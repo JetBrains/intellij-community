@@ -73,6 +73,16 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
         return allForLanguage(base);
       }
     }
+    //if (l != Language.ANY) {
+    //  final List<T> all = allForLanguage(Language.ANY);
+    //  if (!all.isEmpty()) {
+    //    if (list.isEmpty()) {
+    //      return all;
+    //    }
+    //    list = new ArrayList<T>(list);
+    //    list.addAll(all);
+    //  }
+    //}
     return list;
   }
 

@@ -89,4 +89,16 @@ public class FindMethodDuplicatesMiscTest extends FindMethodDuplicatesBaseTest {
   public void testSkipNotAccessible() throws Exception {
     doTest(false);
   }
+  
+  public void testQualifiers() throws Exception {
+    doTest();
+  }
+
+  public void testSimpleConstant() throws Exception {
+    doTest();
+  }
+
+  public void testAnonymousInitializer() throws Exception {
+    doTest();
+  }
 }

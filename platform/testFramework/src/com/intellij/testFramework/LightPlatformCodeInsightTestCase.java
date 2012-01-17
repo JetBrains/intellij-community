@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -431,8 +431,8 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
                                                  caretMarker.getStartOffset(),
                                                  CodeStyleSettingsManager.getSettings(getProject()).getIndentOptions(StdFileTypes.JAVA).TAB_SIZE);
 
-      assertEquals(getMessage("caretLine", message), caretLine + 1, myEditor.getCaretModel().getLogicalPosition().line + 1);
-      assertEquals(getMessage("caretColumn", message), caretCol + 1, myEditor.getCaretModel().getLogicalPosition().column + 1);
+      assertEquals(getMessage("caretLine", message), caretLine, myEditor.getCaretModel().getLogicalPosition().line);
+      assertEquals(getMessage("caretColumn", message), caretCol, myEditor.getCaretModel().getLogicalPosition().column);
     }
   }
 

@@ -308,6 +308,11 @@ public class InstalledPluginsTableModel extends PluginTableModel {
     return enabled != null && enabled.booleanValue();
   }
 
+  public boolean isDisabled(final PluginId pluginId) {
+    final Boolean enabled = myEnabled.get(pluginId);
+    return enabled != null && !enabled.booleanValue();
+  }
+
   public Map<PluginId, Boolean> getEnabledMap() {
     return myEnabled;
   }

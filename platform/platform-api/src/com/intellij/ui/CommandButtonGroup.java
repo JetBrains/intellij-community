@@ -15,6 +15,8 @@
  */
 package com.intellij.ui;
 
+import org.intellij.lang.annotations.JdkConstants;
+
 import javax.swing.*;
 import java.awt.*;
 
@@ -23,7 +25,7 @@ public class CommandButtonGroup extends JPanel {
   public static final int RIGHT = 2;
   private int myPreferredH = 0;
   private int myPreferredW = 0;
-  private int myAxis;
+  @JdkConstants.BoxLayoutAxis private final int myAxis;
 
   public CommandButtonGroup() {
     this(BoxLayout.X_AXIS);
@@ -35,7 +37,7 @@ public class CommandButtonGroup extends JPanel {
    * @see javax.swing.BoxLayout#X_AXIS
    * @see javax.swing.BoxLayout#Y_AXIS
    */
-  public CommandButtonGroup(int axis) {
+  public CommandButtonGroup(@JdkConstants.BoxLayoutAxis int axis) {
     myAxis = axis;
     setLayout(new BoxLayout(this, axis));
     //setBorder(new EmptyBorder(5, 5, 5, 5));

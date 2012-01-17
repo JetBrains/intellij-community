@@ -28,6 +28,8 @@ message Message {
       SHUTDOWN_COMMAND = 2;
       SETUP_COMMAND = 3;
       RELOAD_PROJECT_COMMAND = 4;
+      FS_EVENT = 5;
+      CANCEL_BUILD_COMMAND = 6;
     }
 
     message CompilationRequest {
@@ -35,11 +37,12 @@ message Message {
         REBUILD = 1;
         MAKE = 2;
         CLEAN = 3;
-        CANCEL = 4;
+        FORCED_COMPILATION = 4;
       }
       required Type command_type = 1;
       optional string project_id = 2;
       repeated string module_name = 3;
+      repeated string file_path = 4;
     }
 
     message ShutdownCommand {
@@ -71,11 +74,23 @@ message Message {
       repeated string project_id = 1;
     }
 
+    message CancelBuildCommand {
+      required UUID target_session_id = 1;
+    }
+
+    message FSEvent {
+      required string project_id = 1;
+      repeated string changed_paths = 2;
+      repeated string deleted_paths = 3;
+    }
+
     required Type request_type = 1;
     optional CompilationRequest compile_request = 2;
     optional ShutdownCommand shutdown_command = 3;
     optional SetupCommand setup_command = 4;
     optional ReloadProjectCommand reload_project_command = 5;
+    optional FSEvent fs_event = 6;
+    optional CancelBuildCommand cancel_build_command = 7;
   }
 
   message Response {
@@ -88,11 +103,17 @@ message Message {
       enum Type {
         BUILD_STARTED = 1;
         BUILD_COMPLETED = 2;
-        BUILD_CANCELED = 3;
-        COMMAND_COMPLETED = 4;
+        COMMAND_COMPLETED = 3;
+      }
+      enum Status {
+        CANCELED = 1;
+        ERRORS = 2;
+        SUCCESS = 3;
+        UP_TO_DATE = 4;
       }
       required Type event_type = 1;
       optional string description = 2;
+      optional Status completion_status = 3;
     }
 
     message CompileMessage {
@@ -110,6 +131,7 @@ message Message {
       optional uint64 problem_location_offset = 6;
       optional uint64 line = 7;
       optional uint64 column = 8;
+      optional float  done = 9;
     }
 
     required Type response_type = 1;

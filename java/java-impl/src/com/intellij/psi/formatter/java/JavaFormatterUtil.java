@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiExpressionList;
 import com.intellij.psi.PsiPolyadicExpression;
-import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.impl.source.tree.JavaElementType;
-import com.intellij.psi.impl.source.tree.JavaJspElementType;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,10 +45,10 @@ public class JavaFormatterUtil {
   }
 
   /**
-   * Allows to answer if given node wraps assignement operation.
+   * Allows to answer if given node wraps assignment operation.
    *
    * @param node node to check
-   * @return <code>true</code> if given node wraps assignement operation; <code>false</code> otherwise
+   * @return <code>true</code> if given node wraps assignment operation; <code>false</code> otherwise
    */
   public static boolean isAssignment(ASTNode node) {
     return ASSIGNMENT_ELEMENT_TYPES.contains(node.getElementType());
@@ -75,116 +73,6 @@ public class JavaFormatterUtil {
     PsiPolyadicExpression expression1 = (PsiPolyadicExpression)node1;
     PsiPolyadicExpression expression2 = (PsiPolyadicExpression)node2;
     return expression1.getOperationTokenType() == expression2.getOperationTokenType();
-  }
-
-  public static boolean isFirstMethodCallArgument(@NotNull ASTNode node) {
-    ASTNode firstArgCandidate = node;
-    ASTNode expressionList = node.getTreeParent();
-    if (expressionList == null) {
-      return false;
-    }
-
-    if (expressionList.getElementType() != JavaElementType.EXPRESSION_LIST
-        && expressionList.getElementType() == JavaElementType.NEW_EXPRESSION)
-    {
-      firstArgCandidate = expressionList;
-      expressionList = expressionList.getTreeParent();
-    }
-
-    if (expressionList == null || expressionList.getElementType() != JavaElementType.EXPRESSION_LIST) {
-      return false;
-    }
-
-    ASTNode methodCallExpression = expressionList.getTreeParent();
-    if (methodCallExpression == null || methodCallExpression.getElementType() != JavaElementType.METHOD_CALL_EXPRESSION) {
-      return false;
-    }
-
-    ASTNode lbrace = expressionList.getFirstChildNode();
-    ASTNode firstArg = lbrace.getTreeNext();
-    if (firstArg != null && JavaJspElementType.WHITE_SPACE_BIT_SET.contains(firstArg.getElementType())) {
-      firstArg = firstArg.getTreeNext();
-    }
-
-    return firstArg == firstArgCandidate;
-  }
-
-  /**
-   * Allows to check if given node references anonymous class instance used as a method call argument. The most important thing
-   * is that that method call expression should have other anonymous classes as well.
-   * <p/>
-   * <b>Examples</b>
-   * <pre>
-   *   test(new Runnable() {         &lt;-- true is returned for this node
-   *          public void run() {
-   *          }
-   *        },
-   *        new Runnable() {          &lt;-- false is returned for this node
-   *          public void run() {
-   *          }
-   *        }
-   *    );
-   *
-   *    test(1234, "text", new Runnable() {         &lt;-- true is returned for this node because there are no other anonymous
-   *          public void run() {                          class objects at method call expression before it
-   *          }
-   *        },
-   *        new Runnable() {                        &lt;-- false is returned for this node
-   *          public void run() {
-   *          }
-   *        }
-   *    );
-   *
-   *    test(1234, "text", new Runnable() {         &lt;-- false is returned for this node because there are no other anonymous
-   *        public void run() {                            class objects at method call expression after it
-   *        }
-   *    });
-   * </pre>
-   *
-   * @param node      node to process
-   * @return
-   */
-  public static boolean isFirstAmongOthersAnonymousClassMethodCallArguments(@NotNull ASTNode node) {
-    ASTNode expressionList = node.getTreeParent();
-    ASTNode firstAnonymousClassCandidate = node;
-    if (expressionList == null) {
-      return false;
-    }
-
-    if (expressionList.getElementType() != JavaElementType.EXPRESSION_LIST
-        && expressionList.getElementType() == JavaElementType.NEW_EXPRESSION)
-    {
-      firstAnonymousClassCandidate = expressionList;
-      expressionList = expressionList.getTreeParent();
-    }
-
-    if (expressionList == null || expressionList.getElementType() != JavaElementType.EXPRESSION_LIST) {
-      return false;
-    }
-
-    ASTNode methodCallExpression = expressionList.getTreeParent();
-    if (methodCallExpression == null || methodCallExpression.getElementType() != JavaElementType.METHOD_CALL_EXPRESSION) {
-      return false;
-    }
-
-    ASTNode lbrace = expressionList.getFirstChildNode();
-    boolean firstAnonymousClass = false;
-    for (ASTNode arg = lbrace.getTreeNext(); arg != null; arg = FormatterUtil.getNextNonWhitespaceSibling(arg)) {
-      if (!isAnonymousClass(arg)) {
-        continue;
-      }
-      if (firstAnonymousClass) {
-        // Other anonymous class is found at the method call expression after the target one.
-        return true;
-      }
-      else if (arg != firstAnonymousClassCandidate) {
-        return false;
-      }
-      else {
-        firstAnonymousClass = true;
-      }
-    }
-    return false;
   }
 
   /**

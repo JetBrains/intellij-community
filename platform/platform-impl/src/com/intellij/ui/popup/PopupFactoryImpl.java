@@ -25,6 +25,7 @@ import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.VisualPosition;
@@ -62,6 +63,8 @@ import java.util.HashMap;
 import java.util.List;
 
 public class PopupFactoryImpl extends JBPopupFactory {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.popup.PopupFactoryImpl");
+
   private static final Icon QUICK_LIST_ICON = IconLoader.getIcon("/actions/quickList.png");
 
   public ListPopup createConfirmation(String title, final Runnable onYes, int defaultOptionIndex) {
@@ -678,6 +681,10 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                                                      ActionManager.getInstance(),
                                                                      0));
       for (AnAction action : actions) {
+        if (action == null) {
+          LOG.error("null action in group " + actionGroup);
+          continue;
+        }
         if (action instanceof Separator) {
           myPrependWithSeparator = true;
           mySeparatorText = ((Separator)action).getText();
@@ -699,7 +706,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
       }
     }
 
-    private void appendAction(AnAction action) {
+    private void appendAction(@NotNull AnAction action) {
       Presentation presentation = getPresentation(action);
       AnActionEvent event = new AnActionEvent(null, myDataContext,
                                               myActionPlace,
@@ -740,10 +747,10 @@ public class PopupFactoryImpl extends JBPopupFactory {
       }
     }
 
-    private Presentation getPresentation(AnAction action) {
+    private Presentation getPresentation(@NotNull AnAction action) {
       Presentation presentation = myAction2presentation.get(action);
       if (presentation == null) {
-        presentation = (Presentation)action.getTemplatePresentation().clone();
+        presentation = action.getTemplatePresentation().clone();
         myAction2presentation.put(action, presentation);
       }
       return presentation;

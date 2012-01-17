@@ -64,6 +64,11 @@ public class XmlSurroundDescriptor implements SurroundDescriptor {
     return new Surrounder[0]; //everything is in live templates now
   }
 
+  @Override
+  public boolean isExclusive() {
+    return false;
+  }
+
   protected boolean isEnabled(final TemplateImpl template) {
     final TemplateContext context = template.getTemplateContext();
     return context.isEnabled(new XmlContextType()) || context.isEnabled(new HtmlContextType());

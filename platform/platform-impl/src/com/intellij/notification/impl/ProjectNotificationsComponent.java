@@ -37,9 +37,7 @@ public class ProjectNotificationsComponent implements Notifications, ProjectComp
 
   public ProjectNotificationsComponent(final Project project) {
     myProject = project;
-  }
 
-  public void projectOpened() {
     if (isDummyEnvironment()) {
       return;
     }
@@ -50,6 +48,9 @@ public class ProjectNotificationsComponent implements Notifications, ProjectComp
         NotificationsManagerImpl.getNotificationsManagerImpl().clear(myProject);
       }
     });
+  }
+
+  public void projectOpened() {
   }
 
   public void notify(@NotNull Notification notification) {

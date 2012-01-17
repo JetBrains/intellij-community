@@ -983,7 +983,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
       FSRecords.deleteRecordRecursively(id);
 
       if (parentId != 0) {
-        removeIdFromParentList(parentId, id);
+        removeIdFromParentList(parentId, id, parent, file);
         VirtualDirectoryImpl directory = (VirtualDirectoryImpl)file.getParent();
         assert directory != null;
 
@@ -1013,9 +1013,16 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     }
   }
 
-  private static void removeIdFromParentList(final int parentId, final int id) {
+  private static void removeIdFromParentList(final int parentId, final int id, VirtualFile parent, VirtualFile file) {
     int[] childList = FSRecords.list(parentId);
-    childList = ArrayUtil.remove(childList, ArrayUtil.indexOf(childList, id));
+
+    int index = ArrayUtil.indexOf(childList, id);
+    if (index == -1) {
+      throw new RuntimeException("Cannot find child (" + id + ")" + file
+                                 + "\n\tin (" + parentId + ")" + parent
+                                 + "\n\tactual children:" + Arrays.toString(childList));
+    }
+    childList = ArrayUtil.remove(childList, index);
     FSRecords.updateList(parentId, childList);
   }
 
@@ -1063,16 +1070,16 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     executeCreateChild(newParent, copyName);
   }
 
-  private static void executeMove(final VirtualFile what, final VirtualFile newParent) {
-    final int whatId = getFileId(what);
+  private static void executeMove(final VirtualFile file, final VirtualFile newParent) {
+    final int fileId = getFileId(file);
     final int newParentId = getFileId(newParent);
-    final int oldParentId = getFileId(what.getParent());
+    final int oldParentId = getFileId(file.getParent());
 
-    removeIdFromParentList(oldParentId, whatId);
-    appendIdToParentList(newParentId, whatId);
+    removeIdFromParentList(oldParentId, fileId, file.getParent(), file);
+    appendIdToParentList(newParentId, fileId);
 
-    ((VirtualFileSystemEntry)what).setParent(newParent);
-    FSRecords.setParent(whatId, newParentId);
+    ((VirtualFileSystemEntry)file).setParent(newParent);
+    FSRecords.setParent(fileId, newParentId);
   }
 
   public String getName(final int id) {

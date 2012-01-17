@@ -19,6 +19,8 @@ import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.ui.UIUtil;
+import org.intellij.lang.annotations.JdkConstants;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -28,6 +30,10 @@ import java.awt.*;
  */
 @SuppressWarnings({"PointlessBitwiseExpression"})
 public final class SimpleTextAttributes {
+
+  @MagicConstant(flags = {STYLE_PLAIN, STYLE_BOLD, STYLE_ITALIC, STYLE_STRIKEOUT, STYLE_WAVED, STYLE_UNDERLINE, STYLE_BOLD_DOTTED_LINE, STYLE_SEARCH_MATCH, STYLE_SMALLER})
+  public @interface StyleAttributeConstant { }
+
   public static final int STYLE_PLAIN = Font.PLAIN;
   public static final int STYLE_BOLD = Font.BOLD;
   public static final int STYLE_ITALIC = Font.ITALIC;
@@ -62,6 +68,7 @@ public final class SimpleTextAttributes {
   private final Color myBgColor;
   private final Color myFgColor;
   private final Color myWaveColor;
+  @StyleAttributeConstant
   private final int myStyle;
 
   /**
@@ -70,15 +77,15 @@ public final class SimpleTextAttributes {
    *                <code>null</code>. In that case <code>SimpleColoredComponent</code> will
    *                use its foreground to paint the text fragment.
    */
-  public SimpleTextAttributes(int style, Color fgColor) {
+  public SimpleTextAttributes(@StyleAttributeConstant int style, Color fgColor) {
     this(style, fgColor, null);
   }
 
-  public SimpleTextAttributes(int style, Color fgColor, Color waveColor) {
+  public SimpleTextAttributes(@StyleAttributeConstant int style, Color fgColor, Color waveColor) {
     this(null, fgColor, waveColor, style);
   }
 
-  public SimpleTextAttributes(final Color bgColor, final Color fgColor, final Color waveColor, final int style) {
+  public SimpleTextAttributes(final Color bgColor, final Color fgColor, final Color waveColor, @StyleAttributeConstant int style) {
     if ((~(STYLE_PLAIN |
            STYLE_BOLD |
            STYLE_ITALIC |
@@ -120,6 +127,7 @@ public final class SimpleTextAttributes {
     return myWaveColor;
   }
 
+  @StyleAttributeConstant
   public int getStyle() {
     return myStyle;
   }
@@ -184,6 +192,7 @@ public final class SimpleTextAttributes {
     return new SimpleTextAttributes(attributes.getBackgroundColor(), foregroundColor, attributes.getEffectColor(), style);
   }
 
+  @JdkConstants.FontStyle
   public int getFontStyle() {
     return myStyle & FONT_MASK;
   }
@@ -218,7 +227,7 @@ public final class SimpleTextAttributes {
     return new TextAttributes(myFgColor, null, effectColor, effectType, myStyle & FONT_MASK);
   }
 
-  public SimpleTextAttributes derive(int style, @Nullable Color fg, @Nullable Color bg, @Nullable Color wave) {
+  public SimpleTextAttributes derive(@StyleAttributeConstant int style, @Nullable Color fg, @Nullable Color bg, @Nullable Color wave) {
     return new SimpleTextAttributes(bg != null ? bg : getBgColor(), fg != null ? fg : getFgColor(), wave != null ? wave : getWaveColor(),
                                     style == -1 ? getStyle() : style);
   }
@@ -226,27 +235,31 @@ public final class SimpleTextAttributes {
   // take what differs from REGULAR
   public static SimpleTextAttributes merge(final SimpleTextAttributes weak, final SimpleTextAttributes strong) {
     final int style;
-    final Color wave;
-    final Color fg;
-    final Color bg;
     if (strong.getStyle() != REGULAR_ATTRIBUTES.getStyle()) {
       style = strong.getStyle();
-    } else {
+    }
+    else {
       style = weak.getStyle();
     }
-    if (! Comparing.equal(strong.getWaveColor(), REGULAR_ATTRIBUTES.getWaveColor())) {
+    final Color wave;
+    if (!Comparing.equal(strong.getWaveColor(), REGULAR_ATTRIBUTES.getWaveColor())) {
       wave = strong.getWaveColor();
-    } else {
+    }
+    else {
       wave = weak.getWaveColor();
     }
-    if (! Comparing.equal(strong.getFgColor(), REGULAR_ATTRIBUTES.getFgColor())) {
+    final Color fg;
+    if (!Comparing.equal(strong.getFgColor(), REGULAR_ATTRIBUTES.getFgColor())) {
       fg = strong.getFgColor();
-    } else {
+    }
+    else {
       fg = weak.getFgColor();
     }
-    if (! Comparing.equal(strong.getBgColor(), REGULAR_ATTRIBUTES.getBgColor())) {
+    final Color bg;
+    if (!Comparing.equal(strong.getBgColor(), REGULAR_ATTRIBUTES.getBgColor())) {
       bg = strong.getBgColor();
-    } else {
+    }
+    else {
       bg = weak.getBgColor();
     }
 

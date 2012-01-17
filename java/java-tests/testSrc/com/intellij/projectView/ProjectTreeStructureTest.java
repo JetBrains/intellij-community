@@ -7,7 +7,7 @@ public class ProjectTreeStructureTest extends BaseProjectViewTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myPrintInfo = new Queryable.PrintInfo(new String[]{"className", "fileName", "fieldName", "methodName", "packageName"});
+    myPrintInfo = new Queryable.PrintInfo();
   }
 
   public void test1() {
@@ -33,24 +33,6 @@ public class ProjectTreeStructureTest extends BaseProjectViewTestCase {
                                                 " Form1.form\n" +
                                                 " Form2.form\n");
 
-    assertStructureEqual("Project\n" +
-                         " External Libraries\n" +
-                         "  Library: < java 1.7 >\n" +
-                         "   annotations.jar\n" +
-                         "    META-INF\n" +
-                         "     MANIFEST.MF\n" +
-                         "    classpath.index\n" +
-                         "    org\n" +
-                         "     intellij\n" +
-                         "      lang\n" +
-                         "       annotations\n" +
-                         "        Identifier\n" +
-                         "        Language\n" +
-                         "        Pattern\n" +
-                         "        PrintFormat\n" +
-                         "        PrintFormatPattern\n" +
-                         "        RegExp\n");
-
     getProjectTreeStructure().setProviders();
 
     assertStructureEqual(getPackageDirectory(),
@@ -62,23 +44,6 @@ public class ProjectTreeStructureTest extends BaseProjectViewTestCase {
                          " Form1.java\n" +
                          " Form2.form\n");
 
-    assertStructureEqual("Project\n" +
-                         " External Libraries\n" +
-                         "  Library: < java 1.7 >\n" +
-                         "   annotations.jar\n" +
-                         "    META-INF\n" +
-                         "     MANIFEST.MF\n" +
-                         "    classpath.index\n" +
-                         "    org\n" +
-                         "     intellij\n" +
-                         "      lang\n" +
-                         "       annotations\n" +
-                         "        Identifier.class\n" +
-                         "        Language.class\n" +
-                         "        Pattern.class\n" +
-                         "        PrintFormat.class\n" +
-                         "        PrintFormatPattern.class\n" +
-                         "        RegExp.class\n");
   }
 
   public void testShowClassMembers() {

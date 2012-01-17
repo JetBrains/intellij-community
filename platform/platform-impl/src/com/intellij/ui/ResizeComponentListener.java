@@ -19,6 +19,7 @@ package com.intellij.ui;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.AbstractPopup;
+import org.intellij.lang.annotations.JdkConstants;
 
 import javax.swing.*;
 import java.awt.*;
@@ -35,7 +36,7 @@ public class ResizeComponentListener extends MouseAdapter implements MouseMotion
   private final AbstractPopup myPopup;
   private final AbstractPopup.MyContentPanel myComponent;
   private Point myStartPoint = null;
-  private int myDirection = -1;
+  @JdkConstants.CursorType private int myDirection = -1;
   private IdeGlassPane myGlassPane;
 
   public ResizeComponentListener(final AbstractPopup popup, IdeGlassPane glassPane) {
@@ -181,7 +182,7 @@ public class ResizeComponentListener extends MouseAdapter implements MouseMotion
     }
   }
 
-  private void setWindowCursor(final int cursor) {
+  private void setWindowCursor(@JdkConstants.CursorType int cursor) {
     myGlassPane.setCursor(Cursor.getPredefinedCursor(cursor), this);
   }
 
@@ -212,6 +213,7 @@ public class ResizeComponentListener extends MouseAdapter implements MouseMotion
     }
   }
 
+  @JdkConstants.CursorType
   private int getDirection(Point startPoint, Rectangle bounds){
     if (myPopup.isToDrawMacCorner()){
       if (bounds.x + bounds.width - startPoint.x < 16 && //inside icon

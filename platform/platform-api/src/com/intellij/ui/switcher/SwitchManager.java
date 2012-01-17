@@ -29,6 +29,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
+import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -154,7 +155,7 @@ public class SwitchManager implements ProjectComponent, KeyEventDispatcher, AnAc
   }
 
 
-  public static boolean areAllModifiersPressed(int modifiers, Set<Integer> modifierCodes) {
+  public static boolean areAllModifiersPressed(@JdkConstants.InputEventMask int modifiers, Set<Integer> modifierCodes) {
     int mask = 0;
     for (Integer each : modifierCodes) {
       if (each == KeyEvent.VK_SHIFT) {

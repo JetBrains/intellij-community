@@ -1,4 +1,4 @@
 class A {
-    private long <caret>localizedStringManager;
+    private long<caret> localizedStringManager;
 
 }

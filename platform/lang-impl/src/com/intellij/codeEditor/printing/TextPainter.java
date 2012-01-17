@@ -86,7 +86,7 @@ public class TextPainter implements Printable {
     myPlainFont = new Font(fontName, Font.PLAIN, fontSize);
     myBoldFont = new Font(fontName, Font.BOLD, fontSize);
     myItalicFont = new Font(fontName, Font.ITALIC, fontSize);
-    myBoldItalicFont = new Font(fontName, Font.BOLD + Font.ITALIC, fontSize);
+    myBoldItalicFont = new Font(fontName, Font.BOLD | Font.ITALIC, fontSize);
     myHighlighter = highlighter;
     myHeaderFont = new Font(myPrintSettings.FOOTER_HEADER_FONT_NAME, Font.PLAIN,
                             myPrintSettings.FOOTER_HEADER_FONT_SIZE);

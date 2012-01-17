@@ -18,7 +18,9 @@ package com.intellij.uiDesigner.propertyInspector;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SideBorder;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.componentTree.ComponentSelectionListener;
 import com.intellij.uiDesigner.componentTree.ComponentTree;
@@ -65,6 +67,7 @@ public final class PropertyInspector extends JPanel{
     // Card with property inspector
     final JPanel inspectorCard = new JPanel(new GridBagLayout());
     final JScrollPane inspectorScrollPane = ScrollPaneFactory.createScrollPane(myInspectorTable);
+    inspectorScrollPane.setBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM));
     inspectorCard.add(inspectorScrollPane,
       new GridBagConstraints(0, 0, 0, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0)
     );

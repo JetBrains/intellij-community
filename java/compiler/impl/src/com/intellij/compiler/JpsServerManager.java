@@ -58,7 +58,8 @@ import org.jetbrains.jps.client.Client;
 import org.jetbrains.jps.server.ClasspathBootstrap;
 import org.jetbrains.jps.server.Server;
 
-import javax.tools.*;
+import javax.tools.JavaCompiler;
+import javax.tools.ToolProvider;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -81,8 +82,10 @@ public class JpsServerManager implements ApplicationComponent{
       ApplicationManager.getApplication().executeOnPooledThread(runnable);
     }
   });
+  private final ProjectManager myProjectManager;
 
-  public JpsServerManager(ProjectManager projectManager) {
+  public JpsServerManager(final ProjectManager projectManager) {
+    myProjectManager = projectManager;
     final String systemPath = PathManager.getSystemPath();
     File system = new File(systemPath);
     try {
@@ -107,15 +110,98 @@ public class JpsServerManager implements ApplicationComponent{
     return ApplicationManager.getApplication().getComponent(JpsServerManager.class);
   }
 
+  public void notifyFilesChanged(Collection<String> paths) {
+    sendNotification(paths, false);
+  }
+
+  public void notifyFilesDeleted(Collection<String> paths) {
+    sendNotification(paths, true);
+  }
+
+  public void sendReloadRequest(final Project project) {
+    if (!project.isDefault() && project.isOpen()) {
+      myTaskExecutor.submit(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            if (!project.isDisposed()) {
+              final Client client = ensureServerRunningAndClientConnected(false);
+              if (client != null) {
+                client.sendProjectReloadRequest(Collections.singletonList(project.getLocation()));
+              }
+            }
+          }
+          catch (Throwable e) {
+            LOG.info(e);
+          }
+        }
+      });
+    }
+  }
+
+  public void sendCancelBuildRequest(final UUID sessionId) {
+    myTaskExecutor.submit(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          final Client client = ensureServerRunningAndClientConnected(false);
+          if (client != null) {
+            client.sendCancelBuildRequest(sessionId);
+          }
+        }
+        catch (Throwable e) {
+          LOG.info(e);
+        }
+      }
+    });
+  }
+
+  private void sendNotification(final Collection<String> paths, final boolean isDeleted) {
+    try {
+      final Client client = ensureServerRunningAndClientConnected(false);
+      if (client != null) {
+        myTaskExecutor.submit(new Runnable() {
+          public void run() {
+            final Project[] openProjects = myProjectManager.getOpenProjects();
+            if (openProjects.length > 0) {
+              final Collection<String> changed, deleted;
+              if (isDeleted) {
+                changed = Collections.emptyList();
+                deleted = paths;
+              }
+              else {
+                changed = paths;
+                deleted = Collections.emptyList();
+              }
+              for (Project project : openProjects) {
+                try {
+                  client.sendFSEvent(project.getLocation(), changed, deleted);
+                }
+                catch (Exception e) {
+                  LOG.info(e);
+                }
+              }
+            }
+          }
+        });
+      }
+    }
+    catch (Throwable th) {
+      LOG.error(th); // should not happen
+    }
+  }
+
   @Nullable
-  public Future submitCompilationTask(final String projectId, final List<String> modules, final boolean rebuild, final JpsServerResponseHandler handler) {
+  public RequestFuture submitCompilationTask(final String projectId, final boolean isRebuild, final boolean isMake, final Collection<String> modules, final Collection<String> paths, final JpsServerResponseHandler handler) {
     final Ref<RequestFuture> futureRef = new Ref<RequestFuture>(null);
     final RunnableFuture future = myTaskExecutor.submit(new Runnable() {
       public void run() {
         try {
           final Client client = ensureServerRunningAndClientConnected(true);
           if (client != null) {
-            final RequestFuture requestFuture = client.sendCompileRequest(projectId, modules, rebuild, handler);
+            final RequestFuture requestFuture = isRebuild ?
+              client.sendRebuildRequest(projectId, handler) :
+              client.sendCompileRequest(isMake, projectId, modules, paths, handler);
             futureRef.set(requestFuture);
           }
           else {
@@ -308,8 +394,6 @@ public class JpsServerManager implements ApplicationComponent{
   //  commandLine.add((launcherUsed? "-J" : "") + "-D" + CharsetToolkit.FILE_ENCODING_PROPERTY + "=" + CharsetToolkit.getDefaultSystemCharset().name());
   //}
 
-
-
   private Process launchServer(int port) throws ExecutionException {
     final Sdk projectJdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
     final GeneralCommandLine cmdLine = new GeneralCommandLine();
@@ -422,7 +506,7 @@ public class JpsServerManager implements ApplicationComponent{
       myConnections.put(project, conn);
       conn.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
         public void beforeRootsChange(final ModuleRootEvent event) {
-          sendReloadRequest(project, false);
+          sendReloadRequest(project);
         }
 
         public void rootsChanged(final ModuleRootEvent event) {
@@ -442,11 +526,10 @@ public class JpsServerManager implements ApplicationComponent{
           });
         }
       });
-
     }
 
     public void projectClosing(Project project) {
-      sendReloadRequest(project, false);
+      sendReloadRequest(project);
     }
 
     public void projectClosed(Project project) {
@@ -454,23 +537,6 @@ public class JpsServerManager implements ApplicationComponent{
       if (conn != null) {
         conn.disconnect();
       }
-    }
-
-    private void sendReloadRequest(final Project project, final boolean forceRestart) {
-      myTaskExecutor.submit(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            final Client client = ensureServerRunningAndClientConnected(forceRestart);
-            if (client != null) {
-              client.sendProjectReloadRequest(Collections.singletonList(project.getLocation()));
-            }
-          }
-          catch (Throwable e) {
-            LOG.info(e);
-          }
-        }
-      });
     }
   }
 }

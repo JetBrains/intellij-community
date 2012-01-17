@@ -35,7 +35,6 @@ public class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
   public static final ExtensionPointName<DequotingFilter> EP_NAME =
     ExtensionPointName.create("com.intellij.selectionDequotingFilter");
   private TextRange myReplacedTextRange;
-  private int myCaretPosition;
 
   @Override
   public Result checkAutoPopup(char c, Project project, Editor editor, PsiFile psiFile) {
@@ -46,8 +45,6 @@ public class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
       if (selectedText.length() < 1) {
         return super.checkAutoPopup(c, project, editor, psiFile);
       }
-      myCaretPosition = editor.getCaretModel().getOffset();
-      boolean replace = false;
       if (selectedText.length() > 1) {
         final char firstChar = selectedText.charAt(0);
         if (isSimilarDelimiters(firstChar, c) &&
@@ -56,16 +53,14 @@ public class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
             !shouldSkipReplacementOfQuotesOrBraces(psiFile, editor, selectedText, c)
           ) {
           selectedText = selectedText.substring(1, selectedText.length() - 1);
-          replace = true;
         }
       }
       final int caretOffset = editor.getSelectionModel().getSelectionStart();
       final char c2 = getMatchingDelimiter(c);
       final String newText = String.valueOf(c) + selectedText + c2;
       EditorModificationUtil.insertStringAtCaret(editor, newText);
-      if (Registry.is("editor.smarterSelectionQuoting") && !replace) {
+      if (Registry.is("editor.smarterSelectionQuoting")) {
         myReplacedTextRange = new TextRange(caretOffset + 1, caretOffset + newText.length() - 1);
-        myCaretPosition += 1;
       } else {
         myReplacedTextRange = new TextRange(caretOffset, caretOffset + newText.length());
       }
@@ -112,7 +107,7 @@ public class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
       if (myReplacedTextRange.getEndOffset() <= editor.getDocument().getTextLength()) {
         editor.getSelectionModel().setSelection(myReplacedTextRange.getStartOffset(), myReplacedTextRange.getEndOffset());
         if (Registry.is("editor.smarterSelectionQuoting")) {
-          editor.getCaretModel().moveToOffset(myCaretPosition);
+          editor.getCaretModel().moveToOffset(myReplacedTextRange.getEndOffset());
         }
       }
       myReplacedTextRange = null;

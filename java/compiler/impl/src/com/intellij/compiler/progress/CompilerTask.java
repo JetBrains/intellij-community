@@ -314,7 +314,7 @@ public class CompilerTask extends Task.Backgroundable {
           (
             CompilerWorkspaceConfiguration.getInstance(myProject).useCompileServer() /*todo: temporary*/||
             CompilerMessageCategory.ERROR.equals(category) ||
-            (CompilerMessageCategory.WARNING.equals(category) && !ErrorTreeViewConfiguration.getInstance(myProject).isHideWarnings())
+            !ErrorTreeViewConfiguration.getInstance(myProject).isHideWarnings()
           );
         if (shouldAutoActivate) {
           myMessagesAutoActivated = true;
@@ -479,7 +479,10 @@ public class CompilerTask extends Task.Backgroundable {
   private void activateMessageView() {
     synchronized (myMessageViewLock) {
       if (myErrorTreeView != null) {
-        ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.MESSAGES_WINDOW).activate(null);
+        final ToolWindow tw = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.MESSAGES_WINDOW);
+        if (tw != null) {
+          tw.activate(null, false);
+        }
       }
     }
   }

@@ -37,7 +37,7 @@ public class FilteringTreeBuilderTest extends BaseTreeTestCase  {
   }
 
   private void initBuilder() throws Exception {
-    myBuilder = new FilteringTreeBuilder(null, myTree, myFilter, myStructure, AlphaComparator.INSTANCE) {
+    myBuilder = new FilteringTreeBuilder(myTree, myFilter, myStructure, AlphaComparator.INSTANCE) {
       @Override
       protected AbstractTreeUpdater createUpdater() {
        return _createUpdater(this);
@@ -158,7 +158,7 @@ public class FilteringTreeBuilderTest extends BaseTreeTestCase  {
   }
 
   private void select(String element) throws Exception {
-    FilteringTreeStructure.Node node = myBuilder.getVisibleNodeFor(findNode(element));
+    FilteringTreeStructure.FilteringNode node = myBuilder.getVisibleNodeFor(findNode(element));
     select(new Object[] {node}, false);
   }
 

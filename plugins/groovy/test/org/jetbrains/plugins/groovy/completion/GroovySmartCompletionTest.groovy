@@ -90,6 +90,12 @@ public class GroovySmartCompletionTest extends GroovyCompletionTestBase {
   public void testEnumMembersInAssignment() {doSmartCompletion "IN_STOCK", "NOWHERE", "ORDERED" }
   public void testEnumMembersInAssignmentInsideEnum() {doSmartCompletion "IN_STOCK", "NOWHERE", "ORDERED", "next", "previous" }
 
+  public void testPreferVarargElement() {
+    doSmartCompletion "Foo", "Foo"
+    myFixture.type('\n')
+    checkResult()
+  }
+
   void testNativeList() {doSmartCompletion('a1', 'a2')};
 
   public void testMembersImportStatically() {

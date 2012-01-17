@@ -28,17 +28,17 @@ public class CommonShortcuts {
 
   private CommonShortcuts() {}
 
-  public static final ShortcutSet ALT_ENTER = new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, KeyEvent.ALT_DOWN_MASK));
+  public static final ShortcutSet ALT_ENTER = new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.ALT_DOWN_MASK));
   public static final ShortcutSet ENTER = new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0));
   public static final ShortcutSet CTRL_ENTER = new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER,
                                                                                             SystemInfo.isMac
-                                                                                            ? KeyEvent.META_DOWN_MASK
-                                                                                            : KeyEvent.CTRL_DOWN_MASK));
+                                                                                            ? InputEvent.META_DOWN_MASK
+                                                                                            : InputEvent.CTRL_DOWN_MASK));
   public static final ShortcutSet INSERT = new CustomShortcutSet(getInsertKeystroke());
   public static final ShortcutSet DELETE = new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0));
   public static final ShortcutSet ESCAPE = new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0));
 
-  public static final ShortcutSet DOUBLE_CLICK_1 = new CustomShortcutSet(new Shortcut[]{new MouseShortcut(MouseEvent.BUTTON1, 0, 2)});
+  public static final ShortcutSet DOUBLE_CLICK_1 = new CustomShortcutSet(new MouseShortcut(MouseEvent.BUTTON1, 0, 2));
   
   public static ShortcutSet getNewForDialogs() {
     final ArrayList<Shortcut> shortcuts = new ArrayList<Shortcut>();
@@ -60,7 +60,7 @@ public class CommonShortcuts {
   }
 
   public static KeyStroke getInsertKeystroke() {
-    return SystemInfo.isMac ? KeyStroke.getKeyStroke(KeyEvent.VK_N, KeyEvent.CTRL_DOWN_MASK)
+    return SystemInfo.isMac ? KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.CTRL_DOWN_MASK)
                             : KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, 0);
   }
 
@@ -94,7 +94,8 @@ public class CommonShortcuts {
   }
 
   public static ShortcutSet getDiff() {
-    return new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, SystemInfo.isMac ? KeyEvent.META_DOWN_MASK : KeyEvent.CTRL_DOWN_MASK));
+    return new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, SystemInfo.isMac ? InputEvent.META_DOWN_MASK
+                                                                                        : InputEvent.CTRL_DOWN_MASK));
   }
 
   public static ShortcutSet getFind() {

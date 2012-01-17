@@ -27,6 +27,7 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
+import org.intellij.lang.annotations.JdkConstants;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -186,7 +187,7 @@ public class ActionMacro implements JDOMExternalizable {
     myActions.add(new ShortcutActionDesciption(text));
   }
 
-  public void appendKeytyped(char c, int keyCode, int modifiers) {
+  public void appendKeytyped(char c, int keyCode, @JdkConstants.InputEventMask int modifiers) {
     ActionDescriptor lastAction = myActions.size() > 0 ? myActions.get(myActions.size() - 1) : null;
     if (lastAction instanceof TypedDescriptor) {
       ((TypedDescriptor)lastAction).addChar(c, keyCode, modifiers);
@@ -223,13 +224,13 @@ public class ActionMacro implements JDOMExternalizable {
       assert myKeyCodes.size() == myModifiers.size() : "codes=" + myKeyCodes.toString() + " modifiers=" + myModifiers.toString();
     }
 
-    public TypedDescriptor(char c, int keyCode, int modifiers) {
+    public TypedDescriptor(char c, int keyCode, @JdkConstants.InputEventMask int modifiers) {
       myText = String.valueOf(c);
       myKeyCodes.add(keyCode);
       myModifiers.add(modifiers);
     }
 
-    public void addChar(char c, int keyCode, int modifier) {
+    public void addChar(char c, int keyCode, @JdkConstants.InputEventMask int modifier) {
       myText = myText + c;
       myKeyCodes.add(keyCode);
       myModifiers.add(modifier);

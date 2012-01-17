@@ -643,7 +643,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   public Dimension getPreferredSize() {
     final ArrayList<Rectangle> bounds = new ArrayList<Rectangle>();
     calculateBounds(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE), bounds);
-
+    if (bounds.isEmpty()) return new Dimension(0, 0);
     int xLeft = Integer.MAX_VALUE;
     int yTop = Integer.MAX_VALUE;
     int xRight = Integer.MIN_VALUE;
@@ -798,13 +798,17 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     updateActions(true, false, false);
   }
 
-  private void updateActions(boolean now, final boolean transparrentOnly, final boolean forced) {
+  private void updateActions(boolean now, final boolean transparentOnly, final boolean forced) {
     final IdRunnable updateRunnable = new IdRunnable(this) {
       public void run() {
+        if (!isVisible()) {
+          return;
+        }
+
         myNewVisibleActions.clear();
         final DataContext dataContext = getDataContext();
 
-        Utils.expandActionGroup(myActionGroup, myNewVisibleActions, myPresentationFactory, dataContext, myPlace, myActionManager, transparrentOnly);
+        Utils.expandActionGroup(myActionGroup, myNewVisibleActions, myPresentationFactory, dataContext, myPlace, myActionManager, transparentOnly);
 
         if (forced || !myNewVisibleActions.equals(myVisibleActions)) {
           // should rebuild UI

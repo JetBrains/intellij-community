@@ -1,6 +1,7 @@
 package org.jetbrains.ether.dependencyView;
 
 import org.jetbrains.ether.RW;
+import org.objectweb.asm.Type;
 
 import java.io.*;
 
@@ -18,6 +19,7 @@ abstract class ProtoMember extends Proto {
   private final static int LONG = 3;
   private final static int FLOAT = 4;
   private final static int DOUBLE = 5;
+  private final static int TYPE = 6;
 
   public final TypeRepr.AbstractType type;
   public final Object value;
@@ -51,6 +53,8 @@ abstract class ProtoMember extends Proto {
           return in.readFloat();
         case DOUBLE:
           return in.readDouble();
+        case TYPE : 
+          return Type.getType(in.readUTF());
       }
     }
     catch (IOException e) {
@@ -97,6 +101,10 @@ abstract class ProtoMember extends Proto {
       else if (value instanceof Double) {
         out.writeInt(DOUBLE);
         out.writeDouble(((Double)value).doubleValue());
+      }
+      else if (value instanceof Type) {
+        out.writeInt(TYPE);
+        out.writeUTF(((Type)value).getDescriptor());
       }
       else {
         out.writeInt(NONE);

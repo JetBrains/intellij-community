@@ -61,7 +61,7 @@ public class LightVariableBuilder<T extends LightVariableBuilder> extends LightE
   }
 
   @Override
-  public boolean hasModifierProperty(@Modifier @NonNls @NotNull String name) {
+  public boolean hasModifierProperty(@NonNls @NotNull String name) {
     return myModifierList.hasModifierProperty(name);
   }
 

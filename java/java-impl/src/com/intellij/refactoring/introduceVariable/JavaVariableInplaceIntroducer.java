@@ -194,7 +194,7 @@ public class JavaVariableInplaceIntroducer extends InplaceVariableIntroducer<Psi
       myCanBeFinalCb.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
-          new WriteCommandAction(myProject, IntroduceVariableBase.REFACTORING_NAME, IntroduceVariableBase.REFACTORING_NAME) {
+          new WriteCommandAction(myProject, getCommandName(), getCommandName()) {
             @Override
             protected void run(com.intellij.openapi.application.Result result) throws Throwable {
               PsiDocumentManager.getInstance(myProject).commitDocument(myEditor.getDocument());

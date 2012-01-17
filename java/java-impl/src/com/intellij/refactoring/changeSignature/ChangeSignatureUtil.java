@@ -15,8 +15,11 @@
  */
 package com.intellij.refactoring.changeSignature;
 
+import com.intellij.lang.LanguageRefactoringSupport;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.util.PsiUtilBase;
@@ -95,6 +98,12 @@ public class ChangeSignatureUtil {
       Child element = elements.get(i);
       element.delete();
     }
+  }
+
+  public static void invokeChangeSignatureOn(PsiMethod method, Project project) {
+    final ChangeSignatureHandler handler =
+      LanguageRefactoringSupport.INSTANCE.forLanguage(method.getLanguage()).getChangeSignatureHandler();
+    handler.invoke(project, new PsiElement[]{method}, null);
   }
 
   public interface ChildrenGenerator<Parent extends PsiElement, Child extends PsiElement> {

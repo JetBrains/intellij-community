@@ -22,6 +22,7 @@ import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -511,7 +512,8 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
     return myConfirmOpenNewProject;
   }
 
-  public void setConfirmOpenNewProject(int confirmOpenNewProject) {
+  public void setConfirmOpenNewProject(@MagicConstant(intValues = {OPEN_PROJECT_ASK, OPEN_PROJECT_NEW_WINDOW, OPEN_PROJECT_SAME_WINDOW})
+                                       int confirmOpenNewProject) {
     myConfirmOpenNewProject = confirmOpenNewProject;
   }
 

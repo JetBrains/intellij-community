@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,15 @@
  */
 package com.siyeh.ig.cloneable;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiTypeParameter;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.*;
+import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.CloneUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,22 +45,49 @@ public class CloneableImplementsCloneInspection extends BaseInspection {
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "cloneable.class.without.clone.display.name");
+    return InspectionGadgetsBundle.message("cloneable.class.without.clone.display.name");
   }
 
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "cloneable.class.without.clone.problem.descriptor");
+    return InspectionGadgetsBundle.message("cloneable.class.without.clone.problem.descriptor");
   }
 
   @Override
   public JComponent createOptionsPanel() {
     return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
-      "cloneable.class.without.clone.ignore.option"),
-                                          this, "m_ignoreCloneableDueToInheritance");
+      "cloneable.class.without.clone.ignore.option"), this, "m_ignoreCloneableDueToInheritance");
+  }
+
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new CreateCloneMethodFix();
+  }
+
+  private static class CreateCloneMethodFix extends InspectionGadgetsFix {
+    @NotNull
+    @Override
+    public String getName() {
+      return InspectionGadgetsBundle.message("cloneable.class.without.clone.quickfix");
+    }
+
+    @Override
+    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+      final PsiElement element = descriptor.getPsiElement();
+      final PsiElement parent = element.getParent();
+      if (!(parent instanceof PsiClass)) {
+        return;
+      }
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+      final StringBuilder cloneMethod = new StringBuilder("public ");
+      cloneMethod.append(element.getText());
+      cloneMethod.append(" clone() throws java.lang.CloneNotSupportedException {\nreturn (");
+      cloneMethod.append(element.getText());
+      cloneMethod.append(") super.clone();\n}");
+      final PsiMethod method = factory.createMethodFromText(cloneMethod.toString(), element);
+      parent.add(method);
+    }
   }
 
   @Override
@@ -66,14 +95,12 @@ public class CloneableImplementsCloneInspection extends BaseInspection {
     return new CloneableImplementsCloneVisitor();
   }
 
-  private class CloneableImplementsCloneVisitor
-    extends BaseInspectionVisitor {
+  private class CloneableImplementsCloneVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
       // no call to super, so it doesn't drill down
-      if (aClass.isInterface() || aClass.isAnnotationType()
-          || aClass.isEnum()) {
+      if (aClass.isInterface() || aClass.isAnnotationType() || aClass.isEnum()) {
         return;
       }
       if (aClass instanceof PsiTypeParameter) {

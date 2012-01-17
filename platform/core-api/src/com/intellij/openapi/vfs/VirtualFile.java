@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ import java.nio.charset.Charset;
  * is deleted, in which case {@link #isValid()} for the instance will return <code>false</code>.
  * <p/>
  * If an in-memory implementation of VirtualFile is required, {@link com.intellij.testFramework.LightVirtualFile}
- * (Extended API) can be used.
+ * can be used.
  * <p/>
  * Please see <a href="http://confluence.jetbrains.net/display/IDEADEV/IntelliJ+IDEA+Virtual+File+System">IntelliJ IDEA Virtual File System</a>
  * for high-level overview.

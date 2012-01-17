@@ -112,6 +112,10 @@ public class CreateConstructorMatchingSuperFix extends BaseIntentionAction {
         @Override
         public void run() {
           try {
+            if (targetClass.getLBrace() == null) {
+              PsiClass psiClass = JavaPsiFacade.getInstance(targetClass.getProject()).getElementFactory().createClass("X");
+              targetClass.addRangeAfter(psiClass.getLBrace(), psiClass.getRBrace(), targetClass.getLastChild());
+            }
             PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
             CodeStyleManager reformatter = CodeStyleManager.getInstance(project);
             PsiMethod derived = null;

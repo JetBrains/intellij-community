@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.ide;
 import com.intellij.application.options.IndentOptionsEditor;
 import com.intellij.application.options.JavaIndentOptionsEditor;
 import com.intellij.lang.Language;
-import com.intellij.lang.StdLanguages;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -41,7 +40,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
   @NotNull
   @Override
   public Language getLanguage() {
-    return StdLanguages.JAVA;
+    return JavaLanguage.INSTANCE;
   }
 
   @Override
@@ -185,6 +184,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
 
   private static final String SPACING_SAMPLE =
     "@Annotation(param1 = \"value1\", param2 = \"value2\")\n" +
+    "@SuppressWarnings({\"ALL\"})\n" +
     "public class Foo<T, U> {\n" +
     "  int[] X = new int[]{1, 3, 5, 6, 7, 87, 1213, 2};\n" +
     "\n" +
@@ -193,7 +193,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     "      y += (y ^ 0x123) << 2;\n" +
     "    }\n" +
     "    do {\n" +
-    "      try (MyResource r1 = getResource(); MyResource r2 = null) {\n" +
+    "      try(MyResource r1 = getResource(); MyResource r2 = null) {\n" +
     "        if (0 < x && x < 10) {\n" +
     "          while (x != y) {\n" +
     "            x = f(x * 3 + 5);\n" +
@@ -217,7 +217,8 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     "    while (true);\n" +
     "  }\n" +
     "  void bar(){{return;}}\n" +
-    "}";
+    "}\n" +
+    "class Bar {}";
 
   private static final String WRAPPING_CODE_SAMPLE =
     "/*\n" +

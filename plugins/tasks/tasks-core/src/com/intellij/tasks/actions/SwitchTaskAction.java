@@ -117,7 +117,7 @@ public class SwitchTaskAction extends BaseTaskAction {
     }
     if (vcsEnabled && !temp.isEmpty()) {
       group.addSeparator();
-      for (int i = 0, tempSize = temp.size(); i < Math.min(tempSize, 5); i++) {
+      for (int i = 0, tempSize = temp.size(); i < Math.min(tempSize, 15); i++) {
         LocalTask task = temp.get(i);
         group.add(createActivateTaskAction(manager, project, task, shiftPressed, true));
       }

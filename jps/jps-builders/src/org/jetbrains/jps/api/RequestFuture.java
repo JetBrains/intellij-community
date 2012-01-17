@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.api;
 
+import java.util.UUID;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -26,9 +27,11 @@ public class RequestFuture implements Future {
   private final Semaphore mySemaphore = new Semaphore(1);
   private final AtomicBoolean myDone = new AtomicBoolean(false);
   private final JpsServerResponseHandler myHandler;
+  private final UUID myRequestID;
 
-  public RequestFuture(JpsServerResponseHandler handler) {
+  public RequestFuture(JpsServerResponseHandler handler, UUID requestID) {
     myHandler = handler;
+    myRequestID = requestID;
     mySemaphore.acquireUninterruptibly();
   }
 
@@ -36,6 +39,10 @@ public class RequestFuture implements Future {
     if (!myDone.getAndSet(true)) {
       mySemaphore.release();
     }
+  }
+
+  public UUID getRequestID() {
+    return myRequestID;
   }
 
   public boolean cancel(boolean mayInterruptIfRunning) {

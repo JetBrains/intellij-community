@@ -112,7 +112,7 @@ public class Java15APIUsageInspection extends BaseJavaLocalInspectionTool {
 
   @NotNull
   public String getDisplayName() {
-    return InspectionsBundle.message("inspection.1.5.display.name", "@since 1.5(1.6)");
+    return InspectionsBundle.message("inspection.1.5.display.name");
   }
 
   @NotNull

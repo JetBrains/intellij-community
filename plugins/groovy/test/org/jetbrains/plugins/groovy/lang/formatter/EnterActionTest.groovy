@@ -32,7 +32,7 @@ public class EnterActionTest extends GroovyFormatterTestCase {
   }
 
 
-  private void doTest() throws Throwable {
+  void doTest() throws Throwable {
     final List<String> data = TestUtils.readInput(getTestDataPath() + getTestName(true) + ".test");
     myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, data.get(0));
     doEnter();

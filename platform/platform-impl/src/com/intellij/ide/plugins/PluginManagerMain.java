@@ -22,9 +22,12 @@ import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
@@ -99,6 +102,7 @@ public abstract class PluginManagerMain implements Disposable {
 
   protected final MyPluginsFilter myFilter = new MyPluginsFilter();
   protected PluginManagerUISettings myUISettings;
+  private boolean myDisposed = false;
 
   public PluginManagerMain(
     PluginManagerUISettings uiSettings) {
@@ -125,6 +129,11 @@ public abstract class PluginManagerMain implements Disposable {
   protected abstract JScrollPane createTable();
 
   public void dispose() {
+    myDisposed = true;
+  }
+
+  public boolean isDisposed() {
+    return myDisposed;
   }
 
   public void filter(String filter) {
@@ -280,14 +289,18 @@ public abstract class PluginManagerMain implements Disposable {
     loadPluginsFromHostInBackground();
   }
 
-  public static boolean downloadPlugins(final List<PluginNode> plugins, final List<IdeaPluginDescriptor> allPlugins) throws IOException {
+  public static boolean downloadPlugins(final List<PluginNode> plugins, final List<IdeaPluginDescriptor> allPlugins, final Runnable onSuccess) throws IOException {
     final boolean[] result = new boolean[1];
     try {
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-        public void run() {
-          result[0] = PluginInstaller.prepareToInstall(plugins, allPlugins);
+      ProgressManager.getInstance().run(new Task.Backgroundable(null, IdeBundle.message("progress.download.plugins"), true) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          if (PluginInstaller.prepareToInstall(plugins, allPlugins)) {
+            ApplicationManager.getApplication().invokeLater(onSuccess);
+            result[0] = true;
+          }
         }
-      }, IdeBundle.message("progress.download.plugins"), true, null);
+      });
     }
     catch (RuntimeException e) {
       if (e.getCause() != null && e.getCause() instanceof IOException) {

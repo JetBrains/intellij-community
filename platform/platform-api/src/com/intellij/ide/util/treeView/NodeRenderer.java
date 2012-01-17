@@ -23,6 +23,8 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -58,17 +60,17 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
       if (coloredText.size() == 0) {
         String text = tree.convertValueToText(value.toString(), selected, expanded, leaf, row, hasFocus);
         SimpleTextAttributes simpleTextAttributes = getSimpleTextAttributes(node, presentation.getForcedTextForeground() != null ? presentation.getForcedTextForeground() : color);
-        append(text, simpleTextAttributes);
+        doAppend(text, simpleTextAttributes, selected);
       }
       else {
         for (PresentableNodeDescriptor.ColoredFragment each : coloredText) {
-          append(each.getText(), each.getAttributes(), true);
+          doAppend(each.getText(), each.getAttributes(), true);
         }
       }
 
       final String location = presentation.getLocationString();
       if (location != null && location.length() > 0) {
-        append(" (" + location + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
+        doAppend(" (" + location + ")", SimpleTextAttributes.GRAY_ATTRIBUTES, selected);
       }
 
       setToolTipText(presentation.getTooltip());
@@ -82,9 +84,21 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
       if (text == null) {
         text = "";
       }
-      append(text);
+      doAppend(text, selected);
       setToolTipText(null);
     }
+  }
+
+  protected void doAppend(@NotNull @Nls String fragment, @NotNull SimpleTextAttributes attributes, boolean isMainText, boolean isSelected) {
+    append(fragment, attributes, isMainText);
+  }
+  
+  public void doAppend(@NotNull String fragment, @NotNull SimpleTextAttributes attributes, boolean isSelected) {
+    append(fragment, attributes);
+  }
+  
+  public void doAppend(String fragment, boolean isSelected) {
+    append(fragment);
   }
 
   protected static SimpleTextAttributes getSimpleTextAttributes(final PresentableNodeDescriptor node, final Color color) {

@@ -111,4 +111,8 @@ public interface EditorSettings {
 
   boolean isAllowSingleLogicalLineFolding();
   void setAllowSingleLogicalLineFolding(boolean allow);
+  
+  boolean isPreselectRename();
+  void setPreselectRename(final boolean val);
+  
 }

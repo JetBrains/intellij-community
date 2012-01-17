@@ -88,7 +88,7 @@ public interface MavenDomBuild extends MavenDomBuildBase {
    */
   @NotNull
   @Required(value = false, nonEmpty = true)
-  @Convert(value = PathReferenceConverter.class, soft = false)
+  @Convert(value = PathReferenceConverter.class, soft = true)
   GenericDomValue<PathReference> getOutputDirectory();
 
   /**
@@ -102,7 +102,7 @@ public interface MavenDomBuild extends MavenDomBuildBase {
    */
   @NotNull
   @Required(value = false, nonEmpty = true)
-  @Convert(value = PathReferenceConverter.class, soft = false)
+  @Convert(value = PathReferenceConverter.class, soft = true)
   GenericDomValue<PathReference> getTestOutputDirectory();
 
   /**

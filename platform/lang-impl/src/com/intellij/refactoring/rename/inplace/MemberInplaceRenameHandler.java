@@ -48,7 +48,7 @@ public class MemberInplaceRenameHandler extends VariableInplaceRenameHandler {
   }
 
   @Override
-  public VariableInplaceRenamer doRename(@NotNull final PsiElement elementToRename, final Editor editor, final DataContext dataContext) {
+  public InplaceRefactoring doRename(@NotNull final PsiElement elementToRename, final Editor editor, final DataContext dataContext) {
     if (elementToRename instanceof PsiNameIdentifierOwner) {
       final RenamePsiElementProcessor processor = RenamePsiElementProcessor.forElement(elementToRename);
       if (processor.isInplaceRenameSupported()) {

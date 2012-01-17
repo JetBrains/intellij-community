@@ -181,7 +181,6 @@ public class IntentionDescriptionPanel {
         }
         usagePanel.reset(exampleUsage.getText(), fileType);
 
-        separator.setText(name);
         if (!reuse) {
           if (i == exampleUsages.length) {
             gb.gridwidth = GridBagConstraints.REMAINDER;

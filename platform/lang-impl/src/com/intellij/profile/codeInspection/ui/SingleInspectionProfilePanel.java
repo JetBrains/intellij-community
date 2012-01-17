@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -264,7 +264,7 @@ public class SingleInspectionProfilePanel extends JPanel {
                                                  JPanel parent,
                                                  String profileName) {
 
-    profileName = Messages.showInputDialog(parent, profileName, "Create new inspection profile", Messages.getQuestionIcon());
+    profileName = Messages.showInputDialog(parent, profileName, "Create New Inspection Profile", Messages.getQuestionIcon());
     if (profileName == null) return null;
     final ProfileManager profileManager = selectedProfile.getProfileManager();
     if (ArrayUtil.find(profileManager.getAvailableProfileNames(), profileName) != -1) {
@@ -1110,9 +1110,9 @@ public class SingleInspectionProfilePanel extends JPanel {
   }
 
   private class MyFilterComponent extends FilterComponent {
-    public MyFilterComponent() {
+    private MyFilterComponent() {
       super(INSPECTION_FILTER_HISTORY, 10);
-      setHistory(Arrays.asList("\"New in 10\""));
+      setHistory(Arrays.asList("\"New in 11\""));
     }
 
     public void filter() {

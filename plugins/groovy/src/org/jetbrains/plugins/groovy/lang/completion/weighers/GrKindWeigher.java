@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.completion.weighers;
 import com.intellij.codeInsight.completion.CompletionLocation;
 import com.intellij.codeInsight.completion.CompletionWeigher;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -77,6 +78,12 @@ public class GrKindWeigher extends CompletionWeigher {
       if (o instanceof PsiVariable && !(o instanceof PsiField)) {
         return NotQualifiedKind.local;
       }
+
+      PsiTypeLookupItem item = element.as(PsiTypeLookupItem.CLASS_CONDITION_KEY);
+      if (item != null && item.getBracketsCount() > 0) {
+        return NotQualifiedKind.arrayType;
+      }
+
       if (isPriorityKeyword(o)) return NotQualifiedKind.local;
       if (isLightElement(o)) return NotQualifiedKind.unknown;
       if (o instanceof PsiMember) {
@@ -139,6 +146,7 @@ public class GrKindWeigher extends CompletionWeigher {
   }
 
   private static enum NotQualifiedKind {
+    arrayType,
     innerClass,
     unknown,
     accessor,

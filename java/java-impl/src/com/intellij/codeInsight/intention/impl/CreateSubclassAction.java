@@ -124,6 +124,30 @@ public class CreateSubclassAction extends BaseIntentionAction {
     PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
     final PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
 
+    LOG.assertTrue(psiClass != null);
+    if (psiClass.hasModifierProperty(PsiModifier.PRIVATE) && psiClass.getContainingClass() != null) {
+      createInnerClass(psiClass);
+      return;
+    }
+    createTopLevelClass(psiClass);
+  }
+
+  public static void createInnerClass(final PsiClass aClass) {
+    new WriteCommandAction(aClass.getProject(), getTitle(aClass), getTitle(aClass)) {
+      @Override
+      protected void run(Result result) throws Throwable {
+        final PsiClass containingClass = aClass.getContainingClass();
+        LOG.assertTrue(containingClass != null);
+
+        final PsiTypeParameterList oldTypeParameterList = aClass.getTypeParameterList();
+        PsiClass classFromText = JavaPsiFacade.getElementFactory(aClass.getProject()).createClass(aClass.getName() + IMPL_SUFFIX);
+        classFromText = (PsiClass)containingClass.addAfter(classFromText, aClass);
+        startTemplate(oldTypeParameterList, aClass.getProject(), aClass, classFromText, true);
+      }
+    }.execute();
+  }
+
+  private static void createTopLevelClass(PsiClass psiClass) {
     final CreateClassDialog dlg = chooseSubclassToCreate(psiClass);
     if (dlg != null) {
       createSubclass(psiClass, dlg.getTargetDirectory(), dlg.getClassName());
@@ -180,55 +204,7 @@ public class CreateSubclassAction extends BaseIntentionAction {
           });
           return;
         }
-        final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
-        PsiJavaCodeReferenceElement ref = elementFactory.createClassReferenceElement(psiClass);
-        try {
-          if (psiClass.isInterface()) {
-            ref = (PsiJavaCodeReferenceElement)targetClass[0].getImplementsList().add(ref);
-          }
-          else {
-            ref = (PsiJavaCodeReferenceElement)targetClass[0].getExtendsList().add(ref);
-          }
-          if (psiClass.hasTypeParameters()) {
-            final Editor editor = CodeInsightUtil.positionCursor(project, targetClass[0].getContainingFile(), targetClass[0].getLBrace());
-            final TemplateBuilderImpl templateBuilder = editor != null && !ApplicationManager.getApplication().isUnitTestMode() ?
-                                                        (TemplateBuilderImpl)TemplateBuilderFactory.getInstance().createTemplateBuilder(
-                                                          targetClass[0]) :
-                                                        null;
-
-
-            if (oldTypeParameterList != null) {
-              for (PsiTypeParameter parameter : oldTypeParameterList.getTypeParameters()) {
-                final PsiElement param = ref.getParameterList().add(elementFactory.createTypeElement(elementFactory.createType(parameter)));
-                if (templateBuilder != null) {
-                  templateBuilder.replaceElement(param, param.getText());
-                }
-              }
-            }
-
-            replaceTypeParamsList(targetClass[0], oldTypeParameterList);
-            if (templateBuilder != null) {
-              templateBuilder.setEndVariableBefore(ref);
-              final Template template = templateBuilder.buildTemplate();
-              template.addEndVariable();
-              final PsiFile containingFile = targetClass[0].getContainingFile();
-              final TextRange textRange = targetClass[0].getTextRange();
-
-              PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
-              editor.getDocument().deleteString(textRange.getStartOffset(), textRange.getEndOffset());
-              CreateFromUsageBaseFix.startTemplate(editor, template, project, new TemplateEditingAdapter() {
-                @Override
-                public void templateFinished(Template template, boolean brokenOff) {
-                  targetClass[0] = ((PsiClassOwner)containingFile).getClasses()[0];
-                  chooseAndImplement(psiClass, project, targetClass[0], editor);
-                }
-              }, getTitle(psiClass));
-            }
-          }
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
+        startTemplate(oldTypeParameterList, project, psiClass, targetClass[0], false);
       }
     }.execute();
     if (targetClass[0] == null) return null;
@@ -240,6 +216,65 @@ public class CreateSubclassAction extends BaseIntentionAction {
       chooseAndImplement(psiClass, project, targetClass[0], editor);
     }
     return targetClass[0];
+  }
+
+  private static void startTemplate(PsiTypeParameterList oldTypeParameterList,
+                                    final Project project,
+                                    final PsiClass psiClass,
+                                    final PsiClass targetClass,
+                                    final boolean includeClassName) {
+    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+    PsiJavaCodeReferenceElement ref = elementFactory.createClassReferenceElement(psiClass);
+    try {
+      if (psiClass.isInterface()) {
+        ref = (PsiJavaCodeReferenceElement)targetClass.getImplementsList().add(ref);
+      }
+      else {
+        ref = (PsiJavaCodeReferenceElement)targetClass.getExtendsList().add(ref);
+      }
+      if (psiClass.hasTypeParameters() || includeClassName) {
+        final Editor editor = CodeInsightUtil.positionCursor(project, targetClass.getContainingFile(), targetClass.getLBrace());
+        final TemplateBuilderImpl templateBuilder = editor != null && !ApplicationManager.getApplication().isUnitTestMode() 
+                   ? (TemplateBuilderImpl)TemplateBuilderFactory.getInstance().createTemplateBuilder(targetClass) : null;
+        
+        if (includeClassName && templateBuilder != null) {
+          templateBuilder.replaceElement(targetClass.getNameIdentifier(), targetClass.getName());
+        }
+        
+        if (oldTypeParameterList != null) {
+          for (PsiTypeParameter parameter : oldTypeParameterList.getTypeParameters()) {
+            final PsiElement param = ref.getParameterList().add(elementFactory.createTypeElement(elementFactory.createType(parameter)));
+            if (templateBuilder != null) {
+              templateBuilder.replaceElement(param, param.getText());
+            }
+          }
+        }
+
+        replaceTypeParamsList(targetClass, oldTypeParameterList);
+        if (templateBuilder != null) {
+          templateBuilder.setEndVariableBefore(ref);
+          final Template template = templateBuilder.buildTemplate();
+          template.addEndVariable();
+
+          final PsiFile containingFile = targetClass.getContainingFile();
+
+          PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
+
+          final TextRange textRange = targetClass.getTextRange();
+          editor.getDocument().deleteString(textRange.getStartOffset(), textRange.getEndOffset());
+          CreateFromUsageBaseFix.startTemplate(editor, template, project, new TemplateEditingAdapter() {
+            @Override
+            public void templateFinished(Template template, boolean brokenOff) {
+              //todo
+              chooseAndImplement(psiClass, project, ((PsiClassOwner)containingFile).getClasses()[0], editor);
+            }
+          }, getTitle(psiClass));
+        }
+      }
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
+    }
   }
 
   private static PsiElement replaceTypeParamsList(PsiClass psiClass, PsiTypeParameterList oldTypeParameterList) {

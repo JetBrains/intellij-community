@@ -16,12 +16,10 @@
 package com.intellij.internal.statistic.beans;
 
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-import java.util.regex.Pattern;
 
 public class ConvertUsagesUtil {
   private static final char GROUP_SEPARATOR = ':';
@@ -83,7 +81,11 @@ public class ConvertUsagesUtil {
       if (!isEmptyOrSpaces(groupStr)) {
         final StringPair group = getPair(groupStr, Character.toString(GROUP_SEPARATOR));
         if (group != null) {
-          descriptors.putAll(convertValueString(GroupDescriptor.create(group.first), group.second));
+          final String groupId = group.first;
+          assert groupId != null;
+          if (groupId.length() < GroupDescriptor.MAX_ID_LENGTH) {
+            descriptors.putAll(convertValueString(GroupDescriptor.create(groupId), group.second));
+          }
         }
       }
     }
@@ -163,12 +165,12 @@ public class ConvertUsagesUtil {
 
   public static void assertDescriptorName(String key) {
     assert key != null;
-    assert containsChar(key, ConvertUsagesUtil.GROUP_SEPARATOR) == false;
-    assert containsChar(key, ConvertUsagesUtil.GROUPS_SEPARATOR) == false;
-    assert containsChar(key, ConvertUsagesUtil.GROUP_VALUE_SEPARATOR) == false;
-    assert key.contains("=") == false;
-    assert key.contains("'") == false;
-    assert key.contains("\"") == false;
+    assert key.indexOf(GROUP_SEPARATOR) == -1 : key + " contains invalid chars";
+    assert key.indexOf(GROUPS_SEPARATOR) == -1 : key + " contains invalid chars";
+    assert key.indexOf(GROUP_VALUE_SEPARATOR) == -1 : key + " contains invalid chars";
+    assert !key.contains("=") : key + " contains invalid chars";
+    assert !key.contains("'") : key + " contains invalid chars";
+    assert !key.contains("\"") : key + " contains invalid chars";
   }
 
   @NotNull
@@ -186,14 +188,10 @@ public class ConvertUsagesUtil {
           escaped.append(' ');
           break;
         default:
-            escaped.append(ch);
+          escaped.append(ch);
           break;
       }
     }
     return escaped.toString();
-  }
-
-  public static boolean containsChar(final String value, final char ch) {
-    return value.indexOf(ch) >= 0;
   }
 }

@@ -24,10 +24,10 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.MethodSignatureUtil;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.turnRefsToSuper.TurnRefsToSuperProcessorBase;
 import com.intellij.refactoring.util.DocCommentPolicy;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
@@ -112,7 +112,7 @@ public abstract class ExtractSuperBaseProcessor extends TurnRefsToSuperProcessor
     }
     for (final PsiReference ref : refs) {
       final PsiElement element = ref.getElement();
-      if (!canTurnToSuper(element) && PsiTreeUtil.getParentOfType(element, PsiImportStatement.class) == null) {
+      if (!canTurnToSuper(element) && !RefactoringUtil.inImportStatement(ref, element)) {
         result.add(new BindToOldUsageInfo(element, ref, myClass));
       }
     }

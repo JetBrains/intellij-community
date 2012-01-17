@@ -30,6 +30,7 @@ public class TestType
     public static final TestType METHOD = new TestType("METHOD", 2);
     public static final TestType GROUP = new TestType("GROUP", 3);
     public static final TestType SUITE = new TestType("SUITE", 4);
+    public static final TestType PATTERN = new TestType("PATTERN", 5);
     
     public final String type;
     public final int value;
@@ -72,6 +73,9 @@ public class TestType
         if(SUITE.type.equals(type))
         {
             return SUITE;
+        }
+        if (PATTERN.type.equals(type)) {
+            return PATTERN;
         }
         throw new IllegalArgumentException("Invalid type requested " + type);
     }

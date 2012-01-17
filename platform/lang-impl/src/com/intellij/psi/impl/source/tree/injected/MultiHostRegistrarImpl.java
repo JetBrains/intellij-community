@@ -66,8 +66,8 @@ import java.util.Map;
 /**
  * @author cdr
 */
-public class MultiHostRegistrarImpl implements MultiHostRegistrar {
-  List<Pair<Place, PsiFile>> result;
+public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationTracker {
+  private List<Pair<Place, PsiFile>> result;
   private Language myLanguage;
   private List<LiteralTextEscaper<? extends PsiLanguageInjectionHost>> escapers;
   private List<PsiLanguageInjectionHost.Shred> shreds;
@@ -76,24 +76,22 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
   private boolean cleared;
   private final Project myProject;
   private final PsiManager myPsiManager;
-  private DocumentEx myHostDocument;
-  private VirtualFile myHostVirtualFile;
+  private final DocumentEx myHostDocument;
+  private final VirtualFile myHostVirtualFile;
   private final PsiElement myContextElement;
   private final PsiFile myHostPsiFile;
 
-  MultiHostRegistrarImpl(@NotNull Project project, @NotNull PsiFile hostPsiFile, @NotNull PsiElement contextElement) {
+  MultiHostRegistrarImpl(@NotNull Project project,
+                         @NotNull PsiFile hostPsiFile,
+                         @NotNull PsiElement contextElement) {
     myProject = project;
     myContextElement = contextElement;
     myHostPsiFile = PsiUtilCore.getTemplateLanguageFile(hostPsiFile);
     myPsiManager = myHostPsiFile.getManager();
     cleared = true;
-  }
-  // null registrar
-  MultiHostRegistrarImpl() {
-    myProject = null;
-    myContextElement = null;
-    myHostPsiFile = null;
-    myPsiManager = null;
+    FileViewProvider viewProvider = myHostPsiFile.getViewProvider();
+    myHostVirtualFile = viewProvider.getVirtualFile();
+    myHostDocument = (DocumentEx)viewProvider.getDocument();
   }
 
   public List<Pair<Place, PsiFile>> getResult() {
@@ -122,10 +120,6 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
     }
     myLanguage = language;
 
-    FileViewProvider viewProvider = myHostPsiFile.getViewProvider();
-    myHostVirtualFile = viewProvider.getVirtualFile();
-    myHostDocument = (DocumentEx)viewProvider.getDocument();
-    assert myHostDocument != null : myHostPsiFile + "; " + viewProvider;
     return this;
   }
 
@@ -267,7 +261,11 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
           viewProvider = (InjectedFileViewProvider)psiFile.getViewProvider();
           documentWindow = (DocumentWindowImpl)viewProvider.getDocument();
           virtualFile = (VirtualFileWindowImpl)viewProvider.getVirtualFile();
-          cacheEverything(place, documentWindow, viewProvider, psiFile, pointer);
+          boolean shredsRewritten = cacheEverything(place, documentWindow, viewProvider, psiFile, pointer);
+          if (!shredsRewritten) {
+            place.dispose();
+            place = documentWindow.getShreds();
+          }
         }
 
         assert psiFile.isValid();
@@ -295,11 +293,12 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
     }
   }
 
-  private static void cacheEverything(@NotNull Place place,
-                                      @NotNull DocumentWindowImpl documentWindow,
-                                      @NotNull InjectedFileViewProvider viewProvider,
-                                      @NotNull PsiFile psiFile,
-                                      @NotNull SmartPsiElementPointer<PsiLanguageInjectionHost> pointer) {
+  // returns true if shreds were set, false if old ones were reused
+  private static boolean cacheEverything(@NotNull Place place,
+                                         @NotNull DocumentWindowImpl documentWindow,
+                                         @NotNull InjectedFileViewProvider viewProvider,
+                                         @NotNull PsiFile psiFile,
+                                         @NotNull SmartPsiElementPointer<PsiLanguageInjectionHost> pointer) {
     FileDocumentManagerImpl.registerDocument(documentWindow, viewProvider.getVirtualFile());
 
     viewProvider.forceCachedPsi(psiFile);
@@ -309,7 +308,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
 
     keepTreeFromChameleoningBack(psiFile);
 
-    viewProvider.setShreds(place);
+    return viewProvider.setShreds(place, psiFile.getProject());
   }
 
 
@@ -504,5 +503,23 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
       }
     }
     return tokens;
+  }
+
+  // for CachedValue
+  @Override
+  public long getModificationCount() {
+    List<PsiLanguageInjectionHost.Shred> shredList = shreds;
+    if (shredList != null) {
+      for (PsiLanguageInjectionHost.Shred shred : shredList) {
+        if (!shred.isValid()) return -1;
+      }
+    }
+    DocumentEx hostDocument = myHostDocument;
+    return hostDocument == null ? -1 : hostDocument.getModificationStamp();
+  }
+
+  @Override
+  public String toString() {
+    return result.toString();
   }
 }

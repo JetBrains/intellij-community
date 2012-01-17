@@ -16,6 +16,8 @@
 package org.jetbrains.plugins.groovy.refactoring.introduce.constant;
 
 import com.intellij.ide.util.*;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -348,9 +350,9 @@ public class GrIntroduceConstantDialog extends DialogWrapper
     PsiClass newClass = myDefaultTargetClass;
 
     if (myDefaultTargetClass == null ||
-        !"".equals(targetClassName) && !Comparing.strEqual(targetClassName, myDefaultTargetClass.getQualifiedName())) {
+        !targetClassName.isEmpty() && !Comparing.strEqual(targetClassName, myDefaultTargetClass.getQualifiedName())) {
       final Module module = ModuleUtil.findModuleForPsiElement(myContext.place);
-      newClass = JavaPsiFacade.getInstance(myContext.project).findClass(targetClassName, module.getModuleScope());
+      newClass = JavaPsiFacade.getInstance(myContext.project).findClass(targetClassName, GlobalSearchScope.projectScope(myContext.project));
       if (newClass == null) {
         if (Messages.showOkCancelDialog(myContext.project, GroovyRefactoringBundle.message("class.does.not.exist.in.the.module"),
                                         IntroduceConstantHandler.REFACTORING_NAME, Messages.getErrorIcon()) != OK_EXIT_CODE) {
@@ -405,7 +407,7 @@ public class GrIntroduceConstantDialog extends DialogWrapper
     String fieldName = getName();
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(myContext.project);
 
-    if ("".equals(fieldName)) {
+    if (fieldName == null || fieldName.isEmpty()) {
       return RefactoringBundle.message("no.field.name.specified");
     }
 
@@ -414,7 +416,7 @@ public class GrIntroduceConstantDialog extends DialogWrapper
     }
 
     final String targetClassName = getTargetClassName();
-    if (myDefaultTargetClass == null && "".equals(targetClassName)) {
+    if (myDefaultTargetClass == null && targetClassName.isEmpty()) {
       return GroovyRefactoringBundle.message("target.class.is.not.specified");
     }
 
@@ -427,7 +429,8 @@ public class GrIntroduceConstantDialog extends DialogWrapper
 
   @Nullable
   private static PsiClass getTargetClass(String qualifiedName, PsiDirectory baseDirectory, Project project, Module module) {
-    GlobalSearchScope scope = module.getModuleScope();
+    GlobalSearchScope scope = GlobalSearchScope.projectScope(project);
+
     PsiClass targetClass = JavaPsiFacade.getInstance(project).findClass(qualifiedName, scope);
     if (targetClass != null) return targetClass;
 
@@ -445,8 +448,14 @@ public class GrIntroduceConstantDialog extends DialogWrapper
     if (psiDirectory == null) return null;
     final String shortName = StringUtil.getShortName(qualifiedName);
     final String fileName = shortName + NewGroovyActionBase.GROOVY_EXTENSION;
-    final GroovyFile file = (GroovyFile)GroovyTemplatesFactory.createFromTemplate(psiDirectory, shortName, fileName, "GroovyClass.groovy");
-    return file.getTypeDefinitions()[0];
+    final AccessToken lock = ApplicationManager.getApplication().acquireWriteActionLock(GrIntroduceConstantDialog.class);
+    try {
+      final GroovyFile file = (GroovyFile)GroovyTemplatesFactory.createFromTemplate(psiDirectory, shortName, fileName, "GroovyClass.groovy");
+      return file.getTypeDefinitions()[0];
+    }
+    finally {
+      lock.finish();
+    }
   }
 
 }

@@ -1,0 +1,14 @@
+<html>
+<body>
+<font face="verdana" size="-1">Report occurrences where usages of "magic" constants only are allowed
+  but other expressions are used instead.<br>
+  E.g.<br>
+  <b><font color="#000080">new </font></b> Font("Arial", <b><font color="#000080">2</font></b>) // not allowed<br>
+  instead of <b><font color="#000080">new </font></b> Font("Arial", Font.<b><font color="#000080">ITALIC</font></b>) // OK<br>
+
+  <br><br>
+
+  Please see <code>org.intellij.lang.annotations.MagicConstant</code> annotation description for details.
+</font>
+</body>
+</html>

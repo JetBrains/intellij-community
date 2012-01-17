@@ -243,4 +243,28 @@ public class ForCanBeForEach {
 
     }
   }
+
+  static class Constants {
+    public static final String[] STRINGS = {"one", "two", "three"};
+  }
+  static class User {{
+    String[] strings = Constants.STRINGS;
+    for (int i = 0, length = strings.length; i < length; i++) { // should warn here
+      String s = strings[i];
+      System.out.println(s);
+    }
+  }}
+
+  public void food(int[] is) {
+    for (int i = 0; is.length > i; i++) {
+    }
+    for (int i = 0, j = 10; i < is.length; i++) {
+    }
+  }
+
+  void foo(List<String> l) {
+    for (int i = 0, j = 10; i < l.size(); i++) {
+      System.out.println(j);
+    }
+  }
 }

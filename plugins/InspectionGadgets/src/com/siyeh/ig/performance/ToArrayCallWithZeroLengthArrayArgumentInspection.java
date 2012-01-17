@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2011 Bas Leijdekkers
+ * Copyright 2007-2012 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,10 @@ package com.siyeh.ig.performance;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -26,6 +29,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.CollectionUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.HighlightUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -59,93 +63,101 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection
   @Override
   @Nullable
   protected InspectionGadgetsFix buildFix(Object... infos) {
-    final PsiMethodCallExpression methodCallExpression =
-      (PsiMethodCallExpression)infos[0];
-    final String replacementText =
-      ToArrayCallWithZeroLengthArrayArgumentFix.getReplacementText(
-        methodCallExpression);
-    if (replacementText == null) {
-      return null;
-    }
-    return new ToArrayCallWithZeroLengthArrayArgumentFix(replacementText);
+    return new ToArrayCallWithZeroLengthArrayArgumentFix();
   }
 
-  private static class ToArrayCallWithZeroLengthArrayArgumentFix
-    extends InspectionGadgetsFix {
+  private static class ToArrayCallWithZeroLengthArrayArgumentFix extends InspectionGadgetsFix {
 
-    private final String replacementText;
-
-    ToArrayCallWithZeroLengthArrayArgumentFix(
-      @NotNull String replacementText) {
-      this.replacementText = replacementText;
-    }
 
     @NotNull
     public String getName() {
-      return InspectionGadgetsBundle.message(
-        "to.array.call.with.zero.length.array.argument.quickfix",
-        replacementText);
+      return InspectionGadgetsBundle.message("to.array.call.with.zero.length.array.argument.quickfix");
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
       final PsiElement grandParent = parent.getParent();
       if (!(grandParent instanceof PsiMethodCallExpression)) {
         return;
       }
-      final PsiMethodCallExpression methodCallExpression =
-        (PsiMethodCallExpression)grandParent;
-      replaceExpression(methodCallExpression, replacementText);
-    }
-
-    @Nullable
-    public static String getReplacementText(
-      PsiMethodCallExpression expression) {
-      final PsiExpressionList argumentList = expression.getArgumentList();
+      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
+      final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
+      final PsiExpression qualifier = methodExpression.getQualifierExpression();
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+      final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
       final PsiExpression[] arguments = argumentList.getExpressions();
       if (arguments.length != 1) {
-        return null;
+        return;
       }
       final PsiExpression argument = arguments[0];
-      final PsiReferenceExpression methodExpression =
-        expression.getMethodExpression();
-      final PsiExpression qualifier =
-        methodExpression.getQualifierExpression();
       if (qualifier == null) {
-        return null;
+        return;
       }
-      final String qualifierText = qualifier.getText();
-      if (argument instanceof PsiNewExpression) {
-        final PsiNewExpression newExpression =
-          (PsiNewExpression)argument;
-        final PsiExpression[] dimensions =
-          newExpression.getArrayDimensions();
-        if (dimensions.length != 1) {
-          return null;
+      final String collectionText = qualifier.getText();
+      final PsiType type = argument.getType();
+      if (type == null) {
+        return;
+      }
+      final PsiType componentType = type.getDeepComponentType();
+      final String typeText = componentType.getCanonicalText();
+      if (!(qualifier instanceof PsiMethodCallExpression)) {
+        @NonNls final String replacementText = "new " + typeText + '[' + collectionText + ".size()]";
+        final String newExpressionText = getElementText(methodCallExpression, argument, replacementText);
+        if (newExpressionText == null) {
+          return;
         }
-        final PsiExpression dimension = dimensions[0];
-        @NonNls final String replacementText = qualifierText + ".size()";
-        return getElementText(expression, dimension, replacementText);
+        replaceExpression(methodCallExpression, newExpressionText);
+        return;
       }
-      else if (argument instanceof PsiReferenceExpression) {
-        final PsiReferenceExpression referenceExpression =
-          (PsiReferenceExpression)argument;
-        final PsiArrayType type =
-          (PsiArrayType)referenceExpression.getType();
-        if (type == null) {
-          return null;
-        }
-        final PsiType componentType = type.getComponentType();
-        final String typeText = componentType.getCanonicalText();
-        @NonNls final String replacementText =
-          "new " + typeText + '[' + qualifierText + ".size()]";
-        return getElementText(expression, referenceExpression,
-                              replacementText);
+      // need to introduce a variable to prevent calling a method twice
+      final PsiStatement statement = PsiTreeUtil.getParentOfType(methodCallExpression, PsiStatement.class);
+      if (statement == null) {
+        return;
       }
-      return null;
+      final StringBuilder replacementText = new StringBuilder();
+      replacementText.append("{\n");
+      final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(project);
+      if (codeStyleSettings.GENERATE_FINAL_LOCALS) {
+        replacementText.append("final ");
+      }
+      final PsiType qualifierType = qualifier.getType();
+      if (qualifierType == null) {
+        return;
+      }
+      replacementText.append(qualifierType.getCanonicalText()).append(" var =").append(qualifier.getText());
+      replacementText.append(";\nvar.toArray(new ").append(typeText).append("[var.size()]);\n}\n");
+      final PsiBlockStatement newStatement =
+        (PsiBlockStatement)factory.createStatementFromText(replacementText.toString(), methodCallExpression);
+      final PsiElement statementParent = statement.getParent();
+
+      if (statementParent instanceof PsiLoopStatement || statementParent instanceof PsiIfStatement) {
+        final PsiBlockStatement blockStatement = (PsiBlockStatement)statement.replace(newStatement);
+        final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
+        final PsiStatement[] statements = codeBlock.getStatements();
+        showRenameTemplate((PsiDeclarationStatement)statements[0], (PsiExpressionStatement)statements[1], statementParent);
+      } else {
+        final PsiCodeBlock codeBlock = newStatement.getCodeBlock();
+        final PsiStatement[] statements = codeBlock.getStatements();
+        final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)statementParent.addBefore(statements[0], statement);
+        final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)statement.replace(statements[1]);
+        showRenameTemplate(declarationStatement, expressionStatement, statementParent);
+      }
+    }
+
+    private void showRenameTemplate(PsiDeclarationStatement declarationStatement, PsiExpressionStatement expressionStatement,
+                                    PsiElement context) {
+      if (!isOnTheFly()) {
+        return;
+      }
+      final PsiVariable variable = (PsiVariable)declarationStatement.getDeclaredElements()[0];
+      final PsiMethodCallExpression callExpression = (PsiMethodCallExpression)expressionStatement.getExpression();
+      final PsiReferenceExpression ref1 = (PsiReferenceExpression)callExpression.getMethodExpression().getQualifierExpression();
+      final PsiNewExpression argument = (PsiNewExpression)callExpression.getArgumentList().getExpressions()[0];
+      final PsiMethodCallExpression sizeExpression = (PsiMethodCallExpression)argument.getArrayDimensions()[0];
+      final PsiReferenceExpression ref2 = (PsiReferenceExpression)sizeExpression.getMethodExpression().getQualifierExpression();
+      HighlightUtils.showRenameTemplate(context, variable, ref1, ref2);
     }
   }
 
@@ -154,17 +166,13 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection
     return new ToArrayCallWithZeroLengthArrayArgument();
   }
 
-  private static class ToArrayCallWithZeroLengthArrayArgument
-    extends BaseInspectionVisitor {
+  private static class ToArrayCallWithZeroLengthArrayArgument extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(
-      PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      final PsiReferenceExpression methodExpression =
-        expression.getMethodExpression();
-      @NonNls final String methodName =
-        methodExpression.getReferenceName();
+      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
+      @NonNls final String methodName = methodExpression.getReferenceName();
       if (!"toArray".equals(methodName)) {
         return;
       }
@@ -178,9 +186,11 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection
       if (!(type instanceof PsiArrayType)) {
         return;
       }
+      if (type.getArrayDimensions() != 1) {
+        return;
+      }
       if (argument instanceof PsiReferenceExpression) {
-        final PsiReferenceExpression referenceExpression =
-          (PsiReferenceExpression)argument;
+        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)argument;
         final PsiElement element = referenceExpression.resolve();
         if (!(element instanceof PsiField)) {
           return;
@@ -190,8 +200,7 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection
           return;
         }
       }
-      else if (!ExpressionUtils.isZeroLengthArrayConstruction(
-        argument)) {
+      else if (!ExpressionUtils.isZeroLengthArrayConstruction(argument)) {
         return;
       }
       final PsiMethod method = expression.resolveMethod();
@@ -199,8 +208,7 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection
         return;
       }
       final PsiClass containingClass = method.getContainingClass();
-      if (!InheritanceUtil.isInheritor(containingClass,
-                                       CommonClassNames.JAVA_UTIL_COLLECTION)) {
+      if (!InheritanceUtil.isInheritor(containingClass, CommonClassNames.JAVA_UTIL_COLLECTION)) {
         return;
       }
       registerMethodCallError(expression, expression, argument);

@@ -125,7 +125,7 @@ public class GotoLineNumberDialog extends DialogWrapper {
     JPanel panel = new JPanel(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
 
-    gbConstraints.insets = new Insets(4, 0, 8, 0);
+    gbConstraints.insets = new Insets(4, 0, 8, 8);
     gbConstraints.fill = GridBagConstraints.VERTICAL;
     gbConstraints.weightx = 0;
     gbConstraints.weighty = 1;

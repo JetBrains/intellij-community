@@ -38,7 +38,7 @@ public interface JavaChangeInfo extends ChangeInfo {
   @NotNull
   JavaParameterInfo[] getNewParameters();
 
-  @Modifier
+  @PsiModifier.ModifierConstant
   String getNewVisibility();
 
   @NotNull

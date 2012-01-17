@@ -321,6 +321,7 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
 
   @Override
   public boolean isAlwaysShowPlus() {
-    return true;
+    final VirtualFile file = getVirtualFile();
+    return file == null || file.getChildren().length > 0;
   }
 }

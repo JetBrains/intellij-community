@@ -75,6 +75,7 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
     public String DEFAULT_PROPERTIES_FILES_CHARSET_NAME;
 
     public boolean RENAME_VARIABLES_INPLACE = true;
+    public boolean PRESELECT_RENAME = true;
     public boolean REFRAIN_FROM_SCROLLING = false;
 
     public boolean SHOW_REFORMAT_DIALOG = true;
@@ -483,6 +484,15 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
   public void setVariableInplaceRenameEnabled(final boolean val) {
     myOptions.RENAME_VARIABLES_INPLACE = val;
   }
+
+  public boolean isPreselectRename() {
+    return myOptions.PRESELECT_RENAME;
+  }
+
+  public void setPreselectRename(final boolean val) {
+    myOptions.PRESELECT_RENAME = val;
+  }
+
 
   // returns true if something has been migrated
   public boolean migrateCharsetSettingsTo(EncodingManager encodingManager) {

@@ -410,7 +410,7 @@ public class EventLog implements Notifications {
 
       RelativePoint target = EventLog.getProjectComponent(project).myConsole.getHyperlinkLocation(this);
       if (target != null) {
-        Balloon balloon = NotificationsManagerImpl.createBalloon(myNotification, true, true, false);
+        Balloon balloon = NotificationsManagerImpl.createBalloon(myNotification, true, true);
         Disposer.register(project, balloon);
         balloon.show(target, Balloon.Position.above);
       }

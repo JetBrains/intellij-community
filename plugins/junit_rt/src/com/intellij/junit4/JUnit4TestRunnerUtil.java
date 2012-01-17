@@ -17,6 +17,8 @@ package com.intellij.junit4;
 
 import org.junit.Ignore;
 import org.junit.internal.AssumptionViolatedException;
+import org.junit.internal.builders.AllDefaultPossibilitiesBuilder;
+import org.junit.internal.builders.AnnotatedBuilder;
 import org.junit.internal.requests.ClassRequest;
 import org.junit.internal.runners.model.EachTestNotifier;
 import org.junit.runner.Description;
@@ -26,11 +28,15 @@ import org.junit.runner.Runner;
 import org.junit.runner.manipulation.Filter;
 import org.junit.runner.notification.RunNotifier;
 import org.junit.runners.BlockJUnit4ClassRunner;
+import org.junit.runners.Parameterized;
+import org.junit.runners.ParentRunner;
 import org.junit.runners.model.FrameworkMethod;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.text.MessageFormat;
 import java.util.*;
@@ -97,7 +103,7 @@ public class JUnit4TestRunnerUtil {
               }
 
               public String describe() {
-                return "Failed tests";
+                return "Tests";
               }
             });
           }
@@ -115,22 +121,12 @@ public class JUnit4TestRunnerUtil {
         if (index != -1) {
           final Class clazz = loadTestClass(suiteClassName.substring(0, index));
           final String methodName = suiteClassName.substring(index + 1);
-          if (clazz.getAnnotation(RunWith.class) == null) { //do not override external runners
+          final RunWith clazzAnnotation = (RunWith)clazz.getAnnotation(RunWith.class);
+          if (clazzAnnotation == null) { //do not override external runners
             try {
-              Class.forName("org.junit.runners.BlockJUnit4ClassRunner"); //ignore IgnoreIgnored for junit4.4 and <
               final Method method = clazz.getMethod(methodName, null);
               if (method != null && notForked && method.getAnnotation(Ignore.class) != null) { //override ignored case only
-                final Request classRequest = new ClassRequest(clazz) {
-                  public Runner getRunner() {
-                    try {
-                      return new IgnoreIgnoredTestJUnit4ClassRunner(clazz);
-                    }
-                    catch (Exception ignored) {
-                      //return super runner
-                    }
-                    return super.getRunner();
-                  }
-                };
+                final Request classRequest = createIgnoreIgnoredClassRequest(clazz);
                 final Filter ignoredTestFilter = Filter.matchMethodDescription(Description.createTestDescription(clazz, methodName));
                 return classRequest.filterWith(new Filter() {
                   public boolean shouldRun(Description description) {
@@ -146,6 +142,17 @@ public class JUnit4TestRunnerUtil {
             catch (Exception ignored) {
               //return simple method runner
             }
+          } else {
+            final Class runnerClass = clazzAnnotation.value();
+            if (runnerClass.isAssignableFrom(Parameterized.class)) {
+              try {
+                Class.forName("org.junit.runners.BlockJUnit4ClassRunner"); //ignore for junit4.4 and <
+                return Request.runner(new ParameterizedMethodRunner(clazz, methodName));
+              }
+              catch (Throwable throwable) {
+                //return simple method runner
+              }
+            }
           }
           return Request.method(clazz, methodName);
         }
@@ -153,7 +160,34 @@ public class JUnit4TestRunnerUtil {
       }
     }
 
-    return result.size() == 1 ? Request.aClass((Class)result.get(0)) : Request.classes(getArrayOfClasses(result));
+    if (result.size() == 1) {
+      final Class clazz = (Class)result.get(0);
+      try {
+        if (clazz.getAnnotation(Ignore.class) != null) { //override ignored case only
+          return createIgnoreIgnoredClassRequest(clazz);
+        }
+      }
+      catch (ClassNotFoundException e) {
+        //return simple class runner
+      }
+      return Request.aClass(clazz);
+    }
+    return Request.classes(getArrayOfClasses(result));
+  }
+
+  private static Request createIgnoreIgnoredClassRequest(final Class clazz) throws ClassNotFoundException {
+    Class.forName("org.junit.runners.BlockJUnit4ClassRunner"); //ignore IgnoreIgnored for junit4.4 and <
+    return new ClassRequest(clazz) {
+      public Runner getRunner() {
+        try {
+          return new IgnoreIgnoredTestJUnit4ClassRunner(clazz);
+        }
+        catch (Exception ignored) {
+          //return super runner
+        }
+        return super.getRunner();
+      }
+    };
   }
 
   private static Request getClassRequestsUsing44API(String suiteName, Class[] classes) {
@@ -228,6 +262,37 @@ public class JUnit4TestRunnerUtil {
       finally {
         eachNotifier.fireTestFinished();
       }
+    }
+  }
+
+  private static class ParameterizedMethodRunner extends Parameterized {
+    private final String myMethodName;
+
+    public ParameterizedMethodRunner(Class clazz, String methodName) throws Throwable {
+      super(clazz);
+      myMethodName = methodName;
+    }
+
+    protected List getChildren() {
+      final List children = super.getChildren();
+      for (int i = 0; i < children.size(); i++) {
+        try {
+          final BlockJUnit4ClassRunner child = (BlockJUnit4ClassRunner)children.get(i);
+          final Method getChildrenMethod = BlockJUnit4ClassRunner.class.getDeclaredMethod("getChildren", new Class[0]);
+          getChildrenMethod.setAccessible(true);
+          final List list = (List)getChildrenMethod.invoke(child, new Object[0]);
+          for (Iterator iterator = list.iterator(); iterator.hasNext(); ) {
+            final FrameworkMethod description = (FrameworkMethod)iterator.next();
+            if (!description.getName().equals(myMethodName)) {
+              iterator.remove();
+            }
+          }
+        }
+        catch (Exception e) {
+         e.printStackTrace();
+        }
+      }
+      return children;
     }
   }
 }

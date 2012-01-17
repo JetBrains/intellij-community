@@ -15,29 +15,25 @@
  */
 package org.jetbrains.plugins.groovy.lang.resolve.noncode;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
+import org.jetbrains.plugins.groovy.lang.resolve.AstTransformContributor;
+
+import java.util.Collection;
 
 /**
  * @author Maxim.Medvedev
  */
-public class GrInheritConstructorContributor extends NonCodeMembersContributor {
+public class GrInheritConstructorContributor extends AstTransformContributor {
   public static final String INHERIT_CONSTRUCTOR_NAME = "groovy.transform.InheritConstructors";
 
   @Override
-  public void processDynamicElements(@NotNull PsiType qualifierType, PsiScopeProcessor processor, GroovyPsiElement place, ResolveState state) {
-    if (!(qualifierType instanceof PsiClassType)) return;
-    final PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)qualifierType).resolveGenerics();
-    final PsiClass psiClass = resolveResult.getElement();
-    if (!(psiClass instanceof GrTypeDefinition) ||
-        ((GrTypeDefinition)psiClass).isAnonymous() ||
-        psiClass.isInterface() ||
-        psiClass.isEnum()) {
+  public void collectMethods(@NotNull GrTypeDefinition psiClass, Collection<PsiMethod> collector) {
+    if (psiClass.isAnonymous() || psiClass.isInterface() || psiClass.isEnum()) {
       return;
     }
 
@@ -45,27 +41,24 @@ public class GrInheritConstructorContributor extends NonCodeMembersContributor {
 
     final PsiClass superClass = psiClass.getSuperClass();
     if (superClass == null) return;
-    final PsiSubstitutor substitutor = state.get(PsiSubstitutor.KEY);
-    final PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, psiClass, substitutor);
-    final ResolveState currentState = state.put(PsiSubstitutor.KEY, superClassSubstitutor);
 
-    final PsiMethod[] constructors = superClass.getConstructors();
-    for (PsiMethod constructor : constructors) {
-      if (!processor.execute(constructor, currentState)) return;
+    final PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, psiClass, PsiSubstitutor.EMPTY);
+    for (PsiMethod constructor : superClass.getConstructors()) {
+      final GrLightMethodBuilder inheritedConstructor =
+        new GrLightMethodBuilder(psiClass.getManager(), psiClass.getName()).setContainingClass(psiClass);
+      inheritedConstructor.setConstructor(true).setNavigationElement(psiClass);
+      for (PsiParameter parameter : constructor.getParameterList().getParameters()) {
+        inheritedConstructor
+          .addParameter(StringUtil.notNullize(parameter.getName()), superClassSubstitutor.substitute(parameter.getType()), false);
+      }
+      if (psiClass.findCodeMethodsBySignature(inheritedConstructor, false).length == 0) {
+        collector.add(inheritedConstructor);
+      }
     }
   }
 
   public static boolean hasInheritConstructorsAnnotation(PsiClass psiClass) {
     final PsiModifierList modifierList = psiClass.getModifierList();
-    if (modifierList == null) return false;
-    final PsiAnnotation[] annotations = modifierList.getAnnotations();
-    boolean hasInheritConstructors = false;
-    for (PsiAnnotation annotation : annotations) {
-      if (INHERIT_CONSTRUCTOR_NAME.equals(annotation.getQualifiedName())) {
-        hasInheritConstructors = true;
-        break;
-      }
-    }
-    return hasInheritConstructors;
+    return modifierList != null && modifierList.findAnnotation(INHERIT_CONSTRUCTOR_NAME) != null;
   }
 }

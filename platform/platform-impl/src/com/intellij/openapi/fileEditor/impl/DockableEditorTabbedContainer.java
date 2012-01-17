@@ -16,17 +16,15 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.docking.DockContainer;
-import com.intellij.ui.docking.DockContainerFactory;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.DockableContent;
 import com.intellij.ui.tabs.JBTabs;
@@ -132,7 +130,10 @@ public class DockableEditorTabbedContainer implements DockContainer.Persistent {
   public void add(DockableContent content, RelativePoint dropTarget) {
     EditorWindow window = null;
     if (myCurrentOver != null) {
-      window = EditorWindow.DATA_KEY.getData(myCurrentOver.getDataProvider());
+      final DataProvider provider = myCurrentOver.getDataProvider();
+      if (provider != null) {
+        window = EditorWindow.DATA_KEY.getData(provider);
+      }
     }
 
     VirtualFile file = ((EditorTabbedContainer.MyDragOutDelegate.DockableEditor)content).getFile();

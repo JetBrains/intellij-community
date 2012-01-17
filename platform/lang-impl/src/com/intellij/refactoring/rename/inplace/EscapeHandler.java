@@ -39,7 +39,7 @@ public class EscapeHandler extends EditorActionHandler {
     final SelectionModel selectionModel = editor.getSelectionModel();
     if (selectionModel.hasSelection()) {
       final TemplateState state = TemplateManagerImpl.getTemplateState(editor);
-      if (state != null && editor.getUserData(VariableInplaceRenamer.INPLACE_RENAMER) != null) {
+      if (state != null && editor.getUserData(InplaceRefactoring.INPLACE_RENAMER) != null) {
         final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
         if (lookup != null) {
           selectionModel.removeSelection();

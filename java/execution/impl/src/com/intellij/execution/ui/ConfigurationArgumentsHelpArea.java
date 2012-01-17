@@ -28,23 +28,32 @@ public class ConfigurationArgumentsHelpArea extends JPanel {
   private JTextArea myHelpArea;
   private JPanel myPanel;
   private JLabel myLabel;
+  private JPanel myToolbarPanel;
 
   public ConfigurationArgumentsHelpArea() {
     super(new BorderLayout());
+    final DefaultActionGroup group = new DefaultActionGroup();
+    group.add(new MyCopyAction());
     myHelpArea.addMouseListener(
       new PopupHandler(){
         public void invokePopup(final Component comp,final int x,final int y){
-          createPopupMenu().getComponent().show(comp,x,y);
+          createPopupMenu(group).getComponent().show(comp,x,y);
         }
       }
     );
     add(myPanel);
+    final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
+    toolbar.setMiniMode(true);
+    myToolbarPanel.add(toolbar.getComponent(), BorderLayout.SOUTH);
+    myToolbarPanel.setVisible(false);
   }
 
-  private ActionPopupMenu createPopupMenu() {
-    final DefaultActionGroup group = new DefaultActionGroup();
-    group.add(new MyCopyAction());
-    return ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN,group);
+  public void setToolbarVisible() {
+    myToolbarPanel.setVisible(true);
+  }
+  
+  private static ActionPopupMenu createPopupMenu(DefaultActionGroup group) {
+    return ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group);
   }
 
   public void updateText(final String text) {
@@ -62,6 +71,7 @@ public class ConfigurationArgumentsHelpArea extends JPanel {
   private class MyCopyAction extends AnAction {
     public MyCopyAction() {
       super(ExecutionBundle.message("run.configuration.arguments.help.panel.copy.action.name"));
+      copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_COPY));
     }
 
     public void actionPerformed(final AnActionEvent e) {

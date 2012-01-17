@@ -19,13 +19,20 @@ package org.jetbrains.plugins.groovy.structure;
  * User: Dmitry.Krasilschikov
  * Date: 19.06.2008
  */
+
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
+import com.intellij.ide.structureView.impl.java.JavaFileTreeModel;
+import com.intellij.ide.structureView.impl.java.JavaInheritedMembersNodeProvider;
+import com.intellij.ide.util.treeView.smartTree.NodeProvider;
 import com.intellij.lang.PsiStructureViewFactory;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+
+import java.util.Arrays;
+import java.util.Collection;
 
 public class GroovyStructureViewFactory implements PsiStructureViewFactory {
   public StructureViewBuilder getStructureViewBuilder(final PsiFile psiFile) {
@@ -33,7 +40,12 @@ public class GroovyStructureViewFactory implements PsiStructureViewFactory {
 
       @NotNull
       public StructureViewModel createStructureViewModel() {
-        return new GroovyStructureViewModel((GroovyFileBase) psiFile);
+        return new JavaFileTreeModel((GroovyFileBase)psiFile) {
+          @Override
+          public Collection<NodeProvider> getNodeProviders() {
+            return Arrays.<NodeProvider>asList(new JavaInheritedMembersNodeProvider());
+          }
+        };
       }
     };
   }

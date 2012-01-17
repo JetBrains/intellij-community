@@ -23,7 +23,7 @@ public abstract class BaseRepositoryImpl extends BaseRepository {
   public static final String EASY_HTTPS = "easyhttps";
 
   static {
-    Protocol.registerProtocol(EASY_HTTPS, new Protocol("https", (ProtocolSocketFactory)new EasySSLProtocolSocketFactory(), 443));
+    Protocol.registerProtocol(EASY_HTTPS, new Protocol(EASY_HTTPS, (ProtocolSocketFactory)new EasySSLProtocolSocketFactory(), 443));
   }
 
   private static final Pattern PATTERN = Pattern.compile("[A-Z]+\\-\\d+");

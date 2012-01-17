@@ -82,7 +82,7 @@ public class GithubCheckoutListener implements CheckoutListener {
     final Runnable taskInitializationRunnable = new Runnable() {
       public void run() {
         try {
-          enableGithubTrackerIntergation(openedProject, settings.getLogin(), settings.getPassword(), author, name);
+          enableGithubTrackerIntegration(openedProject, settings.getLogin(), settings.getPassword(), author, name);
         }
         catch (Exception e) {
           // Ignore it
@@ -96,7 +96,11 @@ public class GithubCheckoutListener implements CheckoutListener {
     }
   }
 
-  private void enableGithubTrackerIntergation(final Project project, final String login, final String password, final String author, final String name) {
+  private void enableGithubTrackerIntegration(final Project project,
+                                              final String login,
+                                              final String password,
+                                              final String author,
+                                              final String name) {
     // Look for github repository type
     final TaskManagerImpl manager = (TaskManagerImpl)TaskManager.getManager(project);
     final TaskRepository[] allRepositories = manager.getAllRepositories();

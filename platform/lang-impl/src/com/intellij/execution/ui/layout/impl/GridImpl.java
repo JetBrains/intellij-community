@@ -80,7 +80,6 @@ public class GridImpl extends Wrapper implements Grid, Disposable, CellTransform
     myTopSplit.setLastComponent(right);
     mySplitter.setFirstComponent(myTopSplit);
     mySplitter.setSecondComponent(bottom);
-
   }
 
   @Override
@@ -115,7 +114,7 @@ public class GridImpl extends Wrapper implements Grid, Disposable, CellTransform
   }
 
   private void updateSelection(boolean isShowing) {
-    for (GridCellImpl each: myPlaceInGrid2Cell.values()) {
+    for (GridCellImpl each : myPlaceInGrid2Cell.values()) {
       each.updateSelection(isShowing);
     }
   }
@@ -181,6 +180,7 @@ public class GridImpl extends Wrapper implements Grid, Disposable, CellTransform
     }
   }
 
+  @Nullable
   public Tab getTabIndex() {
     return getTab();
   }
@@ -202,7 +202,10 @@ public class GridImpl extends Wrapper implements Grid, Disposable, CellTransform
   public void rebuildTabPopup() {
     final List<Content> contents = getContents();
     for (Content each : contents) {
-      findCell(each).rebuildPopupGroup();
+      GridCellImpl cell = findCell(each);
+      if (cell != null) {
+        cell.rebuildPopupGroup();
+      }
     }
   }
 
@@ -253,20 +256,23 @@ public class GridImpl extends Wrapper implements Grid, Disposable, CellTransform
 
     final TabImpl tab = (TabImpl)getTab();
 
-    switch (placeInGrid) {
-      case left:
-        tab.setLeftProportion(getLeftProportion());
-        break;
-      case right:
-        tab.setRightProportion(getRightProportion());
-        break;
-      case bottom:
-        tab.setBottomProportion(getBottomPropertion());
-      case center:
-        break;
+    if (tab != null) {
+      switch (placeInGrid) {
+        case left:
+          tab.setLeftProportion(getLeftProportion());
+          break;
+        case right:
+          tab.setRightProportion(getRightProportion());
+          break;
+        case bottom:
+          tab.setBottomProportion(getBottomPropertion());
+        case center:
+          break;
+      }
     }
   }
 
+  @Nullable
   public Tab getTab() {
     return myViewContext.getTabFor(this);
   }
@@ -276,17 +282,19 @@ public class GridImpl extends Wrapper implements Grid, Disposable, CellTransform
     if (!RunnerContentUi.ensureValid(this)) return;
 
     final TabImpl tab = (TabImpl)getTab();
-    switch (placeInGrid) {
-      case left:
-        setLeftProportion(tab.getLeftProportion());
-        break;
-      case right:
-        setRightProportion(tab.getRightProportion());
-        break;
-      case bottom:
-        mySplitter.setProportion(tab.getBottomProportion());
-      case center:
-        break;
+    if (tab != null) {
+      switch (placeInGrid) {
+        case left:
+          setLeftProportion(tab.getLeftProportion());
+          break;
+        case right:
+          setRightProportion(tab.getRightProportion());
+          break;
+        case bottom:
+          mySplitter.setProportion(tab.getBottomProportion());
+        case center:
+          break;
+      }
     }
   }
 
@@ -378,7 +386,8 @@ public class GridImpl extends Wrapper implements Grid, Disposable, CellTransform
   public Object getData(@NonNls final String dataId) {
     if (ViewContext.CONTEXT_KEY.is(dataId)) {
       return myViewContext;
-    } else if (ViewContext.CONTENT_KEY.is(dataId)) {
+    }
+    else if (ViewContext.CONTENT_KEY.is(dataId)) {
       List<Content> contents = getContents();
       return contents.toArray(new Content[contents.size()]);
     }
@@ -388,6 +397,8 @@ public class GridImpl extends Wrapper implements Grid, Disposable, CellTransform
   public String getSessionName() {
     return mySessionName;
   }
+
+  @Nullable
   public SwitchTarget getCellFor(Component c) {
     Component eachParent = c;
     while (eachParent != null) {

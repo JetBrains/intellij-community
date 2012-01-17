@@ -179,7 +179,7 @@ class ProjectBuilder {
   private def clearChunks(Collection<Module> modules) {
     getChunks(true).getChunkList().each {
       if (!modules.intersect(it.modules).isEmpty()) {
-        clearChunk(it)
+        clearChunk(it, null, null)
       }
     }
   }
@@ -224,7 +224,7 @@ class ProjectBuilder {
   private def buildChunks(Collection<Module> modules, boolean tests) {
     getChunks(tests).getChunkList().each {
       if (!modules.intersect(it.modules).isEmpty()) {
-        buildChunk(it, tests)
+        buildChunk(it, tests, null, null, null)
       }
     }
   }
@@ -291,13 +291,7 @@ class ProjectBuilder {
     }
   }
 
-  private def clearChunk(ModuleChunk c) {
-    clearChunk(c, null, null)
-  }
 
-  private def buildChunk(ModuleChunk chunk, boolean tests) {
-    buildChunk(chunk, tests, null, null, null)
-  }
 
   def buildChunk(ModuleChunk chunk, boolean tests, Collection<String> files, Backend callback, ProjectWrapper pw) {
     Set<ModuleChunk> compiledSet = tests ? compiledTestChunks : compiledChunks

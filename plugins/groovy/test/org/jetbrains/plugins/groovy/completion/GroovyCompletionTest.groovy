@@ -840,6 +840,11 @@ return foo()"""
     doVariantableTest 'foo1', 'foo3', 'foo4', 'Foo5', 'Foo7'
   }
 
+  public void testNoClassesAsMapKeys() throws Exception {
+    CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE
+    doVariantableTest()
+  }
+
   public void testNamedArgsUsedInFile() throws Exception {
     myFixture.configureByFile(getTestName(false) + ".groovy");
     doVariantableTest 'false', 'foo2', 'float', 'foo1', 'foo3', 'foo4', 'foo5'
@@ -1059,7 +1064,7 @@ class X {
   }
 
   public void testInnerClassStart() {
-    checkSingleItemCompletion 'class Foo { cl<caret> }', 'class Foo { class <caret>}'
+    checkSingleItemCompletion 'class Foo { cl<caret> }', 'class Foo { class<caret> }'
   }
 
   public void testPropertyBeforeAccessor() {
@@ -1109,7 +1114,8 @@ public class KeyVO {
 
   public void testSpaceTail() {
     checkCompletion 'class A <caret> ArrayList {}', ' ', 'class A extends <caret> ArrayList {}'
-    checkCompletion 'class A <caret> ArrayList {}', '\n', 'class A extends <caret>ArrayList {}'
+    checkCompletion 'class A <caret> ArrayList {}', '\n', 'class A extends<caret> ArrayList {}'
+    checkSingleItemCompletion 'class Foo impl<caret> {}', 'class Foo implements<caret> {}'
   }
 
   public void testPreferInterfacesInImplements() {

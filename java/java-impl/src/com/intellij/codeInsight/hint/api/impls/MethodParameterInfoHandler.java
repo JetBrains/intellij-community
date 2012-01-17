@@ -15,9 +15,9 @@
  */
 package com.intellij.codeInsight.hint.api.impls;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -401,18 +401,8 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
   }
 
   private static void appendModifierList(@NotNull StringBuilder buffer, @NotNull PsiModifierListOwner owner) {
-    final PsiModifierList list = owner.getModifierList();
-    PsiAnnotation[] annotations = PsiAnnotation.EMPTY_ARRAY;
     int lastSize = buffer.length();
-    if (list != null) {
-      annotations = list.getAnnotations();
-    }
-    final PsiAnnotation[] externalAnnotations = ExternalAnnotationsManager.getInstance(owner.getProject()).findExternalAnnotations(owner);
-    if (externalAnnotations != null) {
-      annotations = ArrayUtil.mergeArrays(annotations, externalAnnotations, PsiAnnotation.ARRAY_FACTORY);
-    }
-
-    for (PsiAnnotation a : annotations) {
+    for (PsiAnnotation a : AnnotationUtil.getAllAnnotations(owner, false, null)) {
       if (lastSize != buffer.length()) buffer.append(" ");
       final PsiJavaCodeReferenceElement element = a.getNameReferenceElement();
       if (element != null) buffer.append("@").append(element.getReferenceName());

@@ -18,13 +18,13 @@ package com.intellij.ide;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexUtil;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.ui.LayeredIcon;
@@ -51,7 +51,7 @@ public class JavaFileIconPatcher implements FileIconPatcher {
     return icon;
   }
 
-  private static Icon replaceIcon(VirtualFile file, int flags, Project project, Icon baseIcon) {
+  private static Icon replaceIcon(VirtualFile file, @Iconable.IconFlags int flags, Project project, Icon baseIcon) {
     FileType fileType = file.getFileType();
     if (fileType == StdFileTypes.JAVA && !FileIndexUtil.isJavaSourceFile(project, file)) {
       return PlatformIcons.JAVA_OUTSIDE_SOURCE_ICON;

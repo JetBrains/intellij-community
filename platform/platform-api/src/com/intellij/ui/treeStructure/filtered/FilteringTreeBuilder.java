@@ -18,7 +18,6 @@ package com.intellij.ui.treeStructure.filtered;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.speedSearch.ElementFilter;
@@ -45,12 +44,16 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
 
   private MergingUpdateQueue myRefilterQueue;
 
-  public FilteringTreeBuilder(Project project,
-                              Tree tree,
+  public FilteringTreeBuilder(Tree tree,
                               ElementFilter filter,
                               AbstractTreeStructure structure,
                               Comparator<NodeDescriptor> comparator) {
-    super(tree, (DefaultTreeModel)tree.getModel(), new FilteringTreeStructure(project, filter, structure), comparator);
+    super(tree,
+          (DefaultTreeModel)tree.getModel(),
+          structure instanceof FilteringTreeStructure ? structure
+                                                      : new FilteringTreeStructure(filter, structure),
+          comparator);
+
     myTree = tree;
     initRootNode();
 
@@ -108,44 +111,58 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
     return true;
   }
 
-  public void refilter() {
-    refilter(null, true, false);
+  public ActionCallback refilter() {
+    return refilter(null, true, false);
   }
 
-  public ActionCallback refilter(final Object preferredSelection, final boolean adjustSelection, final boolean now) {
-    if (myRefilterQueue == null || now) {
-      return refilterNow(preferredSelection, adjustSelection);
+  public ActionCallback refilter(@Nullable final Object preferredSelection, final boolean adjustSelection, final boolean now) {
+    if (myRefilterQueue != null) {
+      myRefilterQueue.cancelAllUpdates();
     }
-    else {
-      final ActionCallback result = new ActionCallback();
-      myRefilterQueue.queue(new Update(this) {
-        public void run() {
-          refilterNow(preferredSelection, adjustSelection).notifyWhenDone(result);
+    final ActionCallback callback = new ActionCallback();
+    getUi().cancelUpdate().doWhenProcessed(new Runnable() {
+      @Override
+      public void run() {
+        if (myRefilterQueue == null || now) {
+          refilterNow(preferredSelection, adjustSelection).doWhenDone(new Runnable() {
+            @Override
+            public void run() {
+              callback.setDone();
+            }
+          });
         }
+        else {
+          myRefilterQueue.queue(new Update(this) {
+            public void run() {
+              refilterNow(preferredSelection, adjustSelection).notifyWhenDone(callback);
+            }
 
-        @Override
-        public void setRejected() {
-          super.setRejected();
-          result.setDone();
+            @Override
+            public void setRejected() {
+              super.setRejected();
+              callback.setDone();
+            }
+          });
         }
-      });
+      }
+    });
 
-      return result;
-    }
+    return callback;
   }
+
 
   protected ActionCallback refilterNow(final Object preferredSelection, final boolean adjustSelection) {
     final ActionCallback selectionDone = new ActionCallback();
 
     getFilteredStructure().refilter();
-    queueUpdate().doWhenDone(new Runnable() {
+    queueUpdate().doWhenProcessed(new Runnable() {
       public void run() {
         revalidateTree();
 
         Object toSelect = preferredSelection != null ? preferredSelection : myLastSuccessfulSelect;
 
         if (adjustSelection && toSelect != null) {
-          final FilteringTreeStructure.Node nodeToSelect = getFilteredStructure().getVisibleNodeFor(toSelect);
+          final FilteringTreeStructure.FilteringNode nodeToSelect = getFilteredStructure().getVisibleNodeFor(toSelect);
 
           if (nodeToSelect != null) {
             select(nodeToSelect, new Runnable() {
@@ -210,7 +227,7 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
   @Nullable
   private Object getSelected() {
     if (isSimpleTree()) {
-      FilteringTreeStructure.Node selected = (FilteringTreeStructure.Node)((SimpleTree)myTree).getSelectedNode();
+      FilteringTreeStructure.FilteringNode selected = (FilteringTreeStructure.FilteringNode)((SimpleTree)myTree).getSelectedNode();
       return selected != null ? selected.getDelegate() : null;
     } else {
       final Object[] nodes = myTree.getSelectedNodes(Object.class, null);
@@ -218,13 +235,13 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
     }
   }
 
-  public FilteringTreeStructure.Node getVisibleNodeFor(Object nodeObject) {
+  public FilteringTreeStructure.FilteringNode getVisibleNodeFor(Object nodeObject) {
     FilteringTreeStructure structure = getFilteredStructure();
     return structure != null ? structure.getVisibleNodeFor(nodeObject) : null;
   }
 
   public Object getOriginalNode(Object node) {
-    return ((FilteringTreeStructure.Node)node).getDelegate();
+    return ((FilteringTreeStructure.FilteringNode)node).getDelegate();
   }
 
   @Override

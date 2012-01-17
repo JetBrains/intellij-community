@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.structureView.impl.java;
 
+import com.intellij.ide.actions.ViewStructureAction;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.TextEditorBasedStructureViewModel;
@@ -23,17 +24,19 @@ import com.intellij.ide.util.treeView.smartTree.Grouper;
 import com.intellij.ide.util.treeView.smartTree.NodeProvider;
 import com.intellij.ide.util.treeView.smartTree.Sorter;
 import com.intellij.psi.*;
+import com.intellij.ui.PlaceHolder;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Collection;
 
-public class JavaFileTreeModel extends TextEditorBasedStructureViewModel implements StructureViewModel.ElementInfoProvider {
+public class JavaFileTreeModel extends TextEditorBasedStructureViewModel implements StructureViewModel.ElementInfoProvider, PlaceHolder<String> {
   private static final Collection<NodeProvider> NODE_PROVIDERS = Arrays.<NodeProvider>asList(new JavaInheritedMembersNodeProvider(),
                                                                                              new JavaAnonymousClassesNodeProvider());
-  private final PsiJavaFile myFile;
+  private final PsiClassOwner myFile;
+  private String myPlace;
 
-  public JavaFileTreeModel(@NotNull PsiJavaFile file) {
+  public JavaFileTreeModel(@NotNull PsiClassOwner file) {
     super(file);
     myFile = file;
   }
@@ -65,7 +68,11 @@ public class JavaFileTreeModel extends TextEditorBasedStructureViewModel impleme
 
   @NotNull
   public Sorter[] getSorters() {
-    return new Sorter[]{KindSorter.INSTANCE, VisibilitySorter.INSTANCE, AnonymousClassesSorter.INSTANCE, Sorter.ALPHA_SORTER};
+    return new Sorter[] {
+      ViewStructureAction.isInStructureViewPopup(this) ? KindSorter.POPUP_INSTANCE : KindSorter.INSTANCE,
+      VisibilitySorter.INSTANCE,
+      AnonymousClassesSorter.INSTANCE,
+      Sorter.ALPHA_SORTER};
   }
 
   protected PsiFile getPsiFile() {
@@ -87,19 +94,17 @@ public class JavaFileTreeModel extends TextEditorBasedStructureViewModel impleme
     if (super.isSuitable(element)) {
       if (element instanceof PsiMethod) {
         PsiMethod method = (PsiMethod)element;
-        PsiElement parent = method.getParent();
-        if (parent instanceof PsiClass) {
-          return ((PsiClass)parent).getQualifiedName() != null;
-        }
+        PsiClass parent = method.getContainingClass();
+        return parent != null && parent.getQualifiedName() != null;
       }
-      else if (element instanceof PsiField) {
+
+      if (element instanceof PsiField) {
         PsiField field = (PsiField)element;
-        PsiElement parent = field.getParent();
-        if (parent instanceof PsiClass) {
-          return ((PsiClass)parent).getQualifiedName() != null;
-        }
+        PsiClass parent = field.getContainingClass();
+        return parent != null && parent.getQualifiedName() != null;
       }
-      else if (element instanceof PsiClass) {
+
+      if (element instanceof PsiClass) {
         return ((PsiClass)element).getQualifiedName() != null;
       }
     }
@@ -109,5 +114,15 @@ public class JavaFileTreeModel extends TextEditorBasedStructureViewModel impleme
   @NotNull
   protected Class[] getSuitableClasses() {
     return new Class[]{PsiClass.class, PsiMethod.class, PsiField.class, PsiJavaFile.class};
+  }
+
+  @Override
+  public void setPlace(String place) {
+    myPlace = place;
+  }
+
+  @Override
+  public String getPlace() {
+    return myPlace;
   }
 }

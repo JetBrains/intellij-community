@@ -125,7 +125,11 @@ public class LightMethodBuilder extends LightElement implements PsiMethod {
 
   @Override
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
-    throw new UnsupportedOperationException("Please don't rename light methods");
+    final String className = myContainingClass == null ? "null" : myContainingClass.getQualifiedName();
+    throw new UnsupportedOperationException("Please don't rename light methods: writable=" + isWritable() +
+                                            "; class=" + getClass() +
+                                            "; name=" + getName() +
+                                            "; inClass=" + className);
   }
 
   @Override

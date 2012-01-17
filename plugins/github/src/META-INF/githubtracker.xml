@@ -1,0 +1,5 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <checkoutCompletedListener implementation="org.jetbrains.plugins.github.GithubCheckoutListener" order="after PlatformProjectCheckoutListener"/>
+  </extensions>
+</idea-plugin>

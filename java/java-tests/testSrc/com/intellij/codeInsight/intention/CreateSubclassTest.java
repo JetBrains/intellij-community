@@ -14,6 +14,19 @@ public class CreateSubclassTest extends MultiFileTestCase {
   public void testGenerics() throws Exception {
     doTest();
   }
+  
+  public void testInnerClass() throws Exception {
+    doTest(new PerformAction() {
+      @Override
+      public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
+        PsiClass superClass = myJavaFacade.findClass("Test", ProjectScope.getAllScope(myProject));
+        assertNotNull(superClass);
+        final PsiClass inner = superClass.findInnerClassByName("Inner", false);
+        assertNotNull(inner);
+        CreateSubclassAction.createInnerClass(inner);
+      }
+    });
+  }
 
   private void doTest() throws Exception {
     doTest(new PerformAction() {

@@ -16,7 +16,7 @@ if [ -z "$WORK_IDEA_HOME" ]; then
 fi
 
 if [ -z "$DEV_IDEA_HOME" ]; then
-   echo "DEV_IDEA_HOME must be defined and point to source base your're updating from."
+   echo "DEV_IDEA_HOME must be defined and point to source base you're updating from."
    exit
 fi
 

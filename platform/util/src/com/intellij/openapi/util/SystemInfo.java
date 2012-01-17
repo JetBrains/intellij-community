@@ -19,6 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.util.List;
 
 @SuppressWarnings({"HardCodedStringLiteral", "UtilityClassWithoutPrivateConstructor", "UnusedDeclaration"})
 public class SystemInfo {
@@ -132,6 +133,58 @@ public class SystemInfo {
 
   private static boolean isLion() {
     return isMac && isSnowLeopard() && !OS_VERSION.startsWith("10.6");
+  }
+
+  @NotNull
+  public static String getMacOSVersionCode() {
+    return getMacOSVersionCode(OS_VERSION);
+  }
+
+  @NotNull
+  public static String getMacOSMajorVersionCode() {
+    return getMacOSMajorVersionCode(OS_VERSION);
+  }
+
+  @NotNull
+  public static String getMacOSMinorVersionCode() {
+    return getMacOSMinorVersionCode(OS_VERSION);
+  }
+
+  @NotNull
+  public static String getMacOSVersionCode(@NotNull String version) {
+    int[] parts = getMacOSVersionParts(version);
+    return String.format("%02d%d%d", parts[0], normalize(parts[1]), normalize(parts[2]));
+  }
+
+  @NotNull
+  public static String getMacOSMajorVersionCode(@NotNull String version) {
+    int[] parts = getMacOSVersionParts(version);
+    return String.format("%02d%d%d", parts[0], normalize(parts[1]), 0);
+  }
+
+  @NotNull 
+  public static String getMacOSMinorVersionCode(@NotNull String version) {
+    int[] parts = getMacOSVersionParts(version);
+    return String.format("%02d%02d", parts[1], parts[2]);
+  }
+
+  private static int[] getMacOSVersionParts(@NotNull String version) {
+    List<String> parts = StringUtil.split(version, ".");
+    if (parts.size() != 3) return new int[]{0, 0, 0};
+    return new int[]{toInt(parts.get(0)), toInt(parts.get(1)), toInt(parts.get(2))};
+  }
+
+  private static int normalize(int number) {
+    return number > 9 ? 9 : number;
+  }
+
+  private static int toInt(String string) {
+    try {
+      return Integer.valueOf(string);
+    }
+    catch (NumberFormatException e) {
+      return 0;
+    }
   }
 
   public static boolean isJavaVersionAtLeast(String v) {

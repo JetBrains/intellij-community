@@ -30,6 +30,7 @@ import com.intellij.openapi.editor.impl.*;
 import com.intellij.openapi.editor.impl.softwrap.*;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.text.StringUtil;
+import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -1113,6 +1114,7 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
     public int            rangeEndOffset;
     public int            tokenStartOffset;
     public int            tokenEndOffset;
+    @JdkConstants.FontStyle
     public int            fontType;
     public boolean        notifyListenersOnLineStartPosition;
     public boolean        skipToLineEnd;
@@ -1139,7 +1141,7 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
       return getSpaceWidth(fontType);
     }
     
-    public int getSpaceWidth(int fontType) {
+    public int getSpaceWidth(@JdkConstants.FontStyle int fontType) {
       int result = fontType2spaceWidth.get(fontType);
       if (result <= 0) {
         result = EditorUtil.getSpaceWidth(fontType, myEditor);

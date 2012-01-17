@@ -676,6 +676,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
           if (_performEditorAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_REPLACE)) {
             return;
           }
+          if (_performEditorAction(IdeActions.ACTION_EXPAND_LIVE_TEMPLATE_BY_TAB)) {
+            return;
+          }
           if (_performEditorAction(IdeActions.ACTION_EDITOR_TAB)) {
             return;
           }
@@ -831,11 +834,13 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     final SortedMap<Integer, List<GutterIconRenderer>> result = new TreeMap<Integer, List<GutterIconRenderer>>();
     configureByFilesInner(filePath);
 
-    for (HighlightInfo info : doHighlighting()) {
+    List<HighlightInfo> infos = doHighlighting();
+    for (HighlightInfo info : infos) {
       addGutterIconRenderer(info.getGutterIconRenderer(), info.startOffset, result);
     }
 
-    for (final RangeHighlighter highlighter : DocumentMarkupModel.forDocument(myEditor.getDocument(), project, true).getAllHighlighters()) {
+    RangeHighlighter[] highlighters = DocumentMarkupModel.forDocument(myEditor.getDocument(), project, true).getAllHighlighters();
+    for (final RangeHighlighter highlighter : highlighters) {
       if (!highlighter.isValid()) continue;
       addGutterIconRenderer(highlighter.getGutterIconRenderer(), highlighter.getStartOffset(), result);
     }
@@ -1365,13 +1370,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     final Project project = getProject();
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-    return
-      ApplicationManager.getApplication().runReadAction(new Computable<List<HighlightInfo>>() {
-        @Override
-        public List<HighlightInfo> compute() {
-          return instantiateAndRun(getFile(), getEditor(), ArrayUtil.EMPTY_INT_ARRAY, myAllowDirt);
-        }
-      });
+    return instantiateAndRun(getFile(), getEditor(), ArrayUtil.EMPTY_INT_ARRAY, myAllowDirt);
   }
 
   @NotNull

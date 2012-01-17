@@ -517,11 +517,15 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
     final PsiModifierList modifierList = methodToAdd.getModifierList();
     final NullableNotNullManager manager = NullableNotNullManager.getInstance(myProject);
     modifierList.setModifierProperty(PsiModifier.ABSTRACT, false);
-    if (manager.isNullable(method, false)) {
-      modifierList.addAfter(myFactory.createAnnotationFromText("@" + manager.getDefaultNullable(), methodToAdd), null);
+    final String nullable = manager.getNullable(method);
+    if (nullable != null) {
+      modifierList.addAfter(myFactory.createAnnotationFromText("@" + nullable, methodToAdd), null);
     }
-    else if (manager.isNotNull(method, false)) {
-      modifierList.addAfter(myFactory.createAnnotationFromText("@" + manager.getDefaultNotNull(), methodToAdd), null);
+    else {
+      final String notNull = manager.getNotNull(method);
+      if (notNull != null) {
+        modifierList.addAfter(myFactory.createAnnotationFromText("@" + notNull, methodToAdd), null);
+      }
     }
 
     final String delegationBody = getDelegationBody(methodToAdd, delegationTarget);
@@ -803,7 +807,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
             final MethodSignature signature = myMethod.getSignature(substitutor);
             PsiMethod outerMethod = MethodSignatureUtil.findMethodBySignature(myClass, signature, false);
             if (outerMethod == null) {
-              @Modifier String visibility = checkOuterClassAbstractMethod(signature);
+              String visibility = checkOuterClassAbstractMethod(signature);
               PsiMethod newOuterMethod = (PsiMethod)myClass.add(myMethod);
               PsiUtil.setModifierProperty(newOuterMethod, visibility, true);
               final PsiDocComment docComment = newOuterMethod.getDocComment();
@@ -858,9 +862,9 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
    * @param methodSignature
    * @return Visibility
    */
-  @Modifier
+  @PsiModifier.ModifierConstant
   private String checkOuterClassAbstractMethod(MethodSignature methodSignature) {
-    @Modifier String visibility = PsiModifier.PROTECTED;
+    String visibility = PsiModifier.PROTECTED;
     for (PsiMethod method : myDelegatedMethods) {
       MethodSignature otherSignature = method.getSignature(getSuperSubstitutor(method.getContainingClass()));
 

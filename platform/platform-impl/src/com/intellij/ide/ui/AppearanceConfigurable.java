@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -144,6 +145,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     }
     settings.OVERRIDE_NONIDEA_LAF_FONTS = myComponent.myOverrideLAFFonts.isSelected();
     settings.MOVE_MOUSE_ON_DEFAULT_BUTTON = myComponent.myMoveMouseOnDefaultButtonCheckBox.isSelected();
+    settings.HIDE_NAVIGATION_ON_FOCUS_LOSS = myComponent.myHideNavigationPopupsCheckBox.isSelected();
 
     update |= settings.DISABLE_MNEMONICS != myComponent.myDisableMnemonics.isSelected();
     settings.DISABLE_MNEMONICS = myComponent.myDisableMnemonics.isSelected();
@@ -202,6 +204,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
 
     myComponent.myHideIconsInQuickNavigation.setSelected(settings.SHOW_ICONS_IN_QUICK_NAVIGATION);
     myComponent.myMoveMouseOnDefaultButtonCheckBox.setSelected(settings.MOVE_MOUSE_ON_DEFAULT_BUTTON);
+    myComponent.myHideNavigationPopupsCheckBox.setSelected(settings.HIDE_NAVIGATION_ON_FOCUS_LOSS);
     myComponent.myLafComboBox.setSelectedItem(LafManager.getInstance().getCurrentLookAndFeel());
     myComponent.myOverrideLAFFonts.setSelected(settings.OVERRIDE_NONIDEA_LAF_FONTS);
     myComponent.myDisableMnemonics.setSelected(settings.DISABLE_MNEMONICS);
@@ -244,6 +247,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     isModified |= myComponent.myHideIconsInQuickNavigation.isSelected() != settings.SHOW_ICONS_IN_QUICK_NAVIGATION;
 
     isModified |= myComponent.myMoveMouseOnDefaultButtonCheckBox.isSelected() != settings.MOVE_MOUSE_ON_DEFAULT_BUTTON;
+    isModified |= myComponent.myHideNavigationPopupsCheckBox.isSelected() != settings.HIDE_NAVIGATION_ON_FOCUS_LOSS;
     isModified |= !Comparing.equal(myComponent.myLafComboBox.getSelectedItem(), LafManager.getInstance().getCurrentLookAndFeel());
     if (WindowManagerEx.getInstanceEx().isAlphaModeSupported()) {
       isModified |= myComponent.myEnableAlphaModeCheckBox.isSelected() != settings.ENABLE_ALPHA_MODE;
@@ -310,6 +314,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     private JCheckBox myHideIconsInQuickNavigation;
     private JCheckBox myCbDisplayIconsInMenu;
     private JCheckBox myDisableMnemonics;
+    private JBCheckBox myHideNavigationPopupsCheckBox;
 
     public MyComponent() {
       ActionListener updater = new ActionListener() {

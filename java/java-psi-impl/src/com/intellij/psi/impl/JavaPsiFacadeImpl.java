@@ -249,7 +249,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   }
 
   public PsiPackage[] getSubPackages(PsiPackage psiPackage, GlobalSearchScope scope) {
-    List<PsiPackage> result = new ArrayList<PsiPackage>();
+    LinkedHashSet<PsiPackage> result = new LinkedHashSet<PsiPackage>();
     for (PsiElementFinder finder : filteredFinders()) {
       PsiPackage[] packages = finder.getSubPackages(psiPackage, scope);
       ContainerUtil.addAll(result, packages);

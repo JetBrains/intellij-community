@@ -21,6 +21,7 @@ package com.intellij.openapi.editor.markup;
 
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.StripedLockConcurrentHashMap;
+import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,7 +34,7 @@ public class AttributesFlyweight {
   @NotNull
   public static AttributesFlyweight create(Color foreground,
                                            Color background,
-                                           int fontType,
+                                           @JdkConstants.FontStyle int fontType,
                                            Color effectColor,
                                            EffectType effectType,
                                            Color errorStripeColor) {
@@ -43,6 +44,7 @@ public class AttributesFlyweight {
 
   private final Color      myForeground;
   private final Color      myBackground;
+  @JdkConstants.FontStyle
   private final int        myFontType;
   private final Color      myEffectColor ;
   private final EffectType myEffectType;
@@ -50,7 +52,7 @@ public class AttributesFlyweight {
 
   private AttributesFlyweight(Color foreground,
                       Color background,
-                      int fontType,
+                      @JdkConstants.FontStyle int fontType,
                       Color effectColor,
                       EffectType effectType,
                       Color errorStripeColor) {
@@ -81,6 +83,7 @@ public class AttributesFlyweight {
     return myBackground;
   }
 
+  @JdkConstants.FontStyle
   public int getFontType() {
     return myFontType;
   }
@@ -105,7 +108,7 @@ public class AttributesFlyweight {
     return create(myForeground, back, myFontType, myEffectColor, myEffectType, myErrorStripeColor);
   }
 
-  public AttributesFlyweight withFontType(int fontType) {
+  public AttributesFlyweight withFontType(@JdkConstants.FontStyle int fontType) {
     return create(myForeground, myBackground, fontType, myEffectColor, myEffectType, myErrorStripeColor);
   }
 

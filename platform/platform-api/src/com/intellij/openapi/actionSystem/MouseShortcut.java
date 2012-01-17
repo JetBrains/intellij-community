@@ -15,8 +15,9 @@
  */
 package com.intellij.openapi.actionSystem;
 
+import org.intellij.lang.annotations.JdkConstants;
+
 import java.awt.event.InputEvent;
-import java.awt.event.MouseEvent;
 
 /**
  * A mouse shortcut, which can consist of a specific mouse button, click count and modifier keys
@@ -24,10 +25,10 @@ import java.awt.event.MouseEvent;
  */
 public final class MouseShortcut extends Shortcut {
   private final int myButton;
-  private final int myModifiers;
+  @JdkConstants.InputEventMask private final int myModifiers;
   private final int myClickCount;
 
-  public MouseShortcut(int button, int modifiers, int clickCount) {
+  public MouseShortcut(int button, @JdkConstants.InputEventMask int modifiers, int clickCount) {
     myButton = button;
     // TODO[vova] check modifiers?
     myModifiers = mapOldModifiers(modifiers);
@@ -41,6 +42,7 @@ public final class MouseShortcut extends Shortcut {
     return myButton;
   }
 
+  @JdkConstants.InputEventMask
   public int getModifiers() {
     return myModifiers;
   }
@@ -62,7 +64,8 @@ public final class MouseShortcut extends Shortcut {
     return myButton + myModifiers + myClickCount;
   }
 
-  private static int mapOldModifiers(int modifiers) {
+  @JdkConstants.InputEventMask
+  private static int mapOldModifiers(@JdkConstants.InputEventMask int modifiers) {
     if ((modifiers & InputEvent.SHIFT_MASK) != 0) {
       modifiers |= InputEvent.SHIFT_DOWN_MASK;
     }

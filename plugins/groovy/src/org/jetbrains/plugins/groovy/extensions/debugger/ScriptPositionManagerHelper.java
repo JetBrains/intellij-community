@@ -19,6 +19,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,7 +53,10 @@ public abstract class ScriptPositionManagerHelper {
    * @return Posiible script to debug through in project scope if there wer not found other by standarrd methods
    */
   @Nullable
-  public abstract PsiFile getExtraScriptIfNotFound(ReferenceType refType, @NotNull String runtimeName, Project project);
+  public abstract PsiFile getExtraScriptIfNotFound(ReferenceType refType,
+                                                   @NotNull String runtimeName,
+                                                   Project project,
+                                                   GlobalSearchScope scope);
 
   @Nullable
   public String customizeClassName(PsiClass psiClass) {

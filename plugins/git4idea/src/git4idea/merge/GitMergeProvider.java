@@ -387,6 +387,16 @@ public class GitMergeProvider implements MergeProvider2 {
             throw new IllegalStateException("Unknown status " + s + " for file " + file.getPath());
         }
       }
+
+      @Override
+      public String getMaxStringValue() {
+        return GitBundle.message("merge.tool.column.status.modified");
+      }
+
+      @Override
+      public int getAdditionalWidth() {
+        return 10;
+      }
     }
   }
 }

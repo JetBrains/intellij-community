@@ -46,7 +46,7 @@ public class MoveToTabAction extends BaseViewAction {
     if (ViewContext.TAB_TOOLBAR_PLACE.equals(e.getPlace())) {
       setEnabled(e, false);
     } else {
-      setEnabled(e, tab.isDefault());
+      setEnabled(e, tab != null && tab.isDefault());
     }
   }
 

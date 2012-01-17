@@ -51,6 +51,7 @@ import com.intellij.util.PlatformIcons;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.intellij.lang.annotations.JdkConstants;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -64,8 +65,6 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -317,7 +316,8 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
     mySplitter.repaint();
   }
 
-  private int ctrlMask() {
+  @JdkConstants.InputEventMask
+  private static int ctrlMask() {
     return SystemInfo.isMac ? InputEvent.META_DOWN_MASK : InputEvent.CTRL_DOWN_MASK;
   }
 

@@ -24,8 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 
 public class AssociateFileType extends AnAction {
   public void actionPerformed(AnActionEvent e) {
-    DataContext dataContext = e.getDataContext();
-    VirtualFile file = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
+    VirtualFile file = e.getData(PlatformDataKeys.VIRTUAL_FILE);
     FileTypeChooser.associateFileType(file.getName());
   }
 
@@ -39,7 +38,8 @@ public class AssociateFileType extends AnAction {
       haveSmthToDo = false;
     }
     else {
-      haveSmthToDo = file.getFileType() == FileTypes.UNKNOWN;
+      // the action should also be available for files which have been auto-detected as text or as a particular language (IDEA-79574)
+      haveSmthToDo = FileTypeManager.getInstance().getFileTypeByFileName(file.getName()) == FileTypes.UNKNOWN;
     }
     presentation.setVisible(haveSmthToDo || ActionPlaces.MAIN_MENU.equals(e.getPlace()));
     presentation.setEnabled(haveSmthToDo);

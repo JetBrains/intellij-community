@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,6 +53,9 @@ public abstract class HighlightManager {
    * Specifies that a highlighter added with {@link #addOccurrenceHighlight} should be removed when the editor text is changed.
    */
   public static final int HIDE_BY_TEXT_CHANGE = 0x04;
+
+  @MagicConstant(flags = {HIDE_BY_ESCAPE, HIDE_BY_ANY_KEY, HIDE_BY_TEXT_CHANGE})
+  public @interface HideFlags {}
 
   /**
    * Highlights a specified range of text in an editor. The highlighting is removed when the user presses the Esc key, and optionally
@@ -152,7 +156,7 @@ public abstract class HighlightManager {
                                               int start,
                                               int end,
                                               TextAttributes attributes,
-                                              int flags,
+                                              @HideFlags int flags,
                                               @Nullable Collection<RangeHighlighter> outHighlighters,
                                               @Nullable Color scrollmarkColor);
 

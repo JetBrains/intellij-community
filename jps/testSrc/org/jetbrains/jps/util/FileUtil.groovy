@@ -73,7 +73,7 @@ class FileUtil {
     if (name.endsWith(".jar") || name.endsWith(".war") || name.endsWith(".zip")) {
       def dir1 = ZipUtil.extractToTempDir(file1)
       def dir2 = ZipUtil.extractToTempDir(file2)
-      processed = compareDirectories(dir1, dir2, relativePath)
+      processed = _compareDirectories(dir1, dir2, relativePath)
       delete(dir1)
       delete(dir2)
     }
@@ -98,11 +98,11 @@ class FileUtil {
       return
     }
     System.out.println("Comparing ${dir1.absolutePath}(#1) and ${dir2.absolutePath}(#2)...");
-    def files = compareDirectories(dir1, dir2, "")
+    def files = _compareDirectories(dir1, dir2, "")
     System.out.println("$files files processed.");
   }
 
-  private static int compareDirectories(File dir1, File dir2, String relativePath) {
+  private static int _compareDirectories(File dir1, File dir2, String relativePath) {
     def processed = 0
     Set<String> dir2Files = dir2.listFiles()*.name as Set
 
@@ -118,7 +118,7 @@ class FileUtil {
           processed += compareFiles(child1, child2, relativePath + "/" + child1.name)
         }
         else if (child1.isDirectory() && child2.isDirectory()) {
-          processed += compareDirectories(child1, child2, relativePath + "/" + child1.name)
+          processed += _compareDirectories(child1, child2, relativePath + "/" + child1.name)
         }
         else {
           System.out.println("type mismatch for $relativePath: #1 is ${child1.isDirectory() ? "dir" : "file"}, #2 is ${child2.isDirectory() ? "dir" : "file"}");

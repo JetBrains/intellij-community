@@ -16,6 +16,7 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.Patches;
+import com.intellij.ide.FrameStateManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
@@ -47,6 +48,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.*;
 import com.intellij.openapi.wm.impl.commands.*;
+import com.intellij.ui.BalloonImpl;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.switcher.QuickAccessSettings;
 import com.intellij.ui.switcher.SwitchManager;
@@ -64,6 +66,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.EventListenerList;
+import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.InputEvent;
@@ -1322,9 +1325,17 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
     Icon actualIcon = icon != null ? icon : type.getDefaultIcon();
 
+    final BalloonHyperlinkListener listenerWrapper = new BalloonHyperlinkListener(listener);
     final Balloon balloon =
-      JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(text.replace("\n", "<br>"), actualIcon, type.getPopupBackground(), listener)
-        .setHideOnClickOutside(true).setHideOnFrameResize(false).createBalloon();
+      JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(text.replace("\n", "<br>"), actualIcon, type.getPopupBackground(), listenerWrapper)
+        .setHideOnClickOutside(false).setHideOnFrameResize(false).createBalloon();
+    FrameStateManager.getInstance().getApplicationActive().doWhenDone(new Runnable() {
+      @Override
+      public void run() {
+        ((BalloonImpl)balloon).setHideOnClickOutside(true);
+      }
+    });
+    listenerWrapper.myBalloon = balloon;
     myWindow2Balloon.put(toolWindowId, balloon);
     Disposer.register(balloon, new Disposable() {
       public void dispose() {
@@ -1848,6 +1859,25 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
   public void stretchHeight(ToolWindowImpl toolWindow, int value) {
     myToolWindowsPane.stretchHeight(toolWindow, value);
+  }
+
+  private static class BalloonHyperlinkListener implements HyperlinkListener {
+    private Balloon myBalloon;
+    private final HyperlinkListener myListener;
+
+    public BalloonHyperlinkListener(HyperlinkListener listener) {
+      myListener = listener;
+    }
+
+    @Override
+    public void hyperlinkUpdate(HyperlinkEvent e) {
+      if (myBalloon != null) {
+        myBalloon.hide();
+      }
+      if (myListener != null) {
+        myListener.hyperlinkUpdate(e);
+      }
+    }
   }
 
 

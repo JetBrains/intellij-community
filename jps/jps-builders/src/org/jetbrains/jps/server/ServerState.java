@@ -1,9 +1,8 @@
 package org.jetbrains.jps.server;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.FileUtil;
 import org.codehaus.groovy.runtime.MethodClosure;
-import org.jetbrains.ether.dependencyView.Mappings;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.JavaSdk;
 import org.jetbrains.jps.Library;
 import org.jetbrains.jps.Module;
@@ -14,12 +13,10 @@ import org.jetbrains.jps.api.GlobalLibrary;
 import org.jetbrains.jps.api.SdkLibrary;
 import org.jetbrains.jps.idea.IdeaProjectLoader;
 import org.jetbrains.jps.incremental.*;
-import org.jetbrains.jps.incremental.messages.BuildMessage;
-import org.jetbrains.jps.incremental.messages.CompilerMessage;
+import org.jetbrains.jps.incremental.storage.ProjectTimestamps;
+import org.jetbrains.jps.incremental.storage.TimestampStorage;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.*;
 
@@ -32,7 +29,7 @@ class ServerState {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.server.ServerState");
   public static final String IDEA_PROJECT_DIRNAME = ".idea";
 
-  private final Map<String, Project> myProjects = new HashMap<String, Project>();
+  private final Map<String, ProjectDescriptor> myProjects = new HashMap<String, ProjectDescriptor>();
 
   private final Object myConfigurationLock = new Object();
   private final Map<String, String> myPathVariables = new HashMap<String, String>();
@@ -40,6 +37,11 @@ class ServerState {
 
   public void setGlobals(List<GlobalLibrary> libs, Map<String, String> pathVars) {
     synchronized (myConfigurationLock) {
+      for (Map.Entry<String, ProjectDescriptor> entry : myProjects.entrySet()) {
+        final String projectPath = entry.getKey();
+        final ProjectDescriptor descriptor = entry.getValue();
+        descriptor.release();
+      }
       myProjects.clear(); // projects should be reloaded against the latest data
       myGlobalLibraries.clear();
       myGlobalLibraries.addAll(libs);
@@ -48,66 +50,88 @@ class ServerState {
     }
   }
 
-  public void clearProjectCache(Collection<String> projectPaths) {
-    synchronized (myConfigurationLock) {
-      myProjects.keySet().removeAll(projectPaths);
+  public void notifyFileChanged(ProjectDescriptor pd, File file) {
+    try {
+      final RootDescriptor rd = pd.rootsIndex.getModuleAndRoot(file);
+      if (rd != null) {
+        pd.fsState.markDirty(file, rd, pd.timestamps.getStorage());
+      }
+    }
+    catch (Exception e) {
+      LOG.error(e); // todo
     }
   }
 
-  public void startBuild(String projectPath, Set<String> modules, final BuildParameters params, final MessageHandler msgHandler) throws Throwable{
+  public void notifyFileDeleted(final ProjectDescriptor pd, File file) {
+    try {
+      final RootDescriptor moduleAndRoot = pd.rootsIndex.getModuleAndRoot(file);
+      if (moduleAndRoot != null) {
+        pd.fsState.registerDeleted(moduleAndRoot.module, file, moduleAndRoot.isTestRoot, pd.timestamps.getStorage());
+      }
+    }
+    catch (Exception e) {
+      LOG.error(e); // todo
+    }
+  }
+
+  @Nullable
+  public ProjectDescriptor getProjectDescriptor(String projectPath) {
+    final ProjectDescriptor pd;
+    synchronized (myConfigurationLock) {
+      pd = myProjects.get(projectPath);
+      if (pd != null) {
+        pd.incUsageCounter();
+      }
+    }
+    return pd;
+  }
+
+  public void clearProjectCache(Collection<String> projectPaths) {
+    synchronized (myConfigurationLock) {
+      for (String projectPath : projectPaths) {
+        final ProjectDescriptor descriptor = myProjects.remove(projectPath);
+        if (descriptor != null) {
+          descriptor.release();
+        }
+      }
+    }
+  }
+
+  public void startBuild(String projectPath, Set<String> modules, Collection<String> paths, final BuildParameters params, final MessageHandler msgHandler, BuildCanceledStatus cs) throws Throwable{
     final String projectName = getProjectName(projectPath);
     BuildType buildType = params.buildType;
 
-    Project project;
+    ProjectDescriptor pd;
     synchronized (myConfigurationLock) {
-      project = myProjects.get(projectPath);
-      if (project == null) {
-        project = loadProject(projectPath, params);
-        myProjects.put(projectPath, project);
+      pd = myProjects.get(projectPath);
+      if (pd == null) {
+        final Project project = loadProject(projectPath, params);
+        final FSState fsState = new FSState();
+        pd = new ProjectDescriptor(projectName, project, fsState, new ProjectTimestamps(projectName));
+        myProjects.put(projectPath, pd);
       }
+      pd.incUsageCounter();
     }
 
-    Mappings mappings = null;
-    final File mappingsRoot = Paths.getMappingsStorageRoot(projectName);
-    try {
-      mappings = new Mappings(mappingsRoot);
-    }
-    catch (FileNotFoundException e) {
-      mappings = new Mappings(mappingsRoot);
-    }
-    catch (IOException e) {
-      FileUtil.delete(mappingsRoot);
-      msgHandler.processMessage(new CompilerMessage(IncProjectBuilder.JPS_SERVER_NAME, BuildMessage.Kind.WARNING, "Problems reading dependency information, rebuild required: " + e.getMessage()));
-      mappings = new Mappings(mappingsRoot);
-      buildType = BuildType.REBUILD;
-    }
+    final Project project = pd.project;
 
     try {
-      final List<Module> toCompile = new ArrayList<Module>();
-      if (modules != null && modules.size() > 0) {
-        for (Module m : project.getModules().values()) {
-          if (modules.contains(m.getName())){
-            toCompile.add(m);
-          }
-        }
-      }
-      else {
-        toCompile.addAll(project.getModules().values());
-      }
-
-      final CompileScope compileScope = new CompileScope(project, toCompile);
-
-      final IncProjectBuilder builder = new IncProjectBuilder(projectName, project, mappings, BuilderRegistry.getInstance());
+      final CompileScope compileScope = createCompilationScope(buildType, pd, modules, paths);
+      final IncProjectBuilder builder = new IncProjectBuilder(pd, BuilderRegistry.getInstance(), cs);
       if (msgHandler != null) {
         builder.addMessageHandler(msgHandler);
       }
       switch (buildType) {
-        case REBUILD:
-          builder.build(compileScope, false);
+        case PROJECT_REBUILD:
+          builder.build(compileScope, false, true);
+          break;
+
+        case FORCED_COMPILATION:
+          builder.build(compileScope, false, false);
           break;
 
         case MAKE:
-          builder.build(compileScope, true);
+          builder.build(compileScope, true, false);
           break;
 
         case CLEAN:
@@ -117,11 +141,63 @@ class ServerState {
       }
     }
     finally {
-      if (mappings != null) {
-        mappings.close();
-      }
+      pd.release();
       clearZipIndexCache();
     }
+  }
+
+  private static CompileScope createCompilationScope(BuildType buildType, ProjectDescriptor pd, Set<String> modules, Collection<String> paths) throws Exception {
+    final CompileScope compileScope;
+    if (buildType == BuildType.PROJECT_REBUILD || (modules.isEmpty() && paths.isEmpty())) {
+      compileScope = new AllProjectScope(pd.project, buildType != BuildType.MAKE);
+    }
+    else {
+      final Set<Module> forcedModules;
+      if (!modules.isEmpty()) {
+        forcedModules = new HashSet<Module>();
+        for (Module m : pd.project.getModules().values()) {
+          if (modules.contains(m.getName())){
+            forcedModules.add(m);
+          }
+        }
+      }
+      else {
+        forcedModules = Collections.emptySet();
+      }
+
+      final TimestampStorage tsStorage = pd.timestamps.getStorage();
+
+      final Map<Module, Set<File>> filesToCompile;
+      if (!paths.isEmpty()) {
+        filesToCompile = new HashMap<Module, Set<File>>();
+        for (String path : paths) {
+          final File file = new File(path);
+          final RootDescriptor rd = pd.rootsIndex.getModuleAndRoot(file);
+          if (rd != null) {
+            Set<File> files = filesToCompile.get(rd.module);
+            if (files == null) {
+              files = new HashSet<File>();
+              filesToCompile.put(rd.module, files);
+            }
+            files.add(file);
+            if (buildType == BuildType.FORCED_COMPILATION) {
+              pd.fsState.markDirty(file, rd, tsStorage);
+            }
+          }
+        }
+      }
+      else {
+        filesToCompile = Collections.emptyMap();
+      }
+
+      if (filesToCompile.isEmpty()) {
+        compileScope = new ModulesScope(pd.project, forcedModules, buildType != BuildType.MAKE);
+      }
+      else {
+        compileScope = new ModulesAndFilesScope(pd.project, forcedModules, filesToCompile, buildType != BuildType.MAKE);
+      }
+    }
+    return compileScope;
   }
 
   private static void clearZipIndexCache() {

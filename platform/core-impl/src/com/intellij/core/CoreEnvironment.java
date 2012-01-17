@@ -20,6 +20,7 @@ import com.intellij.lang.impl.PsiBuilderFactoryImpl;
 import com.intellij.mock.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.extensions.ExtensionPoint;
@@ -34,9 +35,13 @@ import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.StaticGetter;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
+import com.intellij.openapi.vfs.impl.VirtualFileManagerImpl;
 import com.intellij.openapi.vfs.impl.jar.CoreJarFileSystem;
 import com.intellij.openapi.vfs.local.CoreLocalFileSystem;
+import com.intellij.openapi.vfs.newvfs.FileSystemPersistence;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.*;
@@ -53,6 +58,7 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.CachedValuesManagerImpl;
 import com.intellij.util.Function;
+import com.intellij.util.messages.impl.MessageBusImpl;
 import org.picocontainer.MutablePicoContainer;
 
 import java.lang.reflect.Modifier;
@@ -94,6 +100,22 @@ public class CoreEnvironment {
         return new DocumentImpl(charSequence);
       }
     }, null));
+
+    registerComponentInstance(appContainer, VirtualFileManager.class,
+                              new VirtualFileManagerImpl(new VirtualFileSystem[] {myLocalFileSystem, myJarFileSystem},
+                                                         new MessageBusImpl(myApplication, null),
+                                                         new FileSystemPersistence() {
+                                                           @Override
+                                                           public void refresh(boolean asynchronous, Runnable postAction, ModalityState modalityState) {
+                                                           }
+
+                                                           @Override
+                                                           public int getCheapFileSystemModificationCount() {
+                                                             return 0;
+                                                           }
+                                                         }
+                              )
+    );
 
     myApplication.registerService(DefaultASTFactory.class, new CoreASTFactory());
     myApplication.registerService(PsiBuilderFactory.class, new PsiBuilderFactoryImpl());

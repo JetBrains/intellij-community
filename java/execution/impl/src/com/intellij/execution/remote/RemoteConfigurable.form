@@ -1,25 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.execution.remote.RemoteConfigurable">
-  <grid id="715ea" binding="myPanel" layout-manager="GridLayoutManager" row-count="5" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-    <margin top="0" left="0" bottom="0" right="0"/>
+  <grid id="715ea" binding="myPanel" layout-manager="GridBagLayout">
     <constraints>
-      <xy x="64" y="1" width="695" height="498"/>
+      <xy x="64" y="1" width="589" height="319"/>
     </constraints>
     <properties/>
     <border type="none"/>
     <children>
-      <component id="49c58" class="javax.swing.JLabel">
-        <constraints>
-          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-        </constraints>
-        <properties>
-          <text resource-bundle="messages/ExecutionBundle" key="remote.configuration.remote.debugging.allows.you.to.connect.idea.to.a.running.jvm.label"/>
-        </properties>
-      </component>
       <grid id="e37d3" layout-manager="GridLayoutManager" row-count="4" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+          <gridbag weightx="1.0" weighty="0.0"/>
         </constraints>
         <properties/>
         <clientProperties>
@@ -149,21 +141,22 @@
       </grid>
       <component id="aa30e" class="com.intellij.execution.ui.ConfigurationArgumentsHelpArea" binding="myHelpArea">
         <constraints>
-          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="8" fill="3" indent="0" use-parent-layout="false"/>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="9" fill="1" indent="0" use-parent-layout="false"/>
+          <gridbag weightx="1.0" weighty="0.0"/>
         </constraints>
         <properties/>
       </component>
-      <component id="77c23" class="com.intellij.execution.ui.ConfigurationArgumentsHelpArea" binding="myJDK13HelpArea">
+      <component id="4362c" class="com.intellij.execution.ui.ConfigurationArgumentsHelpArea" binding="myJDK13HelpArea">
         <constraints>
-          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="8" fill="3" indent="0" use-parent-layout="false">
-            <preferred-size width="150" height="100"/>
-          </grid>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="9" fill="1" indent="0" use-parent-layout="false"/>
+          <gridbag top="15" left="0" bottom="15" right="0" weightx="1.0" weighty="0.0"/>
         </constraints>
         <properties/>
       </component>
       <component id="38070" class="com.intellij.openapi.ui.LabeledComponent" binding="myModule">
         <constraints>
-          <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+          <gridbag top="15" left="0" bottom="0" right="0" weightx="1.0" weighty="0.0"/>
         </constraints>
         <properties>
           <componentClass value="javax.swing.JComboBox"/>

@@ -24,6 +24,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.util.IncorrectOperationException;
@@ -35,7 +36,7 @@ import java.util.*;
 class JavaChangeInfoImpl implements JavaChangeInfo {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.changeSignature.JavaChangeInfoImpl");
 
-  @Modifier
+  @PsiModifier.ModifierConstant
   final String newVisibility;
   private PsiMethod method;
   String oldName;
@@ -71,7 +72,7 @@ class JavaChangeInfoImpl implements JavaChangeInfo {
   /**
    * @param newExceptions null if not changed
    */
-  public JavaChangeInfoImpl(@Modifier String newVisibility,
+  public JavaChangeInfoImpl(@PsiModifier.ModifierConstant String newVisibility,
                     PsiMethod method,
                     String newName,
                     CanonicalTypes.Type newType,
@@ -88,7 +89,7 @@ class JavaChangeInfoImpl implements JavaChangeInfo {
    * @param newExceptions null if not changed
    * @param oldName
    */
-  public JavaChangeInfoImpl(String newVisibility,
+  public JavaChangeInfoImpl(@PsiModifier.ModifierConstant String newVisibility,
                             PsiMethod method,
                             String newName,
                             CanonicalTypes.Type newType,
@@ -164,12 +165,12 @@ class JavaChangeInfoImpl implements JavaChangeInfo {
     for(int i = 0; i < newParms.length; i++){
       ParameterInfoImpl info = newParms[i];
       if (info.oldParameterIndex < 0 && !info.isVarargType()){
-        if (info.defaultValue == null) continue;
+        if (StringUtil.isEmpty(info.defaultValue)) continue;
         try{
           defaultValues[i] = factory.createExpressionFromText(info.defaultValue, method);
         }
         catch(IncorrectOperationException e){
-          LOG.error(e);
+          LOG.info(e);
         }
       }
     }
@@ -222,7 +223,7 @@ class JavaChangeInfoImpl implements JavaChangeInfo {
     return newParms;
   }
 
-  @Modifier
+  @PsiModifier.ModifierConstant
   public String getNewVisibility() {
     return newVisibility;
   }

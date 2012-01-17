@@ -603,8 +603,6 @@ public class GrStringUtil {
           if (index + 4 <= chars.length()) {
             try {
               int code = Integer.parseInt(chars.substring(index, index + 4), 16);
-              //line separators are invalid here
-              if (code == 0x000a || code == 0x000d) return false;
               c = chars.charAt(index);
               if (c == '+' || c == '-') return false;
               outChars.append((char)code);
@@ -730,8 +728,6 @@ public class GrStringUtil {
           if (index + 4 <= chars.length()) {
             try {
               int code = Integer.parseInt(chars.substring(index, index + 4), 16);
-              //line separators are invalid here
-              if (code == 0x000a || code == 0x000d) return false;
               c = chars.charAt(index);
               if (c == '+' || c == '-') return false;
               outChars.append((char)code);
@@ -786,5 +782,12 @@ public class GrStringUtil {
       }
       return factory.createLiteralFromValue(value);
     }
+  }
+
+  public static boolean isRegex(GrLiteral literal) {
+    if (literal instanceof GrRegex) return true;
+
+    final IElementType elementType = literal.getFirstChild().getNode().getElementType();
+    return elementType == mREGEX_LITERAL || elementType == mDOLLAR_SLASH_REGEX_LITERAL;
   }
 }

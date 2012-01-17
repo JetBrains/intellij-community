@@ -74,16 +74,14 @@ public final class ReflectedProject {
       ourProjectsLock.unlock();
     }
     final ReflectedProject reflectedProj = new ReflectedProject(classLoader);
-    if (reflectedProj.getProject() != null) { // do not cache partially-loaded stuff
-      ourProjectsLock.lock();
-      try {
-        ourProjects.add(new SoftReference<Pair<ReflectedProject, ClassLoader>>(
-          new Pair<ReflectedProject, ClassLoader>(reflectedProj, classLoader)
-        ));
-      }
-      finally {
-        ourProjectsLock.unlock();
-      }
+    ourProjectsLock.lock();
+    try {
+      ourProjects.add(new SoftReference<Pair<ReflectedProject, ClassLoader>>(
+        new Pair<ReflectedProject, ClassLoader>(reflectedProj, classLoader)
+      ));
+    }
+    finally {
+      ourProjectsLock.unlock();
     }
     return reflectedProj;
   }
@@ -162,6 +160,7 @@ public final class ReflectedProject {
     return myTargetClass;
   }
 
+  @Nullable
   public Object getProject() {
     return myProject;
   }

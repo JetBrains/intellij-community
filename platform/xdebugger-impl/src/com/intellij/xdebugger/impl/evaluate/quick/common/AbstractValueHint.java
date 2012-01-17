@@ -32,6 +32,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.treeStructure.Tree;
+import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -326,7 +327,7 @@ public abstract class AbstractValueHint {
     };
   }
 
-  private static boolean isAltMask(int modifiers) {
+  private static boolean isAltMask(@JdkConstants.InputEventMask int modifiers) {
     return modifiers == InputEvent.ALT_MASK;
   }
 

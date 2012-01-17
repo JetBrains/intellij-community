@@ -20,24 +20,21 @@ import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.compiler.ex.CompilerPathsEx;
 import com.intellij.openapi.components.AbstractProjectComponent;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEnumerator;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 public class HotSwapManager extends AbstractProjectComponent {
   private final Map<DebuggerSession, Long> myTimeStamps = new HashMap<DebuggerSession, Long>();
@@ -70,54 +67,52 @@ public class HotSwapManager extends AbstractProjectComponent {
     myTimeStamps.put(session, Long.valueOf(tStamp));
   }
 
-  public HashMap<String, HotSwapFile> getModifiedClasses(final DebuggerSession session, final HotSwapProgress progress) {
+  public Map<String, HotSwapFile> getModifiedClasses(final DebuggerSession session, final HotSwapProgress progress) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    final long timeStamp = getTimeStamp(session);
 
-    final HashMap<String, HotSwapFile> modifiedClasses = new HashMap<String, HotSwapFile>();
-
+    final List<File> outputRoots = new ArrayList<File>();
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
-        final List<VirtualFile> allClasses = OrderEnumerator.orderEntries(myProject).withoutSdk().getPathsList().getRootDirs();
-
-        final VirtualFile[] allDirs = VfsUtil.toVirtualFileArray(allClasses);
-        final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
-        CompilerPathsEx.visitFiles(allDirs, new CompilerPathsEx.FileVisitor() {
-
-          protected void acceptDirectory(final VirtualFile file, final String fileRoot, final String filePath) {
-            if (progress.isCancelled()) {
-              return;
-            }
-            progress.setText(DebuggerBundle.message("progress.hotswap.scanning.path", filePath));
-            if(file.getFileSystem() instanceof JarFileSystem && FileTypes.ARCHIVE.equals(file.getFileType())) {
-              if(file.getTimeStamp() > timeStamp) {
-                super.acceptDirectory(file, fileRoot, filePath);
-              }
-            }
-            else {
-              super.acceptDirectory(file, fileRoot, filePath);
-            }
-          }
-
-          protected void acceptFile(VirtualFile file, String fileRoot, String filePath) {
-            if (progress.isCancelled()) {
-              return;
-            }
-            if (file.getTimeStamp() > timeStamp && StdFileTypes.CLASS.equals(file.getFileType())) {
-              //noinspection HardCodedStringLiteral
-              if (SystemInfo.isFileSystemCaseSensitive? filePath.endsWith(CLASS_EXTENSION) : StringUtil.endsWithIgnoreCase(filePath, CLASS_EXTENSION)) {
-                progress.setText(DebuggerBundle.message("progress.hotswap.scanning.path", filePath));
-                //noinspection HardCodedStringLiteral
-                final String qualifiedName = filePath.substring(fileRoot.length() + 1, filePath.length() - CLASS_EXTENSION.length()).replace('/', '.');
-                modifiedClasses.put(qualifiedName, new HotSwapFile(file));
-              }
-            }
-          }
-        });
+        final List<VirtualFile> allClasses = OrderEnumerator.orderEntries(myProject).withoutSdk().withoutLibraries().getPathsList().getRootDirs();
+        for (VirtualFile dir : VfsUtil.toVirtualFileArray(allClasses)) {
+          outputRoots.add(new File(dir.getPath()));
+        }
       }
     });
 
+    final long timeStamp = getTimeStamp(session);
+    final Map<String, HotSwapFile> modifiedClasses = new HashMap<String, HotSwapFile>();
+    for (File root : outputRoots) {
+      final String rootPath = FileUtil.toCanonicalPath(root.getPath());
+      collectModifiedClasses(root, rootPath, rootPath + "/", modifiedClasses, progress, timeStamp);
+    }
+
     return modifiedClasses;
+  }
+
+  private static boolean collectModifiedClasses(File file, String filePath, String rootPath, Map<String, HotSwapFile> container, HotSwapProgress progress, long timeStamp) {
+    if (progress.isCancelled()) {
+      return false;
+    }
+    final File[] files = file.listFiles();
+    if (files != null) {
+      for (File child : files) {
+        if (!collectModifiedClasses(child, filePath + "/" + child.getName(), rootPath, container, progress, timeStamp)) {
+          return false;
+        }
+      }
+    }
+    else { // not a dir
+      if (SystemInfo.isFileSystemCaseSensitive? StringUtil.endsWith(filePath, CLASS_EXTENSION) : StringUtil.endsWithIgnoreCase(filePath, CLASS_EXTENSION)) {
+        if (file.lastModified() > timeStamp) {
+          progress.setText(DebuggerBundle.message("progress.hotswap.scanning.path", filePath));
+          //noinspection HardCodedStringLiteral
+          final String qualifiedName = filePath.substring(rootPath.length(), filePath.length() - CLASS_EXTENSION.length()).replace('/', '.');
+          container.put(qualifiedName, new HotSwapFile(file));
+        }
+      }
+    }
+    return true;
   }
 
   public static HotSwapManager getInstance(Project project) {
@@ -141,15 +136,12 @@ public class HotSwapManager extends AbstractProjectComponent {
       }
     });
 
-    final Set<Project> projectsToRefresh = new HashSet<Project>();
     for (final DebuggerSession debuggerSession : sessions) {
       if (debuggerSession.isAttached()) {
-        projectsToRefresh.add(debuggerSession.getProject());
         scanClassesCommand.addCommand(debuggerSession.getProcess(), new DebuggerCommandImpl() {
           protected void action() throws Exception {
             swapProgress.setDebuggerSession(debuggerSession);
-            HashMap<String, HotSwapFile> sessionClasses =
-              getInstance(swapProgress.getProject()).getModifiedClasses(debuggerSession, swapProgress);
+            final Map<String, HotSwapFile> sessionClasses = getInstance(swapProgress.getProject()).getModifiedClasses(debuggerSession, swapProgress);
             if (!sessionClasses.isEmpty()) {
               modifiedClasses.put(debuggerSession, sessionClasses);
             }
@@ -159,27 +151,7 @@ public class HotSwapManager extends AbstractProjectComponent {
     }
 
     swapProgress.setTitle(DebuggerBundle.message("progress.hotswap.scanning.classes"));
-    if (!scanClassesCommand.isEmpty()) {
-      // have to refresh dirs first:
-      final Collection<VirtualFile> roots = ApplicationManager.getApplication().runReadAction(new Computable<Collection<VirtualFile>>() {
-        public Collection<VirtualFile> compute() {
-          final Set<VirtualFile> result = new HashSet<VirtualFile>();
-          for (Project project : projectsToRefresh) {
-            for (VirtualFile file : OrderEnumerator.orderEntries(project).withoutSdk().getPathsList().getRootDirs()) {
-              if (!file.getFileSystem().isReadOnly()) {
-                result.add(file);
-              }
-            }
-          }
-          return result;
-        }
-      });
-
-      if (!roots.isEmpty()) {
-        RefreshQueue.getInstance().refresh(false, true, null, roots.toArray(new VirtualFile[roots.size()]));
-      }
-      scanClassesCommand.run();
-    }
+    scanClassesCommand.run();
 
     return swapProgress.isCancelled() ? new HashMap<DebuggerSession, Map<String, HotSwapFile>>() : modifiedClasses;
   }

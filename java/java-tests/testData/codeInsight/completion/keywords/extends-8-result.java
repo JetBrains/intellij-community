@@ -1,4 +1,4 @@
 class AAA{}
 
-class BBB extends AAA implements <caret>{
+class BBB extends AAA implements<caret> {
 }

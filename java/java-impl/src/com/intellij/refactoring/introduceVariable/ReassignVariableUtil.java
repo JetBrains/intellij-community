@@ -27,7 +27,7 @@ import com.intellij.psi.scope.processor.VariablesProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
+import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.Nullable;
@@ -153,10 +153,10 @@ public class ReassignVariableUtil {
 
   private static void finishTemplate(Editor editor) {
     final TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);
-    final VariableInplaceRenamer renamer = editor.getUserData(VariableInplaceRenamer.INPLACE_RENAMER);
+    final InplaceRefactoring renamer = editor.getUserData(InplaceRefactoring.INPLACE_RENAMER);
     if (templateState != null && renamer != null) {
       templateState.gotoEnd(true);
-      editor.putUserData(VariableInplaceRenamer.INPLACE_RENAMER, null);
+      editor.putUserData(InplaceRefactoring.INPLACE_RENAMER, null);
     }
   }
 }

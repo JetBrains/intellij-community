@@ -26,6 +26,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.execution.ui.RunnerLayoutUi;
+import org.jetbrains.annotations.Nullable;
 
 public interface ViewContext extends Disposable {
 
@@ -40,6 +41,7 @@ public interface ViewContext extends Disposable {
 
   CellTransform.Facade getCellTransform();
 
+  @Nullable
   Tab getTabFor(final Grid grid);
 
   View getStateFor(Content content);

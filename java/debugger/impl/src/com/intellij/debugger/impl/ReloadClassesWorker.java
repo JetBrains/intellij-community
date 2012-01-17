@@ -21,11 +21,10 @@ import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.ui.MessageCategory;
 import com.sun.jdi.ReferenceType;
@@ -116,34 +115,22 @@ class ReloadClassesWorker {
     try {
       final Map<ReferenceType, byte[]> redefineMap = new HashMap<ReferenceType,byte[]>();
       int processedClassesCount = 0;
-      final IOException[] _ex = new IOException[] {null};
       for (final String qualifiedName : modifiedClasses.keySet()) {
         processedClassesCount++;
         if (qualifiedName != null) {
           myProgress.setText(qualifiedName);
           myProgress.setFraction(processedClassesCount / (double)modifiedClasses.size());
         }
-        _ex[0] = null;
         final HotSwapFile fileDescr = modifiedClasses.get(qualifiedName);
-        final byte[] buffer = ApplicationManager.getApplication().runReadAction(new Computable<byte[]>() {
-          public byte[] compute() {
-            try {
-              return fileDescr.file.contentsToByteArray();
-            }
-            catch (IOException e) {
-              _ex[0] = e;
-              return null;
-            }
-          }
-        });
-        if (buffer != null) {
+        try {
+          final byte[] buffer = FileUtil.loadFileBytes(fileDescr.file);
           final List<ReferenceType> classes = virtualMachineProxy.classesByName(qualifiedName);
           for (final ReferenceType reference : classes) {
             redefineMap.put(reference, buffer);
           }
         }
-        else {
-          reportProblem(qualifiedName, _ex[0]);
+        catch (IOException e) {
+          reportProblem(qualifiedName, e);
         }
         if (redefineMap.size() >= CLASSES_CHUNK_SIZE) {
           // reload this portion of clasess and clear the map to free memory

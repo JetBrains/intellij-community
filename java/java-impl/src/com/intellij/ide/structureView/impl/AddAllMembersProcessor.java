@@ -16,6 +16,7 @@
 package com.intellij.ide.structureView.impl;
 
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiUtil;
@@ -31,35 +32,29 @@ public class AddAllMembersProcessor extends BaseScopeProcessor {
   private final Collection<PsiElement> myAllMembers;
   private final PsiClass myPsiClass;
   private final Map<MethodSignature,PsiMethod> myMethodsBySignature = new HashMap<MethodSignature, PsiMethod>();
-  private final MemberFilter myFilter;
 
   public AddAllMembersProcessor(Collection<PsiElement> allMembers, PsiClass psiClass) {
-    this(allMembers, psiClass, ALL_ACCESSIBLE);
-  }
-
-  public AddAllMembersProcessor(Collection<PsiElement> allMembers, PsiClass psiClass, MemberFilter filter) {
     for (PsiElement psiElement : allMembers) {
       if (psiElement instanceof PsiMethod) mapMethodBySignature((PsiMethod)psiElement);
     }
     myAllMembers = allMembers;
     myPsiClass = psiClass;
-    myFilter = filter;
   }
 
   public boolean execute(PsiElement element, ResolveState state) {
     PsiMember member = (PsiMember)element;
     if (!isInteresting(element)) return true;
     if (myPsiClass.isInterface() && isObjectMember(element)) return true;
-    if (!myAllMembers.contains(member) && myFilter.isVisible(member, myPsiClass)) {
+    if (!myAllMembers.contains(member) && isVisible(member, myPsiClass)) {
       if (member instanceof PsiMethod) {
         PsiMethod psiMethod = (PsiMethod)member;
         if (shouldAdd(psiMethod)) {
           mapMethodBySignature(psiMethod);
-          myAllMembers.add(psiMethod);
+          myAllMembers.add(PsiImplUtil.handleMirror(psiMethod));
         }
       }
       else {
-        myAllMembers.add(member);
+        myAllMembers.add(PsiImplUtil.handleMirror(member));
       }
     }
     return true;
@@ -108,30 +103,17 @@ public class AddAllMembersProcessor extends BaseScopeProcessor {
     return method.hasModifierProperty(PsiModifier.STATIC);
   }
 
-  public abstract static class MemberFilter {
-    public boolean isVisible(PsiMember element, PsiClass psiClass) {
-      return !isInheritedConstructor(element, psiClass) && PsiUtil.isAccessible(element, psiClass, null) && isVisible(element);
-    }
-
-    private static boolean isInheritedConstructor(PsiMember member, PsiClass psiClass) {
-      if (!(member instanceof PsiMethod))
-        return false;
-      PsiMethod method = (PsiMethod)member;
-      return method.isConstructor() && method.getContainingClass() != psiClass;
-    }
-
-    protected abstract boolean isVisible(PsiModifierListOwner member);
+  private boolean isVisible(PsiMember element, PsiClass psiClass) {
+    return !isInheritedConstructor(element, psiClass) && PsiUtil.isAccessible(element, psiClass, null);
   }
 
-  public static final MemberFilter ALL_ACCESSIBLE = new MemberFilter() {
-    protected boolean isVisible(PsiModifierListOwner member) {
-      return true;
-    }
-  };
+  private static boolean isInheritedConstructor(PsiMember member, PsiClass psiClass) {
+    if (!(member instanceof PsiMethod))
+      return false;
+    PsiMethod method = (PsiMethod)member;
+    return method.isConstructor() && method.getContainingClass() != psiClass;
+  }
 
-  public static final MemberFilter PUBLIC_ONLY = new MemberFilter() {
-    protected boolean isVisible(PsiModifierListOwner member) {
-      return member.hasModifierProperty(PsiModifier.PUBLIC);
-    }
-  };
+
+
 }

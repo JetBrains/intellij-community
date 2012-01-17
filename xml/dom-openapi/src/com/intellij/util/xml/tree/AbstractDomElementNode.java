@@ -87,11 +87,11 @@ abstract public class AbstractDomElementNode extends SimpleNode {
 
   }
 
-  protected SimpleTextAttributes getSimpleAttributes(final int style) {
+  protected SimpleTextAttributes getSimpleAttributes(@SimpleTextAttributes.StyleAttributeConstant final int style) {
     return new SimpleTextAttributes(style, SimpleTextAttributes.REGULAR_ATTRIBUTES.getFgColor());
   }
 
-  protected SimpleTextAttributes getWavedAttributes(final int style) {
+  protected SimpleTextAttributes getWavedAttributes(@SimpleTextAttributes.StyleAttributeConstant int style) {
     return new SimpleTextAttributes(style | SimpleTextAttributes.STYLE_WAVED, SimpleTextAttributes.REGULAR_ATTRIBUTES.getFgColor(), SimpleTextAttributes.ERROR_ATTRIBUTES.getFgColor());
   }
   public boolean isExpanded() {

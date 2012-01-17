@@ -25,6 +25,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ui.UIUtil;
+import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -46,7 +47,7 @@ class MouseShortcutDialog extends DialogWrapper{
   private final JTextArea myTarConflicts;
 
   private int myButton;
-  private int myModifiers;
+  @JdkConstants.InputEventMask  private int myModifiers;
 
   /**
    * @param shortcut dialog will be initialized with this <code>shortcut</code>. It can be <code>null</code>

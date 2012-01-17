@@ -206,7 +206,7 @@ public class ApplyPatchAction extends DumbAwareAction {
                                                         final VirtualFile file,
                                                         ApplyPatchForBaseRevisionTexts texts,
                                                         boolean readonly) {
-    final SimpleDiffRequest simpleRequest = new SimpleDiffRequest(project, new StringBuilder().append("Result of patch apply to ")
+    final SimpleDiffRequest simpleRequest = new SimpleDiffRequest(project, new StringBuilder().append("Result Of Patch Apply To ")
       .append(file.getName()).append(" (").append(file.getParent() == null ? file.getPath() : file.getParent().getPath()).append(")")
       .toString());
     final DocumentImpl patched = new DocumentImpl(texts.getPatched());

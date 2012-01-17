@@ -114,11 +114,18 @@ public class LocalChangeListImpl extends LocalChangeList {
   }
 
   synchronized void addChange(Change change) {
+    if (ChangeListManagerImpl.DEBUG) {
+      System.out.println("LocalChangeListImpl.addChange: this = " + this + ", change = " + change);
+    }
     myReadChangesCache = null;
     myChanges.add(change);
   }
 
   synchronized Change removeChange(Change change) {
+    if (ChangeListManagerImpl.DEBUG) {
+      System.out.println("LocalChangeListImpl.removeChange: this = " + this + ", change = " + change);
+      System.out.println("myChanges.size() = " + myChanges.size());
+    }
     for (Change localChange : myChanges) {
       if (localChange.equals(change)) {
         myChanges.remove(localChange);

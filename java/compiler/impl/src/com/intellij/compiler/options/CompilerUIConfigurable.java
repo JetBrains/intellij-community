@@ -15,10 +15,7 @@
  */
 package com.intellij.compiler.options;
 
-import com.intellij.compiler.CompilerConfiguration;
-import com.intellij.compiler.CompilerConfigurationImpl;
-import com.intellij.compiler.CompilerWorkspaceConfiguration;
-import com.intellij.compiler.MalformedPatternException;
+import com.intellij.compiler.*;
 import com.intellij.compiler.impl.TranslatingCompilerFilesMonitor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompilerBundle;
@@ -98,6 +95,16 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
 
     // this will schedule for compilation all files that might become compilable after resource patterns' changing
     TranslatingCompilerFilesMonitor.getInstance().scanSourcesForCompilableFiles(myProject);
+    if (!workspaceConfiguration.USE_COMPILE_SERVER) {
+      JpsServerManager.getInstance().shutdownServer();
+    }
+    else {
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          JpsServerManager.getInstance().sendReloadRequest(myProject);
+        }
+      });
+    }
   }
 
   private static void applyResourcePatterns(String extensionString, final CompilerConfigurationImpl configuration)

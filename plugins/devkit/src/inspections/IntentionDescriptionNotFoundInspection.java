@@ -20,6 +20,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -53,14 +54,13 @@ public class IntentionDescriptionNotFoundInspection extends DevKitInspectionBase
 
     if (base == null || ! aClass.isInheritor(base, true)) return null;
 
-    //final PsiMethod method = findNearestMethod("getFamilyName", aClass);
-    //if (method == null) return null;
-    final String filename = aClass.getName();
-    if (filename == null) return null;
+    String descriptionDir = getDescriptionDirName(aClass);
+    if (StringUtil.isEmptyOrSpaces(descriptionDir)) {
+      return null;
+    }
 
     for (PsiDirectory description : getIntentionDescriptionsDirs(module)) {
-      PsiDirectory dir = description.findSubdirectory(filename);
-      if (dir == null) dir = description.findSubdirectory(aClass.getName());
+      PsiDirectory dir = description.findSubdirectory(descriptionDir);
       if (dir == null) continue;
       final PsiFile descr = dir.findFile("description.html");
       if (descr != null) {
@@ -81,9 +81,24 @@ public class IntentionDescriptionNotFoundInspection extends DevKitInspectionBase
     final PsiElement problem = aClass.getNameIdentifier();
     final ProblemDescriptor problemDescriptor = manager
       .createProblemDescriptor(problem == null ? nameIdentifier : problem,
-                               "Intention does not have a description", isOnTheFly, new LocalQuickFix[]{new CreateHtmlDescriptionFix(aClass.getName(), module, true)},
+                               "Intention does not have a description", isOnTheFly, new LocalQuickFix[]{new CreateHtmlDescriptionFix(descriptionDir, module, true)},
                                ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
     return new ProblemDescriptor[]{problemDescriptor};
+  }
+
+  @Nullable
+  private static String getDescriptionDirName(PsiClass aClass) {
+    String descriptionDir = "";
+    PsiClass each = aClass;
+    while (each != null) {
+      String name = each.getName();
+      if (StringUtil.isEmptyOrSpaces(name)) {
+        return null;
+      }
+      descriptionDir = name + descriptionDir;
+      each = each.getContainingClass();
+    }
+    return descriptionDir;
   }
 
   private static boolean hasBeforeAndAfterTemplate(@NotNull VirtualFile dir) {

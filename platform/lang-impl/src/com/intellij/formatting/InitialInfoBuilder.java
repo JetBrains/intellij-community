@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package com.intellij.formatting;
 
 import com.google.common.collect.ImmutableCollection;
+import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
@@ -364,12 +365,13 @@ class InitialInfoBuilder {
     buffer.append("File text:(").append(model.getTextLength()).append(")\n'");
     buffer.append(model.getText(new TextRange(0, model.getTextLength())).toString());
     buffer.append("'\n");
+    buffer.append("model (").append(model.getClass()).append("): ").append(model);
 
     if (model instanceof FormattingDocumentModelImpl) {
       final FormattingDocumentModelImpl modelImpl = (FormattingDocumentModelImpl)model;
       buffer.append("Psi Tree:\n");
       final PsiFile file = modelImpl.getFile();
-      final PsiFile[] roots = file.getPsiRoots();
+      final List<PsiFile> roots = file.getViewProvider().getAllFiles();
       for (PsiFile root : roots) {
         buffer.append("Root ");
         DebugUtil.treeToBuffer(buffer, root.getNode(), 0, false, true, true, true);
@@ -377,11 +379,11 @@ class InitialInfoBuilder {
       buffer.append('\n');
     }
 
-    LOG.error(buffer);
+    LogMessageEx.error(LOG, "Invalid ranges during formatting", buffer.toString());
   }
 
   /**
-   * We want to wrap {@link Block code blocks} sequentially, hence, need to store a processing state and continure from the point
+   * We want to wrap {@link Block code blocks} sequentially, hence, need to store a processing state and continue from the point
    * where we stopped the processing last time.
    * <p/>
    * Current class defines common contract for the state required for such a processing.

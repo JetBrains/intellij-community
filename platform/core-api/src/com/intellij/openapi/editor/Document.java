@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,9 @@ import java.beans.PropertyChangeListener;
  * Represents the contents of a text file loaded into memory, and possibly opened in an IDEA
  * text editor. Line breaks in the document text are always normalized as single \n characters,
  * and are converted to proper format when the document is saved.
+ * <p/>
+ * Please see <a href="http://confluence.jetbrains.net/display/IDEADEV/IntelliJ+IDEA+Architectural+Overview">IntelliJ IDEA Architectural Overview </a>
+ * for high-level overview.
  *
  * @see Editor#getDocument()
  * @see com.intellij.psi.PsiDocumentManager
@@ -41,7 +44,7 @@ public interface Document extends UserDataHolder {
   String PROP_WRITABLE = "writable";
 
   /**
-   * Retreives a copy of the document content. For obvious performance reasons use
+   * Retrieves a copy of the document content. For obvious performance reasons use
    * {@link #getCharsSequence()} whenever it's possible.
    *
    * @return document content.
@@ -238,7 +241,7 @@ public interface Document extends UserDataHolder {
    * @return the marker instance.
    * @see #removeGuardedBlock(RangeMarker)
    * @see #startGuardedBlockChecking()
-   * @see com.intellij.openapi.editor.actionSystem.EditorActionManager#setReadonlyFragmentModificationHandler(com.intellij.openapi.editor.actionSystem.ReadonlyFragmentModificationHandler) 
+   * @see com.intellij.openapi.editor.actionSystem.EditorActionManager#setReadonlyFragmentModificationHandler(com.intellij.openapi.editor.actionSystem.ReadonlyFragmentModificationHandler)
    */
   @NotNull RangeMarker createGuardedBlock(int startOffset, int endOffset);
 

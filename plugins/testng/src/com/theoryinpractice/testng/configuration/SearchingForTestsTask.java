@@ -346,20 +346,7 @@ public class SearchingForTestsTask extends Task.Backgroundable {
       )) {
         throw new CantRunException("Cannot test anonymous or local class \"" + data.getMainClassName() + '\"');
       }
-      final PsiMethod[] methods = ApplicationManager.getApplication().runReadAction(
-        new Computable<PsiMethod[]>() {
-          public PsiMethod[] compute() {
-            return psiClass.findMethodsByName(data.getMethodName(), true);
-          }
-        }
-      );
-      calculateDependencies(methods, classes, psiClass);
-      Collection<PsiMethod> psiMethods = classes.get(psiClass);
-      if (psiMethods == null) {
-        psiMethods = new LinkedHashSet<PsiMethod>();
-        classes.put(psiClass, psiMethods);
-      }
-      ContainerUtil.addAll(psiMethods, methods);
+      collectTestMethods(classes, psiClass, data.getMethodName());
     }
     else if (data.TEST_OBJECT.equals(TestType.GROUP.getType())) {
       //for a group, we include all classes
@@ -371,6 +358,53 @@ public class SearchingForTestsTask extends Task.Backgroundable {
         }
       }
     }
+    else if (data.TEST_OBJECT.equals(TestType.PATTERN.getType())) {
+      final String methodName = data.getMethodName();
+      for (final String className : data.getPatterns()) {
+        final PsiClass psiClass = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
+          @Nullable
+          @Override
+          public PsiClass compute() {
+            return ClassUtil.findPsiClass(psiManager, className.replace('/', '.'), null, true, getSearchScope());
+          }
+        });
+        if (psiClass == null) {
+          throw new CantRunException("Class " + className + " not found");
+        }
+        if (ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+          @Override
+          public Boolean compute() {
+            return TestNGUtil.hasTest(psiClass);
+          }
+        })) {
+          if (StringUtil.isEmpty(methodName)) {
+            calculateDependencies(null, classes, psiClass);
+          }
+          else {
+            collectTestMethods(classes, psiClass, methodName);
+          }
+        } else {
+          throw new CantRunException("No tests found in class " + className);
+        }
+      }
+    }
+  }
+
+  private void collectTestMethods(Map<PsiClass, Collection<PsiMethod>> classes, final PsiClass psiClass, final String methodName) {
+    final PsiMethod[] methods = ApplicationManager.getApplication().runReadAction(
+      new Computable<PsiMethod[]>() {
+        public PsiMethod[] compute() {
+          return psiClass.findMethodsByName(methodName, true);
+        }
+      }
+    );
+    calculateDependencies(methods, classes, psiClass);
+    Collection<PsiMethod> psiMethods = classes.get(psiClass);
+    if (psiMethods == null) {
+      psiMethods = new LinkedHashSet<PsiMethod>();
+      classes.put(psiClass, psiMethods);
+    }
+    ContainerUtil.addAll(psiMethods, methods);
   }
 
   private Map<String, String> buildTestParameters() {

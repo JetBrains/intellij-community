@@ -307,7 +307,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
       myPattern.setVisible(true);
       myDir.setVisible(false);
       myClass.setVisible(false);
-      myMethod.setVisible(false);
+      myMethod.setVisible(true);
       myForkCb.setEnabled(true);
       myForkCb.setModel(new DefaultComboBoxModel(FORK_MODE_ALL));
       myForkCb.setSelectedItem(selectedItem);

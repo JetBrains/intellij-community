@@ -27,12 +27,15 @@ import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
+import com.intellij.util.Function;
 import com.intellij.util.FunctionUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -78,7 +81,12 @@ public class TestsPattern extends TestObject {
     } else {
       JavaParametersUtil.configureProject(project, myJavaParameters, JavaParameters.JDK_AND_CLASSES_AND_TESTS, jreHome);
     }
-    addClassesListToJavaParameters(classNames, FunctionUtil.<String>id(), "", true, isJUnit4);
+    addClassesListToJavaParameters(classNames, StringUtil.isEmpty(data.METHOD_NAME) ? FunctionUtil.<String>id() : new Function<String, String>() {
+      @Override
+      public String fun(String className) {
+        return className + "," + data.METHOD_NAME;
+      }
+    }, "", true, isJUnit4);
   }
 
   @Override
@@ -100,6 +108,9 @@ public class TestsPattern extends TestObject {
                                        PsiClass testClass,
                                        PsiMethod testMethod,
                                        PsiPackage testPackage) {
+    if (testMethod != null && Comparing.strEqual(testMethod.getName(), configuration.getPersistentData().METHOD_NAME)) {
+      return true;
+    }
     return false;
   }
 

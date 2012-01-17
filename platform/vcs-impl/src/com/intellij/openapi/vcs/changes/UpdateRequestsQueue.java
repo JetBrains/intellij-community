@@ -25,6 +25,7 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.util.Consumer;
+import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 
 import javax.swing.*;
@@ -51,7 +52,9 @@ public class UpdateRequestsQueue {
   private volatile boolean myIgnoreBackgroundOperation;
 
   private boolean myRequestSubmitted;
+  private boolean myRequestRunning;
   private final List<Runnable> myWaitingUpdateCompletionQueue;
+  private final List<Semaphore> myWaitingUpdateCompletionSemaphores = new ArrayList<Semaphore>();
   private final ProjectLevelVcsManager myPlVcsManager;
   //private final ScheduledSlowlyClosingAlarm mySharedExecutor;
   private final StartupManager myStartupManager;
@@ -98,6 +101,9 @@ public class UpdateRequestsQueue {
 
       if (! myStopped) {
         if (! myRequestSubmitted) {
+          if (ChangeListManagerImpl.DEBUG) {
+            System.out.println("UpdateRequestsQueue.schedule");
+          }
           final MyRunnable runnable = new MyRunnable();
           myRequestSubmitted = true;
           myExecutor.schedule(runnable, 300, TimeUnit.MILLISECONDS);
@@ -134,6 +140,44 @@ public class UpdateRequestsQueue {
       runnable.run();
     }
     LOG.debug("Stop finished for project: " + myProject.getName());
+  }
+
+  public void waitUntilRefreshed() {
+    if (ChangeListManagerImpl.DEBUG) {
+      System.out.println("UpdateRequestsQueue.waitUntilRefreshed");
+    }
+
+    try {
+      while (true) {
+        final Semaphore semaphore = new Semaphore();
+        synchronized (myLock) {
+          if (!myRequestSubmitted && !myRequestRunning) {
+            return;
+          }
+
+          semaphore.down();
+          myWaitingUpdateCompletionSemaphores.add(semaphore);
+        }
+        if (!semaphore.waitFor(10000)) {
+          LOG.error("Too long VCS update");
+          return;
+        }
+      }
+    }
+    finally {
+      if (ChangeListManagerImpl.DEBUG) {
+        System.out.println(" - end - UpdateRequestsQueue.waitUntilRefreshed");
+      }
+    }
+  }
+
+  private void freeSemaphores() {
+    synchronized (myLock) {
+      for (Semaphore semaphore : myWaitingUpdateCompletionSemaphores) {
+        semaphore.up();
+      }
+      myWaitingUpdateCompletionSemaphores.clear();
+    }
   }
 
   public void invokeAfterUpdate(final Runnable afterUpdate, final InvokeAfterUpdateMode mode, final String title,
@@ -190,9 +234,10 @@ public class UpdateRequestsQueue {
   private class MyRunnable implements Runnable {
     public void run() {
       final List<Runnable> copy = new ArrayList<Runnable>(myWaitingUpdateCompletionQueue.size());
-
       try {
         synchronized (myLock) {
+          LOG.assertTrue(!myRequestRunning);
+          myRequestRunning = true;
           if (myStopped) {
             myRequestSubmitted = false;
             LOG.debug("MyRunnable: STOPPED, project: " + myProject.getName() + ", runnable: " + hashCode());
@@ -212,10 +257,18 @@ public class UpdateRequestsQueue {
         }
 
         LOG.debug("MyRunnable: INVOKE, project: " + myProject.getName() + ", runnable: " + hashCode());
+        if (ChangeListManagerImpl.DEBUG) {
+          System.out.println("UpdateRequestsQueue$MyRunnable.run");
+        }
+
         myDelegate.run();
+        if (ChangeListManagerImpl.DEBUG) {
+          System.out.println(" - end - UpdateRequestsQueue$MyRunnable.run");
+        }
         LOG.debug("MyRunnable: invokeD, project: " + myProject.getName() + ", runnable: " + hashCode());
       } finally {
         synchronized (myLock) {
+          myRequestRunning = false;
           LOG.debug("MyRunnable: delete executed, project: " + myProject.getName() + ", runnable: " + hashCode());
           if (! copy.isEmpty()) {
             myWaitingUpdateCompletionQueue.removeAll(copy);
@@ -229,6 +282,7 @@ public class UpdateRequestsQueue {
         for (Runnable runnable : copy) {
           runnable.run();
         }
+        freeSemaphores();
         LOG.debug("MyRunnable: Runnables executed, project: " + myProject.getName() + ", runnable: " + hashCode());
       }
     }

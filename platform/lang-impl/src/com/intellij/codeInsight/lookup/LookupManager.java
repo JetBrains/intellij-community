@@ -50,12 +50,13 @@ public abstract class LookupManager {
   }
 
   @Nullable
-  public LookupEx showLookup(Editor editor, @NotNull LookupElement[] items, String prefix) {
+  public LookupEx showLookup(Editor editor, @NotNull LookupElement[] items, @NotNull String prefix) {
     return showLookup(editor, items, prefix, LookupArranger.DEFAULT);
   }
 
   @Nullable
-  public abstract LookupEx showLookup(Editor editor, @NotNull LookupElement[] items, String prefix, @NotNull LookupArranger arranger);
+  public abstract LookupEx showLookup(Editor editor, @NotNull LookupElement[] items,
+                                      @NotNull String prefix, @NotNull LookupArranger arranger);
 
   public abstract void hideActiveLookup();
 
@@ -69,6 +70,6 @@ public abstract class LookupManager {
 
   //public abstract boolean isDisposed();
 
-  public abstract Lookup createLookup(Editor editor, @NotNull LookupElement[] items, final String prefix, LookupArranger arranger);
+  public abstract Lookup createLookup(Editor editor, @NotNull LookupElement[] items, @NotNull final String prefix, LookupArranger arranger);
 
 }

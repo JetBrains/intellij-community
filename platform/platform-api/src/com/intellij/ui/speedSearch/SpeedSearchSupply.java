@@ -23,21 +23,44 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 /**
- * User: spLeaner
+ * @author spLeaner
+ * @author Konstantin Bulenkov
  */
 public abstract class SpeedSearchSupply {
-  protected static final Key SPEED_SEARCH_COMPONENT_MARKER = new Key("SPEED_SEARCH_COMPONENT_MARKER");
+  private static final Key SPEED_SEARCH_COMPONENT_MARKER = new Key("SPEED_SEARCH_COMPONENT_MARKER");
 
   @Nullable
-  public static SpeedSearchSupply getSupply(@NotNull final JComponent speedSearchEnabledComponent) {
-      SpeedSearchSupply speedSearch = (SpeedSearchSupply) speedSearchEnabledComponent.getClientProperty(SPEED_SEARCH_COMPONENT_MARKER);
-      return speedSearch != null && speedSearch.isPopupActive() ? speedSearch : null;
+  public static SpeedSearchSupply getSupply(@NotNull final JComponent component) {
+    return getSupply(component, false);
   }
+  
+  @Nullable
+  public static SpeedSearchSupply getSupply(@NotNull final JComponent component, boolean evenIfInactive) {
+    SpeedSearchSupply speedSearch = (SpeedSearchSupply)component.getClientProperty(SPEED_SEARCH_COMPONENT_MARKER);
 
+    if (evenIfInactive) {
+      return speedSearch;
+    }
+
+    return speedSearch != null && speedSearch.isPopupActive() ? speedSearch : null;
+  }  
+
+  @Nullable
+  public abstract Iterable<TextRange> matchingFragments(@NotNull final String text);
+
+  /**
+   * Selects element according to search criteria changes
+   */
   public abstract void refreshSelection();
 
   public abstract boolean isPopupActive();
 
   @Nullable
-  public abstract Iterable<TextRange> matchingFragments(@NotNull final String text);
+  public String getEnteredPrefix() {
+    return null;
+  }
+
+  protected void installSupplyTo(JComponent component) {
+    component.putClientProperty(SPEED_SEARCH_COMPONENT_MARKER, this);
+  }
 }

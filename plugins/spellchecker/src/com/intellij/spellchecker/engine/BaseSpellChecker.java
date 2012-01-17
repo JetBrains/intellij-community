@@ -89,7 +89,7 @@ public class BaseSpellChecker implements SpellCheckerEngine {
   }
 
   private void loadCompressedDictionary(@NotNull Loader loader) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    if (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment()) {
       final CompressedDictionary dictionary = CompressedDictionary.create(loader, transform);
       if (dictionary != null) {
         addCompressedFixedDictionary(dictionary);

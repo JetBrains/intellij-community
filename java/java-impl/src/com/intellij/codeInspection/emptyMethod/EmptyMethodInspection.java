@@ -319,7 +319,7 @@ public class EmptyMethodInspection extends GlobalJavaInspectionTool {
           public void run() {
             SafeDeleteHandler.invoke(project, PsiUtilCore.toPsiElementArray(psiElements), false);
           }
-        });
+        }, project.getDisposed());
       }
     }
   }
@@ -384,7 +384,7 @@ public class EmptyMethodInspection extends GlobalJavaInspectionTool {
         public void run() {
           SafeDeleteHandler.invoke(project, PsiUtilCore.toPsiElementArray(psiElementsToIgnore), false, refreshViews);
         }
-      });
+      }, project.getDisposed());
     }
   }
 }

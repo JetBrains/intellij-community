@@ -369,7 +369,7 @@ public class ParametersList implements Cloneable {
       try {
         builder.append(parameter);
         StringUtil.escapeQuotes(builder);
-        if (builder.length() == 0 || StringUtil.indexOf(builder, ' ') >= 0) {
+        if (builder.length() == 0 || StringUtil.indexOf(builder, ' ') >= 0 || StringUtil.indexOf(builder, '|') >= 0) {
           StringUtil.quote(builder);
         }
         return builder.toString();

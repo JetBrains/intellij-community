@@ -22,7 +22,9 @@ import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -49,16 +51,13 @@ public class DebuggerStatementEditor extends DebuggerEditorImpl {
   public DebuggerStatementEditor(Project project, PsiElement context, @NonNls String recentsId, final CodeFragmentFactory factory) {
     super(project, context, recentsId, factory);
     myRecentIdx = getRecentItemsCount();
-    myEditor = new EditorTextField("", project, factory.getFileType()) {
+    final Document document = EditorFactory.getInstance().createDocument("");
+    myEditor = new EditorTextField(document, project, factory.getFileType(), false, false) {
       protected EditorEx createEditor() {
         EditorEx editor = super.createEditor();
         editor.setVerticalScrollbarVisible(true);
+        editor.setHorizontalScrollbarVisible(true);
         return editor;
-      }
-
-      @Override
-      protected boolean isOneLineMode() {
-        return false;
       }
     };
 

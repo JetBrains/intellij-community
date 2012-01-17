@@ -24,8 +24,6 @@ class MethodRepr extends ProtoMember {
     boolean satisfy(MethodRepr m);
   }
 
-  private static TypeRepr.AbstractType[] dummyAbstractType = new TypeRepr.AbstractType[0];
-
   public final TypeRepr.AbstractType[] argumentTypes;
   public final Set<TypeRepr.AbstractType> exceptions;
 

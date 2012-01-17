@@ -19,14 +19,15 @@ import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiClassOwner;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 
-public class JavaFileTreeElement extends PsiTreeElementBase<PsiJavaFile> implements ItemPresentation {
-  public JavaFileTreeElement(PsiJavaFile file) {
+public class JavaFileTreeElement extends PsiTreeElementBase<PsiClassOwner> implements ItemPresentation {
+  public JavaFileTreeElement(PsiClassOwner file) {
     super(file);
   }
 
@@ -39,7 +40,7 @@ public class JavaFileTreeElement extends PsiTreeElementBase<PsiJavaFile> impleme
     PsiClass[] classes = getElement().getClasses();
     ArrayList<StructureViewTreeElement> result = new ArrayList<StructureViewTreeElement>();
     for (PsiClass aClass : classes) {
-      result.add(new JavaClassTreeElement(aClass, false));
+      result.add(new JavaClassTreeElement(aClass, false, new HashSet<PsiClass>()));
     }
     return result;
 

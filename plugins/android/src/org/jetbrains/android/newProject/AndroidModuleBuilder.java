@@ -25,17 +25,21 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
-import com.intellij.ide.util.projectWizard.JavaModuleBuilder;
+import com.intellij.ide.util.projectWizard.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
@@ -57,14 +61,18 @@ import org.jetbrains.android.run.TargetSelectionMode;
 import org.jetbrains.android.run.testing.AndroidTestRunConfiguration;
 import org.jetbrains.android.run.testing.AndroidTestRunConfigurationType;
 import org.jetbrains.android.sdk.AndroidPlatform;
+import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 
 import static com.android.sdklib.SdkConstants.FN_ANDROID_MANIFEST_XML;
@@ -574,7 +582,7 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
   }
 
   public ModuleType getModuleType() {
-    return AndroidModuleType.getInstance();
+    return StdModuleTypes.JAVA;
   }
 
   public void setTestedModule(Module module) {
@@ -587,5 +595,64 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
 
   public void setPreferredAvd(String preferredAvd) {
     myPreferredAvd = preferredAvd;
+  }
+
+  @Override
+  public ModuleWizardStep[] createWizardSteps(WizardContext wizardContext, ModulesProvider modulesProvider) {
+    List<ModuleWizardStep> steps = new ArrayList<ModuleWizardStep>();
+    ProjectWizardStepFactory factory = ProjectWizardStepFactory.getInstance();
+    steps.add(factory.createSourcePathsStep(wizardContext, this, null, "reference.dialogs.new.project.fromScratch.source"));
+
+    if (!hasAppropriateJdk()) {
+      steps.add(new ProjectJdkForModuleStep(wizardContext, JavaSdk.getInstance()) {
+        @Override
+        public void updateDataModel() {
+          // do nothing
+        }
+
+        @Override
+        public boolean validate() {
+          for (Object o : getAllJdks()) {
+            if (o instanceof Sdk) {
+              Sdk sdk = (Sdk)o;
+              if (AndroidSdkUtils.isApplicableJdk(sdk)) {
+                return true;
+              }
+            }
+          }
+          Messages.showErrorDialog(AndroidBundle.message("no.jdk.error"), CommonBundle.getErrorTitle());
+          return false;
+        }
+      });
+    }
+
+    steps.add(new AndroidModuleWizardStep(this, wizardContext));
+    return steps.toArray(new ModuleWizardStep[steps.size()]);
+  }
+
+  public Icon getBigIcon() {
+    return AndroidUtils.ANDROID_ICON_24;
+  }
+
+  public String getDescription() {
+    return AndroidBundle.message("android.module.type.description");
+  }
+
+  public String getPresentableName() {
+    return AndroidBundle.message("android.module.type.name");
+  }
+
+  @Override
+  public String getBuilderId() {
+    return getClass().getName();
+  }
+
+  private static boolean hasAppropriateJdk() {
+    for (Sdk sdk : ProjectJdkTable.getInstance().getAllJdks()) {
+      if (AndroidSdkUtils.isApplicableJdk(sdk)) {
+        return true;
+      }
+    }
+    return false;
   }
 }

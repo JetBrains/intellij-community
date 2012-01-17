@@ -28,6 +28,7 @@ import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.ui.MouseDragHelper;
 import com.intellij.ui.PopupHandler;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -63,7 +64,7 @@ public final class StripeButton extends AnchoredButton implements ActionListener
   private Point myPressedPoint;
   private Stripe myLastStripe;
 
-  StripeButton(final InternalDecorator decorator, ToolWindowsPane pane) {
+  StripeButton(@NotNull final InternalDecorator decorator, ToolWindowsPane pane) {
     myDecorator = decorator;
     myToolWindowHandler = new MyPropertyChangeListener();
     myPane = pane;
@@ -165,6 +166,7 @@ public final class StripeButton extends AnchoredButton implements ActionListener
     return c == this;
   }
 
+  @NotNull
   public InternalDecorator getDecorator() {
     return myDecorator;
   }

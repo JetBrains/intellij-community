@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -154,7 +154,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
     }
   }
 
-  private void atomic(Runnable r) {
+  private static void atomic(Runnable r) {
     ProgressManager.getInstance().executeNonCancelableSection(r);
   }
 
@@ -484,6 +484,9 @@ public class PostprocessReformattingAspect implements PomModelAspect {
                                        final TreeSet<PostprocessFormattingTask> rangesToProcess) {
     final Set<ASTNode> nodesToProcess = new HashSet<ASTNode>(astNodes);
     final Document document = provider.getDocument();
+    if (document == null) {
+      return;
+    }
     for (final ASTNode node : astNodes) {
       nodesToProcess.remove(node);
       final FileElement fileElement = TreeUtil.getFileElement((TreeElement)node);
@@ -507,6 +510,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
           if (!currentNodeGenerated && inGeneratedContext) {
             if (element.getElementType() == TokenType.WHITE_SPACE) return false;
             final int oldIndent = CodeEditUtil.getOldIndentation(element);
+            CodeEditUtil.setOldIndentation(element, -1);
             LOG.assertTrue(oldIndent >= 0, "for not generated items old indentation must be defined: element " + element);
             rangesToProcess.add(new ReindentTask(document.createRangeMarker(element.getTextRange()), oldIndent));
             inGeneratedContext = false;
@@ -574,8 +578,10 @@ public class PostprocessReformattingAspect implements PomModelAspect {
     }
   }
 
+  @SuppressWarnings("StatementWithEmptyBody")
   private static int getNewIndent(final PsiFile psiFile, final int firstWhitespace) {
     final Document document = psiFile.getViewProvider().getDocument();
+    assert document != null;
     final int startOffset = document.getLineStartOffset(document.getLineNumber(firstWhitespace));
     int endOffset = startOffset;
     final CharSequence charsSequence = document.getCharsSequence();
@@ -592,6 +598,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
     final CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(myPsiManager.getProject());
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myPsiManager.getProject());
     final Document document = viewProvider.getDocument();
+    assert document != null;
     final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(styleSettings);
 
     documentManager.commitDocument(document);
@@ -688,6 +695,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
     @Override
     public void execute(FileViewProvider viewProvider) {
       final Document document = viewProvider.getDocument();
+      assert document != null;
       final PsiFile psiFile = viewProvider.getPsi(viewProvider.getBaseLanguage());
       for (Pair<Integer, RangeMarker> integerRangeMarkerPair : myRangesToReindent) {
         RangeMarker marker = integerRangeMarkerPair.second;

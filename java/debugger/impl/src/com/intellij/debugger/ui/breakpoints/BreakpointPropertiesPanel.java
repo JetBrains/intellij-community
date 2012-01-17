@@ -252,7 +252,7 @@ public abstract class BreakpointPropertiesPanel {
     myConditionMagnifierButton = new FixedSizeButton(myConditionCombo);
     conditionPanel.add(myConditionMagnifierButton, BorderLayout.EAST);
     myConditionMagnifierButton.setFocusable(false);
-    myConditionMagnifierButton.addActionListener(new MagnifierButtonAction(project, myConditionCombo, myConditionCheckbox.getText()));
+    myConditionMagnifierButton.addActionListener(new MagnifierButtonAction(project, myConditionCombo, "Condition"));
 
     insert(myConditionComboPanel, conditionPanel);
     insert(myLogExpressionComboPanel, myLogExpressionCombo);

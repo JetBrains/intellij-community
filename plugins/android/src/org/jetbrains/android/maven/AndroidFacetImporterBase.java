@@ -35,6 +35,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.PathUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.io.ZipUtil;
@@ -201,7 +202,24 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
           modifiableRootModel.removeOrderEntry(entry);
         }
       }
+      else if (entry instanceof LibraryOrderEntry &&
+               containsDependencyOnApklibFile((LibraryOrderEntry)entry)) {
+        modifiableRootModel.removeOrderEntry(entry);
+      }
     }
+  }
+
+  private static boolean containsDependencyOnApklibFile(@NotNull LibraryOrderEntry libraryOrderEntry) {
+    final String[] urls = libraryOrderEntry.getRootUrls(OrderRootType.CLASSES);
+
+    for (String url : urls) {
+      final String fileName = PathUtil.getFileName(PathUtil.toPresentableUrl(url));
+
+      if ("apklib".equals(FileUtil.getExtension(fileName))) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static void addCompileModuleDependency(@NotNull MavenModifiableModelsProvider modelsProvider,

@@ -549,7 +549,7 @@ public class PatchReader {
           }
         }
       }
-      if (gitPatch && "/dev/null".equals(fileName)) return;
+      if ("/dev/null".equals(fileName)) return;
       if (before) {
         if (gitPatch && fileName.startsWith("a/")) {
           fileName = fileName.substring(2);

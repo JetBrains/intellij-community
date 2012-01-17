@@ -56,13 +56,14 @@ public interface PsiLanguageInjectionHost extends PsiElement {
     public final String prefix;
     public final String suffix;
 
-    public Shred(@NotNull PsiLanguageInjectionHost host, @NotNull RangeMarker relevantRangeInHost, @NotNull String prefix, @NotNull String suffix, @NotNull TextRange range) {
+    public Shred(@NotNull PsiLanguageInjectionHost host, @NotNull final RangeMarker relevantRangeInHost, @NotNull String prefix, @NotNull String suffix, @NotNull TextRange range) {
       this.host = host;
       this.relevantRangeInHost = relevantRangeInHost;
       this.prefix = prefix;
       this.suffix = suffix;
       this.range = range;
       assert isValid();
+      assert relevantRangeInHost.isValid();
     }
 
     public RangeMarker getHostRangeMarker() {
@@ -71,8 +72,8 @@ public interface PsiLanguageInjectionHost extends PsiElement {
 
     public TextRange getRangeInsideHost() {
       TextRange hostTextRange = host.getTextRange();
-      ProperTextRange textRange = new ProperTextRange(relevantRangeInHost.getStartOffset(), relevantRangeInHost.getEndOffset());
-      textRange = textRange.intersection(hostTextRange);
+      ProperTextRange textRange = relevantRangeInHost.isValid() ? new ProperTextRange(relevantRangeInHost.getStartOffset(), relevantRangeInHost.getEndOffset()) : null;
+      textRange = textRange == null ? null : textRange.intersection(hostTextRange);
       if (textRange == null) return new ProperTextRange(0, hostTextRange.getLength());
       return textRange.shiftRight(-hostTextRange.getStartOffset());
     }
@@ -86,6 +87,25 @@ public interface PsiLanguageInjectionHost extends PsiElement {
 
     public boolean isValid() {
       return relevantRangeInHost.isValid() && host.isValid();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      Shred shred = (Shred)o;
+
+      return host.equals(shred.host) &&
+             prefix.equals(shred.prefix) &&
+             suffix.equals(shred.suffix) &&
+             range.equals(shred.range) &&
+             TextRange.create(relevantRangeInHost).equals(TextRange.create(shred.relevantRangeInHost));
+    }
+
+    @Override
+    public int hashCode() {
+      return range.hashCode();
     }
   }
 }

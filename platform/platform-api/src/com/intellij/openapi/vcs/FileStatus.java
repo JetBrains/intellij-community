@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.ui.Gray;
 
@@ -32,25 +31,25 @@ public interface FileStatus {
   Color COLOR_SWITCHED = new Color(8, 151, 143);
   Color COLOR_UNKNOWN = new Color(153, 51, 0);
 
-  FileStatus NOT_CHANGED = ServiceManager.getService(FileStatusFactory.class).createFileStatus("NOT_CHANGED", VcsBundle.message("file.status.name.up.to.date"), COLOR_NOT_CHANGED);
-  FileStatus DELETED = ServiceManager.getService(FileStatusFactory.class).createFileStatus("DELETED", VcsBundle.message("file.status.name.deleted"), COLOR_MISSING);
-  FileStatus MODIFIED = ServiceManager.getService(FileStatusFactory.class).createFileStatus("MODIFIED", VcsBundle.message("file.status.name.modified"), COLOR_MODIFIED);
-  FileStatus ADDED = ServiceManager.getService(FileStatusFactory.class).createFileStatus("ADDED", VcsBundle.message("file.status.name.added"), COLOR_ADDED);
-  FileStatus MERGE = ServiceManager.getService(FileStatusFactory.class).createFileStatus("MERGED", VcsBundle.message("file.status.name.merged"), COLOR_MERGE);
-  FileStatus UNKNOWN = ServiceManager.getService(FileStatusFactory.class).createFileStatus("UNKNOWN", VcsBundle.message("file.status.name.unknown"), COLOR_UNKNOWN);
-  FileStatus IGNORED = ServiceManager.getService(FileStatusFactory.class).createFileStatus("IDEA_FILESTATUS_IGNORED", VcsBundle.message("file.status.name.ignored"), new Color(114, 114, 56));
-  FileStatus HIJACKED = ServiceManager.getService(FileStatusFactory.class).createFileStatus("HIJACKED", VcsBundle.message("file.status.name.hijacked"), COLOR_HIJACKED);
-  FileStatus MERGED_WITH_CONFLICTS = ServiceManager.getService(FileStatusFactory.class)
+  FileStatus NOT_CHANGED = FileStatusFactory.getInstance().createFileStatus("NOT_CHANGED", VcsBundle.message("file.status.name.up.to.date"), COLOR_NOT_CHANGED);
+  FileStatus DELETED = FileStatusFactory.getInstance().createFileStatus("DELETED", VcsBundle.message("file.status.name.deleted"), COLOR_MISSING);
+  FileStatus MODIFIED = FileStatusFactory.getInstance().createFileStatus("MODIFIED", VcsBundle.message("file.status.name.modified"), COLOR_MODIFIED);
+  FileStatus ADDED = FileStatusFactory.getInstance().createFileStatus("ADDED", VcsBundle.message("file.status.name.added"), COLOR_ADDED);
+  FileStatus MERGE = FileStatusFactory.getInstance().createFileStatus("MERGED", VcsBundle.message("file.status.name.merged"), COLOR_MERGE);
+  FileStatus UNKNOWN = FileStatusFactory.getInstance().createFileStatus("UNKNOWN", VcsBundle.message("file.status.name.unknown"), COLOR_UNKNOWN);
+  FileStatus IGNORED = FileStatusFactory.getInstance().createFileStatus("IDEA_FILESTATUS_IGNORED", VcsBundle.message("file.status.name.ignored"), new Color(114, 114, 56));
+  FileStatus HIJACKED = FileStatusFactory.getInstance().createFileStatus("HIJACKED", VcsBundle.message("file.status.name.hijacked"), COLOR_HIJACKED);
+  FileStatus MERGED_WITH_CONFLICTS = FileStatusFactory.getInstance()
    .createFileStatus("IDEA_FILESTATUS_MERGED_WITH_CONFLICTS", VcsBundle.message("file.status.name.merged.with.conflicts"), Color.red);
-  FileStatus MERGED_WITH_BOTH_CONFLICTS = ServiceManager.getService(FileStatusFactory.class)
+  FileStatus MERGED_WITH_BOTH_CONFLICTS = FileStatusFactory.getInstance()
    .createFileStatus("IDEA_FILESTATUS_MERGED_WITH_BOTH_CONFLICTS", VcsBundle.message("file.status.name.merged.with.both.conflicts"), Color.red);
-  FileStatus MERGED_WITH_PROPERTY_CONFLICTS = ServiceManager.getService(FileStatusFactory.class)
+  FileStatus MERGED_WITH_PROPERTY_CONFLICTS = FileStatusFactory.getInstance()
    .createFileStatus("IDEA_FILESTATUS_MERGED_WITH_PROPERTY_CONFLICTS", VcsBundle.message("file.status.name.merged.with.property.conflicts"), Color.red);
-  FileStatus DELETED_FROM_FS = ServiceManager.getService(FileStatusFactory.class)
+  FileStatus DELETED_FROM_FS = FileStatusFactory.getInstance()
    .createFileStatus("IDEA_FILESTATUS_DELETED_FROM_FILE_SYSTEM", VcsBundle.message("file.status.name.deleted.from.file.system"),
                      new Color(119, 56, 149));
-  FileStatus SWITCHED = ServiceManager.getService(FileStatusFactory.class).createFileStatus("SWITCHED", VcsBundle.message("file.status.name.switched"), COLOR_SWITCHED);
-  FileStatus OBSOLETE = ServiceManager.getService(FileStatusFactory.class).createFileStatus("OBSOLETE", VcsBundle.message("file.status.name.obsolete"), COLOR_OUT_OF_DATE);
+  FileStatus SWITCHED = FileStatusFactory.getInstance().createFileStatus("SWITCHED", VcsBundle.message("file.status.name.switched"), COLOR_SWITCHED);
+  FileStatus OBSOLETE = FileStatusFactory.getInstance().createFileStatus("OBSOLETE", VcsBundle.message("file.status.name.obsolete"), COLOR_OUT_OF_DATE);
 
   String getText();
 

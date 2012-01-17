@@ -71,7 +71,7 @@ public class RefactoringConflictsUtil {
   }
 
   public static void checkAccessibilityConflicts(@NotNull PsiMember member,
-                                                 @Nullable String newVisibility,
+                                                 @PsiModifier.ModifierConstant @Nullable String newVisibility,
                                                  @Nullable PsiClass targetClass,
                                                  @NotNull Set<PsiMember> membersToMove,
                                                  @NotNull MultiMap<PsiElement, String> conflicts) {

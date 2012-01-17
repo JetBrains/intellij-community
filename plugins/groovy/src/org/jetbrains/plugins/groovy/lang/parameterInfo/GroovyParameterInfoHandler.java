@@ -26,6 +26,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,6 +44,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
@@ -132,10 +134,10 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     final List elementToShow = new ArrayList();
     final PsiElement parent = place.getParent();
     if (parent instanceof GrMethodCall) {
-      final Condition<GroovyResolveResult> condition = new Condition<GroovyResolveResult>() {
-        public boolean value(GroovyResolveResult groovyResolveResult) {
-          final PsiElement element = groovyResolveResult.getElement();
-          return element instanceof PsiMethod && !groovyResolveResult.isInvokedOnProperty() ||
+      final Condition<GroovyResolveResult> methodsOrClosures = new Condition<GroovyResolveResult>() {
+        public boolean value(GroovyResolveResult result) {
+          final PsiElement element = result.getElement();
+          return element instanceof PsiMethod && !result.isInvokedOnProperty() ||
                  element instanceof GrVariable && ((GrVariable)element).getTypeGroovy() instanceof GrClosureType;
         }
       };
@@ -147,18 +149,37 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
         }
         else if (type != null) {
           final GroovyResolveResult[] calls = ResolveUtil.getMethodCandidates(type, "call", place, PsiUtil.getArgumentTypes(place, true));
-          elementToShow.addAll(ContainerUtil.findAll(calls, condition));
+          elementToShow.addAll(ContainerUtil.findAll(calls, methodsOrClosures));
         }
       }
       else {
-        elementToShow.addAll(ContainerUtil.findAll(variants, condition));
+        elementToShow.addAll(ContainerUtil.findAll(variants, methodsOrClosures));
       }
     }
     else {
       elementToShow.addAll(Arrays.asList(variants));
     }
+    
+    filterOutReflectedMethods(elementToShow);
     context.setItemsToShow(ArrayUtil.toObjectArray(elementToShow));
     context.showHint(place, place.getTextRange().getStartOffset(), this);
+  }
+
+  private static void filterOutReflectedMethods(List toShow) {
+    Set<GrMethod> methods = new HashSet<GrMethod>();
+
+    for (Iterator iterator = toShow.iterator(); iterator.hasNext(); ) {
+      Object next = iterator.next();
+      if (next instanceof GroovyResolveResult) {
+        final PsiElement element = ((GroovyResolveResult)next).getElement();
+        if (element instanceof GrReflectedMethod) {
+          final GrMethod base = ((GrReflectedMethod)element).getBaseMethod();
+          if (!methods.add(base)) {
+            iterator.remove();
+          }
+        }
+      }
+    }
   }
 
   private static boolean isPropertyOrVariableInvoked(GrExpression invoked) {
@@ -189,6 +210,8 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       if (objects[i] instanceof GroovyResolveResult) {
         final GroovyResolveResult resolveResult = (GroovyResolveResult)objects[i];
         PsiNamedElement namedElement = (PsiNamedElement)resolveResult.getElement();
+        if (namedElement instanceof GrReflectedMethod) namedElement = ((GrReflectedMethod)namedElement).getBaseMethod();
+
         substitutor = resolveResult.getSubstitutor();
         assert namedElement != null;
         if (!namedElement.isValid()) {
@@ -352,7 +375,9 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
 
 
     if (element instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod) element;
+      PsiMethod method = (PsiMethod) element;
+      if (method instanceof GrReflectedMethod) method = ((GrReflectedMethod)method).getBaseMethod();
+
       if (settings.SHOW_FULL_SIGNATURES_IN_PARAMETER_INFO) {
         if (!method.isConstructor()) {
           PsiType returnType = PsiUtil.getSmartReturnType(method);

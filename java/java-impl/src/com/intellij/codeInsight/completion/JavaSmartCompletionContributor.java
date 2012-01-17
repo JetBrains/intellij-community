@@ -264,7 +264,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
           for (PsiClassType ref : method.getThrowsList().getReferencedTypes()) {
             final PsiClass exception = ref.resolve();
             if (exception != null && throwsSet.add(exception)) {
-              result.addElement(TailTypeDecorator.withTail(new JavaPsiClassReferenceElement(exception), TailType.SPACE));
+              result.addElement(TailTypeDecorator.withTail(new JavaPsiClassReferenceElement(exception), TailType.HUMBLE_SPACE));
             }
           }
         }
@@ -282,7 +282,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
         if (tryBlock == null) return;
 
         for (final PsiClassType type : ExceptionUtil.getThrownExceptions(tryBlock.getStatements())) {
-          result.addElement(TailTypeDecorator.withTail(PsiTypeLookupItem.createLookupItem(type, tryBlock).setInsertHandler(new DefaultInsertHandler()), TailType.SPACE));
+          result.addElement(TailTypeDecorator.withTail(PsiTypeLookupItem.createLookupItem(type, tryBlock).setInsertHandler(new DefaultInsertHandler()), TailType.HUMBLE_SPACE));
         }
       }
     });
@@ -356,9 +356,9 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
     PsiElement position = params.getPosition();
     if (!BasicExpressionCompletionContributor.AFTER_DOT.accepts(position)) {
       for (ExpectedTypeInfo info : mergedInfos) {
-        new JavaMembersGetter(info.getType(), position).addMembers(position, !quick, consumer);
+        new JavaMembersGetter(info.getType(), position).addMembers(params, !quick, consumer);
         if (!info.getDefaultType().equals(info.getType())) {
-          new JavaMembersGetter(info.getDefaultType(), position).addMembers(position, !quick, consumer);
+          new JavaMembersGetter(info.getDefaultType(), position).addMembers(params, !quick, consumer);
         }
       }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -358,10 +358,10 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
       "}\n" +
       "});",
       "foo(new Runnable() {\n" +
-      "            @Override\n" +
-      "            public void run() {\n" +
-      "            }\n" +
-      "        },\n" +
+      "        @Override\n" +
+      "        public void run() {\n" +
+      "        }\n" +
+      "    },\n" +
       "        new Runnable() {\n" +
       "            @Override\n" +
       "            public void run() {\n" +
@@ -435,6 +435,26 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
       "}, 1, 2);"
     );
   }
+
+  public void testAnonymousClassesOnSameLineAtMethodCallExpression() throws Exception {
+    doMethodTest(
+      "foo(new Runnable() {\n" +
+      "        public void run() {\n" +
+      "        }\n" +
+      "    }, new Runnable() {\n" +
+      "               public void run() {\n" +
+      "               }\n" +
+      "              });",
+      "foo(new Runnable() {\n" +
+      "        public void run() {\n" +
+      "        }\n" +
+      "    }, new Runnable() {\n" +
+      "        public void run() {\n" +
+      "        }\n" +
+      "    }\n" +
+      ");"
+    );
+  }
   
   public void testPackagePrivateAnnotation() {
     // Inspired by IDEA-67294
@@ -446,5 +466,27 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
       "\n" +
       "}";
     doTextTest(text, text);
+  }
+
+  public void testIncompleteMethodCall() throws Exception {
+    // Inspired by IDEA-79836.
+
+    doMethodTest(
+      "test(new Runnable() {\n" +
+      "         public void run() {\n" +
+      "         }\n" +
+      "     }, new Runnable() {\n" +
+      "         public void run() {\n" +
+      "         }\n" +
+      "     }, )",
+      "test(new Runnable() {\n" +
+      "         public void run() {\n" +
+      "         }\n" +
+      "     }, new Runnable() {\n" +
+      "         public void run() {\n" +
+      "         }\n" +
+      "     },\n" +
+      ")"
+    );
   }
 }

@@ -51,6 +51,10 @@ public abstract class GroovyScriptRunner {
   public abstract void configureCommandLine(JavaParameters params, @Nullable Module module, boolean tests, VirtualFile script,
                                             GroovyScriptRunConfiguration configuration) throws CantRunException;
 
+  public boolean shouldRefreshAfterFinish() {
+    return false;
+  }
+
   protected static String getConfPath(final String groovyHomePath) {
     String confpath = FileUtil.toSystemDependentName(groovyHomePath + "/conf/groovy-starter.conf");
     if (new File(confpath).exists()) {
@@ -108,14 +112,27 @@ public abstract class GroovyScriptRunner {
   }
 
   protected static void addClasspathFromRootModel(@Nullable Module module, boolean isTests, JavaParameters params, boolean allowDuplication) throws CantRunException {
+    PathsList nonCore = getClassPathFromRootModel(module, isTests, params, allowDuplication);
+    if (nonCore == null) return;
+
+    final String cp = nonCore.getPathsString();
+    if (!StringUtil.isEmptyOrSpaces(cp)) {
+      params.getProgramParametersList().add("--classpath");
+      params.getProgramParametersList().add(cp);
+    }
+  }
+
+  @Nullable
+  public static PathsList getClassPathFromRootModel(Module module, boolean isTests, JavaParameters params, boolean allowDuplication)
+    throws CantRunException {
     if (module == null) {
-      return;
+      return null;
     }
 
     final JavaParameters tmp = new JavaParameters();
     tmp.configureByModule(module, isTests ? JavaParameters.CLASSES_AND_TESTS : JavaParameters.CLASSES_ONLY);
     if (tmp.getClassPath().getVirtualFiles().isEmpty()) {
-      return;
+      return null;
     }
 
     Set<VirtualFile> core = new HashSet<VirtualFile>(params.getClassPath().getVirtualFiles());
@@ -126,12 +143,6 @@ public abstract class GroovyScriptRunner {
         nonCore.add(virtualFile);
       }
     }
-
-    final String cp = nonCore.getPathsString();
-    if (!StringUtil.isEmptyOrSpaces(cp)) {
-      params.getProgramParametersList().add("--classpath");
-      params.getProgramParametersList().add(cp);
-    }
+    return nonCore;
   }
-
 }

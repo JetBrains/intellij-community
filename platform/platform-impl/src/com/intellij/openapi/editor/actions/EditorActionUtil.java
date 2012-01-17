@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,27 +55,38 @@ public class EditorActionUtil {
   private EditorActionUtil() {
   }
 
-  public static void scrollRelatively(Editor editor, int lineShift) {
+  /**
+   * Tries to change given editor's viewport position in vertical dimension by the given number of visual lines.
+   * 
+   * @param editor     target editor which viewport position should be changed
+   * @param lineShift  defines viewport position's change length
+   * @param moveCaret  flag that identifies whether caret should be moved if its current position becomes off-screen
+   */
+  public static void scrollRelatively(Editor editor, int lineShift, boolean moveCaret) {
     if (lineShift != 0) {
       editor.getScrollingModel().scrollVertically(
         editor.getScrollingModel().getVerticalScrollOffset() + lineShift * editor.getLineHeight()
       );
     }
 
-    //Rectangle viewRectangle = editor.getScrollingModel().getVisibleArea();
-    //int lineNumber = editor.getCaretModel().getVisualPosition().line;
-    //if (viewRectangle != null) {
-    //  VisualPosition startPos = editor.xyToVisualPosition(new Point(0, viewRectangle.y));
-    //  int start = startPos.line + 1;
-    //  VisualPosition endPos = editor.xyToVisualPosition(new Point(0, viewRectangle.y + viewRectangle.height));
-    //  int end = endPos.line - 2;
-      //if (lineNumber < start) {
-      //  editor.getCaretModel().moveCaretRelatively(0, start - lineNumber, false, false, true);
-      //}
-      //else if (lineNumber > end) {
-      //  editor.getCaretModel().moveCaretRelatively(0, end - lineNumber, false, false, true);
-      //}
-    //}
+    if (!moveCaret) {
+      return;
+    }
+    
+    Rectangle viewRectangle = editor.getScrollingModel().getVisibleArea();
+    int lineNumber = editor.getCaretModel().getVisualPosition().line;
+    if (viewRectangle != null) {
+      VisualPosition startPos = editor.xyToVisualPosition(new Point(0, viewRectangle.y));
+      int start = startPos.line + 1;
+      VisualPosition endPos = editor.xyToVisualPosition(new Point(0, viewRectangle.y + viewRectangle.height));
+      int end = endPos.line - 2;
+      if (lineNumber < start) {
+        editor.getCaretModel().moveCaretRelatively(0, start - lineNumber, false, false, true);
+      }
+      else if (lineNumber > end) {
+        editor.getCaretModel().moveCaretRelatively(0, end - lineNumber, false, false, true);
+      }
+    }
   }
 
   public static void moveCaretRelativelyAndScroll(Editor editor,
@@ -184,7 +195,6 @@ public class EditorActionUtil {
   public static boolean isWordStart(CharSequence text, int offset, boolean isCamel) {
     char prev = offset > 0 ? text.charAt(offset - 1) : 0;
     char current = text.charAt(offset);
-    char next = offset + 1 < text.length() ? text.charAt(offset + 1) : 0;
 
     final boolean firstIsIdentifierPart = Character.isJavaIdentifierPart(prev);
     final boolean secondIsIdentifierPart = Character.isJavaIdentifierPart(current);
@@ -192,13 +202,8 @@ public class EditorActionUtil {
       return true;
     }
 
-    if (isCamel) {
-      if (firstIsIdentifierPart && secondIsIdentifierPart &&
-          (isLowerCaseOrDigit(prev) && Character.isUpperCase(current) ||
-           prev == '_' && current != '_' ||
-           Character.isUpperCase(prev) && Character.isUpperCase(current) && isLowerCaseOrDigit(next))) {
-        return true;
-      }
+    if (isCamel && firstIsIdentifierPart && secondIsIdentifierPart && isHumpBound(text, offset, true)) {
+      return true;
     }
 
     return (Character.isWhitespace(prev) || firstIsIdentifierPart) &&
@@ -221,9 +226,11 @@ public class EditorActionUtil {
     }
 
     if (isCamel) {
-      if (firstIsIdentifierPart && secondIsIdentifierPart &&
-          (Character.isLowerCase(prev) && Character.isUpperCase(current) || prev != '_' && current == '_' ||
-          Character.isUpperCase(prev) && Character.isUpperCase(current) && Character.isLowerCase(next))) {
+      if (firstIsIdentifierPart
+          && (Character.isLowerCase(prev) && Character.isUpperCase(current)
+              || prev != '_' && current == '_'
+              || Character.isUpperCase(prev) && Character.isUpperCase(current) && Character.isLowerCase(next)))
+      {
         return true;
       }
     }
@@ -728,5 +735,18 @@ public class EditorActionUtil {
       return start <= offset && offset < end;
     }
     return true;
+  }
+
+  public static boolean isHumpBound(CharSequence editorText, int offset, boolean start) {
+    final char prevChar = editorText.charAt(offset - 1);
+    final char curChar = editorText.charAt(offset);
+    final char nextChar = offset + 1 < editorText.length() ? editorText.charAt(offset + 1) : 0; // 0x00 is not lowercase.
+
+    return isLowerCaseOrDigit(prevChar) && Character.isUpperCase(curChar) ||
+        start && prevChar == '_' && curChar != '_' ||
+        !start && prevChar != '_' && curChar == '_' ||
+        start && prevChar == '$' && Character.isLetterOrDigit(curChar) ||
+        !start && Character.isLetterOrDigit(prevChar) && curChar == '$' ||
+        Character.isUpperCase(prevChar) && Character.isUpperCase(curChar) && Character.isLowerCase(nextChar);
   }
 }

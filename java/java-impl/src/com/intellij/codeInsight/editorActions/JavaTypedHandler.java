@@ -17,6 +17,7 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.completion.JavaClassReferenceCompletionContributor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.ScrollType;
@@ -37,6 +38,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -45,19 +47,6 @@ import org.jetbrains.annotations.Nullable;
 public class JavaTypedHandler extends TypedHandlerDelegate {
   static final TokenSet INVALID_INSIDE_REFERENCE = TokenSet.create(JavaTokenType.SEMICOLON, JavaTokenType.LBRACE, JavaTokenType.RBRACE);
   private boolean myJavaLTTyped;
-
-  public Result checkAutoPopup(final char charTyped, final Project project, final Editor editor, final PsiFile file) {
-    if (charTyped == '@' && file instanceof PsiJavaFile) {
-      autoPopupJavadocLookup(project, editor);
-      return Result.STOP;
-    }
-    if (charTyped == '#' || charTyped == '.') {
-      autoPopupMemberLookup(project, editor);
-      return Result.STOP;
-    }
-
-    return Result.CONTINUE;
-  }
 
   private static void autoPopupMemberLookup(Project project, final Editor editor) {
     AutoPopupController.getInstance(project).autoPopupMemberLookup(editor, new Condition<PsiFile>() {
@@ -79,7 +68,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
         if (parent instanceof PsiParameterList || parent instanceof PsiParameter) return false;
 
         if (!".".equals(lastElement.getText()) && !"#".equals(lastElement.getText())) {
-          return false;
+          return JavaClassReferenceCompletionContributor.findJavaClassReference(file, offset - 1) != null;
         }
         else{
           final PsiElement element = file.findElementAt(offset);
@@ -92,6 +81,14 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
   }
 
   public Result beforeCharTyped(final char c, final Project project, final Editor editor, final PsiFile file, final FileType fileType) {
+    if (c == '@' && file instanceof PsiJavaFile) {
+      autoPopupJavadocLookup(project, editor);
+    }
+    else if (c == '#' || c == '.') {
+      autoPopupMemberLookup(project, editor);
+    }
+
+
     final FileType originalFileType = getOriginalFileType(file);
 
     int offsetBefore = editor.getCaretModel().getOffset();
@@ -143,7 +140,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
     return Result.CONTINUE;
   }
 
-  public Result charTyped(final char c, final Project project, final Editor editor, final PsiFile file) {
+  public Result charTyped(final char c, final Project project, final Editor editor, @NotNull final PsiFile file) {
     if (myJavaLTTyped) {
       myJavaLTTyped = false;
       handleAfterJavaLT(editor, JavaTokenType.LT, JavaTokenType.GT, INVALID_INSIDE_REFERENCE);

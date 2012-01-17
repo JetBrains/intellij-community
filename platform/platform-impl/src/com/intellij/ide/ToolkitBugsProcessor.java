@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -124,22 +124,6 @@ public class ToolkitBugsProcessor {
       if (e instanceof ClassCastException && stack.length > 1) {
         return stack[0].getClassName().equals("javax.swing.plaf.synth.SynthButtonUI")
           && stack[0].getMethodName().equals("updateStyle");
-      }
-      return false;
-    }
-  }
-
-  static class Sun_6322854 extends Handler {
-    Sun_6322854() {
-      super("NPE - Failed to retrieve atom name");
-    }
-
-    @Override
-    boolean process(Throwable e, StackTraceElement[] stack) {
-      if (e instanceof NullPointerException && stack.length > 2) {
-        return (e.getMessage() != null && e.getMessage().startsWith("Failed to retrieve atom name"))
-          && stack[1].getClassName().equals("sun.awt.X11.XAtom");
-
       }
       return false;
     }

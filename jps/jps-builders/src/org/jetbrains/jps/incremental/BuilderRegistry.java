@@ -44,6 +44,14 @@ public class BuilderRegistry {
 
   }
 
+  public int getTotalBuilderCount() {
+    int count = 0;
+    for (BuilderCategory category : BuilderCategory.values()) {
+      count += getBuilders(category).size();
+    }
+    return count;
+  }
+
   public List<BuildTask> getBeforeTasks(){
     return Collections.emptyList(); // todo
   }
@@ -53,7 +61,7 @@ public class BuilderRegistry {
   }
 
   public List<Builder> getBuilders(BuilderCategory category){
-    return myBuilders.get(category); // todo
+    return Collections.unmodifiableList(myBuilders.get(category)); // todo
   }
 
   public void shutdown() {

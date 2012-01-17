@@ -237,10 +237,10 @@ public class StringUtil {
     if (convertBreaks) {
       html = html.replaceAll("<br/?>", "\n\n");
     }
-    
+
     return html.replaceAll("<(.|\n)*?>", "");
   }
-  
+
   @Nullable
   public static String toLowerCase(@Nullable final String str) {
     return str == null ? null : str.toLowerCase();
@@ -294,8 +294,7 @@ public class StringUtil {
 
   @NotNull
   public static String convertLineSeparators(@NotNull String text, @NotNull String newSeparator, @Nullable int[] offsetsToKeep,
-                                             boolean keepCarriageReturn)
-  {
+                                             boolean keepCarriageReturn) {
     StringBuilder buffer = null;
     int intactLength = 0;
     final boolean newSeparatorIsSlashN = "\n".equals(newSeparator);
@@ -899,6 +898,20 @@ public class StringUtil {
     return text;
   }
 
+  @NotNull
+  public static String trimLeading(@NotNull String string) {
+    int index = 0;
+    while (index < string.length() && Character.isWhitespace(string.charAt(index))) index++;
+    return string.substring(index);
+  }
+
+  @NotNull
+  public static String trimTrailing(@NotNull String string) {
+    int index = string.length() - 1;
+    while (index >= 0 && Character.isWhitespace(string.charAt(index))) index--;
+    return string.substring(0, index + 1);
+  }
+
   public static boolean startsWithChar(@Nullable CharSequence s, char prefix) {
     return s != null && s.length() != 0 && s.charAt(0) == prefix;
   }
@@ -968,7 +981,8 @@ public class StringUtil {
   public static String nullize(final @Nullable String s, boolean nullizeSpaces) {
     if (nullizeSpaces) {
       if (isEmpty(s)) return null;
-    } else {
+    }
+    else {
       if (isEmptyOrSpaces(s)) return null;
     }
     return s;
@@ -980,14 +994,14 @@ public class StringUtil {
 
   /**
    * Allows to answer if given symbol is white space, tabulation or line feed.
-   * 
-   * @param c  symbol to check
-   * @return   <code>true</code> if given symbol is white space, tabulation or line feed; <code>false</code> otherwise
+   *
+   * @param c symbol to check
+   * @return <code>true</code> if given symbol is white space, tabulation or line feed; <code>false</code> otherwise
    */
   public static boolean isWhiteSpace(char c) {
     return c == '\n' || c == '\t' || c == ' ';
   }
-  
+
   @NotNull
   public static String getThrowableText(@NotNull Throwable aThrowable) {
     return ExceptionUtil.getThrowableText(aThrowable);
@@ -1104,7 +1118,7 @@ public class StringUtil {
   }
 
   @NotNull
-  public static Iterable<String> tokenize(@NotNull String s, final StringTokenizer tokenizer) {
+  public static Iterable<String> tokenize(final StringTokenizer tokenizer) {
     return new Iterable<String>() {
       public Iterator<String> iterator() {
         return new Iterator<String>() {
@@ -1333,6 +1347,10 @@ public class StringUtil {
       return name.substring(0, name.length() - 3) + "y";
     }
 
+    if (name.endsWith("leaves") || name.endsWith("Leaves")) {
+      return name.substring(0, name.length() - "eaves".length()) + "eaf";
+    }
+
     String result = stripEnding(name, "s");
     if (result != null) {
       return result;
@@ -1345,6 +1363,7 @@ public class StringUtil {
     if (name.endsWith("Children") && name.length() > "Children".length()) {
       return name.substring(0, name.length() - "Children".length()) + "Child";
     }
+
 
     return null;
   }
@@ -1461,7 +1480,8 @@ public class StringUtil {
 
     return true;
   }
-  public static boolean startsWith(@NotNull CharSequence text, int startIndex,@NotNull CharSequence prefix) {
+
+  public static boolean startsWith(@NotNull CharSequence text, int startIndex, @NotNull CharSequence prefix) {
     int l1 = text.length() - startIndex;
     int l2 = prefix.length();
     if (l1 < l2) return false;
@@ -1660,7 +1680,7 @@ public class StringUtil {
       idx += 2;
     }
   }
-  
+
   public static String unescapeSlashes(@NotNull final String str) {
     final StringBuilder buf = StringBuilderSpinAllocator.alloc();
     try {
@@ -1668,7 +1688,7 @@ public class StringUtil {
       return buf.toString();
     }
     finally {
-      StringBuilderSpinAllocator.dispose(buf); 
+      StringBuilderSpinAllocator.dispose(buf);
     }
   }
 
@@ -1690,7 +1710,7 @@ public class StringUtil {
   public static void quote(@NotNull final StringBuilder builder) {
     quote(builder, '\"');
   }
-  
+
   public static void quote(@NotNull final StringBuilder builder, final char quotingChar) {
     builder.insert(0, quotingChar);
     builder.append(quotingChar);
@@ -1930,7 +1950,7 @@ public class StringUtil {
     return packageName + '.' + className;
   }
 
-  public static int compareVersionNumbers(String v1, String v2) {
+  public static int compareVersionNumbers(@Nullable String v1, @Nullable String v2) {
     if (v1 == null && v2 == null) {
       return 0;
     }
@@ -2083,7 +2103,7 @@ public class StringUtil {
   private static int naturalCompare(String string1, String string2, boolean caseSensitive) {
     final int string1Length = string1.length();
     final int string2Length = string2.length();
-    for(int i = 0, j = 0; i < string1Length && j < string2Length; i++, j++) {
+    for (int i = 0, j = 0; i < string1Length && j < string2Length; i++, j++) {
       char ch1 = string1.charAt(i);
       char ch2 = string2.charAt(j);
       if ((isDigit(ch1) || ch1 == ' ') && (isDigit(ch2) || ch2 == ' ')) {
@@ -2113,10 +2133,12 @@ public class StringUtil {
             return diff;
           }
         }
-      } else {
+      }
+      else {
         if (caseSensitive) {
           return ch1 - ch2;
-        } else {
+        }
+        else {
           // similar logic to charsMatch() below
           if (ch1 != ch2) {
             final int diff1 = Character.toUpperCase(ch1) - Character.toUpperCase(ch2);
@@ -2158,7 +2180,7 @@ public class StringUtil {
   }
 
   public static boolean equals(@Nullable CharSequence s1, @Nullable CharSequence s2) {
-    if (s1 == null ^ s2  == null) {
+    if (s1 == null ^ s2 == null) {
       return false;
     }
 

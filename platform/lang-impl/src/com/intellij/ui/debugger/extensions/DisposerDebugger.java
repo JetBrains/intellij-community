@@ -232,7 +232,7 @@ public class DisposerDebugger implements UiDebuggerExtension, Disposable  {
       tree.setRootVisible(false);
       tree.setShowsRootHandles(true);
       tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
-      myTreeBuilder = new FilteringTreeBuilder(null, tree, DisposerTree.this, structure, AlphaComparator.INSTANCE) {
+      myTreeBuilder = new FilteringTreeBuilder(tree, DisposerTree.this, structure, AlphaComparator.INSTANCE) {
         @Override
         public boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
           return structure.getRootElement() == getOriginalNode(nodeDescriptor);

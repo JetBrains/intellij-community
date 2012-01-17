@@ -50,6 +50,6 @@ public class VisibleLineMarkersPassFactory extends VisibleHighlightingPassFactor
     TextRange textRange = calculateRangeToProcess(editor);
     if (textRange == null) return null;
 
-    return new LineMarkersPass(file.getProject(), file, editor.getDocument(), textRange.getStartOffset(), textRange.getEndOffset(), false);
+    return new LineMarkersPass(file.getProject(), file, editor, editor.getDocument(), textRange.getStartOffset(), textRange.getEndOffset(), false);
   }
 }

@@ -79,8 +79,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.TreeExpansionEvent;
+import javax.swing.event.TreeWillExpandListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.ExpandVetoException;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
@@ -241,8 +244,12 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
       }
     };
     myTreeExpansionMonitor = PackageTreeExpansionMonitor.install(myTree, myProject);
-    for (ScopeTreeStructureExpander expander : Extensions.getExtensions(ScopeTreeStructureExpander.EP_NAME, myProject)) {
+    final ScopeTreeStructureExpander[] extensions = Extensions.getExtensions(ScopeTreeStructureExpander.EP_NAME, myProject);
+    for (ScopeTreeStructureExpander expander : extensions) {
       myTree.addTreeWillExpandListener(expander);
+    }
+    if (extensions.length == 0) {
+      myTree.addTreeWillExpandListener(new SortingExpandListener());
     }
     myTree.addKeyListener(new KeyAdapter() {
       public void keyPressed(KeyEvent e) {
@@ -416,11 +423,12 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
     if (rootToReload != null && rootToReload != treeModel.getRoot()) {
       final List<TreePath> treePaths = TreeUtil.collectExpandedPaths(myTree, new TreePath(rootToReload.getPath()));
       final List<TreePath> selectionPaths = TreeUtil.collectSelectedPaths(myTree, new TreePath(rootToReload.getPath()));
-      treeModel.reload(rootToReload);
       final TreePath path = new TreePath(rootToReload.getPath());
       final boolean wasCollapsed = myTree.isCollapsed(path);
       final Runnable runnable = new Runnable() {
         public void run() {
+          TreeUtil.sort(rootToReload, getNodeComparator());
+          treeModel.reload(rootToReload);
           if (!wasCollapsed) {
             myTree.collapsePath(path);
             for (TreePath treePath : treePaths) {
@@ -430,7 +438,6 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
               TreeUtil.selectPath(myTree, selectionPath);
             }
           }
-          TreeUtil.sort(rootToReload, getNodeComparator());
         }
       };
       if (ApplicationManager.getApplication().isUnitTestMode()) {
@@ -946,5 +953,19 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
         }
       }
     }
+  }
+
+  private class SortingExpandListener implements TreeWillExpandListener {
+    @Override
+    public void treeWillExpand(TreeExpansionEvent event) throws ExpandVetoException {
+      final TreePath path = event.getPath();
+      if (path == null) return;
+      final PackageDependenciesNode node = (PackageDependenciesNode)path.getLastPathComponent();
+      node.sortChildren();
+      ((DefaultTreeModel)myTree.getModel()).reload(node);
+    }
+
+    @Override
+    public void treeWillCollapse(TreeExpansionEvent event) throws ExpandVetoException {}
   }
 }

@@ -299,7 +299,7 @@ public class ChangeSignatureTest extends LightRefactoringTestCase {
   public void testMethodParametersAlignmentAfterMethodVisibilityChange() throws Exception {
     getCurrentCodeStyleSettings().ALIGN_MULTILINE_PARAMETERS = true;
     getCurrentCodeStyleSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
-    doTest("protected", null, null, new SimpleParameterGen(), new SimpleExceptionsGen(), false);
+    doTest(PsiModifier.PROTECTED, null, null, new SimpleParameterGen(), new SimpleExceptionsGen(), false);
   }
 
   public void testMethodParametersAlignmentAfterMethodReturnTypeChange() throws Exception {
@@ -318,7 +318,7 @@ public class ChangeSignatureTest extends LightRefactoringTestCase {
     doTest(null, null, newReturnType, parameterInfos, new ThrownExceptionInfo[0], generateDelegate);
   }
 
-  private void doTest(@Nullable String newVisibility,
+  private void doTest(@PsiModifier.ModifierConstant @Nullable String newVisibility,
                       @Nullable String newName,
                       @Nullable String newReturnType,
                       ParameterInfoImpl[] parameterInfo,
@@ -327,14 +327,14 @@ public class ChangeSignatureTest extends LightRefactoringTestCase {
     doTest(newVisibility, newName, newReturnType, new SimpleParameterGen(parameterInfo), new SimpleExceptionsGen(exceptionInfo), generateDelegate);
   }
 
-  private void doTest(@Nullable String newVisibility,
+  private void doTest(@PsiModifier.ModifierConstant @Nullable String newVisibility,
                       @Nullable String newName,
                       @Nullable @NonNls String newReturnType,
                       GenParams gen, final boolean generateDelegate) throws Exception {
     doTest(newVisibility, newName, newReturnType, gen, new SimpleExceptionsGen(), generateDelegate);
   }
 
-  private void doTest(@Nullable String newVisibility,
+  private void doTest(@PsiModifier.ModifierConstant @Nullable String newVisibility,
                       @Nullable String newName,
                       @Nullable String newReturnType,
                       GenParams genParams,

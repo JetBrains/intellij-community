@@ -497,7 +497,7 @@ public class JavaDocInfoGenerator {
     }
   }
 
-  private void generateCommonSection(StringBuilder buffer, PsiDocComment docComment) {
+  public void generateCommonSection(StringBuilder buffer, PsiDocComment docComment) {
     generateDescription(buffer, docComment);
     generateDeprecatedSection(buffer, docComment);
     generateSinceSection(buffer, docComment);
@@ -990,7 +990,7 @@ public class JavaDocInfoGenerator {
         }
       }
       else {
-        buffer.append(StringUtil.unescapeStringCharacters(element.getText()));
+        buffer.append(element.getText());
       }
     }
   }

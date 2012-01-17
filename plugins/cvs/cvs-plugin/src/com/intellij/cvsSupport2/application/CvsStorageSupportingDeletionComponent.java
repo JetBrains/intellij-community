@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,19 +56,14 @@ public class CvsStorageSupportingDeletionComponent extends CvsStorageComponent i
     }
   }
 
-  public void beforeCommandFinished(CommandEvent event) {
+  public void beforeCommandFinished(CommandEvent event) {}
 
-  }
+  public void undoTransparentActionStarted() {}
 
-  public void undoTransparentActionStarted() {
-  }
-
-  public void undoTransparentActionFinished() {
-  }
+  public void undoTransparentActionFinished() {}
 
   public void commandFinished(CommandEvent event) {
     myCommandLevel--;
-    if (myCommandLevel == 0) myAnotherProjectCommand = false;
     if (LOG.isDebugEnabled()) {
       LOG.debug("Finished" + event.getCommandName() + ", commandLevel: " + myCommandLevel);
     }
@@ -96,8 +91,7 @@ public class CvsStorageSupportingDeletionComponent extends CvsStorageComponent i
     myProject = null;
   }
 
-  public void beforeFileDeletion(VirtualFileEvent event) {
-  }
+  public void beforeFileDeletion(VirtualFileEvent event) {}
 
   public DeleteHandler getDeleteHandler() {
     if (myDeleteHandler == null) {
@@ -106,17 +100,17 @@ public class CvsStorageSupportingDeletionComponent extends CvsStorageComponent i
     return myDeleteHandler;
   }
 
-  public void fileDeleted(VirtualFileEvent event) {
-  }
+  public void fileDeleted(VirtualFileEvent event) {}
 
   private boolean shouldProcessEvent(VirtualFileEvent event, boolean parentShouldBeUnderCvs) {
-    if (myAnotherProjectCommand) return false;
-    VirtualFile file = event.getFile();
-    if (disabled(file)) return false;
-    if (event.isFromRefresh()) return false;
-    if (isStorageEvent(event)) return false;
-    if (!isUnderCvsManagedModuleRoot(file)) return false;
-    return !(parentShouldBeUnderCvs && !parentIsUnderCvs(file));
+    if (myAnotherProjectCommand) {
+      return false;
+    }
+    final VirtualFile file = event.getFile();
+    if (disabled(file) || event.isFromRefresh() || isStorageEvent(event) || !isUnderCvsManagedModuleRoot(file)) {
+      return false;
+    }
+    return !parentShouldBeUnderCvs || parentIsUnderCvs(file);
   }
 
   private static boolean isStorageEvent(VirtualFileEvent event) {
@@ -127,8 +121,7 @@ public class CvsStorageSupportingDeletionComponent extends CvsStorageComponent i
     return CvsUtil.fileIsUnderCvs(file.getParent());
   }
 
-  public void beforeFileMovement(VirtualFileMoveEvent event) {
-  }
+  public void beforeFileMovement(VirtualFileMoveEvent event) {}
 
   public void fileMoved(VirtualFileMoveEvent event) {
     fileCreated(event);
@@ -139,13 +132,11 @@ public class CvsStorageSupportingDeletionComponent extends CvsStorageComponent i
   }
 
   private AbstractVcs getFileVcs(VirtualFile file) {
-    AbstractVcs storedData = file.getUserData(FILE_VCS);
+    final AbstractVcs storedData = file.getUserData(FILE_VCS);
     if (storedData != null) {
       return storedData;
     }
-    else {
-      return ProjectLevelVcsManager.getInstance(myProject).getVcsFor(file);
-    }
+    return ProjectLevelVcsManager.getInstance(myProject).getVcsFor(file);
   }
 
   private boolean isUnderCvsManagedModuleRoot(VirtualFile file) {
@@ -153,8 +144,7 @@ public class CvsStorageSupportingDeletionComponent extends CvsStorageComponent i
   }
 
   private boolean disabled(VirtualFile file) {
-    return ProjectLevelVcsManager.getInstance(myProject).getVcsFor(file) !=
-           CvsVcs2.getInstance(myProject);
+    return ProjectLevelVcsManager.getInstance(myProject).getVcsFor(file) != CvsVcs2.getInstance(myProject);
   }
 
   public void beforePropertyChange(VirtualFilePropertyEvent event) {
@@ -194,17 +184,25 @@ public class CvsStorageSupportingDeletionComponent extends CvsStorageComponent i
   }
 
   private void execute() {
-    if (myCommandLevel > 0) return;
+    if (myCommandLevel > 0) {
+      return;
+    }
     //myDeletedStorage.sync();
-    if (myDeleteHandler != null) myDeleteHandler.execute();
-    if (myAddHandler != null) myAddHandler.execute();
-
+    if (!myAnotherProjectCommand) {
+      if (myDeleteHandler != null) {
+        myDeleteHandler.execute();
+      }
+      if (myAddHandler != null) {
+        myAddHandler.execute();
+      }
+    }
+    myAnotherProjectCommand = false;
     myDeleteHandler = null;
     myAddHandler = null;
   }
 
   private void initializeDeletedStorage() {
-    File storageRoot = getStorageRoot();
+    final File storageRoot = getStorageRoot();
     storageRoot.mkdirs();
     myDeletedStorage = new DeletedCVSDirectoryStorage(storageRoot);
   }

@@ -141,7 +141,7 @@ public class XmlBlock extends AbstractXmlBlock {
         // merged with other language's code blocks.
         createLeafBlocks(child, result);
       }
-      else if (child.getElementType() != TokenType.ERROR_ELEMENT) {
+      else if (child.getElementType() != TokenType.ERROR_ELEMENT || child.getFirstChildNode() != null) {
         result.add(new ReadOnlyBlock(child));
       }
       child = child.getTreeNext();

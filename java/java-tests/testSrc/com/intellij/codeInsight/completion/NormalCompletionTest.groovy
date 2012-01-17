@@ -418,6 +418,48 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     }
   }
 
+  public void testExcludeInstanceInnerClasses() throws Throwable {
+    CodeInsightSettings.getInstance().EXCLUDED_PACKAGES = ['foo']
+    myFixture.addClass 'package foo; public class Outer { public class Inner {} }'
+    myFixture.addClass 'package bar; public class Inner {}'
+    try {
+      configure()
+      assert 'bar.Inner' == ((JavaPsiClassReferenceElement)myFixture.lookupElements[0]).qualifiedName
+      assert myFixture.lookupElementStrings == ['Inner']
+    }
+    finally {
+      CodeInsightSettings.getInstance().EXCLUDED_PACKAGES = new String[0]
+    }
+  }
+
+  public void testExcludedInstanceInnerClassCreation() throws Throwable {
+    CodeInsightSettings.getInstance().EXCLUDED_PACKAGES = ['foo']
+    myFixture.addClass 'package foo; public class Outer { public class Inner {} }'
+    myFixture.addClass 'package bar; public class Inner {}'
+    try {
+      configure()
+      assert 'foo.Outer.Inner' == ((JavaPsiClassReferenceElement)myFixture.lookupElements[0]).qualifiedName
+      assert myFixture.lookupElementStrings == ['Inner']
+    }
+    finally {
+      CodeInsightSettings.getInstance().EXCLUDED_PACKAGES = new String[0]
+    }
+  }
+
+  public void testExcludedInstanceInnerClassQualifiedReference() throws Throwable {
+    CodeInsightSettings.getInstance().EXCLUDED_PACKAGES = ['foo']
+    myFixture.addClass 'package foo; public class Outer { public class Inner {} }'
+    myFixture.addClass 'package bar; public class Inner {}'
+    try {
+      configure()
+      assert 'foo.Outer.Inner' == ((JavaPsiClassReferenceElement)myFixture.lookupElements[0]).qualifiedName
+      assert myFixture.lookupElementStrings == ['Inner']
+    }
+    finally {
+      CodeInsightSettings.getInstance().EXCLUDED_PACKAGES = new String[0]
+    }
+  }
+
   public void testAtUnderClass() throws Throwable {
     doTest();
   }
@@ -937,6 +979,11 @@ public class ListUtils {
   public void testSuggestExpectedTypeMembers() throws Throwable { doTest('\n') }
   public void testSuggestExpectedTypeMembersInCall() throws Throwable { doTest('\n') }
   public void testExpectedTypesDotSelectsItem() throws Throwable { doTest('.') }
+
+  public void testExpectedTypeMembersVersusStaticImports() throws Throwable {
+    configure()
+    assertStringItems('FOO', 'FOX')
+  }
 
   public void testDoubleExpectedTypeFactoryMethod() throws Throwable {
     configure()

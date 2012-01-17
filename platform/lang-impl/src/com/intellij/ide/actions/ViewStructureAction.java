@@ -33,10 +33,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.ui.PlaceHolder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ViewStructureAction extends AnAction {
+  private static final String PLACE = "StructureViewPopup";
+  
   public ViewStructureAction() {
     setEnabledInModalContext(true);
   }
@@ -91,7 +94,16 @@ public class ViewStructureAction extends AnAction {
     final StructureViewBuilder structureViewBuilder = fileEditor.getStructureViewBuilder();
     if (structureViewBuilder == null) return null;
     StructureView structureView = structureViewBuilder.createStructureView(fileEditor, project);
-    return createStructureViewPopup(structureView.getTreeModel(), editor, project, navigatable, structureView);
+    final StructureViewModel model = structureView.getTreeModel();
+    if (model instanceof PlaceHolder) {
+      //noinspection unchecked
+      ((PlaceHolder)model).setPlace(PLACE);
+    }
+    return createStructureViewPopup(model, editor, project, navigatable, structureView);
+  }
+  
+  public static boolean isInStructureViewPopup(@NotNull PlaceHolder<String> model) {
+    return PLACE.equals(model.getPlace());
   }
 
   public static FileStructureDialog createStructureViewBasedDialog(final StructureViewModel structureViewModel,
@@ -106,7 +118,7 @@ public class ViewStructureAction extends AnAction {
                                                                    final Project project,
                                                                    final Navigatable navigatable,
                                                                    final @NotNull Disposable alternativeDisposable) {
-    return new FileStructurePopup(structureViewModel, editor, project, navigatable, alternativeDisposable, true);
+    return new FileStructurePopup(structureViewModel, editor, project, alternativeDisposable, true);
   }
   
   public void update(AnActionEvent event) {

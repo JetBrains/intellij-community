@@ -134,7 +134,7 @@ public class ElementsChooser<T> extends JPanel implements ComponentWithEmptyText
         }
       }
     };
-    speedSearch.setComparator(new SpeedSearchBase.SpeedSearchComparator(false));
+    speedSearch.setComparator(new SpeedSearchComparator(false));
     setElements(elements, marked);
     installActions(myTable);
   }

@@ -18,6 +18,7 @@ package com.intellij.ui.tabs;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.ui.PlaceProvider;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.content.AlertIcon;
@@ -31,7 +32,7 @@ import java.beans.PropertyChangeSupport;
 import java.lang.ref.WeakReference;
 import java.util.Map;
 
-public final class TabInfo implements Queryable {
+public final class TabInfo implements Queryable, PlaceProvider<String> {
 
   public static final String ACTION_GROUP = "actionGroup";
   public static final String ICON = "icon";
@@ -294,7 +295,7 @@ public final class TabInfo implements Queryable {
     return myEnabled;
   }
 
-  public TabInfo setDefaultStyle(final int style) {
+  public TabInfo setDefaultStyle(@SimpleTextAttributes.StyleAttributeConstant int style) {
     myDefaultStyle = style;
     myDefaultAttributes = null;
     update();

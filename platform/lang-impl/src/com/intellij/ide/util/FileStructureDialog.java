@@ -48,10 +48,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.ListScrollingUtil;
-import com.intellij.ui.SideBorder;
-import com.intellij.ui.SpeedSearchBase;
+import com.intellij.ui.*;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.ArrayUtil;
@@ -448,7 +445,7 @@ public class FileStructureDialog extends DialogWrapper {
       }
 
       ArrayList<Object> filteredElements = new ArrayList<Object>(childElements.length);
-      SpeedSearchBase.SpeedSearchComparator speedSearchComparator = createSpeedSearchComparator();
+      SpeedSearchComparator speedSearchComparator = createSpeedSearchComparator();
 
       for (Object child : childElements) {
         if (child instanceof AbstractTreeNode) {
@@ -474,8 +471,8 @@ public class FileStructureDialog extends DialogWrapper {
     }
   }
 
-  private static SpeedSearchBase.SpeedSearchComparator createSpeedSearchComparator() {
-    return new SpeedSearchBase.SpeedSearchComparator(false);
+  private static SpeedSearchComparator createSpeedSearchComparator() {
+    return new SpeedSearchComparator(false);
   }
 
   private class MyTreeActionsOwner implements TreeActionsOwner {

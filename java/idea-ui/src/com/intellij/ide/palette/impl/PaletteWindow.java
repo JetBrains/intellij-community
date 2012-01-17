@@ -65,6 +65,7 @@ public class PaletteWindow extends JPanel implements DataProvider {
 
     setLayout(new GridLayout(1, 1));
     myScrollPane.addMouseListener(new MyScrollPanePopupHandler());
+    myScrollPane.setBorder(null);
     KeyStroke escStroke = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0);
     new ClearActiveItemAction().registerCustomShortcutSet(new CustomShortcutSet(escStroke), myScrollPane);
     refreshPalette();

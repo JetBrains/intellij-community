@@ -20,6 +20,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
@@ -119,10 +120,11 @@ public class ConstructorAnnotationsProcessor extends AstTransformContributor {
       }
     }
 
-    if (includeFields) {
-      final Map<String,PsiMethod> properties = PropertyUtil.getAllProperties(psiClass, true, false, false);
-      for (PsiField field : psiClass.getFields()) {
-        final String name = field.getName();
+    final Map<String,PsiMethod> properties = PropertyUtil.getAllProperties(psiClass, true, false, false);
+    for (PsiField field : psiClass.getFields()) {
+      final String name = field.getName();
+      if (includeFields ||
+          includeProperties && field.hasModifierProperty(PsiModifier.FINAL) && field instanceof GrField && ((GrField)field).isProperty()) {
         if (!excludes.contains(name) && !field.hasModifierProperty(PsiModifier.STATIC) && !properties.containsKey(name)) {
           fieldsConstructor.addParameter(new GrLightParameter(name, field.getType(), fieldsConstructor).setOptional(optional));
         }

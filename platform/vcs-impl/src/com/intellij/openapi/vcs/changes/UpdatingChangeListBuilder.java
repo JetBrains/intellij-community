@@ -70,6 +70,10 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
   }
 
   public void processChangeInList(final Change change, @Nullable final ChangeList changeList, final VcsKey vcsKey) {
+    if (ChangeListManagerImpl.DEBUG) {
+      System.out.println("UpdatingChangeListBuilder.processChangeInList: change = [" + change + "], changeList = [" + changeList + "], vcsKey = [" + vcsKey + "]");
+    }
+
     checkIfDisposed();
 
     LOG.debug("[processChangeInList-1] entering, cl name: " + ((changeList == null) ? null: changeList.getName()) +
@@ -115,13 +119,18 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
   }
 
   public void processUnversionedFile(final VirtualFile file) {
+    if (ChangeListManagerImpl.DEBUG) {
+      System.out.println("UpdatingChangeListBuilder.processUnversionedFile");
+      System.out.println("file = " + file);
+    }
     if (file == null) return;
     checkIfDisposed();
     if (isExcluded(file)) return;
     if (myScope.belongsTo(new FilePathImpl(file))) {
       if (myIgnoredFilesComponent.isIgnoredFile(file)) {
         myComposite.getIgnoredFileHolder().addFile(file);
-      } else if (myComposite.getIgnoredFileHolder().containsFile(file)) {
+      }
+      else if (myComposite.getIgnoredFileHolder().containsFile(file)) {
         // does not need to add: parent dir is already added
       }
       else {

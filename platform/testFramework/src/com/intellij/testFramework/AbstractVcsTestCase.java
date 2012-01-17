@@ -75,7 +75,10 @@ public abstract class AbstractVcsTestCase {
     }
     Collections.addAll(arguments, commandLine);
     if (myTraceClient) {
-      System.out.println("*** running:\n" + StringUtil.join(arguments," "));
+      System.out.println("*** running:\n" + arguments);
+      if (StringUtil.isNotEmpty(stdin)) {
+        System.out.println("*** stdin:\n" + stdin);
+      }
     }
     final ProcessBuilder builder = new ProcessBuilder().command(arguments);
     if (workingDir != null) {
@@ -96,10 +99,7 @@ public abstract class AbstractVcsTestCase {
 
     CapturingProcessHandler handler = new CapturingProcessHandler(clientProcess, CharsetToolkit.getDefaultSystemCharset());
     ProcessOutput result = handler.runProcess(60*1000);
-    if (result.isTimeout()) {
-      throw new RuntimeException("Timeout waiting for VCS client to finish execution");
-    }
-    if (myTraceClient) {
+    if (myTraceClient || result.isTimeout()) {
       System.out.println("*** result: " + result.getExitCode());
       final String out = result.getStdout().trim();
       if (out.length() > 0) {
@@ -109,6 +109,9 @@ public abstract class AbstractVcsTestCase {
       if (err.length() > 0) {
         System.out.println("*** error:\n" + err);
       }
+    }
+    if (result.isTimeout()) {
+      throw new RuntimeException("Timeout waiting for VCS client to finish execution");
     }
     return result;
   }
@@ -337,10 +340,14 @@ public abstract class AbstractVcsTestCase {
       @Override
       protected void run() throws Throwable {
         try {
-          final long newModTs = Math.max(System.currentTimeMillis(), file.getModificationStamp() + 1100);
+          long newModTs = Math.max(System.currentTimeMillis(), file.getModificationStamp() + 1100);
           final long newTs = Math.max(System.currentTimeMillis(), file.getTimeStamp() + 1100);
           file.setBinaryContent(newContent.getBytes(), newModTs, newTs);
           final File file1 = new File(file.getPath());
+          FileUtil.writeToFile(file1, newContent.getBytes());
+          file.refresh(false, false);
+//          file.setBinaryContent(newContent.getBytes(), newModTs, newTs);
+          newModTs = Math.max(System.currentTimeMillis() + 1100, file.getModificationStamp() + 1100);
           file1.setLastModified(newModTs);
         }
         catch(IOException ex) {
@@ -421,7 +428,7 @@ public abstract class AbstractVcsTestCase {
     File beforeFile = new File(myWorkingCopyDir.getPath(), beforePath);
     String beforeFullPath = FileUtil.toSystemIndependentName(beforeFile.getPath());
     final String beforeRevPath = FileUtil.toSystemIndependentName(beforeRevision.getFile().getPath());
-    Assert.assertTrue(beforeFullPath.equalsIgnoreCase(beforeRevPath));
+    Assert.assertTrue(beforeFullPath + "!=" + beforeRevPath,  beforeFullPath.equalsIgnoreCase(beforeRevPath));
   }
 
   public static void sortChanges(final List<Change> changes) {

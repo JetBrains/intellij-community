@@ -25,9 +25,13 @@ import java.util.Comparator;
 
 public class KindSorter implements Sorter {
   public static final Sorter INSTANCE = new KindSorter();
+  public static final Sorter POPUP_INSTANCE = new KindSorter(){{isPopup = true;}};
+
 
   @NonNls public static final String ID = "KIND";
-  private static final Comparator COMPARATOR = new Comparator() {
+  boolean isPopup = false;
+
+  private final Comparator COMPARATOR = new Comparator() {
     public int compare(final Object o1, final Object o2) {
       return getWeight(o1) - getWeight(o2);
     }
@@ -37,7 +41,7 @@ public class KindSorter implements Sorter {
         return 55;
       }
       if (value instanceof JavaClassTreeElement) {
-        return 10;
+        return isPopup ? 53 : 10;
       }
       if (value instanceof ClassInitializerTreeElement) {
         return 15;

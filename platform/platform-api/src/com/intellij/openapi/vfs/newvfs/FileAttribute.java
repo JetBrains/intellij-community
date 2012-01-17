@@ -22,6 +22,7 @@ package com.intellij.openapi.vfs.newvfs;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInputStream;
@@ -96,7 +97,7 @@ public class FileAttribute {
     }
   }
 
-  public void writeAttributeBytes(VirtualFile file, byte[] bytes) throws IOException {
+  public void writeAttributeBytes(VirtualFile file, @NotNull byte[] bytes) throws IOException {
     writeAttributeBytes(file, bytes, 0, bytes.length);
   }
 

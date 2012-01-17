@@ -21,6 +21,7 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
+import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -41,7 +42,7 @@ public class SelectFromListDialog extends DialogWrapper {
                               Object[] objects,
                               ToStringAspect toStringAspect,
                               String title,
-                              int selectionMode) {
+                              @JdkConstants.ListSelectionMode int selectionMode) {
     super(project, true);
     myToStringAspect = toStringAspect;
     myList.setSelectionMode(selectionMode);

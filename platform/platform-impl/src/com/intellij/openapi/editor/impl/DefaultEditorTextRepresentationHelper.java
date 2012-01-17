@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import gnu.trove.TObjectIntHashMap;
+import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -119,14 +120,14 @@ public class DefaultEditorTextRepresentationHelper implements EditorTextRepresen
   private static class Key {
     public  String fontName;
     private int    fontSize;
-    private int    fontType;
+    @JdkConstants.FontStyle private int    fontType;
     private char   c;
 
     private Key() {
       this(null, 0, 0, ' ');
     }
 
-    Key(String fontName, int fontSize, int fontType, char c) {
+    Key(String fontName, int fontSize, @JdkConstants.FontStyle int fontType, char c) {
       this.fontName = fontName;
       this.fontSize = fontSize;
       this.fontType = fontType;

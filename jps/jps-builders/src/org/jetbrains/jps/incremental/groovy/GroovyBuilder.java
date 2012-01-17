@@ -15,8 +15,7 @@ import org.jetbrains.jps.incremental.java.JavaBuilder;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
-import org.jetbrains.jps.incremental.storage.OutputToSourceMapping;
-import org.jetbrains.jps.incremental.storage.TimestampStorage;
+import org.jetbrains.jps.incremental.storage.SourceToOutputMapping;
 import org.jetbrains.jps.server.ClasspathBootstrap;
 import org.objectweb.asm.ClassReader;
 
@@ -43,16 +42,14 @@ public class GroovyBuilder extends Builder {
 
   public Builder.ExitCode build(final CompileContext context, ModuleChunk chunk) throws ProjectBuildException {
     ExitCode exitCode = ExitCode.OK;
-    final List<File> toCompile = new ArrayList<File>();
+    final Map<File, Module> toCompile = new HashMap<File, Module>();
     try {
-      final TimestampStorage tsStorage = context.getBuildDataManager().getTimestampStorage(getName());
-      // todo: use dirty files passed from outside
-      context.processFiles(chunk, new FileProcessor() {
+      context.processFilesToRecompile(chunk, new FileProcessor() {
         @Override
         public boolean apply(Module module, File file, String sourceRoot) throws Exception {
           final String path = file.getPath();
-          if (isGroovyFile(path) && isFileDirty(file, context, tsStorage)) { //todo file type check
-            toCompile.add(file);
+          if (isGroovyFile(path)) { //todo file type check
+            toCompile.put(file, module);
           }
           return true;
         }
@@ -80,22 +77,22 @@ public class GroovyBuilder extends Builder {
       final File dir = myForStubs ? FileUtil.createTempDirectory(/*new File("/tmp/stubs/"), */"groovyStubs", null) : moduleOutputDir;
       assert dir != null;
 
-      Set<String> toCompilePaths = new LinkedHashSet<String>();
-      for (File file : toCompile) {
-        toCompilePaths.add(file.getPath());
+      final Set<String> toCompilePaths = new LinkedHashSet<String>();
+      for (File file : toCompile.keySet()) {
+        toCompilePaths.add(FileUtil.toSystemIndependentName(file.getPath()));
       }
       
       String moduleOutputPath = FileUtil.toCanonicalPath(moduleOutputDir.getPath());
       if (!moduleOutputPath.endsWith("/")) {
         moduleOutputPath += "/";
       }
-      Map<String, String> class2Src = buildClassToSourceMap(context, toCompilePaths, moduleOutputPath);
+      Map<String, String> class2Src = buildClassToSourceMap(chunk, context, toCompilePaths, moduleOutputPath);
 
       String encoding = "UTF-8"; //todo encoding
       List<String> patchers = Collections.emptyList(); //todo patchers
-      GroovycOSProcessHandler.fillFileWithGroovycParameters(tempFile, FileUtil.toCanonicalPath(dir.getPath()), toCompilePaths,
-                                                            moduleOutputPath, class2Src,
-                                                            encoding, patchers);
+      GroovycOSProcessHandler.fillFileWithGroovycParameters(
+        tempFile, FileUtil.toCanonicalPath(dir.getPath()), toCompilePaths, FileUtil.toSystemDependentName(moduleOutputPath), class2Src, encoding, patchers
+      );
 
       if (myForStubs) {
         JavaBuilder.addTempSourcePathRoot(context, dir);
@@ -112,7 +109,7 @@ public class GroovyBuilder extends Builder {
         Arrays.<String>asList(myForStubs ? "stubs" : "groovyc", tempFile.getPath())
       );
 
-      deleteCorrespondingClasses(context, toCompile);
+      deleteCorrespondingOutputFiles(context, toCompile);
 
       List<GroovycOSProcessHandler.OutputItem> successfullyCompiled = Collections.emptyList();
       try {
@@ -146,28 +143,26 @@ public class GroovyBuilder extends Builder {
         }
       }
       finally {
-        if (myForStubs) {
-          for (GroovycOSProcessHandler.OutputItem item : successfullyCompiled) {
-            tsStorage.saveStamp(new File(item.sourcePath));
-          }
-        }
-        else {
+        if (!myForStubs) {
           final Mappings delta = context.createDelta();
           final List<File> successfullyCompiledFiles = new ArrayList<File>();
           if (!successfullyCompiled.isEmpty()) {
             final Callbacks.Backend callback = delta.getCallback();
-            final OutputToSourceMapping storage = context.getBuildDataManager().getOutputToSourceStorage();
 
             for (GroovycOSProcessHandler.OutputItem item : successfullyCompiled) {
               final String sourcePath = FileUtil.toSystemIndependentName(item.sourcePath);
               final String outputPath = FileUtil.toSystemIndependentName(item.outputPath);
-              storage.update(outputPath, sourcePath);
+              final RootDescriptor moduleAndRoot = context.getModuleAndRoot(new File(sourcePath));
+              if (moduleAndRoot != null) {
+                final String moduleName = moduleAndRoot.module.getName().toLowerCase(Locale.US);
+                context.getDataManager().getSourceToOutputMap(moduleName, moduleAndRoot.isTestRoot).appendData(sourcePath, outputPath);
+              }
               callback.associate(outputPath, Callbacks.getDefaultLookup(sourcePath), new ClassReader(FileUtil.loadFileBytes(new File(outputPath))));
               successfullyCompiledFiles.add(new File(sourcePath));
             }
           }
 
-          final boolean needSecondPass = updateMappings(context, delta, chunk, toCompile, successfullyCompiledFiles);
+          final boolean needSecondPass = updateMappings(context, delta, chunk, toCompile.keySet(), successfullyCompiledFiles);
           if (needSecondPass) {
             exitCode = ExitCode.ADDITIONAL_PASS_REQUIRED;
           }
@@ -185,15 +180,22 @@ public class GroovyBuilder extends Builder {
     return path.endsWith(".groovy") || path.endsWith(".gpp");
   }
 
-  private static Map<String, String> buildClassToSourceMap(CompileContext context, Set<String> toCompilePaths, String moduleOutputPath)
-    throws Exception {
-    Map<String, String> class2Src = new HashMap<String, String>();
-    for (String out : context.getBuildDataManager().getOutputToSourceStorage().getKeys()) {
-      if (out.endsWith(".class") && out.startsWith(moduleOutputPath)) {
-        String src = context.getBuildDataManager().getOutputToSourceStorage().getState(out);
+  private static Map<String, String> buildClassToSourceMap(ModuleChunk chunk, CompileContext context, Set<String> toCompilePaths, String moduleOutputPath) throws Exception {
+    final Map<String, String> class2Src = new HashMap<String, String>();
+    for (Module module : chunk.getModules()) {
+      final String moduleName = module.getName().toLowerCase(Locale.US);
+      final SourceToOutputMapping srcToOut = context.getDataManager().getSourceToOutputMap(moduleName, context.isCompilingTests());
+      for (String src : srcToOut.getKeys()) {
         if (!toCompilePaths.contains(src) && isGroovyFile(src)) {
-          String className = out.substring(moduleOutputPath.length(), out.length() - ".class".length()).replace('/', '.');
-          class2Src.put(className, src);
+          final Collection<String> outs = srcToOut.getState(src);
+          if (outs != null) {
+            for (String out : outs) {
+              if (out.endsWith(".class") && out.startsWith(moduleOutputPath)) {
+                final String className = out.substring(moduleOutputPath.length(), out.length() - ".class".length()).replace('/', '.');
+                class2Src.put(className, src);
+              }
+            }
+          }
         }
       }
     }

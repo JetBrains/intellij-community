@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,17 +24,13 @@ import com.intellij.psi.javadoc.PsiDocTag;
  */
 public class JavaBasicWordSelectionFilter implements Condition<PsiElement> {
   public boolean value(final PsiElement e) {
-    if (e instanceof PsiJavaToken && ((PsiJavaToken)e).getTokenType() == JavaTokenType.IDENTIFIER) {
-      return true;
-    }
     return !(e instanceof PsiCodeBlock) &&
            !(e instanceof PsiArrayInitializerExpression) &&
            !(e instanceof PsiParameterList) &&
            !(e instanceof PsiExpressionList) &&
            !(e instanceof PsiBlockStatement) &&
            !(e instanceof PsiJavaCodeReferenceElement) &&
-           !(e instanceof PsiJavaToken &&
-           !(e instanceof PsiKeyword)) &&
+           !(e instanceof PsiJavaToken) &&
            !(e instanceof PsiDocTag);
   }
 }

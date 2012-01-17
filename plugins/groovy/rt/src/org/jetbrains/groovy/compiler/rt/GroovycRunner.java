@@ -16,7 +16,11 @@
 package org.jetbrains.groovy.compiler.rt;
 
 import groovy.lang.GroovyClassLoader;
-import org.codehaus.groovy.ast.*;
+import groovyjarjarasm.asm.Opcodes;
+import org.codehaus.groovy.ast.AnnotatedNode;
+import org.codehaus.groovy.ast.AnnotationNode;
+import org.codehaus.groovy.ast.ClassCodeVisitorSupport;
+import org.codehaus.groovy.ast.ClassNode;
 import org.codehaus.groovy.classgen.GeneratorContext;
 import org.codehaus.groovy.control.*;
 import org.codehaus.groovy.control.messages.WarningMessage;
@@ -416,6 +420,13 @@ public class GroovycRunner {
                 @Override
                 protected SourceUnit getSourceUnit() {
                   return source;
+                }
+
+                public void visitClass(ClassNode node) {
+                  if (node.isEnum()) {
+                    node.setModifiers(node.getModifiers() & ~Opcodes.ACC_FINAL);
+                  }
+                  super.visitClass(node);
                 }
 
                 @Override

@@ -49,10 +49,7 @@ import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.ui.InplaceButton;
-import com.intellij.ui.JBTableWithHintProvider;
-import com.intellij.ui.SpeedSearchBase;
-import com.intellij.ui.TableScrollingUtil;
+import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.*;
@@ -414,7 +411,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
         table.getSelectionModel().setSelectionInterval(viewRow, viewRow);
       }
     };
-    speedSearch.setComparator(new SpeedSearchBase.SpeedSearchComparator(false));
+    speedSearch.setComparator(new SpeedSearchComparator(false));
 
     PopupChooserBuilder builder = new PopupChooserBuilder(table);
     if (title != null) {

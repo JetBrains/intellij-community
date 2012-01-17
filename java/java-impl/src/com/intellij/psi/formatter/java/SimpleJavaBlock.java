@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
-import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.StdTokenSets;
@@ -75,10 +74,11 @@ public class SimpleJavaBlock extends AbstractJavaBlock {
         if (astNode != child && child != null) {
           offset = child.getTextRange().getStartOffset();
         }
-        if (indent != null && !(myNode.getPsi() instanceof PsiFile) && child != null && child.getElementType() != ElementType.MODIFIER_LIST) {
+        if (indent != null
+            && !(myNode.getPsi() instanceof PsiFile) && child != null && child.getElementType() != JavaElementType.MODIFIER_LIST)
+        {
           indent = Indent.getContinuationIndent(myIndentSettings.USE_RELATIVE_INDENTS);
         }
-        //indent = FormatterEx.getInstance().getContinuationIndent();
       }
       if (child != null) {
         offset += child.getTextLength();
@@ -101,7 +101,7 @@ public class SimpleJavaBlock extends AbstractJavaBlock {
   @Override
   @NotNull
   public ChildAttributes getChildAttributes(final int newChildIndex) {
-    if (myNode.getElementType() == ElementType.CONDITIONAL_EXPRESSION && mySettings.ALIGN_MULTILINE_TERNARY_OPERATION) {
+    if (myNode.getElementType() == JavaElementType.CONDITIONAL_EXPRESSION && mySettings.ALIGN_MULTILINE_TERNARY_OPERATION) {
       final Alignment usedAlignment = getUsedAlignment(newChildIndex);
       if (usedAlignment != null) {
         return new ChildAttributes(null, usedAlignment);        
@@ -129,8 +129,5 @@ public class SimpleJavaBlock extends AbstractJavaBlock {
 
   public void setStartOffset(final int startOffset) {
     myStartOffset = startOffset;
-    //if (startOffset != -1 && startOffset != myNode.getTextRange().getStartOffset()) {
-    //  assert false;
-    //}
   }
 }

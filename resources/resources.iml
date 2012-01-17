@@ -11,6 +11,7 @@
     <orderEntry type="module" module-name="RegExpSupport" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="images" exported="" />
     <orderEntry type="module" module-name="community-resources" exported="" />
+    <orderEntry type="module" module-name="execution-impl" exported="" scope="TEST" />
   </component>
   <component name="copyright">
     <Base>

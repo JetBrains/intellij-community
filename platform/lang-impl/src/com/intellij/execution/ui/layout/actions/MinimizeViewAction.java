@@ -16,6 +16,7 @@
 
 package com.intellij.execution.ui.layout.actions;
 
+import com.intellij.execution.ui.layout.Tab;
 import com.intellij.execution.ui.layout.ViewContext;
 import com.intellij.execution.ui.actions.BaseViewAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -44,9 +45,13 @@ public class MinimizeViewAction extends BaseViewAction {
 
     if (ViewContext.TAB_TOOLBAR_PLACE.equals(place) || ViewContext.TAB_POPUP_PLACE.equals(place)) {
       return false;
-    } else {
-      return getTabFor(context, content).isDefault();
+    }
+    else {
+      Tab tab = getTabFor(context, content);
+      if (tab == null) {
+        return false;
+      }
+      return tab.isDefault();
     }
   }
-
 }

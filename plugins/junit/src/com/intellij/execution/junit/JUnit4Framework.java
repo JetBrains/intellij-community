@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.testIntegration.JavaTestFramework;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -136,5 +137,38 @@ public class JUnit4Framework extends JavaTestFramework {
 
   public FileTemplateDescriptor getTestMethodFileTemplateDescriptor() {
     return new FileTemplateDescriptor("JUnit4 Test Method.java");
+  }
+
+  @Override
+  public FileTemplateDescriptor getParametersMethodFileTemplateDescriptor() {
+    return new FileTemplateDescriptor("JUnit4 Parameters Method.java");
+  }
+
+  @Override
+  public boolean isParameterized(PsiClass clazz) {
+    final PsiAnnotation annotation = AnnotationUtil.findAnnotation(clazz, "org.junit.runner.RunWith");
+    if (annotation != null) {
+      final PsiAnnotationMemberValue value = annotation.findAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
+      if (value instanceof PsiClassObjectAccessExpression) {
+        final PsiTypeElement operand = ((PsiClassObjectAccessExpression)value).getOperand();
+        final PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(operand.getType());
+        return psiClass != null && "org.junit.runners.Parameterized".equals(psiClass.getQualifiedName());
+      }
+    }
+    return false;
+  }
+
+  @Override
+  public PsiMethod findParametersMethod(PsiClass clazz) {
+    final PsiMethod[] methods = clazz.getAllMethods();
+    for (PsiMethod method : methods) {
+      if (method.hasModifierProperty(PsiModifier.PUBLIC) && 
+          method.hasModifierProperty(PsiModifier.STATIC) &&
+          AnnotationUtil.isAnnotated(method, "org.junit.runners.Parameterized.Parameters", false)) {
+        //todo check return value
+        return method;
+      }
+    }
+    return null;
   }
 }

@@ -75,7 +75,7 @@ public class PeerFactoryImpl extends PeerFactory {
   private final UIHelper myUIHelper = new MyUIHelper();
 
   public FileStatusFactory getFileStatusFactory() {
-    return ServiceManager.getService(FileStatusFactory.class);
+    return FileStatusFactory.getInstance();
   }
 
   public DialogWrapperPeerFactory getDialogWrapperPeerFactory() {

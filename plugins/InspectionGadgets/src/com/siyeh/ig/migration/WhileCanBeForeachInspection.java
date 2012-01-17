@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -435,17 +435,13 @@ public class WhileCanBeForeachInspection extends BaseInspection {
       registerStatementError(whileStatement);
     }
 
-    private static boolean isCollectionLoopStatement(
-      PsiWhileStatement whileStatement) {
-      final PsiStatement initialization =
-        getPreviousStatement(whileStatement);
+    private static boolean isCollectionLoopStatement(PsiWhileStatement whileStatement) {
+      final PsiStatement initialization = getPreviousStatement(whileStatement);
       if (!(initialization instanceof PsiDeclarationStatement)) {
         return false;
       }
-      final PsiDeclarationStatement declaration =
-        (PsiDeclarationStatement)initialization;
-      final PsiElement[] declaredElements =
-        declaration.getDeclaredElements();
+      final PsiDeclarationStatement declaration = (PsiDeclarationStatement)initialization;
+      final PsiElement[] declaredElements = declaration.getDeclaredElements();
       if (declaredElements.length != 1) {
         return false;
       }
@@ -454,9 +450,7 @@ public class WhileCanBeForeachInspection extends BaseInspection {
         return false;
       }
       final PsiVariable variable = (PsiVariable)declaredElement;
-      if (!TypeUtils.variableHasTypeOrSubtype(variable,
-                                              CommonClassNames.JAVA_UTIL_ITERATOR,
-                                              "java.util.ListIterator")) {
+      if (!TypeUtils.variableHasTypeOrSubtype(variable, CommonClassNames.JAVA_UTIL_ITERATOR, "java.util.ListIterator")) {
         return false;
       }
       final PsiExpression initialValue = variable.getInitializer();
@@ -466,18 +460,18 @@ public class WhileCanBeForeachInspection extends BaseInspection {
       if (!(initialValue instanceof PsiMethodCallExpression)) {
         return false;
       }
-      final PsiMethodCallExpression initialCall =
-        (PsiMethodCallExpression)initialValue;
-      final PsiReferenceExpression initialMethodExpression =
-        initialCall.getMethodExpression();
-      @NonNls final String initialCallName =
-        initialMethodExpression.getReferenceName();
-      if (!"iterator".equals(initialCallName) &&
-          !"listIterator".equals(initialCallName)) {
+      final PsiMethodCallExpression initialCall = (PsiMethodCallExpression)initialValue;
+      final PsiExpressionList argumentList = initialCall.getArgumentList();
+      final PsiExpression[] argument = argumentList.getExpressions();
+      if (argument.length != 0) {
         return false;
       }
-      final PsiExpression qualifier =
-        initialMethodExpression.getQualifierExpression();
+      final PsiReferenceExpression initialMethodExpression = initialCall.getMethodExpression();
+      @NonNls final String initialCallName = initialMethodExpression.getReferenceName();
+      if (!"iterator".equals(initialCallName) && !"listIterator".equals(initialCallName)) {
+        return false;
+      }
+      final PsiExpression qualifier = initialMethodExpression.getQualifierExpression();
       if (qualifier == null) {
         return false;
       }
@@ -485,15 +479,12 @@ public class WhileCanBeForeachInspection extends BaseInspection {
       if (!(qualifierType instanceof PsiClassType)) {
         return false;
       }
-      final PsiClass qualifierClass =
-        ((PsiClassType)qualifierType).resolve();
+      final PsiClass qualifierClass = ((PsiClassType)qualifierType).resolve();
       if (qualifierClass == null) {
         return false;
       }
-      if (!InheritanceUtil.isInheritor(qualifierClass,
-                                       CommonClassNames.JAVA_LANG_ITERABLE) &&
-          !InheritanceUtil.isInheritor(qualifierClass,
-                                       CommonClassNames.JAVA_UTIL_COLLECTION)) {
+      if (!InheritanceUtil.isInheritor(qualifierClass, CommonClassNames.JAVA_LANG_ITERABLE) &&
+          !InheritanceUtil.isInheritor(qualifierClass, CommonClassNames.JAVA_UTIL_COLLECTION)) {
         return false;
       }
       final PsiExpression condition = whileStatement.getCondition();
@@ -514,18 +505,15 @@ public class WhileCanBeForeachInspection extends BaseInspection {
       if (isIteratorHasNextCalled(variable, body)) {
         return false;
       }
-      if (VariableAccessUtils.variableIsAssigned(variable,
-                                                 body)) {
+      if (VariableAccessUtils.variableIsAssigned(variable, body)) {
         return false;
       }
-      if (VariableAccessUtils.variableIsPassedAsMethodArgument(variable,
-                                                               body)) {
+      if (VariableAccessUtils.variableIsPassedAsMethodArgument(variable, body)) {
         return false;
       }
       PsiElement nextSibling = whileStatement.getNextSibling();
       while (nextSibling != null) {
-        if (VariableAccessUtils.variableValueIsUsed(variable,
-                                                    nextSibling)) {
+        if (VariableAccessUtils.variableValueIsUsed(variable, nextSibling)) {
           return false;
         }
         nextSibling = nextSibling.getNextSibling();

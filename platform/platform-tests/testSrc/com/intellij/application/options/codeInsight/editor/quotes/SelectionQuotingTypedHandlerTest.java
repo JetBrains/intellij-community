@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
@@ -100,6 +101,36 @@ public class SelectionQuotingTypedHandlerTest extends LightPlatformCodeInsightFi
 
   public void testChangeNonSimilar() {
     doTest('[', "<selection><caret>\"aaa\"</selection>\nbbb\n\n", "[\"aaa\"]\nbbb\n\n");
+  }
+
+  public void testReplaceBracketAndText() {
+    doTest("'a", "<selection><caret>\"b\"</selection>\nbbb\n\n", "'a<caret>'\nbbb\n\n");
+  }
+
+  public void testTripleEnquote() {
+    doTest("\"\"\"", "<selection>text<caret></selection>\nbbb\n\n", "\"\"\"<selection>text</selection>\"\"\"\nbbb\n\n");
+  }
+
+  private void doTest(@NotNull final String cs, @NotNull String before, @NotNull String expected) {
+    final boolean smarterSelection = Registry.is("editor.smarterSelectionQuoting");
+    Registry.get("editor.smarterSelectionQuoting").setValue(true);
+    try {
+      myFixture.configureByText(FileTypes.PLAIN_TEXT, before);
+      final TypedAction typedAction = EditorActionManager.getInstance().getTypedAction();
+
+      performAction(myFixture.getProject(), new Runnable() {
+        @Override
+        public void run() {
+          for (int i = 0, max = cs.length(); i < max; i++) {
+            final char c = cs.charAt(i);
+            typedAction.actionPerformed(myFixture.getEditor(), c, ((EditorEx)myFixture.getEditor()).getDataContext());
+          }
+        }
+      });
+      myFixture.checkResult(expected);
+    } finally {
+      Registry.get("editor.smarterSelectionQuoting").setValue(smarterSelection);
+    }
   }
 
   public void testRuby7852ErrantEditor() {

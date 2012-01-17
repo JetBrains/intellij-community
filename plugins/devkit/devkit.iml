@@ -19,7 +19,6 @@
     <orderEntry type="module" module-name="execution-openapi" />
     <orderEntry type="module" module-name="dom-openapi" />
     <orderEntry type="module" module-name="execution-impl" />
-    <orderEntry type="module" module-name="lvcs-impl" />
     <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
     <orderEntry type="module" module-name="java-impl" />
     <orderEntry type="library" name="TestNG" level="project" />

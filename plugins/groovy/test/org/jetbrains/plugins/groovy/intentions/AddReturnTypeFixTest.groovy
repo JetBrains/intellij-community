@@ -1,0 +1,44 @@
+/*
+ * Copyright 2000-2012 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.jetbrains.plugins.groovy.intentions
+
+import org.jetbrains.plugins.groovy.util.TestUtils;
+
+/**
+ * @author Max Medvedev
+ */
+public class AddReturnTypeFixTest extends GrIntentionTestCase {
+  @Override
+  protected String getBasePath() {
+    return "${TestUtils.testDataPath}intentions/addReturnType/";
+  }
+
+  void testSimple() {
+    doTextTest('def f<caret>oo() {}', 'Add return type', 'def void f<caret>oo() {}')
+  }
+
+  void testTypePrams() {
+    doTextTest('def <T> f<caret>oo() {}', 'Add return type', 'def <T> void f<caret>oo() {}')
+  }
+
+  void testReturnPrimitive() {
+    doTextTest('def foo() {re<caret>turn 2}', 'Add return type', 'def int foo() {re<caret>turn 2}')
+  }
+
+  void testReturn() {
+    doTextTest('def foo() {re<caret>turn "2"}', 'Add return type', 'def String foo() {re<caret>turn "2"}')
+  }
+}

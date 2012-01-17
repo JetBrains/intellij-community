@@ -68,6 +68,15 @@ public abstract class GroovyPsiElementFactory implements JVMElementFactory {
   }
 
   /**
+   * Creates an empty class initializer block.
+   *
+   * @return the created initializer block instance.
+   * @throws IncorrectOperationException in case of an internal error.
+   */
+  @NotNull
+  public abstract GrClassInitializer createClassInitializer() throws IncorrectOperationException;
+
+  /**
    * @param qName
    * @param isStatic
    * @param isOnDemand

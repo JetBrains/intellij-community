@@ -24,6 +24,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.internal.statistic.UsageTrigger;
+import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -80,7 +81,7 @@ public class ProgramRunnerUtil {
 
     final ConfigurationType configurationType = configuration.getType();
     if (configurationType != null) {
-      UsageTrigger.trigger("execute." + configurationType.getId() + "." + executor.getId());
+      UsageTrigger.trigger("execute." + ConvertUsagesUtil.ensureProperKey(configurationType.getId()) + "." + executor.getId());
     }
 
     try {

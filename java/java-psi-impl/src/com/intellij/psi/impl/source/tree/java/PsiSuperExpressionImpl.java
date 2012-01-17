@@ -40,9 +40,8 @@ public class PsiSuperExpressionImpl extends ExpressionPsiElement implements PsiS
   public PsiType getType() {
     PsiJavaCodeReferenceElement qualifier = getQualifier();
     if (qualifier != null){
-      PsiClass aClass = (PsiClass)qualifier.resolve();
-      if (aClass == null) return null;
-      return getSuperType(aClass);
+      final PsiElement aClass = qualifier.resolve();
+      return aClass instanceof PsiClass ? getSuperType((PsiClass)aClass) : null;
     }
     for(PsiElement scope = getContext(); scope != null; scope = scope.getContext()){
       if (scope instanceof PsiClass){

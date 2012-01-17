@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Tag;
+import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,6 +62,7 @@ public class AndroidConfiguredLogFilters implements PersistentStateComponent<And
     myFilterEntries = filterEntries;
   }
 
+  @JdkConstants.PatternFlags
   static int getPatternCompileFlags(@NotNull String regex) {
     for (char c : regex.toCharArray()) {
       if (Character.isUpperCase(c)) {

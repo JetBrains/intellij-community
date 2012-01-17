@@ -15,18 +15,16 @@
     <component>
       <interface-class>com.intellij.tasks.TaskManager</interface-class>
       <implementation-class>com.intellij.tasks.impl.TaskManagerImpl</implementation-class>
-      <skipForDefaultProject/>
     </component>
-
   </project-components>
 
   <actions>
 
-    <group id="task.actions" text="_Task" popup="true">
-      <action id="tasks.activate" class="com.intellij.tasks.actions.OpenTaskAction" text="_Open...">
+    <group id="task.actions">
+      <action id="tasks.activate" class="com.intellij.tasks.actions.OpenTaskAction" text="_Open Task...">
         <keyboard-shortcut keymap="$default" first-keystroke="alt shift N"/>
       </action>
-      <action id="tasks.switch" class="com.intellij.tasks.actions.SwitchTaskAction" text="_Switch...">
+      <action id="tasks.switch" class="com.intellij.tasks.actions.SwitchTaskAction" text="_Switch Task...">
         <keyboard-shortcut keymap="$default" first-keystroke="alt shift T"/>
       </action>
       <separator/>
@@ -38,21 +36,26 @@
       <action id="tasks.analyze.stacktrace" class="com.intellij.tasks.actions.AnalyzeTaskStacktraceAction" text="Analyze _Stacktrace..."/>
     </group>
 
-    <group id="working.context" text="_Context" popup="true">
-      <action id="context.save" class="com.intellij.tasks.actions.context.SaveContextAction" text="_Save...">
+    <group id="working.context">
+      <action id="context.save" class="com.intellij.tasks.actions.context.SaveContextAction" text="_Save Context...">
         <keyboard-shortcut keymap="$default" first-keystroke="alt shift S"/>
       </action>
-      <action id="context.load" class="com.intellij.tasks.actions.context.LoadContextAction" text="_Load...">
+      <action id="context.load" class="com.intellij.tasks.actions.context.LoadContextAction" text="_Load Context...">
         <keyboard-shortcut keymap="$default" first-keystroke="alt shift L"/>
       </action>
-      <action id="context.clear" class="com.intellij.tasks.actions.context.ClearContextAction" text="_Clear">
+      <action id="context.clear" class="com.intellij.tasks.actions.context.ClearContextAction" text="_Clear Context">
         <keyboard-shortcut keymap="$default" first-keystroke="alt shift X"/>
       </action>
     </group>
 
-    <group id="tasks.and.contexts" text="Tasks menu">
+    <group id="tasks.and.contexts" text="_Tasks &amp; Contexts" popup="true">
       <reference ref="task.actions"/>
+      <separator/>
       <reference ref="working.context"/>
+    </group>
+
+    <group id="tasks.group">
+      <reference ref="tasks.and.contexts"/>
       <separator/>
       <add-to-group group-id="ToolsMenu" anchor="first"/>
     </group>
@@ -111,6 +114,7 @@
     <tasks.repositoryType implementation="com.intellij.tasks.redmine.RedmineRepositoryType"/>
     <tasks.repositoryType implementation="com.intellij.tasks.trac.TracRepositoryType"/>
 
+    <checkinHandlerFactory implementation="com.intellij.tasks.impl.TaskCheckinHandlerFactory"/>
     <!--<tasks.repositoryType implementation="com.intellij.tasks.mantis.MantisRepositoryType"/>-->
   </extensions>
 

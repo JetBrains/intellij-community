@@ -164,4 +164,24 @@ class ComboContentLayout extends ContentLayout {
   public Component getComponentFor(Content content) {
     return null;
   }
+
+  @Override
+  public String getCloseActionName() {
+    return "Close View";
+  }
+
+  @Override
+  public String getCloseAllButThisActionName() {
+    return "Close Other Views";
+  }
+
+  @Override
+  public String getPreviousContentActionName() {
+    return "Select Previous View";
+  }
+
+  @Override
+  public String getNextContentActionName() {
+    return "Select Next View";
+  }
 }

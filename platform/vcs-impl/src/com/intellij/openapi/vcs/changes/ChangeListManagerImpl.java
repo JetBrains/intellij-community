@@ -55,6 +55,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.util.*;
@@ -66,7 +67,8 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author max
  */
 public class ChangeListManagerImpl extends ChangeListManagerEx implements ProjectComponent, ChangeListOwner, JDOMExternalizable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ChangeListManagerImpl");
+  public static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ChangeListManagerImpl");
+  public static boolean DEBUG = false;
 
   private final Project myProject;
   private final ChangesViewI myChangesViewManager;
@@ -498,6 +500,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       dataHolder.getComposite(), myUpdater.getIsStoppedGetter(), myIgnoredIdeaLevel, gate);
 
     for (final VcsDirtyScope scope : scopes) {
+      if (DEBUG) {
+        System.out.println("ChangeListManagerImpl.iterateScopes: scope = " + scope);
+      }
       myUpdateChangesProgressIndicator.checkCanceled();
 
       final AbstractVcs vcs = scope.getVcs();
@@ -1284,12 +1289,18 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     });
   }
 
+  @TestOnly
+  public void waitUntilRefreshed() {
+    myUpdater.waitUntilRefreshed();
+  }
+
   /**
    * Can be called only from not AWT thread; to do smthg after ChangeListManager refresh, call invokeAfterUpdate
    */
   public boolean ensureUpToDate(final boolean canBeCanceled) {
     final EnsureUpToDateFromNonAWTThread worker = new EnsureUpToDateFromNonAWTThread(myProject);
     worker.execute();
+    myUpdater.waitUntilRefreshed();
     return worker.isDone();
   }
 

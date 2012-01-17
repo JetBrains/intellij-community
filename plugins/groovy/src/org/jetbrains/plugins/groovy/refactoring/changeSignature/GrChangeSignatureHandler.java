@@ -30,6 +30,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.ChangeSignatureHandler;
+import com.intellij.refactoring.changeSignature.ChangeSignatureUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,7 +67,7 @@ public class GrChangeSignatureHandler implements ChangeSignatureHandler {
 
   public void invoke(@NotNull final Project project, @NotNull final PsiElement[] elements, final DataContext dataContext) {
     if (elements.length != 1) return;
-    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    Editor editor = dataContext == null ? null : PlatformDataKeys.EDITOR.getData(dataContext);
     invokeOnElement(project, editor, elements[0]);
   }
 
@@ -78,7 +79,7 @@ public class GrChangeSignatureHandler implements ChangeSignatureHandler {
     if (newMethod == null) return;
 
     if (!newMethod.equals(method)) {
-      invoke(newMethod, project);
+      ChangeSignatureUtil.invokeChangeSignatureOn(method, project);
       return;
     }
 

@@ -45,6 +45,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiClass;
 
+import javax.swing.*;
+
 public class FileStructureDialogTest extends BaseProjectViewTestCase {
   public void testFileStructureForClass() throws Exception {
     final PsiClass psiClass = JavaDirectoryService.getInstance().getPackage(getPackageDirectory()).getClasses()[0];
@@ -64,7 +66,7 @@ public class FileStructureDialogTest extends BaseProjectViewTestCase {
         }
       });
       final CommanderPanel panel = dialog.getPanel();
-      assertListsEqual(panel.getModel(), "Inner1\n" + "Inner2\n" + "__method():void\n" + "_myField1:int\n" + "_myField2:String\n");
+      assertListsEqual((ListModel)panel.getModel(), "Inner1\n" + "Inner2\n" + "__method():void\n" + "_myField1:int\n" + "_myField2:String\n");
     }
     finally {
       if (dialog != null) dialog.close(0);

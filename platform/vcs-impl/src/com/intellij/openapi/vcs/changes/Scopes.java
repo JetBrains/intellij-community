@@ -16,9 +16,10 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -40,6 +41,25 @@ public class Scopes {
     myScopes.clear();
     myEverythingDirty = true;
     final DirtBuilder builder = new DirtBuilder(myGuess);
+    final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
+    final List<VcsDirectoryMapping> mappings = vcsManager.getDirectoryMappings();
+
+    final LocalFileSystem lfs = LocalFileSystem.getInstance();
+    for (VcsDirectoryMapping mapping : mappings) {
+      if (mapping.isDefaultMapping()) {
+        DefaultVcsRootPolicy.getInstance(myProject).markDefaultRootsDirty(builder, myGuess);
+      } else {
+        if (mapping.getVcs() != null) {
+          final String vcsName = mapping.getVcs();
+          final AbstractVcs vcs = vcsManager.findVcsByName(vcsName);
+          final VirtualFile file = lfs.findFileByPath(mapping.getDirectory());
+          if (file != null) {
+            builder.addDirtyDirRecursively(new VcsRoot(vcs, file));
+          }
+        }
+      }
+    }
+
     DefaultVcsRootPolicy.getInstance(myProject).markDefaultRootsDirty(builder, myGuess);
     takeDirt(builder);
   }

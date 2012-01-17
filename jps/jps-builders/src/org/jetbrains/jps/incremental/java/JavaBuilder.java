@@ -16,14 +16,12 @@ import org.jetbrains.ether.dependencyView.Mappings;
 import org.jetbrains.jps.Module;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.ProjectPaths;
-import org.jetbrains.jps.incremental.Builder;
-import org.jetbrains.jps.incremental.CompileContext;
-import org.jetbrains.jps.incremental.FileProcessor;
-import org.jetbrains.jps.incremental.ProjectBuildException;
+import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
-import org.jetbrains.jps.incremental.storage.TimestampStorage;
+import org.jetbrains.jps.incremental.storage.BuildDataManager;
+import org.jetbrains.jps.incremental.storage.SourceToFormMapping;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
@@ -74,16 +72,21 @@ public class JavaBuilder extends Builder{
           if (srcFile != null && content != null) {
             final String outputPath = FileUtil.toSystemIndependentName(out.getFile().getPath());
             final String sourcePath = FileUtil.toSystemIndependentName(srcFile.getPath());
-            try {
-              context.getBuildDataManager().getOutputToSourceStorage().update(outputPath, sourcePath);
-            }
-            catch (Exception e) {
-              context.processMessage(new CompilerMessage(BUILDER_NAME, e));
+            final RootDescriptor moduleAndRoot = context.getModuleAndRoot(srcFile);
+            final BuildDataManager dataManager = context.getDataManager();
+            if (moduleAndRoot != null) {
+              try {
+                final String moduleName = moduleAndRoot.module.getName().toLowerCase(Locale.US);
+                dataManager.getSourceToOutputMap(moduleName, context.isCompilingTests()).appendData(sourcePath, outputPath);
+              }
+              catch (Exception e) {
+                context.processMessage(new CompilerMessage(BUILDER_NAME, e));
+              }
             }
             final ClassReader reader = new ClassReader(content.getBuffer(), content.getOffset(), content.getLength());
             // todo: the callback is not thread-safe?
             //noinspection SynchronizationOnLocalVariableOrMethodParameter
-            synchronized (context.getMappings()) {
+            synchronized (dataManager.getMappings()) {
               // todo: parse class data out of synchronized block (move it from the 'associate' implementation)
               callback.associate(outputPath, Callbacks.getDefaultLookup(sourcePath), reader);
             }
@@ -115,64 +118,53 @@ public class JavaBuilder extends Builder{
 
   public ExitCode build(final CompileContext context, final ModuleChunk chunk) throws ProjectBuildException {
     try {
-      final TimestampStorage tsStorage = context.getBuildDataManager().getTimestampStorage(BUILDER_NAME);
-      final Set<File> filesToCompile = new LinkedHashSet<File>();
+      final Map<File, Module> filesToCompile = new HashMap<File, Module>();
       final List<File> formsToCompile = new ArrayList<File>();
-      final List<File> upToDateForms = new ArrayList<File>();
-      // todo: read srcRoots from JPS model
-      final Set<String> srcRoots = new HashSet<String>();
 
-      final boolean wholeModuleRebuildRequired = context.isDirty(chunk);
-      // todo: only process all sources if wholeModuleRebuild == true
-      context.processFiles(chunk, new FileProcessor() {
+      context.processFilesToRecompile(chunk, new FileProcessor() {
         public boolean apply(Module module, File file, String sourceRoot) throws Exception {
           if (JAVA_SOURCES_FILTER.accept(file)) {
-            srcRoots.add(sourceRoot);
-            if (wholeModuleRebuildRequired || isFileDirty(file, context, tsStorage)) {
-              filesToCompile.add(file);
-            }
+            filesToCompile.put(file, module);
           }
-          else if (FORM_SOURCES_FILTER.accept(file)){
-            if (wholeModuleRebuildRequired || isFileDirty(file, context, tsStorage)) {
-              formsToCompile.add(file);
-            }
-            else {
-              upToDateForms.add(file);
-            }
+          else if (FORM_SOURCES_FILTER.accept(file)) {
+            formsToCompile.add(file);
           }
           return true;
         }
       });
 
-      // todo: change logic below so that complete forms list is not required
-      
       // force compilation of bound source file if the form is dirty
       for (File form : formsToCompile) {
-        for (String root : srcRoots) {
-          final File boundSource = getBoundSource(root, form);
-          if (boundSource != null) {
-            // force compilation of classes that modified forms are bound to
-            filesToCompile.add(boundSource);
-            break;
+        final RootDescriptor descriptor = context.getModuleAndRoot(form);
+        if (descriptor != null) {
+          for (RootDescriptor rd : context.getModuleRoots(descriptor.module)) {
+            final File boundSource = getBoundSource(rd.root, form);
+            if (boundSource != null) {
+              filesToCompile.put(boundSource, rd.module);
+              break;
+            }
           }
         }
       }
 
-      // form should be considered dirty if the class it is bound to is also dirty!
-      for (File form : upToDateForms) {
-        for (String root : srcRoots) {
-          final File boundSource = getBoundSource(root, form);
-          if (boundSource != null && filesToCompile.contains(boundSource)) {
-            formsToCompile.add(form);
-            break;
+      // form should be considered dirty if the class it is bound to is dirty
+      final SourceToFormMapping sourceToFormMap = context.getDataManager().getSourceToFormMap();
+      for (File srcFile : filesToCompile.keySet()) {
+        final String srcPath = srcFile.getPath();
+        final String formPath = sourceToFormMap.getState(srcPath);
+        if (formPath != null) {
+          final File formFile = new File(formPath);
+          if (formFile.exists()) {
+            context.markDirty(formFile);
+            formsToCompile.add(formFile);
           }
+          sourceToFormMap.remove(srcPath);
         }
       }
-      upToDateForms.clear();
 
-      deleteCorrespondingClasses(context, filesToCompile);
+      deleteCorrespondingOutputFiles(context, filesToCompile);
 
-      return compile(context, chunk, filesToCompile, formsToCompile);
+      return compile(context, chunk, filesToCompile.keySet(), formsToCompile);
     }
     catch (ProjectBuildException e) {
       throw e;
@@ -190,7 +182,7 @@ public class JavaBuilder extends Builder{
   }
 
   @Nullable
-  private static File getBoundSource(String srcRoot, File formFile) throws IOException {
+  private static File getBoundSource(File srcRoot, File formFile) throws IOException {
     final String boundClassName = FormsParsing.readBoundClassName(formFile);
     if (boundClassName == null) {
       return null;
@@ -220,21 +212,19 @@ public class JavaBuilder extends Builder{
 
     final ProjectPaths paths = context.getProjectPaths();
 
-    final Mappings delta = context.createDelta();
-    DELTA_MAPPINGS_CALLBACK_KEY.set(context, delta.getCallback());
-
     // todo: consider corresponding setting in CompilerWorkspaceConfiguration
     final boolean addNotNullAssertions = true;
 
-    final Collection<File> classpath = paths.getCompilationClasspath(chunk, context.isCompilingTests(), !context.isMake());
-    final Collection<File> platformCp = paths.getPlatformCompilationClasspath(chunk, context.isCompilingTests(), !context.isMake());
+    final Collection<File> classpath = paths.getCompilationClasspath(chunk, context.isCompilingTests(), context.isProjectRebuild());
+    final Collection<File> platformCp = paths.getPlatformCompilationClasspath(chunk, context.isCompilingTests(), context.isProjectRebuild());
     final Map<File, Set<File>> outs = buildOutputDirectoriesMap(context, chunk);
     final List<String> options = getCompilationOptions(context, chunk);
 
     // begin compilation round
     final DiagnosticSink diagnosticSink = new DiagnosticSink(context);
     final OutputFilesSink outputSink = new OutputFilesSink(context);
-    Collection<File> successfulForms = Collections.emptyList();
+    final Mappings delta = context.createDelta();
+    DELTA_MAPPINGS_CALLBACK_KEY.set(context, delta.getCallback());
     try {
       if (hasSourcesToCompile) {
         final Set<File> sourcePath = TEMPORARY_SOURCE_ROOTS_KEY.get(context,Collections.<File>emptySet());
@@ -249,7 +239,7 @@ public class JavaBuilder extends Builder{
         if (!forms.isEmpty()) {
           try {
             context.processMessage(new ProgressMessage("Instrumenting forms [" + chunk.getName() + "]"));
-            successfulForms = instrumentForms(context, chunk, chunkSourcePath, compiledClassesLoader, forms, outputSink);
+            instrumentForms(context, chunk, chunkSourcePath, compiledClassesLoader, forms, outputSink);
           }
           finally {
             context.processMessage(new ProgressMessage("Finished instrumenting forms [" + chunk.getName() + "]"));
@@ -275,8 +265,6 @@ public class JavaBuilder extends Builder{
       }
     }
     finally {
-      context.setDirty(chunk, false); // no matter what result was, we should clear this flag
-
       outputSink.writePendingData();
 
       final Set<File> successfullyCompiled = outputSink.getSuccessfullyCompiled();
@@ -284,11 +272,6 @@ public class JavaBuilder extends Builder{
 
       if (updateMappings(context, delta, chunk, files, successfullyCompiled)) {
         exitCode = ExitCode.ADDITIONAL_PASS_REQUIRED;
-      }
-
-      final TimestampStorage tsStorage = context.getBuildDataManager().getTimestampStorage(BUILDER_NAME);
-      for (File file : successfulForms) {
-        tsStorage.saveStamp(file);
       }
     }
 
@@ -385,7 +368,7 @@ public class JavaBuilder extends Builder{
     }
   }
 
-  private static Collection<File> instrumentForms(
+  private static void instrumentForms(
     CompileContext context,
     ModuleChunk chunk,
     final Map<File, String> chunkSourcePath,
@@ -394,7 +377,7 @@ public class JavaBuilder extends Builder{
     OutputFilesSink outputSink) throws ProjectBuildException {
 
     final Map<String, File> class2form = new HashMap<String, File>();
-    final List<File> successfullForms = new ArrayList<File>();
+    final SourceToFormMapping sourceToFormMap = context.getDataManager().getSourceToFormMap();
 
     final Map<String, OutputFileObject> compiledClassNames = new HashMap<String, OutputFileObject>();
     for (OutputFileObject fileObject : outputSink.getFileObjects()) {
@@ -472,7 +455,10 @@ public class JavaBuilder extends Builder{
           context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, message.toString()));
         }
         else {
-          successfullForms.add(formFile);
+          final File sourceFile = outputClassFile.getSourceFile();
+          if (sourceFile != null) {
+            sourceToFormMap.update(sourceFile.getPath(), formFile.getPath());
+          }
         }
       }
       catch (Exception e) {
@@ -485,7 +471,6 @@ public class JavaBuilder extends Builder{
         }
       }
     }
-    return successfullForms;
   }
 
   private static OutputFileObject findClassFile(Map<String, OutputFileObject> outputs, String classToBind) {

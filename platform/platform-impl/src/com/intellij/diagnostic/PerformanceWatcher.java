@@ -50,6 +50,9 @@ public class PerformanceWatcher implements ApplicationComponent {
   private File myCurHangLogDir;
   private List<StackTraceElement> myStacktraceCommonPart;
 
+  /**
+   * If the product is unresponsive for UNRESPONSIVE_THRESHOLD seconds, dump threads every UNRESPONSIVE_INTERVAL seconds
+   */
   private int UNRESPONSIVE_THRESHOLD = 5;
   private int UNRESPONSIVE_INTERVAL = 5;
 
@@ -97,7 +100,6 @@ public class PerformanceWatcher implements ApplicationComponent {
 
     myLogDir = new File(PathManager.getLogPath() + "/threadDumps-" + myDateFormat.format(new Date())
                         + "-" + ApplicationInfo.getInstance().getBuild().asString());
-    myLogDir.mkdirs();
     myCurHangLogDir = myLogDir;
 
     try {
@@ -161,11 +163,10 @@ public class PerformanceWatcher implements ApplicationComponent {
         break;
       }
       if (mySwingThreadCounter != myLoopCounter) {
-        myUnresponsiveDuration++;
+        myUnresponsiveDuration += UNRESPONSIVE_INTERVAL;
         if (myUnresponsiveDuration == UNRESPONSIVE_THRESHOLD) {
           //System.out.println("EDT is not responding at " + myPrintDateFormat.format(new Date()));
           myCurHangLogDir = new File(myLogDir, myDateFormat.format(new Date()));
-          myCurHangLogDir.mkdirs();
         }
         if (myUnresponsiveDuration >= UNRESPONSIVE_THRESHOLD) {
           dumpThreads(false);
@@ -174,7 +175,9 @@ public class PerformanceWatcher implements ApplicationComponent {
       else {
         if (myUnresponsiveDuration >= UNRESPONSIVE_THRESHOLD) {
           //System.out.println("EDT was unresponsive for " + myUnresponsiveDuration + " seconds");
-          myCurHangLogDir.renameTo(new File(myLogDir, getLogDirForHang()));
+          if (myCurHangLogDir.exists()) {
+            myCurHangLogDir.renameTo(new File(myLogDir, getLogDirForHang()));
+          }
           myUnresponsiveDuration = 0;
           myCurHangLogDir = myLogDir;
 
@@ -199,6 +202,8 @@ public class PerformanceWatcher implements ApplicationComponent {
 
   public void dumpThreads(boolean millis) {
     final String suffix = millis ? "-" + String.valueOf(System.currentTimeMillis()) : "";
+    myCurHangLogDir.mkdirs();
+
     File f = new File(myCurHangLogDir, "threadDump-" + myDateFormat.format(new Date()) + suffix + ".txt");
     FileOutputStream fos;
     try {

@@ -56,7 +56,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.content.impl.ContentManagerImpl");
 
   private ContentUI myUI;
-  private ArrayList<Content> myContents;
+  private final ArrayList<Content> myContents;
   private EventListenerList myListeners;
   private List<Content> mySelection = new ArrayList<Content>();
   private final boolean myCanCloseContents;
@@ -366,12 +366,21 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   }
 
   public String getCloseActionName() {
-    return UIBundle.message("tabbed.pane.close.tab.action.name");
+    return myUI.getCloseActionName();
   }
 
-
   public String getCloseAllButThisActionName() {
-    return UIBundle.message("tabbed.pane.close.all.tabs.but.this.action.name");
+    return myUI.getCloseAllButThisActionName();
+  }
+
+  @Override
+  public String getPreviousContentActionName() {
+    return myUI.getPreviousContentActionName();
+  }
+
+  @Override
+  public String getNextContentActionName() {
+    return myUI.getNextContentActionName();
   }
 
   public List<AnAction> getAdditionalPopupActions(@NotNull final Content content) {
@@ -651,7 +660,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   public void dispose() {
     myDisposed = true;
 
-    myContents = null;
+    myContents.clear();
     mySelection = null;
     myContentWithChangedComponent.clear();
     myUI = null;

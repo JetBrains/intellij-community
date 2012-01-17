@@ -77,6 +77,7 @@
   <depends>IntentionPowerPack</depends>
 
   <depends optional="true" config-file="maven-support.xml">org.jetbrains.idea.maven</depends>
+  <depends optional="true" config-file="test-ng.xml">TestNG-J</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
@@ -116,8 +117,7 @@
     <facetType implementation="org.jetbrains.android.facet.AndroidFacetType"/>
     <framework.detector implementation="org.jetbrains.android.facet.AndroidFrameworkDetector"/>
     <fileTemplateGroup implementation="org.jetbrains.android.AndroidFileTemplateProvider"/>
-    <moduleType id="ANDROID_MODULE" implementationClass="org.jetbrains.android.newProject.AndroidModuleType" classpathProvider="true"/>
-    <moduleConfigurationEditorProvider implementation="org.jetbrains.android.newProject.AndroidModuleConfigurationEditorProvider"/>
+    <moduleBuilder builderClass="org.jetbrains.android.newProject.AndroidModuleBuilder"/>
 
     <compiler implementation="org.jetbrains.android.compiler.AndroidIncludingCompiler"/>
     <compiler implementation="org.jetbrains.android.compiler.AndroidRenderscriptCompiler"/>
@@ -151,6 +151,7 @@
     <findUsagesHandlerFactory implementation="org.jetbrains.android.AndroidFindUsagesHandlerFactory"/>
     <xml.schemaProvider implementation="org.jetbrains.android.AndroidXmlSchemaProvider"/>
     <project.converterProvider implementation="org.jetbrains.android.converter.AndroidModuleConverterProvider"/>
+    <project.converterProvider implementation="org.jetbrains.android.converter.AndroidModuleToJavaModuleConverterProvider"/>
     <annotator language="XML" implementationClass="org.jetbrains.android.AndroidColorAnnotator" order="first"/>
     <xml.elementDescriptorProvider implementation="org.jetbrains.android.dom.AndroidDomElementDescriptorProvider" order="first"/>
 
@@ -184,5 +185,6 @@
 
   <extensionPoints>
     <extensionPoint name="mavenProvider" interface="org.jetbrains.android.maven.AndroidMavenProvider"/>
+    <extensionPoint name="lightBuildProvider" interface="org.jetbrains.android.compiler.AndroidLightBuildProvider"/>
   </extensionPoints>
 </idea-plugin>

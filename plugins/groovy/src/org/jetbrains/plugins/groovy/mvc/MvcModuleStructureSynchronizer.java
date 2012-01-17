@@ -60,7 +60,7 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
 
   private long myModificationCount = 0;
 
-  private ModificationTracker myModificationTracker = new ModificationTracker() {
+  private final ModificationTracker myModificationTracker = new ModificationTracker() {
     @Override
     public long getModificationCount() {
       return myModificationCount;
@@ -227,6 +227,7 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
     ApplicationManager.getApplication().assertIsDispatchThread();
     synchronized (myActions) {
       if (myActions.isEmpty()) {
+        if (myProject.isDisposed()) return;
         StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new DumbAwareRunnable() {
           public void run() {
             ApplicationManager.getApplication().invokeLater(new Runnable() {

@@ -435,7 +435,14 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     }
 
     if (isAlphaSorted()) {
-      model.addAll(items);
+      final ArrayList<LookupElement> elements = new ArrayList<LookupElement>(items);
+      Collections.sort(elements, new Comparator<LookupElement>() {
+        @Override
+        public int compare(LookupElement o1, LookupElement o2) {
+          return o1.getLookupString().compareToIgnoreCase(o2.getLookupString());
+        }
+      });
+      model.addAll(elements);
     } else if (limitRelevance()) {
       model.addAll(addRemainingItemsLexicographically(model, items));
     } else  {
@@ -845,16 +852,22 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   }
 
   public void performGuardedChange(Runnable change) {
+    performGuardedChange(change, null);
+  }
+
+  public void performGuardedChange(Runnable change, @Nullable final String debug) {
     checkValid();
     assert myLookupStartMarker.isValid();
     assert !myChangeGuard;
 
     myChangeGuard = true;
-    Document document = myEditor.getDocument();
+    final Document document = myEditor.getDocument();
     RangeMarkerSpy spy = new RangeMarkerSpy(myLookupStartMarker) {
       @Override
       protected void invalidated(DocumentEvent e) {
-        LOG.error("Lookup start marker invalidated, say thanks to the "+ e);
+        LOG.error("Lookup start marker invalidated, say thanks to the " + e +
+                  ", doc=" + document +
+                  ", debug=" + debug);
       }
     };
     document.addDocumentListener(spy);
@@ -876,6 +889,13 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   @Override
   public boolean vetoesHiding() {
     return myChangeGuard || myDisposed;
+  }
+
+  public boolean isAvailableToUser() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return myShown;
+    }
+    return isVisible();
   }
 
   public boolean isShown() {
@@ -1304,6 +1324,10 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       return;
     }
 
+    if (myLookupStartMarker != null) {
+      myLookupStartMarker.dispose();
+      myLookupStartMarker = null;
+    }
     Disposer.dispose(myProcessIcon);
     Disposer.dispose(myHintAlarm);
 
@@ -1479,7 +1503,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
     private void layoutStatusIcons() {
       int adHeight = myAdComponent.getAdComponent().getPreferredSize().height;
-      Dimension buttonSize = adHeight > 0 ? new Dimension(0, 0) : new Dimension(relevanceSortIcon.getIconWidth(), relevanceSortIcon.getIconHeight());
+      Dimension buttonSize = adHeight > 0 || !mySortingLabel.isVisible() ? new Dimension(0, 0) : new Dimension(relevanceSortIcon.getIconWidth(), relevanceSortIcon.getIconHeight());
       myScrollBarIncreaseButton.setPreferredSize(buttonSize);
       myScrollBarIncreaseButton.setMinimumSize(buttonSize);
       myScrollBarIncreaseButton.setMaximumSize(buttonSize);

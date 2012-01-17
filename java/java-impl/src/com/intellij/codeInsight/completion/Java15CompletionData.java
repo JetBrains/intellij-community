@@ -31,7 +31,7 @@ public class Java15CompletionData extends JavaCompletionData {
     //static keyword in static import
     {
       final CompletionVariant variant = new CompletionVariant(PsiImportList.class, new LeftNeighbour(new TextFilter (PsiKeyword.IMPORT)));
-      variant.addCompletion(PsiKeyword.STATIC, TailType.SPACE);
+      variant.addCompletion(PsiKeyword.STATIC, TailType.HUMBLE_SPACE);
 
       registerVariant(variant);
     }
@@ -46,7 +46,7 @@ public class Java15CompletionData extends JavaCompletionData {
       final CompletionVariant variant = new CompletionVariant(PsiJavaFile.class, position);
       variant.includeScopeClass(PsiClass.class);
 
-      variant.addCompletion(PsiKeyword.INTERFACE, TailType.SPACE);
+      variant.addCompletion(PsiKeyword.INTERFACE, TailType.HUMBLE_SPACE);
 
       registerVariant(variant);
     }
@@ -55,7 +55,7 @@ public class Java15CompletionData extends JavaCompletionData {
       final CompletionVariant variant = new CompletionVariant(PsiJavaFile.class, CLASS_START);
       variant.includeScopeClass(PsiClass.class);
 
-      variant.addCompletion(PsiKeyword.ENUM, TailType.SPACE);
+      variant.addCompletion(PsiKeyword.ENUM, TailType.HUMBLE_SPACE);
       registerVariant(variant);
     }
 
@@ -68,8 +68,8 @@ public class Java15CompletionData extends JavaCompletionData {
       final CompletionVariant variant = new CompletionVariant(JavaMemberNameCompletionContributor.INSIDE_TYPE_PARAMS_PATTERN);
       variant.includeScopeClass(PsiVariable.class, true);
       variant.includeScopeClass(PsiExpressionStatement.class, true);
-      variant.addCompletion(PsiKeyword.SUPER, TailType.SPACE);
-      variant.addCompletion(PsiKeyword.EXTENDS, TailType.SPACE);
+      variant.addCompletion(PsiKeyword.SUPER, TailType.HUMBLE_SPACE);
+      variant.addCompletion(PsiKeyword.EXTENDS, TailType.HUMBLE_SPACE);
       registerVariant(variant);
     }
   }

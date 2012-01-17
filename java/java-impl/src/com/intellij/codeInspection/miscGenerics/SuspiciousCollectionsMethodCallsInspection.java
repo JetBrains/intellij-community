@@ -16,11 +16,11 @@
 package com.intellij.codeInspection.miscGenerics;
 
 import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
@@ -36,7 +36,6 @@ import java.util.List;
  * @author ven
  */
 public class SuspiciousCollectionsMethodCallsInspection extends BaseLocalInspectionTool {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.miscGenerics.SuspiciousCollectionsMethodCallsInspection");
   public boolean REPORT_CONVERTIBLE_METHOD_CALLS = true;
 
   @Nullable
@@ -133,8 +132,17 @@ public class SuspiciousCollectionsMethodCallsInspection extends BaseLocalInspect
                                                        final IntArrayList indices) {
     final PsiExpression[] args = methodCall.getArgumentList().getExpressions();
     if (args.length != 1) return null;
+
     PsiType argType = args[0].getType();
-    return getSuspiciousMethodCallMessage(methodCall, argType, reportConvertibleMethodCalls, patternMethods, indices);
+    final String plainMessage = getSuspiciousMethodCallMessage(methodCall, argType, reportConvertibleMethodCalls, patternMethods, indices);
+    if (plainMessage != null) {
+      final PsiType dfaType = GuessManager.getInstance(methodCall.getProject()).getControlFlowExpressionType(args[0]);
+      if (dfaType != null && getSuspiciousMethodCallMessage(methodCall, dfaType, reportConvertibleMethodCalls, patternMethods, indices) == null) {
+        return null;
+      }
+    }
+
+    return plainMessage;
   }
 
   @Nullable
@@ -155,6 +163,7 @@ public class SuspiciousCollectionsMethodCallsInspection extends BaseLocalInspect
     if (calleeMethod == null) return null;
     PsiMethod contextMethod = PsiTreeUtil.getParentOfType(methodCall, PsiMethod.class);
 
+    //noinspection SynchronizationOnLocalVariableOrMethodParameter
     synchronized (patternMethods) {
       if (patternMethods.isEmpty()) {
         setupPatternMethods(methodCall.getManager(), methodCall.getResolveScope(), patternMethods, indices);
@@ -172,6 +181,8 @@ public class SuspiciousCollectionsMethodCallsInspection extends BaseLocalInspect
       final PsiClass calleeClass = calleeMethod.getContainingClass();
       PsiSubstitutor substitutor = resolveResult.getSubstitutor();
       final PsiClass patternClass = patternMethod.getContainingClass();
+      assert patternClass != null;
+      assert calleeClass != null;
       substitutor = TypeConversionUtil.getClassSubstitutor(patternClass, calleeClass, substitutor);
       if (substitutor == null) continue;
 

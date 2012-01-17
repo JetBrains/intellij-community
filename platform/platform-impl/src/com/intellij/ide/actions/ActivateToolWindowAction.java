@@ -27,6 +27,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
 public class ActivateToolWindowAction extends AnAction implements DumbAware {
@@ -96,12 +97,12 @@ public class ActivateToolWindowAction extends AnAction implements DumbAware {
         KeyStroke keyStroke = ((KeyboardShortcut)shortcut).getFirstKeyStroke();
         int modifiers=keyStroke.getModifiers();
         if (
-          (modifiers == (KeyEvent.ALT_DOWN_MASK|KeyEvent.ALT_MASK)) ||
-          (modifiers == KeyEvent.ALT_MASK) ||
-          (modifiers == KeyEvent.ALT_DOWN_MASK) ||
-          (modifiers == (KeyEvent.META_DOWN_MASK|KeyEvent.META_MASK)) ||
-          (modifiers == KeyEvent.META_MASK) ||
-          (modifiers == KeyEvent.META_DOWN_MASK)
+          modifiers == (InputEvent.ALT_DOWN_MASK | InputEvent.ALT_MASK) ||
+          modifiers == InputEvent.ALT_MASK ||
+          modifiers == InputEvent.ALT_DOWN_MASK ||
+          modifiers == (InputEvent.META_DOWN_MASK | InputEvent.META_MASK) ||
+          modifiers == InputEvent.META_MASK ||
+          modifiers == InputEvent.META_DOWN_MASK
         ) {
           int keyCode = keyStroke.getKeyCode();
           if (KeyEvent.VK_0 <= keyCode && keyCode <= KeyEvent.VK_9) {

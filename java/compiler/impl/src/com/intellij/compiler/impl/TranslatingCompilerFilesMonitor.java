@@ -18,6 +18,7 @@ package com.intellij.compiler.impl;
 import com.intellij.ProjectTopics;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerIOUtil;
+import com.intellij.compiler.JpsServerManager;
 import com.intellij.compiler.make.MakeUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
@@ -1298,9 +1299,13 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
           System.out.println(message);
         }
       }
+
+      final Set<String> pathsToMark = new HashSet<String>();
+
       processRecursively(eventFile, true, new FileProcessor() {
         public void execute(final VirtualFile file) {
           final String filePath = file.getPath();
+          pathsToMark.add(filePath);
           try {
             final OutputFileInfo outputInfo = loadOutputInfo(file);
             if (outputInfo != null) {
@@ -1360,6 +1365,10 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
           }
         }
       });
+
+      if (!pathsToMark.isEmpty()) {
+        JpsServerManager.getInstance().notifyFilesDeleted(pathsToMark);
+      }
     }
 
     public void beforeFileMovement(final VirtualFileMoveEvent event) {
@@ -1367,10 +1376,14 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     }
 
     private void markDirtyIfSource(final VirtualFile file) {
+      final Set<String> pathsToMark = new HashSet<String>();
       processRecursively(file, false, new FileProcessor() {
         public void execute(final VirtualFile file) {
           final SourceFileInfo srcInfo = file.isValid()? loadSourceInfo(file) : null;
           if (srcInfo != null) {
+
+            pathsToMark.add(file.getPath());
+
             for (int projectId : srcInfo.getProjectIds().toArray()) {
               addSourceForRecompilation(projectId, file, srcInfo);
             }
@@ -1380,9 +1393,13 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
           }
         }
       });
+      if (!pathsToMark.isEmpty()) {
+        JpsServerManager.getInstance().notifyFilesChanged(pathsToMark);
+      }
     }
 
     private void processNewFile(final VirtualFile file) {
+      final Set<String> pathsToMark = new HashSet<String>();
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         // need read action to ensure that the project was not disposed during the iteration over the project list
         public void run() {
@@ -1396,6 +1413,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
               final TranslatingCompiler[] translators = CompilerManager.getInstance(project).getCompilers(TranslatingCompiler.class);
               processRecursively(file, false, new FileProcessor() {
                 public void execute(final VirtualFile file) {
+                  pathsToMark.add(file.getPath());
                   if (isCompilable(file)) {
                     loadInfoAndAddSourceForRecompilation(projectId, file);
                   }
@@ -1423,6 +1441,9 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
           }
         }
       });
+      if (!pathsToMark.isEmpty()) {
+        JpsServerManager.getInstance().notifyFilesChanged(pathsToMark);
+      }
     }
   }
 

@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.impl.IterationState;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -419,16 +420,16 @@ public class EditorUtil {
     }
   }
 
-  public static FontInfo fontForChar(final char c, int style, Editor editor) {
+  public static FontInfo fontForChar(final char c, @JdkConstants.FontStyle int style, Editor editor) {
     EditorColorsScheme colorsScheme = editor.getColorsScheme();
     return ComplementaryFontsRegistry.getFontAbleToDisplay(c, colorsScheme.getEditorFontSize(), style, colorsScheme.getEditorFontName());
   }
 
-  public static int charWidth(char c, int fontType, Editor editor) {
+  public static int charWidth(char c, @JdkConstants.FontStyle int fontType, Editor editor) {
     return fontForChar(c, fontType, editor).charWidth(c, editor.getContentComponent());
   }
 
-  public static int getSpaceWidth(int fontType, Editor editor) {
+  public static int getSpaceWidth(@JdkConstants.FontStyle int fontType, Editor editor) {
     int width = charWidth(' ', fontType, editor);
     return width > 0 ? width : 1;
   }
@@ -559,7 +560,7 @@ public class EditorUtil {
    *                  from <code>[1; tab size]</code> (check {@link #nextTabStop(int, Editor)} for more details)
    * @return          width in pixels required for target text representation
    */
-  public static int textWidth(@NotNull Editor editor, CharSequence text, int start, int end, int fontType, int x) {
+  public static int textWidth(@NotNull Editor editor, CharSequence text, int start, int end, @JdkConstants.FontStyle int fontType, int x) {
     int result = 0;
     for (int i = start; i < end; i++) {
       char c = text.charAt(i);

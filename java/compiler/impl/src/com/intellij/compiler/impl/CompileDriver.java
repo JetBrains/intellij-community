@@ -88,7 +88,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.OrderedSet;
-import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NonNls;
@@ -96,11 +95,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.JpsRemoteProto;
 import org.jetbrains.jps.api.JpsServerResponseHandlerAdapter;
+import org.jetbrains.jps.api.RequestFuture;
 
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 public class CompileDriver {
   private static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.logOnlyGroup("Compiler");
@@ -240,7 +239,6 @@ public class CompileDriver {
           status.set(doCompile(compileContext, false, false, true));
         }
         finally {
-          compileContext.commitZipFiles(); // just to be on the safe side; normally should do nothing if called in isUpToDate()
           CompilerCacheManager.getInstance(myProject).flushCaches();
         }
       }
@@ -417,41 +415,45 @@ public class CompileDriver {
   }
 
   @Nullable
-  private Future compileOnServer(final CompileContext compileContext, Collection<Module> modules, boolean isMake, @Nullable final CompileStatusNotification callback)
+  private RequestFuture compileOnServer(final CompileContextImpl compileContext, Collection<Module> modules, final Collection<String> paths, @Nullable final CompileStatusNotification callback)
     throws Exception {
-    List<String> moduleNames = Collections.emptyList();
+    Collection<String> moduleNames = Collections.emptyList();
     if (modules != null && modules.size() > 0) {
       moduleNames = new ArrayList<String>(modules.size());
       for (Module module : modules) {
         moduleNames.add(module.getName());
       }
     }
-    compileContext.getProgressIndicator().setIndeterminate(true); // todo
-    return JpsServerManager.getInstance().submitCompilationTask(myProject.getLocation(), moduleNames, !isMake, new JpsServerResponseHandlerAdapter() {
+    final JpsServerManager jpsServerManager = JpsServerManager.getInstance();
+    return jpsServerManager.submitCompilationTask(myProject.getLocation(), compileContext.isRebuild(), compileContext.isMake(), moduleNames, paths, new JpsServerResponseHandlerAdapter() {
 
       public void handleCompileMessage(JpsRemoteProto.Message.Response.CompileMessage compilerMessage) {
         final JpsRemoteProto.Message.Response.CompileMessage.Kind kind = compilerMessage.getKind();
         //System.out.println(compilerMessage.getText());
         if (kind == JpsRemoteProto.Message.Response.CompileMessage.Kind.PROGRESS) {
-          compileContext.getProgressIndicator().setText(compilerMessage.getText());
+          final ProgressIndicator indicator = compileContext.getProgressIndicator();
+          indicator.setText(compilerMessage.getText());
+          if (compilerMessage.hasDone()) {
+            indicator.setFraction(compilerMessage.getDone());
+          }
         }
         else {
           final CompilerMessageCategory category = kind == JpsRemoteProto.Message.Response.CompileMessage.Kind.ERROR ? CompilerMessageCategory.ERROR
-                                                   : kind == JpsRemoteProto.Message.Response.CompileMessage.Kind.WARNING ? CompilerMessageCategory.WARNING : CompilerMessageCategory.INFORMATION;
+            : kind == JpsRemoteProto.Message.Response.CompileMessage.Kind.WARNING ? CompilerMessageCategory.WARNING : CompilerMessageCategory.INFORMATION;
           Navigatable navigatable = null;
 
-          String sourceFilePath = compilerMessage.hasSourceFilePath()? compilerMessage.getSourceFilePath() : null;
+          String sourceFilePath = compilerMessage.hasSourceFilePath() ? compilerMessage.getSourceFilePath() : null;
           if (sourceFilePath != null) {
             sourceFilePath = FileUtil.toSystemIndependentName(sourceFilePath);
           }
-          final long offset = compilerMessage.hasProblemLocationOffset()? compilerMessage.getProblemLocationOffset() : -1L;
+          final long offset = compilerMessage.hasProblemLocationOffset() ? compilerMessage.getProblemLocationOffset() : -1L;
           if (sourceFilePath != null && offset >= 0L) {
             final VirtualFile file = LocalFileSystem.getInstance().findFileByPath(sourceFilePath);
             if (file != null) {
               navigatable = new OpenFileDescriptor(myProject, file, (int)offset);
             }
           }
-          final String srcUrl = sourceFilePath != null? VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, sourceFilePath) : null;
+          final String srcUrl = sourceFilePath != null ? VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, sourceFilePath) : null;
           compileContext.addMessage(
             category, compilerMessage.getText(), srcUrl, (int)compilerMessage.getLine(), (int)compilerMessage.getColumn(), navigatable
           );
@@ -466,13 +468,28 @@ public class CompileDriver {
             compileContext.getProgressIndicator().setText("Compilation started");
             break;
           case BUILD_COMPLETED:
-            compileContext.getProgressIndicator().setText("Compilation completed");
-            break;
-          case BUILD_CANCELED:
-            compileContext.getProgressIndicator().setText("Compilation cancelled");
+            ExitStatus status = ExitStatus.SUCCESS;
+            if (event.hasCompletionStatus()) {
+              final JpsRemoteProto.Message.Response.BuildEvent.Status completionStatus = event.getCompletionStatus();
+              switch(completionStatus) {
+                case CANCELED:
+                  status = ExitStatus.CANCELLED;
+                  break;
+                case ERRORS:
+                  status = ExitStatus.ERRORS;
+                  break;
+                case SUCCESS:
+                  status = ExitStatus.SUCCESS;
+                  break;
+                case UP_TO_DATE:
+                  status = ExitStatus.UP_TO_DATE;
+                  break;
+              }
+            }
+            compileContext.putUserData(COMPILE_SERVER_BUILD_STATUS, status);
             break;
         }
-        return eventType == JpsRemoteProto.Message.Response.BuildEvent.Type.BUILD_COMPLETED || eventType == JpsRemoteProto.Message.Response.BuildEvent.Type.BUILD_CANCELED;
+        return eventType == JpsRemoteProto.Message.Response.BuildEvent.Type.BUILD_COMPLETED;
       }
 
       public void handleFailure(JpsRemoteProto.Message.Failure failure) {
@@ -485,19 +502,14 @@ public class CompileDriver {
       }
 
       public void sessionTerminated() {
-        if (callback != null) {
-          UIUtil.invokeLaterIfNeeded(new Runnable() {
-            public void run() {
-              callback.finished(false, compileContext.getMessageCount(CompilerMessageCategory.ERROR), compileContext.getMessageCount(CompilerMessageCategory.WARNING), compileContext);
-            }
-          });
-        }
+        notifyCompilationCompleted(compileContext, callback, COMPILE_SERVER_BUILD_STATUS.get(compileContext, ExitStatus.SUCCESS));
       }
     });
   }
 
 
   public static final Key<Long> COMPILATION_START_TIMESTAMP = Key.create("COMPILATION_START_TIMESTAMP");
+  public static final Key<ExitStatus> COMPILE_SERVER_BUILD_STATUS = Key.create("COMPILE_SERVER_BUILD_STATUS");
 
   private void startup(final CompileScope scope,
                        final boolean isRebuild,
@@ -540,7 +552,8 @@ public class CompileDriver {
     if (useServer) {
       compileWork = new Runnable() {
         public void run() {
-          if (compileContext.getProgressIndicator().isCanceled()) {
+          final ProgressIndicator indicator = compileContext.getProgressIndicator();
+          if (indicator.isCanceled()) {
             if (callback != null) {
               callback.finished(true, 0, 0, compileContext);
             }
@@ -555,9 +568,12 @@ public class CompileDriver {
             if (message != null) {
               compileContext.addMessage(message);
             }
-            final Future future = compileOnServer(compileContext, Arrays.asList(compileContext.getCompileScope().getAffectedModules()), compileContext.isMake(), callback);
+            final Collection<String> paths = fetchFiles(compileContext);
+            final List<Module> modules = paths.isEmpty()? Arrays.asList(compileContext.getCompileScope().getAffectedModules()) : Collections.<Module>emptyList();
+            final RequestFuture future = compileOnServer(compileContext, modules, paths, callback);
             if (future != null) {
               try {
+                startCancelWatcher(indicator, future);
                 future.get();
               }
               catch (InterruptedException e) {
@@ -584,8 +600,10 @@ public class CompileDriver {
               compileContext.getMessageCount(CompilerMessageCategory.WARNING),
               finish - start
             );
+
             CompilerCacheManager.getInstance(myProject).flushCaches();
 
+            // todo: need this for tests; should be removed later
             final Set<File> outputs = new HashSet<File>();
             for (final String path : CompilerPathsEx.getOutputPaths(ModuleManager.getInstance(myProject).getModules())) {
               outputs.add(new File(path));
@@ -617,7 +635,6 @@ public class CompileDriver {
             doCompile(compileContext, isRebuild, forceCompile, callback, checkCachesVersion);
           }
           finally {
-            compileContext.commitZipFiles();
             final long finish = System.currentTimeMillis();
             CompilerUtil.logDuration(
               "\tCOMPILATION FINISHED; Errors: " +
@@ -627,13 +644,11 @@ public class CompileDriver {
               finish - start
             );
             CompilerCacheManager.getInstance(myProject).flushCaches();
-            //if (LOG.isDebugEnabled()) {
-            //  LOG.debug("COMPILATION FINISHED");
-            //}
           }
         }
       };
     }
+
     compileTask.start(compileWork, new Runnable() {
       public void run() {
         if (isRebuild) {
@@ -649,6 +664,53 @@ public class CompileDriver {
         startup(scope, isRebuild, forceCompile, callback, message, checkCachesVersion);
       }
     });
+  }
+
+  private static void startCancelWatcher(final ProgressIndicator indicator, final RequestFuture future) {
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      public void run() {
+        while (true) {
+          try {
+            Thread.sleep(200L);
+            if (future.isDone() || future.isCancelled()) {
+              break;
+            }
+            if (indicator.isCanceled()) {
+              future.cancel(true);
+              break;
+            }
+          }
+          catch (InterruptedException ignored) {
+          }
+        }
+      }
+    });
+  }
+
+  private static List<String> fetchFiles(CompileContextImpl context) {
+    if (context.isRebuild()) {
+      return Collections.emptyList();
+    }
+    final CompileScope scope = context.getCompileScope();
+    if (shouldFetchFiles(scope)) {
+      final List<String> paths = new ArrayList<String>();
+      for (VirtualFile file : scope.getFiles(null, true)) {
+        paths.add(file.getPath());
+      }
+      return paths;
+    }
+    return Collections.emptyList();
+  }
+
+  private static boolean shouldFetchFiles(CompileScope scope) {
+    if (scope instanceof CompositeScope) {
+      for (CompileScope compileScope : ((CompositeScope)scope).getScopes()) {
+        if (shouldFetchFiles(compileScope)) {
+          return true;
+        }
+      }
+    }
+    return scope instanceof OneProjectItemCompileScope || scope instanceof FileSetCompileScope;
   }
 
   private void doCompile(final CompileContextImpl compileContext,
@@ -708,33 +770,39 @@ public class CompileDriver {
         }, ModalityState.NON_MODAL);
       }
       else {
-        final long duration = System.currentTimeMillis() - compileContext.getStartCompilationStamp();
         if (!myProject.isDisposed()) {
           writeStatus(new CompileStatus(CompilerConfigurationImpl.DEPENDENCY_FORMAT_VERSION, wereExceptions, vfsTimestamp), compileContext);
         }
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            if (myProject.isDisposed()) return;
-            final int errorCount = compileContext.getMessageCount(CompilerMessageCategory.ERROR);
-            final int warningCount = compileContext.getMessageCount(CompilerMessageCategory.WARNING);
-            final String statusMessage = createStatusMessage(_status, warningCount, errorCount);
-            final MessageType messageType = errorCount > 0 ? MessageType.ERROR : warningCount > 0 ? MessageType.WARNING : MessageType.INFO;
-            if (duration > ONE_MINUTE_MS) {
-              ToolWindowManager.getInstance(myProject).notifyByBalloon(ToolWindowId.MESSAGES_WINDOW, messageType, statusMessage);
-            }
-
-            NOTIFICATION_GROUP.createNotification(_status == ExitStatus.UP_TO_DATE ? "Compilation: all files are up to date" : statusMessage, messageType).notify(myProject);
-
-            if (_status != ExitStatus.UP_TO_DATE && compileContext.getMessageCount(null) > 0) {
-              compileContext.addMessage(CompilerMessageCategory.INFORMATION, statusMessage, null, -1, -1);
-            }
-            if (callback != null) {
-              callback.finished(_status == ExitStatus.CANCELLED, errorCount, warningCount, compileContext);
-            }
-          }
-        }, ModalityState.NON_MODAL);
+        notifyCompilationCompleted(compileContext, callback, _status);
       }
     }
+  }
+
+  private void notifyCompilationCompleted(final CompileContextImpl compileContext, final CompileStatusNotification callback, final ExitStatus _status) {
+    final long duration = System.currentTimeMillis() - compileContext.getStartCompilationStamp();
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      public void run() {
+        if (myProject.isDisposed()) {
+          return;
+        }
+        final int errorCount = compileContext.getMessageCount(CompilerMessageCategory.ERROR);
+        final int warningCount = compileContext.getMessageCount(CompilerMessageCategory.WARNING);
+        final String statusMessage = createStatusMessage(_status, warningCount, errorCount);
+        final MessageType messageType = errorCount > 0 ? MessageType.ERROR : warningCount > 0 ? MessageType.WARNING : MessageType.INFO;
+        if (duration > ONE_MINUTE_MS) {
+          ToolWindowManager.getInstance(myProject).notifyByBalloon(ToolWindowId.MESSAGES_WINDOW, messageType, statusMessage);
+        }
+
+        NOTIFICATION_GROUP.createNotification(_status == ExitStatus.UP_TO_DATE ? "Compilation: all files are up to date" : statusMessage, messageType).notify(myProject);
+
+        if (_status != ExitStatus.UP_TO_DATE && compileContext.getMessageCount(null) > 0) {
+          compileContext.addMessage(CompilerMessageCategory.INFORMATION, statusMessage, null, -1, -1);
+        }
+        if (callback != null) {
+          callback.finished(_status == ExitStatus.CANCELLED, errorCount, warningCount, compileContext);
+        }
+      }
+    }, ModalityState.NON_MODAL);
   }
 
   private void checkCachesVersion(final CompileContextImpl compileContext, final long currentVFSTimestamp) {
@@ -2125,7 +2193,6 @@ public class CompileDriver {
           // suppressed
         }
         finally {
-          compileContext.commitZipFiles();
           if (onTaskFinished != null) {
             onTaskFinished.run();
           }

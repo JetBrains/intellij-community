@@ -21,6 +21,7 @@ import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.DocumentReferenceManager;
 import com.intellij.openapi.command.undo.UndoConstants;
 import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -29,10 +30,15 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.ExternalChangeAction;
+import org.jetbrains.annotations.Nullable;
 
-class DocumentUndoProvider implements Disposable {
+public class DocumentUndoProvider implements Disposable {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.command.impl.DocumentUndoProvider");
+  private static final Key<Boolean> UNDOING_EDITOR_CHANGE = Key.create("DocumentUndoProvider.UNDOING_EDITOR_CHANGE");
+
   private final Project myProject;
 
   DocumentUndoProvider(Project project) {
@@ -47,6 +53,14 @@ class DocumentUndoProvider implements Disposable {
 
   private UndoManagerImpl getUndoManager() {
     return (UndoManagerImpl)(myProject == null ? UndoManager.getGlobalInstance() : UndoManager.getInstance(myProject));
+  }
+
+  public static void startDocumentUndo(@Nullable Document doc) {
+    if (doc != null) doc.putUserData(UNDOING_EDITOR_CHANGE, Boolean.TRUE);
+  }
+
+  public static void finishDocumentUndo(@Nullable Document doc) {
+    if (doc != null) doc.putUserData(UNDOING_EDITOR_CHANGE, null);
   }
 
   private class MyEditorDocumentListener extends DocumentAdapter {
@@ -66,6 +80,12 @@ class DocumentUndoProvider implements Disposable {
       if (!undoManager.isActive() || !isUndoable(document)) {
         registerNonUndoableAction(document);
         return;
+      }
+
+      if (undoManager.isUndoInProgress() || undoManager.isRedoInProgress()) {
+        if (document.getUserData(UNDOING_EDITOR_CHANGE) != Boolean.TRUE) {
+          LOG.error("Do not change documents during undo as it will break undo sequence.");
+        }
       }
 
       registerUndoableAction(e);

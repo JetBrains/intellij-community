@@ -59,6 +59,11 @@ public class GroovySurroundDescriptor implements SurroundDescriptor {
     return ourSurrounders;
   }
 
+  @Override
+  public boolean isExclusive() {
+    return false;
+  }
+
   @NotNull
   public PsiElement[] getElementsToSurround(PsiFile file, int startOffset, int endOffset) {
     return GroovyRefactoringUtil.findStatementsInRange(file, startOffset, endOffset, true);

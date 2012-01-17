@@ -34,6 +34,7 @@ import com.intellij.ui.table.TableView;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -172,8 +173,7 @@ public class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
 
     splitter.setFirstComponent(topPanel);
 
-    //noinspection HardCodedStringLiteral
-    final JEditorPane browser = new JEditorPane("text/html", "");
+    final JEditorPane browser = new JEditorPane(UIUtil.HTML_MIME, "");
     browser.setEditable(false);
     splitter.setSecondComponent(ScrollPaneFactory.createScrollPane(browser));
 

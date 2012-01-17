@@ -45,6 +45,9 @@ public class TemplateSegments {
   }
 
   public void removeAll() {
+    for (RangeMarker segment : mySegments) {
+      segment.dispose();
+    }
     mySegments.clear();
   }
 

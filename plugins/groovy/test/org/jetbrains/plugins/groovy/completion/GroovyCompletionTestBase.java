@@ -28,6 +28,10 @@ abstract public class GroovyCompletionTestBase extends LightCodeInsightFixtureTe
   protected void doSmartTest() {
     myFixture.configureByFile(getTestName(false) + ".groovy");
     myFixture.complete(CompletionType.SMART);
+    checkResult();
+  }
+
+  protected void checkResult() {
     myFixture.checkResultByFile(getTestName(false) + "_after.groovy", true);
   }
 

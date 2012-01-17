@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,12 @@ package org.jetbrains.annotations;
 
 import java.lang.annotation.*;
 
+/**
+ * A method/constructor annotated with TestOnly claims that it should be called from testing code only.
+ * <p/>
+ * Apart from documentation purposes this annotation is intended to be used by static analysis tools
+ * to validate against element contract violations.
+ */
 @Documented
 @Retention(RetentionPolicy.SOURCE)
 @Target({ElementType.METHOD, ElementType.CONSTRUCTOR})

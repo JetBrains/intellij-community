@@ -17,7 +17,6 @@ package com.intellij.ui;
 
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.IdeTooltip;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -28,7 +27,6 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.impl.ShadowBorderPainter;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupListener;
-import com.intellij.openapi.ui.popup.LightweightWindow;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
@@ -178,7 +176,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
 
   private boolean myDisposed;
   private final JComponent myContent;
-  private final boolean myHideOnMouse;
+  private boolean myHideOnMouse;
   private final boolean myHideOnKey;
   private boolean myHideOnAction;
   private final boolean myEnableCloseButton;
@@ -711,6 +709,10 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
 
   public boolean isVisible() {
     return myVisible;
+  }
+
+  public void setHideOnClickOutside(boolean hideOnMouse) {
+    myHideOnMouse = hideOnMouse;
   }
 
   public void setShowPointer(final boolean show) {

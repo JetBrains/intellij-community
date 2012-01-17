@@ -18,6 +18,7 @@ package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.designSurface.*;
+import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -34,7 +35,7 @@ public class FlowDropLocation implements ComponentDropLocation {
   private final int myHGap;
   private final int myVGap;
 
-  public FlowDropLocation(RadContainer container, Point location, int alignment, int hGap, int vGap) {
+  public FlowDropLocation(RadContainer container, Point location, @JdkConstants.FlowLayoutAlignment int alignment, int hGap, int vGap) {
     myContainer = container;
     myAlignment = alignment;
     myHGap = hGap;

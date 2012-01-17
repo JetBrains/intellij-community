@@ -188,7 +188,7 @@ public class AllClassesGetter {
 
     if (!context.isValid() || !psiClass.isValid()) return false;
 
-    if (JavaCompletionUtil.isInExcludedPackage(psiClass)) return false;
+    if (JavaCompletionUtil.isInExcludedPackage(psiClass, false)) return false;
 
     final String qualifiedName = psiClass.getQualifiedName();
     if (qualifiedName == null || !qualifiedName.startsWith(packagePrefix)) return false;

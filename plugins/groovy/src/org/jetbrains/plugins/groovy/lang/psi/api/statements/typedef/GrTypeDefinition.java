@@ -49,6 +49,7 @@ public interface GrTypeDefinition extends GrTopStatement, NavigatablePsiElement,
     }
   };
 
+  @Nullable
   GrTypeDefinitionBody getBody();
 
   @NotNull
@@ -93,5 +94,6 @@ public interface GrTypeDefinition extends GrTopStatement, NavigatablePsiElement,
 
   boolean isAnonymous();
 
+  @Nullable
   String getName();
 }

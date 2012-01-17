@@ -3,7 +3,9 @@
   <description>short description of the plugin</description>
   <version>1.0</version>
   <vendor>YourCompany</vendor>
-  <idea-version since-build="8000"/>
+
+  <!-- please see http://confluence.jetbrains.net/display/IDEADEV/Build+Number+Ranges for description -->
+  <idea-version since-build="107.105"/>
 
   <application-components>
     <!-- Add your application components here -->

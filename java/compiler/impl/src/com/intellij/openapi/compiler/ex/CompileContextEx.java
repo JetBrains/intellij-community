@@ -24,7 +24,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.util.Collection;
 import java.util.Set;
 
@@ -55,12 +54,6 @@ public interface CompileContextEx extends CompileContext {
   void markGenerated(Collection<VirtualFile> files);
 
   boolean isGenerated(VirtualFile file);
-
-  void updateZippedOuput(String outputDir, String relativePath) throws IOException;
-
-  void commitZipFiles();
-
-  void commitZip(String outputDir) throws IOException;
 
   void assignModule(@NotNull VirtualFile root, @NotNull Module module, boolean isTestSource, @Nullable com.intellij.openapi.compiler.Compiler compiler);
 }

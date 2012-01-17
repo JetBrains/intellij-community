@@ -118,10 +118,13 @@ public class CustomTemplateCallback {
     myTemplateManager.startTemplate(myEditor, template, false, predefinedValues, listener);
   }
 
-  public boolean startTemplate() {
+  public void startTemplate() {
     Map<TemplateImpl, String> template2Argument =
       ((TemplateManagerImpl)myTemplateManager).findMatchingTemplates(myFile, myEditor, null, TemplateSettings.getInstance());
-    return ((TemplateManagerImpl)myTemplateManager).startNonCustomTemplates(template2Argument, myEditor, null);
+    Runnable runnable = ((TemplateManagerImpl)myTemplateManager).startNonCustomTemplates(template2Argument, myEditor, null);
+    if (runnable != null) {
+      runnable.run();
+    }
   }
 
   private static List<TemplateImpl> getMatchingTemplates(@NotNull String templateKey) {

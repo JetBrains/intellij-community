@@ -49,7 +49,7 @@ public class LightModifierList extends LightElement implements PsiModifierList {
 
   public void copyModifiers(PsiModifierList modifierList) {
     if (modifierList == null) return;
-    for (@Modifier String modifier : PsiModifier.MODIFIERS) {
+    for (String modifier : PsiModifier.MODIFIERS) {
       if (modifierList.hasExplicitModifier(modifier)) {
         addModifier(modifier);
       }

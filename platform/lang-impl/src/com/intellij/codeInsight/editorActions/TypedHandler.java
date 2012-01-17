@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -167,7 +167,9 @@ public class TypedHandler extends TypedActionHandlerBase {
     for(TypedHandlerDelegate delegate: delegates) {
       final TypedHandlerDelegate.Result result = delegate.checkAutoPopup(charTyped, project, editor, file);
       handled = result == TypedHandlerDelegate.Result.STOP;
-      if (result != TypedHandlerDelegate.Result.CONTINUE) break;
+      if (result != TypedHandlerDelegate.Result.CONTINUE) {
+        break;
+      }
     }
 
     if (!handled) {
@@ -317,7 +319,7 @@ public class TypedHandler extends TypedActionHandlerBase {
     if (lparenOffset < 0) lparenOffset = 0;
 
     iterator = ((EditorEx)editor).getHighlighter().createIterator(lparenOffset);
-    boolean matched = BraceMatchingUtil.matchBrace(fileText, fileType, iterator, true);
+    boolean matched = BraceMatchingUtil.matchBrace(fileText, fileType, iterator, true, true);
 
     if (!matched) {
       String text;
@@ -388,7 +390,7 @@ public class TypedHandler extends TypedActionHandlerBase {
     }
 
     iterator = ((EditorEx) editor).getHighlighter().createIterator(lparenthOffset);
-    boolean matched = BraceMatchingUtil.matchBrace(text, fileType, iterator, true);
+    boolean matched = BraceMatchingUtil.matchBrace(text, fileType, iterator, true, true);
 
     if (!matched) return false;
 

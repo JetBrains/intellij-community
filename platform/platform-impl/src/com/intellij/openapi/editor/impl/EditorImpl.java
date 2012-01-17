@@ -85,6 +85,7 @@ import com.intellij.util.ui.update.UiNotifyConnector;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntIntHashMap;
+import org.intellij.lang.annotations.JdkConstants;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -1146,7 +1147,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
    * @return            width required to represent given char with the given settings on a screen;
    *                    <code>'0'</code> if given char is a line break
    */
-  private int charToVisibleWidth(char c, int fontType, int currentX) {
+  private int charToVisibleWidth(char c, @JdkConstants.FontStyle int fontType, int currentX) {
     if (c == '\n') {
       return 0;
     }
@@ -2111,7 +2112,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private int drawSoftWrapAwareBackground(Graphics g, Color backColor, CharSequence text, int start, int end, Point position,
-                                          int fontType, Color defaultBackground, Rectangle clip, TIntHashSet softWrapsToSkip,
+                                          @JdkConstants.FontStyle int fontType, Color defaultBackground, Rectangle clip, TIntHashSet softWrapsToSkip,
                                           boolean[] caretRowPainted)
   {
     int startToUse = start;
@@ -2145,7 +2146,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return position.x;
   }
 
-  private void drawSoftWrap(Graphics g, SoftWrap softWrap, Point position, int fontType, Color backColor,
+  private void drawSoftWrap(Graphics g, SoftWrap softWrap, Point position, @JdkConstants.FontStyle int fontType, Color backColor,
                             boolean drawCustomBackgroundAtSoftWrapVirtualSpace, Color defaultBackground, Rectangle clip,
                             boolean[] caretRowPainted) 
   {
@@ -2203,7 +2204,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
    * @param fontType            current font type
    */
   private void paintSelectionOnFirstSoftWrapLineIfNecessary(Graphics g, Point position, Rectangle clip, Color defaultBackground,
-                                                            int fontType) 
+                                                            @JdkConstants.FontStyle int fontType)
   {
     // There is a possible case that the user performed selection at soft wrap virtual space. We need to paint corresponding background
     // there then.
@@ -2261,7 +2262,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
    * @param softWrap            target soft wrap which second line virtual space may contain selection
    */
   private void paintSelectionOnSecondSoftWrapLineIfNecessary(Graphics g, Point position, Rectangle clip, Color defaultBackground,
-                                                             int fontType, SoftWrap softWrap) 
+                                                             @JdkConstants.FontStyle int fontType, SoftWrap softWrap)
   {
     // There is a possible case that the user performed selection at soft wrap virtual space. We need to paint corresponding background
     // there then.
@@ -2296,7 +2297,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     drawBackground(g, getColorsScheme().getColor(EditorColors.SELECTION_BACKGROUND_COLOR), width, position, defaultBackground, clip);
   }
   
-  private int drawBackground(Graphics g, Color backColor, CharSequence text, Point position, int fontType, Color defaultBackground,
+  private int drawBackground(Graphics g, Color backColor, CharSequence text, Point position, @JdkConstants.FontStyle int fontType, Color defaultBackground,
                              Rectangle clip)
   {
     int width = getTextSegmentWidth(text, position.x, fontType, clip);
@@ -2670,7 +2671,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                                       Rectangle clip,
                                       Color effectColor,
                                       EffectType effectType,
-                                      int fontType,
+                                      @JdkConstants.FontStyle int fontType,
                                       Color fontColor,
                                       Ref<LogicalPosition> startDrawingLogicalPosition)
   {
@@ -2686,7 +2687,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                                       Rectangle clip,
                                       Color effectColor,
                                       EffectType effectType,
-                                      int fontType,
+                                      @JdkConstants.FontStyle int fontType,
                                       Color fontColor,
                                       Ref<LogicalPosition> startDrawingLogicalPosition) {
     int startToUse = start;
@@ -2802,7 +2803,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                          Rectangle clip,
                          @Nullable Color effectColor,
                          @Nullable EffectType effectType,
-                         int fontType,
+                         @JdkConstants.FontStyle int fontType,
                          Color fontColor) {
     if (start >= end) return position.x;
 
@@ -2821,7 +2822,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                          Rectangle clip,
                          Color effectColor,
                          EffectType effectType,
-                         int fontType,
+                         @JdkConstants.FontStyle int fontType,
                          Color fontColor) {
     boolean isInClip = getLineHeight() + position.y >= clip.y && position.y <= clip.y + clip.height;
 
@@ -2841,7 +2842,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                                int y,
                                Color effectColor,
                                EffectType effectType,
-                               int fontType,
+                               @JdkConstants.FontStyle int fontType,
                                Color fontColor,
                                final Rectangle clip) {
     int xStart = x;
@@ -2913,7 +2914,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                                 final Graphics g,
                                 int x,
                                 final int y,
-                                final int fontType,
+                                @JdkConstants.FontStyle final int fontType,
                                 final Color fontColor,
                                 final Rectangle clip) {
     int endX = x;
@@ -2971,7 +2972,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
-  private void drawCharsCached(Graphics g, char[] data, int start, int end, int x, int y, int fontType, Color color) {
+  private void drawCharsCached(Graphics g, char[] data, int start, int end, int x, int y, @JdkConstants.FontStyle int fontType, Color color) {
     if (!myForceRefreshFont && myCommonSpaceWidth > 0 && myLastCache != null && spacesOnly(data, start, end)) {
       myLastCache.addContent(g, data, start, end, x, y, null);
     }
@@ -3043,7 +3044,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     UIUtil.drawLine(g, x + WAVE_SEGMENT_LENGTH / 2, y, x + WAVE_SEGMENT_LENGTH, y + WAVE_HEIGHT);
   }
 
-  private int getTextSegmentWidth(CharSequence text, int xStart, int fontType, Rectangle clip) {
+  private int getTextSegmentWidth(CharSequence text, int xStart, @JdkConstants.FontStyle int fontType, Rectangle clip) {
     int x = xStart;
 
     final int textLength = text.length();
@@ -3088,7 +3089,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return myDescent;
   }
 
-  FontMetrics getFontMetrics(int fontType) {
+  FontMetrics getFontMetrics(@JdkConstants.FontStyle int fontType) {
     if (myPlainFontMetrics == null) {
       assertIsDispatchThread();
       myPlainFontMetrics = myEditorComponent.getFontMetrics(myScheme.getFont(EditorFontType.PLAIN));
@@ -3100,7 +3101,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (fontType == Font.PLAIN) return myPlainFontMetrics;
     if (fontType == Font.BOLD) return myBoldFontMetrics;
     if (fontType == Font.ITALIC) return myItalicFontMetrics;
-    if (fontType == Font.BOLD + Font.ITALIC) return myBoldItalicFontMetrics;
+    if (fontType == (Font.BOLD | Font.ITALIC)) return myBoldItalicFontMetrics;
 
     LOG.error("Unknown font type: " + fontType);
 
@@ -3774,6 +3775,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         if (isColumnMode() || e.isAltDown()) {
           final LogicalPosition blockStart = selectionModel.hasBlockSelection() ? selectionModel.getBlockStart() : oldLogicalCaret;
           selectionModel.setBlockSelection(blockStart, getCaretModel().getLogicalPosition());
+          IdeEventQueue.getInstance().blockNextEvents(e);   // don't process action on mouse released (IDEA-53663)
         }
         else {
           if (getMouseSelectionState() != MOUSE_SELECTION_STATE_NONE) {
@@ -4249,7 +4251,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     @NonNls private static final String APPLE_LAF_AQUA_SCROLL_BAR_UI_CLASS = "apple.laf.AquaScrollBarUI";
     private ScrollBarUI myPersistentUI;
 
-    private MyScrollBar(int orientation) {
+    private MyScrollBar(@JdkConstants.AdjustableOrientation int orientation) {
       super(orientation);
     }
 
@@ -5401,7 +5403,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       Font plainFont = new Font(editorFontName, Font.PLAIN, editorFontSize);
       Font boldFont = new Font(editorFontName, Font.BOLD, editorFontSize);
       Font italicFont = new Font(editorFontName, Font.ITALIC, editorFontSize);
-      Font boldItalicFont = new Font(editorFontName, Font.BOLD + Font.ITALIC, editorFontSize);
+      Font boldItalicFont = new Font(editorFontName, Font.BOLD | Font.ITALIC, editorFontSize);
 
       myFontsMap.put(EditorFontType.PLAIN, plainFont);
       myFontsMap.put(EditorFontType.BOLD, boldFont);

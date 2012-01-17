@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryPresentationManager;
@@ -71,7 +72,7 @@ public class OrderEntryAppearanceServiceImpl extends OrderEntryAppearanceService
       }
       Library library = libraryOrderEntry.getLibrary();
       assert library != null : libraryOrderEntry;
-      return forLibrary(project, library, false);
+      return forLibrary(project, library, !((LibraryEx)library).getInvalidRootUrls(OrderRootType.CLASSES).isEmpty());
     }
     else if (orderEntry.isSynthetic()) {
       String presentableName = orderEntry.getPresentableName();

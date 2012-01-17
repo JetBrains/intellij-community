@@ -18,14 +18,18 @@ package com.intellij.execution.junit;
 
 import com.intellij.execution.JavaRunConfigurationExtensionManager;
 import com.intellij.execution.Location;
+import com.intellij.execution.PsiLocation;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
+import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 
 import java.util.Iterator;
+import java.util.List;
 
 public class TestMethodConfigurationProducer extends JUnitConfigurationProducer {
   private Location<PsiMethod> myMethodLocation;
@@ -52,9 +56,35 @@ public class TestMethodConfigurationProducer extends JUnitConfigurationProducer 
   private static Location<PsiMethod> getTestMethod(final Location<?> location) {
     for (Iterator<Location<PsiMethod>> iterator = location.getAncestors(PsiMethod.class, false); iterator.hasNext();) {
       final Location<PsiMethod> methodLocation = iterator.next();
-      if (JUnitUtil.isTestMethod(methodLocation)) return methodLocation;
+      if (JUnitUtil.isTestMethod(methodLocation, false)) return methodLocation;
     }
     return null;
+  }
+
+  @Override
+  public void perform(final ConfigurationContext context, final Runnable performRunnable) {
+    final PsiMethod psiMethod = myMethodLocation.getPsiElement();
+    final PsiClass containingClass = psiMethod.getContainingClass();
+    final InheritorChooser inheritorChooser = new InheritorChooser() {
+      @Override
+      protected void runForClasses(List<PsiClass> classes, PsiMethod method, ConfigurationContext context, Runnable performRunnable) {
+        ((JUnitConfiguration)context.getConfiguration().getConfiguration()).bePatternConfiguration(classes, method);
+        super.runForClasses(classes, method, context, performRunnable);
+      }
+
+      @Override
+      protected void runForClass(PsiClass aClass,
+                                 PsiMethod psiMethod,
+                                 ConfigurationContext context,
+                                 Runnable performRunnable) {
+        final Project project = psiMethod.getProject();
+        final MethodLocation methodLocation = new MethodLocation(project, psiMethod, PsiLocation.fromPsiElement(aClass));
+        ((JUnitConfiguration)context.getConfiguration().getConfiguration()).beMethodConfiguration(methodLocation);
+        super.runForClass(aClass, psiMethod, context, performRunnable);
+      }
+    };
+    if (inheritorChooser.runMethodInAbstractClass(context, performRunnable, psiMethod, containingClass)) return;
+    super.perform(context, performRunnable);
   }
 }
 

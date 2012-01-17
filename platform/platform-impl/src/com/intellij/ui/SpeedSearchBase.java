@@ -27,7 +27,6 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
-import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -79,12 +78,11 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       }
     });
 
-    component.putClientProperty(SPEED_SEARCH_COMPONENT_MARKER, this);
+    installSupplyTo(component);
   }
 
   public static boolean hasActiveSpeedSearch(JComponent component) {
-    SpeedSearchBase speedSearch = (SpeedSearchBase)component.getClientProperty(SPEED_SEARCH_COMPONENT_MARKER);
-    return speedSearch != null && speedSearch.mySearchPopup != null && speedSearch.mySearchPopup.isVisible();
+    return getSupply(component) != null;
   }
 
   public void setClearSearchOnNavigateNoMatch(boolean clearSearchOnNavigateNoMatch) {
@@ -161,34 +159,6 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
 
   public void setComparator(final SpeedSearchComparator comparator) {
     myComparator = comparator;
-  }
-
-  public static class SpeedSearchComparator {
-    private NameUtil.MinusculeMatcher myMinusculeMatcher;
-    private String myRecentSearchText;
-    private boolean myShouldMatchFromTheBeginning;
-
-    public SpeedSearchComparator() {
-      this(true);
-    }
-
-    public SpeedSearchComparator(boolean shouldMatchFromTheBeginning) {
-      myShouldMatchFromTheBeginning = shouldMatchFromTheBeginning;
-    }
-
-    @Nullable
-    public Iterable<TextRange> matchingFragments(String pattern, String text) {
-      if (myRecentSearchText == null || !myRecentSearchText.equals(pattern)) {
-        myRecentSearchText = pattern;
-        myMinusculeMatcher = new NameUtil.MinusculeMatcher(myShouldMatchFromTheBeginning ? pattern : "*" + pattern, NameUtil.MatchingCaseSensitivity.NONE);
-      }
-      return myMinusculeMatcher.matchingFragments(text);
-    }
-
-
-    public String getRecentSearchText() {
-      return myRecentSearchText;
-    }
   }
 
   @Nullable
@@ -517,8 +487,8 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     myPopupLayeredPane.add(mySearchPopup, JLayeredPane.POPUP_LAYER);
     if (myPopupLayeredPane == null) return; // See # 27482. Somewho it does happen...
     Point lPaneP = myPopupLayeredPane.getLocationOnScreen();
-    Point componentP = myComponent.getLocationOnScreen();
-    Rectangle r = myComponent.getVisibleRect();
+    Point componentP = getComponentLocationOnScreen();
+    Rectangle r = getComponentVisibleRect();
     Dimension prefSize = mySearchPopup.getPreferredSize();
     Window window = (Window)SwingUtilities.getAncestorOfClass(Window.class, myComponent);
     Point windowP;
@@ -537,6 +507,14 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     mySearchPopup.setSize(prefSize);
     mySearchPopup.setVisible(true);
     mySearchPopup.validate();
+  }
+
+  protected Rectangle getComponentVisibleRect() {
+    return myComponent.getVisibleRect();
+  }
+
+  protected Point getComponentLocationOnScreen() {
+    return myComponent.getLocationOnScreen();
   }
 
   private class MyToolWindowManagerListener extends ToolWindowManagerAdapter {

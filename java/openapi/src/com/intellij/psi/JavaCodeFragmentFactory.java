@@ -17,6 +17,7 @@ package com.intellij.psi;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class JavaCodeFragmentFactory {
@@ -90,7 +91,9 @@ public abstract class JavaCodeFragmentFactory {
    * @return the created code fragment.
    */
   @NotNull 
-  public abstract PsiTypeCodeFragment createTypeCodeFragment(@NotNull String text, PsiElement context, boolean isPhysical, int flags);
+  public abstract PsiTypeCodeFragment createTypeCodeFragment(@NotNull String text, PsiElement context, boolean isPhysical,
+                                                             @MagicConstant(flags = {ALLOW_VOID, ALLOW_ELLIPSIS, ALLOW_DISJUNCTION})
+                                                             int flags);
   
   /**
    * Creates a Java reference code fragment from the text of a Java reference to a

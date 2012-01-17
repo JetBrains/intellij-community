@@ -29,6 +29,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.Consumer;
+import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -44,7 +45,7 @@ public class SelectCvsElementStep extends WizardStep {
   private final SelectCVSConfigurationStep mySelectCVSConfigurationStep;
   private final Project myProject;
   private final boolean myShowFiles;
-  private final int mySelectionMode;
+  @JdkConstants.TreeSelectionMode private final int mySelectionMode;
   private final boolean myAllowRootSelection;
   private final boolean myShowModules;
   private final Ref<Boolean> myErrors = new Ref<Boolean>();
@@ -53,7 +54,7 @@ public class SelectCvsElementStep extends WizardStep {
                               Project project,
                               SelectCVSConfigurationStep selectCVSConfigurationStep,
                               boolean allowRootSelection,
-                              int selectionMode,
+                              @JdkConstants.TreeSelectionMode int selectionMode,
                               boolean showModules,
                               boolean showFiles) {
     super(title, wizard);

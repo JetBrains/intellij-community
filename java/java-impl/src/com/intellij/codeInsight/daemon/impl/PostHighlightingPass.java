@@ -41,6 +41,8 @@ import com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection;
 import com.intellij.codeInspection.unusedParameters.UnusedParametersInspection;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
+import com.intellij.diagnostic.LogMessageEx;
+import com.intellij.diagnostic.errordialog.Attachment;
 import com.intellij.find.FindManager;
 import com.intellij.find.findUsages.*;
 import com.intellij.find.impl.FindManagerImpl;
@@ -199,15 +201,19 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
         if (file.getProject().isDisposed() || editor.isDisposed() || editor.getDocument().getModificationStamp() != stamp) return;
         PsiDocumentManager.getInstance(file.getProject()).commitAllDocuments();
         String beforeText = file.getText();
+        final long oldStamp = editor.getDocument().getModificationStamp();
         CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
           @Override
           public void run() {
             ApplicationManager.getApplication().runWriteAction(runnable);
           }
         });
-        String afterText = file.getText();
-        if (Comparing.strEqual(beforeText, afterText)) {
-          LOG.error("Import optimizer for the '"+file.getVirtualFile().getPath()+"' hasn't optimized any imports. Text:\n"+afterText);
+        if (oldStamp != editor.getDocument().getModificationStamp()) {
+          String afterText = file.getText();
+          if (Comparing.strEqual(beforeText, afterText)) {
+            LOG.error(LogMessageEx.createEvent("Import optimizer  hasn't optimized any imports", file.getViewProvider().getVirtualFile().getPath(),
+                                               new Attachment(file.getViewProvider().getVirtualFile())));
+          }
         }
       }
     });
@@ -451,6 +457,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
           !method.hasModifierProperty(PsiModifier.NATIVE) &&
           !HighlightMethodUtil.isSerializationRelatedMethod(method, method.getContainingClass()) &&
           !PsiClassImplUtil.isMainMethod(method)) {
+        if (UnusedSymbolLocalInspection.isInjected(method)) return null;
         HighlightInfo highlightInfo = checkUnusedParameter(parameter, progress);
         if (highlightInfo != null) {
           final ArrayList<IntentionAction> options = new ArrayList<IntentionAction>();

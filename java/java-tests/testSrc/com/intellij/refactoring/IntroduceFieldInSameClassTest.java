@@ -1,8 +1,6 @@
 package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
 import com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler;
@@ -104,5 +102,11 @@ public class IntroduceFieldInSameClassTest extends LightCodeInsightTestCase {
     configureByFile("/refactoring/introduceField/beforeEnclosingAnonymous.java");
     performRefactoring(BaseExpressionToFieldHandler.InitializationPlace.IN_CONSTRUCTOR, false);
     checkResultByFile("/refactoring/introduceField/afterEnclosingAnonymous.java");
+  }
+
+  public void testLocalVarAnnotations() throws Exception {
+    configureByFile("/refactoring/introduceField/beforeLocalVarAnnotations.java");
+    performRefactoring(BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION, false);
+    checkResultByFile("/refactoring/introduceField/afterLocalVarAnnotations.java");
   }
 }

@@ -36,7 +36,10 @@ public class TestIconProvider extends IconProvider {
     for (TestFramework framework : testFrameworks) {
       try {
         if (framework.isIgnoredMethod(element)) {
-          return TestsUIUtil.loadIcon("ignoredTest");
+          final Icon ignoredTestIcon = TestsUIUtil.loadIcon("ignoredTest");
+          final LayeredIcon icon = new LayeredIcon(ignoredTestIcon, PlatformIcons.PUBLIC_ICON);
+          icon.setIcon(PlatformIcons.PUBLIC_ICON, 1, ignoredTestIcon.getIconWidth(), 0);
+          return icon;
         }
       }
       catch (AbstractMethodError ignored) {}
@@ -45,7 +48,9 @@ public class TestIconProvider extends IconProvider {
     for (TestFramework framework : testFrameworks) {
       try {
         if (framework.isTestMethod(element)) {
-          return new LayeredIcon(PlatformIcons.METHOD_ICON, TestsUIUtil.loadIcon("testMark"));
+          final LayeredIcon mark = new LayeredIcon(PlatformIcons.METHOD_ICON, TestsUIUtil.loadIcon("testMark"), PlatformIcons.PUBLIC_ICON);
+          mark.setIcon(PlatformIcons.PUBLIC_ICON, 2, PlatformIcons.METHOD_ICON.getIconWidth(), 0);
+          return mark;
         }
       }
       catch (AbstractMethodError ignore) {}

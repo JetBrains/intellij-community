@@ -720,7 +720,7 @@ class Foo {
     joinAutopopup()
     joinCompletion()
     myFixture.type '\n'
-    myFixture.checkResult(" class Foo { { int newa; new <caret>} } ")
+    myFixture.checkResult(" class Foo { { int newa; new <caret> } } ")
     assert !lookup
   }
 
@@ -1148,6 +1148,21 @@ class Foo {{
     myFixture.configureByText 'a.java', 'class Foo extends <caret>'
     type 'Abcde '
     myFixture.checkResult 'class Foo extends Abcdefg <caret>'
+  }
+
+  public void testClassNameInProperties() {
+    myFixture.addClass("package java.langa; public class Abcdefg {}")
+    myFixture.configureByText 'a.properties', 'key.11=java<caret>'
+    type '.'
+    assert lookup
+    type 'lang'
+    assert myFixture.lookupElementStrings.size() >= 2
+    type '.'
+    assert lookup
+    edt { myFixture.editor.caretModel.moveToOffset(myFixture.editor.document.text.indexOf('lang')) }
+    assert !lookup
+    type 'i'
+    assert 'io' in myFixture.lookupElementStrings
   }
 
 

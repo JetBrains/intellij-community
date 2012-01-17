@@ -84,10 +84,10 @@ public class HintManagerImpl extends HintManager implements Disposable {
 
   private static class HintInfo {
     final LightweightHint hint;
-    final int flags;
+    @HideFlags final int flags;
     private final boolean reviveOnEditorChange;
 
-    private HintInfo(LightweightHint hint, int flags, boolean reviveOnEditorChange) {
+    private HintInfo(LightweightHint hint, @HideFlags int flags, boolean reviveOnEditorChange) {
       this.hint = hint;
       this.flags = flags;
       this.reviveOnEditorChange = reviveOnEditorChange;
@@ -234,7 +234,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
     }
   }
 
-  public void showEditorHint(LightweightHint hint, Editor editor, short constraint, int flags, int timeout, boolean reviveOnEditorChange) {
+  public void showEditorHint(LightweightHint hint, Editor editor, @PositionFlags short constraint, @HideFlags int flags, int timeout, boolean reviveOnEditorChange) {
     LogicalPosition pos = editor.getCaretModel().getLogicalPosition();
     Point p = getHintPosition(hint, editor, pos, constraint);
     showEditorHint(hint, editor, p, flags, timeout, reviveOnEditorChange, createHintHint(editor, p, hint, constraint));
@@ -247,20 +247,20 @@ public class HintManagerImpl extends HintManager implements Disposable {
   public void showEditorHint(@NotNull final LightweightHint hint,
                              @NotNull Editor editor,
                              @NotNull Point p,
-                             int flags,
+                             @HideFlags int flags,
                              int timeout,
                              boolean reviveOnEditorChange) {
 
-    showEditorHint(hint, editor, p, flags, timeout, reviveOnEditorChange, HintManagerImpl.ABOVE);
+    showEditorHint(hint, editor, p, flags, timeout, reviveOnEditorChange, HintManager.ABOVE);
   }
 
   public void showEditorHint(@NotNull final LightweightHint hint,
                              @NotNull Editor editor,
                              @NotNull Point p,
-                             int flags,
+                             @HideFlags int flags,
                              int timeout,
                              boolean reviveOnEditorChange,
-                             short position) {
+                             @PositionFlags short position) {
 
     showEditorHint(hint, editor, p, flags, timeout, reviveOnEditorChange, createHintHint(editor, p, hint, position));
   }
@@ -268,7 +268,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
   public void showEditorHint(@NotNull final LightweightHint hint,
                              @NotNull Editor editor,
                              @NotNull Point p,
-                             int flags,
+                             @HideFlags int flags,
                              int timeout,
                              boolean reviveOnEditorChange,
                              HintHint hintInfo) {
@@ -382,7 +382,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
       p = rectangle.getLocation();
       SwingUtilities.convertPointFromScreen(p, layeredPane);
     }
-    else if ((layeredPane.getWidth() < p.x + size.width) && !hintInfo.isAwtTooltip()) {
+    else if (layeredPane.getWidth() < p.x + size.width && !hintInfo.isAwtTooltip()) {
       p.x = Math.max(0, layeredPane.getWidth() - size.width);
     }
 
@@ -402,7 +402,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
     doShowInGivenLocation(hint, editor, p, createHintHint(editor, p, hint, UNDER), false);
   }
 
-  public static void adjustEditorHintPosition(final LightweightHint hint, final Editor editor, final Point p, short constraint) {
+  public static void adjustEditorHintPosition(final LightweightHint hint, final Editor editor, final Point p, @PositionFlags short constraint) {
     doShowInGivenLocation(hint, editor, p, createHintHint(editor, p, hint, constraint), true);
   }
 
@@ -425,7 +425,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
   /**
    * @return coordinates in layered pane coordinate system.
    */
-  public Point getHintPosition(LightweightHint hint, Editor editor, short constraint) {
+  public Point getHintPosition(LightweightHint hint, Editor editor, @PositionFlags short constraint) {
     JLayeredPane lp = editor.getComponent().getRootPane().getLayeredPane();
 
     LogicalPosition pos = editor.getCaretModel().getLogicalPosition();
@@ -485,7 +485,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
 
   private static Point getHintPositionRelativeTo(final LightweightHint hint,
                                                  final Editor editor,
-                                                 final short constraint,
+                                                 @PositionFlags  short constraint,
                                                  final Rectangle lookupBounds,
                                                  final LogicalPosition pos) {
 
@@ -541,11 +541,11 @@ public class HintManagerImpl extends HintManager implements Disposable {
   /**
    * @return position of hint in layered pane coordinate system
    */
-  public static Point getHintPosition(LightweightHint hint, Editor editor, LogicalPosition pos, short constraint) {
+  public static Point getHintPosition(LightweightHint hint, Editor editor, LogicalPosition pos, @PositionFlags short constraint) {
     return getHintPosition(hint, editor, pos, pos, constraint);
   }
 
-  private static Point getHintPosition(LightweightHint hint, Editor editor, LogicalPosition pos1, LogicalPosition pos2, short constraint) {
+  private static Point getHintPosition(LightweightHint hint, Editor editor, LogicalPosition pos1, LogicalPosition pos2, @PositionFlags short constraint) {
     return getHintPosition(hint, editor, pos1, pos2, constraint, Registry.is("editor.balloonHints"));
   }
 
@@ -553,7 +553,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
                                        Editor editor,
                                        LogicalPosition pos1,
                                        LogicalPosition pos2,
-                                       short constraint,
+                                       @PositionFlags short constraint,
                                        boolean showByBalloon) {
     Point p = _getHintPosition(hint, editor, pos1, pos2, constraint, showByBalloon);
     JLayeredPane layeredPane = editor.getComponent().getRootPane().getLayeredPane();
@@ -578,15 +578,11 @@ public class HintManagerImpl extends HintManager implements Disposable {
     return p;
   }
 
-  private static Point _getHintPosition(LightweightHint hint, Editor editor, LogicalPosition pos1, LogicalPosition pos2, short constraint) {
-    return _getHintPosition(hint, editor, pos1, pos2, constraint, false);
-  }
-
   private static Point _getHintPosition(LightweightHint hint,
                                         Editor editor,
                                         LogicalPosition pos1,
                                         LogicalPosition pos2,
-                                        short constraint,
+                                        @PositionFlags short constraint,
                                         boolean showByBalloon) {
     Dimension hintSize = hint.getComponent().getPreferredSize();
     int line1 = pos1.line;
@@ -686,7 +682,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
                                final int offset2,
                                @NotNull final LightweightHint hint,
                                @NotNull final QuestionAction action,
-                               final short constraint) {
+                               @PositionFlags short constraint) {
     final LogicalPosition pos1 = editor.offsetToLogicalPosition(offset1);
     final LogicalPosition pos2 = editor.offsetToLogicalPosition(offset2);
     final Point p = getHintPosition(hint, editor, pos1, pos2, constraint);
@@ -700,7 +696,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
                                final int offset2,
                                @NotNull final LightweightHint hint,
                                @NotNull final QuestionAction action,
-                               short constraint) {
+                               @PositionFlags short constraint) {
     TextAttributes attributes = new TextAttributes();
     attributes.setEffectColor(HintUtil.QUESTION_UNDERSCORE_COLOR);
     attributes.setEffectType(EffectType.LINE_UNDERSCORE);
@@ -730,14 +726,14 @@ public class HintManagerImpl extends HintManager implements Disposable {
     myQuestionHint = hint;
   }
 
-  public static HintHint createHintHint(Editor editor, Point p, LightweightHint hint, short constraint) {
+  public static HintHint createHintHint(Editor editor, Point p, LightweightHint hint, @PositionFlags short constraint) {
     return createHintHint(editor, p, hint, constraint, false);
   }
 
   //todo[nik,kirillk] perhaps 'createInEditorComponent' parameter should always be 'true'
   //old 'createHintHint' method uses LayeredPane as original component for HintHint so IdeTooltipManager.eventDispatched()
   //wasn't able to correctly hide tooltip after mouse move.
-  public static HintHint createHintHint(Editor editor, Point p, LightweightHint hint, short constraint, boolean createInEditorComponent) {
+  public static HintHint createHintHint(Editor editor, Point p, LightweightHint hint, @PositionFlags short constraint, boolean createInEditorComponent) {
     JRootPane rootPane = editor.getComponent().getRootPane();
     if (rootPane == null) {
       return new HintHint(editor, p);

@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
 * @author irengrig
@@ -39,7 +40,7 @@ abstract class GeneralRunner implements ContinuationContext {
   protected final boolean myCancellable;
   protected final List<TaskDescriptor> myQueue;
   protected final Object myQueueLock;
-  protected volatile boolean myTriggerSuspend;
+  private boolean myTriggerSuspend;
   protected ProgressIndicator myIndicator;
   protected final Map<Object, Object> myDisasters;
   private final List<Consumer<TaskDescriptor>> myTasksPatchers;
@@ -53,6 +54,7 @@ abstract class GeneralRunner implements ContinuationContext {
     myDisasters = new HashMap<Object, Object>();
     myHandlersMap = new HashMap<Class<? extends Exception>, Consumer<Exception>>();
     myTasksPatchers = new ArrayList<Consumer<TaskDescriptor>>();
+    myTriggerSuspend = false;
   }
 
   public <T extends Exception> void addExceptionHandler(final Class<T> clazz, final Consumer<T> consumer) {
@@ -113,7 +115,21 @@ abstract class GeneralRunner implements ContinuationContext {
   }
 
   public void suspend() {
-    myTriggerSuspend = true;
+    synchronized (myQueueLock) {
+      myTriggerSuspend = true;
+    }
+  }
+
+  protected boolean getSuspendFlag() {
+    synchronized (myQueueLock) {
+      return myTriggerSuspend;
+    }
+  }
+
+  protected void clearSuspend() {
+    synchronized (myQueueLock) {
+      myTriggerSuspend = false;
+    }
   }
 
   @Override
@@ -241,15 +257,12 @@ abstract class GeneralRunner implements ContinuationContext {
     ping();
   }
 
-  // null - no more tasks or suspend
+  // null - no more tasks
   @Nullable
   protected TaskDescriptor getNextMatching() {
     while (true) {
       synchronized (myQueueLock) {
         if (myQueue.isEmpty()) return null;
-        if (myTriggerSuspend) {
-          return null;
-        }
         TaskDescriptor current = myQueue.remove(0);
         // check if some tasks were scheduled after disaster was thrown, anyway, they should also be checked for cure
         if (! current.isHaveMagicCure()) {

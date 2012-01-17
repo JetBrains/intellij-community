@@ -1170,7 +1170,6 @@ public class ProjectWrapper {
           }
 
           dependencyMapping.integrate(delta, files, removed);
-          delta.close();
 
           if (!incremental) {
             affectedFiles.addAll(sources);
@@ -1285,7 +1284,6 @@ public class ProjectWrapper {
             }
 
             dependencyMapping.integrate(delta, files, removedSources);
-            delta.close();
 
             for (Module m : chunkModules) {
               Reporter.reportBuildSuccess(m, flags.tests());

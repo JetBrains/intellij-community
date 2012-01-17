@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -465,11 +465,11 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
 
     ASTNode lbraceCandidate = leftNode.getTreePrev();
-    return (lbraceCandidate != null && lbraceCandidate.getElementType() == JavaTokenType.LBRACE) ? 0 : 1;
+    return lbraceCandidate != null && lbraceCandidate.getElementType() == JavaTokenType.LBRACE ? 0 : 1;
   }
 
   private int getLinesAroundMethod() {
-    boolean useInterfaceMethodSpacing = !isClass(myParent) || (isAbstractMethod(myChild1) && isAbstractMethod(myChild2));
+    boolean useInterfaceMethodSpacing = !isClass(myParent) || isAbstractMethod(myChild1) && isAbstractMethod(myChild2);
     return useInterfaceMethodSpacing ? mySettings.BLANK_LINES_AROUND_METHOD_IN_INTERFACE : mySettings.BLANK_LINES_AROUND_METHOD;
   }
 
@@ -628,8 +628,8 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
       if (putRightChildOnNewLine) {
         processOnNewLineCondition(true);
       } else {
-        boolean useSpace = (myRole2 == ChildRole.CATCH_SECTION && mySettings.SPACE_BEFORE_CATCH_KEYWORD) 
-                           || (myRole2 == ChildRole.FINALLY_KEYWORD && mySettings.SPACE_BEFORE_FINALLY_KEYWORD);
+        boolean useSpace = myRole2 == ChildRole.CATCH_SECTION && mySettings.SPACE_BEFORE_CATCH_KEYWORD
+                           || myRole2 == ChildRole.FINALLY_KEYWORD && mySettings.SPACE_BEFORE_FINALLY_KEYWORD;
         createSpaceProperty(useSpace, false, 0);
       }
       return;
@@ -644,8 +644,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
                                       mySettings.BRACE_STYLE, null, mySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE, true);
     }
     else if (myType2 == JavaElementType.RESOURCE_LIST) {
-      myResult = getSpaceBeforeLBrace(mySettings.SPACE_BEFORE_TRY_PARENTHESES,
-                                      mySettings.BRACE_STYLE, null, mySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE, true);
+      createSpaceInCode(mySettings.SPACE_BEFORE_TRY_PARENTHESES);
     }
   }
 
@@ -656,8 +655,8 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     else if (myRole1 == ChildRole.LPARENTH || myRole2 == ChildRole.RPARENTH) {
       createSpaceInCode(mySettings.SPACE_WITHIN_FOR_PARENTHESES);
     }
-    else if ((myRole1 == ChildRole.FOR_ITERATION_PARAMETER && myRole2 == ChildRole.COLON) ||
-             (myRole1 == ChildRole.COLON && myRole2 == ChildRole.FOR_ITERATED_VALUE))
+    else if (myRole1 == ChildRole.FOR_ITERATION_PARAMETER && myRole2 == ChildRole.COLON ||
+             myRole1 == ChildRole.COLON && myRole2 == ChildRole.FOR_ITERATED_VALUE)
     {
       createSpaceInCode(true);
     }
@@ -714,7 +713,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
       myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
     }
 
-    else if ((myRole1 == ChildRoleBase.NONE && !lhsStatement) || (myRole2 == ChildRoleBase.NONE && !rhsStatement)) {
+    else if (myRole1 == ChildRoleBase.NONE && !lhsStatement || myRole2 == ChildRoleBase.NONE && !rhsStatement) {
       final IElementType firstElementType = myChild1.getElementType();
       if (
         firstElementType == JavaTokenType.END_OF_LINE_COMMENT
@@ -768,7 +767,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
       int minSpaces = 0;
       int minLineFeeds = 1;
       PsiElement psi = myChild1.getPsi();
-      if (mySettings.KEEP_MULTIPLE_EXPRESSIONS_IN_ONE_LINE || (psi != null && PsiTreeUtil.hasErrorElements(psi))) {
+      if (mySettings.KEEP_MULTIPLE_EXPRESSIONS_IN_ONE_LINE || psi != null && PsiTreeUtil.hasErrorElements(psi)) {
         minSpaces = 1;
         minLineFeeds = 0;
       }
@@ -867,7 +866,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   }
 
   private Spacing getSpaceBeforeLBrace(final boolean spaceBeforeLbrace,
-                                       int braceStyle,
+                                       @CommonCodeStyleSettings.BraceStyleConstant int braceStyle,
                                        @Nullable TextRange dependantRange,
                                        boolean keepOneLine,
                                        boolean useParentBlockAsDependencyAllTheTime)
@@ -880,7 +879,8 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
       return createNonLFSpace(space, null, false);
     }
     else if (braceStyle == CommonCodeStyleSettings.NEXT_LINE && !mySettings.KEEP_SIMPLE_METHODS_IN_ONE_LINE) {
-      return Spacing.createSpacing(0, 0, keepOneLine ? 0 : 1, false, mySettings.KEEP_BLANK_LINES_IN_CODE);
+      space = (keepOneLine && spaceBeforeLbrace) ? 1 : 0;
+      return Spacing.createSpacing(space, 0, keepOneLine ? 0 : 1, false, mySettings.KEEP_BLANK_LINES_IN_CODE);
     }
     else if (keepOneLine) {
       TextRange dependencyRangeToUse = dependantRange == null || useParentBlockAsDependencyAllTheTime
@@ -1258,9 +1258,9 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   }
 
   @Override public void visitReferenceParameterList(PsiReferenceParameterList list) {
-    if ((myRole1 == ChildRole.LT_IN_TYPE_LIST && myRole2 == ChildRole.TYPE_IN_REFERENCE_PARAMETER_LIST)
-        || (myRole1 == ChildRole.LT_IN_TYPE_LIST && myRole2 == ChildRole.GT_IN_TYPE_LIST)
-        || (myRole1 == ChildRole.TYPE_IN_REFERENCE_PARAMETER_LIST && myRole2 == ChildRole.COMMA))
+    if (myRole1 == ChildRole.LT_IN_TYPE_LIST && myRole2 == ChildRole.TYPE_IN_REFERENCE_PARAMETER_LIST
+        || myRole1 == ChildRole.LT_IN_TYPE_LIST && myRole2 == ChildRole.GT_IN_TYPE_LIST
+        || myRole1 == ChildRole.TYPE_IN_REFERENCE_PARAMETER_LIST && myRole2 == ChildRole.COMMA)
     {
       createSpaceInCode(false);
     }

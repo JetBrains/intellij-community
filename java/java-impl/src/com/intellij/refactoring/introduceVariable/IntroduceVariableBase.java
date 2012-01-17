@@ -551,8 +551,11 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
         final RangeMarker exprMarker = editor.getDocument().createRangeMarker(expr.getTextRange());
         final SuggestedNameInfo suggestedName = getSuggestedName(settings.getSelectedType(), expr, chosenAnchor);
         final List<RangeMarker> occurrenceMarkers = new ArrayList<RangeMarker>();
+        final boolean noWrite = choice == OccurrencesChooser.ReplaceChoice.NO_WRITE;
         for (PsiExpression occurrence : occurrences) {
-          occurrenceMarkers.add(editor.getDocument().createRangeMarker(occurrence.getTextRange()));
+          if (allOccurences || (noWrite && !PsiUtil.isAccessedForWriting(occurrence))) {
+            occurrenceMarkers.add(editor.getDocument().createRangeMarker(occurrence.getTextRange()));
+          }
         }
         final String expressionText = expr.getText();
         final Runnable runnable =
@@ -573,7 +576,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
                                                   IntroduceVariableBase.REFACTORING_NAME);
                   renamer.initInitialText(expressionText);
                   PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
-                  renamer.performInplaceRename(false, new LinkedHashSet<String>(Arrays.asList(suggestedName.names)));
+                  renamer.performInplaceRefactoring(new LinkedHashSet<String>(Arrays.asList(suggestedName.names)));
                 }
               }
             }

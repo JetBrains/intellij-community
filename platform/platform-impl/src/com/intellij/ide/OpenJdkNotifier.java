@@ -33,7 +33,7 @@ import java.awt.*;
 public class OpenJdkNotifier {
   public static void checkJdk(MessageBus bus) {
     final String vendor = System.getProperty("java.vendor").toLowerCase();
-    if (!vendor.contains("sun") && !vendor.contains("apple") && vendor.contains("oracle")) {
+    if (!vendor.contains("sun") && !vendor.contains("apple") && !vendor.contains("oracle")) {
       bus.connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener.Adapter() {
         @Override
         public void appFrameCreated(String[] commandLineArgs, @NotNull Ref<Boolean> willOpenProject) {

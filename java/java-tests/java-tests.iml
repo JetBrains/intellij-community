@@ -26,9 +26,9 @@
     <orderEntry type="module" module-name="ui-designer" scope="TEST" />
     <orderEntry type="module" module-name="eclipse" scope="TEST" />
     <orderEntry type="module" module-name="execution-openapi" />
-    <orderEntry type="module" module-name="IntentionPowerPackPlugin" />
-    <orderEntry type="module" module-name="InspectionGadgetsPlugin" />
     <orderEntry type="module" module-name="platform-tests" scope="TEST" />
+    <orderEntry type="module" module-name="IntentionPowerPackPlugin" scope="TEST" />
+    <orderEntry type="module" module-name="InspectionGadgetsPlugin" scope="TEST" />
   </component>
 </module>
 

@@ -47,6 +47,28 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
     assertResolved(f, findTag("project.version"));
   }
 
+  public void testBasicAt() throws Exception {
+    createProjectSubDir("res");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <resources>" +
+                  "    <resource>" +
+                  "      <directory>res</directory>" +
+                  "      <filtering>true</filtering>" +
+                  "    </resource>" +
+                  "  </resources>" +
+                  "</build>");
+
+    VirtualFile f = createProjectSubFile("res/foo.properties",
+                                         "foo=abc@project<caret>.version@abc");
+
+    assertResolved(f, findTag("project.version"));
+  }
+
   public void testCorrectlyCalculatingBaseDir() throws Exception {
     createProjectSubDir("res");
 
@@ -136,7 +158,7 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
     importProjectWithProfiles("one");
 
     VirtualFile f = createProjectSubFile("res/foo.properties",
-                                         "foo=${profileProp<caret>}");
+                                         "foo=@profileProp<caret>@");
 
     assertResolved(f, findTag(profiles, "profilesXml.profiles[0].properties.profileProp", MavenDomProfilesModel.class));
   }
@@ -258,10 +280,11 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
                   "</build>");
 
     VirtualFile f = createProjectSubFile("res/foo.properties",
-                                         "foo=${xxx}");
+                                         "foo=${xxx}\n" +
+                                         "foo2=@xxx@");
     VirtualFile filter = createProjectSubFile("filters/filter.properties", "xx<caret>x=1");
 
-    assertSearchResultsInclude(filter, MavenDomUtil.findPropertyValue(myProject, f, "foo"));
+    assertSearchResultsInclude(filter, MavenDomUtil.findPropertyValue(myProject, f, "foo"), MavenDomUtil.findPropertyValue(myProject, f, "foo2"));
   }
 
   public void testCompletionAfterOpenBrace() throws Exception {

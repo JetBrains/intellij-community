@@ -277,10 +277,11 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
 
   public void testTupleConstructor() {
     myFixture.addClass("package groovy.transform; public @interface TupleConstructor {}")
-    myFixture.addFileToProject('Classes.groovy', '@groovy.transform.TupleConstructor class Foo { int a; int b }')
+    myFixture.addFileToProject('Classes.groovy', '@groovy.transform.TupleConstructor class Foo { int a; final int b }')
     def ref = configureByText('new Fo<caret>o(2, 3)')
     def target = ((GrNewExpression) ref.element.parent).advancedResolve().element
     assert target instanceof PsiMethod
+    assert target.parameterList.parametersCount == 2
     assert target.navigationElement instanceof PsiClass
   }
 
@@ -296,12 +297,6 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
     myFixture.addFileToProject('Classes.groovy', '@groovy.transform.InheritConstructors class CustomException extends Exception {}')
     def ref = configureByText('new Cu<caret>stomException("msg")')
     assert ((GrNewExpression) ref.element.parent).advancedResolve().element instanceof PsiMethod
-  }
-
-  private PsiReference configureByText(String text) {
-    myFixture.configureByText 'a.groovy', text
-    def ref = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset)
-    return ref
   }
 
   public void testPartiallyDeclaredType() throws Exception {
@@ -823,5 +818,18 @@ def test() {
     PsiParameter[] parameters = resolved.parameterList.parameters
     assertTrue parameters.length == 1
     assertEquals "java.lang.Object", parameters[0].type.canonicalText
+  }
+
+  public void testScriptMethodsInClass() {
+    def ref = configureByText('''
+class X {
+  def foo() {
+    scriptMetho<caret>d('1')
+  }
+}
+def scriptMethod(String s){}
+''')
+
+    assertNull(ref.resolve())
   }
 }

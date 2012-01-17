@@ -84,6 +84,10 @@ public class AndroidCompileUtil {
   
   @NonNls private static final String PROGUARD_CFG_FILE_NAME = "proguard.cfg";
   @NonNls public static final String CLASSES_JAR_FILE_NAME = "classes.jar";
+  
+  @NonNls
+  private static final String[] SCALA_TEST_CONFIGURATIONS =
+    {"ScalaTestRunConfiguration", "SpecsRunConfiguration", "Specs2RunConfiguration"};
 
   private AndroidCompileUtil() {
   }
@@ -598,8 +602,23 @@ public class AndroidCompileUtil {
   }
 
   public static boolean isFullBuild(@NotNull CompileContext context) {
-    RunConfiguration runConfiguration = CompileStepBeforeRun.getRunConfiguration(context);
-    return !(runConfiguration instanceof JUnitConfiguration);
+    final RunConfiguration runConfiguration = CompileStepBeforeRun.getRunConfiguration(context);
+    
+    if (runConfiguration == null) {
+      return true;
+    }
+    
+    if (runConfiguration instanceof JUnitConfiguration) {
+      return false;
+    }
+
+    for (AndroidLightBuildProvider provider : AndroidLightBuildProvider.EP_NAME.getExtensions()) {
+      if (provider.toPerformLightBuild(runConfiguration)) {
+        return false;
+      }
+    }
+    final String id = runConfiguration.getType().getId();
+    return ArrayUtil.find(SCALA_TEST_CONFIGURATIONS, id) < 0;
   }
 
   public static boolean isReleaseBuild(@NotNull CompileContext context) {

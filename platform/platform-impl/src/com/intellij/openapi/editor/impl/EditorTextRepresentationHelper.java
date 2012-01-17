@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -58,7 +59,7 @@ public interface EditorTextRepresentationHelper {
    * @param x           <code>'x'</code> offset from the visual line start
    * @return            width in pixels necessary for the target text sub-sequence representation
    */
-  int textWidth(@NotNull CharSequence text, int start, int end, int fontType, int x);
+  int textWidth(@NotNull CharSequence text, int start, int end, @JdkConstants.FontStyle int fontType, int x);
 
   /**
    * This is specification of {@link #textWidth(CharSequence, int, int, int, int)} in case of the single character
@@ -70,5 +71,5 @@ public interface EditorTextRepresentationHelper {
    * @param fontType    font type used for the given char representation
    * @return            width in pixels necessary for the target char representation
    */
-  int charWidth(char c, int fontType);
+  int charWidth(char c, @JdkConstants.FontStyle int fontType);
 }

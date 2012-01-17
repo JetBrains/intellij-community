@@ -167,7 +167,7 @@
 
     <expressionConverter implementationClass="com.intellij.refactoring.introduceParameter.JavaExpressionConverter" language="JAVA"/>
 
-
+    <codeInsight.lineMarkerProvider language="" implementationClass="com.intellij.ui.ColorLineMarkerProvider"/>
     <!--<expectedTypesProvider implementation="com.intellij.codeInsight.JavaExpectedTypesProvider"/>-->
 
     <referencesSearch implementation="com.intellij.psi.impl.search.PsiAnnotationMethodReferencesSearcher"/>
@@ -515,6 +515,9 @@
     <localInspection language="JAVA" shortName="JavacQuirks" bundle="messages.InspectionsBundle" key="inspection.compiler.javac.quirks.name"
                      groupName="Compiler issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.compiler.JavacQuirksInspection" />
+    <localInspection language="JAVA" shortName="MagicConstant" displayName="Magic Constant"
+                     groupName="Probable bugs" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.magicConstant.MagicConstantInspection" />
 
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.SplitIfAction</className>
@@ -728,6 +731,7 @@
     <codeInsight.gotoSuper language="JAVA" implementationClass="com.intellij.codeInsight.navigation.JavaGotoSuperHandler"/>
     <codeInsight.lineMarkerProvider language="JAVA" implementationClass="com.intellij.codeInsight.daemon.impl.JavaLineMarkerProvider"/>
     <codeInsight.lineMarkerProvider language="JAVA" implementationClass="com.intellij.codeInsight.daemon.impl.IconLineMarkerProvider"/>
+    <colorProvider implementation="com.intellij.codeInsight.daemon.impl.JavaColorProvider" />
 
     <annotator language="JAVA" implementationClass="com.intellij.codeInsight.daemon.impl.JavaDocAnnotator"/>
     <statementUpDownMover implementation="com.intellij.codeInsight.editorActions.moveUpDown.StatementMover" id="statement"
@@ -1125,6 +1129,7 @@
 
     <templateCompletionProcessor implementation="com.intellij.codeInsight.template.macro.JavaTemplateCompletionProcessor"/>
 
+    <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.wordSelection.JavaWordSelectioner"/>
     <basicWordSelectionFilter implementation="com.intellij.codeInsight.editorActions.wordSelection.JavaBasicWordSelectionFilter"/>
 
     <fileIconPatcher implementation="com.intellij.ide.JavaFileIconPatcher"/>
@@ -1202,7 +1207,6 @@
     <wizardMode implementation="com.intellij.ide.util.newProjectWizard.modes.CreateProjectFromSourcesMode" id="CreateProjectFromSourcesMode" order="after CreateFromScratchMode"/>
     <wizardMode implementation="com.intellij.ide.util.newProjectWizard.modes.CreateModuleFromSourcesMode" id="CreateModuleFromSourcesMode" order="after CreateProjectFromSourcesMode"/>
     <projectStructureDetector implementation="com.intellij.ide.util.projectWizard.importSources.impl.JavaProjectStructureDetector" order="first"/>
-
   </extensions>
 
   <actions>

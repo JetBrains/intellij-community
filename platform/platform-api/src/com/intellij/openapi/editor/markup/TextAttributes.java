@@ -17,6 +17,7 @@ package com.intellij.openapi.editor.markup;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
+import org.intellij.lang.annotations.JdkConstants;
 import org.jdom.Element;
 
 import java.awt.*;
@@ -60,6 +61,7 @@ public class TextAttributes implements JDOMExternalizable, Cloneable {
     public Color FOREGROUND = null;
     public Color BACKGROUND = null;
 
+    @JdkConstants.FontStyle
     public int FONT_TYPE = Font.PLAIN;
 
     public Color EFFECT_COLOR = null;
@@ -139,7 +141,7 @@ public class TextAttributes implements JDOMExternalizable, Cloneable {
     myAttrs = AttributesFlyweight.create(null, null, Font.PLAIN, null, EffectType.BOXED, null);
   }
 
-  public TextAttributes(Color foregroundColor, Color backgroundColor, Color effectColor, EffectType effectType, int fontType) {
+  public TextAttributes(Color foregroundColor, Color backgroundColor, Color effectColor, EffectType effectType, @JdkConstants.FontStyle int fontType) {
     myAttrs = AttributesFlyweight.create(foregroundColor, backgroundColor, fontType, effectColor, effectType, null);
   }
 
@@ -197,11 +199,12 @@ public class TextAttributes implements JDOMExternalizable, Cloneable {
     myAttrs = myAttrs.withEffectType(effectType);
   }
 
+  @JdkConstants.FontStyle
   public int getFontType() {
     return myAttrs.getFontType();
   }
 
-  public void setFontType(int type) {
+  public void setFontType(@JdkConstants.FontStyle int type) {
     if (type < 0 || type > 3) {
       LOG.error("Wrong font type: " + type);
       type = 0;

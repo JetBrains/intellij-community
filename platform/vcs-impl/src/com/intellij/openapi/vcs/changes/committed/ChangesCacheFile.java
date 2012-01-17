@@ -67,9 +67,9 @@ public class ChangesCacheFile {
 
   public ChangesCacheFile(Project project, File path, AbstractVcs vcs, VirtualFile root, RepositoryLocation location) {
     final Calendar date = Calendar.getInstance();
-    date.set(2020, 1, 2);
+    date.set(2020, Calendar.FEBRUARY, 2);
     myFirstCachedDate = date.getTime();
-    date.set(1970, 1, 2);
+    date.set(1970, Calendar.FEBRUARY, 2);
     myLastCachedDate = date.getTime();
     myProject = project;
     myPath = path;

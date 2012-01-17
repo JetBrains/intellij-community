@@ -17,20 +17,21 @@ package com.intellij.ide.structureView.impl.java;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.psi.*;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.psi.impl.PsiImplUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class JavaClassTreeElement extends JavaClassTreeElementBase<PsiClass> {
-  public JavaClassTreeElement(PsiClass cls, boolean inherited) {
+  private final Set<PsiClass> myParents;
+
+  public JavaClassTreeElement(PsiClass cls, boolean inherited, Set<PsiClass> parents) {
     super(inherited, cls);
+    myParents = parents;
+    myParents.add(cls);
   }
 
   @NotNull
@@ -42,19 +43,15 @@ public class JavaClassTreeElement extends JavaClassTreeElementBase<PsiClass> {
     final PsiClass aClass = getElement();
     if (aClass == null) return Collections.emptyList();
 
-    Collection<PsiElement> members = new ArrayList<PsiElement>();
-    ContainerUtil.addAll(members, aClass.getFields());
-    ContainerUtil.addAll(members, aClass.getMethods());
-    ContainerUtil.addAll(members, aClass.getInnerClasses());
-    ContainerUtil.addAll(members, aClass.getInitializers());
+    LinkedHashSet<PsiElement> members = getOwnChildren(aClass);
     List<StructureViewTreeElement> children = new ArrayList<StructureViewTreeElement>(members.size());
 
     //aClass.processDeclarations(new AddAllMembersProcessor(inherited, aClass), ResolveState.initial(), null, aClass);
 
     for (PsiElement child : members) {
       if (!child.isValid()) continue;
-      if (child instanceof PsiClass) {
-        children.add(new JavaClassTreeElement((PsiClass)child, false));
+      if (child instanceof PsiClass && !myParents.contains((PsiClass)child)) {
+        children.add(new JavaClassTreeElement((PsiClass)child, false, myParents));
       }
       else if (child instanceof PsiField) {
         children.add(new PsiFieldTreeElement((PsiField)child, false));
@@ -67,6 +64,25 @@ public class JavaClassTreeElement extends JavaClassTreeElementBase<PsiClass> {
       }
     }
     return children;
+  }
+
+  static LinkedHashSet<PsiElement> getOwnChildren(PsiClass aClass) {
+    LinkedHashSet<PsiElement> members = new LinkedHashSet<PsiElement>();
+    addPhysicalElements(aClass.getFields(), members);
+    addPhysicalElements(aClass.getMethods(), members);
+    addPhysicalElements(aClass.getInnerClasses(), members);
+    addPhysicalElements(aClass.getInitializers(), members);
+    return members;
+  }
+
+  private static void addPhysicalElements(PsiElement[] elements, LinkedHashSet<PsiElement> to) {
+    for (PsiElement element : elements) {
+      to.add(PsiImplUtil.handleMirror(element));
+    }
+  }
+
+  public Set<PsiClass> getParents() {
+    return myParents;
   }
 
   public String getPresentableText() {

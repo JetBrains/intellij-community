@@ -44,7 +44,7 @@ public class ChangeListChooser extends DialogWrapper {
     super(project, false);
     myProject = project;
 
-    ChangeListEditHandler handler = null;
+    ChangeListEditHandler handler;
     for (ChangeList changelist : changelists) {
       handler = ((LocalChangeListImpl)changelist).getEditHandler();
       if (handler != null) {

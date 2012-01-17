@@ -68,7 +68,6 @@
         implementation="org.jetbrains.plugins.groovy.annotator.DefaultGroovyFrameworkConfigNotification"/>
 
     <membersContributor implementation="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicMembersContributor"/>
-    <membersContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.GrInheritConstructorContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.GrCollectionTypeMembersProvider"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.LoggingContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.spock.SpockMemberContributor"/>
@@ -78,6 +77,7 @@
     <astTransformContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.AutoExternalizeContributor"/>
     <astTransformContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.AutoCloneContributor"/>
     <astTransformContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.ConstructorAnnotationsProcessor"/>
+    <astTransformContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.GrInheritConstructorContributor"/>
 
     <positionManagerDelegate implementation="org.jetbrains.plugins.groovy.gant.GantPositionManagerHelper"/>
 
@@ -184,6 +184,7 @@
     <lang.commenter language="Groovy" implementationClass="org.jetbrains.plugins.groovy.highlighter.GroovyCommenter"/>
     <lang.foldingBuilder language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.folding.GroovyFoldingBuilder"/>
     <lang.formatter language="Groovy" implementationClass="org.jetbrains.plugins.groovy.formatter.GroovyFormattingModelBuilder"/>
+    <lang.whiteSpaceFormattingStrategy language="Groovy" implementationClass="org.jetbrains.plugins.groovy.formatter.GroovyWhiteSpaceFormattingStrategy"/>
 
     <enterHandlerDelegate implementation="org.jetbrains.plugins.groovy.lang.editor.actions.GroovyEnterHandler"
                           order="before EnterBetweenBracesHandler"/>
@@ -642,6 +643,9 @@
     <localInspection language="Groovy" shortName="GroovyRangeTypeCheck" bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
                      key="incorrect.range.argument" groupName="Probable bugs" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyRangeTypeCheckInspection"/>
+    <localInspection language="Groovy" shortName="NewInstanceOfSingleton" bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
+                     key="new.instance.of.singleton" groupName="Probable bugs" enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.bugs.NewInstanceOfSingletonInspection"/>
     <localInspection language="Groovy" shortName="GroovyLabeledStatement" bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
                      key="check.labeled.statement" groupName="Probable bugs" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyLabeledStatementInspection"/>
@@ -942,6 +946,11 @@
       <className>org.jetbrains.plugins.groovy.intentions.style.ConvertFromGeeseBracesIntention</className>
     </intentionAction>
     <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.groovy.style</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.style.AddReturnTypeFix</className>
+    </intentionAction>
+    <intentionAction>
           <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
           <categoryKey>intention.category.groovy/intention.category.groovy.style</categoryKey>
           <className>org.jetbrains.plugins.groovy.intentions.style.ReplaceQualifiedReferenceWithImportIntention</className>
@@ -1022,6 +1031,10 @@
       <action id="DumpGroovyControlFlowAction"
               class="org.jetbrains.plugins.groovy.actions.DumpGroovyControlFlowAction"
               text="dump groovy control flow"
+              description="" internal="true"/>
+      <action id="DumpGroovyStubsAction"
+              class="org.jetbrains.plugins.groovy.actions.DumpGroovyStubsAction"
+              text="dump groovy stubs"
               description="" internal="true"/>
       <add-to-group group-id="Internal"/>
     </group>

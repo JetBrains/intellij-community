@@ -273,6 +273,10 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
           throw new InvalidDataException();
         }
 
+        if (SYSTEM_MACROS.contains(name)) {
+          continue;
+        }
+
         if (value.length() > 1 && value.charAt(value.length() - 1) == '/') {
           value = value.substring(0, value.length() - 1); 
         }

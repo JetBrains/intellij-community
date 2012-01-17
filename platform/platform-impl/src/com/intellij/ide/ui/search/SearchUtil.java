@@ -394,7 +394,7 @@ public class SearchUtil {
 
   public static void appendFragments(String filter,
                                      @NonNls String text,
-                                     final int style,
+                                     @SimpleTextAttributes.StyleAttributeConstant int style,
                                      final Color foreground,
                                      final Color background,
                                      final SimpleColoredComponent textRenderer) {

@@ -31,13 +31,13 @@ public abstract class QuickFixFactory {
   }
 
   public abstract LocalQuickFixAndIntentionActionOnPsiElement createModifierListFix(@NotNull PsiModifierList modifierList,
-                                                        @Modifier @NotNull String modifier,
-                                                        boolean shouldHave,
-                                                        final boolean showContainingClass);
+                                                                                    @PsiModifier.ModifierConstant @NotNull String modifier,
+                                                                                    boolean shouldHave,
+                                                                                    final boolean showContainingClass);
   public abstract LocalQuickFixAndIntentionActionOnPsiElement createModifierListFix(@NotNull PsiModifierListOwner owner,
-                                                        @Modifier @NotNull String modifier,
-                                                        boolean shouldHave,
-                                                        final boolean showContainingClass);
+                                                                                    @PsiModifier.ModifierConstant @NotNull String modifier,
+                                                                                    boolean shouldHave,
+                                                                                    final boolean showContainingClass);
   public abstract LocalQuickFixAndIntentionActionOnPsiElement createMethodReturnFix(@NotNull PsiMethod method, @NotNull PsiType toReturn, boolean fixWholeHierarchy);
 
   public abstract LocalQuickFixAndIntentionActionOnPsiElement createAddMethodFix(@NotNull PsiMethod method, @NotNull PsiClass toClass);
@@ -50,7 +50,7 @@ public abstract class QuickFixFactory {
   public abstract LocalQuickFixAndIntentionActionOnPsiElement createImplementMethodsFix(@NotNull PsiClass psiElement);
   public abstract LocalQuickFixAndIntentionActionOnPsiElement createMethodThrowsFix(@NotNull PsiMethod method, @NotNull PsiClassType exceptionClass, boolean shouldThrow, boolean showContainingClass);
   public abstract LocalQuickFixAndIntentionActionOnPsiElement createAddDefaultConstructorFix(@NotNull PsiClass aClass);
-  public abstract LocalQuickFixAndIntentionActionOnPsiElement createAddConstructorFix(@NotNull PsiClass aClass, @Modifier String modifier);
+  public abstract LocalQuickFixAndIntentionActionOnPsiElement createAddConstructorFix(@NotNull PsiClass aClass, @PsiModifier.ModifierConstant String modifier);
   public abstract LocalQuickFixAndIntentionActionOnPsiElement createMethodParameterTypeFix(@NotNull PsiMethod method, int index, @NotNull PsiType newType, boolean fixWholeHierarchy);
   public abstract LocalQuickFixAndIntentionActionOnPsiElement createMakeClassInterfaceFix(@NotNull PsiClass aClass);
   public abstract LocalQuickFixAndIntentionActionOnPsiElement createMakeClassInterfaceFix(@NotNull PsiClass aClass, final boolean makeInterface);

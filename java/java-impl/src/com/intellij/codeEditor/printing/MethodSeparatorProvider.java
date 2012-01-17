@@ -25,6 +25,7 @@ import com.intellij.codeInsight.daemon.impl.LineMarkersPass;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilBase;
 
 import java.util.*;
 
@@ -34,7 +35,7 @@ public class MethodSeparatorProvider extends FileSeparatorProvider {
     final List<LineMarkerInfo> result = new ArrayList<LineMarkerInfo>();
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
-        LineMarkersPass action = new LineMarkersPass(file.getProject(), file, document, 0, file.getTextLength(), true);
+        LineMarkersPass action = new LineMarkersPass(file.getProject(), file, PsiUtilBase.findEditor(file), document, 0, file.getTextLength(), true);
         Collection<LineMarkerInfo> lineMarkerInfos = action.queryLineMarkers();
         for (LineMarkerInfo lineMarkerInfo : lineMarkerInfos) {
           if (lineMarkerInfo.separatorColor != null) {

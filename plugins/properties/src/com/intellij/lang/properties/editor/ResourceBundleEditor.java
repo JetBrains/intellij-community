@@ -102,6 +102,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
   private final Set<PropertiesFile> myBackSlashPressed = new THashSet<PropertiesFile>();
   @NonNls private static final String VALUES = "values";
   @NonNls private static final String NO_PROPERTY_SELECTED = "noPropertySelected";
+  private VirtualFileListener myVfsListener; 
   private PsiTreeChangeAdapter myPsiTreeChangeAdapter;
   @NonNls protected static final String PROPORTION_PROPERTY = "RESOURCE_BUNDLE_SPLITTER_PROPORTION";
 
@@ -231,7 +232,12 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
   }
 
   private void installPropertiesChangeListeners() {
-    VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileAdapter() {
+    final VirtualFileManager virtualFileManager = VirtualFileManager.getInstance();
+    if (myVfsListener != null) {
+      assert false;
+      virtualFileManager.removeVirtualFileListener(myVfsListener);
+    }
+    myVfsListener = new VirtualFileAdapter() {
       @Override
       public void fileCreated(VirtualFileEvent event) {
         if (PropertiesUtil.isPropertiesFile(event.getFile(), myProject)) {
@@ -260,7 +266,9 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
           }
         }
       }
-    }, this);
+    };
+    
+    virtualFileManager.addVirtualFileListener(myVfsListener, this);
     myPsiTreeChangeAdapter = new PsiTreeChangeAdapter() {
       public void childAdded(PsiTreeChangeEvent event) {
         childrenChanged(event);
@@ -607,6 +615,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
   public void dispose() {
     float proportion = getSplitter().getProportion();
     PropertiesComponent.getInstance(myProject).setValue(PROPORTION_PROPERTY, Double.toString(proportion));
+    VirtualFileManager.getInstance().removeVirtualFileListener(myVfsListener);
 
     myDisposed = true;
     Disposer.dispose(myStructureViewComponent);

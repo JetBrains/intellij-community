@@ -97,7 +97,7 @@ public abstract class ImportClassFixBase<T extends PsiElement & PsiReference> im
     boolean isAnnotationReference = myRef.getParent() instanceof PsiAnnotation;
     for (PsiClass aClass : classes) {
       if (isAnnotationReference && !aClass.isAnnotationType()) continue;
-      if (JavaCompletionUtil.isInExcludedPackage(aClass)) continue;
+      if (JavaCompletionUtil.isInExcludedPackage(aClass, false)) continue;
       if (referenceHasTypeParameters && !aClass.hasTypeParameters()) continue;
       String qName = aClass.getQualifiedName();
       if (qName != null) { //filter local classes

@@ -552,11 +552,15 @@ public class GroovyPropertyUtils {
   private static void annotateWithNullableStuff(final PsiModifierListOwner field, final PsiModifierListOwner listOwner)
     throws IncorrectOperationException {
     final NullableNotNullManager manager = NullableNotNullManager.getInstance(field.getProject());
-    if (manager.isNotNull(field, false)) {
-      annotate(listOwner, manager.getDefaultNotNull());
+    final String notNull = manager.getNotNull(field);
+    if (notNull != null) {
+      annotate(listOwner, notNull);
     }
-    else if (manager.isNullable(field, false)) {
-      annotate(listOwner, manager.getDefaultNullable());
+    else {
+      final String nullable = manager.getNullable(field);
+      if (nullable != null) {
+        annotate(listOwner, nullable);
+      }
     }
 
     final PsiModifierList modifierList = listOwner.getModifierList();

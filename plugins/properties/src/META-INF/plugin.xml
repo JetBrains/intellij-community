@@ -11,7 +11,8 @@
     <applicationService serviceInterface="com.intellij.lang.properties.LastSelectedPropertiesFileStore"
                         serviceImplementation="com.intellij.lang.properties.LastSelectedPropertiesFileStore"/>
     <annotator language="Properties" implementationClass="com.intellij.lang.properties.PropertiesAnnotator"/>
-    <lang.refactoringSupport language="Properties" implementationClass="com.intellij.lang.properties.PropertiesRefactoringSupportProvider"/>
+    <completion.contributor language="Properties" implementationClass="com.intellij.lang.properties.PropertiesCompletionContributor"/>
+    <lang.refactoringSupport language="Properties" implementationClass="com.intellij.lang.properties.refactoring.PropertiesRefactoringSupportProvider"/>
     <lang.documentationProvider language="Properties" implementationClass="com.intellij.lang.properties.PropertiesDocumentationProvider"/>
     <lang.findUsagesProvider language="Properties"
                                  implementationClass="com.intellij.lang.properties.findUsages.PropertiesFindUsagesProvider"/>
@@ -22,22 +23,22 @@
     <codeInsight.wordCompletionFilter language="Properties"
                                       implementationClass="com.intellij.lang.properties.PropertiesWordCompletionFilter"/>
     <lang.psiStructureViewFactory language="Properties"
-                                  implementationClass="com.intellij.lang.properties.PropertiesStructureViewBuilderFactory"/>
+                                  implementationClass="com.intellij.lang.properties.structureView.PropertiesStructureViewBuilderFactory"/>
     <lang.ast.factory language="Properties" implementationClass="com.intellij.lang.properties.psi.impl.PropertiesASTFactory"/>
     <joinLinesHandler implementation="com.intellij.lang.properties.PropertiesJoinLinesHandler"/>
     
     <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.enter.EnterInPropertiesFileHandler"/>
 
     <lang.parserDefinition language="Properties" implementationClass="com.intellij.lang.properties.parsing.PropertiesParserDefinition"/>
-    <renameHandler implementation="com.intellij.lang.properties.ResourceBundleRenameHandler"/>
-    <renameHandler implementation="com.intellij.lang.properties.ResourceBundleKeyRenameHandler"/>
-    <renameHandler implementation="com.intellij.lang.properties.PropertyRenameHandler"/>
+    <renameHandler implementation="com.intellij.lang.properties.refactoring.ResourceBundleRenameHandler"/>
+    <renameHandler implementation="com.intellij.lang.properties.refactoring.ResourceBundleKeyRenameHandler"/>
+    <renameHandler implementation="com.intellij.lang.properties.refactoring.PropertyRenameHandler"/>
     <stubElementTypeHolder class="com.intellij.lang.properties.parsing.PropertiesElementTypes"/>
-    <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenamePropertyProcessor"/>
+    <renamePsiElementProcessor implementation="com.intellij.lang.properties.refactoring.RenamePropertyProcessor"/>
     <lang.commenter language="Properties" implementationClass="com.intellij.lang.properties.PropertiesCommenter"/>
     <stubIndex implementation="com.intellij.lang.properties.psi.PropertyKeyIndex"/>
     <lang.namesValidator language="Properties" implementationClass="com.intellij.lang.properties.PropertiesNamesValidator"/>
-    <refactoring.safeDeleteProcessor implementation="com.intellij.refactoring.safeDelete.PropertiesSafeDeleteProcessor"/>
+    <refactoring.safeDeleteProcessor implementation="com.intellij.lang.properties.refactoring.PropertiesSafeDeleteProcessor"/>
     <refactoring.moveHandler implementation="com.intellij.lang.properties.projectView.ResourceBundleMoveProvider"/>
     <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.PropertiesColorsPage"/>
     <treeStructureProvider implementation="com.intellij.lang.properties.projectView.ResourceBundleGrouper"/>

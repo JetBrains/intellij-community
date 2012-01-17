@@ -67,7 +67,11 @@ public class Saxon9Support {
   public static TransformerFactory createTransformerFactory() {
     final TransformerFactoryImpl factory = new TransformerFactoryImpl();
     factory.setAttribute(FeatureKeys.TRACE_LISTENER, new Saxon9TraceListener());
-    factory.setAttribute(FeatureKeys.OPTIMIZATION_LEVEL, 0);
+    try {
+      factory.setAttribute(FeatureKeys.OPTIMIZATION_LEVEL, "0");
+    } catch (IllegalArgumentException e) {
+      e.printStackTrace();
+    }
     return factory;
   }
 }

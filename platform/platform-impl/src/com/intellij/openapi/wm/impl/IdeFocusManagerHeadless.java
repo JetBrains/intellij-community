@@ -71,10 +71,6 @@ public class IdeFocusManagerHeadless extends IdeFocusManager {
   }
 
   @Override
-  public void suspendKeyProcessingUntil(@NotNull ActionCallback done) {
-  }
-
-  @Override
   public boolean isFocusBeingTransferred() {
     return false;
   }

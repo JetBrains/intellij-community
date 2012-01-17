@@ -26,7 +26,6 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -51,19 +50,22 @@ public class JavaInheritedMembersNodeProvider implements FileStructureNodeProvid
     if (node instanceof JavaClassTreeElement) {
       final PsiClass aClass = ((JavaClassTreeElement)node).getValue();
       Collection<PsiElement> inherited = new LinkedHashSet<PsiElement>();
-      Collection<PsiElement> ownChildren = new THashSet<PsiElement>();
-      ContainerUtil.addAll(ownChildren, aClass.getFields());
-      ContainerUtil.addAll(ownChildren, aClass.getMethods());
-      ContainerUtil.addAll(ownChildren, aClass.getInnerClasses());
-      ContainerUtil.addAll(ownChildren, aClass.getInitializers());
+      Collection<PsiElement> ownChildren = JavaClassTreeElement.getOwnChildren(aClass);
 
       aClass.processDeclarations(new AddAllMembersProcessor(inherited, aClass), ResolveState.initial(), null, aClass);
       inherited.removeAll(ownChildren);
+      if (aClass instanceof PsiAnonymousClass) {
+        final PsiElement element = ((PsiAnonymousClass)aClass).getBaseClassReference().resolve();
+        if (element instanceof PsiClass) {
+          ContainerUtil.addAll(inherited, ((PsiClass)element).getInnerClasses());
+        }
+      }
       List<TreeElement> array = new ArrayList<TreeElement>();
       for (PsiElement child : inherited) {
         if (!child.isValid()) continue;
-        if (child instanceof PsiClass) {
-          array.add(new JavaClassTreeElement((PsiClass)child, true));
+        final Set<PsiClass> parents = ((JavaClassTreeElement)node).getParents();
+        if (child instanceof PsiClass && !parents.contains(child)) {
+          array.add(new JavaClassTreeElement((PsiClass)child, true, parents));
         }
         else if (child instanceof PsiField) {
           array.add(new PsiFieldTreeElement((PsiField)child, true));

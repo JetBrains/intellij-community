@@ -65,7 +65,7 @@ public class TreePopupImpl extends WizardPopup implements TreePopup {
   protected JComponent createContent() {
     myWizardTree = new MyTree();
     myWizardTree.getAccessibleContext().setAccessibleName("WizardTree");
-    myBuilder = new FilteringTreeBuilder(getProject(), myWizardTree, this, getTreeStep().getStructure(), AlphaComparator.INSTANCE) {
+    myBuilder = new FilteringTreeBuilder(myWizardTree, this, getTreeStep().getStructure(), AlphaComparator.INSTANCE) {
       @Override
       protected boolean isSelectable(final Object nodeObject) {
         return getTreeStep().isSelectable(nodeObject, nodeObject);
@@ -365,8 +365,8 @@ public class TreePopupImpl extends WizardPopup implements TreePopup {
 
   private Object extractUserObject(Object aNode) {
     Object object = ((DefaultMutableTreeNode) aNode).getUserObject();
-    if (object instanceof FilteringTreeStructure.Node) {
-      return ((FilteringTreeStructure.Node) object).getDelegate();
+    if (object instanceof FilteringTreeStructure.FilteringNode) {
+      return ((FilteringTreeStructure.FilteringNode) object).getDelegate();
     }
     return object;
   }

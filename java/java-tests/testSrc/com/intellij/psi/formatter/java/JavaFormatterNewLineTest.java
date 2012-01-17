@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package com.intellij.psi.formatter.java;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.util.IncorrectOperationException;
 
 /**
@@ -168,7 +168,7 @@ public class JavaFormatterNewLineTest extends AbstractJavaFormatterTest {
 
   public void testArrayInitializer() throws IncorrectOperationException {
     // Inspired by IDEADEV-6787
-    getSettings().ARRAY_INITIALIZER_WRAP = CodeStyleSettings.WRAP_ALWAYS;
+    getSettings().ARRAY_INITIALIZER_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
     getSettings().ARRAY_INITIALIZER_LBRACE_ON_NEXT_LINE = true;
     getSettings().ARRAY_INITIALIZER_RBRACE_ON_NEXT_LINE = true;
     doTextTest(
@@ -195,7 +195,7 @@ public class JavaFormatterNewLineTest extends AbstractJavaFormatterTest {
 
   public void testSimpleAnnotatedMethodAndBraceOnNextLineStyle() throws Exception {
     // Inspired by IDEA-53542
-    getSettings().METHOD_BRACE_STYLE = CodeStyleSettings.NEXT_LINE;
+    getSettings().METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
     getSettings().KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
     getSettings().KEEP_LINE_BREAKS = true;
     getSettings().KEEP_BLANK_LINES_IN_CODE = 2;

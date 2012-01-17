@@ -39,18 +39,18 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ComponentWithBrowseButton;
-import com.intellij.openapi.ui.LabeledComponent;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.ui.*;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaCodeFragment;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.EditorTextFieldWithBrowseButton;
+import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.table.TableView;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.TextFieldCompletionProvider;
 import com.theoryinpractice.testng.MessageInfoException;
 import com.theoryinpractice.testng.configuration.browser.*;
@@ -62,6 +62,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.text.Document;
 import javax.swing.text.PlainDocument;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -84,6 +85,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
   private JRadioButton classTest;
   private JRadioButton methodTest;
   private JRadioButton groupTest;
+  private JRadioButton patternTest;
   private final TestNGConfigurationModel model;
   private LabeledComponent<EditorTextFieldWithBrowseButton> methodField;
   private LabeledComponent<EditorTextFieldWithBrowseButton> packageField;
@@ -105,6 +107,8 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
   private JList listenersTable;
   private JButton removeListener;
   private JCheckBox myUseDefaultReportersCheckBox;
+  private LabeledComponent<JPanel> myPattern;
+  TextFieldWithBrowseButton myPatternTextField;
   private final CommonJavaParametersPanel commonJavaParameters = new CommonJavaParametersPanel();
   private ArrayList<Map.Entry> propertiesList;
   private TestNGListenersTableModel listenerModel;
@@ -114,7 +118,20 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
   public TestNGConfigurationEditor(Project project) {
     this.project = project;
     BrowseModuleValueActionListener[] browseListeners = new BrowseModuleValueActionListener[] {new PackageBrowser(project),
-        new TestClassBrowser(project, this), new MethodBrowser(project, this), new GroupBrowser(project, this), new SuiteBrowser(project)};
+        new TestClassBrowser(project, this), new MethodBrowser(project, this), new GroupBrowser(project, this), new SuiteBrowser(project),
+        new TestClassBrowser(project, this){
+          @Override
+          protected void onClassChoosen(PsiClass psiClass) {
+            final JTextField textField = myPatternTextField.getTextField();
+            final String text = textField.getText();
+            textField.setText(text + (text.length() > 0 ? "||" : "") + psiClass.getQualifiedName());
+          }
+
+          @Override
+          public void actionPerformed(ActionEvent e) {
+            showDialog();
+          }
+        }};
     model = new TestNGConfigurationModel(project);
     model.setListener(this);
     createView();
@@ -125,7 +142,22 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
         commonJavaParameters.setModuleContext(moduleSelector.getModule());
       }
     });
-    registerListener(new JRadioButton[] {packageTest, classTest, methodTest, groupTest, suiteTest}, new ChangeListener()
+
+    final JPanel panel = myPattern.getComponent();
+    panel.setLayout(new BorderLayout());
+    myPatternTextField = new TextFieldWithBrowseButton();
+    myPatternTextField.setButtonIcon(PlatformIcons.ADD_ICON);
+    panel.add(myPatternTextField, BorderLayout.CENTER);
+    final FixedSizeButton editBtn = new FixedSizeButton();
+    editBtn.setIcon(IconLoader.getIcon("/actions/showViewer.png"));
+    editBtn.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        Messages.showTextAreaDialog(myPatternTextField.getTextField(), "Configure suite tests", "EditParametersPopupWindow");
+      }
+    });
+    panel.add(editBtn, BorderLayout.EAST);
+
+    registerListener(new JRadioButton[] {packageTest, classTest, methodTest, groupTest, suiteTest, patternTest}, new ChangeListener()
     {
       public void stateChanged(ChangeEvent e) {
         ButtonModel buttonModel = (ButtonModel) e.getSource();
@@ -140,6 +172,8 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
             model.setType(TestType.GROUP);
           } else if (buttonModel == suiteTest.getModel()) {
             model.setType(TestType.SUITE);
+          } else if (buttonModel == patternTest.getModel()) {
+            model.setType(TestType.PATTERN);
           }
           redisplay();
         }
@@ -153,17 +187,26 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
       }
     });
 
-    LabeledComponent[] components = new LabeledComponent[] {packageField, classField, methodField, groupField, suiteField};
+    LabeledComponent[] components = new LabeledComponent[] {packageField, classField, methodField, groupField, suiteField, myPattern};
     for (int i = 0; i < components.length; i++) {
-      ComponentWithBrowseButton field = (ComponentWithBrowseButton)components[i].getComponent();
+      JComponent field = components[i].getComponent();
       Object document = model.getDocument(i);
       if (field instanceof TextFieldWithBrowseButton) {
         ((TextFieldWithBrowseButton)field).getTextField().setDocument((PlainDocument)document);
-      } else {
-        final com.intellij.openapi.editor.Document componentDocument = ((EditorTextFieldWithBrowseButton)field).getChildComponent().getDocument();
+      }
+      else if (field instanceof EditorTextFieldWithBrowseButton) {
+        final com.intellij.openapi.editor.Document componentDocument =
+          ((EditorTextFieldWithBrowseButton)field).getChildComponent().getDocument();
         model.setDocument(i, componentDocument);
       }
-      browseListeners[i].setField(field);
+      else {
+        field = myPatternTextField;
+        document = new PlainDocument();
+        ((TextFieldWithBrowseButton)field).getTextField().setDocument((Document)document);
+        model.setDocument(i, document);
+      }
+            
+      browseListeners[i].setField((ComponentWithBrowseButton)field);
     }
     model.setType(TestType.CLASS);
     addListener.addActionListener(new AddTestListenerListener());
@@ -198,30 +241,42 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
       methodField.setVisible(false);
       groupField.setVisible(false);
       suiteField.setVisible(false);
+      myPattern.setVisible(false);
     } else if (classTest.isSelected()) {
       packagePanel.setVisible(false);
       classField.setVisible(true);
       methodField.setVisible(false);
       groupField.setVisible(false);
       suiteField.setVisible(false);
+      myPattern.setVisible(false);
     } else if (methodTest.isSelected()) {
       packagePanel.setVisible(false);
       classField.setVisible(true);
       methodField.setVisible(true);
       groupField.setVisible(false);
       suiteField.setVisible(false);
+      myPattern.setVisible(false);
     } else if (groupTest.isSelected()) {
       packagePanel.setVisible(false);
       classField.setVisible(false);
       methodField.setVisible(false);
       groupField.setVisible(true);
       suiteField.setVisible(false);
+      myPattern.setVisible(false);
     } else if (suiteTest.isSelected()) {
       packagePanel.setVisible(false);
       classField.setVisible(false);
       methodField.setVisible(false);
       groupField.setVisible(false);
       suiteField.setVisible(true);
+      myPattern.setVisible(false);
+    } else if (patternTest.isSelected()) {
+      packagePanel.setVisible(false);
+      classField.setVisible(false);
+      methodField.setVisible(false);
+      groupField.setVisible(false);
+      suiteField.setVisible(false);
+      myPattern.setVisible(true);
     }
   }
 
@@ -333,6 +388,8 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
     groupTest.setEnabled(true);
     classTest.setSelected(false);
     classTest.setEnabled(true);
+    patternTest.setSelected(false);
+    patternTest.setEnabled(true);
 
     classField.setComponent(new EditorTextFieldWithBrowseButton(project, true, new JavaCodeFragment.VisibilityChecker() {
       @Override
@@ -444,6 +501,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
       methodField.setEnabled(false);
       groupField.setEnabled(false);
       suiteField.setEnabled(false);
+      myPattern.setEnabled(false);
     } else if (type == TestType.CLASS) {
       classTest.setSelected(true);
       packageField.setEnabled(false);
@@ -451,6 +509,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
       methodField.setEnabled(false);
       groupField.setEnabled(false);
       suiteField.setEnabled(false);
+      myPattern.setEnabled(false);
     } else if (type == TestType.METHOD) {
       methodTest.setSelected(true);
       packageField.setEnabled(false);
@@ -458,6 +517,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
       methodField.setEnabled(true);
       groupField.setEnabled(false);
       suiteField.setEnabled(false);
+      myPattern.setEnabled(false);
     } else if (type == TestType.GROUP) {
       groupTest.setSelected(true);
       groupField.setEnabled(true);
@@ -465,9 +525,19 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
       classField.setEnabled(false);
       methodField.setEnabled(false);
       suiteField.setEnabled(false);
+      myPattern.setEnabled(false);
     } else if (type == TestType.SUITE) {
       suiteTest.setSelected(true);
       suiteField.setEnabled(true);
+      packageField.setEnabled(false);
+      classField.setEnabled(false);
+      methodField.setEnabled(false);
+      groupField.setEnabled(false);
+      myPattern.setEnabled(false);
+    } else if (type == TestType.PATTERN) {
+      patternTest.setSelected(true);
+      myPattern.setEnabled(true);
+      suiteField.setEnabled(false);
       packageField.setEnabled(false);
       classField.setEnabled(false);
       methodField.setEnabled(false);

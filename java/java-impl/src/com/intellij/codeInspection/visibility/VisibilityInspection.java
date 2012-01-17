@@ -176,7 +176,7 @@ public class VisibilityInspection extends GlobalJavaInspectionTool {
         RefClass refClass = (RefClass) refElement.getOwner();
         if (refClass.isInterface()) return null;
       }
-      @Modifier String access = getPossibleAccess(refElement);
+      String access = getPossibleAccess(refElement);
       if (access != refElement.getAccessModifier() && access != null) {
         final PsiElement element = refElement.getElement();
         final PsiElement nameIdentifier = element != null ? HighlightUsagesHandler.getNameIdentifier(element) : null;
@@ -196,11 +196,11 @@ public class VisibilityInspection extends GlobalJavaInspectionTool {
   }
 
   @Nullable
-  @Modifier
+  @PsiModifier.ModifierConstant
   public String getPossibleAccess(@Nullable RefJavaElement refElement) {
     if (refElement == null) return null;
-    @Modifier String curAccess = refElement.getAccessModifier();
-    @Modifier String weakestAccess = PsiModifier.PRIVATE;
+    String curAccess = refElement.getAccessModifier();
+    String weakestAccess = PsiModifier.PRIVATE;
 
     if (isTopLevelClass(refElement) || isCalledOnSubClasses(refElement)) {
       weakestAccess = PsiModifier.PACKAGE_LOCAL;
@@ -213,11 +213,12 @@ public class VisibilityInspection extends GlobalJavaInspectionTool {
     if (curAccess == weakestAccess) return curAccess;
 
     while (true) {
-      @Modifier String weakerAccess = getWeakerAccess(curAccess, refElement);
+      String weakerAccess = getWeakerAccess(curAccess, refElement);
       if (weakerAccess == null || RefJavaUtil.getInstance().compareAccess(weakerAccess, weakestAccess) < 0) break;
       if (isAccessible(refElement, weakerAccess)) {
         curAccess = weakerAccess;
-      } else {
+      }
+      else {
         break;
       }
     }
@@ -238,20 +239,22 @@ public class VisibilityInspection extends GlobalJavaInspectionTool {
   }
 
   @Nullable
-  @Modifier
-  private String getWeakerAccess(String curAccess, RefElement refElement) {
+  @PsiModifier.ModifierConstant
+  private String getWeakerAccess(@PsiModifier.ModifierConstant String curAccess, RefElement refElement) {
     if (curAccess == PsiModifier.PUBLIC) {
       return isTopLevelClass(refElement) ? PsiModifier.PACKAGE_LOCAL : PsiModifier.PROTECTED;
-    } else if (curAccess == PsiModifier.PROTECTED) {
+    }
+    if (curAccess == PsiModifier.PROTECTED) {
       return SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS ? PsiModifier.PACKAGE_LOCAL : PsiModifier.PRIVATE;
-    } else if (curAccess == PsiModifier.PACKAGE_LOCAL) {
+    }
+    if (curAccess == PsiModifier.PACKAGE_LOCAL) {
       return PsiModifier.PRIVATE;
     }
 
     return null;
   }
 
-  private boolean isAccessible(RefJavaElement to, String accessModifier) {
+  private boolean isAccessible(RefJavaElement to, @PsiModifier.ModifierConstant String accessModifier) {
 
     for (RefElement refElement : to.getInReferences()) {
       if (!isAccessibleFrom(refElement, to, accessModifier)) return false;
@@ -260,7 +263,7 @@ public class VisibilityInspection extends GlobalJavaInspectionTool {
     if (to instanceof RefMethod) {
       RefMethod refMethod = (RefMethod) to;
 
-      if (refMethod.isAbstract() && (refMethod.getDerivedMethods().size() == 0 || refMethod.getAccessModifier() == PsiModifier.PRIVATE)) return false;
+      if (refMethod.isAbstract() && (refMethod.getDerivedMethods().isEmpty() || refMethod.getAccessModifier() == PsiModifier.PRIVATE)) return false;
 
       for (RefMethod refOverride : refMethod.getDerivedMethods()) {
         if (!isAccessibleFrom(refOverride, to, accessModifier)) return false;
@@ -299,7 +302,7 @@ public class VisibilityInspection extends GlobalJavaInspectionTool {
     return true;
   }
 
-  private static int getAccessLevel(String access) {
+  private static int getAccessLevel(@PsiModifier.ModifierConstant String access) {
     if (access == PsiModifier.PRIVATE) return 1;
     if (access == PsiModifier.PACKAGE_LOCAL) return 2;
     if (access == PsiModifier.PROTECTED) return 3;
@@ -490,9 +493,9 @@ public class VisibilityInspection extends GlobalJavaInspectionTool {
 
   private static class AcceptSuggestedAccess implements LocalQuickFix{
     private final RefManager myManager;
-    @Modifier private final String myHint;
+    @PsiModifier.ModifierConstant private final String myHint;
 
-    private AcceptSuggestedAccess(final RefManager manager, @Modifier String hint) {
+    private AcceptSuggestedAccess(final RefManager manager, @PsiModifier.ModifierConstant String hint) {
       myManager = manager;
       myHint = hint;
     }

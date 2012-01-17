@@ -1,31 +1,55 @@
 
 package com.intellij.openapi.vcs.readOnlyHandler;
 
-import com.intellij.util.ui.OptionsDialog;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsBundle;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.ui.CollectionComboBoxModel;
+import com.intellij.ui.HtmlListCellRenderer;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.ui.OptionsDialog;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * @author yole
  */
 public class ReadOnlyStatusDialog extends OptionsDialog {
+
+  static final SimpleTextAttributes BOLD_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, UIUtil.getListForeground());
+  static final SimpleTextAttributes SELECTED_BOLD_ATTRIBUTES =
+    new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, UIUtil.getListSelectionForeground());
+
   private JPanel myTopPanel;
   private JList myFileList;
   private JRadioButton myUsingFileSystemRadioButton;
   private JRadioButton myUsingVcsRadioButton;
+  private JComboBox myChangelist;
   private FileInfo[] myFiles;
 
   public ReadOnlyStatusDialog(Project project, final FileInfo[] files) {
     super(project);
     myFiles = files;
     initFileList();
+
+    ActionListener listener = new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        myChangelist.setEnabled(myUsingVcsRadioButton.isSelected());
+      }
+    };
+    myUsingVcsRadioButton.addActionListener(listener);
+    myUsingFileSystemRadioButton.addActionListener(listener);
+    
     if (myUsingVcsRadioButton.isEnabled()) {
       myUsingVcsRadioButton.setSelected(true);
     }
@@ -58,19 +82,36 @@ public class ReadOnlyStatusDialog extends OptionsDialog {
     for(FileInfo info: myFiles) {
       if (info.hasVersionControl()) {
         hasVcs = true;
+        HandleType handleType = info.getSelectedHandleType();
+        List<String> changelists = handleType.getChangelists();
+        final String defaultChangelist = handleType.getDefaultChangelist();
+        myChangelist.setModel(new CollectionComboBoxModel(changelists, defaultChangelist));
+
+        myChangelist.setRenderer(new HtmlListCellRenderer<String>(myChangelist.getRenderer()) {
+          @Override
+          protected void doCustomize(JList list, String value, int index, boolean selected, boolean hasFocus) {
+            if (value.equals(defaultChangelist)) {
+              append(value, selected ? SELECTED_BOLD_ATTRIBUTES : BOLD_ATTRIBUTES);
+            }
+            else {
+              append(value, selected ? SimpleTextAttributes.SELECTED_SIMPLE_CELL_ATTRIBUTES : SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
+            }
+          }
+        }); 
+        
         break;
       }
     }
-    myUsingVcsRadioButton.setEnabled(hasVcs);    
+    myUsingVcsRadioButton.setEnabled(hasVcs);
   }
 
   protected boolean isToBeShown() {
-    return ((ReadonlyStatusHandlerImpl)ReadonlyStatusHandlerImpl.getInstance(myProject)).getState().SHOW_DIALOG;
+    return ((ReadonlyStatusHandlerImpl)ReadonlyStatusHandler.getInstance(myProject)).getState().SHOW_DIALOG;
   }
 
   protected void setToBeShown(boolean value, boolean onOk) {
     if (onOk) {
-      ((ReadonlyStatusHandlerImpl)ReadonlyStatusHandlerImpl.getInstance(myProject)).getState().SHOW_DIALOG = value;
+      ((ReadonlyStatusHandlerImpl)ReadonlyStatusHandler.getInstance(myProject)).getState().SHOW_DIALOG = value;
     }
   }
 
@@ -101,7 +142,8 @@ public class ReadOnlyStatusDialog extends OptionsDialog {
 
     ArrayList<FileInfo> files = new ArrayList<FileInfo>();
     Collections.addAll(files, myFiles);
-    ReadonlyStatusHandlerImpl.processFiles(files);
+    String changelist = (String)myChangelist.getSelectedItem();
+    ReadonlyStatusHandlerImpl.processFiles(files, changelist);
 
     if (files.isEmpty()) {
       super.doOKAction();

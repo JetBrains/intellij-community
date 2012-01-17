@@ -17,7 +17,6 @@ package com.intellij.openapi.vcs.changes.pending;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Getter;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
@@ -28,10 +27,13 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs;
 import com.intellij.openapi.vcs.changes.committed.MockDelayingChangeProvider;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
+import com.intellij.openapi.vcs.impl.projectlevelman.AllVcses;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 
 public class DuringChangeListManagerUpdateTestScheme {
@@ -49,17 +51,19 @@ public class DuringChangeListManagerUpdateTestScheme {
 
     final File mockVcsRoot = new File(tmpDirPath, "mock");
     mockVcsRoot.mkdir();
+    final VirtualFile vRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(mockVcsRoot);
 
     final ProjectLevelVcsManagerImpl projectLevelVcsManager = (ProjectLevelVcsManagerImpl) ProjectLevelVcsManager.getInstance(project);
     projectLevelVcsManager.registerVcs(vcs);
     //projectLevelVcsManager.setDirectoryMapping(mockVcsRoot.getAbsolutePath(), vcs.getName());
     final ArrayList<VcsDirectoryMapping> list =
       new ArrayList<VcsDirectoryMapping>(projectLevelVcsManager.getDirectoryMappings());
-    list.add(new VcsDirectoryMapping(FileUtil.toSystemIndependentName(mockVcsRoot.getAbsolutePath()), vcs.getName()));
+    list.add(new VcsDirectoryMapping(vRoot.getPath(), vcs.getName()));
     projectLevelVcsManager.setDirectoryMappings(list);
 
     AbstractVcs vcsFound = projectLevelVcsManager.findVcsByName(vcs.getName());
-    assert projectLevelVcsManager.getRootsUnderVcs(vcsFound).length == 1: "size: " + projectLevelVcsManager.getRootsUnderVcs(vcsFound).length;
+    final VirtualFile[] roots = projectLevelVcsManager.getRootsUnderVcs(vcsFound);
+    assert roots.length == 1 : Arrays.asList(roots) + "; " + vcs.getName() + "; " + Arrays.toString(AllVcses.getInstance(project).getAll());
 
     myDirtyScopeManager = VcsDirtyScopeManager.getInstance(project);
     myClManager = ChangeListManager.getInstance(project);

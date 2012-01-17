@@ -371,7 +371,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
     if (PsiJavaPatterns.psiElement().inside(GrImportStatement.class).accepts(position)) {
       return false;
     }
-
+    if (position instanceof PsiComment) return false;
     PsiElement parent = position.getParent();
     if (parent instanceof GrReferenceElement) {
       return ((GrReferenceElement)parent).getQualifier() == null;
@@ -457,7 +457,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
           object = ((GroovyResolveResult)object).getElement();
         }
 
-        if (object instanceof PsiMember && JavaCompletionUtil.isInExcludedPackage((PsiMember)object)) {
+        if (object instanceof PsiMember && JavaCompletionUtil.isInExcludedPackage((PsiMember)object, true)) {
           return;
         }
 
@@ -552,7 +552,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
     }
   }
 
-  private static StaticMemberProcessor completeStaticMembers(CompletionParameters parameters) {
+  static StaticMemberProcessor completeStaticMembers(CompletionParameters parameters) {
     final PsiElement position = parameters.getPosition();
     final PsiElement originalPosition = parameters.getOriginalPosition();
     final StaticMemberProcessor processor = new StaticMemberProcessor(position) {

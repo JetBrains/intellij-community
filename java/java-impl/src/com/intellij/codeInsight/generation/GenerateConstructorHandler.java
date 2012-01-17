@@ -216,7 +216,7 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
 
     PsiMethod constructor = factory.createConstructor();
     constructor.setName(aClass.getName());
-    @Modifier String modifier = getConstructorModifier(aClass);
+    String modifier = getConstructorModifier(aClass);
     if (modifier != null) {
       PsiUtil.setModifierProperty(constructor, modifier, true);
     }
@@ -274,9 +274,9 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
       PsiParameter parm = factory.createParameter(parmName, field.getType());
 
       final NullableNotNullManager nullableManager = NullableNotNullManager.getInstance(field.getProject());
-      if (nullableManager.isNotNull(field, false)) {
-        final PsiAnnotation annotation = factory.createAnnotationFromText("@" + nullableManager.getDefaultNotNull(), field);
-        parm.getModifierList().addAfter(annotation, null);
+      final String notNull = nullableManager.getNotNull(field);
+      if (notNull != null) {
+        parm.getModifierList().addAfter(factory.createAnnotationFromText("@" + notNull, field), null);
       }
 
       constructor.getParameterList().add(parm);
@@ -296,9 +296,9 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
     return constructor;
   }
 
-  @Modifier
+  @PsiModifier.ModifierConstant
   public static String getConstructorModifier(final PsiClass aClass) {
-    @Modifier String modifier = PsiModifier.PUBLIC;
+    String modifier = PsiModifier.PUBLIC;
 
     if (aClass.hasModifierProperty(PsiModifier.ABSTRACT) && !aClass.isEnum()) {
       modifier =  PsiModifier.PROTECTED;

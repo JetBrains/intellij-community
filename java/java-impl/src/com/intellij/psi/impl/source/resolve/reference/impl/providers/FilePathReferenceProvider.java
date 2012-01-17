@@ -23,13 +23,9 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author cdr
@@ -127,11 +123,9 @@ public class FilePathReferenceProvider extends PsiReferenceProvider {
   @NotNull
   public static Collection<PsiFileSystemItem> getRoots(final Module thisModule, boolean includingClasses) {
     if (thisModule == null) return Collections.emptyList();
-    List<Module> modules = new ArrayList<Module>();
-    modules.add(thisModule);
+    Set<Module> modules = new com.intellij.util.containers.HashSet<Module>();
     ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(thisModule);
-    ContainerUtil.addAll(modules, moduleRootManager.getDependencies());
-
+    ModuleUtil.getDependencies(thisModule, modules);
     List<PsiFileSystemItem> result = new ArrayList<PsiFileSystemItem>();
     final PsiManager psiManager = PsiManager.getInstance(thisModule.getProject());
     if (includingClasses) {

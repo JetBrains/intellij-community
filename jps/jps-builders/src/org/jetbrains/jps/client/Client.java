@@ -15,6 +15,7 @@ import java.net.InetSocketAddress;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -86,12 +87,18 @@ public class Client {
   }
 
   @NotNull
-  public RequestFuture sendCompileRequest(String projectId, List<String> modules, boolean rebuild, JpsServerResponseHandler handler) throws Exception{
+  public RequestFuture sendCompileRequest(boolean isMake, String projectId, Collection<String> modules, Collection<String> paths, JpsServerResponseHandler handler) throws Exception{
     checkConnected();
-    return sendRequest(
-      rebuild? ProtoUtil.createRebuildRequest(projectId, modules) : ProtoUtil.createMakeRequest(projectId, modules),
-      handler
-    );
+    final JpsRemoteProto.Message.Request request = isMake?
+      ProtoUtil.createMakeRequest(projectId, modules) :
+      ProtoUtil.createForceCompileRequest(projectId, modules, paths);
+    return sendRequest(request, handler);
+  }
+
+  @NotNull
+  public RequestFuture sendRebuildRequest(String projectId, JpsServerResponseHandler handler) throws Exception{
+    checkConnected();
+    return sendRequest(ProtoUtil.createRebuildRequest(projectId), handler);
   }
 
   @NotNull
@@ -112,6 +119,18 @@ public class Client {
     return sendRequest(ProtoUtil.createReloadProjectRequest(projectPaths), null);
   }
 
+  @NotNull
+  public RequestFuture sendCancelBuildRequest(UUID sessionId) throws Exception {
+    checkConnected();
+    return sendRequest(ProtoUtil.createCancelRequest(sessionId), null);
+  }
+
+  @NotNull
+  public RequestFuture sendFSEvent(String projectPath, Collection<String> changedPaths, Collection<String> deletedPaths) throws Exception {
+    checkConnected();
+    return sendRequest(ProtoUtil.createFSEvent(projectPath, changedPaths, deletedPaths), null);
+  }
+
   private void checkConnected() throws Exception {
     if (myState.get() != State.CONNECTED) {
       throw new Exception("Client not connected");
@@ -120,7 +139,7 @@ public class Client {
 
   private RequestFuture sendRequest(JpsRemoteProto.Message.Request request, @Nullable final JpsServerResponseHandler handler) {
     final UUID sessionUUID = UUID.randomUUID();
-    final RequestFuture requestFuture = new RequestFuture(handler);
+    final RequestFuture requestFuture = handler != null? new CancelableRequestFuture(handler, sessionUUID) : new RequestFuture(handler, sessionUUID);
     myHandlers.put(sessionUUID, requestFuture);
     final ChannelFuture channelFuture = Channels.write(myConnectFuture.getChannel(), ProtoUtil.toMessage(sessionUUID, request));
     channelFuture.addListener(new ChannelFutureListener() {
@@ -198,5 +217,34 @@ public class Client {
 
   public boolean isConnected() {
     return myState.get() == State.CONNECTED;
+  }
+
+  private class CancelableRequestFuture extends RequestFuture {
+
+    private AtomicBoolean myCanceledState;
+
+    public CancelableRequestFuture(JpsServerResponseHandler handler, UUID sessionUUID) {
+      super(handler, sessionUUID);
+      myCanceledState = new AtomicBoolean(false);
+    }
+
+    public boolean cancel(boolean mayInterruptIfRunning) {
+      if (isDone()) {
+        return false;
+      }
+      if (!myCanceledState.getAndSet(true)) {
+        try {
+          sendCancelBuildRequest(getRequestID());
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      }
+      return true;
+    }
+
+    public boolean isCancelled() {
+      return myCanceledState.get();
+    }
   }
 }

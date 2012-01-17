@@ -33,29 +33,19 @@ import java.util.regex.Matcher;
 
 public class MavenPropertyPsiReferenceProvider extends PsiReferenceProvider {
   public static final boolean SOFT_DEFAULT = false;
-  private final boolean myFiltered;
-
-  public MavenPropertyPsiReferenceProvider(boolean filtered) {
-    myFiltered = filtered;
-  }
 
   @NotNull
   @Override
   public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
-    if (myFiltered) {
-      if (!MavenDomUtil.isFilteredResourceFile(element)) return PsiReference.EMPTY_ARRAY;
-      return getReferences(element, element.getText(), 0, true, SOFT_DEFAULT);
-    }
     return getReferences(element, SOFT_DEFAULT);
   }
 
   public static PsiReference[] getReferences(PsiElement element, boolean isSoft) {
-    String text = ElementManipulators.getValueText(element);
-    int textStart = ElementManipulators.getValueTextRange(element).getStartOffset();
-    return getReferences(element, text, textStart, false, isSoft);
-  }
+    TextRange textRange = ElementManipulators.getValueTextRange(element);
+    if (textRange.isEmpty()) return PsiReference.EMPTY_ARRAY;
 
-  private static PsiReference[] getReferences(PsiElement element, String text, int textStart, boolean isFiltered, boolean isSoft) {
+    String text = element.getText();
+
     if (StringUtil.isEmptyOrSpaces(text)) return PsiReference.EMPTY_ARRAY;
 
     MavenProject mavenProject = MavenDomUtil.findContainingProject(element);
@@ -63,20 +53,13 @@ public class MavenPropertyPsiReferenceProvider extends PsiReferenceProvider {
 
     List<PsiReference> result = new ArrayList<PsiReference>();
 
-    Matcher matcher = MavenPropertyResolver.PATTERN.matcher(text);
+    Matcher matcher = MavenPropertyResolver.PATTERN.matcher(textRange.substring(text));
     while (matcher.find()) {
       String propertyName = matcher.group(1);
-      int from = textStart + matcher.start(1);
+      int from = textRange.getStartOffset() + matcher.start(1);
       TextRange range = TextRange.from(from, propertyName.length());
 
-      MavenPropertyPsiReference ref;
-      if (isFiltered) {
-        ref = new MavenFilteredPropertyPsiReference(mavenProject, element, propertyName, range, isSoft);
-      }
-      else {
-        ref = new MavenPropertyPsiReference(mavenProject, element, propertyName, range, isSoft);
-      }
-      result.add(ref);
+      result.add(new MavenPropertyPsiReference(mavenProject, element, propertyName, range, isSoft));
     }
 
     return result.toArray(new PsiReference[result.size()]);

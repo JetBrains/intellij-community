@@ -101,4 +101,9 @@ abstract class ContentLayout {
 
   public abstract Component getComponentFor(Content content);
 
+  public abstract String getCloseActionName();
+  public abstract String getCloseAllButThisActionName();
+  public abstract String getPreviousContentActionName();
+  public abstract String getNextContentActionName();
+
 }

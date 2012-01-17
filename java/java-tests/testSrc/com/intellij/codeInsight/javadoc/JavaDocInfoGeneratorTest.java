@@ -41,6 +41,11 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
   public void testInheritedDocInThrows1() throws Exception {
     doTestMethod();
   }
+  
+  public void testEscapeValues() throws Exception {
+    PsiClass psiClass = getTestClass();
+    verifyJavaDoc(psiClass);
+  }
 
   public void testClassTypeParameter() throws Exception {
     verifyJavaDoc(getTestClass());
