@@ -111,7 +111,8 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     final PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
     if (packageStatement != null) {
       if (packageName.length() > 0) {
-        packageStatement.replace(factory.createPackageStatement(packageName));
+        final PsiJavaCodeReferenceElement reference = packageStatement.getPackageReference();
+        reference.replace(factory.createReferenceFromText(packageName, packageStatement));
       }
       else {
         packageStatement.delete();
