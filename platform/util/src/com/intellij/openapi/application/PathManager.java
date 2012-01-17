@@ -206,7 +206,7 @@ public class PathManager {
   }
 
   public static File getIndexRoot() {
-    File file = new File(getSystemPath(), "index");
+    File file = new File(getIndexRootDir());
     try {
       file = file.getCanonicalFile();
     }
@@ -214,6 +214,11 @@ public class PathManager {
     }
     file.mkdirs();
     return file;
+  }
+
+  private static String getIndexRootDir() {
+    String dir = System.getProperty("index_root_path");
+    return dir == null ? getSystemPath() + "/index" : dir;
   }
 
   private static class StringHolder {

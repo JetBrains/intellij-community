@@ -1,0 +1,6 @@
+<root>
+  <item name='java.lang.ref.Reference T get()'>
+    <annotation name='org.jetbrains.annotations.Nullable'>
+    </annotation>
+  </item>
+</root>
