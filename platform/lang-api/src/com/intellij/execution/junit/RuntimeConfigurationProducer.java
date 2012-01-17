@@ -128,6 +128,10 @@ public abstract class RuntimeConfigurationProducer implements Comparable, Clonea
   public ConfigurationType getConfigurationType() {
     return myConfigurationFactory.getType();
   }
+  
+  public void perform(ConfigurationContext context, Runnable performRunnable){
+    performRunnable.run();
+  }
 
   public static <T extends RuntimeConfigurationProducer> T getInstance(final Class<T> aClass) {
     final RuntimeConfigurationProducer[] configurationProducers = Extensions.getExtensions(RUNTIME_CONFIGURATION_PRODUCER);

@@ -103,7 +103,7 @@ public class JUnit4TestRunnerUtil {
               }
 
               public String describe() {
-                return "Failed tests";
+                return "Tests";
               }
             });
           }
