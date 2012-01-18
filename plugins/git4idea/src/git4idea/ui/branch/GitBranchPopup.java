@@ -88,20 +88,18 @@ class GitBranchPopup  {
     DefaultActionGroup popupGroup = new DefaultActionGroup(null, false);
 
     GitRepositoryManager repositoryManager = GitRepositoryManager.getInstance(myProject);
-    if (repositoryManager.moreThanOneRoot() && (getSyncSetting() != GitBranchSyncSetting.DONT)) {
+    if (repositoryManager.moreThanOneRoot()) {
+      
       Collection<GitRepository> repositories = repositoryManager.getRepositories();
       GitMultiRootBranchConfig branchConfig = new GitMultiRootBranchConfig(repositories);
       
-      if (!branchConfig.diverged()) {
+      if (!branchConfig.diverged() && (getSyncSetting() != GitBranchSyncSetting.DONT)) {
         String currentBranch = branchConfig.getCurrentBranch();
         assert currentBranch != null : "Current branch can't be null if branches have not diverged";
         popupGroup.add(new GitBranchPopupActions.CurrentBranchAction(currentBranch, " in all roots"));
         popupGroup.add(new GitBranchPopupActions.NewBranchAction(myProject, repositories));
 
-        popupGroup.addSeparator("Repositories");
-        for (GitRepository repository : repositoryManager.getRepositories()) {
-          popupGroup.add(new RootAction(repository, myCurrentRepository));
-        }
+        popupGroup.addAll(createRepositoriesActions());
 
         popupGroup.addSeparator("Common Local Branches");
         for (String branch : branchConfig.getLocalBranches()) {
@@ -116,12 +114,14 @@ class GitBranchPopup  {
         }
       }
       else {
-        popupGroup.add(new BranchesHaveDivergedMessage());
-        fillPopupWithCurrentRepositoryActions(popupGroup);
+        popupGroup.add(new BranchesHaveDivergedMessage(myCurrentRepository));
+        popupGroup.addSeparator();
+
+        fillPopupWithCurrentRepositoryActions(popupGroup, createRepositoriesActions());
       }
     } 
     else {
-      fillPopupWithCurrentRepositoryActions(popupGroup);
+      fillPopupWithCurrentRepositoryActions(popupGroup, null);
     }
 
     popupGroup.addSeparator();
@@ -129,8 +129,17 @@ class GitBranchPopup  {
     return popupGroup;
   }
 
-  private void fillPopupWithCurrentRepositoryActions(DefaultActionGroup popupGroup) {
-    popupGroup.addAll(new GitBranchPopupActions(myCurrentRepository.getProject(), myCurrentRepository).createActions());
+  private DefaultActionGroup createRepositoriesActions() {
+    DefaultActionGroup popupGroup = new DefaultActionGroup(null, false);
+    popupGroup.addSeparator("Repositories");
+    for (GitRepository repository : GitRepositoryManager.getInstance(myProject).getRepositories()) {
+      popupGroup.add(new RootAction(repository, myCurrentRepository));
+    }
+    return popupGroup;
+  }
+
+  private void fillPopupWithCurrentRepositoryActions(DefaultActionGroup popupGroup, DefaultActionGroup actions) {
+    popupGroup.addAll(new GitBranchPopupActions(myCurrentRepository.getProject(), myCurrentRepository).createActions(actions));
   }
 
   private static class RootAction extends ActionGroup {
@@ -151,15 +160,15 @@ class GitBranchPopup  {
     @NotNull
     @Override
     public AnAction[] getChildren(@Nullable AnActionEvent e) {
-      ActionGroup group = new GitBranchPopupActions(myRepository.getProject(), myRepository).createActions();
+      ActionGroup group = new GitBranchPopupActions(myRepository.getProject(), myRepository).createActions(null);
       return group.getChildren(e);
     }
   }
 
   private static class BranchesHaveDivergedMessage extends DumbAwareAction {
 
-    BranchesHaveDivergedMessage() {
-      super("Branches have diverged", "", IconLoader.getIcon("/general/ideFatalError.png"));
+    BranchesHaveDivergedMessage(GitRepository currentRepository) {
+      super("Branches have diverged, showing current root " + GitUIUtil.getShortRepositoryName(currentRepository), "", IconLoader.getIcon("/general/ideFatalError.png"));
     }
 
     @Override

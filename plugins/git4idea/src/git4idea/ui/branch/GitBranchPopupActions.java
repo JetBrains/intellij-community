@@ -52,12 +52,16 @@ class GitBranchPopupActions {
     myRepository = repository;
   }
 
-  ActionGroup createActions() {
+  ActionGroup createActions(@Nullable DefaultActionGroup toInsert) {
     DefaultActionGroup popupGroup = new DefaultActionGroup(null, false);
 
     popupGroup.addAction(new CurrentBranchAction(GitBranchUiUtil.getDisplayableBranchText(myRepository), "in root " + GitUIUtil.getShortRepositoryName(myRepository)));
     popupGroup.addAction(new NewBranchAction(myProject, Collections.singleton(myRepository)));
     popupGroup.addAction(new CheckoutRevisionActions(myProject, myRepository));
+
+    if (toInsert != null) {
+      popupGroup.addAll(toInsert);
+    }
 
     popupGroup.addSeparator("Local Branches");
     List<GitBranch> localBranches = new ArrayList<GitBranch>(myRepository.getBranches().getLocalBranches());
