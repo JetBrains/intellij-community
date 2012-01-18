@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.gradle.config;
+package org.jetbrains.plugins.gradle.util;
 
 import javax.swing.*;
 import java.awt.*;

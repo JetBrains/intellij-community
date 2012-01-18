@@ -1,0 +1,25 @@
+package org.jetbrains.plugins.gradle.config;
+
+import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.Nullable;
+
+/**
+ * Defines callback for the gradle config structure change.
+ * 
+ * @author Denis Zhdanov
+ * @since 1/17/12 1:02 PM
+ */
+public interface GradleConfigNotifier {
+  
+  Topic<GradleConfigNotifier> TOPIC = Topic.create("Gradle config", GradleConfigNotifier.class);
+
+  /**
+   * Is expected to be invoked when linked gradle project path (path of the 'build.gradle' file) is changed.
+   * <p/>
+   * <b>Note:</b> this callback is executed <b>after</b> the actual config change.
+   * 
+   * @param oldPath  old path (if any)
+   * @param newPath  new path (if any)
+   */
+  void onLinkedProjectPathChange(@Nullable String oldPath, @Nullable String newPath);
+}

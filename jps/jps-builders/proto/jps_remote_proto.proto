@@ -104,16 +104,25 @@ message Message {
         BUILD_STARTED = 1;
         BUILD_COMPLETED = 2;
         COMMAND_COMPLETED = 3;
+        FILES_GENERATED = 4;
       }
+
       enum Status {
         CANCELED = 1;
         ERRORS = 2;
         SUCCESS = 3;
         UP_TO_DATE = 4;
       }
+
+      message GeneratedFile {
+        required string output_root = 1;
+        required string relative_path = 2;
+      }
+
       required Type event_type = 1;
       optional string description = 2;
       optional Status completion_status = 3;
+      repeated GeneratedFile generated_files = 4;
     }
 
     message CompileMessage {

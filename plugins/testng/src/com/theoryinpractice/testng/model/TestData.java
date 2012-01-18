@@ -20,10 +20,12 @@ import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.Location;
 import com.intellij.execution.configurations.JavaRunConfigurationModule;
 import com.intellij.execution.junit.JUnitUtil;
+import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 
@@ -55,6 +57,7 @@ public class TestData implements Cloneable
   public List<String> TEST_LISTENERS = new ArrayList<String>();
   public boolean USE_DEFAULT_REPORTERS = false;
   public String PROPERTIES_FILE;
+  private Set<String> myPatterns = new HashSet<String>();
 
   public TestData() {
     TEST_OBJECT = TestType.CLASS.getType();
@@ -132,6 +135,7 @@ public class TestData implements Cloneable
           && Comparing.equal(OUTPUT_DIRECTORY, data.OUTPUT_DIRECTORY)
           && Comparing.equal(VM_PARAMETERS, data.VM_PARAMETERS)
           && Comparing.equal(PARAMETERS, data.PARAMETERS)
+          && Comparing.equal(myPatterns, data.myPatterns)
           && USE_DEFAULT_REPORTERS == data.USE_DEFAULT_REPORTERS;
     }
   }
@@ -147,7 +151,8 @@ public class TestData implements Cloneable
         Comparing.hashcode(OUTPUT_DIRECTORY) ^
         Comparing.hashcode(VM_PARAMETERS) ^
         Comparing.hashcode(PARAMETERS) ^
-        Comparing.hashcode(USE_DEFAULT_REPORTERS);
+        Comparing.hashcode(USE_DEFAULT_REPORTERS) ^
+        Comparing.hashcode(myPatterns);
   }
 
   @Override
@@ -163,6 +168,8 @@ public class TestData implements Cloneable
 
     data.USE_DEFAULT_REPORTERS = USE_DEFAULT_REPORTERS;
     data.ENVS = new LinkedHashMap<String, String>(ENVS);
+    data.myPatterns = new HashSet<String>();
+    data.myPatterns.addAll(myPatterns);
     data.setScope(getScope());
     return data;
   }
@@ -187,6 +194,11 @@ public class TestData implements Cloneable
       return getSuiteName();
     }
     else {
+      if (TestType.PATTERN.getType().equals(TEST_OBJECT)) {
+        final int size = myPatterns.size();
+        if (size == 0) return "Temp suite";
+        return StringUtil.getShortName(myPatterns.iterator().next()) + (size > 1 ? " and " + (size - 1) + " more" : "");
+      }
       return name;
     }
   }
@@ -199,7 +211,7 @@ public class TestData implements Cloneable
     final PsiMethod method = location.getPsiElement();
     METHOD_NAME = method.getName();
     TEST_OBJECT = TestType.METHOD.getType();
-    return setMainClass(method.getContainingClass());
+    return setMainClass(location instanceof MethodLocation ? ((MethodLocation)location).getContainingClass() : method.getContainingClass());
   }
 
   public Module setPackage(PsiPackage pkg) {
@@ -241,5 +253,13 @@ public class TestData implements Cloneable
 
   public void setEnvs(final Map<String, String> envs) {
     ENVS = envs;
+  }
+
+  public Set<String> getPatterns() {
+    return myPatterns;
+  }
+
+  public void setPatterns(Set<String> set) {
+    myPatterns = set;
   }
 }

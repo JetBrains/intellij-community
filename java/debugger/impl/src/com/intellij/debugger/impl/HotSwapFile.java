@@ -15,7 +15,7 @@
  */
 package com.intellij.debugger.impl;
 
-import com.intellij.openapi.vfs.VirtualFile;
+import java.io.File;
 
 /**
  * User: lex
@@ -23,9 +23,9 @@ import com.intellij.openapi.vfs.VirtualFile;
  * Time: 2:23:38 PM
  */
 public class HotSwapFile {
-  VirtualFile file;
+  final File file;
 
-  public HotSwapFile(VirtualFile file) {
+  public HotSwapFile(File file) {
     this.file = file;
   }
 }

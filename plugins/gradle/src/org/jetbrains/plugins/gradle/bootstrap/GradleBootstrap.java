@@ -50,6 +50,7 @@ public class GradleBootstrap extends AbstractProjectComponent {
     ToolWindow toolWindow = manager.registerToolWindow(GRADLE_TOOL_WINDOW_ID, false, ToolWindowAnchor.RIGHT);
     toolWindow.setIcon(GradleConstants.GRADLE_ICON);
     String syncTitle = GradleBundle.message("gradle.sync.title.tab");
-    toolWindow.getContentManager().addContent(new ContentImpl(new GradleProjectStructureChangesPanel(myChangesModel), syncTitle, true)); 
+    final GradleProjectStructureChangesPanel projectStructureChanges = new GradleProjectStructureChangesPanel(myProject, myChangesModel);
+    toolWindow.getContentManager().addContent(new ContentImpl(projectStructureChanges, syncTitle, true)); 
   }
 }

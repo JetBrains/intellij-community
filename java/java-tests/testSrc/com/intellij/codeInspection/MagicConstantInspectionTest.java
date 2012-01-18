@@ -27,13 +27,14 @@ package com.intellij.codeInspection;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.magicConstant.MagicConstantInspection;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.AnnotationOrderRootType;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.InspectionTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 
 public class MagicConstantInspectionTest extends InspectionTestCase {
   @Override
@@ -46,7 +47,8 @@ public class MagicConstantInspectionTest extends InspectionTestCase {
     // add JDK annotations
     Sdk sdk = super.getTestProjectSdk();
     SdkModificator sdkModificator = sdk.getSdkModificator();
-    VirtualFile root = LocalFileSystem.getInstance().findFileByPath(PathManager.getHomePath() + "/jdkAnnotations");
+    VirtualFile root = LocalFileSystem.getInstance().findFileByPath(
+      FileUtil.toSystemIndependentName(PlatformTestUtil.getCommunityPath()) + "/java/jdkAnnotations");
     if (root != null) {
       sdkModificator.addRoot(root, AnnotationOrderRootType.getInstance());
       sdkModificator.commitChanges();

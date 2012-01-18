@@ -63,7 +63,7 @@ import java.util.List;
  */
 public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner, E extends PsiElement> extends
                                                                                                         InplaceVariableIntroducer<E> {
-  protected final V myLocalVariable;
+  protected V myLocalVariable;
   protected RangeMarker myLocalMarker;
 
   protected final String myExprText;
@@ -433,6 +433,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
 
           final V localVariable = getLocalVariable();
           if (localVariable != null && localVariable.isPhysical()) {
+            myLocalVariable = localVariable;
             final PsiElement nameIdentifier = localVariable.getNameIdentifier();
             if (nameIdentifier != null) {
               myLocalMarker = createMarker(nameIdentifier);

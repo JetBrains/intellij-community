@@ -59,7 +59,7 @@ public abstract class JUnitConfigurationProducer extends JavaRuntimeConfiguratio
     location = JavaExecutionUtil.stepIntoSingleClass(location);
     final PsiElement element = location.getPsiElement();
     final PsiClass testClass = JUnitUtil.getTestClass(element);
-    final PsiMethod testMethod = JUnitUtil.getTestMethod(element);
+    final PsiMethod testMethod = JUnitUtil.getTestMethod(element, false);
     final PsiPackage testPackage;
     if (element instanceof PsiPackage) {
       testPackage = (PsiPackage)element;

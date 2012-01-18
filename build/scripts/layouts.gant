@@ -72,6 +72,7 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
           "execution-impl",
           "jsp-spi",
           "idea-ui",
+          //"ultimate-verifier",
           "RegExpSupport"].flatten()
 
   ant.patternset(id: "resources.included") {
@@ -106,6 +107,10 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
       }
 
       jar("annotations.jar") { module("annotations")}
+      jar("jdkAnnotations.jar") {
+        fileset(dir: "${home}/java/jdkAnnotations")
+      }
+
       jar("extensions.jar") { module("extensions")}
 
       jar("idea.jar") {

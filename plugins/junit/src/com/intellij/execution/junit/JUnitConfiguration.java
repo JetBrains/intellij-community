@@ -362,6 +362,17 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
     return false;
   }
 
+  public void bePatternConfiguration(List<PsiClass> classes, PsiMethod method) {
+    Set<String> patterns = new HashSet<String>();
+    for (PsiClass pattern : classes) {
+      patterns.add(pattern.getQualifiedName());
+    }
+    myData.setPatterns(patterns);
+    myData.METHOD_NAME = method.getName();
+    myData.TEST_OBJECT = TEST_PATTERN;
+    setGeneratedName();
+  }
+
   public static class Data implements Cloneable {
     public String PACKAGE_NAME;
     private String DIR_NAME;

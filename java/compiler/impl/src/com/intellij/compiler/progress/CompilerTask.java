@@ -584,7 +584,7 @@ public class CompilerTask extends Task.Backgroundable {
         myUserAcceptedCancel = true;
 
         final MessageBusConnection connection = project.getMessageBus().connect();
-        connection.subscribe(CompilerTopics.COMPILATION_STATUS, new CompilationStatusListener() {
+        connection.subscribe(CompilerTopics.COMPILATION_STATUS, new CompilationStatusAdapter() {
           public void compilationFinished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
             connection.disconnect();
             ProjectUtil.closeAndDispose(project);

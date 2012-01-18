@@ -202,7 +202,9 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
     }
     for (final OrderEntry entry : entries) {
       if (entry instanceof ModuleOrderEntry) continue;
-      final VirtualFile[] virtualFiles = AnnotationOrderRootType.getFiles(entry);
+      VirtualFile[] virtualFiles = AnnotationOrderRootType.getFiles(entry);
+      virtualFiles = filterByReadOnliness(virtualFiles);
+
       if (virtualFiles.length > 0) {
         chooseRootAndAnnotateExternally(listOwner, annotationFQName, fromFile, project, packageName, virtualFile, virtualFiles, value);
       }
@@ -255,7 +257,7 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
                                                final Project project, final String packageName, final VirtualFile virtualFile,
                                                final VirtualFile[] virtualFiles, final PsiNameValuePair[] value) {
     if (virtualFiles.length > 1) {
-      JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<VirtualFile>("Annotation Roots", virtualFiles){
+      JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<VirtualFile>("Annotation Roots", virtualFiles) {
         @Override
         public PopupStep onChosen(final VirtualFile file, final boolean finalChoice) {
           annotateExternally(file, listOwner, project, packageName, virtualFile, annotationFQName, fromFile, value);
@@ -273,9 +275,21 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
           return ICON;
         }
       }).showInBestPositionFor(DataManager.getInstance().getDataContext());
-    } else {
+    }
+    else {
       annotateExternally(virtualFiles[0], listOwner, project, packageName, virtualFile, annotationFQName, fromFile, value);
     }
+  }
+
+  @NotNull
+  private static VirtualFile[] filterByReadOnliness(@NotNull VirtualFile[] files) {
+    List<VirtualFile> result = new ArrayList<VirtualFile>();
+    for (VirtualFile file : files) {
+      if (file.isInLocalFileSystem()) {
+        result.add(file);
+      }
+    }
+    return VfsUtil.toVirtualFileArray(result);
   }
 
   private void annotateExternally(final VirtualFile file, final PsiModifierListOwner listOwner, final Project project,
@@ -562,28 +576,28 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
       }
       final List<OrderEntry> entries = ProjectRootManager.getInstance(project).getFileIndex().getOrderEntriesForFile(virtualFile);
       for (OrderEntry entry : entries) {
-        if (!(entry instanceof ModuleOrderEntry)) {
-          List<XmlFile> possibleAnnotationsXmls = null;
-          final String[] externalUrls = AnnotationOrderRootType.getUrls(entry);
-          for (String url : externalUrls) {
-            final VirtualFile ext = LocalFileSystem.getInstance()
-              .findFileByPath(VfsUtil.urlToPath(url) + "/" + packageName.replace(".", "/") + "/" + ANNOTATIONS_XML);
-            if (ext != null) {
-              final PsiFile psiFile = myPsiManager.findFile(ext);
-              if (psiFile instanceof XmlFile) {
-                if (possibleAnnotationsXmls == null) {
-                  possibleAnnotationsXmls = new ArrayList<XmlFile>();
-                }
-                possibleAnnotationsXmls.add((XmlFile)psiFile);
-              }
-            }
-          }
-          if (possibleAnnotationsXmls != null) {
-            myExternalAnnotations.put(fqn, possibleAnnotationsXmls);
-            return possibleAnnotationsXmls;
-          }
-          break;
+        if (entry instanceof ModuleOrderEntry) {
+          continue;
         }
+        List<XmlFile> possibleAnnotationsXmls = null;
+        final String[] externalUrls = AnnotationOrderRootType.getUrls(entry);
+        for (String url : externalUrls) {
+          VirtualFile root = VirtualFileManager.getInstance().findFileByUrl(url);
+          if (root == null) continue;
+          final VirtualFile ext = root.findFileByRelativePath(packageName.replace(".", "/") + "/" + ANNOTATIONS_XML);
+          if (ext == null) continue;
+          final PsiFile psiFile = myPsiManager.findFile(ext);
+          if (!(psiFile instanceof XmlFile)) continue;
+          if (possibleAnnotationsXmls == null) {
+            possibleAnnotationsXmls = new ArrayList<XmlFile>();
+          }
+          possibleAnnotationsXmls.add((XmlFile)psiFile);
+        }
+        if (possibleAnnotationsXmls != null) {
+          myExternalAnnotations.put(fqn, possibleAnnotationsXmls);
+          return possibleAnnotationsXmls;
+        }
+        break;
       }
       myExternalAnnotations.put(fqn, NULL);
     }

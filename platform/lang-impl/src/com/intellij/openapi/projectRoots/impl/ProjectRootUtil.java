@@ -76,7 +76,7 @@ public class ProjectRootUtil {
       root.readExternal(element);
       return root;
     }
-    else if (type.equals(COMPOSITE_ROOT)) {
+    if (type.equals(COMPOSITE_ROOT)) {
       final CompositeProjectRoot root = new CompositeProjectRoot();
       root.readExternal(element);
       return root;

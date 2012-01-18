@@ -17,26 +17,19 @@ package com.theoryinpractice.testng.model;
 
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.junit.JUnitUtil;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 import com.theoryinpractice.testng.configuration.TestNGConfigurationEditor;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.PlainDocument;
-import java.beans.PropertyChangeListener;
+import java.util.LinkedHashSet;
 
 /**
  * @author Hani Suleiman Date: Jul 21, 2005 Time: 1:20:14 PM
@@ -47,7 +40,7 @@ public class TestNGConfigurationModel
 
     private TestNGConfigurationEditor editor;
     private TestType type;
-    private final Object[] typeDocuments = new Object[5];
+    private final Object[] typeDocuments = new Object[6];
     private final Document propertiesFileDocument = new PlainDocument();
     private final Document outputDirectoryDocument = new PlainDocument();
     private final Project project;
@@ -60,7 +53,7 @@ public class TestNGConfigurationModel
         this.project = project;
     }
 
-    public void setDocument(int type, com.intellij.openapi.editor.Document doc) {
+    public void setDocument(int type, Object doc) {
       typeDocuments[type] = doc;
     }
 
@@ -138,6 +131,16 @@ public class TestNGConfigurationModel
             data.MAIN_CLASS_NAME = "";
             data.METHOD_NAME = "";
         }
+        else if (TestType.PATTERN == type) {
+          final LinkedHashSet<String> set = new LinkedHashSet<String>();
+          final String[] patterns = getText(TestType.PATTERN).split("\\|\\|");
+          for (String pattern : patterns) {
+            if (pattern.length() > 0) {
+              set.add(pattern);
+            }
+          }
+          data.setPatterns(set);
+        }
 
         try {
             data.PROPERTIES_FILE = propertiesFileDocument.getText(0, propertiesFileDocument.getLength());
@@ -177,6 +180,7 @@ public class TestNGConfigurationModel
         setTypeValue(TestType.METHOD, data.getMethodName());
         setTypeValue(TestType.GROUP, data.getGroupName());
         setTypeValue(TestType.SUITE, data.getSuiteName());
+        setTypeValue(TestType.PATTERN, StringUtil.join(data.getPatterns(), "||"));
 
         setDocumentText(propertiesFileDocument, data.getPropertiesFile());
         setDocumentText(outputDirectoryDocument, data.getOutputDirectory());

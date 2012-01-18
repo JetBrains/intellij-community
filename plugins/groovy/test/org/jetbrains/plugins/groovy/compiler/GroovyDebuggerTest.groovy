@@ -299,7 +299,7 @@ new Runnable() {
       item.setContext(ctx)
       item.updateRepresentation(ctx, { semaphore.up() } as DescriptorLabelListener)
     }
-    assert semaphore.waitFor(10000):  "too long evaluation: $item.label"
+    assert semaphore.waitFor(10000):  "too long evaluation: $item.label $item.evaluateException"
 
     String result = managed { DebuggerUtils.getValueAsString(ctx, item.value) }
     assert result == expected

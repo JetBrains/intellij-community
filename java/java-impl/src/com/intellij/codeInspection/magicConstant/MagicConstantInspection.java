@@ -17,13 +17,26 @@ package com.intellij.codeInspection.magicConstant;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkModificator;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -68,6 +81,7 @@ public class MagicConstantInspection extends LocalInspectionTool {
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder,
                                         boolean isOnTheFly,
                                         @NotNull LocalInspectionToolSession session) {
+    checkAnnotationsJarAttached(session);
     return new JavaElementVisitor() {
       @Override
       public void visitCallExpression(PsiCallExpression callExpression) {
@@ -135,6 +149,61 @@ public class MagicConstantInspection extends LocalInspectionTool {
     };
   }
 
+  private static void checkAnnotationsJarAttached(@NotNull LocalInspectionToolSession session) {
+    PsiFile file = session.getFile();
+    Project project = file.getProject();
+    PsiClass event = JavaPsiFacade.getInstance(project).findClass("java.awt.event.InputEvent", GlobalSearchScope.allScope(project));
+    PsiMethod[] methods = event == null ? null : event.findMethodsByName("getModifiers", false);
+    PsiMethod getModifiers = methods == null || methods.length != 1 ? null : methods[0];
+    PsiAnnotation annotation = getModifiers == null ? null :
+      ExternalAnnotationsManager.getInstance(project).findExternalAnnotation(getModifiers, MagicConstant.class.getName());
+    if (annotation != null) return;
+    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    final Module module = fileIndex.getModuleForFile(file.getVirtualFile());
+    if (module == null) {
+      return;
+    }
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            attachJdkAnnotations(module);
+          }
+        });
+      }
+    }, ModalityState.NON_MODAL, module.getDisposed());
+  }
+
+  private static void attachJdkAnnotations(Module module) {
+    OrderEntry[] entries = ModuleRootManager.getInstance(module).getOrderEntries();
+    Sdk jdk = null;
+    for (OrderEntry orderEntry : entries) {
+      if (orderEntry instanceof JdkOrderEntry) {
+        jdk = ((JdkOrderEntry)orderEntry).getJdk();
+      }
+    }
+    if (jdk == null) return;
+    LocalFileSystem lfs = LocalFileSystem.getInstance();
+    VirtualFile root = null;
+    if (root == null) { // community idea under idea
+      root = lfs.findFileByPath(FileUtil.toSystemIndependentName(PathManager.getHomePath()) + "/java/jdkAnnotations");
+    }
+    if (root == null) {  // idea under idea
+      root = lfs.findFileByPath(FileUtil.toSystemIndependentName(PathManager.getHomePath()) + "/community/java/jdkAnnotations");
+    }
+    if (root == null) {
+      root = VirtualFileManager.getInstance().findFileByUrl("jar://"+ FileUtil.toSystemIndependentName(PathManager.getHomePath()) + "/lib/jdkAnnotations.jar!/");
+    }
+    if (root == null) {
+      return;
+    }
+
+    SdkModificator modificator = jdk.getSdkModificator();
+    modificator.addRoot(root, AnnotationOrderRootType.getInstance());
+    modificator.commitChanges();
+  }
+
   private static void checkExpression(PsiExpression expression,
                                       PsiModifierListOwner owner,
                                       PsiType type,
@@ -157,8 +226,6 @@ public class MagicConstantInspection extends LocalInspectionTool {
       PsiParameter parameter = parameters[i];
       AllowedValues values = getAllowedValues(parameter, parameter.getType(), null);
       if (values == null) continue;
-      //PsiAnnotation annotation = AnnotationUtil.findAnnotation(parameter, Collections.singletonList(MagicConstant.class.getName()));
-      //if (annotation == null) continue;
       if (i >= arguments.length) break;
       PsiExpression argument = arguments[i];
       argument = PsiUtil.deparenthesizeExpression(argument);
@@ -506,43 +573,5 @@ public class MagicConstantInspection extends LocalInspectionTool {
 
 
     return !children.isEmpty();
-
-    //Set<PsiElement> elements = new THashSet<PsiElement>(DfaUtil.getPossibleInitializationElements(argument));
-    //elements.remove(argument);
-    //if (elements.isEmpty()) return processor.process(argument);
-    //for (PsiElement element : elements) {
-    //  if (element != argument && !processor.process((PsiExpression)element)) return false;
-    //}
-    //return processor.process(argument);
-
   }
-
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -21,9 +21,11 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
+import com.intellij.util.PathUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -36,9 +38,9 @@ import java.io.File;
 public class SimpleProjectRoot implements ProjectRoot, JDOMExternalizable {
   private String myUrl;
   private VirtualFile myFile;
-  private final VirtualFile[] myFileArrray = new VirtualFile[1];
+  private final VirtualFile[] myFileArray = new VirtualFile[1];
   private boolean myInitialized = false;
-  @NonNls public static final String ATTRIBUTE_URL = "url";
+  @NonNls private static final String ATTRIBUTE_URL = "url";
 
   SimpleProjectRoot(@NotNull VirtualFile file) {
     myFile = file;
@@ -71,8 +73,8 @@ public class SimpleProjectRoot implements ProjectRoot, JDOMExternalizable {
       return VirtualFile.EMPTY_ARRAY;
     }
 
-    myFileArrray[0] = myFile;
-    return myFileArrray;
+    myFileArray[0] = myFile;
+    return myFileArray;
   }
 
   public String[] getUrls() {
@@ -96,15 +98,14 @@ public class SimpleProjectRoot implements ProjectRoot, JDOMExternalizable {
 
     if (myFile == null || !myFile.isValid()) {
       myFile = VirtualFileManager.getInstance().findFileByUrl(myUrl);
-      if (myFile != null && cantHaveChildren()) {
+      if (myFile != null && !canHaveChildren()) {
         myFile = null;
       }
     }
   }
 
-  private boolean cantHaveChildren() {
-    if (myFile.getFileSystem() instanceof HttpFileSystem) return false;
-    return !myFile.isDirectory();
+  private boolean canHaveChildren() {
+    return myFile.getFileSystem() instanceof HttpFileSystem || myFile.isDirectory();
   }
 
   public String getUrl() {
@@ -112,7 +113,20 @@ public class SimpleProjectRoot implements ProjectRoot, JDOMExternalizable {
   }
 
   public void readExternal(Element element) throws InvalidDataException {
-    myUrl = element.getAttributeValue(ATTRIBUTE_URL);
+    String url = element.getAttributeValue(ATTRIBUTE_URL);
+    myUrl = migrateJdkAnnotationsToCommunityForDevIdea(url);
+  }
+
+  // hack to migrate internal IDEA jdk annos dir from IDEA_PROJECT_HOME/jdkAnnotations to IDEA_PROJECT_HOME/community/java/jdkAnnotations
+  private static String migrateJdkAnnotationsToCommunityForDevIdea(String url) {
+    File root = new File(VfsUtil.urlToPath(url) + "/..");
+    boolean isOldJdkAnnotations = new File(root, "community/java/jdkAnnotations").exists()
+                && new File(root, "idea.iml").exists()
+                && new File(root, "testData").exists();
+    if (isOldJdkAnnotations) {
+      return VfsUtil.pathToUrl(PathUtil.getCanonicalPath(VfsUtil.urlToPath(url + "/../community/java/jdkAnnotations")));
+    }
+    return url;
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
@@ -122,5 +136,4 @@ public class SimpleProjectRoot implements ProjectRoot, JDOMExternalizable {
 
     element.setAttribute(ATTRIBUTE_URL, myUrl);
   }
-
 }

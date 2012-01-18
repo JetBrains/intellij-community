@@ -17,10 +17,17 @@ package org.jetbrains.plugins.gradle.config;
 
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.diff.GradleProjectStructureChange;
+
+import java.util.Set;
 
 /**
+ * Holds project-level gradle-related settings.
+ * 
  * @author peter
  */
 @State(
@@ -31,7 +38,11 @@ import org.jetbrains.annotations.NotNull;
     }
 )
 public class GradleSettings implements PersistentStateComponent<GradleSettings>, Cloneable {
-  
+
+  /** Holds changes confirmed by the end-user. */
+  public final Set<GradleProjectStructureChange> CHANGES = new HashSet<GradleProjectStructureChange>();
+
+  public String LINKED_PROJECT_FILE_PATH;
   public String GRADLE_HOME;
   
   @Override
@@ -49,15 +60,15 @@ public class GradleSettings implements PersistentStateComponent<GradleSettings>,
     return ServiceManager.getService(project, GradleSettings.class);
   }
 
-  @Override
-  protected GradleSettings clone() throws CloneNotSupportedException {
-    GradleSettings result = new GradleSettings();
-    result.GRADLE_HOME = GRADLE_HOME;
-    return result;
+  public static void setLinkedProjectPath(@Nullable String path, @NotNull Project project) {
+    final GradleSettings settings = getInstance(project);
+    final String oldPath = settings.LINKED_PROJECT_FILE_PATH;
+    settings.LINKED_PROJECT_FILE_PATH = path;
+    project.getMessageBus().syncPublisher(GradleConfigNotifier.TOPIC).onLinkedProjectPathChange(oldPath, path);
   }
 
   @Override
   public String toString() {
-    return "home: " + GRADLE_HOME;
+    return "home: " + GRADLE_HOME + ", path: " + LINKED_PROJECT_FILE_PATH;
   }
 }

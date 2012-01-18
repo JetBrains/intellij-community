@@ -36,6 +36,8 @@ class JarLoader extends Loader {
   private SoftReference<JarMemoryLoader> myMemoryLoader;
   private final boolean myCanLockJar;
   private static final boolean myDebugTime = false;
+  private static int misses;
+  private static int hits;
 
   private static final Logger LOG = Logger.getInstance(JarLoader.class);
 
@@ -57,8 +59,8 @@ class JarLoader extends Loader {
   @NonNls private static final String FILE_PROTOCOL = "file";
   private static final long NS_THRESHOLD = 10000000;
 
-  JarLoader(URL url, boolean canLockJar) throws IOException {
-    super(new URL(JAR_PROTOCOL, "", -1, url + "!/"));
+  JarLoader(URL url, boolean canLockJar, int index) throws IOException {
+    super(new URL(JAR_PROTOCOL, "", -1, url + "!/"), index);
     myURL = url;
     myCanLockJar = canLockJar;
   }
@@ -130,7 +132,9 @@ class JarLoader extends Loader {
 
       while (entries.hasMoreElements()) {
         ZipEntry zipEntry = entries.nextElement();
-        cache.addResourceEntry(zipEntry.getName(), this);
+        String name = zipEntry.getName();
+        cache.addResourceEntry(name, this);
+        cache.addNameEntry(name, this);
       }
     }
     finally {
@@ -153,7 +157,18 @@ class JarLoader extends Loader {
       file = acquireZipFile();
       if (file == null) return null;
       ZipEntry entry = file.getEntry(name);
-      if (entry != null) return new MyResource(entry, new URL(getBaseURL(), name));
+      if (entry != null) {
+        ++hits;
+        if (hits % 1000 == 0 && UrlClassLoader.doDebug) {
+          UrlClassLoader.debug("Exists jar loader: misses:" + misses + ", hits:" + hits);
+        }
+        return new MyResource(entry, new URL(getBaseURL(), name));
+      }
+
+      if (misses % 1000 == 0 && UrlClassLoader.doDebug) {
+        UrlClassLoader.debug("Missed " + name + " from jar:" + myURL);
+      }
+      ++misses;
     }
     catch (Exception e) {
       return null;

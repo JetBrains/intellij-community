@@ -168,7 +168,12 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
   private void perform(final RuntimeConfigurationProducer producer, final ConfigurationContext context) {
     final RunnerAndConfigurationSettings configuration = context.updateConfiguration(producer);
     if (configuration != null) {
-      perform(context);
+      producer.perform(context, new Runnable() {
+        @Override
+        public void run() {
+          perform(context);
+        }
+      });
     }
   }
 

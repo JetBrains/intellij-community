@@ -360,7 +360,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
           Messages.showErrorDialog(InspectionsBundle.message("inspection.error.loading.message", 0, getName()),
-                                   InspectionsBundle.message("inspection.errors.occured.dialog.title"));
+                                   InspectionsBundle.message("inspection.errors.occurred.dialog.title"));
         }
       }, ModalityState.NON_MODAL);
     }

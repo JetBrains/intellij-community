@@ -216,7 +216,8 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
 
     List children = child.getChildren();
     LOG.assertTrue(children.size() == 1);
-    myRoots.put(type, (CompositeProjectRoot)ProjectRootUtil.read((Element)children.get(0)));
+    CompositeProjectRoot root = (CompositeProjectRoot)ProjectRootUtil.read((Element)children.get(0));
+    myRoots.put(type, root);
   }
 
   private void write(Element roots, PersistentOrderRootType type) throws WriteExternalException {

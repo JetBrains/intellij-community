@@ -22,18 +22,20 @@ package com.intellij.codeInspection;
 
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 public class LocalInspectionToolSession extends UserDataHolderBase {
   private final PsiFile myFile;
   private final int myStartOffset;
   private final int myEndOffset;
 
-  public LocalInspectionToolSession(final PsiFile file, final int startOffset, final int endOffset) {
+  public LocalInspectionToolSession(@NotNull PsiFile file, final int startOffset, final int endOffset) {
     myFile = file;
     myStartOffset = startOffset;
     myEndOffset = endOffset;
   }
 
+  @NotNull
   public PsiFile getFile() {
     return myFile;
   }

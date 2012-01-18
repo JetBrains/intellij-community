@@ -1,5 +1,6 @@
 package org.jetbrains.jps.api;
 
+import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 
@@ -116,24 +117,35 @@ public class ProtoUtil {
   }
 
   public static JpsRemoteProto.Message.Response createBuildStartedEvent(@Nullable String description) {
-    return createBuildEvent(JpsRemoteProto.Message.Response.BuildEvent.Type.BUILD_STARTED, description, null);
+    return createBuildEvent(JpsRemoteProto.Message.Response.BuildEvent.Type.BUILD_STARTED, description, null, null);
   }
 
   public static JpsRemoteProto.Message.Response createBuildCompletedEvent(@Nullable String description, final JpsRemoteProto.Message.Response.BuildEvent.Status status) {
-    return createBuildEvent(JpsRemoteProto.Message.Response.BuildEvent.Type.BUILD_COMPLETED, description, status);
+    return createBuildEvent(JpsRemoteProto.Message.Response.BuildEvent.Type.BUILD_COMPLETED, description, status, null);
   }
 
   public static JpsRemoteProto.Message.Response createCommandCompletedEvent(@Nullable String description) {
-    return createBuildEvent(JpsRemoteProto.Message.Response.BuildEvent.Type.COMMAND_COMPLETED, description, null);
+    return createBuildEvent(JpsRemoteProto.Message.Response.BuildEvent.Type.COMMAND_COMPLETED, description, null, null);
   }
 
-  public static JpsRemoteProto.Message.Response createBuildEvent(final JpsRemoteProto.Message.Response.BuildEvent.Type type, @Nullable String description, final JpsRemoteProto.Message.Response.BuildEvent.Status status) {
+  public static JpsRemoteProto.Message.Response createFileGeneratedEvent(final Collection<Pair<String, String>> paths) {
+    return createBuildEvent(JpsRemoteProto.Message.Response.BuildEvent.Type.FILES_GENERATED, null, null, paths);
+  }
+
+  public static JpsRemoteProto.Message.Response createBuildEvent(final JpsRemoteProto.Message.Response.BuildEvent.Type type, @Nullable String description, final JpsRemoteProto.Message.Response.BuildEvent.Status status, Collection<Pair<String, String>> generatedPaths) {
     final JpsRemoteProto.Message.Response.BuildEvent.Builder builder = JpsRemoteProto.Message.Response.BuildEvent.newBuilder().setEventType(type);
     if (description != null) {
       builder.setDescription(description);
     }
     if (status != null) {
       builder.setCompletionStatus(status);
+    }
+    if (generatedPaths != null) {
+      for (Pair<String, String> pair : generatedPaths) {
+        final JpsRemoteProto.Message.Response.BuildEvent.GeneratedFile.Builder fileBuilder = JpsRemoteProto.Message.Response.BuildEvent.GeneratedFile.newBuilder();
+        final JpsRemoteProto.Message.Response.BuildEvent.GeneratedFile generatedFile = fileBuilder.setOutputRoot(pair.first).setRelativePath(pair.second).build();
+        builder.addGeneratedFiles(generatedFile);
+      }
     }
     return JpsRemoteProto.Message.Response.newBuilder().setResponseType(JpsRemoteProto.Message.Response.Type.BUILD_EVENT).setBuildEvent(builder.build()).build();
   }
