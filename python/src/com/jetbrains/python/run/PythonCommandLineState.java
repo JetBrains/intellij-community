@@ -33,6 +33,8 @@ import com.jetbrains.python.console.PyDebugConsoleBuilder;
 import com.jetbrains.python.debugger.PyDebugRunner;
 import com.jetbrains.python.facet.LibraryContributingFacet;
 import com.jetbrains.python.facet.PythonPathContributingFacet;
+import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
+import com.jetbrains.python.remote.PythonRemoteSdkAdditionalData;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
 import com.jetbrains.python.sdk.PythonSdkFlavor;
@@ -124,19 +126,34 @@ public abstract class PythonCommandLineState extends CommandLineState {
    * @throws ExecutionException
    */
   protected ProcessHandler startProcess(CommandLinePatcher... patchers) throws ExecutionException {
+    Sdk sdk = PythonSdkType.findSdkByPath(myConfig.getSdkHome());
+
     GeneralCommandLine commandLine = generateCommandLine(patchers);
 
     // Extend command line
     RunnerSettings runnerSettings = getRunnerSettings();
-    PythonRunConfigurationExtensionsManager.getInstance().patchCommandLine(myConfig,runnerSettings, commandLine, getConfigurationSettings().getRunnerId());
+    PythonRunConfigurationExtensionsManager.getInstance()
+      .patchCommandLine(myConfig, runnerSettings, commandLine, getConfigurationSettings().getRunnerId());
 
-    final ProcessHandler processHandler = doCreateProcess(commandLine);
-    ProcessTerminatedListener.attach(processHandler);
+    if (sdk.getSdkAdditionalData() instanceof PythonRemoteSdkAdditionalData) {
+      if (PythonRemoteInterpreterManager.EP_NAME.getExtensions().length > 0) {
+        ProcessHandler processHandler = PythonRemoteInterpreterManager.EP_NAME.getExtensions()[0].doCreateProcess(myConfig.getProject(), (PythonRemoteSdkAdditionalData)sdk.getSdkAdditionalData(), commandLine);
+        ProcessTerminatedListener.attach(processHandler);
+        return processHandler;
+      } else {
+       throw new ExecutionException("Can't run remote python interpreter. WebDeployment plugin is disabled.");
+      }
+    }
+    else {
 
-    // attach extensions
-    PythonRunConfigurationExtensionsManager.getInstance().attachExtensionsToProcess(myConfig, processHandler, getRunnerSettings());
+      final ProcessHandler processHandler = doCreateProcess(commandLine);
+      ProcessTerminatedListener.attach(processHandler);
 
-    return processHandler;
+      // attach extensions
+      PythonRunConfigurationExtensionsManager.getInstance().attachExtensionsToProcess(myConfig, processHandler, getRunnerSettings());
+
+      return processHandler;
+    }
   }
 
   public GeneralCommandLine generateCommandLine(CommandLinePatcher[] patchers) throws ExecutionException {

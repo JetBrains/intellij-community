@@ -23,6 +23,8 @@
     <orderEntry type="module" module-name="ChromeConnector" />
     <orderEntry type="module" module-name="FirefoxConnector" />
     <orderEntry type="module" module-name="JavaScriptDebugger" />
+    <orderEntry type="module" module-name="webDeployment" />
+    <orderEntry type="module" module-name="python-remote-interpreter" />
   </component>
 </module>
 

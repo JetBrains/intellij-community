@@ -95,16 +95,38 @@ public abstract class PythonSdkFlavor {
     return file.isFile() && FileUtil.getNameWithoutExtension(file).toLowerCase().startsWith("python");
   }
 
-  @Nullable
   public String getVersionString(String sdkHome) {
-    return getVersionFromOutput(sdkHome, "-V", "(Python \\S+).*");
+    return getVersionStringFromOutput(getVersionFromOutput(sdkHome, getVersionOption(), getVersionRegexp()));
+  }
+
+  public String getVersionStringFromOutput(String version) {
+    return version;
+  }
+
+
+  public String getVersionRegexp() {
+    return "(Python \\S+).*";
+  }
+
+  public String getVersionOption() {
+    return "-V";
+  }
+  
+  @Nullable
+  public String getVersionFromOutput(ProcessOutput processOutput) {
+    return getVersionFromOutput(getVersionRegexp(), processOutput);
   }
 
   @Nullable
   protected static String getVersionFromOutput(String sdkHome, String version_opt, String version_regexp) {
-    Pattern pattern = Pattern.compile(version_regexp);
     String run_dir = new File(sdkHome).getParent();
     final ProcessOutput process_output = SdkUtil.getProcessOutput(run_dir, new String[]{sdkHome, version_opt});
+
+    return getVersionFromOutput(version_regexp, process_output);
+  }
+
+  @Nullable
+  private static String getVersionFromOutput(String version_regexp, ProcessOutput process_output) {
     if (process_output.getExitCode() != 0) {
       String err = process_output.getStderr();
       if (StringUtil.isEmpty(err)) {
@@ -114,6 +136,7 @@ public abstract class PythonSdkFlavor {
       );
       return null;
     }
+    Pattern pattern = Pattern.compile(version_regexp);
     final String result = SdkUtil.getFirstMatch(process_output.getStderrLines(), pattern);
     if (result != null) {
       return result;

@@ -17,8 +17,8 @@ import java.util.List;
 import java.util.Set;
 
 /**
-* @author traff
-*/
+ * @author traff
+ */
 public class PythonSdkAdditionalData implements SdkAdditionalData {
   @NonNls private static final String PATHS_ADDED_BY_USER_ROOT = "PATHS_ADDED_BY_USER_ROOT";
   @NonNls private static final String PATH_ADDED_BY_USER = "PATH_ADDED_BY_USER";
@@ -90,13 +90,17 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
   public static PythonSdkAdditionalData load(Sdk sdk, @Nullable Element element) {
     final PythonSdkAdditionalData data = new PythonSdkAdditionalData(PythonSdkFlavor.getFlavor(sdk.getHomePath()));
 
-    data.setAddedPaths(loadStringList(element, PATHS_ADDED_BY_USER_ROOT, PATH_ADDED_BY_USER));
-    data.setExcludedPaths(loadStringList(element, PATHS_REMOVED_BY_USER_ROOT, PATH_REMOVED_BY_USER));
+    load(element, data);
 
     return data;
   }
 
-  private static Set<VirtualFile> loadStringList(Element element, String rootName, String attrName) {
+  protected static void load(@Nullable Element element, @NotNull PythonSdkAdditionalData data) {
+    data.setAddedPaths(loadStringList(element, PATHS_ADDED_BY_USER_ROOT, PATH_ADDED_BY_USER));
+    data.setExcludedPaths(loadStringList(element, PATHS_REMOVED_BY_USER_ROOT, PATH_REMOVED_BY_USER));
+  }
+
+  private static Set<VirtualFile> loadStringList(@Nullable Element element, @NotNull String rootName, @NotNull String attrName) {
     final List<String> paths = new LinkedList<String>();
     if (element != null) {
       final List list = element.getChildren(rootName);

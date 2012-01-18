@@ -43,6 +43,7 @@ import com.jetbrains.python.facet.PythonFacetSettings;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
+import com.jetbrains.python.remote.PythonRemoteSdkAdditionalData;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -140,10 +141,10 @@ public class PythonSdkType extends SdkType {
 
   private static TreeSet<String> createVersionSet() {
     return new TreeSet<String>(new Comparator<String>() {
-        public int compare(String o1, String o2) {
-          return findDigits(o1).compareTo(findDigits(o2));
-        }
-      });
+      public int compare(String o1, String o2) {
+        return findDigits(o1).compareTo(findDigits(o2));
+      }
+    });
   }
 
   private static String findDigits(String s) {
@@ -167,8 +168,8 @@ public class PythonSdkType extends SdkType {
     final boolean is_windows = SystemInfo.isWindows;
     FileChooserDescriptor result = new FileChooserDescriptor(true, false, false, false, false, false) {
       public void validateSelectedFiles(VirtualFile[] files) throws Exception {
-        if (files.length != 0){
-          if (!isValidSdkHome(files[0].getPath())){
+        if (files.length != 0) {
+          if (!isValidSdkHome(files[0].getPath())) {
             throw new Exception(PyBundle.message("sdk.error.invalid.interpreter.name.$0", files[0].getName()));
           }
         }
@@ -177,7 +178,7 @@ public class PythonSdkType extends SdkType {
       @Override
       public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
         // TODO: add a better, customizable filtering
-        if (! file.isDirectory()) {
+        if (!file.isDirectory()) {
           if (is_windows) {
             String path = file.getPath();
             boolean looks_executable = false;
@@ -243,15 +244,16 @@ public class PythonSdkType extends SdkType {
 
   /**
    * Finds a file that looks executable: an .exe or .cmd under windows, plain file under *nix.
+   *
    * @param parent directory to look at
-   * @param name name of the executable without suffix
+   * @param name   name of the executable without suffix
    * @return File representing the executable, or null.
    */
   @Nullable
   public static File findExecutableFile(File parent, String name) {
     if (SystemInfo.isWindows || SystemInfo.isOS2) {
       for (String suffix : WINDOWS_EXECUTABLE_SUFFIXES) {
-        File file = new File(parent, name+suffix);
+        File file = new File(parent, name + suffix);
         if (file.exists()) return file;
       }
     }
@@ -264,8 +266,9 @@ public class PythonSdkType extends SdkType {
 
   /**
    * Alters PATH so that a virtualenv is activated, if present.
-   * @param commandLine what to patch
-   * @param sdkHome home of SDK we're using
+   *
+   * @param commandLine    what to patch
+   * @param sdkHome        home of SDK we're using
    * @param passParentEnvs iff true, include system paths in PATH
    */
   public static void patchCommandLineForVirtualenv(GeneralCommandLine commandLine, String sdkHome, boolean passParentEnvs) {
@@ -281,7 +284,9 @@ public class PythonSdkType extends SdkType {
         path_value = System.getenv(PATH);
         path_value = PythonEnvUtil.appendToPathEnvVar(path_value, virtualenv_bin);
       }
-      else path_value = virtualenv_bin;
+      else {
+        path_value = virtualenv_bin;
+      }
       Map<String, String> new_env = PythonEnvUtil.cloneEnv(commandLine.getEnvParams()); // we need a copy lest we change config's map.
       String existing_path = new_env.get(PATH);
       if (existing_path == null || !existing_path.contains(virtualenv_bin)) {
@@ -299,26 +304,30 @@ public class PythonSdkType extends SdkType {
       return "~" + path.substring(home.length());
     }
     else {
-      return path;
+      return FileUtil.toSystemDependentName(path);
     }
   }
 
   public String suggestSdkName(final String currentSdkName, final String sdkHome) {
     String name = getVersionString(sdkHome);
+    return suggestSdkNameFromVersion(sdkHome, name);
+  }
+
+  public static String suggestSdkNameFromVersion(String sdkHome, String version) {
     final String short_home_name = shortenDirName(sdkHome);
-    if (name != null) {
+    if (version != null) {
       File virtualenv_root = getVirtualEnvRoot(sdkHome);
       if (virtualenv_root != null) {
-        name += " virtualenv at " + shortenDirName(virtualenv_root.getAbsolutePath());
+        version += " virtualenv at " + shortenDirName(virtualenv_root.getAbsolutePath());
       }
       else {
-        name += " (" + short_home_name + ")";
+        version += " (" + short_home_name + ")";
       }
     }
     else {
-      name = "Unknown at " + short_home_name;
+      version = "Unknown at " + short_home_name;
     } // last resort
-    return name;
+    return version;
   }
 
   @Nullable
@@ -327,7 +336,7 @@ public class PythonSdkType extends SdkType {
   }
 
   public void saveAdditionalData(final SdkAdditionalData additionalData, final Element additional) {
-    if (additionalData instanceof PythonSdkAdditionalData ) {
+    if (additionalData instanceof PythonSdkAdditionalData) {
       ((PythonSdkAdditionalData)additionalData).save(additional);
     }
   }
@@ -336,9 +345,14 @@ public class PythonSdkType extends SdkType {
   public SdkAdditionalData loadAdditionalData(final Sdk currentSdk, final Element additional) {
     // try to upgrade from previous version(s)
     String sdk_path = currentSdk.getHomePath();
+
+    if (PythonRemoteSdkAdditionalData.isRemoteSdk(sdk_path)) {
+      return PythonRemoteSdkAdditionalData.loadRemote(currentSdk, additional);
+    }
+
     if (sdk_path != null) {
       // in versions up to 94.239, path points to lib dir; later it points to the interpreter itself
-      if (! isValidSdkHome(sdk_path)) {
+      if (!isValidSdkHome(sdk_path)) {
         if (SystemInfo.isWindows) {
           switchPathToInterpreter(currentSdk, "python.exe", "jython.bat"); // can't be in the same dir, safe to try
         }
@@ -354,8 +368,10 @@ public class PythonSdkType extends SdkType {
           }
           else if (sdk_name.contains("python")) {
             String sdk_home = new File(sdk_path).getName().toLowerCase(); // usually /usr/blahblah/pythonX.Y
-            String version = sdk_home.substring("python".length());
-            switchPathToInterpreter(currentSdk, "python"+version, "/usr/bin/python"+version, "/usr/local/bin/python"+version);
+            if (sdk_home.contains("python")) {
+              String version = sdk_home.substring("python".length());
+              switchPathToInterpreter(currentSdk, "python" + version, "/usr/bin/python" + version, "/usr/local/bin/python" + version);
+            }
           }
         }
       }
@@ -372,7 +388,7 @@ public class PythonSdkType extends SdkType {
     final String sdk_name = currentSdk.getName();
     boolean success = false;
     for (String interpreter : variants) {
-      File binary = interpreter.startsWith("/")? new File(interpreter) : new File(sdk_file, interpreter);
+      File binary = interpreter.startsWith("/") ? new File(interpreter) : new File(sdk_file, interpreter);
       if (binary.exists()) {
         if (currentSdk instanceof SdkModificator) {
           final SdkModificator sdk_as_modificator = (SdkModificator)currentSdk;
@@ -491,7 +507,7 @@ public class PythonSdkType extends SdkType {
       @NonNls final String skeletonsPath = getSkeletonsPath(bin_path);
       new File(skeletonsPath).mkdirs();
       final VirtualFile builtins_root = LocalFileSystem.getInstance().refreshAndFindFileByPath(skeletonsPath);
-      assert builtins_root != null: "Cannot find skeletons path " + skeletonsPath + " in VFS";
+      assert builtins_root != null : "Cannot find skeletons path " + skeletonsPath + " in VFS";
       sdkModificator.addRoot(builtins_root, BUILTIN_ROOT_TYPE);
     }
     if (not_in_unit_test_mode) {
@@ -523,7 +539,7 @@ public class PythonSdkType extends SdkType {
     // NOTE: fragile and arbitrary
     if (SystemInfo.isLinux) {
       final VirtualFile file = LocalFileSystem.getInstance().findFileByPath("/usr/lib/python-django");
-      if (file != null){
+      if (file != null) {
         sdkModificator.addRoot(file, OrderRootType.CLASSES);
       }
     }
@@ -596,7 +612,7 @@ public class PythonSdkType extends SdkType {
     File virtualenv_root = getVirtualEnvRoot(bin_path);
     String[] add_environment = null;
     if (virtualenv_root != null) {
-      add_environment = new String[] {"PATH=" + virtualenv_root + File.pathSeparator};
+      add_environment = new String[]{"PATH=" + virtualenv_root + File.pathSeparator};
     }
     return add_environment;
   }
@@ -673,8 +689,12 @@ public class PythonSdkType extends SdkType {
         if (sdk_errors.size() > 0) {
           String sdk_name = sdk.getName();
           List<String> known_errors = errors.get(sdk_name);
-          if (known_errors == null) errors.put(sdk_name, sdk_errors);
-          else known_errors.addAll(sdk_errors);
+          if (known_errors == null) {
+            errors.put(sdk_name, sdk_errors);
+          }
+          else {
+            known_errors.addAll(sdk_errors);
+          }
         }
       }
       catch (InvalidSdkException ex) {
@@ -690,7 +710,7 @@ public class PythonSdkType extends SdkType {
         message = PyBundle.message("sdk.errorlog.$0.mods.fail.in.$1.sdks.$2.completely", module_errors, errors.size(), failed_sdks.size());
       }
       else {
-          message = PyBundle.message("sdk.errorlog.$0.mods.fail.in.$1.sdks", module_errors, errors.size());
+        message = PyBundle.message("sdk.errorlog.$0.mods.fail.in.$1.sdks", module_errors, errors.size());
       }
       Notifications.Bus.notify(
         new Notification(

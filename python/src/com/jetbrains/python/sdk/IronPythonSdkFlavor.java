@@ -48,9 +48,18 @@ public class IronPythonSdkFlavor extends PythonSdkFlavor {
     return name.equals("ipy.exe") || name.equals("ipy64.exe");
   }
 
+  public String getVersionStringFromOutput(String version) {
+    return getName() + " " + version;
+  }
+
   @Override
-  public String getVersionString(String sdkHome) {
-    return getName() + " " + getVersionFromOutput(sdkHome, "-V", "\\w+ ([0-9\\.]+).*");
+  public String getVersionRegexp() {
+    return "\\w+ ([0-9\\.]+).*";
+  }
+
+  @Override
+  public String getVersionOption() {
+    return "-V";
   }
 
   @Override

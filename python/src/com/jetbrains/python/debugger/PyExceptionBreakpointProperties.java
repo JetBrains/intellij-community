@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 public class PyExceptionBreakpointProperties extends ExceptionBreakpointProperties<PyExceptionBreakpointProperties> {
   @Attribute("notifyAlways")
   public boolean myNotifyAlways;
-  @Attribute("notifyOnTerminate")
+  @Attribute("notifyOnlyOnFirst")
   public boolean myNotifyOnlyOnFirst;
   @Attribute("notifyOnTerminate")
   public boolean myNotifyOnTerminate;
