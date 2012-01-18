@@ -119,7 +119,7 @@ class ClassPath {
         List<Loader> loaders = myCache.getLoaders(s);
         for (int j = 0, size = loaders.size(); j < size; ++j ) {
           final Loader loader = loaders.get(j);
-          if (!myCache.loaderHasName(s, loader)) continue;
+          //if (!myCache.loaderHasName(s, loader)) continue;
           final Resource resource = loader.getResource(s, flag);
           if (resource != null) {
             if (ourDumpOrder) {
