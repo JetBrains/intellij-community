@@ -17,6 +17,7 @@ package org.intellij.plugins.intelliLang.inject.quickedit;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.LowPriorityAction;
+import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -24,6 +25,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.*;
@@ -204,6 +206,12 @@ public class QuickEditAction implements IntentionAction, LowPriorityAction {
         public void editorCreated(EditorFactoryEvent event) {
           if (event.getEditor().getDocument() == myNewDocument) {
             new AnAction() {
+              @Override
+              public void update(AnActionEvent e) {
+                Editor editor = PlatformDataKeys.EDITOR.getData(e.getDataContext());
+                e.getPresentation().setEnabled(editor != null && LookupManager.getActiveLookup(editor) == null);
+              }
+
               @Override
               public void actionPerformed(AnActionEvent e) {
                 closeEditor();
