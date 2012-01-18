@@ -36,10 +36,9 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.NonFocusableCheckBox;
-import com.intellij.ui.TextFieldWithStoredHistory;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -55,7 +54,7 @@ public class MoveFilesOrDirectoriesDialog extends DialogWrapper{
   }
 
   private JLabel myNameLabel;
-  private ComponentWithBrowseButton<TextFieldWithStoredHistory> myTargetDirectoryField;
+  private ComponentWithBrowseButton<JTextField> myTargetDirectoryField;
   private String myHelpID;
   private final Project myProject;
   private final Callback myCallback;
@@ -83,34 +82,47 @@ public class MoveFilesOrDirectoriesDialog extends DialogWrapper{
   }
 
   protected JComponent createNorthPanel() {
-    JPanel panel = new JPanel();
-    panel.setLayout(new GridBagLayout());
+    JPanel panel = new JPanel(new GridBagLayout());
+    final GridBagConstraints c = new GridBagConstraints();
+    c.gridx = 0;
+    c.gridy = 0;
+    c.fill = GridBagConstraints.HORIZONTAL;
+    c.insets = new Insets(0, 2, 0, 0);
 
     myNameLabel = new JLabel();
-    panel.add(myNameLabel, new GridBagConstraints(0,0,2,1,1,0,GridBagConstraints.WEST,GridBagConstraints.HORIZONTAL,new Insets(4,8,4,8),0,0));
-
-    panel.add(new JLabel(RefactoringBundle.message("move.files.to.directory.label")),
-              new GridBagConstraints(0,1,1,1,0,0,GridBagConstraints.WEST,GridBagConstraints.HORIZONTAL,new Insets(4,8,4,8),0,0));
-
-    myTargetDirectoryField = new ComponentWithBrowseButton<TextFieldWithStoredHistory>(new TextFieldWithStoredHistory(RECENT_KEYS), null);
+    panel.add(myNameLabel, c);
+    c.insets.top = 10;
+    c.gridy++;    
+    panel.add(new JLabel(RefactoringBundle.message("move.files.to.directory.label")), c);
+    c.insets.top = 0;
+    
+    myTargetDirectoryField = new ComponentWithBrowseButton<JTextField>(new JTextField(), null);
     final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     myTargetDirectoryField.addBrowseFolderListener(RefactoringBundle.message("select.target.directory"),
                                                    RefactoringBundle.message("the.file.will.be.moved.to.this.directory"),
                                                    myProject,
                                                    descriptor,
-                                                   TextComponentAccessor.TEXT_FIELD_WITH_STORED_HISTORY_WHOLE_TEXT);
-    final TextFieldWithStoredHistory textFieldWithStoredHistory = myTargetDirectoryField.getChildComponent();
-    FileChooserFactory.getInstance().installFileCompletion(textFieldWithStoredHistory.getTextEditor(), descriptor, true, getDisposable());
+                                                   TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
+    final JTextField textField = myTargetDirectoryField.getChildComponent();
+    FileChooserFactory.getInstance().installFileCompletion(textField, descriptor, true, getDisposable());
     myTargetDirectoryField.setTextFieldPreferredWidth(60);
-    panel.add(myTargetDirectoryField, new GridBagConstraints(1,1,1,1,1,0,GridBagConstraints.WEST,GridBagConstraints.HORIZONTAL,new Insets(4,0,4,8),0,0));
+    c.insets.left = 0;
+    c.gridy++;
+    panel.add(myTargetDirectoryField, c);
+    final JLabel label = new JLabel(RefactoringBundle.message("path.completion.shortcut"));
+    UIUtil.applyStyle(UIUtil.ComponentStyle.MINI, label);
+    c.insets.left = 6;
+    c.gridy++;
+    panel.add(label, c);
 
     myCbSearchForReferences = new NonFocusableCheckBox(RefactoringBundle.message("search.for.references"));
     myCbSearchForReferences.setSelected(RefactoringSettings.getInstance().MOVE_SEARCH_FOR_REFERENCES_FOR_FILE);
-    panel.add(myCbSearchForReferences, new GridBagConstraints(0, 2, 2, 1, 1, 0,
-                                                              GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
-                                                              new Insets(4, 8, 4, 8), 0, 0));
+    c.insets.top = 10;
+    c.insets.left = 0;
+    c.gridy++;
+    panel.add(myCbSearchForReferences, c);
 
-    textFieldWithStoredHistory.addDocumentListener(new DocumentAdapter(){
+    textField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
         validateOKButton();
@@ -163,7 +175,7 @@ public class MoveFilesOrDirectoriesDialog extends DialogWrapper{
   }
 
   protected void doOKAction() {
-    myTargetDirectoryField.getChildComponent().addCurrentTextToHistory();
+    //myTargetDirectoryField.getChildComponent().addCurrentTextToHistory();
     RefactoringSettings.getInstance().MOVE_SEARCH_FOR_REFERENCES_FOR_FILE = myCbSearchForReferences.isSelected();
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
