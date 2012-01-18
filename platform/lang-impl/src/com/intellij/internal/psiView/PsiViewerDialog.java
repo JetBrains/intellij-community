@@ -1275,7 +1275,8 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
       final PsiElement rootElement = treeStructure.getRootPsiElement();
       final SelectionModel selection = myEditor.getSelectionModel();
       PsiElement rootPsiElement = treeStructure.getRootPsiElement();
-      int baseOffset = rootPsiElement.getTextRange().getStartOffset();
+      final TextRange textRange = rootPsiElement.getTextRange();
+      int baseOffset = textRange != null ? textRange.getStartOffset() : 0;
       final int start = selection.getSelectionStart()+baseOffset;
       final int end = selection.getSelectionEnd()+baseOffset - 1;
       final PsiElement element =
