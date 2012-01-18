@@ -208,20 +208,20 @@ public class PathMacroManagerTest {
                  "jar://tmp/foo -> jar:/$PROJECT_DIR$\n" +
                  "jar:///tmp/foo -> jar://$PROJECT_DIR$\n" +
                  "/tmp/foo -> $PROJECT_DIR$\n" +
-                 "/home/peter/work/idea -> $APPLICATION_HOME_DIR$\n" +
-                 "file:/home/peter/work/idea -> file:$APPLICATION_HOME_DIR$\n" +
-                 "file://home/peter/work/idea -> file://$APPLICATION_HOME_DIR$\n" +
-                 "file:///home/peter/work/idea -> file://$APPLICATION_HOME_DIR$\n" +
-                 "jar:/home/peter/work/idea -> jar:$APPLICATION_HOME_DIR$\n" +
-                 "jar://home/peter/work/idea -> jar://$APPLICATION_HOME_DIR$\n" +
-                 "jar:///home/peter/work/idea -> jar://$APPLICATION_HOME_DIR$\n" +
-                 "/home/peter -> $USER_HOME$\n" +
-                 "file:/home/peter -> file:$USER_HOME$\n" +
-                 "file://home/peter -> file://$USER_HOME$\n" +
-                 "file:///home/peter -> file://$USER_HOME$\n" +
-                 "jar:/home/peter -> jar:$USER_HOME$\n" +
-                 "jar://home/peter -> jar://$USER_HOME$\n" +
-                 "jar:///home/peter -> jar://$USER_HOME$\n" +
+                 "" + USER_HOME + "/work/idea -> $APPLICATION_HOME_DIR$\n" +
+                 "file:" + USER_HOME + "/work/idea -> file:$APPLICATION_HOME_DIR$\n" +
+                 "file:/" + USER_HOME + "/work/idea -> file://$APPLICATION_HOME_DIR$\n" +
+                 "file://" + USER_HOME + "/work/idea -> file://$APPLICATION_HOME_DIR$\n" +
+                 "jar:" + USER_HOME + "/work/idea -> jar:$APPLICATION_HOME_DIR$\n" +
+                 "jar:/" + USER_HOME + "/work/idea -> jar://$APPLICATION_HOME_DIR$\n" +
+                 "jar://" + USER_HOME + "/work/idea -> jar://$APPLICATION_HOME_DIR$\n" +
+                 "" + USER_HOME + " -> $USER_HOME$\n" +
+                 "file:" + USER_HOME + " -> file:$USER_HOME$\n" +
+                 "file:/" + USER_HOME + " -> file://$USER_HOME$\n" +
+                 "file://" + USER_HOME + " -> file://$USER_HOME$\n" +
+                 "jar:" + USER_HOME + " -> jar:$USER_HOME$\n" +
+                 "jar:/" + USER_HOME + " -> jar://$USER_HOME$\n" +
+                 "jar://" + USER_HOME + " -> jar://$USER_HOME$\n" +
                  "file:/tmp -> file:$PROJECT_DIR$/..\n" +
                  "file://tmp -> file:/$PROJECT_DIR$/..\n" +
                  "file:///tmp -> file://$PROJECT_DIR$/..\n" +
