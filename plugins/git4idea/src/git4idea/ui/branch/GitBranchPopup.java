@@ -23,14 +23,12 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.IconLoader;
-import git4idea.branch.GitBranchOperationsProcessor;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
-import git4idea.validators.GitNewBranchNameValidator;
+import git4idea.util.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -93,7 +91,7 @@ class GitBranchPopup  {
     if (repositoryManager.moreThanOneRoot() && (getSyncSetting() != GitBranchSyncSetting.DONT)) {
       Collection<GitRepository> repositories = repositoryManager.getRepositories();
       GitMultiRootBranchConfig branchConfig = new GitMultiRootBranchConfig(repositories);
-      popupGroup.add(new NewBranchMultiAction(myProject, repositories));
+      popupGroup.add(new GitBranchPopupActions.NewBranchAction(myProject, repositories));
 
       popupGroup.addSeparator("Repositories");
       for (GitRepository repository : repositoryManager.getRepositories()) {
@@ -103,8 +101,13 @@ class GitBranchPopup  {
       popupGroup.addSeparator("Common Local Branches");
       for (String branch : branchConfig.getLocalBranches()) {
         if (!branch.equals(branchConfig.getCurrentBranch())) {
-          popupGroup.add(new LocalBranchMultiActions(myProject, repositories, branch));
+          popupGroup.add(new GitBranchPopupActions.LocalBranchActions(myProject, repositories, branch));
         }
+      }
+
+      popupGroup.addSeparator("Common Remote Branches");
+      for (String branch : branchConfig.getRemoteBranches()) {
+        popupGroup.add(new GitBranchPopupActions.RemoteBranchActions(myProject, repositories, branch));
       }
     } 
     else {
@@ -112,7 +115,7 @@ class GitBranchPopup  {
     }
 
     popupGroup.addSeparator();
-    popupGroup.addAction(new ConfigureAction());
+    //popupGroup.addAction(new ConfigureAction());
     return popupGroup;
   }
 
@@ -121,7 +124,7 @@ class GitBranchPopup  {
     private final GitRepository myRepository;
 
     public RootAction(GitRepository repository) {
-      super(repository.getPresentableUrl(), true);
+      super(GitUIUtil.getShortRepositoryName(repository), true);
       myRepository = repository;
     }
 
@@ -132,135 +135,6 @@ class GitBranchPopup  {
       return group.getChildren(e);
     }
   }
-
-  private static class NewBranchMultiAction extends DumbAwareAction {
-    private final Project myProject;
-    private final Collection<GitRepository> myRepositories;
-
-    private NewBranchMultiAction(Project project, Collection<GitRepository> repositories) {
-      super("New Branch", "Create and checkout new branch", IconLoader.getIcon("/general/add.png"));
-      myProject = project;
-      myRepositories = repositories;
-    }
-
-    @Override
-    public void actionPerformed(AnActionEvent e) {
-      final String name = GitBranchUiUtil.getNewBranchNameFromUser(myProject, myRepositories, "Create New Branch");
-      if (name != null) {
-        new GitBranchOperationsProcessor(myProject, myRepositories).checkoutNewBranch(name);
-      }
-    }
-
-    @Override
-    public void update(AnActionEvent e) {
-      if (anyRepositoryIsFresh()) {
-        e.getPresentation().setEnabled(false);
-        e.getPresentation().setDescription("Checkout of a new branch is not possible before the first commit.");
-      }
-    }
-
-    private boolean anyRepositoryIsFresh() {
-      for (GitRepository repository : myRepositories) {
-        if (repository.isFresh()) {
-          return true;
-        }
-      }
-      return false;
-    }
-  }
-  
-  /**
-   * Actions available for local branches.
-   */
-  private static class LocalBranchMultiActions extends ActionGroup {
-
-    private final Project myProject;
-    private final Collection<GitRepository> myRepositories;
-    private String myBranchName;
-
-    LocalBranchMultiActions(Project project, Collection<GitRepository> repositories, String branchName) {
-      super("", true);
-      myProject = project;
-      myRepositories = repositories;
-      myBranchName = branchName;
-      getTemplatePresentation().setText(myBranchName, false); // no mnemonics
-    }
-
-    @NotNull
-    @Override
-    public AnAction[] getChildren(@Nullable AnActionEvent e) {
-      return new AnAction[] {
-        new CheckoutAction(myProject, myRepositories, myBranchName),
-        new CheckoutAsNewBranch(myProject, myRepositories, myBranchName),
-        new DeleteAction(myProject, myRepositories, myBranchName)
-      };
-    }
-
-    private static class CheckoutAction extends DumbAwareAction {
-      private final Project myProject;
-      private final Collection<GitRepository> myRepositories;
-      private final String myBranchName;
-
-      public CheckoutAction(Project project, Collection<GitRepository> repositories, String branchName) {
-        super("Checkout");
-        myProject = project;
-        myRepositories = repositories;
-        myBranchName = branchName;
-      }
-
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        new GitBranchOperationsProcessor(myProject, myRepositories).checkout(myBranchName);
-      }
-
-    }
-
-    private static class CheckoutAsNewBranch extends DumbAwareAction {
-      private final Project myProject;
-      private final Collection<GitRepository> myRepositories;
-      private final String myBranchName;
-
-      public CheckoutAsNewBranch(Project project, @NotNull Collection<GitRepository> repositories, @NotNull String branchName) {
-        super("Checkout as new branch");
-        myProject = project;
-        myRepositories = repositories;
-        myBranchName = branchName;
-      }
-
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        final String name = Messages
-          .showInputDialog(myProject, "Enter name of new branch", "Checkout New Branch From " + myBranchName,
-                           Messages.getQuestionIcon(), "", GitNewBranchNameValidator.newInstance(myRepositories));
-        if (name != null) {
-          new GitBranchOperationsProcessor(myProject, myRepositories).checkoutNewBranchStartingFrom(name, myBranchName);
-        }
-      }
-
-    }
-
-    /**
-     * Action to delete a branch.
-     */
-    private static class DeleteAction extends DumbAwareAction {
-      private final Project myProject;
-      private final Collection<GitRepository> myRepositories;
-      private final String myBranchName;
-
-      public DeleteAction(Project project, Collection<GitRepository> repositories, String branchName) {
-        super("Delete");
-        myProject = project;
-        myRepositories = repositories;
-        myBranchName = branchName;
-      }
-
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        new GitBranchOperationsProcessor(myProject, myRepositories).deleteBranch(myBranchName);
-      }
-    }
-  }
-  
 
 
   /**
