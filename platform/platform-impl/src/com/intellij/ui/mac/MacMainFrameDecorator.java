@@ -53,6 +53,7 @@ public class MacMainFrameDecorator implements UISettingsListener, Disposable {
   public static final Key<Boolean> SHOULD_OPEN_IN_FULLSCREEN = Key.create("mac.should.open.in.fullscreen");
   
   public static final String FULL_SCREEN = "Idea.Is.In.FullScreen.Mode.Now";
+  public static final boolean FULL_SCREEN_AVAILABLE = SystemInfo.isJavaVersionAtLeast("1.6.0_29");
   
   private static boolean SHOWN = false;
 
@@ -136,6 +137,8 @@ public class MacMainFrameDecorator implements UISettingsListener, Disposable {
     });
     try {
       if (SystemInfo.isMacOSLion) {
+        if (!FULL_SCREEN_AVAILABLE) return;
+
         FullScreenUtilities.addFullScreenListenerTo(frame, new FullScreenAdapter() {
           @Override
           public void windowEnteredFullScreen(AppEvent.FullScreenEvent event) {
