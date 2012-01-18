@@ -220,9 +220,11 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
   }
 
   @Override
-  public void finish() {
-    super.finish();
-    revertState();
+  public void finish(boolean success) {
+    super.finish(success);
+    if (success) {
+      revertState();
+    }
   }
 
   @Nullable

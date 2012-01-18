@@ -246,7 +246,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
         }
         result.set(started);
         if (!started) {
-          finish();
+          finish(true);
         }
       }
 
@@ -316,7 +316,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
 
 
   @Override
-  public void finish() {
+  public void finish(boolean success) {
     myFinished = true;
     final TemplateState templateState = TemplateManagerImpl.getTemplateState(myEditor);
     if (templateState != null) {
@@ -328,13 +328,15 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
     if (myBalloon == null) {
       releaseIfNotRestart();
     }
-    super.finish();
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-    final V variable = getVariable();
-    if (variable == null) {
-      return;
+    super.finish(success);
+    if (success) {
+      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+      final V variable = getVariable();
+      if (variable == null) {
+        return;
+      }
+      restoreState(variable);
     }
-    restoreState(variable);
   }
 
   @Override
@@ -547,7 +549,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
 
   @Override
   protected void navigateToAlreadyStarted(Document oldDocument, int exitCode) {
-    finish();
+    finish(true);
     super.navigateToAlreadyStarted(oldDocument, exitCode);
   }
 
