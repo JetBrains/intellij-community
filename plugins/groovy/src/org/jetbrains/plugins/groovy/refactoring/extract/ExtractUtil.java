@@ -364,7 +364,7 @@ public class ExtractUtil {
     return method;
   }
 
-  public static String[] getParameterString(ExtractMethodInfoHelper helper, boolean useCanonicalText) {
+  public static String[] getParameterString(ExtractInfoHelper helper, boolean useCanonicalText) {
     int i = 0;
     ParameterInfo[] infos = helper.getParameterInfos();
     int number = 0;

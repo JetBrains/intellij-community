@@ -16,7 +16,6 @@
 
 package org.jetbrains.plugins.groovy.refactoring.extract.method;
 
-import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.help.HelpManager;
@@ -36,6 +35,7 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.refactoring.extract.ExtractUtil;
 import org.jetbrains.plugins.groovy.refactoring.extract.InitialInfo;
 import org.jetbrains.plugins.groovy.refactoring.extract.ParameterTablePanel;
+import org.jetbrains.plugins.groovy.refactoring.ui.GrMethodSignatureComponent;
 import org.jetbrains.plugins.groovy.refactoring.ui.GroovyComboboxVisibilityPanel;
 import org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings;
 
@@ -73,7 +73,7 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
     myHelper = new ExtractMethodInfoHelper(info, "");
 
     setUpNameField();
-    myParameterTablePanel.init(this, info);
+    myParameterTablePanel.init(myHelper);
 
     setModal(true);
     setTitle(GroovyExtractMethodHandler.REFACTORING_NAME);
@@ -181,12 +181,7 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
   }
 
   private void createUIComponents() {
-    mySignature = new MethodSignatureComponent("", myProject, JavaFileType.INSTANCE) {
-      @Override
-      protected String getFileName() {
-        return "dummy." + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension();
-      }
-    };
+    mySignature = new GrMethodSignatureComponent("", myProject);
     mySignature.setPreferredSize(new Dimension(500, 100));
     mySignature.setMinimumSize(new Dimension(500, 100));
 
@@ -206,7 +201,19 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
       }
     });
 
-    myParameterTablePanel = new ParameterTablePanel();
+    myParameterTablePanel = new ParameterTablePanel() {
+      protected void updateSignature(){
+        GroovyExtractMethodDialog.this.updateSignature();
+      }
+
+      protected void doEnterAction(){
+        GroovyExtractMethodDialog.this.clickDefaultButton();
+      }
+
+      protected void doCancelAction(){
+        GroovyExtractMethodDialog.this.doCancelAction();
+      }
+    };
   }
 
   class DataChangedListener implements EventListener {

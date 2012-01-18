@@ -32,13 +32,14 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwne
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.VariableInfo;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Max Medvedev
  */
 public class InitialInfo implements ExtractInfoHelper {
-  private final Map<String, ParameterInfo> myInputNamesMap = new HashMap<String, ParameterInfo>();
+  private final ParameterInfo[] myParameterInfos;
   private final VariableInfo[] myOutputNames;
   private final PsiType myOutputType;
   private final GrMemberOwner myTargetClass;
@@ -46,6 +47,7 @@ public class InitialInfo implements ExtractInfoHelper {
   private final Project myProject;
   private final GrStatement[] myStatements;
   private final boolean myHasReturnValue;
+  private String[] myArgumentNames;
 
   public InitialInfo(VariableInfo[] inputInfos,
                      VariableInfo[] outputInfos,
@@ -67,12 +69,14 @@ public class InitialInfo implements ExtractInfoHelper {
 
     assert myStatements.length > 0;
     myProject = myStatements[0].getProject();
-    int i = 0;
-    for (VariableInfo info : inputInfos) {
+
+    myParameterInfos = new ParameterInfo[inputInfos.length];
+    myArgumentNames = new String[inputInfos.length];
+    for (int i = 0; i < inputInfos.length; i++) {
+      VariableInfo info = inputInfos[i];
       PsiType type = info.getType();
-      ParameterInfo pInfo = new ParameterInfo(info.getName(), i, type);
-      myInputNamesMap.put(info.getName(), pInfo);
-      i++;
+      myParameterInfos[i] = new ParameterInfo(info.getName(), i, type);
+      myArgumentNames[i] = info.getName();
     }
 
     PsiType outputType = inferOutputType(outputInfos, statements, targetClass, returnStatements, myHasReturnValue);
@@ -128,14 +132,7 @@ public class InitialInfo implements ExtractInfoHelper {
   @NotNull
   @Override
   public ParameterInfo[] getParameterInfos() {
-    Collection<ParameterInfo> collection = myInputNamesMap.values();
-    ParameterInfo[] infos = new ParameterInfo[collection.size()];
-    for (ParameterInfo info : collection) {
-      int position = info.getPosition();
-      assert position < infos.length && infos[position] == null;
-      infos[position] = info;
-    }
-    return infos;
+    return myParameterInfos;
   }
 
   @Override
@@ -152,14 +149,7 @@ public class InitialInfo implements ExtractInfoHelper {
   @NotNull
   @Override
   public String[] getArgumentNames() {
-    Collection<ParameterInfo> infos = myInputNamesMap.values();
-    String[] argNames = new String[infos.size()];
-    for (ParameterInfo info : infos) {
-      int position = info.getPosition();
-      assert position < argNames.length;
-      argNames[position] = info.passAsParameter() ? info.getOldName() : "";
-    }
-    return argNames;
+    return myArgumentNames;
   }
 
   @Override

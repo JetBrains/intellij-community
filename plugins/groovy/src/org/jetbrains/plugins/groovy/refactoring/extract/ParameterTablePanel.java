@@ -33,7 +33,6 @@ import com.intellij.util.ui.EditableModel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
-import org.jetbrains.plugins.groovy.refactoring.extract.method.GroovyExtractMethodDialog;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
@@ -46,11 +45,10 @@ import java.awt.event.KeyEvent;
 /**
  * @author ilyas
  */
-public class ParameterTablePanel extends JPanel {
+public abstract class ParameterTablePanel extends JPanel {
 
   private ParameterInfo[] myParameterInfos;
   private TypeSelector[] myParameterTypeSelectors;
-  private GroovyExtractMethodDialog myDialog;
 
   private JBTable myTable;
   private MyTableModel myTableModel;
@@ -60,16 +58,15 @@ public class ParameterTablePanel extends JPanel {
     super(new BorderLayout());
   }
 
-  public void init(GroovyExtractMethodDialog dialog, InitialInfo helper) {
+  public void init(ExtractInfoHelper helper) {
 
     setBorder(IdeBorderFactory.createTitledBorder(GroovyRefactoringBundle.message("parameters.border.title"), false, false, true));
 
-    myDialog = dialog;
     myParameterInfos = helper.getParameterInfos();
 
     myTableModel = new MyTableModel();
     myTable = new JBTable(myTableModel);
-    DefaultCellEditor defaultEditor = (DefaultCellEditor) myTable.getDefaultEditor(Object.class);
+    DefaultCellEditor defaultEditor = (DefaultCellEditor)myTable.getDefaultEditor(Object.class);
     defaultEditor.setClickCountToStart(1);
 
     myTable.setTableHeader(null);
@@ -113,6 +110,7 @@ public class ParameterTablePanel extends JPanel {
 
     myTable.getColumnModel().getColumn(MyTableModel.PARAMETER_TYPE_COLUMN).setCellEditor(new AbstractTableCellEditor() {
       TypeSelector myCurrentSelector;
+
       public Object getCellEditorValue() {
         return myCurrentSelector.getSelectedType();
       }
@@ -214,17 +212,11 @@ public class ParameterTablePanel extends JPanel {
     add(listPanel, BorderLayout.CENTER);
   }
 
-  protected void updateSignature(){
-    myDialog.updateSignature();
-  }
+  protected abstract void updateSignature();
 
-  protected void doEnterAction(){
-    myDialog.clickDefaultButton();
-  }
+  protected abstract void doEnterAction();
 
-  protected void doCancelAction(){
-    myDialog.doCancelAction();
-  }
+  protected abstract void doCancelAction();
 
   private class MyTableModel extends AbstractTableModel implements EditableModel {
     public static final int CHECKMARK_COLUMN = 0;
@@ -243,12 +235,16 @@ public class ParameterTablePanel extends JPanel {
 
     @Override
     public void exchangeRows(int oldIndex, int newIndex) {
-      if (oldIndex<0 || newIndex<0) return;
-      if (oldIndex>=myParameterInfos.length || newIndex>=myParameterInfos.length) return;
+      if (oldIndex < 0 || newIndex < 0) return;
+      if (oldIndex >= myParameterInfos.length || newIndex >= myParameterInfos.length) return;
 
       final ParameterInfo old = myParameterInfos[oldIndex];
       myParameterInfos[oldIndex] = myParameterInfos[newIndex];
       myParameterInfos[newIndex] = old;
+
+      myParameterInfos[oldIndex].setPosition(oldIndex);
+      myParameterInfos[newIndex].setPosition(newIndex);
+
       fireTableRowsUpdated(Math.min(oldIndex, newIndex), Math.max(oldIndex, newIndex));
       updateSignature();
     }
@@ -281,7 +277,7 @@ public class ParameterTablePanel extends JPanel {
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
       switch (columnIndex) {
         case CHECKMARK_COLUMN: {
-          myParameterInfos[rowIndex].setPassAsParameter((Boolean) aValue);
+          myParameterInfos[rowIndex].setPassAsParameter((Boolean)aValue);
           fireTableRowsUpdated(rowIndex, rowIndex);
           myTable.getSelectionModel().setSelectionInterval(rowIndex, rowIndex);
           updateSignature();
@@ -289,7 +285,7 @@ public class ParameterTablePanel extends JPanel {
         }
         case PARAMETER_NAME_COLUMN: {
           ParameterInfo info = myParameterInfos[rowIndex];
-          String name = (String) aValue;
+          String name = (String)aValue;
           if (GroovyNamesUtil.isIdentifier(name)) {
             info.setNewName(name);
           }
@@ -298,7 +294,7 @@ public class ParameterTablePanel extends JPanel {
         }
         case PARAMETER_TYPE_COLUMN: {
           ParameterInfo info = myParameterInfos[rowIndex];
-          info.setType((PsiType) aValue);
+          info.setType((PsiType)aValue);
           updateSignature();
           break;
         }
@@ -312,7 +308,9 @@ public class ParameterTablePanel extends JPanel {
         case PARAMETER_NAME_COLUMN:
           return isEnabled() && myParameterInfos[rowIndex].passAsParameter();
         case PARAMETER_TYPE_COLUMN:
-          return isEnabled() && myParameterInfos[rowIndex].passAsParameter() && !(myParameterTypeSelectors[rowIndex].getComponent() instanceof JLabel);
+          return isEnabled() &&
+                 myParameterInfos[rowIndex].passAsParameter() &&
+                 !(myParameterTypeSelectors[rowIndex].getComponent() instanceof JLabel);
         default:
           return false;
       }
@@ -333,6 +331,4 @@ public class ParameterTablePanel extends JPanel {
       return rendererComponent;
     }
   }
-
-
 }
