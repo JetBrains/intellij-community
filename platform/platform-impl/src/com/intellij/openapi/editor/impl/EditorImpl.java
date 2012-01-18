@@ -865,7 +865,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     FileDocumentManager manager = FileDocumentManager.getInstance();
     if (manager != null) {
       final VirtualFile file = manager.getFile(myDocument);
-      if (file == null || !file.exists()) {
+      if (file != null && !file.isValid()) {
         return false;
       }
     }
