@@ -194,6 +194,7 @@ public class FileStructurePopup implements Disposable {
   }
 
   public void show() {
+    //final long time = System.currentTimeMillis();
     final ActionCallback treeHasBuilt = new ActionCallback();
     IdeFocusManager.getInstance(myProject).typeAheadUntil(treeHasBuilt);
     JComponent panel = createCenterPanel();
@@ -232,6 +233,8 @@ public class FileStructurePopup implements Disposable {
           public void run() {
             selectPsiElement(getCurrentElement(getPsiFile(myProject)));
             treeHasBuilt.setDone();
+            //long t = System.currentTimeMillis() - time;
+            //System.out.println("Shown in " + t + "ms");
           }
         });
       }
