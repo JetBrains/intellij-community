@@ -163,16 +163,18 @@ public class MagicConstantInspection extends LocalInspectionTool {
     if (module == null) {
       return;
     }
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            attachJdkAnnotations(module);
-          }
-        });
-      }
-    }, ModalityState.NON_MODAL, module.getDisposed());
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            public void run() {
+              attachJdkAnnotations(module);
+            }
+          });
+        }
+      }, ModalityState.NON_MODAL, module.getDisposed());
+    }
   }
 
   private static void attachJdkAnnotations(Module module) {
