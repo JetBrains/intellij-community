@@ -111,6 +111,7 @@ class FileLoader extends Loader {
           String line = reader.readLine();
           if (line == null) break;
           cache.addResourceEntry(line, this);
+          cache.addNameEntry(line, this);
         }
         while (true);
       }
