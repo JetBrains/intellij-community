@@ -313,12 +313,22 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
         element = ResolveImportUtil.resolveImportElement((PyImportElement)element);
       }
       if (!(element instanceof NameDefiner)) {
-        return new PyClassRef(qualifiedName.toString());
+        currentParent = null;
+        break;
       }
       currentParent = (NameDefiner)element;
     }
 
-    return new PyClassRef(currentParent);
+    if (currentParent != null) {
+      return new PyClassRef(currentParent);
+    }
+    if (qualifiedName.getComponentCount() == 1) {
+      final PyClass builtinClass = PyBuiltinCache.getInstance(parent).getClass(qualifiedName.getComponents().get(0));
+      if (builtinClass != null) {
+        return new PyClassRef(builtinClass);
+      }
+    }
+    return new PyClassRef(qualifiedName.toString());
   }
 
   @NotNull
