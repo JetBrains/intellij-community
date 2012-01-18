@@ -90,4 +90,12 @@ public class WhileCanBeForeachInspection {
         }
     }
 
+  void a() {
+    List<String> list = new ArrayList();
+    ListIterator<String> it = list.listIterator(10);
+    //Intention here:
+    while (it.hasNext()) { // don't warn because listIterator starts at index 10
+      System.out.println(it.next());
+    }
+  }
 }
