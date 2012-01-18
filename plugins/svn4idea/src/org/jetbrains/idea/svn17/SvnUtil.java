@@ -59,7 +59,7 @@ public class SvnUtil {
   private SvnUtil() {
   }
 
-  public static void crawlWCRoots(VirtualFile path, NotNullFunction<VirtualFile, Collection<VirtualFile>> callback) {
+  public static void crawlWCRoots(final Project project, VirtualFile path, NotNullFunction<VirtualFile, Collection<VirtualFile>> callback) {
     if (path == null) {
       return;
     }
@@ -70,12 +70,12 @@ public class SvnUtil {
     }
     final File parent = new File(parentVFile.getPath());
 
-    if (isSvnVersioned(parent)) {
+    if (isSvnVersioned(project, parent)) {
       checkCanceled();
       final Collection<VirtualFile> pending = callback.fun(path);
       checkCanceled();
       for (VirtualFile virtualFile : pending) {
-        crawlWCRoots(virtualFile, callback);
+        crawlWCRoots(project, virtualFile, callback);
       }
     } else if (isDirectory) {
       checkCanceled();
@@ -84,33 +84,39 @@ public class SvnUtil {
         checkCanceled();
         VirtualFile child = children[i];
         if (child.isDirectory()) {
-          crawlWCRoots(child, callback);
+          crawlWCRoots(project, child, callback);
         }
       }
     }
   }
 
-  public static boolean isSvnVersioned(File parent) {
-    return SVNWCUtil.isVersionedDirectory(parent) || is17CopyPart(parent);
+  public static boolean isSvnVersioned(final Project project, File parent) {
+    try {
+      final SVNInfo info = SvnVcs17.getInstance(project).createWCClient().doInfo(parent, SVNRevision.UNDEFINED);
+      return info != null;
+    }
+    catch (SVNException e) {
+      return false;
+    }
   }
 
-  public static Collection<VirtualFile> crawlWCRoots(File path, SvnWCRootCrawler callback, ProgressIndicator progress) {
+  public static Collection<VirtualFile> crawlWCRoots(final Project project, File path, SvnWCRootCrawler callback, ProgressIndicator progress) {
     final LocalFileSystem lfs = LocalFileSystem.getInstance();
     VirtualFile vf = lfs.findFileByIoFile(path);
     if (vf == null) {
       vf = lfs.refreshAndFindFileByIoFile(path);
     }
     if (vf == null) return Collections.emptyList();
-    return crawlWCRoots(vf, callback, progress);
+    return crawlWCRoots(project, vf, callback, progress);
   }
 
-  private static Collection<VirtualFile> crawlWCRoots(VirtualFile vf, SvnWCRootCrawler callback, ProgressIndicator progress) {
+  private static Collection<VirtualFile> crawlWCRoots(final Project project, VirtualFile vf, SvnWCRootCrawler callback, ProgressIndicator progress) {
     final Collection<VirtualFile> result = new HashSet<VirtualFile>();
     final boolean isDirectory = vf.isDirectory();
     VirtualFile parent = ! isDirectory || !vf.exists() ? vf.getParent() : vf;
 
     final File parentIo = new File(parent.getPath());
-    if (isSvnVersioned(parentIo)) {
+    if (isSvnVersioned(project, parentIo)) {
       checkCanceled(progress);
       callback.handleWorkingCopyRoot(parentIo, progress);
       checkCanceled(progress);
@@ -121,7 +127,7 @@ public class SvnUtil {
       for (VirtualFile file : childrenVF) {
         checkCanceled(progress);
         if (file.isDirectory()) {
-          result.addAll(crawlWCRoots(file, callback, progress));
+          result.addAll(crawlWCRoots(project, file, callback, progress));
         }
       }
     }
@@ -141,13 +147,13 @@ public class SvnUtil {
 
   public static String[] getLocationsForModule(final SvnVcs17 vcs, File path, ProgressIndicator progress) {
     LocationsCrawler crawler = new LocationsCrawler(vcs);
-    crawlWCRoots(path, crawler, progress);
+    crawlWCRoots(vcs.getProject(), path, crawler, progress);
     return crawler.getLocations();
   }
 
   public static Map<String, File> getLocationInfoForModule(final SvnVcs17 vcs, File path, ProgressIndicator progress) {
     final LocationsCrawler crawler = new LocationsCrawler(vcs);
-    crawlWCRoots(path, crawler, progress);
+    crawlWCRoots(vcs.getProject(), path, crawler, progress);
     return crawler.getLocationInfos();
   }
 

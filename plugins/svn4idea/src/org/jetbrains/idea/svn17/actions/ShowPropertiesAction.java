@@ -43,7 +43,7 @@ public class ShowPropertiesAction extends BasicAction {
     if (!file.isDirectory()) {
       file = file.getParent();
     }
-    return file != null && file.getPath() != null && SvnUtil.isSvnVersioned(new File(file.getPath()));
+    return file != null && file.getPath() != null && SvnUtil.isSvnVersioned(project, new File(file.getPath()));
   }
 
   protected boolean needsFiles() {
