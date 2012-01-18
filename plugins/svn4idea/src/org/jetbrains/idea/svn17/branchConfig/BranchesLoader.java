@@ -20,10 +20,7 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.idea.svn17.SvnConfiguration17;
 import org.jetbrains.idea.svn17.SvnVcs17;
 import org.jetbrains.idea.svn17.integrate.SvnBranchItem;
-import org.tmatesoft.svn.core.ISVNDirEntryHandler;
-import org.tmatesoft.svn.core.SVNDirEntry;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.wc.SVNLogClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -47,7 +44,7 @@ public class BranchesLoader {
 
     final SVNLogClient logClient = new SVNLogClient(passiveManager, configuration.getOptions(project));
     final SVNURL branchesUrl = SVNURL.parseURIEncoded(url);
-    logClient.doList(branchesUrl, SVNRevision.UNDEFINED, SVNRevision.HEAD, false, false, new ISVNDirEntryHandler() {
+    logClient.doList(branchesUrl, SVNRevision.UNDEFINED, SVNRevision.HEAD, false, SVNDepth.IMMEDIATES, SVNDirEntry.DIRENT_ALL, new ISVNDirEntryHandler() {
       public void handleDirEntry(final SVNDirEntry dirEntry) throws SVNException {
         final SVNURL currentUrl = dirEntry.getURL();
         if (! branchesUrl.equals(currentUrl)) {
