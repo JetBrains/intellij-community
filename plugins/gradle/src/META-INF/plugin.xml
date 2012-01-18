@@ -32,6 +32,7 @@
     <library.presentationProvider implementation="org.jetbrains.plugins.gradle.config.GradleLibraryPresentationProvider" order="last"/>
     <java.elementFinder implementation="org.jetbrains.plugins.gradle.config.GradleClassFinder"/>
     <projectOpenProcessor implementation="org.jetbrains.plugins.gradle.importing.GradleProjectOpenProcessor"/>
+    <colorSettingsPage implementation="org.jetbrains.plugins.gradle.config.GradleColorSettingsPage"/>
 
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.remote.GradleApiFacadeManager"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.util.GradleLibraryManager"/>
