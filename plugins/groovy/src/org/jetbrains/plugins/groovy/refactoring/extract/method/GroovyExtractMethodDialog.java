@@ -21,17 +21,20 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Splitter;
 import com.intellij.psi.PsiModifier;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.ui.ComboBoxVisibilityPanel;
 import com.intellij.refactoring.ui.MethodSignatureComponent;
 import com.intellij.ui.EditorTextField;
+import com.intellij.ui.IdeBorderFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
+import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.extract.ExtractUtil;
 import org.jetbrains.plugins.groovy.refactoring.extract.InitialInfo;
 import org.jetbrains.plugins.groovy.refactoring.extract.ParameterTablePanel;
@@ -64,6 +67,7 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
   private JLabel myNameLabel;
   private MethodSignatureComponent mySignature;
   private ComboBoxVisibilityPanel myVisibilityPanel;
+  private Splitter mySplitter;
   private ParameterTablePanel myParameterTablePanel;
   private final Project myProject;
 
@@ -80,6 +84,15 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
     init();
     setUpDialog();
     update();
+  }
+
+  @Override
+  protected void init() {
+    super.init();
+    mySplitter.setOrientation(true);
+    mySplitter.setShowDividerIcon(false);
+    mySplitter.setFirstComponent(myParameterTablePanel);
+    mySplitter.setSecondComponent(mySignature);
   }
 
   protected void doOKAction() {
@@ -184,6 +197,9 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
     mySignature = new GrMethodSignatureComponent("", myProject);
     mySignature.setPreferredSize(new Dimension(500, 100));
     mySignature.setMinimumSize(new Dimension(500, 100));
+    mySignature.setBorder(
+      IdeBorderFactory.createTitledBorder(GroovyRefactoringBundle.message("signature.preview.border.title"), false, false, true));
+    mySignature.setFocusable(false);
 
     myNameField = new EditorTextField("", myProject, GroovyFileType.GROOVY_FILE_TYPE);
     myVisibilityPanel = new GroovyComboboxVisibilityPanel();
