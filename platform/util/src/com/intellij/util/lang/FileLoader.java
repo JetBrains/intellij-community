@@ -43,7 +43,6 @@ class FileLoader extends Loader {
     }
   }
 
-  // True -> class file
   private void buildPackageCache(final File dir, ClasspathCache cache) {
     cache.addResourceEntry(getRelativeResourcePath(dir), this);
 
@@ -77,27 +76,42 @@ class FileLoader extends Loader {
   }
 
   @Nullable
-  Resource getResource(final String name, boolean flag) {
+  Resource getResource(final String name, boolean check) {
+    URL url = null;
+    File file = null;
+
     try {
-      final URL url = new URL(getBaseURL(), name);
+      url = new URL(getBaseURL(), name);
       if (!url.getFile().startsWith(getBaseURL().getFile())) return null;
 
-      final File file = new File(myRootDir, name.replace('/', File.separatorChar));
-      if (file.exists()) {
+      file = new File(myRootDir, name.replace('/', File.separatorChar));
+      if (!check || file.exists()) {     // check means we load or process resource so we check its existence via old way
+        if (check) {
+          ++misses;
+          if (misses % 1000 == 0 && UrlClassLoader.doDebug) {
+            UrlClassLoader.debug("Missed resource " + name + " from " + myRootDir);
+          }
+        }
+
         ++hits;
         if (hits % 1000 == 0 && UrlClassLoader.doDebug) {
           UrlClassLoader.debug("Exists file loader: misses:" + misses + ", hits:" + hits);
         }
-        return new MyResource(name, url, file);
-      }
 
+        return new MyResource(name, url, file, !check);
+      }
+    }
+    catch (Exception exception) {
+      ++misses;
       if (misses % 1000 == 0 && UrlClassLoader.doDebug) {
         UrlClassLoader.debug("Missed " + name + " from " + myRootDir);
       }
-      ++misses;
-    }
-    catch (Exception exception) {
-      return null;
+      if (!check && file != null && file.exists()) {
+        try {   // we can not open the file if it is directory, Resource still can be created
+          return new MyResource(name, url, file, false);
+        }
+        catch (IOException ex) {}
+      }
     }
     return null;
   }
@@ -131,10 +145,11 @@ class FileLoader extends Loader {
     private final URL myUrl;
     private final File myFile;
 
-    public MyResource(String name, URL url, File file) {
+    public MyResource(String name, URL url, File file, boolean willLoadBytes) throws IOException {
       myName = name;
       myUrl = url;
       myFile = file;
+      if (willLoadBytes) getByteBuffer(); // check for existence by creating cached file input stream
     }
 
     public String getName() {
