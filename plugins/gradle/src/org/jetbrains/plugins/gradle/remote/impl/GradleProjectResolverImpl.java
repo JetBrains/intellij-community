@@ -39,9 +39,10 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class GradleProjectResolverImpl extends RemoteObject implements GradleProjectResolver, RemoteGradleService {
 
-  private final BlockingQueue<ProjectConnection>                myConnections       = new LinkedBlockingQueue<ProjectConnection>();
-  private final AtomicReference<RemoteGradleProcessSettings>    mySettings          = new AtomicReference<RemoteGradleProcessSettings>();
-  private final GradleLibraryNamesMixer                         myLibraryNamesMixer = new GradleLibraryNamesMixer();
+  private final ThreadLocal<ProjectConnection>               myCurrentConnection = new ThreadLocal<ProjectConnection>();
+  private final BlockingQueue<ProjectConnection>             myConnections       = new LinkedBlockingQueue<ProjectConnection>();
+  private final AtomicReference<RemoteGradleProcessSettings> mySettings          = new AtomicReference<RemoteGradleProcessSettings>();
+  private final GradleLibraryNamesMixer                      myLibraryNamesMixer = new GradleLibraryNamesMixer();
   private final AtomicReference<GradleTaskNotificationListener> myNotificationListener =
     new AtomicReference<GradleTaskNotificationListener>();
 
@@ -55,6 +56,19 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
     }
     catch (Throwable e) {
       throw new GradleApiException(e);
+    }
+    finally {
+      final ProjectConnection connection = myCurrentConnection.get();
+      if (connection != null) {
+        myCurrentConnection.set(null);
+        myConnections.remove();
+        try {
+          connection.close();
+        }
+        catch (Throwable e) {
+          // ignore
+        }
+      }
     }
   }
   
@@ -367,6 +381,7 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
       ));
     }
     myConnections.add(connection);
+    myCurrentConnection.set(connection);
     return connection;
   }
   

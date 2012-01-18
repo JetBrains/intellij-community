@@ -13,6 +13,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.rmi.RemoteProcessSupport;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.ide.actions.OpenProjectFileChooserDescriptor;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -129,6 +130,7 @@ public class GradleApiFacadeManager {
         ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(DependencyScope.class), classPath);
         ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(JavaSdkVersion.class), classPath);
         ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(ExtensionPointName.class), classPath);
+        ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(OpenProjectFileChooserDescriptor.class), classPath);
         ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(getClass()), classPath);
         for (File library : gradleLibraries) {
           classPath.add(library.getAbsolutePath());
@@ -263,15 +265,15 @@ public class GradleApiFacadeManager {
     // Check that significant settings are not changed
     RemoteGradleProcessSettings oldSettings = pair.second;
     RemoteGradleProcessSettings currentSettings = getRemoteSettings();
-    if (!StringUtil.equals(oldSettings.getGradleHome(), currentSettings.getGradleHome())) {
-      try {
-        pair.first.applySettings(currentSettings);
-      }
-      catch (RemoteException e) {
-        return false;
-      }
-    }
-    return true;
+    
+    // We restart the slave process because there is a possible case that it was started with the incorrect classpath.
+    // For example, it could be started with gradle milestone-3 and that means that its classpath doesn't contain BasicIdeaProject.class.
+    // So, even if the user defines gradle milestone-7 to use, the slave process still is unable to operate because its classpath
+    // is still not changed.
+    //
+    // Please note that that should be changed when we support gradle wrapper. I.e. minimum set of gradle binaries will be bundled
+    // to the gradle plugin and they will contain all necessary binaries all the time.
+    return StringUtil.equals(oldSettings.getGradleHome(), currentSettings.getGradleHome());
   }
 
   @NotNull
