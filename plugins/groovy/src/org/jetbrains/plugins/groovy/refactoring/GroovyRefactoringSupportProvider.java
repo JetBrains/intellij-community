@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.refactoring.changeSignature.GrChangeSignatureHandler;
-import org.jetbrains.plugins.groovy.refactoring.extractMethod.GroovyExtractMethodHandler;
+import org.jetbrains.plugins.groovy.refactoring.extract.method.GroovyExtractMethodHandler;
 import org.jetbrains.plugins.groovy.refactoring.introduce.constant.GrIntroduceConstantHandler;
 import org.jetbrains.plugins.groovy.refactoring.introduce.field.GrIntroduceFieldHandler;
 import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.GrIntroduceParameterHandler;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.refactoring.extractMethod;
+package org.jetbrains.plugins.groovy.refactoring.extract;
 
+import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiPrimitiveType;
@@ -24,56 +25,48 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.ui.TypeSelector;
 import com.intellij.ui.BooleanTableCellRenderer;
 import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TableUtil;
+import com.intellij.ui.ToolbarDecorator;
+import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.AbstractTableCellEditor;
-import com.intellij.util.ui.Table;
+import com.intellij.util.ui.EditableModel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellEditor;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 
 /**
  * @author ilyas
  */
-public class ParameterTablePanel extends JPanel {
+public abstract class ParameterTablePanel extends JPanel {
 
-  private Project myProject;
   private ParameterInfo[] myParameterInfos;
   private TypeSelector[] myParameterTypeSelectors;
-  private GroovyExtractMethodDialog myDialog;
 
-  private Table myTable;
+  private JBTable myTable;
   private MyTableModel myTableModel;
-  private JButton myUpButton;
-  private JButton myDownButton;
   private JComboBox myTypeRendererCombo;
 
   public ParameterTablePanel() {
     super(new BorderLayout());
   }
 
-  void init(GroovyExtractMethodDialog dialog, ExtractMethodInfoHelper helper) {
+  public void init(ExtractInfoHelper helper) {
 
     setBorder(IdeBorderFactory.createTitledBorder(GroovyRefactoringBundle.message("parameters.border.title"), false, false, true));
 
-    myDialog = dialog;
-    myProject = helper.getProject();
     myParameterInfos = helper.getParameterInfos();
 
     myTableModel = new MyTableModel();
-    myTable = new Table(myTableModel);
-    DefaultCellEditor defaultEditor = (DefaultCellEditor) myTable.getDefaultEditor(Object.class);
+    myTable = new JBTable(myTableModel);
+    DefaultCellEditor defaultEditor = (DefaultCellEditor)myTable.getDefaultEditor(Object.class);
     defaultEditor.setClickCountToStart(1);
 
     myTable.setTableHeader(null);
@@ -89,14 +82,15 @@ public class ParameterTablePanel extends JPanel {
       }
     });
 
-    PsiManager manager = PsiManager.getInstance(myProject);
-    GlobalSearchScope scope = GlobalSearchScope.allScope(myProject);
+    Project project = helper.getProject();
+    PsiManager manager = PsiManager.getInstance(project);
+    GlobalSearchScope scope = GlobalSearchScope.allScope(project);
     myParameterTypeSelectors = new TypeSelector[myParameterInfos.length];
     for (int i = 0; i < myParameterTypeSelectors.length; i++) {
-//      final GrExpression[] occurrences = ExtractMethodUtil.findVariableOccurrences(helper.getStatements(), myParameterInfos[i].getName());
+//      final GrExpression[] occurrences = ExtractUtil.findVariableOccurrences(helper.getStatements(), myParameterInfos[i].getName());
 //      final TypeSelectorManager manager = new TypeSelectorManagerImpl(myProject, myParameterInfos[i].getType(), occurrences, areTypesDirected());
       PsiType type = myParameterInfos[i].getType();
-      myParameterTypeSelectors[i] = new TypeSelector(type != null ? type : PsiType.getJavaLangObject(manager, scope), myProject);
+      myParameterTypeSelectors[i] = new TypeSelector(type != null ? type : PsiType.getJavaLangObject(manager, scope), project);
 //      myParameterInfos[i].setTypeName(myParameterTypeSelectors[i].getSelectedType());
     }
 
@@ -104,21 +98,19 @@ public class ParameterTablePanel extends JPanel {
     myTypeRendererCombo.setOpaque(true);
     myTypeRendererCombo.setBorder(null);
 
-    myTypeRendererCombo.setRenderer(new DefaultListCellRenderer() {
-
-      public Component getListCellRendererComponent(final JList list,
-                                                    final Object value,
-                                                    final int index, final boolean isSelected, final boolean cellHasFocus) {
-        PsiType type = ((ParameterInfo) value).getType();
+    myTypeRendererCombo.setRenderer(new ListCellRendererWrapper<ParameterInfo>(myTypeRendererCombo.getRenderer()) {
+      @Override
+      public void customize(JList list, ParameterInfo info, int index, boolean selected, boolean hasFocus) {
+        PsiType type = info.getType();
         PsiPrimitiveType unboxed = PsiPrimitiveType.getUnboxedType(type);
         type = unboxed != null ? unboxed : type;
         setText(type != null ? type.getPresentableText() : "");
-        return this;
       }
     });
 
     myTable.getColumnModel().getColumn(MyTableModel.PARAMETER_TYPE_COLUMN).setCellEditor(new AbstractTableCellEditor() {
       TypeSelector myCurrentSelector;
+
       public Object getCellEditorValue() {
         return myCurrentSelector.getSelectedType();
       }
@@ -216,142 +208,46 @@ public class ParameterTablePanel extends JPanel {
       }
     });
 
-    JPanel listPanel = new JPanel(new BorderLayout());
-    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTable);
-    listPanel.add(scrollPane, BorderLayout.CENTER);
-    listPanel.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
+    JPanel listPanel = ToolbarDecorator.createDecorator(myTable).disableAddAction().disableRemoveAction().createPanel();
     add(listPanel, BorderLayout.CENTER);
-
-    JPanel buttonsPanel = new JPanel();
-    buttonsPanel.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
-    add(buttonsPanel, BorderLayout.EAST);
-
-    buttonsPanel.setLayout(new GridBagLayout());
-    GridBagConstraints gbConstraints = new GridBagConstraints();
-    gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
-    gbConstraints.fill = GridBagConstraints.HORIZONTAL;
-    gbConstraints.insets = new Insets(2, 4, 2, 4);
-
-    myUpButton = new JButton();
-    myUpButton.setText(GroovyRefactoringBundle.message("row.move.up"));
-    myUpButton.setDefaultCapable(false);
-    myUpButton.setMnemonic(KeyEvent.VK_U);
-    buttonsPanel.add(myUpButton, gbConstraints);
-
-    myDownButton = new JButton();
-    myDownButton.setText(GroovyRefactoringBundle.message("row.move.down"));
-    myDownButton.setMnemonic(KeyEvent.VK_D);
-    myDownButton.setDefaultCapable(false);
-    buttonsPanel.add(myDownButton, gbConstraints);
-
-    gbConstraints.weighty = 1;
-    buttonsPanel.add(new JPanel(), gbConstraints);
-
-    myUpButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        if (myTable.isEditing()) {
-          final boolean isStopped = myTable.getCellEditor().stopCellEditing();
-          if (!isStopped) return;
-        }
-        moveSelectedItem(-1);
-        updateSignature();
-        myTable.requestFocus();
-      }
-    });
-
-    myDownButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        if (myTable.isEditing()) {
-          final boolean isStopped = myTable.getCellEditor().stopCellEditing();
-          if (!isStopped) return;
-        }
-        moveSelectedItem(+1);
-        updateSignature();
-        myTable.requestFocus();
-      }
-    });
-
-    myTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-      public void valueChanged(ListSelectionEvent e) {
-        updateMoveButtons();
-      }
-    });
-    if (myParameterInfos.length <= 1) {
-      myUpButton.setEnabled(false);
-      myDownButton.setEnabled(false);
-    }
-    else {
-      myTable.getSelectionModel().setSelectionInterval(0, 0);
-    }
-    updateMoveButtons();
   }
 
-  private void updateMoveButtons() {
-    int row = myTable.getSelectedRow();
-    if (0 <= row && row < myParameterInfos.length) {
-      myUpButton.setEnabled(row > 0);
-      myDownButton.setEnabled(row < myParameterInfos.length - 1);
-    }
-    else {
-      myUpButton.setEnabled(false);
-      myDownButton.setEnabled(false);
-    }
-  }
+  protected abstract void updateSignature();
 
-  public void setEnabled(boolean enabled) {
-    myTable.setEnabled(enabled);
-    if (!enabled) {
-      myUpButton.setEnabled(false);
-      myDownButton.setEnabled(false);
-    }
-    else {
-      updateMoveButtons();
-    }
-    super.setEnabled(enabled);
-  }
+  protected abstract void doEnterAction();
 
+  protected abstract void doCancelAction();
 
-  private void moveSelectedItem(int moveIncrement) {
-    int row = myTable.getSelectedRow();
-    if (row < 0 || row >= myParameterInfos.length) return;
-    int targetRow = row + moveIncrement;
-    if (targetRow < 0 || targetRow >= myParameterInfos.length) return;
-
-    ParameterInfo currentItem = myParameterInfos[row];
-    int currentPosition = currentItem.getPosition();
-    ParameterInfo targetItem = myParameterInfos[targetRow];
-
-    // Change real parameter position
-    currentItem.setPosition(targetItem.getPosition());
-    targetItem.setPosition(currentPosition);
-
-    myParameterInfos[row] = targetItem;
-    myParameterInfos[targetRow] = currentItem;
-
-    TypeSelector currentSelector = myParameterTypeSelectors[row];
-    myParameterTypeSelectors[row] = myParameterTypeSelectors[targetRow];
-    myParameterTypeSelectors[targetRow] = currentSelector;
-    myTypeRendererCombo.setModel(new DefaultComboBoxModel(myParameterInfos));
-    myTableModel.fireTableRowsUpdated(Math.min(targetRow, row), Math.max(targetRow, row));
-    myTable.getSelectionModel().setSelectionInterval(targetRow, targetRow);
-  }
-
-  protected void updateSignature(){
-    myDialog.updateSignature();
-  }
-
-  protected void doEnterAction(){
-    myDialog.clickDefaultButton();
-  }
-
-  protected void doCancelAction(){
-    myDialog.doCancelAction();
-  }
-
-  private class MyTableModel extends AbstractTableModel {
+  private class MyTableModel extends AbstractTableModel implements EditableModel {
     public static final int CHECKMARK_COLUMN = 0;
     public static final int PARAMETER_TYPE_COLUMN = 1;
     public static final int PARAMETER_NAME_COLUMN = 2;
+
+    @Override
+    public void addRow() {
+      throw new IllegalAccessError("Not implemented");
+    }
+
+    @Override
+    public void removeRow(int index) {
+      throw new IllegalAccessError("Not implemented");
+    }
+
+    @Override
+    public void exchangeRows(int oldIndex, int newIndex) {
+      if (oldIndex < 0 || newIndex < 0) return;
+      if (oldIndex >= myParameterInfos.length || newIndex >= myParameterInfos.length) return;
+
+      final ParameterInfo old = myParameterInfos[oldIndex];
+      myParameterInfos[oldIndex] = myParameterInfos[newIndex];
+      myParameterInfos[newIndex] = old;
+
+      myParameterInfos[oldIndex].setPosition(oldIndex);
+      myParameterInfos[newIndex].setPosition(newIndex);
+
+      fireTableRowsUpdated(Math.min(oldIndex, newIndex), Math.max(oldIndex, newIndex));
+      updateSignature();
+    }
 
     public int getRowCount() {
       return myParameterInfos.length;
@@ -381,7 +277,7 @@ public class ParameterTablePanel extends JPanel {
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
       switch (columnIndex) {
         case CHECKMARK_COLUMN: {
-          myParameterInfos[rowIndex].setPassAsParameter((Boolean) aValue);
+          myParameterInfos[rowIndex].setPassAsParameter((Boolean)aValue);
           fireTableRowsUpdated(rowIndex, rowIndex);
           myTable.getSelectionModel().setSelectionInterval(rowIndex, rowIndex);
           updateSignature();
@@ -389,7 +285,7 @@ public class ParameterTablePanel extends JPanel {
         }
         case PARAMETER_NAME_COLUMN: {
           ParameterInfo info = myParameterInfos[rowIndex];
-          String name = (String) aValue;
+          String name = (String)aValue;
           if (GroovyNamesUtil.isIdentifier(name)) {
             info.setNewName(name);
           }
@@ -398,7 +294,7 @@ public class ParameterTablePanel extends JPanel {
         }
         case PARAMETER_TYPE_COLUMN: {
           ParameterInfo info = myParameterInfos[rowIndex];
-          info.setType((PsiType) aValue);
+          info.setType((PsiType)aValue);
           updateSignature();
           break;
         }
@@ -412,7 +308,9 @@ public class ParameterTablePanel extends JPanel {
         case PARAMETER_NAME_COLUMN:
           return isEnabled() && myParameterInfos[rowIndex].passAsParameter();
         case PARAMETER_TYPE_COLUMN:
-          return isEnabled() && myParameterInfos[rowIndex].passAsParameter() && !(myParameterTypeSelectors[rowIndex].getComponent() instanceof JLabel);
+          return isEnabled() &&
+                 myParameterInfos[rowIndex].passAsParameter() &&
+                 !(myParameterTypeSelectors[rowIndex].getComponent() instanceof JLabel);
         default:
           return false;
       }
@@ -433,6 +331,4 @@ public class ParameterTablePanel extends JPanel {
       return rendererComponent;
     }
   }
-
-
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.refactoring.extractMethod;
+package org.jetbrains.plugins.groovy.refactoring.extract;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -54,6 +54,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
+import org.jetbrains.plugins.groovy.refactoring.extract.method.ExtractMethodInfoHelper;
 import org.jetbrains.plugins.groovy.refactoring.inline.GroovyInlineMethodUtil;
 
 import java.util.*;
@@ -61,13 +62,13 @@ import java.util.*;
 /**
  * @author ilyas
  */
-public class ExtractMethodUtil {
+public class ExtractUtil {
 
-  private ExtractMethodUtil() {
+  private ExtractUtil() {
   }
 
   @Nullable
-  static PsiElement calculateAnchorToInsertBefore(GrMemberOwner owner, PsiElement startElement) {
+  public static PsiElement calculateAnchorToInsertBefore(GrMemberOwner owner, PsiElement startElement) {
     while (startElement != null && !isEnclosingDefinition(owner, startElement)) {
       if (startElement.getParent() instanceof GroovyFile) {
         return startElement.getNextSibling();
@@ -94,16 +95,16 @@ public class ExtractMethodUtil {
   }
 
   @NotNull
-  static GrStatement[] createResultStatement(ExtractMethodInfoHelper helper, @NotNull String methodName) {
+  public static GrStatement[] createResultStatement(ExtractMethodInfoHelper helper, @NotNull String methodName) {
     VariableInfo[] outputVars = helper.getOutputNames();
 
     PsiType type = helper.getOutputType();
     GrStatement[] statements = helper.getStatements();
     GrMethodCallExpression callExpression = createMethodCallByHelper(methodName, helper);
 
-    if ((outputVars.length == 0 || PsiType.VOID.equals(type)) && !helper.isReturnStatement()) return new GrStatement[]{callExpression};
+    if ((outputVars.length == 0 || PsiType.VOID.equals(type)) && !helper.hasReturnValue()) return new GrStatement[]{callExpression};
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(helper.getProject());
-    if (helper.isReturnStatement()) {
+    if (helper.hasReturnValue()) {
       return new GrStatement[]{factory.createStatementFromText("return " + callExpression.getText())};
     }
 
@@ -114,8 +115,7 @@ public class ExtractMethodUtil {
       return new GrStatement[]{createAssignment(outputVars, callExpression, helper)};
     }
     if (mustAdd.size() == outputVars.length && outputVars.length == 1) {
-      final GrVariableDeclaration decl = factory.createVariableDeclaration(ArrayUtil.EMPTY_STRING_ARRAY, callExpression,
-                                                                           outputVars[0].getType(), outputVars[0].getName());
+      final GrVariableDeclaration decl = factory.createVariableDeclaration(ArrayUtil.EMPTY_STRING_ARRAY, callExpression, outputVars[0].getType(), outputVars[0].getName());
       return new GrVariableDeclaration[]{decl};
     }
     List<GrStatement> result = generateVarDeclarations(mustAdd, helper.getProject(), null);
@@ -174,7 +174,7 @@ public class ExtractMethodUtil {
     return GroovyPsiElementFactory.getInstance(helper.getProject()).createExpressionFromText(text.toString());
   }
 
-  static boolean validateMethod(GrMethod method, ExtractMethodInfoHelper helper) {
+  public static boolean validateMethod(GrMethod method, ExtractMethodInfoHelper helper) {
     ArrayList<String> conflicts = new ArrayList<String>();
     GrMemberOwner owner = helper.getOwner();
     PsiMethod[] methods = ArrayUtil.mergeArrays(owner.getAllMethods(), new PsiMethod[]{method}, PsiMethod.ARRAY_FACTORY);
@@ -213,7 +213,7 @@ public class ExtractMethodUtil {
   }
 
 
-  static void removeOldStatements(GrStatementOwner owner, ExtractMethodInfoHelper helper) throws IncorrectOperationException {
+  public static void removeOldStatements(GrStatementOwner owner, ExtractMethodInfoHelper helper) throws IncorrectOperationException {
     owner.removeElements(helper.getInnerElements());
   }
 
@@ -258,7 +258,7 @@ public class ExtractMethodUtil {
     return false;
   }
 
-  static void renameParameterOccurrences(GrMethod method, ExtractMethodInfoHelper helper) throws IncorrectOperationException {
+  public static void renameParameterOccurrences(GrMethod method, ExtractMethodInfoHelper helper) throws IncorrectOperationException {
     GrOpenBlock block = method.getBlock();
     if (block == null) return;
     GrStatement[] statements = block.getStatements();
@@ -289,7 +289,7 @@ public class ExtractMethodUtil {
     }
   }
 
-  static GrMethod createMethodByHelper(@NotNull String name, ExtractMethodInfoHelper helper) {
+  public static GrMethod createMethodByHelper(@NotNull String name, ExtractMethodInfoHelper helper) {
     StringBuilder buffer = new StringBuilder();
 
     //Add signature
@@ -302,7 +302,7 @@ public class ExtractMethodUtil {
     buffer.append(typeText);
     buffer.append(name);
     buffer.append("(");
-    for (String param : getParameterString(helper)) {
+    for (String param : getParameterString(helper, true)) {
       buffer.append(param);
     }
     buffer.append(") { \n");
@@ -364,7 +364,7 @@ public class ExtractMethodUtil {
     return method;
   }
 
-  static String[] getParameterString(ExtractMethodInfoHelper helper) {
+  public static String[] getParameterString(ExtractInfoHelper helper, boolean useCanonicalText) {
     int i = 0;
     ParameterInfo[] infos = helper.getParameterInfos();
     int number = 0;
@@ -377,7 +377,14 @@ public class ExtractMethodUtil {
         PsiType paramType = info.getType();
         final PsiPrimitiveType unboxed = PsiPrimitiveType.getUnboxedType(paramType);
         if (unboxed != null) paramType = unboxed;
-        String paramTypeText = paramType == null || paramType.equalsToText("java.lang.Object") ? "" : paramType.getCanonicalText() + " ";
+        String paramTypeText;
+
+        if (paramType == null || paramType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
+          paramTypeText = "";
+        }
+        else {
+          paramTypeText = (useCanonicalText ? paramType.getCanonicalText() : paramType.getPresentableText()) + " ";
+        }
         params.add(paramTypeText + info.getName() + (i < number - 1 ? ", " : ""));
         i++;
       }
@@ -385,12 +392,12 @@ public class ExtractMethodUtil {
     return ArrayUtil.toStringArray(params);
   }
 
-  static String getTypeString(ExtractMethodInfoHelper helper, boolean forPresentation, String modifier) {
+  public static String getTypeString(ExtractMethodInfoHelper helper, boolean forPresentation, String modifier) {
     PsiType type = helper.getOutputType();
     final PsiPrimitiveType outUnboxed = PsiPrimitiveType.getUnboxedType(type);
     if (outUnboxed != null) type = outUnboxed;
     String typeText = forPresentation ? type.getPresentableText() : type.getCanonicalText();
-    String returnType = typeText == null || typeText.equals("void") || typeText.equals("Object") || !helper.specifyType() ? "" : typeText;
+    String returnType = typeText == null || !helper.specifyType() ? "" : typeText;
     if (returnType.length() == 0) {
       if (modifier.length() == 0) {
         typeText = "def ";
@@ -405,7 +412,7 @@ public class ExtractMethodUtil {
     return typeText;
   }
 
-  static GrStatement[] getStatementsByElements(PsiElement[] elements) {
+  public static GrStatement[] getStatementsByElements(PsiElement[] elements) {
     ArrayList<GrStatement> statementList = new ArrayList<GrStatement>();
     for (PsiElement element : elements) {
       if (element instanceof GrStatement) {
@@ -415,7 +422,7 @@ public class ExtractMethodUtil {
     return statementList.toArray(new GrStatement[statementList.size()]);
   }
 
-  static PsiElement[] getElementsInOffset(PsiFile file, int startOffset, int endOffset) {
+  public static PsiElement[] getElementsInOffset(PsiFile file, int startOffset, int endOffset) {
     PsiElement[] elements;
     GrExpression expr = GroovyRefactoringUtil.findElementInRange(file, startOffset, endOffset, GrExpression.class);
 
@@ -432,7 +439,7 @@ public class ExtractMethodUtil {
   }
 
   @Nullable
-  static GrMemberOwner getMemberOwner(GrStatement statement) {
+  public static GrMemberOwner getMemberOwner(GrStatement statement) {
     PsiElement parent = statement.getParent();
     while (parent != null && !(parent instanceof GrMemberOwner)) {
       if (parent instanceof GroovyFileBase) return (GrMemberOwner) ((GroovyFileBase) parent).getScriptClass();
@@ -442,17 +449,17 @@ public class ExtractMethodUtil {
   }
 
   @Nullable
-  static GrStatementOwner getDeclarationOwner(GrStatement statement) {
+  public static GrStatementOwner getDeclarationOwner(GrStatement statement) {
     PsiElement parent = statement.getParent();
     return parent instanceof GrStatementOwner ? ((GrStatementOwner) parent) : null;
   }
 
-  static boolean isSingleExpression(GrStatement[] statements) {
+  public static boolean isSingleExpression(GrStatement[] statements) {
     return statements.length == 1 && statements[0] instanceof GrExpression &&
         !(statements[0].getParent() instanceof GrVariableDeclarationOwner && statements[0] instanceof GrAssignmentExpression);
   }
 
-  static GrMethodCallExpression createMethodCallByHelper(@NotNull String name, ExtractMethodInfoHelper helper) {
+  public static GrMethodCallExpression createMethodCallByHelper(@NotNull String name, ExtractMethodInfoHelper helper) {
     StringBuilder buffer = new StringBuilder();
     buffer.append(name).append("(");
     int number = 0;
@@ -479,7 +486,7 @@ public class ExtractMethodUtil {
     return ((GrMethodCallExpression) expr);
   }
 
-  static int getCaretOffset(@NotNull GrStatement statement) {
+  public static int getCaretOffset(@NotNull GrStatement statement) {
     if (statement instanceof GrVariableDeclaration) {
       GrVariable[] variables = ((GrVariableDeclaration) statement).getVariables();
       if (variables.length > 0) {
@@ -498,7 +505,7 @@ public class ExtractMethodUtil {
     return statement.getTextOffset();
   }
 
-  static boolean canBeStatic(GrStatement statement) {
+  public static boolean canBeStatic(GrStatement statement) {
     PsiElement parent = statement.getParent();
     while (parent != null && !(parent instanceof PsiFile)) {
       if (parent instanceof GrMethod) {
@@ -509,14 +516,14 @@ public class ExtractMethodUtil {
     return false;
   }
 
-  static String getModifierString(ExtractMethodInfoHelper helper) {
+  public static String getModifierString(ExtractMethodInfoHelper helper) {
     String visibility = helper.getVisibility();
     assert visibility != null && visibility.length() > 0;
     visibility = visibility.equals(PsiModifier.PUBLIC) ? "" : visibility + " ";
     return visibility + (helper.isStatic() ? "static " : "");
   }
 
-  static boolean isReturnStatement(GrStatement statement, Collection<GrStatement> returnStatements) {
+  public static boolean isReturnStatement(GrStatement statement, Collection<GrStatement> returnStatements) {
     if (statement instanceof GrReturnStatement) return true;
     if (statement instanceof GrIfStatement) {
       boolean checked = GroovyInlineMethodUtil.checkTailIfStatement(((GrIfStatement) statement), returnStatements);

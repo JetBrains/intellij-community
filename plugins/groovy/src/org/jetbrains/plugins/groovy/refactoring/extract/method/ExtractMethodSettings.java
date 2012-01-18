@@ -13,12 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.refactoring;
+
+package org.jetbrains.plugins.groovy.refactoring.extract.method;
+
+import org.jetbrains.annotations.NotNull;
 
 /**
- * @author Medvedev Max
+ * @author ilyas
  */
-public interface HelpID {
-  String GROOVY_INTRODUCE_PARAMETER = "refactoring.introduceParameter.groovy";
-  String GROOVY_EXTRACT_CLOSURE = "refactoring.extractClosure.groovy";
+public interface ExtractMethodSettings {
+
+  @NotNull
+  ExtractMethodInfoHelper getHelper();
+
+  String getEnteredName();
+
 }
