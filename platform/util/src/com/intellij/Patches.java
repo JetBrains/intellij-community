@@ -106,8 +106,6 @@ public class Patches {
 
   /**
    * Lion eAWT FullScreen mode leads to visual artifacts
-   *
-   * @see com.intellij.util.concurrency.LockFactory
    */
   public static final boolean APPLE_BUG_ID_10207064 =
     SystemInfo.isMac && (!SystemInfo.isMacOSLeopard || !SystemInfo.isJavaVersionAtLeast("1.6.0_30"));
