@@ -23,6 +23,7 @@ import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -71,6 +72,20 @@ public class InspectionEP extends LanguageExtensionPoint {
   @Attribute("groupName")
   public String groupDisplayName;
 
+  /** Comma-delimited list of parent groups (excluding groupName)*/
+  @Attribute("groupPath")
+  public String groupPath;
+
+  public String[] getGroupPath() {
+    String name = getGroupDisplayName();
+    if (groupPath == null) {
+      return new String[]{name.isEmpty() ? InspectionProfileEntry.GENERAL_GROUP_NAME : name};
+    }
+    else {
+      return ArrayUtil.append(groupPath.split(","), name);
+    }
+  }
+
   @Attribute("enabledByDefault")
   public boolean enabledByDefault = false;
 
@@ -88,7 +103,7 @@ public class InspectionEP extends LanguageExtensionPoint {
     }
     return displayLevel;
   }
-  
+
   private String getLocalizedString(String bundleName, String key, String displayName) {
     if (displayName != null) return displayName;
     final String baseName = bundleName != null ? bundleName : bundle == null ? ((IdeaPluginDescriptor)myPluginDescriptor).getResourceBundleBaseName() : bundle;
@@ -109,5 +124,4 @@ public class InspectionEP extends LanguageExtensionPoint {
       throw new RuntimeException(e);
     }
   }
-    
 }
