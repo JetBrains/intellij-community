@@ -208,14 +208,14 @@ public class PathMacroManagerTest {
                  "jar://tmp/foo -> jar:/$PROJECT_DIR$\n" +
                  "jar:///tmp/foo -> jar://$PROJECT_DIR$\n" +
                  "/tmp/foo -> $PROJECT_DIR$\n" +
-                 "" + USER_HOME + "/work/idea -> $APPLICATION_HOME_DIR$\n" +
-                 "file:" + USER_HOME + "/work/idea -> file:$APPLICATION_HOME_DIR$\n" +
-                 "file:/" + USER_HOME + "/work/idea -> file://$APPLICATION_HOME_DIR$\n" +
-                 "file://" + USER_HOME + "/work/idea -> file://$APPLICATION_HOME_DIR$\n" +
-                 "jar:" + USER_HOME + "/work/idea -> jar:$APPLICATION_HOME_DIR$\n" +
-                 "jar:/" + USER_HOME + "/work/idea -> jar://$APPLICATION_HOME_DIR$\n" +
-                 "jar://" + USER_HOME + "/work/idea -> jar://$APPLICATION_HOME_DIR$\n" +
-                 "" + USER_HOME + " -> $USER_HOME$\n" +
+                 APP_HOME + " -> $APPLICATION_HOME_DIR$\n" +
+                 "file:" + APP_HOME + " -> file:$APPLICATION_HOME_DIR$\n" +
+                 "file:/" + APP_HOME + " -> file://$APPLICATION_HOME_DIR$\n" +
+                 "file://" + APP_HOME + " -> file://$APPLICATION_HOME_DIR$\n" +
+                 "jar:" + APP_HOME + " -> jar:$APPLICATION_HOME_DIR$\n" +
+                 "jar:/" + APP_HOME + " -> jar://$APPLICATION_HOME_DIR$\n" +
+                 "jar://" + APP_HOME + " -> jar://$APPLICATION_HOME_DIR$\n" +
+                 USER_HOME + " -> $USER_HOME$\n" +
                  "file:" + USER_HOME + " -> file:$USER_HOME$\n" +
                  "file:/" + USER_HOME + " -> file://$USER_HOME$\n" +
                  "file://" + USER_HOME + " -> file://$USER_HOME$\n" +
