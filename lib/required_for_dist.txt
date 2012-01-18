@@ -37,7 +37,7 @@ sanselan-0.98-snapshot.jar
 serviceMessages.jar
 trove4j.jar
 velocity.jar
-winp-1.16.jar
+winp-1.16-patched.jar
 xbean.jar
 xerces.jar
 xmlrpc-2.0.jar

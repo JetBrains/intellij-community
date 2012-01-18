@@ -16,6 +16,7 @@
 package com.intellij.debugger.ui;
 
 import com.intellij.CommonBundle;
+import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.impl.DebuggerSession;
@@ -157,11 +158,16 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent{
       return;
     }
 
-    final HotSwapProgressImpl findClassesProgress = generatedPaths == null? new HotSwapProgressImpl(myProject) : null;
+    final boolean isServerMode = CompilerWorkspaceConfiguration.getInstance(myProject).useCompileServer();
+    final boolean shouldPerformScan = !isServerMode || generatedPaths == null;
+
+    final HotSwapProgressImpl findClassesProgress = shouldPerformScan ? new HotSwapProgressImpl(myProject) : null;
     
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
-        final Map<DebuggerSession, Map<String, HotSwapFile>> modifiedClasses = generatedPaths == null? scanForModifiedClassesWithProgress(sessions, findClassesProgress) : HotSwapManager.findModifiedClasses(sessions, generatedPaths);
+        final Map<DebuggerSession, Map<String, HotSwapFile>> modifiedClasses = shouldPerformScan?
+          scanForModifiedClassesWithProgress(sessions, findClassesProgress, !isServerMode) :
+          HotSwapManager.findModifiedClasses(sessions, generatedPaths);
 
         final Application application = ApplicationManager.getApplication();
         if (modifiedClasses.isEmpty()) {
@@ -216,12 +222,12 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent{
     });
   }
 
-  private static Map<DebuggerSession, Map<String, HotSwapFile>> scanForModifiedClassesWithProgress(final List<DebuggerSession> sessions, final HotSwapProgressImpl progress) {
+  private static Map<DebuggerSession, Map<String, HotSwapFile>> scanForModifiedClassesWithProgress(final List<DebuggerSession> sessions, final HotSwapProgressImpl progress, final boolean scanWithVFS) {
     final Ref<Map<DebuggerSession, Map<String, HotSwapFile>>> result = Ref.create(null);
     ProgressManager.getInstance().runProcess(new Runnable() {
       public void run() {
         try {
-          result.set(HotSwapManager.scanForModifiedClasses(sessions, progress));
+          result.set(HotSwapManager.scanForModifiedClasses(sessions, progress, scanWithVFS));
         }
         finally {
           progress.finished();
