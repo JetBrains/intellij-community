@@ -69,20 +69,23 @@ public class FileContentUtil {
     virtualFile.refresh(false, false);
   }
 
-  public static void reparseFiles(@NotNull final Project project, @NotNull final Collection<VirtualFile> files, boolean includeOpenFiles) {
-    final Set<VFilePropertyChangeEvent> events = new THashSet<VFilePropertyChangeEvent>();
-    for (VirtualFile file : files) {
-      saveOrReload(file, events);
-    }
-    if (includeOpenFiles) {
-      for (VirtualFile open : FileEditorManager.getInstance(project).getOpenFiles()) {
-        if (!files.contains(open)) {
-          saveOrReload(open, events);
-        }
-      }
-    }
+  public static void reparseFiles(@NotNull final Project project, @NotNull final Collection<VirtualFile> files, final boolean includeOpenFiles) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
+        // files must be processed under one write action to prevent firing event for invalid files.
+
+        final Set<VFilePropertyChangeEvent> events = new THashSet<VFilePropertyChangeEvent>();
+        for (VirtualFile file : files) {
+          saveOrReload(file, events);
+        }
+        if (includeOpenFiles) {
+          for (VirtualFile open : FileEditorManager.getInstance(project).getOpenFiles()) {
+            if (!files.contains(open)) {
+              saveOrReload(open, events);
+            }
+          }
+        }
+
         ApplicationManager.getApplication().getMessageBus().syncPublisher(VirtualFileManager.VFS_CHANGES)
             .before(new ArrayList<VFileEvent>(events));
         ApplicationManager.getApplication().getMessageBus().syncPublisher(VirtualFileManager.VFS_CHANGES)
@@ -92,7 +95,7 @@ public class FileContentUtil {
   }
 
   private static void saveOrReload(final VirtualFile virtualFile, Collection<VFilePropertyChangeEvent> events) {
-    if (virtualFile == null || virtualFile.isDirectory()) {
+    if (virtualFile == null || virtualFile.isDirectory() || !virtualFile.isValid()) {
       return;
     }
     final FileDocumentManager documentManager = FileDocumentManager.getInstance();
