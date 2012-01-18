@@ -161,17 +161,17 @@ public class IncProjectBuilder {
     myProjectDescriptor.fsState.onRebuild();
 
     final Collection<Module> modulesToClean = context.getProject().getModules().values();
-    final Set<File> toDelete = new HashSet<File>();
+    final Set<File> rootsToDelete = new HashSet<File>();
     final Set<File> allSourceRoots = new HashSet<File>();
 
     for (Module module : modulesToClean) {
       final File out = context.getProjectPaths().getModuleOutputDir(module, false);
       if (out != null) {
-        toDelete.add(out);
+        rootsToDelete.add(out);
       }
       final File testOut = context.getProjectPaths().getModuleOutputDir(module, true);
       if (testOut != null) {
-        toDelete.add(testOut);
+        rootsToDelete.add(testOut);
       }
       final List<RootDescriptor> moduleRoots = context.getModuleRoots(module);
       for (RootDescriptor d : moduleRoots) {
@@ -180,7 +180,11 @@ public class IncProjectBuilder {
     }
 
     // check that output and source roots are not overlapping
-    for (File outputRoot : toDelete) {
+    final List<File> filesToDelete = new ArrayList<File>();
+    for (File outputRoot : rootsToDelete) {
+      if (myCancelStatus.isCanceled()) {
+        throw new ProjectBuildException(CANCELED_MESSAGE);
+      }
       boolean okToDelete = true;
       if (PathUtil.isUnder(allSourceRoots, outputRoot)) {
         okToDelete = false;
@@ -195,22 +199,19 @@ public class IncProjectBuilder {
         }
       }
       if (okToDelete) {
-        context.processMessage(new ProgressMessage("Cleaning " + outputRoot.getPath()));
         // do not delete output root itself to avoid lots of unnecessary "roots_changed" events in IDEA
         final File[] children = outputRoot.listFiles();
         if (children != null) {
-          for (File child : children) {
-            if (myCancelStatus.isCanceled()) {
-              throw new ProjectBuildException(CANCELED_MESSAGE);
-            }
-            FileUtil.delete(child);
-          }
+          filesToDelete.addAll(Arrays.asList(children));
         }
       }
       else {
         context.processMessage(new CompilerMessage(JPS_SERVER_NAME, BuildMessage.Kind.WARNING, "Output path " + outputRoot.getPath() + " intersects with a source root. The output cannot be cleaned."));
       }
     }
+
+    context.processMessage(new ProgressMessage("Cleaning output directories..."));
+    FileUtil.asyncDelete(filesToDelete);
   }
 
   private static void runTasks(CompileContext context, final List<BuildTask> tasks) throws ProjectBuildException {
