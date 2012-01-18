@@ -27,6 +27,7 @@ import com.intellij.openapi.util.IconLoader;
 import git4idea.GitBranch;
 import git4idea.branch.GitBranchOperationsProcessor;
 import git4idea.repo.GitRepository;
+import git4idea.util.GitUIUtil;
 import git4idea.validators.GitNewBranchNameValidator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,7 +55,7 @@ class GitBranchPopupActions {
   ActionGroup createActions() {
     DefaultActionGroup popupGroup = new DefaultActionGroup(null, false);
 
-    popupGroup.addAction(new CurrentBranchAction(myRepository));
+    popupGroup.addAction(new CurrentBranchAction(GitBranchUiUtil.getDisplayableBranchText(myRepository), "in root " + GitUIUtil.getShortRepositoryName(myRepository)));
     popupGroup.addAction(new NewBranchAction(myProject, Collections.singleton(myRepository)));
     popupGroup.addAction(new CheckoutRevisionActions(myProject, myRepository));
 
@@ -80,14 +81,10 @@ class GitBranchPopupActions {
   /**
    * "Current branch:" item which is disabled and is just a label to display the current branch.
    */
-  private static class CurrentBranchAction extends DumbAwareAction {
-    public CurrentBranchAction(GitRepository repository) {
-      super("", String.format("Current branch [%s] in root [%s]", getBranchText(repository), repository.getRoot().getName()), null);
-      getTemplatePresentation().setText("Current Branch: " + getBranchText(repository), false); // no mnemonics
-    }
-
-    private static String getBranchText(GitRepository repository) {
-      return GitBranchUiUtil.getDisplayableBranchText(repository);
+  static class CurrentBranchAction extends DumbAwareAction {
+    CurrentBranchAction(@NotNull String currentBranchName, @Nullable String rootName) {
+      super("", String.format("Current branch is %s %s", currentBranchName, rootName), null);
+      getTemplatePresentation().setText("Current Branch: " + currentBranchName, false); // no mnemonics
     }
 
     @Override public void actionPerformed(AnActionEvent e) {
@@ -141,7 +138,7 @@ class GitBranchPopupActions {
     private final Project myProject;
     private final GitRepository myRepository;
 
-    public CheckoutRevisionActions(Project project, GitRepository repository) {
+    CheckoutRevisionActions(Project project, GitRepository repository) {
       super("Checkout Tag or Revision");
       myProject = project;
       myRepository = repository;
@@ -198,7 +195,7 @@ class GitBranchPopupActions {
       private final Collection<GitRepository> myRepositories;
       private final String myBranchName;
 
-      public CheckoutAction(Project project, Collection<GitRepository> repositories, String branchName) {
+      CheckoutAction(Project project, Collection<GitRepository> repositories, String branchName) {
         super("Checkout");
         myProject = project;
         myRepositories = repositories;
@@ -217,7 +214,7 @@ class GitBranchPopupActions {
       private final Collection<GitRepository> myRepositories;
       private final String myBranchName;
 
-      public CheckoutAsNewBranch(Project project, @NotNull Collection<GitRepository> repositories, @NotNull String branchName) {
+      CheckoutAsNewBranch(Project project, @NotNull Collection<GitRepository> repositories, @NotNull String branchName) {
         super("Checkout as new branch");
         myProject = project;
         myRepositories = repositories;
@@ -244,7 +241,7 @@ class GitBranchPopupActions {
       private final Collection<GitRepository> myRepositories;
       private final String myBranchName;
 
-      public DeleteAction(Project project, Collection<GitRepository> repositories, String branchName) {
+      DeleteAction(Project project, Collection<GitRepository> repositories, String branchName) {
         super("Delete");
         myProject = project;
         myRepositories = repositories;

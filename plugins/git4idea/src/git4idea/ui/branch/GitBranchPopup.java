@@ -91,27 +91,37 @@ class GitBranchPopup  {
     if (repositoryManager.moreThanOneRoot() && (getSyncSetting() != GitBranchSyncSetting.DONT)) {
       Collection<GitRepository> repositories = repositoryManager.getRepositories();
       GitMultiRootBranchConfig branchConfig = new GitMultiRootBranchConfig(repositories);
-      popupGroup.add(new GitBranchPopupActions.NewBranchAction(myProject, repositories));
+      
+      if (!branchConfig.diverged()) {
+        String currentBranch = branchConfig.getCurrentBranch();
+        assert currentBranch != null : "Current branch can't be null if branches have not diverged";
+        popupGroup.add(new GitBranchPopupActions.CurrentBranchAction(currentBranch, " in all roots"));
+        popupGroup.add(new GitBranchPopupActions.NewBranchAction(myProject, repositories));
 
-      popupGroup.addSeparator("Repositories");
-      for (GitRepository repository : repositoryManager.getRepositories()) {
-        popupGroup.add(new RootAction(repository));
-      }
+        popupGroup.addSeparator("Repositories");
+        for (GitRepository repository : repositoryManager.getRepositories()) {
+          popupGroup.add(new RootAction(repository, myCurrentRepository));
+        }
 
-      popupGroup.addSeparator("Common Local Branches");
-      for (String branch : branchConfig.getLocalBranches()) {
-        if (!branch.equals(branchConfig.getCurrentBranch())) {
-          popupGroup.add(new GitBranchPopupActions.LocalBranchActions(myProject, repositories, branch));
+        popupGroup.addSeparator("Common Local Branches");
+        for (String branch : branchConfig.getLocalBranches()) {
+          if (!branch.equals(currentBranch)) {
+            popupGroup.add(new GitBranchPopupActions.LocalBranchActions(myProject, repositories, branch));
+          }
+        }
+
+        popupGroup.addSeparator("Common Remote Branches");
+        for (String branch : branchConfig.getRemoteBranches()) {
+          popupGroup.add(new GitBranchPopupActions.RemoteBranchActions(myProject, repositories, branch));
         }
       }
-
-      popupGroup.addSeparator("Common Remote Branches");
-      for (String branch : branchConfig.getRemoteBranches()) {
-        popupGroup.add(new GitBranchPopupActions.RemoteBranchActions(myProject, repositories, branch));
+      else {
+        popupGroup.add(new BranchesHaveDivergedMessage());
+        fillPopupWithCurrentRepositoryActions(popupGroup);
       }
     } 
     else {
-      popupGroup.addAll(new GitBranchPopupActions(myCurrentRepository.getProject(), myCurrentRepository).createActions());
+      fillPopupWithCurrentRepositoryActions(popupGroup);
     }
 
     popupGroup.addSeparator();
@@ -119,13 +129,23 @@ class GitBranchPopup  {
     return popupGroup;
   }
 
+  private void fillPopupWithCurrentRepositoryActions(DefaultActionGroup popupGroup) {
+    popupGroup.addAll(new GitBranchPopupActions(myCurrentRepository.getProject(), myCurrentRepository).createActions());
+  }
+
   private static class RootAction extends ActionGroup {
 
     private final GitRepository myRepository;
 
-    public RootAction(GitRepository repository) {
+    /**
+     * @param currentRepository Pass null in the case of common repositories - none repository will be highlighted then.
+     */
+    RootAction(@NotNull GitRepository repository, @Nullable GitRepository currentRepository) {
       super(GitUIUtil.getShortRepositoryName(repository), true);
       myRepository = repository;
+      if (repository.equals(currentRepository)) {
+        getTemplatePresentation().setIcon(IconLoader.getIcon("/actions/checked.png"));
+      }
     }
 
     @NotNull
@@ -136,6 +156,20 @@ class GitBranchPopup  {
     }
   }
 
+  private static class BranchesHaveDivergedMessage extends DumbAwareAction {
+
+    BranchesHaveDivergedMessage() {
+      super("Branches have diverged", "", IconLoader.getIcon("/general/ideFatalError.png"));
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+    }
+
+    @Override public void update(AnActionEvent e) {
+      e.getPresentation().setEnabled(false);         // this action works as a label
+    }
+  }
 
   /**
    * "Configure" opens a dialog to configure branches in the repository, i.e. set up tracked branches, fetch/push branches, etc.
@@ -153,4 +187,5 @@ class GitBranchPopup  {
       //e.getPresentation().setVisible(false);
     }
   }
+
 }
