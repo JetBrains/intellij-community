@@ -32,11 +32,11 @@ import static com.intellij.execution.testframework.sm.runner.GeneralToSMTRunnerE
 
 /**
  * @author Roman Chernyatchik
- *
- * This implementation also supports messages splitted in parts by early flush.
- * Implementation assumes that buffer is being flushed on line end or by timer,
- * i.e. incomming text contains no more than one line's end marker ('\r', '\n', or "\r\n")
- * (e.g. process was run with IDEA program's runner)
+ *         <p/>
+ *         This implementation also supports messages splitted in parts by early flush.
+ *         Implementation assumes that buffer is being flushed on line end or by timer,
+ *         i.e. incomming text contains no more than one line's end marker ('\r', '\n', or "\r\n")
+ *         (e.g. process was run with IDEA program's runner)
  */
 public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer {
   private static final Logger LOG = Logger.getInstance(OutputToGeneralTestEventsConverter.class.getName());
@@ -119,19 +119,20 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
         }
         //fire current output
         fireOnUncapturedOutput(outputToProcess, outputType);
-      } else {
+      }
+      else {
         myPendingLineBreakFlag = false;
       }
     }
     catch (ParseException e) {
 
-      LOG.error(getTFrameworkPrefix(myTestFrameworkName) + "Error parsing text: ["+text+"]", e);
+      LOG.error(getTFrameworkPrefix(myTestFrameworkName) + "Error parsing text: [" + text + "]", e);
     }
   }
 
   protected boolean processServiceMessages(final String text,
-                                          final Key outputType,
-                                          final ServiceMessageVisitor visitor) throws ParseException {
+                                           final Key outputType,
+                                           final ServiceMessageVisitor visitor) throws ParseException {
     // service message parser expects line like "##teamcity[ .... ]" without whitespaces in the end.
     final ServiceMessage message = ServiceMessage.parse(text.trim());
     if (message != null) {
@@ -141,7 +142,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
   }
 
 
-  private void fireOnTestStarted(final String testName, @Nullable  final String locationUrl) {
+  private void fireOnTestStarted(final String testName, @Nullable final String locationUrl) {
     assertNotNull(testName);
 
     // local variable is used to prevent concurrent modification
@@ -159,8 +160,8 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     assertNotNull(testName);
     assertNotNull(localizedMessage);
 
-     // local variable is used to prevent concurrent modification
-     final GeneralTestEventsProcessor processor = myProcessor;
+    // local variable is used to prevent concurrent modification
+    final GeneralTestEventsProcessor processor = myProcessor;
     if (processor != null) {
       processor.onTestFailure(testName, localizedMessage, stackTrace, isTestError,
                               comparisionFailureActualText,
@@ -277,8 +278,8 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
   }
 
   protected void fireOnErrorMsg(final String localizedMessage,
-                              @Nullable final String stackTrace,
-                              boolean isCritical) {
+                                @Nullable final String stackTrace,
+                                boolean isCritical) {
     assertNotNull(localizedMessage);
 
     // local variable is used to prevent concurrent modification
@@ -332,7 +333,8 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
         final String oldLocation = attrs.get(ATTR_KEY_LOCATION_URL_OLD);
         if (oldLocation != null) {
           LOG.error(getTFrameworkPrefix(myTestFrameworkName)
-                    + "Test Runner API was changed for TeamCity 5.0 compatibility. Please use 'locationHint' attribute instead of 'location'.");
+                    +
+                    "Test Runner API was changed for TeamCity 5.0 compatibility. Please use 'locationHint' attribute instead of 'location'.");
           return oldLocation;
         }
         return null;
@@ -365,7 +367,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
       if (!StringUtil.isEmptyOrSpaces(durationStr)) {
         duration = convertToInt(durationStr, testFinished);
       }
-      
+
       fireOnTestFinished(testFinished.getTestName(), duration);
     }
 
@@ -375,19 +377,19 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     }
 
     public void visitTestStdOut(@NotNull final TestStdOut testStdOut) {
-      fireOnTestOutput(testStdOut.getTestName(),testStdOut.getStdOut(), true);
+      fireOnTestOutput(testStdOut.getTestName(), testStdOut.getStdOut(), true);
     }
 
     public void visitTestStdErr(@NotNull final TestStdErr testStdErr) {
-      fireOnTestOutput(testStdErr.getTestName(),testStdErr.getStdErr(), false);
+      fireOnTestOutput(testStdErr.getTestName(), testStdErr.getStdErr(), false);
     }
 
     public void visitTestFailed(@NotNull final TestFailed testFailed) {
       final boolean isTestError = testFailed.getAttributes().get(ATTR_KEY_TEST_ERROR) != null;
 
-      fireOnTestFailure(testFailed.getTestName(), 
-                        testFailed.getFailureMessage(), 
-                        testFailed.getStacktrace(), 
+      fireOnTestFailure(testFailed.getTestName(),
+                        testFailed.getFailureMessage(),
+                        testFailed.getStacktrace(),
                         isTestError,
                         testFailed.getActual(),
                         testFailed.getExpected());
@@ -424,10 +426,10 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     @Override
     public void visitMessageWithStatus(@NotNull Message msg) {
       final String name = msg.getMessageName();
-        final Map<String, String> msgAttrs = msg.getAttributes();
+      final Map<String, String> msgAttrs = msg.getAttributes();
 
       final String text = msgAttrs.get(ATTR_KEY_TEXT);
-      if (!StringUtil.isEmpty(text)){
+      if (!StringUtil.isEmpty(text)) {
         // msg status
         final String status = msgAttrs.get(ATTR_KEY_STATUS);
         if (status.equals(ATTR_VALUE_STATUS_ERROR)) {
@@ -435,12 +437,15 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
 
           final String stackTrace = msgAttrs.get(ATTR_KEY_ERROR_DETAILS);
           fireOnErrorMsg(text, stackTrace, true);
-        } else if (status.equals(ATTR_VALUE_STATUS_WARNING)) {
+        }
+        else if (status.equals(ATTR_VALUE_STATUS_WARNING)) {
           // warning msg
 
           // let's show warning via stderr
-          fireOnUncapturedOutput(text, ProcessOutputTypes.STDERR);
-        } else {
+          final String stackTrace = msgAttrs.get(ATTR_KEY_ERROR_DETAILS);
+          fireOnErrorMsg(text, stackTrace, false);
+        }
+        else {
           // some other text
 
           // we cannot pass output type here but it is a service message
@@ -455,23 +460,27 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
 
       if (KEY_TESTS_COUNT.equals(name)) {
         processTestCountInSuite(msg);
-      } else if (CUSTOM_STATUS.equals(name)) {
+      }
+      else if (CUSTOM_STATUS.equals(name)) {
         processCustomStatus(msg);
-      } else if (MESSAGE.equals(name)) {
+      }
+      else if (MESSAGE.equals(name)) {
         final Map<String, String> msgAttrs = msg.getAttributes();
 
         final String text = msgAttrs.get(ATTR_KEY_TEXT);
-        if (!StringUtil.isEmpty(text)){
+        if (!StringUtil.isEmpty(text)) {
           // some other text
 
           // we cannot pass output type here but it is a service message
           // let's think that is was stdout
           fireOnUncapturedOutput(text, ProcessOutputTypes.STDOUT);
         }
-      } else if (TEST_REPORTER_ATTACHED.equals(name)) {
+      }
+      else if (TEST_REPORTER_ATTACHED.equals(name)) {
         fireOnTestFrameworkAttached();
-      } else {
-        GeneralToSMTRunnerEventsConvertor.logProblem(LOG, "Unexpected service message:" + name , myTestFrameworkName);
+      }
+      else {
+        GeneralToSMTRunnerEventsConvertor.logProblem(LOG, "Unexpected service message:" + name, myTestFrameworkName);
       }
     }
 
@@ -484,20 +493,23 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
       int count = 0;
       try {
         count = Integer.parseInt(countStr);
-      } catch (NumberFormatException ex) {
+      }
+      catch (NumberFormatException ex) {
         final String diagnosticInfo = msg.getAttributes().get(ATTR_KEY_DIAGNOSTIC);
-        LOG.error(getTFrameworkPrefix(myTestFrameworkName) + "Parse integer error." + (diagnosticInfo == null ? "" : " " + diagnosticInfo), ex);
+        LOG.error(getTFrameworkPrefix(myTestFrameworkName) + "Parse integer error." + (diagnosticInfo == null ? "" : " " + diagnosticInfo),
+                  ex);
       }
       return count;
     }
 
     private void processCustomStatus(final ServiceMessage msg) {
-      final Map<String,String> attrs = msg.getAttributes();
+      final Map<String, String> attrs = msg.getAttributes();
       final String msgType = attrs.get(ATTR_KEY_TEST_TYPE);
       if (msgType != null) {
         if (msgType.equals(ATTR_VAL_TEST_STARTED)) {
           fireOnCustomProgressTestStarted();
-        } else if (msgType.equals(ATTR_VAL_TEST_FAILED)) {
+        }
+        else if (msgType.equals(ATTR_VAL_TEST_FAILED)) {
           fireOnCustomProgressTestFailed();
         }
         return;
