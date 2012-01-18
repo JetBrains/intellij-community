@@ -24,7 +24,7 @@ import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.projectImport.ProjectImportBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.config.GradleProjectState;
+import org.jetbrains.plugins.gradle.config.GradleSettings;
 import org.jetbrains.plugins.gradle.model.GradleEntity;
 import org.jetbrains.plugins.gradle.model.GradleModule;
 import org.jetbrains.plugins.gradle.model.GradleProject;
@@ -97,18 +97,14 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
                              ModulesProvider modulesProvider,
                              ModifiableArtifactModel artifactModel)
   {
-    // TODO den uncomment
-    //if (!project.isInitialized()) {
-    //  StartupManager.getInstance(project).registerPostStartupActivity(new Runnable() {
-    //    @Override
-    //    public void run() {
-    //      final GradleProjectState state = project.getComponent(GradleProjectState.class);
-    //      if (state != null) {
-    //        state.GRADLE_PROJECT_FILE_PATH = myProjectFile.getAbsolutePath();
-    //      }
-    //    }
-    //  });
-    //}
+    if (!project.isInitialized()) {
+      StartupManager.getInstance(project).registerPostStartupActivity(new Runnable() {
+        @Override
+        public void run() {
+          GradleSettings.setLinkedProjectPath(myProjectFile.getAbsolutePath(), project);
+        }
+      });
+    }
     GradleModulesImporter importer = new GradleModulesImporter();
     Map<GradleModule, Module> mappings =
       importer.importModules(myModuleMappings.values(), project, model, myProjectFile.getAbsolutePath(), myProgressManager);

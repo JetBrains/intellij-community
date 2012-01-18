@@ -3,7 +3,6 @@ package org.jetbrains.plugins.gradle.util;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.config.MultiRowFlowPanel;
 
 import javax.swing.*;
 import java.awt.*;
