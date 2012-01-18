@@ -157,6 +157,9 @@ public class GenericsHighlightUtil {
           if (pparent instanceof PsiTypeElement) {
             PsiElement variable = pparent.getParent();
             if (variable instanceof PsiVariable) {
+              if (targetParametersNum == 0) {
+                QuickFixAction.registerQuickFixAction(highlightInfo, new RemoveTypeArgumentsFix(variable), null);
+              }
               VariableParameterizedTypeFix.registerIntentions(highlightInfo, (PsiVariable)variable, referenceParameterList);
             }
           }
