@@ -83,7 +83,7 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
       public void actionPerformed(ActionEvent e) {
         if (myUpdateToSpecificUrl.isSelected()) {
           myURLText.setEnabled(true);
-          myBranchField.setEnabled((myBranchUrl != null) && (mySourceUrl != null));
+          myBranchField.setEnabled(mySourceUrl != null);
           //chooseBranch();
         } else {
           myURLText.setEnabled(false);
@@ -123,7 +123,7 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
     myRevisionText.getTextField().selectAll();
     myRevisionText.setEnabled(myRevisionBox.isSelected());
     myURLText.setEnabled(myUpdateToSpecificUrl.isSelected());
-    myBranchField.setEnabled(myUpdateToSpecificUrl.isSelected() && (myBranchUrl != null) && (mySourceUrl != null));
+    myBranchField.setEnabled(myUpdateToSpecificUrl.isSelected() && (mySourceUrl != null));
 
     final boolean revisionCanBeSpecifiedForRoot = (! myIsNested) || isRevisionCanBeSpecifiedForRoot();
     myRevisionBox.setEnabled(revisionCanBeSpecifiedForRoot);
@@ -146,12 +146,18 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
   }
 
   private void chooseBranch() {
-    if ((myBranchUrl == null) || (mySourceUrl == null)) {
+    if (mySourceUrl == null) {
       myBranchField.setEnabled(false);
       return;
     }
     SelectBranchPopup.show(myVcs.getProject(), myRoot.getVirtualFile(), new SelectBranchPopup.BranchSelectedCallback() {
       public void branchSelected(final Project project, final SvnBranchConfigurationNew configuration, final String url, final long revision) {
+        // try to re-init branch url
+        myBranchUrl = getBranchForUrl(mySourceUrl);
+        if (myBranchUrl == null) {
+          myBranchField.setText("");
+          return;
+        }
         recalculateUrl(url);
         myBranchField.setText(SVNPathUtil.tail(url));
       }
@@ -205,7 +211,7 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
     myUpdateToSpecificUrl.setSelected(false);
     myRevisionText.setEnabled(myRevisionBox.isSelected());
     myURLText.setEnabled(myUpdateToSpecificUrl.isSelected());
-    myBranchField.setEnabled(myUpdateToSpecificUrl.isSelected() && (myBranchUrl != null) && (mySourceUrl != null));
+    myBranchField.setEnabled(myUpdateToSpecificUrl.isSelected() && (mySourceUrl != null));
   }
 
   public void apply(final SvnConfiguration configuration) throws ConfigurationException {
