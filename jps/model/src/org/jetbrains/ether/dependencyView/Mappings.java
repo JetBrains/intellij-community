@@ -37,13 +37,20 @@ public class Mappings {
   private MultiMaplet<DependencyContext.S, ClassRepr> mySourceFileToClasses;
   private MultiMaplet<DependencyContext.S, UsageRepr.Usage> mySourceFileToAnnotationUsages;
 
-  private Maplet<DependencyContext.S, UsageRepr.Cluster> mySourceFileToUsages;
+  private MultiMaplet<DependencyContext.S, UsageRepr.Cluster> mySourceFileToUsages;
   private Maplet<DependencyContext.S, DependencyContext.S> myClassToSourceFile;
 
   private static final TransientMultiMaplet.CollectionConstructor<ClassRepr> ourClassSetConstructor =
     new TransientMultiMaplet.CollectionConstructor<ClassRepr>() {
       public Set<ClassRepr> create() {
         return new HashSet<ClassRepr>();
+      }
+    };
+
+  private static final TransientMultiMaplet.CollectionConstructor<UsageRepr.Cluster> ourUsageClusterSetConstructor =
+    new TransientMultiMaplet.CollectionConstructor<UsageRepr.Cluster>() {
+      public Set<UsageRepr.Cluster> create() {
+        return new HashSet<UsageRepr.Cluster>();
       }
     };
 
@@ -70,13 +77,6 @@ public class Mappings {
     myRootDir.mkdirs();
 
     createImplementation(myRootDir, true);
-
-    //myClassToSubclasses = new TransientMultiMaplet<DependencyContext.S, DependencyContext.S>(ourStringSetConstructor);
-    //mySourceFileToClasses = new TransientMultiMaplet<DependencyContext.S, ClassRepr>(ourClassSetConstructor);
-    //mySourceFileToUsages = new TransientMaplet<DependencyContext.S, UsageRepr.Cluster>();
-    //mySourceFileToAnnotationUsages = new TransientMultiMaplet<DependencyContext.S, UsageRepr.Usage>(ourUsageSetConstructor);
-    //myClassToSourceFile = new TransientMaplet<DependencyContext.S, DependencyContext.S>();
-    //myClassToClassDependency = new TransientMultiMaplet<DependencyContext.S, DependencyContext.S>(ourStringSetConstructor);
   }
 
   public Mappings(final File rootDir) throws IOException {
@@ -111,9 +111,10 @@ public class Mappings {
                                                                       ourUsageSetConstructor);
 
     mySourceFileToUsages =
-      new PersistentMaplet<DependencyContext.S, UsageRepr.Cluster>(DependencyContext.getTableFile(rootDir, SOURCE_TO_USAGES),
-                                                                   DependencyContext.descriptorS,
-                                                                   UsageRepr.Cluster.clusterExternalizer(myContext));
+      new PersistentMultiMaplet<DependencyContext.S, UsageRepr.Cluster>(DependencyContext.getTableFile(rootDir, SOURCE_TO_USAGES),
+                                                                        DependencyContext.descriptorS,
+                                                                        UsageRepr.Cluster.clusterExternalizer(myContext),
+                                                                        ourUsageClusterSetConstructor);
 
     myClassToSourceFile =
       new PersistentMaplet<DependencyContext.S, DependencyContext.S>(DependencyContext.getTableFile(rootDir, CLASS_TO_SOURCE),
@@ -583,7 +584,7 @@ public class Mappings {
       if (dependants != null) {
         for (DependencyContext.S depClass : dependants) {
           final DependencyContext.S depFile = myClassToSourceFile.get(depClass);
-          
+
           if (depFile != null && sourceFile != null && !depFile.equals(sourceFile)) {
             affectedFiles.add(new File(myContext.getValue(depFile)));
           }
@@ -1214,43 +1215,46 @@ public class Mappings {
             continue filewise;
           }
 
-          final UsageRepr.Cluster depCluster = mySourceFileToUsages.get(depFile);
-          final Set<UsageRepr.Usage> depUsages = depCluster.getUsages();
+          final Collection<UsageRepr.Cluster> depClusters = mySourceFileToUsages.get(depFile);
 
-          if (depUsages != null) {
-            final Set<UsageRepr.Usage> usages = new HashSet<UsageRepr.Usage>(depUsages);
+          for (UsageRepr.Cluster depCluster : depClusters) {
+            final Set<UsageRepr.Usage> depUsages = depCluster.getUsages();
 
-            usages.retainAll(affectedUsages);
+            if (depUsages != null) {
+              final Set<UsageRepr.Usage> usages = new HashSet<UsageRepr.Usage>(depUsages);
 
-            if (!usages.isEmpty()) {
-              for (UsageRepr.Usage usage : usages) {
-                final Util.UsageConstraint constraint = usageConstraints.get(usage);
+              usages.retainAll(affectedUsages);
 
-                if (constraint == null) {
-                  affectedFiles.add(theFile);
-                  continue filewise;
+              if (!usages.isEmpty()) {
+                for (UsageRepr.Usage usage : usages) {
+                  final Util.UsageConstraint constraint = usageConstraints.get(usage);
+
+                  if (constraint == null) {
+                    affectedFiles.add(theFile);
+                    continue filewise;
+                  }
+                  else {
+                    final Set<DependencyContext.S> residenceClasses = depCluster.getResidence(usage);
+                    for (DependencyContext.S residentName : residenceClasses) {
+                      if (constraint.checkResidence(residentName)) {
+                        affectedFiles.add(theFile);
+                        continue filewise;
+                      }
+                    }
+
+                  }
                 }
-                else {
-                  final Set<DependencyContext.S> residenceClasses = depCluster.getResidence(usage);
-                  for (DependencyContext.S residentName : residenceClasses) {
-                    if (constraint.checkResidence(residentName)) {
+              }
+
+              if (annotationQuery.size() > 0) {
+                final Collection<UsageRepr.Usage> annotationUsages = mySourceFileToAnnotationUsages.get(depFile);
+
+                for (UsageRepr.Usage usage : annotationUsages) {
+                  for (UsageRepr.AnnotationUsage query : annotationQuery) {
+                    if (query.satisfies(usage)) {
                       affectedFiles.add(theFile);
                       continue filewise;
                     }
-                  }
-
-                }
-              }
-            }
-
-            if (annotationQuery.size() > 0) {
-              final Collection<UsageRepr.Usage> annotationUsages = mySourceFileToAnnotationUsages.get(depFile);
-
-              for (UsageRepr.Usage usage : annotationUsages) {
-                for (UsageRepr.AnnotationUsage query : annotationQuery) {
-                  if (query.satisfies(usage)) {
-                    affectedFiles.add(theFile);
-                    continue filewise;
                   }
                 }
               }
@@ -1269,8 +1273,7 @@ public class Mappings {
         for (String file : removed) {
           final DependencyContext.S key = myContext.get(file);
           final Set<ClassRepr> classes = (Set<ClassRepr>)mySourceFileToClasses.get(key);
-          final UsageRepr.Cluster cluster = mySourceFileToUsages.get(key);
-          final Set<UsageRepr.Usage> usages = cluster == null ? null : cluster.getUsages();
+          final Collection<UsageRepr.Cluster> clusters = mySourceFileToUsages.get(key);
 
           if (classes != null) {
             for (ClassRepr cr : classes) {
@@ -1282,13 +1285,16 @@ public class Mappings {
                 myClassToSubclasses.removeFrom(superSomething, cr.name);
               }
 
-              if (usages != null) {
-                for (UsageRepr.Usage u : usages) {
-                  if (u instanceof UsageRepr.ClassUsage) {
-                    final Set<DependencyContext.S> residents = cluster.getResidence(u);
+              for (UsageRepr.Cluster cluster : clusters) {
+                final Set<UsageRepr.Usage> usages = cluster.getUsages();
+                if (usages != null) {
+                  for (UsageRepr.Usage u : usages) {
+                    if (u instanceof UsageRepr.ClassUsage) {
+                      final Set<DependencyContext.S> residents = cluster.getResidence(u);
 
-                    if (residents != null && residents.contains(cr.name)) {
-                      myClassToClassDependency.removeFrom(((UsageRepr.ClassUsage)u).className, cr.name);
+                      if (residents != null && residents.contains(cr.name)) {
+                        myClassToClassDependency.removeFrom(((UsageRepr.ClassUsage)u).className, cr.name);
+                      }
                     }
                   }
                 }
@@ -1300,10 +1306,6 @@ public class Mappings {
           mySourceFileToUsages.remove(key);
         }
       }
-
-      //final Set<ClassRepr> cl = (Set<ClassRepr>) delta.mySourceFileToClasses.get(new DependencyContext.S(352));
-
-      //System.out.println("There: " + (cl == null ? "wow..." : cl.size()));
 
       myClassToSubclasses.putAll(delta.myClassToSubclasses);
       mySourceFileToClasses.putAll(delta.mySourceFileToClasses);
@@ -1338,21 +1340,6 @@ public class Mappings {
     finally {
       delta.close();
     }
-  }
-
-  private void updateSourceToUsages(final DependencyContext.S source, final UsageRepr.Cluster usages) {
-    UsageRepr.Cluster c = mySourceFileToUsages.get(source);
-    if (c == null) {
-      c = usages;
-    }
-    else {
-      c.updateCluster(usages);
-    }
-    mySourceFileToUsages.put(source, c);
-  }
-
-  private void updateSourceToAnnotationUsages(final DependencyContext.S source, final Set<UsageRepr.Usage> usages) {
-    mySourceFileToAnnotationUsages.put(source, usages);
   }
 
   public Callbacks.Backend getCallback() {
@@ -1408,11 +1395,11 @@ public class Mappings {
         }
 
         if (!localUsages.isEmpty()) {
-          updateSourceToUsages(sourceFileNameS, localUsages);
+          mySourceFileToUsages.put(sourceFileNameS, localUsages);
         }
 
         if (!localAnnotationUsages.isEmpty()) {
-          updateSourceToAnnotationUsages(sourceFileNameS, localAnnotationUsages);
+          mySourceFileToAnnotationUsages.put(sourceFileNameS, localAnnotationUsages);
         }
       }
     };
@@ -1433,8 +1420,6 @@ public class Mappings {
 
     if (!myIsTansient) {
       // only close if you own the context
-      //final Set<ClassRepr> classes = (Set<ClassRepr>)mySourceFileToClasses.get(new DependencyContext.S(352));
-      //System.out.println("Here: " + (classes == null ? "wow..." : classes.size()));
 
       myContext.close();
     }
