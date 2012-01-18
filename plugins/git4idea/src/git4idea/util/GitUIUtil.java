@@ -511,6 +511,6 @@ public class GitUIUtil {
       }
     }
 
-    return repositoryPath.isEmpty() ? "<Project>" : "." + File.separator + repositoryPath;
+    return repositoryPath.isEmpty() ? "<Project>" : repositoryPath;
   }
 }
