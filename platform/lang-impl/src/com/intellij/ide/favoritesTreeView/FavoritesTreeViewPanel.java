@@ -172,7 +172,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
           AddNewFavoritesListAction.doAddNewFavoritesList(myProject);
         }
       })
-      .setLineBorder(0, 0, 0, 0)
+      .setLineBorder(0, 0, 1, 0)
       .setAddActionName("New Favorites List")
       .disableRemoveAction()
       .disableDownAction()
