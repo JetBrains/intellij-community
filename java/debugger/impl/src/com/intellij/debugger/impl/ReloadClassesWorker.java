@@ -18,7 +18,7 @@ package com.intellij.debugger.impl;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.events.DebuggerCommandImpl;
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -27,10 +27,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.ui.MessageCategory;
+import com.intellij.util.ui.UIUtil;
 import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
@@ -95,6 +95,8 @@ class ReloadClassesWorker {
   }
 
   public void reloadClasses(final Map<String, HotSwapFile> modifiedClasses) {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+
     if(modifiedClasses == null || modifiedClasses.size() == 0) {
       myProgress.addMessage(myDebuggerSession, MessageCategory.INFORMATION, DebuggerBundle.message("status.hotswap.loaded.classes.up.to.date"));
       return;
@@ -157,7 +159,7 @@ class ReloadClassesWorker {
     }
 
     //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(new Runnable() {
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       public void run() {
         if (project.isDisposed()) {
           return;
@@ -171,6 +173,7 @@ class ReloadClassesWorker {
         }
         myDebuggerSession.refresh(false);
 
+        /*
         debugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
           protected void action() throws Exception {
             try {
@@ -191,8 +194,16 @@ class ReloadClassesWorker {
             return Priority.HIGH;
           }
         });
+        */
       }
     });
+    try {
+      breakpointManager.enableBreakpoints(debugProcess);
+    }
+    catch (Exception e) {
+      processException(e);
+    }
+
   }
 
   private void reportProblem(final String qualifiedName, @Nullable Exception ex) {
