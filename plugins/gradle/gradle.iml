@@ -31,6 +31,7 @@
     </orderEntry>
     <orderEntry type="library" name="JUnit4" level="project" />
     <orderEntry type="library" scope="TEST" name="Mocks" level="project" />
+    <orderEntry type="module" module-name="testFramework" scope="TEST" />
   </component>
 </module>
 
