@@ -630,6 +630,9 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     final Editor editor = indicator.getEditor();
 
+    final int caretOffset = editor.getCaretModel().getOffset();
+    final int idDelta = indicator.getIdentifierEndOffset() - caretOffset;
+
     WatchingInsertionContext context = null;
     if (editor.getSelectionModel().hasBlockSelection() && editor.getSelectionModel().getBlockSelectionEnds().length > 0) {
       List<RangeMarker> insertionPoints = new ArrayList<RangeMarker>();
@@ -640,7 +643,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       List<RangeMarker> caretsAfter = new ArrayList<RangeMarker>();
       for (RangeMarker insertionPoint : insertionPoints) {
         if (insertionPoint.isValid()) {
-          context = insertItem(indicator, item, completionChar, items, update, editor, insertionPoint.getStartOffset());
+          context = insertItem(indicator, item, completionChar, items, update, editor, insertionPoint.getStartOffset(), idDelta);
           int offset = editor.getCaretModel().getOffset();
           caretsAfter.add(editor.getDocument().createRangeMarker(offset, offset));
         }
@@ -657,7 +660,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       }
       
     } else {
-      context = insertItem(indicator, item, completionChar, items, update, editor, editor.getCaretModel().getOffset());
+      context = insertItem(indicator, item, completionChar, items, update, editor, caretOffset, idDelta);
     }
 
     final Runnable runnable = context.getLaterRunnable();
@@ -707,26 +710,26 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
                                                      final char completionChar,
                                                      List<LookupElement> items,
                                                      final CompletionLookupArranger.StatisticsUpdate update,
-                                                     final Editor editor, final int caretOffset) {
+                                                     final Editor editor, final int caretOffset, final int idDelta) {
     editor.getCaretModel().moveToOffset(caretOffset);
     final int initialStartOffset = caretOffset - item.getLookupString().length();
     assert initialStartOffset >= 0 : "negative startOffset: " + caretOffset + "; " + item.getLookupString();
+    final int idEndOffset = caretOffset + Math.max(idDelta, 0);
+    
     indicator.getOffsetMap().addOffset(CompletionInitializationContext.START_OFFSET, initialStartOffset);
     indicator.getOffsetMap().addOffset(CompletionInitializationContext.SELECTION_END_OFFSET, caretOffset);
+    indicator.getOffsetMap().addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, idEndOffset);
 
     final WatchingInsertionContext context = new WatchingInsertionContext(indicator, completionChar, items, editor);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        final int idEndOffset = Math.max(caretOffset, indicator.getIdentifierEndOffset());
-        indicator.getOffsetMap().addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, idEndOffset);
-        int selEnd = indicator.getSelectionEndOffset();
-        if (idEndOffset != selEnd && completionChar == Lookup.REPLACE_SELECT_CHAR) {
-          editor.getDocument().deleteString(selEnd, idEndOffset);
+        if (caretOffset != idEndOffset && completionChar == Lookup.REPLACE_SELECT_CHAR) {
+          editor.getDocument().deleteString(caretOffset, idEndOffset);
         }
 
-        assert context.getStartOffset() >= 0 : "stale startOffset: was " + initialStartOffset + "; selEnd=" + selEnd + "; idEnd=" + idEndOffset + "; file=" + context.getFile();
-        assert context.getTailOffset() >= 0 : "stale tail: was " + initialStartOffset + "; selEnd=" + selEnd + "; idEnd=" + idEndOffset + "; file=" + context.getFile();
+        assert context.getStartOffset() >= 0 : "stale startOffset: was " + initialStartOffset + "; selEnd=" + caretOffset + "; idEnd=" + idEndOffset + "; file=" + context.getFile();
+        assert context.getTailOffset() >= 0 : "stale tail: was " + initialStartOffset + "; selEnd=" + caretOffset + "; idEnd=" + idEndOffset + "; file=" + context.getFile();
 
         item.handleInsert(context);
         Project project = indicator.getProject();

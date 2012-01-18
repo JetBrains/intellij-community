@@ -181,11 +181,18 @@ public abstract class LookupActionHandler extends EditorActionHandler {
     }
 
     @Override
-    protected void executeInLookup(LookupImpl lookup, DataContext context) {
+    protected void executeInLookup(final LookupImpl lookup, DataContext context) {
       if (!lookup.isCompletion()) {
         myOriginalHandler.execute(lookup.getEditor(), context);
         return;
       }
+
+      lookup.performGuardedChange(new Runnable() {
+        @Override
+        public void run() {
+          lookup.getEditor().getSelectionModel().removeSelection();
+        }
+      });
 
       BackspaceHandler.truncatePrefix(context, lookup, myOriginalHandler, lookup.getLookupStart() - 1);
     }

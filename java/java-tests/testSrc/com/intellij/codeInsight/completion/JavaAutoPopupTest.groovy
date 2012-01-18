@@ -43,7 +43,6 @@ import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.util.Computable
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiJavaFile
 import com.intellij.util.Consumer
@@ -1113,25 +1112,51 @@ public class UTest {
   }
 
   public void testBlockSelection() {
-    myFixture.configureByText "a.java", """
+    doTestBlockSelection """
 class Foo {{
-  <caret>t;
-  t;
-}}"""
-    def caret = ApplicationManager.getApplication().runReadAction(new Computable<LogicalPosition>() {
-            public LogicalPosition compute() {
-              return myFixture.editor.offsetToLogicalPosition(myFixture.editor.caretModel.offset)
-            }});
-    edt { myFixture.editor.selectionModel.setBlockSelection(caret, new LogicalPosition(caret.line + 1, caret.column + 1)) }
-    type 'toStr'
-    assert lookup
-    type '\n'
-    myFixture.checkResult '''
+  <caret>tx;
+  tx;
+}}""", '\n', '''
+class Foo {{
+  toString()x;
+  toString()<caret>x;
+}}'''
+  }
+
+  public void testBlockSelectionTab() {
+    doTestBlockSelection """
+class Foo {{
+  <caret>tx;
+  tx;
+}}""", '\t', '''
 class Foo {{
   toString();
   toString()<caret>;
 }}'''
+  }
 
+  public void testBlockSelectionBackspace() {
+    doTestBlockSelection """
+class Foo {{
+  <caret>t;
+  t;
+}}""", '\b\t', '''
+class Foo {{
+  toString();
+  toString()<caret>;
+}}'''
+  }
+
+  private doTestBlockSelection(final String textBefore, final String toType, final String textAfter) {
+    myFixture.configureByText "a.java", textBefore
+    edt {
+      def caret = myFixture.editor.offsetToLogicalPosition(myFixture.editor.caretModel.offset)
+      myFixture.editor.selectionModel.setBlockSelection(caret, new LogicalPosition(caret.line + 1, caret.column + 1))
+    }
+    type 'toStr'
+    assert lookup
+    type toType
+    myFixture.checkResult textAfter
     def start = myFixture.editor.selectionModel.blockStart
     def end = myFixture.editor.selectionModel.blockEnd
     assert start.line == end.line - 1

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.MethodCallUtils;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -78,15 +77,13 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
 
     @NotNull
     public String getName() {
-      return InspectionGadgetsBundle.message(
-        "unnecessary.boxing.remove.quickfix");
+      return InspectionGadgetsBundle.message("unnecessary.boxing.remove.quickfix");
     }
 
     @Override
     public void doFix(@NotNull Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {
-      final PsiCallExpression expression =
-        (PsiCallExpression)descriptor.getPsiElement();
+      final PsiCallExpression expression = (PsiCallExpression)descriptor.getPsiElement();
       final PsiType boxedType = expression.getType();
       if (boxedType == null) {
         return;
@@ -104,15 +101,21 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
         return;
       }
       final String cast = getCastString(argumentType, boxedType);
+      if (cast == null) {
+        return;
+      }
       final String newExpression = arguments[0].getText();
       replaceExpression(expression, cast + newExpression);
     }
 
-    private static String getCastString(@NotNull PsiType fromType,
-                                        @NotNull PsiType toType) {
+    @Nullable
+    private static String getCastString(@NotNull PsiType fromType, @NotNull PsiType toType) {
       final String toTypeText = toType.getCanonicalText();
       final String fromTypeText = fromType.getCanonicalText();
       final String unboxedType = boxedPrimitiveMap.get(toTypeText);
+      if (unboxedType == null) {
+        return null;
+      }
       if (fromTypeText.equals(unboxedType)) {
         return "";
       }
