@@ -345,7 +345,10 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
 
   public void showRunContent(@NotNull final Executor info, RunContentDescriptor descriptor, RunContentDescriptor contentToReuse) {
     if (contentToReuse != null) {
-      descriptor.setAttachedContent(contentToReuse.getAttachedContent());
+      final Content attachedContent = contentToReuse.getAttachedContent();
+      if (attachedContent.getManager() != null) {
+        descriptor.setAttachedContent(attachedContent);
+      }
     }
     showRunContent(info, descriptor);
   }
