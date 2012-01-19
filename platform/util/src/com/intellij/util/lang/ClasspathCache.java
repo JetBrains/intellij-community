@@ -22,6 +22,7 @@ package com.intellij.util.lang;
 import com.intellij.util.SmartList;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntObjectHashMap;
+import sun.misc.Resource;
 
 import java.util.List;
 
@@ -66,8 +67,14 @@ public class ClasspathCache {
 
     if (!result) ++hits;
 
-    if (requests % 1000 == 0 && UrlClassLoader.doDebug && false) {
-      UrlClassLoader.debug("Avoided disk hits: "+hits + " from " + requests);
+    if (UrlClassLoader.doDebug && false) {    // extra costly checks
+      Resource resource = loader.getResource(name, true);
+      if ((resource != null && !result) || (resource == null && result)) {
+        ++falseHits;
+      }
+    }
+    if (requests % 1000 == 0 && UrlClassLoader.doDebug) {
+      UrlClassLoader.debug("Avoided disk hits: "+hits + " from " + requests + "," + falseHits);
     }
     return result;
   }
@@ -91,7 +98,7 @@ public class ClasspathCache {
     return name;
   }
 
-  private static int hits, requests;
+  private static int hits, requests, falseHits;
 
   private int hashFromNameAndLoader(String name, Loader loader) {
     int hash = name.hashCode();
@@ -101,5 +108,9 @@ public class ClasspathCache {
       i /= 10;
     }
     return hash;
+  }
+
+  void nameSymbolsLoaded() {
+    //System.out.println("Loaded");
   }
 }
