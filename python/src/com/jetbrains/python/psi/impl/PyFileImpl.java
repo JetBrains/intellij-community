@@ -185,6 +185,9 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
 
     if (remainingDunderAll != null) {
       for (String s: remainingDunderAll) {
+        if (!PyNames.isIdentifier(s)) {
+          continue;
+        }
         if (!processor.execute(new LightNamedElement(myManager, PythonLanguage.getInstance(), s), resolveState)) return false;
       }
     }
