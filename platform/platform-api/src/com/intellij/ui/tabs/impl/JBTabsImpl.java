@@ -629,7 +629,7 @@ public class JBTabsImpl extends JComponent
     }
 
     info.getChangeSupport().addPropertyChangeListener(this);
-    final TabLabel label = new TabLabel(this, info);
+    final TabLabel label = createTabLabel(info);
     myInfo2Label.put(info, label);
 
     if (!isDropTarget) {
@@ -674,6 +674,9 @@ public class JBTabsImpl extends JComponent
     return info;
   }
 
+  protected TabLabel createTabLabel(TabInfo info) {
+    return new TabLabel(this, info);
+  }
 
   @NotNull
   public TabInfo addTab(TabInfo info) {
@@ -1745,17 +1748,18 @@ public class JBTabsImpl extends JComponent
     return myInfo2Label.get(getSelectedInfo());
   }
 
-  static class ShapeInfo {
-    ShapeTransform path;
-    ShapeTransform fillPath;
-    ShapeTransform labelPath;
-    int labelBottomY;
-    int labelTopY;
-    int labelLeftX;
-    int labelRightX;
-    Insets insets;
-    Color from;
-    Color to;
+  protected static class ShapeInfo {
+    public ShapeInfo() {}
+    public ShapeTransform path;
+    public ShapeTransform fillPath;
+    public ShapeTransform labelPath;
+    public int labelBottomY;
+    public int labelTopY;
+    public int labelLeftX;
+    public int labelRightX;
+    public Insets insets;
+    public Color from;
+    public Color to;
   }
 
 
@@ -2977,7 +2981,7 @@ public class JBTabsImpl extends JComponent
     }
   }
 
-  public static Rectangle layout(JComponent c, Rectangle bounds) {
+  public Rectangle layout(JComponent c, Rectangle bounds) {
     final Rectangle now = c.getBounds();
     if (!bounds.equals(now)) {
       c.setBounds(bounds);
@@ -2987,7 +2991,7 @@ public class JBTabsImpl extends JComponent
     return bounds;
   }
 
-  public static Rectangle layout(JComponent c, int x, int y, int width, int height) {
+  public Rectangle layout(JComponent c, int x, int y, int width, int height) {
     return layout(c, new Rectangle(x, y, width, height));
   }
 
