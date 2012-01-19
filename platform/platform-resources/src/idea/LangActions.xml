@@ -730,16 +730,11 @@
     <group id="RunnerLayoutActions">
       <group id="Runner.Layout" icon="/debugger/restoreLayout.png" popup="true">
         <action id="Runner.RestoreLayout" class="com.intellij.execution.ui.layout.actions.RestoreLayoutAction"/>
-        <action id="Runner.ToggleToolbarLayout" class="com.intellij.execution.ui.layout.actions.ToggleToolbarLayoutAction"/>
+        <!--action id="Runner.ToggleToolbarLayout" class="com.intellij.execution.ui.layout.actions.ToggleToolbarLayoutAction"/-->
       </group>
 
 
       <group id="Runner.View.Popup">
-        <action id="Runner.MoveViewToGrid" class="com.intellij.execution.ui.layout.actions.MoveToGridAction" icon="/debugger/toGrid.png"/>
-        <action id="Runner.MoveViewToTab" class="com.intellij.execution.ui.layout.actions.MoveToTabAction" icon="/debugger/toTab.png"/>
-        <action id="Runner.DetachCell" class="com.intellij.execution.ui.layout.actions.DetachCellAction" icon="/debugger/detach.png"/>
-        <action id="Runner.AttachCell" class="com.intellij.execution.ui.layout.actions.AttachCellAction" icon="/debugger/attach.png"/>
-        <separator/>
         <action id="Runner.MinimizeView" class="com.intellij.execution.ui.layout.actions.MinimizeViewAction" icon="/actions/minimize.png"/>
         <separator/>
         <action id="Runner.CloseView" class="com.intellij.execution.ui.layout.actions.CloseViewAction" icon="/actions/cross.png"/>
@@ -753,12 +748,7 @@
 
 
       <group id="Runner.View.Toolbar">
-        <reference ref="Runner.MoveViewToGrid"/>
-        <reference ref="Runner.MoveViewToTab"/>
-        <reference ref="Runner.DetachCell"/>
-        <reference ref="Runner.AttachCell"/>
         <reference ref="Runner.MinimizeView"/>
-        <reference ref="Runner.CloseView"/>
       </group>
     </group>
 
