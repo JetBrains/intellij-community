@@ -17,12 +17,16 @@ package com.intellij.navigation;
 
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.util.PlatformIcons;
+
+import javax.swing.*;
 
 public class DirectoryPresentationProvider implements ItemPresentationProvider<PsiDirectory> {
   @Override
@@ -32,8 +36,8 @@ public class DirectoryPresentationProvider implements ItemPresentationProvider<P
     final String locationString = vFile.getPath();
 
     if (ProjectRootsUtil.isProjectHome(directory)) {
-      return new PresentationData(project.getName(), locationString,
-                                  PlatformIcons.PROJECT_ICON, PlatformIcons.PROJECT_ICON, null);
+      final Icon projectIcon = IconLoader.getIcon(ApplicationInfoEx.getInstanceEx().getSmallIconUrl());
+      return new PresentationData(project.getName(), locationString, projectIcon, projectIcon, null);
     }
 
     if (ProjectRootsUtil.isModuleContentRoot(directory)) {
