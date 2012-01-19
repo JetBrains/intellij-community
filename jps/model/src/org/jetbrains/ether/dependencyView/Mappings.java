@@ -1,5 +1,6 @@
 package org.jetbrains.ether.dependencyView;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.Nullable;
@@ -20,6 +21,8 @@ import java.util.*;
  * To change this template use File | Settings | File Templates.
  */
 public class Mappings {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.ether.dependencyView.Mappings");
+
   private final static String CLASS_TO_SUBCLASSES = "classToSubclasses.tab";
   private final static String CLASS_TO_CLASS = "classToClass.tab";
   private final static String SOURCE_TO_CLASS = "sourceToClass.tab";
@@ -743,10 +746,14 @@ public class Mappings {
 
       final Difference.Specifier<ClassRepr> classDiff = Difference.make(pastClasses, classes);
 
+      LOG.debug("Processing changed classes");
+
       for (Pair<ClassRepr, Difference> changed : classDiff.changed()) {
         final ClassRepr it = changed.first;
         final ClassRepr.Diff diff = (ClassRepr.Diff)changed.second;
 
+        LOG.debug("Changed: " + myContext.getValue(it.name));
+        
         final int addedModifiers = diff.addedModifiers();
         final int removedModifiers = diff.removedModifiers();
 
@@ -766,6 +773,7 @@ public class Mappings {
         }
 
         if (it.isAnnotation() && it.policy == RetentionPolicy.SOURCE) {
+          LOG.debug("Annotation, retention policy = SOURCE => a switch to non-incremental mode requested");
           return false;
         }
 
@@ -805,6 +813,7 @@ public class Mappings {
             final Collection<ElementType> removedtargets = diff.targets().removed();
 
             if (removedtargets.contains(ElementType.LOCAL_VARIABLE)) {
+              LOG.debug("Annotation, removed target contains LOCAL_VARIABLE => a switch to non-incremental mode requested");
               return false;
             }
 
@@ -1130,8 +1139,13 @@ public class Mappings {
           }
         }
 
+        LOG.debug("Processing removed fields");
+        
         for (FieldRepr f : diff.fields().removed()) {
-          if ((f.access & mask) == mask && f.hasValue()) {
+          LOG.debug("Field " + myContext.getValue(f.name));
+
+          if ((f.access & Opcodes.ACC_PRIVATE) == 0 && (f.access & mask) == mask && f.hasValue()) {
+            LOG.debug("Field had value and was (non-private) final static => a switch to non-incremental mode requested");
             return false;
           }
 
@@ -1139,12 +1153,17 @@ public class Mappings {
           u.affectFieldUsages(f, propagated, f.createUsage(myContext, it.name), affectedUsages, dependants);
         }
 
+        LOG.debug("Processing changed fields");
+        
         for (Pair<FieldRepr, Difference> f : diff.fields().changed()) {
           final Difference d = f.second;
           final FieldRepr field = f.first;
 
-          if ((field.access & mask) == mask) {
+          LOG.debug("Field " + myContext.getValue(field.name));
+
+          if ((field.access & Opcodes.ACC_PRIVATE) == 0 && (field.access & mask) == mask) {
             if ((d.base() & Difference.ACCESS) > 0 || (d.base() & Difference.VALUE) > 0) {
+              LOG.debug("Inline field changed it's access or value => a switch to non-incremental mode requested");
               return false;
             }
           }
