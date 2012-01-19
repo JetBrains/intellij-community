@@ -21,13 +21,24 @@
 package com.intellij.refactoring.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.replaceConstructorWithBuilder.ReplaceConstructorWithBuilderHandler;
 
 public class ReplaceConstructorWithBuilderAction extends BaseRefactoringAction{
   protected boolean isAvailableInEditorOnly() {
     return true;
+  }
+
+  @Override
+  protected boolean isAvailableOnElementInEditorAndFile(PsiElement element, Editor editor, PsiFile file, DataContext context) {
+    final int offset = editor.getCaretModel().getOffset();
+    final PsiElement elementAt = file.findElementAt(offset);
+    final PsiClass psiClass = ReplaceConstructorWithBuilderHandler.getParentNamedClass(elementAt);
+    return psiClass != null && psiClass.getConstructors().length > 0;
   }
 
   protected boolean isEnabledOnElements(final PsiElement[] elements) {
