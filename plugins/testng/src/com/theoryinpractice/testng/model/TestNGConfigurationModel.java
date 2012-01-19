@@ -118,7 +118,7 @@ public class TestNGConfigurationModel
             if (TestType.METHOD == type)
                 data.METHOD_NAME = getText(TestType.METHOD);
 
-            PsiClass psiClass = JUnitUtil.findPsiClass(className, module, getProject());
+            PsiClass psiClass = !getProject().isDefault() && !StringUtil.isEmptyOrSpaces(className) ? JUnitUtil.findPsiClass(className, module, getProject()) : null;
             if (psiClass != null && psiClass.isValid())
                 data.setMainClass(psiClass);
             else
