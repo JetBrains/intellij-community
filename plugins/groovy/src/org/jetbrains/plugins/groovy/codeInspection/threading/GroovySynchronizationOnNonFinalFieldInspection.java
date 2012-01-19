@@ -29,6 +29,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 
 public class GroovySynchronizationOnNonFinalFieldInspection extends BaseInspection {
+  @Override
+  public boolean isEnabledByDefault() {
+    return true;
+  }
 
   @Nls
   @NotNull
