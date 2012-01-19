@@ -26,9 +26,11 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 import git4idea.history.browser.GitCommit;
 import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryManager;
 import git4idea.ui.GitCommitListPanel;
 import git4idea.ui.GitRepositoryComboboxListCellRenderer;
 import git4idea.util.GitCommitCompareInfo;
+import git4idea.util.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -62,7 +64,14 @@ public class GitCompareBranchesDialog extends DialogWrapper {
     myBranchName = branchName;
     myInitialRepo = initialRepo;
 
-    setTitle(String.format("Comparing %s with %s", currentBranchName, branchName));
+    String rootString;
+    if (compareInfo.getRepositories().size() == 1 && GitRepositoryManager.getInstance(myProject).moreThanOneRoot()) {
+      rootString = " in root " + GitUIUtil.getShortRepositoryName(initialRepo);
+    }
+    else {
+      rootString = "";
+    }
+    setTitle(String.format("Comparing %s with %s%s", currentBranchName, branchName, rootString));
     init();
   }
 
