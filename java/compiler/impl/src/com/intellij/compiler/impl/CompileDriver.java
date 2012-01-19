@@ -575,7 +575,7 @@ public class CompileDriver {
             if (myProject.isDisposed()) {
               return;
             }
-            LOG.info("COMPILATION STARTED (JPS SERVER)");
+            LOG.info("COMPILATION STARTED (COMPILE SERVER)");
             if (message != null) {
               compileContext.addMessage(message);
             }
@@ -605,7 +605,7 @@ public class CompileDriver {
           finally {
             final long finish = System.currentTimeMillis();
             CompilerUtil.logDuration(
-              "\tCOMPILATION FINISHED; Errors: " +
+              "\tCOMPILATION FINISHED (COMPILE SERVER); Errors: " +
               compileContext.getMessageCount(CompilerMessageCategory.ERROR) +
               "; warnings: " +
               compileContext.getMessageCount(CompilerMessageCategory.WARNING),
