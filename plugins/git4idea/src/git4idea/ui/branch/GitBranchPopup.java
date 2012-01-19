@@ -15,17 +15,22 @@
  */
 package git4idea.ui.branch;
 
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.IconLoader;
+import git4idea.GitVcs;
 import git4idea.config.GitVcsSettings;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -33,6 +38,7 @@ import git4idea.util.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.event.HyperlinkEvent;
 import java.util.Collection;
 
 /**
@@ -86,6 +92,33 @@ class GitBranchPopup  {
       title, createActions(),
       SimpleDataContext.getProjectContext(project),
       JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true);
+
+    if (repositoryManager.moreThanOneRoot() && getSyncSetting() == GitBranchSyncSetting.NOT_DECIDED) {
+      if (!myMultiRootBranchConfig.diverged()) {
+        notifyAboutSyncedBranches();
+        GitVcsSettings.getInstance(project).setSyncSetting(GitBranchSyncSetting.SYNC);
+      }
+      else {
+        GitVcsSettings.getInstance(project).setSyncSetting(GitBranchSyncSetting.DONT);
+      }
+    }
+  }
+
+  private void notifyAboutSyncedBranches() {
+    GitVcs.IMPORTANT_ERROR_NOTIFICATION.createNotification("Synchronous branch control enabled",
+      "You have several Git roots in the project and they all are checked out at the same branch. " +
+      "We've enabled synchronous branch control for the project. <br/>" +
+      "If you wish to control branches in different roots separately, you may <a href='settings'>disable</a> the setting.",
+      NotificationType.INFORMATION, new NotificationListener() {
+      @Override public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+        if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+          ShowSettingsUtil.getInstance().showSettingsDialog(myProject, GitVcs.getInstance(myProject).getConfigurable().getDisplayName());
+          if (getSyncSetting() == GitBranchSyncSetting.DONT) {
+            notification.expire();
+          }
+        }
+      }
+    }).notify(myProject);
   }
 
   @NotNull
