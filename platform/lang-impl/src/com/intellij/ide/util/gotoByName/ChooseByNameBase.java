@@ -218,7 +218,7 @@ public abstract class ChooseByNameBase {
     myToolArea = toolArea;
   }
 
-  public void setFindUsagesTitle(String findUsagesTitle) {
+  public void setFindUsagesTitle(@Nullable String findUsagesTitle) {
     myFindUsagesTitle = findUsagesTitle;
   }
 

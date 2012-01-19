@@ -323,5 +323,25 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
     public XmlFile getContainingFile() {
       return (XmlFile)myAnchor.getFile();
     }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      PsiBasedDomAnchor anchor = (PsiBasedDomAnchor)o;
+
+      if (myAnchor != null ? !myAnchor.equals(anchor.myAnchor) : anchor.myAnchor != null) return false;
+      if (myProject != null ? !myProject.equals(anchor.myProject) : anchor.myProject != null) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = myAnchor != null ? myAnchor.hashCode() : 0;
+      result = 31 * result + (myProject != null ? myProject.hashCode() : 0);
+      return result;
+    }
   }
 }

@@ -711,7 +711,14 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   }
 
   List<LocalInspectionToolWrapper> getInspectionTools(InspectionProfileWrapper profile) {
-    return profile.getHighlightingLocalInspectionTools(myFile);
+    final List<LocalInspectionToolWrapper> tools = profile.getHighlightingLocalInspectionTools(myFile);
+    for (Iterator<LocalInspectionToolWrapper> iterator = tools.iterator(); iterator.hasNext(); ) {
+      LocalInspectionToolWrapper tool = iterator.next();
+      if (myIgnoreSuppressed && InspectionManagerEx.inspectionResultSuppressed(myFile, tool.getTool())) {
+        iterator.remove();
+      }
+    }
+    return tools;
   }
 
   private void doInspectInjectedPsi(@NotNull PsiFile injectedPsi,

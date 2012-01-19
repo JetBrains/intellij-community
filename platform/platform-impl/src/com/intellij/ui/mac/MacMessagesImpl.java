@@ -188,7 +188,7 @@ public class MacMessagesImpl extends MacMessages {
 
   static {
     if (SystemInfo.isMac) {
-      final ID delegateClass = Foundation.allocateObjcClassPair(Foundation.getClass("NSObject"), "NSAlertDelegate_");
+      final ID delegateClass = Foundation.allocateObjcClassPair(Foundation.getObjcClass("NSObject"), "NSAlertDelegate_");
       if (!Foundation.addMethod(delegateClass, Foundation.createSelector("alertDidEnd:returnCode:contextInfo:"), SHEET_DID_END, "v*")) {
         throw new RuntimeException("Unable to add method to objective-c delegate class!");
       }
@@ -256,7 +256,7 @@ public class MacMessagesImpl extends MacMessages {
 
           ID pool = invoke("NSAutoreleasePool", "new");
           try {
-            final ID delegate = invoke(Foundation.getClass("NSAlertDelegate_"), "new");
+            final ID delegate = invoke(Foundation.getObjcClass("NSAlertDelegate_"), "new");
             cfRetain(delegate);
 
             fakeTitle = String.format("MacSheetDialog-%d", delegate.intValue());
@@ -424,7 +424,7 @@ public class MacMessagesImpl extends MacMessages {
 
           ID pool = invoke("NSAutoreleasePool", "new");
           try {
-            final ID delegate = invoke(Foundation.getClass("NSAlertDelegate_"), "new");
+            final ID delegate = invoke(Foundation.getObjcClass("NSAlertDelegate_"), "new");
             cfRetain(delegate);
 
             fakeTitle = String.format("MacSheetDialog-%d", delegate.intValue());

@@ -16,10 +16,7 @@
 
 package org.jetbrains.idea.devkit.inspections;
 
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
@@ -42,7 +39,7 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public class InspectionDescriptionNotFoundInspection extends DevKitInspectionBase{
-  @NonNls private static final String INSPECTION_PROFILE_ENTRY = "com.intellij.codeInspection.InspectionProfileEntry";
+  @NonNls static final String INSPECTION_PROFILE_ENTRY = InspectionProfileEntry.class.getName();
   @NonNls private static final String INSPECTION_DESCRIPTIONS = "inspectionDescriptions";
 
   @Override
@@ -55,11 +52,13 @@ public class InspectionDescriptionNotFoundInspection extends DevKitInspectionBas
 
     final PsiClass base = JavaPsiFacade.getInstance(project).findClass(INSPECTION_PROFILE_ENTRY, GlobalSearchScope.allScope(project));
 
-    if (base == null || ! aClass.isInheritor(base, true) || isPathMethodsAreOverriden(aClass)) return null;
+    if (base == null || ! aClass.isInheritor(base, true) || isPathMethodsAreOverridden(aClass)) return null;
 
-    final PsiMethod method = findNearestMethod("getShortName", aClass);
-    if (method == null) return null;
-    final String filename = PsiUtil.getReturnedLiteral(method, aClass);
+    PsiMethod method = findNearestMethod("getShortName", aClass);
+    if (method != null && method.getContainingClass().getQualifiedName().equals(INSPECTION_PROFILE_ENTRY)) {
+      method = null;
+    }
+    final String filename = method == null ? InspectionProfileEntry.getShortName(aClass.getName()) : PsiUtil.getReturnedLiteral(method, aClass);
     if (filename == null) return null;
 
 
@@ -83,15 +82,15 @@ public class InspectionDescriptionNotFoundInspection extends DevKitInspectionBas
   }
 
   @Nullable
-  private static PsiElement getProblemElement(PsiClass aClass, PsiMethod method) {
-    if (method.getContainingClass() == aClass) {
+  private static PsiElement getProblemElement(PsiClass aClass, @Nullable PsiMethod method) {
+    if (method != null && method.getContainingClass() == aClass) {
       return PsiUtil.getReturnedExpression(method);
     } else {
       return aClass.getNameIdentifier();
     }
   }
 
-  private static boolean isPathMethodsAreOverriden(PsiClass aClass) {
+  private static boolean isPathMethodsAreOverridden(PsiClass aClass) {
     return! ( isLastMethodDefinitionIn("getStaticDescription", INSPECTION_PROFILE_ENTRY, aClass)
       && isLastMethodDefinitionIn("getDescriptionUrl", INSPECTION_PROFILE_ENTRY, aClass)
       && isLastMethodDefinitionIn("getDescriptionContextClass", INSPECTION_PROFILE_ENTRY, aClass)

@@ -179,7 +179,7 @@ public class MacMainFrameDecorator implements UISettingsListener, Disposable {
       } else {
         // toggle toolbar
         String className = "IdeaToolbar" + v;
-        final ID ownToolbar = Foundation.allocateObjcClassPair(Foundation.getClass("NSToolbar"), className);
+        final ID ownToolbar = Foundation.allocateObjcClassPair(Foundation.getObjcClass("NSToolbar"), className);
         Foundation.registerObjcClassPair(ownToolbar);
 
         ID toolbar = invoke(invoke(className, "alloc"), "initWithIdentifier:", Foundation.nsString(className));

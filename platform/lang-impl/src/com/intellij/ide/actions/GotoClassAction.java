@@ -78,7 +78,7 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
           token.finish();
         }
       }
-    }, "Classes matching pattern");
+    }, "Classes matching pattern", true);
   }
 
   private static PsiElement getElement(PsiElement element, ChooseByNamePopup popup) {

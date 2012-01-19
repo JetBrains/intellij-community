@@ -20,6 +20,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerProvider;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -62,7 +63,7 @@ public class TestDataLineMarkerProvider implements LineMarkerProvider {
     List<String> fileNames = new TestDataReferenceCollector(testDataPath, name.substring(4)).collectTestDataReferences(method);
     return fileNames != null && !fileNames.isEmpty();
   }
-  
+
   public void collectSlowLineMarkers(List<PsiElement> elements, Collection<LineMarkerInfo> result) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return;
@@ -74,7 +75,8 @@ public class TestDataLineMarkerProvider implements LineMarkerProvider {
       final PsiMethod method = (PsiMethod)element;
       if (isTestMethod(method)) {
         result.add(new LineMarkerInfo<PsiMethod>(
-          method, method.getTextOffset(), PlatformIcons.TEST_SOURCE_FOLDER, Pass.UPDATE_ALL, null, new TestDataNavigationHandler()
+          method, method.getTextRange(), PlatformIcons.TEST_SOURCE_FOLDER, Pass.UPDATE_ALL, null, new TestDataNavigationHandler(),
+          GutterIconRenderer.Alignment.LEFT
         ));
       }
     }

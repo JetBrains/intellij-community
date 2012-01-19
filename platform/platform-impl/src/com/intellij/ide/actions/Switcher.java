@@ -462,7 +462,7 @@ public class Switcher extends AnAction implements DumbAware {
         final JList jList = getSelectedList();
         final EditorWindow wnd = findAppropriateWindow(info);
         if (wnd == null) {
-          editorManager.closeFile(virtualFile, false);
+          editorManager.closeFile(virtualFile, false, false);
         } else {
           editorManager.closeFile(virtualFile, wnd, false);
         }

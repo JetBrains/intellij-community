@@ -115,12 +115,12 @@ public interface JBTabs extends SwitchProvider {
   
   boolean isEditorTabs();
 
-  JBTabs setNavigationActiondBinding(String prevActiobId, String nextActionId);
+  JBTabs setNavigationActionBinding(String prevActiobId, String nextActionId);
   JBTabs setNavigationActionsEnabled(boolean enabled);
 
   boolean isDisposed();
 
-  JBTabs setAdditinalSwitchProviderWhenOriginal(SwitchProvider delegate);
+  JBTabs setAdditionalSwitchProviderWhenOriginal(SwitchProvider delegate);
 
   Image getComponentImage(TabInfo info);
 

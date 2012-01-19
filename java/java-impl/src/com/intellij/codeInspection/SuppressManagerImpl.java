@@ -161,6 +161,7 @@ public class SuppressManagerImpl extends SuppressManager {
 
   @Nullable
   public PsiElement getElementToolSuppressedIn(@NotNull final PsiElement place, final String toolId) {
+    if (place instanceof PsiFile) return null;
     return ApplicationManager.getApplication().runReadAction(new Computable<PsiElement>() {
       @Nullable
       public PsiElement compute() {

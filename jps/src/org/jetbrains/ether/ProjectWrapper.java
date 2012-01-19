@@ -852,7 +852,7 @@ public class ProjectWrapper {
       myHomeDir + File.separator + myJPSDir + File.separator + myRoot.replace(File.separatorChar, myFileSeparatorReplacement);
 
     try {
-      dependencyMapping = new Mappings(getMapDir());
+      dependencyMapping = new Mappings(getMapDir(), true);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -913,7 +913,7 @@ public class ProjectWrapper {
     RW.readMany(r, RW.myStringReader, affectedFiles);
 
     try {
-      dependencyMapping = new Mappings(getMapDir());
+      dependencyMapping = new Mappings(getMapDir(), true);
     }
     catch (IOException e) {
       throw new RuntimeException(e);

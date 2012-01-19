@@ -16,21 +16,27 @@
 package com.intellij.refactoring.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.removemiddleman.RemoveMiddlemanHandler;
 
 public class RemoveMiddlemanAction extends BaseRefactoringAction{
 
-
   protected RefactoringActionHandler getHandler(DataContext context) {
-        return new RemoveMiddlemanHandler();
-    }
+    return new RemoveMiddlemanHandler();
+  }
 
-  public boolean isAvailableInEditorOnly(){
-      return false;
+  @Override
+  protected boolean isAvailableOnElementInEditorAndFile(PsiElement element, Editor editor, PsiFile file, DataContext context) {
+    return element instanceof PsiField;
+  }
+
+  public boolean isAvailableInEditorOnly() {
+    return false;
   }
 
   public boolean isEnabledOnElements(PsiElement[] elements) {

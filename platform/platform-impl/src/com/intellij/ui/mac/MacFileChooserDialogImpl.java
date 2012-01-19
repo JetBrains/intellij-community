@@ -150,7 +150,7 @@ public class MacFileChooserDialogImpl implements MacFileChooserDialog {
       invoke(chooser, "setTreatsFilePackagesAsDirectories:", myChooserDescriptor.isChooseFolders());
       //invoke(chooser, "setCanCreateDirectories:", true);
       if (Foundation
-        .isClassRespondsToSelector(Foundation.getClass("NSOpenPanel"), Foundation.createSelector("_setIncludeNewFolderButton:"))) {
+        .isClassRespondsToSelector(Foundation.getObjcClass("NSOpenPanel"), Foundation.createSelector("_setIncludeNewFolderButton:"))) {
         invoke(chooser, "_setIncludeNewFolderButton:", true);
       }
 
@@ -158,7 +158,7 @@ public class MacFileChooserDialogImpl implements MacFileChooserDialog {
         myChooserDescriptor.getUserData(MacFileChooserDialog.NATIVE_MAC_FILE_CHOOSER_SHOW_HIDDEN_FILES_ENABLED.getName());
       if (Registry.is("ide.mac.filechooser.showhidden.files")
           || Boolean.TRUE.equals(showHiddenFiles)) {
-        if (Foundation.isClassRespondsToSelector(Foundation.getClass("NSOpenPanel"), Foundation.createSelector("setShowsHiddenFiles:"))) {
+        if (Foundation.isClassRespondsToSelector(Foundation.getObjcClass("NSOpenPanel"), Foundation.createSelector("setShowsHiddenFiles:"))) {
           invoke(chooser, "setShowsHiddenFiles:", true);
         }
       }
@@ -247,7 +247,7 @@ public class MacFileChooserDialogImpl implements MacFileChooserDialog {
   }
 
   static {
-    final ID delegateClass = Foundation.allocateObjcClassPair(Foundation.getClass("NSObject"), "NSOpenPanelDelegate_");
+    final ID delegateClass = Foundation.allocateObjcClassPair(Foundation.getObjcClass("NSObject"), "NSOpenPanelDelegate_");
     if (!Foundation.addMethod(delegateClass, Foundation.createSelector("panel:shouldShowFilename:"), SHOULD_SHOW_FILENAME_CALLBACK, "B*")) {
       throw new RuntimeException("Unable to add method to objective-c delegate class!");
     }
@@ -288,7 +288,7 @@ public class MacFileChooserDialogImpl implements MacFileChooserDialog {
     final ID autoReleasePool = createAutoReleasePool();
 
     try {
-      final ID delegate = invoke(Foundation.getClass("NSOpenPanelDelegate_"), "new");
+      final ID delegate = invoke(Foundation.getObjcClass("NSOpenPanelDelegate_"), "new");
 
       final ID select = toSelect == null ? null : Foundation.nsString(toSelect.getPath());
       Foundation.cfRetain(delegate);
@@ -304,7 +304,7 @@ public class MacFileChooserDialogImpl implements MacFileChooserDialog {
     final ID autoReleasePool = createAutoReleasePool();
 
     try {
-      final ID delegate = invoke(Foundation.getClass("NSOpenPanelDelegate_"), "new");
+      final ID delegate = invoke(Foundation.getObjcClass("NSOpenPanelDelegate_"), "new");
 
       final ID select = toSelect == null ? null : Foundation.nsString(toSelect.getPath());
       Foundation.cfRetain(delegate);
@@ -385,7 +385,7 @@ public class MacFileChooserDialogImpl implements MacFileChooserDialog {
   }
 
   private static ID invoke(@NotNull final String className, @NotNull final String selector, Object... args) {
-    return invoke(Foundation.getClass(className), selector, args);
+    return invoke(Foundation.getObjcClass(className), selector, args);
   }
 
   private static ID invoke(@NotNull final ID id, @NotNull final String selector, Object... args) {

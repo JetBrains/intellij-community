@@ -51,9 +51,23 @@ public abstract class InspectionProfileEntry {
   private static Set<String> myBlackList = null;
   private Boolean myUseNewSerializer = null;
 
+  /**
+   * DO NOT OVERRIDE this method.
+   *
+   * @see InspectionEP#groupDisplayName
+   * @see InspectionEP#groupKey
+   * @see InspectionEP#groupBundle
+   */
   @Nls @NotNull
-  public abstract String getGroupDisplayName();
+  public String getGroupDisplayName() {
+    return "";
+  }
 
+  /**
+   * DO NOT OVERRIDE this method.
+   *
+   * @see InspectionEP#groupPath
+   */
   @NotNull
   public String[] getGroupPath() {
     String groupDisplayName = getGroupDisplayName();
@@ -63,33 +77,47 @@ public abstract class InspectionProfileEntry {
     return new String[]{groupDisplayName};
   }
 
+  /**
+   * DO NOT OVERRIDE this method.
+   *
+   * @see InspectionEP#displayName
+   * @see InspectionEP#key
+   * @see InspectionEP#bundle
+   */
   @Nls @NotNull
-  public abstract String getDisplayName();
+  public String getDisplayName() {
+    return "";
+  }
 
   /**
-   * This method is not supposed to be overridden.
-   * @return short name that is used in two cases: \inspectionDescriptions\&lt;short_name&gt;.html resource may contain short inspection
-   *         description to be shown in "Inspect Code..." dialog and also provide some file name convention when using offline
-   *         inspection or export to HTML function. Should be unique among all inspections.
+   * DO NOT OVERRIDE this method.
+   *
    * @see InspectionEP#shortName
    */
   @NonNls @NotNull
   public String getShortName() {
-    return getShortName(getClass());
+    return getShortName(getClass().getSimpleName());
   }
 
-  public static String getShortName(Class<? extends InspectionProfileEntry> aClass) {
-    return StringUtil.trimEnd(aClass.getSimpleName(), "Inspection");
+  public static String getShortName(String className) {
+    return StringUtil.trimEnd(className, "Inspection");
   }
 
   /**
-   * @return highlighting level for this inspection tool that is used in default settings.
+   * DO NOT OVERRIDE this method.
+   *
+   * @see InspectionEP#level
    */
   @NotNull
   public HighlightDisplayLevel getDefaultLevel() {
     return HighlightDisplayLevel.WARNING;
   }
 
+  /**
+   * DO NOT OVERRIDE this method.
+   *
+   * @see InspectionEP#enabledByDefault
+   */
   public boolean isEnabledByDefault() {
     return false;
   }

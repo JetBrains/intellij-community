@@ -170,8 +170,8 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
     final ApplicationEx app = ApplicationManagerEx.getApplicationEx();
     final boolean restartCapable = app.isRestartCapable();
     String message = "<html>";
-    message += restartCapable ? IdeBundle.message("message.idea.restart.required", ApplicationNamesInfo.getInstance().getProductName()) 
-                              : IdeBundle.message("message.idea.shutdown.required", ApplicationNamesInfo.getInstance().getProductName());
+    message += restartCapable ? IdeBundle.message("message.idea.restart.required", ApplicationNamesInfo.getInstance().getFullProductName())
+                              : IdeBundle.message("message.idea.shutdown.required", ApplicationNamesInfo.getInstance().getFullProductName());
     message += "<br><a href=";
     message += restartCapable ? "\"restart\">Restart now" : "\"shutdown\">Shutdown";
     message += "</a></html>";

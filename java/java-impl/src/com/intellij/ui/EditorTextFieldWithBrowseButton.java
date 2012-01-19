@@ -32,8 +32,15 @@ public class EditorTextFieldWithBrowseButton extends ComponentWithBrowseButton<E
   public EditorTextFieldWithBrowseButton(Project project,
                                          boolean isClassAccepted,
                                          final JavaCodeFragment.VisibilityChecker visibilityChecker) {
-    super(new EditorTextField(createDocument("", project, isClassAccepted,
-                                             visibilityChecker), project, StdFileTypes.JAVA), null);
+    super(createEditorTextField(project, isClassAccepted, visibilityChecker), null);
+  }
+
+  private static EditorTextField createEditorTextField(Project project,
+                                                       boolean isClassAccepted,
+                                                       JavaCodeFragment.VisibilityChecker visibilityChecker) {
+    if (project.isDefault()) return new EditorTextField();
+    return new EditorTextField(createDocument("", project, isClassAccepted,
+                                             visibilityChecker), project, StdFileTypes.JAVA);
   }
 
   private static Document createDocument(final String text,
