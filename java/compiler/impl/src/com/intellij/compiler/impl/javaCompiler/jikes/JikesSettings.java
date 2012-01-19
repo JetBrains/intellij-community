@@ -19,9 +19,9 @@ import com.intellij.compiler.impl.javaCompiler.javac.JavacSettings;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StorageScheme;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.openapi.project.Project;
 
-import java.util.StringTokenizer;
+import java.util.Collection;
 
 @State(
   name = "JikesSettings",
@@ -34,55 +34,18 @@ public class JikesSettings extends JavacSettings {
   public String JIKES_PATH = "";
   public boolean IS_EMACS_ERRORS_MODE = true;
 
-  @NonNls
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public String getOptionsString() {
-    StringBuffer options = new StringBuffer();
-    if(DEBUGGING_INFO) {
-      options.append("-g ");
-    }
-    if(DEPRECATION) {
-      options.append("-deprecation ");
-    }
-    if(GENERATE_NO_WARNINGS) {
-      options.append("-nowarn ");
-    }
-    /*
-    if(IS_INCREMENTAL_MODE) {
-      options.append("++ ");
-    }
-    */
+  public Collection<String> getOptions(Project project) {
+    final Collection<String> options = super.getOptions(project);
     if(IS_EMACS_ERRORS_MODE) {
-      options.append("+E ");
+      options.add("+E");
     }
+    return options;
+  }
 
-    StringTokenizer tokenizer = new StringTokenizer(ADDITIONAL_OPTIONS_STRING, " \t\r\n");
-    while(tokenizer.hasMoreTokens()) {
-      String token = tokenizer.nextToken();
-      if("-g".equals(token)) {
-        continue;
-      }
-      if("-deprecation".equals(token)) {
-        continue;
-      }
-      if("-nowarn".equals(token)) {
-        continue;
-      }
-      if("++".equals(token)) {
-        continue;
-      }
-      if("+M".equals(token)) {
-        continue;
-      }
-      if("+F".equals(token)) {
-        continue;
-      }
-      if("+E".equals(token)) {
-        continue;
-      }
-      options.append(token);
-      options.append(" ");
+  protected boolean acceptUserOption(String token) {
+    if (!super.acceptUserOption(token)) {
+      return false;
     }
-    return options.toString();
+    return !("++".equals(token) || "+M".equals(token) || "+F".equals(token) || "+E".equals(token));
   }
 }

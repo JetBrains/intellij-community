@@ -202,7 +202,7 @@ public class JikesCompiler extends ExternalCompiler {
     commandLine.add(outputPath.replace('/', File.separatorChar));
 
     JikesSettings jikesSettings = JikesConfiguration.getSettings(myProject);
-    StringTokenizer tokenizer = new StringTokenizer(jikesSettings.getOptionsString(), " ");
+    StringTokenizer tokenizer = new StringTokenizer(jikesSettings.getOptionsString(myProject), " ");
     while (tokenizer.hasMoreTokens()) {
       commandLine.add(tokenizer.nextToken());
     }
