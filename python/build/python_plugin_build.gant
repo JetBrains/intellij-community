@@ -112,6 +112,7 @@ target(name: "compile", description: "Compile module python") {
     include(name: "**/?*.tld")
     include(name: "**/?*.py")
     include(name: "**/?*.ft")
+    include(name: "**/?*.dic")
   }
 
   ant.loadfile(srcfile: "${ideaHome}/build.txt", property: "ideaBuildNumber") {
