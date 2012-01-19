@@ -42,7 +42,7 @@ public class BuildDataManager {
       final File mappingsRoot = getMappingsRoot();
       myMappings = createStorage(mappingsRoot, new StorageFactory<Mappings>() {
         public Mappings create(File dataFile) throws Exception {
-          return new Mappings(mappingsRoot);
+          return new Mappings(mappingsRoot, false);
         }
       });
     }

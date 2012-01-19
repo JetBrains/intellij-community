@@ -27,7 +27,8 @@ public class Mappings {
   private final static String SOURCE_TO_USAGES = "sourceToUsages.tab";
   private final static String CLASS_TO_SOURCE = "classToSource.tab";
 
-  private final boolean myIsTansient;
+  private final boolean myIsDelta;
+  private final boolean myDeltaIsTransient;
 
   private final File myRootDir;
   private DependencyContext myContext;
@@ -69,56 +70,66 @@ public class Mappings {
     };
 
   private Mappings(final Mappings base) throws IOException {
-    myIsTansient = true;
-
+    myIsDelta = true;
+    myDeltaIsTransient = base.myDeltaIsTransient;
     myRootDir = new File(FileUtil.toSystemIndependentName(base.myRootDir.getAbsolutePath()) + File.separatorChar + "delta");
     myContext = base.myContext;
-
     myRootDir.mkdirs();
-
-    createImplementation(myRootDir, true);
+    createImplementation();
   }
 
-  public Mappings(final File rootDir) throws IOException {
-    myIsTansient = false;
+  public Mappings(final File rootDir, final boolean transientDelta) throws IOException {
+    myIsDelta = false;
+    myDeltaIsTransient = transientDelta;
     myRootDir = rootDir;
-    createImplementation(rootDir, myIsTansient);
+    myContext = new DependencyContext(rootDir);
+    createImplementation();
   }
 
-  private void createImplementation(final File rootDir, final boolean isTransient) throws IOException {
-    if (!isTransient) {
-      myContext = new DependencyContext(rootDir);
+  private void createImplementation() throws IOException {
+    if (!myIsDelta) {
+      myContext = new DependencyContext(myRootDir);
     }
 
-    myClassToSubclasses =
-      new PersistentMultiMaplet<DependencyContext.S, DependencyContext.S>(DependencyContext.getTableFile(rootDir, CLASS_TO_SUBCLASSES),
-                                                                          DependencyContext.descriptorS, DependencyContext.descriptorS,
-                                                                          ourStringSetConstructor);
+    if (myIsDelta && myDeltaIsTransient) {
+      myClassToSubclasses = new TransientMultiMaplet<DependencyContext.S, DependencyContext.S>(ourStringSetConstructor);
+      myClassToClassDependency = new TransientMultiMaplet<DependencyContext.S, DependencyContext.S>(ourStringSetConstructor);
+      mySourceFileToClasses = new TransientMultiMaplet<DependencyContext.S, ClassRepr>(ourClassSetConstructor);
+      mySourceFileToAnnotationUsages = new TransientMultiMaplet<DependencyContext.S, UsageRepr.Usage>(ourUsageSetConstructor);
+      mySourceFileToUsages = new TransientMultiMaplet<DependencyContext.S, UsageRepr.Cluster>(ourUsageClusterSetConstructor);
+      myClassToSourceFile = new TransientMaplet<DependencyContext.S, DependencyContext.S>();
+    }
+    else {
+      myClassToSubclasses =
+        new PersistentMultiMaplet<DependencyContext.S, DependencyContext.S>(DependencyContext.getTableFile(myRootDir, CLASS_TO_SUBCLASSES),
+                                                                            DependencyContext.descriptorS, DependencyContext.descriptorS,
+                                                                            ourStringSetConstructor);
 
-    myClassToClassDependency =
-      new PersistentMultiMaplet<DependencyContext.S, DependencyContext.S>(DependencyContext.getTableFile(rootDir, CLASS_TO_CLASS),
-                                                                          DependencyContext.descriptorS, DependencyContext.descriptorS,
-                                                                          ourStringSetConstructor);
+      myClassToClassDependency =
+        new PersistentMultiMaplet<DependencyContext.S, DependencyContext.S>(DependencyContext.getTableFile(myRootDir, CLASS_TO_CLASS),
+                                                                            DependencyContext.descriptorS, DependencyContext.descriptorS,
+                                                                            ourStringSetConstructor);
 
-    mySourceFileToClasses =
-      new PersistentMultiMaplet<DependencyContext.S, ClassRepr>(DependencyContext.getTableFile(rootDir, SOURCE_TO_CLASS),
-                                                                DependencyContext.descriptorS, ClassRepr.externalizer(myContext),
-                                                                ourClassSetConstructor);
+      mySourceFileToClasses =
+        new PersistentMultiMaplet<DependencyContext.S, ClassRepr>(DependencyContext.getTableFile(myRootDir, SOURCE_TO_CLASS),
+                                                                  DependencyContext.descriptorS, ClassRepr.externalizer(myContext),
+                                                                  ourClassSetConstructor);
 
-    mySourceFileToAnnotationUsages =
-      new PersistentMultiMaplet<DependencyContext.S, UsageRepr.Usage>(DependencyContext.getTableFile(rootDir, SOURCE_TO_ANNOTATIONS),
-                                                                      DependencyContext.descriptorS, UsageRepr.externalizer(myContext),
-                                                                      ourUsageSetConstructor);
+      mySourceFileToAnnotationUsages =
+        new PersistentMultiMaplet<DependencyContext.S, UsageRepr.Usage>(DependencyContext.getTableFile(myRootDir, SOURCE_TO_ANNOTATIONS),
+                                                                        DependencyContext.descriptorS, UsageRepr.externalizer(myContext),
+                                                                        ourUsageSetConstructor);
 
-    mySourceFileToUsages =
-      new PersistentMultiMaplet<DependencyContext.S, UsageRepr.Cluster>(DependencyContext.getTableFile(rootDir, SOURCE_TO_USAGES),
-                                                                        DependencyContext.descriptorS,
-                                                                        UsageRepr.Cluster.clusterExternalizer(myContext),
-                                                                        ourUsageClusterSetConstructor);
+      mySourceFileToUsages =
+        new PersistentMultiMaplet<DependencyContext.S, UsageRepr.Cluster>(DependencyContext.getTableFile(myRootDir, SOURCE_TO_USAGES),
+                                                                          DependencyContext.descriptorS,
+                                                                          UsageRepr.Cluster.clusterExternalizer(myContext),
+                                                                          ourUsageClusterSetConstructor);
 
-    myClassToSourceFile =
-      new PersistentMaplet<DependencyContext.S, DependencyContext.S>(DependencyContext.getTableFile(rootDir, CLASS_TO_SOURCE),
-                                                                     DependencyContext.descriptorS, DependencyContext.descriptorS);
+      myClassToSourceFile =
+        new PersistentMaplet<DependencyContext.S, DependencyContext.S>(DependencyContext.getTableFile(myRootDir, CLASS_TO_SOURCE),
+                                                                       DependencyContext.descriptorS, DependencyContext.descriptorS);
+    }
   }
 
   public Mappings createDelta() {
@@ -166,7 +177,7 @@ public class Mappings {
     if (myRootDir != null) {
       close();
       FileUtil.delete(myRootDir);
-      createImplementation(myRootDir, myIsTansient);
+      createImplementation();
     }
   }
 
@@ -1418,7 +1429,7 @@ public class Mappings {
     mySourceFileToUsages.close();
     myClassToSourceFile.close();
 
-    if (!myIsTansient) {
+    if (!myIsDelta) {
       // only close if you own the context
 
       myContext.close();
