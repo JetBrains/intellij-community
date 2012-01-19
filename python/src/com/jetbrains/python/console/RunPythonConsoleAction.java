@@ -18,6 +18,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.django.facet.DjangoFacet;
 import com.jetbrains.python.buildout.BuildoutFacet;
@@ -84,7 +85,10 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
       }
       else {
         if (ModuleManager.getInstance(project).getModules().length > 0) {
-          workingDir = ModuleRootManager.getInstance(ModuleManager.getInstance(project).getModules()[0]).getContentRoots()[0].getPath();
+          VirtualFile[] roots = ModuleRootManager.getInstance(ModuleManager.getInstance(project).getModules()[0]).getContentRoots();
+          if (roots.length > 0) {
+            workingDir = roots[0].getPath();
+          }
         }
       }
     }

@@ -137,11 +137,13 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
     if (sdk != null && sdk.getSdkAdditionalData() instanceof PythonRemoteSdkAdditionalData) {
       if (PythonRemoteInterpreterManager.EP_NAME.getExtensions().length > 0) {
-        ProcessHandler processHandler = PythonRemoteInterpreterManager.EP_NAME.getExtensions()[0].doCreateProcess(myConfig.getProject(), (PythonRemoteSdkAdditionalData)sdk.getSdkAdditionalData(), commandLine);
+        ProcessHandler processHandler = PythonRemoteInterpreterManager.EP_NAME.getExtensions()[0]
+          .doCreateProcess(myConfig.getProject(), (PythonRemoteSdkAdditionalData)sdk.getSdkAdditionalData(), commandLine);
         ProcessTerminatedListener.attach(processHandler);
         return processHandler;
-      } else {
-       throw new ExecutionException("Can't run remote python interpreter. WebDeployment plugin is disabled.");
+      }
+      else {
+        throw new ExecutionException("Can't run remote python interpreter. WebDeployment plugin is disabled.");
       }
     }
     else {

@@ -109,5 +109,7 @@ def is_django_exception_break_context(frame):
 
 
 def just_raised(trace):
+    if trace is None:
+        return False
     return trace.tb_next is None
 
