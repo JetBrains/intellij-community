@@ -55,7 +55,7 @@ public class InspectionDescriptionNotFoundInspection extends DevKitInspectionBas
 
     final PsiClass base = JavaPsiFacade.getInstance(project).findClass(INSPECTION_PROFILE_ENTRY, GlobalSearchScope.allScope(project));
 
-    if (base == null || ! aClass.isInheritor(base, true) || isPathMethodsAreOverriden(aClass)) return null;
+    if (base == null || ! aClass.isInheritor(base, true) || isPathMethodsAreOverridden(aClass)) return null;
 
     final PsiMethod method = findNearestMethod("getShortName", aClass);
     if (method == null) return null;
@@ -91,7 +91,7 @@ public class InspectionDescriptionNotFoundInspection extends DevKitInspectionBas
     }
   }
 
-  private static boolean isPathMethodsAreOverriden(PsiClass aClass) {
+  private static boolean isPathMethodsAreOverridden(PsiClass aClass) {
     return! ( isLastMethodDefinitionIn("getStaticDescription", INSPECTION_PROFILE_ENTRY, aClass)
       && isLastMethodDefinitionIn("getDescriptionUrl", INSPECTION_PROFILE_ENTRY, aClass)
       && isLastMethodDefinitionIn("getDescriptionContextClass", INSPECTION_PROFILE_ENTRY, aClass)
