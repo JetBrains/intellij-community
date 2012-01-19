@@ -133,7 +133,26 @@ public class ShutDownTracker implements Runnable {
     return list.isEmpty()? null : list.removeLast();
   }
 
-  public static void invokeAndWait(boolean timed, final Runnable runnable) {
+  public static void invokeAndWait(boolean timed, boolean edt, final Runnable runnable) {
+    if (!edt) {
+      if (!timed) {
+        runnable.run();
+      }
+
+      final Semaphore semaphore = new Semaphore();
+      semaphore.down();
+      new Thread(new Runnable() {
+        @Override
+        public void run() {
+          runnable.run();
+          semaphore.up();
+        }
+      }).start();
+      semaphore.waitFor(1000);
+
+      return;
+    }
+
     if (timed) {
       final Semaphore semaphore = new Semaphore();
       semaphore.down();

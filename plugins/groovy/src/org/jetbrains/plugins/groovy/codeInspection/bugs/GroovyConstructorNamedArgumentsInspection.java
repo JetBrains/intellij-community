@@ -46,6 +46,11 @@ import java.util.List;
 public class GroovyConstructorNamedArgumentsInspection extends BaseInspection {
 
   @Override
+  public boolean isEnabledByDefault() {
+    return true;
+  }
+
+  @Override
   protected BaseInspectionVisitor buildVisitor() {
     return new MyVisitor();
   }

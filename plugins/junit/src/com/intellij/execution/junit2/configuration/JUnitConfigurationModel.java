@@ -25,6 +25,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 
 import javax.swing.text.BadLocationException;
@@ -101,7 +102,7 @@ public class JUnitConfigurationModel {
         testObject != JUnitConfiguration.TEST_DIRECTORY) {
       try {
         data.METHOD_NAME = getJUnitTextValue(METHOD);
-        final PsiClass testClass = JUnitUtil.findPsiClass(className, module, myProject);
+        final PsiClass testClass = !myProject.isDefault() && !StringUtil.isEmptyOrSpaces(className) ? JUnitUtil.findPsiClass(className, module, myProject) : null;
         if (testClass != null && testClass.isValid()) {
           data.setMainClass(testClass);
         }
