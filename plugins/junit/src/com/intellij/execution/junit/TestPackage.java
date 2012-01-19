@@ -345,6 +345,9 @@ public class TestPackage extends TestObject {
       catch (IOException e) {
         LOG.info(e);
       }
+      catch (Throwable e) {
+        LOG.error(e);
+      }
     }
 
     @Override

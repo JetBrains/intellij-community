@@ -96,6 +96,9 @@ public class SearchingForTestsTask extends Task.Backgroundable {
     catch (IOException e) {
       LOG.info(e);
     }
+    catch (Throwable e) {
+      LOG.error(e);
+    }
   }
 
   @Override
