@@ -71,6 +71,7 @@ public class IncProjectBuilder {
             JPS_SERVER_NAME, BuildMessage.Kind.INFO,
             "Internal caches are corrupted or have outdated format, forcing project rebuild: " + e.getMessage())
           );
+          closeContext(context);
           context = createContext(new AllProjectScope(scope.getProject(), true), false, true);
           runBuild(context);
         }
@@ -89,11 +90,15 @@ public class IncProjectBuilder {
       }
     }
     finally {
-      if (context != null) {
-        context.getDataManager().close();
-      }
-      cleanupJavacNameTable();
+      closeContext(context);
     }
+  }
+
+  private static void closeContext(CompileContext context) {
+    if (context != null) {
+      context.getDataManager().close();
+    }
+    cleanupJavacNameTable();
   }
 
   private static void cleanupJavacNameTable() {

@@ -100,6 +100,9 @@ public class BuildDataManager {
             mappings.clean();
           }
         }
+        else {
+          FileUtil.delete(getMappingsRoot());
+        }
       }
     }
   }

@@ -82,7 +82,6 @@ public class Mappings {
     myIsDelta = false;
     myDeltaIsTransient = transientDelta;
     myRootDir = rootDir;
-    myContext = new DependencyContext(rootDir);
     createImplementation();
   }
 
@@ -1431,8 +1430,11 @@ public class Mappings {
 
     if (!myIsDelta) {
       // only close if you own the context
-
-      myContext.close();
+      final DependencyContext context = myContext;
+      if (context != null) {
+        context.close();
+        myContext = null;
+      }
     }
     else {
       FileUtil.delete(myRootDir);
