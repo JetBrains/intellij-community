@@ -40,8 +40,14 @@ public class InspectionEP extends LanguageExtensionPoint {
   /** @see GlobalInspectionTool */
   public final static ExtensionPointName<InspectionEP> GLOBAL_INSPECTION = ExtensionPointName.create("com.intellij.globalInspection");
 
+  /**
+   * Short name is used in two cases: \inspectionDescriptions\&lt;short_name&gt;.html resource may contain short inspection
+   * description to be shown in "Inspect Code..." dialog and also provide some file name convention when using offline
+   * inspection or export to HTML function. Should be unique among all inspections.
+   */
   @Attribute("shortName")
   public String shortName;
+
   @Nls
   @NotNull
   public String getDisplayName() {
@@ -92,6 +98,9 @@ public class InspectionEP extends LanguageExtensionPoint {
   @Attribute("applyToDialects")
   public boolean applyToDialects = true;
 
+  /**
+   * Highlighting level for this inspection tool that is used in default settings.
+   */
   @Attribute("level")
   public String level;
 
