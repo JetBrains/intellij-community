@@ -59,7 +59,9 @@ public abstract class InspectionProfileEntry {
    * @see InspectionEP#groupBundle
    */
   @Nls @NotNull
-  public abstract String getGroupDisplayName();
+  public String getGroupDisplayName() {
+    return "";
+  }
 
   /**
    * DO NOT OVERRIDE this method.
@@ -83,7 +85,9 @@ public abstract class InspectionProfileEntry {
    * @see InspectionEP#bundle
    */
   @Nls @NotNull
-  public abstract String getDisplayName();
+  public String getDisplayName() {
+    return "";
+  }
 
   /**
    * DO NOT OVERRIDE this method.
