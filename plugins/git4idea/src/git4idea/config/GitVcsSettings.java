@@ -21,7 +21,6 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,230 +30,21 @@ import java.util.List;
 /**
  * Git VCS settings
  */
-@State(
-  name = "Git.Settings",
-  storages = {@Storage(
-    file = "$WORKSPACE_FILE$")})
+@State(name = "Git.Settings", storages = {@Storage(file = "$WORKSPACE_FILE$")})
 public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.State> {
 
-  public static final int PREVIOUS_COMMIT_AUTHORS_LIMIT = 16; // Limit for previous commit authors
-  private static final SshExecutable DEFAULT_SSH = SshExecutable.IDEA_SSH; // Default SSH policy
+  private static final int PREVIOUS_COMMIT_AUTHORS_LIMIT = 16; // Limit for previous commit authors
 
   private final GitVcsApplicationSettings myAppSettings;
-  private final List<String> myCommitAuthors = new ArrayList<String>(); // The previously entered authors of the commit (up to {@value #PREVIOUS_COMMIT_AUTHORS_LIMIT})
-  private boolean myCheckoutIncludesTags = false;
-  private SshExecutable mySshExecutable = DEFAULT_SSH; // IDEA SSH should be used instead of native SSH.
-  private UpdateChangesPolicy myUpdateChangesPolicy = UpdateChangesPolicy.STASH; // The policy that specifies how files are saved before update or rebase
-  private UpdateMethod myUpdateType = UpdateMethod.BRANCH_DEFAULT; // The type of update operation to perform
-  private ConversionPolicy myLineSeparatorsConversion = ConversionPolicy.ASK; // The crlf conversion policy
-  private UpdateChangesPolicy myPushActiveBranchesRebaseSavePolicy = UpdateChangesPolicy.STASH; // The policy used in push active branches dialog
-  private boolean myAutoUpdateIfPushRejected = false;
-
-  public GitVcsSettings(GitVcsApplicationSettings appSettings) {
-    myAppSettings = appSettings;
-  }
-
-  public GitVcsApplicationSettings getAppSettings() {
-    return myAppSettings;
-  }
-
-  /**
-   * @return save policy for push active branches dialog
-   */
-  public UpdateChangesPolicy getPushActiveBranchesRebaseSavePolicy() {
-    return myPushActiveBranchesRebaseSavePolicy;
-  }
-
-  /**
-   * Change save policy for push active branches dialog
-   *
-   * @param pushActiveBranchesRebaseSavePolicy
-   *         the new policy value
-   */
-  public void setPushActiveBranchesRebaseSavePolicy(UpdateChangesPolicy pushActiveBranchesRebaseSavePolicy) {
-    myPushActiveBranchesRebaseSavePolicy = pushActiveBranchesRebaseSavePolicy;
-  }
-
-  /**
-   * @return policy for converting line separators
-   */
-  public ConversionPolicy getLineSeparatorsConversion() {
-    return myLineSeparatorsConversion;
-  }
-
-  /**
-   * Modify line separators policy
-   *
-   * @param lineSeparatorsConversion the new policy value
-   */
-  public void setLineSeparatorsConversion(ConversionPolicy lineSeparatorsConversion) {
-    myLineSeparatorsConversion = lineSeparatorsConversion;
-  }
-
-  /**
-   * @return update type
-   */
-  public UpdateMethod getUpdateType() {
-    return myUpdateType;
-  }
-
-  /**
-   * Set update type
-   *
-   * @param updateType the update type to set
-   */
-  public void setUpdateType(UpdateMethod updateType) {
-    myUpdateType = updateType;
-  }
-
-  /**
-   * @return get (a possibly converted value) of update stash policy
-   */
-  @NotNull
-  public UpdateChangesPolicy updateChangesPolicy() {
-    return myUpdateChangesPolicy;
-  }
-
-  /**
-   * Save update changes policy
-   *
-   * @param value the value to save
-   */
-  public void setUpdateChangesPolicy(UpdateChangesPolicy value) {
-    myUpdateChangesPolicy = value;
-  }
-
-  /**
-   * Save an author of the commit and make it the first one. If amount of authors exceeds the limit, remove least recently selected author.
-   *
-   * @param author an author to save
-   */
-  public void saveCommitAuthor(String author) {
-    myCommitAuthors.remove(author);
-    while (myCommitAuthors.size() >= PREVIOUS_COMMIT_AUTHORS_LIMIT) {
-      myCommitAuthors.remove(myCommitAuthors.size() - 1);
-    }
-    myCommitAuthors.add(0, author);
-  }
-
-  /**
-   * @return array for commit authors
-   */
-  public String[] getCommitAuthors() {
-    return ArrayUtil.toStringArray(myCommitAuthors);
-  }
-
-  public State getState() {
-    State s = new State();
-    s.CHECKOUT_INCLUDE_TAGS = myCheckoutIncludesTags;
-    s.LINE_SEPARATORS_CONVERSION = myLineSeparatorsConversion;
-    s.PREVIOUS_COMMIT_AUTHORS = getCommitAuthors();
-    s.PUSH_ACTIVE_BRANCHES_REBASE_SAVE_POLICY = myPushActiveBranchesRebaseSavePolicy;
-    s.SSH_EXECUTABLE = mySshExecutable;
-    s.UPDATE_CHANGES_POLICY = myUpdateChangesPolicy;
-    s.UPDATE_TYPE = myUpdateType;
-    s.PUSH_AUTO_UPDATE = myAutoUpdateIfPushRejected;;
-    return s;
-  }
-
-  public void loadState(State s) {
-    myCheckoutIncludesTags = s.CHECKOUT_INCLUDE_TAGS == null ? false : s.CHECKOUT_INCLUDE_TAGS;
-    myLineSeparatorsConversion = s.LINE_SEPARATORS_CONVERSION;
-    myCommitAuthors.clear();
-    ContainerUtil.addAll(myCommitAuthors, s.PREVIOUS_COMMIT_AUTHORS);
-    myPushActiveBranchesRebaseSavePolicy = s.PUSH_ACTIVE_BRANCHES_REBASE_SAVE_POLICY;
-    mySshExecutable = s.SSH_EXECUTABLE;
-    myUpdateChangesPolicy = s.UPDATE_CHANGES_POLICY;
-    if (myUpdateChangesPolicy == null) {
-      myUpdateChangesPolicy = UpdateChangesPolicy.STASH;
-    }
-    myUpdateType = s.UPDATE_TYPE;
-    myAutoUpdateIfPushRejected = s.PUSH_AUTO_UPDATE;
-  }
-
-  /**
-   * Get git setting for the project
-   *
-   * @param project a context project
-   * @return the git settings
-   */
-  @Nullable
-  public static GitVcsSettings getInstance(Project project) {
-    if (project == null || project.isDisposed()) {
-      return null;
-    }
-    return PeriodicalTasksCloser.getInstance().safeGetService(project, GitVcsSettings.class);
-  }
-
-  /**
-   * @return true if IDEA ssh should be used
-   */
-  public boolean isIdeaSsh() {
-    return (mySshExecutable == null ? DEFAULT_SSH : mySshExecutable) == SshExecutable.IDEA_SSH;
-  }
-
-  /**
-   * @return true if IDEA ssh should be used
-   */
-  public static boolean isDefaultIdeaSsh() {
-    return DEFAULT_SSH == SshExecutable.IDEA_SSH;
-  }
-
-  /**
-   * Set IDEA ssh value
-   *
-   * @param value the value to set
-   */
-  public void setIdeaSsh(boolean value) {
-    mySshExecutable = value ? SshExecutable.IDEA_SSH : SshExecutable.NATIVE_SSH;
-  }
-
-  public boolean autoUpdateIfPushRejected() {
-    return myAutoUpdateIfPushRejected;
-  }
-
-  public void setAutoUpdateIfPushRejected(boolean autoUpdate) {
-    myAutoUpdateIfPushRejected = autoUpdate;
-  }
-
-  /**
-   * The state fo the settings
-   */
+  private State myState = new State();
+  
   public static class State {
-
-    /**
-     * The previously entered authors of the commit (up to {@value #PREVIOUS_COMMIT_AUTHORS_LIMIT})
-     */
-    public String[] PREVIOUS_COMMIT_AUTHORS = {};
-    /**
-     * Checkout includes tags
-     */
-    public Boolean CHECKOUT_INCLUDE_TAGS;
-    /**
-     * IDEA SSH should be used instead of native SSH.
-     */
-    public SshExecutable SSH_EXECUTABLE = DEFAULT_SSH;
-    /**
-     * The policy that specifies how files are saved before update or rebase
-     */
-    public UpdateChangesPolicy UPDATE_CHANGES_POLICY = null;
-    /**
-     * The type of update operation to perform
-     */
+    public List<String> PREVIOUS_COMMIT_AUTHORS = new ArrayList<String>(); // The previously entered authors of the commit (up to {@value #PREVIOUS_COMMIT_AUTHORS_LIMIT})
+    public SshExecutable SSH_EXECUTABLE = SshExecutable.IDEA_SSH;
+    public UpdateChangesPolicy UPDATE_CHANGES_POLICY = UpdateChangesPolicy.STASH; // The policy that specifies how files are saved before update or rebase
     public UpdateMethod UPDATE_TYPE = UpdateMethod.BRANCH_DEFAULT;
-    /**
-     * The crlf conversion policy
-     */
     public ConversionPolicy LINE_SEPARATORS_CONVERSION = ConversionPolicy.CONVERT;
-    /**
-     * If true, the dialog is shown with conversion options
-     */
-    public boolean LINE_SEPARATORS_CONVERSION_ASK = true;
-    /**
-     * The policy used in push active branches dialog
-     */
-    public UpdateChangesPolicy PUSH_ACTIVE_BRANCHES_REBASE_SAVE_POLICY = UpdateChangesPolicy.STASH;
-    
+
     public boolean PUSH_AUTO_UPDATE = false;
   }
 
@@ -270,31 +60,97 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
    * Kinds of SSH executable to be used with the git
    */
   public enum SshExecutable {
-    /**
-     * SSH provided by IDEA
-     */
     IDEA_SSH,
-    /**
-     * Naive SSH.
-     */
     NATIVE_SSH,
   }
 
-  /**
-   * The CRLF conversion policy
-   */
   public enum ConversionPolicy {
-    /**
-     * No conversion is performed
-     */
-    NONE,
-    /**
-     * The files are converted to project line separators
-     */
-    CONVERT,
-    /**
-     * Show dialog and ask user what to do: convert files or leave unchanged.
-     */
-    ASK
+    NONE, // No conversion is performed
+    CONVERT, // The files are converted to project line separators
+    ASK  // Show dialog and ask user what to do: convert files or leave unchanged.
   }
+
+  public GitVcsSettings(GitVcsApplicationSettings appSettings) {
+    myAppSettings = appSettings;
+  }
+
+  public GitVcsApplicationSettings getAppSettings() {
+    return myAppSettings;
+  }
+  
+  @Nullable
+  public static GitVcsSettings getInstance(Project project) {
+    if (project == null || project.isDisposed()) {
+      return null;
+    }
+    return PeriodicalTasksCloser.getInstance().safeGetService(project, GitVcsSettings.class);
+  }
+
+  public ConversionPolicy getLineSeparatorsConversion() {
+    return myState.LINE_SEPARATORS_CONVERSION;
+  }
+
+  public void setLineSeparatorsConversion(ConversionPolicy lineSeparatorsConversion) {
+    myState.LINE_SEPARATORS_CONVERSION = lineSeparatorsConversion;
+  }
+
+  public UpdateMethod getUpdateType() {
+    return myState.UPDATE_TYPE;
+  }
+
+  public void setUpdateType(UpdateMethod updateType) {
+    myState.UPDATE_TYPE = updateType;
+  }
+
+  @NotNull
+  public UpdateChangesPolicy updateChangesPolicy() {
+    return myState.UPDATE_CHANGES_POLICY;
+  }
+
+  public void setUpdateChangesPolicy(UpdateChangesPolicy value) {
+    myState.UPDATE_CHANGES_POLICY = value;
+  }
+
+  /**
+   * Save an author of the commit and make it the first one. If amount of authors exceeds the limit, remove least recently selected author.
+   *
+   * @param author an author to save
+   */
+  public void saveCommitAuthor(String author) {
+    myState.PREVIOUS_COMMIT_AUTHORS.remove(author);
+    while (myState.PREVIOUS_COMMIT_AUTHORS.size() >= PREVIOUS_COMMIT_AUTHORS_LIMIT) {
+      myState.PREVIOUS_COMMIT_AUTHORS.remove(myState.PREVIOUS_COMMIT_AUTHORS.size() - 1);
+    }
+    myState.PREVIOUS_COMMIT_AUTHORS.add(0, author);
+  }
+
+  public String[] getCommitAuthors() {
+    return ArrayUtil.toStringArray(myState.PREVIOUS_COMMIT_AUTHORS);
+  }
+
+  public State getState() {
+    return myState;
+  }
+
+  public void loadState(State state) {
+    myState = state;
+  }
+
+  public boolean isIdeaSsh() {
+    return myState.SSH_EXECUTABLE == SshExecutable.IDEA_SSH;
+  }
+
+  public void setIdeaSsh(boolean value) {
+    myState.SSH_EXECUTABLE = value ? SshExecutable.IDEA_SSH : SshExecutable.NATIVE_SSH;
+  }
+
+  public boolean autoUpdateIfPushRejected() {
+    return myState.PUSH_AUTO_UPDATE;
+  }
+
+  public void setAutoUpdateIfPushRejected(boolean autoUpdate) {
+    myState.PUSH_AUTO_UPDATE = autoUpdate;
+  }
+
+
 }

@@ -56,7 +56,7 @@ public class GitVcsPanel {
     myProject = project;
     mySSHExecutableComboBox.addItem(IDEA_SSH);
     mySSHExecutableComboBox.addItem(NATIVE_SSH);
-    mySSHExecutableComboBox.setSelectedItem(GitVcsSettings.isDefaultIdeaSsh() ? IDEA_SSH : NATIVE_SSH);
+    mySSHExecutableComboBox.setSelectedItem(IDEA_SSH);
     mySSHExecutableComboBox
       .setToolTipText(GitBundle.message("git.vcs.config.ssh.mode.tooltip", ApplicationNamesInfo.getInstance().getFullProductName()));
     myTestButton.addActionListener(new ActionListener() {
