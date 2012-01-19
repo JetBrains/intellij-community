@@ -169,7 +169,7 @@ public abstract class ClassBrowser extends BrowseModuleValueActionListener {
       final String moduleName = moduleSelector.getModuleName();
       return new NoFilterException(new MessagesEx.MessageInfo(
         project,
-        moduleName.isEmpty() ? "Module to browse tests in is not configured" : ExecutionBundle.message("module.does.not.exists", moduleName, project.getName()),
+        moduleName.isEmpty() ? "No module selected" : ExecutionBundle.message("module.does.not.exists", moduleName, project.getName()),
         ExecutionBundle.message("cannot.browse.test.inheritors.dialog.title")));
     }
   }
