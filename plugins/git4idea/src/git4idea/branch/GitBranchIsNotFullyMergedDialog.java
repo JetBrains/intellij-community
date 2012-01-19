@@ -26,6 +26,7 @@ import git4idea.history.browser.GitCommit;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.ui.GitCommitListWithDiffPanel;
+import git4idea.ui.GitRepositoryComboboxListCellRenderer;
 import git4idea.util.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -147,8 +148,8 @@ public class GitBranchIsNotFullyMergedDialog extends DialogWrapper {
   protected JComponent createNorthPanel() {
     JBLabel descriptionLabel = new JBLabel("<html>" + makeDescription() + "</html>");
     
-    final JComboBox repositorySelector = new JComboBox(ArrayUtil.toObjectArray(myRepositories, GitRepository.class));
-    repositorySelector.setRenderer(new MyListCellRenderer());
+      final JComboBox repositorySelector = new JComboBox(ArrayUtil.toObjectArray(myRepositories, GitRepository.class));
+    repositorySelector.setRenderer(new GitRepositoryComboboxListCellRenderer(repositorySelector));
     repositorySelector.setSelectedItem(GitUIUtil.getShortRepositoryName(myInitialRepository));
     repositorySelector.addActionListener(new ActionListener() {
       @Override
@@ -201,18 +202,5 @@ public class GitBranchIsNotFullyMergedDialog extends DialogWrapper {
   @Override
   protected String getDimensionServiceKey() {
     return GitBranchIsNotFullyMergedDialog.class.getName();
-  }
-
-  private static class MyListCellRenderer implements ListCellRenderer {
-    
-    private static final DefaultListCellRenderer DEFAULT_RENDERER = new DefaultListCellRenderer(); 
-    
-    @Override
-    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-      if (value instanceof GitRepository) {
-        DEFAULT_RENDERER.setText(GitUIUtil.getShortRepositoryName((GitRepository)value));
-      }
-      return DEFAULT_RENDERER.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-    }
   }
 }

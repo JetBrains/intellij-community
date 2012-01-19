@@ -190,6 +190,7 @@ class GitBranchPopupActions {
       return new AnAction[] {
         new CheckoutAction(myProject, myRepositories, myBranchName),
         new CheckoutAsNewBranch(myProject, myRepositories, myBranchName),
+        new CompareAction(myProject, myRepositories, myBranchName),
         new DeleteAction(myProject, myRepositories, myBranchName)
       };
     }

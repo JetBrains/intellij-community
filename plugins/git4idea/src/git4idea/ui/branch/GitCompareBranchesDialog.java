@@ -21,17 +21,22 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 import git4idea.history.browser.GitCommit;
 import git4idea.repo.GitRepository;
 import git4idea.ui.GitCommitListPanel;
+import git4idea.ui.GitRepositoryComboboxListCellRenderer;
+import git4idea.util.GitCommitCompareInfo;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 
 /**
  * Dialog for comparing two Git branches.
@@ -40,42 +45,38 @@ import java.util.List;
 public class GitCompareBranchesDialog extends DialogWrapper {
 
   private final Project myProject;
-  private final GitRepository myRepository;
   private final String myBranchName;
-  private final List<GitCommit> myHeadToBranch;
-  private final List<GitCommit> myBranchToHead;
+  private final String myCurrentBranchName;
+  private final GitCommitCompareInfo myCompareInfo;
+  private final GitRepository myInitialRepo;
 
-  private final JPanel myRootPanel;
   private GitCommitListPanel myHeadToBranchListPanel;
   private GitCommitListPanel myBranchToHeadListPanel;
 
-  public GitCompareBranchesDialog(GitRepository repository, String branchName, List<GitCommit> headToBranch, List<GitCommit> branchToHead) {
-    super(repository.getProject(), false);
-    myProject = repository.getProject();
-    myRepository = repository;
+  public GitCompareBranchesDialog(@NotNull Project project, @NotNull String branchName, @NotNull String currentBranchName, GitCommitCompareInfo compareInfo) {
+    super(project, false);
+    myCurrentBranchName = currentBranchName;
+    myCompareInfo = compareInfo;
+    myProject = project;
     myBranchName = branchName;
-    myHeadToBranch = headToBranch;
-    myBranchToHead = branchToHead;
+    myInitialRepo = myCompareInfo.getRepositories().iterator().next();
 
-    String currentBranch = GitBranchUiUtil.getBranchNameOrRev(myRepository);
-
-    myRootPanel = layoutComponents(currentBranch);
-
-    setTitle(String.format("Comparing %s with %s", currentBranch, branchName));
+    setTitle(String.format("Comparing %s with %s", currentBranchName, branchName));
     init();
   }
 
-  private JPanel layoutComponents(String currentBranch) {
+  @Override
+  protected JComponent createCenterPanel() {
     final ChangesBrowser changesBrowser = new ChangesBrowser(myProject, null, Collections.<Change>emptyList(), null, false, true, null, ChangesBrowser.MyUseCase.COMMITTED_CHANGES, null);
 
-    myHeadToBranchListPanel = new GitCommitListPanel(myProject, myHeadToBranch);
-    myBranchToHeadListPanel = new GitCommitListPanel(myProject, myBranchToHead);
+    myHeadToBranchListPanel = new GitCommitListPanel(myProject, getHeadToBranchCommits(myInitialRepo));
+    myBranchToHeadListPanel = new GitCommitListPanel(myProject, getBranchToHeadCommits(myInitialRepo));
 
     addSelectionListener(myHeadToBranchListPanel, myBranchToHeadListPanel, changesBrowser);
     addSelectionListener(myBranchToHeadListPanel, myHeadToBranchListPanel, changesBrowser);
 
-    JPanel htb = layoutCommitListPanel(currentBranch, true);
-    JPanel bth = layoutCommitListPanel(currentBranch, false);
+    JPanel htb = layoutCommitListPanel(myCurrentBranchName, true);
+    JPanel bth = layoutCommitListPanel(myCurrentBranchName, false);
 
     Splitter lists = new Splitter(true, 0.5f);
     lists.setFirstComponent(htb);
@@ -85,6 +86,41 @@ public class GitCompareBranchesDialog extends DialogWrapper {
     rootPanel.setSecondComponent(changesBrowser);
     rootPanel.setFirstComponent(lists);
     return rootPanel;
+  }
+
+  @Override
+  protected JComponent createNorthPanel() {
+    final JComboBox repoSelector = new JComboBox(ArrayUtil.toObjectArray(myCompareInfo.getRepositories(), GitRepository.class));
+    repoSelector.setRenderer(new GitRepositoryComboboxListCellRenderer(repoSelector));
+    repoSelector.setSelectedItem(myInitialRepo);
+    
+    repoSelector.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        GitRepository selectedRepo = (GitRepository)repoSelector.getSelectedItem();
+        myHeadToBranchListPanel.setCommits(getHeadToBranchCommits(selectedRepo));
+        myBranchToHeadListPanel.setCommits(getBranchToHeadCommits(selectedRepo));
+      }
+    });
+    
+    JPanel repoSelectorPanel = new JPanel(new BorderLayout());
+    JBLabel label = new JBLabel("Repository: ");
+    label.setLabelFor(repoSelectorPanel);
+    repoSelectorPanel.add(label);
+    repoSelectorPanel.add(repoSelector);
+
+    if (myCompareInfo.getRepositories().size() < 2) {
+      repoSelectorPanel.setVisible(false);
+    }
+    return repoSelectorPanel;
+  }
+
+  private ArrayList<GitCommit> getBranchToHeadCommits(GitRepository selectedRepo) {
+    return new ArrayList<GitCommit>(myCompareInfo.getBranchToHeadCommits(selectedRepo));
+  }
+
+  private ArrayList<GitCommit> getHeadToBranchCommits(GitRepository selectedRepo) {
+    return new ArrayList<GitCommit>(myCompareInfo.getHeadToBranchCommits(selectedRepo));
   }
 
   private static void addSelectionListener(@NotNull GitCommitListPanel sourcePanel,
@@ -117,10 +153,6 @@ public class GitCompareBranchesDialog extends DialogWrapper {
                          secondBranch, firstBranch, firstBranch, secondBranch);
   }
 
-  @Override
-  protected JComponent createCenterPanel() {
-    return myRootPanel;
-  }
 
   // it is information dialog - no need to OK or Cancel. Close the dialog by clicking the cross button or pressing Esc.
   @Override

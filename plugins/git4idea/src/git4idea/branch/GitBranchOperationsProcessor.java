@@ -25,9 +25,9 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
-import git4idea.commands.Git;
 import git4idea.GitExecutionException;
 import git4idea.GitVcs;
+import git4idea.commands.Git;
 import git4idea.history.GitHistoryUtils;
 import git4idea.history.browser.GitCommit;
 import git4idea.merge.GitConflictResolver;
@@ -35,6 +35,7 @@ import git4idea.repo.GitRepository;
 import git4idea.ui.branch.GitBranchUiUtil;
 import git4idea.ui.branch.GitCompareBranchesDialog;
 import git4idea.ui.branch.GitMultiRootBranchConfig;
+import git4idea.util.GitCommitCompareInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,14 +65,29 @@ public final class GitBranchOperationsProcessor {
     this(repository.getProject(), Collections.singleton(repository), callInAwtAfterExecution);
   }
 
+  public GitBranchOperationsProcessor(@NotNull Project project, @NotNull Collection<GitRepository> repositories) {
+    this(project, repositories, null);
+  }
+
   public GitBranchOperationsProcessor(@NotNull Project project, @NotNull Collection<GitRepository> repositories, @Nullable Runnable callInAwtAfterExecution) {
     myProject = project;
     myRepositories = repositories;
     myCallInAwtAfterExecution = callInAwtAfterExecution;
   }
-
-  public GitBranchOperationsProcessor(@NotNull Project project, @NotNull Collection<GitRepository> repositories) {
-    this(project, repositories, null);
+  
+  @NotNull
+  private String getCurrentBranch() {
+    if (myRepositories.size() > 1) {
+      GitMultiRootBranchConfig multiRootBranchConfig = new GitMultiRootBranchConfig(myRepositories);
+      String currentBranch = multiRootBranchConfig.getCurrentBranch();
+      LOG.assertTrue(currentBranch != null, "Repositories have unexpectedly diverged. " + multiRootBranchConfig);
+      return currentBranch;
+    }
+    else {
+      assert !myRepositories.isEmpty() : "No repositories passed to GitBranchOperationsProcessor.";
+      GitRepository repository = myRepositories.iterator().next();
+      return GitBranchUiUtil.getBranchNameOrRev(repository);
+    }
   }
 
   /**
@@ -100,11 +116,7 @@ public final class GitBranchOperationsProcessor {
   }
 
   private void doCheckoutNewBranch(@NotNull final String name) {
-    GitMultiRootBranchConfig multiRootBranchConfig = new GitMultiRootBranchConfig(myRepositories);
-    String currentBranch = multiRootBranchConfig.getCurrentBranch();
-    LOG.assertTrue(currentBranch != null, "Repositories have unexpectedly diverged. " + multiRootBranchConfig);
-
-    GitCheckoutNewBranchOperation operation = new GitCheckoutNewBranchOperation(myProject, myRepositories, name, currentBranch);
+    GitCheckoutNewBranchOperation operation = new GitCheckoutNewBranchOperation(myProject, myRepositories, name, getCurrentBranch());
     new GitMultiRootOperationExecutor(myProject, myRepositories).execute(operation);
   }
 
@@ -155,12 +167,8 @@ public final class GitBranchOperationsProcessor {
   }
 
   private void doCheckout(@NotNull ProgressIndicator indicator, @NotNull String reference, @Nullable String newBranch) {
-    GitMultiRootBranchConfig multiRootBranchConfig = new GitMultiRootBranchConfig(myRepositories);
-    String currentBranch = multiRootBranchConfig.getCurrentBranch();
-    LOG.assertTrue(currentBranch != null, "Repositories have unexpectedly diverged. " + multiRootBranchConfig);
-
     GitMultiRootOperationExecutor executor = new GitMultiRootOperationExecutor(myProject, myRepositories);
-    GitCheckoutOperation operation = new GitCheckoutOperation(myProject, myRepositories, reference, newBranch, currentBranch, executor, indicator);
+    GitCheckoutOperation operation = new GitCheckoutOperation(myProject, myRepositories, reference, newBranch, getCurrentBranch(), executor, indicator);
     executor.execute(operation);
   }
 
@@ -173,11 +181,7 @@ public final class GitBranchOperationsProcessor {
   }
 
   private void doDelete(final String branchName, ProgressIndicator indicator) {
-    GitMultiRootBranchConfig multiRootBranchConfig = new GitMultiRootBranchConfig(myRepositories);
-    String currentBranch = multiRootBranchConfig.getCurrentBranch();
-    LOG.assertTrue(currentBranch != null, "Repositories have unexpectedly diverged. " + multiRootBranchConfig);
-
-    GitDeleteBranchOperation operation = new GitDeleteBranchOperation(myProject, myRepositories, branchName, currentBranch, indicator);
+    GitDeleteBranchOperation operation = new GitDeleteBranchOperation(myProject, myRepositories, branchName, getCurrentBranch(), indicator);
     operation.execute();
   }
 
@@ -186,28 +190,35 @@ public final class GitBranchOperationsProcessor {
    * @param branchName name of the branch to compare with.
    */
   public void compare(@NotNull final String branchName) {
-    // TODO: make available for several roots
-    if (myRepositories.size() > 1 || myRepositories.isEmpty()) {
-      return;
-    }
-    final GitRepository repository = myRepositories.iterator().next();
     new CommonBackgroundTask(myProject, "Comparing with " + branchName, myCallInAwtAfterExecution) {
   
-      private Pair<List<GitCommit>,List<GitCommit>> myCommits;
+      private GitCommitCompareInfo myCompareInfo;
   
       @Override
       public void execute(@NotNull ProgressIndicator indicator) {
-        myCommits = loadCommitsToCompare(repository, branchName);
+        myCompareInfo = loadCommitsToCompare(myRepositories, branchName);
       }
   
       @Override
       public void onSuccess() {
-        displayCompareDialog(repository, myCommits.getFirst(), myCommits.getSecond(), branchName);
+        if (myCompareInfo == null) {
+          LOG.error("The task to get compare info didn't finish. Repositories: \n" + myRepositories + "\nbranch name: " + branchName);
+          return;
+        }
+        displayCompareDialog(branchName, getCurrentBranch(), myCompareInfo);
       }
     }.runInBackground();
   }
+
+  private GitCommitCompareInfo loadCommitsToCompare(Collection<GitRepository> repositories, String branchName) {
+    GitCommitCompareInfo compareInfo = new GitCommitCompareInfo();
+    for (GitRepository repository : repositories) {
+      compareInfo.put(repository, loadCommitsToCompare(repository, branchName));
+    }
+    return compareInfo;
+  }
   
-  private Pair<List<GitCommit>, List<GitCommit>> loadCommitsToCompare(GitRepository repository, @NotNull final String branchName) {
+  private Pair<List<GitCommit>, List<GitCommit>> loadCommitsToCompare(@NotNull GitRepository repository, @NotNull final String branchName) {
     final List<GitCommit> headToBranch;
     final List<GitCommit> branchToHead;
     try {
@@ -221,13 +232,13 @@ public final class GitBranchOperationsProcessor {
     return Pair.create(headToBranch, branchToHead);
   }
   
-  private void displayCompareDialog(GitRepository repository, List<GitCommit> headToBranch, List<GitCommit> branchToHead, String branchName) {
-    if (headToBranch.isEmpty() && branchToHead.isEmpty()) {
-      String currentBranch = GitBranchUiUtil.getBranchNameOrRev(repository);
+  private void displayCompareDialog(@NotNull String branchName, @NotNull String currentBranch, @NotNull GitCommitCompareInfo compareInfo) {
+    if (compareInfo.isEmpty()) {
       Messages.showInfoMessage(myProject, String.format("<html>There are no changes between <code>%s</code> and <code>%s</code></html>",
                                                         currentBranch, branchName), "No Changes Detected");
-    } else {
-      new GitCompareBranchesDialog(repository, branchName, headToBranch, branchToHead).show();
+    }
+    else {
+      new GitCompareBranchesDialog(myProject, branchName, currentBranch, compareInfo).show();
     }
   }
 
