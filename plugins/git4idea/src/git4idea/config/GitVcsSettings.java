@@ -21,6 +21,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
+import git4idea.ui.branch.GitBranchSyncSetting;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,16 +39,6 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
   private final GitVcsApplicationSettings myAppSettings;
   private State myState = new State();
   
-  public static class State {
-    public List<String> PREVIOUS_COMMIT_AUTHORS = new ArrayList<String>(); // The previously entered authors of the commit (up to {@value #PREVIOUS_COMMIT_AUTHORS_LIMIT})
-    public SshExecutable SSH_EXECUTABLE = SshExecutable.IDEA_SSH;
-    public UpdateChangesPolicy UPDATE_CHANGES_POLICY = UpdateChangesPolicy.STASH; // The policy that specifies how files are saved before update or rebase
-    public UpdateMethod UPDATE_TYPE = UpdateMethod.BRANCH_DEFAULT;
-    public ConversionPolicy LINE_SEPARATORS_CONVERSION = ConversionPolicy.CONVERT;
-
-    public boolean PUSH_AUTO_UPDATE = false;
-  }
-
   /**
    * The way the local changes are saved before update if user has selected auto-stash
    */
@@ -68,6 +59,16 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     NONE, // No conversion is performed
     CONVERT, // The files are converted to project line separators
     ASK  // Show dialog and ask user what to do: convert files or leave unchanged.
+  }
+
+  public static class State {
+    public List<String> PREVIOUS_COMMIT_AUTHORS = new ArrayList<String>(); // The previously entered authors of the commit (up to {@value #PREVIOUS_COMMIT_AUTHORS_LIMIT})
+    public SshExecutable SSH_EXECUTABLE = SshExecutable.IDEA_SSH;
+    public UpdateChangesPolicy UPDATE_CHANGES_POLICY = UpdateChangesPolicy.STASH; // The policy that specifies how files are saved before update or rebase
+    public UpdateMethod UPDATE_TYPE = UpdateMethod.BRANCH_DEFAULT;
+    public ConversionPolicy LINE_SEPARATORS_CONVERSION = ConversionPolicy.CONVERT;
+    public boolean PUSH_AUTO_UPDATE = false;
+    public GitBranchSyncSetting SYNC_SETTING = GitBranchSyncSetting.NOT_DECIDED;
   }
 
   public GitVcsSettings(GitVcsApplicationSettings appSettings) {
@@ -150,6 +151,15 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
 
   public void setAutoUpdateIfPushRejected(boolean autoUpdate) {
     myState.PUSH_AUTO_UPDATE = autoUpdate;
+  }
+
+  @NotNull
+  public GitBranchSyncSetting getSyncSetting() {
+    return myState.SYNC_SETTING;
+  }
+
+  public void setSyncSetting(@NotNull GitBranchSyncSetting syncSetting) {
+    myState.SYNC_SETTING = syncSetting;
   }
 
 
