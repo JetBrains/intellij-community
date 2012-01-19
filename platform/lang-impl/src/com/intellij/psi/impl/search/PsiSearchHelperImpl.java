@@ -844,7 +844,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       }
     }); 
 
-    if (set == null || set.size() > 1000) {
+    if (set == null || set.size() > 1000 && !ApplicationManager.getApplication().isUnitTestMode()) {
       return SearchCostResult.TOO_MANY_OCCURRENCES;
     }
 
