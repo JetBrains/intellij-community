@@ -23,7 +23,9 @@ import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.ex.WeakKeymapManagerListener;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindowAnchor;
+import com.intellij.ui.Gray;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -72,7 +74,7 @@ final class Stripe extends JPanel{
 
       g.setColor(UIUtil.getPanelBackground());
       drawBorder(g, x, y, width, height, insets);
-      g.setColor(new Color(0, 0, 0, 90));
+      g.setColor(Gray._155);
       drawBorder(g, x, y, width, height, insets);
     }
 
@@ -397,13 +399,15 @@ final class Stripe extends JPanel{
   }
 
   public void setOverlayed(boolean overlayed) {
+    if (Registry.is("disable.toolwindow.overlayed")) return;
+
     Color bg = UIUtil.getPanelBackground();
     if (UIUtil.isUnderAquaLookAndFeel()) {
       float[] result = Color.RGBtoHSB(bg.getRed(), bg.getGreen(), bg.getBlue(), new float[3]);
       bg = new Color(Color.HSBtoRGB(result[0], result[1], result[2] - 0.08f > 0 ? result[2] - 0.08f : result[2]));
     }
     if (overlayed) {
-     setBackground(new Color(bg.getRed(), bg.getGreen(), bg.getBlue(), 190));
+    setBackground(new Color(bg.getRed(), bg.getGreen(), bg.getBlue(), 190));
     } else {
       setBackground(bg);
     }
