@@ -18,6 +18,7 @@ package com.intellij.ide.util.scopeChooser;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.favoritesTreeView.FavoritesManager;
+import com.intellij.ide.projectView.impl.AbstractUrl;
 import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -29,6 +30,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.ChangeListsScopesProvider;
 import com.intellij.packageDependencies.DependencyValidationManager;
@@ -322,6 +324,8 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     final FavoritesManager favoritesManager = FavoritesManager.getInstance(project);
     String[] favoritesLists = favoritesManager == null ? ArrayUtil.EMPTY_STRING_ARRAY : favoritesManager.getAvailableFavoritesLists();
     for (final String favorite : favoritesLists) {
+      final Collection<Pair<AbstractUrl,String>> rootUrls = favoritesManager.getFavoritesListRootUrls(favorite);
+      if (rootUrls.isEmpty()) continue; //ignore unused root
       result.add(new GlobalSearchScope(project) {
         @Override
         public String getDisplayName() {
