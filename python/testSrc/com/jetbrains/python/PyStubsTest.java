@@ -338,6 +338,14 @@ public class PyStubsTest extends PyTestCase {
     assertNotParsed(file);
   }
 
+  public void testBuiltinAncestor() {
+    final PyFileImpl file = (PyFileImpl) getTestFile();
+    final PyClass pyClass = file.getTopLevelClasses().get(0);
+    final PyClassRef classRef = pyClass.iterateAncestors().iterator().next();
+    assertNotNull(classRef.getPyClass());
+    assertNotParsed(file);
+  }
+
   private void ensureVariableNotInIndex(String name) {
     getTestFile();
     GlobalSearchScope scope = GlobalSearchScope.allScope(myFixture.getProject());
