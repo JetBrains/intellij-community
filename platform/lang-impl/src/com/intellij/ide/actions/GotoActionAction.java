@@ -58,7 +58,7 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
           }, ModalityState.NON_MODAL);
         }
       }
-    });
+    }, null, false);
   }
 
 }

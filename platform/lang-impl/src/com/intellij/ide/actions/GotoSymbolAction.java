@@ -46,7 +46,7 @@ public class GotoSymbolAction extends GotoActionBase {
       public void elementChosen(ChooseByNamePopup popup, Object element) {
         EditSourceUtil.navigate((NavigationItem)element, true, popup.isOpenInCurrentWindowRequested());
       }
-    }, "Symbols matching patterns");
+    }, "Symbols matching patterns", true);
   }
 
   protected boolean hasContributors(DataContext dataContext) {
