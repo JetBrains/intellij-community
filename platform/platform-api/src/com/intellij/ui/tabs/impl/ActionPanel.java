@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-class ActionPanel extends NonOpaquePanel {
+public class ActionPanel extends NonOpaquePanel {
 
   private final ActionGroup myGroup;
   private final List<ActionButton> myButtons = new ArrayList<ActionButton>();
