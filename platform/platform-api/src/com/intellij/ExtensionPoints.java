@@ -84,8 +84,7 @@ public interface ExtensionPoints {
 
   @NonNls String INSPECTIONS_GRAPH_ANNOTATOR = "com.intellij.refGraphAnnotator";
 
-  @NonNls String INSPECTION_ENRTY_POINT = "com.intellij.entryPoint";
-
+  /** @see EntryPoint */
   @NonNls String DEAD_CODE_TOOL = "com.intellij.deadCode";
 
   @NonNls String JAVADOC_LOCAL = "com.intellij.javaDocNotNecessary";
@@ -97,7 +96,7 @@ public interface ExtensionPoints {
   @NonNls String ANT_BUILD_GEN = "com.intellij.antBuildGen";
 
   /**
-   * Ant custom compiler extenstion point
+   * Ant custom compiler extension point
    */
   @NonNls String ANT_CUSTOM_COMPILER = "com.intellij.antCustomCompiler";
 }
