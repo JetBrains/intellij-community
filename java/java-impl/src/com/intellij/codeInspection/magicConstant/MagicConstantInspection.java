@@ -26,6 +26,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -56,6 +57,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 public class MagicConstantInspection extends LocalInspectionTool {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.magicConstant.MagicConstantInspection");
+
   @Nls
   @NotNull
   @Override
@@ -185,7 +188,7 @@ public class MagicConstantInspection extends LocalInspectionTool {
         jdk = ((JdkOrderEntry)orderEntry).getJdk();
       }
     }
-    if (jdk == null) return;
+    LOG.assertTrue(jdk != null, "JDK not configured for module "+module);
     LocalFileSystem lfs = LocalFileSystem.getInstance();
     VirtualFile root = null;
     if (root == null) { // community idea under idea
@@ -194,10 +197,11 @@ public class MagicConstantInspection extends LocalInspectionTool {
     if (root == null) {  // idea under idea
       root = lfs.findFileByPath(FileUtil.toSystemIndependentName(PathManager.getHomePath()) + "/community/java/jdkAnnotations");
     }
-    if (root == null) {
+    if (root == null) { // build
       root = VirtualFileManager.getInstance().findFileByUrl("jar://"+ FileUtil.toSystemIndependentName(PathManager.getHomePath()) + "/lib/jdkAnnotations.jar!/");
     }
     if (root == null) {
+      LOG.error("jdk annotations not found in: "+ FileUtil.toSystemIndependentName(PathManager.getHomePath()) + "/lib/jdkAnnotations.jar!/");
       return;
     }
 
@@ -278,8 +282,8 @@ public class MagicConstantInspection extends LocalInspectionTool {
     }
   }
 
-  private static AllowedValues getAllowedValuesFromMagic(@NotNull PsiModifierListOwner element, @NotNull PsiType type) {
-    PsiAnnotation magic = AnnotationUtil.findAnnotationInHierarchy(element, Collections.singleton(MagicConstant.class.getName()));
+  private static AllowedValues getAllowedValuesFromMagic(@NotNull PsiModifierListOwner element,
+                                                         @NotNull PsiType type, PsiAnnotation magic) {
     if (magic == null) return null;
     PsiAnnotationMemberValue[] allowedValues;
     final boolean canBeOred;
@@ -342,14 +346,15 @@ public class MagicConstantInspection extends LocalInspectionTool {
   }
   
   static AllowedValues getAllowedValues(@NotNull PsiModifierListOwner element, PsiType type, Set<PsiClass> visited) {
-    AllowedValues values;
-    if (type != null) {
-      values = getAllowedValuesFromMagic(element, type);
-      if (values != null) return values;
-    }
-
     PsiAnnotation[] annotations = AnnotationUtil.getAllAnnotations(element, true, null);
     for (PsiAnnotation annotation : annotations) {
+      AllowedValues values;
+      if (type != null && MagicConstant.class.getName().equals(annotation.getQualifiedName())) {
+        //PsiAnnotation magic = AnnotationUtil.findAnnotationInHierarchy(element, Collections.singleton(MagicConstant.class.getName()));
+        values = getAllowedValuesFromMagic(element, type, annotation);
+        if (values != null) return values;
+      }
+
       PsiJavaCodeReferenceElement ref = annotation.getNameReferenceElement();
       PsiElement resolved = ref == null ? null : ref.resolve();
       if (!(resolved instanceof PsiClass) || !((PsiClass)resolved).isAnnotationType()) continue;
