@@ -63,7 +63,7 @@ public class JBTabsPaneImpl implements TabbedPane, SwingConstants {
   }
 
   public void setKeyboardNavigation(PrevNextActionsDescriptor installKeyboardNavigation) {
-    myTabs.setNavigationActiondBinding(installKeyboardNavigation.getPrevActionId(), installKeyboardNavigation.getNextActionId());
+    myTabs.setNavigationActionBinding(installKeyboardNavigation.getPrevActionId(), installKeyboardNavigation.getNextActionId());
   }
 
   public void addChangeListener(ChangeListener listener) {

@@ -285,7 +285,7 @@ public class JBTabsImpl extends JComponent
   }
 
 
-  public JBTabs setNavigationActiondBinding(String prevActionId, String nextActionId) {
+  public JBTabs setNavigationActionBinding(String prevActionId, String nextActionId) {
     if (myNextAction != null) {
       myNextAction.reconnect(nextActionId);
     }
@@ -313,7 +313,7 @@ public class JBTabsImpl extends JComponent
     return myDisposed;
   }
 
-  public JBTabs setAdditinalSwitchProviderWhenOriginal(SwitchProvider delegate) {
+  public JBTabs setAdditionalSwitchProviderWhenOriginal(SwitchProvider delegate) {
     mySwitchDelegate = delegate;
     return this;
   }
