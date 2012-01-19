@@ -2,6 +2,7 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -41,6 +42,10 @@ import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.interpretAsMo
  * Implements PyFunction.
  */
 public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> implements PyFunction {
+  private static final Icon PROPERTY_GETTER = IconLoader.findIcon("/com/jetbrains/python/icons/propertyGetter.png");
+  private static final Icon PROPERTY_SETTER = IconLoader.findIcon("/com/jetbrains/python/icons/propertySetter.png");
+  private static final Icon PROPERTY_DELETER = IconLoader.findIcon("/com/jetbrains/python/icons/propertyDeleter.png");
+
   public PyFunctionImpl(ASTNode astNode) {
     super(astNode);
   }
@@ -78,7 +83,20 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
 
   @Override
   public Icon getIcon(int flags) {
-    return getProperty() != null ? PlatformIcons.PROPERTY_ICON : PlatformIcons.METHOD_ICON;
+    final Property property = getProperty();
+    if (property != null) {
+      if (property.getGetter().valueOrNull() == this) {
+        return PROPERTY_GETTER;
+      }
+      if (property.getSetter().valueOrNull() == this) {
+        return PROPERTY_SETTER;
+      }
+      if (property.getDeleter().valueOrNull() == this) {
+        return PROPERTY_DELETER;
+      }
+      return PlatformIcons.PROPERTY_ICON;
+    }
+    return PlatformIcons.METHOD_ICON;
   }
 
   @Nullable
