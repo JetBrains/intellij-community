@@ -55,6 +55,7 @@ public class AppEngineUtil {
 
   public static List<Artifact> collectWebArtifacts(@NotNull Project project, final boolean withAppEngineFacetOnly) {
     final List<Artifact> artifacts = new ArrayList<Artifact>();
+    if (project.isDefault()) return artifacts;
     for (Artifact artifact : ArtifactManager.getInstance(project).getArtifactsByType(WebArtifactUtil.getInstance().getExplodedWarArtifactType())) {
       if (!withAppEngineFacetOnly || findAppEngineFacet(project, artifact) != null) {
         artifacts.add(artifact);
