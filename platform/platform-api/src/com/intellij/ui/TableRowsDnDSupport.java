@@ -43,7 +43,15 @@ public class TableRowsDnDSupport {
           if (cellEditor != null) {
             cellEditor.stopCellEditing();
           }
-          return new DnDDragStartBean(Integer.valueOf(table.rowAtPoint(p)));
+          return new DnDDragStartBean(new TableRowDragInfo(table, Integer.valueOf(table.rowAtPoint(p))));
+        }
+      })
+      .setTargetChecker(new DnDTargetChecker() {
+        @Override
+        public boolean update(DnDEvent event) {
+          final Object o = event.getAttachedObject();
+          event.setDropPossible(o instanceof TableRowDragInfo && ((TableRowDragInfo)o).table == table);
+          return false;
         }
       })
       .setDropHandler(new DnDDropHandler() {
@@ -51,8 +59,8 @@ public class TableRowsDnDSupport {
         public void drop(DnDEvent event) {
           final Object o = event.getAttachedObject();
           final Point p = event.getPoint();
-          if (o instanceof Integer) {
-            int oldIndex = ((Integer)o).intValue();
+          if (o instanceof TableRowDragInfo && ((TableRowDragInfo)o).table == table) {
+            int oldIndex = ((TableRowDragInfo)o).row;
             if (oldIndex == -1) return;
             int newIndex = table.rowAtPoint(p);
             if (newIndex == -1) {
@@ -66,7 +74,8 @@ public class TableRowsDnDSupport {
                 min++;
               }
               table.getSelectionModel().setSelectionInterval(min, min);
-            } else {
+            }
+            else {
               while (max > min) {
                 model.exchangeRows(max, max - 1);
                 max--;
@@ -76,5 +85,15 @@ public class TableRowsDnDSupport {
           }
         }
       }).install();
+  }
+  
+  static class TableRowDragInfo {
+    public final JTable table;
+    public final int row;
+
+    TableRowDragInfo(JTable table, int row) {
+      this.table = table;
+      this.row = row;
+    }
   }
 }
