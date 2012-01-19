@@ -105,7 +105,7 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
     });
 
     final PsiCodeBlock containerBlock = PsiTreeUtil.getParentOfType(local, PsiCodeBlock.class);
-    LOG.assertTrue(containerBlock != null);
+    LOG.assertTrue(containerBlock != null, local);
 
     final PsiExpression defToInline = innerClassesWithUsages.isEmpty()
                                       ? getDefToInline(local, refExpr, containerBlock)
