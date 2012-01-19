@@ -59,8 +59,9 @@ class GitBranchPopup  {
   /**
    *
    * @param project
-   * @param currentRepository Current repository, which means the repository of the currently open file. In the case of synchronized branch
-   *                   operations current repository doesn't matter.
+   * @param currentRepository Current repository, which means the repository of the currently open or selected file.
+   *                          In the case of synchronized branch operations current repository matter much less, but sometimes is used,
+   *                          for example, it is preselected in the repositories combobox in the compare branches dialog.
    * @return
    */
   static GitBranchPopup getInstance(@NotNull Project project, GitRepository currentRepository) {
@@ -97,20 +98,20 @@ class GitBranchPopup  {
         String currentBranch = branchConfig.getCurrentBranch();
         assert currentBranch != null : "Current branch can't be null if branches have not diverged";
         popupGroup.add(new GitBranchPopupActions.CurrentBranchAction(currentBranch, " in all roots"));
-        popupGroup.add(new GitBranchPopupActions.NewBranchAction(myProject, repositories));
+        popupGroup.add(new GitBranchPopupActions.NewBranchAction(myProject, repositories, myCurrentRepository));
 
         popupGroup.addAll(createRepositoriesActions());
 
         popupGroup.addSeparator("Common Local Branches");
         for (String branch : branchConfig.getLocalBranches()) {
           if (!branch.equals(currentBranch)) {
-            popupGroup.add(new GitBranchPopupActions.LocalBranchActions(myProject, repositories, branch));
+            popupGroup.add(new GitBranchPopupActions.LocalBranchActions(myProject, repositories, branch, myCurrentRepository));
           }
         }
 
         popupGroup.addSeparator("Common Remote Branches");
         for (String branch : branchConfig.getRemoteBranches()) {
-          popupGroup.add(new GitBranchPopupActions.RemoteBranchActions(myProject, repositories, branch));
+          popupGroup.add(new GitBranchPopupActions.RemoteBranchActions(myProject, repositories, branch, myCurrentRepository));
         }
       }
       else {
@@ -138,7 +139,7 @@ class GitBranchPopup  {
     return popupGroup;
   }
 
-  private void fillPopupWithCurrentRepositoryActions(DefaultActionGroup popupGroup, DefaultActionGroup actions) {
+  private void fillPopupWithCurrentRepositoryActions(@NotNull DefaultActionGroup popupGroup, @Nullable DefaultActionGroup actions) {
     popupGroup.addAll(new GitBranchPopupActions(myCurrentRepository.getProject(), myCurrentRepository).createActions(actions));
   }
 

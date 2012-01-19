@@ -53,13 +53,14 @@ public class GitCompareBranchesDialog extends DialogWrapper {
   private GitCommitListPanel myHeadToBranchListPanel;
   private GitCommitListPanel myBranchToHeadListPanel;
 
-  public GitCompareBranchesDialog(@NotNull Project project, @NotNull String branchName, @NotNull String currentBranchName, GitCommitCompareInfo compareInfo) {
+  public GitCompareBranchesDialog(@NotNull Project project, @NotNull String branchName, @NotNull String currentBranchName, @NotNull GitCommitCompareInfo compareInfo,
+                                  @NotNull GitRepository initialRepo) {
     super(project, false);
     myCurrentBranchName = currentBranchName;
     myCompareInfo = compareInfo;
     myProject = project;
     myBranchName = branchName;
-    myInitialRepo = myCompareInfo.getRepositories().iterator().next();
+    myInitialRepo = initialRepo;
 
     setTitle(String.format("Comparing %s with %s", currentBranchName, branchName));
     init();

@@ -56,22 +56,28 @@ public final class GitBranchOperationsProcessor {
   private final Project myProject;
   private final Collection<GitRepository> myRepositories;
   @Nullable private final Runnable myCallInAwtAfterExecution;
+  private final GitRepository mySelectedRepository;
 
   public GitBranchOperationsProcessor(@NotNull GitRepository repository) {
     this(repository, null);
   }
   
   public GitBranchOperationsProcessor(@NotNull GitRepository repository, @Nullable Runnable callInAwtAfterExecution) {
-    this(repository.getProject(), Collections.singleton(repository), callInAwtAfterExecution);
+    this(repository.getProject(), Collections.singleton(repository), repository, callInAwtAfterExecution);
   }
 
-  public GitBranchOperationsProcessor(@NotNull Project project, @NotNull Collection<GitRepository> repositories) {
-    this(project, repositories, null);
+  public GitBranchOperationsProcessor(@NotNull Project project, @NotNull Collection<GitRepository> repositories,
+                                      @NotNull GitRepository selectedRepository) {
+    this(project, repositories, selectedRepository, null);
   }
 
-  public GitBranchOperationsProcessor(@NotNull Project project, @NotNull Collection<GitRepository> repositories, @Nullable Runnable callInAwtAfterExecution) {
+  public GitBranchOperationsProcessor(@NotNull Project project,
+                                      @NotNull Collection<GitRepository> repositories,
+                                      @NotNull GitRepository selectedRepository,
+                                      @Nullable Runnable callInAwtAfterExecution) {
     myProject = project;
     myRepositories = repositories;
+    mySelectedRepository = selectedRepository;
     myCallInAwtAfterExecution = callInAwtAfterExecution;
   }
   
@@ -238,7 +244,7 @@ public final class GitBranchOperationsProcessor {
                                                         currentBranch, branchName), "No Changes Detected");
     }
     else {
-      new GitCompareBranchesDialog(myProject, branchName, currentBranch, compareInfo).show();
+      new GitCompareBranchesDialog(myProject, branchName, currentBranch, compareInfo, mySelectedRepository).show();
     }
   }
 
