@@ -534,10 +534,10 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   //============================= EditorManager methods ================================
 
   public void closeFile(@NotNull final VirtualFile file) {
-    closeFile(file, true);
+    closeFile(file, true, false);
   }
 
-  public void closeFile(@NotNull final VirtualFile file, final boolean moveFocus) {
+  public void closeFile(@NotNull final VirtualFile file, final boolean moveFocus, final boolean closeAllCopies) {
     assertDispatchThread();
 
     final LocalFileSystem.WatchRequest request = file.getUserData(WATCH_REQUEST_KEY);
@@ -547,14 +547,14 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
 
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
-        closeFileImpl(file, moveFocus);
+        closeFileImpl(file, moveFocus, closeAllCopies);
       }
     }, "", null);
   }
 
 
 
-  private void closeFileImpl(@NotNull final VirtualFile file, final boolean moveFocus) {
+  private void closeFileImpl(@NotNull final VirtualFile file, final boolean moveFocus, boolean closeAllCopies) {
     assertDispatchThread();
     runChange(new FileEditorManagerChange() {
       public void run(EditorsSplitters splitters) {
@@ -581,7 +581,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
           }
         }
       }
-    }, getActiveSplitters(true).getResult());
+    }, closeAllCopies ? null : getActiveSplitters(true).getResult());
   }
 
 //-------------------------------------- Open File ----------------------------------------
@@ -1439,8 +1439,8 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
       final VirtualFile file = e.getFile();
       final VirtualFile[] openFiles = getOpenFiles();
       for (int i = openFiles.length - 1; i >= 0; i--) {
-        if (VfsUtil.isAncestor(file, openFiles[i], false)) {
-          closeFile(openFiles[i]);
+        if (VfsUtilCore.isAncestor(file, openFiles[i], false)) {
+          closeFile(openFiles[i], true, true);
         }
       }
     }
