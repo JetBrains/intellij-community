@@ -35,7 +35,7 @@ public interface ExtensionPoints {
    * </pre>
    * <p/>
    * Possible registration areas are IDEA_PROJECT, MODULE_PROJECT which stand for ProjectComponent and ModuleComponent correspondingly.
-   * If area attribute is ommited the component will be registered in root area which corresponds to ApplicationComponent.
+   * If area attribute is omitted the component will be registered in root area which corresponds to ApplicationComponent.
    */
   @NonNls String COMPONENT = "com.intellij.component";
 
@@ -84,7 +84,6 @@ public interface ExtensionPoints {
 
   @NonNls String INSPECTIONS_GRAPH_ANNOTATOR = "com.intellij.refGraphAnnotator";
 
-  /** @see EntryPoint */
   @NonNls String DEAD_CODE_TOOL = "com.intellij.deadCode";
 
   @NonNls String JAVADOC_LOCAL = "com.intellij.javaDocNotNecessary";
