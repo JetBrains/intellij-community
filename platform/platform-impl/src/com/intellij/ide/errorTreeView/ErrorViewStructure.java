@@ -20,6 +20,7 @@ import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.CustomizeColoredTreeCellRenderer;
@@ -40,10 +41,12 @@ public class ErrorViewStructure extends AbstractTreeStructure {
   private final ErrorTreeElement myRoot = new MyRootElement();
   private final List<String> myGroupNames = new ArrayList<String>();
   private final Map<String, GroupingElement> myGroupNameToElementMap = new HashMap<String, GroupingElement>();
-  private final Map<String, List<NavigatableMessageElement>> myGroupNameToMessagesMap = new HashMap<String, List<NavigatableMessageElement>>();
-  private final Map<ErrorTreeElementKind, List<ErrorTreeElement>> mySimpleMessages = new EnumMap<ErrorTreeElementKind, List<ErrorTreeElement>>(ErrorTreeElementKind.class);
+  private final Map<String, List<NavigatableMessageElement>> myGroupNameToMessagesMap =
+    new HashMap<String, List<NavigatableMessageElement>>();
+  private final Map<ErrorTreeElementKind, List<ErrorTreeElement>> mySimpleMessages =
+    new HashMap<ErrorTreeElementKind, List<ErrorTreeElement>>();
 
-  private static final ErrorTreeElementKind[] ourMessagesOrder = {
+  private static final ErrorTreeElementKind[] ourMessagesOrder = new ErrorTreeElementKind[]{
     ErrorTreeElementKind.INFO,
     ErrorTreeElementKind.ERROR,
     ErrorTreeElementKind.WARNING,
@@ -67,10 +70,10 @@ public class ErrorViewStructure extends AbstractTreeStructure {
       final List<Object> children = new ArrayList<Object>();
       // simple messages
       for (final ErrorTreeElementKind kind : ourMessagesOrder) {
-        if (!ErrorTreeElementKind.ERROR.equals(kind) &&
-            myCanHideWarnings &&
-            ErrorTreeViewConfiguration.getInstance(myProject).isHideWarnings()) {
-          continue;
+        if (ErrorTreeElementKind.WARNING.equals(kind) || ErrorTreeElementKind.NOTE.equals(kind)) {
+          if (myCanHideWarnings && ErrorTreeViewConfiguration.getInstance(myProject).isHideWarnings()) {
+            continue;
+          }
         }
         final List<ErrorTreeElement> elems = mySimpleMessages.get(kind);
         if (elems != null) {
@@ -86,15 +89,15 @@ public class ErrorViewStructure extends AbstractTreeStructure {
       }
       return ArrayUtil.toObjectArray(children);
     }
-    if (element instanceof GroupingElement) {
+    else if (element instanceof GroupingElement) {
       synchronized (myGroupNameToMessagesMap) {
         final List<NavigatableMessageElement> children = myGroupNameToMessagesMap.get(((GroupingElement)element).getName());
-        if (children != null && !children.isEmpty()) {
+        if (children != null && children.size() > 0) {
           if (myCanHideWarnings && ErrorTreeViewConfiguration.getInstance(myProject).isHideWarnings()) {
             final List<NavigatableMessageElement> filtered = new ArrayList<NavigatableMessageElement>(children.size());
             for (final NavigatableMessageElement navigatableMessageElement : children) {
               ErrorTreeElementKind kind = navigatableMessageElement.getKind();
-              if (!ErrorTreeElementKind.ERROR.equals(kind)) {
+              if (ErrorTreeElementKind.WARNING.equals(kind) || ErrorTreeElementKind.NOTE.equals(kind)) {
                 continue;
               }
               filtered.add(navigatableMessageElement);
@@ -117,7 +120,7 @@ public class ErrorViewStructure extends AbstractTreeStructure {
       if (children != null) {
         for (final NavigatableMessageElement child : children) {
           ErrorTreeElementKind kind = child.getKind();
-          if (ErrorTreeElementKind.ERROR.equals(kind)) {
+          if (!ErrorTreeElementKind.WARNING.equals(kind) && !ErrorTreeElementKind.NOTE.equals(kind)) {
             return true;
           }
         }
@@ -184,7 +187,7 @@ public class ErrorViewStructure extends AbstractTreeStructure {
   public List<Object> getGroupChildrenData(final String groupName) {
     synchronized (myGroupNameToMessagesMap) {
       final List<NavigatableMessageElement> children = myGroupNameToMessagesMap.get(groupName);
-      if (children != null && !children.isEmpty()) {
+      if (children != null && (!children.isEmpty())) {
         final List<Object> result = new ArrayList<Object>();
         for (NavigatableMessageElement child : children) {
           final Object data = child.getData();
@@ -299,12 +302,12 @@ public class ErrorViewStructure extends AbstractTreeStructure {
 
   public ErrorTreeElement getFirstMessage(ErrorTreeElementKind kind) {
     if (myCanHideWarnings &&
-        !ErrorTreeElementKind.ERROR.equals(kind) &&
+        (ErrorTreeElementKind.WARNING.equals(kind) || ErrorTreeElementKind.NOTE.equals(kind)) &&
         ErrorTreeViewConfiguration.getInstance(myProject).isHideWarnings()) {
       return null; // no warnings are available
     }
     final List<ErrorTreeElement> simpleMessages = mySimpleMessages.get(kind);
-    if (simpleMessages != null && !simpleMessages.isEmpty()) {
+    if (simpleMessages != null && simpleMessages.size() > 0) {
       return simpleMessages.get(0);
     }
     for (final String path : myGroupNames) {
@@ -345,6 +348,7 @@ public class ErrorViewStructure extends AbstractTreeStructure {
   }
 
   private static class MyNavigatableWithDataElement extends NavigatableMessageElement {
+    private final static Icon ourFileIcon = IconLoader.getIcon("/fileTypes/unknown.png");
     private final VirtualFile myVf;
     private final CustomizeColoredTreeCellRenderer myCustomizeColoredTreeCellRenderer;
 
@@ -366,10 +370,12 @@ public class ErrorViewStructure extends AbstractTreeStructure {
                                           boolean leaf,
                                           int row,
                                           boolean hasFocus) {
-          final Icon icon = myVf.getFileType().getIcon();
-          renderer.setIcon(icon);
+          if (myVf != null) {
+            final Icon icon = myVf.getFileType().getIcon();
+            renderer.setIcon(icon);
+          }
           final String[] messages = getText();
-          final String text = messages == null || messages.length == 0 ? vf.getPath() : messages[0];
+          final String text = ((messages == null) || (messages.length == 0)) ? vf.getPath() : messages[0];
           renderer.append(text);
         }
       };

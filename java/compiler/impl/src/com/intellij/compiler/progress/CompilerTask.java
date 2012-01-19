@@ -23,7 +23,6 @@ package com.intellij.compiler.progress;
 
 import com.intellij.compiler.CompilerManagerImpl;
 import com.intellij.compiler.CompilerMessageImpl;
-import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.impl.CompilerErrorTreeView;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
 import com.intellij.ide.errorTreeView.impl.ErrorTreeViewConfiguration;
@@ -312,9 +311,8 @@ public class CompilerTask extends Task.Backgroundable {
         final boolean shouldAutoActivate =
           !myMessagesAutoActivated &&
           (
-            CompilerWorkspaceConfiguration.getInstance(myProject).useCompileServer() /*todo: temporary*/||
             CompilerMessageCategory.ERROR.equals(category) ||
-            !ErrorTreeViewConfiguration.getInstance(myProject).isHideWarnings()
+            (CompilerMessageCategory.WARNING.equals(category) && !ErrorTreeViewConfiguration.getInstance(myProject).isHideWarnings())
           );
         if (shouldAutoActivate) {
           myMessagesAutoActivated = true;
