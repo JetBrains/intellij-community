@@ -1,5 +1,7 @@
 package org.jetbrains.plugins.gradle.util;
 
+import org.intellij.lang.annotations.JdkConstants;
+
 import javax.swing.*;
 import java.awt.*;
 
@@ -16,9 +18,9 @@ import java.awt.*;
  */
 public class MultiRowFlowPanel extends JPanel {
 
-  private int maximumWidth = Toolkit.getDefaultToolkit().getScreenSize().width / 2;
+  private final int maximumWidth = Toolkit.getDefaultToolkit().getScreenSize().width / 2;
 
-  public MultiRowFlowPanel(int align, int hGap, int vGap) {
+  public MultiRowFlowPanel(@JdkConstants.FlowLayoutAlignment int align, int hGap, int vGap) {
     super(new FlowLayout(align, hGap, vGap));
   }
   
