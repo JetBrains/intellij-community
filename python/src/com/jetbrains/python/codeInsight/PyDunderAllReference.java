@@ -1,13 +1,21 @@
 package com.jetbrains.python.codeInsight;
 
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReferenceBase;
+import com.intellij.psi.ResolveState;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.impl.LightNamedElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -33,6 +41,30 @@ public class PyDunderAllReference extends PsiReferenceBase<PyStringLiteralExpres
   @NotNull
   @Override
   public Object[] getVariants() {
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
+    final List<PsiElement> result = new ArrayList<PsiElement>();
+    PyFile containingFile = (PyFile) getElement().getContainingFile().getOriginalFile();
+    final List<String> dunderAll = containingFile.getDunderAll();
+    containingFile.processDeclarations(new PsiScopeProcessor() {
+      @Override
+      public boolean execute(PsiElement element, ResolveState state) {
+        if (element instanceof PsiNamedElement && !(element instanceof LightNamedElement)) {
+          final String name = ((PsiNamedElement)element).getName();
+          if (name != null && PyUtil.getInitialUnderscores(name) == 0 && (dunderAll == null || !dunderAll.contains(name))) {
+            result.add(element);
+          }
+        }
+        return true;
+      }
+
+      @Override
+      public <T> T getHint(Key<T> hintKey) {
+        return null;
+      }
+
+      @Override
+      public void handleEvent(Event event, @Nullable Object associated) {
+      }
+    }, ResolveState.initial(), null, containingFile);
+    return ArrayUtil.toObjectArray(result);
   }
 }

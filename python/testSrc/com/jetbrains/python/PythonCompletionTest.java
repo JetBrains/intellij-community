@@ -512,4 +512,8 @@ public class PythonCompletionTest extends PyTestCase {
     final List<String> strings = myFixture.getLookupElementStrings();
     assertFalse(strings.contains("mro"));
   }
+  
+  public void testDunderAllReference() {  // PY-5502
+    doTest();
+  }
 }
