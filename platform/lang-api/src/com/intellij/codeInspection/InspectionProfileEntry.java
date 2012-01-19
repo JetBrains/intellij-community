@@ -96,11 +96,11 @@ public abstract class InspectionProfileEntry {
    */
   @NonNls @NotNull
   public String getShortName() {
-    return getShortName(getClass());
+    return getShortName(getClass().getSimpleName());
   }
 
-  public static String getShortName(Class<? extends InspectionProfileEntry> aClass) {
-    return StringUtil.trimEnd(aClass.getSimpleName(), "Inspection");
+  public static String getShortName(String className) {
+    return StringUtil.trimEnd(className, "Inspection");
   }
 
   /**
