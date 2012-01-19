@@ -355,7 +355,7 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
   }
 
   private void createNewDockContainerFor(DockableContent content, RelativePoint point) {
-    DockContainer container = getFactory(content.getDockContainerType()).createContainer();
+    DockContainer container = getFactory(content.getDockContainerType()).createContainer(content);
     register(container);
 
     final DockWindow window = createWindowFor(null, container);
