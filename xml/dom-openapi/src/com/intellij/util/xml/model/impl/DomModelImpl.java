@@ -90,6 +90,7 @@ public class DomModelImpl<T extends DomElement> {
     return myMergedModel instanceof MergedObject ? ((MergedObject) myMergedModel).getImplementations() : Collections.singletonList(myMergedModel);
   }
 
+  @NotNull
   public Project getProject() {
     return myProject;
   }
