@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -338,8 +339,12 @@ public class ExtractMethodDialog extends AbstractExtractDialog {
   protected JComponent createCenterPanel() {
     myCenterPanel = new JPanel(new BorderLayout());
     createParametersPanel();
-    myCenterPanel.add(createSignaturePanel(), BorderLayout.SOUTH);
-    return myCenterPanel;
+
+    final Splitter splitter = new Splitter(true);
+    splitter.setShowDividerIcon(false);
+    splitter.setFirstComponent(myCenterPanel);
+    splitter.setSecondComponent(createSignaturePanel());
+    return splitter;
   }
 
   protected boolean isOutputVariable(PsiVariable var) {
@@ -352,6 +357,7 @@ public class ExtractMethodDialog extends AbstractExtractDialog {
     }
 
     myParamTable = createParameterTableComponent();
+    myParamTable.setMinimumSize(new Dimension(500, 100));
     myCenterPanel.add(myParamTable, BorderLayout.CENTER);
     final JTable table = UIUtil.findComponentOfType(myParamTable, JTable.class);
     myCenterPanel.add(SeparatorFactory.createSeparator("&Parameters", table), BorderLayout.NORTH);

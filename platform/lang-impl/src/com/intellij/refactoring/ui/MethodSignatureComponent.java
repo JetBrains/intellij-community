@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,8 +45,6 @@ public class MethodSignatureComponent extends EditorTextField {
     setText(signature);
     final EditorEx editor = (EditorEx)getEditor();
     if (editor != null) {
-      editor.setHorizontalScrollbarVisible(true);
-      editor.setVerticalScrollbarVisible(true);
       editor.getScrollingModel().scrollVertically(0);
       editor.getScrollingModel().scrollHorizontally(0);
     }
@@ -60,6 +58,8 @@ public class MethodSignatureComponent extends EditorTextField {
       editor.setHighlighter(EditorHighlighterFactory.getInstance().createEditorHighlighter(getProject(), fileName));
     }
     editor.getSettings().setWhitespacesShown(false);
+    editor.setHorizontalScrollbarVisible(true);
+    editor.setVerticalScrollbarVisible(true);
     return editor;
   }
 
