@@ -66,19 +66,28 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class FileStructurePopup implements Disposable {
+  private static final Comparator<TextRange> TEXT_RANGE_COMPARATOR = new Comparator<TextRange>() {
+    @Override
+    public int compare(TextRange o1, TextRange o2) {
+      if (o1.getStartOffset() == o2.getStartOffset()) {
+        return o2.getEndOffset() - o1.getEndOffset(); //longer is better
+      }
+      return o1.getStartOffset() - o2.getStartOffset();
+    }
+  };
   private final Editor myEditor;
   private final Project myProject;
   private final StructureViewModel myTreeModel;
@@ -95,6 +104,7 @@ public class FileStructurePopup implements Disposable {
   private SmartTreeStructure myTreeStructure;
   private int myPreferredWidth;
   private final FilteringTreeStructure myFilteringStructure;
+  private PsiElement myInitialPsiElement;
 
   public FileStructurePopup(StructureViewModel structureViewModel,
                             @Nullable Editor editor,
@@ -154,7 +164,7 @@ public class FileStructurePopup implements Disposable {
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
 
-    mySpeedSearch = new TreeSpeedSearch(myTree, TreeSpeedSearch.NODE_DESCRIPTOR_TOSTRING, true) {
+    mySpeedSearch = new TreeSpeedSearch(myTree, TreeSpeedSearch.NODE_DESCRIPTOR_TOSTRING, true) {      
       @Override
       protected Point getComponentLocationOnScreen() {
         return myPopup.getContent().getLocationOnScreen();
@@ -164,6 +174,108 @@ public class FileStructurePopup implements Disposable {
       protected Rectangle getComponentVisibleRect() {
         return myPopup.getContent().getVisibleRect();
       }
+
+      @Override
+      protected Object findElement(String s) {
+        List<ObjectWithWeight> elements = new ArrayList<ObjectWithWeight>();
+        s = s.trim();
+        final ListIterator<Object> it = getElementIterator(0);
+        while (it.hasNext()) {
+          final ObjectWithWeight o = new ObjectWithWeight(it.next(), s, getComparator());
+          if (!o.weights.isEmpty()) {
+            elements.add(o);
+          }
+        }
+        ObjectWithWeight cur = null;
+        ArrayList<ObjectWithWeight> current = new ArrayList<ObjectWithWeight>();
+        for (ObjectWithWeight element : elements) {
+          if (cur == null) {
+            cur = element;
+            current.add(cur);
+            continue;
+          }
+
+          final int i = element.compareWith(cur);
+          if (i == 0) {
+            current.add(element);
+          } else if (i < 0) {
+            cur = element;
+            current.clear();
+            current.add(cur);
+          }
+        }
+
+        return current.isEmpty() ? null : findClosestTo(myInitialPsiElement, current);
+      }
+
+      private Object findClosestTo(PsiElement path, ArrayList<ObjectWithWeight> pathes) {
+        if (path == null) {
+          return pathes.get(0).node;
+        }
+        //todo[kb]
+        return pathes.get(0).node;
+        //int max = -1;
+        //Object cur = null;
+        //for (ObjectWithWeight objectWithWeight : pathes) {
+        //  if (cur == null) {
+        //    cur = objectWithWeight.node;
+        //    max = matchesNumber(path, (TreePath)cur);
+        //    continue;
+        //  }
+        //
+        //  final int i = matchesNumber(path, (TreePath)objectWithWeight.node);
+        //  if (max < i) {
+        //    cur = objectWithWeight.node;
+        //    max = i;
+        //  }
+        //}
+        //return cur == null ? pathes.get(0).node : cur;
+      }
+
+      private int matchesNumber(TreePath path, TreePath cur) {
+        final Object[] o1 = path.getPath();
+        final Object[] o2 = cur.getPath();
+        for (int i = 0; i < o1.length; i++) {          
+          if (i >= o2.length || o1[i] != o2[i]) {
+            return i;
+          }
+        }
+        return o1.length;
+      }
+      
+      class ObjectWithWeight {
+        final Object node;
+        final List<TextRange> weights = new ArrayList<TextRange>();
+
+        ObjectWithWeight(Object element, String pattern, SpeedSearchComparator comparator) {
+          this.node = element;
+          final String text = getElementText(element);
+          if (text != null) {
+            final Iterable<TextRange> ranges = comparator.matchingFragments(pattern, text);
+            if (ranges != null) {
+              for (TextRange range : ranges) {
+                weights.add(range);
+              }
+            }
+          }
+          Collections.sort(weights, TEXT_RANGE_COMPARATOR);
+        }
+        
+        int compareWith(ObjectWithWeight obj) {
+          final List<TextRange> w = obj.weights;
+          for (int i = 0; i < weights.size(); i++) {
+            if (i >= w.size()) return 1;
+            final int result = TEXT_RANGE_COMPARATOR.compare(weights.get(i), w.get(i));
+            if (result != 0) {
+              return result;
+            }
+          }
+          
+          return 0;
+        }
+        
+      }
+      
     };
     mySpeedSearch.setComparator(new SpeedSearchComparator(false, true));
 
@@ -231,7 +343,8 @@ public class FileStructurePopup implements Disposable {
         myAbstractTreeBuilder.queueUpdate().doWhenDone(new Runnable() {
           @Override
           public void run() {
-            selectPsiElement(getCurrentElement(getPsiFile(myProject)));
+            myInitialPsiElement = getCurrentElement(getPsiFile(myProject));
+            selectPsiElement(myInitialPsiElement);
             treeHasBuilt.setDone();
             //long t = System.currentTimeMillis() - time;
             //System.out.println("Shown in " + t + "ms");
@@ -255,9 +368,9 @@ public class FileStructurePopup implements Disposable {
             @Override
             public void run() {
               myTree.repaint();
-              if (mySpeedSearch.isPopupActive()) {
-                mySpeedSearch.refreshSelection();
-              }
+              //if (mySpeedSearch.isPopupActive()) {
+              //  mySpeedSearch.refreshSelection();
+              //}
             }
           });          
         }
