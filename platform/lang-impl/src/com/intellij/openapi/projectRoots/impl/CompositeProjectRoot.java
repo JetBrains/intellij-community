@@ -41,10 +41,12 @@ class CompositeProjectRoot implements ProjectRoot {
     return myRoots.toArray(new ProjectRoot[myRoots.size()]);
   }
 
+  @NotNull
   public String getPresentableString() {
     throw new UnsupportedOperationException();
   }
 
+  @NotNull
   public VirtualFile[] getVirtualFiles() {
     List<VirtualFile> result = new ArrayList<VirtualFile>();
     for (ProjectRoot root : myRoots) {
@@ -54,6 +56,7 @@ class CompositeProjectRoot implements ProjectRoot {
     return VfsUtil.toVirtualFileArray(result);
   }
 
+  @NotNull
   public String[] getUrls() {
     final List<String> result = new ArrayList<String>();
     for (ProjectRoot root : myRoots) {
@@ -66,22 +69,22 @@ class CompositeProjectRoot implements ProjectRoot {
     return true;
   }
 
-  void remove(ProjectRoot root) {
+  void remove(@NotNull ProjectRoot root) {
     myRoots.remove(root);
   }
 
   @NotNull
-  ProjectRoot add(VirtualFile virtualFile) {
+  ProjectRoot add(@NotNull VirtualFile virtualFile) {
     final SimpleProjectRoot root = new SimpleProjectRoot(virtualFile);
     myRoots.add(root);
     return root;
   }
 
-  void add(ProjectRoot root) {
+  void add(@NotNull ProjectRoot root) {
     myRoots.add(root);
   }
 
-  void remove(VirtualFile root) {
+  void remove(@NotNull VirtualFile root) {
     for (Iterator<ProjectRoot> iterator = myRoots.iterator(); iterator.hasNext();) {
       ProjectRoot projectRoot = iterator.next();
       if (projectRoot instanceof SimpleProjectRoot) {

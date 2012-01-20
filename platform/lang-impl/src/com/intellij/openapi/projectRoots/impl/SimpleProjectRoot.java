@@ -58,6 +58,7 @@ public class SimpleProjectRoot implements ProjectRoot, JDOMExternalizable {
     return myFile;
   }
 
+  @NotNull
   public String getPresentableString() {
     String path = VirtualFileManager.extractPath(myUrl);
     if (path.endsWith(JarFileSystem.JAR_SEPARATOR)) {
@@ -66,6 +67,7 @@ public class SimpleProjectRoot implements ProjectRoot, JDOMExternalizable {
     return path.replace('/', File.separatorChar);
   }
 
+  @NotNull
   public VirtualFile[] getVirtualFiles() {
     if (!myInitialized) initialize();
 
@@ -77,6 +79,7 @@ public class SimpleProjectRoot implements ProjectRoot, JDOMExternalizable {
     return myFileArray;
   }
 
+  @NotNull
   public String[] getUrls() {
     return new String[]{myUrl};
   }
