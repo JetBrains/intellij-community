@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,14 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.navigation.ColoredItemPresentation;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -100,9 +102,14 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
   public void doAppend(String fragment, boolean isSelected) {
     append(fragment);
   }
-
-  protected static SimpleTextAttributes getSimpleTextAttributes(final PresentableNodeDescriptor node, final Color color) {
-    SimpleTextAttributes simpleTextAttributes = getSimpleTextAttributes(node.getPresentation());
+  
+  @NotNull
+  protected EditorColorsScheme getColorsScheme() {
+    return EditorColorsManager.getInstance().getGlobalScheme();
+  }
+  
+  protected SimpleTextAttributes getSimpleTextAttributes(final PresentableNodeDescriptor node, final Color color) {
+    SimpleTextAttributes simpleTextAttributes = getSimpleTextAttributes(node.getPresentation(), getColorsScheme());
 
     if (color != null) {
       final TextAttributes textAttributes = simpleTextAttributes.toTextAttributes();
@@ -112,11 +119,17 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
     return simpleTextAttributes;
   }
 
-  public static SimpleTextAttributes getSimpleTextAttributes(final ItemPresentation presentation) {
+  public static SimpleTextAttributes getSimpleTextAttributes(@Nullable final ItemPresentation presentation) {
+    return getSimpleTextAttributes(presentation, EditorColorsManager.getInstance().getGlobalScheme());
+  }
+  
+  public static SimpleTextAttributes getSimpleTextAttributes(@Nullable final ItemPresentation presentation,
+                                                             @NotNull EditorColorsScheme colorsScheme)
+  {
     if (presentation instanceof ColoredItemPresentation) {
       final TextAttributesKey textAttributesKey = ((ColoredItemPresentation) presentation).getTextAttributesKey();
       if (textAttributesKey == null) return SimpleTextAttributes.REGULAR_ATTRIBUTES;
-      final TextAttributes textAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(textAttributesKey);
+      final TextAttributes textAttributes = colorsScheme.getAttributes(textAttributesKey);
       return textAttributes == null ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.fromTextAttributes(textAttributes);
     }
     return SimpleTextAttributes.REGULAR_ATTRIBUTES;

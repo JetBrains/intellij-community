@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.importing.GradleProjectImportBuilder;
 import org.jetbrains.plugins.gradle.model.*;
 import org.jetbrains.plugins.gradle.importing.wizard.AbstractImportFromGradleWizardStep;
+import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNode;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 
 import javax.swing.*;

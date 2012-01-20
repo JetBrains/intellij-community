@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import com.intellij.openapi.options.colors.EditorHighlightingProvidingColorSetti
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -296,7 +297,7 @@ public class SimpleEditorPreview implements PreviewPanel{
   }
 
 
-  public void addListener(final ColorAndFontSettingsListener listener) {
+  public void addListener(@NotNull final ColorAndFontSettingsListener listener) {
     myDispatcher.addListener(listener);
   }
 

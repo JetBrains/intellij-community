@@ -32,8 +32,8 @@ import org.jetbrains.plugins.gradle.notification.*;
 import org.jetbrains.plugins.gradle.remote.GradleApiException;
 import org.jetbrains.plugins.gradle.remote.GradleApiFacadeManager;
 import org.jetbrains.plugins.gradle.remote.GradleProjectResolver;
+import org.jetbrains.plugins.gradle.ui.GradleIcons;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
-import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleLog;
 
 import javax.swing.*;
@@ -70,7 +70,7 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
 
   @Override
   public Icon getIcon() {
-    return GradleConstants.GRADLE_ICON;
+    return GradleIcons.GRADLE_ICON;
   }
 
   @Override

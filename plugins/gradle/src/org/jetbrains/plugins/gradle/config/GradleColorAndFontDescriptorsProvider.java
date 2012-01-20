@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
+import com.intellij.openapi.options.colors.ColorAndFontDescriptorsProvider;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
 import org.jetbrains.annotations.NotNull;
@@ -22,68 +23,46 @@ import java.util.Map;
  * @author Denis Zhdanov
  * @since 1/18/12 4:15 PM
  */
-public class GradleColorSettingsPage implements ColorSettingsPage {
+public class GradleColorAndFontDescriptorsProvider implements ColorAndFontDescriptorsProvider {
   
-  private static final ColorDescriptor[] DESCRIPTORS = {
-    new ColorDescriptor(
-      GradleBundle.message("gradle.sync.change.type.gradle"),
-      GradleColorKeys.GRADLE_LOCAL_CHANGE,
-      ColorDescriptor.Kind.FOREGROUND
-    ),
-    new ColorDescriptor(
-      GradleBundle.message("gradle.sync.change.type.intellij", ApplicationNamesInfo.getInstance().getProductName()),
-      GradleColorKeys.GRADLE_INTELLIJ_LOCAL_CHANGE,
-      ColorDescriptor.Kind.FOREGROUND
-    ),
-    new ColorDescriptor(
+  private static final AttributesDescriptor[] DESCRIPTORS = {
+    new AttributesDescriptor(
       GradleBundle.message("gradle.sync.change.type.conflict"),
-      GradleColorKeys.GRADLE_CHANGE_CONFLICT,
-      ColorDescriptor.Kind.FOREGROUND
+      GradleTextAttributes.GRADLE_CHANGE_CONFLICT
     ),
-    new ColorDescriptor(
+    new AttributesDescriptor(
+      GradleBundle.message("gradle.sync.change.type.gradle"),
+      GradleTextAttributes.GRADLE_LOCAL_CHANGE
+    ),
+    new AttributesDescriptor(
+      GradleBundle.message("gradle.sync.change.type.intellij", ApplicationNamesInfo.getInstance().getProductName()),
+      GradleTextAttributes.GRADLE_INTELLIJ_LOCAL_CHANGE
+    ),
+    new AttributesDescriptor(
       GradleBundle.message("gradle.sync.change.type.confirmed"),
-      GradleColorKeys.GRADLE_CONFIRMED_CONFLICT,
-      ColorDescriptor.Kind.FOREGROUND
+      GradleTextAttributes.GRADLE_CONFIRMED_CONFLICT
+    ),
+    new AttributesDescriptor(
+      GradleBundle.message("gradle.sync.change.type.unchanged"),
+      GradleTextAttributes.GRADLE_NO_CHANGE
     )
   };
-  
+
   @NotNull
   @Override
   public String getDisplayName() {
     return GradleBundle.message("gradle.name");
   }
 
-  @Override
-  public Icon getIcon() {
-    return GradleIcons.GRADLE_ICON;
-  }
-
   @NotNull
   @Override
   public AttributesDescriptor[] getAttributeDescriptors() {
-    return new AttributesDescriptor[0];
-  }
-
-  @NotNull
-  @Override
-  public ColorDescriptor[] getColorDescriptors() {
     return DESCRIPTORS;
   }
 
   @NotNull
   @Override
-  public SyntaxHighlighter getHighlighter() {
-    return new PlainSyntaxHighlighter();
-  }
-
-  @NotNull
-  @Override
-  public String getDemoText() {
-    return "";
-  }
-
-  @Override
-  public Map<String, TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap() {
-    return null;
+  public ColorDescriptor[] getColorDescriptors() {
+    return new ColorDescriptor[0];
   }
 }

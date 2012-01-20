@@ -1,12 +1,13 @@
 package org.jetbrains.plugins.gradle.importing.wizard.adjust;
 
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.*;
+import org.jetbrains.plugins.gradle.ui.GradleIcons;
+import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNode;
+import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNodeDescriptor;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 
-import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -27,37 +28,32 @@ public class GradleProjectStructureFactory {
   /** Shared instance of the current (stateless) class. */
   public static final GradleProjectStructureFactory INSTANCE = new GradleProjectStructureFactory();
 
-  private static final Icon PROJECT_ICON      = IconLoader.getIcon("/nodes/ideaProject.png");
-  private static final Icon MODULE_ICON       = IconLoader.getIcon("/nodes/ModuleOpen.png");
-  private static final Icon CONTENT_ROOT_ICON = IconLoader.getIcon("/modules/addContentEntry.png");
-  private static final Icon LIB_ICON          = IconLoader.getIcon("/nodes/ppLib.png");
-
   @SuppressWarnings("MethodMayBeStatic")
   @NotNull
   public <T extends GradleEntity> GradleProjectStructureNodeDescriptor buildDescriptor(@NotNull T entity) {
-    final Ref<GradleProjectStructureNodeDescriptor> result = new Ref<GradleProjectStructureNodeDescriptor>();
+    final Ref<GradleProjectStructureNodeDescriptor<GradleEntity>> result = new Ref<GradleProjectStructureNodeDescriptor<GradleEntity>>();
     entity.invite(new GradleEntityVisitor() {
       @Override
       public void visit(@NotNull GradleProject project) {
-        result.set(new GradleProjectStructureNodeDescriptor(project, project.getName(), PROJECT_ICON));
+        result.set(new GradleProjectStructureNodeDescriptor<GradleEntity>(project, project.getName(), GradleIcons.PROJECT_ICON));
       }
 
       @Override
       public void visit(@NotNull GradleModule module) {
-        result.set(new GradleProjectStructureNodeDescriptor(module, module.getName(), MODULE_ICON));
+        result.set(new GradleProjectStructureNodeDescriptor<GradleEntity>(module, module.getName(), GradleIcons.MODULE_ICON));
       }
 
       @Override
       public void visit(@NotNull GradleContentRoot contentRoot) {
-        result.set(new GradleProjectStructureNodeDescriptor(
+        result.set(new GradleProjectStructureNodeDescriptor<GradleEntity>(
           contentRoot,
-          GradleBundle.message("gradle.import.structure.tree.node.content.root"), CONTENT_ROOT_ICON
+          GradleBundle.message("gradle.import.structure.tree.node.content.root"), GradleIcons.CONTENT_ROOT_ICON
         )); 
       }
 
       @Override
       public void visit(@NotNull GradleLibrary library) {
-        result.set(new GradleProjectStructureNodeDescriptor(library, library.getName(), LIB_ICON));
+        result.set(new GradleProjectStructureNodeDescriptor<GradleEntity>(library, library.getName(), GradleIcons.LIB_ICON));
       }
 
       @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
+import com.intellij.openapi.options.colors.ColorAndFontDescriptorsProvider;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
 import com.intellij.util.containers.HashMap;
 
@@ -51,21 +52,21 @@ public class ColorSettingsUtil {
     return displayText;
   }
 
-  public static List<AttributesDescriptor> getAllAttributeDescriptors(ColorSettingsPage page) {
+  public static List<AttributesDescriptor> getAllAttributeDescriptors(ColorAndFontDescriptorsProvider provider) {
     List<AttributesDescriptor> result = new ArrayList<AttributesDescriptor>();
-    Collections.addAll(result, page.getAttributeDescriptors());
-    if (isInspectionColorsPage(page)) {
+    Collections.addAll(result, provider.getAttributeDescriptors());
+    if (isInspectionColorsPage(provider)) {
       addInspectionSeverityAttributes(result);
     }
     return result;
   }
 
-  private static boolean isInspectionColorsPage(ColorSettingsPage page) {
+  private static boolean isInspectionColorsPage(ColorAndFontDescriptorsProvider provider) {
     // the first registered page implementing InspectionColorSettingsPage
     // gets the inspection attribute descriptors added to its list
-    if (!(page instanceof InspectionColorSettingsPage)) return false;
+    if (!(provider instanceof InspectionColorSettingsPage)) return false;
     for(ColorSettingsPage settingsPage: Extensions.getExtensions(ColorSettingsPage.EP_NAME)) {
-      if (settingsPage == page) break;
+      if (settingsPage == provider) break;
       if (settingsPage instanceof InspectionColorSettingsPage) return false;
     }
     return true;        

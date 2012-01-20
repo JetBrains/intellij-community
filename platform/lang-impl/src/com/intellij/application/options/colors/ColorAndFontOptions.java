@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,14 +37,12 @@ import com.intellij.openapi.editor.colors.impl.EditorColorsSchemeImpl;
 import com.intellij.openapi.editor.colors.impl.ReadOnlyColorsScheme;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ExternalizableScheme;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.options.colors.AttributesDescriptor;
-import com.intellij.openapi.options.colors.ColorDescriptor;
-import com.intellij.openapi.options.colors.ColorSettingsPage;
-import com.intellij.openapi.options.colors.ColorSettingsPages;
+import com.intellij.openapi.options.colors.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Comparing;
@@ -329,16 +327,19 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     ColorSettingsPage[] pages = ColorSettingsPages.getInstance().getRegisteredPages();
     for (final ColorSettingsPage page : pages) {
       result.add(new ColorAndFontPanelFactory() {
-        public NewColorAndFontPanel createPanel(ColorAndFontOptions options) {
+        @NotNull
+        public NewColorAndFontPanel createPanel(@NotNull ColorAndFontOptions options) {
           final SimpleEditorPreview preview = new SimpleEditorPreview(options, page);
           return NewColorAndFontPanel.create(preview, page.getDisplayName(), options, null, page);
         }
 
+        @NotNull
         public String getPanelDisplayName() {
           return page.getDisplayName();
         }
       });
     }
+    Collections.addAll(result, Extensions.getExtensions(ColorAndFontPanelFactory.EP_NAME));
     result.add(new DiffColorsPageFactory());
     result.add(new FileStatusColorsPageFactory());
     result.add(new ScopeColorsPageFactory());
@@ -347,7 +348,8 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   }
 
   private static class FontConfigurableFactory implements ColorAndFontPanelFactory {
-    public NewColorAndFontPanel createPanel(ColorAndFontOptions options) {
+    @NotNull
+    public NewColorAndFontPanel createPanel(@NotNull ColorAndFontOptions options) {
       FontEditorPreview previewPanel = new FontEditorPreview(options, true);
       return new NewColorAndFontPanel(new SchemesPanel(options), new FontOptions(options), previewPanel, "Font", null, null){
         @Override
@@ -357,13 +359,15 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
       };
     }
 
+    @NotNull
     public String getPanelDisplayName() {
       return "Font";
     }
   }
 
    private static class ConsoleFontConfigurableFactory implements ColorAndFontPanelFactory {
-    public NewColorAndFontPanel createPanel(ColorAndFontOptions options) {
+    @NotNull
+    public NewColorAndFontPanel createPanel(@NotNull ColorAndFontOptions options) {
       FontEditorPreview previewPanel = new FontEditorPreview(options, false) {
         @Override
         protected EditorColorsScheme updateOptionsScheme(EditorColorsScheme selectedScheme) {
@@ -378,13 +382,15 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
       };
     }
 
+    @NotNull
     public String getPanelDisplayName() {
       return "Console Font";
     }
   }
 
   private class DiffColorsPageFactory implements ColorAndFontPanelFactory {
-    public NewColorAndFontPanel createPanel(ColorAndFontOptions options) {
+    @NotNull
+    public NewColorAndFontPanel createPanel(@NotNull ColorAndFontOptions options) {
       final DiffOptionsPanel optionsPanel = new DiffOptionsPanel(options);
       SchemesPanel schemesPanel = new SchemesPanel(options);
       PreviewPanel previewPanel;
@@ -409,6 +415,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
       return new NewColorAndFontPanel(schemesPanel, optionsPanel, previewPanel, DIFF_GROUP, null, null);
     }
 
+    @NotNull
     public String getPanelDisplayName() {
       return DIFF_GROUP;
     }
@@ -444,18 +451,21 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     for (ColorSettingsPage page : pages) {
       initDescriptions(page, descriptions, scheme);
     }
+    for (ColorAndFontDescriptorsProvider provider : Extensions.getExtensions(ColorAndFontDescriptorsProvider.EP_NAME)) {
+      initDescriptions(provider, descriptions, scheme);
+    }
   }
 
-  private static void initDescriptions(ColorSettingsPage page,
+  private static void initDescriptions(ColorAndFontDescriptorsProvider provider,
                                        ArrayList<EditorSchemeAttributeDescriptor> descriptions,
                                        MyColorScheme scheme) {
-    String group = page.getDisplayName();
-    List<AttributesDescriptor> attributeDescriptors = ColorSettingsUtil.getAllAttributeDescriptors(page);
+    String group = provider.getDisplayName();
+    List<AttributesDescriptor> attributeDescriptors = ColorSettingsUtil.getAllAttributeDescriptors(provider);
     for (AttributesDescriptor descriptor : attributeDescriptors) {
       addSchemedDescription(descriptions, descriptor.getDisplayName(), group, descriptor.getKey(), scheme, null, null);
     }
 
-    ColorDescriptor[] colorDescriptors = page.getColorDescriptors();
+    ColorDescriptor[] colorDescriptors = provider.getColorDescriptors();
     for (ColorDescriptor descriptor : colorDescriptors) {
       ColorKey back = descriptor.getKind() == ColorDescriptor.Kind.BACKGROUND ? descriptor.getKey() : null;
       ColorKey fore = descriptor.getKind() == ColorDescriptor.Kind.FOREGROUND ? descriptor.getKey() : null;

@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.gradle.util;
+package org.jetbrains.plugins.gradle.ui;
 
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
