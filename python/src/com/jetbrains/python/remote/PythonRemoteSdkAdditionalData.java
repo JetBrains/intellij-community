@@ -78,7 +78,7 @@ public class PythonRemoteSdkAdditionalData extends PythonSdkAdditionalData imple
     rootElement.setAttribute(PASSPHRASE, getSerializedPassphrase());
     rootElement.setAttribute(USE_KEY_PAIR, Boolean.toString(isUseKeyPair()));
 
-    rootElement.setAttribute(INTERPRETER_PATH, getInterpreterPath());
+    rootElement.setAttribute(INTERPRETER_PATH, StringUtil.notNullize(getInterpreterPath()));
   }
 
 
@@ -267,6 +267,8 @@ public class PythonRemoteSdkAdditionalData extends PythonSdkAdditionalData imple
       data.setKnownHostsFile(StringUtil.nullize(element.getAttributeValue(KNOWN_HOSTS_FILE)));
       data.setSerializedPassphrase(element.getAttributeValue(PASSPHRASE));
       data.setUseKeyPair(Boolean.parseBoolean(element.getAttributeValue(USE_KEY_PAIR)));
+
+      data.setInterpreterPath(StringUtil.nullize(element.getAttributeValue(INTERPRETER_PATH)));
     }
 
     return data;
