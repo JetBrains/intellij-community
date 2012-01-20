@@ -17,9 +17,12 @@ package org.jetbrains.idea.maven.importing;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.project.*;
@@ -55,6 +58,11 @@ public abstract class MavenImporter {
 
   public boolean isApplicable(MavenProject mavenProject) {
     return mavenProject.findPlugin(myPluginGroupID, myPluginArtifactID) != null;
+  }
+
+  @NotNull
+  public ModuleType getModuleType() {
+    return StdModuleTypes.JAVA;
   }
 
   public void getSupportedPackagings(Collection<String> result) {
