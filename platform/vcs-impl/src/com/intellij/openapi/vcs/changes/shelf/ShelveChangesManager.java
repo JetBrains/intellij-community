@@ -366,7 +366,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
                                  @Nullable final List<ShelvedBinaryFile> binaryFiles,
                                  @Nullable final LocalChangeList targetChangeList,
                                  final boolean showSuccessNotification, final ContinuationContext context,
-                                 final boolean silentAddDelete) {
+                                 final boolean systemOperation) {
     context.next(new TaskDescriptor("", Where.AWT) {
       @Override
       public void run(ContinuationContext contextInner) {
@@ -400,6 +400,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
         final BinaryPatchApplier binaryPatchApplier = new BinaryPatchApplier(binaryFilesToUnshelve.size());
         final PatchApplier<ShelvedBinaryFilePatch> patchApplier = new PatchApplier<ShelvedBinaryFilePatch>(myProject, myProject.getBaseDir(),
             patches, targetChangeList, binaryPatchApplier, commitContext);
+        patchApplier.setIsSystemOperation(systemOperation);
 
         // after patch applier part
         contextInner.next(new TaskDescriptor("", Where.AWT) {
@@ -416,7 +417,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
           }
         });
 
-        patchApplier.scheduleSelf(showSuccessNotification, contextInner, silentAddDelete);
+        patchApplier.scheduleSelf(showSuccessNotification, contextInner, systemOperation);
       }
     });
   }
