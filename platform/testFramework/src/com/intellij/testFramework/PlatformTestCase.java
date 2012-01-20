@@ -34,6 +34,8 @@ import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.module.EmptyModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -479,12 +481,22 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
             }
           }
         });
-
-        myProject = null;
       }
     }
     catch (Exception e) {
       result.add(e);
+    }
+    finally {
+      if (myProject != null) {
+        try {
+          PsiDocumentManager documentManager = myProject.getComponent(PsiDocumentManager.class, null);
+          if (documentManager != null) EditorFactory.getInstance().getEventMulticaster().removeDocumentListener((DocumentListener)documentManager);
+        }
+        catch (Exception ignored) {
+
+        }
+        myProject = null;
+      }
     }
   }
 
