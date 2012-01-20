@@ -55,7 +55,7 @@ public class ChangeTypeSignatureAction extends BaseRefactoringAction {
     if (referenceParameterList != null) {
       return referenceParameterList.getTypeArguments().length > 0;
     }
-    return true;
+    return PsiTreeUtil.getParentOfType(psiElement, PsiTypeElement.class) != null;
   }
 
   public RefactoringActionHandler getHandler(DataContext dataContext) {

@@ -29,7 +29,7 @@
     <spellchecker.support language="JAVA" implementationClass="com.intellij.spellchecker.JavaSpellcheckingStrategy"/>
 
     <localInspection language="JAVA" shortName="HardCodedStringLiteral" bundle="messages.CodeInsightBundle" key="inspection.i18n.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.javadoc.issues" enabledByDefault="false" level="WARNING"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.internationalization.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.intellij.codeInspection.i18n.I18nInspection"/>
     <localInspection language="JAVA" shortName="UnresolvedPropertyKey" bundle="messages.CodeInsightBundle"
                      key="inspection.unresolved.property.key.reference.name" groupName="Internationalization issues" enabledByDefault="true"

@@ -101,6 +101,8 @@ public abstract class InplaceRefactoring {
 
   protected StartMarkAction myMarkAction;
   protected PsiElement myScope;
+  
+  private RangeMarker myCaretRangeMarker;
 
   public InplaceRefactoring(Editor editor, PsiNamedElement elementToRename, Project project) {
     this(editor, elementToRename, project, elementToRename != null ? elementToRename.getName() : null,
@@ -256,7 +258,10 @@ public abstract class InplaceRefactoring {
     return true;
   }
 
-  protected abstract void beforeTemplateStart();
+  protected void beforeTemplateStart() {
+    myCaretRangeMarker = myEditor.getDocument()
+          .createRangeMarker(new TextRange(myEditor.getCaretModel().getOffset(), myEditor.getCaretModel().getOffset()));
+  }
 
   private void startTemplate(final TemplateBuilderImpl builder) {
 
@@ -343,7 +348,7 @@ public abstract class InplaceRefactoring {
   }
 
   protected int restoreCaretOffset(int offset) {
-    return offset;
+    return myCaretRangeMarker.isValid() ? myCaretRangeMarker.getStartOffset() : offset;
   }
 
   protected void navigateToAlreadyStarted(Document oldDocument, int exitCode) {
@@ -415,6 +420,9 @@ public abstract class InplaceRefactoring {
    * @param success true if the refactoring was accepted, false if it was cancelled (by undo or Esc)
    */
   protected void moveOffsetAfter(boolean success) {
+    if (myCaretRangeMarker != null) {
+      myCaretRangeMarker.dispose();
+    }
   }
 
   protected void addAdditionalVariables(TemplateBuilderImpl builder) {
@@ -480,7 +488,7 @@ public abstract class InplaceRefactoring {
    */
   protected abstract String getCommandName();
 
-  public void finish() {
+  public void finish(boolean success) {
     if (!ourRenamersStack.isEmpty() && ourRenamersStack.peek() == this) {
       ourRenamersStack.pop();
     }
@@ -672,7 +680,7 @@ public abstract class InplaceRefactoring {
         if (myBeforeRevert != null) {
           myBeforeRevert.setGreedyToRight(true);
         }
-        finish();
+        finish(true);
       }
       finally {
         restoreDaemonUpdateState();
@@ -703,7 +711,7 @@ public abstract class InplaceRefactoring {
       try {
         final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
         documentManager.commitAllDocuments();
-        finish();
+        finish(false);
         moveOffsetAfter(false);
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {

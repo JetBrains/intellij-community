@@ -59,6 +59,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class JBTabsImpl extends JComponent
   implements JBTabs, PropertyChangeListener, TimerListener, DataProvider, PopupMenuListener, Disposable, JBTabsPresentation, Queryable, QuickActionProvider {
@@ -79,8 +80,8 @@ public class JBTabsImpl extends JComponent
 
   private Insets myInnerInsets = JBInsets.NONE;
 
-  private final List<EventListener> myTabMouseListeners = new ArrayList<EventListener>();
-  private final List<TabsListener> myTabListeners = new ArrayList<TabsListener>();
+  private final List<EventListener> myTabMouseListeners = new CopyOnWriteArrayList<EventListener>();
+  private final List<TabsListener> myTabListeners = new CopyOnWriteArrayList<TabsListener>();
   public boolean myFocused;
 
   private Getter<ActionGroup> myPopupGroup;
@@ -284,7 +285,7 @@ public class JBTabsImpl extends JComponent
   }
 
 
-  public JBTabs setNavigationActiondBinding(String prevActionId, String nextActionId) {
+  public JBTabs setNavigationActionBinding(String prevActionId, String nextActionId) {
     if (myNextAction != null) {
       myNextAction.reconnect(nextActionId);
     }
@@ -312,7 +313,7 @@ public class JBTabsImpl extends JComponent
     return myDisposed;
   }
 
-  public JBTabs setAdditinalSwitchProviderWhenOriginal(SwitchProvider delegate) {
+  public JBTabs setAdditionalSwitchProviderWhenOriginal(SwitchProvider delegate) {
     mySwitchDelegate = delegate;
     return this;
   }

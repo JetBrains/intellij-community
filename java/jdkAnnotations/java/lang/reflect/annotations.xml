@@ -1,0 +1,7 @@
+<root>
+  <item name='java.lang.reflect.Member int getModifiers()'>
+    <annotation name='org.intellij.lang.annotations.MagicConstant'>
+      <val name="flagsFromClass" val="java.lang.reflect.Modifier.class"/>
+    </annotation>
+  </item>
+</root>

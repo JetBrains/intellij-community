@@ -17,14 +17,30 @@ package com.intellij.refactoring.actions;
 
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.encapsulateFields.EncapsulateFieldsHandler;
 
 public class EncapsulateFieldsAction extends BaseRefactoringAction {
   public boolean isAvailableInEditorOnly() {
+    return false;
+  }
+
+  @Override
+  protected boolean isAvailableOnElementInEditorAndFile(PsiElement element, Editor editor, PsiFile file, DataContext context) {
+    final PsiElement psiElement = file.findElementAt(editor.getCaretModel().getOffset());
+    final PsiClass containingClass = PsiTreeUtil.getParentOfType(psiElement, PsiClass.class, false);
+    if (containingClass != null) {
+      final PsiField[] fields = containingClass.getFields();
+      for (PsiField field : fields) {
+        if (isAcceptedField(field)) return true;
+      }
+    }
     return false;
   }
 

@@ -3,7 +3,8 @@ package org.jetbrains.jps.incremental.java;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.Paths;
 
-import javax.tools.*;
+import javax.tools.JavaFileObject;
+import javax.tools.SimpleJavaFileObject;
 import java.io.*;
 import java.util.Arrays;
 
@@ -14,19 +15,33 @@ import java.util.Arrays;
 class OutputFileObject extends SimpleJavaFileObject {
 
   private final JavacFileManager.Context myContext;
+  @Nullable
+  private final File myOutputRoot;
+  private final String myRelativePath;
   private final File myFile;
   @Nullable
   private final String myClassName;
   private volatile Content myContent;
   private final File mySourceFile;
 
-  public OutputFileObject(JavacFileManager.Context context, File file, Kind kind, @Nullable String className, JavaFileObject source) {
+  public OutputFileObject(JavacFileManager.Context context, @Nullable File outputRoot, String relativePath, File file, Kind kind, @Nullable String className, JavaFileObject source) {
     super(Paths.toURI(file.getPath()), kind);
     myContext = context;
+    myOutputRoot = outputRoot;
+    myRelativePath = relativePath;
     myFile = file;
     myClassName = className;
 
     mySourceFile = source != null? new File(Paths.toURI(source.toUri().getPath())) : null;
+  }
+
+  @Nullable
+  public File getOutputRoot() {
+    return myOutputRoot;
+  }
+
+  public String getRelativePath() {
+    return myRelativePath;
   }
 
   public File getFile() {

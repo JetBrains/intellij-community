@@ -43,7 +43,6 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ShutDownTracker;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -405,12 +404,7 @@ public class JpsServerManager implements ApplicationComponent{
     cmdLine.addParameter("-Djava.awt.headless=true");
     //cmdLine.addParameter("-DuseJavaUtilZip");
     // todo: get xmx value from settings
-    if (SystemInfo.is64Bit) {
-      cmdLine.addParameter("-Xmx700m");
-    }
-    else {
-      cmdLine.addParameter("-Xmx512m");
-    }
+    cmdLine.addParameter("-Xmx600m");
 
     // debugging
     cmdLine.addParameter("-XX:+HeapDumpOnOutOfMemoryError");

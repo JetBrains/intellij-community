@@ -93,4 +93,30 @@ public class CopyTest extends CodeInsightTestCase {
     assertNotNull(root.findFileByRelativePath("to/1.txt"));
     assertNotNull(root.findFileByRelativePath("to/2.txt"));
   }
+
+  public void testPackageInfo() throws Exception {
+    String rootBefore = getRoot();
+    PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk17());
+    final VirtualFile root = PsiTestUtil.createTestProjectStructure(myProject, myModule, rootBefore, myFilesToDelete);
+
+    final VirtualFile first = root.findFileByRelativePath("from/package-info.java");
+    assertNotNull(first);
+    
+    final PsiFile firstPsi = myPsiManager.findFile(first);
+    
+    assertTrue(CopyHandler.canCopy(new PsiElement[]{firstPsi}));
+
+    final VirtualFile toDir = root.findChild("to");
+    assertNotNull(toDir);
+    final PsiDirectory targetDirectory = myPsiManager.findDirectory(toDir);
+
+    CopyHandler.doCopy(new PsiElement[]{firstPsi}, targetDirectory);
+
+    final VirtualFile dest = root.findFileByRelativePath("to/package-info.java");
+    assertNotNull(dest);
+
+    VirtualFile fileExpected = root.findFileByRelativePath("to/package-info.expected.java");
+    
+    PlatformTestUtil.assertFilesEqual(fileExpected, dest);
+  }
 }

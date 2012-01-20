@@ -44,8 +44,16 @@ public abstract class DomService {
     return ourCachedInstance;
   }
 
-  public Collection<VirtualFile> getDomFileCandidates(Class<? extends DomElement> description, Project project, final GlobalSearchScope scope) {
-    return ContainerUtil.findAll(getDomFileCandidates(description, project), new Condition<VirtualFile>() {
+  /**
+   * @param rootElementClass class of root (file-level) element in DOM model
+   * @param project current project
+   * @param scope search scope
+   * @return files containing given root element
+   *
+   * @see #getFileElements(Class, com.intellij.openapi.project.Project, com.intellij.psi.search.GlobalSearchScope)
+   */
+  public Collection<VirtualFile> getDomFileCandidates(Class<? extends DomElement> rootElementClass, Project project, final GlobalSearchScope scope) {
+    return ContainerUtil.findAll(getDomFileCandidates(rootElementClass, project), new Condition<VirtualFile>() {
       public boolean value(final VirtualFile file) {
         return scope.contains(file);
       }
@@ -54,7 +62,15 @@ public abstract class DomService {
 
   public abstract Collection<VirtualFile> getDomFileCandidates(Class<? extends DomElement> description, Project project);
 
-  public abstract <T extends DomElement> List<DomFileElement<T>> getFileElements(Class<T> clazz, final Project project, @Nullable GlobalSearchScope scope);
+  /**
+   * @param rootElementClass class of root (file-level) element in DOM model
+   * @param project          current project
+   * @param scope            search scope
+   * @return DOM file elements containing given root element
+   */
+  public abstract <T extends DomElement> List<DomFileElement<T>> getFileElements(Class<T> rootElementClass,
+                                                                                 final Project project,
+                                                                                 @Nullable GlobalSearchScope scope);
 
   public abstract ModelMerger createModelMerger();
 

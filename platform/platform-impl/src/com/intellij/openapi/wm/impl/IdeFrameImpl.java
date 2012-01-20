@@ -114,7 +114,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
     // http://lists.apple.com/archives/java-dev/2009/Dec/msg00240.html
     if (SystemInfo.isMac) setIconImage(null);
     // enable fullscreen titlebar button
-    if (SystemInfo.isMacOSLion) FullScreenUtilities.setWindowCanFullScreen(this, true);
+    if (SystemInfo.isMacOSLion && MacMainFrameDecorator.FULL_SCREEN_AVAILABLE) FullScreenUtilities.setWindowCanFullScreen(this, true);
     
     MouseGestureManager.getInstance().add(this);
   }

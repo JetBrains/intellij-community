@@ -1,0 +1,161 @@
+<root>
+  <item name='java.awt.CardLayout void show(Container parent, java.lang.String) 1'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='java.awt.Cursor'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='java.awt.Container void addPropertyChangeListener(java.lang.String, java.beans.PropertyChangeListener) 0'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='java.awt.KeyboardFocusManager void addPropertyChangeListener(java.lang.String, java.beans.PropertyChangeListener) 0'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='java.awt.CardLayout void show(java.awt.Container, java.lang.String) 1'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='java.awt.Rectangle boolean contains(java.awt.Rectangle) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'>
+    </annotation>
+  </item>
+  <item name='java.awt.Font java.awt.Font deriveFont(int, float) 0'>
+    <annotation name='org.intellij.lang.annotations.MagicConstant'>
+      <val name="flags" val="{java.awt.Font.PLAIN, java.awt.Font.BOLD, java.awt.Font.ITALIC}"/>
+    </annotation>
+  </item>
+  <item name='java.awt.Font java.awt.Font deriveFont(int, java.awt.geom.AffineTransform) 0'>
+    <annotation name='org.intellij.lang.annotations.MagicConstant'>
+      <val name="flags" val="{java.awt.Font.PLAIN, java.awt.Font.BOLD, java.awt.Font.ITALIC}"/>
+    </annotation>
+  </item>
+  <item name='java.awt.Font Font(java.lang.String, int, int) 1'>
+    <annotation name='org.intellij.lang.annotations.MagicConstant'>
+      <val name="flags" val="{java.awt.Font.PLAIN, java.awt.Font.BOLD, java.awt.Font.ITALIC}"/>
+    </annotation>
+  </item>
+  <item name='java.awt.Font java.awt.Font deriveFont(int) 0'>
+    <annotation name='org.intellij.lang.annotations.MagicConstant'>
+      <val name="flags" val="{java.awt.Font.PLAIN, java.awt.Font.BOLD, java.awt.Font.ITALIC}"/>
+    </annotation>
+  </item>
+  <item name='java.awt.Font int getStyle()'>
+    <annotation name='org.intellij.lang.annotations.MagicConstant'>
+      <val name="flags" val="{java.awt.Font.PLAIN, java.awt.Font.BOLD, java.awt.Font.ITALIC}"/>
+    </annotation>
+  </item>
+  <item name='java.awt.FlowLayout void setAlignment(int) 0'>
+    <annotation name='org.intellij.lang.annotations.MagicConstant'>
+      <val name="intValues" val="{java.awt.FlowLayout.LEFT, java.awt.FlowLayout.CENTER, java.awt.FlowLayout.RIGHT, java.awt.FlowLayout.LEADING, java.awt.FlowLayout.TRAILING}"/>
+    </annotation>
+  </item>
+  <item name='java.awt.FlowLayout int getAlignment()'>
+    <annotation name='org.intellij.lang.annotations.MagicConstant'>
+      <val name="intValues" val="{java.awt.FlowLayout.LEFT, java.awt.FlowLayout.CENTER, java.awt.FlowLayout.RIGHT, java.awt.FlowLayout.LEADING, java.awt.FlowLayout.TRAILING}"/>
+    </annotation>
+  </item>
+  <item name='java.awt.FlowLayout FlowLayout(int) 0'>
+    <annotation name='org.intellij.lang.annotations.MagicConstant'>
+      <val name="intValues" val="{java.awt.FlowLayout.LEFT, java.awt.FlowLayout.CENTER, java.awt.FlowLayout.RIGHT, java.awt.FlowLayout.LEADING, java.awt.FlowLayout.TRAILING}"/>
+    </annotation>
+  </item>
+  <item name='java.awt.FlowLayout FlowLayout(int, int, int) 0'>
+    <annotation name='org.intellij.lang.annotations.MagicConstant'>
+      <val name="intValues" val="{java.awt.FlowLayout.LEFT, java.awt.FlowLayout.CENTER, java.awt.FlowLayout.RIGHT, java.awt.FlowLayout.LEADING, java.awt.FlowLayout.TRAILING}"/>
+    </annotation>
+  </item>
+  <item name='java.awt.BasicStroke BasicStroke(float, int, int, float, float[], float) 1'>
+    <annotation name='org.intellij.lang.annotations.MagicConstant'>
+      <val name="intValues" val="{java.awt.BasicStroke.CAP_BUTT, java.awt.BasicStroke.CAP_ROUND, java.awt.BasicStroke.CAP_SQUARE}"/>
+    </annotation>
+  </item>
+  <item name='java.awt.BasicStroke BasicStroke(float, int, int, float) 1'>
+    <annotation name='org.intellij.lang.annotations.MagicConstant'>
+      <val name="intValues" val="{java.awt.BasicStroke.CAP_BUTT, java.awt.BasicStroke.CAP_ROUND, java.awt.BasicStroke.CAP_SQUARE}"/>
+    </annotation>
+  </item>
+  <item name='java.awt.BasicStroke BasicStroke(float, int, int) 1'>
+    <annotation name='org.intellij.lang.annotations.MagicConstant'>
+      <val name="intValues" val="{java.awt.BasicStroke.CAP_BUTT, java.awt.BasicStroke.CAP_ROUND, java.awt.BasicStroke.CAP_SQUARE}"/>
+    </annotation>
+  </item>
+  <item name='java.awt.BasicStroke int getEndCap()'>
+    <annotation name='org.intellij.lang.annotations.MagicConstant'>
+      <val name="intValues" val="{java.awt.BasicStroke.CAP_BUTT, java.awt.BasicStroke.CAP_ROUND, java.awt.BasicStroke.CAP_SQUARE}"/>
+    </annotation>
+  </item>
+  <item name='java.awt.BasicStroke BasicStroke(float, int, int, float, float[], float) 2'>
+    <annotation name='org.intellij.lang.annotations.MagicConstant'>
+      <val name="intValues" val="{java.awt.BasicStroke.JOIN_BEVEL, java.awt.BasicStroke.JOIN_MITER, java.awt.BasicStroke.JOIN_ROUND}"/>
+    </annotation>
+  </item>
+  <item name='java.awt.BasicStroke BasicStroke(float, int, int, float) 2'>
+    <annotation name='org.intellij.lang.annotations.MagicConstant'>
+      <val name="intValues" val="{java.awt.BasicStroke.JOIN_BEVEL, java.awt.BasicStroke.JOIN_MITER, java.awt.BasicStroke.JOIN_ROUND}"/>
+    </annotation>
+  </item>
+  <item name='java.awt.BasicStroke BasicStroke(float, int, int) 2'>
+    <annotation name='org.intellij.lang.annotations.MagicConstant'>
+      <val name="intValues" val="{java.awt.BasicStroke.JOIN_BEVEL, java.awt.BasicStroke.JOIN_MITER, java.awt.BasicStroke.JOIN_ROUND}"/>
+    </annotation>
+  </item>
+  <item name='java.awt.BasicStroke int getLineJoin()'>
+    <annotation name='org.intellij.lang.annotations.MagicConstant'>
+      <val name="intValues" val="{java.awt.BasicStroke.JOIN_BEVEL, java.awt.BasicStroke.JOIN_MITER, java.awt.BasicStroke.JOIN_ROUND}"/>
+    </annotation>
+  </item>
+  <item name='java.awt.Cursor Cursor(int) 0'>
+    <annotation name='org.intellij.lang.annotations.MagicConstant'>
+      <val name="valuesFromClass" val="java.awt.Cursor.class"/>
+    </annotation>
+  </item>
+  <item name='java.awt.Cursor int getType()'>
+    <annotation name='org.intellij.lang.annotations.MagicConstant'>
+      <val name="valuesFromClass" val="java.awt.Cursor.class"/>
+    </annotation>
+  </item>
+  <item name='java.awt.Cursor java.awt.Cursor getPredefinedCursor(int) 0'>
+    <annotation name='org.intellij.lang.annotations.MagicConstant'>
+      <val name="valuesFromClass" val="java.awt.Cursor.class"/>
+    </annotation>
+  </item>
+  <item name='java.awt.AWTKeyStroke AWTKeyStroke(char, int, int, boolean) 2'>
+    <annotation name='org.intellij.lang.annotations.MagicConstant'>
+      <val name="flagsFromClass" val="java.awt.event.InputEvent.class"/>
+    </annotation>
+  </item>
+  <item name='java.awt.AWTKeyStroke java.awt.AWTKeyStroke getAWTKeyStroke(java.lang.Character, int) 1'>
+    <annotation name='org.intellij.lang.annotations.MagicConstant'>
+      <val name="flagsFromClass" val="java.awt.event.InputEvent.class"/>
+    </annotation>
+  </item>
+  <item name='java.awt.AWTKeyStroke java.awt.AWTKeyStroke getAWTKeyStroke(int, int, boolean) 1'>
+    <annotation name='org.intellij.lang.annotations.MagicConstant'>
+      <val name="flagsFromClass" val="java.awt.event.InputEvent.class"/>
+    </annotation>
+  </item>
+  <item name='java.awt.AWTKeyStroke java.awt.AWTKeyStroke getAWTKeyStroke(int, int) 1'>
+    <annotation name='org.intellij.lang.annotations.MagicConstant'>
+      <val name="flagsFromClass" val="java.awt.event.InputEvent.class"/>
+    </annotation>
+  </item>
+  <item name='java.awt.AWTKeyStroke int getModifiers()'>
+    <annotation name='org.intellij.lang.annotations.MagicConstant'>
+      <val name="flagsFromClass" val="java.awt.event.InputEvent.class"/>
+    </annotation>
+  </item>
+  <item name='java.awt.Label void setAlignment(int) 0'>
+    <annotation name='org.intellij.lang.annotations.MagicConstant'>
+      <val name="intValues" val="{java.awt.Label.LEFT, java.awt.Label.CENTER, java.awt.Label.RIGHT}"/>
+    </annotation>
+  </item>
+  <item name='java.awt.Label int getAlignment()'>
+    <annotation name='org.intellij.lang.annotations.MagicConstant'>
+      <val name="intValues" val="{java.awt.Label.LEFT, java.awt.Label.CENTER, java.awt.Label.RIGHT}"/>
+    </annotation>
+  </item>
+  <item name='java.awt.Toolkit int getMenuShortcutKeyMask()'>
+    <annotation name='org.intellij.lang.annotations.MagicConstant'>
+      <val name="flagsFromClass" val="java.awt.event.InputEvent.class"/>
+    </annotation>
+  </item>
+</root>

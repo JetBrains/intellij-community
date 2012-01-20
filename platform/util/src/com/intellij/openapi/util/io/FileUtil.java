@@ -24,6 +24,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Stack;
 import com.intellij.util.io.URLUtil;
 import org.intellij.lang.annotations.RegExp;
 import org.jetbrains.annotations.NonNls;
@@ -761,7 +762,7 @@ public class FileUtil {
                                                 @NotNull @NonNls final String aFilePrefix,
                                                 @NotNull String aExtension) {
     int postfix = 0;
-    String ext = 0 == aExtension.length() ? "" : "." + aExtension;
+    String ext = aExtension.isEmpty() ? "" : "." + aExtension;
 
     File candidate = new File(aParentFolder, aFilePrefix + ext);
     while (candidate.exists()) {
@@ -787,12 +788,12 @@ public class FileUtil {
   }
 
   public static String toCanonicalPath(String path) {
-    if (path == null || path.length() == 0) {
+    if (path == null || path.isEmpty()) {
       return path;
     }
     path = path.replace(File.separatorChar, '/');
     final StringTokenizer tok = new StringTokenizer(path, "/");
-    final com.intellij.util.containers.Stack<String> stack = new com.intellij.util.containers.Stack<String>();
+    final Stack<String> stack = new Stack<String>();
     while (tok.hasMoreTokens()) {
       final String token = tok.nextToken();
       if ("..".equals(token)) {
@@ -801,7 +802,7 @@ public class FileUtil {
         }
         stack.pop();
       }
-      else if (token.length() != 0 && !".".equals(token)) {
+      else if (!token.isEmpty() && !".".equals(token)) {
         stack.push(token);
       }
     }
@@ -1256,7 +1257,7 @@ public class FileUtil {
 
     String _path = path;
 
-    if ((SystemInfo.isLinux || SystemInfo.isMac)) {
+    if (SystemInfo.isLinux || SystemInfo.isMac) {
       final File projectDir = new File(path);
       final File userHomeDir = new File(SystemProperties.getUserHome());
       if (isAncestor(userHomeDir, projectDir, true)) {

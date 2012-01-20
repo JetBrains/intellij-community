@@ -14,6 +14,7 @@ import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.java.JavaBuilder;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
+import org.jetbrains.jps.incremental.messages.FileGeneratedEvent;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.incremental.storage.SourceToOutputMapping;
 import org.jetbrains.jps.server.ClasspathBootstrap;
@@ -147,7 +148,9 @@ public class GroovyBuilder extends Builder {
           final Mappings delta = context.createDelta();
           final List<File> successfullyCompiledFiles = new ArrayList<File>();
           if (!successfullyCompiled.isEmpty()) {
+
             final Callbacks.Backend callback = delta.getCallback();
+            final FileGeneratedEvent generatedEvent = new FileGeneratedEvent();
 
             for (GroovycOSProcessHandler.OutputItem item : successfullyCompiled) {
               final String sourcePath = FileUtil.toSystemIndependentName(item.sourcePath);
@@ -159,8 +162,13 @@ public class GroovyBuilder extends Builder {
               }
               callback.associate(outputPath, Callbacks.getDefaultLookup(sourcePath), new ClassReader(FileUtil.loadFileBytes(new File(outputPath))));
               successfullyCompiledFiles.add(new File(sourcePath));
+
+              generatedEvent.add(moduleOutputPath, FileUtil.getRelativePath(moduleOutputPath, outputPath, '/'));
             }
+
+            context.processMessage(generatedEvent);
           }
+
 
           final boolean needSecondPass = updateMappings(context, delta, chunk, toCompile.keySet(), successfullyCompiledFiles);
           if (needSecondPass) {

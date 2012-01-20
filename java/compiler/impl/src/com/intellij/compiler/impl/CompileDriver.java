@@ -88,6 +88,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.OrderedSet;
+import com.intellij.util.messages.MessageBus;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NonNls;
@@ -425,6 +426,7 @@ public class CompileDriver {
       }
     }
     final JpsServerManager jpsServerManager = JpsServerManager.getInstance();
+    final MessageBus messageBus = myProject.getMessageBus();
     return jpsServerManager.submitCompilationTask(myProject.getLocation(), compileContext.isRebuild(), compileContext.isMake(), moduleNames, paths, new JpsServerResponseHandlerAdapter() {
 
       public void handleCompileMessage(JpsRemoteProto.Message.Response.CompileMessage compilerMessage) {
@@ -466,6 +468,15 @@ public class CompileDriver {
         switch (eventType) {
           case BUILD_STARTED:
             compileContext.getProgressIndicator().setText("Compilation started");
+            break;
+          case FILES_GENERATED:
+            final List<JpsRemoteProto.Message.Response.BuildEvent.GeneratedFile> generated = event.getGeneratedFilesList();
+            final CompilationStatusListener publisher = messageBus.syncPublisher(CompilerTopics.COMPILATION_STATUS);
+            for (JpsRemoteProto.Message.Response.BuildEvent.GeneratedFile generatedFile : generated) {
+              final String root = FileUtil.toSystemIndependentName(generatedFile.getOutputRoot());
+              final String relativePath = FileUtil.toSystemIndependentName(generatedFile.getRelativePath());
+              publisher.fileGenerated(root, relativePath);
+            }
             break;
           case BUILD_COMPLETED:
             ExitStatus status = ExitStatus.SUCCESS;
@@ -564,7 +575,7 @@ public class CompileDriver {
             if (myProject.isDisposed()) {
               return;
             }
-            LOG.info("COMPILATION STARTED (JPS SERVER)");
+            LOG.info("COMPILATION STARTED (COMPILE SERVER)");
             if (message != null) {
               compileContext.addMessage(message);
             }
@@ -594,7 +605,7 @@ public class CompileDriver {
           finally {
             final long finish = System.currentTimeMillis();
             CompilerUtil.logDuration(
-              "\tCOMPILATION FINISHED; Errors: " +
+              "\tCOMPILATION FINISHED (COMPILE SERVER); Errors: " +
               compileContext.getMessageCount(CompilerMessageCategory.ERROR) +
               "; warnings: " +
               compileContext.getMessageCount(CompilerMessageCategory.WARNING),

@@ -30,6 +30,7 @@ import com.intellij.util.containers.OrderedSet;
 import gnu.trove.TObjectHashingStrategy;
 
 import java.io.File;
+import java.util.Collection;
 import java.util.Set;
 
 public class CompilerPathsEx extends CompilerPaths {
@@ -75,7 +76,7 @@ public class CompilerPathsEx extends CompilerPaths {
     }
   }
 
-  public static void visitFiles(final VirtualFile[] directories, final FileVisitor visitor) {
+  public static void visitFiles(final Collection<VirtualFile> directories, final FileVisitor visitor) {
     for (final VirtualFile outputDir : directories) {
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         public void run() {

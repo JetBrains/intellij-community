@@ -46,7 +46,7 @@ public class CompareJarsAction extends AnAction {
         src = new JarFileDiffElement(files[0]);
         trg = new JarFileDiffElement(files[1]);
       } else if (files.length == 1 && isJar(files[0])) {
-        src = new VirtualFileDiffElement(files[0]);
+        src = new JarFileDiffElement(files[0]);
         final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, true, true, false, false) {
           @Override
           public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {

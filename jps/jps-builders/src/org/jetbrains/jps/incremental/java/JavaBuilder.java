@@ -19,6 +19,7 @@ import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
+import org.jetbrains.jps.incremental.messages.FileGeneratedEvent;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.SourceToFormMapping;
@@ -611,12 +612,24 @@ public class JavaBuilder extends Builder{
 
     public void writePendingData() {
       try {
-        for (OutputFileObject file : myFileObjects) {
+        if (!myFileObjects.isEmpty()) {
+          final FileGeneratedEvent event = new FileGeneratedEvent();
           try {
-            writeToDisk(file);
+            for (OutputFileObject fileObject : myFileObjects) {
+              try {
+                writeToDisk(fileObject);
+                final File rootFile = fileObject.getOutputRoot();
+                if (rootFile != null) {
+                  event.add(rootFile.getPath(), fileObject.getRelativePath());
+                }
+              }
+              catch (IOException e) {
+                myContext.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, e.getMessage()));
+              }
+            }
           }
-          catch (IOException e) {
-            myContext.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, e.getMessage()));
+          finally {
+            myContext.processMessage(event);
           }
         }
       }

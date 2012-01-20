@@ -1,6 +1,7 @@
 package org.jetbrains.jps
 
 import org.jetbrains.jps.artifacts.Artifact
+import org.jetbrains.jps.idea.SdkLoader
 
 /**
  * @author max
@@ -44,6 +45,12 @@ class Project {
   def JavaSdk createJavaSdk(String name, String path, Closure initializer) {
     def sdk = new JavaSdk(this, name, path, initializer)
     sdks[name] = sdk
+    return sdk
+  }
+
+  def Sdk createSdk(String typeName, String sdkName, String path, Node additionalData) {
+    def sdk = SdkLoader.createSdk(this, typeName, sdkName, path, additionalData)
+    sdks[sdkName] = sdk
     return sdk
   }
 

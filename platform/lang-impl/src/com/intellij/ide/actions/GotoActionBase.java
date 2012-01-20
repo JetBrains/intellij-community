@@ -119,21 +119,22 @@ public abstract class GotoActionBase extends AnAction {
   }
 
   protected static <T> void showNavigationPopup(AnActionEvent e, ChooseByNameModel model, final GotoActionCallback<T> callback) {
-    showNavigationPopup(e, model, callback, null);
+    showNavigationPopup(e, model, callback, null, true);
   }
 
   protected static <T> void showNavigationPopup(AnActionEvent e,
                                                 ChooseByNameModel model,
                                                 final GotoActionCallback<T> callback,
-                                                final String findTitle) {
+                                                @Nullable final String findUsagesTitle,
+                                                boolean useSelectionFromEditor) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
 
     boolean mayRequestOpenInCurrentWindow = model.willOpenEditor() && FileEditorManagerEx.getInstanceEx(project).hasSplitOrUndockedWindows();
     final Class startedAction = myInAction;
     LOG.assertTrue(startedAction != null);
-    Pair<String, Integer> start = getInitialText(e.getData(PlatformDataKeys.EDITOR));
+    Pair<String, Integer> start = getInitialText(useSelectionFromEditor ? e.getData(PlatformDataKeys.EDITOR) : null);
     final ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, model, getPsiContext(e), start.first, mayRequestOpenInCurrentWindow, start.second);
-    popup.setFindUsagesTitle(findTitle);
+    popup.setFindUsagesTitle(findUsagesTitle);
     final ChooseByNameFilter<T> filter = callback.createFilter(popup);
 
     popup.invoke(new ChooseByNamePopupComponent.Callback() {

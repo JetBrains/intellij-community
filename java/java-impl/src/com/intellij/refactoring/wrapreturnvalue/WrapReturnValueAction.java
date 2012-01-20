@@ -16,8 +16,8 @@
 package com.intellij.refactoring.wrapreturnvalue;
 
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.actions.BaseRefactoringAction;
@@ -32,11 +32,21 @@ public class WrapReturnValueAction extends BaseRefactoringAction{
       return false;
   }
 
+  @Override
+  protected boolean isAvailableOnElementInEditorAndFile(PsiElement element, Editor editor, PsiFile file, DataContext context) {
+    final PsiMethod psiMethod = PsiTreeUtil.getParentOfType(element, PsiMethod.class, false);
+    if (psiMethod != null && !(psiMethod instanceof PsiCompiledElement)) {
+      final PsiType returnType = psiMethod.getReturnType();
+      return returnType != null && returnType != PsiType.VOID;
+    }
+    return false;
+  }
+
   public boolean isEnabledOnElements(PsiElement[] elements) {
-      if (elements.length != 1) {
-          return false;
-      }
-      final PsiElement element = elements[0];
+    if (elements.length != 1) {
+        return false;
+    }
+    final PsiElement element = elements[0];
     final PsiMethod containingMethod =
             PsiTreeUtil.getParentOfType(element, PsiMethod.class, false);
     return containingMethod != null;

@@ -222,7 +222,7 @@ libraryLicense(name: "TestNG", version: "5.7 snapshot", license: "Apache 2.0", u
 libraryLicense(name: "Trilead SSH", libraryName: "trilead-ssh2", version: "build 213", license: "BSD style (see LICENSE.txt in trilead.jar)", url: "http://www.trilead.com/SSH_Library/")
 libraryLicense(name: "Trove4j", version: "1.1 (with patches by JetBrains)", license: "LGPL", url: "http://trove4j.sourceforge.net/", licenseUrl: "http://trove4j.sourceforge.net/html/license.html")
 libraryLicense(name: "Velocity", version: "1.7", license: "Apache 2.0", url: "http://velocity.apache.org/", licenseUrl: "http://velocity.apache.org/index.html")
-libraryLicense(name: "winp", version: "1.16", license: "MIT", url: "http://winp.dev.java.net/", licenseUrl: "https://winp.dev.java.net/license.html")
+libraryLicense(name: "winp", version: "1.16 (patched)", license: "MIT", url: "http://winp.dev.java.net/", licenseUrl: "https://winp.dev.java.net/license.html")
 libraryLicense(name: "Xalan", libraryName:"Xalan-2.7.1", version: "2.7.1", license: "Apache 2.0", url: "http://xml.apache.org/xalan-j/", licenseUrl: "http://xml.apache.org/xalan-j/")
 libraryLicense(name: "Xerces", version: "2.9.1", license: "Apache 2.0", url: "http://xerces.apache.org/xerces2-j/", licenseUrl: "http://xerces.apache.org/xerces2-j/")
 libraryLicense(name: "XML Commons (xml-apis.jar, resolver.jar)", version: "", license: "Apache 2.0, W3C Software License , public domain", url: "http://xml.apache.org/commons/", licenseUrl: "http://xml.apache.org/commons/licenses.html")

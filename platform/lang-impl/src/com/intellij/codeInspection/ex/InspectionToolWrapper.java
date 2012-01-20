@@ -101,7 +101,7 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
   @NotNull
   @Override
   public String[] getGroupPath() {
-    return getTool().getGroupPath();
+    return myEP == null ? getTool().getGroupPath() : myEP.getGroupPath();
   }
 
   public void readSettings(Element element) throws InvalidDataException {

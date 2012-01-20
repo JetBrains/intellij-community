@@ -1,0 +1,23 @@
+<root>
+  <item name='java.util.concurrent.ConcurrentMap V putIfAbsent(K, V) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.concurrent.ConcurrentMap boolean remove(java.lang.Object, java.lang.Object) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.concurrent.ConcurrentMap boolean replace(K, V, V) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.concurrent.ConcurrentMap boolean replace(K, V, V) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.concurrent.ConcurrentMap boolean replace(K, V, V) 2'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.concurrent.ConcurrentMap V replace(K, V) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.concurrent.ConcurrentMap V replace(K, V) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+</root>

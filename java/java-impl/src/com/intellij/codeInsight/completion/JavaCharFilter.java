@@ -52,16 +52,19 @@ public class JavaCharFilter extends CharFilter {
 
     PsiFile file = lookup.getPsiFile();
     if (file == null) return false;
-    
-    Object o = item.getObject();
-    if (o instanceof PsiClass && ((PsiClass)o).getName().length() > lookup.itemPattern(item).length()) {
-      for (PsiClass aClass : PsiShortNamesCache.getInstance(file.getProject()).getClassesByName(lookup.itemPattern(item), file.getResolveScope())) {
-        if (!isObfuscated(aClass)) {
-          return true;
-        }
+
+    final String prefix = lookup.itemPattern(item);
+    for (String s : item.getAllLookupStrings()) {
+      if (s.equalsIgnoreCase(prefix)) {
+        return false;
       }
     }
-    
+    for (PsiClass aClass : PsiShortNamesCache.getInstance(file.getProject()).getClassesByName(prefix, file.getResolveScope())) {
+      if (!isObfuscated(aClass)) {
+        return true;
+      }
+    }
+
     return false;
   }
 
@@ -102,7 +105,7 @@ public class JavaCharFilter extends CharFilter {
     }
     if (c == '.' && isWithinLiteral(lookup)) return Result.ADD_TO_PREFIX;
 
-    if ((c == '[' || c == '<' || c == '.' || c == ' ') && isNonImportedClassEntered((LookupImpl)lookup)) {
+    if ((c == '[' || c == '<' || c == '.' || c == ' ' || c == '(') && isNonImportedClassEntered((LookupImpl)lookup)) {
       return Result.HIDE_LOOKUP;
     }
     

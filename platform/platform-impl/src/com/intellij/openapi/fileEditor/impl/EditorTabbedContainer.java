@@ -109,7 +109,7 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
             newEditor.selectNotify();
           }
         }
-      }).setAdditinalSwitchProviderWhenOriginal(new MySwitchProvider())
+      }).setAdditionalSwitchProviderWhenOriginal(new MySwitchProvider())
     .setSelectionChangeHandler(new JBTabs.SelectionChangeHandler() {
       @Override
       public ActionCallback execute(TabInfo info, boolean requestFocus, final ActiveRunnable doChangeSelection) {

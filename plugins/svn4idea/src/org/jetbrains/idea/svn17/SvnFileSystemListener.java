@@ -122,12 +122,12 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
 
     File srcFile = new File(file.getPath());
     File destFile = new File(new File(toDir.getPath()), copyName);
-    final boolean dstDirUnderControl = SvnUtil.isSvnVersioned(destFile.getParentFile());
+    final boolean dstDirUnderControl = SvnUtil.isSvnVersioned(vcs.getProject(), destFile.getParentFile());
     if (! dstDirUnderControl && !isPendingAdd(vcs.getProject(), toDir)) {
       return null;
     }
 
-    if (! SvnUtil.isSvnVersioned(srcFile.getParentFile())) {
+    if (! SvnUtil.isSvnVersioned(vcs.getProject(), srcFile.getParentFile())) {
       myAddedFiles.putValue(vcs.getProject(), new AddedFileInfo(toDir, copyName, null, false));
       return null;
     }
@@ -347,8 +347,9 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
     if (vcs != null && SvnUtil.isAdminDirectory(file)) {
       return true;
     }
+    if (vcs == null) return false;
     File ioFile = getIOFile(file);
-    if (! SvnUtil.isSvnVersioned(ioFile.getParentFile())) {
+    if (! SvnUtil.isSvnVersioned(vcs.getProject(), ioFile.getParentFile())) {
       return false;
     }
     try {
@@ -433,7 +434,7 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
     }
     File ioDir = getIOFile(dir);
     boolean pendingAdd = isPendingAdd(vcs.getProject(), dir);
-    if (! SvnUtil.isSvnVersioned(ioDir) && ! pendingAdd) {
+    if (! SvnUtil.isSvnVersioned(vcs.getProject(), ioDir) && ! pendingAdd) {
       return false;
     }
     SVNWCClient wcClient = vcs.createWCClient();

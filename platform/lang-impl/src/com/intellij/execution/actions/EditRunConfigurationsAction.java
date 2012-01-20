@@ -20,6 +20,7 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.impl.EditConfigurationsDialog;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.ui.EmptyIcon;
@@ -33,15 +34,21 @@ public class EditRunConfigurationsAction extends AnAction{
   }
 
   public void actionPerformed(final AnActionEvent e) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
-    if (project == null || project.isDisposed()) return;
+    Project project = e.getData(PlatformDataKeys.PROJECT);
+    if (project != null && project.isDisposed()) {
+      return;
+    }
+    if (project == null) {
+      //setup template project configurations
+      project = ProjectManager.getInstance().getDefaultProject();
+    }
     final EditConfigurationsDialog dialog = new EditConfigurationsDialog(project);
     dialog.show();
   }
 
   public void update(final AnActionEvent e) {
     Presentation presentation = e.getPresentation();
-    presentation.setEnabled(e.getData(PlatformDataKeys.PROJECT) != null);
+    presentation.setEnabled(true);
     if (ActionPlaces.RUN_CONFIGURATIONS_COMBOBOX.equals(e.getPlace())) {
       presentation.setText(ExecutionBundle.message("edit.configuration.action"));
       presentation.setDescription(presentation.getText());

@@ -50,7 +50,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.actions.CollapseAllAction;
 import com.intellij.util.*;
@@ -172,7 +172,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
           AddNewFavoritesListAction.doAddNewFavoritesList(myProject);
         }
       })
-      .setLineBorder(0, 0, 0, 0)
+      .setLineBorder(0, 0, 1, 0)
       .setAddActionName("New Favorites List")
       .disableRemoveAction()
       .disableDownAction()
@@ -248,7 +248,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
         }
       }
     }
-    return PsiUtilBase.toPsiElementArray(result);
+    return PsiUtilCore.toPsiElementArray(result);
   }
 
   public FavoritesTreeStructure getFavoritesTreeStructure() {
@@ -295,7 +295,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
           result.add(element);
         }
       }
-      return result.isEmpty() ? null : PsiUtilBase.toPsiElementArray(result);
+      return result.isEmpty() ? null : PsiUtilCore.toPsiElementArray(result);
     }
 
     if (LangDataKeys.IDE_VIEW.is(dataId)) {
@@ -452,7 +452,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
       for (PsiElement psiElement : allElements) {
         if (psiElement != null && psiElement.isValid()) validElements.add(psiElement);
       }
-      final PsiElement[] elements = PsiUtilBase.toPsiElementArray(validElements);
+      final PsiElement[] elements = PsiUtilCore.toPsiElementArray(validElements);
 
       LocalHistoryAction a = LocalHistory.getInstance().startAction(IdeBundle.message("progress.deleting"));
       try {
@@ -487,7 +487,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
         }
       }
 
-      return PsiUtilBase.toPsiElementArray(result);
+      return PsiUtilCore.toPsiElementArray(result);
     }
   }
 
@@ -511,7 +511,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
     }
 
     private void selectPsiElement(PsiElement element, boolean requestFocus) {
-      VirtualFile virtualFile = PsiUtilBase.getVirtualFile(element);
+      VirtualFile virtualFile = PsiUtilCore.getVirtualFile(element);
       FavoritesTreeViewPanel.this.selectElement(element, virtualFile, requestFocus);
     }
 

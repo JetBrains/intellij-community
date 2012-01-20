@@ -31,8 +31,9 @@ public abstract class TextFieldCompletionProvider {
 
   public void apply(@NotNull EditorTextField field, String text) {
     Project project = field.getProject();
-    assert project != null;
-    field.setDocument(createDocument(project, text));
+    if (project != null) {
+      field.setDocument(createDocument(project, text));
+    }
   }
   
   public void apply(@NotNull EditorTextField field) {

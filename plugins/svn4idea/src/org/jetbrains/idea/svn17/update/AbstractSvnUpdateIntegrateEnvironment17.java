@@ -95,7 +95,7 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment17 implements UpdateE
       final File ioRoot = contentRoot.getIOFile();
       if (! ((SvnUpdateContext)context.get()).shouldRunFor(ioRoot)) continue;
 
-      Collection<VirtualFile> roots = SvnUtil.crawlWCRoots(ioRoot, crawler, progressIndicator);
+      Collection<VirtualFile> roots = SvnUtil.crawlWCRoots(myVcs.getProject(), ioRoot, crawler, progressIndicator);
       updatedRoots.addAll(roots);
     }
     if (updatedRoots.isEmpty()) {

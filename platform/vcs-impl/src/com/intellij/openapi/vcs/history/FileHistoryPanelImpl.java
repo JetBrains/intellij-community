@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -855,14 +855,13 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
         showDifferences(myVcs.getProject(), sel.get(0), sel.get(sel.size() - 1));
       }
       else if (selectionSize == 1) {
-        final TableView flatView = myDualView.getFlatView();
-        final TableViewModel model = flatView.getTableViewModel();
+        final TableView<TreeNodeOnVcsRevision> flatView = myDualView.getFlatView();
         final int selectedRow = flatView.getSelectedRow();
-        if (selectedRow == (model.getRowCount() - 1)) {
+        if (selectedRow == (flatView.getRowCount() - 1)) {
           // no previous
           showDifferences(myVcs.getProject(), VcsFileRevision.NULL, getFirstSelectedRevision());
         } else {
-          showDifferences(myVcs.getProject(), (VcsFileRevision)model.getRowValue(selectedRow + 1), getFirstSelectedRevision());
+          showDifferences(myVcs.getProject(), flatView.getRow(selectedRow + 1), getFirstSelectedRevision());
         }
       }
     }

@@ -1,5 +1,6 @@
 package org.jetbrains.jps
 
+import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.jps.idea.Facet
 
 /**
@@ -58,19 +59,19 @@ class Module extends LazyInitializeableObject implements ClasspathItem {//}, Com
       }
 
       meta.content = {Object[] arg ->
-        arg.each { contentRoots << it.toString() }
+        arg.each { contentRoots << FileUtil.toCanonicalPath(it) }
       }
 
       meta.src = {Object[] arg ->
-        arg.each { sourceRoots << it.toString() }
+        arg.each { sourceRoots << FileUtil.toCanonicalPath(it) }
       }
 
       meta.testSrc = {Object[] arg ->
-        arg.each { testRoots << it.toString() }
+        arg.each { testRoots << FileUtil.toCanonicalPath(it) }
       }
 
       meta.exclude = {Object[] arg ->
-        arg.each { excludes << it.toString() }
+        arg.each { excludes << FileUtil.toCanonicalPath(it) }
       }
 
       initializer.delegate = meta

@@ -132,6 +132,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
 
   @Override
   protected void beforeTemplateStart() {
+    super.beforeTemplateStart();
     myLanguage = myScope.getLanguage();
     final ResolveSnapshotProvider resolveSnapshotProvider = INSTANCE.forLanguage(myLanguage);
     mySnapshot = resolveSnapshotProvider != null ? resolveSnapshotProvider.createSnapshot(myScope) : null;
@@ -163,14 +164,18 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
   }
 
   protected void performOnInvalidIdentifier(final String newName, final LinkedHashSet<String> nameSuggestions) {
-    revertState();
-    JBPopupFactory.getInstance()
-      .createConfirmation("Inserted identifier is not valid", "Continue editing", "Cancel", new Runnable() {
-        @Override
-        public void run() {
-          createInplaceRenamerToRestart(getVariable(), myEditor, newName).performInplaceRefactoring(nameSuggestions);
-        }
-      }, 0).showInBestPositionFor(myEditor);
+    final PsiNamedElement variable = getVariable();
+    if (variable != null) {
+      final int offset = variable.getTextOffset();
+      restoreCaretOffset(offset);
+      JBPopupFactory.getInstance()
+        .createConfirmation("Inserted identifier is not valid", "Continue editing", "Cancel", new Runnable() {
+          @Override
+          public void run() {
+            createInplaceRenamerToRestart(variable, myEditor, newName).performInplaceRefactoring(nameSuggestions);
+          }
+        }, 0).showInBestPositionFor(myEditor);
+    }
   }
 
   protected void performRefactoringRename(final String newName,

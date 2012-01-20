@@ -20,6 +20,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NonNls;
@@ -103,6 +104,7 @@ class ClassPath {
     push(urls);
   }
 
+  // Accessed by reflection from PluginClassLoader // TODO: do we need it?
   void addURL(URL url) {
     push(new URL[]{url});
   }
@@ -114,8 +116,10 @@ class ClassPath {
     try {
       int i;
       if (myCanUseCache) {
-        final List<Loader> loaders = myCache.getLoaders(s);
-        for (Loader loader : loaders) {
+        List<Loader> loaders = myCache.getLoaders(s);
+        for (int j = 0, size = loaders.size(); j < size; ++j ) {
+          final Loader loader = loaders.get(j);
+          if (!myCache.loaderHasName(s, loader)) continue;
           final Resource resource = loader.getResource(s, flag);
           if (resource != null) {
             if (ourDumpOrder) {
@@ -169,7 +173,7 @@ class ClassPath {
 
       Loader loader;
       try {
-        loader = getLoader(url);
+        loader = getLoader(url, myLoaders.size());
         if (loader == null) continue;
       }
       catch (IOException ioexception) {
@@ -184,7 +188,7 @@ class ClassPath {
   }
 
   @Nullable
-  private Loader getLoader(final URL url) throws IOException {
+  private Loader getLoader(final URL url, int index) throws IOException {
     String s;
     if (myAcceptUnescapedUrls) {
       s = url.getFile();
@@ -200,11 +204,11 @@ class ClassPath {
     Loader loader = null;
     if (s != null  && new File(s).isDirectory()) {
       if (FILE_PROTOCOL.equals(url.getProtocol())) {
-        loader = new FileLoader(url);
+        loader = new FileLoader(url, index);
       }
     }
     else {
-      JarLoader jarLoader = new JarLoader(url, myCanLockJars);
+      JarLoader jarLoader = new JarLoader(url, myCanLockJars, index);
       jarLoader.preLoadClasses();
       loader = jarLoader;
     }
@@ -233,20 +237,50 @@ class ClassPath {
     private Resource myRes = null;
     private final String myName;
     private final boolean myCheck;
+    private final List<Loader> myLoaders;
 
     public MyEnumeration(String name, boolean check) {
       myName = name;
       myCheck = check;
+      List<Loader> loaders = null;
+
+      if (myCanUseCache) {
+        synchronized (myUrls) {
+          if (myUrls.isEmpty()) {
+            loaders = myCache.getLoaders(name);
+            if (!name.endsWith("/")) {
+              loaders = new SmartList<Loader>(loaders);
+              loaders.addAll(myCache.getLoaders(name + "/"));
+            }
+          }
+        }
+      }
+
+      myLoaders = loaders;
     }
 
     private boolean next() {
       if (myRes != null) return true;
 
       Loader loader;
-      while ((loader = getLoader(myIndex++)) != null) {
-        myRes = loader.getResource(myName, myCheck);
-        if (myRes != null) return true;
+
+      if (myLoaders != null) {
+        while (myIndex < myLoaders.size()) {
+          loader = myLoaders.get(myIndex++);
+          if (!myCache.loaderHasName(myName, loader)) {
+            myRes = null;
+            continue;
+          }
+          myRes = loader.getResource(myName, myCheck);
+          if (myRes != null) return true;
+        }
+      } else {
+        while ((loader = getLoader(myIndex++)) != null) {
+          myRes = loader.getResource(myName, myCheck);
+          if (myRes != null) return true;
+        }
       }
+
 
       return false;
     }

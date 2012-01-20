@@ -3,10 +3,10 @@ package org.jetbrains.jps.server;
 import com.intellij.openapi.diagnostic.Logger;
 import org.codehaus.groovy.runtime.MethodClosure;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.JavaSdk;
 import org.jetbrains.jps.Library;
 import org.jetbrains.jps.Module;
 import org.jetbrains.jps.Project;
+import org.jetbrains.jps.Sdk;
 import org.jetbrains.jps.api.BuildParameters;
 import org.jetbrains.jps.api.BuildType;
 import org.jetbrains.jps.api.GlobalLibrary;
@@ -227,7 +227,7 @@ class ServerState {
     for (GlobalLibrary library : myGlobalLibraries) {
       if (library instanceof SdkLibrary) {
         final SdkLibrary sdk = (SdkLibrary)library;
-        final JavaSdk jdk = project.createJavaSdk(sdk.getName(), sdk.getHomePath(), fakeClosure);
+        final Sdk jdk = project.createSdk("JavaSDK", sdk.getName(), sdk.getHomePath(), null);
         jdk.setClasspath(sdk.getPaths());
       }
       else {

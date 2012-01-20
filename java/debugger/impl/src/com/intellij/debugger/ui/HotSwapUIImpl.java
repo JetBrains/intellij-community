@@ -16,6 +16,7 @@
 package com.intellij.debugger.ui;
 
 import com.intellij.CommonBundle;
+import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.impl.DebuggerSession;
@@ -41,12 +42,11 @@ import com.intellij.util.PairFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * User: lex
@@ -62,7 +62,21 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent{
   public HotSwapUIImpl(final Project project, MessageBus bus) {
     myProject = project;
     bus.connect().subscribe(CompilerTopics.COMPILATION_STATUS, new CompilationStatusListener() {
+
+      private final AtomicReference<Map<String, List<String>>> myGeneratedPaths = new AtomicReference<Map<String, List<String>>>(new HashMap<String, List<String>>());
+
+      public void fileGenerated(String outputRoot, String relativePath) {
+        final Map<String, List<String>> map = myGeneratedPaths.get();
+        List<String> paths = map.get(outputRoot);
+        if (paths == null) {
+          paths = new ArrayList<String>();
+          map.put(outputRoot, paths);
+        }
+        paths.add(relativePath);
+      }
+
       public void compilationFinished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
+        final Map<String, List<String>> generated = myGeneratedPaths.getAndSet(new HashMap<String, List<String>>());
         if (myProject.isDisposed()) {
           return;
         }
@@ -82,7 +96,7 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent{
             }
           }
           if (!sessions.isEmpty()) {
-            hotSwapSessions(sessions);
+            hotSwapSessions(sessions, generated);
           }
         }
         myPerformHotswapAfterThisCompilation = true;
@@ -129,7 +143,7 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent{
     return false;
   }
 
-  private void hotSwapSessions(final List<DebuggerSession> sessions) {
+  private void hotSwapSessions(final List<DebuggerSession> sessions, @Nullable final Map<String, List<String>> generatedPaths) {
     final boolean shouldAskBeforeHotswap = myAskBeforeHotswap;
     myAskBeforeHotswap = true;
 
@@ -144,11 +158,16 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent{
       return;
     }
 
-    final HotSwapProgressImpl findClassesProgress = new HotSwapProgressImpl(myProject);
+    final boolean isServerMode = CompilerWorkspaceConfiguration.getInstance(myProject).useCompileServer();
+    final boolean shouldPerformScan = !isServerMode || generatedPaths == null;
+
+    final HotSwapProgressImpl findClassesProgress = shouldPerformScan ? new HotSwapProgressImpl(myProject) : null;
     
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
-        final Map<DebuggerSession, Map<String, HotSwapFile>> modifiedClasses = getModifiedClasses(findClassesProgress, sessions);
+        final Map<DebuggerSession, Map<String, HotSwapFile>> modifiedClasses = shouldPerformScan?
+          scanForModifiedClassesWithProgress(sessions, findClassesProgress, !isServerMode) :
+          HotSwapManager.findModifiedClasses(sessions, generatedPaths);
 
         final Application application = ApplicationManager.getApplication();
         if (modifiedClasses.isEmpty()) {
@@ -179,7 +198,7 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent{
                     @Override
                     public Integer fun(Integer exitCode, JCheckBox cb) {
                       settings.HOTSWAP_HANG_WARNING_ENABLED = !cb.isSelected();
-                      return exitCode == DialogWrapper.OK_EXIT_CODE? exitCode : DialogWrapper.CANCEL_EXIT_CODE;
+                      return exitCode == DialogWrapper.OK_EXIT_CODE ? exitCode : DialogWrapper.CANCEL_EXIT_CODE;
                     }
                   }
                 );
@@ -203,6 +222,21 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent{
     });
   }
 
+  private static Map<DebuggerSession, Map<String, HotSwapFile>> scanForModifiedClassesWithProgress(final List<DebuggerSession> sessions, final HotSwapProgressImpl progress, final boolean scanWithVFS) {
+    final Ref<Map<DebuggerSession, Map<String, HotSwapFile>>> result = Ref.create(null);
+    ProgressManager.getInstance().runProcess(new Runnable() {
+      public void run() {
+        try {
+          result.set(HotSwapManager.scanForModifiedClasses(sessions, progress, scanWithVFS));
+        }
+        finally {
+          progress.finished();
+        }
+      }
+    }, progress.getProgressIndicator());
+    return result.get();
+  }
+
   private static void reloadModifiedClasses(final Map<DebuggerSession, Map<String, HotSwapFile>> modifiedClasses, final HotSwapProgressImpl progress) {
     ProgressManager.getInstance().runProcess(new Runnable() {
       public void run() {
@@ -210,18 +244,6 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent{
         progress.finished();
       }
     }, progress.getProgressIndicator());
-  }
-
-  private static Map<DebuggerSession, Map<String, HotSwapFile>> getModifiedClasses(final HotSwapProgressImpl swapProgress, final List<DebuggerSession> sessions) {
-    final Ref<Map<DebuggerSession, Map<String, HotSwapFile>>> modifiedClasses = Ref.create(null);
-    ProgressManager.getInstance().runProcess(new Runnable() {
-      public void run() {
-        modifiedClasses.set(HotSwapManager.getModifiedClasses(sessions, swapProgress));
-        swapProgress.finished();
-        
-      }
-    }, swapProgress.getProgressIndicator());
-    return modifiedClasses.get();
   }
 
   public void reloadChangedClasses(final DebuggerSession session, boolean compileBeforeHotswap) {
@@ -233,7 +255,7 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent{
       if(session.isAttached()) {
         final List<DebuggerSession> sessions = new ArrayList<DebuggerSession>(1);
         sessions.add(session);
-        hotSwapSessions(sessions);
+        hotSwapSessions(sessions, null);
       }
     }
   }

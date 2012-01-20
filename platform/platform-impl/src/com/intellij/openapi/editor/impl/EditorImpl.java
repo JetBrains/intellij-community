@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,6 +55,8 @@ import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -860,6 +862,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (queue.shouldNotTypeInEditor() || ProgressManager.getInstance().hasModalProgressIndicator()) {
       return false;
     }
+    FileDocumentManager manager = FileDocumentManager.getInstance();
+    if (manager != null) {
+      final VirtualFile file = manager.getFile(myDocument);
+      if (file != null && !file.isValid()) {
+        return false;
+      }
+    }
+    
     ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     DataContext dataContext = getDataContext();
     actionManager.fireBeforeEditorTyping(c, dataContext);

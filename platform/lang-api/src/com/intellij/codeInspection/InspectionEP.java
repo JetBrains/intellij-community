@@ -23,6 +23,7 @@ import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -39,8 +40,14 @@ public class InspectionEP extends LanguageExtensionPoint {
   /** @see GlobalInspectionTool */
   public final static ExtensionPointName<InspectionEP> GLOBAL_INSPECTION = ExtensionPointName.create("com.intellij.globalInspection");
 
+  /**
+   * Short name is used in two cases: \inspectionDescriptions\&lt;short_name&gt;.html resource may contain short inspection
+   * description to be shown in "Inspect Code..." dialog and also provide some file name convention when using offline
+   * inspection or export to HTML function. Should be unique among all inspections.
+   */
   @Attribute("shortName")
   public String shortName;
+
   @Nls
   @NotNull
   public String getDisplayName() {
@@ -71,12 +78,29 @@ public class InspectionEP extends LanguageExtensionPoint {
   @Attribute("groupName")
   public String groupDisplayName;
 
+  /** Comma-delimited list of parent groups (excluding groupName)*/
+  @Attribute("groupPath")
+  public String groupPath;
+
+  public String[] getGroupPath() {
+    String name = getGroupDisplayName();
+    if (groupPath == null) {
+      return new String[]{name.isEmpty() ? InspectionProfileEntry.GENERAL_GROUP_NAME : name};
+    }
+    else {
+      return ArrayUtil.append(groupPath.split(","), name);
+    }
+  }
+
   @Attribute("enabledByDefault")
   public boolean enabledByDefault = false;
 
   @Attribute("applyToDialects")
   public boolean applyToDialects = true;
 
+  /**
+   * Highlighting level for this inspection tool that is used in default settings.
+   */
   @Attribute("level")
   public String level;
 
@@ -88,7 +112,7 @@ public class InspectionEP extends LanguageExtensionPoint {
     }
     return displayLevel;
   }
-  
+
   private String getLocalizedString(String bundleName, String key, String displayName) {
     if (displayName != null) return displayName;
     final String baseName = bundleName != null ? bundleName : bundle == null ? ((IdeaPluginDescriptor)myPluginDescriptor).getResourceBundleBaseName() : bundle;
@@ -109,5 +133,4 @@ public class InspectionEP extends LanguageExtensionPoint {
       throw new RuntimeException(e);
     }
   }
-    
 }

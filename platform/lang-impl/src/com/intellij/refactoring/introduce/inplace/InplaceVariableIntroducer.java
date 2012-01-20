@@ -62,7 +62,7 @@ public abstract class InplaceVariableIntroducer<E extends PsiElement> extends In
   protected Balloon myBalloon;
   protected String myTitle;
   protected RelativePoint myTarget;
-  private RangeMarker myCaretRangeMarker;
+ 
 
   public InplaceVariableIntroducer(PsiNamedElement elementToRename,
                                    Editor editor,
@@ -85,11 +85,6 @@ public abstract class InplaceVariableIntroducer<E extends PsiElement> extends In
   @Override
   protected boolean shouldSelectAll() {
     return true;
-  }
-
-  @Override
-  protected int restoreCaretOffset(int offset) {
-    return myCaretRangeMarker.isValid() ? myCaretRangeMarker.getStartOffset() : offset;
   }
 
   @Override
@@ -148,12 +143,6 @@ public abstract class InplaceVariableIntroducer<E extends PsiElement> extends In
   }
 
   @Override
-  protected void beforeTemplateStart() {
-    myCaretRangeMarker = myEditor.getDocument()
-      .createRangeMarker(new TextRange(myEditor.getCaretModel().getOffset(), myEditor.getCaretModel().getOffset()));
-  }
-
-  @Override
   protected void collectAdditionalElementsToRename(List<Pair<PsiElement, TextRange>> stringUsages) {
   }
 
@@ -180,9 +169,6 @@ public abstract class InplaceVariableIntroducer<E extends PsiElement> extends In
       for (RangeMarker marker : myOccurrenceMarkers) {
         marker.dispose();
       }
-    }
-    if (myCaretRangeMarker != null) {
-      myCaretRangeMarker.dispose();
     }
     if (myExprMarker != null && !isRestart()) {
       myExprMarker.dispose();
@@ -233,8 +219,8 @@ public abstract class InplaceVariableIntroducer<E extends PsiElement> extends In
   }
 
   @Override
-  public void finish() {
-    super.finish();
+  public void finish(boolean success) {
+    super.finish(success);
     if (myBalloon != null) {
       final Boolean isRestart = myEditor.getUserData(INTRODUCE_RESTART);
       if (isRestart == null || !isRestart.booleanValue()) {
