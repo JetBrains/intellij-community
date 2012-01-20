@@ -125,7 +125,8 @@ class GitMultiRootOperationExecutor {
 
   private void updateRepositories() {
     GitRepositoryManager.getInstance(myProject).updateAllRepositories(GitRepository.TrackedTopic.CURRENT_BRANCH,
-                                                                      GitRepository.TrackedTopic.BRANCHES);
+                                                                      GitRepository.TrackedTopic.BRANCHES,
+                                                                      GitRepository.TrackedTopic.CONFIG);
   }
 
   static void notifySuccess(@NotNull String message, @NotNull Project project) {

@@ -45,12 +45,19 @@ final class GitRepositoryUpdater implements Disposable, BulkFileListener {
 
     VirtualFile gitDir = root.findChild(".git");
     assert gitDir != null;
-    gitDir.getChildren();
     LocalFileSystem.getInstance().addRootToWatch(gitDir.getPath(), true);
     
-    myUpdateQueue = new QueueProcessor<GitRepository.TrackedTopic>(new Updater(myRepository), myRepository.getProject().getDisposed());
-
     myRepositoryFiles = GitRepositoryFiles.getInstance(root);
+    gitDir.getChildren();
+    for (String subdir : GitRepositoryFiles.getSubDirRelativePaths()) {
+      VirtualFile dir = gitDir.findFileByRelativePath(subdir);
+      if (dir != null) {
+        dir.getChildren();
+      }
+    }    
+    
+    myUpdateQueue = new QueueProcessor<GitRepository.TrackedTopic>(new Updater(myRepository), myRepository.getProject().getDisposed());
+    
     myMessageBusConnection = repository.getProject().getMessageBus().connect();
     myMessageBusConnection.subscribe(VirtualFileManager.VFS_CHANGES, this);
   }
