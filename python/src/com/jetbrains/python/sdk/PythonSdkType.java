@@ -645,8 +645,16 @@ public class PythonSdkType extends SdkType {
   @Nullable
   public static Sdk findSdkByPath(@Nullable String path) {
     if (path != null) {
-      for (Sdk sdk : getAllSdks()) {
-        if (FileUtil.pathsEqual(path, sdk.getHomePath())) {
+      return findSdkByPath(getAllSdks(), path);
+    }
+    return null;
+  }
+
+  @Nullable
+  public static Sdk findSdkByPath(List<Sdk> sdkList, @Nullable String path) {
+    if (path != null) {
+      for (Sdk sdk : sdkList) {
+        if (sdk != null && FileUtil.pathsEqual(path, sdk.getHomePath())) {
           return sdk;
         }
       }
