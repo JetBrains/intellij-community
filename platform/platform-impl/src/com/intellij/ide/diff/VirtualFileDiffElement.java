@@ -224,12 +224,16 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
 
   @Override
   public void refresh(boolean userInitiated) {
+    refreshFile(userInitiated, myFile);
+  }
+
+  public static void refreshFile(boolean userInitiated, VirtualFile virtualFile) {
     if (userInitiated) {
       final List<Document> docsToSave = new ArrayList<Document>();
       final FileDocumentManager manager = FileDocumentManager.getInstance();
       for (Document document : manager.getUnsavedDocuments()) {
         VirtualFile file = manager.getFile(document);
-        if (file!=null && VfsUtilCore.isAncestor(myFile, file, false)) {
+        if (file!=null && VfsUtilCore.isAncestor(virtualFile, file, false)) {
           docsToSave.add(document);
         }
       }
@@ -251,9 +255,9 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
         }, ModalityState.defaultModalityState());
       }
     }
-    if (!FileWatcher.getInstance().isWatched(myFile)) {
-      ((NewVirtualFile)myFile).markDirtyRecursively();
+    if (!FileWatcher.getInstance().isWatched(virtualFile)) {
+      ((NewVirtualFile)virtualFile).markDirtyRecursively();
     }
-    myFile.refresh(false, true);
+    virtualFile.refresh(false, true);
   }
 }
