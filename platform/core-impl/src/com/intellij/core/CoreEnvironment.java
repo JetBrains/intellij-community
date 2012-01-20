@@ -127,14 +127,15 @@ public class CoreEnvironment {
 
     myFileIndexFacade = new MockFileIndexFacade(myProject);
     final MutablePicoContainer projectContainer = myProject.getPicoContainer();
-    
-    myProject.registerService(PsiModificationTracker.class, new PsiModificationTrackerImpl(myProject));
+
+    PsiModificationTrackerImpl modificationTracker = new PsiModificationTrackerImpl(myProject);
+    myProject.registerService(PsiModificationTracker.class, modificationTracker);
     myProject.registerService(FileIndexFacade.class, myFileIndexFacade);
     myProject.registerService(ResolveScopeManager.class, new MockResolveScopeManager(myProject));
     myProject.registerService(ResolveCache.class, new ResolveCache(null));
     
     registerProjectExtensionPoint(PsiTreeChangePreprocessor.EP_NAME, PsiTreeChangePreprocessor.class);
-    myPsiManager = new PsiManagerImpl(myProject, null, null, myFileIndexFacade, null);
+    myPsiManager = new PsiManagerImpl(myProject, null, null, myFileIndexFacade, null, modificationTracker);
     ((FileManagerImpl) myPsiManager.getFileManager()).markInitialized();
     registerComponentInstance(projectContainer, PsiManager.class, myPsiManager);
 
