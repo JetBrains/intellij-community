@@ -80,8 +80,7 @@ public class IndexCacheManagerImpl implements CacheManager{
   // Since implementation of virtualFileProcessor.process() may call indices directly or indirectly,
   // we cannot call it inside FileBasedIndex.processValues() method except in collecting form
   // If we do, deadlocks are possible (IDEADEV-42137). Process the files without not holding indices' read lock.
-  @Override
-  public boolean collectVirtualFilesWithWord(@NotNull final CommonProcessors.CollectProcessor<VirtualFile> fileProcessor,
+  private boolean collectVirtualFilesWithWord(@NotNull final Processor<VirtualFile> fileProcessor,
                                              @NotNull final String word, final short occurrenceMask,
                                              @NotNull final GlobalSearchScope scope, final boolean caseSensitively) {
     if (myProject.isDefault()) {

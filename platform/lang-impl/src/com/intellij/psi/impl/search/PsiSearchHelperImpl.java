@@ -48,7 +48,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.text.StringSearcher;
-import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -369,22 +368,16 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     final ArrayList<IdIndexEntry> entries = getWordEntries(text, caseSensitively);
     if (entries.isEmpty()) return true;
 
-    final Collection<VirtualFile> fileSet = ApplicationManager.getApplication().runReadAction(new Computable<Collection<VirtualFile>>() {
+    final CommonProcessors.CollectProcessor<VirtualFile> collectProcessor = new CommonProcessors.CollectProcessor<VirtualFile>();
+    processFilesContainingAllKeys(scope, new Condition<Integer>() {
       @Override
-      public Collection<VirtualFile> compute() {
-        final CommonProcessors.CollectProcessor<VirtualFile> collectProcessor = new CommonProcessors.CollectProcessor<VirtualFile>();
-        FileBasedIndex.getInstance().processFilesContainingAllKeys(IdIndex.NAME, entries, scope, new Condition<Integer>() {
-          @Override
-          public boolean value(Integer integer) {
-            return (integer.intValue() & searchContext) != 0;
-          }
-        }, collectProcessor);
-        return collectProcessor.getResults();
+      public boolean value(Integer integer) {
+        return (integer.intValue() & searchContext) != 0;
       }
-    });
+    }, collectProcessor, getWordEntries(text, caseSensitively));
 
     final FileIndexFacade index = FileIndexFacade.getInstance(myManager.getProject());
-    return ContainerUtil.process(fileSet, new ReadActionProcessor<VirtualFile>() {
+    return ContainerUtil.process(collectProcessor.getResults(), new ReadActionProcessor<VirtualFile>() {
       @Override
       public boolean processInReadAction(VirtualFile virtualFile) {
         return !IndexCacheManagerImpl.shouldBeFound(scope, virtualFile, index) || processor.process(virtualFile);
@@ -690,16 +683,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         continue;
       }
 
-      final Collection<VirtualFile> fileSet = ApplicationManager.getApplication().runReadAction(new Computable<Collection<VirtualFile>>() {
-        @Override
-        public Collection<VirtualFile> compute() {
-          final CommonProcessors.CollectProcessor<VirtualFile> processor = new CommonProcessors.CollectProcessor<VirtualFile>();
-          FileBasedIndex.getInstance().processFilesContainingAllKeys(IdIndex.NAME, key, commonScope, null, processor);
-          return processor.getResults();
-        }
-      });
-      
-      for (final VirtualFile file : fileSet) {
+      final CommonProcessors.CollectProcessor<VirtualFile> processor = new CommonProcessors.CollectProcessor<VirtualFile>();
+      processFilesContainingAllKeys(commonScope, null, processor, key);
+      for (final VirtualFile file : processor.getResults()) {
         if (progress != null) {
           progress.checkCanceled();
         }
@@ -834,22 +820,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                 @Nullable final PsiFile fileToIgnoreOccurencesIn,
                                                 @Nullable ProgressIndicator progress) {
     
-    final ArrayList<IdIndexEntry> keys = getWordEntries(name, true);
-    if (keys.isEmpty()) return SearchCostResult.ZERO_OCCURRENCES;
-    
-    final TIntHashSet set = ApplicationManager.getApplication().runReadAction(new NullableComputable<TIntHashSet>() {
-      @Override
-      public TIntHashSet compute() {
-        return FileBasedIndex.getInstance().collectFileIdsContainingAllKeys(IdIndex.NAME, keys, scope, null);
-      }
-    }); 
-
-    if (set == null || set.size() > 1000 && !ApplicationManager.getApplication().isUnitTestMode()) {
-      return SearchCostResult.TOO_MANY_OCCURRENCES;
-    }
-
     final AtomicInteger count = new AtomicInteger();
-
     final FileIndexFacade index = FileIndexFacade.getInstance(myManager.getProject());
     final Processor<VirtualFile> processor = new Processor<VirtualFile>() {
       private final VirtualFile fileToIgnoreOccurencesInVirtualFile =
@@ -863,18 +834,25 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         return value < 10;
       }
     };
-    final boolean cheap = ApplicationManager.getApplication().runReadAction(new NullableComputable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        return FileBasedIndex.processVirtualFiles(set, scope, processor);
-      }
-    });
+    final ArrayList<IdIndexEntry> keys = getWordEntries(name, true);
+    final boolean cheap = keys.isEmpty() || processFilesContainingAllKeys(scope, null, processor, keys);
 
     if (!cheap) {
       return SearchCostResult.TOO_MANY_OCCURRENCES;
     }
 
     return count.get() == 0 ? SearchCostResult.ZERO_OCCURRENCES : SearchCostResult.FEW_OCCURRENCES;
+  }
+
+  private static boolean processFilesContainingAllKeys(final GlobalSearchScope scope,
+                                                       @Nullable final Condition<Integer> checker,
+                                                       final Processor<VirtualFile> processor, final Collection<IdIndexEntry> keys) {
+    return ApplicationManager.getApplication().runReadAction(new NullableComputable<Boolean>() {
+      @Override
+      public Boolean compute() {
+        return FileBasedIndex.getInstance().processFilesContainingAllKeys(IdIndex.NAME, keys, scope, checker, processor);
+      }
+    });
   }
 
   private static ArrayList<IdIndexEntry> getWordEntries(String name, boolean caseSensitively) {
