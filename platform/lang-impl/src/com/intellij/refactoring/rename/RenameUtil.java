@@ -194,7 +194,11 @@ public class RenameUtil {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         final String helpID = RenamePsiElementProcessor.forElement(element).getHelpID(element);
-        CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("rename.title"), e.getMessage(), helpID, project);
+        String message = e.getMessage();
+        if (StringUtil.isEmpty(message)) {
+          message = RefactoringBundle.message("rename.not.supported");
+        }
+        CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("rename.title"), message, helpID, project);
       }
     });
   }
