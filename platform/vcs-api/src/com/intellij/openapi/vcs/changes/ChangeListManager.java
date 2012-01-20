@@ -26,6 +26,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.continuation.ContinuationPause;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.util.Collection;
@@ -46,6 +47,7 @@ public abstract class ChangeListManager implements ChangeListModification {
   public abstract void invokeAfterUpdate(final Runnable afterUpdate, final InvokeAfterUpdateMode mode, final String title,
                                          final Consumer<VcsDirtyScopeManager> dirtyScopeManager,
                                          final ModalityState state);
+  @TestOnly
   public abstract boolean ensureUpToDate(boolean canBeCanceled);
 
   public abstract List<LocalChangeList> getChangeListsCopy();
