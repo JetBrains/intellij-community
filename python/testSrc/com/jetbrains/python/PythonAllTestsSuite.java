@@ -1,5 +1,8 @@
 package com.jetbrains.python;
 
+import com.jetbrains.cython.CythonInspectionsTest;
+import com.jetbrains.cython.CythonRenameTest;
+import com.jetbrains.cython.CythonResolveTest;
 import com.jetbrains.django.lang.template.DjangoTemplateParserTest;
 import com.jetbrains.jinja2.Jinja2ParserTest;
 import com.jetbrains.python.codeInsight.PyCompletionPatternsTest;
@@ -33,6 +36,7 @@ public class PythonAllTestsSuite {
     Py3ResolveTest.class,
     PyMultiFileResolveTest.class,
     PyResolveCalleeTest.class,
+    CythonResolveTest.class,
     PyAssignmentMappingTest.class,
     PythonCompletionTest.class,
     PyInheritorsSearchTest.class,
@@ -41,6 +45,7 @@ public class PythonAllTestsSuite {
     PyQuickDocTest.class,
     PythonInspectionsTest.class,
     PyArgumentListInspectionTest.class,
+    CythonInspectionsTest.class,
     PythonDemorganLawIntentionTest.class,
     PyQuickFixTest.class,
     PyIntentionTest.class,
@@ -49,6 +54,7 @@ public class PythonAllTestsSuite {
     PySurroundWithTest.class,
     PyFormatterTest.class,
     PyRenameTest.class,
+    CythonRenameTest.class,
     PyExtractMethodTest.class,
     PyPullUpTest.class,
     PyPushDownTest.class,
@@ -92,5 +98,5 @@ public class PythonAllTestsSuite {
     return new TestSuite(tests);
   }
 
-  
+
 }
