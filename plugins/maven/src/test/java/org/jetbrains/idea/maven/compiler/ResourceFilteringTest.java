@@ -41,7 +41,8 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
   }
 
   public void testBasic() throws Exception {
-    createProjectSubFile("resources/file.properties", "value=${project.version}");
+    createProjectSubFile("resources/file.properties", "value=${project.version}\n" +
+                                                      "value2=@project.version@");
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -58,7 +59,8 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
 
     compileModules("project");
 
-    assertResult("target/classes/file.properties", "value=1");
+    assertResult("target/classes/file.properties", "value=1\n" +
+                                                   "value2=1");
   }
 
   public void testPomArtifactId() throws Exception {
@@ -166,7 +168,7 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
   }
 
   public void testFilteringTestResources() throws Exception {
-    createProjectSubFile("resources/file.properties", "value=${project.version}");
+    createProjectSubFile("resources/file.properties", "value=@project.version@");
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -263,8 +265,10 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
 
 
   public void testEscapingSpecialCharsInProperties() throws Exception {
-    createProjectSubFile("resources/file.txt", "value=${foo}");
-    createProjectSubFile("resources/file.properties", "value=${foo}");
+    createProjectSubFile("resources/file.txt", "value=${foo}\n" +
+                                               "value2=@foo@");
+    createProjectSubFile("resources/file.properties", "value=${foo}\n" +
+                                                      "value2=@foo@");
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -284,8 +288,10 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
                   "</build>");
     compileModules("project");
 
-    assertResult("target/classes/file.txt", "value=c:\\projects\\foo/bar");
-    assertResult("target/classes/file.properties", "value=c:\\\\projects\\\\foo/bar");
+    assertResult("target/classes/file.txt", "value=c:\\projects\\foo/bar\n" +
+                                            "value2=c:\\projects\\foo/bar");
+    assertResult("target/classes/file.properties", "value=c:\\\\projects\\\\foo/bar\n" +
+                                                   "value2=c:\\\\projects\\\\foo/bar");
   }
 
   public void testFilteringPropertiesWithEmptyValues() throws Exception {

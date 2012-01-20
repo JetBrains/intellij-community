@@ -51,17 +51,29 @@ public class MavenPropertyPsiReferenceProvider extends PsiReferenceProvider {
     MavenProject mavenProject = MavenDomUtil.findContainingProject(element);
     if (mavenProject == null) return PsiReference.EMPTY_ARRAY;
 
-    List<PsiReference> result = new ArrayList<PsiReference>();
+    List<PsiReference> result = null;
 
     Matcher matcher = MavenPropertyResolver.PATTERN.matcher(textRange.substring(text));
     while (matcher.find()) {
       String propertyName = matcher.group(1);
-      int from = textRange.getStartOffset() + matcher.start(1);
-      TextRange range = TextRange.from(from, propertyName.length());
+      int from;
+      if (propertyName == null) {
+        propertyName = matcher.group(2);
+        from = matcher.start(2);
+      }
+      else {
+        from = matcher.start(1);
+      }
+
+      TextRange range = TextRange.from(textRange.getStartOffset() + from, propertyName.length());
+
+      if (result == null) {
+        result = new ArrayList<PsiReference>();
+      }
 
       result.add(new MavenPropertyPsiReference(mavenProject, element, propertyName, range, isSoft));
     }
 
-    return result.toArray(new PsiReference[result.size()]);
+    return result == null ? PsiReference.EMPTY_ARRAY : result.toArray(new PsiReference[result.size()]);
   }
 }
