@@ -803,7 +803,11 @@ public class MavenProject {
     ModuleType typeFromImporter = null;
     for (MavenImporter each : getSuitableImporters()) {
       final ModuleType moduleType = each.getModuleType();
-      assert typeFromImporter == null || typeFromImporter.equals(moduleType);
+      if (typeFromImporter != null && !typeFromImporter.equals(moduleType)) {
+        MavenLog.LOG.error("Incompatible plugins: " + each.getClass().getName() + " wants to create " +
+                           moduleType.getName() + " for project " + getName() + " whereas some other importer requires " +
+                           typeFromImporter.getName());
+      }
       typeFromImporter = moduleType;
     }
     return typeFromImporter != null ? typeFromImporter : StdModuleTypes.JAVA;
