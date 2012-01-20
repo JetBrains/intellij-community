@@ -47,7 +47,7 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
                         boolean isProjectRebuild,
                         ProjectChunks productionChunks,
                         ProjectChunks testChunks,
-                        FSState fsState, TimestampStorage tsStorage, MessageHandler delegateMessageHandler, final ModuleRootsIndex rootsIndex, BuildCanceledStatus cancelStatus) throws ProjectBuildException {
+                        FSState fsState, TimestampStorage tsStorage, MessageHandler delegateMessageHandler, final ModuleRootsIndex rootsIndex, BuildCanceledStatus cancelStatus, boolean useMemoryTempCaches) throws ProjectBuildException {
     myTsStorage = tsStorage;
     myCancelStatus = cancelStatus;
     myCompilationStartStamp = System.currentTimeMillis();
@@ -58,7 +58,7 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
     myTestChunks = testChunks;
     myFsState = fsState;
     myDelegateMessageHandler = delegateMessageHandler;
-    myDataManager = new BuildDataManager(projectName);
+    myDataManager = new BuildDataManager(projectName, useMemoryTempCaches);
     final Project project = scope.getProject();
     myProjectPaths = new ProjectPaths(project);
     myRootsIndex = rootsIndex;

@@ -30,7 +30,7 @@ public class BuildDataManager {
   private final SourceToFormMapping mySrcToFormMap;
   private final Mappings myMappings;
 
-  public BuildDataManager(String projectName) throws ProjectBuildException {
+  public BuildDataManager(String projectName, final boolean useMemoryTempCaches) throws ProjectBuildException {
     myProjectName = projectName;
     try {
       mySrcToFormMap = createStorage(getSourceToFormsRoot(), new StorageFactory<SourceToFormMapping>() {
@@ -42,7 +42,7 @@ public class BuildDataManager {
       final File mappingsRoot = getMappingsRoot();
       myMappings = createStorage(mappingsRoot, new StorageFactory<Mappings>() {
         public Mappings create(File dataFile) throws Exception {
-          return new Mappings(mappingsRoot, false);
+          return new Mappings(mappingsRoot, useMemoryTempCaches);
         }
       });
     }

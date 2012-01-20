@@ -425,7 +425,7 @@ public class CompileDriver {
         moduleNames.add(module.getName());
       }
     }
-    final JpsServerManager jpsServerManager = JpsServerManager.getInstance();
+    final CompileServerManager jpsServerManager = CompileServerManager.getInstance();
     final MessageBus messageBus = myProject.getMessageBus();
     return jpsServerManager.submitCompilationTask(myProject.getLocation(), compileContext.isRebuild(), compileContext.isMake(), moduleNames, paths, new JpsServerResponseHandlerAdapter() {
 

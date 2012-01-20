@@ -15,6 +15,7 @@
  */
 package com.intellij.compiler.options;
 
+import com.intellij.compiler.CompileServerManager;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -248,6 +249,11 @@ public class AnnotationProcessorsConfigurable implements SearchableConfigurable,
     config.setAnnotationProcessorsMap(myProcessorsModel.exportToMap());
 
     config.setAnotationProcessedModules(getMarkedModules());
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        CompileServerManager.getInstance().sendReloadRequest(myProject);
+      }
+    });
   }
 
   private Map<Module, String> getMarkedModules() {

@@ -34,6 +34,7 @@ class ServerState {
   private final Object myConfigurationLock = new Object();
   private final Map<String, String> myPathVariables = new HashMap<String, String>();
   private final List<GlobalLibrary> myGlobalLibraries = new ArrayList<GlobalLibrary>();
+  private volatile boolean myKeepTempCachesInMemory = false;
 
   public void setGlobals(List<GlobalLibrary> libs, Map<String, String> pathVars) {
     synchronized (myConfigurationLock) {
@@ -48,6 +49,14 @@ class ServerState {
       myPathVariables.clear();
       myPathVariables.putAll(pathVars);
     }
+  }
+
+  public boolean isKeepTempCachesInMemory() {
+    return myKeepTempCachesInMemory;
+  }
+
+  public void setKeepTempCachesInMemory(boolean keepTempCachesInMemory) {
+    myKeepTempCachesInMemory = keepTempCachesInMemory;
   }
 
   public void notifyFileChanged(ProjectDescriptor pd, File file) {
@@ -117,7 +126,7 @@ class ServerState {
 
     try {
       final CompileScope compileScope = createCompilationScope(buildType, pd, modules, paths);
-      final IncProjectBuilder builder = new IncProjectBuilder(pd, BuilderRegistry.getInstance(), cs);
+      final IncProjectBuilder builder = new IncProjectBuilder(pd, BuilderRegistry.getInstance(), cs, myKeepTempCachesInMemory);
       if (msgHandler != null) {
         builder.addMessageHandler(msgHandler);
       }

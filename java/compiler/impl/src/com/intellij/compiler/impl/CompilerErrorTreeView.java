@@ -109,7 +109,7 @@ public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
           public void run() {
             if (!project.isDisposed()) {
               project.save();
-              JpsServerManager.getInstance().sendReloadRequest(project);
+              CompileServerManager.getInstance().sendReloadRequest(project);
             }
           }
         });

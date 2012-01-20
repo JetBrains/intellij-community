@@ -43,8 +43,8 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ShutDownTracker;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -71,7 +71,7 @@ import java.util.concurrent.TimeUnit;
  * @author Eugene Zhuravlev
  *         Date: 9/6/11
  */
-public class JpsServerManager implements ApplicationComponent{
+public class CompileServerManager implements ApplicationComponent{
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.JpsServerManager");
   private static final String COMPILE_SERVER_SYSTEM_ROOT = "compile-server";
   private volatile OSProcessHandler myProcessHandler;
@@ -84,7 +84,7 @@ public class JpsServerManager implements ApplicationComponent{
   });
   private final ProjectManager myProjectManager;
 
-  public JpsServerManager(final ProjectManager projectManager) {
+  public CompileServerManager(final ProjectManager projectManager) {
     myProjectManager = projectManager;
     final String systemPath = PathManager.getSystemPath();
     File system = new File(systemPath);
@@ -106,8 +106,8 @@ public class JpsServerManager implements ApplicationComponent{
     });
   }
 
-  public static JpsServerManager getInstance() {
-    return ApplicationManager.getApplication().getComponent(JpsServerManager.class);
+  public static CompileServerManager getInstance() {
+    return ApplicationManager.getApplication().getComponent(CompileServerManager.class);
   }
 
   public void notifyFilesChanged(Collection<String> paths) {
@@ -404,18 +404,14 @@ public class JpsServerManager implements ApplicationComponent{
     cmdLine.addParameter("-XX:ReservedCodeCacheSize=64m");
     cmdLine.addParameter("-Djava.awt.headless=true");
     //cmdLine.addParameter("-DuseJavaUtilZip");
-    // todo: get xmx value from settings
-    if (SystemInfo.is64Bit) {
-      cmdLine.addParameter("-Xmx800m");
-    }
-    else {
-      cmdLine.addParameter("-Xmx600m");
-    }
+    cmdLine.addParameter("-Xmx" + Registry.intValue("compiler.server.heap.size") + "m");
 
     // debugging
     cmdLine.addParameter("-XX:+HeapDumpOnOutOfMemoryError");
-    //cmdLine.addParameter("-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5008");
-
+    //cmdLine.addParameter("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5008");
+    if (Registry.is("compiler.server.use.memory.temp.cache")) {
+      cmdLine.addParameter("-D"+Server.USE_MEMORY_TEMP_CACHE_OPTION + "=true");
+    }
     // javac's VM should use the same default locale that IDEA uses in order for javac to print messages in 'correct' language
     final String lang = System.getProperty("user.language");
     if (lang != null) {

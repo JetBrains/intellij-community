@@ -15,6 +15,7 @@
  */
 package com.intellij.compiler.options;
 
+import com.intellij.compiler.CompileServerManager;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
@@ -45,12 +46,14 @@ public class JavaCompilersTab implements SearchableConfigurable, Configurable.No
   private JComboBox myCompiler;
   private final CardLayout myCardLayout;
 
+  private final Project myProject;
   private final BackendCompiler myDefaultCompiler;
   private BackendCompiler mySelectedCompiler;
   private final CompilerConfigurationImpl myCompilerConfiguration;
   private final Collection<Configurable> myConfigurables;
 
   public JavaCompilersTab(final Project project, Collection<BackendCompiler> compilers, BackendCompiler defaultCompiler) {
+    myProject = project;
     myDefaultCompiler = defaultCompiler;
     myCompilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(project);
     myConfigurables = new ArrayList<Configurable>(compilers.size());
@@ -122,6 +125,11 @@ public class JavaCompilersTab implements SearchableConfigurable, Configurable.No
       configurable.apply();
     }
     myCompilerConfiguration.setDefaultCompiler(mySelectedCompiler);
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        CompileServerManager.getInstance().sendReloadRequest(myProject);
+      }
+    });
   }
 
   public void reset() {

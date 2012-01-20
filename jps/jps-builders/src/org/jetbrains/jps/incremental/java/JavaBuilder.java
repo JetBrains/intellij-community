@@ -15,6 +15,7 @@ import org.jetbrains.ether.dependencyView.Callbacks;
 import org.jetbrains.ether.dependencyView.Mappings;
 import org.jetbrains.jps.Module;
 import org.jetbrains.jps.ModuleChunk;
+import org.jetbrains.jps.Project;
 import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
@@ -211,11 +212,10 @@ public class JavaBuilder extends Builder{
 
     final ProjectPaths paths = context.getProjectPaths();
 
-    // todo: consider corresponding setting in CompilerWorkspaceConfiguration
-    final boolean addNotNullAssertions = true;
+    final boolean addNotNullAssertions = context.getProject().getCompilerConfiguration().isAddNotNullAssertions();
 
-    final Collection<File> classpath = paths.getCompilationClasspath(chunk, context.isCompilingTests(), context.isProjectRebuild());
-    final Collection<File> platformCp = paths.getPlatformCompilationClasspath(chunk, context.isCompilingTests(), context.isProjectRebuild());
+    final Collection<File> classpath = paths.getCompilationClasspath(chunk, context.isCompilingTests(), false/*context.isProjectRebuild()*/);
+    final Collection<File> platformCp = paths.getPlatformCompilationClasspath(chunk, context.isCompilingTests(), false/*context.isProjectRebuild()*/);
     final Map<File, Set<File>> outs = buildOutputDirectoriesMap(context, chunk);
     final List<String> options = getCompilationOptions(context, chunk);
 
@@ -303,8 +303,45 @@ public class JavaBuilder extends Builder{
   }
 
   private static List<String> getCompilationOptions(CompileContext context, ModuleChunk chunk) {
-    // todo: read full set of options from settings
-    return Arrays.asList("-g", "-verbose")/*Collections.emptyList()*/;
+    final List<String> options = new ArrayList<String>();
+    options.add("-verbose");
+
+    final Project project = context.getProject();
+    final Map<String, String> javacOpts = project.getCompilerConfiguration().getJavacOptions();
+    final boolean debugInfo = !"false".equals(javacOpts.get("DEBUGGING_INFO"));
+    final boolean nowarn = "true".equals(javacOpts.get("GENERATE_NO_WARNINGS"));
+    final boolean deprecation = !"false".equals(javacOpts.get("DEPRECATION"));
+    if (debugInfo) {
+      options.add("-g");
+    }
+    if (deprecation) {
+      options.add("-deprecation");
+    }
+    if (nowarn) {
+      options.add("-nowarn");
+    }
+
+    final String customArgs = javacOpts.get("ADDITIONAL_OPTIONS_STRING");
+    boolean isEncodingSet = false;
+    if (customArgs != null) {
+      final StringTokenizer tokenizer = new StringTokenizer(customArgs, " \t\r\n");
+      while(tokenizer.hasMoreTokens()) {
+        final String token = tokenizer.nextToken();
+        if ("-g".equals(token) || "-deprecation".equals(token) || "-nowarn".equals(token) || "-verbose".equals(token)){
+          continue;
+        }
+        options.add(token);
+        if ("-encoding".equals(token)) {
+          isEncodingSet = true;
+        }
+      }
+    }
+
+    if (!isEncodingSet && project.getProjectCharset() != null) {
+      options.add("-encoding");
+      options.add(project.getProjectCharset());
+    }
+    return options;
   }
 
   private static Map<File, Set<File>> buildOutputDirectoriesMap(CompileContext context, ModuleChunk chunk) {

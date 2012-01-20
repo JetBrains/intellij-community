@@ -28,6 +28,7 @@ public class IncProjectBuilder {
   private final ProjectDescriptor myProjectDescriptor;
   private final BuilderRegistry myBuilderRegistry;
   private final BuildCanceledStatus myCancelStatus;
+  private final boolean myUseMemoryTempCaches;
   private ProjectChunks myProductionChunks;
   private ProjectChunks myTestChunks;
   private final List<MessageHandler> myMessageHandlers = new ArrayList<MessageHandler>();
@@ -43,10 +44,11 @@ public class IncProjectBuilder {
   private final float myTotalModulesWork;
   private final int myTotalBuilderCount;
 
-  public IncProjectBuilder(ProjectDescriptor pd, BuilderRegistry builderRegistry, BuildCanceledStatus cs) {
+  public IncProjectBuilder(ProjectDescriptor pd, BuilderRegistry builderRegistry, BuildCanceledStatus cs, boolean useMemoryTempCaches) {
     myProjectDescriptor = pd;
     myBuilderRegistry = builderRegistry;
     myCancelStatus = cs;
+    myUseMemoryTempCaches = useMemoryTempCaches;
     myProductionChunks = new ProjectChunks(pd.project, ClasspathKind.PRODUCTION_COMPILE);
     myTestChunks = new ProjectChunks(pd.project, ClasspathKind.TEST_COMPILE);
     myTotalModulesWork = (float) pd.rootsIndex.getTotalModuleCount() * 2;  /* multiply by 2 to reflect production and test sources */
@@ -145,8 +147,8 @@ public class IncProjectBuilder {
     final FSState fsState = myProjectDescriptor.fsState;
     final ModuleRootsIndex rootsIndex = myProjectDescriptor.rootsIndex;
     return new CompileContext(
-      projectName, scope, isMake, isProjectRebuild, myProductionChunks, myTestChunks, fsState, tsStorage, myMessageDispatcher, rootsIndex, myCancelStatus
-    );
+      projectName, scope, isMake, isProjectRebuild, myProductionChunks, myTestChunks, fsState, tsStorage, myMessageDispatcher, rootsIndex, myCancelStatus,
+      myUseMemoryTempCaches);
   }
 
   private void cleanOutputRoots(CompileContext context) throws ProjectBuildException {
