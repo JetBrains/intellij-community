@@ -122,7 +122,7 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
 
   @Override
   public IdeFrame getIdeFrame(DockContainer container) {
-    Component parent = UIUtil.findUltimateParent(container.getComponent());
+    Component parent = UIUtil.findUltimateParent(container.getContainerComponent());
     if (parent instanceof IdeFrame) {
       return (IdeFrame)parent;
     }
@@ -143,7 +143,7 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
     if (c == null) return null;
 
     for (DockContainer eachContainer : myContainers) {
-      if (SwingUtilities.isDescendingFrom(c, eachContainer.getComponent())) {
+      if (SwingUtilities.isDescendingFrom(c, eachContainer.getContainerComponent())) {
         return eachContainer;
       }
     }
@@ -152,7 +152,7 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
     if (parent == null) return null;
 
     for (DockContainer eachContainer : myContainers) {
-      if (parent == UIUtil.findUltimateParent(eachContainer.getComponent())) {
+      if (parent == UIUtil.findUltimateParent(eachContainer.getContainerComponent())) {
         return eachContainer;
       }
     }
@@ -424,7 +424,7 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
       center.add(myNorthPanel, BorderLayout.NORTH);
 
       myDockContentUiContainer = new NonOpaquePanel(new BorderLayout());
-      myDockContentUiContainer.add(myContainer.getComponent(), BorderLayout.CENTER);
+      myDockContentUiContainer.add(myContainer.getContainerComponent(), BorderLayout.CENTER);
       center.add(myDockContentUiContainer, BorderLayout.CENTER);
 
       myUiContainer.add(center, BorderLayout.CENTER);

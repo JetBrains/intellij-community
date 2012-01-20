@@ -30,7 +30,7 @@ public interface DockContainer extends Disposable, Activatable {
   RelativeRectangle getAcceptArea();
   boolean canAccept(DockableContent content, RelativePoint point);
 
-  JComponent getComponent();
+  JComponent getContainerComponent();
 
   void add(DockableContent content, RelativePoint dropTarget);
 

@@ -187,7 +187,7 @@ public class DockableEditorTabbedContainer implements DockContainer.Persistent {
   }
 
   @Override
-  public JComponent getComponent() {
+  public JComponent getContainerComponent() {
     return mySplitters;
   }
 
