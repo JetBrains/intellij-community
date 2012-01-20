@@ -27,11 +27,13 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.AnnotationOrderRootType;
+import com.intellij.openapi.roots.JdkOrderEntry;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -154,41 +156,42 @@ public class MagicConstantInspection extends LocalInspectionTool {
 
   private static void checkAnnotationsJarAttached(@NotNull LocalInspectionToolSession session) {
     PsiFile file = session.getFile();
-    Project project = file.getProject();
+    final Project project = file.getProject();
     PsiClass event = JavaPsiFacade.getInstance(project).findClass("java.awt.event.InputEvent", GlobalSearchScope.allScope(project));
-    PsiMethod[] methods = event == null ? null : event.findMethodsByName("getModifiers", false);
-    PsiMethod getModifiers = methods == null || methods.length != 1 ? null : methods[0];
-    PsiAnnotation annotation = getModifiers == null ? null :
-      ExternalAnnotationsManager.getInstance(project).findExternalAnnotation(getModifiers, MagicConstant.class.getName());
+    if (event == null) return; // no jdk to attach
+    PsiMethod[] methods = event.findMethodsByName("getModifiers", false);
+    if (methods.length != 1) return; // no jdk to attach
+    PsiMethod getModifiers = methods[0];
+    PsiAnnotation annotation = ExternalAnnotationsManager.getInstance(project).findExternalAnnotation(getModifiers, MagicConstant.class.getName());
     if (annotation != null) return;
-    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    final Module module = fileIndex.getModuleForFile(file.getVirtualFile());
-    if (module == null) {
-      return;
+    final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(getModifiers);
+    if (virtualFile == null) return; // no jdk to attach
+    final List<OrderEntry> entries = ProjectRootManager.getInstance(project).getFileIndex().getOrderEntriesForFile(virtualFile);
+    Sdk jdk = null;
+    for (OrderEntry orderEntry : entries) {
+      if (orderEntry instanceof JdkOrderEntry) {
+        jdk = ((JdkOrderEntry)orderEntry).getJdk();
+        if (jdk != null) break;
+      }
     }
+    if (jdk == null) return; // no jdk to attach
+
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      final Sdk finalJdk = jdk;
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {
-              attachJdkAnnotations(module);
+              attachJdkAnnotations(finalJdk);
             }
           });
         }
-      }, ModalityState.NON_MODAL, module.getDisposed());
+      }, ModalityState.NON_MODAL, project.getDisposed());
     }
   }
 
-  private static void attachJdkAnnotations(Module module) {
-    OrderEntry[] entries = ModuleRootManager.getInstance(module).getOrderEntries();
-    Sdk jdk = null;
-    for (OrderEntry orderEntry : entries) {
-      if (orderEntry instanceof JdkOrderEntry) {
-        jdk = ((JdkOrderEntry)orderEntry).getJdk();
-      }
-    }
-    LOG.assertTrue(jdk != null, "JDK not configured for module "+module);
+  private static void attachJdkAnnotations(Sdk jdk) {
     LocalFileSystem lfs = LocalFileSystem.getInstance();
     VirtualFile root = null;
     if (root == null) { // community idea under idea
@@ -206,6 +209,7 @@ public class MagicConstantInspection extends LocalInspectionTool {
     }
 
     SdkModificator modificator = jdk.getSdkModificator();
+    modificator.removeRoot(root, AnnotationOrderRootType.getInstance());
     modificator.addRoot(root, AnnotationOrderRootType.getInstance());
     modificator.commitChanges();
   }
@@ -577,7 +581,6 @@ public class MagicConstantInspection extends LocalInspectionTool {
       PsiElement element = usage.getElement();
       if (element instanceof PsiExpression && !processor.process((PsiExpression)element)) return false;
     }
-
 
     return !children.isEmpty();
   }
