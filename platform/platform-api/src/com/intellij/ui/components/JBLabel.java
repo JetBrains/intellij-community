@@ -17,6 +17,7 @@ package com.intellij.ui.components;
 
 import com.intellij.ui.AnchorableComponent;
 import com.intellij.util.ui.UIUtil;
+import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,15 +58,15 @@ public class JBLabel extends JLabel implements AnchorableComponent {
     setFontColor(fontColor);
   }
 
-  public JBLabel(@NotNull String text, int horizontalAlignment) {
+  public JBLabel(@NotNull String text, @JdkConstants.HorizontalAlignment int horizontalAlignment) {
     super(text, horizontalAlignment);
   }
 
-  public JBLabel(@Nullable Icon image, int horizontalAlignment) {
+  public JBLabel(@Nullable Icon image, @JdkConstants.HorizontalAlignment int horizontalAlignment) {
     super(image, horizontalAlignment);
   }
 
-  public JBLabel(@NotNull String text, @Nullable Icon icon, int horizontalAlignment) {
+  public JBLabel(@NotNull String text, @Nullable Icon icon, @JdkConstants.HorizontalAlignment int horizontalAlignment) {
     super(text, icon, horizontalAlignment);
   }
 

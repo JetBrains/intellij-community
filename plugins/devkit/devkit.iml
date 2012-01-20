@@ -25,6 +25,7 @@
     <orderEntry type="module" module-name="compiler-impl" />
     <orderEntry type="module" module-name="properties" />
     <orderEntry type="module" module-name="idea-ui" scope="TEST" />
+    <orderEntry type="module" module-name="xml" />
   </component>
 </module>
 

@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.util.ui.UIUtil;
+import org.intellij.lang.annotations.JdkConstants;
 
 import javax.swing.*;
 import java.awt.*;
@@ -23,7 +24,7 @@ import java.awt.*;
 public class StrikeoutLabel extends JLabel{
   private boolean myStrikeout = false;
 
-  public StrikeoutLabel(String text, int horizontalAlignment) {
+  public StrikeoutLabel(String text, @JdkConstants.HorizontalAlignment int horizontalAlignment) {
     super(text, horizontalAlignment);
   }
 

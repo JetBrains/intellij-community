@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,25 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.codeInspection.reference;
 
-package com.intellij.openapi.projectRoots.ex;
-
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author mike
+ * Provides quick fixes for "Unused declaration" inspection
+ * 
+ * @author Dmitry Avdeev
+ *         Date: 1/19/12
  */
-public interface ProjectRoot {
-  boolean isValid();
-  @NotNull
-  VirtualFile[] getVirtualFiles();
+public interface UnusedDeclarationFixProvider {
+
+  ExtensionPointName<UnusedDeclarationFixProvider> EP_NAME = ExtensionPointName.create("com.intellij.unusedDeclarationFixProvider");
 
   @NotNull
-  String[] getUrls();
-
-  @NotNull
-  String getPresentableString();
-
-  void update();
+  IntentionAction[] getQuickFixes(PsiElement unusedElement);
 }

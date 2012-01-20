@@ -498,8 +498,9 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
           (XmlTagImpl)XmlElementFactory.getInstance(getProject()).createTagFromText(XmlTagUtil.composeTagText(name, "aa"));
         final XmlTagImpl tag = XmlTagImpl.this;
         final CharTable charTableByTree = SharedImplUtil.findCharTableByTree(tag);
-        tag.replaceChild(XmlChildRole.START_TAG_NAME_FINDER.findChild(tag),
-                         ChangeUtil.copyElement((TreeElement)XmlChildRole.START_TAG_NAME_FINDER.findChild(dummyTag), charTableByTree));
+        ASTNode child = XmlChildRole.START_TAG_NAME_FINDER.findChild(tag);
+        LOG.assertTrue(child != null, "It seems '" + name + "' is not a valid tag name");
+        tag.replaceChild(child, ChangeUtil.copyElement((TreeElement)XmlChildRole.START_TAG_NAME_FINDER.findChild(dummyTag), charTableByTree));
         final ASTNode childByRole = XmlChildRole.CLOSING_TAG_NAME_FINDER.findChild(tag);
         if (childByRole != null) {
           final TreeElement treeElement = (TreeElement)XmlChildRole.CLOSING_TAG_NAME_FINDER.findChild(dummyTag);

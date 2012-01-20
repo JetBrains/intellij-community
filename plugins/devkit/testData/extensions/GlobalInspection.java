@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,25 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import com.intellij.codeInspection.GlobalInspectionTool;
 
-package com.intellij.openapi.projectRoots.ex;
-
-import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NotNull;
-
-/**
- * @author mike
- */
-public interface ProjectRoot {
-  boolean isValid();
-  @NotNull
-  VirtualFile[] getVirtualFiles();
-
-  @NotNull
-  String[] getUrls();
-
-  @NotNull
-  String getPresentableString();
-
-  void update();
+public class <warning descr="Class 'GlobalInspection' is never used">Global<caret>Inspection</warning> extends GlobalInspectionTool {
 }

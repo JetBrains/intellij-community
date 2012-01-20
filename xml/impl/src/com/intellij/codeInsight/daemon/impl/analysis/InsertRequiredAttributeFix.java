@@ -33,7 +33,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.xml.XmlChildRole;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
@@ -159,7 +158,7 @@ public class InsertRequiredAttributeFix implements IntentionAction, LocalQuickFi
               if (anchorIsEmptyTag && indirectSyntax1) {
                 editor.getDocument().deleteString(textOffset,textOffset + 2);
               }
-              TemplateManager.getInstance(project).startTemplate(editor, template, null);
+              TemplateManager.getInstance(project).startTemplate(editor, template);
             }
           }
         );
