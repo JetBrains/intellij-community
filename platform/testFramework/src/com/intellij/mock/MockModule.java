@@ -21,7 +21,7 @@ public class MockModule extends MockComponentManager implements Module {
     this(null, parentDisposable);
   }
 
-  public MockModule(final Project project, @NotNull Disposable parentDisposable) {
+  public MockModule(@Nullable final Project project, @NotNull Disposable parentDisposable) {
     super(project == null ? null : project.getPicoContainer(), parentDisposable);
     myProject = project;
   }
@@ -67,6 +67,16 @@ public class MockModule extends MockComponentManager implements Module {
   @Override
   public GlobalSearchScope getModuleWithDependenciesScope() {
     return new MockGlobalSearchScope();
+  }
+
+  @Override
+  public GlobalSearchScope getModuleContentWithDependenciesScope() {
+    throw new UnsupportedOperationException("Method getModuleContentWithDependenciesScope is not yet implemented in " + getClass().getName());
+  }
+
+  @Override
+  public GlobalSearchScope getModuleContentScope() {
+    throw new UnsupportedOperationException("Method getModuleContentScope is not yet implemented in " + getClass().getName());
   }
 
   @Override

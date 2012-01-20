@@ -253,6 +253,16 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
     return getCachedScope(ModuleWithDependenciesScope.COMPILE | ModuleWithDependenciesScope.TESTS | ModuleWithDependenciesScope.MODULES);
   }
 
+  @Override
+  public GlobalSearchScope getModuleContentScope() {
+    return getCachedScope(ModuleWithDependenciesScope.CONTENT);
+  }
+
+  @Override
+  public GlobalSearchScope getModuleContentWithDependenciesScope() {
+    return getCachedScope(ModuleWithDependenciesScope.CONTENT | ModuleWithDependenciesScope.MODULES);
+  }
+
   public GlobalSearchScope getModuleWithDependenciesAndLibrariesScope(boolean includeTests) {
     return getCachedScope(ModuleWithDependenciesScope.COMPILE |
                           ModuleWithDependenciesScope.MODULES |

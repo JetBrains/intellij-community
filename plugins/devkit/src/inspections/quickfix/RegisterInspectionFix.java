@@ -25,8 +25,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
-import com.intellij.openapi.module.impl.ModuleImpl;
-import com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -87,7 +85,7 @@ class RegisterInspectionFix implements IntentionAction {
     Module module = ModuleUtil.findModuleForPsiElement(file);
     assert module != null;
     List<DomFileElement<IdeaPlugin>> elements =
-      DomService.getInstance().getFileElements(IdeaPlugin.class, project, ((ModuleImpl)module).getCachedScope(ModuleWithDependenciesScope.CONTENT | ModuleWithDependenciesScope.MODULES));
+      DomService.getInstance().getFileElements(IdeaPlugin.class, project, module.getModuleContentWithDependenciesScope());
 
     elements = ContainerUtil.filter(elements, new Condition<DomFileElement<IdeaPlugin>>() {
       @Override
