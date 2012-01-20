@@ -15,6 +15,8 @@
  */
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
@@ -794,6 +796,21 @@ public class MavenProject {
   @NotNull
   public List<MavenImporter> getSuitableImporters() {
     return MavenImporter.getSuitableImporters(this);
+  }
+
+  @NotNull
+  public ModuleType getModuleType() {
+    ModuleType typeFromImporter = null;
+    for (MavenImporter each : getSuitableImporters()) {
+      final ModuleType moduleType = each.getModuleType();
+      if (typeFromImporter != null && !typeFromImporter.equals(moduleType)) {
+        MavenLog.LOG.error("Incompatible plugins: " + each.getClass().getName() + " wants to create " +
+                           moduleType.getName() + " for project " + getName() + " whereas some other importer requires " +
+                           typeFromImporter.getName());
+      }
+      typeFromImporter = moduleType;
+    }
+    return typeFromImporter != null ? typeFromImporter : StdModuleTypes.JAVA;
   }
 
   @NotNull
