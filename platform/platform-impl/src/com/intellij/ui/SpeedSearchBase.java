@@ -199,7 +199,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   }
 
   @Nullable
-  private Object findElement(String s) {
+  protected Object findElement(String s) {
     final String _s = s.trim();
     int selectedIndex = getSelectedIndex();
     if (selectedIndex < 0) {
