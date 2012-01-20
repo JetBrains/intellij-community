@@ -17,6 +17,7 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeVariable;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -30,8 +31,8 @@ public class ScopeImpl implements Scope {
   private Set<String> myNonlocals;
   private final ScopeOwner myFlowOwner;
   private Set<String> myAllNames;
-  private Map<String, PsiElement> myDeclarations;
-  private List<NameDefiner> myStarDeclarations;  // declarations which declare unknown set of names, such as 'from ... import *'
+  private Map<String, PsiNamedElement> myNamedElements;
+  private List<NameDefiner> myNameDefiners;  // declarations which declare unknown set of names, such as 'from ... import *'
   private static final Logger LOG = Logger.getInstance(ScopeImpl.class.getName());
 
   public ScopeImpl(final ScopeOwner flowOwner) {
@@ -42,19 +43,6 @@ public class ScopeImpl implements Scope {
     if (myFlow == null) {
       myFlow = ControlFlowCache.getControlFlow(myFlowOwner).getInstructions();
     }
-  }
-
-  @NotNull
-  public Collection<ScopeVariable> getDeclaredVariables(@NotNull final PsiElement anchorElement) throws DFALimitExceededException {
-    computeScopeVariables();
-    for (int i = 0; i < myFlow.length; i++) {
-      Instruction instruction = myFlow[i];
-      final PsiElement element = instruction.getElement();
-      if (element == anchorElement) {
-        return myCachedScopeVariables.get(i).values();
-      }
-    }
-    return Collections.emptyList();
   }
 
   public ScopeVariable getDeclaredVariable(@NotNull final PsiElement anchorElement,
@@ -103,62 +91,59 @@ public class ScopeImpl implements Scope {
   }
 
   @NotNull
-  public Collection<ScopeVariable> getAllDeclaredVariables() throws DFALimitExceededException {
-    final List<DFAMap<ScopeVariable>> vars = computeScopeVariables();
-    final int n = vars.size();
-    if (n > 0) {
-      return vars.get(n - 1).values();
-    }
-    return Collections.emptyList();
-  }
-
   @Override
-  public List<NameDefiner> getStarDeclarations() {
-    if (myDeclarations == null) {
+  public List<NameDefiner> getNameDefiners() {
+    if (myNamedElements == null) {
       collectDeclarations();
     }
-    return myStarDeclarations;
+    return myNameDefiners;
   }
 
+  @Nullable
   @Override
-  public PsiElement getDeclaration(String name) {
-    if (myDeclarations == null) {
+  public PsiNamedElement getNamedElement(String name) {
+    if (myNamedElements == null) {
       collectDeclarations();
     }
-    return myDeclarations.get(name);
+    return myNamedElements.get(name);
+  }
+
+  @Nullable
+  @Override
+  public PsiElement getImplicitElement(String name) {
+    if (myFlowOwner instanceof PyFile) {
+      return ((PyFile)myFlowOwner).getImplicitElement(name);
+    }
+    return null;
   }
 
   private void collectDeclarations() {
-    final Map<String, PsiElement> declarations = new HashMap<String, PsiElement>();
-    final List<NameDefiner> starDeclarations = new ArrayList<NameDefiner>();
+    final Map<String, PsiNamedElement> namedElements = new HashMap<String, PsiNamedElement>();
+    final List<NameDefiner> nameDefiners = new ArrayList<NameDefiner>();
     myFlowOwner.acceptChildren(new PyRecursiveElementVisitor() {
       @Override
-      public void visitPyFunction(PyFunction node) {
-        declarations.put(node.getName(), node);
-      }
-
-      @Override
-      public void visitPyClass(PyClass node) {
-        declarations.put(node.getName(), node);
+      public void visitPyTargetExpression(PyTargetExpression node) {
+        final PsiElement parent = node.getParent();
+        if (!(parent instanceof PyImportElement)) {
+          super.visitPyTargetExpression(node);
+        }
       }
 
       @Override
       public void visitPyElement(PyElement node) {
         if (node instanceof PsiNamedElement) {
-          declarations.put(node.getName(), node);
+          namedElements.put(node.getName(), (PsiNamedElement)node);
         }
-        super.visitPyElement(node);
+        if (node instanceof NameDefiner && !(node instanceof PsiNamedElement)) {
+          nameDefiners.add((NameDefiner)node);
+        }
+        if (!(node instanceof ScopeOwner)) {
+          super.visitPyElement(node);
+        }
       }
-
-      @Override
-      public void visitPyStarImportElement(PyStarImportElement node) {
-        starDeclarations.add(node);
-      }
-      
-      // TODO...
     });
-    myDeclarations = declarations;
-    myStarDeclarations = starDeclarations;
+    myNamedElements = namedElements;
+    myNameDefiners = nameDefiners;
   }
 
   private Set<String> computeAllNames() {

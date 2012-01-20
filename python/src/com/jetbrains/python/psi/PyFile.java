@@ -57,4 +57,7 @@ public interface PyFile extends PyElement, PsiFile, PyDocStringOwner, ScopeOwner
    * @return the deprecation message or null if the function is not deprecated.
    */
   String getDeprecationMessage();
+
+  @Nullable
+  PsiElement getImplicitElement(@NotNull String name);
 }

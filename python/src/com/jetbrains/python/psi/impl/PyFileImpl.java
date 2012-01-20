@@ -63,7 +63,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   public String toString() {
     return "PyFile:" + getName();
   }
-  
+
   @NotNull
   public String getUrl() {
     String fname;
@@ -358,6 +358,24 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     processor.setAllowedNames(getDunderAll());
     processDeclarations(processor, ResolveState.initial(), null, this);
     return result;
+  }
+
+  @Nullable
+  @Override
+  public PsiElement getImplicitElement(@NotNull String name) {
+    final VirtualFile file = getVirtualFile();
+    if (file != null) {
+      if (name.equals(file.getNameWithoutExtension())) {
+        return this;
+      }
+      else if (PyNames.INIT_DOT_PY.equals(file.getName())) {
+        final VirtualFile dir = file.getParent();
+        if ((dir != null) && name.equals(dir.getName())) {
+          return this;
+        }
+      }
+    }
+    return null;
   }
 
   public boolean mustResolveOutside() {

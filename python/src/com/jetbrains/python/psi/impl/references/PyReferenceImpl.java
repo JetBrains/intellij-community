@@ -49,6 +49,26 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
   protected final PyQualifiedExpression myElement;
   protected final PyResolveContext myContext;
 
+  private static class ScopeDeclaration {
+    @Nullable private NameDefiner myNameDefiner;
+    @Nullable private PsiElement myElement;
+
+    public ScopeDeclaration(@Nullable NameDefiner nameDefiner, @Nullable PsiElement element) {
+      myNameDefiner = nameDefiner;
+      myElement = element;
+    }
+
+    @Nullable
+    public PsiElement getElement() {
+      return myElement;
+    }
+
+    @Nullable
+    public NameDefiner getNameDefiner() {
+      return myNameDefiner;
+    }
+  }
+
   public PyReferenceImpl(PyQualifiedExpression element, @NotNull PyResolveContext context) {
     myElement = element;
     myContext = context;
@@ -149,6 +169,49 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     return ret.toArray(new ResolveResult[ret.size()]);
   }
 
+  @Nullable
+  private static ScopeDeclaration getScopeDeclaration(@NotNull String name, @NotNull Scope scope) {
+    PsiElement element = scope.getNamedElement(name);
+    if (element != null) {
+      return new ScopeDeclaration(null, element);
+    }
+    element = scope.getImplicitElement(name);
+    if (element != null) {
+      return new ScopeDeclaration(null, element);
+    }
+    for (NameDefiner definer : scope.getNameDefiners()) {
+      element = definer.getElementNamed(name);
+      if (element != null) {
+        return new ScopeDeclaration(definer, element);
+      }
+      else if (definer instanceof PyImportElement) {
+        final PyImportElement importElement = (PyImportElement) definer;
+        final PyQualifiedName qname = importElement.getImportedQName();
+
+        // http://stackoverflow.com/questions/6048786/from-module-import-in-init-py-makes-module-name-visible
+        if (qname != null && qname.getComponentCount() > 1 && name.equals(qname.getLastComponent()) &&
+            PyNames.INIT_DOT_PY.equals(importElement.getContainingFile().getName())) {
+          final PsiElement packageElement = ResolveImportUtil.resolveImportElement(importElement, qname.removeLastComponent());
+          if (PyUtil.turnDirIntoInit(packageElement) == importElement.getContainingFile()) {
+            element = PyUtil.turnDirIntoInit(ResolveImportUtil.resolveImportElement(importElement));
+            return new ScopeDeclaration(definer, element);
+          }
+        }
+
+        // name is resolved to unresolved import (PY-956)
+        String definedName = importElement.getAsName();
+        if (definedName == null) {
+          if (qname != null && qname.getComponentCount() == 1) {
+            definedName = qname.getComponents().get(0);
+          }
+        }
+        if (name.equals(definedName)) {
+          return new ScopeDeclaration(definer, null);
+        }
+      }
+    }
+    return null;
+  }
 
   /**
    * Does actual resolution of resolve().
@@ -179,41 +242,38 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     PsiElement roof = findResolveRoof(referencedName, realContext);
 
     if (Registry.is("python.new.style.resolve")) {
-      ScopeOwner scopeOwner = ScopeUtil.getResolveScopeOwner(realContext);
-      if (scopeOwner != null) {
-        final List<ReadWriteInstruction> defs = PyDefUseUtil.getLatestDefs(scopeOwner, referencedName, myElement, false);
-        if (!defs.isEmpty()) {
-          for (ReadWriteInstruction def : defs) {
-            addResolvedElement(ret, referencedName, def.getElement());
-          }
-          return ret;
-        }
-        final Scope scope = ControlFlowCache.getScope(scopeOwner);
-        checkStarDeclarations(ret, referencedName, scope);
-        if (!ret.isEmpty()) {
-          return ret;
-        }
-
-        while (true) {
-          scopeOwner = PsiTreeUtil.getParentOfType(scopeOwner, ScopeOwner.class);
-          if (scopeOwner == null) {
-            break;
-          }
-          final Scope parentScope = ControlFlowCache.getScope(scopeOwner);
-          final PsiElement declaration = parentScope.getDeclaration(referencedName);
-          if (declaration != null) {
-            addResolvedElement(ret, referencedName, declaration);
-          }
-          else {
-            checkStarDeclarations(ret, referencedName, parentScope);
-          }
-          if (!ret.isEmpty()) {
+      final ScopeOwner originalOwner = ScopeUtil.getResolveScopeOwner(realContext);
+      ScopeOwner owner = originalOwner;
+      while (owner != null) {
+        if (!(owner instanceof PyClass) || owner == originalOwner) {
+          final Scope scope = ControlFlowCache.getScope(owner);
+          final ScopeDeclaration scopeDeclaration = getScopeDeclaration(referencedName, scope);
+          if (scopeDeclaration != null) {
+            NameDefiner definer = scopeDeclaration.getNameDefiner();
+            PsiElement element = scopeDeclaration.getElement();
+            if (owner == originalOwner && definer == null) {
+              final List<ReadWriteInstruction> defs = PyDefUseUtil.getLatestDefs(owner, referencedName, myElement, false);
+              if (!defs.isEmpty()) {
+                for (ReadWriteInstruction def : defs) {
+                  element = def.getElement();
+                  if (element instanceof NameDefiner && !(element instanceof PsiNamedElement)) {
+                    definer = (NameDefiner)element;
+                    element = definer.getElementNamed(referencedName);
+                  }
+                  addResolvedElement(ret, definer, element);
+                }
+                return ret;
+              }
+              break;
+            }
+            addResolvedElement(ret, definer, element);
             return ret;
           }
-          if (scopeOwner == roof) {
-            break;
-          }
         }
+        if (owner == roof) {
+          break;
+        }
+        owner = ScopeUtil.getScopeOwner(owner);
       }
     }
     else {
@@ -274,28 +334,21 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     return ret;
   }
 
-  private static void addResolvedElement(ResolveResultList ret, String referencedName, PsiElement element) {
-    if (element instanceof NameDefiner && !(element instanceof PsiNamedElement)) {
-      final NameDefiner definer = (NameDefiner)element;
-      final PsiElement result = definer.getElementNamed(referencedName);
-      ret.add(new ImportedResolveResult(result, RatedResolveResult.RATE_NORMAL, Collections.<PsiElement>singletonList(definer)));
+  private static void addResolvedElement(@NotNull ResolveResultList ret, @Nullable NameDefiner definer, @Nullable PsiElement element) {
+    if (definer != null) {
+      if (definer instanceof PyImportElement || definer instanceof PyStarImportElement || definer instanceof PyImportedModule) {
+        ret.add(new ImportedResolveResult(element, getRate(element), Collections.<PsiElement>singletonList(definer)));
+      }
+      else {
+        ret.poke(element, getRate(element));
+      }
       // TODO this kind of resolve contract is quite stupid
-      if (result != null) {
+      if (element != null) {
         ret.poke(definer, RatedResolveResult.RATE_LOW);
       }
     }
     else {
-      ret.poke(element, RatedResolveResult.RATE_HIGH);
-    }
-  }
-
-  private static void checkStarDeclarations(ResolveResultList ret, String referencedName, Scope scope) {
-    for (NameDefiner definer : scope.getStarDeclarations()) {
-      final PsiElement result = definer.getElementNamed(referencedName);
-      if (result != null) {
-        ret.add(new ImportedResolveResult(result, RatedResolveResult.RATE_NORMAL, Collections.<PsiElement>singletonList(definer)));
-        ret.poke(definer, RatedResolveResult.RATE_LOW);
-      }
+      ret.poke(element, getRate(element));
     }
   }
 
@@ -317,16 +370,19 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
     if (myElement instanceof PyTargetExpression) {
       final ScopeOwner scopeOwner = PsiTreeUtil.getParentOfType(myElement, ScopeOwner.class);
-      final Scope scope = ControlFlowCache.getScope(scopeOwner);
-      final String name = myElement.getName();
-      if (scope.isNonlocal(name)) {
-        final ScopeOwner nonlocalOwner = ScopeUtil.getDeclarationScopeOwner(myElement, referencedName);
-        if (nonlocalOwner != null && !(nonlocalOwner instanceof PyFile)) {
-          return nonlocalOwner;
+      final Scope scope;
+      if (scopeOwner != null) {
+        scope = ControlFlowCache.getScope(scopeOwner);
+        final String name = myElement.getName();
+        if (scope.isNonlocal(name)) {
+          final ScopeOwner nonlocalOwner = ScopeUtil.getDeclarationScopeOwner(myElement, referencedName);
+          if (nonlocalOwner != null && !(nonlocalOwner instanceof PyFile)) {
+            return nonlocalOwner;
+          }
         }
-      }
-      if (scopeOwner != null && !scope.isGlobal(name)) {
-        return scopeOwner;
+        if (!scope.isGlobal(name)) {
+          return scopeOwner;
+        }
       }
     }
     return realContext.getContainingFile();
