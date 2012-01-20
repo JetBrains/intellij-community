@@ -37,6 +37,7 @@ import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.codeInspection.reference.UnusedDeclarationFixProvider;
 import com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection;
 import com.intellij.codeInspection.unusedParameters.UnusedParametersInspection;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
@@ -374,7 +375,15 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   }
 
   private static HighlightInfo createUnusedSymbolInfo(PsiElement element, String message, final HighlightInfoType highlightInfoType) {
-    return HighlightInfo.createHighlightInfo(highlightInfoType, element, message);
+    HighlightInfo info = HighlightInfo.createHighlightInfo(highlightInfoType, element, message);
+    UnusedDeclarationFixProvider[] fixProviders = Extensions.getExtensions(UnusedDeclarationFixProvider.EP_NAME);
+    for (UnusedDeclarationFixProvider provider : fixProviders) {
+      IntentionAction[] fixes = provider.getQuickFixes(element);
+      for (IntentionAction fix : fixes) {
+        QuickFixAction.registerQuickFixAction(info, fix);
+      }
+    }
+    return info;
   }
 
   @Nullable

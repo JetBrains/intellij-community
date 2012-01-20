@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,23 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.devkit.dom;
+import com.intellij.codeInspection.GlobalInspectionTool;
 
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.GenericAttributeValue;
-import com.intellij.util.xml.NameValue;
-import org.jetbrains.annotations.Nullable;
-
-/**
- * @author mike
- */
-public interface Extension extends DomElement {
-
-  @NameValue
-  GenericAttributeValue<String> getId();
-
-  GenericAttributeValue<String> getOrder();
-
-  @Nullable
-  ExtensionPoint getExtensionPoint();
+public class <warning descr="Class 'GlobalInspection' is never used">Global<caret>Inspection</warning> extends GlobalInspectionTool {
 }
