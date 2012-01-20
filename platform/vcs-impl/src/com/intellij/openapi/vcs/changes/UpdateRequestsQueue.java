@@ -16,7 +16,6 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.ide.startup.impl.StartupManagerImpl;
-import com.intellij.lifecycle.AtomicSectionsAware;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,6 +25,7 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.util.Consumer;
+import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import org.jetbrains.annotations.NonNls;
 
@@ -43,7 +43,7 @@ import java.util.concurrent.TimeUnit;
 @SomeQueue
 public class UpdateRequestsQueue {
   private final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.UpdateRequestsQueue");
-  private final static String ourHeavyLatchOptimization = "vcs.local.changes.track.heavy.latch";
+  private static final String ourHeavyLatchOptimization = "vcs.local.changes.track.heavy.latch";
   private final Project myProject;
   private final ScheduledExecutorService myExecutor;
   private final Runnable myDelegate;
@@ -53,7 +53,9 @@ public class UpdateRequestsQueue {
   private volatile boolean myIgnoreBackgroundOperation;
 
   private boolean myRequestSubmitted;
+  private boolean myRequestRunning;
   private final List<Runnable> myWaitingUpdateCompletionQueue;
+  private final List<Semaphore> myWaitingUpdateCompletionSemaphores = new ArrayList<Semaphore>();
   private final ProjectLevelVcsManager myPlVcsManager;
   //private final ScheduledSlowlyClosingAlarm mySharedExecutor;
   private final StartupManager myStartupManager;
@@ -139,6 +141,33 @@ public class UpdateRequestsQueue {
     LOG.debug("Stop finished for project: " + myProject.getName());
   }
 
+  public void waitUntilRefreshed() {
+    while (true) {
+      final Semaphore semaphore = new Semaphore();
+      synchronized (myLock) {
+        if (!myRequestSubmitted && !myRequestRunning) {
+          return;
+        }
+
+        semaphore.down();
+        myWaitingUpdateCompletionSemaphores.add(semaphore);
+      }
+      if (!semaphore.waitFor(10000)) {
+        LOG.error("Too long VCS update");
+        return;
+      }
+    }
+  }
+
+  private void freeSemaphores() {
+    synchronized (myLock) {
+      for (Semaphore semaphore : myWaitingUpdateCompletionSemaphores) {
+        semaphore.up();
+      }
+      myWaitingUpdateCompletionSemaphores.clear();
+    }
+  }
+
   public void invokeAfterUpdate(final Runnable afterUpdate, final InvokeAfterUpdateMode mode, final String title,
                                 final Consumer<VcsDirtyScopeManager> dirtyScopeManagerFiller, final ModalityState state) {
     LOG.debug("invokeAfterUpdate for project: " + myProject.getName());
@@ -155,7 +184,7 @@ public class UpdateRequestsQueue {
         if (managerProxy != null) {
           managerProxy.callRealManager(VcsDirtyScopeManager.getInstance(myProject));
         }
-        
+
         myWaitingUpdateCompletionQueue.add(data.getCallback());
         schedule();
       }
@@ -195,6 +224,8 @@ public class UpdateRequestsQueue {
 
       try {
         synchronized (myLock) {
+          LOG.assertTrue(!myRequestRunning);
+          myRequestRunning = true;
           if (myStopped) {
             myRequestSubmitted = false;
             LOG.debug("MyRunnable: STOPPED, project: " + myProject.getName() + ", runnable: " + hashCode());
@@ -218,6 +249,7 @@ public class UpdateRequestsQueue {
         LOG.debug("MyRunnable: invokeD, project: " + myProject.getName() + ", runnable: " + hashCode());
       } finally {
         synchronized (myLock) {
+          myRequestRunning = false;
           LOG.debug("MyRunnable: delete executed, project: " + myProject.getName() + ", runnable: " + hashCode());
           if (! copy.isEmpty()) {
             myWaitingUpdateCompletionQueue.removeAll(copy);
@@ -231,6 +263,7 @@ public class UpdateRequestsQueue {
         for (Runnable runnable : copy) {
           runnable.run();
         }
+        freeSemaphores();
         LOG.debug("MyRunnable: Runnables executed, project: " + myProject.getName() + ", runnable: " + hashCode());
       }
     }

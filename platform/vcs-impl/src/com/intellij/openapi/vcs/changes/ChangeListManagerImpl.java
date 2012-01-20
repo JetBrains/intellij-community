@@ -55,6 +55,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.util.*;
@@ -447,7 +448,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
     finally {
       myDirtyScopeManager.changesProcessed();
-      
+
       synchronized (myDataLock) {
         myDelayedNotificator.getProxyDispatcher().changeListUpdateDone();
         myChangesViewManager.scheduleRefresh();
@@ -617,7 +618,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   /**
-   * @deprecated 
+   * @deprecated
    * this method made equivalent to {@link #getChangeListsCopy()} so to don't be confused by method name,
    * better use {@link #getChangeListsCopy()}
    */
@@ -724,7 +725,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       return myUpdateException;
     }
   }
-  
+
   public List<String> getAdditionalUpdateInfo() {
     synchronized (myDataLock) {
       return new ArrayList<String>(myAdditionalInfo);
@@ -1260,6 +1261,11 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         }
       }
     });
+  }
+
+  @TestOnly
+  public void waitUntilRefreshed() {
+    myUpdater.waitUntilRefreshed();
   }
 
   /**
