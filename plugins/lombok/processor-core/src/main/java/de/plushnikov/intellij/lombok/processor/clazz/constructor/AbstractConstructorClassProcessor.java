@@ -1,15 +1,5 @@
 package de.plushnikov.intellij.lombok.processor.clazz.constructor;
 
-import java.lang.annotation.Annotation;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
@@ -28,6 +18,15 @@ import de.plushnikov.intellij.lombok.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.lombok.util.PsiClassUtil;
 import de.plushnikov.intellij.lombok.util.PsiElementUtil;
 import de.plushnikov.intellij.lombok.util.PsiMethodUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.lang.annotation.Annotation;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Base lombok processor class for constructor processing
@@ -152,12 +151,12 @@ public abstract class AbstractConstructorClassProcessor extends AbstractLombokCl
   protected Collection<PsiMethod> createConstructorMethod(@NotNull PsiClass psiClass, @NotNull String methodVisibility, @NotNull PsiAnnotation psiAnnotation, @NotNull Collection<PsiField> params, @Nullable String staticName) {
     final String suppressConstructorProperties = PsiAnnotationUtil.getAnnotationValue(psiAnnotation, "suppressConstructorProperties", String.class);
 
-    final boolean staticConstrRequired = isStaticConstructor(staticName);
+    final boolean staticConstructorRequired = isStaticConstructor(staticName);
 
-    final String constrVisibility = staticConstrRequired || psiClass.isEnum() ? PsiModifier.PRIVATE : methodVisibility;
+    final String constructorVisibility = staticConstructorRequired || psiClass.isEnum() ? PsiModifier.PRIVATE : methodVisibility;
 
-    PsiMethod constructor = createConstructor(psiClass, constrVisibility, Boolean.valueOf(suppressConstructorProperties), params, psiAnnotation);
-    if (staticConstrRequired) {
+    PsiMethod constructor = createConstructor(psiClass, constructorVisibility, Boolean.valueOf(suppressConstructorProperties), params, psiAnnotation);
+    if (staticConstructorRequired) {
       PsiMethod staticConstructor = createStaticConstructor(psiClass, staticName, params, psiAnnotation);
       return Arrays.asList(constructor, staticConstructor);
     }
