@@ -20,7 +20,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
-import com.intellij.ide.structureView.newStructureView.TreeActionsOwner;
 import com.intellij.ide.structureView.newStructureView.TreeModelWrapper;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeRenderer;
@@ -92,7 +91,7 @@ public class FileStructurePopup implements Disposable {
   private final Project myProject;
   private final StructureViewModel myTreeModel;
   private final StructureViewModel myBaseTreeModel;
-  private final MyTreeActionsOwner myTreeActionsOwner;
+  private final TreeStructureActionsOwner myTreeActionsOwner;
   private JBPopup myPopup;
 
   @NonNls private static final String narrowDownPropertyKey = "FileStructurePopup.narrowDown";
@@ -116,7 +115,7 @@ public class FileStructurePopup implements Disposable {
     myBaseTreeModel = structureViewModel;
     Disposer.register(this, auxDisposable);
     if (applySortAndFilter) {
-      myTreeActionsOwner = new MyTreeActionsOwner();
+      myTreeActionsOwner = new TreeStructureActionsOwner(myBaseTreeModel);
       myTreeModel = new TreeModelWrapper(structureViewModel, myTreeActionsOwner);
     }
     else {
@@ -670,34 +669,6 @@ public class FileStructurePopup implements Disposable {
 
   public void setTitle(String title) {
     myTitle = title;
-  }
-
-  private class MyTreeActionsOwner implements TreeActionsOwner {
-    private final Set<TreeAction> myActions = new HashSet<TreeAction>();
-
-    public void setActionActive(String name, boolean state) {
-    }
-
-    public boolean isActionActive(String name) {
-      for (final Sorter sorter : myBaseTreeModel.getSorters()) {
-        if (sorter.getName().equals(name)) {
-          if (!sorter.isVisible()) return true;
-        }
-      }
-      for(TreeAction action: myActions) {
-        if (action.getName().equals(name)) return true;
-      }
-      return Sorter.ALPHA_SORTER_ID.equals(name);
-    }
-
-    public void setActionIncluded(final TreeAction filter, final boolean selected) {
-      if (selected) {
-        myActions.add(filter);
-      }
-      else {
-        myActions.remove(filter);
-      }
-    }
   }
 
   private class FileStructurePopupFilter implements ElementFilter {

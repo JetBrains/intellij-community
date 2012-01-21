@@ -23,7 +23,6 @@ import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
-import com.intellij.ide.structureView.newStructureView.TreeActionsOwner;
 import com.intellij.ide.structureView.newStructureView.TreeModelWrapper;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.smartTree.*;
@@ -52,7 +51,6 @@ import com.intellij.ui.*;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -68,7 +66,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 public class FileStructureDialog extends DialogWrapper {
   private final Editor myEditor;
@@ -78,7 +75,7 @@ public class FileStructureDialog extends DialogWrapper {
   private final StructureViewModel myTreeModel;
   private final StructureViewModel myBaseTreeModel;
   private SmartTreeStructure myTreeStructure;
-  private final MyTreeActionsOwner myTreeActionsOwner;
+  private final TreeStructureActionsOwner myTreeActionsOwner;
 
   @NonNls private static final String ourPropertyKey = "FileStructure.narrowDown";
   private boolean myShouldNarrowDown = false;
@@ -95,7 +92,7 @@ public class FileStructureDialog extends DialogWrapper {
     myNavigatable = navigatable;
     myBaseTreeModel = structureViewModel;
     if (applySortAndFilter) {
-      myTreeActionsOwner = new MyTreeActionsOwner();
+      myTreeActionsOwner = new TreeStructureActionsOwner(myBaseTreeModel);
       myTreeModel = new TreeModelWrapper(structureViewModel, myTreeActionsOwner);
     }
     else {
@@ -473,33 +470,5 @@ public class FileStructureDialog extends DialogWrapper {
 
   private static SpeedSearchComparator createSpeedSearchComparator() {
     return new SpeedSearchComparator(false);
-  }
-
-  private class MyTreeActionsOwner implements TreeActionsOwner {
-    private final Set<TreeAction> myActions = new HashSet<TreeAction>();
-
-    public void setActionActive(String name, boolean state) {
-    }
-
-    public boolean isActionActive(String name) {
-      for (final Sorter sorter : myBaseTreeModel.getSorters()) {
-        if (sorter.getName().equals(name)) {
-          if (!sorter.isVisible()) return true;
-        }
-      }
-      for(TreeAction action: myActions) {
-        if (action.getName().equals(name)) return true;
-      }
-      return Sorter.ALPHA_SORTER_ID.equals(name);
-    }
-
-    public void setActionIncluded(final TreeAction filter, final boolean selected) {
-      if (selected) {
-        myActions.add(filter);
-      }
-      else {
-        myActions.remove(filter);
-      }
-    }
   }
 }
