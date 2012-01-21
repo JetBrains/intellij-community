@@ -11,6 +11,7 @@ import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.CheckUtil;
@@ -137,7 +138,9 @@ public class LombokLightMethodBuilder11Impl extends LightMethodBuilder implement
     final StringBuilder builder = StringBuilderSpinAllocator.alloc();
     try {
       for (String modifier : modifierList.getModifiers()) {
-        builder.append(modifier).append(' ');
+        if (!PsiModifier.PACKAGE_LOCAL.equals(modifier)) {
+          builder.append(modifier).append(' ');
+        }
       }
       return builder.toString();
     } finally {

@@ -1,12 +1,11 @@
 package de.plushnikov.intellij.lombok.util;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import com.intellij.psi.Modifier;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.PsiModifier;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Plushnikov Michail
@@ -16,12 +15,12 @@ public class LombokProcessorUtil {
   @Modifier
   @Nullable
   public static String getMethodModifier(@NotNull PsiAnnotation psiAnnotation) {
-    return convertAcessLevelToJavaModifier(getAnnotationValue(psiAnnotation, "value"));
+    return convertAccessLevelToJavaModifier(getAnnotationValue(psiAnnotation, "value"));
   }
 
   @Nullable
   public static String getAccessVisibity(@NotNull PsiAnnotation psiAnnotation) {
-    return convertAcessLevelToJavaString(getAnnotationValue(psiAnnotation, "access"));
+    return convertAccessLevelToJavaString(getAnnotationValue(psiAnnotation, "access"));
   }
 
   private static String getAnnotationValue(final PsiAnnotation psiAnnotation, final String parameterName) {
@@ -29,7 +28,7 @@ public class LombokProcessorUtil {
   }
 
   @Nullable
-  public static String convertAcessLevelToJavaString(String value) {
+  public static String convertAccessLevelToJavaString(String value) {
     if (null == value || value.isEmpty() || value.equals("PUBLIC")) {
       return PsiKeyword.PUBLIC;
     }
@@ -54,7 +53,7 @@ public class LombokProcessorUtil {
 
   @Modifier
   @Nullable
-  private static String convertAcessLevelToJavaModifier(String value) {
+  private static String convertAccessLevelToJavaModifier(String value) {
     if (null == value || value.isEmpty() || value.equals("PUBLIC")) {
       return PsiModifier.PUBLIC;
     }

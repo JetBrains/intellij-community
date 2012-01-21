@@ -1,11 +1,5 @@
 package de.plushnikov.intellij.lombok.processor.field;
 
-import java.lang.annotation.Annotation;
-import java.util.Collection;
-import java.util.List;
-
-import org.jetbrains.annotations.NotNull;
-
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.Modifier;
 import com.intellij.psi.PsiAnnotation;
@@ -15,7 +9,6 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
-import de.plushnikov.intellij.lombok.LombokConstants;
 import de.plushnikov.intellij.lombok.UserMapKeys;
 import de.plushnikov.intellij.lombok.problem.ProblemBuilder;
 import de.plushnikov.intellij.lombok.psi.LombokLightMethodBuilder;
@@ -28,6 +21,11 @@ import de.plushnikov.intellij.lombok.util.PsiMethodUtil;
 import de.plushnikov.intellij.lombok.util.PsiPrimitiveTypeFactory;
 import lombok.Getter;
 import lombok.core.TransformationsUtil;
+import org.jetbrains.annotations.NotNull;
+
+import java.lang.annotation.Annotation;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * Inspect and validate @Getter lombok annotation on a field
@@ -115,8 +113,8 @@ public class GetterFieldProcessor extends AbstractLombokFieldProcessor {
     final PsiType booleanType = PsiPrimitiveTypeFactory.getInstance().getBooleanType();
     String methodName = TransformationsUtil.toGetterName(fieldName, booleanType.equals(psiReturnType));
 
-    final Collection<String> annotationsToCopy = PsiAnnotationUtil.collectAnnotationsToCopy(psiField, LombokConstants.NON_NULL_PATTERN);
-    final String annotationsString = PsiAnnotationUtil.buildAnnotationsString(annotationsToCopy);
+//    final Collection<String> annotationsToCopy = PsiAnnotationUtil.collectAnnotationsToCopy(psiField, LombokConstants.NON_NULL_PATTERN);
+//    final String annotationsString = PsiAnnotationUtil.buildAnnotationsString(annotationsToCopy);
     //TODO adapt annotations
 
     PsiClass psiClass = psiField.getContainingClass();

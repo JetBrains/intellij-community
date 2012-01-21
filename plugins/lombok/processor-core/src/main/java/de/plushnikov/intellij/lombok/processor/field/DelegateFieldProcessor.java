@@ -7,6 +7,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
@@ -192,7 +193,7 @@ public class DelegateFieldProcessor extends AbstractLombokFieldProcessor {
   private PsiMethod generateDelegateMethod(@NotNull PsiClass psiClass, @NotNull PsiMethod psiMethod, @Nullable PsiSubstitutor psiSubstitutor) {
     final StringBuilder builder = StringBuilderSpinAllocator.alloc();
     try {
-      builder.append(PsiModifier.PUBLIC);
+      builder.append(PsiKeyword.PUBLIC);
       builder.append(' ');
       final PsiType returnType = null == psiSubstitutor ? psiMethod.getReturnType() : psiSubstitutor.substitute(psiMethod.getReturnType());
       builder.append(null == returnType ? "" : returnType.getCanonicalText());

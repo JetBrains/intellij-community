@@ -45,7 +45,9 @@ public class LombokLightModifierList extends LightElement implements PsiModifier
     final StringBuilder builder = StringBuilderSpinAllocator.alloc();
     try {
       for (String modifier : myModifiers) {
-        builder.append(modifier).append(' ');
+        if (!PsiModifier.PACKAGE_LOCAL.equals(modifier)) {
+          builder.append(modifier).append(' ');
+        }
       }
       return builder.toString();
     } finally {
