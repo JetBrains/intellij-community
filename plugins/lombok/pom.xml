@@ -404,7 +404,7 @@
   <properties>
     <idea9.version>9.0.4</idea9.version>
     <idea10.version>10.5.4</idea10.version>
-    <idea11.version>11.0</idea11.version>
+    <idea11.version>11.0.1</idea11.version>
 
     <!-- maven.build.timestamp since 2.1.0-M1 -->
     <maven.min.version>2.1.0</maven.min.version>
@@ -422,7 +422,7 @@
     <plugin.vendor>${project.organization.name}</plugin.vendor>
     <plugin.vendor.url>${project.organization.url}</plugin.vendor.url>
     <plugin.vendor.email>lombok-plugin@plushnikov.de</plugin.vendor.email>
-    <lombok.version>0.10.4</lombok.version>
+    <lombok.version>0.10.8</lombok.version>
     <lombok-pg.version>0.10.4</lombok-pg.version>
     <lombok-maven-plugin.version>0.10.2.0</lombok-maven-plugin.version>
     <lombok-annotations.includes>lombok/extern/**,
@@ -599,6 +599,10 @@
             <optimize>true</optimize>
             <debug>false</debug>
           </configuration>
+        </plugin>
+        <plugin>
+          <artifactId>maven-jar-plugin</artifactId>
+          <version>2.3.1</version>
         </plugin>
         <plugin>
           <artifactId>maven-source-plugin</artifactId>
