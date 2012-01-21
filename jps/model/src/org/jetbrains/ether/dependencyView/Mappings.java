@@ -634,17 +634,18 @@ public class Mappings {
       }
     }
 
-    public class InheritanceConstraint extends UsageConstraint {
+    public class InheritanceConstraint extends PackageConstraint {
       public final DependencyContext.S rootClass;
 
       public InheritanceConstraint(final DependencyContext.S rootClass) {
+        super(ClassRepr.getPackageName(myContext.getValue(rootClass)));
         this.rootClass = rootClass;
       }
 
       @Override
       public boolean checkResidence(final DependencyContext.S residence) {
         final Option<Boolean> inheritorOf = isInheritorOf(residence, rootClass);
-        return inheritorOf.isNone() || !inheritorOf.value();
+        return inheritorOf.isNone() || !inheritorOf.value() || super.checkResidence(residence);
       }
     }
 
@@ -722,6 +723,44 @@ public class Mappings {
     }
   }
 
+  private boolean incrementalDecision(final DependencyContext.S owner, final Proto member, final Collection<File> affectedFiles) {
+    final boolean isField = member instanceof FieldRepr;
+    final Util self = new Util(this);
+
+    // Public branch --- hopeless
+    if ((member.access & Opcodes.ACC_PUBLIC) > 0) {
+      debug("Switched to non-incremental mode");
+      return false;
+    }
+
+    // Protected branch
+    if ((member.access & Opcodes.ACC_PROTECTED) > 0) {
+      debug("Softening non-incremental decision: adding all relevant subclasses for a recompilation");
+
+      final Collection<DependencyContext.S> propagated = self.propagateFieldAccess(isField ? member.name : myContext.get(""), owner);
+
+      for (DependencyContext.S className : propagated) {
+        affectedFiles.add(new File(myContext.getValue(myClassToSourceFile.get(className))));
+      }
+    }
+
+    debug("Softening non-incremental decision: adding all package classes for a recompilation");
+
+    final String packageName = ClassRepr.getPackageName(myContext.getValue(isField ? owner : member.name));
+
+    // Package-local branch    
+    for (Map.Entry<DependencyContext.S, DependencyContext.S> e : myClassToSourceFile.entrySet()) {
+      final DependencyContext.S className = e.getKey();
+      final DependencyContext.S fileName = e.getValue();
+
+      if (ClassRepr.getPackageName(myContext.getValue(className)).equals(packageName)) {
+        affectedFiles.add(new File(myContext.getValue(fileName)));
+      }
+    }
+
+    return false;
+  }
+
   public boolean differentiate(final Mappings delta,
                                final Collection<String> removed,
                                final Collection<File> filesToCompile,
@@ -787,7 +826,7 @@ public class Mappings {
 
         if (it.isAnnotation() && it.policy == RetentionPolicy.SOURCE) {
           debug("Annotation, retention policy = SOURCE => a switch to non-incremental mode requested");
-          return false;
+          return incrementalDecision(it.outerClassName, it, affectedFiles);
         }
 
         if ((addedModifiers & Opcodes.ACC_PROTECTED) > 0) {
@@ -827,7 +866,7 @@ public class Mappings {
 
             if (removedtargets.contains(ElementType.LOCAL_VARIABLE)) {
               debug("Annotation, removed target contains LOCAL_VARIABLE => a switch to non-incremental mode requested");
-              return false;
+              return incrementalDecision(it.outerClassName, it, affectedFiles);
             }
 
             if (!removedtargets.isEmpty()) {
@@ -1179,7 +1218,7 @@ public class Mappings {
 
           if ((f.access & Opcodes.ACC_PRIVATE) == 0 && (f.access & mask) == mask && f.hasValue()) {
             debug("Field had value and was (non-private) final static => a switch to non-incremental mode requested");
-            return false;
+            return incrementalDecision(it.name, f, affectedFiles);
           }
 
           final Collection<DependencyContext.S> propagated = u.propagateFieldAccess(f.name, it.name);
@@ -1198,39 +1237,32 @@ public class Mappings {
           if ((field.access & Opcodes.ACC_PRIVATE) == 0 && (field.access & mask) == mask) {
             if ((d.base() & Difference.ACCESS) > 0 || (d.base() & Difference.VALUE) > 0) {
               debug("Inline field changed it's access or value => a switch to non-incremental mode requested");
-              return false;
+              return incrementalDecision(it.name, field, affectedFiles);
             }
           }
 
           if (d.base() != Difference.NONE) {
             final Collection<DependencyContext.S> propagated = u.propagateFieldAccess(field.name, it.name);
-            final Set<UsageRepr.Usage> usages = new HashSet<UsageRepr.Usage>();
-
-            boolean affected = false;
 
             if ((d.base() & Difference.TYPE) > 0 || (d.base() & Difference.SIGNATURE) > 0) {
-              u.affectFieldUsages(field, propagated, field.createUsage(myContext, it.name), usages, dependants);
-              affectedUsages.addAll(usages);
-              affected = true;
+              u.affectFieldUsages(field, propagated, field.createUsage(myContext, it.name), affectedUsages, dependants);
             }
             else if ((d.base() & Difference.ACCESS) > 0) {
               if ((d.addedModifiers() & Opcodes.ACC_STATIC) > 0 ||
                   (d.removedModifiers() & Opcodes.ACC_STATIC) > 0 ||
                   (d.addedModifiers() & Opcodes.ACC_PRIVATE) > 0 ||
                   (d.addedModifiers() & Opcodes.ACC_VOLATILE) > 0) {
-                if (!affected) {
-                  u.affectFieldUsages(field, propagated, field.createUsage(myContext, it.name), usages, dependants);
-                  affectedUsages.addAll(usages);
-                  affected = true;
-                }
+
+                u.affectFieldUsages(field, propagated, field.createUsage(myContext, it.name), affectedUsages, dependants);
               }
               else {
+                boolean affected = false;
+                final Set<UsageRepr.Usage> usages = new HashSet<UsageRepr.Usage>();
+
                 if ((d.addedModifiers() & Opcodes.ACC_FINAL) > 0) {
-                  if (!affected) {
-                    u.affectFieldUsages(field, propagated, field.createAssignUsage(myContext, it.name), usages, dependants);
-                    affectedUsages.addAll(usages);
-                    affected = true;
-                  }
+                  u.affectFieldUsages(field, propagated, field.createAssignUsage(myContext, it.name), usages, dependants);
+                  affectedUsages.addAll(usages);
+                  affected = true;
                 }
 
                 if ((d.removedModifiers() & Opcodes.ACC_PUBLIC) > 0) {
