@@ -164,7 +164,11 @@ class DependencyContext {
       throw new RuntimeException(e);
     }
   }
-  
+
+  public void flush() {
+    myEnumerator.force();
+  }
+
   public Logger<S> getLogger(final com.intellij.openapi.diagnostic.Logger log) {
     return new Logger<S>() {
       @Override

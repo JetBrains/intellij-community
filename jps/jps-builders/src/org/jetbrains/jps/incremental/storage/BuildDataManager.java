@@ -107,6 +107,24 @@ public class BuildDataManager {
     }
   }
 
+  public void flush() {
+    synchronized (mySourceToOutputLock) {
+      for (Map.Entry<String, SourceToOutputMapping> entry : myProductionSourceToOutputs.entrySet()) {
+        entry.getValue().force();
+      }
+      for (Map.Entry<String, SourceToOutputMapping> entry : myTestSourceToOutputs.entrySet()) {
+        entry.getValue().force();
+      }
+    }
+    mySrcToFormMap.force();
+    final Mappings mappings = myMappings;
+    if (mappings != null) {
+      synchronized (mappings) {
+        mappings.flush();
+      }
+    }
+  }
+
   public void close() {
     try {
       synchronized (mySourceToOutputLock) {

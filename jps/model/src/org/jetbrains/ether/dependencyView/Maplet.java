@@ -17,7 +17,6 @@ package org.jetbrains.ether.dependencyView;
 
 import java.util.Collection;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -35,4 +34,6 @@ interface Maplet<K, V> {
   void close();
   Collection<K> keyCollection();
   Collection<Map.Entry<K, V>> entrySet();
+
+  void flush();
 }

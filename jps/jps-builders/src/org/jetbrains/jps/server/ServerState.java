@@ -13,6 +13,7 @@ import org.jetbrains.jps.api.GlobalLibrary;
 import org.jetbrains.jps.api.SdkLibrary;
 import org.jetbrains.jps.idea.IdeaProjectLoader;
 import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.ProjectTimestamps;
 import org.jetbrains.jps.incremental.storage.TimestampStorage;
 
@@ -116,7 +117,10 @@ class ServerState {
       if (pd == null) {
         final Project project = loadProject(projectPath, params);
         final FSState fsState = new FSState();
-        pd = new ProjectDescriptor(projectName, project, fsState, new ProjectTimestamps(projectName));
+        final ProjectTimestamps timestamps = new ProjectTimestamps(projectName);
+        final BuildDataManager dataManager = new BuildDataManager(projectName, myKeepTempCachesInMemory);
+
+        pd = new ProjectDescriptor(projectName, project, fsState, timestamps, dataManager);
         myProjects.put(projectPath, pd);
       }
       pd.incUsageCounter();
@@ -126,7 +130,7 @@ class ServerState {
 
     try {
       final CompileScope compileScope = createCompilationScope(buildType, pd, modules, paths);
-      final IncProjectBuilder builder = new IncProjectBuilder(pd, BuilderRegistry.getInstance(), cs, myKeepTempCachesInMemory);
+      final IncProjectBuilder builder = new IncProjectBuilder(pd, BuilderRegistry.getInstance(), cs);
       if (msgHandler != null) {
         builder.addMessageHandler(msgHandler);
       }

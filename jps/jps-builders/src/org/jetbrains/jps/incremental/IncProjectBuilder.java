@@ -6,6 +6,7 @@ import org.jetbrains.jps.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
+import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.SourceToFormMapping;
 import org.jetbrains.jps.incremental.storage.SourceToOutputMapping;
 import org.jetbrains.jps.incremental.storage.TimestampStorage;
@@ -28,7 +29,6 @@ public class IncProjectBuilder {
   private final ProjectDescriptor myProjectDescriptor;
   private final BuilderRegistry myBuilderRegistry;
   private final BuildCanceledStatus myCancelStatus;
-  private final boolean myUseMemoryTempCaches;
   private ProjectChunks myProductionChunks;
   private ProjectChunks myTestChunks;
   private final List<MessageHandler> myMessageHandlers = new ArrayList<MessageHandler>();
@@ -44,11 +44,10 @@ public class IncProjectBuilder {
   private final float myTotalModulesWork;
   private final int myTotalBuilderCount;
 
-  public IncProjectBuilder(ProjectDescriptor pd, BuilderRegistry builderRegistry, BuildCanceledStatus cs, boolean useMemoryTempCaches) {
+  public IncProjectBuilder(ProjectDescriptor pd, BuilderRegistry builderRegistry, BuildCanceledStatus cs) {
     myProjectDescriptor = pd;
     myBuilderRegistry = builderRegistry;
     myCancelStatus = cs;
-    myUseMemoryTempCaches = useMemoryTempCaches;
     myProductionChunks = new ProjectChunks(pd.project, ClasspathKind.PRODUCTION_COMPILE);
     myTestChunks = new ProjectChunks(pd.project, ClasspathKind.TEST_COMPILE);
     myTotalModulesWork = (float) pd.rootsIndex.getTotalModuleCount() * 2;  /* multiply by 2 to reflect production and test sources */
@@ -73,7 +72,7 @@ public class IncProjectBuilder {
             JPS_SERVER_NAME, BuildMessage.Kind.INFO,
             "Internal caches are corrupted or have outdated format, forcing project rebuild: " + e.getMessage())
           );
-          closeContext(context);
+          flushContext(context);
           context = createContext(new AllProjectScope(scope.getProject(), true), false, true);
           runBuild(context);
         }
@@ -92,13 +91,13 @@ public class IncProjectBuilder {
       }
     }
     finally {
-      closeContext(context);
+      flushContext(context);
     }
   }
 
-  private static void closeContext(CompileContext context) {
+  private static void flushContext(CompileContext context) {
     if (context != null) {
-      context.getDataManager().close();
+      context.getDataManager().flush();
     }
     cleanupJavacNameTable();
   }
@@ -142,13 +141,13 @@ public class IncProjectBuilder {
   }
 
   private CompileContext createContext(CompileScope scope, boolean isMake, final boolean isProjectRebuild) throws ProjectBuildException {
-    final String projectName = myProjectDescriptor.projectName;
     final TimestampStorage tsStorage = myProjectDescriptor.timestamps.getStorage();
     final FSState fsState = myProjectDescriptor.fsState;
     final ModuleRootsIndex rootsIndex = myProjectDescriptor.rootsIndex;
+    final BuildDataManager dataManager = myProjectDescriptor.dataManager;
     return new CompileContext(
-      projectName, scope, isMake, isProjectRebuild, myProductionChunks, myTestChunks, fsState, tsStorage, myMessageDispatcher, rootsIndex, myCancelStatus,
-      myUseMemoryTempCaches);
+      scope, isMake, isProjectRebuild, myProductionChunks, myTestChunks, fsState, dataManager, tsStorage, myMessageDispatcher, rootsIndex, myCancelStatus
+    );
   }
 
   private void cleanOutputRoots(CompileContext context) throws ProjectBuildException {

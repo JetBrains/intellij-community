@@ -1506,4 +1506,21 @@ public class Mappings {
       FileUtil.delete(myRootDir);
     }
   }
+
+  public void flush() {
+    myClassToSubclasses.flush();
+    myClassToClassDependency.flush();
+    mySourceFileToClasses.flush();
+    mySourceFileToAnnotationUsages.flush();
+    mySourceFileToUsages.flush();
+    myClassToSourceFile.flush();
+
+    if (!myIsDelta) {
+      // flush if you own the context
+      final DependencyContext context = myContext;
+      if (context != null) {
+        context.flush();
+      }
+    }
+  }
 }

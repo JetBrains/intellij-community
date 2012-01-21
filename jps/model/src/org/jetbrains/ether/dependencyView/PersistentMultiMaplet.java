@@ -165,6 +165,10 @@ class PersistentMultiMaplet<K, V> implements MultiMaplet<K, V> {
     }
   }
 
+  public void flush() {
+    myMap.force();
+  }
+
   @Override
   public Collection<Map.Entry<K, Collection<V>>> entrySet() {
     final Collection<Map.Entry<K, Collection<V>>> result = new LinkedList<Map.Entry<K, Collection<V>>>();
