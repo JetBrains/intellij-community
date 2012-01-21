@@ -21,6 +21,7 @@ import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Author: msk
@@ -53,6 +54,7 @@ public class EditorWithProviderComposite extends EditorComposite {
     return false;
   }
 
+  @NotNull
   public Pair<FileEditor, FileEditorProvider> getSelectedEditorWithProvider() {
     LOG.assertTrue(myEditors.length > 0, myEditors.length);
     if(myEditors.length==1){
