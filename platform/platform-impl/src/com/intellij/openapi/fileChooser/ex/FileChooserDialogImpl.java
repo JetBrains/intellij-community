@@ -17,6 +17,7 @@ package com.intellij.openapi.fileChooser.ex;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SaveAndSyncHandler;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
@@ -73,7 +74,6 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
 
   private JPanel myNorthPanel;
 
-  private static boolean ourToShowTextField = true;
   private TextFieldAction myTextFieldAction;
 
   protected FileTextFieldImpl myPathTextField;
@@ -212,7 +212,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
 
     panel.add(new JLabel(
       "<html><center><small><font color=gray>Drag and drop a file into the space above to quickly locate it in the tree.</font></small></center></html>",
-      JLabel.CENTER), BorderLayout.SOUTH);
+      SwingConstants.CENTER), BorderLayout.SOUTH);
 
 
     ApplicationManager.getApplication().getMessageBus().connect(getDisposable())
@@ -232,7 +232,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
 
 
   public JComponent getPreferredFocusedComponent() {
-    if (ourToShowTextField) {
+    if (isToShowTextField()) {
       return myPathTextField != null ? myPathTextField.getField() : null;
     }
     else {
@@ -341,6 +341,14 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
 
   private final Map<String, LocalFileSystem.WatchRequest> myRequests = new HashMap<String, LocalFileSystem.WatchRequest>();
 
+  private static boolean isToShowTextField() {
+    return PropertiesComponent.getInstance().getBoolean("FileChooser.ShowPath", true);
+  }
+
+  private static void setToShowTextField(boolean toShowTextField) {
+    PropertiesComponent.getInstance().setValue("FileChooser.ShowPath", Boolean.toString(toShowTextField));
+  }
+
   private final class FileTreeExpansionListener implements TreeExpansionListener {
     public void treeExpanded(TreeExpansionEvent event) {
       final Object[] path = event.getPath().getPath();
@@ -413,14 +421,14 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
   }
 
   public void toggleShowTextField() {
-    ourToShowTextField = !ourToShowTextField;
+    setToShowTextField(!isToShowTextField());
     updateTextFieldShowing();
   }
 
   private void updateTextFieldShowing() {
     myTextFieldAction.update();
     myNorthPanel.remove(myPathTextFieldWrapper);
-    if (ourToShowTextField) {
+    if (isToShowTextField()) {
       final ArrayList<VirtualFile> selection = new ArrayList<VirtualFile>();
       if (myFileSystemTree.getSelectedFile() != null) {
         selection.add(myFileSystemTree.getSelectedFile());
@@ -458,7 +466,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
 
     public void update() {
       setVisible(true);
-      setText(ourToShowTextField ? IdeBundle.message("file.chooser.hide.path") : IdeBundle.message("file.chooser.show.path"));
+      setText(isToShowTextField() ? IdeBundle.message("file.chooser.hide.path") : IdeBundle.message("file.chooser.show.path"));
     }
 
     public void linkSelected(final LinkLabel aSource, final Object aLinkData) {
@@ -467,7 +475,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
   }
 
   private void updatePathFromTree(final List<VirtualFile> selection, boolean now) {
-    if (!ourToShowTextField || myTreeIsUpdating) return;
+    if (!isToShowTextField() || myTreeIsUpdating) return;
 
     String text = "";
     if (selection.size() > 0) {
@@ -501,7 +509,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
   }
 
   private void updateTreeFromPath(final String text) {
-    if (!ourToShowTextField) return;
+    if (!isToShowTextField()) return;
     if (myPathTextField.isPathUpdating()) return;
     if (text == null) return;
 
