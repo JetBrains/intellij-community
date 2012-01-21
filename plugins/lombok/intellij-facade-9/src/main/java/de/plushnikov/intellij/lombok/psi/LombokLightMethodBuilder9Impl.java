@@ -1,13 +1,5 @@
 package de.plushnikov.intellij.lombok.psi;
 
-import java.util.List;
-
-import javax.swing.Icon;
-
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
@@ -43,6 +35,7 @@ import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.impl.light.LightElement;
+import com.intellij.psi.impl.light.LightIdentifier;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.presentation.java.JavaPresentationUtil;
 import com.intellij.psi.search.SearchScope;
@@ -52,6 +45,12 @@ import com.intellij.ui.RowIcon;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import java.util.List;
 
 /**
  * @author Plushnikov Michail
@@ -59,15 +58,16 @@ import com.intellij.util.StringBuilderSpinAllocator;
 public class LombokLightMethodBuilder9Impl extends LightElement implements LombokLightMethodBuilder {
   private ASTNode myASTNode;
 
-  private final String                          myName;
-  private final LombokLightModifierList         myModifierList;
+  private final String myName;
+  private final LombokLightModifierList myModifierList;
   private final LombokLightParameterListBuilder myParameterList;
   private final LombokLightReferenceListBuilder myThrowsList;
+  private final LightIdentifier myNameIdentifier;
 
-  private   PsiType    myReturnType;
-  private   Icon       myBaseIcon;
-  private   PsiClass   myContainingClass;
-  private   boolean    myConstructor;
+  private PsiType myReturnType;
+  private Icon myBaseIcon;
+  private PsiClass myContainingClass;
+  private boolean myConstructor;
   protected PsiElement myNavigationElement;
 
   public LombokLightMethodBuilder9Impl(@NotNull PsiManager manager, @NotNull String name) {
@@ -80,6 +80,7 @@ public class LombokLightMethodBuilder9Impl extends LightElement implements Lombo
     myParameterList = new LombokLightParameterListBuilder(manager, language, this);
     myModifierList = new LombokLightModifierList(manager, language, this);
     myThrowsList = new LombokLightReferenceListBuilder(manager, language, PsiReferenceList.Role.THROWS_LIST);
+    myNameIdentifier = new LightIdentifier(manager, name);
     myNavigationElement = this;
   }
 
@@ -120,6 +121,11 @@ public class LombokLightMethodBuilder9Impl extends LightElement implements Lombo
   public LombokLightMethodBuilder withException(@NotNull String fqName) {
     myThrowsList.addReference(fqName);
     return this;
+  }
+
+  @Override
+  public PsiIdentifier getNameIdentifier() {
+    return myNameIdentifier;
   }
 
   public LombokLightMethodBuilder setBaseIcon(Icon baseIcon) {
@@ -236,10 +242,6 @@ public class LombokLightMethodBuilder9Impl extends LightElement implements Lombo
   @NotNull
   public MethodSignature getSignature(@NotNull PsiSubstitutor substitutor) {
     return MethodSignatureBackedByPsiMethod.create(this, substitutor);
-  }
-
-  public PsiIdentifier getNameIdentifier() {
-    return null;
   }
 
   public PsiClass getContainingClass() {

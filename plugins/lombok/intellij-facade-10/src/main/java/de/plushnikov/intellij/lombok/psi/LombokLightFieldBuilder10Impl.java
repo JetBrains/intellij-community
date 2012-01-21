@@ -1,24 +1,28 @@
 package de.plushnikov.intellij.lombok.psi;
 
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-
 import com.intellij.psi.Modifier;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.light.LightFieldBuilder;
+import com.intellij.psi.impl.light.LightIdentifier;
 import com.intellij.psi.impl.light.LightModifierList;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Plushnikov Michail
  */
 public class LombokLightFieldBuilder10Impl extends LightFieldBuilder implements LombokLightFieldBuilder {
+  private final LightIdentifier myNameIdentifier;
+
   public LombokLightFieldBuilder10Impl(@NotNull PsiManager manager, @NotNull String name, @NotNull PsiType type) {
     super(manager, name, type);
+    myNameIdentifier = new LightIdentifier(manager, name);
   }
 
   @Override
@@ -37,6 +41,11 @@ public class LombokLightFieldBuilder10Impl extends LightFieldBuilder implements 
   public LombokLightFieldBuilder withNavigationElement(PsiElement navigationElement) {
     setNavigationElement(navigationElement);
     return this;
+  }
+
+  @Override
+  public PsiIdentifier getNameIdentifier() {
+    return myNameIdentifier;
   }
 
   public String toString() {
