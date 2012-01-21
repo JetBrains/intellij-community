@@ -351,6 +351,7 @@ public abstract class ChooseByNameBase {
 
     myCard = new CardLayout();
     myCardContainer = new JPanel(myCard);
+    myCardContainer.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 4));  // space between checkbox and filter/show all in view buttons
 
     final String checkBoxName = myModel.getCheckBoxName();
     myCheckBox = new JCheckBox(checkBoxName != null ? checkBoxName : "");
