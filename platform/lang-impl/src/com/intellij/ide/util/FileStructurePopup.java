@@ -208,41 +208,32 @@ public class FileStructurePopup implements Disposable {
         return current.isEmpty() ? null : findClosestTo(myInitialPsiElement, current);
       }
 
-      private Object findClosestTo(PsiElement path, ArrayList<ObjectWithWeight> pathes) {
-        if (path == null) {
-          return pathes.get(0).node;
+      private Object findClosestTo(PsiElement path, ArrayList<ObjectWithWeight> paths) {
+        if (path == null || myInitialPsiElement == null) {
+          return paths.get(0).node;
         }
-        //todo[kb]
-        return pathes.get(0).node;
-        //int max = -1;
-        //Object cur = null;
-        //for (ObjectWithWeight objectWithWeight : pathes) {
-        //  if (cur == null) {
-        //    cur = objectWithWeight.node;
-        //    max = matchesNumber(path, (TreePath)cur);
-        //    continue;
-        //  }
-        //
-        //  final int i = matchesNumber(path, (TreePath)objectWithWeight.node);
-        //  if (max < i) {
-        //    cur = objectWithWeight.node;
-        //    max = i;
-        //  }
-        //}
-        //return cur == null ? pathes.get(0).node : cur;
-      }
-
-      private int matchesNumber(TreePath path, TreePath cur) {
-        final Object[] o1 = path.getPath();
-        final Object[] o2 = cur.getPath();
-        for (int i = 0; i < o1.length; i++) {          
-          if (i >= o2.length || o1[i] != o2[i]) {
-            return i;
+        final Set<PsiElement> parents = getAllParents(myInitialPsiElement);
+        Object cur = paths.get(0).node;
+        int max = -1;
+        for (ObjectWithWeight p : paths) {
+          final Object last = ((TreePath)p.node).getLastPathComponent();
+          final List<PsiElement> elements = new ArrayList<PsiElement>();
+          FilteringTreeStructure.FilteringNode node =
+            (FilteringTreeStructure.FilteringNode)((DefaultMutableTreeNode)last).getUserObject();
+          while (node != null) {
+            elements.add(getPsi(node));
+            node = node.getParentNode();
+          }
+          final int size = ContainerUtil.intersection(parents, elements).size();
+          if (size > max) {
+            max = size;
+            cur = p.node;
           }
         }
-        return o1.length;
+
+        return cur;
       }
-      
+
       class ObjectWithWeight {
         final Object node;
         final List<TextRange> weights = new ArrayList<TextRange>();
@@ -380,13 +371,7 @@ public class FileStructurePopup implements Disposable {
   }
 
   private void selectPsiElement(PsiElement element) {
-    Set<PsiElement> parents = new java.util.HashSet<PsiElement>();
-
-    while (element != null) {
-      parents.add(element);
-      if (element instanceof PsiFile) break;
-      element = element.getParent();
-    }
+    Set<PsiElement> parents = getAllParents(element);
 
     FilteringTreeStructure.FilteringNode node = (FilteringTreeStructure.FilteringNode)myAbstractTreeBuilder.getRootElement();
     while (node != null) {
@@ -409,6 +394,17 @@ public class FileStructurePopup implements Disposable {
       }
     }
     TreeUtil.selectFirstNode(myTree);
+  }
+
+  private static Set<PsiElement> getAllParents(PsiElement element) {
+    Set<PsiElement> parents = new java.util.HashSet<PsiElement>();
+
+    while (element != null) {
+      parents.add(element);
+      if (element instanceof PsiFile) break;
+      element = element.getParent();
+    }
+    return parents;
   }
 
   @Nullable
