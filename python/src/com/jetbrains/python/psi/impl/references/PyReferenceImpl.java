@@ -256,6 +256,11 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
               if (!defs.isEmpty()) {
                 for (ReadWriteInstruction def : defs) {
                   element = def.getElement();
+                  // TODO: This check may slow down resolving, but it is the current solution to the compehension scopes problem
+                  final PyComprehensionElement elementComprh = PsiTreeUtil.getParentOfType(element, PyComprehensionElement.class);
+                  if (elementComprh != null && elementComprh != PsiTreeUtil.getParentOfType(myElement, PyComprehensionElement.class)) {
+                    continue;
+                  }
                   if (element instanceof NameDefiner && !(element instanceof PsiNamedElement)) {
                     definer = (NameDefiner)element;
                     element = definer.getElementNamed(referencedName);
