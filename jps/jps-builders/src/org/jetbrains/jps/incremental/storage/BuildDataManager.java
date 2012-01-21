@@ -135,25 +135,31 @@ public class BuildDataManager {
 
   private void closeOutputToSourceStorages() throws IOException {
     IOException ex = null;
-    for (Map.Entry<String, SourceToOutputMapping> entry : myProductionSourceToOutputs.entrySet()) {
-      try {
-        closeStorage(entry.getValue());
+    try {
+      for (Map.Entry<String, SourceToOutputMapping> entry : myProductionSourceToOutputs.entrySet()) {
+        try {
+          closeStorage(entry.getValue());
+        }
+        catch (IOException e) {
+          if (ex != null) {
+            ex = e;
+          }
+        }
       }
-      catch (IOException e) {
-        if (ex != null) {
-          ex = e;
+      for (Map.Entry<String, SourceToOutputMapping> entry : myTestSourceToOutputs.entrySet()) {
+        try {
+          closeStorage(entry.getValue());
+        }
+        catch (IOException e) {
+          if (ex != null) {
+            ex = e;
+          }
         }
       }
     }
-    for (Map.Entry<String, SourceToOutputMapping> entry : myTestSourceToOutputs.entrySet()) {
-      try {
-        closeStorage(entry.getValue());
-      }
-      catch (IOException e) {
-        if (ex != null) {
-          ex = e;
-        }
-      }
+    finally {
+      myProductionSourceToOutputs.clear();
+      myTestSourceToOutputs.clear();
     }
     if (ex != null) {
       throw ex;
