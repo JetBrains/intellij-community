@@ -456,7 +456,8 @@ final class ToolWindowsPane extends JLayeredPane implements Disposable {
           resizer = myHorizontalSplitter.getFirstComponent() == cmp ? new Resizer.Splitter.FirstComponent(myHorizontalSplitter) : new Resizer.Splitter.LastComponent(myHorizontalSplitter);
         }
       }
-    } if (wnd.getType() == ToolWindowType.SLIDING) {
+    }
+    else if (wnd.getType() == ToolWindowType.SLIDING) {
       cmp = wnd.getComponent();
       while (cmp != null) {
         if (cmp.getParent() == myLayeredPane) break;
@@ -476,13 +477,13 @@ final class ToolWindowsPane extends JLayeredPane implements Disposable {
       }
     }
 
-    if (resizer == null || cmp == null) return;
+    if (resizer == null) return;
 
     int currentValue = wnd.getAnchor().isHorizontal() ? cmp.getHeight() : cmp.getWidth();
 
     int actualSize = currentValue + value;
 
-    int minValue = wnd.getAnchor().isHorizontal() ? ((ToolWindowEx)wnd).getDecorator().getTitlePanel().getPreferredSize().height : 16 + myHorizontalSplitter.getDividerWidth();
+    int minValue = wnd.getAnchor().isHorizontal() ? ((ToolWindowEx)wnd).getDecorator().getHeaderHeight() : 16 + myHorizontalSplitter.getDividerWidth();
     int maxValue = wnd.getAnchor().isHorizontal() ? myLayeredPane.getHeight() : myLayeredPane.getWidth();
 
 

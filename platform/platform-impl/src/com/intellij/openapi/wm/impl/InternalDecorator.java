@@ -63,7 +63,6 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
   private WindowInfoImpl myInfo;
   private final ToolWindowImpl myToolWindow;
   private final MyDivider myDivider;
-  private final TitlePanel myTitlePanel;
   private final EventListenerList myListenerList;
   /*
    * Actions
@@ -95,12 +94,6 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
     myToolWindow = toolWindow;
     myToolWindow.setDecorator(this);
     myDivider = new MyDivider();
-    myTitlePanel = new TitlePanel() {
-      @Override
-      public boolean isActive() {
-        return isFocused();
-      }
-    };
 
     myToggleFloatingModeAction = new ToggleFloatingModeAction();
     myToggleSideModeAction = new ToggleSideModeAction();
@@ -543,6 +536,10 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
   final WindowInfoImpl getWindowInfo() {
     return myInfo;
   }
+  
+  public int getHeaderHeight() {
+    return myHeader.getPreferredSize().height;
+  }
 
   protected final void processComponentEvent(final ComponentEvent e) {
     super.processComponentEvent(e);
@@ -848,11 +845,6 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
         }
       }
     }
-  }
-
-
-  public TitlePanel getTitlePanel() {
-    return myTitlePanel;
   }
 
   public void putInfo(@NotNull Map<String, String> info) {
