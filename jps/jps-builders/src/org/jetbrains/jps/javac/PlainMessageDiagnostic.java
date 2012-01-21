@@ -1,18 +1,19 @@
-package org.jetbrains.jps.incremental.java;
+package org.jetbrains.jps.javac;
 
-import javax.tools.*;
+import javax.tools.Diagnostic;
+import javax.tools.JavaFileObject;
 import java.util.Locale;
 
 /**
  * @author Eugene Zhuravlev
  *         Date: 9/24/11
  */
-class PlainMessageDiagnostic implements Diagnostic<JavaFileObject>{
+final class PlainMessageDiagnostic implements Diagnostic<JavaFileObject>{
 
   private final Kind myKind;
   private final String myMessage;
 
-  public PlainMessageDiagnostic(Kind kind, String message) {
+  PlainMessageDiagnostic(Kind kind, String message) {
     myKind = kind;
     myMessage = message;
   }

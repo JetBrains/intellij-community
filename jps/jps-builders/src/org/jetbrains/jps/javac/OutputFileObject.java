@@ -1,4 +1,4 @@
-package org.jetbrains.jps.incremental.java;
+package org.jetbrains.jps.javac;
 
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.Paths;
@@ -12,7 +12,7 @@ import java.util.Arrays;
  * @author Eugene Zhuravlev
  *         Date: 9/24/11
  */
-class OutputFileObject extends SimpleJavaFileObject {
+public final class OutputFileObject extends SimpleJavaFileObject {
 
   private final JavacFileManager.Context myContext;
   @Nullable
