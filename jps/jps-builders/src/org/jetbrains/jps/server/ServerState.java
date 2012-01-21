@@ -42,6 +42,14 @@ class ServerState {
 
   public void setGlobals(List<GlobalLibrary> libs, Map<String, String> pathVars) {
     synchronized (myConfigurationLock) {
+      clearCahedState();
+      myGlobalLibraries.addAll(libs);
+      myPathVariables.putAll(pathVars);
+    }
+  }
+
+  public final void clearCahedState() {
+    synchronized (myConfigurationLock) {
       for (Map.Entry<String, ProjectDescriptor> entry : myProjects.entrySet()) {
         final String projectPath = entry.getKey();
         final ProjectDescriptor descriptor = entry.getValue();
@@ -49,9 +57,7 @@ class ServerState {
       }
       myProjects.clear(); // projects should be reloaded against the latest data
       myGlobalLibraries.clear();
-      myGlobalLibraries.addAll(libs);
       myPathVariables.clear();
-      myPathVariables.putAll(pathVars);
     }
   }
 
