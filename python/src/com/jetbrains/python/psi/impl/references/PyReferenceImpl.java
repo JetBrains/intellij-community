@@ -223,6 +223,11 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     final String referencedName = myElement.getReferencedName();
     if (referencedName == null) return ret;
 
+    if (myElement instanceof PyTargetExpression) {
+      addResolvedElement(ret, null, myElement);
+      return ret;
+    }
+
     // here we have an unqualified expr. it may be defined:
     // ...in current file
     ResolveProcessor processor = new ResolveProcessor(referencedName);
