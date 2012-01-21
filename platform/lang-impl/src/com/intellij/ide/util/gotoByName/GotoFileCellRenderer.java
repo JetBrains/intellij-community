@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
@@ -118,6 +119,6 @@ public class GotoFileCellRenderer extends PsiElementListCellRenderer<PsiFile> {
   }
 
   protected int getIconFlags() {
-    return 0;
+    return Iconable.ICON_FLAG_READ_STATUS;
   }
 }
