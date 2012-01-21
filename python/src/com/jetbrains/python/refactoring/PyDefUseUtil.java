@@ -31,7 +31,7 @@ public class PyDefUseUtil {
     final Instruction[] instructions = controlFlow.getInstructions();
     final int instr = ControlFlowUtil.findInstructionNumberByElement(instructions, anchor);
     if (instr < 0) {
-      throw new InstructionNotFoundException();
+      return Collections.emptyList();
     }
     final boolean[] visited = new boolean[instructions.length];
     final Collection<ReadWriteInstruction> result = new LinkedHashSet<ReadWriteInstruction>();
