@@ -234,10 +234,6 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
     // Use real context here to enable correct completion and resolve in case of PyExpressionCodeFragment!!!
     PsiElement realContext = PyPsiUtils.getRealContext(myElement);
-    PyClass containingClass = PsiTreeUtil.getParentOfType(realContext, PyClass.class);
-    if (containingClass != null && PsiTreeUtil.isAncestor(containingClass.getSuperClassExpressionList(), myElement, false)) {
-      realContext = containingClass;
-    }
 
     PsiElement uexpr = null;
 
