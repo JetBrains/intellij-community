@@ -3,7 +3,6 @@ package org.jetbrains.jps.incremental.storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.jps.incremental.Paths;
-import org.jetbrains.jps.incremental.ProjectBuildException;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,34 +15,11 @@ public class ProjectTimestamps {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.storage.ProjectTimestamps");
   private static final String TIMESTAMP_STORAGE = "timestamps";
   private final String myProjectName;
-
   private final TimestampStorage myTimestamps;
 
-  public ProjectTimestamps(String projectName) throws ProjectBuildException {
+  public ProjectTimestamps(String projectName) throws Exception {
     myProjectName = projectName;
-    try {
-      File root = getTimestampsRoot();
-      TimestampStorage result;
-      final File dataFile = new File(root, "data");
-      try {
-        result = new TimestampStorage(dataFile);
-      }
-      catch (Exception e) {
-        LOG.info("Error opening timestamp storage: ", e);
-        FileUtil.delete(root);
-        result = new TimestampStorage(dataFile);
-      }
-      myTimestamps = result;
-    }
-    catch (Exception e) {
-      try {
-        clean();
-      }
-      catch (IOException ignored) {
-        LOG.info(ignored);
-      }
-      throw new ProjectBuildException(e);
-    }
+    myTimestamps = new TimestampStorage(new File(getTimestampsRoot(projectName), "data"));
   }
 
   public TimestampStorage getStorage() {
@@ -56,7 +32,7 @@ public class ProjectTimestamps {
       timestamps.wipe();
     }
     else {
-      FileUtil.delete(getTimestampsRoot());
+      FileUtil.delete(getTimestampsRoot(myProjectName));
     }
   }
 
@@ -68,12 +44,12 @@ public class ProjectTimestamps {
       }
       catch (IOException e) {
         LOG.error(e);
-        FileUtil.delete(getTimestampsRoot());
+        FileUtil.delete(getTimestampsRoot(myProjectName));
       }
     }
   }
 
-  public File getTimestampsRoot() {
-    return new File(Paths.getDataStorageRoot(myProjectName), TIMESTAMP_STORAGE);
+  public static File getTimestampsRoot(final String projectName) {
+    return new File(Paths.getDataStorageRoot(projectName), TIMESTAMP_STORAGE);
   }
 }

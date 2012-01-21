@@ -6,6 +6,8 @@ import org.jetbrains.jps.incremental.ModuleRootsIndex;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.ProjectTimestamps;
 
+import java.io.IOException;
+
 /**
 * @author Eugene Zhuravlev
 *         Date: 1/8/12
@@ -43,7 +45,12 @@ public final class ProjectDescriptor {
         timestamps.close();
       }
       finally {
-        dataManager.close();
+        try {
+          dataManager.close();
+        }
+        catch (IOException e) {
+          e.printStackTrace(System.err);
+        }
       }
     }
   }

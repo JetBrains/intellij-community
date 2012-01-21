@@ -1,6 +1,7 @@
 package org.jetbrains.jps.server;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.FileUtil;
 import org.codehaus.groovy.runtime.MethodClosure;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.Library;
@@ -13,6 +14,8 @@ import org.jetbrains.jps.api.GlobalLibrary;
 import org.jetbrains.jps.api.SdkLibrary;
 import org.jetbrains.jps.idea.IdeaProjectLoader;
 import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.incremental.messages.BuildMessage;
+import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.ProjectTimestamps;
 import org.jetbrains.jps.incremental.storage.TimestampStorage;
@@ -117,8 +120,28 @@ class ServerState {
       if (pd == null) {
         final Project project = loadProject(projectPath, params);
         final FSState fsState = new FSState();
-        final ProjectTimestamps timestamps = new ProjectTimestamps(projectName);
-        final BuildDataManager dataManager = new BuildDataManager(projectName, myKeepTempCachesInMemory);
+        ProjectTimestamps timestamps = null;
+        BuildDataManager dataManager = null;
+        try {
+          timestamps = new ProjectTimestamps(projectName);
+          dataManager = new BuildDataManager(projectName, myKeepTempCachesInMemory);
+        }
+        catch (Exception e) {
+          // second try
+          e.printStackTrace(System.err);
+          if (timestamps != null) {
+            timestamps.close();
+          }
+          if (dataManager != null) {
+            dataManager.close();
+          }
+          buildType = BuildType.PROJECT_REBUILD; // force project rebuild
+          FileUtil.delete(Paths.getDataStorageRoot(projectName));
+          timestamps = new ProjectTimestamps(projectName);
+          dataManager = new BuildDataManager(projectName, myKeepTempCachesInMemory);
+          // second attempt succeded
+          msgHandler.processMessage(new CompilerMessage("compile-server", BuildMessage.Kind.INFO, "Project rebuild forced: " + e.getMessage()));
+        }
 
         pd = new ProjectDescriptor(projectName, project, fsState, timestamps, dataManager);
         myProjects.put(projectPath, pd);
