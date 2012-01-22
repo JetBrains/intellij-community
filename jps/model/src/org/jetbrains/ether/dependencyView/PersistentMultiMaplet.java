@@ -142,7 +142,9 @@ class PersistentMultiMaplet<K, V> implements MultiMaplet<K, V> {
   @Override
   public void putAll(MultiMaplet<K, V> m) {
     for (Map.Entry<K, Collection<V>> entry : m.entrySet()) {
-      put(entry.getKey(), entry.getValue());
+      final K key = entry.getKey();
+      remove(key);
+      put(key, entry.getValue());
     }
   }
 

@@ -1412,6 +1412,7 @@ public class Mappings {
 
           mySourceFileToClasses.remove(key);
           mySourceFileToUsages.remove(key);
+          mySourceFileToAnnotationUsages.remove(key);
         }
       }
 
