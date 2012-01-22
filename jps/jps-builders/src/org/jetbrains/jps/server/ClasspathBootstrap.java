@@ -31,7 +31,7 @@ import org.jetbrains.groovy.compiler.rt.GroovyCompilerWrapper;
 import org.jetbrains.jps.MacroExpander;
 import org.objectweb.asm.ClassWriter;
 
-import javax.tools.*;
+import javax.tools.StandardJavaFileManager;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -46,7 +46,7 @@ public class ClasspathBootstrap {
   public static final String JPS_RUNTIME_PATH = "rt/jps-incremental";
 
   private static class OptimizedFileManagerClassHolder {
-    static final String CLASS_NAME = "org.jetbrains.jps.incremental.java.OptimizedFileManager";
+    static final String CLASS_NAME = "org.jetbrains.jps.javac.OptimizedFileManager";
     static final Class<StandardJavaFileManager> managerClass;
     static {
       Class<StandardJavaFileManager> aClass = null;

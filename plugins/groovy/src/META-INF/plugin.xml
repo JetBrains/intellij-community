@@ -437,7 +437,7 @@
                      level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.exception.GroovyEmptyTryBlockInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyUnusedCatchParameter" displayName="Unused catch parameter" groupName="Error handling"
-                     enabledByDefault="false" level="WARNING"
+                     enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.exception.GroovyUnusedCatchParameterInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyBreak" displayName="Break statement" groupName="Control Flow" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.control.GroovyBreakInspection"/>
@@ -450,7 +450,7 @@
                      enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.control.GroovyLoopStatementThatDoesntLoopInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyConditionalWithIdenticalBranches" displayName="Conditional expression with identical branches"
-                     groupName="Control Flow" enabledByDefault="false" level="WARNING"
+                     groupName="Control Flow" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.control.GroovyConditionalWithIdenticalBranchesInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyConditionalCanBeElvis" displayName="Conditional expression can be elvis" groupName="Control Flow"
                      enabledByDefault="false" level="WARNING"
@@ -459,7 +459,7 @@
                      groupName="Control Flow" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.control.GroovyConditionalCanBeConditionalCallInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyIfStatementWithIdenticalBranches" displayName="If statement with identical branches"
-                     groupName="Control Flow" enabledByDefault="false" level="WARNING"
+                     groupName="Control Flow" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.control.GroovyIfStatementWithIdenticalBranchesInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyIfStatementWithTooManyBranches" displayName="If statement with too many branches"
                      groupName="Control Flow" enabledByDefault="false" level="WARNING"
@@ -491,7 +491,7 @@
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyTrivialIf" displayName="Redundant 'if' statement" groupName="Control Flow" enabledByDefault="true"
                      level="WARNING" implementationClass="org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialIfInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyAccessToStaticFieldLockedOnInstance" displayName="Access to static field locked on instance data"
-                     groupName="Threading issues" enabledByDefault="false" level="WARNING"
+                     groupName="Threading issues" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.threading.GroovyAccessToStaticFieldLockedOnInstanceInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyDoubleCheckedLocking" displayName="Double-checked locking" groupName="Threading issues"
                      enabledByDefault="false" level="WARNING"
@@ -533,14 +533,14 @@
                      enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.threading.GroovyWaitWhileNotSynchronizedInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovySynchronizationOnNonFinalField" displayName="Synchronization on non-final field"
-                     groupName="Threading issues" enabledByDefault="false" level="WARNING"
+                     groupName="Threading issues" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.threading.GroovySynchronizationOnNonFinalFieldInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovySynchronizationOnVariableInitializedWithLiteral"
                      displayName="Synchronization on variable initialized with literal" groupName="Threading issues"
-                     enabledByDefault="false" level="WARNING"
+                     enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.threading.GroovySynchronizationOnVariableInitializedWithLiteralInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyUnsynchronizedMethodOverridesSynchronizedMethod"
-                     displayName="Unsynchronized method overrides synchronized method" groupName="Threading issues" enabledByDefault="false"
+                     displayName="Unsynchronized method overrides synchronized method" groupName="Threading issues" enabledByDefault="true"
                      level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.threading.GroovyUnsynchronizedMethodOverridesSynchronizedMethodInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyWhileLoopSpinsOnField" displayName="While loop spins on field" groupName="Threading issues"
@@ -615,7 +615,7 @@
                      enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyOctalIntegerInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyDuplicateSwitchBranch" displayName="Duplicate switch case" groupName="Validity issues"
-                     enabledByDefault="false" level="WARNING"
+                     enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.validity.GroovyDuplicateSwitchBranchInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyNonShortCircuitBoolean" displayName="Non short-circuit boolean" groupName="Probable bugs"
                      enabledByDefault="false" level="WARNING"
@@ -635,7 +635,7 @@
                      key="access.to.inaccessible.element" groupName="Probable bugs" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyAccessibilityInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyConstructorNamedArguments" displayName="Named arguments of constructor call" groupName="Probable bugs"
-                     enabledByDefault="false" level="WARNING"
+                     enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyConstructorNamedArgumentsInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyDocCheck" displayName="GroovyDoc issues" groupName="Probable bugs"
                      enabledByDefault="true" level="ERROR"

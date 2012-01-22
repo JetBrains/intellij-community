@@ -735,7 +735,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
       @Override
       public void run() {
-        ShutDownTracker.invokeAndWait(true, new Runnable() {
+        ShutDownTracker.invokeAndWait(true, true, new Runnable() {
           @Override
           public void run() {
             ApplicationManager.getApplication().runWriteAction(new Runnable() {

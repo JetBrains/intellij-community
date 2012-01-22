@@ -32,6 +32,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.*;
@@ -43,7 +44,6 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.RefreshSession;
-import com.intellij.ui.GuiUtils;
 import com.intellij.util.Consumer;
 import com.intellij.util.WaitForProgressToShow;
 import com.intellij.util.continuation.*;
@@ -66,6 +66,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
   private final Consumer<Collection<FilePath>> myToTargetListsMover;
   private final List<FilePatch> myRemainingPatches;
   private final PathsVerifier<BinaryType> myVerifier;
+  private boolean mySystemOperation;
 
   public PatchApplier(final Project project, final VirtualFile baseDirectory, final List<FilePatch> patches,
                       @Nullable final Consumer<Collection<FilePath>> toTargetListsMover, final CustomBinaryPatchApplier<BinaryType> customForBinaries,
@@ -96,6 +97,10 @@ public class PatchApplier<BinaryType extends FilePatch> {
     this(project, baseDirectory, patches, createMover(project, targetChangeList), customForBinaries, commitContext);
   }
 
+  public void setIsSystemOperation(boolean systemOperation) {
+    mySystemOperation = systemOperation;
+  }
+
   @Nullable
   private static Consumer<Collection<FilePath>> createMover(final Project project, final LocalChangeList targetChangeList) {
     final ChangeListManager clm = ChangeListManager.getInstance(project);
@@ -122,12 +127,12 @@ public class PatchApplier<BinaryType extends FilePatch> {
   public class ApplyPatchTask extends TaskDescriptor {
     private ApplyPatchStatus myStatus;
     private final boolean myShowNotification;
-    private final boolean mySilentAddDelete;
+    private final boolean mySystemOperation;
 
-    public ApplyPatchTask(final boolean showNotification, boolean silentAddDelete) {
+    public ApplyPatchTask(final boolean showNotification, boolean systemOperation) {
       super("", Where.AWT);
       myShowNotification = showNotification;
-      mySilentAddDelete = silentAddDelete;
+      mySystemOperation = systemOperation;
     }
 
     @Override
@@ -143,7 +148,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
         return;
       }
 
-      final TriggerAdditionOrDeletion trigger = new TriggerAdditionOrDeletion(myProject, mySilentAddDelete);
+      final TriggerAdditionOrDeletion trigger = new TriggerAdditionOrDeletion(myProject, mySystemOperation);
       final ApplyPatchStatus applyStatus;
       try {
         applyStatus = ApplicationManager.getApplication().runReadAction(new Computable<ApplyPatchStatus>() {
@@ -232,7 +237,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
     }
     directlyAffected.addAll(trigger.getAffected());
     final Consumer<Collection<FilePath>> mover = localChangeList == null ? null : createMover(project, localChangeList);
-    PatchApplier.refreshPassedFilesAndMoveToChangelist(project, null, directlyAffected, indirectlyAffected, mover);
+    PatchApplier.refreshPassedFilesAndMoveToChangelist(project, null, directlyAffected, indirectlyAffected, mover, false);
     showApplyStatus(project, result);
     return result;
   }
@@ -294,7 +299,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
     final List<VirtualFile> indirectlyAffected = myVerifier.getAllAffected();
     directlyAffected.addAll(additionalDirectly);
 
-    refreshPassedFilesAndMoveToChangelist(myProject, context, directlyAffected, indirectlyAffected, myToTargetListsMover);
+    refreshPassedFilesAndMoveToChangelist(myProject, context, directlyAffected, indirectlyAffected, myToTargetListsMover, mySystemOperation);
   }
 
   public List<FilePath> getDirectlyAffected() {
@@ -306,21 +311,23 @@ public class PatchApplier<BinaryType extends FilePatch> {
   }
 
   public static void refreshPassedFilesAndMoveToChangelist(final Project project, final ContinuationContext context,
-      final Collection<FilePath> directlyAffected, final Collection<VirtualFile> indirectlyAffected, final Consumer<Collection<FilePath>> targetChangelistMover) {
+      final Collection<FilePath> directlyAffected, final Collection<VirtualFile> indirectlyAffected,
+      final Consumer<Collection<FilePath>> targetChangelistMover, final boolean systemOperation) {
     if (context != null) {
       context.suspend();
     }
 
-    final Runnable projectFilesReload =
-      MergeVersion.MergeDocumentVersion.prepareToReportChangedProjectFiles(project, ObjectsConvertor.fp2vf(directlyAffected));
-    final TaskDescriptor projectFilesReloadTaskDescriptor = projectFilesReload == null ? null : new TaskDescriptor("", Where.AWT) {
-      @Override
-      public void run(final ContinuationContext context) {
-        projectFilesReload.run();
-      }
-    };
-    final Runnable scheduleProjectFilesReload = new Runnable() {
+    final Runnable scheduleProjectFilesReload = systemOperation ? EmptyRunnable.getInstance() : new Runnable() {
       public void run() {
+        final Runnable projectFilesReload =
+          MergeVersion.MergeDocumentVersion.prepareToReportChangedProjectFiles(project, ObjectsConvertor.fp2vf(directlyAffected));
+        final TaskDescriptor projectFilesReloadTaskDescriptor = projectFilesReload == null ? null : new TaskDescriptor("", Where.AWT) {
+          @Override
+          public void run(final ContinuationContext context) {
+            projectFilesReload.run();
+          }
+        };
+
         if (projectFilesReloadTaskDescriptor != null) {
           if (context != null) {
             context.last(projectFilesReloadTaskDescriptor);

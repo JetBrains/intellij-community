@@ -20,8 +20,8 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -151,7 +151,7 @@ public class UnknownRunConfiguration implements RunConfiguration {
       myPanel = new JPanel();
       myPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 50, 0));
 
-      myPanel.add(new JLabel("This configuration can not be edited", JLabel.CENTER));
+      myPanel.add(new JLabel("This configuration cannot be edited", JLabel.CENTER));
     }
 
     protected void resetEditorFrom(final UnknownRunConfiguration s) {

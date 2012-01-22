@@ -1,4 +1,4 @@
-package org.jetbrains.jps.incremental.java;
+package org.jetbrains.jps.javac;
 
 import com.sun.tools.javac.util.Context;
 import com.sun.tools.javac.util.DefaultFileManager;
@@ -6,7 +6,7 @@ import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.ListBuffer;
 
 import javax.lang.model.SourceVersion;
-import javax.tools.*;
+import javax.tools.JavaFileObject;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;

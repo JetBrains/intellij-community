@@ -4,7 +4,7 @@
       <implementation-class>com.intellij.compiler.impl.TranslatingCompilerFilesMonitor</implementation-class>
     </component>
     <component>
-      <implementation-class>com.intellij.compiler.JpsServerManager</implementation-class>
+      <implementation-class>com.intellij.compiler.CompileServerManager</implementation-class>
     </component>
   </application-components>
   

@@ -1,4 +1,4 @@
-package org.jetbrains.jps.incremental.java;
+package org.jetbrains.jps.javac;
 
 import java.io.IOException;
 import java.io.Writer;

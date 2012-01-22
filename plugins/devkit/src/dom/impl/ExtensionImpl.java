@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.devkit.dom.impl;
 
+import com.intellij.pom.PomTarget;
 import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.xml.DomTarget;
@@ -31,7 +32,8 @@ public abstract class ExtensionImpl implements Extension {
   public ExtensionPoint getExtensionPoint() {
     PsiElement declaration = getChildDescription().getDeclaration(getManager().getProject());
     if (declaration instanceof PomTargetPsiElement) {
-      return (ExtensionPoint)((DomTarget)((PomTargetPsiElement)declaration).getTarget()).getDomElement();
+      PomTarget target = ((PomTargetPsiElement)declaration).getTarget();
+      return target instanceof DomTarget ? (ExtensionPoint)((DomTarget)target).getDomElement() : null;
     }
     return null;
   }

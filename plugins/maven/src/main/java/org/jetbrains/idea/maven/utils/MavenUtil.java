@@ -465,35 +465,70 @@ public class MavenUtil {
     }
 
     if (SystemInfo.isMac) {
-      final File brewDir = new File("/usr/local/Cellar/maven");
-      final String[] list = brewDir.list();
-      if (list == null || list.length == 0) {
-        return null;
+      File home = fromBrew();
+      if (home != null) {
+        return home;
       }
 
-      if (list.length == 1) {
-        final File home;
-        if ((home = fromBrew(brewDir, list)) != null) {
-          return home;
-        }
-      }
-      else {
-        Arrays.sort(list, new Comparator<String>() {
-          @Override
-          public int compare(String o1, String o2) {
-            return StringUtil.compareVersionNumbers(o2, o1);
-          }
-        });
-
-        return fromBrew(brewDir, list);
+      if ((home = fromMacSystemJavaTools()) != null) {
+        return home;
       }
     }
 
     return null;
   }
-  
+
   @Nullable
-  private static File fromBrew(File brewDir, String[] list) {
+  private static File fromMacSystemJavaTools() {
+    final File symlinkDir = new File("/usr/share/maven");
+    if (isValidMavenHome(symlinkDir)) {
+      return symlinkDir;
+    }
+
+    // well, try to search
+    final File dir = new File("/usr/share/java");
+    final String[] list = dir.list();
+    if (list == null || list.length == 0) {
+      return null;
+    }
+
+    String home = null;
+    final String prefix = "maven-";
+    final int versionIndex = prefix.length();
+    for (String path : list) {
+      if (path.startsWith(prefix) &&
+          (home == null || StringUtil.compareVersionNumbers(path.substring(versionIndex), home.substring(versionIndex)) > 0)) {
+        home = path;
+      }
+    }
+
+    if (home != null) {
+      File file = new File(dir, home);
+      if (isValidMavenHome(file)) {
+        return file;
+      }
+    }
+
+    return null;
+  }
+
+  @Nullable
+  private static File fromBrew() {
+    final File brewDir = new File("/usr/local/Cellar/maven");
+    final String[] list = brewDir.list();
+    if (list == null || list.length == 0) {
+      return null;
+    }
+
+    if (list.length > 1) {
+      Arrays.sort(list, new Comparator<String>() {
+        @Override
+        public int compare(String o1, String o2) {
+          return StringUtil.compareVersionNumbers(o2, o1);
+        }
+      });
+    }
+
     final File file = new File(brewDir, list[0] + "/libexec");
     return isValidMavenHome(file) ? file : null;
   }

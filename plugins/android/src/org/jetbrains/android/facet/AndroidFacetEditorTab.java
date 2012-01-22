@@ -33,14 +33,10 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.TIntHashSet;
 import org.jetbrains.android.compiler.AndroidAptCompiler;
 import org.jetbrains.android.compiler.AndroidCompileUtil;
 import org.jetbrains.android.compiler.AndroidIdlCompiler;
@@ -59,9 +55,7 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author yole
@@ -86,10 +80,6 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
   private JCheckBox myGenerateIdlWhenChanged;
   private JCheckBox myIsLibraryProjectCheckbox;
   private JPanel myAaptCompilerPanel;
-  private JBList myResOverlayList;
-  private JButton myAddResOverlayButton;
-  private JPanel myResOverlayPanel;
-  private JButton myRemoveResOverlayButton;
   private JCheckBox myGenerateUnsignedApk;
   private ComboboxWithBrowseButton myApkPathCombo;
   private JLabel myApkPathLabel;
@@ -186,41 +176,6 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     };
     myRunProcessResourcesRadio.addActionListener(listener);
     myCompileResourcesByIdeRadio.addActionListener(listener);
-
-    myAddResOverlayButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        CollectionListModel model = (CollectionListModel)myResOverlayList.getModel();
-        Set<Object> currentItems = new HashSet<Object>();
-        for (int i = 0; i < model.getSize(); i++) {
-          currentItems.add(model.getElementAt(i));
-        }
-        VirtualFile[] files = chooserDirsUnderModule(null, false, true, null);
-        for (VirtualFile file : files) {
-          String newItem = FileUtil.toSystemDependentName(file.getPath());
-          if (!currentItems.contains(newItem)) {
-            model.add(newItem);
-          }
-        }
-        myResOverlayList.setModel(model);
-      }
-    });
-
-    myRemoveResOverlayButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        List<String> newItems = new ArrayList<String>();
-        TIntHashSet selectedIndices = new TIntHashSet(myResOverlayList.getSelectedIndices());
-        ListModel model = myResOverlayList.getModel();
-        for (int i = 0; i < model.getSize(); i++) {
-          String item = (String)model.getElementAt(i);
-          if (!selectedIndices.contains(i)) {
-            newItems.add(item);
-          }
-        }
-        myResOverlayList.setModel(new CollectionListModel(newItems));
-      }
-    });
 
     myApkPathLabel.setLabelFor(myApkPathCombo);
 
@@ -327,25 +282,7 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     if (!myConfiguration.CUSTOM_DEBUG_KEYSTORE_PATH.equals(getSelectedCustomKeystorePath())) {
       return true;
     }
-
-    List<String> currentResOverlayFolders = new ArrayList<String>();
-    for (String folder : myConfiguration.RES_OVERLAY_FOLDERS) {
-      String absPath = toAbsolutePath(folder);
-      if (absPath != null) {
-        currentResOverlayFolders.add(absPath);
-      }
-    }
-    Collections.sort(currentResOverlayFolders);
-
-    List<String> newResFolders = new ArrayList<String>();
-    ListModel model = myResOverlayList.getModel();
-    for (int i = 0; i < model.getSize(); i++) {
-      String element = (String)model.getElementAt(i);
-      newResFolders.add(element);
-    }
-    Collections.sort(newResFolders);
-
-    return !currentResOverlayFolders.equals(newResFolders);
+    return false;
   }
 
   @NotNull
@@ -453,14 +390,6 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     myConfiguration.RUN_PROCESS_RESOURCES_MAVEN_TASK = myRunProcessResourcesRadio.isSelected();
 
     myConfiguration.GENERATE_UNSIGNED_APK = myGenerateUnsignedApk.isSelected();
-
-    ListModel model = myResOverlayList.getModel();
-    String[] newResOverlayValue = new String[model.getSize()];
-    for (int i = 0; i < model.getSize(); i++) {
-      String element = (String)model.getElementAt(i);
-      newResOverlayValue[i] = '/' + getAndCheckRelativePath(element, false);
-    }
-    myConfiguration.RES_OVERLAY_FOLDERS = newResOverlayValue;
 
     boolean useCustomAptSrc = myUseCustomSourceDirectoryRadio.isSelected();
 
@@ -584,21 +513,6 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     myCompileResourcesByIdeRadio.setSelected(!myConfiguration.RUN_PROCESS_RESOURCES_MAVEN_TASK);
 
     myGenerateUnsignedApk.setSelected(myConfiguration.GENERATE_UNSIGNED_APK);
-
-    myResOverlayPanel.setVisible(mavenizedModule);
-
-    String[] resOverlayFolders = configuration.RES_OVERLAY_FOLDERS;
-    List<String> items = new ArrayList<String>();
-    for (int i = 0, n = resOverlayFolders.length; i < n; i++) {
-      String relPath = resOverlayFolders[i];
-      if (relPath.length() > 0) {
-        String absPath = toAbsolutePath(relPath);
-        if (absPath != null && absPath.length() > 0) {
-          items.add(absPath);
-        }
-      }
-    }
-    myResOverlayList.setModel(new CollectionListModel(items));
 
     updateAptPanel();
 

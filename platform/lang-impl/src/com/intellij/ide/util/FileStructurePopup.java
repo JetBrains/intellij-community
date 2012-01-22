@@ -20,7 +20,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
-import com.intellij.ide.structureView.newStructureView.TreeActionsOwner;
 import com.intellij.ide.structureView.newStructureView.TreeModelWrapper;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeRenderer;
@@ -66,24 +65,33 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class FileStructurePopup implements Disposable {
+  private static final Comparator<TextRange> TEXT_RANGE_COMPARATOR = new Comparator<TextRange>() {
+    @Override
+    public int compare(TextRange o1, TextRange o2) {
+      if (o1.getStartOffset() == o2.getStartOffset()) {
+        return o2.getEndOffset() - o1.getEndOffset(); //longer is better
+      }
+      return o1.getStartOffset() - o2.getStartOffset();
+    }
+  };
   private final Editor myEditor;
   private final Project myProject;
   private final StructureViewModel myTreeModel;
   private final StructureViewModel myBaseTreeModel;
-  private final MyTreeActionsOwner myTreeActionsOwner;
+  private final TreeStructureActionsOwner myTreeActionsOwner;
   private JBPopup myPopup;
 
   @NonNls private static final String narrowDownPropertyKey = "FileStructurePopup.narrowDown";
@@ -95,6 +103,7 @@ public class FileStructurePopup implements Disposable {
   private SmartTreeStructure myTreeStructure;
   private int myPreferredWidth;
   private final FilteringTreeStructure myFilteringStructure;
+  private PsiElement myInitialPsiElement;
 
   public FileStructurePopup(StructureViewModel structureViewModel,
                             @Nullable Editor editor,
@@ -106,7 +115,7 @@ public class FileStructurePopup implements Disposable {
     myBaseTreeModel = structureViewModel;
     Disposer.register(this, auxDisposable);
     if (applySortAndFilter) {
-      myTreeActionsOwner = new MyTreeActionsOwner();
+      myTreeActionsOwner = new TreeStructureActionsOwner(myBaseTreeModel);
       myTreeModel = new TreeModelWrapper(structureViewModel, myTreeActionsOwner);
     }
     else {
@@ -154,7 +163,7 @@ public class FileStructurePopup implements Disposable {
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
 
-    mySpeedSearch = new TreeSpeedSearch(myTree, TreeSpeedSearch.NODE_DESCRIPTOR_TOSTRING, true) {
+    mySpeedSearch = new TreeSpeedSearch(myTree, TreeSpeedSearch.NODE_DESCRIPTOR_TOSTRING, true) {      
       @Override
       protected Point getComponentLocationOnScreen() {
         return myPopup.getContent().getLocationOnScreen();
@@ -164,6 +173,99 @@ public class FileStructurePopup implements Disposable {
       protected Rectangle getComponentVisibleRect() {
         return myPopup.getContent().getVisibleRect();
       }
+
+      @Override
+      protected Object findElement(String s) {
+        List<ObjectWithWeight> elements = new ArrayList<ObjectWithWeight>();
+        s = s.trim();
+        final ListIterator<Object> it = getElementIterator(0);
+        while (it.hasNext()) {
+          final ObjectWithWeight o = new ObjectWithWeight(it.next(), s, getComparator());
+          if (!o.weights.isEmpty()) {
+            elements.add(o);
+          }
+        }
+        ObjectWithWeight cur = null;
+        ArrayList<ObjectWithWeight> current = new ArrayList<ObjectWithWeight>();
+        for (ObjectWithWeight element : elements) {
+          if (cur == null) {
+            cur = element;
+            current.add(cur);
+            continue;
+          }
+
+          final int i = element.compareWith(cur);
+          if (i == 0) {
+            current.add(element);
+          } else if (i < 0) {
+            cur = element;
+            current.clear();
+            current.add(cur);
+          }
+        }
+
+        return current.isEmpty() ? null : findClosestTo(myInitialPsiElement, current);
+      }
+
+      private Object findClosestTo(PsiElement path, ArrayList<ObjectWithWeight> paths) {
+        if (path == null || myInitialPsiElement == null) {
+          return paths.get(0).node;
+        }
+        final Set<PsiElement> parents = getAllParents(myInitialPsiElement);
+        Object cur = paths.get(0).node;
+        int max = -1;
+        for (ObjectWithWeight p : paths) {
+          final Object last = ((TreePath)p.node).getLastPathComponent();
+          final List<PsiElement> elements = new ArrayList<PsiElement>();
+          FilteringTreeStructure.FilteringNode node =
+            (FilteringTreeStructure.FilteringNode)((DefaultMutableTreeNode)last).getUserObject();
+          while (node != null) {
+            elements.add(getPsi(node));
+            node = node.getParentNode();
+          }
+          final int size = ContainerUtil.intersection(parents, elements).size();
+          if (size > max) {
+            max = size;
+            cur = p.node;
+          }
+        }
+
+        return cur;
+      }
+
+      class ObjectWithWeight {
+        final Object node;
+        final List<TextRange> weights = new ArrayList<TextRange>();
+
+        ObjectWithWeight(Object element, String pattern, SpeedSearchComparator comparator) {
+          this.node = element;
+          final String text = getElementText(element);
+          if (text != null) {
+            final Iterable<TextRange> ranges = comparator.matchingFragments(pattern, text);
+            if (ranges != null) {
+              for (TextRange range : ranges) {
+                weights.add(range);
+              }
+            }
+          }
+          Collections.sort(weights, TEXT_RANGE_COMPARATOR);
+        }
+        
+        int compareWith(ObjectWithWeight obj) {
+          final List<TextRange> w = obj.weights;
+          for (int i = 0; i < weights.size(); i++) {
+            if (i >= w.size()) return 1;
+            final int result = TEXT_RANGE_COMPARATOR.compare(weights.get(i), w.get(i));
+            if (result != 0) {
+              return result;
+            }
+          }
+          
+          return 0;
+        }
+        
+      }
+      
     };
     mySpeedSearch.setComparator(new SpeedSearchComparator(false, true));
 
@@ -231,7 +333,8 @@ public class FileStructurePopup implements Disposable {
         myAbstractTreeBuilder.queueUpdate().doWhenDone(new Runnable() {
           @Override
           public void run() {
-            selectPsiElement(getCurrentElement(getPsiFile(myProject)));
+            myInitialPsiElement = getCurrentElement(getPsiFile(myProject));
+            selectPsiElement(myInitialPsiElement);
             treeHasBuilt.setDone();
             //long t = System.currentTimeMillis() - time;
             //System.out.println("Shown in " + t + "ms");
@@ -255,9 +358,9 @@ public class FileStructurePopup implements Disposable {
             @Override
             public void run() {
               myTree.repaint();
-              if (mySpeedSearch.isPopupActive()) {
-                mySpeedSearch.refreshSelection();
-              }
+              //if (mySpeedSearch.isPopupActive()) {
+              //  mySpeedSearch.refreshSelection();
+              //}
             }
           });          
         }
@@ -267,13 +370,7 @@ public class FileStructurePopup implements Disposable {
   }
 
   private void selectPsiElement(PsiElement element) {
-    Set<PsiElement> parents = new java.util.HashSet<PsiElement>();
-
-    while (element != null) {
-      parents.add(element);
-      if (element instanceof PsiFile) break;
-      element = element.getParent();
-    }
+    Set<PsiElement> parents = getAllParents(element);
 
     FilteringTreeStructure.FilteringNode node = (FilteringTreeStructure.FilteringNode)myAbstractTreeBuilder.getRootElement();
     while (node != null) {
@@ -296,6 +393,17 @@ public class FileStructurePopup implements Disposable {
       }
     }
     TreeUtil.selectFirstNode(myTree);
+  }
+
+  private static Set<PsiElement> getAllParents(PsiElement element) {
+    Set<PsiElement> parents = new java.util.HashSet<PsiElement>();
+
+    while (element != null) {
+      parents.add(element);
+      if (element instanceof PsiFile) break;
+      element = element.getParent();
+    }
+    return parents;
   }
 
   @Nullable
@@ -561,34 +669,6 @@ public class FileStructurePopup implements Disposable {
 
   public void setTitle(String title) {
     myTitle = title;
-  }
-
-  private class MyTreeActionsOwner implements TreeActionsOwner {
-    private final Set<TreeAction> myActions = new HashSet<TreeAction>();
-
-    public void setActionActive(String name, boolean state) {
-    }
-
-    public boolean isActionActive(String name) {
-      for (final Sorter sorter : myBaseTreeModel.getSorters()) {
-        if (sorter.getName().equals(name)) {
-          if (!sorter.isVisible()) return true;
-        }
-      }
-      for(TreeAction action: myActions) {
-        if (action.getName().equals(name)) return true;
-      }
-      return Sorter.ALPHA_SORTER_ID.equals(name);
-    }
-
-    public void setActionIncluded(final TreeAction filter, final boolean selected) {
-      if (selected) {
-        myActions.add(filter);
-      }
-      else {
-        myActions.remove(filter);
-      }
-    }
   }
 
   private class FileStructurePopupFilter implements ElementFilter {

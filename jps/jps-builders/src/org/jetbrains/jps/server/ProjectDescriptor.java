@@ -3,7 +3,10 @@ package org.jetbrains.jps.server;
 import org.jetbrains.jps.Project;
 import org.jetbrains.jps.incremental.FSState;
 import org.jetbrains.jps.incremental.ModuleRootsIndex;
+import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.ProjectTimestamps;
+
+import java.io.IOException;
 
 /**
 * @author Eugene Zhuravlev
@@ -14,15 +17,17 @@ public final class ProjectDescriptor {
   public final Project project;
   public final FSState fsState;
   public final ProjectTimestamps timestamps;
+  public final BuildDataManager dataManager;
   public ModuleRootsIndex rootsIndex;
 
   private int myUseCounter = 1;
 
-  ProjectDescriptor(String projectName, Project project, FSState fsState, ProjectTimestamps timestamps) {
+  ProjectDescriptor(String projectName, Project project, FSState fsState, ProjectTimestamps timestamps, BuildDataManager dataManager) {
     this.projectName = projectName;
     this.project = project;
     this.fsState = fsState;
     this.timestamps = timestamps;
+    this.dataManager = dataManager;
     this.rootsIndex = new ModuleRootsIndex(project);
   }
   public synchronized void incUsageCounter() {
@@ -36,7 +41,17 @@ public final class ProjectDescriptor {
       shouldClose = myUseCounter == 0;
     }
     if (shouldClose) {
-      timestamps.close();
+      try {
+        timestamps.close();
+      }
+      finally {
+        try {
+          dataManager.close();
+        }
+        catch (IOException e) {
+          e.printStackTrace(System.err);
+        }
+      }
     }
   }
 }

@@ -15,10 +15,10 @@
  */
 package com.intellij.compiler.options;
 
+import com.intellij.compiler.CompileServerManager;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.CompilerSettingsFactory;
-import com.intellij.compiler.JpsServerManager;
 import com.intellij.compiler.impl.rmiCompiler.RmicConfiguration;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.options.ExcludedEntriesConfigurable;
@@ -180,7 +180,7 @@ public class CompilerConfigurable implements SearchableConfigurable.Parent, Conf
         excludes.apply();
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
-            JpsServerManager.getInstance().sendReloadRequest(project);
+            CompileServerManager.getInstance().sendReloadRequest(project);
           }
         });
       }

@@ -296,7 +296,7 @@ public class AndroidRootUtil {
     if (facet == null) {
       return VirtualFile.EMPTY_ARRAY;
     }
-    String[] overlayFolders = facet.getConfiguration().RES_OVERLAY_FOLDERS;
+    List<String> overlayFolders = facet.getConfiguration().RES_OVERLAY_FOLDERS;
     List<VirtualFile> result = new ArrayList<VirtualFile>();
     for (String overlayFolder : overlayFolders) {
       VirtualFile overlayDir = getFileByRelativeModulePath(module, overlayFolder, true);

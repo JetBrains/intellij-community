@@ -24,6 +24,7 @@ import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -36,6 +37,7 @@ import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -81,7 +83,12 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
           setWorkingDirectory(file.getPresentableUrl());
         }
       }
-    });
+    }) {
+      @Override
+      protected void installPathCompletion(@Nullable Project project, FileChooserDescriptor fileChooserDescriptor) {
+        super.installPathCompletion(project, FileChooserDescriptorFactory.createSingleFolderDescriptor());
+      }
+    };
     panel.add(myWorkingDirectoryField, BorderLayout.CENTER);
 
     final FixedSizeButton button = new FixedSizeButton(myWorkingDirectoryField);

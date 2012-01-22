@@ -5,7 +5,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ether.dependencyView.Mappings;
 import org.jetbrains.jps.incremental.Paths;
-import org.jetbrains.jps.incremental.ProjectBuildException;
 
 import java.io.File;
 import java.io.IOException;
@@ -30,31 +29,10 @@ public class BuildDataManager {
   private final SourceToFormMapping mySrcToFormMap;
   private final Mappings myMappings;
 
-  public BuildDataManager(String projectName) throws ProjectBuildException {
+  public BuildDataManager(String projectName, final boolean useMemoryTempCaches) throws Exception {
     myProjectName = projectName;
-    try {
-      mySrcToFormMap = createStorage(getSourceToFormsRoot(), new StorageFactory<SourceToFormMapping>() {
-        public SourceToFormMapping create(File dataFile) throws Exception {
-          return new SourceToFormMapping(dataFile);
-        }
-      });
-
-      final File mappingsRoot = getMappingsRoot();
-      myMappings = createStorage(mappingsRoot, new StorageFactory<Mappings>() {
-        public Mappings create(File dataFile) throws Exception {
-          return new Mappings(mappingsRoot, false);
-        }
-      });
-    }
-    catch (Exception e) {
-      try {
-        clean();
-      }
-      catch (IOException ignored) {
-        LOG.info(ignored);
-      }
-      throw new ProjectBuildException(e);
-    }
+    mySrcToFormMap = new SourceToFormMapping(new File(getSourceToFormsRoot(), "data"));
+    myMappings = new Mappings(getMappingsRoot(), useMemoryTempCaches);
   }
 
   public SourceToOutputMapping getSourceToOutputMap(String moduleName, boolean testSources) throws Exception {
@@ -63,11 +41,7 @@ public class BuildDataManager {
     synchronized (mySourceToOutputLock) {
       mapping = storageMap.get(moduleName);
       if (mapping == null) {
-        mapping = createStorage(getSourceToOutputRoot(moduleName, testSources), new StorageFactory<SourceToOutputMapping>() {
-          public SourceToOutputMapping create(File dataFile) throws Exception {
-            return new SourceToOutputMapping(dataFile);
-          }
-        });
+        mapping = new SourceToOutputMapping(new File(getSourceToOutputRoot(moduleName, testSources), "data"));
         storageMap.put(moduleName, mapping);
       }
     }
@@ -85,8 +59,12 @@ public class BuildDataManager {
   public void clean() throws IOException {
     try {
       synchronized (mySourceToOutputLock) {
-        closeOutputToSourceStorages();
-        FileUtil.delete(getSourceToOutputsRoot());
+        try {
+          closeOutputToSourceStorages();
+        }
+        finally {
+          FileUtil.delete(getSourceToOutputsRoot());
+        }
       }
     }
     finally {
@@ -107,7 +85,25 @@ public class BuildDataManager {
     }
   }
 
-  public void close() {
+  public void flush() {
+    synchronized (mySourceToOutputLock) {
+      for (Map.Entry<String, SourceToOutputMapping> entry : myProductionSourceToOutputs.entrySet()) {
+        entry.getValue().force();
+      }
+      for (Map.Entry<String, SourceToOutputMapping> entry : myTestSourceToOutputs.entrySet()) {
+        entry.getValue().force();
+      }
+    }
+    mySrcToFormMap.force();
+    final Mappings mappings = myMappings;
+    if (mappings != null) {
+      synchronized (mappings) {
+        mappings.flush();
+      }
+    }
+  }
+
+  public void close() throws IOException {
     try {
       synchronized (mySourceToOutputLock) {
         closeOutputToSourceStorages();
@@ -115,25 +111,58 @@ public class BuildDataManager {
     }
     finally {
       try {
-        closeStorage(getSourceToFormsRoot(), mySrcToFormMap);
+        closeStorage(mySrcToFormMap);
       }
       finally {
         final Mappings mappings = myMappings;
         if (mappings != null) {
           synchronized (mappings) {
-            mappings.close();
+            try {
+              mappings.close();
+            }
+            catch (RuntimeException e) {
+              final Throwable cause = e.getCause();
+              if (cause instanceof IOException) {
+                throw ((IOException)cause);
+              }
+              throw e;
+            }
           }
         }
       }
     }
   }
 
-  private void closeOutputToSourceStorages() {
-    for (Map.Entry<String, SourceToOutputMapping> entry : myProductionSourceToOutputs.entrySet()) {
-      closeStorage(getSourceToOutputRoot(entry.getKey(), false), entry.getValue());
+  private void closeOutputToSourceStorages() throws IOException {
+    IOException ex = null;
+    try {
+      for (Map.Entry<String, SourceToOutputMapping> entry : myProductionSourceToOutputs.entrySet()) {
+        try {
+          closeStorage(entry.getValue());
+        }
+        catch (IOException e) {
+          if (ex != null) {
+            ex = e;
+          }
+        }
+      }
+      for (Map.Entry<String, SourceToOutputMapping> entry : myTestSourceToOutputs.entrySet()) {
+        try {
+          closeStorage(entry.getValue());
+        }
+        catch (IOException e) {
+          if (ex != null) {
+            ex = e;
+          }
+        }
+      }
     }
-    for (Map.Entry<String, SourceToOutputMapping> entry : myTestSourceToOutputs.entrySet()) {
-      closeStorage(getSourceToOutputRoot(entry.getKey(), true), entry.getValue());
+    finally {
+      myProductionSourceToOutputs.clear();
+      myTestSourceToOutputs.clear();
+    }
+    if (ex != null) {
+      throw ex;
     }
   }
 
@@ -153,21 +182,6 @@ public class BuildDataManager {
     return new File(Paths.getDataStorageRoot(myProjectName), MAPPINGS_STORAGE);
   }
 
-  private interface StorageFactory<T> {
-    T create(File dataFile) throws Exception;
-  }
-
-  private static <T> T createStorage(File root, StorageFactory<T> factory) throws Exception {
-    final File dataFile = new File(root, "data");
-    try {
-      return factory.create(dataFile);
-    }
-    catch (Exception e) {
-      FileUtil.delete(root);
-      return factory.create(dataFile);
-    }
-  }
-
   private static void wipeStorage(File root, @Nullable AbstractStateStorage<?, ?> storage) {
     if (storage != null) {
       synchronized (storage) {
@@ -179,16 +193,10 @@ public class BuildDataManager {
     }
   }
 
-  private static void closeStorage(File root, @Nullable AbstractStateStorage<?, ?> storage) {
+  private static void closeStorage(@Nullable AbstractStateStorage<?, ?> storage) throws IOException {
     if (storage != null) {
       synchronized (storage) {
-        try {
-          storage.close();
-        }
-        catch (IOException e) {
-          LOG.error(e);
-          FileUtil.delete(root);
-        }
+        storage.close();
       }
     }
   }

@@ -15,6 +15,8 @@
  */
 package com.intellij.ui.components.labels;
 
+import org.intellij.lang.annotations.JdkConstants;
+
 import javax.swing.*;
 
 /**
@@ -30,7 +32,7 @@ public class BoldLabel extends JLabel {
     super(toHtml(text));
   }
 
-  public BoldLabel(String text, int horizontalAlignment) {
+  public BoldLabel(String text, @JdkConstants.HorizontalAlignment int horizontalAlignment) {
     super(toHtml(text), horizontalAlignment);
   }
 
@@ -38,11 +40,11 @@ public class BoldLabel extends JLabel {
     super(image);
   }
 
-  public BoldLabel(Icon image, int horizontalAlignment) {
+  public BoldLabel(Icon image, @JdkConstants.HorizontalAlignment int horizontalAlignment) {
     super(image, horizontalAlignment);
   }
 
-  public BoldLabel(String text, Icon icon, int horizontalAlignment) {
+  public BoldLabel(String text, Icon icon, @JdkConstants.HorizontalAlignment int horizontalAlignment) {
     super(toHtml(text), icon, horizontalAlignment);
   }
 

@@ -42,12 +42,12 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
   private final BuildCanceledStatus myCancelStatus;
   private float myDone = -1.0f;
 
-  public CompileContext(String projectName, CompileScope scope,
+  public CompileContext(CompileScope scope,
                         boolean isMake,
                         boolean isProjectRebuild,
                         ProjectChunks productionChunks,
                         ProjectChunks testChunks,
-                        FSState fsState, TimestampStorage tsStorage, MessageHandler delegateMessageHandler, final ModuleRootsIndex rootsIndex, BuildCanceledStatus cancelStatus) throws ProjectBuildException {
+                        FSState fsState, final BuildDataManager dataManager, TimestampStorage tsStorage, MessageHandler delegateMessageHandler, final ModuleRootsIndex rootsIndex, BuildCanceledStatus cancelStatus) throws ProjectBuildException {
     myTsStorage = tsStorage;
     myCancelStatus = cancelStatus;
     myCompilationStartStamp = System.currentTimeMillis();
@@ -58,7 +58,7 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
     myTestChunks = testChunks;
     myFsState = fsState;
     myDelegateMessageHandler = delegateMessageHandler;
-    myDataManager = new BuildDataManager(projectName);
+    myDataManager = dataManager;
     final Project project = scope.getProject();
     myProjectPaths = new ProjectPaths(project);
     myRootsIndex = rootsIndex;

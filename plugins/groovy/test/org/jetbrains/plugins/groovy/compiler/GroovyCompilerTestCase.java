@@ -1,8 +1,8 @@
 package org.jetbrains.plugins.groovy.compiler;
 
+import com.intellij.compiler.CompileServerManager;
 import com.intellij.compiler.CompilerManagerImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
-import com.intellij.compiler.JpsServerManager;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.application.ApplicationConfiguration;
@@ -15,7 +15,10 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.compiler.*;
@@ -119,7 +122,7 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
                 jdkTable.removeJdk(jdkTable.getInternalJdk());
               }
             }.execute();
-            JpsServerManager.getInstance().shutdownServer();
+            CompileServerManager.getInstance().shutdownServer();
           }
 
           myMainOutput.tearDown();

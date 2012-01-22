@@ -21,6 +21,7 @@ import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
@@ -31,6 +32,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.util.List;
+
+import static com.intellij.openapi.components.StorageScheme.DIRECTORY_BASED;
 
 /**
  * @author Eugene Zhuravlev
@@ -73,7 +76,7 @@ public class ProjectNameStep extends ModuleWizardStep {
 
   public void updateStep() {
     super.updateStep();
-    myNamePathComponent.setPath(myWizardContext.getProjectFileDirectory());
+    myNamePathComponent.setPath(FileUtil.toSystemDependentName(myWizardContext.getProjectFileDirectory()));
     String name = myWizardContext.getProjectName();
     if (name == null) {
       List<String> components = StringUtil.split(FileUtil.toSystemIndependentName(myWizardContext.getProjectFileDirectory()), "/");
@@ -115,13 +118,21 @@ public class ProjectNameStep extends ModuleWizardStep {
     }
 
     boolean shouldContinue = true;
-    final File projectFile = new File(getProjectFilePath());
+
+    final String path = myWizardContext.isCreatingNewProject() && myWizardContext.getProjectStorageFormat() == DIRECTORY_BASED
+                        ? getProjectFileDirectory() + "/" + ProjectUtil.DIRECTORY_BASED_PROJECT_DIR
+                        : getProjectFilePath();
+    final File projectFile = new File(path);
     if (projectFile.exists()) {
-      int answer = Messages.showYesNoDialog(
-        IdeBundle.message("prompt.overwrite.project.file", projectFile.getAbsolutePath(), myWizardContext.getPresentationName()),
-        IdeBundle.message("title.file.already.exists"),
-        Messages.getQuestionIcon()
-      );
+      final String title = myWizardContext.isCreatingNewProject()
+                           ? IdeBundle.message("title.new.project")
+                           : IdeBundle.message("title.add.module");
+      final String message = myWizardContext.isCreatingNewProject() && myWizardContext.getProjectStorageFormat() == DIRECTORY_BASED
+                             ? IdeBundle.message("prompt.overwrite.project.folder", ProjectUtil.DIRECTORY_BASED_PROJECT_DIR,
+                                                 projectFile.getParentFile().getAbsolutePath())
+                             : IdeBundle.message("prompt.overwrite.project.file", projectFile.getAbsolutePath(),
+                                                 myWizardContext.getPresentationName());
+      int answer = Messages.showYesNoDialog(message, title, Messages.getQuestionIcon());
       shouldContinue = answer == 0;
     }
 
@@ -135,7 +146,7 @@ public class ProjectNameStep extends ModuleWizardStep {
   }
 
   public String getProjectFileDirectory() {
-    return myNamePathComponent.getPath();
+    return FileUtil.toSystemIndependentName(myNamePathComponent.getPath());
   }
 
   public String getProjectName() {

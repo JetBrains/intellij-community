@@ -49,6 +49,8 @@ class ClassPath {
   private final boolean myCanLockJars;
   private final boolean myCanUseCache;
   private static final long NS_THRESHOLD = 10000000L;
+  private static long total;
+  private static int requests;
 
   private static PrintStream ourOrder;
   private static long ourOrderSize;
@@ -140,6 +142,9 @@ class ClassPath {
       }
 
       for (Loader loader; (loader = getLoader(i)) != null; i++) {
+        if (myCanUseCache) {
+          if (!myCache.loaderHasName(s, loader)) continue;
+        }
         Resource resource = loader.getResource(s, flag);
         if (resource != null) {
           return resource;
@@ -149,10 +154,7 @@ class ClassPath {
       return null;
     }
     finally {
-      long doneFor = myDebugTime ? System.nanoTime() - started:0;
-      if (doneFor > NS_THRESHOLD) {
-        System.out.println((doneFor/1000000) + " ms for getResource:"+s+", flag:"+flag);
-      }
+      if (myDebugTime) reportTime(started, s);
     }
   }
 
@@ -165,7 +167,10 @@ class ClassPath {
     while (myLoaders.size() < i + 1) {
       URL url;
       synchronized (myUrls) {
-        if (myUrls.empty()) return null;
+        if (myUrls.empty()) {
+          if (myCanUseCache) myCache.nameSymbolsLoaded();
+          return null;
+        }
         url = myUrls.pop();
       }
 
@@ -261,24 +266,30 @@ class ClassPath {
 
     private boolean next() {
       if (myRes != null) return true;
-
+      long started = myDebugTime ? System.nanoTime() : 0;
       Loader loader;
-
-      if (myLoaders != null) {
-        while (myIndex < myLoaders.size()) {
-          loader = myLoaders.get(myIndex++);
-          if (!myCache.loaderHasName(myName, loader)) {
-            myRes = null;
-            continue;
+      try {
+        if (myLoaders != null) {
+          while (myIndex < myLoaders.size()) {
+            loader = myLoaders.get(myIndex++);
+            if (!myCache.loaderHasName(myName, loader)) {
+              myRes = null;
+              continue;
+            }
+            myRes = loader.getResource(myName, myCheck);
+            if (myRes != null) return true;
           }
-          myRes = loader.getResource(myName, myCheck);
-          if (myRes != null) return true;
         }
-      } else {
-        while ((loader = getLoader(myIndex++)) != null) {
-          myRes = loader.getResource(myName, myCheck);
-          if (myRes != null) return true;
+        else {
+          while ((loader = getLoader(myIndex++)) != null) {
+            if (!myCache.loaderHasName(myName, loader)) continue;
+            myRes = loader.getResource(myName, myCheck);
+            if (myRes != null) return true;
+          }
         }
+      }
+      finally {
+        if (myDebugTime) reportTime(started, myName);
       }
 
 
@@ -299,5 +310,15 @@ class ClassPath {
         return resource.getURL();
       }
     }
+  }
+
+  private void reportTime(long started, String msg) {
+    long doneFor = System.nanoTime() - started;
+    total += doneFor;
+    ++requests;
+    if (doneFor > NS_THRESHOLD) {
+      System.out.println((doneFor/1000000) + " ms for " +msg);
+    }
+    if (requests % 1000 == 0) System.out.println(toString() + "," + requests + "," + (total / 1000000));
   }
 }

@@ -16,6 +16,7 @@
 package org.intellij.lang.annotations;
 
 import javax.swing.*;
+import javax.swing.border.TitledBorder;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.awt.event.InputEvent;
@@ -56,4 +57,10 @@ public class JdkConstants {
 
   @MagicConstant(flags = {Font.PLAIN, Font.BOLD, Font.ITALIC})
   public @interface FontStyle {}
+
+  @MagicConstant(intValues = {TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.LEFT, TitledBorder.CENTER, TitledBorder.RIGHT, TitledBorder.LEADING, TitledBorder.TRAILING})
+  public @interface TitledBorderJustification {}
+
+  @MagicConstant(intValues = {TitledBorder.DEFAULT_POSITION, TitledBorder.ABOVE_TOP, TitledBorder.TOP, TitledBorder.BELOW_TOP, TitledBorder.ABOVE_BOTTOM, TitledBorder.BOTTOM, TitledBorder.BELOW_BOTTOM})
+  public @interface TitledBorderTitlePosition{}
 }

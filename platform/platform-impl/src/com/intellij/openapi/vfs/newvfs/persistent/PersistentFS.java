@@ -70,6 +70,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
   private final MessageBus myEventsBus;
 
   private final Map<String, VirtualFileSystemEntry> myRoots = new HashMap<String, VirtualFileSystemEntry>();
+  private final Map<Integer, VirtualFileSystemEntry> myRootsById = new HashMap<Integer, VirtualFileSystemEntry>();
   private VirtualFileSystemEntry myFakeRoot;
   private final Object INPUT_LOCK = new Object();
 
@@ -770,6 +771,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
 
         if (basePath.length() > 0) {
           myRoots.put(rootUrl, root);
+          myRootsById.put(root.getId(), root);
         }
         else {
           myFakeRoot = root;
@@ -861,10 +863,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     final int parentId = getParent(id);
     if (parentId == 0) {
       synchronized (LOCK) {
-        for (NewVirtualFile root : myRoots.values()) {
-          if (root.getId() == id) return root;
-        }
-        return null;
+        return myRootsById.get(id);
       }
     }
     else {
@@ -992,6 +991,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
       else {
         synchronized (LOCK) {
           myRoots.remove(file.getUrl());
+          myRootsById.remove(id);
           try {
             FSRecords.deleteRootRecord(id);
           }

@@ -176,50 +176,74 @@ public class MavenProjectImporter {
   }
 
   private boolean deleteIncompatibleModules() {
-    final List<Pair<MavenProject, Module>> incompatible = collectIncompatibleModulesWithProjects();
-    if (incompatible.isEmpty()) return false;
+    final Pair<List<Pair<MavenProject, Module>>, List<Pair<MavenProject, Module>>> incompatible = collectIncompatibleModulesWithProjects();
+    final List<Pair<MavenProject, Module>> incompatibleMavenized = incompatible.first;
+    final List<Pair<MavenProject, Module>> incompatibleNotMavenized = incompatible.second;
+
+    if (incompatibleMavenized.isEmpty() && incompatibleNotMavenized.isEmpty()) return false;
+
+    boolean changed = false;
+
+    // For already mavenized modules the type may change because maven project plugins were resolved and MavenImporter asked to create a module of a different type.
+    // In such cases we must change module type silently.
+    for (Pair<MavenProject, Module> each : incompatibleMavenized) {
+      myFileToModuleMapping.remove(each.first.getFile());
+      myModuleModel.disposeModule(each.second);
+      changed |= true;
+    }
+
+    if (incompatibleNotMavenized.isEmpty()) return changed;
 
     final int[] result = new int[1];
     MavenUtil.invokeAndWait(myProject, myModelsProvider.getModalityStateForQuestionDialogs(), new Runnable() {
       public void run() {
         String message = ProjectBundle.message("maven.import.incompatible.modules",
-                                               formatProjectsWithModules(incompatible),
-                                               incompatible.size() == 1 ? "" : "s");
+                                               incompatibleNotMavenized.size(),
+                                               formatProjectsWithModules(incompatibleNotMavenized));
         String[] options = {
           ProjectBundle.message("maven.import.incompatible.modules.recreate"),
           ProjectBundle.message("maven.import.incompatible.modules.ignore")
         };
 
         result[0] = Messages.showOkCancelDialog(myProject, message,
-                                        ProjectBundle.message("maven.tab.importing"),
-                                        options[0], options[1], Messages.getQuestionIcon());
+                                                ProjectBundle.message("maven.project.import.title"),
+                                                options[0], options[1], Messages.getQuestionIcon());
       }
     });
 
     if (result[0] == 0) {
-      for (Pair<MavenProject, Module> each : incompatible) {
+      for (Pair<MavenProject, Module> each : incompatibleNotMavenized) {
         myFileToModuleMapping.remove(each.first.getFile());
         myModuleModel.disposeModule(each.second);
       }
-      return true;
+      changed |= true;
     }
     else {
-      myProjectsTree.setIgnoredState(MavenUtil.collectFirsts(incompatible), true, true);
-      return false;
+      myProjectsTree.setIgnoredState(MavenUtil.collectFirsts(incompatibleNotMavenized), true, true);
+      changed |= false;
     }
+
+    return changed;
   }
 
-  private List<Pair<MavenProject, Module>> collectIncompatibleModulesWithProjects() {
-    List<Pair<MavenProject, Module>> incompatible = new ArrayList<Pair<MavenProject, Module>>();
+  /**
+   * Collects modules that need to change module type
+   * @return the first List in returned Pair contains already mavenized modules, the second List - not mavenized
+   */
+  private Pair<List<Pair<MavenProject, Module>>, List<Pair<MavenProject, Module>>> collectIncompatibleModulesWithProjects() {
+    List<Pair<MavenProject, Module>> incompatibleMavenized = new ArrayList<Pair<MavenProject, Module>>();
+    List<Pair<MavenProject, Module>> incompatibleNotMavenized = new ArrayList<Pair<MavenProject, Module>>();
+
+    MavenProjectsManager manager = MavenProjectsManager.getInstance(myProject);
     for (MavenProject each : myAllProjects) {
       Module module = myFileToModuleMapping.get(each.getFile());
       if (module == null) continue;
 
-      if (shouldCreateModuleFor(each) && !(ModuleType.get(module) instanceof JavaModuleType)) {
-        incompatible.add(Pair.create(each, module));
+      if (shouldCreateModuleFor(each) && !(ModuleType.get(module).equals(each.getModuleType()))) {
+        (manager.isMavenizedModule(module) ? incompatibleMavenized : incompatibleNotMavenized).add(Pair.create(each, module));
       }
     }
-    return incompatible;
+    return Pair.create(incompatibleMavenized, incompatibleNotMavenized);
   }
 
   private static String formatProjectsWithModules(List<Pair<MavenProject, Module>> projectsWithModules) {
@@ -230,9 +254,8 @@ public class MavenProjectImporter {
           return ModuleType.get(module).getName() +
                  " '" +
                  module.getName() +
-                 "' for Maven project '" +
-                 project.getMavenId().getDisplayString() +
-                 "'";
+                 "' for Maven project " +
+                 project.getMavenId().getDisplayString();
         }
       }, "<br>");
   }
@@ -248,7 +271,7 @@ public class MavenProjectImporter {
       public void run() {
         result[0] = Messages.showYesNoDialog(myProject,
                                              ProjectBundle.message("maven.import.message.delete.obsolete", formatModules(obsoleteModules)),
-                                             ProjectBundle.message("maven.tab.importing"),
+                                             ProjectBundle.message("maven.project.import.title"),
                                              Messages.getQuestionIcon());
       }
     });
@@ -271,8 +294,9 @@ public class MavenProjectImporter {
     }
 
     List<Module> obsolete = new ArrayList<Module>();
+    final MavenProjectsManager manager = MavenProjectsManager.getInstance(myProject);
     for (Module each : remainingModules) {
-      if (MavenProjectsManager.getInstance(myProject).isMavenizedModule(each)) {
+      if (manager.isMavenizedModule(each)) {
         obsolete.add(each);
       }
     }
@@ -440,7 +464,7 @@ public class MavenProjectImporter {
     // have to remove it beforehand.
     deleteExistingImlFile(path);
 
-    final Module module = myModuleModel.newModule(path, StdModuleTypes.JAVA);
+    final Module module = myModuleModel.newModule(path, project.getModuleType());
     myMavenProjectToModule.put(project, module);
     myCreatedModules.add(module);
     return true;

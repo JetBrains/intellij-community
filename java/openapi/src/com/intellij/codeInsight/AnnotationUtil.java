@@ -152,6 +152,44 @@ public class AnnotationUtil {
     if (listOwner instanceof PsiClass) {
       return findAnnotationInHierarchy((PsiClass)listOwner, annotationNames, null);
     }
+    if (listOwner instanceof PsiParameter) {
+      PsiParameter parameter = (PsiParameter)listOwner;
+      return doFindAnnotationInHierarchy(parameter, annotationNames, null);
+    }
+    return null;
+  }
+
+  private static PsiAnnotation doFindAnnotationInHierarchy(PsiParameter parameter,
+                                                           Set<String> annotationNames,
+                                                           Set<PsiModifierListOwner> visited) {
+    PsiAnnotation annotation = findAnnotation(parameter, annotationNames);
+    if (annotation != null) return annotation;
+    PsiElement scope = parameter.getDeclarationScope();
+    if (!(scope instanceof PsiMethod)) {
+      return null;
+    }
+    PsiMethod method = (PsiMethod)scope;
+    PsiClass aClass = method.getContainingClass();
+    PsiElement parent = parameter.getParent();
+    if (aClass == null || !(parent instanceof PsiParameterList)) {
+      return null;
+    }
+    int index = ((PsiParameterList)parent).getParameterIndex(parameter);
+    HierarchicalMethodSignature methodSignature = method.getHierarchicalMethodSignature();
+
+    final List<HierarchicalMethodSignature> superSignatures = methodSignature.getSuperSignatures();
+    PsiResolveHelper resolveHelper = PsiResolveHelper.SERVICE.getInstance(aClass.getProject());
+    for (final HierarchicalMethodSignature superSignature : superSignatures) {
+      final PsiMethod superMethod = superSignature.getMethod();
+      if (visited == null) visited = new THashSet<PsiModifierListOwner>();
+      if (!visited.add(superMethod)) continue;
+      if (!resolveHelper.isAccessible(superMethod, parameter, null)) continue;
+      PsiParameter[] superParameters = superMethod.getParameterList().getParameters();
+      if (index < superParameters.length) {
+        PsiAnnotation insuper = doFindAnnotationInHierarchy(superParameters[index], annotationNames, visited);
+        if (insuper != null) return insuper;
+      }
+    }
     return null;
   }
 

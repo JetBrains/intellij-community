@@ -15,6 +15,8 @@
  */
 package com.intellij.ui;
 
+import org.intellij.lang.annotations.JdkConstants;
+
 import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
@@ -37,15 +39,15 @@ public class TitledBorderWithMnemonic extends TitledBorder {
     this(border, title, LEADING, DEFAULT_POSITION, null, null);
   }
 
-  public TitledBorderWithMnemonic(Border border, String title, int titleJustification, int titlePosition) {
+  public TitledBorderWithMnemonic(Border border, String title, @JdkConstants.TitledBorderJustification int titleJustification, @JdkConstants.TitledBorderTitlePosition int titlePosition) {
     this(border, title, titleJustification, titlePosition, null, null);
   }
 
-  public TitledBorderWithMnemonic(Border border, String title, int titleJustification, int titlePosition, Font titleFont) {
+  public TitledBorderWithMnemonic(Border border, String title, @JdkConstants.TitledBorderJustification int titleJustification, @JdkConstants.TitledBorderTitlePosition int titlePosition, Font titleFont) {
     this(border, title, titleJustification, titlePosition, titleFont, null);
   }
 
-  public TitledBorderWithMnemonic(Border border, String title, int titleJustification, int titlePosition, Font titleFont,
+  public TitledBorderWithMnemonic(Border border, String title, @JdkConstants.TitledBorderJustification int titleJustification, @JdkConstants.TitledBorderTitlePosition int titlePosition, Font titleFont,
                                   Color titleColor) {
     super(border, title.replaceAll("&", ""), titleJustification, titlePosition, titleFont, titleColor);
     myOriginalTitle = title;

@@ -239,4 +239,9 @@ public class X {
       new javax.swing.JLabel("text", 3);
     }
   }
+  static class OverrideX extends X {
+    void f(int x) {
+      super.f(x);
+    }
+  }
 }

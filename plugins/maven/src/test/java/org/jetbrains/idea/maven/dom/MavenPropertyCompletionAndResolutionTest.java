@@ -56,6 +56,16 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertResolved(myProjectPom, findTag("project.version"));
   }
 
+  public void testResolutionToProjectAt() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<name>@<caret>project.version@</name>");
+
+    assertResolved(myProjectPom, findTag("project.version"));
+  }
+
   public void testCorrectlyCalculatingTextRangeWithLeadingWhitespaces() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -136,6 +146,18 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
 
                      "<properties>" +
                      "  <foo>${<caret>project.version}</foo>" +
+                     "</properties>");
+
+    assertResolved(myProjectPom, findTag("project.version"));
+  }
+
+  public void testResolvingFromPropertiesSectionAt() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<properties>" +
+                     "  <foo>@<caret>project.version@</foo>" +
                      "</properties>");
 
     assertResolved(myProjectPom, findTag("project.version"));

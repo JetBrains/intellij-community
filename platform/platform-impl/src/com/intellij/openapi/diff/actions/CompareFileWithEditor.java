@@ -18,6 +18,7 @@ package com.intellij.openapi.diff.actions;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
@@ -32,8 +33,19 @@ public class CompareFileWithEditor extends BaseDiffAction {
     if (project == null) return null;
     VirtualFile[] selectedFiles = FileEditorManager.getInstance(project).getSelectedFiles();
     if (selectedFiles.length == 0) return null;
-    if (!DiffContentUtil.isTextFile(selectedFiles[0])) return null;
-    return FileDocumentManager.getInstance().getDocument(selectedFiles[0]);
+    VirtualFile selectedFile = selectedFiles[0];
+    final Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
+    // find document for latest selected editor
+    if (editor != null) {
+      for (VirtualFile file : selectedFiles) {
+        final Document document = FileDocumentManager.getInstance().getDocument(file);
+        if (document == editor.getDocument()) {
+          selectedFile = file;
+        }
+      }
+    }
+    if (!DiffContentUtil.isTextFile(selectedFile)) return null;
+    return FileDocumentManager.getInstance().getDocument(selectedFile);
   }
 
   public void update(AnActionEvent e) {

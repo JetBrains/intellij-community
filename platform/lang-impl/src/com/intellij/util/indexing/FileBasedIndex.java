@@ -58,10 +58,7 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.search.EverythingGlobalScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.SerializationManager;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.CommonProcessors;
-import com.intellij.util.Processor;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.containers.ContainerUtil;
@@ -73,6 +70,7 @@ import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntIterator;
+import gnu.trove.TIntProcedure;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -854,14 +852,16 @@ public class FileBasedIndex implements ApplicationComponent {
   }
 
 
-
-  private <K, V> boolean processValuesImpl(final ID<K, V> indexId, final K dataKey, boolean ensureValueProcessedOnce,
-                                        @Nullable final VirtualFile restrictToFile, ValueProcessor<V> processor,
-                                        final GlobalSearchScope filter) {
+ 
+  
+  private <K, V, R> R processExceptions(final ID<K, V> indexId,
+                                        @Nullable final VirtualFile restrictToFile, 
+                                        final GlobalSearchScope filter,
+                                        ThrowableConvertor<UpdatableIndex<K, V, FileContent>, R, StorageException> computable) {
     try {
       final UpdatableIndex<K, V, FileContent> index = getIndex(indexId);
       if (index == null) {
-        return true;
+        return null;
       }
       final Project project = filter.getProject();
       //assert project != null : "GlobalSearchScope#getProject() should be not-null for all index queries";
@@ -869,6 +869,33 @@ public class FileBasedIndex implements ApplicationComponent {
 
       try {
         index.getReadLock().lock();
+        return computable.convert(index);
+      }
+      finally {
+        index.getReadLock().unlock();
+      }
+    }
+    catch (StorageException e) {
+      scheduleRebuild(indexId, e);
+    }
+    catch (RuntimeException e) {
+      final Throwable cause = getCauseToRebuildIndex(e);
+      if (cause != null) {
+        scheduleRebuild(indexId, cause);
+      }
+      else {
+        throw e;
+      }
+    }
+    return null;
+  }
+
+  private <K, V> boolean processValuesImpl(final ID<K, V> indexId, final K dataKey, final boolean ensureValueProcessedOnce,
+                                           @Nullable final VirtualFile restrictToFile, final ValueProcessor<V> processor,
+                                           final GlobalSearchScope filter) {
+    ThrowableConvertor<UpdatableIndex<K, V, FileContent>, Boolean, StorageException> keyProcessor = new ThrowableConvertor<UpdatableIndex<K, V, FileContent>, Boolean, StorageException>() {
+      @Override
+      public Boolean convert(UpdatableIndex<K, V, FileContent> index) throws StorageException {
         final ValueContainer<V> container = index.getData(dataKey);
 
         boolean shouldContinue = true;
@@ -876,7 +903,7 @@ public class FileBasedIndex implements ApplicationComponent {
         if (restrictToFile != null) {
           if (restrictToFile instanceof VirtualFileWithId) {
             final int restrictedFileId = getFileId(restrictToFile);
-            for (final Iterator<V> valueIt = container.getValueIterator(); valueIt.hasNext();) {
+            for (final Iterator<V> valueIt = container.getValueIterator(); valueIt.hasNext(); ) {
               final V value = valueIt.next();
               if (container.isAssociated(value, restrictedFileId)) {
                 shouldContinue = processor.process(restrictToFile, value);
@@ -908,23 +935,80 @@ public class FileBasedIndex implements ApplicationComponent {
         }
         return shouldContinue;
       }
-      finally {
-        index.getReadLock().unlock();
-      }
+    };
+    final Boolean result = processExceptions(indexId, restrictToFile, filter, keyProcessor);
+    return result == null || result.booleanValue();
+  }
+  
+  public <K, V> boolean processFilesContainingAllKeys(final ID<K, V> indexId,
+                                                      final Collection<K> dataKeys,
+                                                      final GlobalSearchScope filter,
+                                                      @Nullable Condition<V> valueChecker,
+                                                      final Processor<VirtualFile> processor) {
+    final TIntHashSet set = collectFileIdsContainingAllKeys(indexId, dataKeys, filter, valueChecker);
+    if (set == null) {
+      return false;
     }
-    catch (StorageException e) {
-      scheduleRebuild(indexId, e);
-    }
-    catch (RuntimeException e) {
-      final Throwable cause = getCauseToRebuildIndex(e);
-      if (cause != null) {
-        scheduleRebuild(indexId, cause);
+    return processVirtualFiles(set, filter, processor);
+  }
+
+  @Nullable 
+  private <K, V> TIntHashSet collectFileIdsContainingAllKeys(final ID<K, V> indexId,
+                                                            final Collection<K> dataKeys,
+                                                            final GlobalSearchScope filter,
+                                                            @Nullable final Condition<V> valueChecker) {
+    final ThrowableConvertor<UpdatableIndex<K, V, FileContent>, TIntHashSet, StorageException> convertor =
+      new ThrowableConvertor<UpdatableIndex<K, V, FileContent>, TIntHashSet, StorageException>() {
+        @Nullable
+        @Override
+        public TIntHashSet convert(UpdatableIndex<K, V, FileContent> index) throws StorageException {
+          TIntHashSet mainIntersection = null;
+
+          for (K dataKey : dataKeys) {
+            ProgressManager.checkCanceled();
+            TIntHashSet copy = new TIntHashSet();
+            final ValueContainer<V> container = index.getData(dataKey);
+
+            for (final Iterator<V> valueIt = container.getValueIterator(); valueIt.hasNext(); ) {
+              final V value = valueIt.next();
+              if (valueChecker != null && !valueChecker.value(value)) {
+                continue;
+              }
+              for (final ValueContainer.IntIterator inputIdsIterator = container.getInputIdsIterator(value); inputIdsIterator.hasNext(); ) {
+                final int id = inputIdsIterator.next();
+                if (mainIntersection == null || mainIntersection.contains(id)) {
+                  copy.add(id);
+                }
+              }
+            }
+
+            mainIntersection = copy;
+            if (mainIntersection.isEmpty()) {
+              return new TIntHashSet();
+            }
+          }
+
+          return mainIntersection;
+        }
+      };
+
+
+    return processExceptions(indexId, null, filter, convertor);
+  }
+
+  private static boolean processVirtualFiles(TIntHashSet ids, final GlobalSearchScope filter, final Processor<VirtualFile> processor) {
+    final PersistentFS fs = (PersistentFS)ManagingFS.getInstance();
+    return ids.forEach(new TIntProcedure() {
+      @Override
+      public boolean execute(int id) {
+        ProgressManager.checkCanceled();
+        VirtualFile file = IndexInfrastructure.findFileByIdIfCached(fs, id);
+        if (file != null && filter.accept(file)) {
+          return processor.process(file);
+        }
+        return true;
       }
-      else {
-        throw e;
-      }
-    }
-    return true;
+    });
   }
 
   public static @Nullable Throwable getCauseToRebuildIndex(RuntimeException e) {

@@ -28,9 +28,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.roots.FileIndexFacade;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -46,10 +44,10 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.text.StringSearcher;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -352,8 +350,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         searchContext,
         caseSensitively,
         text,
-        new CommonProcessors.CollectProcessor<VirtualFile>(result),
-        progress
+        new CommonProcessors.CollectProcessor<VirtualFile>(result)
       );
       LOG.assertTrue(success);
       return result;
@@ -364,81 +361,28 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   public boolean processFilesWithText(@NotNull final GlobalSearchScope scope,
-                                       final short searchContext,
-                                       final boolean caseSensitively,
-                                       @NotNull String text,
-                                       @NotNull final Processor<VirtualFile> processor,
-                                       @Nullable ProgressIndicator progress) {
-    List<String> words = StringUtil.getWordsIn(text);
-    if (words.isEmpty()) return true;
-    Collections.sort(words, new Comparator<String>() {
+                                      final short searchContext,
+                                      final boolean caseSensitively,
+                                      @NotNull String text,
+                                      @NotNull final Processor<VirtualFile> processor) {
+    final ArrayList<IdIndexEntry> entries = getWordEntries(text, caseSensitively);
+    if (entries.isEmpty()) return true;
+
+    final CommonProcessors.CollectProcessor<VirtualFile> collectProcessor = new CommonProcessors.CollectProcessor<VirtualFile>();
+    processFilesContainingAllKeys(scope, new Condition<Integer>() {
       @Override
-      public int compare(String o1, String o2) {
-        return o2.length() - o1.length();
+      public boolean value(Integer integer) {
+        return (integer.intValue() & searchContext) != 0;
+      }
+    }, collectProcessor, getWordEntries(text, caseSensitively));
+
+    final FileIndexFacade index = FileIndexFacade.getInstance(myManager.getProject());
+    return ContainerUtil.process(collectProcessor.getResults(), new ReadActionProcessor<VirtualFile>() {
+      @Override
+      public boolean processInReadAction(VirtualFile virtualFile) {
+        return !IndexCacheManagerImpl.shouldBeFound(scope, virtualFile, index) || processor.process(virtualFile);
       }
     });
-    final Set<VirtualFile> fileSet;
-    CacheManager cacheManager = CacheManager.SERVICE.getInstance(myManager.getProject());
-
-    if (words.size() > 1) {
-      fileSet = new THashSet<VirtualFile>();
-      Set<VirtualFile> copy = new THashSet<VirtualFile>();
-      for (int i = 0; i < words.size() - 1; i++) {
-        if (progress != null) {
-          progress.checkCanceled();
-        }
-        else {
-          ProgressManager.checkCanceled();
-        }
-        final String word = words.get(i);
-        final int finalI = i;
-        cacheManager.collectVirtualFilesWithWord(new CommonProcessors.CollectProcessor<VirtualFile>(i != 0 ? copy:fileSet) {
-          @Override
-          protected boolean accept(VirtualFile virtualFile) {
-            return finalI == 0 || fileSet.contains(virtualFile);
-          }
-        }, word, searchContext, scope, caseSensitively);
-        if (i != 0) {          
-          fileSet.retainAll(copy);
-        }
-        copy.clear();
-        if (fileSet.isEmpty()) break;
-      }
-      if (fileSet.isEmpty()) return true;
-    }
-    else {
-      fileSet = null;
-    }
-
-    final String lastWord = words.get(words.size() - 1);
-    if (processor instanceof CommonProcessors.CollectProcessor) {
-      final CommonProcessors.CollectProcessor collectProcessor = (CommonProcessors.CollectProcessor)processor;
-      return cacheManager.collectVirtualFilesWithWord(new CommonProcessors.CollectProcessor<VirtualFile>(collectProcessor.getResults()) {
-        @Override
-        public boolean process(VirtualFile virtualFile) {
-          if (fileSet == null || fileSet.contains(virtualFile)) return collectProcessor.process(virtualFile);
-          return true;
-        }
-      }, lastWord, searchContext, scope, caseSensitively);
-    } else {
-      THashSet<VirtualFile> files = new THashSet<VirtualFile>();
-      cacheManager.collectVirtualFilesWithWord(new CommonProcessors.CollectProcessor<VirtualFile>(files) {
-        @Override
-        protected boolean accept(VirtualFile virtualFile) {
-          return fileSet == null || fileSet.contains(virtualFile);
-        }
-      }, lastWord, searchContext, scope, caseSensitively);
-      ReadActionProcessor<VirtualFile> readActionProcessor = new ReadActionProcessor<VirtualFile>() {
-        @Override
-        public boolean processInReadAction(VirtualFile virtualFile) {
-          return processor.process(virtualFile);
-        }
-      };
-      for(VirtualFile file:files) {
-        if (!readActionProcessor.process(file)) return false;
-      }
-      return true;
-    }    
   }
 
   @Override
@@ -725,31 +669,50 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                                    ProgressIndicator progress) {
     final FileIndexFacade index = FileIndexFacade.getInstance(myManager.getProject());
     final MultiMap<VirtualFile, RequestWithProcessor> result = createMultiMap();
-    for (Set<IdIndexEntry> key : singles.keySet()) {
+    for (final Set<IdIndexEntry> key : singles.keySet()) {
       if (key.isEmpty()) {
         continue;
       }
 
+
       final Collection<RequestWithProcessor> data = singles.get(key);
-      GlobalSearchScope commonScope = uniteScopes(data);
+      final GlobalSearchScope commonScope = uniteScopes(data);
 
-      MultiMap<VirtualFile, RequestWithProcessor> intersection = null;
+      if (key.size() == 1) {
+        result.putAllValues(findFilesWithIndexEntry(key.iterator().next(), index, data, commonScope, progress));
+        continue;
+      }
 
-      boolean first = true;
-      for (IdIndexEntry entry : key) {
-        final MultiMap<VirtualFile, RequestWithProcessor> local = findFilesWithIndexEntry(entry, index, data, commonScope, progress);
-        if (first) {
-          intersection = local;
-          first = false;
+      final CommonProcessors.CollectProcessor<VirtualFile> processor = new CommonProcessors.CollectProcessor<VirtualFile>();
+      processFilesContainingAllKeys(commonScope, null, processor, key);
+      for (final VirtualFile file : processor.getResults()) {
+        if (progress != null) {
+          progress.checkCanceled();
         }
-        else {
-          intersection.keySet().retainAll(local.keySet());
-          for (VirtualFile file : intersection.keySet()) {
-            intersection.get(file).retainAll(local.get(file));
-          }
+        for (final IdIndexEntry entry : key) {
+          ApplicationManager.getApplication().runReadAction(new Runnable() {
+            @Override
+            public void run() {
+              FileBasedIndex.getInstance().processValues(IdIndex.NAME, entry, file, new FileBasedIndex.ValueProcessor<Integer>() {
+                @Override
+                public boolean process(VirtualFile file, Integer value) {
+                  if (IndexCacheManagerImpl.shouldBeFound(commonScope, file, index)) {
+                    int mask = value.intValue();
+                    for (RequestWithProcessor single : data) {
+                      final PsiSearchRequest request = single.request;
+                      if ((mask & request.searchContext) != 0 && ((GlobalSearchScope)request.searchScope).contains(file)) {
+                        result.putValue(file, single);
+                      }
+                    }
+                  }
+                  return true;
+                }
+              }, commonScope);
+              
+            }
+          });
         }
       }
-      result.putAllValues(intersection);
     }
     return result;
   }
@@ -853,24 +816,51 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
   @Override
   public SearchCostResult isCheapEnoughToSearch(@NotNull String name,
-                                                @NotNull GlobalSearchScope scope,
+                                                @NotNull final GlobalSearchScope scope,
                                                 @Nullable final PsiFile fileToIgnoreOccurencesIn,
                                                 @Nullable ProgressIndicator progress) {
+    
     final AtomicInteger count = new AtomicInteger();
-    if (!processFilesWithText(scope, UsageSearchContext.ANY, true, name, new CommonProcessors.CollectProcessor<VirtualFile> (Collections.<VirtualFile>emptyList()) {
+    final FileIndexFacade index = FileIndexFacade.getInstance(myManager.getProject());
+    final Processor<VirtualFile> processor = new Processor<VirtualFile>() {
       private final VirtualFile fileToIgnoreOccurencesInVirtualFile =
-        fileToIgnoreOccurencesIn != null ? fileToIgnoreOccurencesIn.getVirtualFile():null;
+        fileToIgnoreOccurencesIn != null ? fileToIgnoreOccurencesIn.getVirtualFile() : null;
 
       @Override
       public boolean process(VirtualFile file) {
         if (file == fileToIgnoreOccurencesInVirtualFile) return true;
-        int value = count.incrementAndGet();
+        if (!IndexCacheManagerImpl.shouldBeFound(scope, file, index)) return true;
+        final int value = count.incrementAndGet();
         return value < 10;
       }
-    }, progress)) {
+    };
+    final ArrayList<IdIndexEntry> keys = getWordEntries(name, true);
+    final boolean cheap = keys.isEmpty() || processFilesContainingAllKeys(scope, null, processor, keys);
+
+    if (!cheap) {
       return SearchCostResult.TOO_MANY_OCCURRENCES;
     }
 
     return count.get() == 0 ? SearchCostResult.ZERO_OCCURRENCES : SearchCostResult.FEW_OCCURRENCES;
+  }
+
+  private static boolean processFilesContainingAllKeys(final GlobalSearchScope scope,
+                                                       @Nullable final Condition<Integer> checker,
+                                                       final Processor<VirtualFile> processor, final Collection<IdIndexEntry> keys) {
+    return ApplicationManager.getApplication().runReadAction(new NullableComputable<Boolean>() {
+      @Override
+      public Boolean compute() {
+        return FileBasedIndex.getInstance().processFilesContainingAllKeys(IdIndex.NAME, keys, scope, checker, processor);
+      }
+    });
+  }
+
+  private static ArrayList<IdIndexEntry> getWordEntries(String name, boolean caseSensitively) {
+    List<String> words = StringUtil.getWordsIn(name);
+    final ArrayList<IdIndexEntry> keys = new ArrayList<IdIndexEntry>();
+    for (String word : words) {
+      keys.add(new IdIndexEntry(word, caseSensitively));
+    }
+    return keys;
   }
 }

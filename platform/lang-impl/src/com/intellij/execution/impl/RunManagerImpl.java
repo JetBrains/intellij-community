@@ -818,7 +818,11 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
 
   @Override
   @Nullable
-  public RunnerAndConfigurationSettings findConfigurationByName(@NotNull String name) {
+  public RunnerAndConfigurationSettings findConfigurationByName(@Nullable String name) {
+    if (name == null) return null;
+    for (RunnerAndConfigurationSettings each : myConfigurations.values()) {
+      if (name.equals(each.getName())) return each;
+    }
     return null;
   }
 
@@ -868,6 +872,9 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   public void shareConfiguration(final RunConfiguration runConfiguration, final boolean shareConfiguration) {
     if (shareConfiguration && isTemporary(runConfiguration)) makeStable(runConfiguration);
     mySharedConfigurations.put(runConfiguration.getUniqueID(), shareConfiguration);
+
+    RunnerAndConfigurationSettings settings = getSettings(runConfiguration);
+    if (settings != null) fireRunConfigurationChanged(settings);
   }
 
   public final void setBeforeRunTasks(final RunConfiguration runConfiguration, Map<Key<? extends BeforeRunTask>, BeforeRunTask> tasks) {

@@ -32,6 +32,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 
 public class GroovyAccessToStaticFieldLockedOnInstanceInspection
     extends BaseInspection {
+  @Override
+  public boolean isEnabledByDefault() {
+    return true;
+  }
 
   @Nls
   @NotNull

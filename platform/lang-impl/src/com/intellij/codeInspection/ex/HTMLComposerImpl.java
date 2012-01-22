@@ -69,8 +69,10 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
     myListStackTop = -1;
     for (InspectionExtensionsFactory factory : Extensions.getExtensions(InspectionExtensionsFactory.EP_NAME)) {
       final HTMLComposerExtension extension = factory.createHTMLComposerExtension(this);
-      myExtensions.put(extension.getID(), extension);
-      myLanguageExtensions.put(extension.getLanguage(), extension);
+      if (extension != null) {
+        myExtensions.put(extension.getID(), extension);
+        myLanguageExtensions.put(extension.getLanguage(), extension);
+      }
     }
   }
 

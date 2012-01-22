@@ -51,7 +51,7 @@ public class ReplaceConstructorWithBuilderHandler implements RefactoringActionHa
   }
 
   @Nullable
-  private static PsiClass getParentNamedClass(PsiElement element) {
+  public static PsiClass getParentNamedClass(PsiElement element) {
     final PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
     if (psiClass instanceof PsiAnonymousClass) {
       return getParentNamedClass(psiClass);

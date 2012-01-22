@@ -266,7 +266,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
    *
    * runnable is invoked on AWT thread
    */
-  public void invokeAfterUpdate(final Runnable afterUpdate, final InvokeAfterUpdateMode mode, final String title, final ModalityState state) {
+  public void invokeAfterUpdate(final Runnable afterUpdate, final InvokeAfterUpdateMode mode, @Nullable final String title, @Nullable final ModalityState state) {
     myUpdater.invokeAfterUpdate(afterUpdate, mode, title, null, state);
   }
 

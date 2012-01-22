@@ -17,12 +17,15 @@
 package com.intellij.refactoring.move.moveFilesOrDirectories;
 
 import com.intellij.ide.util.DirectoryUtil;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.help.HelpManager;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -109,7 +112,8 @@ public class MoveFilesOrDirectoriesDialog extends DialogWrapper{
     c.insets.left = 0;
     c.gridy++;
     panel.add(myTargetDirectoryField, c);
-    final JLabel label = new JLabel(RefactoringBundle.message("path.completion.shortcut"));
+    String shortcutText = KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_CODE_COMPLETION));
+    final JLabel label = new JLabel(RefactoringBundle.message("path.completion.shortcut", shortcutText));
     UIUtil.applyStyle(UIUtil.ComponentStyle.MINI, label);
     c.insets.left = 6;
     c.gridy++;

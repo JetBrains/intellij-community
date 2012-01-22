@@ -54,6 +54,7 @@ public class PsiManagerImpl extends PsiManagerEx {
   private final Project myProject;
   private final FileIndexFacade myExcludedFileIndex;
   private final MessageBus myMessageBus;
+  private final PsiModificationTracker myModificationTracker;
 
   private final FileManager myFileManager;
 
@@ -74,10 +75,12 @@ public class PsiManagerImpl extends PsiManagerEx {
                         FileDocumentManager fileDocumentManager,
                         PsiBuilderFactory psiBuilderFactory,
                         FileIndexFacade excludedFileIndex,
-                        MessageBus messageBus) {
+                        MessageBus messageBus,
+                        PsiModificationTracker modificationTracker) {
     myProject = project;
     myExcludedFileIndex = excludedFileIndex;
     myMessageBus = messageBus;
+    myModificationTracker = modificationTracker;
 
     //We need to initialize PsiBuilderFactory service so it won't initialize under PsiLock from ChameleonTransform
     @SuppressWarnings({"UnusedDeclaration", "UnnecessaryLocalVariable"}) Object used = psiBuilderFactory;
@@ -86,7 +89,7 @@ public class PsiManagerImpl extends PsiManagerEx {
 
     myFileManager = isProjectDefault ? new EmptyFileManager(this) : new FileManagerImpl(this, fileDocumentManager, excludedFileIndex);
 
-    myTreeChangePreprocessors.add((PsiTreeChangePreprocessor) PsiModificationTracker.SERVICE.getInstance(project));
+    myTreeChangePreprocessors.add((PsiTreeChangePreprocessor) modificationTracker);
     Collections.addAll(myTreeChangePreprocessors, Extensions.getExtensions(PsiTreeChangePreprocessor.EP_NAME, myProject));
 
     Disposer.register(project, new Disposable() {
@@ -526,7 +529,7 @@ public class PsiManagerImpl extends PsiManagerEx {
   @Override
   @NotNull
   public PsiModificationTracker getModificationTracker() {
-    return PsiModificationTracker.SERVICE.getInstance(myProject);
+    return myModificationTracker;
   }
 
   @Override

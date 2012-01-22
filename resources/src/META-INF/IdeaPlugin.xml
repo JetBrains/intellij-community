@@ -62,6 +62,8 @@
 
     <extensionPoint name="deadCode"
                     interface="com.intellij.codeInspection.reference.EntryPoint"/>
+    <extensionPoint name="unusedDeclarationFixProvider"
+                    interface="com.intellij.codeInspection.reference.UnusedDeclarationFixProvider"/>
 
     <!-- PsiMember -->
     <extensionPoint name="javaDocNotNecessary"

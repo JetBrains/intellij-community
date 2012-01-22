@@ -17,7 +17,6 @@ package com.intellij.compiler.options;
 
 import com.intellij.compiler.*;
 import com.intellij.compiler.impl.TranslatingCompilerFilesMonitor;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -44,7 +43,6 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
 
   public CompilerUIConfigurable(final Project project) {
     myProject = project;
-    myCbUseCompileServer.setVisible(ApplicationManager.getApplication().isInternal());
     myPatternLegendLabel.setText("<html>" +
                                  "Use <b>;</b> to separate patterns and <b>!</b> to negate a pattern. " +
                                  "Accepted wildcards: <b>?</b> &mdash; exactly one symbol; <b>*</b> &mdash; zero or more symbols; " +
@@ -96,12 +94,12 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     // this will schedule for compilation all files that might become compilable after resource patterns' changing
     TranslatingCompilerFilesMonitor.getInstance().scanSourcesForCompilableFiles(myProject);
     if (!workspaceConfiguration.USE_COMPILE_SERVER) {
-      JpsServerManager.getInstance().shutdownServer();
+      CompileServerManager.getInstance().shutdownServer();
     }
     else {
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
-          JpsServerManager.getInstance().sendReloadRequest(myProject);
+          CompileServerManager.getInstance().sendReloadRequest(myProject);
         }
       });
     }

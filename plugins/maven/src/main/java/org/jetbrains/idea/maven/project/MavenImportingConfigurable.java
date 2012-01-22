@@ -30,7 +30,7 @@ import java.util.List;
 
 public class MavenImportingConfigurable implements SearchableConfigurable {
   private final MavenImportingSettings myImportingSettings;
-  private final MavenImportingSettingsForm mySettingsForm = new MavenImportingSettingsForm(false);
+  private final MavenImportingSettingsForm mySettingsForm = new MavenImportingSettingsForm(false, false);
   private final List<UnnamedConfigurable> myAdditionalConfigurables;
 
   public MavenImportingConfigurable(Project project, MavenImportingSettings importingSettings) {

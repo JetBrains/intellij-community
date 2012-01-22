@@ -24,6 +24,8 @@
                         implementationClass="org.jetbrains.idea.devkit.dom.impl.IdeaPluginImpl"/>
     <dom.implementation interfaceClass="org.jetbrains.idea.devkit.dom.Extension"
                         implementationClass="org.jetbrains.idea.devkit.dom.impl.ExtensionImpl"/>
+    <dom.implementation interfaceClass="org.jetbrains.idea.devkit.dom.Extensions"
+                        implementationClass="org.jetbrains.idea.devkit.dom.impl.ExtensionsImpl"/>
     <useScopeEnlarger implementation="org.jetbrains.idea.devkit.DevKitUseScopeEnlarger"/>
 
     <configurationType implementation="org.jetbrains.idea.devkit.run.PluginConfigurationType"/>
@@ -73,6 +75,7 @@
     <moduleConfigurationEditorProvider implementation="org.jetbrains.idea.devkit.module.PluginModuleEditorsProvider"/>
     <implicitUsageProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitEntryPoints"/>
     <psi.referenceContributor implementation="org.jetbrains.idea.devkit.dom.impl.InspectionsPropertiesReferenceProviderContributor"/>
+    <unusedDeclarationFixProvider implementation="org.jetbrains.idea.devkit.inspections.quickfix.RegisterInspectionFixProvider"/>
   </extensions>
 
   <module-components>

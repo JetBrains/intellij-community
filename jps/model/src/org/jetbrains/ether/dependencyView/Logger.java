@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package com.intellij.usages;
-
-import com.intellij.openapi.components.ApplicationComponent;
-import org.jetbrains.annotations.NotNull;
+package org.jetbrains.ether.dependencyView;
 
 /**
- * @author peter
+ * Created by IntelliJ IDEA.
+ * User: db
+ * Date: 20.01.12
+ * Time: 15:42
+ * To change this template use File | Settings | File Templates.
  */
-@Deprecated
-public interface UsageConvertor extends ApplicationComponent{
-
-  @NotNull Usage convert(@NotNull Usage usage);
-
+public interface Logger<T> {
+  void debug(T t);
 }

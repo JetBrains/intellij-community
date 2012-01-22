@@ -19,6 +19,7 @@ package org.jetbrains.android.uipreview;
 import com.android.ide.common.log.ILogger;
 import com.android.ide.common.rendering.LayoutLibrary;
 import com.android.ide.common.rendering.api.IProjectCallback;
+import com.android.ide.common.rendering.api.RenderResources;
 import com.android.ide.common.rendering.api.ResourceValue;
 import com.android.ide.common.resources.FrameworkResources;
 import com.android.ide.common.resources.ResourceResolver;
@@ -73,7 +74,7 @@ public class RenderServiceFactory {
     return null;
   }
 
-  public ResourceResolver createResourceResolver(final AndroidFacet facet,
+  public RenderResources createResourceResolver(final AndroidFacet facet,
                                                  FolderConfiguration config,
                                                  ProjectResources projectResources,
                                                  String themeName,
@@ -94,10 +95,11 @@ public class RenderServiceFactory {
     }
 
     final Map<ResourceType, Map<String, ResourceValue>> configedFrameworkRes = myResources.getConfiguredResources(config);
-    return ResourceResolver.create(configedProjectRes, configedFrameworkRes, themeName, isProjectTheme);
+    final ResourceResolver resolver = ResourceResolver.create(configedProjectRes, configedFrameworkRes, themeName, isProjectTheme);
+    return new ResourceResolverDecorator(resolver);
   }
 
-  public RenderService createService(ResourceResolver resources,
+  public RenderService createService(RenderResources resources,
                                      FolderConfiguration config,
                                      float xdpi,
                                      float ydpi,

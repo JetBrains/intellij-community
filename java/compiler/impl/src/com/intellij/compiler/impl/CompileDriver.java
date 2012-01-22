@@ -187,7 +187,7 @@ public class CompileDriver {
 
   public void rebuild(CompileStatusNotification callback) {
     CompileScope projectScope = ArtifactCompileScope.createScopeWithArtifacts(new ProjectCompileScope(myProject),
-                                                                              ArtifactUtil.getArtifactWithOutputPaths(myProject));
+                                                                              ArtifactUtil.getArtifactWithOutputPaths(myProject), false);
     final CompileScope compileScope = useCompileServer() ? projectScope : addAdditionalRoots(projectScope, ALL_EXCEPT_SOURCE_PROCESSING);
     doRebuild(callback, null, true, compileScope);
   }
@@ -425,7 +425,7 @@ public class CompileDriver {
         moduleNames.add(module.getName());
       }
     }
-    final JpsServerManager jpsServerManager = JpsServerManager.getInstance();
+    final CompileServerManager jpsServerManager = CompileServerManager.getInstance();
     final MessageBus messageBus = myProject.getMessageBus();
     return jpsServerManager.submitCompilationTask(myProject.getLocation(), compileContext.isRebuild(), compileContext.isMake(), moduleNames, paths, new JpsServerResponseHandlerAdapter() {
 

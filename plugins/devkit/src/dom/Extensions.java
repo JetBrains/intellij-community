@@ -26,6 +26,8 @@ import com.intellij.util.xml.GenericAttributeValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.dom.impl.ExtensionNsConverter;
 
+import java.util.List;
+
 public interface Extensions extends DomElement {
   @NotNull
   @Attribute("defaultExtensionNs")
@@ -35,4 +37,9 @@ public interface Extensions extends DomElement {
   @NotNull
   @Convert(value=ExtensionNsConverter.class, soft=true)
   GenericAttributeValue<IdeaPlugin> getXmlns();
+
+  List<Extension> getExtensions();
+  Extension addExtension();
+
+  Extension addExtension(String name);
 }

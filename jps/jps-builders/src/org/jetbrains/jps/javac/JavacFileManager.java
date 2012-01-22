@@ -1,4 +1,4 @@
-package org.jetbrains.jps.incremental.java;
+package org.jetbrains.jps.javac;
 
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
@@ -28,8 +28,6 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
     void consumeOutputFile(@NotNull OutputFileObject obj);
 
     void reportMessage(final Diagnostic.Kind kind, String message);
-
-    void ensurePendingTasksCompleted();
   }
 
   public JavacFileManager(Context context) {

@@ -143,17 +143,6 @@ public class IntentionDescriptionNotFoundInspection extends DevKitInspectionBase
     }
   }
 
-  @Nullable
-  private static PsiMethod findNearestMethod(String name, @Nullable PsiClass cls) {
-    if (cls == null) return null;
-    for (PsiMethod method : cls.getMethods()) {
-      if (method.getParameterList().getParametersCount() == 0 && method.getName().equals(name)) {
-        return method.getModifierList().hasModifierProperty(PsiModifier.ABSTRACT) ? null : method;
-      }
-    }
-    return findNearestMethod(name, cls.getSuperClass());
-  }
-
   @Nls
   @NotNull
   public String getDisplayName() {

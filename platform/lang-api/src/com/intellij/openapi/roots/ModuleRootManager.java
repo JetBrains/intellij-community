@@ -31,7 +31,7 @@ public abstract class ModuleRootManager implements ModuleRootModel {
    * @param module the module for which the root manager is requested.
    * @return the root manager instance.
    */
-  public static ModuleRootManager getInstance(Module module) {
+  public static ModuleRootManager getInstance(@NotNull Module module) {
     return module.getComponent(ModuleRootManager.class);
   }
 

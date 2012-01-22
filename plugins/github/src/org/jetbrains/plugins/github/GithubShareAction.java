@@ -20,10 +20,12 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsOutgoingChangesProvider;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
+import com.intellij.openapi.vcs.changes.InvokeAfterUpdateMode;
 import com.intellij.openapi.vcs.changes.actions.RefreshAction;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.HashSet;
 import git4idea.GitDeprecatedRemote;
 import git4idea.util.GitUtil;
@@ -261,8 +263,21 @@ public class GithubShareAction extends DumbAwareAction {
             files2Add.add(readmeFile);
           }
           final ChangeListManagerImpl changeListManager = (ChangeListManagerImpl)ChangeListManager.getInstance(project);
+
           // Force update
-          changeListManager.ensureUpToDate(false);
+          final Semaphore semaphore = new Semaphore();
+          semaphore.up();
+          changeListManager.invokeAfterUpdate(new Runnable() {
+            @Override
+            public void run() {
+              semaphore.down();
+            }
+          }, InvokeAfterUpdateMode.SILENT, null, null);
+          if (!semaphore.waitFor(30000)) {
+            exceptionRef.set(new VcsException("Too long VCS update"));
+            return;
+          }
+
           for (VirtualFile file : changeListManager.getUnversionedFiles()) {
             if (file.getPath().contains(".idea")) {
               continue;

@@ -30,6 +30,7 @@ import com.intellij.ide.projectView.impl.nodes.AbstractModuleNode;
 import com.intellij.ide.projectView.impl.nodes.AbstractProjectNode;
 import com.intellij.ide.projectView.impl.nodes.ModuleGroupNode;
 import com.intellij.ide.util.treeView.*;
+import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -486,7 +487,18 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
         final PsiFile containingFile = element.getContainingFile();
         if (containingFile != null) {
           final PsiDirectory psiDirectory = containingFile.getContainingDirectory();
-          return psiDirectory != null ? new PsiDirectory[]{psiDirectory} : PsiDirectory.EMPTY_ARRAY;
+          if (psiDirectory != null) {
+            return new PsiDirectory[]{psiDirectory};
+          }
+          final VirtualFile file = containingFile.getVirtualFile();
+          if (file instanceof VirtualFileWindow) {
+            final VirtualFile delegate = ((VirtualFileWindow)file).getDelegate();
+            final PsiFile delegatePsiFile = containingFile.getManager().findFile(delegate);
+            if (delegatePsiFile != null && delegatePsiFile.getContainingDirectory() != null) {
+              return new PsiDirectory[] { delegatePsiFile.getContainingDirectory() };
+            }
+          }
+          return PsiDirectory.EMPTY_ARRAY;
         }
       }
     }

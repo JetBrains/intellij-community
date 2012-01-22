@@ -1,0 +1,6 @@
+<idea-plugin>
+    <extensions defaultExtensionNs="com.intellij">
+        <localInspection implementationClass="LocalInspection"/>
+        <globalInspection implementationClass="GlobalInspection"/>
+    </extensions>
+</idea-plugin>

@@ -24,11 +24,17 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.psi.*;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * @author cdr
@@ -69,7 +75,17 @@ public class UnusedPropertyInspection extends PropertySuppressableInspectionBase
 
         String name = property.getName();
         if (name == null) return;
-        PsiSearchHelper.SearchCostResult cheapEnough = searchHelper.isCheapEnoughToSearch(name, searchScope, file, original);
+        
+        final List<String> words = StringUtil.getWordsIn(name);
+        if (words.isEmpty()) {
+          return;
+        }
+
+        final String lastWord = words.get(words.size() - 1);
+        PsiSearchHelper.SearchCostResult cheapEnough = searchHelper.isCheapEnoughToSearch(lastWord, searchScope, file, original);
+        if (cheapEnough == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) return;
+        
+        cheapEnough = searchHelper.isCheapEnoughToSearch(name, searchScope, file, original);
         if (cheapEnough == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) return;
 
         final PsiReference usage = cheapEnough == PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES ? null :

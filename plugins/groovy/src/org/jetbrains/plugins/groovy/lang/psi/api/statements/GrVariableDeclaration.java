@@ -1,12 +1,13 @@
-
 package org.jetbrains.plugins.groovy.lang.psi.api.statements;
 
 import com.intellij.psi.PsiType;
 import com.intellij.util.ArrayFactory;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
-
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -33,4 +34,7 @@ public interface GrVariableDeclaration extends GrStatement, GrMembersDeclaration
   GrTypeElement getTypeElementGroovyForVariable(GrVariable var);
 
   GrTupleDeclaration getTupleDeclaration();
+
+  @Override
+  boolean hasModifierProperty(@GrModifier.GrModifierConstant @NonNls @NotNull String name);
 }

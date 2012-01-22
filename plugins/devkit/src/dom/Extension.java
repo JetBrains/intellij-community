@@ -18,6 +18,7 @@ package org.jetbrains.idea.devkit.dom;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.NameValue;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author mike
@@ -29,5 +30,6 @@ public interface Extension extends DomElement {
 
   GenericAttributeValue<String> getOrder();
 
+  @Nullable
   ExtensionPoint getExtensionPoint();
 }

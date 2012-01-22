@@ -37,7 +37,7 @@ public class ResizeComponentListener extends MouseAdapter implements MouseMotion
   private final AbstractPopup.MyContentPanel myComponent;
   private Point myStartPoint = null;
   @JdkConstants.CursorType private int myDirection = -1;
-  private IdeGlassPane myGlassPane;
+  private final IdeGlassPane myGlassPane;
 
   public ResizeComponentListener(final AbstractPopup popup, IdeGlassPane glassPane) {
     myPopup = popup;
@@ -99,7 +99,7 @@ public class ResizeComponentListener extends MouseAdapter implements MouseMotion
       myPopup.storeDimensionSize(popupWindow.getSize());
     }
     myStartPoint = null;
-    myDirection = -1;
+    myDirection = Cursor.CUSTOM_CURSOR;
   }
 
   private boolean isToShowBorder() {

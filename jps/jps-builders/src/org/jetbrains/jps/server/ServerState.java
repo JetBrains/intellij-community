@@ -1,6 +1,7 @@
 package org.jetbrains.jps.server;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.FileUtil;
 import org.codehaus.groovy.runtime.MethodClosure;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.Library;
@@ -13,6 +14,9 @@ import org.jetbrains.jps.api.GlobalLibrary;
 import org.jetbrains.jps.api.SdkLibrary;
 import org.jetbrains.jps.idea.IdeaProjectLoader;
 import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.incremental.messages.BuildMessage;
+import org.jetbrains.jps.incremental.messages.CompilerMessage;
+import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.ProjectTimestamps;
 import org.jetbrains.jps.incremental.storage.TimestampStorage;
 
@@ -34,8 +38,17 @@ class ServerState {
   private final Object myConfigurationLock = new Object();
   private final Map<String, String> myPathVariables = new HashMap<String, String>();
   private final List<GlobalLibrary> myGlobalLibraries = new ArrayList<GlobalLibrary>();
+  private volatile boolean myKeepTempCachesInMemory = false;
 
   public void setGlobals(List<GlobalLibrary> libs, Map<String, String> pathVars) {
+    synchronized (myConfigurationLock) {
+      clearCahedState();
+      myGlobalLibraries.addAll(libs);
+      myPathVariables.putAll(pathVars);
+    }
+  }
+
+  public final void clearCahedState() {
     synchronized (myConfigurationLock) {
       for (Map.Entry<String, ProjectDescriptor> entry : myProjects.entrySet()) {
         final String projectPath = entry.getKey();
@@ -44,10 +57,16 @@ class ServerState {
       }
       myProjects.clear(); // projects should be reloaded against the latest data
       myGlobalLibraries.clear();
-      myGlobalLibraries.addAll(libs);
       myPathVariables.clear();
-      myPathVariables.putAll(pathVars);
     }
+  }
+
+  public boolean isKeepTempCachesInMemory() {
+    return myKeepTempCachesInMemory;
+  }
+
+  public void setKeepTempCachesInMemory(boolean keepTempCachesInMemory) {
+    myKeepTempCachesInMemory = keepTempCachesInMemory;
   }
 
   public void notifyFileChanged(ProjectDescriptor pd, File file) {
@@ -107,7 +126,30 @@ class ServerState {
       if (pd == null) {
         final Project project = loadProject(projectPath, params);
         final FSState fsState = new FSState();
-        pd = new ProjectDescriptor(projectName, project, fsState, new ProjectTimestamps(projectName));
+        ProjectTimestamps timestamps = null;
+        BuildDataManager dataManager = null;
+        try {
+          timestamps = new ProjectTimestamps(projectName);
+          dataManager = new BuildDataManager(projectName, myKeepTempCachesInMemory);
+        }
+        catch (Exception e) {
+          // second try
+          e.printStackTrace(System.err);
+          if (timestamps != null) {
+            timestamps.close();
+          }
+          if (dataManager != null) {
+            dataManager.close();
+          }
+          buildType = BuildType.PROJECT_REBUILD; // force project rebuild
+          FileUtil.delete(Paths.getDataStorageRoot(projectName));
+          timestamps = new ProjectTimestamps(projectName);
+          dataManager = new BuildDataManager(projectName, myKeepTempCachesInMemory);
+          // second attempt succeded
+          msgHandler.processMessage(new CompilerMessage("compile-server", BuildMessage.Kind.INFO, "Project rebuild forced: " + e.getMessage()));
+        }
+
+        pd = new ProjectDescriptor(projectName, project, fsState, timestamps, dataManager);
         myProjects.put(projectPath, pd);
       }
       pd.incUsageCounter();

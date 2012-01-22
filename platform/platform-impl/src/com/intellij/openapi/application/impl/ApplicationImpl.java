@@ -285,7 +285,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
         if (isDisposed() || isDisposeInProgress()) {
           return;
         }
-        ShutDownTracker.invokeAndWait(isUnitTestMode(), new Runnable() {
+        ShutDownTracker.invokeAndWait(isUnitTestMode(), true, new Runnable() {
           public void run() {
             if (ApplicationManager.getApplication() != ApplicationImpl.this) return;
             try {

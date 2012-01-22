@@ -337,6 +337,7 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
       return true;
     }
 
+
     @Override
     public int hashCode() {
       int result = myAnchor != null ? myAnchor.hashCode() : 0;

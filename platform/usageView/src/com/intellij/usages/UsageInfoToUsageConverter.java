@@ -16,7 +16,6 @@
 package com.intellij.usages;
 
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
@@ -110,16 +109,6 @@ public class UsageInfoToUsageConverter {
 
   @NotNull
   public static Usage convert(TargetElementsDescriptor descriptor, UsageInfo usageInfo) {
-    Usage usage = _convert(descriptor, usageInfo);
-    final UsageConvertor[] convertors = ApplicationManager.getApplication().getComponents(UsageConvertor.class);
-    for (UsageConvertor convertor : convertors) {
-      usage = convertor.convert(usage);
-    }
-    return usage;
-  }
-
-  @NotNull
-  private static Usage _convert(final TargetElementsDescriptor descriptor, final UsageInfo usageInfo) {
     final PsiElement[] primaryElements = descriptor.getPrimaryElements();
 
     for(ReadWriteAccessDetector detector: Extensions.getExtensions(ReadWriteAccessDetector.EP_NAME)) {

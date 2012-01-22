@@ -252,7 +252,7 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
         }
       };
       ((PsiSearchHelperImpl)PsiSearchHelper.SERVICE.getInstance(project)).processFilesWithText(
-        scope, UsageSearchContext.IN_PLAIN_TEXT, true, name, collector, null  
+        scope, UsageSearchContext.IN_PLAIN_TEXT, true, name, collector
       );
       
       for (final VirtualFile vfile:collector.getResults()) {

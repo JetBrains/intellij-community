@@ -17,16 +17,20 @@
 package com.intellij.openapi.projectRoots.ex;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author mike
  */
 public interface ProjectRoot {
   boolean isValid();
+  @NotNull
   VirtualFile[] getVirtualFiles();
 
+  @NotNull
   String[] getUrls();
 
+  @NotNull
   String getPresentableString();
 
   void update();

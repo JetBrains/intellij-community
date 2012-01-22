@@ -25,6 +25,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 
 public class GroovyUnusedCatchParameterInspection extends BaseInspection {
+  @Override
+  public boolean isEnabledByDefault() {
+    return true;
+  }
 
   @Nls
   @NotNull
