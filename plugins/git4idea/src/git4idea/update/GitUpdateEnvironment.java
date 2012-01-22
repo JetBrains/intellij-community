@@ -27,7 +27,7 @@ import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vcs.update.UpdateSession;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.GitUtil;
+import git4idea.util.GitUtil;
 import git4idea.GitVcs;
 import git4idea.config.GitVcsSettings;
 import org.jetbrains.annotations.NotNull;

@@ -24,7 +24,7 @@ import com.intellij.ui.*;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.DialogManager;
-import git4idea.GitUtil;
+import git4idea.util.GitUtil;
 import git4idea.config.GitVcsSettings;
 import git4idea.i18n.GitBundle;
 

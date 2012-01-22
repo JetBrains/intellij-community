@@ -90,6 +90,21 @@ class ServerMessageHandler extends SimpleChannelHandler {
           // todo pay attention to policy
           myBuildsExecutor.submit(new Runnable() {
             public void run() {
+              for (Map.Entry<String, CompilationTask> entry : myBuildsInProgress.entrySet()) {
+                final CompilationTask task = entry.getValue();
+                task.cancel();
+              }
+
+              facade.clearCahedState();
+
+              while (!myBuildsInProgress.isEmpty()) {
+                try {
+                  Thread.sleep(100L);
+                }
+                catch (InterruptedException ignored) {
+                }
+              }
+
               myServer.stop();
             }
           });

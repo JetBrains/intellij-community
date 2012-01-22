@@ -15,8 +15,6 @@
  */
 package com.intellij.xml.actions;
 
-import com.intellij.openapi.actionSystem.ActionGroupUtil;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 
 /**
@@ -28,8 +26,4 @@ public class XmlActionsGroup extends DefaultActionGroup {
     getTemplatePresentation().setText("XML Actions");
   }
 
-  @Override
-  public void update(AnActionEvent e) {
-    e.getPresentation().setVisible(!ActionGroupUtil.isGroupEmpty(this, e));
-  }
 }

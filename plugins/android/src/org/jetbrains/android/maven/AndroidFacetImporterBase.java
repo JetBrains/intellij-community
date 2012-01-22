@@ -680,13 +680,13 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
         }
       }
       if (dirs.size() > 0) {
-        configuration.RES_OVERLAY_FOLDERS = ArrayUtil.toStringArray(dirs);
+        configuration.RES_OVERLAY_FOLDERS = dirs;
       }
     }
     else {
       String resOverlayFolderRelPath = getPathFromConfig(module, project, moduleDirPath, "resourceOverlayDirectory", true, true);
       if (resOverlayFolderRelPath != null) {
-        configuration.RES_OVERLAY_FOLDERS = new String[]{'/' + resOverlayFolderRelPath};
+        configuration.RES_OVERLAY_FOLDERS = Arrays.asList('/' + resOverlayFolderRelPath);
       }
     }
 
@@ -705,7 +705,7 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
       configuration.ASSETS_FOLDER_RELATIVE_PATH = '/' + assetsFolderRelPath;
     }
 
-    String manifestFileRelPath = getPathFromConfig(module, project, moduleDirPath, "androidManifestFile", true, false);
+    String manifestFileRelPath =  getPathFromConfig(module, project, moduleDirPath, "androidManifestFile", true, false);
     if (manifestFileRelPath != null) {
       configuration.MANIFEST_FILE_RELATIVE_PATH = '/' + manifestFileRelPath;
     }

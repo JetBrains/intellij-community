@@ -28,7 +28,7 @@ import git4idea.config.GitConfigUtil;
 import git4idea.i18n.GitBundle;
 import git4idea.merge.GitMergeUtil;
 import git4idea.ui.GitReferenceValidator;
-import git4idea.ui.GitUIUtil;
+import git4idea.util.GitUIUtil;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;

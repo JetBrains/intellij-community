@@ -70,7 +70,7 @@ public abstract class RunManagerEx extends RunManager {
   @NotNull
   public abstract <T extends BeforeRunTask> Collection<T> getBeforeRunTasks(Key<T> taskProviderID, boolean includeOnlyActiveTasks);
 
-  public abstract RunnerAndConfigurationSettings findConfigurationByName(@NotNull final String name);
+  public abstract RunnerAndConfigurationSettings findConfigurationByName(@Nullable final String name);
 
   public abstract Icon getConfigurationIcon(@NotNull RunnerAndConfigurationSettings settings);
   public abstract void invalidateConfigurationIcon(@NotNull RunnerAndConfigurationSettings settings);

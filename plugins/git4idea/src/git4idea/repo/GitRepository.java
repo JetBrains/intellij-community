@@ -385,4 +385,25 @@ public final class GitRepository implements Disposable {
   public String toString() {
     return getPresentableUrl();
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    GitRepository that = (GitRepository)o;
+
+    if (myProject != null ? !myProject.equals(that.myProject) : that.myProject != null) return false;
+    if (myRootDir != null ? !myRootDir.equals(that.myRootDir) : that.myRootDir != null) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myProject != null ? myProject.hashCode() : 0;
+    result = 31 * result + (myRootDir != null ? myRootDir.hashCode() : 0);
+    return result;
+  }
+
 }

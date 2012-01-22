@@ -19,12 +19,9 @@ import com.intellij.compiler.impl.javaCompiler.javac.JavacSettings;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StorageScheme;
-import com.intellij.util.ArrayUtil;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.openapi.project.Project;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.StringTokenizer;
+import java.util.Collection;
 
 @State(
   name = "RmicSettings",
@@ -37,33 +34,26 @@ public class RmicSettings extends JavacSettings {
   public boolean IS_EANABLED = false;
   public boolean GENERATE_IIOP_STUBS = false;
 
-  @NonNls
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public String[] getOptions() {
-    List<String> options = new ArrayList<String>();
-    if(DEBUGGING_INFO) {
-      options.add("-g");
-    }
-    if(GENERATE_NO_WARNINGS) {
-      options.add("-nowarn");
-    }
+  public RmicSettings() {
+    DEPRECATION = false; // in this configuration deprecation is false by default
+  }
+
+  public Collection<String> getOptions(Project project) {
+    final Collection<String> options = super.getOptions(project);
     if(GENERATE_IIOP_STUBS) {
       options.add("-iiop");
     }
-    final StringTokenizer tokenizer = new StringTokenizer(ADDITIONAL_OPTIONS_STRING, " \t\r\n");
-    while(tokenizer.hasMoreTokens()) {
-      String token = tokenizer.nextToken();
-      if("-g".equals(token)) {
-        continue;
-      }
-      if("-iiop".equals(token)) {
-        continue;
-      }
-      if("-nowarn".equals(token)) {
-        continue;
-      }
-      options.add(token);
+    return options;
+  }
+
+  protected boolean acceptUserOption(String token) {
+    if (!super.acceptUserOption(token)) {
+      return false;
     }
-    return ArrayUtil.toStringArray(options);
+    return !("-iiop".equals(token));
+  }
+
+  protected boolean acceptEncoding() {
+    return false;
   }
 }

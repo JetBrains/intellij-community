@@ -181,7 +181,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
     ListPopupStep step = new ActionPopupStep(items, title, component, showNumbers || honorActionMnemonics && itemsHaveMnemonics(items),
                                              defaultOptionIndex,
-                                             false);
+                                             false, showDisabledActions);
 
     final ListPopupImpl popup = new ListPopupImpl(step, maxRowCount) {
       public void dispose() {
@@ -282,7 +282,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
     final List<ActionItem> items = builder.getItems();
 
     return new ActionPopupStep(items, title, component, showNumbers || honorActionMnemonics && itemsHaveMnemonics(items), defaultOptionIndex,
-                               autoSelectionEnabled);
+                               autoSelectionEnabled, showDisabledActions);
   }
 
   public ListPopupStep createActionsStep(ActionGroup actionGroup, @NotNull DataContext dataContext, boolean showNumbers, boolean showDisabledActions,
@@ -459,19 +459,21 @@ public class PopupFactoryImpl extends JBPopupFactory {
     private final boolean myEnableMnemonics;
     private final int myDefaultOptionIndex;
     private final boolean myAutoSelectionEnabled;
+    private final boolean myShowDisabledActions;
     private Runnable myFinalRunnable;
 
     private ActionPopupStep(@NotNull final List<ActionItem> items,
-                           final String title,
-                           Component context,
-                           boolean enableMnemonics,
-                           final int defaultOptionIndex, final boolean autoSelection) {
+                            final String title,
+                            Component context,
+                            boolean enableMnemonics,
+                            final int defaultOptionIndex, final boolean autoSelection, boolean showDisabledActions) {
       myItems = items;
       myTitle = title;
       myContext = context;
       myEnableMnemonics = enableMnemonics;
       myDefaultOptionIndex = defaultOptionIndex;
       myAutoSelectionEnabled = autoSelection;
+      myShowDisabledActions = showDisabledActions;
     }
 
     @NotNull
@@ -524,7 +526,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
       final DataContext dataContext = myContext != null ? mgr.getDataContext(myContext) : mgr.getDataContext();
 
       if (action instanceof ActionGroup && (!finalChoice || !((ActionGroup)action).canBePerformed(dataContext))) {
-          return JBPopupFactory.getInstance().createActionsStep((ActionGroup)action, dataContext, myEnableMnemonics, false, null, myContext, false);
+          return JBPopupFactory.getInstance().createActionsStep((ActionGroup)action, dataContext, myEnableMnemonics, myShowDisabledActions, null, myContext, false);
       }
       else {
         myFinalRunnable = new Runnable() {

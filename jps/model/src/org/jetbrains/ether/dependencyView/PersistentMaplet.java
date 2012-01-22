@@ -106,6 +106,10 @@ public class PersistentMaplet<K, V> implements Maplet<K, V> {
     }
   }
 
+  public void flush() {
+    myMap.force();
+  }
+
   @Override
   public Collection<K> keyCollection() {
     try {

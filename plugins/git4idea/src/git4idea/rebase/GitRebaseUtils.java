@@ -20,7 +20,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitRevisionNumber;
-import git4idea.GitUtil;
+import git4idea.util.GitUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;

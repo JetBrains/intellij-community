@@ -22,9 +22,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
-import git4idea.commands.StringScanner;
+import git4idea.util.StringScanner;
 import git4idea.config.GitConfigUtil;
-import git4idea.ui.GitUIUtil;
+import git4idea.util.GitUIUtil;
 import git4idea.ui.StashInfo;
 import org.jetbrains.annotations.NotNull;
 

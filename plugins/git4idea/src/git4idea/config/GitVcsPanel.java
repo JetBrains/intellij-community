@@ -20,8 +20,11 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.ui.components.JBCheckBox;
 import git4idea.GitVcs;
 import git4idea.i18n.GitBundle;
+import git4idea.repo.GitRepositoryManager;
+import git4idea.ui.branch.GitBranchSyncSetting;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -49,6 +52,7 @@ public class GitVcsPanel {
   private JComboBox mySSHExecutableComboBox; // Type of SSH executable to use
   private JComboBox myConvertTextFilesComboBox; // The conversion policy
   private JCheckBox myAutoUpdateIfPushRejected;
+  private JBCheckBox mySyncBranchControl;
 
   public GitVcsPanel(@NotNull Project project) {
     myVcs = GitVcs.getInstance(project);
@@ -56,7 +60,7 @@ public class GitVcsPanel {
     myProject = project;
     mySSHExecutableComboBox.addItem(IDEA_SSH);
     mySSHExecutableComboBox.addItem(NATIVE_SSH);
-    mySSHExecutableComboBox.setSelectedItem(GitVcsSettings.isDefaultIdeaSsh() ? IDEA_SSH : NATIVE_SSH);
+    mySSHExecutableComboBox.setSelectedItem(IDEA_SSH);
     mySSHExecutableComboBox
       .setToolTipText(GitBundle.message("git.vcs.config.ssh.mode.tooltip", ApplicationNamesInfo.getInstance().getFullProductName()));
     myTestButton.addActionListener(new ActionListener() {
@@ -70,6 +74,7 @@ public class GitVcsPanel {
     myConvertTextFilesComboBox.setSelectedItem(CRLF_ASK);
     myGitField.addBrowseFolderListener(GitBundle.getString("find.git.title"), GitBundle.getString("find.git.description"), project,
                                        FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor());
+    mySyncBranchControl.setVisible(GitRepositoryManager.getInstance(project).moreThanOneRoot());
   }
 
   /**
@@ -116,6 +121,7 @@ public class GitVcsPanel {
     mySSHExecutableComboBox.setSelectedItem(settings.isIdeaSsh() ? IDEA_SSH : NATIVE_SSH);
     myConvertTextFilesComboBox.setSelectedItem(crlfPolicyItem(settings));
     myAutoUpdateIfPushRejected.setSelected(settings.autoUpdateIfPushRejected());
+    mySyncBranchControl.setSelected(settings.getSyncSetting() == GitBranchSyncSetting.SYNC);
   }
 
   /**
@@ -152,7 +158,8 @@ public class GitVcsPanel {
     return !settings.getAppSettings().getPathToGit().equals(myGitField.getText()) ||
            (settings.isIdeaSsh() != IDEA_SSH.equals(mySSHExecutableComboBox.getSelectedItem())) ||
            !crlfPolicyItem(settings).equals(myConvertTextFilesComboBox.getSelectedItem()) ||
-           !settings.autoUpdateIfPushRejected() == myAutoUpdateIfPushRejected.isSelected();
+           !settings.autoUpdateIfPushRejected() == myAutoUpdateIfPushRejected.isSelected() ||
+           ((settings.getSyncSetting() == GitBranchSyncSetting.SYNC) != mySyncBranchControl.isSelected());
   }
 
   /**
@@ -179,5 +186,6 @@ public class GitVcsPanel {
       throw new IllegalStateException("Unknown selected CRLF policy: " + policyItem);
     }
     settings.setLineSeparatorsConversion(conversionPolicy);
+    settings.setSyncSetting(mySyncBranchControl.isSelected() ? GitBranchSyncSetting.SYNC : GitBranchSyncSetting.DONT);
   }
 }

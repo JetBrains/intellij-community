@@ -91,8 +91,10 @@ public class RefManagerImpl extends RefManager {
     myProjectIterator = new ProjectIterator();
     for (InspectionExtensionsFactory factory : Extensions.getExtensions(InspectionExtensionsFactory.EP_NAME)) {
       final RefManagerExtension extension = factory.createRefManagerExtension(this);
-      myExtensions.put(extension.getID(), extension);
-      myLanguageExtensions.put(extension.getLanguage(), extension);
+      if (extension != null) {
+        myExtensions.put(extension.getID(), extension);
+        myLanguageExtensions.put(extension.getLanguage(), extension);
+      }
     }
   }
 

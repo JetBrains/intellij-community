@@ -88,7 +88,7 @@ class DependencyContext {
       }
     }
           
-    /*private*/ S(final int i) {
+    private S(final int i) {
       index = i;
     }
     
@@ -163,5 +163,20 @@ class DependencyContext {
     catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  public void flush() {
+    myEnumerator.force();
+  }
+
+  public Logger<S> getLogger(final com.intellij.openapi.diagnostic.Logger log) {
+    return new Logger<S>() {
+      @Override
+      public void debug(S s) {
+        if (log.isDebugEnabled()) {
+          log.debug(getValue(s));
+        }
+      }
+    };
   }
 }

@@ -24,8 +24,6 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
@@ -33,9 +31,10 @@ import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import git4idea.GitBranch;
-import git4idea.GitUtil;
+import git4idea.util.GitUtil;
 import git4idea.history.browser.GitCommit;
 import git4idea.repo.GitRepository;
+import git4idea.util.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -44,7 +43,6 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.io.File;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -314,7 +312,7 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
         renderer.setToolTipText(getHashString(commit) + " " + getDateString(commit));
       }
       else if (userObject instanceof GitRepository) {
-        String repositoryPath = calcRootPath((GitRepository)userObject);
+        String repositoryPath = GitUIUtil.getShortRepositoryName((GitRepository)userObject);
         renderer.append(repositoryPath, SimpleTextAttributes.GRAY_ATTRIBUTES);
       }
       else if (userObject instanceof GitPushBranchInfo) {
@@ -358,21 +356,6 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
       else {
         renderer.append(userObject == null ? "" : userObject.toString());
       }
-    }
-
-    @NotNull
-    private static String calcRootPath(@NotNull GitRepository repository) {
-      VirtualFile projectDir = repository.getProject().getBaseDir();
-
-      String repositoryPath = repository.getPresentableUrl();
-      if (projectDir != null) {
-        String relativePath = VfsUtilCore.getRelativePath(repository.getRoot(), projectDir, File.separatorChar);
-        if (relativePath != null) {
-          repositoryPath = relativePath;
-        }
-      }
-
-      return repositoryPath.isEmpty() ? "<Project>" : "." + File.separator + repositoryPath;
     }
   }
   

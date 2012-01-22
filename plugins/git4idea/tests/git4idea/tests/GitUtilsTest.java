@@ -15,7 +15,7 @@
  */
 package git4idea.tests;
 
-import git4idea.GitUtil;
+import git4idea.util.GitUtil;
 import org.junit.Assert;
 import org.junit.Test;
 

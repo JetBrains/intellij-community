@@ -43,12 +43,10 @@ public class UntrackedFilesNotifier {
    * Clicking on the link in the notification opens a simple dialog with the list of these files.
    * @param operation the name of the Git operation that caused the error: {@code rebase, merge, checkout}.
    */
-  public static void notifyUntrackedFilesOverwrittenBy(final @NotNull Project project, final @NotNull Collection<VirtualFile> untrackedFiles, @NotNull String operation) {
+  public static void notifyUntrackedFilesOverwrittenBy(final @NotNull Project project, final @NotNull Collection<VirtualFile> untrackedFiles, @NotNull final String operation) {
     final String notificationTitle = StringUtil.capitalize(operation) + " error";
-    final String description1 = " untracked working tree files would be overwritten by " + operation + ".";
-    final String description2 = "Please move or remove them before you can " + operation + ".";
-    final String notificationDesc = "Some" + description1 + "<br/>" + description2 + " <a href=''>View them</a>";
-    final String dialogDesc = "These" + description1 + "\n" + description2;
+    final String notificationDesc = createUntrackedFilesOverwrittenDescription(operation, false);
+    final String dialogDesc = createUntrackedFilesOverwrittenDescription(operation, true);
 
     GitVcs.IMPORTANT_ERROR_NOTIFICATION.createNotification(notificationTitle, notificationDesc, NotificationType.ERROR, new NotificationListener() {
       @Override public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
@@ -57,10 +55,23 @@ public class UntrackedFilesNotifier {
             return new Action[]{getOKAction()};
           }
         };
-        dlg.setTitle("Untracked Files Preventing Rebase");
+        dlg.setTitle("Untracked Files Preventing " + StringUtil.capitalize(operation));
         dlg.show();
       }
     }).notify(project);
 
+  }
+  
+  public static String createUntrackedFilesOverwrittenDescription(@NotNull final String operation, boolean filesAreShown) {
+    final String description1 = " untracked working tree files would be overwritten by " + operation + ".";
+    final String description2 = "Please move or remove them before you can " + operation + ".";
+    final String notificationDesc;
+    if (filesAreShown) {
+      notificationDesc = "These" + description1 + "<br/>" + description2;
+    }
+    else {
+      notificationDesc = "Some" + description1 + "<br/>" + description2 + " <a href=''>View them</a>";
+    }
+    return notificationDesc;
   }
 }

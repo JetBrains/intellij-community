@@ -1,3 +1,19 @@
+/*
+ * Copyright 2000-2012 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import org.jetbrains.jps.Jps
 import org.jetbrains.jps.Module
 import org.jetbrains.jps.idea.IdeaProjectLoader
@@ -18,15 +34,18 @@ binding.setVariable("guessJdk", {
   return javaHome
 })
 
-binding.setVariable("includeFile", {String filepath ->
-  Script s = groovyShell.parse(new File(filepath))
+binding.setVariable("includeFile", {String filePath ->
+  Script s = groovyShell.parse(new File(filePath))
   s.setBinding(binding)
   s
 })
 
-
 binding.setVariable("isMac", {
   return System.getProperty("os.name").toLowerCase().startsWith("mac")
+})
+
+binding.setVariable("isWin", {
+  return System.getProperty("os.name").toLowerCase().startsWith("windows")
 })
 
 binding.setVariable("isEap", {
@@ -37,8 +56,15 @@ binding.setVariable("mem32", "-Xms128m -Xmx512m -XX:MaxPermSize=250m -XX:Reserve
 binding.setVariable("mem64", "-Xms128m -Xmx800m -XX:MaxPermSize=350m -XX:ReservedCodeCacheSize=64m")
 binding.setVariable("common_vmoptions", "-ea")
 
-binding.setVariable("vmoptions32", {"$mem32 $common_vmoptions"})
-binding.setVariable("vmoptions64", {"$mem64 $common_vmoptions"})
+binding.setVariable("vmOptions", { "$common_vmoptions ${isEap() ? '-XX:+HeapDumpOnOutOfMemoryError' : ''}".trim() })
+binding.setVariable("vmOptions32", { "$mem32 ${vmOptions()}".trim() })
+binding.setVariable("vmOptions64", { "$mem64 ${vmOptions()}".trim() })
+binding.setVariable("vmOptions32yjp", { String systemSelector ->
+  "${vmOptions32()} -agentlib:yjpagent=disablej2ee,disablecounts,disablealloc,sessionname=$systemSelector".trim()
+})
+binding.setVariable("vmOptions64yjp", { String systemSelector ->
+  "${vmOptions64()} -agentlib:yjpagent64=disablej2ee,disablecounts,disablealloc,sessionname=$systemSelector".trim()
+})
 
 binding.setVariable("isDefined", {String key ->
   try {
@@ -138,6 +164,42 @@ if (suspendUntilDebuggerConnect == 'y') {
 -------------------------------------------^------^------^------^------^------^------^-----------------------  
 """
 }
+
+binding.setVariable("patchFiles", { List files, Map args, String marker = "__" ->
+  files.each { file ->
+    args.each { arg ->
+      ant.replace(file: file, token: "${marker}${arg.key}${marker}", value:  arg.value)
+    }
+  }
+})
+
+binding.setVariable("copyAndPatchFile", { String file, String target, Map args, String marker = "__" ->
+  ant.copy(file: file, tofile: target, overwrite: "true") {
+    filterset(begintoken: marker, endtoken: marker) {
+      args.each {
+        filter(token: it.key, value: it.value)
+      }
+    }
+  }
+})
+
+binding.setVariable("copyAndPatchFiles", { Closure files, String target, Map args, String marker = "__" ->
+  ant.copy(todir: target, overwrite: "true") {
+    files()
+
+    filterset(begintoken: marker, endtoken: marker) {
+      args.each {
+        filter(token: it.key, value: it.value)
+      }
+    }
+  }
+})
+
+binding.setVariable("wireBuildDate", { String buildNumber, String appInfoFile ->
+  ant.tstamp()
+  patchFiles([appInfoFile], ["BUILD_NUMBER": buildNumber, "BUILD_DATE": DSTAMP])
+})
+
 binding.setVariable("commonJvmArgs", {
   return [
    "-ea",
@@ -152,7 +214,6 @@ binding.setVariable("commonJvmArgs", {
 
 binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
   ant.copy(todir: "$path/bin") {
-    fileset(dir: "$ch/bin/nix")
     fileset(dir: "$ch/bin/mac")
   }
 
@@ -164,6 +225,7 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
     format(property: "todayYear", pattern: "yyyy")
   }
 
+  String executable = args.executable != null ? args.executable : p("component.names.product").toLowerCase()
   String icns = "idea.icns"
   if (args.icns != null) {
     ant.delete(file: "$path/Contents/Resources/idea.icns")
@@ -171,28 +233,132 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
     icns = new File((String)args.icns).getName();
   }
 
-  def version = isEap() ? "EAP " + args.buildNumber : p("component.version.major") + "." +  p("component.version.minor")
+  String fullName = args.fullName != null ? args.fullName : p("component.names.fullname")
+
+  String vmOptions = "${vmOptions()} -Xverify:none"
+  if (isEap() && !args.mac_no_yjp) {
+    vmOptions += " -agentlib:yjpagent=disablej2ee,disablecounts,disablealloc,sessionname=${args.system_selector}"
+  }
+
+  String version = isEap() ? "EAP $args.buildNumber" : "${p("component.version.major")}.${p("component.version.minor")}"
+
+  args.get("idea.properties", [:])["idea.fatal.error.notification"] = isEap() ? "enabled" : "disabled";
+  String properties = readIdeaProperties(args)
 
   ant.replace(file: "$path/Contents/Info.plist") {
     replacefilter(token: "@@build@@", value: args.buildNumber)
-    replacefilter(token: "@@doc_types@@", value: args.get("doc_types", ""))
-    replacefilter(token: "@@executable@@", value: args.executable)
+    replacefilter(token: "@@doc_types@@", value: ifNull(args.doc_types, ""))
+    replacefilter(token: "@@executable@@", value: executable)
     replacefilter(token: "@@icns@@", value: icns)
-    replacefilter(token: "@@bundle_name@@", value: args.bundle_name)
+    replacefilter(token: "@@bundle_name@@", value: fullName)
     replacefilter(token: "@@bundle_identifier@@", value: args.bundleIdentifier)
     replacefilter(token: "@@year@@", value: "$todayYear")
-
     replacefilter(token: "@@version@@", value: version)
-    replacefilter(token: "@@vmoptions@@", value: "$common_vmoptions -Xverify:none")
+    replacefilter(token: "@@vmoptions@@", value: vmOptions)
     replacefilter(token: "@@vmoptions32@@", value: "$mem32")
     replacefilter(token: "@@vmoptions64@@", value: "$mem64 -XX:+UseCompressedOops")
-    replacefilter(token: "@@idea_properties@@", value: readIdeaProperties(args))
+    replacefilter(token: "@@idea_properties@@", value: properties)
   }
 
-  if (args.executable != "idea") {
-    ant.move(file: "$path/Contents/MacOS/idea", tofile: "$path/Contents/MacOS/$args.executable")
+  if (executable != "idea") {
+    ant.move(file: "$path/Contents/MacOS/idea", tofile: "$path/Contents/MacOS/$executable")
   }
 
+  ant.replace(file: "$path/bin/inspect.sh") {
+    replacefilter(token: "@@product_full@@", value: fullName)
+    replacefilter(token: "@@script_name@@", value: executable)
+  }
+  if (args.inspect_script != null && args.inspect_script != "inspect") {
+    ant.move(file: "$path/bin/inspect.sh", tofile: "$path/bin/${args.inspect_script}.sh")
+  }
+})
+
+binding.setVariable("winScripts", { String target, String home, String name, Map args ->
+  String fullName = args.fullName != null ? args.fullName : p("component.names.fullname")
+  String product_uc = args.product_uc != null ? args.product_uc : p("component.names.product").toUpperCase()
+  String vm_options = args.vm_options != null ? args.vm_options : "${p("component.names.product").toLowerCase()}.exe"
+
+  ant.copy(todir: "$target/bin") {
+    fileset(dir: "$home/bin/scripts/win")
+
+    filterset(begintoken: "@@", endtoken: "@@") {
+      filter(token: "product_full", value: fullName)
+      filter(token: "product_uc", value: product_uc)
+      filter(token: "vm_options", value: vm_options)
+      filter(token: "isEap", value: isEap())
+      filter(token: "system_selector", value: args.system_selector)
+      filter(token: "ide_jvm_args", value: ifNull(args.ide_jvm_args, ""))
+      filter(token: "tools_jar", value: ifNull(args.tools_jar, false))
+      filter(token: "script_name", value: name)
+    }
+  }
+
+  if (name != "idea.bat") {
+    ant.move(file: "$target/bin/idea.bat", tofile: "$target/bin/$name")
+  }
+  if (args.inspect_script != null && args.inspect_script != "inspect") {
+    ant.move(file: "$target/bin/inspect.bat", tofile: "$target/bin/${args.inspect_script}.bat")
+  }
+
+  ant.fixcrlf(srcdir: "$target/bin", includes: "*.bat", eol: "dos")
+})
+
+private ifNull(v, defVal) { v != null ? v : defVal }
+
+binding.setVariable("unixScripts", { String target, String home, String name, Map args ->
+  String fullName = args.fullName != null ? args.fullName : p("component.names.fullname")
+  String product_uc = args.product_uc != null ? args.product_uc : p("component.names.product").toUpperCase()
+  String vm_options = args.vm_options != null ? args.vm_options : p("component.names.product").toLowerCase()
+
+  ant.copy(todir: "$target/bin") {
+    fileset(dir: "$home/bin/scripts/unix")
+
+    filterset(begintoken: "@@", endtoken: "@@") {
+      filter(token: "product_full", value: fullName)
+      filter(token: "product_uc", value: product_uc)
+      filter(token: "vm_options", value: vm_options)
+      filter(token: "isEap", value: isEap())
+      filter(token: "system_selector", value: args.system_selector)
+      filter(token: "ide_jvm_args", value: ifNull(args.ide_jvm_args, ""))
+      filter(token: "tools_jar", value: ifNull(args.tools_jar, false))
+      filter(token: "script_name", value: name)
+    }
+  }
+
+  if (name != "idea.sh") {
+    ant.move(file: "$target/bin/idea.sh", tofile: "$target/bin/$name")
+  }
+  if (args.inspect_script != null && args.inspect_script != "inspect") {
+    ant.move(file: "$target/bin/inspect.sh", tofile: "$target/bin/${args.inspect_script}.sh")
+  }
+
+  ant.fixcrlf(srcdir: "$target/bin", includes: "*.sh", eol: "unix")
+})
+
+binding.setVariable("winVMOptions", { String target, String system_selector, String name, String name64 = null ->
+  def options = system_selector != null ? vmOptions32yjp(system_selector) : vmOptions32()
+  ant.echo(file: "$target/bin/${name}.vmoptions", message: options.replace(' ', '\n'))
+
+  if (name64 != null) {
+    options = system_selector != null ? vmOptions64yjp(system_selector) : vmOptions64()
+    ant.echo(file: "$target/bin/${name64}.vmoptions", message: options.replace(' ', '\n'))
+  }
+
+  ant.fixcrlf(srcdir: "$target/bin", includes: "*.vmoptions", eol: "dos")
+})
+
+binding.setVariable("unixVMOptions", { String target, String name ->
+  ant.echo(file: "$target/bin/${name}.vmoptions", message: vmOptions32().replace(' ', '\n'))
+  ant.echo(file: "$target/bin/${name}64.vmoptions", message: vmOptions64().replace(' ', '\n'))
+  ant.fixcrlf(srcdir: "$target/bin", includes: "*.vmoptions", eol: "unix")
+})
+
+binding.setVariable("unixReadme", { String target, String home, Map args ->
+  String fullName = args.fullName != null ? args.fullName : p("component.names.fullname")
+  copyAndPatchFile("$home/build/Install-Linux-tar.txt", "$target/Install-Linux-tar.txt",
+                   ["product_full": fullName, "product": p("component.names.product").toLowerCase(),
+                    "system_selector": args.system_selector, "settings_dir": fullName.replace(" ", "")], "@@")
+  ant.fixcrlf(file: "$target/bin/Install-Linux-tar.txt", eol: "unix")
 })
 
 binding.setVariable("forceDelete", { String dirPath ->
@@ -218,34 +384,33 @@ binding.setVariable("forceDelete", { String dirPath ->
   }
 })
 
-binding.setVariable("patchPropertiesFile", { String where ->
-  ant.echo(file: "$where/bin/idea.properties", append: "true", message:
-           isEap() ?
-"""
+binding.setVariable("copyPropertiesFile", { String source, String target ->
+  ant.copy(file: source, tofile: "$target/bin/idea.properties", overwrite: "true")
+  patchPropertiesFile(target)
+})
 
+binding.setVariable("patchPropertiesFile", { String target ->
+  String message = (isEap() ? """
 #-----------------------------------------------------------------------
-# Change to 'disabled' if you do not need to receive instant visual notifications about
-# fatal errors that happen to an IDE or plugins installed.
+# Change to 'disabled' if you don't want to receive instant visual notifications
+# about fatal errors that happen to an IDE or plugins installed.
 #-----------------------------------------------------------------------
 idea.fatal.error.notification=enabled
 """
-
- :
-
-"""
-
+                 : """
 #-----------------------------------------------------------------------
-# Change to 'enabled' if you need to receive instant visual notifications about
-# fatal errors that happen to an IDE or plugins installed.
+# Change to 'enabled' if you want to receive instant visual notifications
+# about fatal errors that happen to an IDE or plugins installed.
 #-----------------------------------------------------------------------
 idea.fatal.error.notification=disabled
-"""
-)
+""")
+  ant.echo(file: "$target/bin/idea.properties", append: "true", message: message)
 })
 
-binding.setVariable("zipSources", {String home, String targetDir ->
-  def sources = "$targetDir/sources.zip"
+binding.setVariable("zipSources", { String home, String targetDir ->
+  String sources = "$targetDir/sources.zip"
   project.stage("zip sources to $sources")
+
   ant.mkdir(dir: targetDir)
   ant.delete(file: sources)
   ant.zip(destfile: sources) {
@@ -256,6 +421,8 @@ binding.setVariable("zipSources", {String home, String targetDir ->
       exclude(name: "**/testData/**")
     }
   }
+
+  notifyArtifactBuilt(sources)
 })
 
 /**
@@ -287,8 +454,6 @@ private String readIdeaProperties(Map args) {
   ideaProperties.load(ideaPropertiesFile);
   ideaPropertiesFile.close();
 
-  //Map properties =
-  def userCustomProperties = args.get("idea.properties")
   def defaultProperties = ["CVS_PASSFILE": "~/.cvspass",
                            "com.apple.mrj.application.live-resize": "false",
                            "idea.paths.selector": args.system_selector,
@@ -296,13 +461,17 @@ private String readIdeaProperties(Map args) {
                            "idea.smooth.progress": "false",
                            "apple.laf.useScreenMenuBar": "true",
                            "apple.awt.graphics.UseQuartz": "true",
-                           "apple.awt.fullscreencapturealldisplays": "false",
-                          ]
-  if (args.get("platform_prefix", null) != null) {
+                           "apple.awt.fullscreencapturealldisplays": "false"]
+  if (args.platform_prefix != null) {
     defaultProperties.put("idea.platform.prefix", args.platform_prefix)
   }
 
-  Map properties =  defaultProperties + (userCustomProperties != null ? userCustomProperties : [:]);
+  Map properties = defaultProperties
+  def customProperties = args.get("idea.properties")
+  if (customProperties != null) {
+    properties += customProperties
+  }
+
   properties.each {k, v ->
     if (v == null) {
       // if overridden with null - ignore property
@@ -327,3 +496,73 @@ private String readIdeaProperties(Map args) {
   }
   return buff.toString()
 }
+
+binding.setVariable("buildWinZip", { String zipPath, List paths ->
+  project.stage(".win.zip")
+
+  ant.zip(zipfile: zipPath) {
+    paths.each {
+      fileset(dir: it)
+    }
+  }
+
+  notifyArtifactBuilt(zipPath)
+})
+
+binding.setVariable("buildMacZip", { String zipRoot, String zipPath, List paths, List extraBins = [] ->
+  project.stage(".mac.zip")
+
+  ant.zip(zipfile: zipPath) {
+    paths.each {
+      zipfileset(dir: it, prefix: zipRoot) {
+        exclude(name: "bin/*.sh")
+        exclude(name: "bin/fsnotifier")
+        exclude(name: "bin/relaunch")
+        exclude(name: "bin/idea.properties")
+        exclude(name: "Contents/MacOS/*")
+        extraBins.each {
+          exclude(name: it)
+        }
+      }
+    }
+
+    paths.each {
+      zipfileset(dir: it, filemode: "755", prefix: zipRoot) {
+        include(name: "bin/*.sh")
+        include(name: "bin/fsnotifier")
+        include(name: "bin/relaunch")
+        include(name: "Contents/MacOS/*")
+        extraBins.each {
+          include(name: it)
+        }
+      }
+    }
+  }
+
+  notifyArtifactBuilt(zipPath)
+})
+
+binding.setVariable("buildTarGz", { String tarRoot, String tarPath, List paths ->
+  project.stage(".tar.gz")
+
+  ant.tar(tarfile: tarPath) {
+    paths.each {
+      tarfileset(dir: it, prefix: tarRoot) {
+        exclude(name: "bin/*.sh")
+        exclude(name: "bin/fsnotifier*")
+      }
+    }
+
+    paths.each {
+      tarfileset(dir: it, filemode: "755", prefix: tarRoot) {
+        include(name: "bin/*.sh")
+        include(name: "bin/fsnotifier*")
+      }
+    }
+  }
+
+  String gzPath = "${tarPath}.gz"
+  ant.gzip(src: tarPath, zipfile: gzPath)
+  ant.delete(file: tarPath)
+  notifyArtifactBuilt(gzPath)
+})

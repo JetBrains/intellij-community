@@ -16,8 +16,11 @@
 package git4idea.repo;
 
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.commands.GitFileUtils;
+import git4idea.util.GitFileUtils;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Arrays;
+import java.util.Collection;
 
 /**
  * Stores paths to Git service files (from .git/ directory) that are used by IDEA, and provides test-methods to check if a file
@@ -26,7 +29,10 @@ import org.jetbrains.annotations.NotNull;
  * @author Kirill Likhodedov
  */
 public class GitRepositoryFiles {
-  
+
+  public static final String REFS_HEADS = "/refs/heads";
+  public static final String REFS_REMOTES = "/refs/remotes";
+  public static final String INFO = "/info";
   private final String myConfigFilePath;
   private final String myHeadFilePath;
   private final String myIndexFilePath;
@@ -59,9 +65,17 @@ public class GitRepositoryFiles {
     myRebaseApplyPath = gitDirPath + "/rebase-apply";
     myRebaseMergePath = gitDirPath + "/rebase-merge";
     myPackedRefsPath = gitDirPath + "/packed-refs";
-    myRefsHeadsDirPath = gitDirPath + "/refs/heads";
-    myRefsRemotesDirPath = gitDirPath + "/refs/remotes";
-    myExcludePath = gitDirPath + "/info/exclude";
+    myRefsHeadsDirPath = gitDirPath + REFS_HEADS;
+    myRefsRemotesDirPath = gitDirPath + REFS_REMOTES;
+    myExcludePath = gitDirPath + INFO + "/exclude";
+  }
+
+  /**
+   * Returns subdirectories of .git which we are interested in - they should be watched by VFS.
+   */
+  @NotNull
+  static Collection<String> getSubDirRelativePaths() {
+    return Arrays.asList(REFS_HEADS, REFS_REMOTES, INFO);
   }
 
   /**

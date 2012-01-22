@@ -295,7 +295,8 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
 
     commandLine.add("-verbose");
 
-    ContainerUtil.addAll(commandLine, RmicConfiguration.getSettings(module.getProject()).getOptions());
+    final Project project = module.getProject();
+    ContainerUtil.addAll(commandLine, RmicConfiguration.getSettings(project).getOptions(project));
 
     commandLine.add("-classpath");
 

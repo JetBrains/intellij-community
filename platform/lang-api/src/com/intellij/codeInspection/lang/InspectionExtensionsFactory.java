@@ -32,7 +32,9 @@ public abstract class InspectionExtensionsFactory {
   public static final ExtensionPointName<InspectionExtensionsFactory> EP_NAME = ExtensionPointName.create("com.intellij.codeInspection.InspectionExtension");
 
   public abstract GlobalInspectionContextExtension createGlobalInspectionContextExtension();
+  @Nullable
   public abstract RefManagerExtension createRefManagerExtension(RefManager refManager);
+  @Nullable
   public abstract HTMLComposerExtension createHTMLComposerExtension(final HTMLComposer composer);
 
   public abstract boolean isToCheckMember(PsiElement element, String id);

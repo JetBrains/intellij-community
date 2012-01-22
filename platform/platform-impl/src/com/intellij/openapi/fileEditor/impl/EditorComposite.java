@@ -81,7 +81,6 @@ public abstract class EditorComposite implements Disposable {
    */
   private FileEditor mySelectedEditor;
   private final FileEditorManagerEx myFileEditorManager;
-  private final long myInitialFileModificationStamp;
   private final Map<FileEditor, JComponent> myTopComponents = new HashMap<FileEditor, JComponent>();
   private final Map<FileEditor, JComponent> myBottomComponents = new HashMap<FileEditor, JComponent>();
 
@@ -108,7 +107,6 @@ public abstract class EditorComposite implements Disposable {
     myEditors = editors;
     myFileEditorManager = fileEditorManager;
     myInitialFileTimeStamp     = myFile.getTimeStamp();
-    myInitialFileModificationStamp = myFile.getModificationStamp();
 
     Disposer.register(fileEditorManager.getProject(), this);
 
@@ -261,9 +259,9 @@ public abstract class EditorComposite implements Disposable {
   }
 
   /**
-   * @return file for which composite was created. The method always
-   * returns not <code>null</code> valus.
+   * @return file for which composite was created.
    */
+  @NotNull
   public VirtualFile getFile() {
     return myFile;
   }
@@ -278,14 +276,6 @@ public abstract class EditorComposite implements Disposable {
    */
   public long getInitialFileTimeStamp() {
     return myInitialFileTimeStamp;
-  }
-
-  /**
-   * @return initial modifcation stamp of the file (on moment of creation of
-   * the composite)
-   */
-  public long getInitialFileModificationStamp() {
-    return myInitialFileModificationStamp;
   }
 
   /**
@@ -325,10 +315,11 @@ public abstract class EditorComposite implements Disposable {
   }
 
   /**
-   * @return currently selected myEditor. The method never returns <code>null</code>.
+   * @return currently selected myEditor.
    */
-  @NotNull FileEditor getSelectedEditor(){
-    return getSelectedEditorWithProvider ().getFirst ();
+  @NotNull
+  FileEditor getSelectedEditor() {
+    return getSelectedEditorWithProvider().getFirst ();
   }
 
   public boolean isDisposed() {
@@ -336,8 +327,9 @@ public abstract class EditorComposite implements Disposable {
   }
 
   /**
-   * @return currently selected myEditor with its provider. The method never returns <code>null</code>.
+   * @return currently selected myEditor with its provider.
    */
+  @NotNull
   public abstract Pair<FileEditor, FileEditorProvider> getSelectedEditorWithProvider();
 
   void setSelectedEditor(final int index){
@@ -416,7 +408,7 @@ public abstract class EditorComposite implements Disposable {
   public void dispose() {
   }
 
-  private class TopBottomPanel extends JPanel {
+  private static class TopBottomPanel extends JPanel {
     private TopBottomPanel() {
       setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
     }
@@ -428,7 +420,7 @@ public abstract class EditorComposite implements Disposable {
     }
   }
 
-  private class TopBottomComponentWrapper extends JPanel {
+  private static class TopBottomComponentWrapper extends JPanel {
     public TopBottomComponentWrapper(JComponent component, boolean top) {
       super(new BorderLayout());
       setOpaque(false);

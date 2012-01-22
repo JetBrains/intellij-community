@@ -19,7 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
-import git4idea.process.GitBranchOperationsProcessor;
+import git4idea.branch.GitBranchOperationsProcessor;
 import git4idea.repo.GitRepository;
 
 /**

@@ -32,7 +32,7 @@ import git4idea.i18n.GitBundle;
 import git4idea.jgit.GitHttpAdapter;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
-import git4idea.ui.GitUIUtil;
+import git4idea.util.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

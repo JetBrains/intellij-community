@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitBranch;
 import git4idea.GitDeprecatedRemote;
 import git4idea.i18n.GitBundle;
+import git4idea.util.GitUIUtil;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;

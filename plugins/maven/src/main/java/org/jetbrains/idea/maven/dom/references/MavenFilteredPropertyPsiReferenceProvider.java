@@ -17,7 +17,6 @@ package org.jetbrains.idea.maven.dom.references;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceProvider;
@@ -30,12 +29,9 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class MavenFilteredPropertyPsiReferenceProvider extends PsiReferenceProvider {
 
-  private static final Pattern PATTERN = Pattern.compile("\\$\\{([^\\}]+?)\\}|@([^@]+?)@");
-  
   @NotNull
   @Override
   public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
@@ -49,7 +45,7 @@ public class MavenFilteredPropertyPsiReferenceProvider extends PsiReferenceProvi
 
     List<PsiReference> result = new ArrayList<PsiReference>();
 
-    Matcher matcher = PATTERN.matcher(text);
+    Matcher matcher = MavenPropertyResolver.PATTERN.matcher(text);
     while (matcher.find()) {
       String propertyName = matcher.group(1);
       int from;

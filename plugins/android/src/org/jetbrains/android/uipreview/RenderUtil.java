@@ -1,5 +1,6 @@
 package org.jetbrains.android.uipreview;
 
+import com.android.ide.common.rendering.api.RenderResources;
 import com.android.ide.common.rendering.api.RenderSession;
 import com.android.ide.common.rendering.api.Result;
 import com.android.ide.common.resources.*;
@@ -98,7 +99,7 @@ class RenderUtil {
       missingRClass = true;
     }
 
-    final ResourceResolver resolver =
+    final RenderResources resolver =
       factory.createResourceResolver(facet, config, projectResources, theme.getName(), theme.isProjectTheme());
     final RenderService renderService = factory.createService(resolver, config, xdpi, ydpi, callback, minSdkVersion);
 

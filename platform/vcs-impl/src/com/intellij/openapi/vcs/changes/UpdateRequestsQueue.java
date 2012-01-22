@@ -27,6 +27,7 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.io.storage.HeavyProcessLatch;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -181,7 +182,7 @@ public class UpdateRequestsQueue {
   }
 
   public void invokeAfterUpdate(final Runnable afterUpdate, final InvokeAfterUpdateMode mode, final String title,
-                                final Consumer<VcsDirtyScopeManager> dirtyScopeManagerFiller, final ModalityState state) {
+                                @Nullable final Consumer<VcsDirtyScopeManager> dirtyScopeManagerFiller, final ModalityState state) {
     LOG.debug("invokeAfterUpdate for project: " + myProject.getName());
     final CallbackData data = CallbackData.create(afterUpdate, title, state, mode, myProject);
 

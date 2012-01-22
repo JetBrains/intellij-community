@@ -38,6 +38,8 @@ import org.intellij.images.editor.ImageFileEditor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+
 /**
  * UI Utilities specific for Git branch features.
  *
@@ -69,9 +71,9 @@ public class GitBranchUiUtil {
    * @return name of new branch or {@code null} if user has cancelled the dialog.
    */
   @Nullable
-  public static String getNewBranchNameFromUser(GitRepository repository, @NotNull String dialogTitle) {
-    return Messages.showInputDialog(repository.getProject(), "Enter the name of new branch", dialogTitle, Messages.getQuestionIcon(), "",
-                                    GitNewBranchNameValidator.newInstance(repository));
+  public static String getNewBranchNameFromUser(@NotNull Project project, @NotNull Collection<GitRepository> repositories, @NotNull String dialogTitle) {
+    return Messages.showInputDialog(project, "Enter the name of new branch", dialogTitle, Messages.getQuestionIcon(), "",
+                                    GitNewBranchNameValidator.newInstance(repositories));
   }
 
   /**

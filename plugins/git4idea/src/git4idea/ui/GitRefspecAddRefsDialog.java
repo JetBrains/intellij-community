@@ -31,7 +31,7 @@ import git4idea.GitTag;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitHandlerUtil;
 import git4idea.commands.GitSimpleHandler;
-import git4idea.commands.StringScanner;
+import git4idea.util.StringScanner;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;

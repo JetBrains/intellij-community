@@ -19,7 +19,6 @@ import com.intellij.util.containers.hash.HashMap;
 
 import java.util.Collection;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -29,47 +28,50 @@ import java.util.Set;
  * To change this template use File | Settings | File Templates.
  */
 public class TransientMaplet<K, V> implements Maplet<K, V>{
-  private final Map<K, V> map = new HashMap<K, V>();
+  private final Map<K, V> myMap = new HashMap<K, V>();
   
   @Override
   public boolean containsKey(final Object key) {
-    return map.containsKey(key);
+    return myMap.containsKey(key);
   }
 
   @Override
   public V get(final Object key) {
-    return map.get(key);
+    return myMap.get(key);
   }
 
   @Override
   public void put(final K key, final V value) {
-    map.put(key, value);
+    myMap.put(key, value);
   }
 
   @Override
   public void putAll(final Maplet<K, V> m) {
     for (Map.Entry<K, V> e : m.entrySet()) {
-      map.put(e.getKey(), e.getValue());
+      myMap.put(e.getKey(), e.getValue());
     }
   }
 
   @Override
   public void remove(final Object key) {
-    map.remove(key);
+    myMap.remove(key);
   }
 
   @Override
   public void close() {
-   
+    myMap.clear();
+  }
+
+  public void flush() {
   }
 
   @Override
   public Collection<K> keyCollection() {
-    return map.keySet();
+    return myMap.keySet();
   }
 
   @Override
   public Collection<Map.Entry<K, V>> entrySet() {
-    return map.entrySet();
+    return myMap.entrySet();
   }
 }

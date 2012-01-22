@@ -22,11 +22,12 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.GitUtil;
+import git4idea.util.GitUtil;
 import git4idea.GitVcs;
 import git4idea.commands.*;
 import git4idea.merge.GitConflictResolver;
-import git4idea.ui.GitUIUtil;
+import git4idea.util.GitUIUtil;
+import git4idea.util.StringScanner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

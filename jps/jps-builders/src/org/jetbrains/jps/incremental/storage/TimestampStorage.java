@@ -19,10 +19,6 @@ public class TimestampStorage extends AbstractStateStorage<File, TimestampValidi
     super(storePath, new FileKeyDescriptor(), new StateExternalizer());
   }
 
-  public void saveStamp(File file) throws Exception {
-    saveStamp(file, file.lastModified());
-  }
-
   public long getStamp(File file) throws Exception {
     final TimestampValidityState state = getState(file);
     return state != null? state.getTimestamp() : -1L;

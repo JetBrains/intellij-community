@@ -19,6 +19,7 @@ import com.intellij.lang.ASTFactory;
 import com.intellij.lang.DefaultASTFactory;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.psi.impl.source.Constants;
+import com.intellij.psi.impl.source.javadoc.CorePsiDocTagValueImpl;
 import com.intellij.psi.impl.source.javadoc.PsiDocTokenImpl;
 import com.intellij.psi.impl.source.tree.java.PsiIdentifierImpl;
 import com.intellij.psi.impl.source.tree.java.PsiJavaTokenImpl;
@@ -51,6 +52,14 @@ public class CoreJavaASTFactory extends ASTFactory implements Constants {
       return new PsiDocTokenImpl(type, text);
     }
 
+    return null;
+  }
+
+  @Override
+  public CompositeElement createComposite(IElementType type) {
+    if (type == DOC_TAG_VALUE_TOKEN) {
+      return new CorePsiDocTagValueImpl();
+    }
     return null;
   }
 }

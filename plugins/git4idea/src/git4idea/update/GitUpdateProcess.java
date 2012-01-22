@@ -34,12 +34,12 @@ import git4idea.merge.GitConflictResolver;
 import git4idea.merge.GitMerger;
 import git4idea.rebase.GitRebaser;
 import git4idea.stash.GitChangesSaver;
-import git4idea.ui.GitUIUtil;
+import git4idea.util.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-import static git4idea.ui.GitUIUtil.*;
+import static git4idea.util.GitUIUtil.*;
 
 /**
  * Handles update process (pull via merge or rebase) for several roots.

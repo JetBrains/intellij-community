@@ -111,6 +111,15 @@ public class MavenProjectsManagerWatcher {
         MavenProject mavenProject = myManager.findProject(module);
         if (mavenProject != null) myManager.setIgnoredState(Collections.singletonList(mavenProject), true);
       }
+
+      public void moduleAdded(final Project project, final Module module) {
+        // this method is needed to return non-ignored status for modules that were deleted (and thus ignored) and then created again with a different module type
+        if (myManager.isMavenizedModule(module)) {
+          MavenProject mavenProject = myManager.findProject(module);
+          if (mavenProject != null) myManager.setIgnoredState(Collections.singletonList(mavenProject), false);
+        }
+
+      }
     });
 
     DocumentAdapter myDocumentListener = new DocumentAdapter() {

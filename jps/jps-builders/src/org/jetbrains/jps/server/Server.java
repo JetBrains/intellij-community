@@ -27,6 +27,7 @@ public class Server {
   private static final int MAX_SIMULTANEOUS_BUILD_SESSIONS = Math.max(2, Runtime.getRuntime().availableProcessors());
   public static final String SERVER_SUCCESS_START_MESSAGE = "JPS Server started successfully. Listening on port: ";
   public static final String SERVER_ERROR_START_MESSAGE = "Error starting JPS Server: ";
+  public static final String USE_MEMORY_TEMP_CACHE_OPTION = "use.memory.temp.cache";
 
   private final ChannelGroup myAllOpenChannels = new DefaultChannelGroup("jps-server");
   private final ChannelFactory myChannelFactory;
@@ -97,6 +98,9 @@ public class Server {
           server.stop();
         }
       });
+
+      ServerState.getInstance().setKeepTempCachesInMemory(System.getProperty(USE_MEMORY_TEMP_CACHE_OPTION) != null);
+
       System.out.println("Server classpath: " + System.getProperty("java.class.path"));
       System.err.println(SERVER_SUCCESS_START_MESSAGE + port);
     }

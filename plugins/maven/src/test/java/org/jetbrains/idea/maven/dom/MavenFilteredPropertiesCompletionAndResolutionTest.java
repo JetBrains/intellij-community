@@ -258,6 +258,9 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
 
     VirtualFile f = createProjectSubFile("res/foo.properties", "foo=abc${<caret>}abc");
     assertCompletionVariantsInclude(f, "xxx", "yyy");
+
+    f = createProjectSubFile("res/foo.properties", "foo=abc@<caret>@abc");
+    assertCompletionVariantsInclude(f, "xxx", "yyy");
   }
 
   public void testSearchingFromFilters() throws Exception {

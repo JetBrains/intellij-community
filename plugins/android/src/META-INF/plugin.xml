@@ -147,6 +147,9 @@
                          groupKey="android.inspections.group.name" enabledByDefault="true" level="ERROR"
                          implementationClass="org.jetbrains.android.inspections.AndroidNonConstantResIdsInSwitchInspection"/>
 
+    <inspectionToolProvider implementation="org.jetbrains.android.inspections.lint.AndroidLintInspectionToolProvider"/>
+    <codeInspection.InspectionExtension implementation="org.jetbrains.android.inspections.lint.AndroidInspectionExtensionsFactory"/>
+
     <colorSettingsPage implementation="org.jetbrains.android.logcat.AndroidLogcatColorPage"/>
     <findUsagesHandlerFactory implementation="org.jetbrains.android.AndroidFindUsagesHandlerFactory"/>
     <xml.schemaProvider implementation="org.jetbrains.android.AndroidXmlSchemaProvider"/>
@@ -181,6 +184,10 @@
     <gotoDeclarationHandler implementation="org.jetbrains.android.AndroidGotoDeclarationHandler"/>
     <refactoring.safeDeleteProcessor id="android" order="before javaProcessor"
                                      implementation="org.jetbrains.android.AndroidSafeDeleteProcessorDelegate"/>
+
+    <externalAnnotator language="JAVA" implementationClass="org.jetbrains.android.inspections.lint.AndroidLintExternalAnnotator"/>
+    <externalAnnotator language="XML" implementationClass="org.jetbrains.android.inspections.lint.AndroidLintExternalAnnotator"/>
+    <externalAnnotator language="TEXT" implementationClass="org.jetbrains.android.inspections.lint.AndroidLintExternalAnnotator"/>
   </extensions>
 
   <extensionPoints>

@@ -32,7 +32,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class MavenPropertyResolver {
-  public static final Pattern PATTERN = Pattern.compile("\\$\\{([^}]+)\\}");
+  public static final Pattern PATTERN = Pattern.compile("\\$\\{([^\\}]+?)\\}|@([^@]+?)@");
 
   public static String resolve(Module module,
                                String text,
@@ -89,6 +89,9 @@ public class MavenPropertyResolver {
     while (matcher.find()) {
       String propText = matcher.group();
       String propName = matcher.group(1);
+      if (propName == null) {
+        propName = matcher.group(2);
+      }
 
       int tempLast = last;
       last = matcher.start() + propText.length();

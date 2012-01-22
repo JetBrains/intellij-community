@@ -940,19 +940,20 @@ public class FileBasedIndex implements ApplicationComponent {
     return result == null || result.booleanValue();
   }
   
-  public <K, V> void processFilesContainingAllKeys(final ID<K, V> indexId,
+  public <K, V> boolean processFilesContainingAllKeys(final ID<K, V> indexId,
                                                       final Collection<K> dataKeys,
                                                       final GlobalSearchScope filter,
                                                       @Nullable Condition<V> valueChecker,
                                                       final Processor<VirtualFile> processor) {
     final TIntHashSet set = collectFileIdsContainingAllKeys(indexId, dataKeys, filter, valueChecker);
-    if (set != null) {
-      processVirtualFiles(set, filter, processor);
+    if (set == null) {
+      return false;
     }
+    return processVirtualFiles(set, filter, processor);
   }
 
   @Nullable 
-  public <K, V> TIntHashSet collectFileIdsContainingAllKeys(final ID<K, V> indexId,
+  private <K, V> TIntHashSet collectFileIdsContainingAllKeys(final ID<K, V> indexId,
                                                             final Collection<K> dataKeys,
                                                             final GlobalSearchScope filter,
                                                             @Nullable final Condition<V> valueChecker) {
@@ -995,7 +996,7 @@ public class FileBasedIndex implements ApplicationComponent {
     return processExceptions(indexId, null, filter, convertor);
   }
 
-  public static boolean processVirtualFiles(TIntHashSet ids, final GlobalSearchScope filter, final Processor<VirtualFile> processor) {
+  private static boolean processVirtualFiles(TIntHashSet ids, final GlobalSearchScope filter, final Processor<VirtualFile> processor) {
     final PersistentFS fs = (PersistentFS)ManagingFS.getInstance();
     return ids.forEach(new TIntProcedure() {
       @Override

@@ -29,8 +29,8 @@ import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.packaging.impl.elements.ArtifactElementType;
 import com.intellij.packaging.impl.elements.ArtifactPackagingElement;
-import com.intellij.packaging.impl.elements.ProductionModuleOutputElementType;
 import com.intellij.packaging.impl.elements.ModuleOutputPackagingElement;
+import com.intellij.packaging.impl.elements.ProductionModuleOutputElementType;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,12 +54,14 @@ public class ArtifactCompileScope {
   }
 
   public static CompileScope createArtifactsScope(@NotNull Project project, @NotNull Collection<Artifact> artifacts) {
-    return createScopeWithArtifacts(createScopeForModulesInArtifacts(project, artifacts), artifacts);
+    return createScopeWithArtifacts(createScopeForModulesInArtifacts(project, artifacts), artifacts, true);
   }
 
-  public static CompileScope createScopeWithArtifacts(final CompileScope baseScope, @NotNull Collection<Artifact> artifacts) {
+  public static CompileScope createScopeWithArtifacts(final CompileScope baseScope, @NotNull Collection<Artifact> artifacts, boolean useCustomContentId) {
     baseScope.putUserData(ARTIFACTS_KEY, artifacts.toArray(new Artifact[artifacts.size()]));
-    baseScope.putUserData(CompilerManager.CONTENT_ID_KEY, ARTIFACTS_CONTENT_ID_KEY);
+    if (useCustomContentId) {
+      baseScope.putUserData(CompilerManager.CONTENT_ID_KEY, ARTIFACTS_CONTENT_ID_KEY);
+    }
     return baseScope;
   }
 

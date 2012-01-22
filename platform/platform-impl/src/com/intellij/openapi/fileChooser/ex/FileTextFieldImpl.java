@@ -19,6 +19,7 @@ import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -821,7 +822,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     else {
       final Keymap active = KeymapManager.getInstance().getActiveKeymap();
       final String[] ids = active.getActionIds(stroke);
-      if (ids.length > 0 && "CodeCompletion".equals(ids[0])) {
+      if (ids.length > 0 && IdeActions.ACTION_CODE_COMPLETION.equals(ids[0])) {
         suggestCompletion(true, true);
       }
     }

@@ -16,9 +16,9 @@
 package com.intellij.compiler.impl;
 
 import com.intellij.ProjectTopics;
+import com.intellij.compiler.CompileServerManager;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerIOUtil;
-import com.intellij.compiler.JpsServerManager;
 import com.intellij.compiler.make.MakeUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
@@ -1367,7 +1367,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
       });
 
       if (!pathsToMark.isEmpty()) {
-        JpsServerManager.getInstance().notifyFilesDeleted(pathsToMark);
+        CompileServerManager.getInstance().notifyFilesDeleted(pathsToMark);
       }
     }
 
@@ -1394,7 +1394,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
         }
       });
       if (!pathsToMark.isEmpty()) {
-        JpsServerManager.getInstance().notifyFilesChanged(pathsToMark);
+        CompileServerManager.getInstance().notifyFilesChanged(pathsToMark);
       }
     }
 
@@ -1442,7 +1442,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
         }
       });
       if (!pathsToMark.isEmpty()) {
-        JpsServerManager.getInstance().notifyFilesChanged(pathsToMark);
+        CompileServerManager.getInstance().notifyFilesChanged(pathsToMark);
       }
     }
   }

@@ -30,11 +30,11 @@ import com.intellij.vcsUtil.VcsRunnable;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitFileRevision;
 import git4idea.GitRevisionNumber;
-import git4idea.GitUtil;
+import git4idea.util.GitUtil;
 import git4idea.commands.GitCommand;
-import git4idea.commands.GitFileUtils;
+import git4idea.util.GitFileUtils;
 import git4idea.commands.GitSimpleHandler;
-import git4idea.commands.StringScanner;
+import git4idea.util.StringScanner;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 

@@ -36,15 +36,13 @@ import java.util.List;
 public class GitCommitListWithDiffPanel extends JPanel {
 
   private final Project myProject;
-  private final List<GitCommit> myCommits;
   private final ChangesBrowser myChangesBrowser;
   private final GitCommitListPanel myCommitListPanel;
 
   public GitCommitListWithDiffPanel(Project project, List<GitCommit> commits) {
     myProject = project;
-    myCommits = commits;
 
-    myCommitListPanel = new GitCommitListPanel(myProject, myCommits);
+    myCommitListPanel = new GitCommitListPanel(myProject, commits);
     myCommitListPanel.addListSelectionListener(new Consumer<GitCommit>() {
       @Override public void consume(GitCommit commit) {
         myChangesBrowser.setChangesToDisplay(commit.getChanges());
@@ -63,6 +61,10 @@ public class GitCommitListWithDiffPanel extends JPanel {
   @NotNull
   public JComponent getPreferredFocusComponent() {
     return myCommitListPanel.getPreferredFocusComponent();
+  }
+  
+  public void setCommits(@NotNull List<GitCommit> commits) {
+    myCommitListPanel.setCommits(commits);
   }
 
 }

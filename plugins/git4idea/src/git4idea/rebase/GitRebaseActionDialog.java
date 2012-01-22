@@ -18,7 +18,7 @@ package git4idea.rebase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.ui.GitUIUtil;
+import git4idea.util.GitUIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;

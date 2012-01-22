@@ -172,10 +172,6 @@ public class CompilerTask extends Task.Backgroundable {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         if (myProject.isDisposed()) return;
-        //if (myIsBackgroundMode) {
-        //  openMessageView();
-        //} 
-        //else {
         synchronized (myMessageViewLock) {
           // clear messages from the previous compilation
           if (myErrorTreeView == null) {
@@ -183,7 +179,6 @@ public class CompilerTask extends Task.Backgroundable {
             removeAllContents(myProject, null);
           }
         }
-        //}
       }
     });
   }
@@ -463,11 +458,15 @@ public class CompilerTask extends Task.Backgroundable {
   }
 
   private void removeAllContents(Project project, Content notRemove) {
-    MessageView messageView = MessageView.SERVICE.getInstance(project);
+    final MessageView messageView = MessageView.SERVICE.getInstance(project);
     Content[] contents = messageView.getContentManager().getContents();
     for (Content content : contents) {
-      if (content.isPinned()) continue;
-      if (content == notRemove) continue;
+      if (content.isPinned()) {
+        continue;
+      }
+      if (content == notRemove) {
+        continue;
+      }
       if (content.getUserData(myContentIdKey) != null) { // the content was added by me
         messageView.getContentManager().removeContent(content, true);
       }

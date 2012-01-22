@@ -20,10 +20,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.TestOnly;
 
 import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.StringTokenizer;
 
 public class JavacSettings {
@@ -35,44 +37,56 @@ public class JavacSettings {
 
   private boolean myTestsUseExternalCompiler = false;
 
-  public String getOptionsString(final Project project) {
-    @NonNls StringBuilder options = new StringBuilder();
-    if(DEBUGGING_INFO) {
-      options.append("-g ");
+  public Collection<String> getOptions(Project project) {
+    List<String> options = new ArrayList<String>();
+    if (DEBUGGING_INFO) {
+      options.add("-g");
     }
-    if(DEPRECATION) {
-      options.append("-deprecation ");
+    if (DEPRECATION) {
+      options.add("-deprecation");
     }
-    if(GENERATE_NO_WARNINGS) {
-      options.append("-nowarn ");
+    if (GENERATE_NO_WARNINGS) {
+      options.add("-nowarn");
     }
     boolean isEncodingSet = false;
     final StringTokenizer tokenizer = new StringTokenizer(ADDITIONAL_OPTIONS_STRING, " \t\r\n");
     while(tokenizer.hasMoreTokens()) {
-      @NonNls String token = tokenizer.nextToken();
-      if("-g".equals(token)) {
+      final String token = tokenizer.nextToken();
+      if(!acceptUserOption(token)) {
         continue;
       }
-      if("-deprecation".equals(token)) {
-        continue;
-      }
-      if("-nowarn".equals(token)) {
-        continue;
-      }
-      options.append(token);
-      options.append(" ");
+      options.add(token);
       if ("-encoding".equals(token)) {
         isEncodingSet = true;
       }
     }
-    if (!isEncodingSet) {
+    if (!isEncodingSet && acceptEncoding()) {
       final Charset ideCharset = EncodingProjectManager.getInstance(project).getDefaultCharset();
-      if (!Comparing.equal(CharsetToolkit.getDefaultSystemCharset(), ideCharset)) {
-        options.append("-encoding ");
-        options.append(ideCharset.name());
+      if (ideCharset != null && !Comparing.equal(CharsetToolkit.getDefaultSystemCharset(), ideCharset)) {
+        options.add("-encoding");
+        options.add(ideCharset.name());
       }
     }
-    return options.toString();
+    return options;
+  }
+
+  protected boolean acceptUserOption(String token) {
+    return !("-g".equals(token) || "-deprecation".equals(token) || "-nowarn".equals(token));
+  }
+
+  protected boolean acceptEncoding() {
+    return true;
+  }
+
+  public String getOptionsString(final Project project) {
+    final StringBuilder options = new StringBuilder();
+    for (String option : getOptions(project)) {
+      if (options.length() > 0) {
+        options.append(" ");
+      }
+      options.append(option);
+    }
+   return options.toString();
   }
 
   public static JavacSettings getInstance(Project project) {

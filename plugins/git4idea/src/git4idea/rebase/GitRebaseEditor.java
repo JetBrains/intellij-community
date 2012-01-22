@@ -25,7 +25,7 @@ import com.intellij.util.ListWithSelection;
 import com.intellij.util.ui.ComboBoxTableCellEditor;
 import com.intellij.util.ui.ComboBoxTableCellRenderer;
 import git4idea.actions.GitShowAllSubmittedFilesAction;
-import git4idea.commands.StringScanner;
+import git4idea.util.StringScanner;
 import git4idea.config.GitConfigUtil;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NonNls;

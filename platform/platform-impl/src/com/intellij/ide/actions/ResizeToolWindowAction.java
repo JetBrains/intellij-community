@@ -118,7 +118,7 @@ public abstract class ResizeToolWindowAction extends AnAction implements DumbAwa
     }
   }
 
-  private void setDisabled(AnActionEvent e) {
+  private void setDisabled(@Nullable AnActionEvent e) {
     if (e != null) {
       e.getPresentation().setEnabled(false);
     }
@@ -186,11 +186,11 @@ public abstract class ResizeToolWindowAction extends AnAction implements DumbAwa
     }
   }
 
-  private void incWidth(ToolWindow wnd, int value, boolean isPositive) {
+  private static void incWidth(ToolWindow wnd, int value, boolean isPositive) {
     ((ToolWindowEx)wnd).stretchWidth(isPositive ? value : -value);
   }
 
-  private void incHeight(ToolWindow wnd, int value, boolean isPositive) {
+  private static void incHeight(ToolWindow wnd, int value, boolean isPositive) {
     ((ToolWindowEx)wnd).stretchHeight(isPositive ? value : -value);
   }
 

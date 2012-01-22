@@ -23,8 +23,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import static git4idea.ui.GitUIUtil.bold;
-import static git4idea.ui.GitUIUtil.code;
+import static git4idea.util.GitUIUtil.bold;
+import static git4idea.util.GitUIUtil.code;
 
 /**
  * If an error happens, all push is unsuccessful, for all branches.

@@ -35,6 +35,9 @@
           <root url="jar://$MODULE_DIR$/lib/ninepatch.jar!/" />
           <root url="jar://$MODULE_DIR$/lib/layoutlib_api.jar!/" />
           <root url="jar://$MODULE_DIR$/lib/kxml2-2.3.0.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/lint_api.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/lint_checks.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/lint.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
@@ -46,6 +49,9 @@
           <root url="jar://$MODULE_DIR$/lib/src/androidprefs_src.zip!/src" />
           <root url="jar://$MODULE_DIR$/lib/src/sdklib_src.zip!/src" />
           <root url="jar://$MODULE_DIR$/lib/src/ninepatch_src.zip!/src" />
+          <root url="jar://$MODULE_DIR$/lib/src/lint_api_src.zip!/src" />
+          <root url="jar://$MODULE_DIR$/lib/src/lint_checks_src.zip!/src" />
+          <root url="jar://$MODULE_DIR$/lib/src/lint_src.zip!/src" />
         </SOURCES>
       </library>
     </orderEntry>

@@ -41,7 +41,7 @@ public class MavenProjectImportStep extends ProjectImportWizardStep {
   public MavenProjectImportStep(WizardContext wizardContext) {
     super(wizardContext);
 
-    myImportingSettingsForm = new MavenImportingSettingsForm(true) {
+    myImportingSettingsForm = new MavenImportingSettingsForm(true, wizardContext.isCreatingNewProject()) {
       public String getDefaultModuleDir() {
         return myRootPathComponent.getPath();
       }

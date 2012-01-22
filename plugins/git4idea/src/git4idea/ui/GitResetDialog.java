@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
 import git4idea.i18n.GitBundle;
+import git4idea.util.GitUIUtil;
 
 import javax.swing.*;
 import java.util.List;

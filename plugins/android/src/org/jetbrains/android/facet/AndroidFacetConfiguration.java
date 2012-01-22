@@ -30,15 +30,26 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
-import org.jetbrains.android.sdk.*;
+import org.jetbrains.android.sdk.AndroidPlatform;
+import org.jetbrains.android.sdk.AndroidSdk;
+import org.jetbrains.android.sdk.AndroidSdkAdditionalData;
+import org.jetbrains.android.sdk.AndroidSdkType;
 import org.jetbrains.android.util.AndroidUtils;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Eugene.Kudelevsky
  */
 public class AndroidFacetConfiguration implements FacetConfiguration {
+  @NonNls private static final String RES_OVERLAY_FOLDERS_ELEMENT_NAME = "resOverlayFolders";
+  @NonNls private static final String PATH_ELEMENT_NAME = "path";
+
   public String GEN_FOLDER_RELATIVE_PATH_APT = "/" + SdkConstants.FD_GEN_SOURCES;
   public String GEN_FOLDER_RELATIVE_PATH_AIDL = "/" + SdkConstants.FD_GEN_SOURCES;
 
@@ -48,7 +59,7 @@ public class AndroidFacetConfiguration implements FacetConfiguration {
   public String ASSETS_FOLDER_RELATIVE_PATH = "/" + SdkConstants.FD_ASSETS;
   public String LIBS_FOLDER_RELATIVE_PATH = "/" + SdkConstants.FD_NATIVE_LIBS;
 
-  public String[] RES_OVERLAY_FOLDERS = new String[]{"/" + AndroidUtils.RES_OVERLAY_DIR_NAME};
+  public List<String> RES_OVERLAY_FOLDERS = Arrays.asList("/" + AndroidUtils.RES_OVERLAY_DIR_NAME);
 
   public boolean REGENERATE_R_JAVA = true;
 
@@ -67,7 +78,7 @@ public class AndroidFacetConfiguration implements FacetConfiguration {
   public boolean RUN_PROCESS_RESOURCES_MAVEN_TASK = true;
 
   public boolean GENERATE_UNSIGNED_APK = false;
-  
+
   public String CUSTOM_DEBUG_KEYSTORE_PATH = "";
 
   private AndroidFacet myFacet = null;
@@ -94,8 +105,8 @@ public class AndroidFacetConfiguration implements FacetConfiguration {
     ASSETS_FOLDER_RELATIVE_PATH = '/' + s + ASSETS_FOLDER_RELATIVE_PATH;
     LIBS_FOLDER_RELATIVE_PATH = '/' + s + LIBS_FOLDER_RELATIVE_PATH;
 
-    for (int i = 0; i < RES_OVERLAY_FOLDERS.length; i++) {
-      RES_OVERLAY_FOLDERS[i] = '/' + s + RES_OVERLAY_FOLDERS[i];
+    for (int i = 0; i < RES_OVERLAY_FOLDERS.size(); i++) {
+      RES_OVERLAY_FOLDERS.set(i, '/' + s + RES_OVERLAY_FOLDERS.get(i));
     }
   }
 
@@ -132,9 +143,35 @@ public class AndroidFacetConfiguration implements FacetConfiguration {
 
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
+    readResOverlayFolders(element);
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, element);
+    writeResOverlayFolders(element);
+  }
+
+  private void readResOverlayFolders(final Element element) throws InvalidDataException {
+    final List<String> resOverlayFolders = new ArrayList<String>();
+    final Element resOverlayFoldersElement = element.getChild(RES_OVERLAY_FOLDERS_ELEMENT_NAME);
+
+    if (resOverlayFoldersElement != null) {
+      //noinspection unchecked
+      for (Element conditionalCompilerDefinitionElement : (Iterable<Element>)resOverlayFoldersElement.getChildren(PATH_ELEMENT_NAME)) {
+        resOverlayFolders.add(conditionalCompilerDefinitionElement.getValue());
+      }
+    }
+    RES_OVERLAY_FOLDERS = resOverlayFolders;
+  }
+
+  private void writeResOverlayFolders(final Element element) throws WriteExternalException {
+    final Element resOverlayFoldersElement = new Element(RES_OVERLAY_FOLDERS_ELEMENT_NAME);
+
+    for (String resOverlayFolderPath : RES_OVERLAY_FOLDERS) {
+      final Element pathElement = new Element(PATH_ELEMENT_NAME);
+      pathElement.setText(resOverlayFolderPath);
+      resOverlayFoldersElement.addContent(pathElement);
+    }
+    element.addContent(resOverlayFoldersElement);
   }
 }

@@ -49,13 +49,11 @@ public class MavenImportingSettingsForm {
   private JPanel myAdditionalSettingsPanel;
   private JPanel mySeparateModulesDirPanel;
 
-  public MavenImportingSettingsForm(boolean isImportStep) {
-    if (!isImportStep) {
-      mySearchRecursivelyCheckBox.setVisible(false);
-      myProjectFormatLabel.setVisible(false);
-      myProjectFormatComboBox.setVisible(false);
-      mySeparateModulesDirPanel.setVisible(false);
-    }
+  public MavenImportingSettingsForm(boolean isImportStep, boolean isCreatingNewProject) {
+    mySearchRecursivelyCheckBox.setVisible(isImportStep);
+    myProjectFormatLabel.setVisible(isImportStep && isCreatingNewProject);
+    myProjectFormatComboBox.setVisible(isImportStep && isCreatingNewProject);
+    mySeparateModulesDirPanel.setVisible(isImportStep);
 
     ActionListener listener = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
