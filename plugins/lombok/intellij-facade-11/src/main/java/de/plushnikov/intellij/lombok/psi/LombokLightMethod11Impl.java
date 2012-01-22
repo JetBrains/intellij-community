@@ -1,9 +1,6 @@
 package de.plushnikov.intellij.lombok.psi;
 
-import org.jetbrains.annotations.NotNull;
-
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -12,6 +9,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.light.LightMethod;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Plushnikov Michail
@@ -48,10 +46,6 @@ public class LombokLightMethod11Impl extends LightMethod implements LombokLightM
 
   public ASTNode getNode() {
     return myMethod.getNode();
-  }
-
-  public FileStatus getFileStatus() {
-    return FileStatus.NOT_CHANGED;
   }
 
   @Override

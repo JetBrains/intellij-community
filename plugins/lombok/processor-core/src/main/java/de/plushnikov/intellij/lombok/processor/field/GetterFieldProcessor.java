@@ -1,11 +1,5 @@
 package de.plushnikov.intellij.lombok.processor.field;
 
-import java.lang.annotation.Annotation;
-import java.util.Collection;
-import java.util.List;
-
-import org.jetbrains.annotations.NotNull;
-
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.Modifier;
 import com.intellij.psi.PsiAnnotation;
@@ -14,6 +8,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiType;
 import de.plushnikov.intellij.lombok.LombokConstants;
 import de.plushnikov.intellij.lombok.UserMapKeys;
@@ -28,6 +23,11 @@ import de.plushnikov.intellij.lombok.util.PsiMethodUtil;
 import de.plushnikov.intellij.lombok.util.PsiPrimitiveTypeFactory;
 import lombok.Getter;
 import lombok.core.TransformationsUtil;
+import org.jetbrains.annotations.NotNull;
+
+import java.lang.annotation.Annotation;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * Inspect and validate @Getter lombok annotation on a field
@@ -56,11 +56,11 @@ public class GetterFieldProcessor extends AbstractLombokFieldProcessor {
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiField psiField, @NotNull ProblemBuilder builder) {
     boolean result;
 
-    final String methodVisibity = LombokProcessorUtil.getMethodModifier(psiAnnotation);
-    result = null != methodVisibity;
+    final String methodVisibility = LombokProcessorUtil.getMethodModifier(psiAnnotation);
+    result = null != methodVisibility;
 
     final boolean lazy = isLazyGetter(psiAnnotation);
-    if (null == methodVisibity && lazy) {
+    if (null == methodVisibility && lazy) {
       builder.addWarning("'lazy' does not work with AccessLevel.NONE.");
     }
 
@@ -69,9 +69,11 @@ public class GetterFieldProcessor extends AbstractLombokFieldProcessor {
         builder.addError("'lazy' requires the field to be private and final",
             PsiQuickFixFactory.createModifierListFix(psiField, PsiModifier.PRIVATE, true, false),
             PsiQuickFixFactory.createModifierListFix(psiField, PsiModifier.FINAL, true, false));
+        result = false;
       }
       if (null == psiField.getInitializer()) {
         builder.addError("'lazy' requires field initialization.");
+        result = false;
       }
     }
 
@@ -115,10 +117,6 @@ public class GetterFieldProcessor extends AbstractLombokFieldProcessor {
     final PsiType booleanType = PsiPrimitiveTypeFactory.getInstance().getBooleanType();
     String methodName = TransformationsUtil.toGetterName(fieldName, booleanType.equals(psiReturnType));
 
-    final Collection<String> annotationsToCopy = PsiAnnotationUtil.collectAnnotationsToCopy(psiField, LombokConstants.NON_NULL_PATTERN);
-    final String annotationsString = PsiAnnotationUtil.buildAnnotationsString(annotationsToCopy);
-    //TODO adapt annotations
-
     PsiClass psiClass = psiField.getContainingClass();
     assert psiClass != null;
 
@@ -133,6 +131,13 @@ public class GetterFieldProcessor extends AbstractLombokFieldProcessor {
     }
     if (psiField.hasModifierProperty(PsiModifier.STATIC)) {
       method.withModifier(PsiModifier.STATIC);
+    }
+
+    PsiModifierList methodParameterModifierList = method.getModifierList();
+    final Collection<String> annotationsToCopy = PsiAnnotationUtil.collectAnnotationsToCopy(psiField,
+        LombokConstants.NON_NULL_PATTERN, LombokConstants.NULLABLE_PATTERN);
+    for (String annotationFQN : annotationsToCopy) {
+      methodParameterModifierList.addAnnotation(annotationFQN);
     }
     return method;
   }

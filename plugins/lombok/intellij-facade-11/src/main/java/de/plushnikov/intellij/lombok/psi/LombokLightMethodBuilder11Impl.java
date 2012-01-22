@@ -9,11 +9,14 @@ import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.CheckUtil;
+import com.intellij.psi.impl.light.LightIdentifier;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.impl.light.LightModifierList;
 import com.intellij.psi.impl.light.LightParameterListBuilder;
@@ -27,11 +30,13 @@ import org.jetbrains.annotations.Nullable;
  * @author Plushnikov Michail
  */
 public class LombokLightMethodBuilder11Impl extends LightMethodBuilder implements LombokLightMethodBuilder {
+  private final LightIdentifier myNameIdentifier;
   private ASTNode myASTNode;
 
   public LombokLightMethodBuilder11Impl(@NotNull PsiManager manager, @NotNull String name) {
     super(manager, JavaLanguage.INSTANCE, name,
         new LightParameterListBuilder(manager, JavaLanguage.INSTANCE), new LombokLightModifierList11Impl(manager, JavaLanguage.INSTANCE));
+    myNameIdentifier = new LightIdentifier(manager, name);
   }
 
   @Override
@@ -54,7 +59,7 @@ public class LombokLightMethodBuilder11Impl extends LightMethodBuilder implement
 
   @Override
   public LombokLightMethodBuilder withParameter(@NotNull String name, @NotNull PsiType type) {
-    addParameter(name, type);
+    addParameter(new LombokLightParameter11Impl(name, type, this, JavaLanguage.INSTANCE));
     return this;
   }
 
@@ -74,6 +79,11 @@ public class LombokLightMethodBuilder11Impl extends LightMethodBuilder implement
   public LombokLightMethodBuilder withContainingClass(@NotNull PsiClass containingClass) {
     setContainingClass(containingClass);
     return this;
+  }
+
+  @Override
+  public PsiIdentifier getNameIdentifier() {
+    return myNameIdentifier;
   }
 
   @Override
@@ -137,7 +147,9 @@ public class LombokLightMethodBuilder11Impl extends LightMethodBuilder implement
     final StringBuilder builder = StringBuilderSpinAllocator.alloc();
     try {
       for (String modifier : modifierList.getModifiers()) {
-        builder.append(modifier).append(' ');
+        if (!PsiModifier.PACKAGE_LOCAL.equals(modifier)) {
+          builder.append(modifier).append(' ');
+        }
       }
       return builder.toString();
     } finally {

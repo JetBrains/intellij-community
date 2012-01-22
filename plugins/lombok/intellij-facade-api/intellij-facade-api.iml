@@ -7,16 +7,14 @@
       <sourceFolder url="file://$MODULE_DIR$/src/main/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/target/generated-sources/annotations" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/target/classes" />
-      <excludeFolder url="file://$MODULE_DIR$/target/maven-archiver" />
-      <excludeFolder url="file://$MODULE_DIR$/target/surefire" />
       <excludeFolder url="file://$MODULE_DIR$/target/test-classes" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" scope="PROVIDED" name="Maven: com.intellij.idea:openapi:11.0" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="Maven: com.intellij.idea:annotations:11.0" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="Maven: com.intellij.idea:util:11.0" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="Maven: com.intellij.idea:idea:11.0" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: com.intellij.idea:openapi:11.0.1" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: com.intellij.idea:annotations:11.0.1" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: com.intellij.idea:util:11.0.1" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: com.intellij.idea:idea:11.0.1" level="project" />
   </component>
 </module>
 

@@ -1,8 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <idea-plugin version="2" url="http://code.google.com/p/lombok-intellij-plugin">
   <id>Lombook Plugin</id>
   <name>Lombok Plugin</name>
   <vendor url="http://code.google.com/p/lombok-intellij-plugin" email="lombokplugin@plushnikov.de">Michail Plushnikov</vendor>
-  <version>0.3</version>
+  <!--This line will be changed by maven plugin-->
+  <version>100</version>
+  <!--This line will be changed by maven plugin-->
   <idea-version since-build="93.13"/>
 
   <description><![CDATA[
@@ -30,12 +33,16 @@
 		<ul>
 			<li>0.3
 				<ol>
-            <li>Fixed issue #7 "Added support for IntelliJ 11"</li>
             <li>Fixed issue #4 "Getter/Setter on generic types"</li>
             <li>Fixed issue #6 "The Plugin panel in IDEA lists the plugin as "Lombook Plugin (doubled letter 'o')"</li>
+            <li>Fixed issue #7 "Added support for IntelliJ 11"</li>
             <li>Fixed issue #9 "@Data(staticConstructor="of") is not created"</li>
             <li>Fixed issue #10 "Empty constructor is created even if it already exists"</li>
+            <li>Fixed issue #15 "@Data with @NoArgsConstructor does not generate default constructor"</li>
+            <li>Fixed issue #17 "Incompatibility with javax.annotation.Nonnull/Nullable"</li>
             <li>Added more inspections and QuickFixes for some of lombok annotations.</li>
+            <li>Fixed: skip constructor generation for @Data if some constructor is already defined in the class</li>
+            <li>Fixed: skip getter generation for invalid lazy-getters</li>
             <li>Added support for "LazyGetter" and "FluentSetter" annotations from lombok-pg</li>
 				</ol>
 			</li>

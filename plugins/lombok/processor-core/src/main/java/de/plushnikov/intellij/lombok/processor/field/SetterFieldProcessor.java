@@ -1,11 +1,5 @@
 package de.plushnikov.intellij.lombok.processor.field;
 
-import java.lang.annotation.Annotation;
-import java.util.Collection;
-import java.util.List;
-
-import org.jetbrains.annotations.NotNull;
-
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.Modifier;
 import com.intellij.psi.PsiAnnotation;
@@ -14,18 +8,27 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiType;
+import de.plushnikov.intellij.lombok.LombokConstants;
 import de.plushnikov.intellij.lombok.UserMapKeys;
 import de.plushnikov.intellij.lombok.problem.ProblemBuilder;
 import de.plushnikov.intellij.lombok.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.lombok.psi.LombokPsiElementFactory;
 import de.plushnikov.intellij.lombok.quickfix.PsiQuickFixFactory;
 import de.plushnikov.intellij.lombok.util.LombokProcessorUtil;
+import de.plushnikov.intellij.lombok.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.lombok.util.PsiClassUtil;
 import de.plushnikov.intellij.lombok.util.PsiMethodUtil;
 import de.plushnikov.intellij.lombok.util.PsiPrimitiveTypeFactory;
 import lombok.Setter;
 import lombok.core.TransformationsUtil;
+import org.jetbrains.annotations.NotNull;
+
+import java.lang.annotation.Annotation;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * Inspect and validate @Setter lombok annotation on a field
@@ -114,10 +117,6 @@ public class SetterFieldProcessor extends AbstractLombokFieldProcessor {
     final PsiType booleanType = PsiPrimitiveTypeFactory.getInstance().getBooleanType();
     final String methodName = getSetterName(psiField, booleanType.equals(psiFieldType));
 
-//      final Collection<String> annotationsToCopy = PsiAnnotationUtil.collectAnnotationsToCopy(psiField);
-//      final String annotationsString = PsiAnnotationUtil.buildAnnotationsString(annotationsToCopy);
-//    //TODO adapt annotations
-
     PsiClass psiClass = psiField.getContainingClass();
     assert psiClass != null;
 
@@ -134,6 +133,17 @@ public class SetterFieldProcessor extends AbstractLombokFieldProcessor {
     if (psiField.hasModifierProperty(PsiModifier.STATIC)) {
       method.withModifier(PsiModifier.STATIC);
     }
+
+    PsiParameter methodParameter = method.getParameterList().getParameters()[0];
+    PsiModifierList methodParameterModifierList = methodParameter.getModifierList();
+    if (null != methodParameterModifierList) {
+      final Collection<String> annotationsToCopy = PsiAnnotationUtil.collectAnnotationsToCopy(psiField,
+          LombokConstants.NON_NULL_PATTERN, LombokConstants.NULLABLE_PATTERN);
+      for (String annotationFQN : annotationsToCopy) {
+        methodParameterModifierList.addAnnotation(annotationFQN);
+      }
+    }
+
     return method;
 
   }

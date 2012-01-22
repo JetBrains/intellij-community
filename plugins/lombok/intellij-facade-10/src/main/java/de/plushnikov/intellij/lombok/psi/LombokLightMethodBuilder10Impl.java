@@ -9,12 +9,15 @@ import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.CheckUtil;
+import com.intellij.psi.impl.light.LightIdentifier;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.impl.light.LightModifierList;
 import com.intellij.psi.impl.light.LightParameterListBuilder;
@@ -28,14 +31,16 @@ import org.jetbrains.annotations.Nullable;
  * @author Plushnikov Michail
  */
 public class LombokLightMethodBuilder10Impl extends LightMethodBuilder implements LombokLightMethodBuilder {
-  private ASTNode myASTNode;
   private final LombokLightReferenceListBuilder10Impl myThrowsList;
+  private final LightIdentifier myNameIdentifier;
+  private ASTNode myASTNode;
 
   public LombokLightMethodBuilder10Impl(@NotNull PsiManager manager, @NotNull String name) {
     super(manager, StdLanguages.JAVA, name,
         new LightParameterListBuilder(manager, StdLanguages.JAVA), new LombokLightModifierList10Impl(manager, StdLanguages.JAVA));
 
     myThrowsList = new LombokLightReferenceListBuilder10Impl(manager, PsiReferenceList.Role.THROWS_LIST);
+    myNameIdentifier = new LightIdentifier(manager, name);
   }
 
   @Override
@@ -58,7 +63,7 @@ public class LombokLightMethodBuilder10Impl extends LightMethodBuilder implement
 
   @Override
   public LombokLightMethodBuilder withParameter(@NotNull String name, @NotNull PsiType type) {
-    addParameter(name, type);
+    addParameter(new LombokLightParameter10Impl(name, type, this, StdLanguages.JAVA));
     return this;
   }
 
@@ -83,6 +88,11 @@ public class LombokLightMethodBuilder10Impl extends LightMethodBuilder implement
   @NotNull
   public PsiReferenceList getThrowsList() {
     return myThrowsList;
+  }
+
+  @Override
+  public PsiIdentifier getNameIdentifier() {
+    return myNameIdentifier;
   }
 
   @Override
@@ -146,7 +156,9 @@ public class LombokLightMethodBuilder10Impl extends LightMethodBuilder implement
     final StringBuilder builder = StringBuilderSpinAllocator.alloc();
     try {
       for (String modifier : modifierList.getModifiers()) {
-        builder.append(modifier).append(' ');
+        if (!PsiModifier.PACKAGE_LOCAL.equals(modifier)) {
+          builder.append(modifier).append(' ');
+        }
       }
       return builder.toString();
     } finally {

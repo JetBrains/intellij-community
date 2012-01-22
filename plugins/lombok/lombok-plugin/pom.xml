@@ -151,6 +151,32 @@
         </executions>
       </plugin>
       <plugin>
+        <groupId>com.google.code.maven-replacer-plugin</groupId>
+        <artifactId>maven-replacer-plugin</artifactId>
+        <executions>
+          <execution>
+            <phase>prepare-package</phase>
+            <goals>
+              <goal>replace</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <file>target/classes/META-INF/plugin.xml</file>
+          <replacements>
+            <replacement>
+              <token>&lt;version&gt;100&lt;/version&gt;</token>
+              <value>&lt;version&gt;${project.version}&lt;/version&gt;</value>
+            </replacement>
+            <replacement>
+              <token>&lt;idea-version since-build="93.13" /&gt;</token>
+              <value>&lt;idea-version since-build="${plugin.supported.build.from}" until-build="${plugin.supported.build.to}"/&gt;</value>
+            </replacement>
+          </replacements>
+        </configuration>
+      </plugin>
+
+      <plugin>
         <artifactId>maven-assembly-plugin</artifactId>
         <executions>
           <execution>

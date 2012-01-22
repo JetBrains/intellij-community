@@ -1,10 +1,5 @@
 package de.plushnikov.intellij.lombok.psi;
 
-import javax.swing.Icon;
-
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-
 import com.intellij.lang.Language;
 import com.intellij.psi.Modifier;
 import com.intellij.psi.PsiElement;
@@ -18,18 +13,24 @@ import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.PsiVariable;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.light.LightElement;
+import com.intellij.psi.impl.light.LightIdentifier;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
 
 /**
  * @author Plushnikov Michail
  */
 public abstract class LombokLightVariableBuilder extends LightElement implements PsiVariable {
-  protected final String                  myName;
-  protected final PsiType                 myType;
+  protected final String myName;
+  protected final PsiType myType;
   protected final LombokLightModifierList myModifierList;
-  protected       PsiElement              myNavigationElement;
+  protected final LightIdentifier myNameIdentifier;
+  protected PsiElement myNavigationElement;
   private volatile Icon myBaseIcon = Icons.VARIABLE_ICON;
 
   public LombokLightVariableBuilder(@NotNull PsiManager manager, @NotNull String name, @NotNull PsiType type, @NotNull Language language) {
@@ -38,6 +39,7 @@ public abstract class LombokLightVariableBuilder extends LightElement implements
     myType = type;
     myModifierList = new LombokLightModifierList(manager, language, this);
     myNavigationElement = this;
+    myNameIdentifier = new LightIdentifier(manager, name);
   }
 
   public LombokLightVariableBuilder addModifier(@Modifier @NotNull @NonNls String modifier) {
@@ -129,7 +131,7 @@ public abstract class LombokLightVariableBuilder extends LightElement implements
 
   @Override
   public PsiIdentifier getNameIdentifier() {
-    return null;
+    return myNameIdentifier;
   }
 
   @Override
