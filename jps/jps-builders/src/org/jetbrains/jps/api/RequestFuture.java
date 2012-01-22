@@ -15,6 +15,8 @@
  */
 package org.jetbrains.jps.api;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.util.UUID;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -23,15 +25,22 @@ import java.util.concurrent.atomic.AtomicBoolean;
 * @author Eugene Zhuravlev
 *         Date: 9/13/11
 */
-public class RequestFuture implements Future {
+public class RequestFuture<T> implements Future {
   private final Semaphore mySemaphore = new Semaphore(1);
   private final AtomicBoolean myDone = new AtomicBoolean(false);
-  private final JpsServerResponseHandler myHandler;
+  private final T myHandler;
   private final UUID myRequestID;
+  @Nullable private final CancelAction<T> myCancelAction;
+  private final AtomicBoolean myCanceledState = new AtomicBoolean(false);
 
-  public RequestFuture(JpsServerResponseHandler handler, UUID requestID) {
+  public interface CancelAction<T> {
+    void cancel(RequestFuture<T> future) throws Exception;
+  }
+
+  public RequestFuture(T handler, UUID requestID, @Nullable CancelAction<T> cancelAction) {
     myHandler = handler;
     myRequestID = requestID;
+    myCancelAction = cancelAction;
     mySemaphore.acquireUninterruptibly();
   }
 
@@ -46,11 +55,24 @@ public class RequestFuture implements Future {
   }
 
   public boolean cancel(boolean mayInterruptIfRunning) {
-    return false;
+    if (isDone()) {
+      return false;
+    }
+    if (!myCanceledState.getAndSet(true)) {
+      try {
+        if (myCancelAction != null) {
+          myCancelAction.cancel(this);
+        }
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
+    return true;
   }
 
   public boolean isCancelled() {
-    return false;
+    return myCanceledState.get();
   }
 
   public boolean isDone() {
@@ -71,7 +93,7 @@ public class RequestFuture implements Future {
     return null;
   }
 
-  public JpsServerResponseHandler getHandler() {
+  public T getResponseHandler() {
     return myHandler;
   }
 }

@@ -17,14 +17,6 @@ public class JavacMain {
     "-d", "-classpath", "-cp", "-bootclasspath"
   ));
 
-  public interface DiagnosticOutputConsumer extends DiagnosticListener<JavaFileObject> {
-    void outputLineAvailable(String line);
-  }
-
-  public interface OutputFileConsumer {
-    void save(@NotNull OutputFileObject fileObject);
-  }
-
   public static boolean compile(Collection<String> options,
                                 final Collection<File> sources,
                                 Collection<File> classpath,

@@ -24,8 +24,7 @@ import org.jetbrains.jps.incremental.messages.FileGeneratedEvent;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.SourceToFormMapping;
-import org.jetbrains.jps.javac.JavacMain;
-import org.jetbrains.jps.javac.OutputFileObject;
+import org.jetbrains.jps.javac.*;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
@@ -289,14 +288,19 @@ public class JavaBuilder extends Builder{
     return exitCode;
   }
 
-  private boolean compileJava(List<String> options, Collection<File> files, Collection<File> classpath, Collection<File> platformCp, Set<File> sourcePath, Map<File, Set<File>> outs, CompileContext context, JavacMain.DiagnosticOutputConsumer diagnosticSink, final JavacMain.OutputFileConsumer outputSink) {
+  private boolean compileJava(List<String> options, Collection<File> files, Collection<File> classpath, Collection<File> platformCp, Collection<File> sourcePath, Map<File, Set<File>> outs, CompileContext context, DiagnosticOutputConsumer diagnosticSink, final OutputFileConsumer outputSink) {
     final ClassProcessingConsumer classesConsumer = new ClassProcessingConsumer(context, outputSink);
     try {
-      return JavacMain.compile(options, files, classpath, platformCp, sourcePath, outs, diagnosticSink, classesConsumer);
+      final JavacProxy proxy = createJavacProxy(context);
+      return proxy.compile(options, files, classpath, platformCp, sourcePath, outs, diagnosticSink, classesConsumer);
     }
     finally {
       classesConsumer.ensurePendingTasksCompleted();
     }
+  }
+
+  private JavacProxy createJavacProxy(CompileContext context) {
+    return new EmbeddedJavacProxy();
   }
 
   private static ClassLoader createInstrumentationClassLoader(Collection<File> classpath, Collection<File> platformCp, Map<File, String> chunkSourcePath, OutputFilesSink outputSink)
@@ -550,7 +554,7 @@ public class JavaBuilder extends Builder{
     return version >= Opcodes.V1_6 && version != Opcodes.V1_1 ? ClassWriter.COMPUTE_FRAMES : ClassWriter.COMPUTE_MAXS;
   }
 
-  private static class DiagnosticSink implements JavacMain.DiagnosticOutputConsumer {
+  private static class DiagnosticSink implements DiagnosticOutputConsumer {
     private final CompileContext myContext;
     private volatile int myErrorCount = 0;
     private volatile int myWarningCount = 0;
@@ -619,7 +623,7 @@ public class JavaBuilder extends Builder{
     }
   }
 
-  private static class OutputFilesSink implements JavacMain.OutputFileConsumer {
+  private static class OutputFilesSink implements OutputFileConsumer {
     private final CompileContext myContext;
     private final Set<File> mySuccessfullyCompiled = new HashSet<File>();
     private final Set<File> myProblematic = new HashSet<File>();
@@ -859,15 +863,15 @@ public class JavaBuilder extends Builder{
     }
   }
 
-  private class ClassProcessingConsumer implements JavacMain.OutputFileConsumer {
+  private class ClassProcessingConsumer implements OutputFileConsumer {
     private final CompileContext myCompileContext;
-    private final JavacMain.OutputFileConsumer myDelegateOutputFileSink;
+    private final OutputFileConsumer myDelegateOutputFileSink;
     private int myTasksInProgress = 0;
     private final Object myCounterLock = new Object();
 
-    public ClassProcessingConsumer(CompileContext compileContext, JavacMain.OutputFileConsumer sink) {
+    public ClassProcessingConsumer(CompileContext compileContext, OutputFileConsumer sink) {
       myCompileContext = compileContext;
-      myDelegateOutputFileSink = sink != null? sink : new JavacMain.OutputFileConsumer() {
+      myDelegateOutputFileSink = sink != null? sink : new OutputFileConsumer() {
         public void save(@NotNull OutputFileObject fileObject) {
           throw new RuntimeException("Output sink for compiler was not specified");
         }

@@ -95,7 +95,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.JpsRemoteProto;
-import org.jetbrains.jps.api.JpsServerResponseHandlerAdapter;
+import org.jetbrains.jps.api.JpsServerResponseHandler;
 import org.jetbrains.jps.api.RequestFuture;
 
 import java.io.*;
@@ -427,8 +427,9 @@ public class CompileDriver {
     }
     final CompileServerManager jpsServerManager = CompileServerManager.getInstance();
     final MessageBus messageBus = myProject.getMessageBus();
-    return jpsServerManager.submitCompilationTask(myProject.getLocation(), compileContext.isRebuild(), compileContext.isMake(), moduleNames, paths, new JpsServerResponseHandlerAdapter() {
+    return jpsServerManager.submitCompilationTask(myProject.getLocation(), compileContext.isRebuild(), compileContext.isMake(), moduleNames, paths, new JpsServerResponseHandler() {
 
+      @Override
       public void handleCompileMessage(JpsRemoteProto.Message.Response.CompileMessage compilerMessage) {
         final JpsRemoteProto.Message.Response.CompileMessage.Kind kind = compilerMessage.getKind();
         //System.out.println(compilerMessage.getText());
@@ -503,6 +504,7 @@ public class CompileDriver {
         return eventType == JpsRemoteProto.Message.Response.BuildEvent.Type.BUILD_COMPLETED;
       }
 
+      @Override
       public void handleFailure(JpsRemoteProto.Message.Failure failure) {
         compileContext.addMessage(CompilerMessageCategory.ERROR, failure.getDescription(), null, -1, -1);
         final String trace = failure.getStacktrace();
@@ -512,6 +514,7 @@ public class CompileDriver {
         }
       }
 
+      @Override
       public void sessionTerminated() {
         notifyCompilationCompleted(compileContext, callback, COMPILE_SERVER_BUILD_STATUS.get(compileContext, ExitStatus.SUCCESS));
       }

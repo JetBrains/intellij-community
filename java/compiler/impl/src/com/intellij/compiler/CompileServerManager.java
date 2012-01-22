@@ -54,7 +54,7 @@ import com.intellij.util.net.NetUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.*;
-import org.jetbrains.jps.client.Client;
+import org.jetbrains.jps.client.CompileServerClient;
 import org.jetbrains.jps.server.ClasspathBootstrap;
 import org.jetbrains.jps.server.Server;
 
@@ -76,7 +76,7 @@ public class CompileServerManager implements ApplicationComponent{
   private static final String COMPILE_SERVER_SYSTEM_ROOT = "compile-server";
   private volatile OSProcessHandler myProcessHandler;
   private final File mySystemDirectory;
-  private volatile Client myClient = new Client();
+  private volatile CompileServerClient myClient = new CompileServerClient();
   private final SequentialTaskExecutor myTaskExecutor = new SequentialTaskExecutor(new SequentialTaskExecutor.AsyncTaskExecutor() {
     public void submit(Runnable runnable) {
       ApplicationManager.getApplication().executeOnPooledThread(runnable);
@@ -125,7 +125,7 @@ public class CompileServerManager implements ApplicationComponent{
         public void run() {
           try {
             if (!project.isDisposed()) {
-              final Client client = ensureServerRunningAndClientConnected(false);
+              final CompileServerClient client = ensureServerRunningAndClientConnected(false);
               if (client != null) {
                 client.sendProjectReloadRequest(Collections.singletonList(project.getLocation()));
               }
@@ -144,7 +144,7 @@ public class CompileServerManager implements ApplicationComponent{
       @Override
       public void run() {
         try {
-          final Client client = ensureServerRunningAndClientConnected(false);
+          final CompileServerClient client = ensureServerRunningAndClientConnected(false);
           if (client != null) {
             client.sendCancelBuildRequest(sessionId);
           }
@@ -158,7 +158,7 @@ public class CompileServerManager implements ApplicationComponent{
 
   private void sendNotification(final Collection<String> paths, final boolean isDeleted) {
     try {
-      final Client client = ensureServerRunningAndClientConnected(false);
+      final CompileServerClient client = ensureServerRunningAndClientConnected(false);
       if (client != null) {
         myTaskExecutor.submit(new Runnable() {
           public void run() {
@@ -197,7 +197,7 @@ public class CompileServerManager implements ApplicationComponent{
     final RunnableFuture future = myTaskExecutor.submit(new Runnable() {
       public void run() {
         try {
-          final Client client = ensureServerRunningAndClientConnected(true);
+          final CompileServerClient client = ensureServerRunningAndClientConnected(true);
           if (client != null) {
             final RequestFuture requestFuture = isRebuild ?
               client.sendRebuildRequest(projectId, handler) :
@@ -244,9 +244,9 @@ public class CompileServerManager implements ApplicationComponent{
 
   // executed in one thread at a time
   @Nullable
-  private Client ensureServerRunningAndClientConnected(boolean forceRestart) throws Throwable {
+  private CompileServerClient ensureServerRunningAndClientConnected(boolean forceRestart) throws Throwable {
     final OSProcessHandler ph = myProcessHandler;
-    final Client cl = myClient;
+    final CompileServerClient cl = myClient;
     final boolean processNotRunning = ph == null || ph.isProcessTerminated() || ph.isProcessTerminating();
     final boolean clientNotConnected = cl == null || !cl.isConnected();
 
@@ -312,7 +312,7 @@ public class CompileServerManager implements ApplicationComponent{
         throw new Exception("Server startup failed: " + startupMsg);
       }
 
-      Client client = new Client();
+      CompileServerClient client = new CompileServerClient();
       boolean connected = false;
       try {
         connected = client.connect(NetUtils.getLocalHostString(), port);
@@ -332,7 +332,7 @@ public class CompileServerManager implements ApplicationComponent{
     return myClient;
   }
 
-  private static RequestFuture sendSetupRequest(final @NotNull Client client) throws Exception {
+  private static RequestFuture sendSetupRequest(final @NotNull CompileServerClient client) throws Exception {
     final Map<String, String> data = new HashMap<String, String>();
 
     // need this for tests and when this macro is missing from PathMacros registry
@@ -408,7 +408,7 @@ public class CompileServerManager implements ApplicationComponent{
 
     // debugging
     cmdLine.addParameter("-XX:+HeapDumpOnOutOfMemoryError");
-    //cmdLine.addParameter("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5008");
+    cmdLine.addParameter("-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5008");
     if (Registry.is("compiler.server.use.memory.temp.cache")) {
       cmdLine.addParameter("-D"+Server.USE_MEMORY_TEMP_CACHE_OPTION + "=true");
     }
@@ -465,7 +465,7 @@ public class CompileServerManager implements ApplicationComponent{
     shutdownServer(myClient, myProcessHandler);
   }
 
-  private static void shutdownServer(final Client client, final OSProcessHandler processHandler) {
+  private static void shutdownServer(final CompileServerClient client, final OSProcessHandler processHandler) {
     try {
       if (client != null && client.isConnected()) {
         final Future future = client.sendShutdownRequest();
@@ -510,7 +510,7 @@ public class CompileServerManager implements ApplicationComponent{
             public void run() {
               try {
                 // this will reload sdks and global libraries
-                final Client client = ensureServerRunningAndClientConnected(false);
+                final CompileServerClient client = ensureServerRunningAndClientConnected(false);
                 if (client != null) {
                   sendSetupRequest(client);
                 }

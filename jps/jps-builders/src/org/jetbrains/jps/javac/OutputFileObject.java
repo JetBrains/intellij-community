@@ -1,11 +1,13 @@
 package org.jetbrains.jps.javac;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.Paths;
 
 import javax.tools.JavaFileObject;
 import javax.tools.SimpleJavaFileObject;
 import java.io.*;
+import java.net.URI;
 import java.util.Arrays;
 
 /**
@@ -13,7 +15,7 @@ import java.util.Arrays;
  *         Date: 9/24/11
  */
 public final class OutputFileObject extends SimpleJavaFileObject {
-
+  @Nullable
   private final JavacFileManager.Context myContext;
   @Nullable
   private final File myOutputRoot;
@@ -24,15 +26,19 @@ public final class OutputFileObject extends SimpleJavaFileObject {
   private volatile Content myContent;
   private final File mySourceFile;
 
-  public OutputFileObject(JavacFileManager.Context context, @Nullable File outputRoot, String relativePath, File file, Kind kind, @Nullable String className, JavaFileObject source) {
+  public OutputFileObject(@NotNull JavacFileManager.Context context, @Nullable File outputRoot, String relativePath, @NotNull File file, @NotNull Kind kind, @Nullable String className, @Nullable final URI sourceUri) {
+    this(context, outputRoot, relativePath, file, kind, className, sourceUri, null);
+  }
+
+  public OutputFileObject(@Nullable JavacFileManager.Context context, @Nullable File outputRoot, String relativePath, @NotNull File file, @NotNull Kind kind, @Nullable String className, @Nullable final URI srcUri, @Nullable Content content) {
     super(Paths.toURI(file.getPath()), kind);
     myContext = context;
+    myContent = content;
     myOutputRoot = outputRoot;
     myRelativePath = relativePath;
     myFile = file;
     myClassName = className;
-
-    mySourceFile = source != null? new File(Paths.toURI(source.toUri().getPath())) : null;
+    mySourceFile = srcUri != null? new File(Paths.toURI(srcUri.getPath())) : null;
   }
 
   @Nullable
@@ -44,6 +50,7 @@ public final class OutputFileObject extends SimpleJavaFileObject {
     return myRelativePath;
   }
 
+  @NotNull
   public File getFile() {
     return myFile;
   }
@@ -68,7 +75,9 @@ public final class OutputFileObject extends SimpleJavaFileObject {
         }
         finally {
           myContent = new Content(buf, 0, size());
-          myContext.consumeOutputFile(OutputFileObject.this);
+          if (myContext != null) {
+            myContext.consumeOutputFile(OutputFileObject.this);
+          }
         }
       }
     };
@@ -87,16 +96,17 @@ public final class OutputFileObject extends SimpleJavaFileObject {
   public CharSequence getCharContent(boolean ignoreEncodingErrors) throws IOException {
     final Content content = myContent;
     if (content == null) {
-      throw null;
+      throw new FileNotFoundException(toUri().getPath());
     }
     return new String(content.getBuffer(), content.getOffset(), content.getLength());
   }
 
+  @Nullable
   public Content getContent() {
     return myContent;
   }
 
-  public void updateContent(byte[] updatedContent) {
+  public void updateContent(@NotNull byte[] updatedContent) {
     myContent = new Content(updatedContent, 0, updatedContent.length);
   }
 

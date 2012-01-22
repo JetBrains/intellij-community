@@ -108,7 +108,7 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
       }
     }
     final File file = (dir == null? new File(fileName).getAbsoluteFile() : new File(dir, fileName));
-    return new OutputFileObject(myContext, dir, fileName, file, kind, className, src);
+    return new OutputFileObject(myContext, dir, fileName, file, kind, className, src != null? src.toUri() : null);
   }
 
   private File getSingleOutputDirectory(final Location loc, final JavaFileObject sourceFile) {
