@@ -10,13 +10,15 @@ import java.lang.reflect.Field;
 public class ReflectionUtil {
   private static final Logger LOG = Logger.getInstance(ReflectionUtil.class.getName());
 
-  public static <T> void setFinalFieldPerReflection(Class<T> clazz, T instance, String fieldName, Object value) {
+  public static <T, R> void setFinalFieldPerReflection(Class<T> clazz, T instance, Class<R> oldClazz, R newValue) {
     try {
-      Field f = clazz.getDeclaredField(fieldName);
-      f.setAccessible(true);
-      f.set(instance, value);
-    } catch (NoSuchFieldException x) {
-      LOG.error(x);
+      for (Field field : clazz.getDeclaredFields()) {
+        if (field.getType().equals(oldClazz)) {
+          field.setAccessible(true);
+          field.set(instance, newValue);
+          break;
+        }
+      }
     } catch (IllegalArgumentException x) {
       LOG.error(x);
     } catch (IllegalAccessException x) {

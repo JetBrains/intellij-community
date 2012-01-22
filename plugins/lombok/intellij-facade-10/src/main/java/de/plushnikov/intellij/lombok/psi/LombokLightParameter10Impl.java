@@ -7,6 +7,7 @@ import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.light.LightIdentifier;
+import com.intellij.psi.impl.light.LightModifierList;
 import com.intellij.psi.impl.light.LightParameter;
 import com.intellij.psi.impl.light.LightVariableBuilder;
 import de.plushnikov.intellij.lombok.util.ReflectionUtil;
@@ -22,7 +23,7 @@ public class LombokLightParameter10Impl extends LightParameter {
     super(name, type, declarationScope, language);
     PsiManager manager = declarationScope.getManager();
     myNameIdentifier = new LightIdentifier(manager, name);
-    ReflectionUtil.setFinalFieldPerReflection(LightVariableBuilder.class, this, "myModifierList",
+    ReflectionUtil.setFinalFieldPerReflection(LightVariableBuilder.class, this, LightModifierList.class,
         new LombokLightModifierList10Impl(manager, language));
   }
 
@@ -36,7 +37,7 @@ public class LombokLightParameter10Impl extends LightParameter {
     for (PsiAnnotation annotation : getAnnotations()) {
       modifierList.addAnnotation(annotation.getQualifiedName());
     }
-    ReflectionUtil.setFinalFieldPerReflection(LightVariableBuilder.class, this, "myModifierList", modifierList);
+    ReflectionUtil.setFinalFieldPerReflection(LightVariableBuilder.class, this, LightModifierList.class, modifierList);
     return this;
   }
 }
