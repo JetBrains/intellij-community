@@ -69,9 +69,11 @@ public class GetterFieldProcessor extends AbstractLombokFieldProcessor {
         builder.addError("'lazy' requires the field to be private and final",
             PsiQuickFixFactory.createModifierListFix(psiField, PsiModifier.PRIVATE, true, false),
             PsiQuickFixFactory.createModifierListFix(psiField, PsiModifier.FINAL, true, false));
+        result = false;
       }
       if (null == psiField.getInitializer()) {
         builder.addError("'lazy' requires field initialization.");
+        result = false;
       }
     }
 
