@@ -157,6 +157,9 @@ public class CompileServerManager implements ApplicationComponent{
   }
 
   private void sendNotification(final Collection<String> paths, final boolean isDeleted) {
+    if (paths.isEmpty()) {
+      return;
+    }
     try {
       final CompileServerClient client = ensureServerRunningAndClientConnected(false);
       if (client != null) {

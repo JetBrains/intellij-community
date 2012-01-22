@@ -1270,24 +1270,24 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
   private class MyVfsListener extends VirtualFileAdapter {
     public void propertyChanged(final VirtualFilePropertyEvent event) {
       if (VirtualFile.PROP_NAME.equals(event.getPropertyName())) {
-        markDirtyIfSource(event.getFile());
+        markDirtyIfSource(event.getFile(), false);
       }
     }
 
     public void contentsChanged(final VirtualFileEvent event) {
-      markDirtyIfSource(event.getFile());
+      markDirtyIfSource(event.getFile(), false);
     }
 
     public void fileCreated(final VirtualFileEvent event) {
-      processNewFile(event.getFile());
+      processNewFile(event.getFile(), true);
     }
 
     public void fileCopied(final VirtualFileCopyEvent event) {
-      processNewFile(event.getFile());
+      processNewFile(event.getFile(), true);
     }
 
     public void fileMoved(VirtualFileMoveEvent event) {
-      processNewFile(event.getFile());
+      processNewFile(event.getFile(), true);
     }
 
     public void beforeFileDeletion(final VirtualFileEvent event) {
@@ -1372,34 +1372,35 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     }
 
     public void beforeFileMovement(final VirtualFileMoveEvent event) {
-      markDirtyIfSource(event.getFile());
+      markDirtyIfSource(event.getFile(), true);
     }
 
-    private void markDirtyIfSource(final VirtualFile file) {
+    private void markDirtyIfSource(final VirtualFile file, boolean fromMove) {
       final Set<String> pathsToMark = new HashSet<String>();
       processRecursively(file, false, new FileProcessor() {
         public void execute(final VirtualFile file) {
+          pathsToMark.add(file.getPath());
           final SourceFileInfo srcInfo = file.isValid()? loadSourceInfo(file) : null;
           if (srcInfo != null) {
-
-            pathsToMark.add(file.getPath());
-
             for (int projectId : srcInfo.getProjectIds().toArray()) {
               addSourceForRecompilation(projectId, file, srcInfo);
             }
           }
           else {
-            processNewFile(file);
+            processNewFile(file, false);
           }
         }
       });
-      if (!pathsToMark.isEmpty()) {
+      if (fromMove) {
+        CompileServerManager.getInstance().notifyFilesDeleted(pathsToMark);
+      }
+      else {
         CompileServerManager.getInstance().notifyFilesChanged(pathsToMark);
       }
     }
 
-    private void processNewFile(final VirtualFile file) {
-      final Set<String> pathsToMark = new HashSet<String>();
+    private void processNewFile(final VirtualFile file, final boolean notifyServer) {
+      final Set<String> pathsToMark = notifyServer ? new HashSet<String>() : Collections.<String>emptySet();
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         // need read action to ensure that the project was not disposed during the iteration over the project list
         public void run() {
@@ -1413,7 +1414,9 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
               final TranslatingCompiler[] translators = CompilerManager.getInstance(project).getCompilers(TranslatingCompiler.class);
               processRecursively(file, false, new FileProcessor() {
                 public void execute(final VirtualFile file) {
-                  pathsToMark.add(file.getPath());
+                  if (notifyServer) {
+                    pathsToMark.add(file.getPath());
+                  }
                   if (isCompilable(file)) {
                     loadInfoAndAddSourceForRecompilation(projectId, file);
                   }
@@ -1441,7 +1444,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
           }
         }
       });
-      if (!pathsToMark.isEmpty()) {
+      if (notifyServer) {
         CompileServerManager.getInstance().notifyFilesChanged(pathsToMark);
       }
     }
