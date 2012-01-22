@@ -107,7 +107,7 @@ public abstract class Builder {
     if (!context.isProjectRebuild() && !sources.isEmpty()) {
       for (Map.Entry<File, Module> pair : sources.entrySet()) {
         final File file = pair.getKey();
-        final String srcPath = file.getPath();
+        final String srcPath = FileUtil.toSystemIndependentName(file.getPath());
         final String moduleName = pair.getValue().getName().toLowerCase(Locale.US);
         final SourceToOutputMapping srcToOut = context.getDataManager().getSourceToOutputMap(moduleName, context.isCompilingTests());
         final Collection<String> outputs = srcToOut.getState(srcPath);
