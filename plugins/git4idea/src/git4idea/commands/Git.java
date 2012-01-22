@@ -210,6 +210,17 @@ public class Git {
   }
 
   /**
+   * Create branch without checking it out.
+   * {@code git branch <branchName>}
+   */
+  @NotNull
+  public static GitCommandResult branchCreate(@NotNull GitRepository repository, @NotNull String branchName) {
+    final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.BRANCH);
+    h.addParameters(branchName);
+    return run(h);
+  }
+
+  /**
    * Returns the last (tip) commit on the given branch.<br/>
    * {@code git rev-list -1 <branchName>}
    */

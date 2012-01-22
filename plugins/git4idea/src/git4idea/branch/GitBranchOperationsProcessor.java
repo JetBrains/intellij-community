@@ -106,7 +106,7 @@ public final class GitBranchOperationsProcessor {
   public void checkoutNewBranch(@NotNull final String name) {
     new CommonBackgroundTask(myProject, "Checking out new branch " + name, myCallInAwtAfterExecution) {
       @Override public void execute(@NotNull ProgressIndicator indicator) {
-        doCheckoutNewBranch(name);
+        doCheckoutNewBranch(name, indicator);
       }
     }.runInBackground();
   }
@@ -121,9 +121,8 @@ public final class GitBranchOperationsProcessor {
     }.runInBackground();
   }
 
-  private void doCheckoutNewBranch(@NotNull final String name) {
-    GitCheckoutNewBranchOperation operation = new GitCheckoutNewBranchOperation(myProject, myRepositories, name, getCurrentBranch());
-    new GitMultiRootOperationExecutor(myProject, myRepositories).execute(operation);
+  private void doCheckoutNewBranch(@NotNull final String name, @NotNull ProgressIndicator indicator) {
+    new GitCheckoutNewBranchOperation(myProject, myRepositories, name, getCurrentBranch(), indicator).execute();
   }
 
 
@@ -173,9 +172,7 @@ public final class GitBranchOperationsProcessor {
   }
 
   private void doCheckout(@NotNull ProgressIndicator indicator, @NotNull String reference, @Nullable String newBranch) {
-    GitMultiRootOperationExecutor executor = new GitMultiRootOperationExecutor(myProject, myRepositories);
-    GitCheckoutOperation operation = new GitCheckoutOperation(myProject, myRepositories, reference, newBranch, getCurrentBranch(), executor, indicator);
-    executor.execute(operation);
+    new GitCheckoutOperation(myProject, myRepositories, reference, newBranch, getCurrentBranch(), indicator).execute();
   }
 
   public void deleteBranch(final String branchName) {

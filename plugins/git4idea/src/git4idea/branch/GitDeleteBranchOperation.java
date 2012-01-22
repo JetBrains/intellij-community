@@ -15,11 +15,14 @@
  */
 package git4idea.branch;
 
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
+import git4idea.GitVcs;
 import git4idea.commands.Git;
 import git4idea.GitExecutionException;
 import git4idea.commands.GitCommandResult;
@@ -28,6 +31,7 @@ import git4idea.commands.GitSimpleEventDetector;
 import git4idea.history.GitHistoryUtils;
 import git4idea.history.browser.GitCommit;
 import git4idea.repo.GitRepository;
+import git4idea.util.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,87 +39,89 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Note: GitDeleteBranchOperation doesn't implement {@link GitBranchOperation}, because we don't need nor retry, neither rollback,
- * but we need a lot of additional customizations.
- * 
+ * Deletes a branch.
+ * If branch is not fully merged to the current branch, shows a dialog with the list of unmerged commits and with a list of branches
+ * current branch are merged to, and makes force delete, if wanted.
+ *
  * @author Kirill Likhodedov
  */
-class GitDeleteBranchOperation {
+class GitDeleteBranchOperation extends GitBranchOperation {
   
   private static final Logger LOG = Logger.getInstance(GitDeleteBranchOperation.class);
 
   private final String myBranchName;
   private final String myCurrentBranch;
-  private final ProgressIndicator myIndicator;
-  private final Project myProject;
-  private final Collection<GitRepository> myRepositories;
 
-  public GitDeleteBranchOperation(@NotNull Project project, @NotNull Collection<GitRepository> repositories, @NotNull String branchName, @NotNull String currentBranch, @NotNull ProgressIndicator indicator) {
-    myProject = project;
-    myRepositories = repositories;
+  public GitDeleteBranchOperation(@NotNull Project project, @NotNull Collection<GitRepository> repositories,
+                                  @NotNull String branchName, @NotNull String currentBranch, @NotNull ProgressIndicator indicator) {
+    super(project, repositories, indicator);
     myBranchName = branchName;
     myCurrentBranch = currentBranch;
-    myIndicator = indicator;
   }
 
+  @Override
   public void execute() {
-    Collection<GitRepository> succeeded = new ArrayList<GitRepository>();
-    for (GitRepository repository : myRepositories) {
+    boolean fatalErrorHappened = false;
+    while (hasMoreRepositories() && !fatalErrorHappened) {
+      final GitRepository repository = next();
+
       GitSimpleEventDetector notFullyMergedDetector = new GitSimpleEventDetector(GitSimpleEventDetector.Event.BRANCH_NOT_FULLY_MERGED);
       GitCommandResult result = Git.branchDelete(repository, myBranchName, false, notFullyMergedDetector);
+
       if (result.success()) {
-        succeeded.add(repository);
+        refresh(repository);
+        markSuccessful(repository);
       }
       else if (notFullyMergedDetector.hasHappened()) {
-        Collection<GitRepository> remainingRepos = filterOut(myRepositories, succeeded);
-        boolean forceDelete = showNotFullyMergedDialog(myBranchName, remainingRepos);
+        Collection<GitRepository> remainingRepositories = getRemainingRepositories();
+        boolean forceDelete = showNotFullyMergedDialog(myBranchName, remainingRepositories);
         if (forceDelete) {
-          GitCompoundResult compoundResult = forceDelete(myBranchName, remainingRepos);
+          GitCompoundResult compoundResult = forceDelete(myBranchName, remainingRepositories);
           if (compoundResult.totalSuccess()) {
-            break;
+            GitRepository[] remainingRepositoriesArray = ArrayUtil.toObjectArray(remainingRepositories, GitRepository.class);
+            markSuccessful(remainingRepositoriesArray);
+            refresh(remainingRepositoriesArray);
           }
           else {
-            notifyError(succeeded, compoundResult);
+            fatalError(getErrorTitle(), compoundResult.getErrorOutputWithReposIndication());
             return;
           }
         }
         else {
-          if (succeeded.isEmpty()) {
-            GitMultiRootOperationExecutor
-              .showFatalError(getErrorTitle(), "The branch is not fully merged to the current branch.", myProject);
-          }
-          else {
-            StringBuilder message = new StringBuilder();
-            message.append("Successfully removed in ").append(GitMultiRootOperationExecutor.joinRepositoryUrls(succeeded, "<br/>"))
-              .append("The branch is not fully merged to the current branch in other repositories.");
-            GitMultiRootOperationExecutor.showFatalError(getErrorTitle() + " in some repositories", message.toString(), myProject);
-          }
-          return;
+          fatalError(getErrorTitle(), "This branch is not fully merged to " + myCurrentBranch);
+          fatalErrorHappened = true;
         }
       }
       else {
-        GitMultiRootOperationExecutor.showFatalError(getErrorTitle(), result.getErrorOutputAsHtmlString(), myProject);
-        return;
+        fatalError(getErrorTitle(), result.getErrorOutputAsJoinedString());
+        fatalErrorHappened = true;
       }
     }
-    GitMultiRootOperationExecutor.notifySuccess(getSuccessMessage(), myProject);
-  }
 
-  private void notifyError(Collection<GitRepository> succeeded, GitCompoundResult compoundResult) {
-    if (succeeded.isEmpty()) {
-      GitMultiRootOperationExecutor.showFatalError(getErrorTitle(), compoundResult.getErrorOutputWithReposIndication(), myProject);
-    }
-    else {
-      notifyPartialError(succeeded, compoundResult);
+    if (!fatalErrorHappened) {
+      notifySuccess();
     }
   }
 
-  private void notifyPartialError(Collection<GitRepository> succeeded, GitCompoundResult compoundResult) {
-    String title = "Couldn't delete branch " + myBranchName + " in some repositories";
-    StringBuilder message = new StringBuilder();
-    message.append("Successfully removed in ").append(GitMultiRootOperationExecutor.joinRepositoryUrls(succeeded, "<br/>"))
-      .append(compoundResult.getErrorOutputWithReposIndication());
-    GitMultiRootOperationExecutor.showFatalError(title, message.toString(), myProject);
+  private static void refresh(@NotNull GitRepository... repositories) {
+    for (GitRepository repository : repositories) {
+      repository.update(GitRepository.TrackedTopic.BRANCHES, GitRepository.TrackedTopic.CONFIG);
+    }
+  }
+
+  @Override
+  protected void rollback() {
+    GitCompoundResult result = new GitCompoundResult(myProject);
+    for (GitRepository repository : getSuccessfulRepositories()) {
+      GitCommandResult res = Git.branchCreate(repository, myBranchName);
+      result.append(repository, res);
+      refresh(repository);
+    }
+
+    if (!result.totalSuccess()) {
+      GitUIUtil.notify(GitVcs.IMPORTANT_ERROR_NOTIFICATION, myProject, "Error during rollback of branch deletion",
+                       result.getErrorOutputWithReposIndication(), NotificationType.ERROR, null);
+    }
   }
 
   @NotNull
@@ -126,6 +132,14 @@ class GitDeleteBranchOperation {
   @NotNull
   public String getSuccessMessage() {
     return String.format("Deleted branch <b><code>%s</code></b>", myBranchName);
+  }
+
+  @NotNull
+  @Override
+  protected String getRollbackProposal() {
+    return "However branch deletion has succeeded for the following repositories.:<br/>" +
+           successfulRepositoriesJoined() +
+           "<br/>You may rollback (recreate " + myBranchName + " in these roots) not to let branches diverge.";
   }
 
   @NotNull
@@ -148,7 +162,7 @@ class GitDeleteBranchOperation {
     final List<String> mergedToBranches = getMergedToBranches(branchName);
 
     final Map<GitRepository, List<GitCommit>> history = new HashMap<GitRepository, List<GitCommit>>();
-    for (GitRepository repository : myRepositories) {
+    for (GitRepository repository : getRepositories()) {
       // we don't confuse user with the absence of repositories that have succeeded, just show no commits for them (and don't query for log)
       if (repositories.contains(repository)) {
         history.put(repository, getUnmergedCommits(repository, branchName));
@@ -183,7 +197,7 @@ class GitDeleteBranchOperation {
   @NotNull
   private List<String> getMergedToBranches(String branchName) {
     List<String> mergedToBranches = null;
-    for (GitRepository repository : myRepositories) {
+    for (GitRepository repository : getRepositories()) {
       List<String> branches = getMergedToBranches(repository, branchName);
       if (mergedToBranches == null) {
         mergedToBranches = branches;
@@ -241,11 +255,4 @@ class GitDeleteBranchOperation {
     return Collections.emptyList();
   }
 
-
-  @NotNull
-  public static <T> Collection<T> filterOut(@NotNull Collection<T> original, @NotNull Collection<T> toRemove) {
-    Collection<T> filtered = new ArrayList<T>(original);
-    filtered.removeAll(toRemove);
-    return filtered;
-  }
 }

@@ -16,10 +16,11 @@
 package git4idea.branch;
 
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import git4idea.commands.Git;
 import git4idea.GitVcs;
+import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitCompoundResult;
 import git4idea.commands.GitSimpleEventDetector;
@@ -32,46 +33,55 @@ import java.util.Collection;
 import static git4idea.util.GitUIUtil.code;
 
 /**
-* @author Kirill Likhodedov
-*/
-public class GitCheckoutNewBranchOperation implements GitBranchOperation {
+ * Create new branch (starting from the current branch) and check it out.
+ *
+ * @author Kirill Likhodedov
+ */
+public class GitCheckoutNewBranchOperation extends GitBranchOperation {
 
-  private final Collection<GitRepository> myRepositories;
-  private final String myNewBranchName;
-  private Project myProject;
-  private final String myPreviousBranch;
+  @NotNull private final Project myProject;
+  @NotNull private final String myNewBranchName;
+  @NotNull private final String myPreviousBranch;
 
-  public GitCheckoutNewBranchOperation(@NotNull Project project,
-                                       @NotNull Collection<GitRepository> repositories,
-                                       @NotNull String newBranchName,
-                                       @NotNull String previousBranch) {
-    myRepositories = repositories;
+  public GitCheckoutNewBranchOperation(@NotNull Project project, @NotNull Collection<GitRepository> repositories,
+                                       @NotNull String newBranchName, @NotNull String previousBranch,
+                                       @NotNull ProgressIndicator indicator) {
+    super(project, repositories, indicator);
     myNewBranchName = newBranchName;
     myProject = project;
     myPreviousBranch = previousBranch;
   }
 
-  @NotNull
   @Override
-  public GitBranchOperationResult execute(@NotNull GitRepository repository) {
-    GitSimpleEventDetector unmergedDetector = new GitSimpleEventDetector(GitSimpleEventDetector.Event.UNMERGED);
-    GitCommandResult result = Git.checkoutNewBranch(repository, myNewBranchName, unmergedDetector);
-    if (result.success()) {
-      return GitBranchOperationResult.success();
+  protected void execute() {
+    boolean fatalErrorHappened = false;
+    while (hasMoreRepositories() && !fatalErrorHappened) {
+      final GitRepository repository = next();
+
+      GitSimpleEventDetector unmergedDetector = new GitSimpleEventDetector(GitSimpleEventDetector.Event.UNMERGED);
+      GitCommandResult result = Git.checkoutNewBranch(repository, myNewBranchName, unmergedDetector);
+
+      if (result.success()) {
+        refresh(repository);
+        markSuccessful(repository);
+      }
+      else if (unmergedDetector.hasHappened()) {
+        fatalUnmergedFilesError();
+        fatalErrorHappened = true;
+      }
+      else {
+        fatalError("Couldn't create new branch " + myNewBranchName, result.getErrorOutputAsJoinedString());
+        fatalErrorHappened = true;
+      }
     }
-    else if (unmergedDetector.hasHappened()) {
-      return GitBranchOperationResult.resolvable();
-    }
-    else {
-      return GitBranchOperationResult.error("Couldn't create new branch " + myNewBranchName, result.getErrorOutputAsJoinedString());
+
+    if (!fatalErrorHappened) {
+      notifySuccess();
     }
   }
 
-  @NotNull
-  @Override
-  public GitBranchOperationResult tryResolve() {
-    return GitBranchUtil.proposeToResolveUnmergedFiles(myProject, myRepositories, "Couldn't create new branch " + myNewBranchName,
-                                                       "Couldn't create new branch due to unmerged files. ");
+  private static void refresh(@NotNull GitRepository repository) {
+    repository.update(GitRepository.TrackedTopic.ALL_CURRENT, GitRepository.TrackedTopic.CONFIG, GitRepository.TrackedTopic.BRANCHES);
   }
 
   @NotNull
@@ -80,32 +90,31 @@ public class GitCheckoutNewBranchOperation implements GitBranchOperation {
     return String.format("Branch <b><code>%s</code></b> was created", myNewBranchName);
   }
 
+  @NotNull
   @Override
-  public boolean showFatalError() {
-    return false;
+  protected String getRollbackProposal() {
+    return "However checkout has succeeded for the following repositories:<br/>" +
+           successfulRepositoriesJoined() +
+           "<br/>You may rollback (checkout back to " + myPreviousBranch + ") not to let branches diverge.";
   }
 
   @Override
-  public boolean rollbackable() {
-    return true;
-  }
-
-  @Override
-  public void rollback(@NotNull Collection<GitRepository> repositories) {
+  protected void rollback() {
     GitCompoundResult checkoutResult = new GitCompoundResult(myProject);
     GitCompoundResult deleteResult = new GitCompoundResult(myProject);
+    Collection<GitRepository> repositories = getSuccessfulRepositories();
     for (GitRepository repository : repositories) {
       GitCommandResult result = Git.checkout(repository, myPreviousBranch, null);
       checkoutResult.append(repository, result);
       if (result.success()) {
         deleteResult.append(repository, Git.branchDelete(repository, myNewBranchName, false));
       }
+      refresh(repository);
     }
     if (checkoutResult.totalSuccess() && deleteResult.totalSuccess()) {
       GitUIUtil.notify(GitVcs.NOTIFICATION_GROUP_ID, myProject, "Rollback successful",
                        String.format("Checked out %s and deleted %s on %s %s", code(myPreviousBranch), code(myNewBranchName),
-                                     StringUtil.pluralize("root", repositories.size()), GitMultiRootOperationExecutor
-                         .joinRepositoryUrls(repositories, "<br/>")),
+                                     StringUtil.pluralize("root", repositories.size()), successfulRepositoriesJoined()),
                        NotificationType.INFORMATION, null);
     }
     else {
@@ -121,4 +130,5 @@ public class GitCheckoutNewBranchOperation implements GitBranchOperation {
       GitUIUtil.notify(GitVcs.IMPORTANT_ERROR_NOTIFICATION, myProject, "Error during rollback", message.toString(), NotificationType.ERROR, null);
     }
   }
+
 }
