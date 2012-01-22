@@ -111,7 +111,7 @@
       <properties>
         <idea.version>${idea9.version}</idea.version>
         <plugin.supported.build.from>93.13</plugin.supported.build.from>
-        <plugin.supported.build.to>99.0</plugin.supported.build.to>
+        <plugin.supported.build.to>96.0</plugin.supported.build.to>
       </properties>
     </profile>
 
@@ -681,6 +681,11 @@
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>build-helper-maven-plugin</artifactId>
           <version>1.7</version>
+        </plugin>
+        <plugin>
+          <groupId>com.google.code.maven-replacer-plugin</groupId>
+          <artifactId>maven-replacer-plugin</artifactId>
+          <version>1.4.0</version>
         </plugin>
         <plugin>
           <groupId>org.projectlombok</groupId>
