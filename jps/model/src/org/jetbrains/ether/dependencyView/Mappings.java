@@ -1416,6 +1416,7 @@ public class Mappings {
         }
       }
 
+
       myClassToSubclasses.putAll(delta.myClassToSubclasses);
       mySourceFileToClasses.putAll(delta.mySourceFileToClasses);
       mySourceFileToUsages.putAll(delta.mySourceFileToUsages);
