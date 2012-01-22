@@ -45,6 +45,7 @@ class PyDBFrame:
     def shouldStopOnException(self, frame, event, arg):
       mainDebugger, filename, info, thread = self._args
       flag = False
+
       if info.pydev_state != STATE_SUSPEND:  #and breakpoint is not None:
           (exception, value, trace) = arg
 
@@ -84,6 +85,11 @@ class PyDBFrame:
       mainDebugger.SetTraceForFrameAndParents(frame)
 
     def trace_dispatch(self, frame, event, arg):
+        mainDebugger, filename, info, thread = self._args
+
+        if getattr(thread, 'pydev_do_not_trace', None):
+            return None
+
         if event not in ('line', 'call', 'return'):
             if event == 'exception':
                 (flag, frame) = self.shouldStopOnException(frame, event, arg)
@@ -93,8 +99,6 @@ class PyDBFrame:
             else:
                  #I believe this can only happen in jython on some frontiers on jython and java code, which we don't want to trace.
                 return None
-
-        mainDebugger, filename, info, thread = self._args
 
         if event is not 'exception':
             breakpoints_for_file = mainDebugger.breakpoints.get(filename)

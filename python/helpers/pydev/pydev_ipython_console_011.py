@@ -71,8 +71,10 @@ class PyDevFrontEnd:
         self.ipython.user_global_ns.clear()
         self.ipython.user_global_ns.update(globals)
         self.ipython.user_ns = locals
-        
-        
+
+        if hasattr(self.ipython, 'history_manager') and hasattr(self.ipython.history_manager, 'save_thread'):
+            self.ipython.history_manager.save_thread.pydev_do_not_trace = True #don't trace ipython history saving thread
+
     def complete(self, string):
         if string:
             return self.ipython.complete(string)

@@ -61,6 +61,7 @@ from pydevd_constants import * #@UnusedWildImport
 
 import time
 import threading
+import thread
 import sys
 try:
     import Queue as PydevQueue
@@ -812,8 +813,14 @@ class InternalConsoleExec(InternalThreadCommand):
 
     def doIt(self, dbg):
         """ Converts request into python variable """
+        pydev_start_new_thread = None
         try:
             try:
+                pydev_start_new_thread = thread.start_new_thread
+
+                thread.start_new_thread = thread._original_start_new_thread #don't trace new threads created by console command
+                thread.start_new = thread._original_start_new_thread
+
                 result = pydevd_vars.consoleExec(self.thread_id, self.frame_id, self.expression)
                 xml = "<xml>"
                 xml += pydevd_vars.varToXML(result, "")
@@ -826,6 +833,8 @@ class InternalConsoleExec(InternalThreadCommand):
                 cmd = dbg.cmdFactory.makeErrorMessage(self.sequence, "Error evaluating console expression " + exc)
                 dbg.writer.addCommand(cmd)
         finally:
+            thread.start_new_thread = pydev_start_new_thread
+            thread.start_new = pydev_start_new_thread
             sys.stderr.flush()
             sys.stdout.flush()
 
