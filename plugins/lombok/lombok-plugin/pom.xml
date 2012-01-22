@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>de.plushnikov.lombok-intellij-plugin</groupId>
@@ -168,7 +169,7 @@
               <value>&lt;version&gt;${project.version}&lt;/version&gt;</value>
             </replacement>
             <replacement>
-              <token>&lt;idea-version since-build="93.13" /&gt;</token>
+              <token>&lt;idea-version since-build="93.13"/&gt;</token>
               <value>&lt;idea-version since-build="${plugin.supported.build.from}" until-build="${plugin.supported.build.to}"/&gt;</value>
             </replacement>
           </replacements>
