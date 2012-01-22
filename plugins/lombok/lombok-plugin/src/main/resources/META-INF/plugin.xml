@@ -41,6 +41,8 @@
             <li>Fixed issue #15 "@Data with @NoArgsConstructor does not generate default constructor"</li>
             <li>Fixed issue #17 "Incompatibility with javax.annotation.Nonnull/Nullable"</li>
             <li>Added more inspections and QuickFixes for some of lombok annotations.</li>
+            <li>Fixed: skip constructor generation for @Data if some constructor is already defined in the class</li>
+            <li>Fixed: skip getter generation for invalid lazy-getters</li>
             <li>Added support for "LazyGetter" and "FluentSetter" annotations from lombok-pg</li>
 				</ol>
 			</li>
