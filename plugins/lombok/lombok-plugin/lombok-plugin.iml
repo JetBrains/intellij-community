@@ -15,7 +15,7 @@
       <excludeFolder url="file://$MODULE_DIR$/target/maven-archiver" />
       <excludeFolder url="file://$MODULE_DIR$/target/test-classes" />
     </content>
-    <orderEntry type="jdk" jdkName="IDEA IC-111.167(11.0.1)" jdkType="IDEA JDK" />
+    <orderEntry type="jdk" jdkName="IDEA IU-111.167" jdkType="IDEA JDK" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij-facade-api" />
     <orderEntry type="module" module-name="processor-api" />

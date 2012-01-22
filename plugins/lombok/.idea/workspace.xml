@@ -1,13 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" readonly="true" id="63abab39-9c6b-40ad-95fe-410c022ad9ac" name="Default" comment="intellij project files" />
-    <list id="64e30ca6-6e33-4b24-964c-ad37c8de018e" name="ignore" comment="ignore">
+    <list default="true" readonly="true" id="63abab39-9c6b-40ad-95fe-410c022ad9ac" name="Default" comment="">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/intellij-facade-10/intellij-facade-10.iml" afterPath="$PROJECT_DIR$/intellij-facade-10/intellij-facade-10.iml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/intellij-facade-11/intellij-facade-11.iml" afterPath="$PROJECT_DIR$/intellij-facade-11/intellij-facade-11.iml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/intellij-facade-9/intellij-facade-9.iml" afterPath="$PROJECT_DIR$/intellij-facade-9/intellij-facade-9.iml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/intellij-facade-factory/intellij-facade-factory.iml" afterPath="$PROJECT_DIR$/intellij-facade-factory/intellij-facade-factory.iml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lombok-plugin/lombok-plugin.iml" afterPath="$PROJECT_DIR$/lombok-plugin/lombok-plugin.iml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/processor-api/processor-api.iml" afterPath="$PROJECT_DIR$/processor-api/processor-api.iml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/processor-core/processor-core.iml" afterPath="$PROJECT_DIR$/processor-core/processor-core.iml" />
     </list>
+    <list id="64e30ca6-6e33-4b24-964c-ad37c8de018e" name="ignore" comment="ignore" />
     <ignored path="LombokIntelliJPlugin.iws" />
     <ignored path=".idea/workspace.xml" />
-    <file path="$PROJECT_DIR$/.idea/workspace.xml" changelist="63abab39-9c6b-40ad-95fe-410c022ad9ac" time="1327246348200" ignored="false" />
     <option name="TRACKING_ENABLED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -78,7 +84,103 @@
     <favorites_list name="LombokIntelliJPlugin" />
   </component>
   <component name="FileEditorManager">
-    <leaf />
+    <leaf>
+      <file leaf-file-name="pom.xml" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/pom.xml">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="412" column="23" selection-start="15674" selection-end="15674" vertical-scroll-proportion="0.0">
+              <folding>
+                <element signature="tag#profile#0;tag#profiles#0;tag#project#0" expanded="false" />
+                <element signature="tag#profile#1;tag#profiles#0;tag#project#0" expanded="false" />
+                <element signature="tag#profile#2;tag#profiles#0;tag#project#0" expanded="false" />
+                <element signature="tag#profile#5;tag#profiles#0;tag#project#0" expanded="false" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="LombokLightParameter11Impl.java" pinned="false" current="true" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/intellij-facade-11/src/main/java/de/plushnikov/intellij/lombok/psi/LombokLightParameter11Impl.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="43" column="16" selection-start="1758" selection-end="1758" vertical-scroll-proportion="0.60918254">
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="ReflectionUtil.java" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/intellij-facade-api/src/main/java/de/plushnikov/intellij/lombok/util/ReflectionUtil.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="18" column="16" selection-start="605" selection-end="605" vertical-scroll-proportion="0.0">
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="LombokLightParameter10Impl.java" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/intellij-facade-10/src/main/java/de/plushnikov/intellij/lombok/psi/LombokLightParameter10Impl.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="25" column="19" selection-start="1047" selection-end="1047" vertical-scroll-proportion="0.0">
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="LombokLightModifierList10Impl.java" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/intellij-facade-10/src/main/java/de/plushnikov/intellij/lombok/psi/LombokLightModifierList10Impl.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="31" column="9" selection-start="1200" selection-end="1200" vertical-scroll-proportion="0.0">
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="LombokLightModifierList11Impl.java" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/intellij-facade-11/src/main/java/de/plushnikov/intellij/lombok/psi/LombokLightModifierList11Impl.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="30" column="0" selection-start="1065" selection-end="1065" vertical-scroll-proportion="0.0">
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="pom.xml" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/processor-core/pom.xml">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="63" column="21" selection-start="2067" selection-end="2067" vertical-scroll-proportion="0.0">
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="pom.xml" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/intellij-facade-11/pom.xml">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0">
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="plugin.xml" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/lombok-plugin/src/main/resources/META-INF/plugin.xml">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="36" column="36" selection-start="1441" selection-end="1441" vertical-scroll-proportion="0.0">
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="pom.xml" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/intellij-facade-10/pom.xml">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="22" column="23" selection-start="802" selection-end="802" vertical-scroll-proportion="0.0">
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+    </leaf>
   </component>
   <component name="FindManager">
     <FindUsagesManager>
@@ -92,22 +194,22 @@
   <component name="IdeDocumentHistory">
     <option name="changedFiles">
       <list>
-        <option value="$PROJECT_DIR$/intellij-facade-10/src/main/java/de/plushnikov/intellij/lombok/psi/LombokLightModifierList10Impl.java" />
-        <option value="$PROJECT_DIR$/intellij-facade-11/src/main/java/de/plushnikov/intellij/lombok/psi/LombokLightModifierList11Impl.java" />
-        <option value="$PROJECT_DIR$/intellij-facade-factory/src/main/java/de/plushnikov/intellij/lombok/util/PsiAnnotationUtil.java" />
-        <option value="$PROJECT_DIR$/intellij-facade-11/src/main/java/de/plushnikov/intellij/lombok/psi/qqqqqqq.java" />
         <option value="$PROJECT_DIR$/processor-core/src/main/java/de/plushnikov/intellij/lombok/processor/field/SetterFieldProcessor.java" />
         <option value="$PROJECT_DIR$/intellij-facade-factory/src/main/java/de/plushnikov/intellij/lombok/util/ReflectionUtil.java" />
-        <option value="$PROJECT_DIR$/intellij-facade-10/src/main/java/de/plushnikov/intellij/lombok/psi/LombokLightParameter10Impl.java" />
-        <option value="$PROJECT_DIR$/intellij-facade-api/src/main/java/de/plushnikov/intellij/lombok/util/ReflectionUtil.java" />
-        <option value="$PROJECT_DIR$/intellij-facade-11/src/main/java/de/plushnikov/intellij/lombok/psi/LombokLightParameter11Impl.java" />
         <option value="$PROJECT_DIR$/build.versions.txt" />
-        <option value="$PROJECT_DIR$/lombok-plugin/pom.xml" />
         <option value="$PROJECT_DIR$/pom.xml" />
         <option value="$PROJECT_DIR$/processor-core/src/main/java/de/plushnikov/intellij/lombok/processor/clazz/DataProcessor.java" />
         <option value="$PROJECT_DIR$/intellij-facade-factory/src/main/java/de/plushnikov/intellij/lombok/util/PsiClassUtil.java" />
         <option value="$PROJECT_DIR$/processor-core/src/main/java/de/plushnikov/intellij/lombok/processor/field/GetterFieldProcessor.java" />
         <option value="$PROJECT_DIR$/lombok-plugin/src/main/resources/META-INF/plugin.xml" />
+        <option value="$PROJECT_DIR$/intellij-facade-api/pom.xml" />
+        <option value="$PROJECT_DIR$/intellij-facade-factory/pom.xml" />
+        <option value="$PROJECT_DIR$/lombok-plugin/pom.xml" />
+        <option value="$PROJECT_DIR$/processor-api/pom.xml" />
+        <option value="$PROJECT_DIR$/processor-core/pom.xml" />
+        <option value="$PROJECT_DIR$/intellij-facade-10/src/main/java/de/plushnikov/intellij/lombok/psi/LombokLightParameter10Impl.java" />
+        <option value="$PROJECT_DIR$/intellij-facade-11/src/main/java/de/plushnikov/intellij/lombok/psi/LombokLightParameter11Impl.java" />
+        <option value="$PROJECT_DIR$/intellij-facade-api/src/main/java/de/plushnikov/intellij/lombok/util/ReflectionUtil.java" />
       </list>
     </option>
   </component>
@@ -190,7 +292,7 @@
     <ConfirmationsSetting value="0" id="Remove" />
   </component>
   <component name="ProjectReloadState">
-    <option name="STATE" value="2" />
+    <option name="STATE" value="0" />
   </component>
   <component name="ProjectView">
     <navigator currentView="ProjectPane" proportions="" version="1" splitterProportion="0.5">
@@ -205,8 +307,6 @@
       <sortByType />
     </navigator>
     <panes>
-      <pane id="Scope" />
-      <pane id="PackagesPane" />
       <pane id="ProjectPane">
         <subPane>
           <PATH>
@@ -221,7 +321,17 @@
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
-              <option name="myItemId" value="lombok-plugin" />
+              <option name="myItemId" value="processor-core" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="LombokIntelliJPlugin" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="processor-api" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
@@ -234,12 +344,44 @@
               <option name="myItemId" value="lombok-plugin" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
+          </PATH>
+          <PATH>
             <PATH_ELEMENT>
-              <option name="myItemId" value="target" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+              <option name="myItemId" value="LombokIntelliJPlugin" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
-              <option name="myItemId" value="test-classes" />
+              <option name="myItemId" value="intellij-facade-factory" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="LombokIntelliJPlugin" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="intellij-facade-api" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="LombokIntelliJPlugin" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="intellij-facade-11" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="LombokIntelliJPlugin" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="intellij-facade-11" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
@@ -250,6 +392,14 @@
               <option name="myItemId" value="main" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="java" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="lombok" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
           </PATH>
           <PATH>
             <PATH_ELEMENT>
@@ -257,7 +407,7 @@
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
-              <option name="myItemId" value="lombok-plugin" />
+              <option name="myItemId" value="intellij-facade-11" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
@@ -265,7 +415,7 @@
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
-              <option name="myItemId" value="test" />
+              <option name="myItemId" value="main" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
@@ -273,12 +423,17 @@
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
-              <option name="myItemId" value="plugin" />
+              <option name="myItemId" value="lombok" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="psi" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
         </subPane>
       </pane>
+      <pane id="PackagesPane" />
       <pane id="Scope" />
       <pane id="Favorites" />
     </panes>
@@ -299,9 +454,7 @@
     <property name="project.structure.side.proportion" value="0.3092243" />
     <property name="GenerateAntBuildDialog.outputFileNameProperty" value="lombokintellijplugin" />
     <property name="GoToClass.includeJavaFiles" value="false" />
-    <property name="GenerateAntBuildDialog.outputFileNameProperty" value="lombokintellijplugin" />
     <property name="MemberChooser.copyJavadoc" value="false" />
-    <property name="GoToClass.includeJavaFiles" value="false" />
     <property name="GenerateAntBuildDialog.enableUiFormCompile" value="true" />
     <property name="GoToClass.toSaveIncludeLibraries" value="false" />
     <property name="MemberChooser.showClasses" value="true" />
@@ -334,138 +487,6 @@
       <recent name="de.plushnikov.intellij.lombok.extension" />
       <recent name="de.plushnikov.intellij.plugin.provider" />
     </key>
-  </component>
-  <component name="RestoreUpdateTree">
-    <UpdateInfo date="Moments ago" ActionInfo="_Update">
-      <UpdatedFiles>
-        <FILE-GROUP>
-          <option name="myUpdateName" value="Updated from server" />
-          <option name="myStatusName" value="Changed on server" />
-          <option name="mySupportsDeletion" value="false" />
-          <option name="myCanBeAbsent" value="false" />
-          <option name="myId" value="CHANGED_ON_SERVER" />
-          <FILE-GROUP>
-            <option name="myUpdateName" value="Updated" />
-            <option name="myStatusName" value="Changed" />
-            <option name="mySupportsDeletion" value="false" />
-            <option name="myCanBeAbsent" value="false" />
-            <option name="myId" value="UPDATED" />
-            <PATH vcs="svn" revision="138">D:\projekte\Privat\lombok\lombok-intellj-plugin\lombok-plugin\src\main\assembly\idea-plugin-assembly.xml</PATH>
-            <PATH vcs="svn" revision="138">D:\projekte\Privat\lombok\lombok-intellj-plugin\lombok-plugin\src\main\resources\META-INF\plugin.xml</PATH>
-            <PATH vcs="svn" revision="138">D:\projekte\Privat\lombok\lombok-intellj-plugin\lombok-plugin\pom.xml</PATH>
-            <PATH vcs="svn" revision="138">D:\projekte\Privat\lombok\lombok-intellj-plugin\intellij-facade-factory\pom.xml</PATH>
-            <PATH vcs="svn" revision="138">D:\projekte\Privat\lombok\lombok-intellj-plugin\intellij-facade-9\pom.xml</PATH>
-            <PATH vcs="svn" revision="138">D:\projekte\Privat\lombok\lombok-intellj-plugin\intellij-facade-api\pom.xml</PATH>
-            <PATH vcs="svn" revision="138">D:\projekte\Privat\lombok\lombok-intellj-plugin\processor-core\pom.xml</PATH>
-            <PATH vcs="svn" revision="138">D:\projekte\Privat\lombok\lombok-intellj-plugin\processor-api\pom.xml</PATH>
-            <PATH vcs="svn" revision="138">D:\projekte\Privat\lombok\lombok-intellj-plugin\intellij-facade-10\src\main\java\de\plushnikov\intellij\lombok\psi\LombokLightMethodBuilder10Impl.java</PATH>
-            <PATH vcs="svn" revision="138">D:\projekte\Privat\lombok\lombok-intellj-plugin\intellij-facade-10\src\main\java\de\plushnikov\intellij\lombok\util\PsiPrimitiveTypeUtil10Impl.java</PATH>
-            <PATH vcs="svn" revision="138">D:\projekte\Privat\lombok\lombok-intellj-plugin\intellij-facade-10\pom.xml</PATH>
-            <PATH vcs="svn" revision="138">D:\projekte\Privat\lombok\lombok-intellj-plugin\pom.xml</PATH>
-            <PATH vcs="svn" revision="138">D:\projekte\Privat\lombok\lombok-intellj-plugin\intellij-facade-11\src\main\java\de\plushnikov\intellij\lombok\psi\LombokLightMethodBuilder11Impl.java</PATH>
-            <PATH vcs="svn" revision="138">D:\projekte\Privat\lombok\lombok-intellj-plugin\intellij-facade-11\pom.xml</PATH>
-          </FILE-GROUP>
-          <FILE-GROUP>
-            <option name="myUpdateName" value="Created" />
-            <option name="myStatusName" value="Created" />
-            <option name="mySupportsDeletion" value="false" />
-            <option name="myCanBeAbsent" value="false" />
-            <option name="myId" value="CREATED" />
-            <PATH vcs="svn" revision="138">D:\projekte\Privat\lombok\lombok-intellj-plugin\.idea\libraries\Maven__com_intellij_idea_util_10_5_4.xml</PATH>
-            <PATH vcs="svn" revision="138">D:\projekte\Privat\lombok\lombok-intellj-plugin\.idea\libraries\Maven__com_intellij_idea_openapi_10_5_4.xml</PATH>
-            <PATH vcs="svn" revision="138">D:\projekte\Privat\lombok\lombok-intellj-plugin\.idea\libraries\Maven__com_intellij_idea_annotations_10_5_4.xml</PATH>
-            <PATH vcs="svn" revision="138">D:\projekte\Privat\lombok\lombok-intellj-plugin\.idea\libraries\Maven__com_intellij_idea_extensions_10_5_4.xml</PATH>
-            <PATH vcs="svn" revision="138">D:\projekte\Privat\lombok\lombok-intellj-plugin\.idea\libraries\Maven__com_intellij_idea_idea_10_5_4.xml</PATH>
-            <PATH vcs="svn" revision="138">D:\projekte\Privat\lombok\lombok-intellj-plugin\intellij-facade-10\src\main\java\de\plushnikov\intellij\lombok\psi\LombokLightModifierList10Impl.java</PATH>
-            <PATH vcs="svn" revision="138">D:\projekte\Privat\lombok\lombok-intellj-plugin\intellij-facade-11\src\main\java\de\plushnikov\intellij\lombok\psi\LombokLightModifierList11Impl.java</PATH>
-          </FILE-GROUP>
-          <FILE-GROUP>
-            <option name="myUpdateName" value="Deleted" />
-            <option name="myStatusName" value="Deleted" />
-            <option name="mySupportsDeletion" value="false" />
-            <option name="myCanBeAbsent" value="true" />
-            <option name="myId" value="REMOVED_FROM_REPOSITORY" />
-          </FILE-GROUP>
-          <FILE-GROUP>
-            <option name="myUpdateName" value="Restored" />
-            <option name="myStatusName" value="Will be restored" />
-            <option name="mySupportsDeletion" value="false" />
-            <option name="myCanBeAbsent" value="false" />
-            <option name="myId" value="RESTORED" />
-          </FILE-GROUP>
-        </FILE-GROUP>
-        <FILE-GROUP>
-          <option name="myUpdateName" value="Modified" />
-          <option name="myStatusName" value="Modified" />
-          <option name="mySupportsDeletion" value="false" />
-          <option name="myCanBeAbsent" value="false" />
-          <option name="myId" value="MODIFIED" />
-        </FILE-GROUP>
-        <FILE-GROUP>
-          <option name="myUpdateName" value="Skipped" />
-          <option name="myStatusName" value="Skipped" />
-          <option name="mySupportsDeletion" value="false" />
-          <option name="myCanBeAbsent" value="false" />
-          <option name="myId" value="SKIPPED" />
-        </FILE-GROUP>
-        <FILE-GROUP>
-          <option name="myUpdateName" value="Merged with conflicts" />
-          <option name="myStatusName" value="Will be merged with conflicts" />
-          <option name="mySupportsDeletion" value="false" />
-          <option name="myCanBeAbsent" value="false" />
-          <option name="myId" value="MERGED_WITH_CONFLICTS" />
-        </FILE-GROUP>
-        <FILE-GROUP>
-          <option name="myUpdateName" value="Merged with tree conflicts" />
-          <option name="myStatusName" value="Merged with tree conflicts" />
-          <option name="mySupportsDeletion" value="false" />
-          <option name="myCanBeAbsent" value="false" />
-          <option name="myId" value="MERGED_WITH_TREE_CONFLICT" />
-        </FILE-GROUP>
-        <FILE-GROUP>
-          <option name="myUpdateName" value="Merged" />
-          <option name="myStatusName" value="Will be merged" />
-          <option name="mySupportsDeletion" value="false" />
-          <option name="myCanBeAbsent" value="false" />
-          <option name="myId" value="MERGED" />
-        </FILE-GROUP>
-        <FILE-GROUP>
-          <option name="myUpdateName" value="Not in repository" />
-          <option name="myStatusName" value="Not in repository" />
-          <option name="mySupportsDeletion" value="true" />
-          <option name="myCanBeAbsent" value="false" />
-          <option name="myId" value="UNKNOWN" />
-        </FILE-GROUP>
-        <FILE-GROUP>
-          <option name="myUpdateName" value="Locally added" />
-          <option name="myStatusName" value="Locally added" />
-          <option name="mySupportsDeletion" value="false" />
-          <option name="myCanBeAbsent" value="false" />
-          <option name="myId" value="LOCALLY_ADDED" />
-        </FILE-GROUP>
-        <FILE-GROUP>
-          <option name="myUpdateName" value="Locally removed" />
-          <option name="myStatusName" value="Locally removed" />
-          <option name="mySupportsDeletion" value="false" />
-          <option name="myCanBeAbsent" value="false" />
-          <option name="myId" value="LOCALLY_REMOVED" />
-        </FILE-GROUP>
-        <FILE-GROUP>
-          <option name="myUpdateName" value="Switched" />
-          <option name="myStatusName" value="Switched" />
-          <option name="mySupportsDeletion" value="false" />
-          <option name="myCanBeAbsent" value="false" />
-          <option name="myId" value="SWITCHED" />
-        </FILE-GROUP>
-        <FILE-GROUP>
-          <option name="myUpdateName" value="Merged with property conflicts" />
-          <option name="myStatusName" value="Will be merged with property conflicts" />
-          <option name="mySupportsDeletion" value="false" />
-          <option name="myCanBeAbsent" value="false" />
-          <option name="myId" value="MERGED_WITH_PROPERTY_CONFLICT" />
-        </FILE-GROUP>
-      </UpdatedFiles>
-    </UpdateInfo>
   </component>
   <component name="RunManager" selected="Plugin.Run LombokPlugin">
     <configuration default="false" name="DataTestCase.testDataPlain" type="JUnit" factoryName="JUnit" temporary="true">
@@ -870,6 +891,1470 @@
           <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\processor-core" />
           <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\processor-core" />
         </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\.idea" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\.idea\.name" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\.idea\ant.xml" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\.idea\artifacts" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\.idea\artifacts\ProcessorCore_jar.xml" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\.idea\compiler.xml" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\.idea\copyright" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\.idea\copyright\profiles_settings.xml" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\.idea\encodings.xml" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\.idea\inspectionProfiles" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\.idea\libraries" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\.idea\libraries\Maven__com_intellij_idea_annotations_10_5_4.xml" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\.idea\libraries\Maven__com_intellij_idea_annotations_11_0_1.xml" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\.idea\libraries\Maven__com_intellij_idea_annotations_9_0_4.xml" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\.idea\libraries\Maven__com_intellij_idea_extensions_10_5_4.xml" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\.idea\libraries\Maven__com_intellij_idea_extensions_11_0_1.xml" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\.idea\libraries\Maven__com_intellij_idea_extensions_9_0_4.xml" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\.idea\libraries\Maven__com_intellij_idea_idea_10_5_4.xml" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\.idea\libraries\Maven__com_intellij_idea_idea_11_0_1.xml" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\.idea\libraries\Maven__com_intellij_idea_idea_9_0_4.xml" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\.idea\libraries\Maven__com_intellij_idea_openapi_10_5_4.xml" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\.idea\libraries\Maven__com_intellij_idea_openapi_11_0_1.xml" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\.idea\libraries\Maven__com_intellij_idea_openapi_9_0_4.xml" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\.idea\libraries\Maven__com_intellij_idea_trove_10_5_4.xml" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\.idea\libraries\Maven__com_intellij_idea_trove_11_0_1.xml" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\.idea\libraries\Maven__com_intellij_idea_trove_9_0_4.xml" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\.idea\libraries\Maven__com_intellij_idea_util_10_5_4.xml" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\.idea\libraries\Maven__com_intellij_idea_util_11_0_1.xml" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\.idea\libraries\Maven__com_intellij_idea_util_9_0_4.xml" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\.idea\misc.xml" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\.idea\modules.xml" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\.idea\scopes" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\.idea\scopes\scope_settings.xml" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\.idea\uiDesigner.xml" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\.idea\vcs.xml" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\.idea\workspace.xml" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-10" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-10\intellij-facade-10.iml" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-10\pom.xml" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-10\src" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-10\src\main" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-10\src\main\java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-10\src\main\java\de" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-10\src\main\java\de\plushnikov" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-10\src\main\java\de\plushnikov\intellij" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-10\src\main\java\de\plushnikov\intellij\lombok" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-10\src\main\java\de\plushnikov\intellij\lombok\extension" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-10\src\main\java\de\plushnikov\intellij\lombok\extension\ExtensionRegister10Impl.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-10\src\main\java\de\plushnikov\intellij\lombok\psi" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-10\src\main\java\de\plushnikov\intellij\lombok\psi\LombokLightFieldBuilder10Impl.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-10\src\main\java\de\plushnikov\intellij\lombok\psi\LombokLightMethod10Impl.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-10\src\main\java\de\plushnikov\intellij\lombok\psi\LombokLightMethodBuilder10Impl.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-10\src\main\java\de\plushnikov\intellij\lombok\psi\LombokLightModifierList10Impl.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-10\src\main\java\de\plushnikov\intellij\lombok\psi\LombokLightParameter10Impl.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-10\src\main\java\de\plushnikov\intellij\lombok\psi\LombokLightReferenceListBuilder10Impl.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-10\src\main\java\de\plushnikov\intellij\lombok\quickfix" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-10\src\main\java\de\plushnikov\intellij\lombok\quickfix\LombokAnnotationQuickFix10Impl.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-10\src\main\java\de\plushnikov\intellij\lombok\util" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-10\src\main\java\de\plushnikov\intellij\lombok\util\PsiPrimitiveTypeUtil10Impl.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-11" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-11\intellij-facade-11.iml" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-11\pom.xml" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-11\src" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-11\src\main" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-11\src\main\java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-11\src\main\java\de" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-11\src\main\java\de\plushnikov" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-11\src\main\java\de\plushnikov\intellij" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-11\src\main\java\de\plushnikov\intellij\lombok" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-11\src\main\java\de\plushnikov\intellij\lombok\extension" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-11\src\main\java\de\plushnikov\intellij\lombok\extension\ExtensionRegister11Impl.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-11\src\main\java\de\plushnikov\intellij\lombok\psi" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-11\src\main\java\de\plushnikov\intellij\lombok\psi\LombokLightFieldBuilder11Impl.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-11\src\main\java\de\plushnikov\intellij\lombok\psi\LombokLightMethod11Impl.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-11\src\main\java\de\plushnikov\intellij\lombok\psi\LombokLightMethodBuilder11Impl.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-11\src\main\java\de\plushnikov\intellij\lombok\psi\LombokLightModifierList11Impl.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-11\src\main\java\de\plushnikov\intellij\lombok\psi\LombokLightParameter11Impl.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-11\src\main\java\de\plushnikov\intellij\lombok\quickfix" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-11\src\main\java\de\plushnikov\intellij\lombok\quickfix\LombokAnnotationQuickFix11Impl.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-11\src\main\java\de\plushnikov\intellij\lombok\util" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-11\src\main\java\de\plushnikov\intellij\lombok\util\PsiPrimitiveTypeUtil11Impl.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-9" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-9\intellij-facade-9.iml" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-9\pom.xml" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-9\src" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-9\src\main" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-9\src\main\java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-9\src\main\java\de" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-9\src\main\java\de\plushnikov" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-9\src\main\java\de\plushnikov\intellij" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-9\src\main\java\de\plushnikov\intellij\lombok" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-9\src\main\java\de\plushnikov\intellij\lombok\extension" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-9\src\main\java\de\plushnikov\intellij\lombok\extension\ExtensionRegister9Impl.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-9\src\main\java\de\plushnikov\intellij\lombok\psi" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-9\src\main\java\de\plushnikov\intellij\lombok\psi\LombokLightFieldBuilder9Impl.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-9\src\main\java\de\plushnikov\intellij\lombok\psi\LombokLightMethod9Impl.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-9\src\main\java\de\plushnikov\intellij\lombok\psi\LombokLightMethodBuilder9Impl.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-9\src\main\java\de\plushnikov\intellij\lombok\psi\LombokLightModifierList.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-9\src\main\java\de\plushnikov\intellij\lombok\psi\LombokLightParameter.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-9\src\main\java\de\plushnikov\intellij\lombok\psi\LombokLightParameterListBuilder.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-9\src\main\java\de\plushnikov\intellij\lombok\psi\LombokLightReferenceListBuilder.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-9\src\main\java\de\plushnikov\intellij\lombok\psi\LombokLightVariableBuilder.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-9\src\main\java\de\plushnikov\intellij\lombok\quickfix" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-9\src\main\java\de\plushnikov\intellij\lombok\quickfix\LombokAnnotationQuickFix9Impl.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-9\src\main\java\de\plushnikov\intellij\lombok\util" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-9\src\main\java\de\plushnikov\intellij\lombok\util\PsiPrimitiveTypeUtil9Impl.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-api" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-api\intellij-facade-api.iml" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-api\pom.xml" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-api\src" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-api\src\main" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-api\src\main\java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-api\src\main\java\de" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-api\src\main\java\de\plushnikov" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-api\src\main\java\de\plushnikov\intellij" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-api\src\main\java\de\plushnikov\intellij\lombok" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-api\src\main\java\de\plushnikov\intellij\lombok\extension" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-api\src\main\java\de\plushnikov\intellij\lombok\extension\ExtensionRegister.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-api\src\main\java\de\plushnikov\intellij\lombok\extension\LombokElementRenameHandler.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-api\src\main\java\de\plushnikov\intellij\lombok\extension\LombokLightMethodTreeGenerator.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-api\src\main\java\de\plushnikov\intellij\lombok\psi" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-api\src\main\java\de\plushnikov\intellij\lombok\psi\LombokLightFieldBuilder.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-api\src\main\java\de\plushnikov\intellij\lombok\psi\LombokLightMethod.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-api\src\main\java\de\plushnikov\intellij\lombok\psi\LombokLightMethodBuilder.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-api\src\main\java\de\plushnikov\intellij\lombok\quickfix" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-api\src\main\java\de\plushnikov\intellij\lombok\quickfix\LombokQuickFix.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-api\src\main\java\de\plushnikov\intellij\lombok\util" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-api\src\main\java\de\plushnikov\intellij\lombok\util\PsiPrimitiveTypeUtil.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-api\src\main\java\de\plushnikov\intellij\lombok\util\ReflectionUtil.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-factory" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-factory\intellij-facade-factory.iml" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-factory\pom.xml" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-factory\src" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-factory\src\main" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-factory\src\main\java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-factory\src\main\java\de" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-factory\src\main\java\de\plushnikov" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-factory\src\main\java\de\plushnikov\intellij" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-factory\src\main\java\de\plushnikov\intellij\lombok" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-factory\src\main\java\de\plushnikov\intellij\lombok\extension" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-factory\src\main\java\de\plushnikov\intellij\lombok\extension\LombokExtensionRegisterFactory.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-factory\src\main\java\de\plushnikov\intellij\lombok\psi" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-factory\src\main\java\de\plushnikov\intellij\lombok\psi\LombokPsiElementFactory.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-factory\src\main\java\de\plushnikov\intellij\lombok\quickfix" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-factory\src\main\java\de\plushnikov\intellij\lombok\quickfix\ChangeAnnotationParameterQuickFix.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-factory\src\main\java\de\plushnikov\intellij\lombok\quickfix\CreateFieldQuickFix.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-factory\src\main\java\de\plushnikov\intellij\lombok\quickfix\PsiQuickFixFactory.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-factory\src\main\java\de\plushnikov\intellij\lombok\util" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-factory\src\main\java\de\plushnikov\intellij\lombok\util\IntelliJVersion.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-factory\src\main\java\de\plushnikov\intellij\lombok\util\IntelliJVersionRangeUtil.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-factory\src\main\java\de\plushnikov\intellij\lombok\util\LombokProcessorUtil.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-factory\src\main\java\de\plushnikov\intellij\lombok\util\PsiAnnotationUtil.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-factory\src\main\java\de\plushnikov\intellij\lombok\util\PsiClassUtil.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-factory\src\main\java\de\plushnikov\intellij\lombok\util\PsiElementUtil.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-factory\src\main\java\de\plushnikov\intellij\lombok\util\PsiFieldUtil.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-factory\src\main\java\de\plushnikov\intellij\lombok\util\PsiMethodUtil.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\intellij-facade-factory\src\main\java\de\plushnikov\intellij\lombok\util\PsiPrimitiveTypeFactory.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\LICENSE.txt" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\lombok-plugin.iml" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\pom.xml" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\main" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\main\assembly" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\main\assembly\idea-plugin-assembly.xml" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\main\java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\main\java\de" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\main\java\de\plushnikov" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\main\java\de\plushnikov\intellij" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\main\java\de\plushnikov\intellij\plugin" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\main\java\de\plushnikov\intellij\plugin\core" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\main\java\de\plushnikov\intellij\plugin\core\GenericServiceLocator.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\main\java\de\plushnikov\intellij\plugin\handler" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\main\java\de\plushnikov\intellij\plugin\inspection" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\main\java\de\plushnikov\intellij\plugin\inspection\LombokInspection.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\main\java\de\plushnikov\intellij\plugin\LombokLoader.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\main\java\de\plushnikov\intellij\plugin\provider" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\main\java\de\plushnikov\intellij\plugin\provider\LombokAugmentProvider.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\main\java\de\plushnikov\intellij\plugin\provider\LombokImplicitUsageProvider.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\main\java\de\plushnikov\intellij\plugin\provider\LombokInspectionProvider.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\main\resources" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\main\resources\inspectionDescriptions" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\main\resources\inspectionDescriptions\Lombok.html" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\main\resources\META-INF" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\main\resources\META-INF\plugin.xml" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\java\de" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\java\de\plushnikov" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\java\de\plushnikov\lombok" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\java\de\plushnikov\lombok\LombokParsingTestCase.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\java\de\plushnikov\lombok\tests" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\java\de\plushnikov\lombok\tests\DataTestCase.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\java\de\plushnikov\lombok\tests\DelegateTestCase.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\java\de\plushnikov\lombok\tests\EqualsAndHashCodeTestCase.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\java\de\plushnikov\lombok\tests\GetterTestCase.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\java\de\plushnikov\lombok\tests\IntelliJLombokPluginTestCase.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\java\de\plushnikov\lombok\tests\LoggerTestCase.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\java\de\plushnikov\lombok\tests\SetterTestCase.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\java\de\plushnikov\lombok\tests\ToStringTestCase.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\after" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\after\ClassNamedAfterGetter.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\after\CommentsInterspersed.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\after\Constructors.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\after\DataExtended.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\after\DataIgnore.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\after\DataOnEnum.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\after\DataOnLocalClass.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\after\DataPlain.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\after\DataStaticConstructor.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\after\DataWithGetter.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\after\DataWithGetterNone.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\after\DelegateTypesAndExcludes.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\after\EqualsAndHashCode.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\after\EqualsAndHashCodeWithExistingMethods.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\after\GetterAccessLevel.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\after\GetterAlreadyExists.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\after\GetterBoolean.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\after\GetterLazy.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\after\GetterLazyEahcToString.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\after\GetterLazyInvalid.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\after\GetterLazyNative.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\after\GetterOnClass.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\after\GetterOnStatic.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\after\GetterPlain.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\after\GetterWithDollar.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\after\LoggerCommons.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\after\LoggerJul.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\after\LoggerLog4j.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\after\LoggerSlf4j.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\after\LoggerSlf4jAlreadyExists.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\after\LoggerSlf4jOnNonType.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\after\LoggerSlf4jTypes.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\after\LoggerSlf4jWithPackage.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\after\MultiFieldGetter.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\after\NonNullPlain.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\after\SetterAccessLevel.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\after\SetterAlreadyExists.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\after\SetterOnClass.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\after\SetterOnStatic.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\after\SetterPlain.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\after\SetterWithDollar.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\after\SynchronizedName.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\after\SynchronizedPlain.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\after\ToStringInner.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\after\ToStringPlain.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\before" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\before\ClassNamedAfterGetter.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\before\CommentsInterspersed.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\before\Constructors.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\before\DataExtended.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\before\DataIgnore.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\before\DataOnEnum.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\before\DataOnLocalClass.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\before\DataPlain.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\before\DataStaticConstructor.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\before\DataWithGetter.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\before\DataWithGetterNone.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\before\DelegateTypesAndExcludes.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\before\EqualsAndHashCode.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\before\EqualsAndHashCodeWithExistingMethods.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\before\GetterAccessLevel.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\before\GetterAlreadyExists.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\before\GetterBoolean.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\before\GetterLazy.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\before\GetterLazyEahcToString.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\before\GetterLazyInvalid.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\before\GetterLazyNative.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\before\GetterOnClass.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\before\GetterOnStatic.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\before\GetterPlain.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\before\GetterWithDollar.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\before\LoggerCommons.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\before\LoggerJul.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\before\LoggerLog4j.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\before\LoggerSlf4j.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\before\LoggerSlf4jAlreadyExists.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\before\LoggerSlf4jOnNonType.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\before\LoggerSlf4jTypes.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\before\LoggerSlf4jWithPackage.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\before\MultiFieldGetter.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\before\NonNullPlain.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\before\SetterAccessLevel.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\before\SetterAlreadyExists.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\before\SetterOnClass.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\before\SetterOnStatic.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\before\SetterPlain.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\before\SetterWithDollar.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\before\SynchronizedName.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\before\SynchronizedPlain.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\before\ToStringInner.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\lombok-plugin\src\test\resources\data\before\ToStringPlain.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\pom.xml" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-api" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-api\pom.xml" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-api\processor-api.iml" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-api\src" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-api\src\main" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-api\src\main\java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-api\src\main\java\de" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-api\src\main\java\de\plushnikov" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-api\src\main\java\de\plushnikov\intellij" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-api\src\main\java\de\plushnikov\intellij\lombok" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-api\src\main\java\de\plushnikov\intellij\lombok\LombokConstants.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-api\src\main\java\de\plushnikov\intellij\lombok\problem" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-api\src\main\java\de\plushnikov\intellij\lombok\problem\LombokProblem.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-api\src\main\java\de\plushnikov\intellij\lombok\problem\ProblemBuilder.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-api\src\main\java\de\plushnikov\intellij\lombok\problem\ProblemEmptyBuilder.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-api\src\main\java\de\plushnikov\intellij\lombok\problem\ProblemNewBuilder.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-api\src\main\java\de\plushnikov\intellij\lombok\processor" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-api\src\main\java\de\plushnikov\intellij\lombok\processor\clazz" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-api\src\main\java\de\plushnikov\intellij\lombok\processor\clazz\LombokClassProcessor.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-api\src\main\java\de\plushnikov\intellij\lombok\processor\field" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-api\src\main\java\de\plushnikov\intellij\lombok\processor\field\LombokFieldProcessor.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-api\src\main\java\de\plushnikov\intellij\lombok\processor\LombokProcessor.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-api\src\main\java\de\plushnikov\intellij\lombok\UserMapKeys.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-core" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-core\pom.xml" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-core\processor-core.iml" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-core\src" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-core\src\main" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-core\src\main\java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-core\src\main\java\de" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-core\src\main\java\de\plushnikov" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-core\src\main\java\de\plushnikov\intellij" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-core\src\main\java\de\plushnikov\intellij\lombok" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-core\src\main\java\de\plushnikov\intellij\lombok\processor" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-core\src\main\java\de\plushnikov\intellij\lombok\processor\AbstractLombokProcessor.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-core\src\main\java\de\plushnikov\intellij\lombok\processor\clazz" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-core\src\main\java\de\plushnikov\intellij\lombok\processor\clazz\AbstractLombokClassProcessor.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-core\src\main\java\de\plushnikov\intellij\lombok\processor\clazz\constructor" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-core\src\main\java\de\plushnikov\intellij\lombok\processor\clazz\constructor\AbstractConstructorClassProcessor.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-core\src\main\java\de\plushnikov\intellij\lombok\processor\clazz\constructor\AllArgsConstructorProcessor.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-core\src\main\java\de\plushnikov\intellij\lombok\processor\clazz\constructor\NoArgsConstructorProcessor.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-core\src\main\java\de\plushnikov\intellij\lombok\processor\clazz\constructor\RequiredArgsConstructorProcessor.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-core\src\main\java\de\plushnikov\intellij\lombok\processor\clazz\DataProcessor.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-core\src\main\java\de\plushnikov\intellij\lombok\processor\clazz\EqualsAndHashCodeProcessor.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-core\src\main\java\de\plushnikov\intellij\lombok\processor\clazz\FluentSetterProcessor.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-core\src\main\java\de\plushnikov\intellij\lombok\processor\clazz\GetterProcessor.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-core\src\main\java\de\plushnikov\intellij\lombok\processor\clazz\log" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-core\src\main\java\de\plushnikov\intellij\lombok\processor\clazz\log\AbstractLogProcessor.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-core\src\main\java\de\plushnikov\intellij\lombok\processor\clazz\log\CommonsLogProcessor.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-core\src\main\java\de\plushnikov\intellij\lombok\processor\clazz\log\Log4jProcessor.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-core\src\main\java\de\plushnikov\intellij\lombok\processor\clazz\log\LogProcessor.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-core\src\main\java\de\plushnikov\intellij\lombok\processor\clazz\log\Slf4jProcessor.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-core\src\main\java\de\plushnikov\intellij\lombok\processor\clazz\SetterProcessor.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-core\src\main\java\de\plushnikov\intellij\lombok\processor\clazz\ToStringProcessor.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-core\src\main\java\de\plushnikov\intellij\lombok\processor\CleanupProcessor.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-core\src\main\java\de\plushnikov\intellij\lombok\processor\field" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-core\src\main\java\de\plushnikov\intellij\lombok\processor\field\AbstractLombokFieldProcessor.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-core\src\main\java\de\plushnikov\intellij\lombok\processor\field\DelegateFieldProcessor.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-core\src\main\java\de\plushnikov\intellij\lombok\processor\field\FluentSetterFieldProcessor.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-core\src\main\java\de\plushnikov\intellij\lombok\processor\field\GetterFieldProcessor.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-core\src\main\java\de\plushnikov\intellij\lombok\processor\field\LazyGetterFieldProcessor.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-core\src\main\java\de\plushnikov\intellij\lombok\processor\field\SetterFieldProcessor.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-core\src\main\java\de\plushnikov\intellij\lombok\processor\SynchronizedProcessor.java" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-core\src\main\resources" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-core\src\main\resources\META-INF" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-core\src\main\resources\META-INF\MANIFEST.MF" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-core\src\main\resources\META-INF\services" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-core\src\main\resources\META-INF\services\de.plushnikov.intellij.lombok.processor.clazz.LombokClassProcessor" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-core\src\main\resources\META-INF\services\de.plushnikov.intellij.lombok.processor.field.LombokFieldProcessor" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout\processor-core\src\main\resources\META-INF\services\de.plushnikov.intellij.lombok.processor.LombokProcessor" />
+        </SvnCopyRootSimple>
       </list>
     </option>
     <option name="myMoreRealMappingRoots">
@@ -877,6 +2362,10 @@
         <SvnCopyRootSimple>
           <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
           <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+        </SvnCopyRootSimple>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin" />
+          <option name="myCopyRoot" value="D:\Projekte\lombok\LombokIntelliJPlugin\working\checkout" />
         </SvnCopyRootSimple>
       </list>
     </option>
@@ -913,33 +2402,31 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="54" y="-8" width="1874" height="1096" extended-state="6" />
-    <editor active="false" />
+    <editor active="true" />
     <layout>
       <window_info id="Data Sources" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32979852" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Palette" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32942432" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.146328" sideWeight="0.6733828" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3400853" sideWeight="0.49779007" order="3" side_tool="false" content_ui="tabs" />
-      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.5490405" sideWeight="0.49834254" order="7" side_tool="true" content_ui="tabs" />
+      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32978722" sideWeight="0.0" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3272921" sideWeight="0.49779007" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32942432" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="true" content_ui="tabs" />
-      <window_info id="Maven Projects" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.16353591" sideWeight="0.58848614" order="3" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="true" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.29447514" sideWeight="0.58848614" order="0" side_tool="false" content_ui="tabs" />
+      <window_info id="Maven Projects" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.18895027" sideWeight="0.65991473" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.2640884" sideWeight="0.65991473" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.41151386" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="JavaRebel Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="IDEtalk Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
-      <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="IDEtalk" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="JavaRebel" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Atlassian " active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
-      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32942432" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Dependency Viewer" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
@@ -979,7 +2466,7 @@
     <option name="INCLUDE_TEXT_INTO_SHELF" value="false" />
     <option name="CREATE_PATCH_EXPAND_DETAILS_DEFAULT" value="true" />
     <option name="FORCE_NON_EMPTY_COMMENT" value="false" />
-    <option name="LAST_COMMIT_MESSAGE" value="updated intellij project files" />
+    <option name="LAST_COMMIT_MESSAGE" value="update maven build configuration" />
     <option name="MAKE_NEW_CHANGELIST_ACTIVE" value="false" />
     <option name="OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT" value="true" />
     <option name="CHECK_FILES_UP_TO_DATE_BEFORE_COMMIT" value="false" />
@@ -992,9 +2479,6 @@
     <option name="UPDATE_GROUP_BY_CHANGELIST" value="false" />
     <option name="SHOW_FILE_HISTORY_AS_TREE" value="false" />
     <option name="FILE_HISTORY_SPLITTER_PROPORTION" value="0.6" />
-    <MESSAGE value="fix maven configuration for provided dependecies (all intellij deps should be provided)" />
-    <MESSAGE value="changed maven configuration for intellij dependecies: install intellij-deps into local repository" />
-    <MESSAGE value="update lombok-maven-plugin version&#10;update junit version" />
     <MESSAGE value="simplified Processor-constructors" />
     <MESSAGE value="support for LazyGetter annotation from lombok-pg (issue #12)" />
     <MESSAGE value="support for FluentSetter annotation from lombok-pg (issue #12)" />
@@ -1017,6 +2501,9 @@
     <MESSAGE value="added change-notes" />
     <MESSAGE value="intellij project files" />
     <MESSAGE value="updated intellij project files" />
+    <MESSAGE value="update intellij project files" />
+    <MESSAGE value="fix reflection access for intellij ultimate" />
+    <MESSAGE value="update maven build configuration" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager />
@@ -1045,62 +2532,42 @@
     </option>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/processor-core/src/main/java/de/plushnikov/intellij/lombok/processor/clazz/DataProcessor.java">
+    <entry file="file://$PROJECT_DIR$/lombok-plugin/src/test/java/de/plushnikov/lombok/LombokParsingTestCase.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="75" column="48" selection-start="3494" selection-end="3494" vertical-scroll-proportion="0.0" />
+        <state line="227" column="0" selection-start="9631" selection-end="9631" vertical-scroll-proportion="2.6433334" />
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/processor-core/src/main/java/de/plushnikov/intellij/lombok/processor/field/LazyGetterFieldProcessor.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="13" column="13" selection-start="366" selection-end="366" vertical-scroll-proportion="0.0" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/lombok-plugin/src/test/resources/data/after/GetterLazy.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="10" column="34" selection-start="361" selection-end="361" vertical-scroll-proportion="0.0" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/lombok-plugin/src/test/resources/data/before/GetterLazyInvalid.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="7" column="13" selection-start="179" selection-end="179" vertical-scroll-proportion="0.0" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/lombok-plugin/src/test/resources/data/after/GetterLazyInvalid.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="14" column="36" selection-start="211" selection-end="211" vertical-scroll-proportion="0.26067907" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/processor-core/src/main/java/de/plushnikov/intellij/lombok/processor/field/GetterFieldProcessor.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="64" column="72" selection-start="2611" selection-end="2611" vertical-scroll-proportion="0.19333333" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/lombok-plugin/src/test/java/de/plushnikov/lombok/tests/DataTestCase.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="14" column="4" selection-start="263" selection-end="263" vertical-scroll-proportion="0.0" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/lombok-plugin/src/test/java/de/plushnikov/lombok/tests/GetterTestCase.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="39" column="0" selection-start="618" selection-end="618" vertical-scroll-proportion="0.0" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/lombok-plugin/src/test/resources/data/before/GetterLazyNative.java">
+    <entry file="file://$PROJECT_DIR$/lombok-plugin/lombok-plugin.iml">
       <provider selected="true" editor-type-id="text-editor">
         <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0" />
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/lombok-plugin/src/test/resources/data/before/GetterLazyEahcToString.java">
+    <entry file="file://$PROJECT_DIR$/intellij-facade-api/pom.xml">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0" />
+        <state line="34" column="14" selection-start="1035" selection-end="1035" vertical-scroll-proportion="0.0" />
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/lombok-plugin/src/test/resources/data/before/GetterLazy.java">
+    <entry file="file://$PROJECT_DIR$/intellij-facade-factory/pom.xml">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0" />
+        <state line="64" column="21" selection-start="1960" selection-end="1960" vertical-scroll-proportion="0.0" />
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/lombok-plugin/src/test/resources/data/after/GetterLazyNative.java">
+    <entry file="file://$PROJECT_DIR$/lombok-plugin/pom.xml">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="98" column="21" selection-start="2974" selection-end="2974" vertical-scroll-proportion="0.0" />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/processor-api/pom.xml">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="42" column="21" selection-start="1422" selection-end="1422" vertical-scroll-proportion="0.0" />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/processor-core/pom.xml">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="63" column="21" selection-start="2067" selection-end="2067" vertical-scroll-proportion="0.0" />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/intellij-facade-11/pom.xml">
       <provider selected="true" editor-type-id="text-editor">
         <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0" />
       </provider>
@@ -1110,19 +2577,56 @@
         <state line="36" column="36" selection-start="1441" selection-end="1441" vertical-scroll-proportion="0.0" />
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/lombok-plugin/src/test/java/de/plushnikov/lombok/LombokParsingTestCase.java">
+    <entry file="file://$PROJECT_DIR$/intellij-facade-10/pom.xml">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="227" column="0" selection-start="9631" selection-end="9631" vertical-scroll-proportion="2.6433334" />
+        <state line="22" column="23" selection-start="802" selection-end="802" vertical-scroll-proportion="0.0" />
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/lombok-plugin/pom.xml">
+    <entry file="file://$PROJECT_DIR$/pom.xml">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="128" column="0" selection-start="4296" selection-end="4296" vertical-scroll-proportion="0.0" />
+        <state line="412" column="23" selection-start="15674" selection-end="15674" vertical-scroll-proportion="0.0">
+          <folding>
+            <element signature="tag#profile#0;tag#profiles#0;tag#project#0" expanded="false" />
+            <element signature="tag#profile#1;tag#profiles#0;tag#project#0" expanded="false" />
+            <element signature="tag#profile#2;tag#profiles#0;tag#project#0" expanded="false" />
+            <element signature="tag#profile#5;tag#profiles#0;tag#project#0" expanded="false" />
+          </folding>
+        </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/lombok-plugin/lombok-plugin.iml">
+    <entry file="file://$PROJECT_DIR$/intellij-facade-10/src/main/java/de/plushnikov/intellij/lombok/psi/LombokLightModifierList10Impl.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0" />
+        <state line="31" column="9" selection-start="1200" selection-end="1200" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/intellij-facade-10/src/main/java/de/plushnikov/intellij/lombok/psi/LombokLightParameter10Impl.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="25" column="19" selection-start="1047" selection-end="1047" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/intellij-facade-11/src/main/java/de/plushnikov/intellij/lombok/psi/LombokLightModifierList11Impl.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="30" column="0" selection-start="1065" selection-end="1065" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/intellij-facade-api/src/main/java/de/plushnikov/intellij/lombok/util/ReflectionUtil.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="18" column="16" selection-start="605" selection-end="605" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/intellij-facade-11/src/main/java/de/plushnikov/intellij/lombok/psi/LombokLightParameter11Impl.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="43" column="16" selection-start="1758" selection-end="1758" vertical-scroll-proportion="0.60918254">
+          <folding />
+        </state>
       </provider>
     </entry>
   </component>
@@ -1167,7 +2671,7 @@
       </state>
       <state key="JdkListConfigurable.UI">
         <settings>
-          <last-edited>IDEA IC-111.167(11.0.1)</last-edited>
+          <last-edited>IDEA IU-111.167</last-edited>
           <splitter-proportions>
             <option name="proportions">
               <list>
@@ -1179,12 +2683,11 @@
       </state>
       <state key="ModuleStructureConfigurable.UI">
         <settings>
-          <last-edited>intellij-facade-10</last-edited>
+          <last-edited>lombok-plugin</last-edited>
           <splitter-proportions>
             <option name="proportions">
               <list>
                 <option value="0.3092243" />
-                <option value="0.5" />
               </list>
             </option>
           </splitter-proportions>
