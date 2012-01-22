@@ -12,6 +12,7 @@ import de.plushnikov.intellij.lombok.problem.ProblemEmptyBuilder;
 import de.plushnikov.intellij.lombok.processor.clazz.constructor.RequiredArgsConstructorProcessor;
 import de.plushnikov.intellij.lombok.quickfix.PsiQuickFixFactory;
 import de.plushnikov.intellij.lombok.util.PsiAnnotationUtil;
+import de.plushnikov.intellij.lombok.util.PsiClassUtil;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -75,15 +76,20 @@ public class DataProcessor extends AbstractLombokClassProcessor {
     if (PsiAnnotationUtil.isNotAnnotatedWith(psiClass, ToString.class)) {
       target.addAll((Collection<? extends Psi>) new ToStringProcessor().createToStringMethod(psiClass, psiAnnotation));
     }
+    // create required constructor only if there are no other constructor annotations
     if (PsiAnnotationUtil.isNotAnnotatedWith(psiClass, NoArgsConstructor.class, RequiredArgsConstructor.class, AllArgsConstructor.class)) {
-      final RequiredArgsConstructorProcessor requiredArgsConstructorProcessor = new RequiredArgsConstructorProcessor();
+      final PsiMethod[] definedConstructors = PsiClassUtil.collectClassConstructorIntern(psiClass);
+      // and only if there are no any other constructors!
+      if (0 == definedConstructors.length) {
+        final RequiredArgsConstructorProcessor requiredArgsConstructorProcessor = new RequiredArgsConstructorProcessor();
 
-      final String staticName = PsiAnnotationUtil.getAnnotationValue(psiAnnotation, "staticConstructor", String.class);
-      final Collection<PsiField> requiredFields = requiredArgsConstructorProcessor.getRequiredFields(psiClass);
+        final String staticName = PsiAnnotationUtil.getAnnotationValue(psiAnnotation, "staticConstructor", String.class);
+        final Collection<PsiField> requiredFields = requiredArgsConstructorProcessor.getRequiredFields(psiClass);
 
-      if (requiredArgsConstructorProcessor.validateIsConstructorDefined(psiClass, staticName, requiredFields, ProblemEmptyBuilder.getInstance())) {
-        target.addAll((Collection<? extends Psi>) requiredArgsConstructorProcessor.createRequiredArgsConstructor(
-            psiClass, PsiModifier.PUBLIC, psiAnnotation, staticName));
+        if (requiredArgsConstructorProcessor.validateIsConstructorDefined(psiClass, staticName, requiredFields, ProblemEmptyBuilder.getInstance())) {
+          target.addAll((Collection<? extends Psi>) requiredArgsConstructorProcessor.createRequiredArgsConstructor(
+              psiClass, PsiModifier.PUBLIC, psiAnnotation, staticName));
+        }
       }
     }
   }
