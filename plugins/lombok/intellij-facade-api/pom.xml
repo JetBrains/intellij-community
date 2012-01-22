@@ -5,7 +5,7 @@
   <parent>
     <groupId>de.plushnikov.lombok-intellij-plugin</groupId>
     <artifactId>parent</artifactId>
-    <version>0.3</version>
+    <version>0.4-SNAPSHOT</version>
   </parent>
 
   <artifactId>intellij-facade-api</artifactId>
