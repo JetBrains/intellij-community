@@ -728,6 +728,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     if (settings != null) {
       invalidateConfigurationIcon(settings);
       settings.setTemporary(false);
+      fireRunConfigurationChanged(settings);
     }
   }
 
@@ -870,11 +871,13 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   }
 
   public void shareConfiguration(final RunConfiguration runConfiguration, final boolean shareConfiguration) {
+    RunnerAndConfigurationSettings settings = getSettings(runConfiguration);
+    boolean shouldFire = settings != null && isConfigurationShared(settings) != shareConfiguration;
+
     if (shareConfiguration && isTemporary(runConfiguration)) makeStable(runConfiguration);
     mySharedConfigurations.put(runConfiguration.getUniqueID(), shareConfiguration);
 
-    RunnerAndConfigurationSettings settings = getSettings(runConfiguration);
-    if (settings != null) fireRunConfigurationChanged(settings);
+    if (shouldFire) fireRunConfigurationChanged(settings);
   }
 
   public final void setBeforeRunTasks(final RunConfiguration runConfiguration, Map<Key<? extends BeforeRunTask>, BeforeRunTask> tasks) {
