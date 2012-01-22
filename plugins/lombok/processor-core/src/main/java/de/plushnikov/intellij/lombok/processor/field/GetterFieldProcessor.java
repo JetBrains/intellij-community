@@ -8,7 +8,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiType;
+import de.plushnikov.intellij.lombok.LombokConstants;
 import de.plushnikov.intellij.lombok.UserMapKeys;
 import de.plushnikov.intellij.lombok.problem.ProblemBuilder;
 import de.plushnikov.intellij.lombok.psi.LombokLightMethodBuilder;
@@ -54,11 +56,11 @@ public class GetterFieldProcessor extends AbstractLombokFieldProcessor {
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiField psiField, @NotNull ProblemBuilder builder) {
     boolean result;
 
-    final String methodVisibity = LombokProcessorUtil.getMethodModifier(psiAnnotation);
-    result = null != methodVisibity;
+    final String methodVisibility = LombokProcessorUtil.getMethodModifier(psiAnnotation);
+    result = null != methodVisibility;
 
     final boolean lazy = isLazyGetter(psiAnnotation);
-    if (null == methodVisibity && lazy) {
+    if (null == methodVisibility && lazy) {
       builder.addWarning("'lazy' does not work with AccessLevel.NONE.");
     }
 
@@ -113,10 +115,6 @@ public class GetterFieldProcessor extends AbstractLombokFieldProcessor {
     final PsiType booleanType = PsiPrimitiveTypeFactory.getInstance().getBooleanType();
     String methodName = TransformationsUtil.toGetterName(fieldName, booleanType.equals(psiReturnType));
 
-//    final Collection<String> annotationsToCopy = PsiAnnotationUtil.collectAnnotationsToCopy(psiField, LombokConstants.NON_NULL_PATTERN);
-//    final String annotationsString = PsiAnnotationUtil.buildAnnotationsString(annotationsToCopy);
-    //TODO adapt annotations
-
     PsiClass psiClass = psiField.getContainingClass();
     assert psiClass != null;
 
@@ -131,6 +129,13 @@ public class GetterFieldProcessor extends AbstractLombokFieldProcessor {
     }
     if (psiField.hasModifierProperty(PsiModifier.STATIC)) {
       method.withModifier(PsiModifier.STATIC);
+    }
+
+    PsiModifierList methodParameterModifierList = method.getModifierList();
+    final Collection<String> annotationsToCopy = PsiAnnotationUtil.collectAnnotationsToCopy(psiField,
+        LombokConstants.NON_NULL_PATTERN, LombokConstants.NULLABLE_PATTERN);
+    for (String annotationFQN : annotationsToCopy) {
+      methodParameterModifierList.addAnnotation(annotationFQN);
     }
     return method;
   }

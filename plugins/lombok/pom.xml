@@ -198,6 +198,21 @@
                   <version>${idea9.version}</version>
                 </configuration>
               </execution>
+              <execution>
+                <id>install_trove9</id>
+                <phase>initialize</phase>
+                <goals>
+                  <goal>install-file</goal>
+                </goals>
+                <configuration>
+                  <file>${idea9.home}/lib/trove4j.jar</file>
+                  <sources>${idea9.home}/lib/trove4j_src.jar</sources>
+                  <groupId>com.intellij.idea</groupId>
+                  <artifactId>trove</artifactId>
+                  <packaging>jar</packaging>
+                  <version>${idea9.version}</version>
+                </configuration>
+              </execution>
               <!-- Install IntelliJ 10 artifacts-->
               <execution>
                 <id>install_openapi10</id>
@@ -269,6 +284,21 @@
                   <version>${idea10.version}</version>
                 </configuration>
               </execution>
+              <execution>
+                <id>install_trove10</id>
+                <phase>initialize</phase>
+                <goals>
+                  <goal>install-file</goal>
+                </goals>
+                <configuration>
+                  <file>${idea10.home}/lib/trove4j.jar</file>
+                  <sources>${idea10.home}/lib/trove4j_src.jar</sources>
+                  <groupId>com.intellij.idea</groupId>
+                  <artifactId>trove</artifactId>
+                  <packaging>jar</packaging>
+                  <version>${idea10.version}</version>
+                </configuration>
+              </execution>
               <!-- Install IntelliJ 11 artifacts-->
               <execution>
                 <id>install_openapi11</id>
@@ -336,6 +366,21 @@
                   <file>${idea11.home}/lib/idea.jar</file>
                   <groupId>com.intellij.idea</groupId>
                   <artifactId>idea</artifactId>
+                  <packaging>jar</packaging>
+                  <version>${idea11.version}</version>
+                </configuration>
+              </execution>
+              <execution>
+                <id>install_trove11</id>
+                <phase>initialize</phase>
+                <goals>
+                  <goal>install-file</goal>
+                </goals>
+                <configuration>
+                  <file>${idea11.home}/lib/trove4j.jar</file>
+                  <sources>${idea11.home}/lib/trove4j_src.jar</sources>
+                  <groupId>com.intellij.idea</groupId>
+                  <artifactId>trove</artifactId>
                   <packaging>jar</packaging>
                   <version>${idea11.version}</version>
                 </configuration>

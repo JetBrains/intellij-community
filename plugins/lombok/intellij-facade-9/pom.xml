@@ -49,5 +49,11 @@
       <version>${idea9.version}</version>
       <scope>provided</scope>
     </dependency>
+    <dependency>
+      <groupId>com.intellij.idea</groupId>
+      <artifactId>trove</artifactId>
+      <version>${idea9.version}</version>
+      <scope>provided</scope>
+    </dependency>
   </dependencies>
 </project>

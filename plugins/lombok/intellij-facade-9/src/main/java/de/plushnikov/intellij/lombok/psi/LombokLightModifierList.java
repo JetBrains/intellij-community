@@ -2,9 +2,11 @@ package de.plushnikov.intellij.lombok.psi;
 
 import com.intellij.lang.Language;
 import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.Modifier;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -13,11 +15,14 @@ import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -30,11 +35,13 @@ public class LombokLightModifierList extends LightElement implements PsiModifier
 
   private final Set<String> myModifiers;
   private final PsiElement myParentElement;
+  private final Map<String, PsiAnnotation> myAnnotations;
 
   public LombokLightModifierList(@NotNull PsiManager manager, @NotNull Language language, @NotNull PsiElement parent) {
     super(manager, language);
-    myModifiers = new HashSet<String>();
     myParentElement = parent;
+    myModifiers = CollectionFactory.newTroveSet();
+    myAnnotations = CollectionFactory.newTroveMap();
   }
 
   public void addModifier(@Modifier @NotNull @NonNls String modifier) {
@@ -100,23 +107,33 @@ public class LombokLightModifierList extends LightElement implements PsiModifier
   }
 
   @NotNull
-  public PsiAnnotation[] getAnnotations() {
-    //todo
-    return PsiAnnotation.EMPTY_ARRAY;
-  }
-
-  @NotNull
   public PsiAnnotation[] getApplicableAnnotations() {
     return getAnnotations();
   }
 
-  public PsiAnnotation findAnnotation(@NotNull String qualifiedName) {
-    return null;
-  }
-
+  @Override
   @NotNull
   public PsiAnnotation addAnnotation(@NotNull @NonNls String qualifiedName) {
-    throw new IncorrectOperationException();
+    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
+    final PsiAnnotation psiAnnotation = elementFactory.createAnnotationFromText('@' + qualifiedName, null);
+    myAnnotations.put(qualifiedName, psiAnnotation);
+    return psiAnnotation;
+  }
+
+  @Override
+  public PsiAnnotation findAnnotation(@NotNull String qualifiedName) {
+    return myAnnotations.get(qualifiedName);
+  }
+
+  @Override
+  @NotNull
+  public PsiAnnotation[] getAnnotations() {
+    PsiAnnotation[] result = PsiAnnotation.EMPTY_ARRAY;
+    if (!myAnnotations.isEmpty()) {
+      Collection<PsiAnnotation> annotations = myAnnotations.values();
+      result = annotations.toArray(new PsiAnnotation[annotations.size()]);
+    }
+    return result;
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {

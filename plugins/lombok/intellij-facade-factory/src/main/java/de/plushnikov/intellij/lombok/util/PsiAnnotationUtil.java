@@ -1,16 +1,5 @@
 package de.plushnikov.intellij.lombok.util;
 
-import java.lang.annotation.Annotation;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.regex.Pattern;
-
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiAnnotationMemberValue;
@@ -28,6 +17,16 @@ import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.PsiVariable;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.lang.annotation.Annotation;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * @author peichhorn
@@ -187,14 +186,16 @@ public class PsiAnnotationUtil {
   }
 
   @NotNull
-  public static Collection<String> collectAnnotationsToCopy(@NotNull PsiField psiField, final Pattern pattern) {
+  public static Collection<String> collectAnnotationsToCopy(@NotNull PsiField psiField, final Pattern... patterns) {
     Collection<String> annotationsToCopy = new ArrayList<String>();
     PsiModifierList modifierList = psiField.getModifierList();
     if (null != modifierList) {
       for (PsiAnnotation psiAnnotation : modifierList.getAnnotations()) {
         final String annotationName = getSimpleNameOf(psiAnnotation);
-        if (pattern.matcher(annotationName).matches()) {
-          annotationsToCopy.add(psiAnnotation.getQualifiedName());
+        for (Pattern pattern : patterns) {
+          if (pattern.matcher(annotationName).matches()) {
+            annotationsToCopy.add(psiAnnotation.getQualifiedName());
+          }
         }
       }
     }
