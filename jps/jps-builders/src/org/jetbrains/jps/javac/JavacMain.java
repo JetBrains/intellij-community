@@ -2,6 +2,8 @@ package org.jetbrains.jps.javac;
 
 import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.server.ClasspathBootstrap;
 
 import javax.tools.*;
@@ -24,7 +26,7 @@ public class JavacMain {
                                 Collection<File> sourcePath,
                                 Map<File, Set<File>> outputDirToRoots,
                                 final DiagnosticOutputConsumer outConsumer,
-                                final OutputFileConsumer outputSink) {
+                                final OutputFileConsumer outputSink, @Nullable CanceledStatus canceledStatus) {
     final JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
 
     for (File outputDir : outputDirToRoots.keySet()) {
@@ -115,6 +117,10 @@ public class JavacMain {
       else {
         myStdManager = compiler.getStandardFileManager(outConsumer, Locale.US, null);
       }
+    }
+
+    public boolean isCanceled() {
+      return false; // todo
     }
 
     public StandardJavaFileManager getStandardFileManager() {
