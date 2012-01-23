@@ -757,6 +757,10 @@ public class EditorsSplitters extends JPanel {
     return null;
   }
 
+  public boolean isFloating() {
+    return false;
+  }
+
   private final class MyFocusWatcher extends FocusWatcher {
     protected void focusedComponentChanged(final Component component, final AWTEvent cause) {
       EditorWindow newWindow = null;

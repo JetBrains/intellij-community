@@ -457,6 +457,10 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
     });
   }
 
+  private boolean isFloating() {
+    return myWindow.getOwner().isFloating();
+  }
+
   private class TabMouseListener extends MouseAdapter {
     @Override
     public void mousePressed(final MouseEvent e) {
@@ -469,7 +473,7 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
         }
       }
 
-      if (UIUtil.isActionClick(e) && (e.getClickCount() % 2) == 0) {
+      if (UIUtil.isActionClick(e) && (e.getClickCount() % 2) == 0 && !isFloating()) {
         final ActionManager mgr = ActionManager.getInstance();
         mgr.tryToExecute(mgr.getAction("HideAllWindows"), e, null, ActionPlaces.UNKNOWN, true);
       }

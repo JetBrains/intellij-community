@@ -60,6 +60,11 @@ public class DockableEditorContainerFactory implements DockContainerFactory.Pers
       protected IdeFrame getFrame(Project project) {
         return DockManager.getInstance(project).getIdeFrame(containerRef.get());
       }
+
+      @Override
+      public boolean isFloating() {
+        return true;
+      }
     };
     if (!loadingState) {
       splitters.createCurrentWindow();
