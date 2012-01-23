@@ -31,7 +31,7 @@ import com.intellij.openapi.vcs.update.UpdateInfoTree;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import git4idea.GitBranch;
 import git4idea.GitRevisionNumber;
-import git4idea.util.GitUtil;
+import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.merge.MergeChangeCollector;
 import git4idea.repo.GitRepository;

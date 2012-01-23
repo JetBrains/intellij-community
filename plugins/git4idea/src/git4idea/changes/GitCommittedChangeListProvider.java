@@ -37,7 +37,7 @@ import com.intellij.util.Consumer;
 import git4idea.GitBranch;
 import git4idea.GitFileRevision;
 import git4idea.GitDeprecatedRemote;
-import git4idea.util.GitUtil;
+import git4idea.GitUtil;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.history.GitHistoryUtils;
 import git4idea.history.browser.GitCommit;
