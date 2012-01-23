@@ -13,4 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-new A().doSmth { println "smth" }
+class A {
+  def foo(int x) {
+    [1, 2, 3].each <selection>{
+      print it + x
+    }</selection>
+  }
+}
