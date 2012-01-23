@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.NotNull;
@@ -90,7 +91,7 @@ public class GradleColorAndFontPreviewPanel implements PreviewPanel {
     GridBagConstraints constraints = new GridBagConstraints();
     constraints.fill = GridBagConstraints.BOTH;
     constraints.weightx = constraints.weighty = 1;
-    myContent.add(tree, constraints);
+    myContent.add(new JBScrollPane(tree), constraints);
     return new Pair<Tree, DefaultTreeModel>(tree, treeModel);
   }
   

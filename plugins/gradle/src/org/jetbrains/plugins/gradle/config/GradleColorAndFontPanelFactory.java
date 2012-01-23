@@ -17,7 +17,6 @@ public class GradleColorAndFontPanelFactory implements ColorAndFontPanelFactory 
     final ColorAndFontDescriptionPanel descriptionPanel = new ColorAndFontDescriptionPanel();
     final OptionsPanel optionsPanel = new OptionsPanelImpl(descriptionPanel, options, schemesPanel, GradleBundle.message("gradle.name"));
     GradleColorAndFontPreviewPanel previewPanel = new GradleColorAndFontPreviewPanel(options);
-    // TODO den check what listeners do we need here.
     return new NewColorAndFontPanel(schemesPanel, optionsPanel, previewPanel, GradleBundle.message("gradle.name"), null, null);
   }
 
