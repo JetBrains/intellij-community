@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,10 +35,8 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element)
-    throws IncorrectOperationException {
-    final PsiForeachStatement statement =
-      (PsiForeachStatement)element.getParent();
+  public void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
+    final PsiForeachStatement statement = (PsiForeachStatement)element.getParent();
     if (statement == null) {
       return;
     }
@@ -54,18 +52,20 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
       return;
     }
     final boolean isArray = iteratedValueType instanceof PsiArrayType;
-    final String iteratedValueText =
-      getReferenceToIterate(iteratedValue, statement);
+    final PsiElement grandParent = statement.getParent();
+    final PsiStatement context;
+    if (grandParent instanceof PsiLabeledStatement) {
+      context = (PsiStatement)grandParent;
+    } else {
+      context = statement;
+    }
+    final String iteratedValueText = getReferenceToIterate(iteratedValue, context);
     final String lengthText;
     if (isArray) {
-      lengthText =
-        createVariableName(iteratedValueText + "Length",
-                           PsiType.INT, statement);
+      lengthText = createVariableName(iteratedValueText + "Length", PsiType.INT, statement);
     }
     else {
-      lengthText =
-        createVariableName(iteratedValueText + "Size",
-                           PsiType.INT, statement);
+      lengthText = createVariableName(iteratedValueText + "Size", PsiType.INT, statement);
     }
     @NonNls final StringBuilder newStatement = new StringBuilder();
     newStatement.append("for(int ");
