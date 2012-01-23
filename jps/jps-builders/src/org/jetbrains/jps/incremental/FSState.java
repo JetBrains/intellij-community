@@ -166,6 +166,7 @@ public class FSState {
     }
   }
 
+  /** @noinspection SynchronizationOnLocalVariableOrMethodParameter*/
   private static final class FilesDelta {
     private final Set<String> myDeletedProduction = Collections.synchronizedSet(new HashSet<String>());
     private final Set<String> myDeletedTests = Collections.synchronizedSet(new HashSet<String>());
@@ -182,7 +183,12 @@ public class FSState {
           toRecompile.put(root, files);
         }
       }
-      return files.add(file);
+      final boolean added = files.add(file);
+      if (added) {
+        final Set<String> deleted = isTestRoot? myDeletedTests : myDeletedProduction;
+        deleted.remove(FileUtil.toCanonicalPath(file.getPath()));
+      }
+      return added;
     }
 
     public void addDeleted(File file, boolean isTest) {
@@ -193,13 +199,13 @@ public class FSState {
           files.remove(file);
         }
       }
-      final Set<String> deletedMap = isTest? myDeletedTests : myDeletedProduction;
-      deletedMap.add(FileUtil.toCanonicalPath(file.getPath()));
+      final Set<String> deleted = isTest? myDeletedTests : myDeletedProduction;
+      deleted.add(FileUtil.toCanonicalPath(file.getPath()));
     }
 
     public void clearDeletedPaths(boolean isTest) {
-      final Set<String> map = isTest? myDeletedTests : myDeletedProduction;
-      map.clear();
+      final Set<String> deleted = isTest? myDeletedTests : myDeletedProduction;
+      deleted.clear();
     }
 
     public Map<File, Set<File>> getSourcesToRecompile(boolean forTests) {
@@ -207,9 +213,9 @@ public class FSState {
     }
 
     public Set<String> getDeletedPaths(boolean isTest) {
-      final Set<String> set = isTest ? myDeletedTests : myDeletedProduction;
-      synchronized (set) {
-        return new HashSet<String>(set);
+      final Set<String> deleted = isTest ? myDeletedTests : myDeletedProduction;
+      synchronized (deleted) {
+        return deleted.isEmpty()? Collections.<String>emptySet() : new HashSet<String>(deleted);
       }
     }
 
