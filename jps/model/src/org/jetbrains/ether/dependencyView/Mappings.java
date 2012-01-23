@@ -758,7 +758,7 @@ public class Mappings {
       }
     }
 
-    return false;
+    return true;
   }
 
   public boolean differentiate(final Mappings delta,
