@@ -269,7 +269,7 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
 
   public void setDone(float done) {
     myDone = done;
-    processMessage(new ProgressMessage("", done));
+    //processMessage(new ProgressMessage("", done));
   }
 
   public static enum DirtyMarkScope{
