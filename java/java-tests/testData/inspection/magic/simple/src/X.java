@@ -103,10 +103,10 @@ public class X {
     if (x == Const.X) {
       x = Const.Y;
       assert x != Const.Z;
-      f |= Const.Y;
+      f |= Const.Y;  f &= Const.X & ~(Const.Z | Const.X);
     }
     else {
-      f |= Const.X;
+      f |= Const.X;  f = f & ~(Const.X | Const.X);
     }
     f3(f);
 
