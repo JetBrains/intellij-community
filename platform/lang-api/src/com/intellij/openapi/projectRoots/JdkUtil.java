@@ -33,6 +33,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.PathUtil;
 import com.intellij.util.lang.UrlClassLoader;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -189,6 +190,7 @@ public class JdkUtil {
           final Class<UrlClassLoader> ourUrlClassLoader = UrlClassLoader.class;
           if (ourUrlClassLoader.getName().equals(parametersList.getPropertyValue("java.system.class.loader"))) {
             classpath += File.pathSeparator + PathUtil.getJarPathForClass(ourUrlClassLoader);
+            classpath += File.pathSeparator + PathUtil.getJarPathForClass(THashMap.class);
           }
 
           commandLine.addParameter("-classpath");
