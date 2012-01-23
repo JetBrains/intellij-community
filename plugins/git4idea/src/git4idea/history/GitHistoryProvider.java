@@ -29,7 +29,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.ui.ColumnInfo;
 import git4idea.GitFileRevision;
 import git4idea.GitRevisionNumber;
-import git4idea.util.GitUtil;
+import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.actions.GitShowAllSubmittedFilesAction;
 import git4idea.changes.GitChangeUtils;

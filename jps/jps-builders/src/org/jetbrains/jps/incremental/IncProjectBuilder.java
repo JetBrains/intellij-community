@@ -3,6 +3,7 @@ package org.jetbrains.jps.incremental;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.PersistentEnumerator;
 import org.jetbrains.jps.*;
+import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
@@ -10,7 +11,6 @@ import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.SourceToFormMapping;
 import org.jetbrains.jps.incremental.storage.SourceToOutputMapping;
 import org.jetbrains.jps.incremental.storage.TimestampStorage;
-import org.jetbrains.jps.server.BuildCanceledStatus;
 import org.jetbrains.jps.server.ProjectDescriptor;
 
 import java.io.File;
@@ -28,7 +28,7 @@ public class IncProjectBuilder {
 
   private final ProjectDescriptor myProjectDescriptor;
   private final BuilderRegistry myBuilderRegistry;
-  private final BuildCanceledStatus myCancelStatus;
+  private final CanceledStatus myCancelStatus;
   private ProjectChunks myProductionChunks;
   private ProjectChunks myTestChunks;
   private final List<MessageHandler> myMessageHandlers = new ArrayList<MessageHandler>();
@@ -44,7 +44,7 @@ public class IncProjectBuilder {
   private final float myTotalModulesWork;
   private final int myTotalBuilderCount;
 
-  public IncProjectBuilder(ProjectDescriptor pd, BuilderRegistry builderRegistry, BuildCanceledStatus cs) {
+  public IncProjectBuilder(ProjectDescriptor pd, BuilderRegistry builderRegistry, CanceledStatus cs) {
     myProjectDescriptor = pd;
     myBuilderRegistry = builderRegistry;
     myCancelStatus = cs;

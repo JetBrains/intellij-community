@@ -1890,6 +1890,7 @@ public final class JavacRemoteProto {
           ERROR(0, 1),
           WARNING(1, 2),
           INFO(2, 3),
+          STD_OUT(3, 4),
           ;
           
           
@@ -1900,6 +1901,7 @@ public final class JavacRemoteProto {
               case 1: return ERROR;
               case 2: return WARNING;
               case 3: return INFO;
+              case 4: return STD_OUT;
               default: return null;
             }
           }
@@ -2544,12 +2546,12 @@ public final class JavacRemoteProto {
         public boolean hasClassName() { return hasClassName; }
         public java.lang.String getClassName() { return className_; }
         
-        // optional string source_uri = 6;
-        public static final int SOURCE_URI_FIELD_NUMBER = 6;
-        private boolean hasSourceUri;
-        private java.lang.String sourceUri_ = "";
-        public boolean hasSourceUri() { return hasSourceUri; }
-        public java.lang.String getSourceUri() { return sourceUri_; }
+        // optional string source_path = 6;
+        public static final int SOURCE_PATH_FIELD_NUMBER = 6;
+        private boolean hasSourcePath;
+        private java.lang.String sourcePath_ = "";
+        public boolean hasSourcePath() { return hasSourcePath; }
+        public java.lang.String getSourcePath() { return sourcePath_; }
         
         // optional bytes content = 7;
         public static final int CONTENT_FIELD_NUMBER = 7;
@@ -2585,8 +2587,8 @@ public final class JavacRemoteProto {
           if (hasClassName()) {
             output.writeString(5, getClassName());
           }
-          if (hasSourceUri()) {
-            output.writeString(6, getSourceUri());
+          if (hasSourcePath()) {
+            output.writeString(6, getSourcePath());
           }
           if (hasContent()) {
             output.writeBytes(7, getContent());
@@ -2619,9 +2621,9 @@ public final class JavacRemoteProto {
             size += com.google.protobuf.CodedOutputStream
               .computeStringSize(5, getClassName());
           }
-          if (hasSourceUri()) {
+          if (hasSourcePath()) {
             size += com.google.protobuf.CodedOutputStream
-              .computeStringSize(6, getSourceUri());
+              .computeStringSize(6, getSourcePath());
           }
           if (hasContent()) {
             size += com.google.protobuf.CodedOutputStream
@@ -2786,8 +2788,8 @@ public final class JavacRemoteProto {
             if (other.hasClassName()) {
               setClassName(other.getClassName());
             }
-            if (other.hasSourceUri()) {
-              setSourceUri(other.getSourceUri());
+            if (other.hasSourcePath()) {
+              setSourcePath(other.getSourcePath());
             }
             if (other.hasContent()) {
               setContent(other.getContent());
@@ -2835,7 +2837,7 @@ public final class JavacRemoteProto {
                   break;
                 }
                 case 50: {
-                  setSourceUri(input.readString());
+                  setSourcePath(input.readString());
                   break;
                 }
                 case 58: {
@@ -2952,24 +2954,24 @@ public final class JavacRemoteProto {
             return this;
           }
           
-          // optional string source_uri = 6;
-          public boolean hasSourceUri() {
-            return result.hasSourceUri();
+          // optional string source_path = 6;
+          public boolean hasSourcePath() {
+            return result.hasSourcePath();
           }
-          public java.lang.String getSourceUri() {
-            return result.getSourceUri();
+          public java.lang.String getSourcePath() {
+            return result.getSourcePath();
           }
-          public Builder setSourceUri(java.lang.String value) {
+          public Builder setSourcePath(java.lang.String value) {
             if (value == null) {
     throw new NullPointerException();
   }
-  result.hasSourceUri = true;
-            result.sourceUri_ = value;
+  result.hasSourcePath = true;
+            result.sourcePath_ = value;
             return this;
           }
-          public Builder clearSourceUri() {
-            result.hasSourceUri = false;
-            result.sourceUri_ = getDefaultInstance().getSourceUri();
+          public Builder clearSourcePath() {
+            result.hasSourcePath = false;
+            result.sourcePath_ = getDefaultInstance().getSourcePath();
             return this;
           }
           
@@ -3027,6 +3029,13 @@ public final class JavacRemoteProto {
       public boolean hasOutputObject() { return hasOutputObject; }
       public org.jetbrains.jps.javac.JavacRemoteProto.Message.Response.OutputObject getOutputObject() { return outputObject_; }
       
+      // optional bool completion_status = 4;
+      public static final int COMPLETION_STATUS_FIELD_NUMBER = 4;
+      private boolean hasCompletionStatus;
+      private boolean completionStatus_ = false;
+      public boolean hasCompletionStatus() { return hasCompletionStatus; }
+      public boolean getCompletionStatus() { return completionStatus_; }
+      
       private void initFields() {
         responseType_ = org.jetbrains.jps.javac.JavacRemoteProto.Message.Response.Type.BUILD_MESSAGE;
         compileMessage_ = org.jetbrains.jps.javac.JavacRemoteProto.Message.Response.CompileMessage.getDefaultInstance();
@@ -3055,6 +3064,9 @@ public final class JavacRemoteProto {
         if (hasOutputObject()) {
           output.writeMessage(3, getOutputObject());
         }
+        if (hasCompletionStatus()) {
+          output.writeBool(4, getCompletionStatus());
+        }
       }
       
       private int memoizedSerializedSize = -1;
@@ -3074,6 +3086,10 @@ public final class JavacRemoteProto {
         if (hasOutputObject()) {
           size += com.google.protobuf.CodedOutputStream
             .computeMessageSize(3, getOutputObject());
+        }
+        if (hasCompletionStatus()) {
+          size += com.google.protobuf.CodedOutputStream
+            .computeBoolSize(4, getCompletionStatus());
         }
         memoizedSerializedSize = size;
         return size;
@@ -3228,6 +3244,9 @@ public final class JavacRemoteProto {
           if (other.hasOutputObject()) {
             mergeOutputObject(other.getOutputObject());
           }
+          if (other.hasCompletionStatus()) {
+            setCompletionStatus(other.getCompletionStatus());
+          }
           return this;
         }
         
@@ -3270,6 +3289,10 @@ public final class JavacRemoteProto {
                 }
                 input.readMessage(subBuilder, extensionRegistry);
                 setOutputObject(subBuilder.buildPartial());
+                break;
+              }
+              case 32: {
+                setCompletionStatus(input.readBool());
                 break;
               }
             }
@@ -3369,6 +3392,24 @@ public final class JavacRemoteProto {
         public Builder clearOutputObject() {
           result.hasOutputObject = false;
           result.outputObject_ = org.jetbrains.jps.javac.JavacRemoteProto.Message.Response.OutputObject.getDefaultInstance();
+          return this;
+        }
+        
+        // optional bool completion_status = 4;
+        public boolean hasCompletionStatus() {
+          return result.hasCompletionStatus();
+        }
+        public boolean getCompletionStatus() {
+          return result.getCompletionStatus();
+        }
+        public Builder setCompletionStatus(boolean value) {
+          result.hasCompletionStatus = true;
+          result.completionStatus_ = value;
+          return this;
+        }
+        public Builder clearCompletionStatus() {
+          result.hasCompletionStatus = false;
+          result.completionStatus_ = false;
           return this;
         }
         

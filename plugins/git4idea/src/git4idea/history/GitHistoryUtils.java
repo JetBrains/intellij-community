@@ -39,7 +39,7 @@ import com.intellij.util.concurrency.Semaphore;
 import git4idea.GitBranch;
 import git4idea.GitFileRevision;
 import git4idea.GitRevisionNumber;
-import git4idea.util.GitUtil;
+import git4idea.GitUtil;
 import git4idea.commands.*;
 import git4idea.config.GitConfigUtil;
 import git4idea.history.browser.GitCommit;

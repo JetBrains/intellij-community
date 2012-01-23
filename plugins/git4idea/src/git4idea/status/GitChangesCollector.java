@@ -23,7 +23,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScope;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.util.GitUtil;
+import git4idea.GitUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;

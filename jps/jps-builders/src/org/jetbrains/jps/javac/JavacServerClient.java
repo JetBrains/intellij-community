@@ -50,16 +50,8 @@ public class JavacServerClient extends SimpleProtobufClient<JavacServerResponseH
     final JavacRemoteProto.Message.Request.Builder requestBuilder = JavacRemoteProto.Message.Request.newBuilder();
     requestBuilder.setRequestType(type);
     final JavacRemoteProto.Message.Request request = requestBuilder.build();
-    final JavacRemoteProto.Message msg = toMessage(requestId, request);
+    final JavacRemoteProto.Message msg = JavacProtoUtil.toMessage(requestId, request);
     return sendMessage(requestId, msg, responseHandler, cancelAction);
-  }
-
-  private static JavacRemoteProto.Message toMessage(UUID requestId, JavacRemoteProto.Message.Request request) {
-    return JavacRemoteProto.Message.newBuilder().setMessageType(JavacRemoteProto.Message.Type.REQUEST).setSessionId(toProtoUUID(requestId)).setRequest(request).build();
-  }
-
-  private static JavacRemoteProto.Message.UUID toProtoUUID(UUID requestId) {
-    return JavacRemoteProto.Message.UUID.newBuilder().setMostSigBits(requestId.getMostSignificantBits()).setLeastSigBits(requestId.getLeastSignificantBits()).build();
   }
 
 }

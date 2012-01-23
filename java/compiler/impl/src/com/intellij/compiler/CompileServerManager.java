@@ -411,7 +411,8 @@ public class CompileServerManager implements ApplicationComponent{
 
     // debugging
     cmdLine.addParameter("-XX:+HeapDumpOnOutOfMemoryError");
-    cmdLine.addParameter("-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5008");
+    //cmdLine.addParameter("-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5008");
+    
     if (Registry.is("compiler.server.use.memory.temp.cache")) {
       cmdLine.addParameter("-D"+Server.USE_MEMORY_TEMP_CACHE_OPTION + "=true");
     }

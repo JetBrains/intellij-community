@@ -27,7 +27,7 @@ import com.intellij.util.ui.UIUtil;
 import git4idea.GitVcs;
 import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
-import git4idea.util.GitUtil;
+import git4idea.GitUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.HyperlinkEvent;
@@ -192,7 +192,8 @@ abstract class GitBranchOperation {
         String description = "You have to resolve all merge conflicts before checkout.<br/>" + getRollbackProposal();
         // suppressing: this message looks ugly if capitalized by words
         //noinspection DialogTitleCapitalization
-        ok.set(Messages.OK == Messages.showYesNoDialog(myProject, description, UNMERGED_FILES_ERROR_TITLE, "Rollback", "Don't rollback", Messages.getErrorIcon()));
+        ok.set(Messages.OK == Messages.showYesNoDialog(myProject, description, UNMERGED_FILES_ERROR_TITLE, "Rollback", "Don't rollback",
+                                                       Messages.getErrorIcon()));
       }
     });
     if (ok.get()) {
