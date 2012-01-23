@@ -185,6 +185,8 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
         final PyImportElement importElement = (PyImportElement) definer;
         final PyQualifiedName qname = importElement.getImportedQName();
 
+        // TODO: These checks are duplicates of checks inside the ResolveProcessor. We need to refactor them
+
         // http://stackoverflow.com/questions/6048786/from-module-import-in-init-py-makes-module-name-visible
         if (qname != null && qname.getComponentCount() > 1 && name.equals(qname.getLastComponent()) &&
             PyNames.INIT_DOT_PY.equals(importElement.getContainingFile().getName())) {
@@ -225,34 +227,26 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
     final PsiElement parent = myElement.getParent();
     final boolean isGlobalOrNonlocal = parent instanceof PyGlobalStatement || parent instanceof PyNonlocalStatement;
-
     if (myElement instanceof PyTargetExpression && !isGlobalOrNonlocal) {
       addResolvedElement(ret, null, myElement);
       return ret;
     }
 
-    // here we have an unqualified expr. it may be defined:
-    // ...in current file
-    ResolveProcessor processor = new ResolveProcessor(referencedName);
-
     // Use real context here to enable correct completion and resolve in case of PyExpressionCodeFragment!!!
     PsiElement realContext = PyPsiUtils.getRealContext(myElement);
-
+    final ResolveProcessor processor = new ResolveProcessor(referencedName);
     PsiElement uexpr = null;
-
-    PsiElement roof = findResolveRoof(referencedName, realContext);
+    final PsiElement roof = findResolveRoof(referencedName, realContext);
     final ScopeOwner originalOwner = ScopeUtil.getResolveScopeOwner(realContext);
-    ScopeOwner owner = originalOwner;
-    if (isGlobalOrNonlocal) {
-      final ScopeOwner outerScopeOwner = ScopeUtil.getScopeOwner(owner);
-      if (outerScopeOwner != null) {
-        owner = outerScopeOwner;
-      }
-    }
 
     if (Registry.is("python.new.style.resolve")) {
-      final ScopeOwner originalOwner = ScopeUtil.getResolveScopeOwner(realContext);
       ScopeOwner owner = originalOwner;
+      if (isGlobalOrNonlocal) {
+        final ScopeOwner outerScopeOwner = ScopeUtil.getScopeOwner(owner);
+        if (outerScopeOwner != null) {
+          owner = outerScopeOwner;
+        }
+      }
       while (owner != null) {
         if (!(owner instanceof PyClass) || owner == originalOwner) {
           final Scope scope = ControlFlowCache.getScope(owner);
@@ -322,19 +316,13 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
         }
       }
     }
-    if (uexpr == null && !(myElement instanceof PyTargetExpression)) {
-      //uexpr = PyResolveUtil.resolveOffContext(this);
-      final PsiElement outerContextElement = PyResolveUtil.scanOuterContext(new ResolveProcessor(referencedName), realContext);
-      uexpr = PyUtil.turnDirIntoInit(outerContextElement);
-    }
     if (uexpr == null && CythonLanguageDialect.isInsideCythonFile(realContext)) {
       final CythonFile implicit = CythonResolveUtil.findImplicitDefinitionFile(realContext);
       if (implicit != null) {
         uexpr = implicit.getElementNamed(referencedName);
       }
-      final ScopeOwner owner = PsiTreeUtil.getParentOfType(myElement, ScopeOwner.class);
-      if (owner instanceof CythonFile) {
-        final PsiElement resolved = ((CythonFile)owner).getElementNamed(referencedName);
+      if (originalOwner instanceof CythonFile) {
+        final PsiElement resolved = ((CythonFile)originalOwner).getElementNamed(referencedName);
         if ((resolved instanceof CythonFunction && ((CythonFunction)resolved).isCythonLevel()) ||
             resolved instanceof CythonFile) {
           ret.poke(resolved, getRate(resolved));
