@@ -223,7 +223,10 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     final String referencedName = myElement.getReferencedName();
     if (referencedName == null) return ret;
 
-    if (myElement instanceof PyTargetExpression) {
+    final PsiElement parent = myElement.getParent();
+    final boolean isGlobalOrNonlocal = parent instanceof PyGlobalStatement || parent instanceof PyNonlocalStatement;
+
+    if (myElement instanceof PyTargetExpression && !isGlobalOrNonlocal) {
       addResolvedElement(ret, null, myElement);
       return ret;
     }
@@ -238,6 +241,14 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     PsiElement uexpr = null;
 
     PsiElement roof = findResolveRoof(referencedName, realContext);
+    final ScopeOwner originalOwner = ScopeUtil.getResolveScopeOwner(realContext);
+    ScopeOwner owner = originalOwner;
+    if (isGlobalOrNonlocal) {
+      final ScopeOwner outerScopeOwner = ScopeUtil.getScopeOwner(owner);
+      if (outerScopeOwner != null) {
+        owner = outerScopeOwner;
+      }
+    }
 
     if (Registry.is("python.new.style.resolve")) {
       final ScopeOwner originalOwner = ScopeUtil.getResolveScopeOwner(realContext);
