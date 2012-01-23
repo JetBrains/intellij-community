@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -161,6 +161,10 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
 
   public List<Item> getItems() {
     return getListTableModel().getItems();
+  }
+
+  public Item getRow(int row) {
+    return getItems().get(convertRowIndexToModel(row));
   }
 
   public void setMinRowHeight(int i) {
