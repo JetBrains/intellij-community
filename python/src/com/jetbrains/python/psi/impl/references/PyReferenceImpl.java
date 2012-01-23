@@ -181,26 +181,36 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
         return new ScopeDeclaration(definer, element);
       }
       else if (definer instanceof PyImportElement) {
-        final PyImportElement importElement = (PyImportElement) definer;
-        final PyQualifiedName qname = importElement.getImportedQName();
+        final PyImportElement importElement = (PyImportElement)definer;
+        final PyQualifiedName importedQName = importElement.getImportedQName();
 
         // TODO: These checks are duplicates of checks inside the ResolveProcessor. We need to refactor them
 
         // http://stackoverflow.com/questions/6048786/from-module-import-in-init-py-makes-module-name-visible
-        if (qname != null && qname.getComponentCount() > 1 && name.equals(qname.getLastComponent()) &&
+        if (importedQName != null && importedQName.getComponentCount() > 1 && name.equals(importedQName.getLastComponent()) &&
             PyNames.INIT_DOT_PY.equals(importElement.getContainingFile().getName())) {
-          final PsiElement packageElement = ResolveImportUtil.resolveImportElement(importElement, qname.removeLastComponent());
+          final PsiElement packageElement = ResolveImportUtil.resolveImportElement(importElement, importedQName.removeLastComponent());
           if (PyUtil.turnDirIntoInit(packageElement) == importElement.getContainingFile()) {
             element = PyUtil.turnDirIntoInit(ResolveImportUtil.resolveImportElement(importElement));
             return new ScopeDeclaration(definer, element);
+          }
+        }
+        final PyFromImportStatement fromImportStatement = PsiTreeUtil.getParentOfType(importElement, PyFromImportStatement.class);
+        if (fromImportStatement != null && PyNames.INIT_DOT_PY.equals(importElement.getContainingFile().getName())) {
+          final PyQualifiedName importSourceQName = fromImportStatement.getImportSourceQName();
+          if (importSourceQName != null && importSourceQName.endsWith(name)) {
+            final PsiElement source = PyUtil.turnInitIntoDir(fromImportStatement.resolveImportSource());
+            if (source != null && source.getParent() == importElement.getContainingFile().getContainingDirectory()) {
+              return new ScopeDeclaration(definer, source);
+            }
           }
         }
 
         // name is resolved to unresolved import (PY-956)
         String definedName = importElement.getAsName();
         if (definedName == null) {
-          if (qname != null && qname.getComponentCount() == 1) {
-            definedName = qname.getComponents().get(0);
+          if (importedQName != null && importedQName.getComponentCount() == 1) {
+            definedName = importedQName.getComponents().get(0);
           }
         }
         if (name.equals(definedName)) {
