@@ -312,7 +312,7 @@ public class EventLog implements Notifications {
       panel.setContent(editor.getComponent());
 
       DefaultActionGroup group = new DefaultActionGroup();
-      group.add(new DumbAwareAction("Settings", "Edit notification settings", IconLoader.getIcon("/general/secondaryGroup.png")) {
+      group.add(new DumbAwareAction("Settings", "Edit notification settings", IconLoader.getIcon("/actions/showSettings.png")) {
         @Override
         public void actionPerformed(AnActionEvent e) {
           ShowSettingsUtil.getInstance().editConfigurable(project, new NotificationsConfigurable());
