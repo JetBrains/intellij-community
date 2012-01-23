@@ -176,7 +176,7 @@ class ServerMessageHandler extends SimpleChannelHandler {
     ctx.sendUpstream(e);
   }
 
-  private class CompilationTask implements Runnable, BuildCanceledStatus {
+  private class CompilationTask implements Runnable, CanceledStatus {
 
     private final UUID mySessionId;
     private final ChannelHandlerContext myChannelContext;

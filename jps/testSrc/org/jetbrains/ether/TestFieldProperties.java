@@ -75,4 +75,12 @@ public class TestFieldProperties extends IncrementalTestCase {
   public void testTypeChange2() throws Exception {
     doTest();
   }
+
+  public void testNonIncremental1() throws Exception {
+      doTest();
+  }
+
+  public void testNonIncremental2() throws Exception {
+        doTest();
+  }
 }

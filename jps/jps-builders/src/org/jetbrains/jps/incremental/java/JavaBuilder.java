@@ -300,7 +300,7 @@ public class JavaBuilder extends Builder{
   }
 
   private JavacProxy createJavacProxy(CompileContext context) {
-    return new EmbeddedJavacProxy();
+    return new EmbeddedJavacProxy(context.getCancelStatus());
   }
 
   private static ClassLoader createInstrumentationClassLoader(Collection<File> classpath, Collection<File> platformCp, Map<File, String> chunkSourcePath, OutputFilesSink outputSink)
