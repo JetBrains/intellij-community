@@ -47,9 +47,6 @@ public class PyStatementEffectInspection extends PyInspection {
 
     @Override
     public void visitPyExpressionStatement(final PyExpressionStatement node) {
-      if (PydevConsoleRunner.isInPydevConsole(node)) {
-        return;
-      }
       final PyExpression expression = node.getExpression();
       if (PsiTreeUtil.hasErrorElements(expression))
         return;
