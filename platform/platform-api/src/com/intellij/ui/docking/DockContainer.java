@@ -16,7 +16,6 @@
 package com.intellij.ui.docking;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.util.ui.update.Activatable;
@@ -47,7 +46,6 @@ public interface DockContainer extends Disposable, Activatable {
   @Nullable
   Image processDropOver(DockableContent content, RelativePoint point);
 
-  @Nullable
   void resetDropOver(DockableContent content);
 
 

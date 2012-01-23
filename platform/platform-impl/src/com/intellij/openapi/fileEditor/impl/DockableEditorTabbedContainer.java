@@ -25,12 +25,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.docking.DockContainer;
-import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.DockableContent;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -38,27 +38,25 @@ import java.util.concurrent.CopyOnWriteArraySet;
 
 public class DockableEditorTabbedContainer implements DockContainer.Persistent {
 
-  private EditorsSplitters mySplitters;
-  private Project myProject;
+  private final EditorsSplitters mySplitters;
+  private final Project myProject;
 
-  private CopyOnWriteArraySet<Listener> myListeners = new CopyOnWriteArraySet<Listener>();
+  private final CopyOnWriteArraySet<Listener> myListeners = new CopyOnWriteArraySet<Listener>();
 
   private JBTabs myCurrentOver;
   private Image myCurrentOverImg;
   private TabInfo myCurrentOverInfo;
 
   private boolean myDisposeWhenEmpty;
-  private DockManager myDockManager;
 
   private boolean myWasEverShown;
 
-  DockableEditorTabbedContainer(Project project, DockManager dockManager) {
-    this(project, dockManager, null, true);
+  DockableEditorTabbedContainer(Project project) {
+    this(project, null, true);
   }
 
-  DockableEditorTabbedContainer(Project project, DockManager dockManager, EditorsSplitters splitters, boolean disposeWhenEmpty) {
+  DockableEditorTabbedContainer(Project project, @Nullable EditorsSplitters splitters, boolean disposeWhenEmpty) {
     myProject = project;
-    myDockManager = dockManager;
     mySplitters = splitters;
     myDisposeWhenEmpty = disposeWhenEmpty;
   }
@@ -98,10 +96,9 @@ public class DockableEditorTabbedContainer implements DockContainer.Persistent {
     return getTabsAt(content, point) != null;
   }
 
+  @Nullable
   private JBTabs getTabsAt(DockableContent content, RelativePoint point) {
     if (content instanceof EditorTabbedContainer.MyDragOutDelegate.DockableEditor) {
-      EditorTabbedContainer.MyDragOutDelegate.DockableEditor editor = (EditorTabbedContainer.MyDragOutDelegate.DockableEditor)content;
-
       JBTabs targetTabs = mySplitters.getTabsAt(point);
       if (targetTabs != null) {
         return targetTabs;

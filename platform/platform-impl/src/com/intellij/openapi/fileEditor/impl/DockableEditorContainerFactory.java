@@ -64,7 +64,7 @@ public class DockableEditorContainerFactory implements DockContainerFactory.Pers
     if (!loadingState) {
       splitters.createCurrentWindow();
     }
-    container.set(new DockableEditorTabbedContainer(myProject, myDockManager, splitters, true));
+    container.set(new DockableEditorTabbedContainer(myProject, splitters, true));
     return container.get();
   }
 

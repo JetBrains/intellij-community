@@ -95,7 +95,7 @@ public class EditorWindow {
 
   private void createTabs(int tabPlacement) {
     LOG.assertTrue (myTabbedPane == null);
-    myTabbedPane = new EditorTabbedContainer(this, getManager().getProject(), getManager().getDockManager(), tabPlacement);
+    myTabbedPane = new EditorTabbedContainer(this, getManager().getProject(), tabPlacement);
     myPanel.add(myTabbedPane.getComponent(), BorderLayout.CENTER);
   }
 
