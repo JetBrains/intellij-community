@@ -72,7 +72,6 @@ public class EditorsSplitters extends JPanel {
   private Element mySplittersElement;  // temporarily used during initialization
   int myInsideChange = 0;
   private final MyFocusWatcher myFocusWatcher;
-  private EditorWithProviderComposite myCurrentSelectedEditor;
   private final Alarm myIconUpdaterAlarm = new Alarm();
 
   public EditorsSplitters(final FileEditorManagerImpl manager, DockManager dockManager, boolean createOwnDockableContainer) {
@@ -643,17 +642,15 @@ public class EditorsSplitters extends JPanel {
    * @param requestFocus whether to request focus to the editor currently selected in this window
    */
   public void setCurrentWindow(@Nullable final EditorWindow window, final boolean requestFocus) {
-    final EditorWithProviderComposite oldEditor = myCurrentSelectedEditor;
     final EditorWithProviderComposite newEditor = window != null? window.getSelectedEditor() : null;
 
     Runnable fireRunnable = new Runnable() {
       public void run() {
-        getManager().fireSelectionChanged(oldEditor, newEditor);
+        getManager().fireSelectionChanged(newEditor);
       }
     };
 
     setCurrentWindow(window);
-    myCurrentSelectedEditor = newEditor;
 
     getManager().updateFileName(window == null ? null : window.getSelectedFile());
 
@@ -781,10 +778,7 @@ public class EditorsSplitters extends JPanel {
 
       myCurrentFile = newFile;
       setCurrentWindow(newWindow);
-
-      if (changed) {
-        setCurrentWindow(newWindow, false);
-      }
+      setCurrentWindow(newWindow, false);
     }
   }
 

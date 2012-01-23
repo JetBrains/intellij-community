@@ -77,6 +77,7 @@ import javax.swing.border.Border;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.List;
 
@@ -97,6 +98,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   private EditorsSplitters mySplitters;
   private final Project myProject;
   private final List<Pair<VirtualFile, EditorWindow>> mySelectionHistory = new ArrayList<Pair<VirtualFile, EditorWindow>>();
+  private WeakReference<EditorComposite> myLastSelectedComposite = new WeakReference<EditorComposite>(null);
 
 
   private final MergingUpdateQueue myQueue = new MergingUpdateQueue("FileEditorManagerUpdateQueue", 50, true, null);
@@ -1317,9 +1319,10 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     ApplicationManager.getApplication().assertReadAccessAllowed();
   }
 
-  public void fireSelectionChanged(final EditorComposite oldSelectedComposite, final EditorComposite newSelectedComposite) {
-    final Trinity<VirtualFile, FileEditor, FileEditorProvider> oldData = extract(oldSelectedComposite);
+  public void fireSelectionChanged(final EditorComposite newSelectedComposite) {
+    final Trinity<VirtualFile, FileEditor, FileEditorProvider> oldData = extract(myLastSelectedComposite.get());
     final Trinity<VirtualFile, FileEditor, FileEditorProvider> newData = extract(newSelectedComposite);
+    myLastSelectedComposite = new WeakReference<EditorComposite>(newSelectedComposite);
     final boolean filesEqual = oldData.first == null ? newData.first == null : oldData.first.equals(newData.first);
     final boolean editorsEqual = oldData.second == null ? newData.second == null : oldData.second.equals(newData.second);
     if (!filesEqual || !editorsEqual) {
