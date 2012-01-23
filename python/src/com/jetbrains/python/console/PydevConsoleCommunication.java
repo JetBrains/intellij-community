@@ -195,7 +195,6 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   }
 
   private Object execNotifyFinished() {
-    LOG.info("notifyFinished");
     setExecuting(false);
     notifyFinished();
     return true;
@@ -289,7 +288,6 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   public void execInterpreter(final String command, final ICallback<Object, InterpreterResponse> onResponseReceived) {
     nextResponse = null;
     if (waitingForInput) {
-      LOG.info("Command:" + command);
       inputReceived = command;
       waitingForInput = false;
       //the thread that we started in the last exec is still alive if we were waiting for an input.
