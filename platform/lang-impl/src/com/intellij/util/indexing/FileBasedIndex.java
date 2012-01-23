@@ -68,10 +68,7 @@ import com.intellij.util.io.*;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
-import gnu.trove.TIntHashSet;
-import gnu.trove.TIntIterator;
-import gnu.trove.TIntProcedure;
-import gnu.trove.TObjectIntHashMap;
+import gnu.trove.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -93,29 +90,29 @@ public class FileBasedIndex implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.FileBasedIndex");
   @NonNls
   private static final String CORRUPTION_MARKER_NAME = "corruption.marker";
-  private final Map<ID<?, ?>, Pair<UpdatableIndex<?, ?, FileContent>, InputFilter>> myIndices = new HashMap<ID<?, ?>, Pair<UpdatableIndex<?, ?, FileContent>, InputFilter>>();
-  private final Map<ID<?, ?>, Semaphore> myUnsavedDataIndexingSemaphores = new HashMap<ID<?,?>, Semaphore>();
+  private final Map<ID<?, ?>, Pair<UpdatableIndex<?, ?, FileContent>, InputFilter>> myIndices = new THashMap<ID<?, ?>, Pair<UpdatableIndex<?, ?, FileContent>, InputFilter>>();
+  private final Map<ID<?, ?>, Semaphore> myUnsavedDataIndexingSemaphores = new THashMap<ID<?,?>, Semaphore>();
   private final TObjectIntHashMap<ID<?, ?>> myIndexIdToVersionMap = new TObjectIntHashMap<ID<?, ?>>();
-  private final Set<ID<?, ?>> myNotRequiringContentIndices = new HashSet<ID<?, ?>>();
-  private final Set<ID<?, ?>> myRequiringContentIndices = new HashSet<ID<?, ?>>();
-  private final Set<FileType> myNoLimitCheckTypes = new HashSet<FileType>();
+  private final Set<ID<?, ?>> myNotRequiringContentIndices = new THashSet<ID<?, ?>>();
+  private final Set<ID<?, ?>> myRequiringContentIndices = new THashSet<ID<?, ?>>();
+  private final Set<FileType> myNoLimitCheckTypes = new THashSet<FileType>();
 
   private final PerIndexDocumentVersionMap myLastIndexedDocStamps = new PerIndexDocumentVersionMap();
   private final ChangedFilesCollector myChangedFilesCollector;
 
   private final List<IndexableFileSet> myIndexableSets = ContainerUtil.createEmptyCOWList();
-  private final Map<IndexableFileSet, Project> myIndexableSetToProjectMap = new HashMap<IndexableFileSet, Project>();
+  private final Map<IndexableFileSet, Project> myIndexableSetToProjectMap = new THashMap<IndexableFileSet, Project>();
 
   private static final int OK = 1;
   private static final int REQUIRES_REBUILD = 2;
   private static final int REBUILD_IN_PROGRESS = 3;
-  private static final Map<ID<?, ?>, AtomicInteger> ourRebuildStatus = new HashMap<ID<?,?>, AtomicInteger>();
+  private static final Map<ID<?, ?>, AtomicInteger> ourRebuildStatus = new THashMap<ID<?,?>, AtomicInteger>();
 
   private final VirtualFileManagerEx myVfManager;
   private final FileDocumentManager myFileDocumentManager;
   private final FileTypeManager myFileTypeManager;
   private final ConcurrentHashSet<ID<?, ?>> myUpToDateIndices = new ConcurrentHashSet<ID<?, ?>>();
-  private final Map<Document, PsiFile> myTransactionMap = new HashMap<Document, PsiFile>();
+  private final Map<Document, PsiFile> myTransactionMap = new THashMap<Document, PsiFile>();
 
   private static final int ALREADY_PROCESSED = 0x02;
   @Nullable private final String myConfigPath;

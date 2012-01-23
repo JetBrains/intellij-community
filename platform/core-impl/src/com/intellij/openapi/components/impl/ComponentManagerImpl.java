@@ -31,10 +31,10 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.containers.ConcurrentHashMap;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusFactory;
 import com.intellij.util.pico.IdeaPicoContainer;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -415,13 +415,13 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   protected class ComponentsRegistry {
-    private final Map<Class, Object> myInterfaceToLockMap = new HashMap<Class, Object>();
-    private final Map<Class, Class> myInterfaceToClassMap = new HashMap<Class, Class>();
+    private final Map<Class, Object> myInterfaceToLockMap = new THashMap<Class, Object>();
+    private final Map<Class, Class> myInterfaceToClassMap = new THashMap<Class, Class>();
     private final ArrayList<Class> myComponentInterfaces = new ArrayList<Class>(); // keeps order of component's registration
-    private final Map<String, BaseComponent> myNameToComponent = new HashMap<String, BaseComponent>();
+    private final Map<String, BaseComponent> myNameToComponent = new THashMap<String, BaseComponent>();
     private final List<ComponentConfig> myComponentConfigs = new ArrayList<ComponentConfig>();
     private final List<Object> myImplementations = new ArrayList<Object>();
-    private final Map<Class, ComponentConfig> myComponentClassToConfig = new java.util.HashMap<Class, ComponentConfig>();
+    private final Map<Class, ComponentConfig> myComponentClassToConfig = new THashMap<Class, ComponentConfig>();
     private boolean myClassesLoaded = false;
 
     private void loadClasses() {
