@@ -4,7 +4,7 @@
   <executable name="pycharm"
               type="1"
               iconSet="true"
-              iconFile="../resources/PyCharm.ico"
+              iconFile="../../python/resources/PyCharm.ico"
               executableDir="bin"
               redirectStderr="false"
               stderrFile="error.log"
@@ -27,7 +27,7 @@
                  productVersion="__PRODUCT_VERSION__"
                  internalName="idea"/>
   </executable>
-  <splashScreen show="true" autoOff="true" alwaysOnTop="false" width="400" height="300" bitmapFile="../resources/pycharm_logo.png">
+  <splashScreen show="true" autoOff="true" alwaysOnTop="false" width="400" height="300" bitmapFile="../../python/resources/pycharm_logo.png">
     <text>
       <statusLine x="10" y="208" text="" font="Arial" fontSize="8" fontColor="0,0,0" fontWeight="500"/>
       <versionLine x="10" y="231" text="" font="Arial" fontSize="8" fontColor="0,0,0" fontWeight="500"/>
@@ -43,19 +43,13 @@
         allowBetaVM="true"
         jdkOnly="false">
     <searchSequence>
-      <envVar name="IDEA_JDK"/>
+      <envVar name="PYCHARM_JDK"/>
       <directory location="./jre"/>
       <registry/>
       <envVar name="JDK_HOME"/>
     </searchSequence>
     <classPath>
-      <archive location="lib/bootstrap.jar" failOnError="true"/>
-      <archive location="lib/util.jar" failOnError="true"/>
-      <archive location="lib/log4j.jar" failOnError="true"/>
-      <archive location="lib/jdom.jar" failOnError="true"/>
-      <archive location="lib/extensions.jar" failOnError="true"/>
-      <archive location="lib/jna.jar" failOnError="true"/>
-      <archive location="lib/trove4j.jar" failOnError="true"/>
+      __CLASS_PATH__
     </classPath>
     <nativeLibraryDirectories>
       <directory name="./bin"/>
@@ -63,4 +57,3 @@
   </java>
   <includedFiles/>
 </exe4j>
-
