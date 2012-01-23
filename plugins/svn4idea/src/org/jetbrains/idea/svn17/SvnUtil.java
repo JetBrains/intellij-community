@@ -118,7 +118,8 @@ public class SvnUtil {
     final File parentIo = new File(parent.getPath());
     if (isSvnVersioned(project, parentIo)) {
       checkCanceled(progress);
-      callback.handleWorkingCopyRoot(parentIo, progress);
+      File ioFile = new File(vf.getPath());
+      callback.handleWorkingCopyRoot(ioFile, progress);
       checkCanceled(progress);
       result.add(parent);
     } else if (isDirectory) {
