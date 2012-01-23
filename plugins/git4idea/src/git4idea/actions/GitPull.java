@@ -24,7 +24,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.ActionInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitRevisionNumber;
-import git4idea.util.GitUtil;
+import git4idea.GitUtil;
 import git4idea.commands.GitLineHandler;
 import git4idea.commands.GitStandardProgressAnalyzer;
 import git4idea.commands.GitTask;

@@ -27,7 +27,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitContentRevision;
 import git4idea.GitRevisionNumber;
-import git4idea.util.GitUtil;
+import git4idea.GitUtil;
 import git4idea.commands.GitHandler;
 import git4idea.history.wholeTree.AbstractHash;
 import org.jetbrains.annotations.NotNull;

@@ -42,7 +42,9 @@ import com.intellij.util.containers.StripedLockIntObjectConcurrentHashMap;
 import com.intellij.util.io.DupOutputStream;
 import com.intellij.util.io.ReplicatorInputStream;
 import com.intellij.util.messages.MessageBus;
+import gnu.trove.THashMap;
 import gnu.trove.TIntHashSet;
+import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,8 +71,8 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
 
   private final MessageBus myEventsBus;
 
-  private final Map<String, VirtualFileSystemEntry> myRoots = new HashMap<String, VirtualFileSystemEntry>();
-  private final Map<Integer, VirtualFileSystemEntry> myRootsById = new HashMap<Integer, VirtualFileSystemEntry>();
+  private final Map<String, VirtualFileSystemEntry> myRoots = new THashMap<String, VirtualFileSystemEntry>();
+  private final TIntObjectHashMap<VirtualFileSystemEntry> myRootsById = new TIntObjectHashMap<VirtualFileSystemEntry>();
   private VirtualFileSystemEntry myFakeRoot;
   private final Object INPUT_LOCK = new Object();
 

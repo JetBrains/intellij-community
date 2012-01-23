@@ -28,7 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.HashSet;
 import git4idea.GitDeprecatedRemote;
-import git4idea.util.GitUtil;
+import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.actions.BasicAction;
 import git4idea.actions.GitInit;

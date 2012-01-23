@@ -19,13 +19,13 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.containers.MultiMap;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
 
 public class Extensions {
@@ -33,11 +33,11 @@ public class Extensions {
 
   public static final ExtensionPointName<AreaListener> AREA_LISTENER_EXTENSION_POINT = new ExtensionPointName<AreaListener>("com.intellij.arealistener");
 
-  private static final Map<AreaInstance,ExtensionsAreaImpl> ourAreaInstance2area = new HashMap<AreaInstance, ExtensionsAreaImpl>();
+  private static final Map<AreaInstance,ExtensionsAreaImpl> ourAreaInstance2area = new THashMap<AreaInstance, ExtensionsAreaImpl>();
   private static ExtensionsAreaImpl ourRootArea = createRootArea();
   private static final MultiMap<String, AreaInstance> ourAreaClass2instances = new MultiMap<String, AreaInstance>();
-  private static final Map<AreaInstance,String> ourAreaInstance2class = new HashMap<AreaInstance, String>();
-  private static final Map<String,AreaClassConfiguration> ourAreaClass2Configuration = new HashMap<String, AreaClassConfiguration>();
+  private static final Map<AreaInstance,String> ourAreaInstance2class = new THashMap<AreaInstance, String>();
+  private static final Map<String,AreaClassConfiguration> ourAreaClass2Configuration = new THashMap<String, AreaClassConfiguration>();
 
   private static ExtensionsAreaImpl createRootArea() {
     ExtensionsAreaImpl rootArea = new ExtensionsAreaImpl(null, null, null, ourLogger);

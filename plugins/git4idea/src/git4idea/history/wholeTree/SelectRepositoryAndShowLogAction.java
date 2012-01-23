@@ -45,7 +45,7 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.AdjustComponentWhenShown;
-import git4idea.util.GitUtil;
+import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.config.GitVersion;
 import git4idea.history.browser.GitProjectLogManager;

@@ -8,10 +8,7 @@ import org.jetbrains.jps.Library;
 import org.jetbrains.jps.Module;
 import org.jetbrains.jps.Project;
 import org.jetbrains.jps.Sdk;
-import org.jetbrains.jps.api.BuildParameters;
-import org.jetbrains.jps.api.BuildType;
-import org.jetbrains.jps.api.GlobalLibrary;
-import org.jetbrains.jps.api.SdkLibrary;
+import org.jetbrains.jps.api.*;
 import org.jetbrains.jps.idea.IdeaProjectLoader;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
@@ -116,7 +113,7 @@ class ServerState {
     }
   }
 
-  public void startBuild(String projectPath, Set<String> modules, Collection<String> paths, final BuildParameters params, final MessageHandler msgHandler, BuildCanceledStatus cs) throws Throwable{
+  public void startBuild(String projectPath, Set<String> modules, Collection<String> paths, final BuildParameters params, final MessageHandler msgHandler, CanceledStatus cs) throws Throwable{
     final String projectName = getProjectName(projectPath);
     BuildType buildType = params.buildType;
 
