@@ -378,12 +378,26 @@ public class NameUtil {
   }
 
   public static class MinusculeMatcher implements com.intellij.util.text.Matcher {
+    public static final Function<Character,Boolean> BASE_SEPARATOR_FUNCTION = new Function<Character, Boolean>() {
+      @Override
+      public Boolean fun(Character character) {
+        final char c = character.charValue();
+        return Character.isWhitespace(c) || c == '_' || c == '-';
+      }
+    };
+
     private final char[] myPattern;
     private final MatchingCaseSensitivity myOptions;
+    private final Function<Character, Boolean> mySeparatorFunction;
 
     public MinusculeMatcher(String pattern, MatchingCaseSensitivity options) {
+      this(pattern, options, BASE_SEPARATOR_FUNCTION);
+    }
+
+    public MinusculeMatcher(String pattern, MatchingCaseSensitivity options, Function<Character, Boolean> separatorFunction) {
       myOptions = options;
       myPattern = StringUtil.trimEnd(pattern, "* ").replaceAll(":", "\\*:").toCharArray();
+      mySeparatorFunction = separatorFunction;
     }
 
     @Nullable
@@ -483,6 +497,10 @@ public class NameUtil {
       return null;
     }
 
+    private boolean isWordSeparator(char c) {
+      return mySeparatorFunction.fun(c);
+    }
+
     @Nullable
     private FList<TextRange> skipSeparators(String name, int patternIndex, int nameIndex) {
       int nextStart = NameUtil.nextWord(name, nameIndex);
@@ -549,10 +567,6 @@ public class NameUtil {
 
       int patternCaps = StringUtil.capitalsOnly(new String(myPattern)).length();
       return -fragmentCount - Math.max(0, patternCaps - matchingCaps) * 10;
-    }
-
-    private static boolean isWordSeparator(char c) {
-      return Character.isWhitespace(c) || c == '_' || c == '-';
     }
 
     @Override
