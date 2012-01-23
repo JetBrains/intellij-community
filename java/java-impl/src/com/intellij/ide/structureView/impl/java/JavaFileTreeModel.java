@@ -95,7 +95,8 @@ public class JavaFileTreeModel extends TextEditorBasedStructureViewModel impleme
       if (element instanceof PsiMethod) {
         PsiMethod method = (PsiMethod)element;
         PsiClass parent = method.getContainingClass();
-        return parent != null && parent.getQualifiedName() != null;
+        return parent != null
+               && (parent.getQualifiedName() != null || parent instanceof PsiAnonymousClass);
       }
 
       if (element instanceof PsiField) {
