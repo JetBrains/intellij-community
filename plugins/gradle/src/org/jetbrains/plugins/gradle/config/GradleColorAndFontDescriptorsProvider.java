@@ -31,16 +31,16 @@ public class GradleColorAndFontDescriptorsProvider implements ColorAndFontDescri
       GradleTextAttributes.GRADLE_CHANGE_CONFLICT
     ),
     new AttributesDescriptor(
+      GradleBundle.message("gradle.sync.change.type.confirmed"),
+      GradleTextAttributes.GRADLE_CONFIRMED_CONFLICT
+    ),
+    new AttributesDescriptor(
       GradleBundle.message("gradle.sync.change.type.gradle"),
       GradleTextAttributes.GRADLE_LOCAL_CHANGE
     ),
     new AttributesDescriptor(
       GradleBundle.message("gradle.sync.change.type.intellij", ApplicationNamesInfo.getInstance().getProductName()),
       GradleTextAttributes.GRADLE_INTELLIJ_LOCAL_CHANGE
-    ),
-    new AttributesDescriptor(
-      GradleBundle.message("gradle.sync.change.type.confirmed"),
-      GradleTextAttributes.GRADLE_CONFIRMED_CONFLICT
     ),
     new AttributesDescriptor(
       GradleBundle.message("gradle.sync.change.type.unchanged"),

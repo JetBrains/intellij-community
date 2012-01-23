@@ -13,7 +13,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.containers.hash.HashMap;
-import org.jdesktop.swingx.JXPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.ui.GradleIcons;
@@ -25,8 +24,6 @@ import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -37,24 +34,19 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public class GradleColorAndFontPreviewPanel implements PreviewPanel {
   
-  private static final int   SELECTED_NODE_REFRESH_INTERVAL_MILLIS = 100;
-  private static final float BLINK_ALPHA_INCREMENT                 = 0.1f;
-
   private final Map<TextAttributesKey, DefaultMutableTreeNode> myNodes = new HashMap<TextAttributesKey, DefaultMutableTreeNode>();
-  
-  private final List<ColorAndFontSettingsListener> myListeners          = new CopyOnWriteArrayList<ColorAndFontSettingsListener>();
-  private final JPanel                             myContent            = new JPanel(new GridBagLayout());
-  private final JXPanel                            myNodeRenderPanel    = new JXPanel(new BorderLayout());
-  private final Ref<Boolean>                       myAllowTreeExpansion = new Ref<Boolean>(true);
+
+  private final List<ColorAndFontSettingsListener> myListeners                = new CopyOnWriteArrayList<ColorAndFontSettingsListener>();
+  private final JPanel                             myContent                  = new JPanel(new GridBagLayout());
+  private final JPanel                             myNodeRenderPanel          = new JPanel(new GridBagLayout());
+  private final Ref<Boolean>                       myAllowTreeExpansion       = new Ref<Boolean>(true);
+  private final ArrowPanel                         mySelectedElementSignPanel = new ArrowPanel();
   
   private final Tree             myTree;
   private final DefaultTreeModel myTreeModel;
 
-  private Timer               myTimer;
   private ColorAndFontOptions myOptions;
   private TreeNode            mySelectedNode;
-  private float               mySelectedNodeAlpha;
-  private boolean             mySelectedNodePainted;
 
   public GradleColorAndFontPreviewPanel(@NotNull ColorAndFontOptions options) {
     myOptions = options;
@@ -65,34 +57,32 @@ public class GradleColorAndFontPreviewPanel implements PreviewPanel {
 
   private Pair<Tree, DefaultTreeModel> init() {
     myContent.removeAll();
-    String projectName = GradleBundle.message("gradle.settings.color.text.sample.project.name");
-    DefaultMutableTreeNode root = createNode(projectName, GradleIcons.PROJECT_ICON, null);
+    String projectName = GradleBundle.message("gradle.settings.color.text.sample.conflict.node.name");
+    DefaultMutableTreeNode root = createNode(projectName, GradleIcons.PROJECT_ICON, GradleTextAttributes.GRADLE_CHANGE_CONFLICT);
 
-    String moduleName = GradleBundle.message("gradle.settings.color.text.sample.conflict.module.name");
-    DefaultMutableTreeNode module = createNode(moduleName, GradleIcons.MODULE_ICON, GradleTextAttributes.GRADLE_CHANGE_CONFLICT);
+    String moduleName = GradleBundle.message("gradle.settings.color.text.sample.node.confirmed.name");
+    DefaultMutableTreeNode module = createNode(moduleName, GradleIcons.MODULE_ICON, GradleTextAttributes.GRADLE_CONFIRMED_CONFLICT);
 
-    String gradleLibraryName = GradleBundle.message("gradle.settings.color.text.sample.library.gradle.name");
-    DefaultMutableTreeNode gradleLibrary = createNode(gradleLibraryName, GradleIcons.LIB_ICON, GradleTextAttributes.GRADLE_LOCAL_CHANGE);
+    String gradleLibraryName = GradleBundle.message("gradle.settings.color.text.sample.node.gradle.name");
+    DefaultMutableTreeNode gradleLibrary = createNode(
+      gradleLibraryName, GradleIcons.LIB_ICON, GradleTextAttributes.GRADLE_LOCAL_CHANGE
+    );
 
-    String intellijLibraryName = GradleBundle.message("gradle.settings.color.text.sample.library.intellij.name",
+    String intellijLibraryName = GradleBundle.message("gradle.settings.color.text.sample.node.intellij.name",
                                                       ApplicationNamesInfo.getInstance().getProductName());
     DefaultMutableTreeNode intellijLibrary = createNode(
       intellijLibraryName, GradleIcons.LIB_ICON, GradleTextAttributes.GRADLE_INTELLIJ_LOCAL_CHANGE
     );
     
-    String confirmedLibraryName = GradleBundle.message("gradle.settings.color.text.sample.library.confirmed.name");
-    DefaultMutableTreeNode confirmedLibrary = createNode(
-      confirmedLibraryName, GradleIcons.LIB_ICON, GradleTextAttributes.GRADLE_CONFIRMED_CONFLICT
-    );
-
-    String syncLibraryName = GradleBundle.message("gradle.settings.color.text.sample.library.sync.name");
+    String syncLibraryName = GradleBundle.message("gradle.settings.color.text.sample.node.sync.name");
     DefaultMutableTreeNode syncLibrary = createNode(syncLibraryName, GradleIcons.LIB_ICON, GradleTextAttributes.GRADLE_NO_CHANGE);
     
     module.add(gradleLibrary);
     module.add(intellijLibrary);
-    module.add(confirmedLibrary);
     module.add(syncLibrary);
     root.add(module);
+    
+    mySelectedNode = root;
     
     DefaultTreeModel treeModel = new DefaultTreeModel(root);
     Tree tree = buildTree(treeModel, module);
@@ -140,6 +130,7 @@ public class GradleColorAndFontPreviewPanel implements PreviewPanel {
         final Object component = path.getLastPathComponent();
         for (Map.Entry<TextAttributesKey, DefaultMutableTreeNode> entry : myNodes.entrySet()) {
           if (entry.getValue().equals(component)) {
+            pointTo(entry.getValue());
             for (ColorAndFontSettingsListener listener : myListeners) {
               listener.selectionInPreviewChanged(entry.getKey().getExternalName());
               clearSelection();
@@ -171,7 +162,6 @@ public class GradleColorAndFontPreviewPanel implements PreviewPanel {
       }
     };
     myNodeRenderPanel.setBackground(tree.getBackground());
-    myNodeRenderPanel.setPaintBorderInsets(false);
     tree.setCellRenderer(new TreeCellRenderer() {
       @Override
       public Component getTreeCellRendererComponent(JTree tree,
@@ -183,15 +173,14 @@ public class GradleColorAndFontPreviewPanel implements PreviewPanel {
                                                     boolean hasFocus)
       {
         final Component component = delegate.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
-        myNodeRenderPanel.removeAll();
-        myNodeRenderPanel.add(component);
-        if (value == mySelectedNode) {
-          myNodeRenderPanel.setAlpha(roundAlpha(mySelectedNodeAlpha));
-          mySelectedNodePainted = true;
+        if (myNodeRenderPanel.getComponentCount() <= 0) {
+          GridBagConstraints constraints = new GridBagConstraints();
+          myNodeRenderPanel.add(component, constraints);
+          constraints.weightx = 1;
+          myNodeRenderPanel.add(mySelectedElementSignPanel, constraints);
         }
-        else {
-          myNodeRenderPanel.setAlpha(roundAlpha(1.1f - mySelectedNodeAlpha));
-        }
+        
+        mySelectedElementSignPanel.setPaint(value == mySelectedNode);
         return myNodeRenderPanel;
       }
     });
@@ -206,36 +195,22 @@ public class GradleColorAndFontPreviewPanel implements PreviewPanel {
     final String type = ((EditorSchemeAttributeDescriptor)selected).getType();
     for (Map.Entry<TextAttributesKey, DefaultMutableTreeNode> entry : myNodes.entrySet()) {
       if (entry.getKey().getExternalName().equals(type)) {
-        blink(entry.getValue());
+        pointTo(entry.getValue());
         return;
       }
     }
   }
 
-  private void blink(@NotNull TreeNode node) {
-    if (myTimer != null) {
-      myTimer.stop();
-    }
+  /**
+   * Instructs the panel to show given node as selected.
+   * 
+   * @param node  node to show as 'selected'
+   */
+  private void pointTo(@NotNull TreeNode node) {
+    TreeNode oldSelectedNode = mySelectedNode;
     mySelectedNode = node;
-    mySelectedNodeAlpha = 0.5f;
-    myTimer = new Timer(SELECTED_NODE_REFRESH_INTERVAL_MILLIS, new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        if (mySelectedNodeAlpha > 1) {
-          mySelectedNodeAlpha = 1;
-          myTimer.stop();
-          repaintTree();
-          return;
-        }
-        if (!mySelectedNodePainted) {
-          return;
-        }
-        mySelectedNodePainted = false;
-        mySelectedNodeAlpha += BLINK_ALPHA_INCREMENT;
-        repaintTree();
-      }
-    });
-    myTimer.start();
+    myTreeModel.nodeChanged(oldSelectedNode);
+    myTreeModel.nodeChanged(mySelectedNode);
   }
   
   @Override
@@ -257,7 +232,6 @@ public class GradleColorAndFontPreviewPanel implements PreviewPanel {
   }
 
   private void repaintTree() {
-    // TODO den implement
     myTreeModel.reload();
     myAllowTreeExpansion.set(true);
     try {
@@ -285,16 +259,41 @@ public class GradleColorAndFontPreviewPanel implements PreviewPanel {
     }
     return result;
   }
-  
-  private static float roundAlpha(float alpha) {
-    if (alpha < 0) {
-      return 0;
+
+  /**
+   * Encapsulates logic of drawing 'selected element' sign.
+   */
+  private static class ArrowPanel extends JPanel {
+    
+    private boolean myPaint;
+    
+    ArrowPanel() {
+      super(new BorderLayout());
+      // Reserve enough horizontal space.
+      add(new JLabel("intellij"));
     }
-    else if (alpha > 1) {
-      return 1;
+
+    public void setPaint(boolean paint) {
+      myPaint = paint;
     }
-    else {
-      return alpha;
-    } 
+
+    @Override
+    public void paint(Graphics g) {
+      if (!myPaint) {
+        return;
+      }
+      Graphics2D g2 = (Graphics2D)g;
+      g.setColor(Color.RED);
+      RenderingHints renderHints = new RenderingHints(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+      renderHints.put(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+      g2.setRenderingHints(renderHints);
+
+      FontMetrics fontMetrics = getFontMetrics(getFont());
+      int unit = fontMetrics.charWidth('a');
+      int q = unit / 4;
+      int[] x = {0, unit * 3, unit * 2, unit * 4, unit * 4, unit * 2, unit * 3, 0};
+      int[] y = {unit, 0, unit - q, unit - q, unit + q, unit + q, unit * 2, unit};
+      g2.fillPolygon(x, y, x.length);
+    }
   }
 }
