@@ -148,7 +148,7 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
     return findChildByType(TokenSets.VISIBILITY_MODIFIERS) != null;
   }
 
-  public static boolean checkModifierProperty(@NotNull GrModifierList modifierList, @NotNull String modifier) {
+  public static boolean checkModifierProperty(@NotNull GrModifierList modifierList, @GrModifier.GrModifierConstant @NotNull String modifier) {
     final PsiElement owner = modifierList.getParent();
     if (owner instanceof GrVariableDeclaration && owner.getParent() instanceof GrTypeDefinitionBody) {
       PsiElement pParent = owner.getParent().getParent();

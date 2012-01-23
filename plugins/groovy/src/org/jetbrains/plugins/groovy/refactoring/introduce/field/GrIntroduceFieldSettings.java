@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.introduce.field;
 
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceSettings;
 
 /**
@@ -25,6 +26,7 @@ public interface GrIntroduceFieldSettings extends GrIntroduceSettings {
 
   Init initializeIn();
 
+  @GrModifier.GrModifierConstant
   String getVisibilityModifier();
 
   boolean isStatic();

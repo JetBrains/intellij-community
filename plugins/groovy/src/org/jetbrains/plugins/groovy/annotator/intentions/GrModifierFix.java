@@ -25,20 +25,21 @@ import com.intellij.psi.PsiModifierList;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 
 /**
  * @author Maxim.Medvedev
  */
 public class GrModifierFix implements IntentionAction {
   @NotNull private final PsiMember myMember;
-  private final String myModifier;
+  @GrModifier.GrModifierConstant private final String myModifier;
   private final boolean myShowContainingClass;
   private final PsiModifierList myModifierList;
   private final boolean myDoSet;
 
   public GrModifierFix(@NotNull PsiMember member,
                        @NotNull PsiModifierList modifierList,
-                       String modifier,
+                       @GrModifier.GrModifierConstant String modifier,
                        boolean showContainingClass,
                        boolean doSet) {
     myMember = member;
