@@ -50,6 +50,11 @@ public class AccessStaticViaInstance extends BaseJavaLocalInspectionTool {
     return ACCESS_STATIC_VIA_INSTANCE;
   }
 
+  @Override
+  public String getAlternativeID() {
+    return "static-access";
+  }
+
   public boolean isEnabledByDefault() {
     return true;
   }
