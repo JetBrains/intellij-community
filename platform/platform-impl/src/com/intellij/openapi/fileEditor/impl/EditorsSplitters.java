@@ -793,12 +793,12 @@ public class EditorsSplitters extends JPanel {
   }
 
   private final class MyTransferHandler extends TransferHandler {
-    private final FileDropHandler myFileDropHandler = new FileDropHandler();
+    private final FileDropHandler myFileDropHandler = new FileDropHandler(null);
 
     @Override
     public boolean importData(JComponent comp, Transferable t) {
       if (myFileDropHandler.canHandleDrop(t.getTransferDataFlavors())) {
-        myFileDropHandler.handleDrop(t, myManager.getProject());
+        myFileDropHandler.handleDrop(t, myManager.getProject(), myCurrentWindow);
         return true;
       }
       return false;
