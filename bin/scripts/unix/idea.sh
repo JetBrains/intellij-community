@@ -127,17 +127,7 @@ COMMON_JVM_ARGS="-Xbootclasspath/a:../lib/boot.jar -Didea.paths.selector=@@syste
 IDE_JVM_ARGS="@@ide_jvm_args@@"
 ALL_JVM_ARGS="$VM_OPTIONS $COMMON_JVM_ARGS $IDE_JVM_ARGS $AGENT $REQUIRED_JVM_ARGS"
 
-TOOLS_JAR="@@tools_jar@@"
-CLASSPATH="../lib/bootstrap.jar"
-CLASSPATH="$CLASSPATH:../lib/util.jar"
-CLASSPATH="$CLASSPATH:../lib/jdom.jar"
-CLASSPATH="$CLASSPATH:../lib/log4j.jar"
-CLASSPATH="$CLASSPATH:../lib/extensions.jar"
-CLASSPATH="$CLASSPATH:../lib/trove4j.jar"
-CLASSPATH="$CLASSPATH:../lib/jna.jar"
-if [ "$TOOLS_JAR" = "true" ]; then
-  CLASSPATH="$CLASSPATH:$JDK/lib/tools.jar"
-fi
+@@class_path@@
 if [ -n "$@@product_uc@@_CLASSPATH" ]; then
   CLASSPATH="$CLASSPATH:$@@product_uc@@_CLASSPATH"
 fi

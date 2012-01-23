@@ -212,6 +212,16 @@ binding.setVariable("commonJvmArgs", {
    "-Xrunjdwp:transport=dt_socket,server=y,suspend=$suspendUntilDebuggerConnect,address=$debugPort"]
 })
 
+binding.setVariable("classPathLibs", [
+        "bootstrap.jar",
+        "extensions.jar",
+        "util.jar",
+        "jdom.jar",
+        "log4j.jar",
+        "trove4j.jar",
+        "jna.jar"
+])
+
 binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
   ant.copy(todir: "$path/bin") {
     fileset(dir: "$ch/bin/mac")
@@ -245,6 +255,8 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
   args.get("idea.properties", [:])["idea.fatal.error.notification"] = isEap() ? "enabled" : "disabled";
   String properties = readIdeaProperties(args)
 
+  String classPath = classPathLibs.collect {"\$APP_PACKAGE/lib/${it}" }.join(":")
+
   ant.replace(file: "$path/Contents/Info.plist") {
     replacefilter(token: "@@build@@", value: args.buildNumber)
     replacefilter(token: "@@doc_types@@", value: ifNull(args.doc_types, ""))
@@ -258,6 +270,7 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
     replacefilter(token: "@@vmoptions32@@", value: "$mem32")
     replacefilter(token: "@@vmoptions64@@", value: "$mem64 -XX:+UseCompressedOops")
     replacefilter(token: "@@idea_properties@@", value: properties)
+    replacefilter(token: "@@class_path@@", value: classPath)
   }
 
   if (executable != "idea") {
@@ -278,6 +291,10 @@ binding.setVariable("winScripts", { String target, String home, String name, Map
   String product_uc = args.product_uc != null ? args.product_uc : p("component.names.product").toUpperCase()
   String vm_options = args.vm_options != null ? args.vm_options : "${p("component.names.product").toLowerCase()}.exe"
 
+  String classPath = "SET CLASS_PATH=%IDE_HOME%\\lib\\${classPathLibs[0]}\n"
+  classPath += classPathLibs[1..-1].collect {"SET CLASS_PATH=%CLASS_PATH%;%IDE_HOME%\\lib\\${it}"}.join("\n")
+  if (args.tools_jar) classPath += "\nSET CLASS_PATH=%CLASS_PATH%;%JDK%\\lib\\tools.jar"
+
   ant.copy(todir: "$target/bin") {
     fileset(dir: "$home/bin/scripts/win")
 
@@ -288,7 +305,7 @@ binding.setVariable("winScripts", { String target, String home, String name, Map
       filter(token: "isEap", value: isEap())
       filter(token: "system_selector", value: args.system_selector)
       filter(token: "ide_jvm_args", value: ifNull(args.ide_jvm_args, ""))
-      filter(token: "tools_jar", value: ifNull(args.tools_jar, false))
+      filter(token: "class_path", value: classPath)
       filter(token: "script_name", value: name)
     }
   }
@@ -310,6 +327,10 @@ binding.setVariable("unixScripts", { String target, String home, String name, Ma
   String product_uc = args.product_uc != null ? args.product_uc : p("component.names.product").toUpperCase()
   String vm_options = args.vm_options != null ? args.vm_options : p("component.names.product").toLowerCase()
 
+  String classPath = "CLASSPATH=\"../lib/${classPathLibs[0]}\"\n"
+  classPath += classPathLibs[1..-1].collect {"CLASSPATH=\"\$CLASSPATH:../lib/${it}\""}.join("\n")
+  if (args.tools_jar) classPath += "\nCLASSPATH=\"\$CLASSPATH:\$JDK/lib/tools.jar\""
+
   ant.copy(todir: "$target/bin") {
     fileset(dir: "$home/bin/scripts/unix")
 
@@ -320,7 +341,7 @@ binding.setVariable("unixScripts", { String target, String home, String name, Ma
       filter(token: "isEap", value: isEap())
       filter(token: "system_selector", value: args.system_selector)
       filter(token: "ide_jvm_args", value: ifNull(args.ide_jvm_args, ""))
-      filter(token: "tools_jar", value: ifNull(args.tools_jar, false))
+      filter(token: "class_path", value: classPath)
       filter(token: "script_name", value: name)
     }
   }
