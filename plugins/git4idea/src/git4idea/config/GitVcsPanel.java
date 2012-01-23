@@ -74,7 +74,8 @@ public class GitVcsPanel {
     myConvertTextFilesComboBox.setSelectedItem(CRLF_ASK);
     myGitField.addBrowseFolderListener(GitBundle.getString("find.git.title"), GitBundle.getString("find.git.description"), project,
                                        FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor());
-    mySyncBranchControl.setVisible(GitRepositoryManager.getInstance(project).moreThanOneRoot());
+    final GitRepositoryManager repositoryManager = GitRepositoryManager.getInstance(project);
+    mySyncBranchControl.setVisible(repositoryManager != null && repositoryManager.moreThanOneRoot());
   }
 
   /**
