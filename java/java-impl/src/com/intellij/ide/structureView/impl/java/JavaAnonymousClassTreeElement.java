@@ -15,13 +15,12 @@
  */
 package com.intellij.ide.structureView.impl.java;
 
+import com.intellij.ide.util.JavaAnonymousClassesHelper;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.PlatformIcons;
 
 import javax.swing.*;
-import java.util.Collection;
 import java.util.Set;
 
 /**
@@ -45,25 +44,14 @@ public class JavaAnonymousClassTreeElement extends JavaClassTreeElement {
   @Override
   public String getPresentableText() {
     if (myName != null) return myName;
-
     final PsiClass element = getElement();
+
     if (element != null) {
-      final PsiClass container = PsiTreeUtil.getParentOfType(element, PsiClass.class);
-      final Collection<PsiAnonymousClass> all = PsiTreeUtil.collectElementsOfType(container, PsiAnonymousClass.class);
-      int index = 0;
-      for (PsiAnonymousClass anonymousClass : all) {
-        if (PsiTreeUtil.getParentOfType(anonymousClass, PsiClass.class) == container) {
-          index++;
-          if (anonymousClass == element) {
-            myName = "$" + index;
-            return myName;
-          }
-        }
-      }
+      myName = JavaAnonymousClassesHelper.getName((PsiAnonymousClass)element);
+      if (myName != null) return myName;
     }
     return "Anonymous";
   }
-
 
 
   @Override
