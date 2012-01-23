@@ -121,6 +121,7 @@ public class ContentRevisionCache {
     }
   }
 
+  @Nullable
   public static String getOrLoadAsString(Project project,
                                          FilePath file,
                                          VcsRevisionNumber number,
@@ -135,7 +136,7 @@ public class ContentRevisionCache {
     return CharsetToolkit.bytesToString(bytes, charset);
   }
 
-  private static String bytesToString(FilePath path, byte[] bytes) {
+  private static String bytesToString(FilePath path, @NotNull byte[] bytes) {
     Charset charset = null;
     if (path.getVirtualFile() != null) {
       charset = path.getVirtualFile().getCharset();
@@ -183,10 +184,13 @@ public class ContentRevisionCache {
     return bytes;
   }
 
+  @Nullable
   public static String getOrLoadAsString(final Project project, FilePath path, VcsRevisionNumber number, @NotNull VcsKey vcsKey,
                                         @NotNull UniqueType type, final Throwable2Computable<byte[], VcsException, IOException> loader)
     throws VcsException, IOException {
     byte[] bytes = getOrLoadAsBytes(project, path, number, vcsKey, type, loader);
+    if (bytes == null) return null;
+    
     return bytesToString(path, bytes);
   }
 
