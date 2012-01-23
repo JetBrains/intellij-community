@@ -292,6 +292,11 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     return myTree.select(configurable);
   }
 
+  @NotNull
+  public List<Configurable> getPathToRoot(@NotNull Configurable configurable) {
+    return myTree.getPathToRoot(configurable);
+  }
+
   private float readProportion(final float defaultValue, final String propertyName) {
     float proportion = defaultValue;
     try {
