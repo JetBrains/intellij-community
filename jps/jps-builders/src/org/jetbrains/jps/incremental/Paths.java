@@ -52,4 +52,8 @@ public class Paths {
       throw new Error(e);
     }
   }
+
+  public static File convertToFile(final URI uri) {
+    return new File(toURI(uri.getPath()));
+  }
 }

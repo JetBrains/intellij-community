@@ -6,7 +6,8 @@ import org.jetbrains.jps.api.RequestFuture;
 import org.jetbrains.jps.client.SimpleProtobufClient;
 import org.jetbrains.jps.client.UUIDGetter;
 
-import java.util.UUID;
+import java.io.File;
+import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
@@ -25,33 +26,23 @@ public class JavacServerClient extends SimpleProtobufClient<JavacServerResponseH
     });
   }
 
-  public interface RequestCallback extends OutputFileConsumer, DiagnosticOutputConsumer {
-
-  }
-
-  public RequestFuture<JavacServerResponseHandler> sendCompileRequest(RequestCallback callback, final JavacServerResponseHandler responseHandler) {
-    // todo: populate with data
-    return sendRequest(UUID.randomUUID(), JavacRemoteProto.Message.Request.Type.COMPILE, responseHandler, new RequestFuture.CancelAction<JavacServerResponseHandler>() {
+  public RequestFuture<JavacServerResponseHandler> sendCompileRequest(List<String> options, Collection<File> files, Collection<File> classpath, Collection<File> platformCp, Collection<File> sourcePath, Map<File, Set<File>> outs, DiagnosticOutputConsumer diagnosticSink, OutputFileConsumer outputSink) {
+    final JavacServerResponseHandler rh = new JavacServerResponseHandler(diagnosticSink, outputSink);
+    final JavacRemoteProto.Message.Request request = JavacProtoUtil.createCompilationRequest(options, files, classpath, platformCp, sourcePath, outs);
+    return sendRequest(request, rh, new RequestFuture.CancelAction<JavacServerResponseHandler>() {
       public void cancel(RequestFuture<JavacServerResponseHandler> javacServerResponseHandlerRequestFuture) throws Exception {
-        sendCancelRequest();
+        sendRequest(JavacProtoUtil.createCancelRequest(), null, null);
       }
     });
   }
 
-  public void sendCancelRequest() {
-    sendRequest(UUID.randomUUID(), JavacRemoteProto.Message.Request.Type.CANCEL, null, null);
-  }
-
   public void sendShutdownRequest() {
-    sendRequest(UUID.randomUUID(), JavacRemoteProto.Message.Request.Type.SHUTDOWN, null, null);
+    sendRequest(JavacProtoUtil.createShutdownRequest(), null, null);
   }
 
-  private RequestFuture<JavacServerResponseHandler> sendRequest(UUID requestId, final JavacRemoteProto.Message.Request.Type type, final JavacServerResponseHandler responseHandler, final RequestFuture.CancelAction<JavacServerResponseHandler> cancelAction) {
-    final JavacRemoteProto.Message.Request.Builder requestBuilder = JavacRemoteProto.Message.Request.newBuilder();
-    requestBuilder.setRequestType(type);
-    final JavacRemoteProto.Message.Request request = requestBuilder.build();
-    final JavacRemoteProto.Message msg = JavacProtoUtil.toMessage(requestId, request);
-    return sendMessage(requestId, msg, responseHandler, cancelAction);
+  private RequestFuture<JavacServerResponseHandler> sendRequest(final JavacRemoteProto.Message.Request request, final JavacServerResponseHandler responseHandler, final RequestFuture.CancelAction<JavacServerResponseHandler> cancelAction) {
+    final UUID requestId = UUID.randomUUID();
+    return sendMessage(requestId, JavacProtoUtil.toMessage(requestId, request), responseHandler, cancelAction);
   }
 
 }

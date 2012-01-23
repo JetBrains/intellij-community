@@ -777,16 +777,16 @@ public final class JavacRemoteProto {
         public boolean hasOutputRoot() { return hasOutputRoot; }
         public java.lang.String getOutputRoot() { return outputRoot_; }
         
-        // repeated string source_roots = 2;
-        public static final int SOURCE_ROOTS_FIELD_NUMBER = 2;
-        private java.util.List<java.lang.String> sourceRoots_ =
+        // repeated string source_root = 2;
+        public static final int SOURCE_ROOT_FIELD_NUMBER = 2;
+        private java.util.List<java.lang.String> sourceRoot_ =
           java.util.Collections.emptyList();
-        public java.util.List<java.lang.String> getSourceRootsList() {
-          return sourceRoots_;
+        public java.util.List<java.lang.String> getSourceRootList() {
+          return sourceRoot_;
         }
-        public int getSourceRootsCount() { return sourceRoots_.size(); }
-        public java.lang.String getSourceRoots(int index) {
-          return sourceRoots_.get(index);
+        public int getSourceRootCount() { return sourceRoot_.size(); }
+        public java.lang.String getSourceRoot(int index) {
+          return sourceRoot_.get(index);
         }
         
         private void initFields() {
@@ -802,7 +802,7 @@ public final class JavacRemoteProto {
           if (hasOutputRoot()) {
             output.writeString(1, getOutputRoot());
           }
-          for (java.lang.String element : getSourceRootsList()) {
+          for (java.lang.String element : getSourceRootList()) {
             output.writeString(2, element);
           }
         }
@@ -819,12 +819,12 @@ public final class JavacRemoteProto {
           }
           {
             int dataSize = 0;
-            for (java.lang.String element : getSourceRootsList()) {
+            for (java.lang.String element : getSourceRootList()) {
               dataSize += com.google.protobuf.CodedOutputStream
                 .computeStringSizeNoTag(element);
             }
             size += dataSize;
-            size += 1 * getSourceRootsList().size();
+            size += 1 * getSourceRootList().size();
           }
           memoizedSerializedSize = size;
           return size;
@@ -963,9 +963,9 @@ public final class JavacRemoteProto {
               throw new IllegalStateException(
                 "build() has already been called on this Builder.");
             }
-            if (result.sourceRoots_ != java.util.Collections.EMPTY_LIST) {
-              result.sourceRoots_ =
-                java.util.Collections.unmodifiableList(result.sourceRoots_);
+            if (result.sourceRoot_ != java.util.Collections.EMPTY_LIST) {
+              result.sourceRoot_ =
+                java.util.Collections.unmodifiableList(result.sourceRoot_);
             }
             org.jetbrains.jps.javac.JavacRemoteProto.Message.Request.OutputGroup returnMe = result;
             result = null;
@@ -977,11 +977,11 @@ public final class JavacRemoteProto {
             if (other.hasOutputRoot()) {
               setOutputRoot(other.getOutputRoot());
             }
-            if (!other.sourceRoots_.isEmpty()) {
-              if (result.sourceRoots_.isEmpty()) {
-                result.sourceRoots_ = new java.util.ArrayList<java.lang.String>();
+            if (!other.sourceRoot_.isEmpty()) {
+              if (result.sourceRoot_.isEmpty()) {
+                result.sourceRoot_ = new java.util.ArrayList<java.lang.String>();
               }
-              result.sourceRoots_.addAll(other.sourceRoots_);
+              result.sourceRoot_.addAll(other.sourceRoot_);
             }
             return this;
           }
@@ -1006,7 +1006,7 @@ public final class JavacRemoteProto {
                   break;
                 }
                 case 18: {
-                  addSourceRoots(input.readString());
+                  addSourceRoot(input.readString());
                   break;
                 }
               }
@@ -1035,43 +1035,43 @@ public final class JavacRemoteProto {
             return this;
           }
           
-          // repeated string source_roots = 2;
-          public java.util.List<java.lang.String> getSourceRootsList() {
-            return java.util.Collections.unmodifiableList(result.sourceRoots_);
+          // repeated string source_root = 2;
+          public java.util.List<java.lang.String> getSourceRootList() {
+            return java.util.Collections.unmodifiableList(result.sourceRoot_);
           }
-          public int getSourceRootsCount() {
-            return result.getSourceRootsCount();
+          public int getSourceRootCount() {
+            return result.getSourceRootCount();
           }
-          public java.lang.String getSourceRoots(int index) {
-            return result.getSourceRoots(index);
+          public java.lang.String getSourceRoot(int index) {
+            return result.getSourceRoot(index);
           }
-          public Builder setSourceRoots(int index, java.lang.String value) {
+          public Builder setSourceRoot(int index, java.lang.String value) {
             if (value == null) {
     throw new NullPointerException();
   }
-  result.sourceRoots_.set(index, value);
+  result.sourceRoot_.set(index, value);
             return this;
           }
-          public Builder addSourceRoots(java.lang.String value) {
+          public Builder addSourceRoot(java.lang.String value) {
             if (value == null) {
     throw new NullPointerException();
   }
-  if (result.sourceRoots_.isEmpty()) {
-              result.sourceRoots_ = new java.util.ArrayList<java.lang.String>();
+  if (result.sourceRoot_.isEmpty()) {
+              result.sourceRoot_ = new java.util.ArrayList<java.lang.String>();
             }
-            result.sourceRoots_.add(value);
+            result.sourceRoot_.add(value);
             return this;
           }
-          public Builder addAllSourceRoots(
+          public Builder addAllSourceRoot(
               java.lang.Iterable<? extends java.lang.String> values) {
-            if (result.sourceRoots_.isEmpty()) {
-              result.sourceRoots_ = new java.util.ArrayList<java.lang.String>();
+            if (result.sourceRoot_.isEmpty()) {
+              result.sourceRoot_ = new java.util.ArrayList<java.lang.String>();
             }
-            super.addAll(values, result.sourceRoots_);
+            super.addAll(values, result.sourceRoot_);
             return this;
           }
-          public Builder clearSourceRoots() {
-            result.sourceRoots_ = java.util.Collections.emptyList();
+          public Builder clearSourceRoot() {
+            result.sourceRoot_ = java.util.Collections.emptyList();
             return this;
           }
           
@@ -1832,6 +1832,7 @@ public final class JavacRemoteProto {
         BUILD_MESSAGE(0, 1),
         OUTPUT_OBJECT(1, 2),
         BUILD_COMPLETED(2, 3),
+        REQUEST_ACK(3, 4),
         ;
         
         
@@ -1842,6 +1843,7 @@ public final class JavacRemoteProto {
             case 1: return BUILD_MESSAGE;
             case 2: return OUTPUT_OBJECT;
             case 3: return BUILD_COMPLETED;
+            case 4: return REQUEST_ACK;
             default: return null;
           }
         }
@@ -1889,8 +1891,10 @@ public final class JavacRemoteProto {
             implements com.google.protobuf.Internal.EnumLite {
           ERROR(0, 1),
           WARNING(1, 2),
-          INFO(2, 3),
-          STD_OUT(3, 4),
+          MANDATORY_WARNING(2, 3),
+          NOTE(3, 4),
+          OTHER(4, 5),
+          STD_OUT(5, 6),
           ;
           
           
@@ -1900,8 +1904,10 @@ public final class JavacRemoteProto {
             switch (value) {
               case 1: return ERROR;
               case 2: return WARNING;
-              case 3: return INFO;
-              case 4: return STD_OUT;
+              case 3: return MANDATORY_WARNING;
+              case 4: return NOTE;
+              case 5: return OTHER;
+              case 6: return STD_OUT;
               default: return null;
             }
           }
@@ -1942,12 +1948,12 @@ public final class JavacRemoteProto {
         public boolean hasText() { return hasText; }
         public java.lang.String getText() { return text_; }
         
-        // optional string source_file_path = 3;
-        public static final int SOURCE_FILE_PATH_FIELD_NUMBER = 3;
-        private boolean hasSourceFilePath;
-        private java.lang.String sourceFilePath_ = "";
-        public boolean hasSourceFilePath() { return hasSourceFilePath; }
-        public java.lang.String getSourceFilePath() { return sourceFilePath_; }
+        // optional string source_uri = 3;
+        public static final int SOURCE_URI_FIELD_NUMBER = 3;
+        private boolean hasSourceUri;
+        private java.lang.String sourceUri_ = "";
+        public boolean hasSourceUri() { return hasSourceUri; }
+        public java.lang.String getSourceUri() { return sourceUri_; }
         
         // optional uint64 problem_begin_offset = 4;
         public static final int PROBLEM_BEGIN_OFFSET_FIELD_NUMBER = 4;
@@ -2001,8 +2007,8 @@ public final class JavacRemoteProto {
           if (hasText()) {
             output.writeString(2, getText());
           }
-          if (hasSourceFilePath()) {
-            output.writeString(3, getSourceFilePath());
+          if (hasSourceUri()) {
+            output.writeString(3, getSourceUri());
           }
           if (hasProblemBeginOffset()) {
             output.writeUInt64(4, getProblemBeginOffset());
@@ -2035,9 +2041,9 @@ public final class JavacRemoteProto {
             size += com.google.protobuf.CodedOutputStream
               .computeStringSize(2, getText());
           }
-          if (hasSourceFilePath()) {
+          if (hasSourceUri()) {
             size += com.google.protobuf.CodedOutputStream
-              .computeStringSize(3, getSourceFilePath());
+              .computeStringSize(3, getSourceUri());
           }
           if (hasProblemBeginOffset()) {
             size += com.google.protobuf.CodedOutputStream
@@ -2209,8 +2215,8 @@ public final class JavacRemoteProto {
             if (other.hasText()) {
               setText(other.getText());
             }
-            if (other.hasSourceFilePath()) {
-              setSourceFilePath(other.getSourceFilePath());
+            if (other.hasSourceUri()) {
+              setSourceUri(other.getSourceUri());
             }
             if (other.hasProblemBeginOffset()) {
               setProblemBeginOffset(other.getProblemBeginOffset());
@@ -2258,7 +2264,7 @@ public final class JavacRemoteProto {
                   break;
                 }
                 case 26: {
-                  setSourceFilePath(input.readString());
+                  setSourceUri(input.readString());
                   break;
                 }
                 case 32: {
@@ -2328,24 +2334,24 @@ public final class JavacRemoteProto {
             return this;
           }
           
-          // optional string source_file_path = 3;
-          public boolean hasSourceFilePath() {
-            return result.hasSourceFilePath();
+          // optional string source_uri = 3;
+          public boolean hasSourceUri() {
+            return result.hasSourceUri();
           }
-          public java.lang.String getSourceFilePath() {
-            return result.getSourceFilePath();
+          public java.lang.String getSourceUri() {
+            return result.getSourceUri();
           }
-          public Builder setSourceFilePath(java.lang.String value) {
+          public Builder setSourceUri(java.lang.String value) {
             if (value == null) {
     throw new NullPointerException();
   }
-  result.hasSourceFilePath = true;
-            result.sourceFilePath_ = value;
+  result.hasSourceUri = true;
+            result.sourceUri_ = value;
             return this;
           }
-          public Builder clearSourceFilePath() {
-            result.hasSourceFilePath = false;
-            result.sourceFilePath_ = getDefaultInstance().getSourceFilePath();
+          public Builder clearSourceUri() {
+            result.hasSourceUri = false;
+            result.sourceUri_ = getDefaultInstance().getSourceUri();
             return this;
           }
           
@@ -2546,12 +2552,12 @@ public final class JavacRemoteProto {
         public boolean hasClassName() { return hasClassName; }
         public java.lang.String getClassName() { return className_; }
         
-        // optional string source_path = 6;
-        public static final int SOURCE_PATH_FIELD_NUMBER = 6;
-        private boolean hasSourcePath;
-        private java.lang.String sourcePath_ = "";
-        public boolean hasSourcePath() { return hasSourcePath; }
-        public java.lang.String getSourcePath() { return sourcePath_; }
+        // optional string source_uri = 6;
+        public static final int SOURCE_URI_FIELD_NUMBER = 6;
+        private boolean hasSourceUri;
+        private java.lang.String sourceUri_ = "";
+        public boolean hasSourceUri() { return hasSourceUri; }
+        public java.lang.String getSourceUri() { return sourceUri_; }
         
         // optional bytes content = 7;
         public static final int CONTENT_FIELD_NUMBER = 7;
@@ -2587,8 +2593,8 @@ public final class JavacRemoteProto {
           if (hasClassName()) {
             output.writeString(5, getClassName());
           }
-          if (hasSourcePath()) {
-            output.writeString(6, getSourcePath());
+          if (hasSourceUri()) {
+            output.writeString(6, getSourceUri());
           }
           if (hasContent()) {
             output.writeBytes(7, getContent());
@@ -2621,9 +2627,9 @@ public final class JavacRemoteProto {
             size += com.google.protobuf.CodedOutputStream
               .computeStringSize(5, getClassName());
           }
-          if (hasSourcePath()) {
+          if (hasSourceUri()) {
             size += com.google.protobuf.CodedOutputStream
-              .computeStringSize(6, getSourcePath());
+              .computeStringSize(6, getSourceUri());
           }
           if (hasContent()) {
             size += com.google.protobuf.CodedOutputStream
@@ -2788,8 +2794,8 @@ public final class JavacRemoteProto {
             if (other.hasClassName()) {
               setClassName(other.getClassName());
             }
-            if (other.hasSourcePath()) {
-              setSourcePath(other.getSourcePath());
+            if (other.hasSourceUri()) {
+              setSourceUri(other.getSourceUri());
             }
             if (other.hasContent()) {
               setContent(other.getContent());
@@ -2837,7 +2843,7 @@ public final class JavacRemoteProto {
                   break;
                 }
                 case 50: {
-                  setSourcePath(input.readString());
+                  setSourceUri(input.readString());
                   break;
                 }
                 case 58: {
@@ -2954,24 +2960,24 @@ public final class JavacRemoteProto {
             return this;
           }
           
-          // optional string source_path = 6;
-          public boolean hasSourcePath() {
-            return result.hasSourcePath();
+          // optional string source_uri = 6;
+          public boolean hasSourceUri() {
+            return result.hasSourceUri();
           }
-          public java.lang.String getSourcePath() {
-            return result.getSourcePath();
+          public java.lang.String getSourceUri() {
+            return result.getSourceUri();
           }
-          public Builder setSourcePath(java.lang.String value) {
+          public Builder setSourceUri(java.lang.String value) {
             if (value == null) {
     throw new NullPointerException();
   }
-  result.hasSourcePath = true;
-            result.sourcePath_ = value;
+  result.hasSourceUri = true;
+            result.sourceUri_ = value;
             return this;
           }
-          public Builder clearSourcePath() {
-            result.hasSourcePath = false;
-            result.sourcePath_ = getDefaultInstance().getSourcePath();
+          public Builder clearSourceUri() {
+            result.hasSourceUri = false;
+            result.sourceUri_ = getDefaultInstance().getSourceUri();
             return this;
           }
           

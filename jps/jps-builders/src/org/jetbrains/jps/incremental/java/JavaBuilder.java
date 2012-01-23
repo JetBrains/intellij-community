@@ -599,14 +599,9 @@ public class JavaBuilder extends Builder{
         default:
           kind = BuildMessage.Kind.INFO;
       }
-      final String srcPath;
       final JavaFileObject source = diagnostic.getSource();
-      if (source != null) {
-        srcPath = FileUtil.toSystemIndependentName(source.toUri().getPath());
-      }
-      else {
-        srcPath = null;
-      }
+      final File sourceFile = source != null? Paths.convertToFile(source.toUri()) : null;
+      final String srcPath = sourceFile != null? FileUtil.toSystemIndependentName(sourceFile.getPath()) : null;
       myContext.processMessage(new CompilerMessage(
         BUILDER_NAME, kind, diagnostic.getMessage(Locale.US), srcPath,
         diagnostic.getStartPosition(), diagnostic.getEndPosition(), diagnostic.getPosition(),

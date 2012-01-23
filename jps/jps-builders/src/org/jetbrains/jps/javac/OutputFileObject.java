@@ -23,6 +23,7 @@ public final class OutputFileObject extends SimpleJavaFileObject {
   private final File myFile;
   @Nullable
   private final String myClassName;
+  @Nullable private final URI mySourceUri;
   private volatile Content myContent;
   private final File mySourceFile;
 
@@ -33,12 +34,13 @@ public final class OutputFileObject extends SimpleJavaFileObject {
   public OutputFileObject(@Nullable JavacFileManager.Context context, @Nullable File outputRoot, String relativePath, @NotNull File file, @NotNull Kind kind, @Nullable String className, @Nullable final URI srcUri, @Nullable Content content) {
     super(Paths.toURI(file.getPath()), kind);
     myContext = context;
+    mySourceUri = srcUri;
     myContent = content;
     myOutputRoot = outputRoot;
     myRelativePath = relativePath;
     myFile = file;
     myClassName = className;
-    mySourceFile = srcUri != null? new File(Paths.toURI(srcUri.getPath())) : null;
+    mySourceFile = srcUri != null? Paths.convertToFile(srcUri) : null;
   }
 
   @Nullable
@@ -63,6 +65,11 @@ public final class OutputFileObject extends SimpleJavaFileObject {
   @Nullable
   public File getSourceFile() {
     return mySourceFile;
+  }
+
+  @Nullable
+  public URI getSourceUri() {
+    return mySourceUri;
   }
 
   @Override
@@ -125,7 +132,7 @@ public final class OutputFileObject extends SimpleJavaFileObject {
     private final int myOffset;
     private final int myLength;
 
-    private Content(byte[] buf, int off, int len) {
+    Content(byte[] buf, int off, int len) {
       myBuffer = buf;
       myOffset = off;
       myLength = len;

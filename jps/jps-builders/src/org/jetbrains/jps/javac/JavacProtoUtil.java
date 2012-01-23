@@ -2,17 +2,57 @@ package org.jetbrains.jps.javac;
 
 import com.google.protobuf.ByteString;
 import com.intellij.openapi.util.io.FileUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.util.UUID;
+import java.io.PrintStream;
+import java.net.URI;
+import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
  *         Date: 1/23/12
  */
 public class JavacProtoUtil {
+
+  public static JavacRemoteProto.Message.Request createCancelRequest() {
+    return JavacRemoteProto.Message.Request.newBuilder().setRequestType(JavacRemoteProto.Message.Request.Type.CANCEL).build();
+  }
+
+  public static JavacRemoteProto.Message.Request createShutdownRequest() {
+    return JavacRemoteProto.Message.Request.newBuilder().setRequestType(JavacRemoteProto.Message.Request.Type.SHUTDOWN).build();
+  }
+
+  public static JavacRemoteProto.Message.Request createCompilationRequest(List<String> options, Collection<File> files, Collection<File> classpath, Collection<File> platformCp, Collection<File> sourcePath, Map<File, Set<File>> outs) {
+    final JavacRemoteProto.Message.Request.Builder builder = JavacRemoteProto.Message.Request.newBuilder();
+    builder.setRequestType(JavacRemoteProto.Message.Request.Type.COMPILE);
+    builder.addAllOption(options);
+    for (File file : files) {
+      builder.addFile(FileUtil.toSystemIndependentName(file.getPath()));
+    }
+    for (File file : classpath) {
+      builder.addClasspath(FileUtil.toSystemIndependentName(file.getPath()));
+    }
+    for (File file : platformCp) {
+      builder.addPlatformClasspath(FileUtil.toSystemIndependentName(file.getPath()));
+    }
+    for (File file : sourcePath) {
+      builder.addSourcepath(FileUtil.toSystemIndependentName(file.getPath()));
+    }
+    for (Map.Entry<File, Set<File>> entry : outs.entrySet()) {
+      final JavacRemoteProto.Message.Request.OutputGroup.Builder groupBuilder = JavacRemoteProto.Message.Request.OutputGroup.newBuilder();
+      groupBuilder.setOutputRoot(FileUtil.toSystemIndependentName(entry.getKey().getPath()));
+      for (File srcRoot : entry.getValue()) {
+        groupBuilder.addSourceRoot(FileUtil.toSystemIndependentName(srcRoot.getPath()));
+      }
+      builder.addOutput(groupBuilder.build());
+    }
+    return builder.build();
+  }
+
 
   public static JavacRemoteProto.Message.Response createOutputObjectResponse(OutputFileObject fileObject) {
     final JavacRemoteProto.Message.Response.OutputObject.Builder msgBuilder = JavacRemoteProto.Message.Response.OutputObject.newBuilder();
@@ -35,9 +75,9 @@ public class JavacProtoUtil {
     if (relativePath != null) {
       msgBuilder.setRelativePath(relativePath);
     }
-    final File sourceFile = fileObject.getSourceFile();
-    if (sourceFile != null) {
-      msgBuilder.setSourcePath(FileUtil.toSystemIndependentName(sourceFile.getPath()));
+    final URI srcUri = fileObject.getSourceUri();
+    if (srcUri != null) {
+      msgBuilder.setSourceUri(srcUri.toString());
     }
 
     final JavacRemoteProto.Message.Response.Builder builder = JavacRemoteProto.Message.Response.newBuilder();
@@ -56,20 +96,31 @@ public class JavacProtoUtil {
     return builder.build();
   }
 
-  public static JavacRemoteProto.Message.Response createBuildMessageResponse(Diagnostic.Kind kind, String text, final String srcPath, final long line, final long column, final long beginOffset, final long endOffset) {
+  public static JavacRemoteProto.Message.Response createBuildMessageResponse(Diagnostic<? extends JavaFileObject> diagnostic) {
     final JavacRemoteProto.Message.Response.CompileMessage.Builder msgBuilder = JavacRemoteProto.Message.Response.CompileMessage.newBuilder();
-    msgBuilder.setKind(convertKind(kind));
-    msgBuilder.setText(text);
-    msgBuilder.setSourceFilePath(srcPath);
-    msgBuilder.setLine(line);
-    msgBuilder.setColumn(column);
-    msgBuilder.setProblemBeginOffset(beginOffset);
-    msgBuilder.setProblemEndOffset(endOffset);
+
+    msgBuilder.setKind(convertKind(diagnostic.getKind()));
+    msgBuilder.setText(diagnostic.getMessage(Locale.US));
+
+    final JavaFileObject source = diagnostic.getSource();
+    final URI srcUri = source != null? source.toUri() : null;
+    if (srcUri != null) {
+      msgBuilder.setSourceUri(srcUri.toString());
+    }
+    msgBuilder.setLine(diagnostic.getLineNumber());
+    msgBuilder.setColumn(diagnostic.getColumnNumber());
+    msgBuilder.setProblemBeginOffset(diagnostic.getStartPosition());
+    msgBuilder.setProblemEndOffset(diagnostic.getEndPosition());
+    msgBuilder.setProblemLocationOffset(diagnostic.getPosition());
 
     final JavacRemoteProto.Message.Response.Builder builder = JavacRemoteProto.Message.Response.newBuilder();
     builder.setResponseType(JavacRemoteProto.Message.Response.Type.BUILD_MESSAGE).setCompileMessage(msgBuilder.build());
 
     return builder.build();
+  }
+
+  public static JavacRemoteProto.Message.Response createRequestAckResponse() {
+    return JavacRemoteProto.Message.Response.newBuilder().setResponseType(JavacRemoteProto.Message.Response.Type.REQUEST_ACK).build();
   }
 
   public static JavacRemoteProto.Message.Response createBuildCompletedResponse(boolean code) {
@@ -78,9 +129,14 @@ public class JavacProtoUtil {
     return builder.build();
   }
 
-  public static JavacRemoteProto.Message.Failure createFailure(String description) {
+  public static JavacRemoteProto.Message.Failure createFailure(String description, @Nullable Throwable ex) {
     final JavacRemoteProto.Message.Failure.Builder builder = JavacRemoteProto.Message.Failure.newBuilder();
     builder.setDescription(description);
+    if (ex != null) {
+      final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      ex.printStackTrace(new PrintStream(baos));
+      builder.setStacktrace(new String(baos.toByteArray()));
+    }
     return builder.build();
   }
 
@@ -117,14 +173,12 @@ public class JavacProtoUtil {
   }
   private static JavacRemoteProto.Message.Response.CompileMessage.Kind convertKind(Diagnostic.Kind kind) {
     switch (kind) {
-      case ERROR:
-        return JavacRemoteProto.Message.Response.CompileMessage.Kind.ERROR;
-      case MANDATORY_WARNING:
-      case WARNING:
-      case NOTE:
-        return JavacRemoteProto.Message.Response.CompileMessage.Kind.WARNING;
+      case ERROR: return JavacRemoteProto.Message.Response.CompileMessage.Kind.ERROR;
+      case MANDATORY_WARNING: return JavacRemoteProto.Message.Response.CompileMessage.Kind.MANDATORY_WARNING;
+      case WARNING: return JavacRemoteProto.Message.Response.CompileMessage.Kind.WARNING;
+      case NOTE: return JavacRemoteProto.Message.Response.CompileMessage.Kind.NOTE;
       default:
-        return JavacRemoteProto.Message.Response.CompileMessage.Kind.INFO;
+        return JavacRemoteProto.Message.Response.CompileMessage.Kind.OTHER;
     }
   }
 

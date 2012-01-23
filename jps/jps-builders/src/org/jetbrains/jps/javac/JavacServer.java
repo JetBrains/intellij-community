@@ -110,12 +110,7 @@ public class JavacServer {
       }
 
       public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
-        final Diagnostic.Kind kind = diagnostic.getKind();
-        final JavaFileObject source = diagnostic.getSource();
-        final String srcPath = source != null? source.toUri().getPath() : null;
-        final JavacRemoteProto.Message.Response response = JavacProtoUtil.createBuildMessageResponse(
-          kind, diagnostic.getMessage(Locale.US), srcPath, diagnostic.getLineNumber(), diagnostic.getColumnNumber(), diagnostic.getStartPosition(), diagnostic.getEndPosition()
-        );
+        final JavacRemoteProto.Message.Response response = JavacProtoUtil.createBuildMessageResponse(diagnostic);
         Channels.write(ctx.getChannel(), JavacProtoUtil.toMessage(sessionId, response));
       }
     };
@@ -126,11 +121,14 @@ public class JavacServer {
       }
     };
 
-    final boolean rc = JavacMain.compile(options, files, classpath, platformCp, sourcePath, outs, diagnostic, outputSink, null/*todo*/);
-
-    return JavacProtoUtil.toMessage(sessionId, JavacProtoUtil.createBuildCompletedResponse(rc));
+    try {
+      final boolean rc = JavacMain.compile(options, files, classpath, platformCp, sourcePath, outs, diagnostic, outputSink, null/*todo*/);
+      return JavacProtoUtil.toMessage(sessionId, JavacProtoUtil.createBuildCompletedResponse(rc));
+    }
+    catch (Throwable e) {
+      return JavacProtoUtil.toMessage(sessionId, JavacProtoUtil.createFailure(e.getMessage(), e));
+    }
   }
-
 
   public static void cancelBuild() {
     // todo
@@ -167,7 +165,7 @@ public class JavacServer {
             final Map<File, Set<File>> outs = new HashMap<File, Set<File>>();
             for (JavacRemoteProto.Message.Request.OutputGroup outputGroup : request.getOutputList()) {
               final Set<File> srcRoots = new HashSet<File>();
-              for (String root : outputGroup.getSourceRootsList()) {
+              for (String root : outputGroup.getSourceRootList()) {
                 srcRoots.add(new File(root));
               }
               outs.put(new File(outputGroup.getOutputRoot()), srcRoots);
@@ -177,17 +175,18 @@ public class JavacServer {
           }
           else if (requestType == JavacRemoteProto.Message.Request.Type.CANCEL){
             cancelBuild();
+            reply = JavacProtoUtil.toMessage(sessionId, JavacProtoUtil.createRequestAckResponse());
           }
           else if (requestType == JavacRemoteProto.Message.Request.Type.SHUTDOWN){
             cancelBuild();
             System.exit(0);
           }
           else {
-            reply = JavacProtoUtil.toMessage(sessionId, JavacProtoUtil.createFailure("Unsupported request type: " + requestType.name()));
+            reply = JavacProtoUtil.toMessage(sessionId, JavacProtoUtil.createFailure("Unsupported request type: " + requestType.name(), null));
           }
         }
         else {
-          reply = JavacProtoUtil.toMessage(sessionId, JavacProtoUtil.createFailure("Unsupported message: " + messageType.name()));
+          reply = JavacProtoUtil.toMessage(sessionId, JavacProtoUtil.createFailure("Unsupported message: " + messageType.name(), null));
         }
       }
       finally {
