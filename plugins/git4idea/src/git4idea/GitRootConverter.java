@@ -19,7 +19,6 @@ package git4idea;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashSet;
-import git4idea.util.GitUtil;
 
 import java.util.ArrayList;
 import java.util.List;

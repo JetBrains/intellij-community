@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.structureView.impl.java;
 
+import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
 import com.intellij.ide.util.FileStructureNodeProvider;
 import com.intellij.ide.util.treeView.smartTree.ActionPresentation;
 import com.intellij.ide.util.treeView.smartTree.ActionPresentationData;
@@ -29,6 +30,7 @@ import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -44,14 +46,14 @@ public class JavaAnonymousClassesNodeProvider implements FileStructureNodeProvid
 
   @Override
   public Collection<JavaAnonymousClassTreeElement> provideNodes(TreeElement node) {
-    if (node instanceof JavaClassTreeElement) {
-      final PsiClass cls = ((JavaClassTreeElement)node).getElement();
+    if (node instanceof PsiMethodTreeElement || node instanceof PsiFieldTreeElement || node instanceof ClassInitializerTreeElement) {
+      final PsiElement el = ((PsiTreeElementBase)node).getElement();
       for (AnonymousElementProvider provider : Extensions.getExtensions(AnonymousElementProvider.EP_NAME)) {
-        final PsiElement[] elements = provider.getAnonymousElements(cls);
+        final PsiElement[] elements = provider.getAnonymousElements(el);
         if (elements != null && elements.length > 0) {
           List<JavaAnonymousClassTreeElement> result = new ArrayList<JavaAnonymousClassTreeElement>(elements.length);
           for (PsiElement element : elements) {
-            result.add(new JavaAnonymousClassTreeElement((PsiAnonymousClass)element, ((JavaClassTreeElement)node).getParents()));
+            result.add(new JavaAnonymousClassTreeElement((PsiAnonymousClass)element, new HashSet<PsiClass>()));
           }
           return result;
         }

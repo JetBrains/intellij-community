@@ -19,7 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
 import git4idea.GitBranch;
-import git4idea.util.GitUtil;
+import git4idea.GitUtil;
 import git4idea.branch.GitBranchPair;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;

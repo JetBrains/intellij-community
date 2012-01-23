@@ -27,18 +27,26 @@ import java.util.List;
 public class JavaAnonymousClassesProvider implements AnonymousElementProvider {
   @Override
   public PsiElement[] getAnonymousElements(PsiElement parent) {
-    if (parent instanceof PsiClass) {
+    if (suite(parent)) {
       if (parent instanceof PsiCompiledElement) {
         parent = parent.getNavigationElement();
       }
-      if (parent instanceof PsiClass && !(parent instanceof PsiCompiledElement)) {
+      if (suite(parent) && !(parent instanceof PsiCompiledElement)) {
         final List<PsiElement> elements = new ArrayList<PsiElement>();
-        new JavaRecursiveElementWalkingVisitor() {
+        final PsiElement element = parent;
+        element.accept(new JavaRecursiveElementWalkingVisitor() {
           @Override
           public void visitAnonymousClass(PsiAnonymousClass aClass) {
             elements.add(aClass);
           }
-        }.visitElement(parent);
+
+          @Override
+          public void visitClass(PsiClass aClass) {
+            if (aClass == element) {
+              super.visitClass(aClass);
+            }
+          }
+        });
 
         if (! elements.isEmpty()) {
           return elements.toArray(new PsiElement[elements.size()]);
@@ -46,5 +54,12 @@ public class JavaAnonymousClassesProvider implements AnonymousElementProvider {
       }
     }
     return PsiElement.EMPTY_ARRAY;
+  }
+
+  private static boolean suite(PsiElement element) {
+    return element instanceof PsiClass
+      || element instanceof PsiMethod
+      || element instanceof PsiField
+      || element instanceof PsiClassInitializer;
   }
 }

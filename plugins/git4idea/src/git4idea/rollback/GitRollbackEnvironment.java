@@ -27,7 +27,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
-import git4idea.util.GitUtil;
+import git4idea.GitUtil;
 import git4idea.commands.GitCommand;
 import git4idea.util.GitFileUtils;
 import git4idea.commands.GitHandlerUtil;

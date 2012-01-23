@@ -186,12 +186,56 @@ public final class FormEditingUtil {
     }
   }
 
+  private static final int EMPTY_COMPONENT_SIZE = 5;
+
+  private static Component getDeepestEmptyComponentAt(JComponent parent, Point location) {
+    int size = parent.getComponentCount();
+
+    for (int i = 0; i < size; i++) {
+      Component child = parent.getComponent(i);
+
+      if (child.isShowing()) {
+        if (child.getWidth() < EMPTY_COMPONENT_SIZE || child.getHeight() < EMPTY_COMPONENT_SIZE) {
+          Point childLocation = child.getLocationOnScreen();
+          Rectangle bounds = new Rectangle();
+
+          bounds.x = childLocation.x;
+          bounds.y = childLocation.y;
+          bounds.width = child.getWidth();
+          bounds.height = child.getHeight();
+          bounds.grow(child.getWidth() < EMPTY_COMPONENT_SIZE ? EMPTY_COMPONENT_SIZE : 0,
+                      child.getHeight() < EMPTY_COMPONENT_SIZE ? EMPTY_COMPONENT_SIZE : 0);
+
+          if (bounds.contains(location)) {
+            return child;
+          }
+        }
+
+        if (child instanceof JComponent) {
+          Component result = getDeepestEmptyComponentAt((JComponent)child, location);
+
+          if (result != null) {
+            return result;
+          }
+        }
+      }
+    }
+
+    return null;
+  }
+
   /**
    * @param x in editor pane coordinates
    * @param y in editor pane coordinates
    */
   public static RadComponent getRadComponentAt(final RadRootContainer rootContainer, final int x, final int y){
-    Component c = SwingUtilities.getDeepestComponentAt(rootContainer.getDelegee(), x, y);
+    Point location = new Point(x, y);
+    SwingUtilities.convertPointToScreen(location, rootContainer.getDelegee());
+    Component c = getDeepestEmptyComponentAt(rootContainer.getDelegee(), location);
+
+    if (c == null) {
+      c = SwingUtilities.getDeepestComponentAt(rootContainer.getDelegee(), x, y);
+    }
 
     RadComponent result = null;
 
@@ -310,9 +354,9 @@ public final class FormEditingUtil {
     final ArrayList<RadComponent> result = new ArrayList<RadComponent>();
     iterate(
       editor.getRootContainer(),
-      new ComponentVisitor<RadComponent>(){
+      new ComponentVisitor<RadComponent>() {
         public boolean visit(final RadComponent component) {
-          if(component.isSelected()){
+          if (component.isSelected()) {
             result.add(component);
           }
           return true;
@@ -793,26 +837,28 @@ public final class FormEditingUtil {
     iterate(component, new ComponentVisitor<IComponent>() {
 
       public boolean visit(final IComponent component) {
-        for(IProperty prop: component.getModifiedProperties()) {
+        for (IProperty prop : component.getModifiedProperties()) {
           Object value = prop.getPropertyValue(component);
           if (value instanceof StringDescriptor) {
-            if (!visitor.visit(component, (StringDescriptor) value)) {
+            if (!visitor.visit(component, (StringDescriptor)value)) {
               return false;
             }
           }
         }
         if (component.getParentContainer() instanceof ITabbedPane) {
-          StringDescriptor tabTitle = ((ITabbedPane) component.getParentContainer()).getTabProperty(component, ITabbedPane.TAB_TITLE_PROPERTY);
+          StringDescriptor tabTitle =
+            ((ITabbedPane)component.getParentContainer()).getTabProperty(component, ITabbedPane.TAB_TITLE_PROPERTY);
           if (tabTitle != null && !visitor.visit(component, tabTitle)) {
             return false;
           }
-          StringDescriptor tabToolTip = ((ITabbedPane) component.getParentContainer()).getTabProperty(component, ITabbedPane.TAB_TOOLTIP_PROPERTY);
+          StringDescriptor tabToolTip =
+            ((ITabbedPane)component.getParentContainer()).getTabProperty(component, ITabbedPane.TAB_TOOLTIP_PROPERTY);
           if (tabToolTip != null && !visitor.visit(component, tabToolTip)) {
             return false;
           }
         }
         if (component instanceof IContainer) {
-          final StringDescriptor borderTitle = ((IContainer) component).getBorderTitle();
+          final StringDescriptor borderTitle = ((IContainer)component).getBorderTitle();
           if (borderTitle != null && !visitor.visit(component, borderTitle)) {
             return false;
           }

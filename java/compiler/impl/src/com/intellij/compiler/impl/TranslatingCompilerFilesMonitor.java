@@ -1270,7 +1270,13 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
   private class MyVfsListener extends VirtualFileAdapter {
     public void propertyChanged(final VirtualFilePropertyEvent event) {
       if (VirtualFile.PROP_NAME.equals(event.getPropertyName())) {
-        markDirtyIfSource(event.getFile(), false);
+        final VirtualFile file = event.getFile();
+        final VirtualFile parent = event.getParent();
+        if (parent != null) {
+          final String oldName = (String)event.getOldValue();
+          CompileServerManager.getInstance().notifyFilesDeleted(Collections.singleton(parent.getPath() + "/" + oldName));
+        }
+        markDirtyIfSource(file, false);
       }
     }
 

@@ -6,13 +6,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ether.dependencyView.Mappings;
 import org.jetbrains.jps.*;
+import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.incremental.messages.UptoDateFilesSavedEvent;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.SourceToOutputMapping;
 import org.jetbrains.jps.incremental.storage.TimestampStorage;
-import org.jetbrains.jps.server.BuildCanceledStatus;
 
 import java.io.File;
 import java.util.*;
@@ -39,7 +39,7 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
   private volatile boolean myErrorsFound = false;
   private final long myCompilationStartStamp;
   private final TimestampStorage myTsStorage;
-  private final BuildCanceledStatus myCancelStatus;
+  private final CanceledStatus myCancelStatus;
   private float myDone = -1.0f;
 
   public CompileContext(CompileScope scope,
@@ -47,7 +47,7 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
                         boolean isProjectRebuild,
                         ProjectChunks productionChunks,
                         ProjectChunks testChunks,
-                        FSState fsState, final BuildDataManager dataManager, TimestampStorage tsStorage, MessageHandler delegateMessageHandler, final ModuleRootsIndex rootsIndex, BuildCanceledStatus cancelStatus) throws ProjectBuildException {
+                        FSState fsState, final BuildDataManager dataManager, TimestampStorage tsStorage, MessageHandler delegateMessageHandler, final ModuleRootsIndex rootsIndex, CanceledStatus cancelStatus) throws ProjectBuildException {
     myTsStorage = tsStorage;
     myCancelStatus = cancelStatus;
     myCompilationStartStamp = System.currentTimeMillis();
@@ -144,6 +144,10 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
 
   public boolean isCompilingTests() {
     return myCompilingTests;
+  }
+
+  public CanceledStatus getCancelStatus() {
+    return myCancelStatus;
   }
 
   void setCompilingTests(boolean compilingTests) {
@@ -269,7 +273,7 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
 
   public void setDone(float done) {
     myDone = done;
-    processMessage(new ProgressMessage("", done));
+    //processMessage(new ProgressMessage("", done));
   }
 
   public static enum DirtyMarkScope{

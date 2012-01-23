@@ -26,7 +26,7 @@ import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitBranch;
-import git4idea.util.GitUtil;
+import git4idea.GitUtil;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;

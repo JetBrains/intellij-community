@@ -20,6 +20,7 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.impl.VcsPathPresenter;
 import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.AdjustComponentWhenShown;
@@ -47,15 +48,14 @@ public class MultipleRootEditorWithSplitter extends JPanel {
     super(new BorderLayout());
 
     final Splitter splitter = new Splitter(false, 0.5f);
-    splitter.setShowDividerControls(true);
+    splitter.setHonorComponentsMinimumSize(false);
     add(splitter, BorderLayout.CENTER);
 
     myList = new JBList();
     final Color borderColor = UIUtil.getBorderColor();
-    myList.setBorder(BorderFactory.createLineBorder(borderColor));
     myConfigureRootPanel = new JPanel();
     myConfigureRootPanel.setBorder(BorderFactory.createLineBorder(borderColor));
-    splitter.setFirstComponent(myList);
+    splitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myList));
     splitter.setSecondComponent(myConfigureRootPanel);
 
     final CardLayout layout = new CardLayout();

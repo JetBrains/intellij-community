@@ -15,8 +15,8 @@
  */
 package com.intellij.openapi.ui;
 
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -43,25 +43,27 @@ public class FixedSizeButton extends JButton {
     else {
       setText(".");
     }
-    mySize=size;
-    myComponent=component;
+    mySize = size;
+    myComponent = component;
     setMargin(new Insets(0, 0, 0, 0));
     setDefaultCapable(false);
     setFocusable(false);
-    if (SystemInfo.isMac) {
+    if (UIUtil.isUnderAquaLookAndFeel() && size == -1) {
       putClientProperty("JButton.buttonType", "square");
     }
   }
 
   /**
    * Creates the <code>FixedSizeButton</code> with specified size.
-   * @throws java.lang.IllegalArgumentException if <code>size</code> isn't
-   * positive integer number.
+   *
+   * @throws java.lang.IllegalArgumentException
+   *          if <code>size</code> isn't
+   *          positive integer number.
    */
-  public FixedSizeButton(int size){
-    this(size,null);
-    if(size<=0){
-      throw new IllegalArgumentException("wrong size: "+size);
+  public FixedSizeButton(int size) {
+    this(size, null);
+    if (size <= 0) {
+      throw new IllegalArgumentException("wrong size: " + size);
     }
   }
 
@@ -74,21 +76,23 @@ public class FixedSizeButton extends JButton {
     this(-1, component);
   }
 
-  public Dimension getMinimumSize(){
+  public Dimension getMinimumSize() {
     return getPreferredSize();
   }
 
-  public Dimension getMaximumSize(){
+  public Dimension getMaximumSize() {
     return getPreferredSize();
   }
 
-  public Dimension getPreferredSize(){
-    if(myComponent!=null){
-      int size=myComponent.getPreferredSize().height;
-      return new Dimension(size,size);
-    }else if(mySize!=-1){
-      return new Dimension(mySize,mySize);
-    }else{
+  public Dimension getPreferredSize() {
+    if (myComponent != null) {
+      int size = myComponent.getPreferredSize().height;
+      return new Dimension(size, size);
+    }
+    else if (mySize != -1) {
+      return new Dimension(mySize, mySize);
+    }
+    else {
       return super.getPreferredSize();
     }
   }

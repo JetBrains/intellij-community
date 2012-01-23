@@ -118,18 +118,8 @@ class ClassPath {
     try {
       int i;
       if (myCanUseCache) {
-        List<Loader> loaders = myCache.getLoaders(s);
-        for (int j = 0, size = loaders.size(); j < size; ++j ) {
-          final Loader loader = loaders.get(j);
-          if (!myCache.loaderHasName(s, loader)) continue;
-          final Resource resource = loader.getResource(s, flag);
-          if (resource != null) {
-            if (ourDumpOrder) {
-              printOrder(loader, s, resource);
-            }
-            return resource;
-          }
-        }
+        Resource prevResource = myCache.iterateLoaders(s, flag ? checkedIterator:uncheckedIterator, s, this);
+        if (prevResource != null) return prevResource;
 
         synchronized (myUrls) {
           if (myUrls.isEmpty()) return null;
@@ -165,6 +155,7 @@ class ClassPath {
   @Nullable
   private synchronized Loader getLoader(int i) {
     while (myLoaders.size() < i + 1) {
+      boolean lastOne;
       URL url;
       synchronized (myUrls) {
         if (myUrls.empty()) {
@@ -172,6 +163,7 @@ class ClassPath {
           return null;
         }
         url = myUrls.pop();
+        lastOne = myUrls.isEmpty();
       }
 
       if (myLoadersMap.containsKey(url)) continue;
@@ -187,6 +179,9 @@ class ClassPath {
 
       myLoaders.add(loader);
       myLoadersMap.put(url, loader);
+      if (lastOne && myCanUseCache) {
+        myCache.nameSymbolsLoaded();
+      }
     }
 
     return myLoaders.get(i);
@@ -231,6 +226,7 @@ class ClassPath {
   }
 
   private void push(URL[] urls) {
+    if (urls.length == 0) return;
     synchronized (myUrls) {
       for (int i = urls.length - 1; i >= 0; i--) myUrls.push(urls[i]);
 
@@ -252,10 +248,10 @@ class ClassPath {
       if (myCanUseCache) {
         synchronized (myUrls) {
           if (myUrls.isEmpty()) {
-            loaders = myCache.getLoaders(name);
+            loaders = new SmartList<Loader>();
+            myCache.iterateLoaders(name, myLoaderCollector, loaders, this);
             if (!name.endsWith("/")) {
-              loaders = new SmartList<Loader>(loaders);
-              loaders.addAll(myCache.getLoaders(name + "/"));
+              myCache.iterateLoaders(name.concat("/"), myLoaderCollector, loaders, this);
             }
           }
         }
@@ -319,6 +315,40 @@ class ClassPath {
     if (doneFor > NS_THRESHOLD) {
       System.out.println((doneFor/1000000) + " ms for " +msg);
     }
-    if (requests % 1000 == 0) System.out.println(toString() + "," + requests + "," + (total / 1000000));
+    if (requests % 1000 == 0) {
+      System.out.println(toString() + ", requests:" + requests + ", time:" + (total / 1000000) + "ms");
+    }
+  }
+
+  private static class ResourceStringLoaderIterator extends ClasspathCache.LoaderIterator<Resource, String, ClassPath> {
+    private final boolean myFlag;
+
+    private ResourceStringLoaderIterator(boolean flag) {
+      myFlag = flag;
+    }
+
+    @Override
+    Resource process(Loader loader, String s, ClassPath classPath) {
+      if (!classPath.myCache.loaderHasName(s, loader)) return null;
+      final Resource resource = loader.getResource(s, myFlag);
+      if (resource != null) {
+        if (ourDumpOrder) {
+          printOrder(loader, s, resource);
+        }
+        return resource;
+      }
+      return null;
+    }
+  }
+  private static final ResourceStringLoaderIterator checkedIterator = new ResourceStringLoaderIterator(true);
+  private static final ResourceStringLoaderIterator uncheckedIterator = new ResourceStringLoaderIterator(false);
+  private final static LoaderCollector myLoaderCollector = new LoaderCollector();
+
+  private static class LoaderCollector extends ClasspathCache.LoaderIterator<Object, List<Loader>, Object> {
+    @Override
+    Object process(Loader loader, List<Loader> parameter, Object parameter2) {
+      parameter.add(loader);
+      return null;
+    }
   }
 }

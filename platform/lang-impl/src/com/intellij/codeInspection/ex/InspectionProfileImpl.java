@@ -42,6 +42,7 @@ import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.SeverityProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
+import gnu.trove.THashMap;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -59,7 +60,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.InspectionProfileImpl");
   @NonNls private static final String VALID_VERSION = "1.0";
 
-  private Map<String, ToolsImpl> myTools = new HashMap<String, ToolsImpl>();
+  private Map<String, ToolsImpl> myTools = new THashMap<String, ToolsImpl>();
 
   private Map<String, Boolean> myDisplayLevelMap;
   private Map<String, Element> myDeinstalledInspectionsSettings = new TreeMap<String, Element>();

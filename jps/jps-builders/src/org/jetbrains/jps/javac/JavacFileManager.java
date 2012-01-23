@@ -23,6 +23,8 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
   private Map<File, Set<File>> myOutputsMap = Collections.emptyMap();
 
   interface Context {
+    boolean isCanceled();
+
     StandardJavaFileManager getStandardFileManager();
 
     void consumeOutputFile(@NotNull OutputFileObject obj);
