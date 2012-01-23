@@ -774,21 +774,9 @@ public class EditorsSplitters extends JPanel {
         }
       }
 
-      boolean changed = !Comparing.equal(newWindow, myCurrentWindow) || !Comparing.equal(newFile, myCurrentFile);
-
       myCurrentFile = newFile;
       setCurrentWindow(newWindow);
       setCurrentWindow(newWindow, false);
-    }
-  }
-
-  public void runChange(Runnable change) {
-    myInsideChange++;
-    try {
-      change.run();
-    }
-    finally {
-      myInsideChange--;
     }
   }
 
