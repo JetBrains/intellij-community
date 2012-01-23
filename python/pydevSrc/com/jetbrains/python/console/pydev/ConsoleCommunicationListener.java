@@ -5,4 +5,5 @@ package com.jetbrains.python.console.pydev;
  */
 public interface ConsoleCommunicationListener {
   void executionFinished();
+  void inputRequested();
 }

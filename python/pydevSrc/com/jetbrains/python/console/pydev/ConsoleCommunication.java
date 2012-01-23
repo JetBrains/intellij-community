@@ -22,6 +22,8 @@ public interface ConsoleCommunication {
   void interrupt();
 
   void addCommunicationListener(ConsoleCommunicationListener listener);
+
   void notifyFinished();
+  void notifyInputRequested();
 
 }

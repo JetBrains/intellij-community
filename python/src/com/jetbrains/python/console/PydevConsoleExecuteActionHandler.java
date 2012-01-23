@@ -76,7 +76,7 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
     if (StringUtil.isEmptyOrSpaces(line)) {
       doProcessLine("\n");
     }
-    else if (indentSize == 0 && indentSize < myCurrentIndentSize && !shouldIndent(line)) {
+    else if (indentSize == 0 && indentSize < myCurrentIndentSize && !shouldIndent(line) && !myConsoleCommunication.isWaitingForInput()) {
       doProcessLine("\n");
       doProcessLine(line);
     }
@@ -168,14 +168,7 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
           // clear
           myInputBuffer = null;
           // Handle prompt
-          if (interpreterResponse.need_input) {
-            if (!PyConsoleUtil.INPUT_PROMPT.equals(console.getPrompt()) && !PyConsoleUtil.HELP_PROMPT.equals(console.getPrompt())) {
-              console.setPrompt(PyConsoleUtil.INPUT_PROMPT);
-              PyConsoleUtil.scrollDown(currentEditor);
-            }
-            setCurrentIndentSize(1);
-          }
-          else if (interpreterResponse.more) {
+          if (interpreterResponse.more) {
             more(console, currentEditor);
             if (myCurrentIndentSize == -1) {
               // compute current indentation
@@ -234,6 +227,18 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
     final LanguageConsoleImpl console = myConsoleView.getConsole();
     final Editor currentEditor = console.getCurrentEditor();
     ordinaryPrompt(console, currentEditor);
+  }
+
+  @Override
+  public void inputRequested() {
+    final LanguageConsoleImpl console = myConsoleView.getConsole();
+    final Editor currentEditor = console.getCurrentEditor();
+
+    if (!PyConsoleUtil.INPUT_PROMPT.equals(console.getPrompt()) && !PyConsoleUtil.HELP_PROMPT.equals(console.getPrompt())) {
+      console.setPrompt(PyConsoleUtil.INPUT_PROMPT);
+      PyConsoleUtil.scrollDown(currentEditor);
+    }
+    setCurrentIndentSize(1);
   }
 
   @Override

@@ -64,6 +64,13 @@ public abstract class AbstractConsoleCommunication implements ConsoleCommunicati
     }
   }
 
+  @Override
+  public void notifyInputRequested() {
+    for (ConsoleCommunicationListener listener: communicationListeners) {
+      listener.inputRequested();
+    }
+  }
+
   public VirtualFile getConsoleFile() {
     return myConsoleFile;
   }
