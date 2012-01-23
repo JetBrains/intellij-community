@@ -159,9 +159,10 @@ public class AnnotationUtil {
     return null;
   }
 
+  @Nullable
   private static PsiAnnotation doFindAnnotationInHierarchy(PsiParameter parameter,
                                                            Set<String> annotationNames,
-                                                           Set<PsiModifierListOwner> visited) {
+                                                           @Nullable Set<PsiModifierListOwner> visited) {
     PsiAnnotation annotation = findAnnotation(parameter, annotationNames);
     if (annotation != null) return annotation;
     PsiElement scope = parameter.getDeclarationScope();
