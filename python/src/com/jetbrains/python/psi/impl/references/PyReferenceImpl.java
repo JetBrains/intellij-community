@@ -272,7 +272,9 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
                 }
                 return ret;
               }
-              break;
+              else if (!isCythonLevel(myElement)) {
+                break;
+              }
             }
             addResolvedElement(ret, definer, element);
             return ret;
@@ -334,6 +336,10 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     }
 
     return ret;
+  }
+
+  private static boolean isCythonLevel(@Nullable PsiElement element) {
+    return PsiTreeUtil.getParentOfType(element, CythonNamedElement.class) != null;
   }
 
   private static void addResolvedElement(@NotNull ResolveResultList ret, @Nullable NameDefiner definer, @Nullable PsiElement element) {
