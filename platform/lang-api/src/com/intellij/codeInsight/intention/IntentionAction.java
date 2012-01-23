@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,9 @@ import org.jetbrains.annotations.NotNull;
  * Interface for intention actions. Intention actions are invoked by pressing
  * Alt-Enter in the code editor at the location where an intention is available,
  * and can be enabled or disabled in the "Intentions" settings dialog.
+ * <p/>
+ * Implement {@link com.intellij.openapi.util.Iconable Iconable} interface to
+ * change icon in intention popup menu.
  *
  * @see IntentionManager#registerIntentionAndMetaData(com.intellij.codeInsight.intention.IntentionAction, java.lang.String...)
  */
