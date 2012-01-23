@@ -329,6 +329,7 @@ public class EditorsSplitters extends JPanel {
         window = new EditorWindow(this);
       } else {
         window = findWindowWith(panel);
+        LOG.assertTrue(window != null);
       }
       //noinspection unchecked
       final List<Element> children = new ArrayList<Element>(leaf.getChildren("file"));
@@ -548,6 +549,7 @@ public class EditorsSplitters extends JPanel {
   protected void afterFileOpen(VirtualFile file) {
   }
 
+  @Nullable
   public JBTabs getTabsAt(RelativePoint point) {
     Point thisPoint = point.getPoint(this);
     Component c = SwingUtilities.getDeepestComponentAt(this, thisPoint.x, thisPoint.y);
@@ -571,6 +573,7 @@ public class EditorsSplitters extends JPanel {
     return true;
   }
 
+  @Nullable
   public VirtualFile findNextFile(final VirtualFile file) {
     final EditorWindow[] windows = getWindows(); // TODO: use current file as base
     for (int i = 0; i != windows.length; ++i) {
@@ -639,7 +642,7 @@ public class EditorsSplitters extends JPanel {
    * @param window a window to be set as current
    * @param requestFocus whether to request focus to the editor currently selected in this window
    */
-  public void setCurrentWindow(final EditorWindow window, final boolean requestFocus) {
+  public void setCurrentWindow(@Nullable final EditorWindow window, final boolean requestFocus) {
     final EditorWithProviderComposite oldEditor = myCurrentSelectedEditor;
     final EditorWithProviderComposite newEditor = window != null? window.getSelectedEditor() : null;
 
@@ -746,6 +749,7 @@ public class EditorsSplitters extends JPanel {
     return res.toArray(new EditorWindow [res.size()]);
   }
 
+  @Nullable
   private EditorWindow findWindowWith(final Component component) {
     if (component != null) {
       for (final EditorWindow window : myWindows) {

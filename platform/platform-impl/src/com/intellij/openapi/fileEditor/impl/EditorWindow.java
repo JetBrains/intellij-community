@@ -570,7 +570,7 @@ public class EditorWindow {
     }
   }
 
-  public void setEditor(final EditorWithProviderComposite editor, final boolean focusEditor) {
+  public void setEditor(@Nullable final EditorWithProviderComposite editor, final boolean focusEditor) {
     if (editor != null) {
       if (myTabbedPane == null) {
         myPanel.removeAll ();
@@ -892,10 +892,11 @@ public class EditorWindow {
     return editor == null ? null : editor.getFile();
   }
 
+  @Nullable
   public EditorWithProviderComposite findFileComposite(final VirtualFile file) {
     for (int i = 0; i != getTabCount(); ++i) {
       final EditorWithProviderComposite editor = getEditorAt(i);
-      if (editor.getFile ().equals (file)) {
+      if (editor.getFile().equals(file)) {
         return editor;
       }
     }
@@ -951,24 +952,24 @@ public class EditorWindow {
 
   public boolean isFilePinned(final VirtualFile file) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if(!isFileOpen(file)){
+    final EditorComposite editorComposite = findFileComposite(file);
+    if (editorComposite == null) {
       throw new IllegalArgumentException("file is not open: " + file.getPath());
     }
-    final EditorComposite editorComposite = findFileComposite(file);
     return editorComposite.isPinned();
   }
 
   public void setFilePinned(final VirtualFile file, final boolean pinned) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if(!isFileOpen(file)){
+    final EditorComposite editorComposite = findFileComposite(file);
+    if (editorComposite == null) {
       throw new IllegalArgumentException("file is not open: " + file.getPath());
     }
-    final EditorComposite editorComposite = findFileComposite(file);
     editorComposite.setPinned(pinned);
     updateFileIcon(file);
   }
 
-  void trimToSize(final int limit, final VirtualFile fileToIgnore, final boolean transferFocus) {
+  void trimToSize(final int limit, @Nullable final VirtualFile fileToIgnore, final boolean transferFocus) {
     if (myTabbedPane == null) {
       return;
     }
@@ -988,7 +989,7 @@ public class EditorWindow {
     });
   }
 
-  private void doTrimSize(int limit, VirtualFile fileToIgnore, boolean closeNonModifiedFilesFirst, boolean transferFocus) {
+  private void doTrimSize(int limit, @Nullable VirtualFile fileToIgnore, boolean closeNonModifiedFilesFirst, boolean transferFocus) {
     while_label:
     while (myTabbedPane.getTabCount() > limit && myTabbedPane.getTabCount() > 0) {
       // If all tabs are pinned then do nothings. Othrwise we will get infinitive loop
@@ -1119,7 +1120,7 @@ public class EditorWindow {
     closeFile(file, true, transferFocus);
   }
 
-  private boolean fileCanBeClosed(final VirtualFile file, final VirtualFile fileToIgnore) {
+  private boolean fileCanBeClosed(final VirtualFile file, @Nullable final VirtualFile fileToIgnore) {
     return isFileOpen (file) && !file.equals(fileToIgnore) && !isFilePinned(file);
   }
 
