@@ -1,6 +1,5 @@
 package com.jetbrains.python.psi;
 
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import org.jetbrains.annotations.NotNull;

@@ -57,9 +57,15 @@ public class ScopeUtil {
 
   @Nullable
   public static ScopeOwner getResolveScopeOwner(PsiElement element) {
-    // References in default values of parameters are defined somewhere in outer scopes, as well as references in decorators
+    // References in default values of parameters are defined somewhere in outer scopes, as well as references in decorators and
+    // superclasses
     if (PsiTreeUtil.getParentOfType(element, PyParameter.class, PyDecorator.class) != null) {
       element = getScopeOwner(element);
+    }
+    final PyClass containingClass = PsiTreeUtil.getParentOfType(element, PyClass.class);
+    if (containingClass != null && element != null &&
+        PsiTreeUtil.isAncestor(containingClass.getSuperClassExpressionList(), element, false)) {
+      element = containingClass;
     }
     return PsiTreeUtil.getParentOfType(element, ScopeOwner.class);
   }

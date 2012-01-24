@@ -120,6 +120,7 @@ public class ResolveProcessor implements PsiScopeProcessor {
         if (myName.equals(definedName)) {
           addNameDefiner(importElement);
         }
+        element = importElement.getContainingImportStatement();
       }
     }
     if (element instanceof PyFromImportStatement && PyNames.INIT_DOT_PY.equals(element.getContainingFile().getName())) {
@@ -153,6 +154,6 @@ public class ResolveProcessor implements PsiScopeProcessor {
   }
 
   private static PsiElement getScope(PsiElement result) {
-    return PsiTreeUtil.getParentOfType(result, PyFunction.class, PyClass.class, PyFile.class); 
+    return PsiTreeUtil.getParentOfType(result, PyFunction.class, PyClass.class, PyFile.class);
   }
 }
