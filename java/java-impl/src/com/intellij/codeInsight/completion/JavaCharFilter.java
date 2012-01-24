@@ -105,6 +105,17 @@ public class JavaCharFilter extends CharFilter {
     }
     if (c == '.' && isWithinLiteral(lookup)) return Result.ADD_TO_PREFIX;
 
+    if (c == ':') {
+      PsiFile file = lookup.getPsiFile();
+      PsiDocumentManager.getInstance(file.getProject()).commitDocument(lookup.getEditor().getDocument());
+      PsiElement element = lookup.getPsiElement();
+      if (PsiTreeUtil.getParentOfType(element, PsiSwitchLabelStatement.class) != null ||
+          PsiTreeUtil.getParentOfType(element, PsiConditionalExpression.class) != null) {
+        return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
+      }
+      return Result.HIDE_LOOKUP;
+    }
+
     if ((c == '[' || c == '<' || c == '.' || c == ' ' || c == '(') && isNonImportedClassEntered((LookupImpl)lookup)) {
       return Result.HIDE_LOOKUP;
     }

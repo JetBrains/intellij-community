@@ -226,4 +226,10 @@ class GroovyAutoPopupTest extends CompletionAutoPopupTestCase {
     assert myFixture.lookupElementStrings == ['PrimaBalerina']
   }
 
+  public void testEnteringLabel() {
+    myFixture.configureByText 'a.groovy', '<caret>'
+    type 'FIS:'
+    assert myFixture.file.text == 'FIS:'
+  }
+
 }
