@@ -40,12 +40,16 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.android.AndroidFileTemplateProvider;
 import org.jetbrains.android.actions.CreateXmlResourceDialog;
 import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.android.dom.resources.ResourceElement;
+import org.jetbrains.android.dom.resources.ResourceValue;
 import org.jetbrains.android.dom.resources.Resources;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.util.AndroidBundle;
@@ -101,6 +105,9 @@ public class AndroidAddStringResourceAction extends AbstractIntentionAction {
       if (value instanceof String) {
         return (String)value;
       }
+    }
+    else if (file instanceof XmlFile && element instanceof XmlAttributeValue) {
+      return ((XmlAttributeValue)element).getValue();
     }
     return null;
   }
@@ -178,7 +185,16 @@ public class AndroidAddStringResourceAction extends AbstractIntentionAction {
       return;
     }
 
-    createJavaResourceReference(project, editor, file, element, aPackage, resName, ResourceType.STRING.getName());
+    if (file instanceof PsiJavaFile) {
+      createJavaResourceReference(project, editor, file, element, aPackage, resName, ResourceType.STRING.getName());
+    }
+    else {
+      final XmlAttribute attribute = PsiTreeUtil.getParentOfType(element, XmlAttribute.class);
+      if (attribute != null) {
+        attribute.setValue(ResourceValue.referenceTo('@', null, ResourceType.STRING.getName(), resName).toString());
+      }
+    }
+    
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     UndoUtil.markPsiFileForUndo(file);
 

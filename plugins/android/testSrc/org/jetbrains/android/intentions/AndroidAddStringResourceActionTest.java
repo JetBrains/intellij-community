@@ -121,6 +121,12 @@ public class AndroidAddStringResourceActionTest extends AndroidTestCase {
     myFixture.checkResultByFile("res/values/strings.xml", BASE_PATH + "strings_invalid.xml", false);
   }
 
+  public void testFromLayout() {
+    final VirtualFile javaFile = myFixture.copyFileToProject(BASE_PATH + getTestName(false) + ".xml", "res/layout/layout.xml");
+    doExtractAndCheckStringsXml("strings.xml", null, true, "strings_after.xml", javaFile);
+    myFixture.checkResultByFile(BASE_PATH + getTestName(false) + "_after.xml");
+  }
+
   private void doTest() {
     doTest(getTestName(false), "strings.xml", null, true);
   }
@@ -138,11 +144,20 @@ public class AndroidAddStringResourceActionTest extends AndroidTestCase {
                       @Nullable final Runnable invokeAfterTemplate,
                       final boolean closePopup,
                       String stringsAfter) {
+    VirtualFile javaFile = myFixture.copyFileToProject(BASE_PATH + "Class" + testName + ".java", "src/p1/p2/Class.java");
+    doExtractAndCheckStringsXml(stringsXml, invokeAfterTemplate, closePopup, stringsAfter, javaFile);
+    myFixture.checkResultByFile(BASE_PATH + "Class" + testName + "_after.java");
+  }
+
+  private void doExtractAndCheckStringsXml(String stringsXml,
+                                           final Runnable invokeAfterTemplate,
+                                           final boolean closePopup,
+                                           String stringsAfter,
+                                           VirtualFile javaFile) {
     if (stringsXml != null) {
       myFixture.copyFileToProject(BASE_PATH + stringsXml, "res/values/strings.xml");
     }
     myFixture.copyFileToProject(BASE_PATH + "R.java", "src/p1/p2/R.java");
-    VirtualFile javaFile = myFixture.copyFileToProject(BASE_PATH + "Class" + testName + ".java", "src/p1/p2/Class.java");
     myFixture.configureFromExistingVirtualFile(javaFile);
     final PsiFile javaPsiFile = myFixture.getFile();
     assertTrue(new AndroidAddStringResourceAction().isAvailable(myFixture.getProject(), myFixture.getEditor(), javaPsiFile));
@@ -163,7 +178,6 @@ public class AndroidAddStringResourceActionTest extends AndroidTestCase {
         }
       }
     }, "", "");
-    myFixture.checkResultByFile(BASE_PATH + "Class" + testName + "_after.java");
     myFixture.checkResultByFile("res/values/strings.xml", BASE_PATH + stringsAfter, false);
   }
 }
