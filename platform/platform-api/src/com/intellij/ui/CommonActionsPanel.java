@@ -25,10 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Konstantin Bulenkov
@@ -88,7 +85,7 @@ class CommonActionsPanel extends JPanel {
   private final AnActionButton[] myActions;
 
   CommonActionsPanel(ListenerFactory factory, @Nullable JComponent contextComponent, boolean isHorizontal,
-                     @Nullable AnActionButton[] additionalActions,
+                     @Nullable AnActionButton[] additionalActions, @Nullable Comparator<AnActionButton> buttonComparator,
                      String addName, String removeName, String moveUpName, String moveDownName, String editName,
                      Buttons... buttons) {
     super(new BorderLayout());
@@ -116,6 +113,9 @@ class CommonActionsPanel extends JPanel {
     myActions = actions;
     for (AnActionButton action : actions) {
       action.setContextComponent(contextComponent);
+    }
+    if (buttonComparator != null) {
+      Arrays.sort(myActions, buttonComparator);
     }
     final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN,
                                                                                   new DefaultActionGroup(myActions),
