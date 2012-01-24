@@ -28,6 +28,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.ui.components.JBTabbedPane;
 import org.jetbrains.annotations.NotNull;
@@ -35,8 +36,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -47,6 +47,8 @@ import java.util.List;
  */
 
 public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPanel {
+  
+  private final static Icon COPY_ICON = IconLoader.getIcon("/actions/import.png");
 
   private CodeStyleAbstractPanel myActiveTab;
   private List<CodeStyleAbstractPanel> myTabs;
@@ -117,8 +119,33 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
       myTabs = new ArrayList<CodeStyleAbstractPanel>();
       myPanel.add(myTabbedPane);
       initTabs(getSettings());
+      addSetFrom();
     }
     assert !myTabs.isEmpty();
+  }
+
+  private void addSetFrom() {
+    myPredefinedCodeStyles = getPredefinedStyles();
+    JLabel dummyLabel = new JLabel("");
+    myTabbedPane.addTab("Set From...", dummyLabel);
+    int dummyIndex = myTabbedPane.indexOfComponent(dummyLabel);
+    myTabbedPane.setEnabledAt(dummyIndex, false);
+    JPanel setFromPanel = new JPanel();
+    setFromPanel.setBorder(BorderFactory.createEtchedBorder());
+    setFromPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 10,0));
+    JLabel setFromLabel = new JLabel("Set from...");
+    setFromPanel.add(setFromLabel);
+    final PopupMenu copyMenu = new PopupMenu();
+    setFromLabel.add(copyMenu);
+    setFromLabel.setIcon(COPY_ICON);
+    setupCopyFromMenu(copyMenu);
+    setFromLabel.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mousePressed(MouseEvent e) {
+          copyMenu.show(e.getComponent(), e.getX(), e.getY());
+      }
+    });
+    myTabbedPane.setTabComponentAt(dummyIndex, setFromPanel);
   }
 
   /**

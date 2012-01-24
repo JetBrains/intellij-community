@@ -35,10 +35,8 @@ public class CodeStyleSchemesPanel{
   private final CodeStyleSchemesModel myModel;
   private JPanel myPanel;
   private JBScrollPane myJBScrollPane;
-  private JButton myCopyFromButton;
   private JButton myManageButton;
 
-  private PopupMenu myCopyFromMenu;
   private boolean myIsReset = false;
   private NewCodeStyleSettingsPanel mySettingsPanel;
   private final Font myDefaultComboFont;
@@ -75,14 +73,6 @@ public class CodeStyleSchemesPanel{
         return component;
       }
     });
-
-    myCopyFromButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        showCopyFromMenu();
-      }
-    });
-    myCopyFromButton.setEnabled(false);
     
     myManageButton.addActionListener(new ActionListener() {
       @Override
@@ -158,33 +148,8 @@ public class CodeStyleSchemesPanel{
 
   public void setCodeStyleSettingsPanel(NewCodeStyleSettingsPanel settingsPanel) {
     mySettingsPanel = settingsPanel;
-    CodeStyleAbstractPanel selectedPanel = mySettingsPanel.getSelectedPanel();
-    myCopyFromButton.setEnabled(selectedPanel != null && selectedPanel.isCopyFromMenuAvailable());
   }
 
-
-  private void showCopyFromMenu() {
-    initCopyFromMenu();
-    if (myCopyFromMenu.getItemCount() > 0) {
-      myCopyFromMenu.show(myCopyFromButton, 0, 0);
-    }
-  }
-  
-  private void initCopyFromMenu() {
-    if (myCopyFromMenu == null) {      
-      myCopyFromMenu = new PopupMenu();
-      myCopyFromButton.add(myCopyFromMenu);
-    }
-    CodeStyleAbstractPanel selectedPanel = mySettingsPanel.getSelectedPanel();
-    if (selectedPanel != null) {
-      selectedPanel.setupCopyFromMenu(myCopyFromMenu);
-      myCopyFromButton.setEnabled(myCopyFromMenu.getItemCount() > 0);
-    }
-    else {
-      myCopyFromButton.setEnabled(false);
-    }
-  }
-  
   private void showManageSchemesDialog() {
     ManageCodeStyleSchemesDialog manageSchemesDialog = new ManageCodeStyleSchemesDialog(myPanel, myModel);
     manageSchemesDialog.show();
