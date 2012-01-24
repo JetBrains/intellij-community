@@ -31,6 +31,7 @@ import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
@@ -72,6 +73,7 @@ public abstract class ToolbarDecorator implements DataProvider, CommonActionsPan
   private String myMoveDownName;
   private Dimension myPreferredSize;
   private CommonActionsPanel myPanel;
+  private Comparator<AnActionButton> myButtonComparator;
 
   protected abstract JComponent getComponent();
 
@@ -135,6 +137,30 @@ public abstract class ToolbarDecorator implements DataProvider, CommonActionsPan
 
   public ToolbarDecorator setToolbarBorder(Border border) {
     myBorder = border;
+    return this;
+  }
+
+  public ToolbarDecorator setButtonComparator(Comparator<AnActionButton> buttonComparator) {
+    myButtonComparator = buttonComparator;
+    return this;
+  }
+  
+  public ToolbarDecorator setButtonComparator(String...actionNames) {
+    final List<String> names = Arrays.asList(actionNames);
+    myButtonComparator = new Comparator<AnActionButton>() {
+      @Override
+      public int compare(AnActionButton o1, AnActionButton o2) {
+        final String t1 = o1.getTemplatePresentation().getText();
+        final String t2 = o2.getTemplatePresentation().getText();
+        if (t1 == null || t2 == null) return 0;
+        
+        final int ind1 = names.indexOf(t1);
+        final int ind2 = names.indexOf(t2);
+        if (ind1 == -1 && ind2 >= 0) return 1;
+        if (ind2 == -1 && ind1 >= 0) return -1;
+        return ind1 - ind2;
+      }
+    };
     return this;
   }
 
@@ -218,6 +244,7 @@ public abstract class ToolbarDecorator implements DataProvider, CommonActionsPan
     myPanel = new CommonActionsPanel(this, contextComponent,
                              myToolbarPosition == ActionToolbarPosition.TOP || myToolbarPosition == ActionToolbarPosition.BOTTOM,
                              myExtraActions.toArray(new AnActionButton[myExtraActions.size()]),
+                             myButtonComparator,
                              myAddName, myRemoveName, myMoveUpName, myMoveDownName, myEditName,
                              buttons);
     myPanel.setBorder(myBorder);

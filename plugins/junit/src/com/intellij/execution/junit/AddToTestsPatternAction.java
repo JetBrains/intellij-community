@@ -27,8 +27,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMember;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -41,21 +41,21 @@ public class AddToTestsPatternAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final PsiElement[] psiElements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
-    final Set<PsiClass> classes = PatternConfigurationProducer.collectTestClasses(psiElements);
+    final Set<PsiMember> classes = PatternConfigurationProducer.collectTestMembers(psiElements);
 
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     final List<JUnitConfiguration> patternConfigurations = collectPatternConfigurations(classes, project);
     if (patternConfigurations.size() == 1) {
       final JUnitConfiguration configuration = patternConfigurations.get(0);
-      for (PsiClass aClass : classes) {
-        configuration.getPersistentData().getPatterns().add(aClass.getQualifiedName());
+      for (PsiMember aClass : classes) {
+        configuration.getPersistentData().getPatterns().add(PatternConfigurationProducer.getQName(aClass));
       }
     } else {
       JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<JUnitConfiguration>("Choose suite to add", patternConfigurations) {
         @Override
         public PopupStep onChosen(JUnitConfiguration configuration, boolean finalChoice) {
-          for (PsiClass aClass : classes) {
-            configuration.getPersistentData().getPatterns().add(aClass.getQualifiedName());
+          for (PsiMember aClass : classes) {
+            configuration.getPersistentData().getPatterns().add(PatternConfigurationProducer.getQName(aClass));
           }
           return FINAL_CHOICE;
         }
@@ -81,11 +81,11 @@ public class AddToTestsPatternAction extends AnAction {
     final DataContext dataContext = e.getDataContext();
     final PsiElement[] psiElements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
     if (psiElements != null) {
-      final Set<PsiClass> foundClasses = PatternConfigurationProducer.collectTestClasses(psiElements);
-      if (foundClasses.isEmpty()) return;
+      final Set<PsiMember> foundMembers = PatternConfigurationProducer.collectTestMembers(psiElements);
+      if (foundMembers.isEmpty()) return;
       final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
       if (project != null) {
-        final List<JUnitConfiguration> foundConfigurations = collectPatternConfigurations(foundClasses, project);
+        final List<JUnitConfiguration> foundConfigurations = collectPatternConfigurations(foundMembers, project);
         if (!foundConfigurations.isEmpty()) {
           presentation.setVisible(true);
           if (foundConfigurations.size() == 1) {
@@ -96,13 +96,13 @@ public class AddToTestsPatternAction extends AnAction {
     }
   }
 
-  private static List<JUnitConfiguration> collectPatternConfigurations(Set<PsiClass> foundClasses, Project project) {
+  private static List<JUnitConfiguration> collectPatternConfigurations(Set<PsiMember> foundClasses, Project project) {
     final RunConfiguration[] configurations = RunManager.getInstance(project).getConfigurations(JUnitConfigurationType.getInstance());
     final List<JUnitConfiguration> foundConfigurations = new ArrayList<JUnitConfiguration>();
     for (RunConfiguration configuration : configurations) {
       final JUnitConfiguration.Data data = ((JUnitConfiguration)configuration).getPersistentData();
       if (data.TEST_OBJECT == JUnitConfiguration.TEST_PATTERN) {
-        if (foundClasses.size() > 1 || !data.getPatterns().contains(foundClasses.iterator().next().getQualifiedName()) ) {
+        if (foundClasses.size() > 1 || !data.getPatterns().contains(PatternConfigurationProducer.getQName(foundClasses.iterator().next())) ) {
           foundConfigurations.add((JUnitConfiguration)configuration);
         }
       }

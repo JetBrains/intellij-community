@@ -50,12 +50,12 @@ public class CompositePrintable implements Printable, Disposable {
     }
   }
 
-  public void invokeInAlarm(Runnable runnable) {
+  public static void invokeInAlarm(Runnable runnable) {
     invokeInAlarm(runnable, !ApplicationManager.getApplication().isDispatchThread() ||
                             ApplicationManager.getApplication().isUnitTestMode());
   }
 
-  public void invokeInAlarm(Runnable runnable, final boolean sync) {
+  public static void invokeInAlarm(Runnable runnable, final boolean sync) {
     if (sync) {
       runnable.run();
     } else {

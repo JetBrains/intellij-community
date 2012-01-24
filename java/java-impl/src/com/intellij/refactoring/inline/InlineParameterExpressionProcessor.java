@@ -340,7 +340,7 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
       }
       if (element instanceof PsiMethod || element instanceof PsiField) {
         if (!mySameClass && !((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.STATIC)) {
-          myConflicts.putValue(expression, "Parameter initializer depend on non static member from some other class");
+          myConflicts.putValue(expression, "Parameter initializer depends on non static member from some other class");
         } else if (!PsiUtil.isAccessible((PsiMember)element, myMethod, null)) {
           myConflicts.putValue(expression, "Parameter initializer depends on value which is not available inside method");
         }

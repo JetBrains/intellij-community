@@ -15,7 +15,6 @@
         <properties>
           <componentClass value="com.intellij.openapi.ui.TextFieldWithBrowseButton"/>
           <labelLocation value="West"/>
-
           <text value="Working &amp;directory"/>
         </properties>
       </component>
@@ -29,10 +28,9 @@
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <componentClass value="javax.swing.JTextField"/>
+          <componentClass value="com.intellij.ui.EditorTextField"/>
           <labelInsets top="0" left="0" bottom="0" right="0"/>
           <labelLocation value="West"/>
-
           <text value="&amp;Goals (separated with space)"/>
         </properties>
       </component>
@@ -41,9 +39,8 @@
           <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <componentClass value="javax.swing.JTextField"/>
+          <componentClass value="com.intellij.ui.EditorTextField"/>
           <labelLocation value="West"/>
-
           <text value="&amp;Profiles (separated with space)"/>
         </properties>
       </component>

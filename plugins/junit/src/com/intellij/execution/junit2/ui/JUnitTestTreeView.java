@@ -22,6 +22,7 @@ import com.intellij.execution.testframework.TestTreeView;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.TreePath;
+import javax.swing.tree.TreeSelectionModel;
 
 public class JUnitTestTreeView extends TestTreeView {
 
@@ -40,5 +41,10 @@ public class JUnitTestTreeView extends TestTreeView {
                                    final int row,
                                    final boolean hasFocus) {
     return Formatters.printTest(TestProxyClient.from(value));
+  }
+
+  @Override
+  protected int getSelectionMode() {
+    return TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION;
   }
 }

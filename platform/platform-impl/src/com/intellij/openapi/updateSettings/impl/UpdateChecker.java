@@ -246,6 +246,7 @@ public final class UpdateChecker {
     if (inputStream == null) return false;
     final ArrayList<IdeaPluginDescriptor> descriptors = RepositoryHelper.loadPluginsFromDescription(inputStream);
     for (IdeaPluginDescriptor descriptor : descriptors) {
+      ((PluginNode)descriptor).setRepositoryName(host);
       downloaded.add(PluginDownloader.createDownloader(descriptor));
     }
 

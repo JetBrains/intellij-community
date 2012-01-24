@@ -494,7 +494,8 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
 
       ApplicationEx application = (ApplicationEx)ApplicationManager.getApplication();
       // we should cache every local files content
-      // because the local history feature is currently depends on this cache
+      // because the local history feature is currently depends on this cache,
+      // perforce offline mode as well
       if ((!delegate.isReadOnly() || !application.isInternal() && !application.isUnitTestMode()) &&
           content.length <= PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD) {
         synchronized (INPUT_LOCK) {

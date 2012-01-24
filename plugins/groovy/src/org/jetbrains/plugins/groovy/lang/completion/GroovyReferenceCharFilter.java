@@ -20,10 +20,14 @@ import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseLabel;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
 
 /**
  * @author ilyas
@@ -50,6 +54,21 @@ public class GroovyReferenceCharFilter extends CharFilter {
         lookup.getEditor().getDocument().getCharsSequence().charAt(caret - 1) == '.') {
       return Result.HIDE_LOOKUP;
     }
+
+    if (c == ':') {
+      PsiFile file = lookup.getPsiFile();
+      PsiDocumentManager.getInstance(file.getProject()).commitDocument(lookup.getEditor().getDocument());
+      PsiElement element = lookup.getPsiElement();
+      if (PsiTreeUtil.getParentOfType(element, GrCaseLabel.class) != null ||
+          PsiTreeUtil.getParentOfType(element, GrConditionalExpression.class) != null ||
+          PsiTreeUtil.getParentOfType(element, GrArgumentList.class) != null ||
+          PsiTreeUtil.getParentOfType(element, GrListOrMap.class) != null
+        ) {
+        return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
+      }
+      return Result.HIDE_LOOKUP;
+    }
+
 
     if (c == '[') return CharFilter.Result.SELECT_ITEM_AND_FINISH_LOOKUP;
     if (c == '<' && item.getObject() instanceof PsiClass) return Result.SELECT_ITEM_AND_FINISH_LOOKUP;

@@ -17,11 +17,14 @@
 package com.intellij.refactoring.copy;
 
 import com.intellij.ide.util.DirectoryUtil;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.help.HelpManager;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -36,6 +39,7 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.RecentsManager;
 import com.intellij.ui.TextFieldWithHistoryWithBrowseButton;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -181,7 +185,7 @@ class CopyFilesOrDirectoriesDialog extends DialogWrapper{
                                                                             TextComponentAccessor.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT);
       
       myTargetDirectoryField.setTextFieldPreferredWidth(60);
-      panel.add(myTargetDirectoryField, new GridBagConstraints(1,2,1,1,1,0,GridBagConstraints.WEST,GridBagConstraints.HORIZONTAL,new Insets(4,0,4,8),0,0));
+      panel.add(myTargetDirectoryField, new GridBagConstraints(1,2,1,1,1,0,GridBagConstraints.WEST,GridBagConstraints.HORIZONTAL,new Insets(4,0,2,8),0,0));
 
       myTargetDirectoryField.getChildComponent().addDocumentListener(new DocumentAdapter() {
         @Override
@@ -189,6 +193,11 @@ class CopyFilesOrDirectoriesDialog extends DialogWrapper{
           validateOKButton();
         }
       });
+      String shortcutText = KeymapUtil
+        .getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_CODE_COMPLETION));
+      final JLabel label = new JLabel(RefactoringBundle.message("path.completion.shortcut", shortcutText));
+      UIUtil.applyStyle(UIUtil.ComponentStyle.MINI, label);
+      panel.add(label, new GridBagConstraints(1,3,2,1,1,0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0,6,4,8), 0,0));
     }
 
     return panel;

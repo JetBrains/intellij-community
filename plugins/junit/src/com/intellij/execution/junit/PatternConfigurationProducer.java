@@ -51,43 +51,56 @@ public class PatternConfigurationProducer extends JUnitConfigurationProducer {
     return settings;
   }
 
-  static Set<PsiClass> collectTestClasses(PsiElement[] psiElements) {
-    final Set<PsiClass> foundClasses = new LinkedHashSet<PsiClass>();
+  static Set<PsiMember> collectTestMembers(PsiElement[] psiElements) {
+    final Set<PsiMember> foundMembers = new LinkedHashSet<PsiMember>();
     for (PsiElement psiElement : psiElements) {
       if (psiElement instanceof PsiClassOwner) {
         final PsiClass[] classes = ((PsiClassOwner)psiElement).getClasses();
         for (PsiClass aClass : classes) {
           if (JUnitUtil.isTestClass(aClass)) {
-            foundClasses.add(aClass);
+            foundMembers.add(aClass);
           }
         }
       } else if (psiElement instanceof PsiClass) {
         if (JUnitUtil.isTestClass((PsiClass)psiElement)) {
-          foundClasses.add((PsiClass)psiElement);
+          foundMembers.add((PsiClass)psiElement);
+        }
+      } else if (psiElement instanceof PsiMethod) {
+        if (JUnitUtil.getTestMethod(psiElement) != null) {
+          foundMembers.add((PsiMethod)psiElement);
         }
       }
     }
-    return foundClasses;
+    return foundMembers;
   }
 
   private static PsiElement[] collectPatternElements(ConfigurationContext context, LinkedHashSet<String> classes) {
     final DataContext dataContext = context.getDataContext();
     PsiElement[] elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
     if (elements != null) {
-      for (PsiClass psiClass : collectTestClasses(elements)) {
-        classes.add(psiClass.getQualifiedName());
+      for (PsiMember psiClass : collectTestMembers(elements)) {
+        classes.add(getQName(psiClass));
       }
       return elements;
     } else {
       final PsiFile file = LangDataKeys.PSI_FILE.getData(dataContext);
       if (file instanceof PsiClassOwner) {
-        for (PsiClass psiClass : collectTestClasses(((PsiClassOwner)file).getClasses())) {
-          classes.add(psiClass.getQualifiedName());
+        for (PsiMember psiMember : collectTestMembers(((PsiClassOwner)file).getClasses())) {
+          classes.add(((PsiClass)psiMember).getQualifiedName());
         }
         return new PsiElement[]{file};
       }
     }
     return null;
+  }
+
+  public static String getQName(PsiMember psiMember) {
+    if (psiMember instanceof PsiClass) {
+      return ((PsiClass)psiMember).getQualifiedName();
+    }
+    else {
+      return psiMember.getContainingClass().getQualifiedName() + "," + psiMember.getName();
+    }
   }
 
   public PsiElement getSourceElement() {

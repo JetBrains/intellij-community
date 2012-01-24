@@ -362,8 +362,17 @@ public class SearchingForTestsTask extends Task.Backgroundable {
       }
     }
     else if (data.TEST_OBJECT.equals(TestType.PATTERN.getType())) {
-      final String methodName = data.getMethodName();
-      for (final String className : data.getPatterns()) {
+      for (final String pattern : data.getPatterns()) {
+        final String className;
+        final String methodName;
+        if (pattern.contains(",")) {
+          methodName = StringUtil.getShortName(pattern, ',');
+          className = StringUtil.getPackageName(pattern, ',');
+        } else {
+          className = pattern;
+          methodName = null;
+        }
+        
         final PsiClass psiClass = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
           @Nullable
           @Override
