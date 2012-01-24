@@ -29,10 +29,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiClassOwner;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.theoryinpractice.testng.model.TestData;
 import com.theoryinpractice.testng.model.TestType;
 import com.theoryinpractice.testng.util.TestNGUtil;
@@ -66,38 +63,46 @@ public class TestNGPatternConfigurationProducer extends TestNGConfigurationProdu
     return settings;
   }
 
-  static Set<PsiClass> collectTestClasses(PsiElement[] psiElements) {
-    final Set<PsiClass> foundClasses = new LinkedHashSet<PsiClass>();
+  static Set<PsiMember> collectTestMembers(PsiElement[] psiElements) {
+    final Set<PsiMember> foundMembers = new LinkedHashSet<PsiMember>();
     for (PsiElement psiElement : psiElements) {
       if (psiElement instanceof PsiClassOwner) {
         final PsiClass[] classes = ((PsiClassOwner)psiElement).getClasses();
         for (PsiClass aClass : classes) {
           if (JUnitUtil.isTestClass(aClass)) {
-            foundClasses.add(aClass);
+            foundMembers.add(aClass);
           }
         }
       } else if (psiElement instanceof PsiClass) {
         if (TestNGUtil.hasTest((PsiClass)psiElement)) {
-          foundClasses.add((PsiClass)psiElement);
+          foundMembers.add((PsiClass)psiElement);
+        }
+      } else if (psiElement instanceof PsiMethod) {
+        if (TestNGUtil.hasTest((PsiModifierListOwner)psiElement)) {
+          foundMembers.add((PsiMember)psiElement);
         }
       }
     }
-    return foundClasses;
+    return foundMembers;
   }
 
   private static PsiElement[] collectPatternElements(ConfigurationContext context, LinkedHashSet<String> classes) {
     final DataContext dataContext = context.getDataContext();
     PsiElement[] elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
     if (elements != null) {
-      for (PsiClass psiClass : collectTestClasses(elements)) {
-        classes.add(psiClass.getQualifiedName());
+      for (PsiMember psiMember : collectTestMembers(elements)) {
+        if (psiMember instanceof PsiClass) {
+          classes.add(((PsiClass)psiMember).getQualifiedName());
+        } else {
+          classes.add(psiMember.getContainingClass().getQualifiedName() + "," + psiMember.getName());
+        }
       }
       return elements;
     } else {
       final PsiFile file = LangDataKeys.PSI_FILE.getData(dataContext);
       if (file instanceof PsiClassOwner) {
-        for (PsiClass psiClass : collectTestClasses(((PsiClassOwner)file).getClasses())) {
-          classes.add(psiClass.getQualifiedName());
+        for (PsiMember psiMember : collectTestMembers(((PsiClassOwner)file).getClasses())) {
+          classes.add(((PsiClass)psiMember).getQualifiedName());
         }
         return new PsiElement[]{file};
       }
