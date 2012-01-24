@@ -543,7 +543,7 @@ public class PsiUtil {
       if (context instanceof GrTypeDefinition) {
         return (PsiClass)context;
       }
-      else if (context instanceof GroovyFileBase) {
+      else if (context instanceof GroovyFileBase && context.isPhysical()) {
         return ((GroovyFileBase)context).getScriptClass();
       }
 

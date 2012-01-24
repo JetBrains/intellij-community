@@ -145,7 +145,7 @@ public class OldReferencesResolver {
       //newExpr = ((GrReferenceExpression)newExpr).getReferenceNameElement();
       final GroovyResolveResult adv = oldRef.advancedResolve();
       final PsiElement scope = getClassContainingResolve(adv);
-      final PsiElement owner = PsiTreeUtil.getContextOfType(oldExpr, PsiClass.class);
+      final PsiElement owner = PsiUtil.getContextClass(oldExpr);
 
       if (myToReplaceIn instanceof GrClosableBlock || (owner != null && scope != null && PsiTreeUtil.isContextAncestor(owner, scope, false))) {
 
@@ -368,7 +368,7 @@ public class OldReferencesResolver {
         return ((PsiMember)elem).getContainingClass();
       }
       else {
-        return PsiTreeUtil.getParentOfType(elem, PsiClass.class);
+        return PsiUtil.getContextClass(elem);
       }
     }
     return null;
