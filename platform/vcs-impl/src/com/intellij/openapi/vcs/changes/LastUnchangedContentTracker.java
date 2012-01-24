@@ -84,12 +84,20 @@ public class LastUnchangedContentTracker {
     long stamp = file.getModificationStamp();
     try {
       final DataOutputStream contentStream = ACQUIRED_CONTENT_ATTR.writeAttribute(file);
-      contentStream.writeInt(contentId);
-      contentStream.close();
+      try {
+        contentStream.writeInt(contentId);
+      }
+      finally {
+        contentStream.close();
+      }
 
       final DataOutputStream tsStream = LAST_TS_ATTR.writeAttribute(file);
-      tsStream.writeLong(stamp);
-      tsStream.close();
+      try {
+        tsStream.writeLong(stamp);
+      }
+      finally {
+        tsStream.close();
+      }
 
       file.putUserData(LAST_TS_KEY, stamp);
     }
@@ -112,8 +120,12 @@ public class LastUnchangedContentTracker {
     try {
       final DataInputStream stream = ACQUIRED_CONTENT_ATTR.readAttribute(file);
       if (stream != null) {
-        oldContentId = stream.readInt();
-        stream.close();
+        try {
+          oldContentId = stream.readInt();
+        }
+        finally {
+          stream.close();
+        }
         LOG.assertTrue(oldContentId > 0, oldContentId);
       }
     }
@@ -130,8 +142,12 @@ public class LastUnchangedContentTracker {
       try {
         final DataInputStream stream = LAST_TS_ATTR.readAttribute(file);
         if (stream != null) {
-          l = stream.readLong();
-          stream.close();
+          try {
+            l = stream.readLong();
+          }
+          finally {
+            stream.close();
+          }
         }
       }
       catch (IOException e) {
