@@ -354,7 +354,7 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
     return myFactories.get(type);
   }
 
-  private void createNewDockContainerFor(DockableContent content, RelativePoint point) {
+  public void createNewDockContainerFor(DockableContent content, RelativePoint point) {
     DockContainer container = getFactory(content.getDockContainerType()).createContainer(content);
     register(container);
 
