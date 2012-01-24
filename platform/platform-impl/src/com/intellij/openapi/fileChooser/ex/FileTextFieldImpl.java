@@ -400,7 +400,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
         }
       }).setItemChoosenCallback(new Runnable() {
         public void run() {
-          processChosenFromCompletion(true, false);
+          processChosenFromCompletion(false);
         }
       }).setCancelKeyEnabled(false).setAlpha(0.1f).setFocusOwners(new Component[]{myPathTextField}).
           createPopup();
@@ -628,15 +628,14 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     return lastFound;
   }
 
-  public
   @Nullable
-  LookupFile getFile() {
+  public LookupFile getFile() {
     String text = getTextFieldText();
     if (text == null) return null;
     return myFinder.find(text);
   }
 
-  private void processChosenFromCompletion(boolean closePath, boolean nameOnly) {
+  private void processChosenFromCompletion(boolean nameOnly) {
     final LookupFile file = getSelectedFileFromCompletionPopup();
     if (file == null) return;
 
@@ -675,7 +674,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
         }
 
         if (start > end || start < 0 || end > doc.getLength()) {
-          setTextToFile(file, closePath);
+          setTextToFile(file);
         } else {
           myPathTextField.setSelectionStart(0);
           myPathTextField.setSelectionEnd(0);
@@ -727,7 +726,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
         LOG.error(e);
       }
     } else {
-      setTextToFile(file, closePath);
+      setTextToFile(file);
     }
   }
 
@@ -735,12 +734,10 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     return SystemInfo.isFileSystemCaseSensitive ? name : name.toUpperCase();
   }
 
-  private void setTextToFile(final LookupFile file, final boolean closePath) {
+  private void setTextToFile(final LookupFile file) {
     String text = file.getAbsolutePath();
-    if (closePath) {
-      if (file.isDirectory() && !text.endsWith(myFinder.getSeparator())) {
-        text += myFinder.getSeparator();
-      }
+    if (file.isDirectory() && !text.endsWith(myFinder.getSeparator())) {
+      text += myFinder.getSeparator();
     }
     myPathTextField.setText(text);
   }
@@ -783,7 +780,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     else if (getSelectedFileFromCompletionPopup() != null && (e.getKeyCode() == KeyEvent.VK_ENTER || e.getKeyCode() == KeyEvent.VK_TAB) && e.getModifiers() == 0) {
       hideCurrentPopup();
       e.consume();
-      processChosenFromCompletion(true, e.getKeyCode() == KeyEvent.VK_TAB);
+      processChosenFromCompletion(e.getKeyCode() == KeyEvent.VK_TAB);
     }
   }
 
