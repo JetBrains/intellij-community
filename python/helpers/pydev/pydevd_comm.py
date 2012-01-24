@@ -61,7 +61,12 @@ from pydevd_constants import * #@UnusedWildImport
 
 import time
 import threading
-import thread
+
+try:
+    import thread
+except ImportError:
+    import _thread as thread #Py3K changed it.
+
 import sys
 try:
     import Queue as PydevQueue

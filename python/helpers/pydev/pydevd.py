@@ -175,14 +175,26 @@ thread.NewThreadStartup = NewThreadStartup
 #=======================================================================================================================
 # pydev_start_new_thread
 #=======================================================================================================================
-def pydev_start_new_thread(function, args, kwargs={}):
+def _pydev_start_new_thread(function, args, kwargs={}):
     '''
     We need to replace the original thread.start_new_thread with this function so that threads started through
     it and not through the threading module are properly traced.
     '''
-    import thread
+    try:
+        import thread
+    except ImportError:
+        import _thread as thread #Py3K changed it.
 
     return thread._original_start_new_thread(thread.NewThreadStartup(function, args, kwargs), ())
+
+class PydevStartNewThread(object):
+    def __get__(self, obj, type=None):
+        return self
+
+    def __call__(self, function, args, kwargs={}):
+        return _pydev_start_new_thread(function, args, kwargs)
+
+pydev_start_new_thread = PydevStartNewThread()
 
 #=======================================================================================================================
 # PyDB
