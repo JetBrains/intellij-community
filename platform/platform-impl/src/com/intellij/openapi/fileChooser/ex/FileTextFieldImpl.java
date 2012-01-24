@@ -676,50 +676,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
         if (start > end || start < 0 || end > doc.getLength()) {
           setTextToFile(file);
         } else {
-          myPathTextField.setSelectionStart(0);
-          myPathTextField.setSelectionEnd(0);
-
-          final String name = file.getName();
-          boolean toRemoveExistingName;
-          String prefix = "";
-
-          if (caretPos >= start) {
-            prefix = doc.getText(start, caretPos - start);
-            if (prefix.length() == 0) {
-              prefix = doc.getText(start, end - start);
-            }
-            if (SystemInfo.isFileSystemCaseSensitive) {
-              toRemoveExistingName = name.startsWith(prefix) && prefix.length() > 0;
-            } else {
-              toRemoveExistingName = name.toUpperCase().startsWith(prefix.toUpperCase()) && prefix.length() > 0;
-            }
-          } else {
-            toRemoveExistingName = true;
-          }
-
-          int newPos;
-          if (toRemoveExistingName) {
-            doc.remove(start, end - start);
-            doc.insertString(start, name, doc.getDefaultRootElement().getAttributes());
-            newPos = start + name.length();
-          } else {
-            doc.insertString(caretPos, name, doc.getDefaultRootElement().getAttributes());
-            newPos = caretPos + name.length();
-          }
-
-          if (file.isDirectory()) {
-            if (!myFinder.getSeparator().equals(doc.getText(newPos, 1))) {
-              doc.insertString(newPos, myFinder.getSeparator(), doc.getDefaultRootElement().getAttributes());
-              newPos++;
-            }
-          }
-
-          if (newPos < doc.getLength()) {
-            if (myFinder.getSeparator().equals(doc.getText(newPos, 1))) {
-              newPos++;
-            }
-          }
-          myPathTextField.setCaretPosition(newPos);
+          replacePathComponent(file, caretPos, start, end);
         }
       }
       catch (BadLocationException e) {
@@ -730,8 +687,53 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     }
   }
 
-  private String toFileName(String name) {
-    return SystemInfo.isFileSystemCaseSensitive ? name : name.toUpperCase();
+  private void replacePathComponent(LookupFile file, int caretPos, int start, int end) throws BadLocationException {
+    final Document doc = myPathTextField.getDocument();
+
+    myPathTextField.setSelectionStart(0);
+    myPathTextField.setSelectionEnd(0);
+
+    final String name = file.getName();
+    boolean toRemoveExistingName;
+    String prefix = "";
+
+    if (caretPos >= start) {
+      prefix = doc.getText(start, caretPos - start);
+      if (prefix.length() == 0) {
+        prefix = doc.getText(start, end - start);
+      }
+      if (SystemInfo.isFileSystemCaseSensitive) {
+        toRemoveExistingName = name.startsWith(prefix) && prefix.length() > 0;
+      } else {
+        toRemoveExistingName = name.toUpperCase().startsWith(prefix.toUpperCase()) && prefix.length() > 0;
+      }
+    } else {
+      toRemoveExistingName = true;
+    }
+
+    int newPos;
+    if (toRemoveExistingName) {
+      doc.remove(start, end - start);
+      doc.insertString(start, name, doc.getDefaultRootElement().getAttributes());
+      newPos = start + name.length();
+    } else {
+      doc.insertString(caretPos, name, doc.getDefaultRootElement().getAttributes());
+      newPos = caretPos + name.length();
+    }
+
+    if (file.isDirectory()) {
+      if (!myFinder.getSeparator().equals(doc.getText(newPos, 1))) {
+        doc.insertString(newPos, myFinder.getSeparator(), doc.getDefaultRootElement().getAttributes());
+        newPos++;
+      }
+    }
+
+    if (newPos < doc.getLength()) {
+      if (myFinder.getSeparator().equals(doc.getText(newPos, 1))) {
+        newPos++;
+      }
+    }
+    myPathTextField.setCaretPosition(newPos);
   }
 
   private void setTextToFile(final LookupFile file) {
