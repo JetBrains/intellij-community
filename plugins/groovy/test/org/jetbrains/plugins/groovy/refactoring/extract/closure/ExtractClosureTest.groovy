@@ -125,7 +125,6 @@ foo {->
     print s
 }
 ''', [0], [0])
-
   }
 
   void testInsertQualifier() {
