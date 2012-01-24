@@ -201,7 +201,7 @@ public final class GitRepository implements Disposable {
    * Returns the full-functional instance of GitRepository - with UntrackedFilesHolder and GitRepositoryUpdater.
    * This is used for repositories registered in project, and should be optained via {@link GitRepositoryManager}.
    */
-  static GitRepository getFullInstance(@NotNull VirtualFile root, @NotNull Project project, @NotNull Disposable parentDisposable) {
+  public static GitRepository getFullInstance(@NotNull VirtualFile root, @NotNull Project project, @NotNull Disposable parentDisposable) {
     GitRepository repository = new GitRepository(root, project, parentDisposable);
     repository.myUntrackedFilesHolder.setupVfsListener(project);
     repository.setupUpdater();
