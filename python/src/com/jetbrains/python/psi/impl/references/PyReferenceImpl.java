@@ -206,7 +206,6 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
     // Use real context here to enable correct completion and resolve in case of PyExpressionCodeFragment
     final PsiElement realContext = PyPsiUtils.getRealContext(myElement);
-    final ScopeOwner originalOwner = ScopeUtil.getResolveScopeOwner(realContext);
 
     PsiElement roof = findResolveRoof(referencedName, realContext);
     PyResolveUtil.scopeCrawlUp(processor, myElement, referencedName, roof);
@@ -214,6 +213,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     final List<PsiElement> definers = processor.getDefiners();
     if (uexpr != null) {
       if (definers.isEmpty()) {
+        final ScopeOwner originalOwner = ScopeUtil.getResolveScopeOwner(realContext);
         final ScopeOwner owner = ScopeUtil.getScopeOwner(uexpr);
         if (owner != null && owner == originalOwner) {
           final ResolveResultList latest = resolveToLatestDefs(owner, myElement, referencedName);
