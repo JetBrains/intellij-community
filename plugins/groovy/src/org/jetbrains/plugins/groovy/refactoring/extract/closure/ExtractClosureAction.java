@@ -13,24 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.refactoring.introduce.parameter;
+package org.jetbrains.plugins.groovy.refactoring.extract.closure;
 
-import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSuperReferenceExpression;
+import com.intellij.lang.refactoring.RefactoringSupportProvider;
+import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.actions.BasePlatformRefactoringAction;
+import org.jetbrains.annotations.NotNull;
 
 /**
-* @author Medvedev Max
-*/
-public class AnySupers extends GroovyRecursiveElementVisitor {
-  boolean myContainsSupers = false;
-
+ * @author Max Medvedev
+ */
+public class ExtractClosureAction extends BasePlatformRefactoringAction {
   @Override
-  public void visitSuperExpression(GrSuperReferenceExpression superExpression) {
-    super.visitSuperExpression(superExpression);
-    myContainsSupers = true;
+  protected RefactoringActionHandler getRefactoringHandler(@NotNull RefactoringSupportProvider provider) {
+    return new ExtractClosureHandler();
   }
 
-  public boolean isResult() {
-    return myContainsSupers;
+  @Override
+  protected boolean isAvailableInEditorOnly() {
+    return true;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,8 +52,7 @@ import static com.intellij.codeInsight.ChangeContextUtil.*;
  */
 
 public class OldReferencesResolver {
-  private static final Logger LOG =
-    Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.introduce.parameter.java2groovy.OldReferencesResolver");
+  private static final Logger LOG = Logger.getInstance(OldReferencesResolver.class);
 
   private final GrCall myContext;
   private final GrExpression myExpr;

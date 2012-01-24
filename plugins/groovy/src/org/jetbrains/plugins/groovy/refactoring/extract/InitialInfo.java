@@ -42,7 +42,6 @@ public class InitialInfo implements ExtractInfoHelper {
   private final ParameterInfo[] myParameterInfos;
   private final VariableInfo[] myOutputNames;
   private final PsiType myOutputType;
-  private final GrMemberOwner myTargetClass;
   private final PsiElement[] myInnerElements;
   private final Project myProject;
   private final GrStatement[] myStatements;
@@ -57,7 +56,6 @@ public class InitialInfo implements ExtractInfoHelper {
                      ArrayList<GrStatement> returnStatements) {
     myInnerElements = innerElements;
     myStatements = statements;
-    myTargetClass = targetClass;
     myOutputNames = outputInfos;
 
     myHasReturnValue = ContainerUtil.find(returnStatements, new Condition<GrStatement>() {
@@ -94,7 +92,7 @@ public class InitialInfo implements ExtractInfoHelper {
         outputType = outputInfos[0].getType();
       }
       else {
-        outputType = JavaPsiFacade.getElementFactory(myProject).createTypeFromText(CommonClassNames.JAVA_UTIL_LIST, myTargetClass);
+        outputType = JavaPsiFacade.getElementFactory(myProject).createTypeFromText(CommonClassNames.JAVA_UTIL_LIST, myStatements[0]);
       }
     }
     else if (ExtractUtil.isSingleExpression(statements)) {
@@ -137,7 +135,7 @@ public class InitialInfo implements ExtractInfoHelper {
 
   @Override
   @NotNull
-  public VariableInfo[] getOutputNames() {
+  public VariableInfo[] getOutputVariableInfos() {
     return myOutputNames;
   }
 
@@ -170,13 +168,12 @@ public class InitialInfo implements ExtractInfoHelper {
     return myStatements;
   }
 
-  @Override
-  @NotNull
-  public GrMemberOwner getOwner() {
-    return myTargetClass;
-  }
-
   public boolean hasReturnValue() {
     return myHasReturnValue;
+  }
+
+  @Override
+  public String getName() {
+    throw new UnsupportedOperationException();
   }
 }

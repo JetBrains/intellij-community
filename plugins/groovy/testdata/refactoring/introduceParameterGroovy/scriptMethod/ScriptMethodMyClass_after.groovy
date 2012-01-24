@@ -13,18 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-class Base {
-    def foo() {
-        foo(123)
-    }
-
-    def foo(int anObject){}
+def foo(def anObject) {
+    <selection>print(anObject)</selection>
 }
 
-class Inh extends Base {
-    def foo() {
-        foo(123)
-    }
-
-    def foo(int anObject) {print anObject}
-}
+foo('a' + 1)

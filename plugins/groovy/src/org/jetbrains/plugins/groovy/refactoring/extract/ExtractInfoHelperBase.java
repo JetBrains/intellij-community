@@ -20,7 +20,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwner;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.VariableInfo;
 
 import java.util.Collection;
@@ -30,7 +29,7 @@ import java.util.Map;
 /**
  * @author Max Medvedev
  */
-public class ExtractInfoHelperBase implements ExtractInfoHelper {
+public abstract class ExtractInfoHelperBase implements ExtractInfoHelper {
   protected final InitialInfo myInitialInfo;
   protected final Map<String, ParameterInfo> myInputNamesMap;
 
@@ -66,8 +65,8 @@ public class ExtractInfoHelperBase implements ExtractInfoHelper {
 
   @Override
   @NotNull
-  public VariableInfo[] getOutputNames() {
-    return myInitialInfo.getOutputNames();
+  public VariableInfo[] getOutputVariableInfos() {
+    return myInitialInfo.getOutputVariableInfos();
   }
 
   /**
@@ -105,12 +104,6 @@ public class ExtractInfoHelperBase implements ExtractInfoHelper {
   @NotNull
   public GrStatement[] getStatements() {
     return myInitialInfo.getStatements();
-  }
-
-  @Override
-  @NotNull
-  public GrMemberOwner getOwner() {
-    return myInitialInfo.getOwner();
   }
 
   public boolean hasReturnValue() {

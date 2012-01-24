@@ -13,18 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-class Base {
-    def foo() {
-        foo(123)
-    }
+package org.jetbrains.plugins.groovy.refactoring.extract.closure;
 
-    def foo(int anObject){}
-}
+import com.intellij.psi.PsiReference;
+import com.intellij.usageView.UsageInfo;
+import org.jetbrains.annotations.NotNull;
 
-class Inh extends Base {
-    def foo() {
-        foo(123)
-    }
-
-    def foo(int anObject) {print anObject}
+/**
+ * @author Max Medvedev
+ */
+public class OtherLanguageUsageInfo extends UsageInfo {
+  public OtherLanguageUsageInfo(@NotNull PsiReference reference) {
+    super(reference);
+  }
 }
