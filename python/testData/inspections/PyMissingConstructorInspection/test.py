@@ -24,25 +24,25 @@ class C(B):
     print("Constructor C was called")
 
 
-class A:
+class A2:
   def __init__(self):
-    print("A __init__")
+    print("A2 __init__")
 
 
-class B(A):
+class B2(A2):
   def __init__(self):
-    A.__init__(self)
-    print("Constructor B was called")
+    A2.__init__(self)
+    print("Constructor B2 was called")
 
-class C(B):
+class C2(B2):
   def <warning descr="Call to constructor of super class is missed">__init__</warning>(self):
-    print("Constructor C was called")
+    print("Constructor C2 was called")
 
-class D(A):
+class D2(A2):
   def __init__(self):
     if True:
-      A.__init__(self)
-    print("Constructor D was called")
+      A2.__init__(self)
+    print("Constructor D2 was called")
 
 #PY-3238
 class Kl:
@@ -53,16 +53,16 @@ class Kl2(Kl):
         pass
 
 #PY-3313
-class A(object):
+class A3(object):
     def __init__(self):
-        print ("Constructor A was called")
+        print ("Constructor A3 was called")
 
-class B(A):
+class B3(A3):
     pass
 
-class C(B):
+class C3(B3):
     def <warning descr="Call to constructor of super class is missed">__init__</warning>(self):
-        print ("Constructor C was called")
+        print ("Constructor C3 was called")
 
 #PY-3395
 class Over(Over):
