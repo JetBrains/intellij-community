@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -132,28 +132,22 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
     }
 
     if (isStringLiteral(token)) {
-      if (rawText != null && rawText.rawText != null) {
-        text = rawText.rawText;
-      }
-
       StringBuilder buffer = new StringBuilder(text.length());
       @NonNls String breaker = getLineBreaker(token);
       final String[] lines = LineTokenizer.tokenize(text.toCharArray(), false, true);
       for (int i = 0; i < lines.length; i++) {
         buffer.append(escapeCharCharacters(lines[i], token));
-        if (i != lines.length - 1 || "\n".equals(breaker) && text.endsWith("\n")) {
+        if (i != lines.length - 1) {
           buffer.append(breaker);
+        }
+        else if (text.endsWith("\n")) {
+          buffer.append("\\n");
         }
       }
       text = buffer.toString();
     }
     else if (isCharLiteral(token)) {
-      if (rawText != null && rawText.rawText != null) {
-        return escapeCharCharacters(rawText.rawText, token);
-      }
-      else {
-        return escapeCharCharacters(text, token);
-      }
+      return escapeCharCharacters(text, token);
     }
     return text;
   }
