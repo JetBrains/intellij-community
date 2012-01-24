@@ -305,11 +305,20 @@ public class FileStructurePopup implements Disposable {
     myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, null)
       .setTitle(myTitle)
       .setResizable(true)
+      .setModalContext(false)
       .setFocusable(true)
       .setMovable(true)
+      .setBelongsToGlobalPopupStack(true)
       //.setCancelOnClickOutside(false) //for debug and snapshots
       .setCancelKeyEnabled(false)
       .setDimensionServiceKey(null, getDimensionServiceKey(), false)
+      .setCancelCallback(new Computable<Boolean>() {
+        @Override
+        public Boolean compute() {
+          DimensionService.getInstance().setLocation(getDimensionServiceKey(), myPopup.getLocationOnScreen(), myProject);
+          return true;
+        }
+      })
       .createPopup();
     Disposer.register(myPopup, this);
     Disposer.register(myPopup, new Disposable() {
@@ -320,7 +329,12 @@ public class FileStructurePopup implements Disposable {
         }
       }
     });
-    myPopup.showCenteredInCurrentWindow(myProject);
+    final Point location = DimensionService.getInstance().getLocation(getDimensionServiceKey(), myProject);
+    if (location != null) {
+      myPopup.showInScreenCoordinates(myEditor.getContentComponent(), location);
+    } else {
+      myPopup.showCenteredInCurrentWindow(myProject);
+    }
 
     ((AbstractPopup)myPopup).setShowHints(true);
     if (shouldSetWidth) {
@@ -345,11 +359,12 @@ public class FileStructurePopup implements Disposable {
     final Alarm alarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, myPopup);
     alarm.addRequest(new Runnable() {
       String filter = "";
+
       @Override
       public void run() {
         alarm.cancelAllRequests();
         String prefix = mySpeedSearch.getEnteredPrefix();
-        myTree.getEmptyText().setText(StringUtil.isEmpty(prefix) ?  "Nothing to show" : "Can't find '" + prefix + "'");
+        myTree.getEmptyText().setText(StringUtil.isEmpty(prefix) ? "Nothing to show" : "Can't find '" + prefix + "'");
         if (prefix == null) prefix = "";
 
         if (!filter.equals(prefix)) {
@@ -362,7 +377,7 @@ public class FileStructurePopup implements Disposable {
               //  mySpeedSearch.refreshSelection();
               //}
             }
-          });          
+          });
         }
         alarm.addRequest(this, 300);
       }
