@@ -70,6 +70,7 @@ public class LastUnchangedContentTracker {
   }
 
   private static void saveContentReference(VirtualFile file, int contentId) {
+    LOG.assertTrue(contentId > 0, contentId);
     if (ChangeListManagerImpl.DEBUG) {
       System.out.println("LastUnchangedContentTracker.saveCurrentContent");
       try {
@@ -113,6 +114,7 @@ public class LastUnchangedContentTracker {
       if (stream != null) {
         oldContentId = stream.readInt();
         stream.close();
+        LOG.assertTrue(oldContentId > 0, oldContentId);
       }
     }
     catch (IOException e) {
