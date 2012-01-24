@@ -15,19 +15,33 @@
  */
 package org.jetbrains.idea.maven.execution;
 
+import com.intellij.codeInsight.completion.CompletionResultSet;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.EditorTextField;
 import com.intellij.ui.PanelWithAnchor;
+import com.intellij.util.TextFieldCompletionProvider;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenConstants;
-import org.jetbrains.idea.maven.utils.Strings;
+import org.jetbrains.idea.maven.model.MavenPlugin;
+import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.utils.*;
 
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author Vladislav.Kaznacheev
@@ -35,11 +49,11 @@ import javax.swing.*;
 public abstract class MavenRunnerParametersConfigurable implements Configurable, PanelWithAnchor {
   private JPanel panel;
   protected LabeledComponent<TextFieldWithBrowseButton> workingDirComponent;
-  protected LabeledComponent<JTextField> goalsComponent;
-  private LabeledComponent<JTextField> profilesComponent;
+  protected LabeledComponent<EditorTextField> goalsComponent;
+  private LabeledComponent<EditorTextField> profilesComponent;
   private JComponent anchor;
 
-  public MavenRunnerParametersConfigurable() {
+  public MavenRunnerParametersConfigurable(@NotNull Project project) {
     workingDirComponent.getComponent().addBrowseFolderListener(
       RunnerBundle.message("maven.select.maven.project.file"), "", null,
       new FileChooserDescriptor(false, true, false, false, false, false) {
@@ -50,6 +64,53 @@ public abstract class MavenRunnerParametersConfigurable implements Configurable,
         }
       });
 
+    MyCompletionProvider profilesCompletionProvider = new MyCompletionProvider(project) {
+      @Override
+      protected void addVariants(@NotNull CompletionResultSet result, MavenProjectsManager manager) {
+        for (String profile : manager.getAvailableProfiles()) {
+          result.addElement(LookupElementBuilder.create(profile));
+        }
+      }
+    };
+    
+    profilesComponent.setComponent(profilesCompletionProvider.createEditor(project));
+
+    MyCompletionProvider goalsCompletionProvider = new MyCompletionProvider(project) {
+      
+      private volatile List<LookupElement> myCachedElements;
+      
+      @Override
+      protected void addVariants(@NotNull CompletionResultSet result, MavenProjectsManager manager) {
+        List<LookupElement> cachedElements = myCachedElements;
+        if (cachedElements == null) {
+          Set<String> goals = new HashSet<String>();
+          goals.addAll(MavenConstants.PHASES);
+
+          for (MavenProject mavenProject : manager.getProjects()) {
+            for (MavenPlugin plugin : mavenProject.getPlugins()) {
+              MavenPluginInfo pluginInfo = MavenArtifactUtil.readPluginInfo(manager.getLocalRepository(), plugin.getMavenId());
+              if (pluginInfo != null) {
+                for (MavenPluginInfo.Mojo mojo : pluginInfo.getMojos()) {
+                  goals.add(mojo.getDisplayName());
+                }
+              }
+            }
+          }
+
+          cachedElements = new ArrayList<LookupElement>(goals.size());
+          for (String goal : goals) {
+            cachedElements.add(LookupElementBuilder.create(goal).setIcon(MavenIcons.PHASE_ICON));
+          }
+
+          myCachedElements = cachedElements;
+        }
+
+        result.addAllElements(cachedElements);
+      }
+    };
+    
+    goalsComponent.setComponent(goalsCompletionProvider.createEditor(project));
+    
     setAnchor(profilesComponent.getLabel());
   }
 
@@ -115,4 +176,27 @@ public abstract class MavenRunnerParametersConfigurable implements Configurable,
     goalsComponent.setAnchor(anchor);
     profilesComponent.setAnchor(anchor);
   }
+  
+  private static abstract class MyCompletionProvider extends TextFieldCompletionProvider {
+    private final Project myProject;
+
+    protected MyCompletionProvider(Project project) {
+      myProject = project;
+    }
+
+    @NotNull
+    @Override
+    protected String getPrefix(@NotNull String currentTextPrefix) {
+      return currentTextPrefix.substring(currentTextPrefix.lastIndexOf(' ') + 1);
+    }
+    
+    @Override
+    protected final void addCompletionVariants(@NotNull String text, int offset, @NotNull String prefix, @NotNull CompletionResultSet result) {
+      MavenProjectsManager manager = MavenProjectsManager.getInstance(myProject);
+      addVariants(result, manager);
+    }
+    
+    protected abstract void addVariants(@NotNull CompletionResultSet result, MavenProjectsManager manager);
+  }
+  
 }

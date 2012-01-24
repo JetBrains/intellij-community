@@ -602,12 +602,17 @@ public class JavaCompletionData extends JavaAwareCompletionData{
 
     LookupElement br = createKeyword(position, PsiKeyword.BREAK);
     LookupElement cont = createKeyword(position, PsiKeyword.CONTINUE);
-    if (!psiElement().insideSequence(true, psiElement(PsiLabeledStatement.class),
-                                                  or(psiElement(PsiFile.class), psiElement(PsiMethod.class),
-                                                     psiElement(PsiClassInitializer.class))).accepts(position)) {
-      br = TailTypeDecorator.withTail(br, TailType.SEMICOLON);
-      cont = TailTypeDecorator.withTail(cont, TailType.SEMICOLON);
+    TailType tailType;
+    if (psiElement().insideSequence(true, psiElement(PsiLabeledStatement.class),
+                                    or(psiElement(PsiFile.class), psiElement(PsiMethod.class),
+                                       psiElement(PsiClassInitializer.class))).accepts(position)) {
+      tailType = TailType.HUMBLE_SPACE;
     }
+    else {
+      tailType = TailType.SEMICOLON;
+    }
+    br = TailTypeDecorator.withTail(br, tailType);
+    cont = TailTypeDecorator.withTail(cont, tailType);
 
     if (loop != null && new InsideElementFilter(new ClassFilter(PsiStatement.class)).isAcceptable(position, loop)) {
       result.addElement(br);

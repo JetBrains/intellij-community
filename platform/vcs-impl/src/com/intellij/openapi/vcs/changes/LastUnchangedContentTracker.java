@@ -36,7 +36,7 @@ public class LastUnchangedContentTracker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.LastUnchangedContentTracker");
   private static final Key<Long> LAST_TS_KEY = Key.create("LAST_TS_KEY");
   private static final FileAttribute LAST_TS_ATTR = new FileAttribute("LAST_TS_ATTR", 0, true);
-  private static final FileAttribute ACQUIRED_CONTENT_ATTR = new FileAttribute("ACQUIRED_CONTENT_ATTR", 0, false);
+  private static final FileAttribute ACQUIRED_CONTENT_ATTR = new FileAttribute("ACQUIRED_CONTENT_ATTR", 1, true);
 
   public static void updateLastUnchangedContent(@NotNull VirtualFile file) {
     Long lastTs = getLastSavedStamp(file);
@@ -70,6 +70,11 @@ public class LastUnchangedContentTracker {
   }
 
   private static void saveContentReference(VirtualFile file, int contentId) {
+    if (contentId == 0) {
+      return; // content not loaded yet, nothing to save
+    }
+
+    LOG.assertTrue(contentId > 0, contentId);
     if (ChangeListManagerImpl.DEBUG) {
       System.out.println("LastUnchangedContentTracker.saveCurrentContent");
       try {
@@ -83,12 +88,20 @@ public class LastUnchangedContentTracker {
     long stamp = file.getModificationStamp();
     try {
       final DataOutputStream contentStream = ACQUIRED_CONTENT_ATTR.writeAttribute(file);
-      contentStream.writeInt(contentId);
-      contentStream.close();
+      try {
+        contentStream.writeInt(contentId);
+      }
+      finally {
+        contentStream.close();
+      }
 
       final DataOutputStream tsStream = LAST_TS_ATTR.writeAttribute(file);
-      tsStream.writeLong(stamp);
-      tsStream.close();
+      try {
+        tsStream.writeLong(stamp);
+      }
+      finally {
+        tsStream.close();
+      }
 
       file.putUserData(LAST_TS_KEY, stamp);
     }
@@ -111,8 +124,13 @@ public class LastUnchangedContentTracker {
     try {
       final DataInputStream stream = ACQUIRED_CONTENT_ATTR.readAttribute(file);
       if (stream != null) {
-        oldContentId = stream.readInt();
-        stream.close();
+        try {
+          oldContentId = stream.readInt();
+        }
+        finally {
+          stream.close();
+        }
+        LOG.assertTrue(oldContentId > 0, oldContentId);
       }
     }
     catch (IOException e) {
@@ -128,8 +146,12 @@ public class LastUnchangedContentTracker {
       try {
         final DataInputStream stream = LAST_TS_ATTR.readAttribute(file);
         if (stream != null) {
-          l = stream.readLong();
-          stream.close();
+          try {
+            l = stream.readLong();
+          }
+          finally {
+            stream.close();
+          }
         }
       }
       catch (IOException e) {

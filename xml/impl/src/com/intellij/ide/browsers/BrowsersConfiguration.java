@@ -25,11 +25,14 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -201,7 +204,7 @@ public class BrowsersConfiguration implements PersistentStateComponent<Element> 
       BrowserUtil.launchBrowser(url);
     }
     else {
-      getInstance().doLaunchBrowser(family, url, ArrayUtil.EMPTY_STRING_ARRAY, false);
+      getInstance().doLaunchBrowser(family, url, ArrayUtil.EMPTY_STRING_ARRAY, Conditions.<String>alwaysTrue(), false);
     }
   }
 
@@ -221,12 +224,22 @@ public class BrowsersConfiguration implements PersistentStateComponent<Element> 
                                    @NotNull final String url,
                                    final boolean forceOpenNewInstanceOnMac,
                                    String... parameters) {
-    getInstance().doLaunchBrowser(family, url, parameters, forceOpenNewInstanceOnMac);
+    launchBrowser(family, url, forceOpenNewInstanceOnMac, Conditions.<String>alwaysTrue(), parameters);
+  }
+
+  public static void launchBrowser(final @NotNull BrowserFamily family,
+                                   @NotNull final String url,
+                                   final boolean forceOpenNewInstanceOnMac,
+                                   final Condition<String> browserSpecificParametersFilter,
+                                   String... parameters) {
+    getInstance().doLaunchBrowser(family, url, parameters, browserSpecificParametersFilter, forceOpenNewInstanceOnMac);
   }
 
   private void doLaunchBrowser(final BrowserFamily family,
                                @NotNull String url,
-                               @NotNull String[] additionalParameters, final boolean forceOpenNewInstanceOnMac) {
+                               @NotNull String[] additionalParameters,
+                               @NotNull Condition<String> browserSpecificParametersFilter,
+                               final boolean forceOpenNewInstanceOnMac) {
     final WebBrowserSettings settings = getBrowserSettings(family);
     final String path = settings.getPath();
     if (path != null && path.length() > 0) {
@@ -234,7 +247,8 @@ public class BrowsersConfiguration implements PersistentStateComponent<Element> 
       try {
         final BrowserSpecificSettings specificSettings = settings.getBrowserSpecificSettings();
         final String[] browserParameters = specificSettings != null ? specificSettings.getAdditionalParameters() : ArrayUtil.EMPTY_STRING_ARRAY;
-        String[] parameters = ArrayUtil.mergeArrays(browserParameters, additionalParameters);
+        String[] parameters = ArrayUtil.mergeArrays(ContainerUtil.findAllAsArray(browserParameters, browserSpecificParametersFilter),
+                                                    additionalParameters);
         launchBrowser(path, url, forceOpenNewInstanceOnMac, parameters);
       }
       catch (IOException e) {

@@ -20,7 +20,10 @@
  */
 package com.theoryinpractice.testng.configuration;
 
-import com.intellij.execution.*;
+import com.intellij.execution.JavaRunConfigurationExtensionManager;
+import com.intellij.execution.Location;
+import com.intellij.execution.PsiLocation;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.junit.InheritorChooser;
 import com.intellij.execution.junit2.info.MethodLocation;
@@ -45,7 +48,7 @@ public class TestNGInClassConfigurationProducer extends TestNGConfigurationProdu
   @Nullable
   protected RunnerAndConfigurationSettings createConfigurationByElement(Location location, ConfigurationContext context) {
     final PsiElement[] elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(context.getDataContext());
-    if (elements != null && TestNGPatternConfigurationProducer.collectTestClasses(elements).size() > 1) {
+    if (elements != null && TestNGPatternConfigurationProducer.collectTestMembers(elements).size() > 1) {
       return null;
     }
 

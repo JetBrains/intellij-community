@@ -54,6 +54,7 @@ public class FileHeaderChecker {
     TIntObjectHashMap<String> offsetToProperty = new TIntObjectHashMap<String>();
     String templateText = template.getText().trim();
     String regex = templateToRegex(templateText, offsetToProperty);
+    regex = StringUtil.replace(regex, "with", "(?:with|by)");
     regex = ".*("+regex+").*";
     String fileText = file.getText();
     Pattern pattern = Pattern.compile(regex, Pattern.DOTALL);

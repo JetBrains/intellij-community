@@ -65,11 +65,6 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements 
   protected void initPanel() {
     setLayout(new BorderLayout());
 
-    final String label = getLabelText();
-    if (label != null) {
-      setBorder(IdeBorderFactory.createTitledBorder(label, false, false, true));
-    }
-
     final JPanel panel = ToolbarDecorator.createDecorator(myTable)
       .setAddAction(new AnActionButtonRunnable() {
         @Override
@@ -93,6 +88,10 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements 
       .disableDownAction()
       .createPanel();
     add(panel, BorderLayout.CENTER);
+    final String label = getLabelText();
+    if (label != null) {
+      add(SeparatorFactory.createSeparator(label, myTable), BorderLayout.NORTH);
+    }
   }
 
   protected String getLabelText(){

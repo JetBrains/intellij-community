@@ -2,7 +2,7 @@ package x;
 import java.io.*;
 
 /**
- * Created by IntelliJ IDEA.
+ * Created with IntelliJ IDEA.
  * User: Alexey
  * Date: 02.12.2005
  * Time: 0:24:14

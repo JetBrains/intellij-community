@@ -60,7 +60,7 @@ public class TestsPattern extends TestObject {
     final ArrayList<String> classNames = new ArrayList<String>();
     final Set<Module> modules = new HashSet<Module>();
     for (String className : data.getPatterns()) {
-      final PsiClass psiClass = JavaExecutionUtil.findMainClass(project, className, GlobalSearchScope.allScope(project));
+      final PsiClass psiClass = JavaExecutionUtil.findMainClass(project, className.contains(",") ? className.substring(0, className.indexOf(',')) : className, GlobalSearchScope.allScope(project));
       if (psiClass != null && JUnitUtil.isTestClass(psiClass)) {
         classNames.add(className);
         modules.add(ModuleUtil.findModuleForPsiElement(psiClass));
@@ -84,7 +84,7 @@ public class TestsPattern extends TestObject {
     addClassesListToJavaParameters(classNames, StringUtil.isEmpty(data.METHOD_NAME) ? FunctionUtil.<String>id() : new Function<String, String>() {
       @Override
       public String fun(String className) {
-        return className + "," + data.METHOD_NAME;
+        return className;
       }
     }, "", true, isJUnit4);
   }

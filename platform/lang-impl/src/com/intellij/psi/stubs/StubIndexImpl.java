@@ -44,6 +44,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
+import gnu.trove.THashMap;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -69,7 +70,7 @@ import java.util.concurrent.locks.Lock;
 public class StubIndexImpl extends StubIndex implements ApplicationComponent, PersistentStateComponent<StubIndexState> {
   private static final AtomicReference<Boolean> ourForcedClean = new AtomicReference<Boolean>(null);
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubs.StubIndexImpl");
-  private final Map<StubIndexKey<?,?>, MyIndex<?>> myIndices = new HashMap<StubIndexKey<?,?>, MyIndex<?>>();
+  private final Map<StubIndexKey<?,?>, MyIndex<?>> myIndices = new THashMap<StubIndexKey<?,?>, MyIndex<?>>();
   private final TObjectIntHashMap<ID<?, ?>> myIndexIdToVersionMap = new TObjectIntHashMap<ID<?, ?>>();
 
   private StubIndexState myPreviouslyRegistered;

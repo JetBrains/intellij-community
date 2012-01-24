@@ -171,13 +171,13 @@ public abstract class TreeElementPattern<ParentType, T extends ParentType, Self 
    * @return Ensures that first elements in hierarchy accepted by patterns appear in specified order
    */
   public Self insideSequence(final boolean strict, @NotNull final ElementPattern<? extends ParentType>... patterns) {
-    return with(new PatternCondition<T>("condInside") {
+    return with(new PatternCondition<T>("insideSequence") {
       public boolean accepts(@NotNull final T t, final ProcessingContext context) {
         int i = 0;
         ParentType element = strict ? getParent(t) : t;
-        while (element != null && i >= patterns.length) {
+        while (element != null && i < patterns.length) {
           for (int j = i; j < patterns.length; j++) {
-            if (patterns[j].getCondition().accepts(t, context)) {
+            if (patterns[j].accepts(element, context)) {
               if (i != j) return false;
               i++;
               break;
@@ -185,7 +185,7 @@ public abstract class TreeElementPattern<ParentType, T extends ParentType, Self 
           }
           element = getParent(element);
         }
-        return false;
+        return true;
       }
     });
   }

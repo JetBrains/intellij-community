@@ -44,14 +44,16 @@ public abstract class RadLayoutManager {
    *
    * @return the layout manager name.
    */
-  @Nullable public abstract String getName();
+  @Nullable
+  public abstract String getName();
 
-  @Nullable public LayoutManager createLayout() {
+  @Nullable
+  public LayoutManager createLayout() {
     return null;
   }
 
   public void changeContainerLayout(RadContainer container) throws IncorrectOperationException {
-    ensureChildrenVisible(container);    
+    ensureChildrenVisible(container);
     container.setLayoutManager(this);
   }
 
@@ -60,7 +62,11 @@ public abstract class RadLayoutManager {
   public void writeLayout(final XmlWriter writer, final RadContainer radContainer) {
   }
 
-  @NotNull public ComponentDropLocation getDropLocation(RadContainer container, @Nullable final Point location) {
+  public void refresh(RadContainer container) {
+  }
+
+  @NotNull
+  public ComponentDropLocation getDropLocation(RadContainer container, @Nullable final Point location) {
     return NoDropLocation.INSTANCE;
   }
 
@@ -125,7 +131,7 @@ public abstract class RadLayoutManager {
   protected static void ensureChildrenVisible(final RadContainer container) {
     if (container.getLayoutManager().areChildrenExclusive()) {
       // ensure that components which were hidden by previous layout are visible (IDEADEV-16077)
-      for(RadComponent child: container.getComponents()) {
+      for (RadComponent child : container.getComponents()) {
         final IProperty property = FormInspectionUtil.findProperty(child, SwingProperties.VISIBLE);
         if (property == null || property.getPropertyValue(child) == Boolean.TRUE) {
           child.getDelegee().setVisible(true);

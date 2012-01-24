@@ -89,17 +89,18 @@ public class TestsOutputConsolePrinter implements Printer, Disposable {
       myCurrentTest.setPrinter(null);
     }
     myMarkOffset = 0;
-    if (test == null) {
-      myCurrentTest = null;
-      return;
-    }
-    myCurrentTest = test;
-    myCurrentTest.setPrinter(this);
     final Runnable clearRunnable = new Runnable() {
       public void run() {
         myConsole.clear();
       }
     };
+    if (test == null) {
+      myCurrentTest = null;
+      CompositePrintable.invokeInAlarm(clearRunnable);
+      return;
+    }
+    myCurrentTest = test;
+    myCurrentTest.setPrinter(this);
     final Runnable scrollRunnable = new Runnable() {
       @Override
       public void run() {
@@ -107,9 +108,9 @@ public class TestsOutputConsolePrinter implements Printer, Disposable {
       }
     };
     final AbstractTestProxy currentProxyOrRoot = getCurrentProxyOrRoot();
-    currentProxyOrRoot.invokeInAlarm(clearRunnable);
+    CompositePrintable.invokeInAlarm(clearRunnable);
     currentProxyOrRoot.printOn(this);
-    currentProxyOrRoot.invokeInAlarm(scrollRunnable);
+    CompositePrintable.invokeInAlarm(scrollRunnable);
   }
 
   private AbstractTestProxy getCurrentProxyOrRoot() {

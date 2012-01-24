@@ -474,7 +474,13 @@ public class MavenUtil {
         return home;
       }
     }
-
+    else if (SystemInfo.isLinux) {
+      File home = new File("/usr/share/maven2");
+      if (isValidMavenHome(home)) {
+        return home;
+      }
+    }
+    
     return null;
   }
 
