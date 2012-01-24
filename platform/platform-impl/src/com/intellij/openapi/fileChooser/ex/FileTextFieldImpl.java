@@ -259,7 +259,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     public String myFieldText;
   }
 
-  private class Separator {
+  private static class Separator {
     private final String myText;
 
     private Separator(final String text) {
@@ -298,6 +298,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
           return file.getIcon();
         }
 
+        @Nullable
         private Separator getSeparatorAboveOf(Object value) {
           if (myCurrentCompletion == null) return null;
           final LookupFile file = (LookupFile)value;
@@ -593,9 +594,8 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     }
   }
 
-  private
   @Nullable
-  LookupFile getClosestParent(final String typed) {
+  private LookupFile getClosestParent(final String typed) {
     if (typed == null) return null;
     LookupFile lastFound = myFinder.find(typed);
     if (lastFound == null) return null;
@@ -605,7 +605,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     }
 
     final String[] splits = myFinder.normalize(typed).split(myFileSpitRegExp);
-    StringBuffer fullPath = new StringBuffer();
+    StringBuilder fullPath = new StringBuilder();
     for (int i = 0; i < splits.length; i++) {
       String each = splits[i];
       fullPath.append(each);
