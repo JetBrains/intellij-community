@@ -18,6 +18,7 @@ import org.jetbrains.jps.Module;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.Project;
 import org.jetbrains.jps.ProjectPaths;
+import org.jetbrains.jps.api.RequestFuture;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
@@ -38,6 +39,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 
 /**
@@ -290,20 +292,32 @@ public class JavaBuilder extends Builder{
   }
 
   private boolean compileJava(List<String> options, Collection<File> files, Collection<File> classpath, Collection<File> platformCp, Collection<File> sourcePath, Map<File, Set<File>> outs, CompileContext context, DiagnosticOutputConsumer diagnosticSink, final OutputFileConsumer outputSink) throws Exception {
+    final boolean useEmbeddedJavac = true; // todo: make configurable
     final ClassProcessingConsumer classesConsumer = new ClassProcessingConsumer(context, outputSink);
     try {
-      final JavacProxy proxy = createJavacProxy(context);
-      return proxy.compile(options, files, classpath, platformCp, sourcePath, outs, diagnosticSink, classesConsumer);
+      final boolean rc;
+      if (useEmbeddedJavac) {
+        rc = JavacMain.compile(options, files, classpath, platformCp, sourcePath, outs, diagnosticSink, classesConsumer, context.getCancelStatus());
+      }
+      else {
+        final JavacServerClient client = ensureJavacServerLaunched(context);
+        final RequestFuture<JavacServerResponseHandler> future = client.sendCompileRequest(options, files, classpath, platformCp, sourcePath, outs, diagnosticSink, classesConsumer);
+        try {
+          future.get();
+        }
+        catch (InterruptedException e) {
+          e.printStackTrace(System.err);
+        }
+        catch (ExecutionException e) {
+          e.printStackTrace(System.err);
+        }
+        rc = future.getResponseHandler().isTerminatedSuccessfully();
+      }
+      return rc;
     }
     finally {
       classesConsumer.ensurePendingTasksCompleted();
     }
-  }
-
-  private static JavacProxy createJavacProxy(CompileContext context) throws Exception {
-    return new EmbeddedJavacProxy(context.getCancelStatus());
-    //final JavacServerClient client = ensureJavacServerLaunched(context);
-    //return new ExternalProcessJavacProxy(context.getCancelStatus(), client);
   }
 
   private static JavacServerClient ensureJavacServerLaunched(CompileContext context) throws Exception {
