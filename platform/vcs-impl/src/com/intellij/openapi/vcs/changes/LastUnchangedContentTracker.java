@@ -70,7 +70,11 @@ public class LastUnchangedContentTracker {
   }
 
   private static void saveContentReference(VirtualFile file, int contentId) {
-    //LOG.assertTrue(contentId > 0, contentId);
+    if (contentId == 0) {
+      return; // content not loaded yet, nothing to save
+    }
+
+    LOG.assertTrue(contentId > 0, contentId);
     if (ChangeListManagerImpl.DEBUG) {
       System.out.println("LastUnchangedContentTracker.saveCurrentContent");
       try {
