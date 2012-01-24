@@ -45,26 +45,6 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
   protected final PyQualifiedExpression myElement;
   protected final PyResolveContext myContext;
 
-  private static class ScopeDeclaration {
-    @Nullable private NameDefiner myNameDefiner;
-    @Nullable private PsiElement myElement;
-
-    public ScopeDeclaration(@Nullable NameDefiner nameDefiner, @Nullable PsiElement element) {
-      myNameDefiner = nameDefiner;
-      myElement = element;
-    }
-
-    @Nullable
-    public PsiElement getElement() {
-      return myElement;
-    }
-
-    @Nullable
-    public NameDefiner getNameDefiner() {
-      return myNameDefiner;
-    }
-  }
-
   public PyReferenceImpl(PyQualifiedExpression element, @NotNull PyResolveContext context) {
     myElement = element;
     myContext = context;
@@ -165,60 +145,39 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     return ret.toArray(new ResolveResult[ret.size()]);
   }
 
-  @Nullable
-  private static ScopeDeclaration getScopeDeclaration(@NotNull String name, @NotNull Scope scope) {
-    PsiElement element = scope.getNamedElement(name);
-    if (element != null) {
-      return new ScopeDeclaration(null, element);
-    }
-    element = scope.getImplicitElement(name);
-    if (element != null) {
-      return new ScopeDeclaration(null, element);
-    }
-    for (NameDefiner definer : scope.getNameDefiners()) {
-      element = definer.getElementNamed(name);
-      if (element != null) {
-        return new ScopeDeclaration(definer, element);
+  @NotNull
+  private static ResolveResultList resolveToLatestDefs(@NotNull ScopeOwner owner, @NotNull PsiElement element, @NotNull String name) {
+    final ResolveResultList ret = new ResolveResultList();
+    final List<ReadWriteInstruction> instructions = PyDefUseUtil.getLatestDefs(owner, name, element, false);
+    for (ReadWriteInstruction instruction : instructions) {
+      PsiElement definition = instruction.getElement();
+      NameDefiner definer = null;
+      // TODO: This check may slow down resolving, but it is the current solution to the compehension scopes problem
+      final PyComprehensionElement defComprh = PsiTreeUtil.getParentOfType(definition, PyComprehensionElement.class);
+      if (defComprh != null && defComprh != PsiTreeUtil.getParentOfType(element, PyComprehensionElement.class)) {
+        continue;
       }
-      else if (definer instanceof PyImportElement) {
-        final PyImportElement importElement = (PyImportElement)definer;
-        final PyQualifiedName importedQName = importElement.getImportedQName();
-
-        // TODO: These checks are duplicates of checks inside the ResolveProcessor. We need to refactor them
-
-        // http://stackoverflow.com/questions/6048786/from-module-import-in-init-py-makes-module-name-visible
-        if (importedQName != null && importedQName.getComponentCount() > 1 && name.equals(importedQName.getLastComponent()) &&
-            PyNames.INIT_DOT_PY.equals(importElement.getContainingFile().getName())) {
-          final PsiElement packageElement = ResolveImportUtil.resolveImportElement(importElement, importedQName.removeLastComponent());
-          if (PyUtil.turnDirIntoInit(packageElement) == importElement.getContainingFile()) {
-            element = PyUtil.turnDirIntoInit(ResolveImportUtil.resolveImportElement(importElement));
-            return new ScopeDeclaration(definer, element);
-          }
+      if (definition instanceof NameDefiner && !(definition instanceof PsiNamedElement)) {
+        definer = (NameDefiner)definition;
+        definition = definer.getElementNamed(name);
+      }
+      if (definer != null) {
+        if (definer instanceof PyImportElement || definer instanceof PyStarImportElement || definer instanceof PyImportedModule) {
+          ret.add(new ImportedResolveResult(definition, getRate(definition), Collections.<PsiElement>singletonList(definer)));
         }
-        final PyFromImportStatement fromImportStatement = PsiTreeUtil.getParentOfType(importElement, PyFromImportStatement.class);
-        if (fromImportStatement != null && PyNames.INIT_DOT_PY.equals(importElement.getContainingFile().getName())) {
-          final PyQualifiedName importSourceQName = fromImportStatement.getImportSourceQName();
-          if (importSourceQName != null && importSourceQName.endsWith(name)) {
-            final PsiElement source = PyUtil.turnInitIntoDir(fromImportStatement.resolveImportSource());
-            if (source != null && source.getParent() == importElement.getContainingFile().getContainingDirectory()) {
-              return new ScopeDeclaration(definer, source);
-            }
-          }
+        else {
+          ret.poke(definition, getRate(definition));
         }
-
-        // name is resolved to unresolved import (PY-956)
-        String definedName = importElement.getAsName();
-        if (definedName == null) {
-          if (importedQName != null && importedQName.getComponentCount() == 1) {
-            definedName = importedQName.getComponents().get(0);
-          }
-        }
-        if (name.equals(definedName)) {
-          return new ScopeDeclaration(definer, null);
+        // TODO this kind of resolve contract is quite stupid
+        if (definition != null) {
+          ret.poke(definer, RatedResolveResult.RATE_LOW);
         }
       }
+      else {
+        ret.poke(definition, getRate(definition));
+      }
     }
-    return null;
+    return ret;
   }
 
   /**
@@ -229,82 +188,69 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
    */
   @NotNull
   protected List<RatedResolveResult> resolveInner() {
-    ResolveResultList ret = new ResolveResultList();
+    final ResolveResultList ret = new ResolveResultList();
 
     final String referencedName = myElement.getReferencedName();
     if (referencedName == null) return ret;
 
-    final PsiElement parent = myElement.getParent();
-    final boolean isGlobalOrNonlocal = parent instanceof PyGlobalStatement || parent instanceof PyNonlocalStatement;
-    if (myElement instanceof PyTargetExpression && !isGlobalOrNonlocal) {
-      addResolvedElement(ret, null, myElement);
-      return ret;
+    if (myElement instanceof PyTargetExpression) {
+      final PsiElement parent = myElement.getParent();
+      if (!(parent instanceof PyGlobalStatement || parent instanceof PyNonlocalStatement)) {
+        ret.poke(myElement, getRate(myElement));
+        return ret;
+      }
     }
 
-    // Use real context here to enable correct completion and resolve in case of PyExpressionCodeFragment!!!
+    // here we have an unqualified expr. it may be defined:
+    // ...in current file
+    final ResolveProcessor processor = new ResolveProcessor(referencedName);
+
+    // Use real context here to enable correct completion and resolve in case of PyExpressionCodeFragment
     final PsiElement realContext = PyPsiUtils.getRealContext(myElement);
-    final PsiElement roof = findResolveRoof(referencedName, realContext);
     final ScopeOwner originalOwner = ScopeUtil.getResolveScopeOwner(realContext);
 
-    ScopeOwner owner = originalOwner;
-    if (isGlobalOrNonlocal) {
-      final ScopeOwner outerScopeOwner = ScopeUtil.getScopeOwner(owner);
-      if (outerScopeOwner != null) {
-        owner = outerScopeOwner;
-      }
-    }
-    while (owner != null) {
-      if (!(owner instanceof PyClass) || owner == originalOwner) {
-        final Scope scope = ControlFlowCache.getScope(owner);
-        final ScopeDeclaration scopeDeclaration = getScopeDeclaration(referencedName, scope);
-        if (scopeDeclaration != null) {
-          NameDefiner definer = scopeDeclaration.getNameDefiner();
-          PsiElement element = scopeDeclaration.getElement();
-          if (owner == originalOwner && definer == null) {
-            final List<ReadWriteInstruction> defs = PyDefUseUtil.getLatestDefs(owner, referencedName, myElement, false);
-            if (!defs.isEmpty()) {
-              for (ReadWriteInstruction def : defs) {
-                element = def.getElement();
-                // TODO: This check may slow down resolving, but it is the current solution to the compehension scopes problem
-                final PyComprehensionElement elementComprh = PsiTreeUtil.getParentOfType(element, PyComprehensionElement.class);
-                if (elementComprh != null && elementComprh != PsiTreeUtil.getParentOfType(myElement, PyComprehensionElement.class)) {
-                  continue;
-                }
-                if (element instanceof NameDefiner && !(element instanceof PsiNamedElement)) {
-                  definer = (NameDefiner)element;
-                  element = definer.getElementNamed(referencedName);
-                }
-                addResolvedElement(ret, definer, element);
-              }
-              return ret;
-            }
-            else if (!isCythonLevel(myElement)) {
-              break;
-            }
+    PsiElement roof = findResolveRoof(referencedName, realContext);
+    PyResolveUtil.scopeCrawlUp(processor, myElement, referencedName, roof);
+    PsiElement uexpr = processor.getResult();
+    final List<PsiElement> definers = processor.getDefiners();
+    if (uexpr != null) {
+      if (definers.isEmpty()) {
+        final ScopeOwner owner = ScopeUtil.getScopeOwner(uexpr);
+        if (owner != null && owner == originalOwner) {
+          final ResolveResultList latest = resolveToLatestDefs(owner, myElement, referencedName);
+          if (!latest.isEmpty()) {
+            return latest;
           }
-          addResolvedElement(ret, definer, element);
-          return ret;
+          if (!isCythonLevel(myElement)) {
+            uexpr = null;
+          }
         }
       }
-      if (owner == roof) {
-        break;
+      // sort what we got
+      for (PsiElement hit : processor.getDefiners()) {
+        ret.poke(hit, getRate(hit));
       }
-      owner = ScopeUtil.getScopeOwner(owner);
+      uexpr = PyUtil.turnDirIntoInit(uexpr); // an import statement may have returned a dir
     }
-
-    PyBuiltinCache builtinsCache = PyBuiltinCache.getInstance(realContext);
-    // ...as a part of current module
-    PyType otype = builtinsCache.getObjectType(); // "object" as a closest kin to "module"
-    if (otype != null) {
-      ret.addAll(otype.resolveMember(myElement.getName(), null, AccessDirection.READ, myContext));
+    else if (!processor.getDefiners().isEmpty()) {
+      ret.add(new ImportedResolveResult(null, RatedResolveResult.RATE_LOW, processor.getDefiners()));
     }
-    PsiElement uexpr = null;
-    // ...as a builtin symbol
-    PyFile bfile = builtinsCache.getBuiltinsFile();
-    if (bfile != null) {
-      uexpr = bfile.getElementNamed(referencedName);
-      if (uexpr == null && "__builtins__".equals(referencedName)) {
-        uexpr = bfile; // resolve __builtins__ reference
+    PyBuiltinCache builtins_cache = PyBuiltinCache.getInstance(realContext);
+    if (uexpr == null) {
+      // ...as a part of current module
+      PyType otype = builtins_cache.getObjectType(); // "object" as a closest kin to "module"
+      if (otype != null) {
+        ret.addAll(otype.resolveMember(myElement.getName(), null, AccessDirection.READ, myContext));
+      }
+    }
+    if (uexpr == null) {
+      // ...as a builtin symbol
+      PyFile bfile = builtins_cache.getBuiltinsFile();
+      if (bfile != null) {
+        uexpr = bfile.getElementNamed(referencedName);
+        if (uexpr == null && "__builtins__".equals(referencedName)) {
+          uexpr = bfile; // resolve __builtins__ reference
+        }
       }
     }
     if (uexpr == null && CythonLanguageDialect.isInsideCythonFile(realContext)) {
@@ -312,8 +258,9 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
       if (implicit != null) {
         uexpr = implicit.getElementNamed(referencedName);
       }
-      if (originalOwner instanceof CythonFile) {
-        final PsiElement resolved = ((CythonFile)originalOwner).getElementNamed(referencedName);
+      final ScopeOwner owner = PsiTreeUtil.getParentOfType(myElement, ScopeOwner.class);
+      if (owner instanceof CythonFile) {
+        final PsiElement resolved = ((CythonFile)owner).getElementNamed(referencedName);
         if ((resolved instanceof CythonFunction && ((CythonFunction)resolved).isCythonLevel()) ||
             resolved instanceof CythonFile) {
           ret.poke(resolved, getRate(resolved));
@@ -321,7 +268,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
       }
     }
     if (uexpr != null) {
-      ret.add(new ImportedResolveResult(uexpr, getRate(uexpr), Collections.<PsiElement>emptyList()));
+      ret.add(new ImportedResolveResult(uexpr, getRate(uexpr), processor.getDefiners()));
     }
 
     return ret;
@@ -329,24 +276,6 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
   private static boolean isCythonLevel(@Nullable PsiElement element) {
     return PsiTreeUtil.getParentOfType(element, CythonNamedElement.class) != null;
-  }
-
-  private static void addResolvedElement(@NotNull ResolveResultList ret, @Nullable NameDefiner definer, @Nullable PsiElement element) {
-    if (definer != null) {
-      if (definer instanceof PyImportElement || definer instanceof PyStarImportElement || definer instanceof PyImportedModule) {
-        ret.add(new ImportedResolveResult(element, getRate(element), Collections.<PsiElement>singletonList(definer)));
-      }
-      else {
-        ret.poke(element, getRate(element));
-      }
-      // TODO this kind of resolve contract is quite stupid
-      if (element != null) {
-        ret.poke(definer, RatedResolveResult.RATE_LOW);
-      }
-    }
-    else {
-      ret.poke(element, getRate(element));
-    }
   }
 
   private PsiElement findResolveRoof(String referencedName, PsiElement realContext) {
@@ -383,18 +312,6 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
       }
     }
     return realContext.getContainingFile();
-  }
-
-  private boolean isSuperClassExpression(PyClass cls) {
-    if (myElement.getContainingFile() != cls.getContainingFile()) {  // quick check to avoid unnecessary tree loading
-      return false;
-    }
-    for (PyExpression base_expr : cls.getSuperClassExpressions()) {
-      if (base_expr == this) {
-        return true;
-      }
-    }
-    return false;
   }
 
   // NOTE: very crude

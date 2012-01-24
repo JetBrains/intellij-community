@@ -30,7 +30,4 @@ public interface Scope {
 
   @Nullable
   PsiNamedElement getNamedElement(String name);
-
-  @Nullable
-  PsiElement getImplicitElement(String name);
 }

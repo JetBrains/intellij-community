@@ -108,15 +108,6 @@ public class ScopeImpl implements Scope {
     return myNamedElements.get(name);
   }
 
-  @Nullable
-  @Override
-  public PsiElement getImplicitElement(String name) {
-    if (myFlowOwner instanceof PyFile) {
-      return ((PyFile)myFlowOwner).getImplicitElement(name);
-    }
-    return null;
-  }
-
   private void collectDeclarations() {
     final Map<String, PsiNamedElement> namedElements = new HashMap<String, PsiNamedElement>();
     final List<NameDefiner> nameDefiners = new ArrayList<NameDefiner>();

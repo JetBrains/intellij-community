@@ -1,6 +1,5 @@
 package com.jetbrains.python.psi;
 
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import org.jetbrains.annotations.NotNull;
@@ -57,7 +56,4 @@ public interface PyFile extends PyElement, PsiFile, PyDocStringOwner, ScopeOwner
    * @return the deprecation message or null if the function is not deprecated.
    */
   String getDeprecationMessage();
-
-  @Nullable
-  PsiElement getImplicitElement(@NotNull String name);
 }
