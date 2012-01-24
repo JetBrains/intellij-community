@@ -450,7 +450,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       });
 
       for (VcsDirtyScope scope : scopes) {
-        updateLastUnchangedContents(scope);
+        if (scope.getVcs().needsLastUnchangedContent()) {
+          updateLastUnchangedContents(scope);
+        }
       }
 
       myChangesViewManager.scheduleRefresh();
@@ -644,7 +646,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     for (VcsDirectoryMapping mapping : vcsManager.getDirectoryMappings()) {
       final AbstractVcs vcs = vcsManager.findVcsByName(mapping.getVcs());
       final VirtualFile file = LocalFileSystem.getInstance().findFileByPath(mapping.getDirectory());
-      if (vcs != null && file != null) {
+      if (vcs != null && file != null && vcs.needsLastUnchangedContent()) {
         if (indicator != null) {
           indicator.setText(mapping.getDirectory());
         }
