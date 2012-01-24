@@ -55,6 +55,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
   private JPanel myPanel;
   private JTabbedPane myTabbedPane;
   private PredefinedCodeStyle[] myPredefinedCodeStyles;
+  private PopupMenu myCopyFromMenu;
 
   protected TabbedLanguageCodeStylePanel(@Nullable Language language, CodeStyleSettings currentSettings, CodeStyleSettings settings) {
     super(language, currentSettings, settings);
@@ -132,20 +133,26 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
     myTabbedPane.setEnabledAt(dummyIndex, false);
     JPanel setFromPanel = new JPanel();
     setFromPanel.setBorder(BorderFactory.createEtchedBorder());
-    setFromPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 10,0));
-    JLabel setFromLabel = new JLabel("Set from...");
+    setFromPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 10, 0));
+    final JLabel setFromLabel = new JLabel("Set from...");
     setFromPanel.add(setFromLabel);
-    final PopupMenu copyMenu = new PopupMenu();
-    setFromLabel.add(copyMenu);
     setFromLabel.setIcon(COPY_ICON);
-    setupCopyFromMenu(copyMenu);
     setFromLabel.addMouseListener(new MouseAdapter() {
       @Override
       public void mousePressed(MouseEvent e) {
-          copyMenu.show(e.getComponent(), e.getX(), e.getY());
+        initCopyFromMenu(setFromLabel);
+        myCopyFromMenu.show(e.getComponent(), e.getX(), e.getY());
       }
     });
     myTabbedPane.setTabComponentAt(dummyIndex, setFromPanel);
+  }
+  
+  private void initCopyFromMenu(JComponent parent) {
+    if (myCopyFromMenu == null) {
+      myCopyFromMenu = new PopupMenu();
+      parent.add(myCopyFromMenu);
+      setupCopyFromMenu(myCopyFromMenu);
+    }
   }
 
   /**
