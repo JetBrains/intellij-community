@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.openapi.fileChooser.FileTextField;
 import com.intellij.openapi.ui.ComboBoxWithWidePopup;
 
 import javax.swing.*;
@@ -96,6 +97,18 @@ public class TextFieldWithHistory extends ComboBoxWithWidePopup {
 
   public JTextField getTextEditor() {
     return (JTextField)getEditor().getEditorComponent();
+  }
+
+  @Override
+  public void setPopupVisible(boolean v) {
+    if (v) {
+      final FileTextField fileTextField = (FileTextField)getTextEditor().getClientProperty(FileTextField.KEY);
+      // don't allow showing combobox popup when file completion popup is displayed (IDEA-68711)
+      if (fileTextField != null && fileTextField.isPopupDisplayed()) {
+        return;
+      }
+    }
+    super.setPopupVisible(v);
   }
 
   public class MyModel extends AbstractListModel implements ComboBoxModel{

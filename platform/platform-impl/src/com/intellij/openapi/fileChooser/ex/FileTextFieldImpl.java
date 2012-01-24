@@ -79,7 +79,6 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
 
   private int myCurrentCompletionsPos = 1;
   private String myFileSpitRegExp;
-  public static final String KEY = "fileTextField";
 
   private boolean myAutopopup = false;
   private FileTextFieldImpl.CancelAction myCancelAction;
@@ -838,6 +837,11 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
 
   public JTextField getField() {
     return myPathTextField;
+  }
+
+  @Override
+  public boolean isPopupDisplayed() {
+    return myCurrentPopup != null && myCurrentPopup.isVisible();
   }
 
   public Finder getFinder() {
