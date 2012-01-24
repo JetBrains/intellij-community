@@ -213,9 +213,13 @@ public class SelfElementInfo implements SmartPointerElementInfo {
 
   @Nullable
   public static PsiFile restoreFileFromVirtual(final VirtualFile virtualFile, @NotNull final Project project) {
+    return restoreFileFromVirtual(virtualFile, project, null);
+  }
+  @Nullable
+  public static PsiFile restoreFileFromVirtual(final VirtualFile virtualFile, @NotNull final Project project, @Nullable final Language language) {
     if (virtualFile == null) return null;
 
-    return ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
+    return ApplicationManager.getApplication().runReadAction(new NullableComputable<PsiFile>() {
       @Override
       public PsiFile compute() {
         VirtualFile child;
@@ -230,7 +234,10 @@ public class SelfElementInfo implements SmartPointerElementInfo {
         }
         if (child == null || !child.isValid()) return null;
         PsiFile file = PsiManager.getInstance(project).findFile(child);
-        if (file == null || !file.isValid()) return null;
+        if (file != null && language != null) {
+          return file.getViewProvider().getPsi(language);
+        }
+        
         return file;
       }
     });
