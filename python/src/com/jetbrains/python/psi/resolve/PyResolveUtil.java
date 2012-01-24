@@ -14,7 +14,12 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
+import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -76,6 +81,46 @@ public class PyResolveUtil {
     }
     else {
       return getPrevNodeOf(elt, PythonDialectsTokenSetProvider.INSTANCE.getNameDefinerTokens());
+    }
+  }
+
+  /**
+   * Crawls up scopes of the PSI tree, checking named elements and name definers.
+   */
+  public static void scopeCrawlUp(@NotNull PsiScopeProcessor processor, @NotNull PsiElement element, @NotNull String name,
+                                  @Nullable PsiElement roof) {
+    // Use real context here to enable correct completion and resolve in case of PyExpressionCodeFragment!!!
+    final PsiElement realContext = PyPsiUtils.getRealContext(element);
+    final ScopeOwner originalOwner = ScopeUtil.getResolveScopeOwner(realContext);
+
+    ScopeOwner owner = originalOwner;
+    final PsiElement parent = element.getParent();
+    final boolean isGlobalOrNonlocal = parent instanceof PyGlobalStatement || parent instanceof PyNonlocalStatement;
+    if (isGlobalOrNonlocal) {
+      final ScopeOwner outerScopeOwner = ScopeUtil.getScopeOwner(owner);
+      if (outerScopeOwner != null) {
+        owner = outerScopeOwner;
+      }
+    }
+    while (owner != null) {
+      if (!(owner instanceof PyClass) || owner == originalOwner) {
+        final Scope scope = ControlFlowCache.getScope(owner);
+        PsiElement resolved = scope.getNamedElement(name);
+        if (resolved != null) {
+          if (!processor.execute(resolved, ResolveState.initial())) {
+            return;
+          }
+        }
+        for (NameDefiner definer : scope.getNameDefiners()) {
+          if (!processor.execute(definer, ResolveState.initial())) {
+            return;
+          }
+        }
+      }
+      if (owner == roof) {
+        return;
+      }
+      owner = ScopeUtil.getScopeOwner(owner);
     }
   }
 

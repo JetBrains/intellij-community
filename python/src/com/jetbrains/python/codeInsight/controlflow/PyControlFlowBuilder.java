@@ -7,6 +7,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyElementTypes;
@@ -91,6 +92,15 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   public void visitPyStatement(final PyStatement node) {
     myBuilder.startNode(node);
     super.visitPyStatement(node);
+  }
+
+  @Override
+  public void visitPyElement(PyElement node) {
+    if (node instanceof PsiNamedElement) {
+      myBuilder.startNode(node);
+      myBuilder.addNode(ReadWriteInstruction.newInstruction(myBuilder, node, node.getName(), ReadWriteInstruction.ACCESS.WRITE));
+    }
+    super.visitPyElement(node);
   }
 
   @Override

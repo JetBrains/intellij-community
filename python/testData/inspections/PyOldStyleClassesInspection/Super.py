@@ -11,13 +11,3 @@ class B(object):
   def __init__(self):
     super(B, self)
 
-def super(a, b):
-  pass
-
-class C:
-  def __init__(self):
-    super(C, self)
-
-class C(D):
-  def meth(self, arg):
-      super(C, self).meth(arg)

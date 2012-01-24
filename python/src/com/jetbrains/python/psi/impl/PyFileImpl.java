@@ -63,7 +63,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   public String toString() {
     return "PyFile:" + getName();
   }
-  
+
   @NotNull
   public String getUrl() {
     String fname;

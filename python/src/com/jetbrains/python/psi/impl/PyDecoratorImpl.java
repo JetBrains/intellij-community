@@ -1,5 +1,6 @@
 package com.jetbrains.python.psi.impl;
 
+import com.intellij.extapi.psi.StubBasedPsiElementBase;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -21,7 +22,7 @@ import java.util.List;
 /**
  * @author dcheryasov
  */
-public class PyDecoratorImpl extends PyPresentableElementImpl<PyDecoratorStub> implements PyDecorator {
+public class PyDecoratorImpl extends StubBasedPsiElementBase<PyDecoratorStub> implements PyDecorator {
 
   public PyDecoratorImpl(ASTNode astNode) {
     super(astNode);
