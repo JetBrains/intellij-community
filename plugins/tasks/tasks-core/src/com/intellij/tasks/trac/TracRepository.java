@@ -57,10 +57,8 @@ public class TracRepository extends BaseRepositoryImpl {
     String search = myDefaultSearch + "&max=" + max;
     if (myMaxSupported == null) {
       try {
+        myMaxSupported = true;
         result = runQuery(query, transport, client, search);
-        if (result != null) {
-          myMaxSupported = true;
-        }
       }
       catch (XmlRpcException e) {
         if (e.getMessage().contains("t.max")) {
