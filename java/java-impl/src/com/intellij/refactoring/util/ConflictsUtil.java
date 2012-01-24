@@ -22,10 +22,12 @@ package com.intellij.refactoring.util;
 
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageViewUtil;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,9 +56,10 @@ public class ConflictsUtil {
 
   public static void checkMethodConflicts(@Nullable PsiClass aClass,
                                           PsiMethod refactoredMethod,
-                                          PsiMethod prototype,
+                                          final PsiMethod prototype,
                                           final MultiMap<PsiElement,String> conflicts) {
     if (prototype == null) return;
+    final String protoMethodInfo = getMethodPrototypeString(prototype);
 
     PsiMethod method = aClass != null ? aClass.findMethodBySignature(prototype, true) : null;
 
@@ -71,7 +74,6 @@ public class ConflictsUtil {
       }
       else { // method somewhere in base class
         if (JavaPsiFacade.getInstance(method.getProject()).getResolveHelper().isAccessible(method, aClass, null)) {
-          String protoMethodInfo = getMethodPrototypeString(prototype);
           String className = CommonRefactoringUtil.htmlEmphasize(UsageViewUtil.getDescriptiveName(method.getContainingClass()));
           if (PsiUtil.getAccessLevel(prototype.getModifierList()) >= PsiUtil.getAccessLevel(method.getModifierList()) ) {
             boolean isMethodAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
@@ -87,6 +89,18 @@ public class ConflictsUtil {
           }
         }
       }
+    }
+    if (aClass != null && prototype.hasModifierProperty(PsiModifier.PRIVATE)) {
+      ClassInheritorsSearch.search(aClass).forEach(new Processor<PsiClass>() {
+        @Override
+        public boolean process(PsiClass aClass) {
+          final PsiMethod[] methods = aClass.findMethodsBySignature(prototype, false);
+          for (PsiMethod method : methods) {
+            conflicts.putValue(method, "Method " + RefactoringUIUtil.getDescription(method, true) + " will override method of the base class " + RefactoringUIUtil.getDescription(aClass, false));
+          }
+          return true;
+        }
+      });
     }
   }
 
