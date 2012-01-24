@@ -25,6 +25,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitVcs;
+import git4idea.MessageManager;
+import git4idea.NotificationManager;
 import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
 import git4idea.util.GitUtil;
@@ -43,7 +45,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 abstract class GitBranchOperation {
 
-  private static final String UNMERGED_FILES_ERROR_TITLE = "Can't checkout because of unmerged files";
+  static final String UNMERGED_FILES_ERROR_TITLE = "Can't checkout because of unmerged files";
+  static final String UNMERGED_FILES_ERROR_NOTIFICATION_DESCRIPTION =
+    "You have to <a href='resolve'>resolve</a> all merge conflicts before checkout.<br/>" +
+    "After resolving conflicts you also probably would want to commit your files to the current branch.";
 
   @NotNull protected final Project myProject;
   @NotNull private final Collection<GitRepository> myRepositories;
@@ -129,7 +134,7 @@ abstract class GitBranchOperation {
   }
 
   protected void notifySuccess() {
-    GitVcs.NOTIFICATION_GROUP_ID.createNotification(getSuccessMessage(), NotificationType.INFORMATION).notify(myProject);
+    NotificationManager.getInstance(myProject).notify(GitVcs.NOTIFICATION_GROUP_ID, "", getSuccessMessage(), NotificationType.INFORMATION);
   }
 
   /**
@@ -151,7 +156,7 @@ abstract class GitBranchOperation {
       public void run() {
         String description = message + getRollbackProposal();
         ok.set(Messages.OK ==
-               Messages.showYesNoDialog(myProject, description, title, "Rollback", "Don't rollback", Messages.getErrorIcon()));
+               MessageManager.showYesNoDialog(myProject, description, title, "Rollback", "Don't rollback", Messages.getErrorIcon()));
       }
     });
     if (ok.get()) {
@@ -164,7 +169,7 @@ abstract class GitBranchOperation {
   }
 
   protected void notifyError(@NotNull String title, @NotNull String message) {
-    GitVcs.IMPORTANT_ERROR_NOTIFICATION.createNotification(title, message, NotificationType.ERROR, null).notify(myProject);
+    NotificationManager.getInstance(myProject).notify(GitVcs.IMPORTANT_ERROR_NOTIFICATION, title, message, NotificationType.ERROR);
   }
 
   @NotNull
@@ -192,7 +197,7 @@ abstract class GitBranchOperation {
         String description = "You have to resolve all merge conflicts before checkout.<br/>" + getRollbackProposal();
         // suppressing: this message looks ugly if capitalized by words
         //noinspection DialogTitleCapitalization
-        ok.set(Messages.OK == Messages.showYesNoDialog(myProject, description, UNMERGED_FILES_ERROR_TITLE, "Rollback", "Don't rollback", Messages.getErrorIcon()));
+        ok.set(Messages.OK == MessageManager.showYesNoDialog(myProject, description, UNMERGED_FILES_ERROR_TITLE, "Rollback", "Don't rollback", Messages.getErrorIcon()));
       }
     });
     if (ok.get()) {
@@ -202,9 +207,8 @@ abstract class GitBranchOperation {
 
   private void showUnmergedFilesNotification() {
     String title = UNMERGED_FILES_ERROR_TITLE;
-    String description = "You have to <a href='resolve'>resolve</a> all merge conflicts before checkout.<br/>" +
-                         "After resolving conflicts you also probably would want to commit your files to the current branch.";
-    GitVcs.IMPORTANT_ERROR_NOTIFICATION.createNotification(title, description, NotificationType.ERROR, new NotificationListener() {
+    String description = UNMERGED_FILES_ERROR_NOTIFICATION_DESCRIPTION;
+    NotificationManager.getInstance(myProject).notify(GitVcs.IMPORTANT_ERROR_NOTIFICATION, title, description, NotificationType.ERROR, new NotificationListener() {
       @Override public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
         if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED && event.getDescription().equals("resolve")) {
           GitConflictResolver.Params params = new GitConflictResolver.Params().
@@ -213,7 +217,7 @@ abstract class GitBranchOperation {
           new GitConflictResolver(myProject, GitUtil.getRoots(getRepositories()), params).merge();
         }
       }
-    }).notify(myProject);
+    });
   }
 
 }
