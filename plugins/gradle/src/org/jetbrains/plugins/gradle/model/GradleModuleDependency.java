@@ -19,8 +19,8 @@ public class GradleModuleDependency extends AbstractGradleDependency<GradleModul
   
   private static final long serialVersionUID = 1L;
   
-  public GradleModuleDependency(@NotNull GradleModule module) {
-    super(module);
+  public GradleModuleDependency(@NotNull GradleModule ownerModule, @NotNull GradleModule module) {
+    super(ownerModule, module);
   }
 
   @Override
@@ -31,7 +31,7 @@ public class GradleModuleDependency extends AbstractGradleDependency<GradleModul
   @NotNull
   @Override
   public GradleModuleDependency clone(@NotNull GradleEntityCloneContext context) {
-    GradleModuleDependency result = new GradleModuleDependency(getTarget().clone(context));
+    GradleModuleDependency result = new GradleModuleDependency(getOwnerModule().clone(context), getTarget().clone(context));
     copyTo(result); 
     return result;
   }
