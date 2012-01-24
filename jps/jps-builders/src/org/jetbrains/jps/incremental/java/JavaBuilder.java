@@ -1,6 +1,7 @@
 package org.jetbrains.jps.incremental.java;
 
 import com.intellij.compiler.notNullVerification.NotNullVerifyingInstrumenter;
+import com.intellij.execution.process.BaseOSProcessHandler;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
@@ -288,7 +289,7 @@ public class JavaBuilder extends Builder{
     return exitCode;
   }
 
-  private boolean compileJava(List<String> options, Collection<File> files, Collection<File> classpath, Collection<File> platformCp, Collection<File> sourcePath, Map<File, Set<File>> outs, CompileContext context, DiagnosticOutputConsumer diagnosticSink, final OutputFileConsumer outputSink) {
+  private boolean compileJava(List<String> options, Collection<File> files, Collection<File> classpath, Collection<File> platformCp, Collection<File> sourcePath, Map<File, Set<File>> outs, CompileContext context, DiagnosticOutputConsumer diagnosticSink, final OutputFileConsumer outputSink) throws Exception {
     final ClassProcessingConsumer classesConsumer = new ClassProcessingConsumer(context, outputSink);
     try {
       final JavacProxy proxy = createJavacProxy(context);
@@ -299,8 +300,35 @@ public class JavaBuilder extends Builder{
     }
   }
 
-  private JavacProxy createJavacProxy(CompileContext context) {
+  private static JavacProxy createJavacProxy(CompileContext context) throws Exception {
     return new EmbeddedJavacProxy(context.getCancelStatus());
+    //final JavacServerClient client = ensureJavacServerLaunched(context);
+    //return new ExternalProcessJavacProxy(context.getCancelStatus(), client);
+  }
+
+  private static JavacServerClient ensureJavacServerLaunched(CompileContext context) throws Exception {
+    final ExternalJavacDescriptor descriptor = ExternalJavacDescriptor.KEY.get(context);
+    if (descriptor != null) {
+      return descriptor.client;
+    }
+    // start server here
+    final String javaHome = System.getProperty("java.home");
+
+    final String hostString = "localhost"; // todo: obtain from IDEA
+    final int port = 9999; // todo: obtain from IDEA
+    final int heapSize = 512; // todo: make configurable; either obtain from IDEA or calculate
+
+    final BaseOSProcessHandler processHandler = JavacServerBootstrap.launchJavacServer(javaHome + "/bin/java", heapSize, port, Paths.getSystemRoot());
+    final JavacServerClient client = new JavacServerClient();
+    try {
+      client.connect(hostString, port);
+    }
+    catch (Throwable ex) {
+      processHandler.destroyProcess();
+      throw new Exception("Failed to connect to external javac process: ", ex);
+    }
+    ExternalJavacDescriptor.KEY.set(context, new ExternalJavacDescriptor(processHandler, client));
+    return client;
   }
 
   private static ClassLoader createInstrumentationClassLoader(Collection<File> classpath, Collection<File> platformCp, Map<File, String> chunkSourcePath, OutputFilesSink outputSink)

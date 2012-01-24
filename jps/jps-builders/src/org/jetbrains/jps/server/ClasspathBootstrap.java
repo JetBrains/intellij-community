@@ -29,9 +29,12 @@ import org.codehaus.groovy.GroovyException;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.groovy.compiler.rt.GroovyCompilerWrapper;
 import org.jetbrains.jps.MacroExpander;
+import org.jetbrains.jps.javac.JavacServer;
 import org.objectweb.asm.ClassWriter;
 
+import javax.tools.JavaCompiler;
 import javax.tools.StandardJavaFileManager;
+import javax.tools.ToolProvider;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -66,7 +69,7 @@ public class ClasspathBootstrap {
   private ClasspathBootstrap() {
   }
 
-  public static List<File> getApplicationClasspath() {
+  public static List<File> getCompileServerApplicationClasspath() {
     final Set<File> cp = new LinkedHashSet<File>();
     cp.add(getResourcePath(Server.class));
     cp.add(getResourcePath(com.google.protobuf.Message.class)); // protobuf
@@ -98,30 +101,52 @@ public class ClasspathBootstrap {
       cp.add(getResourcePath(cmdLineWrapper));  // idea_rt.jar
     }
     catch (Throwable ignored) {
-
     }
 
-    //final File jpsRuntime = new File(jpsFacadeJar.getParentFile(), JPS_RUNTIME_PATH);
-    //final File[] files = jpsRuntime.listFiles();
-    //if (files != null) {
-    //  for (File file : files) {
-    //    final String name = file.getName();
-    //    final boolean shouldAdd =
-    //      name.endsWith("jar") &&
-    //      (name.startsWith("ant") ||
-    //       name.startsWith("jps") ||
-    //       name.startsWith("asm") ||
-    //       name.startsWith("gant")||
-    //       name.startsWith("groovy") ||
-    //       name.startsWith("javac2") ||
-    //       name.startsWith("util") ||
-    //       name.startsWith("trove")
-    //      );
-    //    if (shouldAdd) {
-    //      cp.add(file);
-    //    }
-    //  }
-    //}
+    final JavaCompiler systemCompiler = ToolProvider.getSystemJavaCompiler();
+    if (systemCompiler != null) {
+      try {
+        cp.add(getResourcePath(systemCompiler.getClass()));  // tools.jar
+      }
+      catch (Throwable ignored) {
+      }
+    }
+    return new ArrayList<File>(cp);
+  }
+
+  public static List<File> getJavacServerClasspath() {
+    final Set<File> cp = new LinkedHashSet<File>();
+    cp.add(getResourcePath(JavacServer.class));
+    cp.add(getResourcePath(com.google.protobuf.Message.class)); // protobuf
+    cp.add(getResourcePath(org.jboss.netty.bootstrap.Bootstrap.class)); // netty
+    cp.add(getResourcePath(TIntHash.class));  // trove
+    cp.add(getResourcePath(FileUtil.class));  // util module
+    cp.add(getResourcePath(Pointer.class));  // jna.jar
+    cp.add(getResourcePath(com.google.common.collect.MapMaker.class));  // guava
+    cp.add(getResourcePath(FileMonitor.class));  // jna-utils.jar
+    cp.add(getResourcePath(org.jdom.input.SAXBuilder.class));  // jdom
+
+    final Class<StandardJavaFileManager> optimizedFileManagerClass = getOptimizedFileManagerClass();
+    if (optimizedFileManagerClass != null) {
+      cp.add(getResourcePath(optimizedFileManagerClass));  // optimizedFileManager
+    }
+
+    try {
+      final Class<?> cmdLineWrapper = Class.forName("com.intellij.rt.execution.CommandLineWrapper");
+      cp.add(getResourcePath(cmdLineWrapper));  // idea_rt.jar
+    }
+    catch (Throwable ignored) {
+    }
+
+    final JavaCompiler systemCompiler = ToolProvider.getSystemJavaCompiler();
+    if (systemCompiler != null) {
+      try {
+        cp.add(getResourcePath(systemCompiler.getClass()));  // tools.jar
+      }
+      catch (Throwable ignored) {
+      }
+    }
+
     return new ArrayList<File>(cp);
   }
 

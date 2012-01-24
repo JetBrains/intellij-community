@@ -25,11 +25,11 @@ import java.util.concurrent.Executors;
 public class Server {
   public static final int DEFAULT_SERVER_PORT = 7777;
   private static final int MAX_SIMULTANEOUS_BUILD_SESSIONS = Math.max(2, Runtime.getRuntime().availableProcessors());
-  public static final String SERVER_SUCCESS_START_MESSAGE = "JPS Server started successfully. Listening on port: ";
-  public static final String SERVER_ERROR_START_MESSAGE = "Error starting JPS Server: ";
+  public static final String SERVER_SUCCESS_START_MESSAGE = "Compile Server started successfully. Listening on port: ";
+  public static final String SERVER_ERROR_START_MESSAGE = "Error starting Compile Server: ";
   public static final String USE_MEMORY_TEMP_CACHE_OPTION = "use.memory.temp.cache";
 
-  private final ChannelGroup myAllOpenChannels = new DefaultChannelGroup("jps-server");
+  private final ChannelGroup myAllOpenChannels = new DefaultChannelGroup("compile-server");
   private final ChannelFactory myChannelFactory;
   private final ChannelPipelineFactory myPipelineFactory;
   private final ExecutorService myBuildsExecutor;

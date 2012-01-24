@@ -398,6 +398,12 @@ public class CompileServerManager implements ApplicationComponent{
   //}
 
   private Process launchServer(int port) throws ExecutionException {
+    // validate tools.jar presence
+    final JavaCompiler systemCompiler = ToolProvider.getSystemJavaCompiler();
+    if (systemCompiler == null) {
+      throw new ExecutionException("No system java compiler is provided by the JRE. Make sure tools.jar is present in IntelliJ IDEA classpath.");
+    }
+
     final Sdk projectJdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
     final GeneralCommandLine cmdLine = new GeneralCommandLine();
     cmdLine.setExePath(((JavaSdkType)projectJdk.getSdkType()).getVMExecutablePath(projectJdk));
@@ -434,21 +440,9 @@ public class CompileServerManager implements ApplicationComponent{
       cmdLine.addParameter("-Duser.region=" + region);
     }
 
-
     cmdLine.addParameter("-classpath");
 
-    final List<File> cp = ClasspathBootstrap.getApplicationClasspath();
-
-    // append tools.jar
-    final JavaCompiler systemCompiler = ToolProvider.getSystemJavaCompiler();
-    if (systemCompiler == null) {
-      throw new ExecutionException("No system java compiler is provided by the JRE. Make sure tools.jar is present in IntelliJ IDEA classpath.");
-    }
-    try {
-      cp.add(ClasspathBootstrap.getResourcePath(systemCompiler.getClass()));  // tools.jar
-    }
-    catch (Throwable ignored) {
-    }
+    final List<File> cp = ClasspathBootstrap.getCompileServerApplicationClasspath();
 
     cmdLine.addParameter(classpathToString(cp));
 

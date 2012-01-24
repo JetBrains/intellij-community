@@ -126,6 +126,7 @@ public class JavacServer {
       return JavacProtoUtil.toMessage(sessionId, JavacProtoUtil.createBuildCompletedResponse(rc));
     }
     catch (Throwable e) {
+      e.printStackTrace(System.err);
       return JavacProtoUtil.toMessage(sessionId, JavacProtoUtil.createFailure(e.getMessage(), e));
     }
   }
@@ -142,7 +143,7 @@ public class JavacServer {
     return files;
   }
 
-  private static class CompilationRequestsHandler extends SimpleChannelHandler {
+  private class CompilationRequestsHandler extends SimpleChannelHandler {
 
     public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
       final JavacRemoteProto.Message msg = (JavacRemoteProto.Message)e.getMessage();
@@ -179,7 +180,12 @@ public class JavacServer {
           }
           else if (requestType == JavacRemoteProto.Message.Request.Type.SHUTDOWN){
             cancelBuild();
-            System.exit(0);
+            new Thread("StopThread") {
+              public void run() {
+                JavacServer.this.stop();
+              }
+            }.start();
+            //System.exit(0);
           }
           else {
             reply = JavacProtoUtil.toMessage(sessionId, JavacProtoUtil.createFailure("Unsupported request type: " + requestType.name(), null));

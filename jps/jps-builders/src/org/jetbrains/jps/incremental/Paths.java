@@ -25,8 +25,8 @@ public class Paths {
     return ourInstance;
   }
 
-  public File getSystemRoot() {
-    return mySystemRoot;
+  public static File getSystemRoot() {
+    return getInstance().mySystemRoot;
   }
 
   public void setSystemRoot(File systemRoot) {

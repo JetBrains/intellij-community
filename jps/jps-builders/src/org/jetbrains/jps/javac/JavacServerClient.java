@@ -36,8 +36,8 @@ public class JavacServerClient extends SimpleProtobufClient<JavacServerResponseH
     });
   }
 
-  public void sendShutdownRequest() {
-    sendRequest(JavacProtoUtil.createShutdownRequest(), null, null);
+  public RequestFuture sendShutdownRequest() {
+    return sendRequest(JavacProtoUtil.createShutdownRequest(), null, null);
   }
 
   private RequestFuture<JavacServerResponseHandler> sendRequest(final JavacRemoteProto.Message.Request request, final JavacServerResponseHandler responseHandler, final RequestFuture.CancelAction<JavacServerResponseHandler> cancelAction) {
