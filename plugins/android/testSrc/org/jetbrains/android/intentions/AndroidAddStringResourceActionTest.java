@@ -46,13 +46,7 @@ public class AndroidAddStringResourceActionTest extends AndroidTestCase {
   }
 
   public void test5() {
-    doTest(new Runnable() {
-      @Override
-      public void run() {
-        myFixture.type('r');
-        TemplateManagerImpl.getTemplateState(myFixture.getEditor()).nextTab();
-      }
-    });
+    doTest();
   }
 
   public void test6() {
@@ -70,12 +64,7 @@ public class AndroidAddStringResourceActionTest extends AndroidTestCase {
   }
 
   public void test8() {
-    doTest(new Runnable() {
-      @Override
-      public void run() {
-        myFixture.performEditorAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM);
-      }
-    });
+    doTest();
   }
 
   public void test9() {
@@ -101,13 +90,7 @@ public class AndroidAddStringResourceActionTest extends AndroidTestCase {
   }
 
   public void test13() {
-    doTest(new Runnable() {
-      @Override
-      public void run() {
-        myFixture.type("r");
-        myFixture.performEditorAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM);
-      }
-    });
+    doTest();
   }
 
   public void test14() {
@@ -132,7 +115,7 @@ public class AndroidAddStringResourceActionTest extends AndroidTestCase {
     }
     catch (IncorrectOperationException e) {
       // in normal mode error dialog will be shown
-      assertEquals("invalid strings.xml", e.getMessage());
+      assertEquals("File strings.xml is not resource file", e.getMessage());
     }
     myFixture.checkResultByFile(BASE_PATH + "Class1.java");
     myFixture.checkResultByFile("res/values/strings.xml", BASE_PATH + "strings_invalid.xml", false);

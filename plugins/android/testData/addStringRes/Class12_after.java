@@ -6,6 +6,6 @@ import p1.p2.R;
 
 public class Class extends View {
   public void f() {
-    String s = getContext().getResources().getString(R.string.hello);
+    String s = getContext().getString(R.string.hello);
   }
 }

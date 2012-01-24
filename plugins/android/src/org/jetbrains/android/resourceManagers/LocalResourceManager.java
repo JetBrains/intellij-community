@@ -208,7 +208,8 @@ public class LocalResourceManager extends ResourceManager {
   private VirtualFile findOrCreateResourceFile(@NotNull final String fileName) {
     VirtualFile dir = getResourceDir();
     if (dir == null) {
-      Messages.showErrorDialog(myModule.getProject(), AndroidBundle.message("check.resource.dir.error"), CommonBundle.getErrorTitle());
+      Messages.showErrorDialog(myModule.getProject(), AndroidBundle.message("check.resource.dir.error", myModule.getName()),
+                               CommonBundle.getErrorTitle());
       return null;
     }
     final VirtualFile valuesDir = findOrCreateChildDir(dir, AndroidConstants.FD_RES_VALUES);
@@ -240,7 +241,8 @@ public class LocalResourceManager extends ResourceManager {
     VirtualFile resDir = getResourceDir();
     Project project = myModule.getProject();
     if (resDir == null) {
-      Messages.showErrorDialog(project, AndroidBundle.message("check.resource.dir.error"), CommonBundle.getErrorTitle());
+      Messages
+        .showErrorDialog(project, AndroidBundle.message("check.resource.dir.error", myModule.getName()), CommonBundle.getErrorTitle());
       return null;
     }
     PsiElement[] createdElements = CreateResourceFileAction.createResourceFile(project, resDir, resType, fileOrResourceName);
@@ -269,47 +271,12 @@ public class LocalResourceManager extends ResourceManager {
                                CommonBundle.getErrorTitle());
       return null;
     }
-    ResourceElement element = addValueResource(type, resources);
+    ResourceElement element = AndroidResourceUtil.addValueResource(type, resources);
     element.getName().setValue(name);
     if (value != null) {
       element.setStringValue(value);
     }
     return element;
-  }
-
-  @NotNull
-  private static ResourceElement addValueResource(@NotNull final String type, @NotNull final Resources resources) {
-    if (type.equals("string")) {
-      return resources.addString();
-    }
-    else if (type.equals("dimen")) {
-      return resources.addDimen();
-    }
-    else if (type.equals("color")) {
-      return resources.addColor();
-    }
-    else if (type.equals("drawable")) {
-      return resources.addDrawable();
-    }
-    else if (type.equals("style")) {
-      return resources.addStyle();
-    }
-    else if (type.equals("array")) {
-      // todo: choose among string-array, integer-array and array
-      return resources.addStringArray();
-    }
-    else if (type.equals("integer")) {
-      return resources.addInteger();
-    }
-    else if (type.equals("bool")) {
-      return resources.addBool();
-    }
-    else if (type.equals("id")) {
-      Item item = resources.addItem();
-      item.getType().setValue("id");
-      return item;
-    }
-    throw new IllegalArgumentException("Incorrect resource type");
   }
 
   @Nullable

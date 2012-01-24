@@ -4,6 +4,6 @@ import p1.p2.R;
 
 public class Class {
   public void f() {
-    String s = .getResources().getString(R.string.hello);
+    String s = .getString(R.string.hello);
   }
 }
