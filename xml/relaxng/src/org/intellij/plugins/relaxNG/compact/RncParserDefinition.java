@@ -43,6 +43,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class RncParserDefinition implements ParserDefinition {
   public static final IFileElementType FILE_ELEMENT_TYPE = new IFileElementType(RngCompactLanguage.INSTANCE);
+  private static final TokenSet myCommentTypes = TokenSet.orSet(RncTokenTypes.COMMENTS, RncTokenTypes.DOC_TOKENS);
 
   @NotNull
   public Lexer createLexer(Project project) {
@@ -64,7 +65,7 @@ public class RncParserDefinition implements ParserDefinition {
 
   @NotNull
   public TokenSet getCommentTokens() {
-    return TokenSet.orSet(RncTokenTypes.COMMENTS, RncTokenTypes.DOC_TOKENS);
+    return myCommentTypes;
   }
 
   @NotNull
