@@ -42,13 +42,13 @@ public class MockLocalFileSystem extends LocalFileSystem {
 
   @Override
   @Nullable
-  public VirtualFile findFileByIoFile(final File file) {
+  public VirtualFile findFileByIoFile(@NotNull final File file) {
     return myDelegate.findFileByPath(FileUtil.toSystemIndependentName(file.getPath()));
   }
 
   @Override
   @Nullable
-  public VirtualFile findFileByIoFile(final IFile file) {
+  public VirtualFile findFileByIoFile(@NotNull final IFile file) {
     return myDelegate.findFileByPath(FileUtil.toSystemIndependentName(file.getPath()));
   }
 
@@ -60,67 +60,67 @@ public class MockLocalFileSystem extends LocalFileSystem {
 
   @Override
   @Nullable
-  public VirtualFile refreshAndFindFileByIoFile(final IFile ioFile) {
+  public VirtualFile refreshAndFindFileByIoFile(@NotNull final IFile ioFile) {
     return findFileByIoFile(ioFile);
   }
 
   @Override
-  public void refreshIoFiles(final Iterable<File> files) {
+  public void refreshIoFiles(@NotNull final Iterable<File> files) {
   }
 
   @Override
-  public void refreshFiles(final Iterable<VirtualFile> files) {
+  public void refreshFiles(@NotNull final Iterable<VirtualFile> files) {
   }
 
   @Override
-  public void refreshIoFiles(Iterable<File> files, boolean async, boolean recursive, @Nullable Runnable onFinish) {
+  public void refreshIoFiles(@NotNull Iterable<File> files, boolean async, boolean recursive, @Nullable Runnable onFinish) {
   }
 
   @Override
-  public void refreshFiles(Iterable<VirtualFile> files, boolean async, boolean recursive, @Nullable Runnable onFinish) {
+  public void refreshFiles(@NotNull Iterable<VirtualFile> files, boolean async, boolean recursive, @Nullable Runnable onFinish) {
   }
 
   @Override
-  public byte[] physicalContentsToByteArray(final VirtualFile virtualFile) throws IOException {
+  public byte[] physicalContentsToByteArray(@NotNull final VirtualFile virtualFile) throws IOException {
     throw new UnsupportedOperationException("'physicalContentsToByteArray' not implemented in " + getClass().getName());
   }
 
   @Override
-  public long physicalLength(final VirtualFile virtualFile) throws IOException {
+  public long physicalLength(@NotNull final VirtualFile virtualFile) throws IOException {
     throw new UnsupportedOperationException("'physicalLength' not implemented in " + getClass().getName());
   }
 
   @Override
   @Nullable
-  public WatchRequest addRootToWatch(final @NotNull String rootPath, final boolean toWatchRecursively) {
+  public WatchRequest addRootToWatch(@NotNull final String rootPath, final boolean toWatchRecursively) {
     throw new UnsupportedOperationException("'addRootToWatch' not implemented in " + getClass().getName());
   }
 
   @Override
   @NotNull
-  public Set<WatchRequest> addRootsToWatch(final @NotNull Collection<String> rootPaths, final boolean toWatchRecursively) {
+  public Set<WatchRequest> addRootsToWatch(@NotNull final Collection<String> rootPaths, final boolean toWatchRecursively) {
     throw new UnsupportedOperationException("'addRootsToWatch' not implemented in " + getClass().getName());
   }
 
   @Override
-  public void removeWatchedRoots(final @NotNull Collection<WatchRequest> rootsToWatch) {
+  public void removeWatchedRoots(@NotNull final Collection<WatchRequest> rootsToWatch) {
   }
 
   @Override
-  public void removeWatchedRoot(final @NotNull WatchRequest watchRequest) {
+  public void removeWatchedRoot(@NotNull final WatchRequest watchRequest) {
   }
 
   @Override
-  public void registerAuxiliaryFileOperationsHandler(final LocalFileOperationsHandler handler) {
+  public void registerAuxiliaryFileOperationsHandler(@NotNull final LocalFileOperationsHandler handler) {
   }
 
   @Override
-  public void unregisterAuxiliaryFileOperationsHandler(final LocalFileOperationsHandler handler) {
+  public void unregisterAuxiliaryFileOperationsHandler(@NotNull final LocalFileOperationsHandler handler) {
   }
 
 
   @Override
-  public boolean processCachedFilesInSubtree(final VirtualFile file, final Processor<VirtualFile> processor) {
+  public boolean processCachedFilesInSubtree(@NotNull final VirtualFile file, @NotNull final Processor<VirtualFile> processor) {
     throw new UnsupportedOperationException("'processCachedFilesInSubtree' not implemented in " + getClass().getName());
   }
 

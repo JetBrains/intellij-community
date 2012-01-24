@@ -72,7 +72,6 @@ public class EditorsSplitters extends JPanel {
   private Element mySplittersElement;  // temporarily used during initialization
   int myInsideChange = 0;
   private final MyFocusWatcher myFocusWatcher;
-  private EditorWithProviderComposite myCurrentSelectedEditor;
   private final Alarm myIconUpdaterAlarm = new Alarm();
 
   public EditorsSplitters(final FileEditorManagerImpl manager, DockManager dockManager, boolean createOwnDockableContainer) {
@@ -85,7 +84,7 @@ public class EditorsSplitters extends JPanel {
     clear();
 
     if (createOwnDockableContainer) {
-      DockableEditorTabbedContainer dockable = new DockableEditorTabbedContainer(myManager.getProject(), dockManager, this, false);
+      DockableEditorTabbedContainer dockable = new DockableEditorTabbedContainer(myManager.getProject(), this, false);
       Disposer.register(manager.getProject(), dockable);
       dockManager.register(dockable);
     }
@@ -329,6 +328,7 @@ public class EditorsSplitters extends JPanel {
         window = new EditorWindow(this);
       } else {
         window = findWindowWith(panel);
+        LOG.assertTrue(window != null);
       }
       //noinspection unchecked
       final List<Element> children = new ArrayList<Element>(leaf.getChildren("file"));
@@ -548,6 +548,7 @@ public class EditorsSplitters extends JPanel {
   protected void afterFileOpen(VirtualFile file) {
   }
 
+  @Nullable
   public JBTabs getTabsAt(RelativePoint point) {
     Point thisPoint = point.getPoint(this);
     Component c = SwingUtilities.getDeepestComponentAt(this, thisPoint.x, thisPoint.y);
@@ -571,6 +572,7 @@ public class EditorsSplitters extends JPanel {
     return true;
   }
 
+  @Nullable
   public VirtualFile findNextFile(final VirtualFile file) {
     final EditorWindow[] windows = getWindows(); // TODO: use current file as base
     for (int i = 0; i != windows.length; ++i) {
@@ -639,18 +641,16 @@ public class EditorsSplitters extends JPanel {
    * @param window a window to be set as current
    * @param requestFocus whether to request focus to the editor currently selected in this window
    */
-  public void setCurrentWindow(final EditorWindow window, final boolean requestFocus) {
-    final EditorWithProviderComposite oldEditor = myCurrentSelectedEditor;
+  public void setCurrentWindow(@Nullable final EditorWindow window, final boolean requestFocus) {
     final EditorWithProviderComposite newEditor = window != null? window.getSelectedEditor() : null;
 
     Runnable fireRunnable = new Runnable() {
       public void run() {
-        getManager().fireSelectionChanged(oldEditor, newEditor);
+        getManager().fireSelectionChanged(newEditor);
       }
     };
 
     setCurrentWindow(window);
-    myCurrentSelectedEditor = newEditor;
 
     getManager().updateFileName(window == null ? null : window.getSelectedFile());
 
@@ -746,6 +746,7 @@ public class EditorsSplitters extends JPanel {
     return res.toArray(new EditorWindow [res.size()]);
   }
 
+  @Nullable
   private EditorWindow findWindowWith(final Component component) {
     if (component != null) {
       for (final EditorWindow window : myWindows) {
@@ -755,6 +756,10 @@ public class EditorsSplitters extends JPanel {
       }
     }
     return null;
+  }
+
+  public boolean isFloating() {
+    return false;
   }
 
   private final class MyFocusWatcher extends FocusWatcher {
@@ -769,34 +774,19 @@ public class EditorsSplitters extends JPanel {
         }
       }
 
-      boolean changed = !Comparing.equal(newWindow, myCurrentWindow) || !Comparing.equal(newFile, myCurrentFile);
-
       myCurrentFile = newFile;
       setCurrentWindow(newWindow);
-
-      if (changed) {
-        setCurrentWindow(newWindow, false);
-      }
-    }
-  }
-
-  public void runChange(Runnable change) {
-    myInsideChange++;
-    try {
-      change.run();
-    }
-    finally {
-      myInsideChange--;
+      setCurrentWindow(newWindow, false);
     }
   }
 
   private final class MyTransferHandler extends TransferHandler {
-    private final FileDropHandler myFileDropHandler = new FileDropHandler();
+    private final FileDropHandler myFileDropHandler = new FileDropHandler(null);
 
     @Override
     public boolean importData(JComponent comp, Transferable t) {
       if (myFileDropHandler.canHandleDrop(t.getTransferDataFlavors())) {
-        myFileDropHandler.handleDrop(t, myManager.getProject());
+        myFileDropHandler.handleDrop(t, myManager.getProject(), myCurrentWindow);
         return true;
       }
       return false;

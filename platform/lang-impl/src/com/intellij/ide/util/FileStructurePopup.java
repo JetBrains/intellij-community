@@ -52,6 +52,7 @@ import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
@@ -241,7 +242,12 @@ public class FileStructurePopup implements Disposable {
           this.node = element;
           final String text = getElementText(element);
           if (text != null) {
-            final Iterable<TextRange> ranges = comparator.matchingFragments(pattern, text);
+            final Iterable<TextRange> ranges = comparator.matchingFragments(pattern, text, new Function<Character, Boolean>() {
+              @Override
+              public Boolean fun(Character character) {
+                return Character.isWhitespace(character.charValue());
+              }
+            });
             if (ranges != null) {
               for (TextRange range : ranges) {
                 weights.add(range);

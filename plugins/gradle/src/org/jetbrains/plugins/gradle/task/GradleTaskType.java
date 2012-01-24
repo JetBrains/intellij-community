@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.gradle.notification;
+package org.jetbrains.plugins.gradle.task;
 
 /**
  * Enumerates interested types of tasks that may be enqueued to Gradle API.

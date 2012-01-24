@@ -1,5 +1,7 @@
 package org.jetbrains.plugins.gradle.util;
 
+import com.intellij.testFramework.SkipInHeadlessEnvironment;
+import org.jetbrains.plugins.gradle.ui.RichTextControlBuilder;
 import org.jmock.Expectations;
 import org.jmock.Mockery;
 import org.jmock.integration.junit4.JMock;
@@ -15,6 +17,7 @@ import org.junit.runner.RunWith;
  * @since 01/17/2012
  */
 @RunWith(JMock.class)
+@SkipInHeadlessEnvironment
 public class RichTextControlBuilderTest {
 
   private static final String META_KEY = "my-key";

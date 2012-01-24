@@ -10,7 +10,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
-import org.jetbrains.plugins.gradle.util.RichTextControlBuilder;
+import org.jetbrains.plugins.gradle.ui.RichTextControlBuilder;
 
 import javax.swing.*;
 import java.awt.*;
@@ -85,13 +85,18 @@ public abstract class GradleToolWindowPanel extends SimpleToolWindowPanel {
     
     updateContent();
   }
-  
+
+  @NotNull
+  public Project getProject() {
+    return myProject;
+  }
+
   /**
    * @return    GUI control to be displayed at the current tab
    */
   @NotNull
   protected abstract JComponent buildContent();
-
+  
   /**
    * Callback for asking content control to update its state.
    */

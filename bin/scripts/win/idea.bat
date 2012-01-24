@@ -38,15 +38,7 @@ SET COMMON_JVM_ARGS="-Xbootclasspath/a:%IDE_HOME%/lib/boot.jar" -Didea.paths.sel
 SET IDE_JVM_ARGS=@@ide_jvm_args@@
 SET ALL_JVM_ARGS=%ACC% %COMMON_JVM_ARGS% %IDE_JVM_ARGS% %REQUIRED_JVM_ARGS%
 
-SET TOOLS_JAR=@@tools_jar@@
-SET CLASS_PATH=%IDE_HOME%\lib\bootstrap.jar
-SET CLASS_PATH=%CLASS_PATH%;%IDE_HOME%\lib\util.jar
-SET CLASS_PATH=%CLASS_PATH%;%IDE_HOME%\lib\jdom.jar
-SET CLASS_PATH=%CLASS_PATH%;%IDE_HOME%\lib\log4j.jar
-SET CLASS_PATH=%CLASS_PATH%;%IDE_HOME%\lib\extensions.jar
-SET CLASS_PATH=%CLASS_PATH%;%IDE_HOME%\lib\trove4j.jar
-SET CLASS_PATH=%CLASS_PATH%;%IDE_HOME%\lib\jna.jar
-IF "%TOOLS_JAR%" == "true" SET CLASS_PATH=%CLASS_PATH%;%JDK%\lib\tools.jar
+@@class_path@@
 IF NOT "%@@product_uc@@_CLASS_PATH%" == "" SET CLASS_PATH=%CLASS_PATH%;%@@product_uc@@_CLASS_PATH%
 
 :: ---------------------------------------------------------------------

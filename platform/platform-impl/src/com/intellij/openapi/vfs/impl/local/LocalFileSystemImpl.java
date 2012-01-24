@@ -113,7 +113,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     }
 
     @Override
-    public boolean dominates(WatchRequest other) {
+    public boolean dominates(@NotNull WatchRequest other) {
       if (myToWatchRecursively) {
         return other.getRootPath().startsWith(myRootPath);
       }

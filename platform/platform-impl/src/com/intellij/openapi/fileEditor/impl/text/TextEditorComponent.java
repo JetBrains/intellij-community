@@ -181,7 +181,7 @@ class TextEditorComponent extends JPanel implements DataProvider{
     editor.getSelectionModel().addSelectionListener(myEditorSelectionListener);
     ((EditorEx)editor).addPropertyChangeListener(myEditorPropertyChangeListener);
 
-    ((EditorImpl) editor).setDropHandler(new FileDropHandler());
+    ((EditorImpl) editor).setDropHandler(new FileDropHandler(editor));
 
     TextEditorProvider.putTextEditor(editor, myTextEditor);
     return editor;

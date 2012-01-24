@@ -4,19 +4,19 @@ import com.intellij.execution.rmi.RemoteServer;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ConcurrentHashMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.notification.GradleTaskId;
+import org.jetbrains.plugins.gradle.task.GradleTaskId;
 import org.jetbrains.plugins.gradle.notification.GradleTaskNotificationEvent;
 import org.jetbrains.plugins.gradle.notification.GradleTaskNotificationListener;
 import org.jetbrains.plugins.gradle.remote.RemoteGradleProgressNotificationManager;
 import org.jetbrains.plugins.gradle.remote.*;
+import org.jetbrains.plugins.gradle.task.GradleTaskType;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -35,7 +35,7 @@ public class GradleApiFacadeImpl extends RemoteServer implements GradleApiFacade
     = new ConcurrentHashMap<Class<?>, RemoteGradleService>();
   private final AtomicReference<RemoteGradleProcessSettings>       mySettings
     = new AtomicReference<RemoteGradleProcessSettings>();
-  private final AtomicReference<GradleTaskNotificationListener> myNotificationListener
+  private final AtomicReference<GradleTaskNotificationListener>    myNotificationListener
     = new AtomicReference<GradleTaskNotificationListener>();
   private final AtomicLong                                         myTtlMs
     = new AtomicLong(DEFAULT_REMOTE_GRADLE_PROCESS_TTL_IN_MS);
@@ -130,6 +130,33 @@ public class GradleApiFacadeImpl extends RemoteServer implements GradleApiFacade
     }
   }
 
+  @Override
+  public boolean isTaskInProgress(@NotNull GradleTaskId id) throws RemoteException {
+    for (RemoteGradleService service : myRemotes.values()) {
+      if (service.isTaskInProgress(id)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @NotNull
+  @Override
+  public Collection<GradleTaskId> getTasksInProgress(@NotNull GradleTaskType type) throws RemoteException {
+    Set<GradleTaskId> result = null;
+    for (RemoteGradleService service : myRemotes.values()) {
+      final Collection<GradleTaskId> tasks = service.getTasksInProgress(type);
+      if (tasks.isEmpty()) {
+        continue;
+      }
+      if (result == null) {
+        result = new HashSet<GradleTaskId>();
+      }
+      result.addAll(tasks);
+    }
+    return result == null ? Collections.<GradleTaskId>emptySet() : result;
+  }
+  
   @Override
   public void applySettings(@NotNull RemoteGradleProcessSettings settings) throws RemoteException {
     mySettings.set(settings);

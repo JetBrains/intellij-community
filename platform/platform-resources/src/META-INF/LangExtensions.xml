@@ -364,7 +364,7 @@
 
   <patternDialectProvider implementation="com.intellij.packageDependencies.ui.ProjectPatternProvider" id="file"/>
   <customScopesProvider implementation="com.intellij.packageDependencies.DefaultScopesProvider"/>
-  <customScopesProvider implementation="com.intellij.packageDependencies.ChangeListsScopesProvider"/>
+  <customScopesProvider implementation="com.intellij.packageDependencies.ChangeListsScopesProvider" order="last"/>
   <refactoring.elementListenerProvider implementation="com.intellij.packageDependencies.ui.RefactoringScopeElementListenerProvider"/>
 
   <highlightVisitor implementation="com.intellij.codeInsight.daemon.impl.DefaultHighlightVisitor"/>

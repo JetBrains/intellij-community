@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.diff.FilesTooBigForDiffException;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -130,7 +131,7 @@ public class DiffPreviewPanel implements PreviewPanel {
     public String getWindowTitle() { return DiffBundle.message("merge.color.options.dialog.title"); }
   }
 
-  public void addListener(final ColorAndFontSettingsListener listener) {
+  public void addListener(@NotNull final ColorAndFontSettingsListener listener) {
     myDispatcher.addListener(listener);
   }
 

@@ -30,6 +30,18 @@ else
       if [ -x "$JAVA_LOCATION/bin/java" ]; then
         JDK="$JAVA_LOCATION"
       fi
+    elif [ "$OS_TYPE" = "Darwin" ]; then
+      if [ -h "$JAVA_BIN_PATH" ]; then
+        JAVA_LOCATION=`readlink "$JAVA_BIN_PATH" | xargs dirname | xargs dirname | xargs dirname`
+        if [ -x "$JAVA_LOCATION/CurrentJDK/Home/bin/java" ]; then
+          JDK="$JAVA_LOCATION/CurrentJDK/Home"
+        fi
+      else
+        JAVA_LOCATION=`echo "$JAVA_BIN_PATH" | xargs dirname | xargs dirname`
+        if [ -f "$JAVA_LOCATION/lib/tools.jar" ]; then
+          JDK="$JAVA_LOCATION"
+        fi
+      fi
     fi
 
     if [ -z "$JDK" -a -x "/bin/readlink" ]; then
@@ -127,17 +139,7 @@ COMMON_JVM_ARGS="-Xbootclasspath/a:../lib/boot.jar -Didea.paths.selector=@@syste
 IDE_JVM_ARGS="@@ide_jvm_args@@"
 ALL_JVM_ARGS="$VM_OPTIONS $COMMON_JVM_ARGS $IDE_JVM_ARGS $AGENT $REQUIRED_JVM_ARGS"
 
-TOOLS_JAR="@@tools_jar@@"
-CLASSPATH="../lib/bootstrap.jar"
-CLASSPATH="$CLASSPATH:../lib/util.jar"
-CLASSPATH="$CLASSPATH:../lib/jdom.jar"
-CLASSPATH="$CLASSPATH:../lib/log4j.jar"
-CLASSPATH="$CLASSPATH:../lib/extensions.jar"
-CLASSPATH="$CLASSPATH:../lib/trove4j.jar"
-CLASSPATH="$CLASSPATH:../lib/jna.jar"
-if [ "$TOOLS_JAR" = "true" ]; then
-  CLASSPATH="$CLASSPATH:$JDK/lib/tools.jar"
-fi
+@@class_path@@
 if [ -n "$@@product_uc@@_CLASSPATH" ]; then
   CLASSPATH="$CLASSPATH:$@@product_uc@@_CLASSPATH"
 fi

@@ -38,6 +38,7 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
@@ -121,7 +122,7 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod {
     return PsiSuperMethodImplUtil.getHierarchicalMethodSignature(this);
   }
 
-  public boolean hasModifierProperty(@NotNull String name) {
+  public boolean hasModifierProperty(@GrModifier.GrModifierConstant @NotNull String name) {
     return getModifierList().hasModifierProperty(name);
   }
 

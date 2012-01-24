@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.gradle.importing.wizard.adjust;
+package org.jetbrains.plugins.gradle.ui;
 
 import org.jetbrains.annotations.NotNull;
 

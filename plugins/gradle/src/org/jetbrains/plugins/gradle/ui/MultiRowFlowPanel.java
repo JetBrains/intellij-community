@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.gradle.util;
+package org.jetbrains.plugins.gradle.ui;
 
 import org.intellij.lang.annotations.JdkConstants;
 

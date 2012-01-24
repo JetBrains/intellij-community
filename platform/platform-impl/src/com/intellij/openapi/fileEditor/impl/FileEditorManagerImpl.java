@@ -77,6 +77,7 @@ import javax.swing.border.Border;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.List;
 
@@ -97,6 +98,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   private EditorsSplitters mySplitters;
   private final Project myProject;
   private final List<Pair<VirtualFile, EditorWindow>> mySelectionHistory = new ArrayList<Pair<VirtualFile, EditorWindow>>();
+  private WeakReference<EditorComposite> myLastSelectedComposite = new WeakReference<EditorComposite>(null);
 
 
   private final MergingUpdateQueue myQueue = new MergingUpdateQueue("FileEditorManagerUpdateQueue", 50, true, null);
@@ -229,11 +231,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     }
   }
 
-  public DockManager getDockManager() {
-    return myDockManager;
-  }
-
-  private class MyBorder implements Border {
+  private static class MyBorder implements Border {
     @Override
     public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
       if (UIUtil.isUnderAquaLookAndFeel()) {
@@ -661,7 +659,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   Pair<FileEditor[], FileEditorProvider[]> openFileImpl3(@NotNull final EditorWindow window,
                                                          @NotNull final VirtualFile file,
                                                          final boolean focusEditor,
-                                                         final HistoryEntry entry,
+                                                         @Nullable final HistoryEntry entry,
                                                          boolean current) {
     // Open file
     FileEditor[] editors;
@@ -866,6 +864,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   }
 
 
+  @Nullable
   private EditorWithProviderComposite newEditorComposite(final VirtualFile file) {
     if (file == null) {
       return null;
@@ -1049,12 +1048,14 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     return active == null ? getMainSplitters() : active;
   }
 
+  @Nullable
   public FileEditor getSelectedEditor(@NotNull final VirtualFile file) {
     final Pair<FileEditor, FileEditorProvider> selectedEditorWithProvider = getSelectedEditorWithProvider(file);
     return selectedEditorWithProvider == null ? null : selectedEditorWithProvider.getFirst();
   }
 
 
+  @Nullable
   public Pair<FileEditor, FileEditorProvider> getSelectedEditorWithProvider(@NotNull VirtualFile file) {
     if (file instanceof VirtualFileWindow) file = ((VirtualFileWindow)file).getDelegate();
     final EditorWithProviderComposite composite = getCurrentEditorWithProviderComposite(file);
@@ -1289,6 +1290,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     getMainSplitters().readExternal(element);
   }
 
+  @Nullable
   private EditorWithProviderComposite getEditorComposite(@NotNull final FileEditor editor) {
     for (EditorsSplitters splitters : getAllSplitters()) {
       final EditorWithProviderComposite[] editorsComposites = splitters.getEditorsComposites();
@@ -1317,9 +1319,10 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     ApplicationManager.getApplication().assertReadAccessAllowed();
   }
 
-  public void fireSelectionChanged(final EditorComposite oldSelectedComposite, final EditorComposite newSelectedComposite) {
-    final Trinity<VirtualFile, FileEditor, FileEditorProvider> oldData = extract(oldSelectedComposite);
+  public void fireSelectionChanged(final EditorComposite newSelectedComposite) {
+    final Trinity<VirtualFile, FileEditor, FileEditorProvider> oldData = extract(myLastSelectedComposite.get());
     final Trinity<VirtualFile, FileEditor, FileEditorProvider> newData = extract(newSelectedComposite);
+    myLastSelectedComposite = new WeakReference<EditorComposite>(newSelectedComposite);
     final boolean filesEqual = oldData.first == null ? newData.first == null : oldData.first.equals(newData.first);
     final boolean editorsEqual = oldData.second == null ? newData.second == null : oldData.second.equals(newData.second);
     if (!filesEqual || !editorsEqual) {
@@ -1401,6 +1404,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     Disposer.dispose(editor);
   }
 
+  @Nullable
   EditorComposite getLastSelected() {
     final EditorWindow currentWindow = getActiveSplitters(true).getResult().getCurrentWindow();
     if (currentWindow != null) {
@@ -1457,11 +1461,11 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
       }
       else if (VirtualFile.PROP_WRITABLE.equals(e.getPropertyName()) || VirtualFile.PROP_ENCODING.equals(e.getPropertyName())) {
         // TODO: message bus?
-        updateIconAndStatusbar(e);
+        updateIconAndStatusBar(e);
       }
     }
 
-    private void updateIconAndStatusbar(final VirtualFilePropertyEvent e) {
+    private void updateIconAndStatusBar(final VirtualFilePropertyEvent e) {
       assertDispatchThread();
       final VirtualFile file = e.getFile();
       if (isFileOpen(file)) {
@@ -1478,44 +1482,13 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
       final VirtualFile file = e.getFile();
       final VirtualFile[] openFiles = getOpenFiles();
       for (final VirtualFile openFile : openFiles) {
-        if (VfsUtil.isAncestor(file, openFile, false)) {
+        if (VfsUtilCore.isAncestor(file, openFile, false)) {
           updateFileName(openFile);
           updateFileBackgroundColor(openFile);
         }
       }
     }
   }
-
-/*
-private final class MyVirtualFileListener extends VirtualFileAdapter {
-  public void beforeFileDeletion(final VirtualFileEvent e) {
-    assertDispatchThread();
-    final VirtualFile file = e.getFile();
-    final VirtualFile[] openFiles = getOpenFiles();
-    for (int i = openFiles.length - 1; i >= 0; i--) {
-      if (VfsUtil.isAncestor(file, openFiles[i], false)) {
-        closeFile(openFiles[i]);
-      }
-    }
-  }
-
-  public void propertyChanged(final VirtualFilePropertyEvent e) {
-    if (VirtualFile.PROP_WRITABLE.equals(e.getPropertyName())) {
-      assertDispatchThread();
-      final VirtualFile file = e.getFile();
-      if (isFileOpen(file)) {
-        if (file.equals(getSelectedFiles()[0])) { // update "write" status
-          final StatusBarEx statusBar = (StatusBarEx)WindowManager.getInstance().getStatusBar(myProject);
-          LOG.assertTrue(statusBar != null);
-          statusBar.setWriteStatus(!file.isWritable());
-        }
-      }
-    }
-  }
-
-  //public void fileMoved(final VirtualFileMoveEvent e){ }
-}
-*/
 
   public boolean isInsideChange() {
     return getSplitters().isInsideChange();

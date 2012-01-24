@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.gradle.notification;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.task.GradleTaskId;
 
 /**
  * Defines contract for callback to listen gradle task notifications. 

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor;
 
+import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.project.Project;
 
 import java.awt.datatransfer.DataFlavor;
@@ -25,5 +26,5 @@ import java.awt.datatransfer.Transferable;
  */
 public interface EditorDropHandler {
   boolean canHandleDrop(DataFlavor[] transferFlavors);
-  void handleDrop(Transferable t, final Project project);
+  void handleDrop(Transferable t, final Project project, EditorWindow editorWindow);
 }

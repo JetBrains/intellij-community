@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.gradle.util;
+package org.jetbrains.plugins.gradle.ui;
 
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import javax.swing.*;
 import java.awt.*;
