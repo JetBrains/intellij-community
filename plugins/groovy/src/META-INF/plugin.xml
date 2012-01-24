@@ -1036,6 +1036,10 @@
               class="org.jetbrains.plugins.groovy.actions.DumpGroovyStubsAction"
               text="dump groovy stubs"
               description="" internal="true"/>
+      <action id="Groovy.Extract.Closure" class="org.jetbrains.plugins.groovy.refactoring.extract.closure.ExtractClosureAction"
+              text="Closure...">
+        <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt shift M"/>
+      </action>
       <add-to-group group-id="Internal"/>
     </group>
 
@@ -1086,10 +1090,10 @@
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>
 
-    <action id="Groovy.Extract.Closure" class="org.jetbrains.plugins.groovy.refactoring.extract.closure.ExtractClosureAction" text="Closure...">
+    <!--<action id="Groovy.Extract.Closure" class="org.jetbrains.plugins.groovy.refactoring.extract.closure.ExtractClosureAction" text="Closure...">
       <add-to-group group-id="IntroduceActionsGroup" anchor="after" relative-to-action="ExtractMethod"/>
       <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt shift M"/>
-    </action>
+    </action>-->
 
     <group id="Mvc.Actions" popup="true" class="org.jetbrains.plugins.groovy.mvc.MvcActionGroup">
       <action id="Mvc.Upgrade"
