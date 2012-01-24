@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>PublicConstructorInNonPublicClass.java</file>
+    <line>5</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'public' constructor in non-public class</problem_class>
+    <description>Constructor is declared &lt;code&gt;public&lt;/code&gt; in non-public class 'PublicConstructorInNonPublicClass' #loc</description>
+  </problem>
+
+
+  <problem>
+    <file>PublicConstructorInNonPublicClass.java</file>
+    <line>8</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'public' constructor in non-public class</problem_class>
+    <description>Constructor is declared &lt;code&gt;public&lt;/code&gt; in non-public class 'A' #loc</description>
+  </problem>
+</problems>
