@@ -457,6 +457,8 @@ public final class GuiEditor extends JPanel implements DataProvider {
     }
 
     if (component instanceof RadContainer) {
+      component.refresh();
+
       final RadContainer container = (RadContainer)component;
       for (int i = container.getComponentCount() - 1; i >= 0; i--) {
         refreshImpl(container.getComponent(i));
@@ -526,7 +528,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
 
   private void fireHierarchyChanged() {
     final HierarchyChangeListener[] listeners = myListenerList.getListeners(HierarchyChangeListener.class);
-    for(final HierarchyChangeListener listener : listeners) {
+    for (final HierarchyChangeListener listener : listeners) {
       listener.hierarchyChanged();
     }
   }
@@ -538,7 +540,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
 
   /**
    * @return the component which represents layer with active decorators
-   * such as grid edit controls, inplace editors, etc.
+   *         such as grid edit controls, inplace editors, etc.
    */
   public InplaceEditingLayer getInplaceEditingLayer() {
     return myInplaceEditingLayer;
@@ -643,9 +645,9 @@ public final class GuiEditor extends JPanel implements DataProvider {
       public boolean visit(final IComponent component) {
         final RadComponent radComponent = (RadComponent)component;
         boolean componentModified = false;
-        for(IProperty prop: component.getModifiedProperties()) {
+        for (IProperty prop : component.getModifiedProperties()) {
           if (prop instanceof IntroStringProperty) {
-            IntroStringProperty strProp = (IntroStringProperty) prop;
+            IntroStringProperty strProp = (IntroStringProperty)prop;
             componentModified = strProp.refreshValue(radComponent) || componentModified;
           }
         }
@@ -655,7 +657,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
         }
 
         if (component.getParentContainer() instanceof RadTabbedPane) {
-          componentModified = ((RadTabbedPane) component.getParentContainer()).refreshChildTitle(radComponent) || componentModified;
+          componentModified = ((RadTabbedPane)component.getParentContainer()).refreshChildTitle(radComponent) || componentModified;
         }
         if (componentModified) {
           anythingModified.set(Boolean.TRUE);
@@ -783,7 +785,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
   }
 
   public void setDesignTimeInsets(final int insets) {
-    Integer oldInsets = (Integer) myRootContainer.getDelegee().getClientProperty(GridLayoutManager.DESIGN_TIME_INSETS);
+    Integer oldInsets = (Integer)myRootContainer.getDelegee().getClientProperty(GridLayoutManager.DESIGN_TIME_INSETS);
     if (oldInsets == null || oldInsets.intValue() != insets) {
       myRootContainer.getDelegee().putClientProperty(GridLayoutManager.DESIGN_TIME_INSETS, insets);
       revalidateRecursive(myRootContainer.getDelegee());
@@ -791,7 +793,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
   }
 
   private static void revalidateRecursive(final JComponent component) {
-    for(Component child: component.getComponents()) {
+    for (Component child : component.getComponents()) {
       if (child instanceof JComponent) {
         revalidateRecursive((JComponent)child);
       }
@@ -802,6 +804,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
 
   /**
    * Creates and sets new <code>RadRootContainer</code>
+   *
    * @param keepSelection if true, the GUI designer tries to preserve the selection state after reload.
    */
   public void readFromFile(final boolean keepSelection) {
@@ -839,7 +842,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
       }
       showInvalidCard(original);
     }
-    catch(final LinkageError exc) {
+    catch (final LinkageError exc) {
       showInvalidCard(exc);
     }
   }
@@ -863,7 +866,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
     FormEditingUtil.iterate(getRootContainer(), new FormEditingUtil.ComponentVisitor() {
       public boolean visit(final IComponent component) {
         if (component instanceof RadTabbedPane) {
-          RadTabbedPane tabbedPane = (RadTabbedPane) component;
+          RadTabbedPane tabbedPane = (RadTabbedPane)component;
           RadComponent c = tabbedPane.getSelectedTab();
           if (c != null) {
             result.put(tabbedPane.getId(), c.getId());
@@ -879,10 +882,10 @@ public final class GuiEditor extends JPanel implements DataProvider {
     FormEditingUtil.iterate(getRootContainer(), new FormEditingUtil.ComponentVisitor() {
       public boolean visit(final IComponent component) {
         if (component instanceof RadTabbedPane) {
-          RadTabbedPane tabbedPane = (RadTabbedPane) component;
+          RadTabbedPane tabbedPane = (RadTabbedPane)component;
           String selectedTabId = tabbedPaneSelectedTabs.get(tabbedPane.getId());
           if (selectedTabId != null) {
-            for(RadComponent c: tabbedPane.getComponents()) {
+            for (RadComponent c : tabbedPane.getComponents()) {
               if (c.getId().equals(selectedTabId)) {
                 tabbedPane.selectTab(c);
                 break;
@@ -997,9 +1000,9 @@ public final class GuiEditor extends JPanel implements DataProvider {
 
     public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) {
       if (orientation == SwingConstants.HORIZONTAL) {
-        return visibleRect.width-10;
+        return visibleRect.width - 10;
       }
-      return visibleRect.height-10;
+      return visibleRect.height - 10;
     }
 
     public boolean getScrollableTracksViewportWidth() {
@@ -1144,14 +1147,16 @@ public final class GuiEditor extends JPanel implements DataProvider {
   }
 
   private class MyPaletteKeyListener extends KeyAdapter {
-    @Override public void keyPressed(KeyEvent e) {
+    @Override
+    public void keyPressed(KeyEvent e) {
       PaletteManager paletteManager = PaletteManager.getInstance(getProject());
       if (e.getKeyCode() == KeyEvent.VK_SHIFT && paletteManager.getActiveItem(ComponentItem.class) != null && isActiveEditor()) {
         setDesignTimeInsets(12);
       }
     }
 
-    @Override public void keyReleased(KeyEvent e) {
+    @Override
+    public void keyReleased(KeyEvent e) {
       if (e.getKeyCode() == KeyEvent.VK_SHIFT) {
         setDesignTimeInsets(2);
       }
