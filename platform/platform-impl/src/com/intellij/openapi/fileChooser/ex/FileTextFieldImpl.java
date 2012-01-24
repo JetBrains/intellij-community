@@ -199,7 +199,15 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
 
     myUiUpdater.queue(new Update("textField.suggestCompletion") {
       public void run() {
-        result.myCompletionBase = getCompletionBase();
+        final String completionBase = getCompletionBase();
+        if (completionBase != null) {
+          final LookupFile file = myFinder.find(completionBase);
+          if (file != null && !file.isDirectory()) {
+            // we've entered a complete path already, no need to autopopup completion again (IDEA-78996)
+            return;
+          }
+        }
+        result.myCompletionBase = completionBase;
         if (result.myCompletionBase == null) return;
         result.myFieldText = myPathTextField.getText();
         ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
