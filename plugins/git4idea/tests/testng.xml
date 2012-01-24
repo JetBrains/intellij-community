@@ -2,6 +2,7 @@
 <suite name="Git Suite">
   <test name="Git Test">
     <packages>
+      <package name="git4idea.branch"/>
       <package name="git4idea.history"/>
       <package name="git4idea.repo"/>
       <package name="git4idea.validators"/>

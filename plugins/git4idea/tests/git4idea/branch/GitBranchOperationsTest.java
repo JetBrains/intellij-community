@@ -50,7 +50,9 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
   private static final String MASTER = "master";
 
   private Collection<GitRepository> myRepositories;
-  private GitRepository myUltimate, myCommunity, myContrib;
+  private GitRepository myUltimate;
+  private GitRepository myCommunity;
+  private GitRepository myContrib;
 
   private TestMessageManager myMessageManager;
   private TestNotificationManager myNotificationManager;
@@ -65,7 +67,7 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
     myTempDirFixture.setUp();
     
     final File projectDir = new File(myTempDirFixture.getTempDirPath(), "ultimate");
-    projectDir.mkdir();
+    assertTrue(projectDir.mkdir());
     
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
