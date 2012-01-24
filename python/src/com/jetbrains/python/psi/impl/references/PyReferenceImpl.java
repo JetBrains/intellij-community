@@ -194,8 +194,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     if (referencedName == null) return ret;
 
     if (myElement instanceof PyTargetExpression) {
-      final PsiElement parent = myElement.getParent();
-      if (!(parent instanceof PyGlobalStatement || parent instanceof PyNonlocalStatement)) {
+      if (PsiTreeUtil.getParentOfType(myElement, PyComprehensionElement.class) != null) {
         ret.poke(myElement, getRate(myElement));
         return ret;
       }

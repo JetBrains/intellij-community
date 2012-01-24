@@ -276,7 +276,7 @@ public class PyResolveTest extends PyResolveTestCase {
     PsiElement targetElement = resolve();
     assertTrue(targetElement instanceof PyParameter);
   }
-  
+
   public void testTextBasedResolve() {
     ResolveResult[] resolveResults = multiResolve();
     assertEquals(1, resolveResults.length);
@@ -422,19 +422,27 @@ public class PyResolveTest extends PyResolveTestCase {
   public void testDontResolveTargetToBuiltins() {  // PY-4256
     assertResolvesTo(PyTargetExpression.class, "str");
   }
-  
+
   public void testKeywordArgument() {
     assertResolvesTo(PyNamedParameter.class, "bar");
   }
-  
+
   public void testImplicitResolveInstanceAttribute() {
     ResolveResult[] resolveResults = multiResolve();
     assertEquals(1, resolveResults.length);
     final PsiElement psiElement = resolveResults[0].getElement();
     assertTrue(psiElement instanceof PyTargetExpression && "xyzzy".equals(((PyTargetExpression)psiElement).getName()));
   }
-  
+
   public void testAttributeAssignedNearby() {
     assertResolvesTo(PyTargetExpression.class, "xyzzy");
+  }
+
+  public void testPreviousTarget() {
+    PsiElement resolved = resolve();
+    assertInstanceOf(resolved, PyTargetExpression.class);
+    PyTargetExpression target = (PyTargetExpression)resolved;
+    PyExpression value = target.findAssignedValue();
+    assertInstanceOf(value, PyNumericLiteralExpression.class);
   }
 }

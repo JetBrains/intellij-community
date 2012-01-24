@@ -31,9 +31,15 @@ public class PyDefUseUtil {
     if (augAssignment != null) {
       anchor = augAssignment;
     }
-    final int instr = ControlFlowUtil.findInstructionNumberByElement(instructions, anchor);
+    int instr = ControlFlowUtil.findInstructionNumberByElement(instructions, anchor);
     if (instr < 0) {
       return Collections.emptyList();
+    }
+    if (anchor instanceof PyTargetExpression) {
+      Collection<Instruction> pred = instructions[instr].allPred();
+      if (!pred.isEmpty()) {
+        instr = pred.iterator().next().num();
+      }
     }
     final boolean[] visited = new boolean[instructions.length];
     final Collection<ReadWriteInstruction> result = new LinkedHashSet<ReadWriteInstruction>();
