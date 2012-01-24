@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
  * @author nik
  */
 public class ChromeSettings extends BrowserSpecificSettings {
-  @NonNls public static final String REMOTE_SHELL_PORT_ARG = "--remote-shell-port=";
+  @NonNls public static final String REMOTE_DEBUGGING_PORT_ARG = "--remote-debugging-port=";
   @NonNls public static final String USER_DATA_DIR_ARG = "--user-data-dir=";
   public static final int DEFAULT_REMOTE_SHELL_PORT = 7930;
   private String myUserDataDirectoryPath;
@@ -88,7 +88,7 @@ public class ChromeSettings extends BrowserSpecificSettings {
 
     String[] remoteShellArg;
     if (myEnableRemoteDebug) {
-      remoteShellArg = new String[]{REMOTE_SHELL_PORT_ARG + myRemoteShellPort};
+      remoteShellArg = new String[]{REMOTE_DEBUGGING_PORT_ARG + myRemoteShellPort};
     }
     else {
       remoteShellArg = ArrayUtil.EMPTY_STRING_ARRAY;

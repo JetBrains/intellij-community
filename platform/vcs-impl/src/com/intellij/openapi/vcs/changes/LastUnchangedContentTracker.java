@@ -36,7 +36,7 @@ public class LastUnchangedContentTracker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.LastUnchangedContentTracker");
   private static final Key<Long> LAST_TS_KEY = Key.create("LAST_TS_KEY");
   private static final FileAttribute LAST_TS_ATTR = new FileAttribute("LAST_TS_ATTR", 0, true);
-  private static final FileAttribute ACQUIRED_CONTENT_ATTR = new FileAttribute("ACQUIRED_CONTENT_ATTR", 0, false);
+  private static final FileAttribute ACQUIRED_CONTENT_ATTR = new FileAttribute("ACQUIRED_CONTENT_ATTR", 1, true);
 
   public static void updateLastUnchangedContent(@NotNull VirtualFile file) {
     Long lastTs = getLastSavedStamp(file);

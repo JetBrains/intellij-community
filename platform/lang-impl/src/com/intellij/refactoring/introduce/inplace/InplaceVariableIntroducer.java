@@ -212,8 +212,7 @@ public abstract class InplaceVariableIntroducer<E extends PsiElement> extends In
   }
 
   protected void releaseIfNotRestart() {
-    final Boolean isRestart = myEditor.getUserData(INTRODUCE_RESTART);
-    if (isRestart == null || !isRestart.booleanValue()) {
+    if (!isRestart()) {
       releaseResources();
     }
   }
@@ -222,8 +221,7 @@ public abstract class InplaceVariableIntroducer<E extends PsiElement> extends In
   public void finish(boolean success) {
     super.finish(success);
     if (myBalloon != null) {
-      final Boolean isRestart = myEditor.getUserData(INTRODUCE_RESTART);
-      if (isRestart == null || !isRestart.booleanValue()) {
+      if (!isRestart()) {
         myBalloon.hide();
       }
     }
