@@ -42,7 +42,7 @@ public class GradleProjectStructureChangesModel extends AbstractProjectComponent
    *  <li>{@link #addListener(GradleProjectStructureChangeListener) Registered listeners} are notified if any new change is detected;</li>
    * </ol>
    *
-   * @param gradleProject
+   * @param gradleProject  gradle project to sync with
    */
   public void update(@NotNull GradleProject gradleProject) {
     //TODO den implement

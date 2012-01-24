@@ -3,11 +3,9 @@ package org.jetbrains.plugins.gradle.importing;
 import com.intellij.execution.rmi.RemoteUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.projectWizard.WizardContext;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -28,10 +26,8 @@ import org.jetbrains.plugins.gradle.config.GradleSettings;
 import org.jetbrains.plugins.gradle.model.GradleEntity;
 import org.jetbrains.plugins.gradle.model.GradleModule;
 import org.jetbrains.plugins.gradle.model.GradleProject;
-import org.jetbrains.plugins.gradle.notification.*;
 import org.jetbrains.plugins.gradle.remote.GradleApiException;
-import org.jetbrains.plugins.gradle.remote.GradleApiFacadeManager;
-import org.jetbrains.plugins.gradle.remote.GradleProjectResolver;
+import org.jetbrains.plugins.gradle.task.GradleResolveProjectTask;
 import org.jetbrains.plugins.gradle.ui.GradleIcons;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleLog;
@@ -54,14 +50,8 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
   /** @see #setModuleMappings(Map) */
   private final Map<GradleModule/*origin*/, GradleModule/*adjusted*/> myModuleMappings = new HashMap<GradleModule, GradleModule>();
   
-  private final GradleProgressNotificationManager myProgressManager;
-  
   private GradleProject myGradleProject;
   private File myProjectFile;
-
-  public GradleProjectImportBuilder(@NotNull GradleProgressNotificationManager progressManager) {
-    myProgressManager = progressManager;
-  }
 
   @Override
   public String getName() {
@@ -107,7 +97,7 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
     }
     GradleModulesImporter importer = new GradleModulesImporter();
     Map<GradleModule, Module> mappings =
-      importer.importModules(myModuleMappings.values(), project, model, myProjectFile.getAbsolutePath(), myProgressManager);
+      importer.importModules(myModuleMappings.values(), project, model, myProjectFile.getAbsolutePath());
     return new ArrayList<Module>(mappings.values());
   }
 
@@ -165,48 +155,36 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
     }
     final Ref<String> errorReason = new Ref<String>();
     try {
-      Project project = getProject(wizardContext);
+      final Project project = getProject(wizardContext);
       ProgressManager.getInstance().run(new Task.Modal(project, GradleBundle.message("gradle.import.progress.text"), true) {
         @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
         @Override
         public void run(@NotNull final ProgressIndicator indicator) {
-          indicator.setIndeterminate(true);
-          GradleApiFacadeManager manager = ServiceManager.getService(GradleApiFacadeManager.class);
-          GradleTaskNotificationListener gradleProgressListener = new GradleTaskNotificationListenerAdapter() {
-            @Override
-            public void onStatusChange(@NotNull GradleTaskNotificationEvent event) {
-              indicator.setText2(event.getDescription());
-            }
-          };
-          GradleTaskId taskId = GradleTaskId.create(GradleTaskType.RESOLVE_PROJECT);
-          myProgressManager.addNotificationListener(taskId, gradleProgressListener);
-          try {
-            GradleProjectResolver resolver = manager.getFacade().getResolver();
-            myGradleProject = resolver.resolveProjectInfo(taskId, myProjectFile.getAbsolutePath(), false);
+          GradleResolveProjectTask task = new GradleResolveProjectTask(project, myProjectFile.getAbsolutePath(), false);
+          task.execute(indicator);
+          myGradleProject = task.getProject();
+          if (myGradleProject != null) {
+            return;
           }
-          catch (ProcessCanceledException e) {
-            // Ignore
+          final Throwable error = task.getError();
+          if (error == null) {
+            return;
           }
-          catch (Exception e) {
-            Throwable unwrapped = RemoteUtil.unwrap(e);
-            String reason = unwrapped.getLocalizedMessage();
-            if (!StringUtil.isEmpty(reason)) {
-              errorReason.set(reason);
-            }
-            if (unwrapped.getClass() == NoClassDefFoundError.class) {
-              errorReason.set(GradleBundle.message("gradle.import.text.incomplete.tooling.api"));
-            }
-            else if (unwrapped.getClass() == GradleApiException.class) {
-              GradleLog.LOG.warn("Can't resolve gradle project. Reason: gradle api threw an exception:\n"
-                                 + ((GradleApiException)unwrapped).getOriginalReason()
-              );
-            }
-            else {
-              GradleLog.LOG.warn("Can't resolve gradle project", e);
-            }
+          Throwable unwrapped = RemoteUtil.unwrap(error);
+          String reason = unwrapped.getLocalizedMessage();
+          if (!StringUtil.isEmpty(reason)) {
+            errorReason.set(reason);
           }
-          finally {
-            myProgressManager.removeNotificationListener(gradleProgressListener);
+          if (unwrapped.getClass() == NoClassDefFoundError.class) {
+            errorReason.set(GradleBundle.message("gradle.import.text.incomplete.tooling.api"));
+          }
+          else if (unwrapped.getClass() == GradleApiException.class) {
+            GradleLog.LOG.warn("Can't resolve gradle project. Reason: gradle api threw an exception:\n"
+                               + ((GradleApiException)unwrapped).getOriginalReason()
+            );
+          }
+          else {
+            GradleLog.LOG.warn("Can't resolve gradle project", unwrapped);
           }
         }
       });

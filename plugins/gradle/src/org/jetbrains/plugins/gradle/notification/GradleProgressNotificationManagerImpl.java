@@ -5,6 +5,7 @@ import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ConcurrentHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.remote.RemoteGradleProgressNotificationManager;
+import org.jetbrains.plugins.gradle.task.GradleTaskId;
 
 import java.util.Map;
 import java.util.Set;
