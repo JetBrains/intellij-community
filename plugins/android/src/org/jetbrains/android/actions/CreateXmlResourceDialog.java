@@ -22,6 +22,7 @@ import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.resourceManagers.ResourceManager;
 import org.jetbrains.android.uipreview.DeviceConfiguratorPanel;
 import org.jetbrains.android.uipreview.InvalidOptionValueException;
+import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidResourceUtil;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
@@ -182,13 +183,17 @@ public class CreateXmlResourceDialog extends DialogWrapper {
     }
 
     final VirtualFile resFile = resourceSubdir.findChild(fileName);
-    if (resFile == null || resFile.getFileType() != StdFileTypes.XML) {
+    if (resFile == null) {
       return null;
+    }
+
+    if (resFile.getFileType() != StdFileTypes.XML) {
+      return new ValidationInfo("File " + FileUtil.toSystemDependentName(resFile.getPath()) + " is not XML file");
     }
 
     final Resources resources = AndroidUtils.loadDomElement(selectedModule, resFile, Resources.class);
     if (resources == null) {
-      return null;
+      return new ValidationInfo(AndroidBundle.message("not.resource.file.error", FileUtil.toSystemDependentName(resFile.getPath())));
     }
 
     for (ResourceElement element : ResourceManager.getValueResources(resourceType.getName(), resources)) {
