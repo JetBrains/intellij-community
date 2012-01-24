@@ -104,11 +104,14 @@ class StdIn(BaseStdIn):
 
     def readline(self, *args, **kwargs):
         #Ok, callback into the client to get the new input
-        server = xmlrpclib.Server('http://%s:%s' % (self.host, self.client_port))
-        requested_input = server.RequestInput()
-        if not requested_input:
-            return '\n' #Yes, a readline must return something (otherwise we can get an EOFError on the input() call).
-        return requested_input
+        try:
+            server = xmlrpclib.Server('http://%s:%s' % (self.host, self.client_port))
+            requested_input = server.RequestInput()
+            if not requested_input:
+                return '\n' #Yes, a readline must return something (otherwise we can get an EOFError on the input() call).
+            return requested_input
+        except:
+            return '\n'
 
 
 #=======================================================================================================================
