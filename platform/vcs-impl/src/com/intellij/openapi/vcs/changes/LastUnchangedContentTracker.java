@@ -46,7 +46,7 @@ public class LastUnchangedContentTracker {
     }
 
     Integer oldContentId = getSavedContentId(file);
-    if (oldContentId != null) {
+    if (oldContentId != null && oldContentId > 0) {
       getFS().releaseContent(oldContentId);
     }
 
