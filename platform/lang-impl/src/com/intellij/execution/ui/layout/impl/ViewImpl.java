@@ -31,16 +31,19 @@ public class ViewImpl implements View {
 
   private Tab myTab;
   private int myTabIndex;
+  
+  private int myWindow;
 
   private PlaceInGrid myPlaceInGrid;
 
   private boolean myMinimizedInGrid;
 
-  public ViewImpl(String id, TabImpl tab, final PlaceInGrid placeInGrid, boolean minimizedInGrid) {
+  public ViewImpl(String id, TabImpl tab, final PlaceInGrid placeInGrid, boolean minimizedInGrid, int window) {
     myID = id;
     myTab = tab;
     myPlaceInGrid = placeInGrid;
     myMinimizedInGrid = minimizedInGrid;
+    myWindow = window;
   }
 
   public ViewImpl(RunnerLayout settings, Element element) {
@@ -94,6 +97,16 @@ public class ViewImpl implements View {
     myTabIndex = tabIndex;
   }
 
+  @Override
+  public int getWindow() {
+    return myWindow;
+  }
+
+  @Override
+  public void setWindow(int windowNumber) {
+    myWindow = windowNumber;
+  }
+
   public static class Default {
 
     private final String myID;
@@ -110,7 +123,7 @@ public class ViewImpl implements View {
 
     public ViewImpl createView(RunnerLayout settings) {
       final TabImpl tab = myTabID == Integer.MAX_VALUE ? settings.createNewTab() : settings.getOrCreateTab(myTabID);
-      return new ViewImpl(myID, tab, myPlaceInGrid, myMinimizedInGrid);
+      return new ViewImpl(myID, tab, myPlaceInGrid, myMinimizedInGrid, 0);
     }
 
     public PlaceInGrid getPlaceInGrid() {

@@ -35,7 +35,7 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
-public class GridImpl extends Wrapper implements Grid, Disposable, CellTransform.Facade, DataProvider {
+public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider {
   private final ThreeComponentsSplitter myTopSplit = new ThreeComponentsSplitter();
   private final Splitter mySplitter = new Splitter(true);
 
@@ -152,8 +152,7 @@ public class GridImpl extends Wrapper implements Grid, Disposable, CellTransform
 
   public boolean updateGridUI() {
     for (final GridCellImpl cell : myPlaceInGrid2Cell.values()) {
-      final boolean eachToHide = myContents.size() == 1 && !cell.isDetached();
-      cell.setHideTabs(eachToHide);
+      cell.setHideTabs(myContents.size() == 1);
     }
 
     final Content onlyContent = myContents.get(0);
@@ -252,7 +251,7 @@ public class GridImpl extends Wrapper implements Grid, Disposable, CellTransform
 
     final GridCellImpl cell = myPlaceInGrid2Cell.get(placeInGrid);
 
-    if (!cell.isValidForCalculatePropertions()) return;
+    if (!cell.isValidForCalculateProportions()) return;
 
     final TabImpl tab = (TabImpl)getTab();
 
@@ -335,17 +334,10 @@ public class GridImpl extends Wrapper implements Grid, Disposable, CellTransform
     ArrayList<Content> result = new ArrayList<Content>();
 
     for (Content each : getContents()) {
-      if (!isDetached(each)) {
-        result.add(each);
-      }
+      result.add(each);
     }
 
     return result;
-  }
-
-
-  public boolean isDetached(Content content) {
-    return getCellFor(content).isDetached();
   }
 
   public List<Content> getContents() {
@@ -360,28 +352,6 @@ public class GridImpl extends Wrapper implements Grid, Disposable, CellTransform
     });
   }
 
-  public void moveToTab(final Content content) {
-    myViewContext.getCellTransform().moveToTab(content);
-  }
-
-  public void moveToGrid(final Content content) {
-    myViewContext.getCellTransform().moveToGrid(content);
-  }
-
-  public CellTransform.Restore detach(final Content[] content) {
-    final CellTransform.Restore.List restore = new CellTransform.Restore.List();
-    restore.add(myViewContext.getCellTransform().detach(content));
-    restore.add(new CellTransform.Restore() {
-      public ActionCallback restoreInGrid() {
-        revalidate();
-        repaint();
-        return new ActionCallback.Done();
-      }
-    });
-
-    return restore;
-  }
-
   @Nullable
   public Object getData(@NonNls final String dataId) {
     if (ViewContext.CONTEXT_KEY.is(dataId)) {
@@ -392,10 +362,6 @@ public class GridImpl extends Wrapper implements Grid, Disposable, CellTransform
       return contents.toArray(new Content[contents.size()]);
     }
     return null;
-  }
-
-  public String getSessionName() {
-    return mySessionName;
   }
 
   @Nullable
@@ -419,9 +385,7 @@ public class GridImpl extends Wrapper implements Grid, Disposable, CellTransform
     Collection<GridCellImpl> cells = myPlaceInGrid2Cell.values();
     ArrayList<SwitchTarget> result = new ArrayList<SwitchTarget>();
     for (GridCellImpl each : cells) {
-      if (!each.isDetached()) {
-        result.addAll(each.getTargets(onlyVisible));
-      }
+      result.addAll(each.getTargets(onlyVisible));
     }
     return result;
   }

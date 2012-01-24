@@ -72,12 +72,6 @@ public interface CellTransform {
 
   interface Facade {
     void minimize(Content content, Restore restore);
-
-    void moveToTab(final Content content);
-
-    void moveToGrid(final Content content);
-
-    Restore detach(final Content[] content);
   }
  
 }

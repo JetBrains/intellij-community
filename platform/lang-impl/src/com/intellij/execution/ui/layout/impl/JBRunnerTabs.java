@@ -39,7 +39,8 @@ import java.util.List;
 /**
  * @author Dennis.Ushakov
  */
-public class JBRunnerTabs extends JBTabsImpl {
+public class
+  JBRunnerTabs extends JBTabsImpl {
   public JBRunnerTabs(@Nullable Project project, ActionManager actionManager, IdeFocusManager focusManager, @NotNull Disposable parent) {
     super(project, actionManager, focusManager, parent);
   }
@@ -211,7 +212,7 @@ public class JBRunnerTabs extends JBTabsImpl {
   protected TabLabel createTabLabel(TabInfo info) {
     return new MyTabLabel(this, info);
   }
-  
+
   private static class MyTabLabel extends TabLabel {
     public MyTabLabel(JBTabsImpl tabs, final TabInfo info) {
       super(tabs, info);

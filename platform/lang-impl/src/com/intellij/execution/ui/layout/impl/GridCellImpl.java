@@ -18,18 +18,16 @@ package com.intellij.execution.ui.layout.impl;
 
 import com.intellij.execution.ui.layout.*;
 import com.intellij.execution.ui.layout.actions.MinimizeViewAction;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.DimensionService;
+import com.intellij.openapi.util.MutualMap;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.Content;
+import com.intellij.ui.docking.DockContainer;
+import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.switcher.SwitchTarget;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.TabInfo;
@@ -43,14 +41,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
-public class GridCellImpl implements GridCell, Disposable {
+public class GridCellImpl implements GridCell {
+  static final String CELL_KEY = "runner-grid-cell";
 
   private final GridImpl myContainer;
 
@@ -62,15 +61,11 @@ public class GridCellImpl implements GridCell, Disposable {
   private final PlaceInGrid myPlaceInGrid;
 
   private final ViewContextEx myContext;
-  private CellTransform.Restore.List myRestoreFromDetach;
   private JBPopup myPopup;
-  private boolean myDisposed;
 
   public GridCellImpl(ViewContextEx context, @NotNull GridImpl container, GridImpl.Placeholder placeholder, PlaceInGrid placeInGrid) {
     myContext = context;
     myContainer = container;
-
-    Disposer.register(container, this);
 
     myPlaceInGrid = placeInGrid;
     myPlaceholder = placeholder;
@@ -97,18 +92,12 @@ public class GridCellImpl implements GridCell, Disposable {
       }
     }).setSideComponentVertical(!context.getLayoutSettings().isToolbarHorizontal())
       .setStealthTabMode(true)
-      .setFocusCycle(false).setPaintFocus(true).setProvideSwitchTargets(false);
+      .setFocusCycle(false).setPaintFocus(true).setProvideSwitchTargets(false).setTabDraggingEnabled(true);
 
     myTabs.addTabMouseListener(new MouseAdapter() {
       public void mousePressed(final MouseEvent e) {
         if (UIUtil.isCloseClick(e)) {
-          if (isDetached()) {
-            myPopup.cancel();
-            myPopup = null;
-          }
-          else {
             minimize(e);
-          }
         }
       }
     });
@@ -181,7 +170,7 @@ public class GridCellImpl implements GridCell, Disposable {
       }
     }
     else {
-      if (myPlaceholder.isNull() && !isDetached()) {
+      if (myPlaceholder.isNull()) {
         myPlaceholder.setContent(myTabs.getComponent());
       }
 
@@ -211,7 +200,7 @@ public class GridCellImpl implements GridCell, Disposable {
 
     ActionGroup group = (ActionGroup)myContext.getActionManager().getAction(RunnerContentUi.VIEW_TOOLBAR);
     tabInfo.setTabLabelActions(group, ViewContext.CELL_TOOLBAR_PLACE);
-
+    tabInfo.setDragOutDelegate(((RunnerContentUi)myContext).myDragOutDelegate);
     return tabInfo;
   }
 
@@ -248,7 +237,7 @@ public class GridCellImpl implements GridCell, Disposable {
     return myMinimizedContents.contains(content);
   }
 
-  public java.util.List<SwitchTarget> getTargets(boolean onlyVisible) {
+  public List<SwitchTarget> getTargets(boolean onlyVisible) {
     if (myTabs.getPresentation().isHideTabs()) return new ArrayList<SwitchTarget>();
 
     return myTabs.getTargets(onlyVisible, false);
@@ -271,6 +260,7 @@ public class GridCellImpl implements GridCell, Disposable {
       myContent = content;
       myContext = context;
       setLayout(new BorderLayout());
+      putClientProperty(CELL_KEY, Boolean.TRUE);
       add(content.getComponent(), BorderLayout.CENTER);
     }
 
@@ -287,7 +277,7 @@ public class GridCellImpl implements GridCell, Disposable {
   }
 
   @Nullable
-  private TabInfo getTabFor(Content content) {
+  TabInfo getTabFor(Content content) {
     return myContents.getValue(content);
   }
 
@@ -306,14 +296,21 @@ public class GridCellImpl implements GridCell, Disposable {
     restoreProportions();
 
     Content[] contents = getContents();
+    int window = 0;
     for (Content each : contents) {
-      if (myContainer.getStateFor(each).isMinimizedInGrid()) {
+      final View view = myContainer.getStateFor(each);
+      if (view.isMinimizedInGrid()) {
         minimize(each);
       }
+      window = view.getWindow();
     }
-
-    if (!isRestoringFromDetach() && myContainer.getTab().isDetached(myPlaceInGrid) && contents.length > 0) {
-      _detach(!myContext.isStateBeingRestored()).notifyWhenDone(result);
+    final Tab tab = myContainer.getTab();
+    final boolean detached = (tab != null && tab.isDetached(myPlaceInGrid)) || window != myContext.getWindow();
+    if (detached && contents.length > 0) {
+      if (tab != null) {
+        tab.setDetached(myPlaceInGrid, false);
+      }
+      _detach(window).notifyWhenDone(result);
     } else {
       result.setDone();
     }
@@ -321,7 +318,7 @@ public class GridCellImpl implements GridCell, Disposable {
     return result;
   }
 
-  private Content[] getContents() {
+  Content[] getContents() {
     return myContents.getKeys().toArray(new Content[myContents.size()]);
   }
 
@@ -339,6 +336,14 @@ public class GridCellImpl implements GridCell, Disposable {
     for (Content each : myMinimizedContents) {
       saveState(each, true);
     }
+
+    final DimensionService service = DimensionService.getInstance();
+    final Dimension size = myContext.getContentManager().getComponent().getSize();
+    service.setSize(getDimensionKey(), size, myContext.getProject());
+    if (myContext.getWindow() != 0) {
+      final JFrame frame = (JFrame)DockManager.getInstance(myContext.getProject()).getIdeFrame((DockContainer)myContext);
+      service.setLocation(getDimensionKey(), frame.getLocationOnScreen());
+    }
   }
 
   public void saveProportions() {
@@ -350,8 +355,7 @@ public class GridCellImpl implements GridCell, Disposable {
     state.setMinimizedInGrid(minimized);
     state.setPlaceInGrid(myPlaceInGrid);
     state.assignTab(myContainer.getTabIndex());
-
-    state.getTab().setDetached(myPlaceInGrid, isDetached());
+    state.setWindow(myContext.getWindow());
   }
 
   public void restoreProportions() {
@@ -362,7 +366,7 @@ public class GridCellImpl implements GridCell, Disposable {
     for (Content each : myContents.getKeys()) {
       final TabInfo eachTab = getTabFor(each);
       boolean isSelected = eachTab != null && myTabs.getSelectedInfo() == eachTab;
-      if (isSelected && (isShowing || isDetached())) {
+      if (isSelected && isShowing) {
         myContext.getContentManager().addSelectedContent(each);
       }
       else {
@@ -391,147 +395,27 @@ public class GridCellImpl implements GridCell, Disposable {
     }
   }
 
-  public ActionCallback detach() {
-    return _detach(true);
-  }
-
-  private ActionCallback _detach(final boolean requestFocus) {
+  private ActionCallback _detach(final int window) {
     myContext.saveUiState();
-
-    final DimensionService dimService = DimensionService.getInstance();
-    Point storedLocation = dimService.getLocation(getDimensionKey(), myContext.getProject());
-    Dimension storedSize = dimService.getSize(getDimensionKey(), myContext.getProject());
-
-    final IdeFrame frame = WindowManager.getInstance().getIdeFrame(myContext.getProject());
-    final Rectangle targetBounds = frame.suggestChildFrameBounds();
-
-
-    if (storedLocation != null && storedSize != null) {
-      targetBounds.setLocation(storedLocation);
-      targetBounds.setSize(storedSize);
-    }
-
-    final ActionCallback result = new ActionCallback();
-
-    if (storedLocation == null || storedSize == null) {
-      if (myContents.size() > 0) {
-        myContext.validate(myContents.getKeys().iterator().next(), new ActiveRunnable() {
-          public ActionCallback run() {
-            if (!myTabs.getComponent().isShowing()) {
-              detachTo(targetBounds.getLocation(), targetBounds.getSize(), false, requestFocus).notifyWhenDone(result);
-            } else {
-              detachForShowingTabs(requestFocus).notifyWhenDone(result);
-            }
-
-            return new ActionCallback.Done();
-          }
-        });
-
-        return result;
-      }
-    }
-
-    detachTo(targetBounds.getLocation(), targetBounds.getSize(), false, requestFocus).notifyWhenDone(result);
-
-    return result;
+    return myContext.detachTo(window, this);
   }
 
-  private ActionCallback detachForShowingTabs(boolean requestFocus) {
-    return detachTo(myTabs.getComponent().getLocationOnScreen(), myTabs.getComponent().getSize(), false, requestFocus);
+  @Nullable
+  public Point getLocation() {
+    return DimensionService.getInstance().getLocation(getDimensionKey(), myContext.getProject());
   }
 
-  private ActionCallback detachTo(Point screenPoint, Dimension size, boolean dragging, final boolean requestFocus) {
-    if (isDetached()) {
-      if (myPopup != null) {
-        return new ActionCallback.Done();
-      }
-    }
-
-    final Content[] contents = getContents();
-
-    myRestoreFromDetach = new CellTransform.Restore.List();
-
-    myRestoreFromDetach.add(myPlaceholder.detach());
-    myRestoreFromDetach.add(myContainer.detach(contents));
-    myRestoreFromDetach.add(new CellTransform.Restore() {
-      public ActionCallback restoreInGrid() {
-        ensureVisible();
-        return new ActionCallback.Done();
-      }
-    });
-
-    myPopup = createPopup(dragging, requestFocus);
-    myPopup.setSize(size);
-    myPopup.setLocation(screenPoint);
-    myPopup.show(myContext.getContentManager().getComponent());
-
-    myContext.saveUiState();
-
-    myTabs.updateTabActions(true);
-
-    return new ActionCallback.Done();
+  @Nullable
+  public Dimension getSize() {
+    return DimensionService.getInstance().getSize(getDimensionKey(), myContext.getProject());
   }
-
-  private void ensureVisible() {
-    if (myTabs.getSelectedInfo() != null) {
-      myContext.select(getContentFor(myTabs.getSelectedInfo()), true);
-    }
-  }
-
-  private JBPopup createPopup(boolean dragging, final boolean requestFocus) {
-    Wrapper wrapper = new Wrapper(myTabs.getComponent());
-    wrapper.setBorder(new EmptyBorder(1, 0, 0, 0));
-    final ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(wrapper, myTabs.getComponent())
-      .setTitle(myContainer.getSessionName())
-      .setMovable(true)
-      .setRequestFocus(requestFocus)
-      .setFocusable(true)
-      .setResizable(true)
-      .setDimensionServiceKey(myContext.getProject(), getDimensionKey(), true)
-      .setCancelOnOtherWindowOpen(false)
-      .setCancelOnClickOutside(false)
-      .setCancelKeyEnabled(true)
-      .setLocateByContent(dragging)
-      .setLocateWithinScreenBounds(!dragging)
-      .setCancelKeyEnabled(false)
-      .setBelongsToGlobalPopupStack(false)
-      .setModalContext(false)
-      .setCancelCallback(new Computable<Boolean>() {
-        public Boolean compute() {
-          if (myDisposed || myContents.size() == 0) return Boolean.TRUE;
-          myRestoreFromDetach.restoreInGrid();
-          myRestoreFromDetach = null;
-          myContext.saveUiState();
-          myTabs.updateTabActions(true);
-          return Boolean.TRUE;
-        }
-      });
-
-    return builder.createPopup();
-  }
-
-  public void attach() {
-    if (isDetached()) {
-      myPopup.cancel();
-      myPopup = null;
-    }
-  }
-
-
-  public boolean isDetached() {
-    return myRestoreFromDetach != null && !myRestoreFromDetach.isRestoringNow();
-  }
-
-  public boolean isRestoringFromDetach() {
-    return myRestoreFromDetach != null && myRestoreFromDetach.isRestoringNow();
-  }
-
+  
   private String getDimensionKey() {
     return "GridCell.Tab." + myContainer.getTab().getIndex() + "." + myPlaceInGrid.name();
   }
 
-  public boolean isValidForCalculatePropertions() {
-    return !isDetached() && getContentCount() > 0;
+  public boolean isValidForCalculateProportions() {
+    return getContentCount() > 0;
   }
 
   public void minimize(Content content) {
@@ -552,14 +436,5 @@ public class GridCellImpl implements GridCell, Disposable {
     add(content);
     updateSelection(myTabs.getComponent().getRootPane() != null);
     return new ActionCallback.Done();
-  }
-
-  public void dispose() {
-    myDisposed = true;
-
-    if (myPopup != null) {
-      myPopup.cancel();
-      myPopup = null;
-    }
   }
 }

@@ -39,19 +39,15 @@ public class MinimizeViewAction extends BaseViewAction {
       return false;
     }
 
-    if (isDetached(context, content[0])) {
-      return false;
-    }
-
     if (ViewContext.TAB_TOOLBAR_PLACE.equals(place) || ViewContext.TAB_POPUP_PLACE.equals(place)) {
-      return false;
-    }
-    else {
       Tab tab = getTabFor(context, content);
       if (tab == null) {
         return false;
       }
-      return tab.isDefault();
+      return !tab.isDefault();
+    }
+    else {
+      return getTabFor(context, content) != null;
     }
   }
 }
