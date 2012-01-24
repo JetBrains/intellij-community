@@ -68,7 +68,7 @@ public final class FormEditingUtil {
   private FormEditingUtil() {
   }
 
-  public static boolean canDeleteSelection(final GuiEditor editor){
+  public static boolean canDeleteSelection(final GuiEditor editor) {
     final ArrayList<RadComponent> selection = getSelectedComponents(editor);
     if (selection.isEmpty()) return false;
     final RadRootContainer rootContainer = editor.getRootContainer();
@@ -83,7 +83,7 @@ public final class FormEditingUtil {
    *
    * @param editor the editor in which the selection is deleted.
    */
-  public static void deleteSelection(final GuiEditor editor){
+  public static void deleteSelection(final GuiEditor editor) {
     final List<RadComponent> selection = getSelectedComponents(editor);
     deleteComponents(selection, true);
     editor.refreshAndSave(true);
@@ -93,7 +93,7 @@ public final class FormEditingUtil {
     if (selection.size() == 0) {
       return;
     }
-    final RadRootContainer rootContainer = (RadRootContainer) getRoot(selection.iterator().next());
+    final RadRootContainer rootContainer = (RadRootContainer)getRoot(selection.iterator().next());
     final Set<String> deletedComponentIds = new HashSet<String>();
     for (final RadComponent component : selection) {
       boolean wasSelected = component.isSelected();
@@ -126,7 +126,7 @@ public final class FormEditingUtil {
           parent.getComponent(index).setSelected(true);
         }
         else if (index > 0 && parent.getComponentCount() == index) {
-          parent.getComponent(index-1).setSelected(true);
+          parent.getComponent(index - 1).setSelected(true);
         }
         else {
           parent.setSelected(true);
@@ -178,7 +178,7 @@ public final class FormEditingUtil {
 
   private static void deleteEmptyGridCells(final RadContainer parent, final GridConstraints delConstraints, final boolean isRow) {
     final RadAbstractGridLayoutManager layoutManager = parent.getGridLayoutManager();
-    for(int cell=delConstraints.getCell(isRow) + delConstraints.getSpan(isRow)-1; cell>= delConstraints.getCell(isRow); cell--) {
+    for (int cell = delConstraints.getCell(isRow) + delConstraints.getSpan(isRow) - 1; cell >= delConstraints.getCell(isRow); cell--) {
       if (cell < parent.getGridCellCount(isRow) && GridChangeUtil.canDeleteCell(parent, cell, isRow) == GridChangeUtil.CellStatus.Empty &&
           !layoutManager.isGapCell(parent, isRow, cell)) {
         layoutManager.deleteGridCells(parent, cell, isRow);
@@ -186,7 +186,7 @@ public final class FormEditingUtil {
     }
   }
 
-  private static final int EMPTY_COMPONENT_SIZE = 5;
+  public static final int EMPTY_COMPONENT_SIZE = 5;
 
   private static Component getDeepestEmptyComponentAt(JComponent parent, Point location) {
     int size = parent.getComponentCount();
@@ -228,7 +228,7 @@ public final class FormEditingUtil {
    * @param x in editor pane coordinates
    * @param y in editor pane coordinates
    */
-  public static RadComponent getRadComponentAt(final RadRootContainer rootContainer, final int x, final int y){
+  public static RadComponent getRadComponentAt(final RadRootContainer rootContainer, final int x, final int y) {
     Point location = new Point(x, y);
     SwingUtilities.convertPointToScreen(location, rootContainer.getDelegee());
     Component c = getDeepestEmptyComponentAt(rootContainer.getDelegee(), location);
@@ -240,7 +240,7 @@ public final class FormEditingUtil {
     RadComponent result = null;
 
     while (c != null) {
-      if (c instanceof JComponent){
+      if (c instanceof JComponent) {
         final RadComponent component = (RadComponent)((JComponent)c).getClientProperty(RadComponent.CLIENT_PROP_RAD_COMPONENT);
         if (component != null) {
 
@@ -263,16 +263,16 @@ public final class FormEditingUtil {
 
   /**
    * @return component which has dragger. There is only one component with the dargger
-   * at a time.
+   *         at a time.
    */
   @Nullable
-  public static RadComponent getDraggerHost(@NotNull final GuiEditor editor){
+  public static RadComponent getDraggerHost(@NotNull final GuiEditor editor) {
     final Ref<RadComponent> result = new Ref<RadComponent>();
     iterate(
       editor.getRootContainer(),
       new ComponentVisitor<RadComponent>() {
         public boolean visit(final RadComponent component) {
-          if(component.hasDragger()){
+          if (component.hasDragger()) {
             result.set(component);
             return false;
           }
@@ -314,18 +314,18 @@ public final class FormEditingUtil {
 
   /**
    * @return currently selected components. Method returns the minimal amount of
-   * selected component which contains all selected components. It means that if the
-   * selected container contains some selected children then only this container
-   * will be added to the returned array.
+   *         selected component which contains all selected components. It means that if the
+   *         selected container contains some selected children then only this container
+   *         will be added to the returned array.
    */
   @NotNull
-  public static ArrayList<RadComponent> getSelectedComponents(@NotNull final GuiEditor editor){
+  public static ArrayList<RadComponent> getSelectedComponents(@NotNull final GuiEditor editor) {
     final ArrayList<RadComponent> result = new ArrayList<RadComponent>();
     calcSelectedComponentsImpl(result, editor.getRootContainer());
     return result;
   }
 
-  private static void calcSelectedComponentsImpl(final ArrayList<RadComponent> result, final RadContainer container){
+  private static void calcSelectedComponentsImpl(final ArrayList<RadComponent> result, final RadContainer container) {
     if (container.isSelected()) {
       if (container.getParent() != null) { // ignore RadRootContainer
         result.add(container);
@@ -350,7 +350,7 @@ public final class FormEditingUtil {
    * @return all selected component inside the <code>editor</code>
    */
   @NotNull
-  public static ArrayList<RadComponent> getAllSelectedComponents(@NotNull final GuiEditor editor){
+  public static ArrayList<RadComponent> getAllSelectedComponents(@NotNull final GuiEditor editor) {
     final ArrayList<RadComponent> result = new ArrayList<RadComponent>();
     iterate(
       editor.getRootContainer(),
@@ -373,8 +373,7 @@ public final class FormEditingUtil {
         return getExceptionMessage(cause);
       }
     }
-    else
-    if (ex instanceof InvocationTargetException) {
+    else if (ex instanceof InvocationTargetException) {
       final Throwable target = ((InvocationTargetException)ex).getTargetException();
       if (target != null && target != ex) {
         return getExceptionMessage(target);
@@ -382,10 +381,13 @@ public final class FormEditingUtil {
     }
     String message = ex.getMessage();
     if (ex instanceof ClassNotFoundException) {
-      message = message != null? UIDesignerBundle.message("error.class.not.found.N", message) : UIDesignerBundle.message("error.class.not.found");
+      message =
+        message != null ? UIDesignerBundle.message("error.class.not.found.N", message) : UIDesignerBundle.message("error.class.not.found");
     }
     else if (ex instanceof NoClassDefFoundError) {
-      message = message != null? UIDesignerBundle.message("error.required.class.not.found.N", message) : UIDesignerBundle.message("error.required.class.not.found");
+      message = message != null
+                ? UIDesignerBundle.message("error.required.class.not.found.N", message)
+                : UIDesignerBundle.message("error.required.class.not.found");
     }
     return message;
   }
@@ -394,14 +396,16 @@ public final class FormEditingUtil {
     return findComponentWithBinding(component, binding, null);
   }
 
-  public static IComponent findComponentWithBinding(IComponent component, final String binding, @Nullable final IComponent exceptComponent) {
+  public static IComponent findComponentWithBinding(IComponent component,
+                                                    final String binding,
+                                                    @Nullable final IComponent exceptComponent) {
     // Check that binding is unique
     final Ref<IComponent> boundComponent = new Ref<IComponent>();
     iterate(
       component,
       new ComponentVisitor() {
         public boolean visit(final IComponent component) {
-          if(component != exceptComponent && binding.equals(component.getBinding())) {
+          if (component != exceptComponent && binding.equals(component.getBinding())) {
             boundComponent.set(component);
             return false;
           }
@@ -419,10 +423,10 @@ public final class FormEditingUtil {
     RadComponent component = getRadComponentAt(rootContainer, x, y);
     if (isNullOrRoot(component) && epsilon > 0) {
       // try to find component near specified location
-      component = getRadComponentAt(rootContainer, x-epsilon, y-epsilon);
-      if (isNullOrRoot(component)) component = getRadComponentAt(rootContainer, x-epsilon, y+epsilon);
-      if (isNullOrRoot(component)) component = getRadComponentAt(rootContainer, x+epsilon, y-epsilon);
-      if (isNullOrRoot(component)) component = getRadComponentAt(rootContainer, x+epsilon, y+epsilon);
+      component = getRadComponentAt(rootContainer, x - epsilon, y - epsilon);
+      if (isNullOrRoot(component)) component = getRadComponentAt(rootContainer, x - epsilon, y + epsilon);
+      if (isNullOrRoot(component)) component = getRadComponentAt(rootContainer, x + epsilon, y - epsilon);
+      if (isNullOrRoot(component)) component = getRadComponentAt(rootContainer, x + epsilon, y + epsilon);
     }
 
     if (component != null) {
@@ -447,9 +451,9 @@ public final class FormEditingUtil {
   }
 
   public static IRootContainer getRoot(IComponent component) {
-    while(component != null) {
+    while (component != null) {
       if (component.getParentContainer() instanceof IRootContainer) {
-        return (IRootContainer) component.getParentContainer();
+        return (IRootContainer)component.getParentContainer();
       }
       component = component.getParentContainer();
     }
@@ -459,7 +463,7 @@ public final class FormEditingUtil {
   /**
    * Iterates component and its children (if any)
    */
-  public static void iterate(final IComponent component, final ComponentVisitor visitor){
+  public static void iterate(final IComponent component, final ComponentVisitor visitor) {
     iterateImpl(component, visitor);
   }
 
@@ -507,9 +511,9 @@ public final class FormEditingUtil {
   public static Locale[] collectUsedLocales(final Module module, final IRootContainer rootContainer) {
     final Set<Locale> locales = new HashSet<Locale>();
     final PropertiesReferenceManager propManager = PropertiesReferenceManager.getInstance(module.getProject());
-    for(String bundleName: collectUsedBundleNames(rootContainer)) {
+    for (String bundleName : collectUsedBundleNames(rootContainer)) {
       List<PropertiesFile> propFiles = propManager.findPropertiesFiles(module, bundleName.replace('/', '.'));
-      for(PropertiesFile propFile: propFiles) {
+      for (PropertiesFile propFile : propFiles) {
         locales.add(propFile.getLocale());
       }
     }
@@ -528,9 +532,9 @@ public final class FormEditingUtil {
       public void run() {
         if (!GridChangeUtil.canDeleteCells(container, cells, isRow)) {
           Set<RadComponent> componentsInColumn = new HashSet<RadComponent>();
-          for(RadComponent component: container.getComponents()) {
+          for (RadComponent component : container.getComponents()) {
             GridConstraints c = component.getConstraints();
-            for(int cell: cells) {
+            for (int cell : cells) {
               if (c.contains(isRow, cell)) {
                 componentsInColumn.add(component);
                 break;
@@ -545,7 +549,7 @@ public final class FormEditingUtil {
 
             final int rc = Messages.showYesNoDialog(editor, message,
                                                     isRow ? UIDesignerBundle.message("delete.row.title")
-                                                    : UIDesignerBundle.message("delete.column.title"), Messages.getQuestionIcon());
+                                                          : UIDesignerBundle.message("delete.column.title"), Messages.getQuestionIcon());
             if (rc != DialogWrapper.OK_EXIT_CODE) {
               return;
             }
@@ -554,7 +558,7 @@ public final class FormEditingUtil {
           }
         }
 
-        for(int cell: cells) {
+        for (int cell : cells) {
           container.getGridLayoutManager().deleteGridCells(container, cell, isRow);
         }
         editor.refreshAndSave(true);
@@ -566,8 +570,8 @@ public final class FormEditingUtil {
   }
 
   /**
+   * @param rootContainer
    * @return id
-     * @param rootContainer
    */
   public static String generateId(final RadRootContainer rootContainer) {
     while (true) {
@@ -582,9 +586,9 @@ public final class FormEditingUtil {
    * @return {@link com.intellij.uiDesigner.designSurface.GuiEditor} from the context. Can be <code>null</code>.
    */
   @Nullable
-  public static GuiEditor getEditorFromContext(@NotNull final DataContext context){
+  public static GuiEditor getEditorFromContext(@NotNull final DataContext context) {
     final FileEditor editor = PlatformDataKeys.FILE_EDITOR.getData(context);
-    if(editor instanceof UIFormEditor){
+    if (editor instanceof UIFormEditor) {
       return ((UIFormEditor)editor).getEditor();
     }
     else {
@@ -592,7 +596,8 @@ public final class FormEditingUtil {
     }
   }
 
-  @Nullable public static GuiEditor getActiveEditor(final DataContext context){
+  @Nullable
+  public static GuiEditor getActiveEditor(final DataContext context) {
     Project project = PlatformDataKeys.PROJECT.getData(context);
     if (project == null) {
       return null;
@@ -605,11 +610,10 @@ public final class FormEditingUtil {
   }
 
   /**
-   *
    * @param componentToAssignBinding
    * @param binding
-   * @param component topmost container where to find duplicate binding. In most cases
-   * it should be {@link com.intellij.uiDesigner.designSurface.GuiEditor#getRootContainer()}
+   * @param component                topmost container where to find duplicate binding. In most cases
+   *                                 it should be {@link com.intellij.uiDesigner.designSurface.GuiEditor#getRootContainer()}
    */
   public static boolean isBindingUnique(
     final IComponent componentToAssignBinding,
@@ -633,7 +637,7 @@ public final class FormEditingUtil {
   @Nullable
   public static RadContainer getSelectionParent(final List<RadComponent> selection) {
     RadContainer parent = null;
-    for(RadComponent c: selection) {
+    for (RadComponent c : selection) {
       if (parent == null) {
         parent = c.getParent();
       }
@@ -651,17 +655,17 @@ public final class FormEditingUtil {
     int maxRow = 0;
     int maxCol = 0;
 
-    for(RadComponent c: selection) {
+    for (RadComponent c : selection) {
       minRow = Math.min(minRow, c.getConstraints().getRow());
       minCol = Math.min(minCol, c.getConstraints().getColumn());
       maxRow = Math.max(maxRow, c.getConstraints().getRow() + c.getConstraints().getRowSpan());
       maxCol = Math.max(maxCol, c.getConstraints().getColumn() + c.getConstraints().getColSpan());
     }
-    return new Rectangle(minCol, minRow, maxCol-minCol, maxRow-minRow);
+    return new Rectangle(minCol, minRow, maxCol - minCol, maxRow - minRow);
   }
 
   public static boolean isComponentSwitchedInView(@NotNull RadComponent component) {
-    while(component.getParent() != null) {
+    while (component.getParent() != null) {
       if (!component.getParent().getLayoutManager().isSwitchedToChild(component.getParent(), component)) {
         return false;
       }
@@ -680,7 +684,7 @@ public final class FormEditingUtil {
   public static boolean selectComponent(final GuiEditor editor, @NotNull final RadComponent component) {
     boolean hasTab = false;
     RadComponent parent = component;
-    while(parent.getParent() != null) {
+    while (parent.getParent() != null) {
       if (parent.getParent().getLayoutManager().switchContainerToChild(parent.getParent(), parent)) {
         hasTab = true;
       }
@@ -724,8 +728,8 @@ public final class FormEditingUtil {
       }
       builder.beginUpdateSelection();
       try {
-        clearSelection((RadContainer) getRoot(component));
-        for(RadComponent aComponent: components) {
+        clearSelection((RadContainer)getRoot(component));
+        for (RadComponent aComponent : components) {
           selectComponent(editor, aComponent);
         }
       }
@@ -736,12 +740,12 @@ public final class FormEditingUtil {
   }
 
   public static boolean isDropOnChild(final DraggedComponentList draggedComponentList,
-                                       final ComponentDropLocation location) {
+                                      final ComponentDropLocation location) {
     if (location.getContainer() == null) {
       return false;
     }
 
-    for(RadComponent component: draggedComponentList.getComponents()) {
+    for (RadComponent component : draggedComponentList.getComponents()) {
       if (isChild(location.getContainer(), component)) {
         return true;
       }
@@ -750,7 +754,7 @@ public final class FormEditingUtil {
   }
 
   private static boolean isChild(RadContainer maybeChild, RadComponent maybeParent) {
-    while(maybeChild != null) {
+    while (maybeChild != null) {
       if (maybeParent == maybeChild) {
         return true;
       }
@@ -779,30 +783,31 @@ public final class FormEditingUtil {
 
   public static int adjustForGap(final RadContainer container, final int cellIndex, final boolean isRow, final int delta) {
     if (container.getGridLayoutManager().isGapCell(container, isRow, cellIndex)) {
-      return cellIndex+delta;
+      return cellIndex + delta;
     }
     return cellIndex;
   }
 
   public static int prevRow(final RadContainer container, final int row) {
-    return adjustForGap(container, row-1, true, -1);
+    return adjustForGap(container, row - 1, true, -1);
   }
 
   public static int nextRow(final RadContainer container, final int row) {
-    return adjustForGap(container, row+1, true, 1);
+    return adjustForGap(container, row + 1, true, 1);
   }
 
   public static int prevCol(final RadContainer container, final int col) {
-    return adjustForGap(container, col-1, false, -1);
+    return adjustForGap(container, col - 1, false, -1);
   }
 
   public static int nextCol(final RadContainer container, final int col) {
-    return adjustForGap(container, col+1, false, 1);
+    return adjustForGap(container, col + 1, false, 1);
   }
 
-  @Nullable public static IButtonGroup findGroupForComponent(final IRootContainer radRootContainer, @NotNull final IComponent component) {
-    for(IButtonGroup group: radRootContainer.getButtonGroups()) {
-      for(String id: group.getComponentIds()) {
+  @Nullable
+  public static IButtonGroup findGroupForComponent(final IRootContainer radRootContainer, @NotNull final IComponent component) {
+    for (IButtonGroup group : radRootContainer.getButtonGroups()) {
+      for (String id : group.getComponentIds()) {
         if (component.getId().equals(id)) {
           return group;
         }
@@ -812,7 +817,7 @@ public final class FormEditingUtil {
   }
 
   public static void remapToActionTargets(final List<RadComponent> selection) {
-    for(int i=0; i<selection.size(); i++) {
+    for (int i = 0; i < selection.size(); i++) {
       final RadComponent c = selection.get(i);
       if (c.getParent() != null) {
         selection.set(i, c.getParent().getActionTargetComponent(c));
@@ -868,7 +873,7 @@ public final class FormEditingUtil {
     });
   }
 
-  public static void clearSelection(@NotNull final RadContainer container){
+  public static void clearSelection(@NotNull final RadContainer container) {
     container.setSelected(false);
 
     for (int i = 0; i < container.getComponentCount(); i++) {
@@ -887,6 +892,7 @@ public final class FormEditingUtil {
    * <code>container</code>. The method goes recursively through the hierarchy
    * of components. Note, that if <code>container</code> itself has <code>id</code>
    * then the method immediately retuns it.
+   *
    * @return the found component.
    */
   @Nullable
@@ -899,9 +905,9 @@ public final class FormEditingUtil {
     }
 
     final IContainer uiContainer = (IContainer)component;
-    for (int i=0; i < uiContainer.getComponentCount(); i++){
+    for (int i = 0; i < uiContainer.getComponentCount(); i++) {
       final IComponent found = findComponent(uiContainer.getComponent(i), id);
-      if (found != null){
+      if (found != null) {
         return found;
       }
     }
@@ -914,7 +920,7 @@ public final class FormEditingUtil {
       .findClass(classToBindName.replace('$', '.'), module.getModuleWithDependenciesScope());
   }
 
-  public interface ComponentVisitor <Type extends IComponent>{
+  public interface ComponentVisitor<Type extends IComponent> {
     /**
      * @return true if iteration should continue
      */
