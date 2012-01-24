@@ -79,16 +79,16 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
   }
 
   @Nullable
-  public abstract VirtualFile findFileByIoFile(File file);
+  public abstract VirtualFile findFileByIoFile(@NotNull File file);
 
   @Nullable
-  public abstract VirtualFile findFileByIoFile(IFile file);
+  public abstract VirtualFile findFileByIoFile(@NotNull IFile file);
 
   @Nullable
   public abstract VirtualFile refreshAndFindFileByIoFile(@NotNull File file);
 
   @Nullable
-  public abstract VirtualFile refreshAndFindFileByIoFile(final IFile ioFile);
+  public abstract VirtualFile refreshAndFindFileByIoFile(@NotNull IFile ioFile);
 
   /**
    * Performs a non-recursive synchronous refresh of specified files.
@@ -96,9 +96,9 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
    * @param files files to refresh.
    * @since 6.0
    */
-  public abstract void refreshIoFiles(Iterable<File> files);
+  public abstract void refreshIoFiles(@NotNull Iterable<File> files);
 
-  public abstract void refreshIoFiles(Iterable<File> files, boolean async, boolean recursive, @Nullable Runnable onFinish);
+  public abstract void refreshIoFiles(@NotNull Iterable<File> files, boolean async, boolean recursive, @Nullable Runnable onFinish);
 
   /**
    * Performs a non-recursive synchronous refresh of specified files.
@@ -106,13 +106,13 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
    * @param files files to refresh.
    * @since 6.0
    */
-  public abstract void refreshFiles(Iterable<VirtualFile> files);
+  public abstract void refreshFiles(@NotNull Iterable<VirtualFile> files);
 
-  public abstract void refreshFiles(Iterable<VirtualFile> files, boolean async, boolean recursive, @Nullable Runnable onFinish);
+  public abstract void refreshFiles(@NotNull Iterable<VirtualFile> files, boolean async, boolean recursive, @Nullable Runnable onFinish);
 
-  public abstract byte[] physicalContentsToByteArray(final VirtualFile virtualFile) throws IOException;
+  public abstract byte[] physicalContentsToByteArray(@NotNull VirtualFile virtualFile) throws IOException;
 
-  public abstract long physicalLength(final VirtualFile virtualFile) throws IOException;
+  public abstract long physicalLength(@NotNull VirtualFile virtualFile) throws IOException;
 
   public interface WatchRequest {
     @NotNull
@@ -123,7 +123,7 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
 
     boolean isToWatchRecursively();
 
-    boolean dominates(WatchRequest other);
+    boolean dominates(@NotNull WatchRequest other);
   }
 
   /**
@@ -143,9 +143,9 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
 
   public abstract void removeWatchedRoot(@NotNull final WatchRequest watchRequest);
 
-  public abstract void registerAuxiliaryFileOperationsHandler(LocalFileOperationsHandler handler);
+  public abstract void registerAuxiliaryFileOperationsHandler(@NotNull LocalFileOperationsHandler handler);
 
-  public abstract void unregisterAuxiliaryFileOperationsHandler(LocalFileOperationsHandler handler);
+  public abstract void unregisterAuxiliaryFileOperationsHandler(@NotNull LocalFileOperationsHandler handler);
 
-  public abstract boolean processCachedFilesInSubtree(final VirtualFile file, Processor<VirtualFile> processor);
+  public abstract boolean processCachedFilesInSubtree(@NotNull VirtualFile file, @NotNull Processor<VirtualFile> processor);
 }

@@ -40,7 +40,7 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
   public abstract VirtualFile findFileByPathIfCached(@NotNull @NonNls final String path);
 
   @Nullable
-  protected String normalize(final String path) {
+  protected String normalize(@NotNull String path) {
     return path;
   }
 
@@ -100,7 +100,7 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
     return false;
   }
 
-  public String getCanonicallyCasedName(VirtualFile file) {
+  public String getCanonicallyCasedName(@NotNull VirtualFile file) {
     return file.getName();
   }
 }
