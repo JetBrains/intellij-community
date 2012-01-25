@@ -16,8 +16,8 @@
 
 package com.intellij.execution.junit2.ui.model;
 
-import com.intellij.execution.junit2.events.TestEvent;
 import com.intellij.execution.junit2.TestProxy;
+import com.intellij.execution.junit2.events.TestEvent;
 import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.TestTreeView;
@@ -25,9 +25,6 @@ import com.intellij.execution.testframework.ui.AbstractTestTreeBuilder;
 import com.intellij.ide.util.treeView.IndexComparator;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.util.StatusBarProgress;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -41,8 +38,9 @@ public class TestTreeBuilder extends AbstractTestTreeBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit2.ui.model.TestTreeBuilder");
 
   private JUnitRunningModel myModel;
-  private final JUnitAdapter myListener = new JUnitAdapter(){
+  private final JUnitAdapter myListener = new JUnitAdapter() {
     private final Collection<TestProxy> myNodesToUpdate = new HashSet<TestProxy>();
+
     public void onEventsDispatched(final List<TestEvent> events) {
       for (final TestEvent event : events) {
         final TestProxy testSubtree = (TestProxy)event.getTestSubtree();
@@ -75,16 +73,9 @@ public class TestTreeBuilder extends AbstractTestTreeBuilder {
     treeStructure.setSpecialNode(new SpecialNode(this, model));
     myModel = model;
     myModel.addListener(myListener);
-    init(tree, new DefaultTreeModel(new DefaultMutableTreeNode(treeStructure.createDescriptor(model.getRoot(), null))), treeStructure, IndexComparator.INSTANCE, true);
+    init(tree, new DefaultTreeModel(new DefaultMutableTreeNode(treeStructure.createDescriptor(model.getRoot(), null))), treeStructure,
+         IndexComparator.INSTANCE, true);
     initRootNode();
-  }
-
-  protected boolean isSmartExpand() {
-    return false;
-  }
-
-  protected boolean isAlwaysShowPlus(final NodeDescriptor nodeDescriptor) {
-    return false;
   }
 
   protected boolean isAutoExpandNode(final NodeDescriptor nodeDescriptor) {
@@ -96,7 +87,7 @@ public class TestTreeBuilder extends AbstractTestTreeBuilder {
     DefaultMutableTreeNode node = getNodeForElement(test);
     if (node != null) {
       if (node.getParent() != null) {
-        expandNodeChildren((DefaultMutableTreeNode) node.getParent());
+        expandNodeChildren((DefaultMutableTreeNode)node.getParent());
         node = getNodeForElement(test);
       }
       return node;
@@ -111,10 +102,5 @@ public class TestTreeBuilder extends AbstractTestTreeBuilder {
       }
     }
     return node;
-  }
-
-  @NotNull
-  protected ProgressIndicator createProgressIndicator() {
-    return new StatusBarProgress();
   }
 }
