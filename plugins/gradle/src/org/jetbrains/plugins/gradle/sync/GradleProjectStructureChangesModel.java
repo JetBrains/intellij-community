@@ -2,11 +2,13 @@ package org.jetbrains.plugins.gradle.sync;
 
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.containers.ConcurrentHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.diff.GradleProjectStructureChange;
 import org.jetbrains.plugins.gradle.diff.GradleProjectStructureChangesCalculator;
 import org.jetbrains.plugins.gradle.model.GradleProject;
 
+import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
@@ -19,8 +21,9 @@ import java.util.concurrent.CopyOnWriteArraySet;
  * @since 11/3/11 7:01 PM
  */
 public class GradleProjectStructureChangesModel extends AbstractProjectComponent {
-  
+
   private final Set<GradleProjectStructureChangeListener> myListeners = new CopyOnWriteArraySet<GradleProjectStructureChangeListener>();
+  private final Set<GradleProjectStructureChange>         myChanges   = new ConcurrentHashSet<GradleProjectStructureChange>();
 
   private final GradleProjectStructureChangesCalculator myChangesCalculator;
 
@@ -45,7 +48,12 @@ public class GradleProjectStructureChangesModel extends AbstractProjectComponent
    * @param gradleProject  gradle project to sync with
    */
   public void update(@NotNull GradleProject gradleProject) {
-    //TODO den implement
+    Set<GradleProjectStructureChange> knownChanges = new HashSet<GradleProjectStructureChange>(myChanges);
+    final Set<GradleProjectStructureChange> newChanges = myChangesCalculator.calculate(gradleProject, myProject, knownChanges);
+    myChanges.addAll(newChanges);
+    for (GradleProjectStructureChangeListener listener : myListeners) {
+      listener.onChanges(newChanges);
+    }
   }
 
   /**
@@ -64,7 +72,6 @@ public class GradleProjectStructureChangesModel extends AbstractProjectComponent
    */
   @NotNull
   public Set<GradleProjectStructureChange> getChanges() {
-    //TODO den implement
-    return null;
+    return myChanges;
   }
 }

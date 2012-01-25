@@ -1,19 +1,11 @@
 package org.jetbrains.plugins.gradle.config;
 
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
-import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorAndFontDescriptorsProvider;
 import com.intellij.openapi.options.colors.ColorDescriptor;
-import com.intellij.openapi.options.colors.ColorSettingsPage;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.ui.GradleIcons;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
-
-import javax.swing.*;
-import java.util.Map;
 
 /**
  * Provides support for defining gradle-specific color settings.
@@ -40,7 +32,7 @@ public class GradleColorAndFontDescriptorsProvider implements ColorAndFontDescri
     ),
     new AttributesDescriptor(
       GradleBundle.message("gradle.sync.change.type.intellij", ApplicationNamesInfo.getInstance().getProductName()),
-      GradleTextAttributes.GRADLE_INTELLIJ_LOCAL_CHANGE
+      GradleTextAttributes.INTELLIJ_LOCAL_CHANGE
     ),
     new AttributesDescriptor(
       GradleBundle.message("gradle.sync.change.type.unchanged"),
