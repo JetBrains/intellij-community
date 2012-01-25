@@ -185,18 +185,18 @@ target('default': "Build artifacts") {
     wireBuildDate(buildName, appInfoFile())
   }
 
-  LayoutInfo layoutInfo = layoutFull(paths.distAll, usedJars)
+  Map args = [
+          buildNumber: buildName,
+          system_selector: system_selector,
+          ide_jvm_args: "-Didea.platform.prefix=Python -Didea.no.jre.check=true"]
+
+  LayoutInfo layoutInfo = layoutFull(args, paths.distAll, usedJars)
   generateLicensesTable("$paths.artifacts/third-party-libraries.txt", layoutInfo.usedModules);
 
   egg = buildDebuggerEgg(paths.sandbox, "$home/python", buildName)
   ant.copy(file: egg, todir: paths.distAll)
 
   scramble()
-
-  Map args = [
-          buildNumber: buildName,
-          system_selector: system_selector,
-          ide_jvm_args: "-Didea.platform.prefix=Python -Didea.no.jre.check=true"]
 
   layoutWin(args, paths.distWin)
   layoutUnix(args, paths.distUnix)
@@ -240,7 +240,7 @@ private String appInfoFile() {
   return "$home/out/pycharm/classes/production/python-ide/idea/PythonApplicationInfo.xml"
 }
 
-private layoutFull(String target, Set usedJars) {
+private layoutFull(Map args, String target, Set usedJars) {
   def openapiModules = platformApiModules()
   def implementationModules = [platformImplementationModules(), "python", "python-ide"].flatten()
 
@@ -348,13 +348,12 @@ private layoutFull(String target, Set usedJars) {
 
     dir("bin") {
       fileset(dir: "$home/community/bin") {
-        include(name: "*.*")
-        exclude(name: "idea.properties")
         exclude(name: "appletviewer.policy")
+        include(name: "*.*")
       }
     }
   }
-  copyPropertiesFile("$home/python/build/idea.properties", target)
+  patchPropertiesFile(target, args + [appendices: ["$home/build/conf/ideaJNC.properties"]])
 
   return result
 }
@@ -420,7 +419,7 @@ private layoutMac(Map _args, String target) {
   args.icns = "$home/python/resources/PyCharm.icns"
   args.bundleIdentifier = "com.jetbrains.pycharm"
   args.platform_prefix = "Python"
-  args."idea.properties.path" = "$home/python/build/idea.properties"
+  args."idea.properties.path" = "${paths.distAll}/bin/idea.properties"
   args."idea.properties" = ["idea.no.jre.check": true, "ide.mac.useNativeClipboard": "false"];
   layoutMacApp(target, "$home/community", args)
 
