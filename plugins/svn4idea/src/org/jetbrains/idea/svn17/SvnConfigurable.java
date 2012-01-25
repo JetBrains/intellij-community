@@ -326,11 +326,11 @@ public class SvnConfigurable implements Configurable {
     value = (value == -1) ? SvnConfiguration17.ourMaxAnnotateRevisionsDefault : value;
     myNumRevsInAnnotations = new JSpinner(new SpinnerNumberModel(value, 10, 100000, 100));
 
-    final int maximum = 30 * 60 * 1000;
+    final Long maximum = 30 * 60 * 1000L;
     final long connection = configuration.mySSHConnectionTimeout <= maximum ? configuration.mySSHConnectionTimeout : maximum;
     final long read = configuration.mySSHReadTimeout <= maximum ? configuration.mySSHReadTimeout : maximum;
-    mySSHConnectionTimeout = new JSpinner(new SpinnerNumberModel(Long.valueOf(connection / 1000).longValue(), 0, maximum, 10));
-    mySSHReadTimeout = new JSpinner(new SpinnerNumberModel(Long.valueOf(read / 1000).longValue(), 0, maximum, 10));
+    mySSHConnectionTimeout = new JSpinner(new SpinnerNumberModel(Long.valueOf(connection / 1000), Long.valueOf(0L), maximum, Long.valueOf(10L)));
+    mySSHReadTimeout = new JSpinner(new SpinnerNumberModel(Long.valueOf(read / 1000), Long.valueOf(0L), maximum, Long.valueOf(10L)));
   }
 }
 
