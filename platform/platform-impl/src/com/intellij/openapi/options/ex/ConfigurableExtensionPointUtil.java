@@ -73,7 +73,7 @@ public class ConfigurableExtensionPointUtil {
   @NotNull
   private static <T extends Configurable> T findConfigurable(ConfigurableEP[] extensions, Class<T> configurableClass) {
     for (ConfigurableEP extension : extensions) {
-      if (extension.implementationClass != null) {
+      if (extension.providerClass != null || extension.instanceClass != null || extension.implementationClass != null) {
         final Configurable configurable = extension.createConfigurable();
         if (configurableClass.isInstance(configurable)) {
           return configurableClass.cast(configurable);
