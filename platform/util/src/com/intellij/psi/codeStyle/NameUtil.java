@@ -493,12 +493,12 @@ public class NameUtil {
       return null;
     }
 
-    private static FList<TextRange> prependRange(FList<TextRange> ranges, int from, int to) {
+    private static FList<TextRange> prependRange(FList<TextRange> ranges, int from, int length) {
       TextRange head = ranges.getHead();
-      if (head != null && head.getStartOffset() == from + to) {
+      if (head != null && head.getStartOffset() == from + length) {
         return ranges.getTail().prepend(new TextRange(from, head.getEndOffset()));
       }
-      return ranges.prepend(TextRange.from(from, to));
+      return ranges.prepend(TextRange.from(from, length));
     }
 
     private boolean isWordSeparator(char c) {
@@ -519,10 +519,10 @@ public class NameUtil {
 
         final FList<TextRange> ranges = matchName(name, patternIndex + 1, nextStart);
         if (ranges != null) {
-          return prependRange(ranges, patternIndex, patternIndex + 1);
+          return prependRange(ranges, nameIndex, 1);
         }
 
-        return ranges;
+        return null;
       }
 
       return matchName(name, patternIndex, nextStart);
