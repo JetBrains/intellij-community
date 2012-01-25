@@ -15,11 +15,9 @@
  */
 package com.intellij.codeInspection.magicConstant;
 
+import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.completion.*;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.codeInsight.lookup.LookupItemUtil;
-import com.intellij.codeInsight.lookup.VariableLookupItem;
+import com.intellij.codeInsight.lookup.*;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -28,6 +26,8 @@ import com.intellij.util.Consumer;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
@@ -140,13 +140,14 @@ public class MagicCompletionContributor extends CompletionContributor {
     });
     if (allowedValues.canBeOred) {
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(pos.getProject());
-      PsiExpression e0 = factory.createExpressionFromText("0", pos);
-      result.addElement(PrioritizedLookupElement.withPriority(LookupElementBuilder.create(e0,"0"), PRIORITY-1));
-      PsiExpression e1 = factory.createExpressionFromText("-1", pos);
-      result.addElement(PrioritizedLookupElement.withPriority(LookupElementBuilder.create(e1,"-1"), PRIORITY-1));
-      allowed.add(e0);
-      allowed.add(e1);
+      PsiExpression zero = factory.createExpressionFromText("0", pos);
+      result.addElement(PrioritizedLookupElement.withPriority(LookupElementBuilder.create(zero,"0"), PRIORITY-1));
+      PsiExpression minusOne = factory.createExpressionFromText("-1", pos);
+      result.addElement(PrioritizedLookupElement.withPriority(LookupElementBuilder.create(minusOne,"-1"), PRIORITY-1));
+      allowed.add(zero);
+      allowed.add(minusOne);
     }
+    List<ExpectedTypeInfo> types = Arrays.asList(JavaSmartCompletionContributor.getExpectedTypes(parameters));
     for (PsiAnnotationMemberValue value : allowedValues.values) {
       if (value instanceof PsiReference) {
         PsiElement resolved = ((PsiReference)value).resolve();
@@ -156,15 +157,19 @@ public class MagicCompletionContributor extends CompletionContributor {
           if (lookupElement instanceof VariableLookupItem) {
             ((VariableLookupItem)lookupElement).setSubstitutor(PsiSubstitutor.EMPTY);
           }
-          result.addElement(PrioritizedLookupElement.withPriority(lookupElement, PRIORITY));
+          LookupElement element = PrioritizedLookupElement.withPriority(lookupElement, PRIORITY);
+          element = decorate(parameters, types, element);
+          result.addElement(element);
           allowed.add(resolved);
           continue;
         }
       }
-      LookupElementBuilder builder = LookupElementBuilder.create(value, value.getText());
-      result.addElement(builder);
+      LookupElement element = LookupElementBuilder.create(value, value.getText());
+      element = decorate(parameters, types, element);
+      result.addElement(element);
       allowed.add(value);
     }
+
     result.runRemainingContributors(parameters, new Consumer<CompletionResult>() {
       @Override
       public void consume(CompletionResult completionResult) {
@@ -175,6 +180,13 @@ public class MagicCompletionContributor extends CompletionContributor {
         result.passResult(completionResult);
       }
     });
+  }
+
+  private static LookupElement decorate(CompletionParameters parameters, List<ExpectedTypeInfo> types, LookupElement element) {
+    if (!types.isEmpty() && parameters.getCompletionType() == CompletionType.SMART) {
+      element = JavaSmartCompletionContributor.decorate(element, types);
+    }
+    return element;
   }
 }
   
