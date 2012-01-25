@@ -24,8 +24,6 @@ public class AssignmentCollectProcessor implements PsiScopeProcessor {
   /**
    * Creates an instance to collect assignments of attributes to the object identified by 'qualifier'.
    * E.g. if qualifier = {"foo", "bar"} then assignments like "foo.bar.baz = ..." will be considered.
-   * The collection continues up to the point of latest redefinition of the object identified by 'qualifier',
-   * that is, up to the point of something like "foo.bar = ..." or "foo = ...".
    *
    * @param qualifier qualifying names, outermost first; must not be empty.
    */
@@ -53,10 +51,6 @@ public class AssignmentCollectProcessor implements PsiScopeProcessor {
                 myResult.add(last_elt);
                 mySeenNames.add(last_elt_name);
               }
-            }
-            else if (qualifiedName.getComponentCount() < myQualifier.getComponentCount() + 1 && myQualifier.matchesPrefix(qualifiedName)) {
-              // qualifier(s) get redefined; collect no more.
-              return false;
             }
           }
         }
