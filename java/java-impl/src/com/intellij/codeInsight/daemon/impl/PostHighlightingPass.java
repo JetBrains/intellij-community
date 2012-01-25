@@ -51,6 +51,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -200,6 +201,9 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
       @Override
       public void run() {
         if (file.getProject().isDisposed() || editor.isDisposed() || editor.getDocument().getModificationStamp() != stamp) return;
+        //no need to optimize imports on the fly during undo/redo
+        final UndoManager undoManager = UndoManager.getInstance(editor.getProject());
+        if (undoManager.isUndoInProgress() || undoManager.isRedoInProgress()) return;
         PsiDocumentManager.getInstance(file.getProject()).commitAllDocuments();
         String beforeText = file.getText();
         final long oldStamp = editor.getDocument().getModificationStamp();
