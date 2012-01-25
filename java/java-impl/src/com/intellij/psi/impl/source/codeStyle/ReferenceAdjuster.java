@@ -221,7 +221,8 @@ public class ReferenceAdjuster {
   private static boolean isSafeToShortenReference(final String referenceText, final PsiElement psiReference, final PsiClass refClass) {
     final PsiManager manager = refClass.getManager();
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
-    return manager.areElementsEquivalent(refClass, facade.getResolveHelper().resolveReferencedClass(referenceText, psiReference));
+    final PsiResolveHelper helper = facade.getResolveHelper();
+    return manager.areElementsEquivalent(refClass, helper.resolveReferencedClass(referenceText, psiReference)) && helper.resolveReferencedVariable(referenceText, psiReference) == null;
   }
 
   @NotNull
