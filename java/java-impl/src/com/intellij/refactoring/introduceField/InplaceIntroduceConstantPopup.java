@@ -175,6 +175,7 @@ public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceField
   protected boolean performRefactoring() {
     JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_MOVE_TO_ANOTHER_CLASS = myMoveToAnotherClassCb.isSelected();
     if (myMoveToAnotherClassCb.isSelected()) {
+      myEditor.putUserData(INTRODUCE_RESTART, true);
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {
@@ -190,7 +191,15 @@ public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceField
             }
           }
           finally {
+            myEditor.putUserData(INTRODUCE_RESTART, false);
             myEditor.putUserData(ACTIVE_INTRODUCE, null);
+            releaseResources();
+            if (myLocalMarker != null) {
+              myLocalMarker.dispose();
+            }
+            if (myExprMarker != null) {
+              myExprMarker.dispose();
+            }
           }
         }
       });

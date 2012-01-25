@@ -233,27 +233,31 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   private static MultiMap<LocalInspectionTool, String> getToolsForElements(List<LocalInspectionToolWrapper> toolWrappers,
                                                                boolean checkDumbAwareness,
                                                                List<PsiElement> inside, List<PsiElement> outside) {
-    Set<Language> languages = new HashSet<Language>();
+    Set<Language> languages = new THashSet<Language>();
+    Map<String, Language> langIds = new THashMap<String, Language>();
+    Set<String> dialects = new THashSet<String>();
     for (PsiElement element : inside) {
-      languages.add(element.getLanguage());
+      Language language = element.getLanguage();
+      if (languages.add(language)) {
+        langIds.put(language.getID(), language);
+        for (Language dialect : language.getDialects()) {
+          dialects.add(dialect.getID());
+        }
+      }
     }
     for (PsiElement element : outside) {
-      languages.add(element.getLanguage());
-    }
-    Map<String, Language> langIds = new HashMap<String, Language>();
-    for (Language language : languages) {
-      langIds.put(language.getID(), language);
-    }
-    Set<String> dialects = new HashSet<String>();
-    for (Language language : languages) {
-      for (Language dialect : language.getDialects()) {
-        dialects.add(dialect.getID());
+      Language language = element.getLanguage();
+      if (languages.add(language)) {
+        langIds.put(language.getID(), language);
+        for (Language dialect : language.getDialects()) {
+          dialects.add(dialect.getID());
+        }
       }
     }
     MultiMap<LocalInspectionTool, String> map = new MultiMap<LocalInspectionTool, String>() {
       @Override
       protected Collection<String> createCollection() {
-        return new HashSet<String>();
+        return new THashSet<String>();
       }
 
       @Override
@@ -319,11 +323,11 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
             }
           }
         };
-        PsiElementVisitor visitor = createVisitorAndAcceptElements(tool, holder, isOnTheFly, session, elements,
-                                                                   (Set<String>)pair.getValue());
+        Set<String> languages = (Set<String>)pair.getValue();
+        PsiElementVisitor visitor = createVisitorAndAcceptElements(tool, holder, isOnTheFly, session, elements, languages);
 
         synchronized (init) {
-          init.add(new InspectionContext(tool, holder, visitor, (Set<String>)pair.getValue()));
+          init.add(new InspectionContext(tool, holder, visitor, languages));
         }
         advanceProgress(1);
 
@@ -477,7 +481,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     }
   }, myProject.getDisposed(), 200);
 
-  private final Set<TextRange> emptyActionRegistered = Collections.synchronizedSet(new HashSet<TextRange>());
+  private final Set<TextRange> emptyActionRegistered = Collections.synchronizedSet(new THashSet<TextRange>());
 
   private void addDescriptorIncrementally(@NotNull final ProblemDescriptor descriptor,
                                           @NotNull final LocalInspectionTool tool,
@@ -777,7 +781,6 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   }
   
   private static class InspectionContext {
-    
     private InspectionContext(LocalInspectionTool tool, ProblemsHolder holder, PsiElementVisitor visitor, Set<String> languageIds) {
       this.tool = tool;
       this.holder = holder;

@@ -44,4 +44,13 @@ public class ScrollPaneFactory {
   public static JScrollPane createScrollPane(Component view, int vsbPolicy, int hsbPolicy) {
     return new JBScrollPane(view, vsbPolicy, hsbPolicy);
   }
+
+  public static JScrollPane createScrollPane(Component view, boolean withoutBorder) {
+    JBScrollPane scrollPane = new JBScrollPane(view);
+    if (withoutBorder) {
+      scrollPane.setBorder(null);
+    }
+    return scrollPane;
+
+  }
 }

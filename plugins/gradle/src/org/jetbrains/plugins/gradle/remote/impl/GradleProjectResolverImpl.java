@@ -5,6 +5,7 @@ import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.containers.HashMap;
 import org.gradle.tooling.*;
 import org.gradle.tooling.model.DomainObjectSet;
@@ -12,22 +13,21 @@ import org.gradle.tooling.model.idea.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.*;
-import org.jetbrains.plugins.gradle.notification.GradleTaskId;
+import org.jetbrains.plugins.gradle.task.GradleTaskId;
 import org.jetbrains.plugins.gradle.notification.GradleTaskNotificationEvent;
 import org.jetbrains.plugins.gradle.notification.GradleTaskNotificationListener;
 import org.jetbrains.plugins.gradle.remote.GradleApiException;
 import org.jetbrains.plugins.gradle.remote.GradleProjectResolver;
 import org.jetbrains.plugins.gradle.remote.RemoteGradleProcessSettings;
 import org.jetbrains.plugins.gradle.remote.RemoteGradleService;
+import org.jetbrains.plugins.gradle.task.GradleTaskType;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleLog;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import java.io.File;
 import java.rmi.RemoteException;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -39,12 +39,14 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class GradleProjectResolverImpl extends RemoteObject implements GradleProjectResolver, RemoteGradleService {
 
-  private final ThreadLocal<ProjectConnection>               myCurrentConnection = new ThreadLocal<ProjectConnection>();
-  private final BlockingQueue<ProjectConnection>             myConnections       = new LinkedBlockingQueue<ProjectConnection>();
-  private final AtomicReference<RemoteGradleProcessSettings> mySettings          = new AtomicReference<RemoteGradleProcessSettings>();
-  private final GradleLibraryNamesMixer                      myLibraryNamesMixer = new GradleLibraryNamesMixer();
-  private final AtomicReference<GradleTaskNotificationListener> myNotificationListener =
-    new AtomicReference<GradleTaskNotificationListener>();
+  private final ThreadLocal<ProjectConnection>                  myCurrentConnection = new ThreadLocal<ProjectConnection>();
+  private final BlockingQueue<ProjectConnection>                myConnections       = new LinkedBlockingQueue<ProjectConnection>();
+  private final AtomicReference<RemoteGradleProcessSettings>    mySettings          = new AtomicReference<RemoteGradleProcessSettings>();
+  private final GradleLibraryNamesMixer                         myLibraryNamesMixer = new GradleLibraryNamesMixer();
+  private final ConcurrentHashSet<GradleTaskId>                 myTasksInProgress   = new ConcurrentHashSet<GradleTaskId>();
+  private final AtomicReference<GradleTaskNotificationListener> myNotificationListener
+    = new AtomicReference<GradleTaskNotificationListener>();
+  
 
   @NotNull
   @Override
@@ -71,7 +73,21 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
       }
     }
   }
-  
+
+  @Override
+  public boolean isTaskInProgress(@NotNull GradleTaskId id) {
+    return myTasksInProgress.contains(id);
+  }
+
+  @NotNull
+  @Override
+  public Collection<GradleTaskId> getTasksInProgress(@NotNull GradleTaskType type) {
+    if (type != GradleTaskType.RESOLVE_PROJECT || myTasksInProgress.isEmpty()) {
+      return Collections.emptySet();
+    }
+    return new HashSet<GradleTaskId>(myTasksInProgress);
+  }
+
   @NotNull
   private GradleProject doResolveProjectInfo(@NotNull final GradleTaskId id, @NotNull String projectPath, boolean downloadLibraries)
     throws RemoteException, IllegalArgumentException, IllegalStateException
@@ -237,7 +253,8 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
     );
   }
 
-  private static void populateDependencies(@NotNull IdeaModule gradleModule, @NotNull GradleModule intellijModule, 
+  private static void populateDependencies(@NotNull IdeaModule gradleModule,
+                                           @NotNull GradleModule intellijModule, 
                                            @NotNull GradleProject intellijProject)
   {
     DomainObjectSet<? extends IdeaDependency> dependencies = gradleModule.getDependencies();
@@ -250,10 +267,10 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
       }
       AbstractGradleDependency intellijDependency = null;
       if (dependency instanceof IdeaModuleDependency) {
-        intellijDependency = buildDependency((IdeaModuleDependency)dependency, intellijProject);
+        intellijDependency = buildDependency(intellijModule, (IdeaModuleDependency)dependency, intellijProject);
       }
       else if (dependency instanceof IdeaSingleEntryLibraryDependency) {
-        intellijDependency = buildDependency((IdeaSingleEntryLibraryDependency)dependency, intellijProject);
+        intellijDependency = buildDependency(intellijModule, (IdeaSingleEntryLibraryDependency)dependency, intellijProject);
       }
 
       if (intellijDependency == null) {
@@ -270,7 +287,9 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
   }
 
   @NotNull
-  private static AbstractGradleDependency buildDependency(@NotNull IdeaModuleDependency dependency, @NotNull GradleProject intellijProject)
+  private static AbstractGradleDependency buildDependency(@NotNull GradleModule ownerModule,
+                                                          @NotNull IdeaModuleDependency dependency,
+                                                          @NotNull GradleProject intellijProject)
     throws IllegalStateException
   {
     IdeaModule module = dependency.getDependencyModule();
@@ -291,7 +310,7 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
     for (GradleModule gradleModule : intellijProject.getModules()) {
       registeredModuleNames.add(gradleModule.getName());
       if (gradleModule.getName().equals(moduleName)) {
-        return new GradleModuleDependency(gradleModule);
+        return new GradleModuleDependency(ownerModule, gradleModule);
       }
     }
     throw new IllegalStateException(String.format(
@@ -301,7 +320,8 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
   }
 
   @NotNull
-  private static AbstractGradleDependency buildDependency(@NotNull IdeaSingleEntryLibraryDependency dependency, 
+  private static AbstractGradleDependency buildDependency(@NotNull GradleModule ownerModule,
+                                                          @NotNull IdeaSingleEntryLibraryDependency dependency, 
                                                           @NotNull GradleProject intellijProject)
     throws IllegalStateException
   {
@@ -329,12 +349,12 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
     if (!intellijProject.addLibrary(library)) {
       for (GradleLibrary registeredLibrary : intellijProject.getLibraries()) {
         if (registeredLibrary.equals(library)) {
-          return new GradleLibraryDependency(registeredLibrary);
+          return new GradleLibraryDependency(ownerModule, registeredLibrary);
         }
       }
     }
     
-    return new GradleLibraryDependency(library);
+    return new GradleLibraryDependency(ownerModule, library);
   }
 
   @Nullable

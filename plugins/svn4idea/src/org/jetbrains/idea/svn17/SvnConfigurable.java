@@ -27,15 +27,19 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.MultiLineTooltipUI;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.JBRadioButton;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.svn17.config.ConfigureProxiesListener;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -65,6 +69,9 @@ public class SvnConfigurable implements Configurable {
   private JSpinner mySSHReadTimeout;
   private JBLabel myWarningLabel;
   private HyperlinkLabel myLinkLabel;
+  private JRadioButton myJavaHLAcceleration;
+  private JRadioButton myNoAcceleration;
+  private JLabel myJavaHLInfo;
 
   @NonNls private static final String HELP_ID = "project.propSubversion";
 
@@ -137,7 +144,11 @@ public class SvnConfigurable implements Configurable {
       }
     });
     myNumRevsInAnnotations.setEnabled(myMaximumNumberOfRevisionsCheckBox.isSelected());
- }
+
+    ButtonGroup bg = new ButtonGroup();
+    bg.add(myNoAcceleration);
+    bg.add(myJavaHLAcceleration);
+  }
 
   private static FileChooserDescriptor createFileDescriptor() {
     final FileChooserDescriptor descriptor =  FileChooserDescriptorFactory.createSingleFolderDescriptor();
@@ -191,6 +202,7 @@ public class SvnConfigurable implements Configurable {
     if (configuration.SHOW_MERGE_SOURCES_IN_ANNOTATE != myShowMergeSourceInAnnotate.isSelected()) {
       return true;
     }
+    if (! configuration.myUseAcceleration.equals(acceleration())) return true;
     final int annotateRevisions = configuration.getMaxAnnotateRevisions();
     final boolean useMaxInAnnot = annotateRevisions != -1;
     if (useMaxInAnnot != myMaximumNumberOfRevisionsCheckBox.isSelected()) {
@@ -208,6 +220,34 @@ public class SvnConfigurable implements Configurable {
       return true;
     }
     return !configuration.getConfigurationDirectory().equals(myConfigurationDirectoryText.getText().trim());
+  }
+  
+  private SvnConfiguration17.UseAcceleration acceleration() {
+    if (myNoAcceleration.isSelected()) return SvnConfiguration17.UseAcceleration.nothing;
+    if (myJavaHLAcceleration.isSelected()) return SvnConfiguration17.UseAcceleration.javaHL;
+    return SvnConfiguration17.UseAcceleration.nothing;
+  }
+
+  private void setAcceleration(SvnConfiguration17.UseAcceleration acceleration) {
+    if (! CheckJavaHL.isPresent()) {
+      myJavaHLInfo.setText(CheckJavaHL.getProblemDescription());
+      myJavaHLInfo.setForeground(Color.red);
+      myJavaHLInfo.setEnabled(true);
+      myJavaHLAcceleration.setEnabled(false);
+      /*myJavaHLAcceleration.setText(myJavaHLAcceleration.getText() + ". " + CheckJavaHL.getProblemDescription());
+      myJavaHLAcceleration.setEnabled(false);
+      myJavaHLAcceleration.setForeground(Color.red);*/
+    } else {
+      myJavaHLInfo.setText("You need to have JavaHL 1.7.2");
+      myJavaHLInfo.setForeground(UIUtil.getInactiveTextColor());
+      myJavaHLAcceleration.setEnabled(true);
+    }
+
+    if (SvnConfiguration17.UseAcceleration.javaHL.equals(acceleration)) {
+      myJavaHLAcceleration.setSelected(true);
+      return;
+    }
+    myNoAcceleration.setSelected(true);
   }
 
   public void apply() throws ConfigurationException {
@@ -230,6 +270,7 @@ public class SvnConfigurable implements Configurable {
     }
     configuration.mySSHConnectionTimeout = ((SpinnerNumberModel) mySSHConnectionTimeout.getModel()).getNumber().longValue() * 1000;
     configuration.mySSHReadTimeout = ((SpinnerNumberModel) mySSHReadTimeout.getModel()).getNumber().longValue() * 1000;
+    configuration.myUseAcceleration = acceleration();
   }
 
   public void reset() {
@@ -262,6 +303,7 @@ public class SvnConfigurable implements Configurable {
     myNumRevsInAnnotations.setEnabled(myMaximumNumberOfRevisionsCheckBox.isSelected());
     mySSHConnectionTimeout.setValue(Long.valueOf(configuration.mySSHConnectionTimeout / 1000));
     mySSHReadTimeout.setValue(Long.valueOf(configuration.mySSHReadTimeout / 1000));
+    setAcceleration(configuration.myUseAcceleration);
   }
 
   public void disposeUIResources() {
@@ -284,11 +326,11 @@ public class SvnConfigurable implements Configurable {
     value = (value == -1) ? SvnConfiguration17.ourMaxAnnotateRevisionsDefault : value;
     myNumRevsInAnnotations = new JSpinner(new SpinnerNumberModel(value, 10, 100000, 100));
 
-    final int maximum = 30 * 60 * 1000;
+    final Long maximum = 30 * 60 * 1000L;
     final long connection = configuration.mySSHConnectionTimeout <= maximum ? configuration.mySSHConnectionTimeout : maximum;
     final long read = configuration.mySSHReadTimeout <= maximum ? configuration.mySSHReadTimeout : maximum;
-    mySSHConnectionTimeout = new JSpinner(new SpinnerNumberModel(Long.valueOf(connection / 1000).longValue(), 0, maximum, 10));
-    mySSHReadTimeout = new JSpinner(new SpinnerNumberModel(Long.valueOf(read / 1000).longValue(), 0, maximum, 10));
+    mySSHConnectionTimeout = new JSpinner(new SpinnerNumberModel(Long.valueOf(connection / 1000), Long.valueOf(0L), maximum, Long.valueOf(10L)));
+    mySSHReadTimeout = new JSpinner(new SpinnerNumberModel(Long.valueOf(read / 1000), Long.valueOf(0L), maximum, Long.valueOf(10L)));
   }
 }
 

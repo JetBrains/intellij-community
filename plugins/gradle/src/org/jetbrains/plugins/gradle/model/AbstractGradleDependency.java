@@ -16,16 +16,23 @@ public abstract class AbstractGradleDependency<T extends AbstractGradleEntity & 
 
   private static final long serialVersionUID = 1L;
 
-  private final T myTarget;
+  private final GradleModule myOwnerModule;
+  private final T            myTarget;
   
   private DependencyScope myScope = DependencyScope.COMPILE;
 
   private transient boolean mySkipNameChange;
   private           boolean myExported;
 
-  protected AbstractGradleDependency(@NotNull T dependency) {
+  protected AbstractGradleDependency(@NotNull GradleModule ownerModule, @NotNull T dependency) {
+    myOwnerModule = ownerModule;
     myTarget = dependency;
     initListener();
+  }
+
+  @NotNull
+  public GradleModule getOwnerModule() {
+    return myOwnerModule;
   }
 
   @NotNull
@@ -97,9 +104,12 @@ public abstract class AbstractGradleDependency<T extends AbstractGradleEntity & 
 
   @Override
   public int hashCode() {
-    return myTarget.hashCode();
+    int result = super.hashCode();
+    result = 31 * result + myOwnerModule.hashCode();
+    result = 31 * result + myTarget.hashCode();
+    return result;
   }
-  
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -109,7 +119,7 @@ public abstract class AbstractGradleDependency<T extends AbstractGradleEntity & 
       return false;
     }
     AbstractGradleDependency<?> that = (AbstractGradleDependency<?>)o;
-    return myTarget.equals(that.myTarget);
+    return myOwnerModule.equals(that.myOwnerModule) && myTarget.equals(that.myTarget);
   }
 
   @Override

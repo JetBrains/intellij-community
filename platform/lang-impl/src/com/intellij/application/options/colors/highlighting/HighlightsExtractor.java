@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ package com.intellij.application.options.colors.highlighting;
 
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.util.containers.Stack;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,7 +38,7 @@ public class HighlightsExtractor {
   private boolean myIsOpeningTag;
   private static final HighlightData[] EMPTY_DATA = new HighlightData[0];
 
-  public HighlightsExtractor(Map<String, TextAttributesKey> tags) {
+  public HighlightsExtractor(@Nullable Map<String, TextAttributesKey> tags) {
     myTags = tags;
   }
 

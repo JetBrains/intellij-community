@@ -48,6 +48,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrNamedArgumentSearchVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
@@ -370,7 +371,7 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
     return ObjectUtils.assertNotNull(getStubOrPsiChild(GroovyElementTypes.MODIFIERS));
   }
 
-  public boolean hasModifierProperty(@NonNls @NotNull String name) {
+  public boolean hasModifierProperty(@GrModifier.GrModifierConstant @NonNls @NotNull String name) {
     if (name.equals(PsiModifier.ABSTRACT)) {
       final PsiClass containingClass = getContainingClass();
       if (containingClass != null && containingClass.isInterface()) return true;

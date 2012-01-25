@@ -520,6 +520,8 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     checkResult()
   }
 
+  public void testContinueLabel() throws Throwable { doTest(); }
+
   public void testAnonymousProcess() {
     myFixture.addClass 'package java.lang; public class Process {}'
     myFixture.addClass '''

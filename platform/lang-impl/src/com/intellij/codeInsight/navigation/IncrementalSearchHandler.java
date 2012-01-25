@@ -130,6 +130,8 @@ public class IncrementalSearchHandler {
 
     final DocumentListener[] documentListener = new DocumentListener[1];
     final CaretListener[] caretListener = new CaretListener[1];
+    final Document document = editor.getDocument();
+
     final LightweightHint hint = new LightweightHint(panel) {
       public void hide() {
         PerHintSearchData data = getUserData(SEARCH_DATA_IN_HINT_KEY);
@@ -146,7 +148,7 @@ public class IncrementalSearchHandler {
         editorData.lastSearch = prefix;
 
         if (documentListener[0] != null){
-          editor.getDocument().removeDocumentListener(documentListener[0]);
+          document.removeDocumentListener(documentListener[0]);
         }
 
         if (caretListener[0] != null){
@@ -162,7 +164,7 @@ public class IncrementalSearchHandler {
         hint.hide();
       }
     };
-    editor.getDocument().addDocumentListener(documentListener[0]);
+    document.addDocumentListener(documentListener[0]);
 
     caretListener[0] = new CaretListener() {
       public void caretPositionChanged(CaretEvent e) {

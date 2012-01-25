@@ -72,6 +72,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
       public void editorReleased(EditorFactoryEvent event) {
         Editor editor = event.getEditor();
         if (editor.getProject() != null && editor.getProject() != myProject) return;
+        if (myProject.isDisposed() || !myProject.isOpen()) return;
         TemplateState tState = getTemplateState(editor);
         if (tState != null) {
           tState.gotoEnd();

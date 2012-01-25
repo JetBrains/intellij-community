@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.diff.impl.dir;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.diff.BackgroundOperatingDiffElement;
 import com.intellij.ide.diff.DiffElement;
 import com.intellij.ide.diff.DirDiffModel;
@@ -363,7 +364,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   }
 
   public String getTitle() {
-    return "Diff between " + mySrc.getPresentablePath() + " and " + myTrg.getPresentablePath();
+    return IdeBundle.message("diff.dialog.title", mySrc.getPresentablePath(), myTrg.getPresentablePath());
   }
 
   @Nullable

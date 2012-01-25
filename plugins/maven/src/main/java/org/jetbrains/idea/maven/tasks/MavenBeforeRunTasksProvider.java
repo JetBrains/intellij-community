@@ -100,7 +100,7 @@ public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBefo
 
   public boolean executeTask(final DataContext context, RunConfiguration configuration, final MavenBeforeRunTask task) {
     final Semaphore targetDone = new Semaphore();
-    final boolean[] result = new boolean[1];
+    final boolean[] result = new boolean[]{true};
     try {
       ApplicationManager.getApplication().invokeAndWait(new Runnable() {
           public void run() {

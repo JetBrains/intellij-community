@@ -105,6 +105,7 @@ public abstract class FileEditorManager {
    * @return editor which is currently selected in the currently selected file.
    * The method returns <code>null</code> if <code>file</code> is not opened.
    */
+  @Nullable
   public abstract FileEditor getSelectedEditor(@NotNull VirtualFile file);
 
   /**

@@ -20,7 +20,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwner;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.VariableInfo;
 
 /**
@@ -34,7 +33,7 @@ public interface ExtractInfoHelper {
   ParameterInfo[] getParameterInfos();
 
   @NotNull
-  VariableInfo[] getOutputNames();
+  VariableInfo[] getOutputVariableInfos();
 
   @NotNull
   String[] getArgumentNames();
@@ -48,6 +47,7 @@ public interface ExtractInfoHelper {
   @NotNull
   GrStatement[] getStatements();
 
-  @NotNull
-  GrMemberOwner getOwner();
+  boolean hasReturnValue();
+  
+  String getName();
 }

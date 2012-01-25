@@ -89,7 +89,7 @@ class FileLoader extends Loader {
         if (check) {
           ++misses;
           if (misses % 1000 == 0 && UrlClassLoader.doDebug) {
-            UrlClassLoader.debug("Missed resource " + name + " from " + myRootDir);
+            UrlClassLoader.debug("[Sample of] missed resource " + name + " from " + myRootDir);
           }
         }
 

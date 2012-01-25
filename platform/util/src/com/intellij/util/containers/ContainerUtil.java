@@ -217,6 +217,17 @@ public class ContainerUtil {
     return true;
   }
 
+  public static <T> boolean process(@NotNull List<? extends T> list, @NotNull Processor<T> processor) {
+    //noinspection ForLoopReplaceableByForEach
+    for (int i = 0, size = list.size(); i < size; i++) {
+      T t = list.get(i);
+      if (!processor.process(t)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   public static <T> boolean process(@NotNull T[] iterable, @NotNull Processor<? super T> processor) {
     for (final T t : iterable) {
       if (!processor.process(t)) {

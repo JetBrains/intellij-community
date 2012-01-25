@@ -48,6 +48,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.NetUtils;
@@ -354,7 +355,7 @@ public class CompileServerManager implements ApplicationComponent{
     fillSdks(globals);
     fillGlobalLibraries(globals);
 
-    return client.sendSetupRequest(data, globals);
+    return client.sendSetupRequest(data, globals, EncodingManager.getInstance().getDefaultCharsetName());
   }
 
   private static void fillSdks(List<GlobalLibrary> globals) {
@@ -397,10 +398,17 @@ public class CompileServerManager implements ApplicationComponent{
   //  commandLine.add((launcherUsed? "-J" : "") + "-D" + CharsetToolkit.FILE_ENCODING_PROPERTY + "=" + CharsetToolkit.getDefaultSystemCharset().name());
   //}
 
-  private Process launchServer(int port) throws ExecutionException {
+  private Process launchServer(final int port) throws ExecutionException {
+    // validate tools.jar presence
+    final JavaCompiler systemCompiler = ToolProvider.getSystemJavaCompiler();
+    if (systemCompiler == null) {
+      throw new ExecutionException("No system java compiler is provided by the JRE. Make sure tools.jar is present in IntelliJ IDEA classpath.");
+    }
+
     final Sdk projectJdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
     final GeneralCommandLine cmdLine = new GeneralCommandLine();
-    cmdLine.setExePath(((JavaSdkType)projectJdk.getSdkType()).getVMExecutablePath(projectJdk));
+    final String vmExecutablePath = ((JavaSdkType)projectJdk.getSdkType()).getVMExecutablePath(projectJdk);
+    cmdLine.setExePath(vmExecutablePath);
     cmdLine.addParameter("-server");
     cmdLine.addParameter("-ea");
     cmdLine.addParameter("-XX:MaxPermSize=150m");
@@ -410,12 +418,21 @@ public class CompileServerManager implements ApplicationComponent{
     cmdLine.addParameter("-Xmx" + Registry.intValue("compiler.server.heap.size") + "m");
 
     // debugging
-    cmdLine.addParameter("-XX:+HeapDumpOnOutOfMemoryError");
-    //cmdLine.addParameter("-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5008");
-    
-    if (Registry.is("compiler.server.use.memory.temp.cache")) {
-      cmdLine.addParameter("-D"+Server.USE_MEMORY_TEMP_CACHE_OPTION + "=true");
+    final int debugPort = Registry.intValue("compiler.server.debug.port");
+    if (debugPort > 0) {
+      cmdLine.addParameter("-XX:+HeapDumpOnOutOfMemoryError");
+      cmdLine.addParameter("-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=" + debugPort);
     }
+
+    if (Registry.is("compiler.server.use.memory.temp.cache")) {
+      cmdLine.addParameter("-D"+ GlobalOptions.USE_MEMORY_TEMP_CACHE_OPTION + "=true");
+    }
+    if (Registry.is("compiler.server.use.external.javac.process")) {
+      cmdLine.addParameter("-D"+ GlobalOptions.USE_EXTERNAL_JAVAC_OPTION + "=true");
+    }
+    cmdLine.addParameter("-D"+ GlobalOptions.HOSTNAME_OPTION + "=" + NetUtils.getLocalHostString());
+    cmdLine.addParameter("-D"+ GlobalOptions.VM_EXE_PATH_OPTION + "=" + FileUtil.toSystemIndependentName(vmExecutablePath));
+
     // javac's VM should use the same default locale that IDEA uses in order for javac to print messages in 'correct' language
     final String lang = System.getProperty("user.language");
     if (lang != null) {
@@ -434,21 +451,9 @@ public class CompileServerManager implements ApplicationComponent{
       cmdLine.addParameter("-Duser.region=" + region);
     }
 
-
     cmdLine.addParameter("-classpath");
 
-    final List<File> cp = ClasspathBootstrap.getApplicationClasspath();
-
-    // append tools.jar
-    final JavaCompiler systemCompiler = ToolProvider.getSystemJavaCompiler();
-    if (systemCompiler == null) {
-      throw new ExecutionException("No system java compiler is provided by the JRE. Make sure tools.jar is present in IntelliJ IDEA classpath.");
-    }
-    try {
-      cp.add(ClasspathBootstrap.getResourcePath(systemCompiler.getClass()));  // tools.jar
-    }
-    catch (Throwable ignored) {
-    }
+    final List<File> cp = ClasspathBootstrap.getCompileServerApplicationClasspath();
 
     cmdLine.addParameter(classpathToString(cp));
 

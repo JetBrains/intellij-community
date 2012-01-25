@@ -106,5 +106,6 @@ public class ExtractMethodTest extends LightGroovyTestCase {
   public void testAOOBE() {doTest();}
   
   public void testWildCardReturnType() {doTest();}
+  public void testParamChangedInsideExtractedMethod() {doTest();}
 
 }

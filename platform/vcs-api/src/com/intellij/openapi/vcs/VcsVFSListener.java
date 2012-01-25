@@ -223,6 +223,9 @@ public abstract class VcsVFSListener implements Disposable {
                                            getSingleFileDeletePromptTemplate(), myRemoveOption);
   }
 
+  protected void beforeContentsChange(VirtualFile file) {
+  }
+
   private void addFileToMove(final VirtualFile file, final String newParentPath, final String newName) {
     if (file.isDirectory() && !isDirectoryVersioningSupported()) {
       VirtualFile[] children = file.getChildren();
@@ -370,6 +373,14 @@ public abstract class VcsVFSListener implements Disposable {
             addFileToMove(file, parent.getPath(), newName);
           }
         }
+      }
+    }
+
+    @Override
+    public void beforeContentsChange(VirtualFileEvent event) {
+      if (!isEventIgnored(event, false)) {
+        assert !event.getFile().isDirectory();
+        VcsVFSListener.this.beforeContentsChange(event.getFile());
       }
     }
   }

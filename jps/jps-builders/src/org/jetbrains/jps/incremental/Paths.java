@@ -25,8 +25,8 @@ public class Paths {
     return ourInstance;
   }
 
-  public File getSystemRoot() {
-    return mySystemRoot;
+  public static File getSystemRoot() {
+    return getInstance().mySystemRoot;
   }
 
   public void setSystemRoot(File systemRoot) {
@@ -51,5 +51,9 @@ public class Paths {
     catch (URISyntaxException e) {
       throw new Error(e);
     }
+  }
+
+  public static File convertToFile(final URI uri) {
+    return new File(toURI(uri.getPath()));
   }
 }

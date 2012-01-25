@@ -11,7 +11,7 @@ protected static def getGeneratedFileNames(String name, int boo) {
 }
 
 private static ArrayList<String> testMethod() {
-    ArrayList<String> names
+    def names
     names = new ArrayList<String>()
     return names
 }

@@ -532,7 +532,7 @@ public interface Test {
     }
     edt { myFixture.type '\t' }
     myFixture.checkResult 'public interface Test { RuntimeException<caret>x }'
-  }
+ }
 
   private def registerContributor(final Class contributor, LoadingOrder order = LoadingOrder.LAST) {
     def ep = Extensions.rootArea.getExtensionPoint("com.intellij.completion.contributor")
@@ -1194,5 +1194,13 @@ class Foo {{
     assert 'io' in myFixture.lookupElementStrings
   }
 
+  public void testEnteringLabel() {
+    myFixture.configureByText 'a.java', '''class Foo {{
+  <caret>
+}}
+'''
+    type 'FIS:'
+    assert myFixture.file.text.contains('FIS:')
+  }
 
 }

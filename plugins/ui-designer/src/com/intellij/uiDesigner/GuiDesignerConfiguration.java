@@ -49,6 +49,7 @@ public final class GuiDesignerConfiguration implements PersistentStateComponent<
 
   public String DEFAULT_FIELD_ACCESSIBILITY = PsiModifier.PRIVATE;
 
+  public boolean RESIZE_HEADERS = true;
 
   public GuiDesignerConfiguration getState() {
     return this;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,10 @@ public class GrIntroduceParameterTest extends LightCodeInsightFixtureTestCase {
   
   protected String getBasePath() {
     return TestUtils.getTestDataPath() + "refactoring/introduceParameterGroovy/" + getTestName(true) + '/';
+  }
+
+  private void doDelegateTest() {
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, null, true);
   }
 
   private boolean doTest(int replaceFieldsWithGetters, boolean removeUnusedParameters, boolean declareFinal) {
@@ -326,7 +330,8 @@ public class GrIntroduceParameterTest extends LightCodeInsightFixtureTestCase {
   
   public void testDelegaterInSuper() {doDelegateTest();}
 
-  private void doDelegateTest() {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, null, true);
-  }
+  public void testClosureArg() {doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false);}
+  public void testClosureArgWithEmptyArgList() {doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, true, false);}
+
+  public void testScriptMethod() {doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, true, false);}
 }

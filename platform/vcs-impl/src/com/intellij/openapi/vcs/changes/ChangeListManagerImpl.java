@@ -47,6 +47,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.util.*;
+import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.continuation.ContinuationPause;
 import com.intellij.util.messages.Topic;
@@ -447,6 +448,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
           }
         }
       });
+
       myChangesViewManager.scheduleRefresh();
     }
     catch (DisposedException e) {
@@ -1292,6 +1294,20 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   @TestOnly
   public void waitUntilRefreshed() {
     myUpdater.waitUntilRefreshed();
+    waitUpdateAlarm();
+  }
+
+  // this is for perforce tests to ensure that LastSuccessfulUpdateTracker receives the event it needs
+  private static void waitUpdateAlarm() {
+    final Semaphore semaphore = new Semaphore();
+    semaphore.down();
+    ourUpdateAlarm.execute(new Runnable() {
+      @Override
+      public void run() {
+        semaphore.up();
+      }
+    });
+    semaphore.waitFor();
   }
 
   /**
@@ -1301,6 +1317,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     final EnsureUpToDateFromNonAWTThread worker = new EnsureUpToDateFromNonAWTThread(myProject);
     worker.execute();
     myUpdater.waitUntilRefreshed();
+    waitUpdateAlarm();
     return worker.isDone();
   }
 

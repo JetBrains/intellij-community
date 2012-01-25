@@ -4,6 +4,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.PersistentEnumerator;
 import org.jetbrains.jps.*;
 import org.jetbrains.jps.api.CanceledStatus;
+import org.jetbrains.jps.api.RequestFuture;
+import org.jetbrains.jps.incremental.java.ExternalJavacDescriptor;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
@@ -17,6 +19,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 
 /**
  * @author Eugene Zhuravlev
@@ -98,6 +101,22 @@ public class IncProjectBuilder {
   private static void flushContext(CompileContext context) {
     if (context != null) {
       context.getDataManager().flush();
+    }
+    final ExternalJavacDescriptor descriptor = ExternalJavacDescriptor.KEY.get(context);
+    if (descriptor != null) {
+      try {
+        final RequestFuture future = descriptor.client.sendShutdownRequest();
+        future.get();
+      }
+      catch (InterruptedException ignored) {
+      }
+      catch (ExecutionException ignored) {
+      }
+      finally {
+        // ensure process is not running
+        descriptor.process.destroyProcess();
+      }
+      ExternalJavacDescriptor.KEY.set(context, null);
     }
     cleanupJavacNameTable();
   }

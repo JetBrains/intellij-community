@@ -44,28 +44,35 @@ public class DockableEditorContainerFactory implements DockContainerFactory.Pers
   }
 
   private DockContainer createContainer(boolean loadingState) {
-    final Ref<DockableEditorTabbedContainer> container = new Ref<DockableEditorTabbedContainer>();
+    final Ref<DockableEditorTabbedContainer> containerRef = new Ref<DockableEditorTabbedContainer>();
     EditorsSplitters splitters = new EditorsSplitters(myFileEditorManager, myDockManager, false) {
       @Override
       protected void afterFileClosed(VirtualFile file) {
-        container.get().fireContentClosed(file);
+        containerRef.get().fireContentClosed(file);
       }
 
       @Override
       protected void afterFileOpen(VirtualFile file) {
-        container.get().fireContentOpen(file);
+        containerRef.get().fireContentOpen(file);
       }
 
       @Override
       protected IdeFrame getFrame(Project project) {
-        return DockManager.getInstance(project).getIdeFrame(container.get());
+        return DockManager.getInstance(project).getIdeFrame(containerRef.get());
+      }
+
+      @Override
+      public boolean isFloating() {
+        return true;
       }
     };
     if (!loadingState) {
       splitters.createCurrentWindow();
     }
-    container.set(new DockableEditorTabbedContainer(myProject, myDockManager, splitters, true));
-    return container.get();
+    final DockableEditorTabbedContainer container = new DockableEditorTabbedContainer(myProject, splitters, true);
+    containerRef.set(container);
+    container.getSplitters().startListeningFocus();
+    return container;
   }
 
   @Override

@@ -16,28 +16,100 @@
 package org.jetbrains.plugins.gradle.diff;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.util.containers.hash.HashSet;
+import com.intellij.openapi.roots.*;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.model.GradleModule;
+import org.jetbrains.plugins.gradle.model.*;
 
-import java.util.Collection;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 /**
- * //TODO den add doc
+ * Encapsulates functionality of calculating changes between Gradle and IntelliJ IDEA module hierarchies.
+ * <p/>
+ * Thread-safe.
  *
  * @author Denis Zhdanov
  * @since 11/14/11 6:30 PM
  */
-public class GradleModuleStructureChangesCalculator {
-
-  //TODO den add doc
+public class GradleModuleStructureChangesCalculator implements GradleStructureChangesCalculator<GradleModule, Module> {
+  
+  private final GradleLibraryDependencyStructureChangesCalculator myLibraryDependencyCalculator
+    = new GradleLibraryDependencyStructureChangesCalculator();
+  
   @NotNull
-  public Collection<GradleProjectStructureChange> calculateDiff(@NotNull GradleModule gradleModule,
-                                                                @NotNull Module intellijModule,
-                                                                @NotNull Set<GradleProjectStructureChange> knownChanges)
+  @Override
+  public Set<GradleProjectStructureChange> calculate(@NotNull GradleModule gradleEntity,
+                                                     @NotNull Module intellijEntity,
+                                                     @NotNull Set<GradleProjectStructureChange> knownChanges)
   {
-    //TODO den implement
-    return new HashSet<GradleProjectStructureChange>();
+    //TODO den process module-local settings
+    //TODO den process content roots 
+    return checkDependencies(gradleEntity, intellijEntity, knownChanges);
+  }
+
+  @NotNull
+  @Override
+  public Object getIntellijKey(@NotNull Module entity, @NotNull Set<GradleProjectStructureChange> knownChanges) {
+    // TODO den consider the known changes
+    return entity.getName();
+  }
+
+  @NotNull
+  @Override
+  public Object getGradleKey(@NotNull GradleModule entity, @NotNull Set<GradleProjectStructureChange> knownChanges) {
+    // TODO den consider the known changes
+    return entity.getName();
+  }
+
+  private Set<GradleProjectStructureChange> checkDependencies(@NotNull GradleModule gradleModule,
+                                                              @NotNull Module intellijModule,
+                                                              @NotNull Set<GradleProjectStructureChange> knownChanges)
+  {
+    // Prepare intellij part.
+    final List<ModuleOrderEntry> intellijModuleDependencies = new ArrayList<ModuleOrderEntry>();
+    final List<LibraryOrderEntry> intellijLibraryDependencies = new ArrayList<LibraryOrderEntry>();
+    RootPolicy<Object> policy = new RootPolicy<Object>() {
+      @Override
+      public Object visitModuleOrderEntry(ModuleOrderEntry moduleOrderEntry, Object value) {
+        intellijModuleDependencies.add(moduleOrderEntry);
+        return moduleOrderEntry;
+      }
+
+      @Override
+      public Object visitLibraryOrderEntry(LibraryOrderEntry libraryOrderEntry, Object value) {
+        intellijLibraryDependencies.add(libraryOrderEntry);
+        return libraryOrderEntry;
+      }
+    };
+    final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(intellijModule);
+    for (OrderEntry orderEntry : moduleRootManager.getOrderEntries()) {
+      orderEntry.accept(policy, null);
+    }
+    
+    // Prepare gradle part.
+    final List<GradleModuleDependency> gradleModuleDependencies = new ArrayList<GradleModuleDependency>();
+    final List<GradleLibraryDependency> gradleLibraryDependencies = new ArrayList<GradleLibraryDependency>();
+    GradleEntityVisitor visitor = new GradleEntityVisitorAdapter() {
+      @Override
+      public void visit(@NotNull GradleModuleDependency dependency) {
+        gradleModuleDependencies.add(dependency);
+      }
+
+      @Override
+      public void visit(@NotNull GradleLibraryDependency dependency) {
+        gradleLibraryDependencies.add(dependency);
+      }
+    };
+    for (GradleDependency dependency : gradleModule.getDependencies()) {
+      dependency.invite(visitor);
+    }
+    
+    // Calculate changes.
+    // TODO den process module dependencies here as well.
+    final Set<GradleProjectStructureChange> libraryChanges
+      = GradleDiffUtil.calculate(myLibraryDependencyCalculator, gradleLibraryDependencies, intellijLibraryDependencies, knownChanges);
+    return libraryChanges;
+    
   }
 }

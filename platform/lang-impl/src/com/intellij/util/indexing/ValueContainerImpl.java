@@ -17,6 +17,7 @@
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.diagnostic.Logger;
+import gnu.trove.THashMap;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntIterator;
 
@@ -29,14 +30,15 @@ import java.util.*;
 class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implements Cloneable{
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.ValueContainerImpl");
 
-  private HashMap<Value, Object> myInputIdMapping;
+  private THashMap<Value, Object> myInputIdMapping;
 
   public ValueContainerImpl() {
-    myInputIdMapping = new HashMap<Value, Object>(16, 0.98f);
+    myInputIdMapping = new THashMap<Value, Object>();
   }
 
   @Override
   public void addValue(int inputId, Value value) {
+    value = maskNull(value);
     final Object input = myInputIdMapping.get(value);
     if (input == null) {
       //idSet = new TIntHashSet(3, 0.98f);
@@ -81,6 +83,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
 
   @Override
   public boolean removeValue(int inputId, Value value) {
+    value = maskNull(value);
     final Object input = myInputIdMapping.get(value);
     if (input == null) {
       return false;
@@ -104,9 +107,37 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     return true;
   }
 
+  private final static Object myNullValue = new Object();
+  private Value maskNull(Value value) {
+    if (value == null) {
+      return (Value)myNullValue;
+    }
+    return value;
+  }
+
   @Override
   public Iterator<Value> getValueIterator() {
-    return Collections.unmodifiableSet(myInputIdMapping.keySet()).iterator();
+    final Set<Value> values = Collections.unmodifiableSet(myInputIdMapping.keySet());
+    return new Iterator<Value>() {
+      final Iterator<Value> iterator = values.iterator();
+      
+      @Override
+      public boolean hasNext() {
+        return iterator.hasNext();
+      }
+
+      @Override
+      public Value next() {
+        Value next = iterator.next();
+        if (next == myNullValue) next = null;
+        return next;
+      }
+
+      @Override
+      public void remove() {
+        iterator.remove();
+      }
+    };
   }
 
   @Override
@@ -118,7 +149,8 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
   }
 
   @Override
-  public boolean isAssociated(final Value value, final int inputId) {
+  public boolean isAssociated(Value value, final int inputId) {
+    value = maskNull(value);
     final Object input = myInputIdMapping.get(value);
     if (input instanceof TIntHashSet) {
       return ((TIntHashSet)input).contains(inputId);
@@ -130,7 +162,8 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
   }
 
   @Override
-  public IntIterator getInputIdsIterator(final Value value) {
+  public IntIterator getInputIdsIterator(Value value) {
+    value = maskNull(value);
     final Object input = myInputIdMapping.get(value);
     final IntIterator it;
     if (input instanceof TIntHashSet) {
@@ -228,11 +261,11 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     }
   }
 
-  private HashMap<Value, Object> mapCopy(final HashMap<Value, Object> map) {
+  private THashMap<Value, Object> mapCopy(final THashMap<Value, Object> map) {
     if (map == null) {
       return null;
     }
-    final HashMap<Value, Object> cloned = (HashMap<Value, Object>)map.clone();
+    final THashMap<Value, Object> cloned = map.clone();
     for (Value key : cloned.keySet()) {
       final Object val = cloned.get(key);
       if (val instanceof TIntHashSet) {

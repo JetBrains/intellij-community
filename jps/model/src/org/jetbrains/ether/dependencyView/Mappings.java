@@ -826,7 +826,9 @@ public class Mappings {
 
         if (it.isAnnotation() && it.policy == RetentionPolicy.SOURCE) {
           debug("Annotation, retention policy = SOURCE => a switch to non-incremental mode requested");
-          return incrementalDecision(it.outerClassName, it, affectedFiles);
+          if (!incrementalDecision(it.outerClassName, it, affectedFiles)) {
+            return false;
+          }
         }
 
         if ((addedModifiers & Opcodes.ACC_PROTECTED) > 0) {
@@ -866,7 +868,9 @@ public class Mappings {
 
             if (removedtargets.contains(ElementType.LOCAL_VARIABLE)) {
               debug("Annotation, removed target contains LOCAL_VARIABLE => a switch to non-incremental mode requested");
-              return incrementalDecision(it.outerClassName, it, affectedFiles);
+              if (!incrementalDecision(it.outerClassName, it, affectedFiles)) {
+                return false;
+              }
             }
 
             if (!removedtargets.isEmpty()) {
@@ -1218,7 +1222,9 @@ public class Mappings {
 
           if ((f.access & Opcodes.ACC_PRIVATE) == 0 && (f.access & mask) == mask && f.hasValue()) {
             debug("Field had value and was (non-private) final static => a switch to non-incremental mode requested");
-            return incrementalDecision(it.name, f, affectedFiles);
+            if (!incrementalDecision(it.name, f, affectedFiles)) {
+              return false;
+            }
           }
 
           final Collection<DependencyContext.S> propagated = u.propagateFieldAccess(f.name, it.name);
@@ -1237,7 +1243,9 @@ public class Mappings {
           if ((field.access & Opcodes.ACC_PRIVATE) == 0 && (field.access & mask) == mask) {
             if ((d.base() & Difference.ACCESS) > 0 || (d.base() & Difference.VALUE) > 0) {
               debug("Inline field changed it's access or value => a switch to non-incremental mode requested");
-              return incrementalDecision(it.name, field, affectedFiles);
+              if (!incrementalDecision(it.name, field, affectedFiles)){
+                return false;
+              }
             }
           }
 

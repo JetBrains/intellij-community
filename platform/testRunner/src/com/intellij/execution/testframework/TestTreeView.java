@@ -27,16 +27,14 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiNamedElement;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
-import com.intellij.util.Function;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,13 +51,15 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
 
   @Nullable
   public AbstractTestProxy getSelectedTest() {
+    TreePath[] paths = getSelectionPaths();
+    if (paths != null && paths.length > 1) return null;
     final TreePath selectionPath = getSelectionPath();
     return selectionPath != null ? getSelectedTest(selectionPath) : null;
   }
 
   public void attachToModel(final TestFrameworkRunningModel model) {
     setModel(new DefaultTreeModel(new DefaultMutableTreeNode(model.getRoot())));
-    getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
+    getSelectionModel().setSelectionMode(getSelectionMode());
     myModel = model;
     Disposer.register(myModel, myModel.getRoot());
     Disposer.register(myModel, new Disposable() {
@@ -84,6 +84,20 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
     if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
       return this;
     }
+
+    if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
+      TreePath[] paths = getSelectionPaths();
+      if (paths != null && paths.length > 1) {
+        final PsiElement[] els = new PsiElement[paths.length];
+        int i = 0;
+        for (TreePath path : paths) {
+          AbstractTestProxy test = getSelectedTest(path);
+          els[i++] = test != null ? (PsiElement)TestsUIUtil.getData(test, LangDataKeys.PSI_ELEMENT.getName(), myModel) : null;
+        }
+        return els;
+      }
+    }
+    
     final TreePath selectionPath = getSelectionPath();
     if (selectionPath == null) return null;
     final AbstractTestProxy testProxy = getSelectedTest(selectionPath);
@@ -119,5 +133,10 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
     TreeUtil.installActions(this);
     PopupHandler.installPopupHandler(this, IdeActions.GROUP_TESTTREE_POPUP, ActionPlaces.TESTTREE_VIEW_POPUP);
     ViewAssertEqualsDiffAction.registerShortcut(this);
+  }
+
+  @JdkConstants.TreeSelectionMode
+  protected int getSelectionMode() {
+    return TreeSelectionModel.SINGLE_TREE_SELECTION;
   }
 }

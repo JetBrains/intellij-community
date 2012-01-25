@@ -150,7 +150,7 @@ public class FileChooserCompletionTest extends FlyIdeaTestCase {
   }
 
   private String asString(List objects, FileTextFieldImpl.CompletionResult completion) {
-    StringBuffer result = new StringBuffer();
+    StringBuilder result = new StringBuilder();
     for (int i = 0; i < objects.size(); i++) {
       final Object each = objects.get(i);
       result.append(toFileText(each, completion));

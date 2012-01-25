@@ -15,9 +15,13 @@
  */
 package org.jetbrains.idea.svn17;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.idea.svn17.portable.JavaHLSvnStatusClient;
+import org.jetbrains.idea.svn17.portable.SvnStatusClientI;
+import org.jetbrains.idea.svn17.portable.SvnkitSvnStatusClient;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
@@ -32,11 +36,13 @@ import java.util.LinkedList;
 
 public class SvnRecursiveStatusWalker {
   private final StatusWalkerPartner myPartner;
+  private final Project myProject;
   private final StatusReceiver myReceiver;
   private final LinkedList<MyItem> myQueue;
   private final MyHandler myHandler;
 
-  public SvnRecursiveStatusWalker(final StatusReceiver receiver, final StatusWalkerPartner partner) {
+  public SvnRecursiveStatusWalker(final Project project, final StatusReceiver receiver, final StatusWalkerPartner partner) {
+    myProject = project;
     myReceiver = receiver;
     myPartner = partner;
     myQueue = new LinkedList<MyItem>();
@@ -44,7 +50,7 @@ public class SvnRecursiveStatusWalker {
   }
 
   public void go(final FilePath rootPath, final SVNDepth depth) throws SVNException {
-    final MyItem root = new MyItem(rootPath, depth, myPartner.createStatusClient(), false);
+    final MyItem root = new MyItem(myProject, rootPath, depth, myPartner.createStatusClient(), false);
     myQueue.add(root);
 
     while (! myQueue.isEmpty()) {
@@ -57,7 +63,7 @@ public class SvnRecursiveStatusWalker {
       if (path.isDirectory()) {
         myHandler.setCurrentItem(item);
         try {
-          item.getClient().doStatus(ioFile, SVNRevision.WORKING, item.getDepth(), false, false, true, false, myHandler, null);
+          item.getClient(ioFile).doStatus(ioFile, SVNRevision.WORKING, item.getDepth(), false, false, true, false, myHandler, null);
         }
         catch (SVNException e) {
           if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_DIRECTORY) {
@@ -82,6 +88,7 @@ public class SvnRecursiveStatusWalker {
             myReceiver.processUnversioned(path.getVirtualFile());
           }
         } else {
+          // just file
           final SVNStatus status = item.getClient().doStatus(ioFile, false, false);
           myReceiver.process(path, status, false);
         }
@@ -90,15 +97,21 @@ public class SvnRecursiveStatusWalker {
   }
 
   private static class MyItem {
+    private final Project myProject;
     private final FilePath myPath;
     private final SVNDepth myDepth;
     private final SVNStatusClient myClient;
+    private final SvnStatusClientI mySvnClient;
     private final boolean myIsInnerCopyRoot;
+    private final SvnConfiguration17 myConfiguration17;
 
-    private MyItem(FilePath path, SVNDepth depth, SVNStatusClient client, boolean isInnerCopyRoot) {
+    private MyItem(Project project, FilePath path, SVNDepth depth, SVNStatusClient client, boolean isInnerCopyRoot) {
+      myProject = project;
+      myConfiguration17 = SvnConfiguration17.getInstance(myProject);
       myPath = path;
       myDepth = depth;
       myClient = client;
+      mySvnClient = new SvnkitSvnStatusClient(client);
       myIsInnerCopyRoot = isInnerCopyRoot;
     }
 
@@ -110,8 +123,20 @@ public class SvnRecursiveStatusWalker {
       return myDepth;
     }
 
-    public SVNStatusClient getClient() {
-      return myClient;
+    public SvnStatusClientI getClient() {
+      return mySvnClient;
+    }
+    
+    public SvnStatusClientI getClient(final File file) {
+      if (! SVNDepth.INFINITY.equals(myDepth)) {
+        return mySvnClient;
+      }
+      // check format
+      if (CheckJavaHL.isPresent() && SvnConfiguration17.UseAcceleration.javaHL.equals(myConfiguration17.myUseAcceleration) &&
+          Svn17Detector.is17(myProject, file)) {
+        return new JavaHLSvnStatusClient(myProject);
+      }
+      return mySvnClient;
     }
 
     public boolean isIsInnerCopyRoot() {
@@ -132,7 +157,7 @@ public class SvnRecursiveStatusWalker {
     for (VirtualFile child : children) {
       final FilePath filePath = VcsUtil.getFilePath(child.getPath(), child.isDirectory());
       // recursiveness is used ONLY for search of working copies that have unversioned files above
-      final MyItem childItem = new MyItem(filePath, newDepth, childClient, true);
+      final MyItem childItem = new MyItem(myProject, filePath, newDepth, childClient, true);
       myQueue.add(childItem);
     }
   }

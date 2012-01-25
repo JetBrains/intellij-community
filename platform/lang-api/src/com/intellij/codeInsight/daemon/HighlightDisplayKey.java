@@ -17,7 +17,7 @@ package com.intellij.codeInsight.daemon;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.util.containers.HashMap;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,10 +27,10 @@ import java.util.Map;
 public class HighlightDisplayKey {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.HighlightDisplayKey");
 
-  private static final HashMap<String,HighlightDisplayKey> ourNameToKeyMap = new HashMap<String, HighlightDisplayKey>();
-  private static final HashMap<String,HighlightDisplayKey> ourIdToKeyMap = new HashMap<String, HighlightDisplayKey>();
-  private static final Map<HighlightDisplayKey, String> ourKeyToDisplayNameMap = new HashMap<HighlightDisplayKey, String>();
-  private static final Map<HighlightDisplayKey, String> ourKeyToAlternativeIDMap = new HashMap<HighlightDisplayKey, String>();
+  private static final Map<String,HighlightDisplayKey> ourNameToKeyMap = new THashMap<String, HighlightDisplayKey>();
+  private static final Map<String,HighlightDisplayKey> ourIdToKeyMap = new THashMap<String, HighlightDisplayKey>();
+  private static final Map<HighlightDisplayKey, String> ourKeyToDisplayNameMap = new THashMap<HighlightDisplayKey, String>();
+  private static final Map<HighlightDisplayKey, String> ourKeyToAlternativeIDMap = new THashMap<HighlightDisplayKey, String>();
 
   private final String myName;
   private final String myID;

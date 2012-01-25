@@ -34,4 +34,8 @@ public class GradleProjectStructureChangeVisitorAdapter implements GradleProject
   @Override
   public void visit(@NotNull GradleModulePresenceChange change) {
   }
+
+  @Override
+  public void visit(@NotNull GradleLibraryDependencyPresenceChange change) {
+  }
 }

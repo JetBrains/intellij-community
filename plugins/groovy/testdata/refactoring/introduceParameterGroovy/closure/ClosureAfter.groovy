@@ -1,1 +1,1 @@
-new A().doSmth({ println "smth" })
+new A().doSmth { println "smth" }

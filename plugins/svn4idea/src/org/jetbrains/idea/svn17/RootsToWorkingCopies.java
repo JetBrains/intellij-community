@@ -116,7 +116,7 @@ public class RootsToWorkingCopies implements VcsListener {
           SVNEntry entry = wcAccess.getVersionedEntry(workingCopyRoot, false);
           final SVNURL url = entry.getSVNURL();
           if (url != null) {
-            workingCopy = new WorkingCopy(workingCopyRoot, url);
+            workingCopy = new WorkingCopy(workingCopyRoot, url, false);
           }
         } finally {
           wcAccess.close();
@@ -132,7 +132,7 @@ public class RootsToWorkingCopies implements VcsListener {
         final SVNInfo svnInfo;
         try {
           svnInfo = SvnVcs17.getInstance(myProject).createWCClient().doInfo(workingCopyRoot, SVNRevision.UNDEFINED);
-          workingCopy = new WorkingCopy(workingCopyRoot, svnInfo.getURL());
+          workingCopy = new WorkingCopy(workingCopyRoot, svnInfo.getURL(), true);
         }
         catch (SVNException e) {
           //

@@ -8,20 +8,20 @@
     <array>
       @@doc_types@@
       <dict>
-          <key>CFBundleTypeExtensions</key>
-          <array>
-              <string>*</string>
-          </array>
-          <key>CFBundleTypeName</key>
-          <string>All documents</string>
-          <key>CFBundleTypeOSTypes</key>
-          <array>
-              <string>****</string>
-          </array>
-          <key>CFBundleTypeRole</key>
-          <string>Editor</string>
-          <key>LSTypeIsPackage</key>
-          <false/>
+        <key>CFBundleTypeExtensions</key>
+        <array>
+          <string>*</string>
+        </array>
+        <key>CFBundleTypeName</key>
+        <string>All documents</string>
+        <key>CFBundleTypeOSTypes</key>
+        <array>
+          <string>****</string>
+        </array>
+        <key>CFBundleTypeRole</key>
+        <string>Editor</string>
+        <key>LSTypeIsPackage</key>
+        <false/>
       </dict>
     </array>
     <key>CFBundleExecutable</key>
@@ -58,7 +58,7 @@
     <key>Java</key>
     <dict>
       <key>ClassPath</key>
-      <string>$APP_PACKAGE/lib/bootstrap.jar:$APP_PACKAGE/lib/extensions.jar:$APP_PACKAGE/lib/util.jar:$APP_PACKAGE/lib/jdom.jar:$APP_PACKAGE/lib/log4j.jar:$APP_PACKAGE/lib/jna.jar:$APP_PACKAGE/lib/trove4j.jar</string>
+      <string>@@class_path@@</string>
 
       <key>JVMVersion</key>
       <string>1.6*</string>

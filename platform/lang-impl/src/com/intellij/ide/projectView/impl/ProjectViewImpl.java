@@ -1616,6 +1616,11 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
     public void scrollFromSource() {
       final FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
+      final Editor selectedTextEditor = fileEditorManager.getSelectedTextEditor();
+      if (selectedTextEditor != null) {
+        selectElementAtCaret(selectedTextEditor);
+        return;
+      }
       final FileEditor[] editors = fileEditorManager.getSelectedEditors();
       for (FileEditor fileEditor : editors) {
         if (fileEditor instanceof TextEditor) {

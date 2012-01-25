@@ -15,7 +15,10 @@
  */
 package com.intellij.junit4;
 
-import com.intellij.rt.execution.junit.*;
+import com.intellij.rt.execution.junit.IDEAJUnitListener;
+import com.intellij.rt.execution.junit.IdeaTestRunner;
+import com.intellij.rt.execution.junit.TimeSender;
+import com.intellij.rt.execution.junit.TreeSender;
 import com.intellij.rt.execution.junit.segments.OutputObjectRegistry;
 import com.intellij.rt.execution.junit.segments.SegmentedOutputStream;
 import org.junit.internal.requests.ClassRequest;
@@ -25,7 +28,9 @@ import org.junit.runner.manipulation.Filter;
 import org.junit.runner.notification.RunListener;
 
 import java.lang.reflect.Field;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 /** @noinspection UnusedDeclaration*/
 public class JUnit4IdeaTestRunner implements IdeaTestRunner {
@@ -93,17 +98,20 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner {
     field.setAccessible(true);
     final Filter filter = (Filter)field.get(request);
     final String filterDescription = filter.describe();
-    if (filterDescription != null && (filterDescription.startsWith("Failed tests") || filterDescription.startsWith("Ignored"))) {
+    if (filterDescription != null) {
+      boolean isMethodFilter = filterDescription.startsWith("Method");
+      if (isMethodFilter && canCompress(description)) return (Description)description.getChildren().get(0);
       try {
         final Description failedTestsDescription = Description.createSuiteDescription(filterDescription, null);
-        for (Iterator iterator = description.getChildren().iterator(); iterator.hasNext();) {
-          final Description childDescription = (Description)iterator.next();
-          if (filter.shouldRun(childDescription)) {
-            failedTestsDescription.addChild(childDescription);
+        if (filterDescription.startsWith("Tests") || filterDescription.startsWith("Ignored")) {
+          for (Iterator iterator = description.getChildren().iterator(); iterator.hasNext(); ) {
+            final Description childDescription = (Description)iterator.next();
+            if (filter.shouldRun(childDescription)) {
+              failedTestsDescription.addChild(childDescription);
+            }
           }
-        }
-        description = failedTestsDescription;
-        if (!failedTestsDescription.isTest() && failedTestsDescription.testCount() == 1 && filterDescription.startsWith("Method")) {
+          description = failedTestsDescription;
+        } else  if (isMethodFilter && canCompress(failedTestsDescription)) {
           description = (Description)failedTestsDescription.getChildren().get(0);
         }
       }
@@ -112,6 +120,10 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner {
       }
     }
     return description;
+  }
+
+  private static boolean canCompress(Description description) {
+    return !description.isTest() && description.testCount() == 1;
   }
 
   private static Description getSuiteMethodDescription(Request request, Description description) throws NoSuchFieldException, IllegalAccessException {

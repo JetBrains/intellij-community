@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,8 +29,6 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduceParameter.*;
 import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.refactoring.util.ConflictsUtil;
-import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.refactoring.util.usageInfo.DefaultConstructorImplicitUsageInfo;
 import com.intellij.refactoring.util.usageInfo.NoConstructorClassUsageInfo;
 import com.intellij.usageView.UsageInfo;
@@ -38,23 +36,14 @@ import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.TIntArrayList;
-import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
-import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 /**
  * @author Maxim.Medvedev
@@ -99,7 +88,10 @@ public class GrIntroduceParameterProcessor extends BaseRefactoringProcessor impl
     MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
 
     if (!mySettings.generateDelegate()) {
-      detectAccessibilityConflicts(usagesIn, conflicts);
+      GroovyIntroduceParameterUtil.detectAccessibilityConflicts(myContext.expression, usagesIn, conflicts,
+                                                                mySettings.replaceFieldsWithGetters() != IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE,
+                                                                myProject
+      );
     }
 
     final GrMethod toReplaceIn = (GrMethod)myContext.toReplaceIn;
@@ -125,41 +117,6 @@ public class GrIntroduceParameterProcessor extends BaseRefactoringProcessor impl
     }
 
     return showConflicts(conflicts, usagesIn);
-  }
-
-  private void detectAccessibilityConflicts(final UsageInfo[] usageArray, MultiMap<PsiElement, String> conflicts) {
-    if (myContext.expression == null) return;
-
-    final ReferencedElementsCollector collector = new ReferencedElementsCollector();
-    myContext.expression.accept(collector);
-    final List<PsiElement> result = collector.getResult();
-    if (result.isEmpty()) return;
-
-    for (final UsageInfo usageInfo : usageArray) {
-      if (!(usageInfo instanceof ExternalUsageInfo) || !IntroduceParameterUtil.isMethodUsage(usageInfo)) continue;
-
-      final PsiElement place = usageInfo.getElement();
-      for (PsiElement element : result) {
-        if (element instanceof PsiField &&
-            mySettings.replaceFieldsWithGetters() != IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE) {
-          //check getter access instead
-          final PsiClass psiClass = ((PsiField)element).getContainingClass();
-          LOG.assertTrue(psiClass != null);
-          final PsiMethod method = GroovyPropertyUtils.findGetterForField((PsiField)element);
-          if (method != null) {
-            element = method;
-          }
-        }
-        if (element instanceof PsiMember &&
-            !JavaPsiFacade.getInstance(myProject).getResolveHelper().isAccessible((PsiMember)element, place, null)) {
-          String message = RefactoringBundle.message(
-            "0.is.not.accessible.from.1.value.for.introduced.parameter.in.that.method.call.will.be.incorrect",
-            RefactoringUIUtil.getDescription(element, true),
-            RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(place), true));
-          conflicts.putValue(element, message);
-        }
-      }
-    }
   }
 
   @NotNull
@@ -220,7 +177,7 @@ public class GrIntroduceParameterProcessor extends BaseRefactoringProcessor impl
 
     PsiType initializerType = mySettings.getSelectedType();
 
-    // Changing external occurences (the tricky part)
+    // Changing external occurrences (the tricky part)
 
     IntroduceParameterUtil.processUsages(usages, this);
 
@@ -229,9 +186,9 @@ public class GrIntroduceParameterProcessor extends BaseRefactoringProcessor impl
 
     final boolean methodsToProcessAreDifferent = toReplaceIn != toSearchFor;
     if (mySettings.generateDelegate()) {
-      generateDelegate(toReplaceIn);
+      GroovyIntroduceParameterUtil.generateDelegate(toReplaceIn, myParameterInitializer, myProject);
       if (methodsToProcessAreDifferent) {
-        final GrMethod method = generateDelegate(toSearchFor);
+        final GrMethod method = GroovyIntroduceParameterUtil.generateDelegate(toSearchFor, myParameterInitializer, myProject);
         final PsiClass containingClass = method.getContainingClass();
         if (containingClass != null && containingClass.isInterface()) {
           final GrOpenBlock block = method.getBlock();
@@ -255,12 +212,12 @@ public class GrIntroduceParameterProcessor extends BaseRefactoringProcessor impl
 
     if (myContext.var != null) myContext.var.delete();
 
-    // Replacing expression occurences
+    // Replacing expression occurrences
     for (UsageInfo usage : usages) {
       if (usage instanceof ChangedMethodCallInfo) {
         PsiElement element = usage.getElement();
 
-        processChangedMethodCall(element);
+        GroovyIntroduceParameterUtil.processChangedMethodCall(element, mySettings, myProject);
       }
       else if (usage instanceof InternalUsageInfo) {
         PsiElement element = usage.getElement();
@@ -279,86 +236,6 @@ public class GrIntroduceParameterProcessor extends BaseRefactoringProcessor impl
       myContext.var.delete();
     }
     fieldConflictsResolver.fix();
-  }
-
-  private GrMethod generateDelegate(PsiMethod prototype) {
-    final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(myProject);
-
-    GrMethod result;
-    if (prototype instanceof GrMethod) {
-      result = (GrMethod)prototype.copy();
-    }
-    else {
-      StringBuilder builder = new StringBuilder();
-      builder.append(prototype.getModifierList().getText()).append(' ');
-
-      if (prototype.getReturnTypeElement() != null  ) {
-        builder.append(prototype.getReturnTypeElement().getText());
-      }
-      builder.append(' ').append(prototype.getName());
-      builder.append(prototype.getParameterList().getText());
-      builder.append("{}");
-      result = factory.createMethodFromText(builder.toString());
-    }
-
-    StringBuilder call = new StringBuilder();
-    call.append("def foo(){\n").append(prototype.getName()).append('(');
-    final GrParameter[] parameters = result.getParameters();
-    for (GrParameter parameter : parameters) {
-      call.append(parameter.getName()).append(", ");
-    }
-    call.append(myParameterInitializer.getText());
-    call.append(");\n}");
-    final GrOpenBlock block = factory.createMethodFromText(call.toString()).getBlock();
-
-    result.getBlock().replace(block);
-    final PsiElement parent = prototype.getParent();
-    return (GrMethod)parent.addBefore(result, prototype);
-  }
-
-  private void processChangedMethodCall(PsiElement element) {
-    if (element.getParent() instanceof GrMethodCallExpression) {
-      GrMethodCallExpression methodCall = (GrMethodCallExpression)element.getParent();
-
-      GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(myProject);
-      GrExpression expression = factory.createExpressionFromText(mySettings.getName(), null);
-      final GrArgumentList argList = methodCall.getArgumentList();
-      final PsiElement[] exprs = argList.getAllArguments();
-
-      if (exprs.length > 0) {
-        argList.addAfter(expression, exprs[exprs.length - 1]);
-      }
-      else {
-        argList.add(expression);
-      }
-
-      removeParametersFromCall(methodCall, argList);
-
-    }
-    else {
-      LOG.error(element.getParent());
-    }
-
-  }
-
-  private void removeParametersFromCall(GrMethodCallExpression methodCall, GrArgumentList argList) {
-    final GroovyResolveResult resolveResult = methodCall.advancedResolve();
-    final PsiElement resolved = resolveResult.getElement();
-    LOG.assertTrue(resolved instanceof PsiMethod);
-    final GrClosureSignature signature = GrClosureSignatureUtil.createSignature((PsiMethod)resolved, resolveResult.getSubstitutor());
-    final GrClosureSignatureUtil.ArgInfo<PsiElement>[] argInfos =
-      GrClosureSignatureUtil.mapParametersToArguments(signature, argList, methodCall, methodCall.getClosureArguments());
-    LOG.assertTrue(argInfos != null);
-    mySettings.parametersToRemove().forEach(new TIntProcedure() {
-      @Override
-      public boolean execute(int value) {
-        final List<PsiElement> args = argInfos[value].args;
-        for (PsiElement arg : args) {
-          arg.delete();
-        }
-        return true;
-      }
-    });
   }
 
   @Override

@@ -1580,15 +1580,16 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     Assert.assertEquals("Text mismatch in file " + expectedFile, newFileText1, actualText);
 
     if (loader.caretMarker != null) {
-      int caretLine = StringUtil.offsetToLineNumber(loader.newFileText, loader.caretMarker.getStartOffset());
-      int caretCol = EditorUtil.calcColumnNumber(null, loader.newFileText,
-                                                 StringUtil.lineColToOffset(loader.newFileText, caretLine, 0),
-                                                 loader.caretMarker.getStartOffset(),
-                                                 CodeStyleSettingsManager.getSettings(getProject())
-                                                   .getIndentOptions(StdFileTypes.JAVA).TAB_SIZE);
+      final int tabSize = CodeStyleSettingsManager.getSettings(getProject()).getIndentOptions(StdFileTypes.JAVA).TAB_SIZE;
 
-      Assert.assertEquals("caretLine in " + expectedFile, caretLine + 1, myEditor.getCaretModel().getLogicalPosition().line + 1);
-      Assert.assertEquals("caretColumn in " + expectedFile, caretCol + 1, myEditor.getCaretModel().getLogicalPosition().column + 1);
+      int caretLine = StringUtil.offsetToLineNumber(loader.newFileText, loader.caretMarker.getStartOffset());
+      int caretCol = EditorUtil.calcColumnNumber(null, loader.newFileText, StringUtil.lineColToOffset(loader.newFileText, caretLine, 0), loader.caretMarker.getStartOffset(), tabSize);
+
+      final int actualLine = myEditor.getCaretModel().getLogicalPosition().line;
+      final int actualCol = myEditor.getCaretModel().getLogicalPosition().column;
+      boolean caretPositionEquals = caretLine == actualLine && caretCol == actualCol;
+      assertTrue("Caret position in " + expectedFile + " differs. Expected " + genCaretPositionPresentation(caretLine, caretCol) +
+        ". Actual " + genCaretPositionPresentation(actualLine, actualCol), caretPositionEquals);
     }
 
     if (loader.selStartMarker != null && loader.selEndMarker != null) {
@@ -1599,11 +1600,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       int selEndCol = loader.selEndMarker.getEndOffset() - StringUtil.lineColToOffset(loader.newFileText, selEndLine, 0);
 
       final int selStartLineActual = StringUtil.offsetToLineNumber(loader.newFileText, myEditor.getSelectionModel().getSelectionStart());
-      final int selStartColActual = myEditor.getSelectionModel().getSelectionStart() - StringUtil.lineColToOffset(loader.newFileText,
-                                                                                                                  selStartLine, 0);
+      final int selStartColActual = myEditor.getSelectionModel().getSelectionStart() - StringUtil.lineColToOffset(loader.newFileText, selStartLineActual, 0);
+
       final int selEndLineActual = StringUtil.offsetToLineNumber(loader.newFileText, myEditor.getSelectionModel().getSelectionEnd());
-      final int selEndColActual =
-        myEditor.getSelectionModel().getSelectionEnd() - StringUtil.lineColToOffset(loader.newFileText, selEndLine, 0);
+      final int selEndColActual = myEditor.getSelectionModel().getSelectionEnd() - StringUtil.lineColToOffset(loader.newFileText, selEndLineActual, 0);
 
       final boolean selectionEquals = selStartCol == selStartColActual &&
                                       selStartLine == selStartLineActual &&
@@ -1620,6 +1620,12 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     else if (myEditor != null) {
       Assert.assertTrue("has no selection in " + expectedFile, !myEditor.getSelectionModel().hasSelection());
     }
+  }
+
+  private static String genCaretPositionPresentation(int line, int col) {
+    line++;
+    col++;
+    return "(" + line + ", " + col + ")";
   }
 
   private static String genSelectionPresentation(int startLine, int startCol, int endLine, int endCol) {

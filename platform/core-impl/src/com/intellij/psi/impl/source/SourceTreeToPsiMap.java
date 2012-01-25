@@ -27,8 +27,7 @@ public class SourceTreeToPsiMap {
 
   @Nullable
   public static PsiElement treeElementToPsi(@Nullable final ASTNode element) {
-    if (element == null) return null;
-    return element.getPsi();
+    return element == null ? null : element.getPsi();
   }
 
   @NotNull

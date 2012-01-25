@@ -378,12 +378,26 @@ public class NameUtil {
   }
 
   public static class MinusculeMatcher implements com.intellij.util.text.Matcher {
+    public static final Function<Character,Boolean> BASE_SEPARATOR_FUNCTION = new Function<Character, Boolean>() {
+      @Override
+      public Boolean fun(Character character) {
+        final char c = character.charValue();
+        return Character.isWhitespace(c) || c == '_' || c == '-';
+      }
+    };
+
     private final char[] myPattern;
     private final MatchingCaseSensitivity myOptions;
+    private final Function<Character, Boolean> mySeparatorFunction;
 
     public MinusculeMatcher(String pattern, MatchingCaseSensitivity options) {
+      this(pattern, options, BASE_SEPARATOR_FUNCTION);
+    }
+
+    public MinusculeMatcher(String pattern, MatchingCaseSensitivity options, Function<Character, Boolean> separatorFunction) {
       myOptions = options;
       myPattern = StringUtil.trimEnd(pattern, "* ").replaceAll(":", "\\*:").toCharArray();
+      mySeparatorFunction = separatorFunction;
     }
 
     @Nullable
@@ -472,15 +486,23 @@ public class NameUtil {
       while (i > 0) {
         FList<TextRange> ranges = matchName(name, patternIndex + i, nextStart);
         if (ranges != null) {
-          TextRange head = ranges.getHead();
-          if (head != null && head.getStartOffset() == nameIndex + i) {
-            return ranges.getTail().prepend(new TextRange(nameIndex, head.getEndOffset()));
-          }
-          return ranges.prepend(TextRange.from(nameIndex, i));
+          return prependRange(ranges, nameIndex, i);
         }
         i--;
       }
       return null;
+    }
+
+    private static FList<TextRange> prependRange(FList<TextRange> ranges, int from, int length) {
+      TextRange head = ranges.getHead();
+      if (head != null && head.getStartOffset() == from + length) {
+        return ranges.getTail().prepend(new TextRange(from, head.getEndOffset()));
+      }
+      return ranges.prepend(TextRange.from(from, length));
+    }
+
+    private boolean isWordSeparator(char c) {
+      return mySeparatorFunction.fun(c);
     }
 
     @Nullable
@@ -495,7 +517,12 @@ public class NameUtil {
           return null;
         }
 
-        return matchName(name, patternIndex + 1, nextStart);
+        final FList<TextRange> ranges = matchName(name, patternIndex + 1, nextStart);
+        if (ranges != null) {
+          return prependRange(ranges, nameIndex, 1);
+        }
+
+        return null;
       }
 
       return matchName(name, patternIndex, nextStart);
@@ -549,10 +576,6 @@ public class NameUtil {
 
       int patternCaps = StringUtil.capitalsOnly(new String(myPattern)).length();
       return -fragmentCount - Math.max(0, patternCaps - matchingCaps) * 10;
-    }
-
-    private static boolean isWordSeparator(char c) {
-      return Character.isWhitespace(c) || c == '_' || c == '-';
     }
 
     @Override

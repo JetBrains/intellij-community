@@ -23,8 +23,12 @@ import javax.swing.*;
 
 public interface FileTextField {
 
+  String KEY = "fileTextField";
+
   JTextField getField();
+
   @Nullable
   VirtualFile getSelectedFile();
 
+  boolean isPopupDisplayed();
 }

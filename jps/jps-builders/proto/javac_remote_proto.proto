@@ -31,7 +31,7 @@ message Message {
 
     message OutputGroup {
       required string output_root = 1;
-      repeated string source_roots = 2;
+      repeated string source_root = 2;
     }
 
     required Type request_type = 1;
@@ -48,18 +48,21 @@ message Message {
       BUILD_MESSAGE = 1;
       OUTPUT_OBJECT = 2;
       BUILD_COMPLETED = 3;
+      REQUEST_ACK = 4;
     }
 
     message CompileMessage {
       enum Kind {
         ERROR = 1;
         WARNING = 2;
-        INFO = 3;
-        STD_OUT = 4;
+        MANDATORY_WARNING = 3;
+        NOTE = 4;
+        OTHER = 5;
+        STD_OUT = 6;
       }
       required Kind kind = 1;
       optional string text = 2;
-      optional string source_file_path = 3;
+      optional string source_uri = 3;
       optional uint64 problem_begin_offset = 4;
       optional uint64 problem_end_offset = 5;
       optional uint64 problem_location_offset = 6;
@@ -80,7 +83,7 @@ message Message {
      optional string output_root = 3;
      optional string relative_path = 4;
      optional string class_name = 5;
-     optional string source_path = 6;
+     optional string source_uri = 6;
      optional bytes content = 7;
     }
 

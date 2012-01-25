@@ -133,7 +133,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     return ((ElementBase)element).getElementIcon(flags);
   }
 
-  protected Icon computeBaseIcon(int flags) {
+  protected Icon computeBaseIcon(@Iconable.IconFlags int flags) {
     return isVisibilitySupported() ? getAdjustedBaseIcon(getBaseIcon(), flags) : getBaseIcon();
   }
 
@@ -153,7 +153,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     return fileType instanceof INativeFileType && ((INativeFileType) fileType).useNativeIcon() || fileType instanceof UnknownFileType;
   }
 
-  protected Icon getAdjustedBaseIcon(Icon icon, int flags) {
+  protected Icon getAdjustedBaseIcon(Icon icon, @Iconable.IconFlags int flags) {
     Icon result = icon;
     if ((flags & ICON_FLAG_VISIBILITY) > 0) {
       RowIcon rowIcon = new RowIcon(2);
@@ -183,7 +183,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     return icon;
   }
 
-  public static Icon iconWithVisibilityIfNeeded(int flags, Icon baseIcon, Icon visibility) {
+  public static Icon iconWithVisibilityIfNeeded(@Iconable.IconFlags int flags, Icon baseIcon, Icon visibility) {
     return (flags & ICON_FLAG_VISIBILITY) != 0 ? buildRowIcon(
       baseIcon,
       visibility
@@ -214,7 +214,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   }
 
   @Nullable
-  protected Icon getElementIcon(final int flags) {
+  protected Icon getElementIcon(@Iconable.IconFlags int flags) {
     final PsiElement element = (PsiElement)this;
 
     if (!element.isValid()) return null;

@@ -79,7 +79,6 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
 
   private int myCurrentCompletionsPos = 1;
   private String myFileSpitRegExp;
-  public static final String KEY = "fileTextField";
 
   private boolean myAutopopup = false;
   private FileTextFieldImpl.CancelAction myCancelAction;
@@ -200,7 +199,15 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
 
     myUiUpdater.queue(new Update("textField.suggestCompletion") {
       public void run() {
-        result.myCompletionBase = getCompletionBase();
+        final String completionBase = getCompletionBase();
+        if (completionBase != null) {
+          final LookupFile file = myFinder.find(completionBase);
+          if (file != null && !file.isDirectory()) {
+            // we've entered a complete path already, no need to autopopup completion again (IDEA-78996)
+            return;
+          }
+        }
+        result.myCompletionBase = completionBase;
         if (result.myCompletionBase == null) return;
         result.myFieldText = myPathTextField.getText();
         ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
@@ -260,7 +267,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     public String myFieldText;
   }
 
-  private class Separator {
+  private static class Separator {
     private final String myText;
 
     private Separator(final String text) {
@@ -299,6 +306,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
           return file.getIcon();
         }
 
+        @Nullable
         private Separator getSeparatorAboveOf(Object value) {
           if (myCurrentCompletion == null) return null;
           final LookupFile file = (LookupFile)value;
@@ -392,7 +400,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
         }
       }).setItemChoosenCallback(new Runnable() {
         public void run() {
-          processChosenFromCompletion(true, false);
+          processChosenFromCompletion(false);
         }
       }).setCancelKeyEnabled(false).setAlpha(0.1f).setFocusOwners(new Component[]{myPathTextField}).
           createPopup();
@@ -594,9 +602,8 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     }
   }
 
-  private
   @Nullable
-  LookupFile getClosestParent(final String typed) {
+  private LookupFile getClosestParent(final String typed) {
     if (typed == null) return null;
     LookupFile lastFound = myFinder.find(typed);
     if (lastFound == null) return null;
@@ -606,7 +613,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     }
 
     final String[] splits = myFinder.normalize(typed).split(myFileSpitRegExp);
-    StringBuffer fullPath = new StringBuffer();
+    StringBuilder fullPath = new StringBuilder();
     for (int i = 0; i < splits.length; i++) {
       String each = splits[i];
       fullPath.append(each);
@@ -621,15 +628,14 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     return lastFound;
   }
 
-  public
   @Nullable
-  LookupFile getFile() {
+  public LookupFile getFile() {
     String text = getTextFieldText();
     if (text == null) return null;
     return myFinder.find(text);
   }
 
-  private void processChosenFromCompletion(boolean closePath, boolean nameOnly) {
+  private void processChosenFromCompletion(boolean nameOnly) {
     final LookupFile file = getSelectedFileFromCompletionPopup();
     if (file == null) return;
 
@@ -668,72 +674,81 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
         }
 
         if (start > end || start < 0 || end > doc.getLength()) {
-          setTextToFile(file, closePath);
+          setTextToFile(file);
         } else {
-          myPathTextField.setSelectionStart(0);
-          myPathTextField.setSelectionEnd(0);
-
-          final String name = file.getName();
-          boolean toRemoveExistingName;
-          String prefix = "";
-
-          if (caretPos >= start) {
-            prefix = doc.getText(start, caretPos - start);
-            if (prefix.length() == 0) {
-              prefix = doc.getText(start, end - start);
-            }
-            if (SystemInfo.isFileSystemCaseSensitive) {
-              toRemoveExistingName = name.startsWith(prefix) && prefix.length() > 0;
-            } else {
-              toRemoveExistingName = name.toUpperCase().startsWith(prefix.toUpperCase()) && prefix.length() > 0;
-            }
-          } else {
-            toRemoveExistingName = true;
-          }
-
-          int newPos;
-          if (toRemoveExistingName) {
-            doc.remove(start, end - start);
-            doc.insertString(start, name, doc.getDefaultRootElement().getAttributes());
-            newPos = start + name.length();
-          } else {
-            doc.insertString(caretPos, name, doc.getDefaultRootElement().getAttributes());
-            newPos = caretPos + name.length();
-          }
-
-          if (file.isDirectory()) {
-            if (!myFinder.getSeparator().equals(doc.getText(newPos, 1))) {
-              doc.insertString(newPos, myFinder.getSeparator(), doc.getDefaultRootElement().getAttributes());
-              newPos++;
-            }
-          }
-
-          if (newPos < doc.getLength()) {
-            if (myFinder.getSeparator().equals(doc.getText(newPos, 1))) {
-              newPos++;
-            }
-          }
-          myPathTextField.setCaretPosition(newPos);
+          replacePathComponent(file, caretPos, start, end);
         }
       }
       catch (BadLocationException e) {
         LOG.error(e);
       }
     } else {
-      setTextToFile(file, closePath);
+      setTextToFile(file);
     }
   }
 
-  private String toFileName(String name) {
-    return SystemInfo.isFileSystemCaseSensitive ? name : name.toUpperCase();
+  /**
+   * Replace the path component under the caret with the file selected from the completion list.
+   *
+   * @param file     the selected file.
+   * @param caretPos
+   * @param start    the start offset of the path component under the caret.
+   * @param end      the end offset of the path component under the caret.
+   * @throws BadLocationException
+   */
+  private void replacePathComponent(LookupFile file, int caretPos, int start, int end) throws BadLocationException {
+    final Document doc = myPathTextField.getDocument();
+
+    myPathTextField.setSelectionStart(0);
+    myPathTextField.setSelectionEnd(0);
+
+    final String name = file.getName();
+    boolean toRemoveExistingName;
+    String prefix = "";
+
+    if (caretPos >= start) {
+      prefix = doc.getText(start, caretPos - start);
+      if (prefix.length() == 0) {
+        prefix = doc.getText(start, end - start);
+      }
+      if (SystemInfo.isFileSystemCaseSensitive) {
+        toRemoveExistingName = name.startsWith(prefix) && prefix.length() > 0;
+      } else {
+        toRemoveExistingName = name.toUpperCase().startsWith(prefix.toUpperCase()) && prefix.length() > 0;
+      }
+    } else {
+      toRemoveExistingName = true;
+    }
+
+    int newPos;
+    if (toRemoveExistingName) {
+      doc.remove(start, end - start);
+      doc.insertString(start, name, doc.getDefaultRootElement().getAttributes());
+      newPos = start + name.length();
+    } else {
+      doc.insertString(caretPos, name, doc.getDefaultRootElement().getAttributes());
+      newPos = caretPos + name.length();
+    }
+
+    if (file.isDirectory()) {
+      if (!myFinder.getSeparator().equals(doc.getText(newPos, 1))) {
+        doc.insertString(newPos, myFinder.getSeparator(), doc.getDefaultRootElement().getAttributes());
+        newPos++;
+      }
+    }
+
+    if (newPos < doc.getLength()) {
+      if (myFinder.getSeparator().equals(doc.getText(newPos, 1))) {
+        newPos++;
+      }
+    }
+    myPathTextField.setCaretPosition(newPos);
   }
 
-  private void setTextToFile(final LookupFile file, final boolean closePath) {
+  private void setTextToFile(final LookupFile file) {
     String text = file.getAbsolutePath();
-    if (closePath) {
-      if (file.isDirectory() && !text.endsWith(myFinder.getSeparator())) {
-        text += myFinder.getSeparator();
-      }
+    if (file.isDirectory() && !text.endsWith(myFinder.getSeparator())) {
+      text += myFinder.getSeparator();
     }
     myPathTextField.setText(text);
   }
@@ -776,7 +791,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     else if (getSelectedFileFromCompletionPopup() != null && (e.getKeyCode() == KeyEvent.VK_ENTER || e.getKeyCode() == KeyEvent.VK_TAB) && e.getModifiers() == 0) {
       hideCurrentPopup();
       e.consume();
-      processChosenFromCompletion(true, e.getKeyCode() == KeyEvent.VK_TAB);
+      processChosenFromCompletion(e.getKeyCode() == KeyEvent.VK_TAB);
     }
   }
 
@@ -838,6 +853,11 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
 
   public JTextField getField() {
     return myPathTextField;
+  }
+
+  @Override
+  public boolean isPopupDisplayed() {
+    return myCurrentPopup != null && myCurrentPopup.isVisible();
   }
 
   public Finder getFinder() {

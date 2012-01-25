@@ -22,19 +22,30 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiSubstitutor;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.ui.ComboBoxVisibilityPanel;
+import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.ui.MethodSignatureComponent;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.util.ArrayUtil;
+import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.intentions.utils.DuplicatesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
+import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.extract.ExtractUtil;
 import org.jetbrains.plugins.groovy.refactoring.extract.InitialInfo;
 import org.jetbrains.plugins.groovy.refactoring.extract.ParameterTablePanel;
@@ -51,7 +62,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
 import java.util.EventListener;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author ilyas
@@ -71,10 +85,10 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
   private ParameterTablePanel myParameterTablePanel;
   private final Project myProject;
 
-  public GroovyExtractMethodDialog(InitialInfo info) {
+  public GroovyExtractMethodDialog(InitialInfo info, GrMemberOwner owner) {
     super(info.getProject(), true);
     myProject = info.getProject();
-    myHelper = new ExtractMethodInfoHelper(info, "");
+    myHelper = new ExtractMethodInfoHelper(info, "", owner);
 
     setUpNameField();
     myParameterTablePanel.init(myHelper);
@@ -98,8 +112,8 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
   protected void doOKAction() {
     String name = getEnteredName();
     if (name == null) return;
-    GrMethod method = ExtractUtil.createMethodByHelper(name, myHelper);
-    if (method != null && !ExtractUtil.validateMethod(method, myHelper)) {
+    GrMethod method = ExtractUtil.createMethod(myHelper);
+    if (method != null && !validateMethod(method, myHelper)) {
       return;
     }
     if (myCbSpecifyType.isEnabled()) {
@@ -230,6 +244,44 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
         GroovyExtractMethodDialog.this.doCancelAction();
       }
     };
+  }
+
+  private static boolean validateMethod(GrMethod method, ExtractMethodInfoHelper helper) {
+    ArrayList<String> conflicts = new ArrayList<String>();
+    GrMemberOwner owner = helper.getOwner();
+    PsiMethod[] methods = ArrayUtil.mergeArrays(owner.getAllMethods(), new PsiMethod[]{method}, PsiMethod.ARRAY_FACTORY);
+    final Map<PsiMethod, List<PsiMethod>> map = DuplicatesUtil.factorDuplicates(methods, new TObjectHashingStrategy<PsiMethod>() {
+      public int computeHashCode(PsiMethod method) {
+        return method.getSignature(PsiSubstitutor.EMPTY).hashCode();
+      }
+
+      public boolean equals(PsiMethod method1, PsiMethod method2) {
+        return method1.getSignature(PsiSubstitutor.EMPTY).equals(method2.getSignature(PsiSubstitutor.EMPTY));
+      }
+    });
+
+    List<PsiMethod> list = map.get(method);
+    if (list == null) return true;
+    for (PsiMethod psiMethod : list) {
+      if (psiMethod != method) {
+        PsiClass containingClass = psiMethod.getContainingClass();
+        if (containingClass == null) return true;
+        String message = containingClass instanceof GroovyScriptClass ?
+            GroovyRefactoringBundle.message("method.is.already.defined.in.script", GroovyRefactoringUtil.getMethodSignature(method),
+                CommonRefactoringUtil.htmlEmphasize(containingClass.getQualifiedName())) :
+            GroovyRefactoringBundle.message("method.is.already.defined.in.class", GroovyRefactoringUtil.getMethodSignature(method),
+                CommonRefactoringUtil.htmlEmphasize(containingClass.getQualifiedName()));
+        conflicts.add(message);
+      }
+    }
+
+    return conflicts.size() <= 0 || reportConflicts(conflicts, helper.getProject());
+  }
+
+  private static boolean reportConflicts(final ArrayList<String> conflicts, final Project project) {
+    ConflictsDialog conflictsDialog = new ConflictsDialog(project, conflicts);
+    conflictsDialog.show();
+    return conflictsDialog.isOK();
   }
 
   class DataChangedListener implements EventListener {

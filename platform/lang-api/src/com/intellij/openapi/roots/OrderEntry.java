@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.openapi.roots;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents an entry in the classpath of a module (as shown in the "Order/Export" page
@@ -88,5 +89,5 @@ public interface OrderEntry extends Synthetic, Comparable<OrderEntry> {
    * @param initialValue the default value to be returned by the visit process.
    * @return the value returned by the visitor.
    */
-  <R> R accept(RootPolicy<R> policy, R initialValue);
+  <R> R accept(RootPolicy<R> policy, @Nullable R initialValue);
 }

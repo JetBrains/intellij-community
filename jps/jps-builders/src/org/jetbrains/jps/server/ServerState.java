@@ -2,6 +2,7 @@ package org.jetbrains.jps.server;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import org.codehaus.groovy.runtime.MethodClosure;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.Library;
@@ -35,13 +36,15 @@ class ServerState {
   private final Object myConfigurationLock = new Object();
   private final Map<String, String> myPathVariables = new HashMap<String, String>();
   private final List<GlobalLibrary> myGlobalLibraries = new ArrayList<GlobalLibrary>();
+  private volatile String myGlobalEncoding = null;
   private volatile boolean myKeepTempCachesInMemory = false;
 
-  public void setGlobals(List<GlobalLibrary> libs, Map<String, String> pathVars) {
+  public void setGlobals(List<GlobalLibrary> libs, Map<String, String> pathVars, String globalEncoding) {
     synchronized (myConfigurationLock) {
       clearCahedState();
       myGlobalLibraries.addAll(libs);
       myPathVariables.putAll(pathVars);
+      myGlobalEncoding = StringUtil.isEmpty(globalEncoding)? null : globalEncoding;
     }
   }
 
@@ -281,6 +284,10 @@ class ServerState {
 
     final String loadPath = isDirectoryBased(projectFile) ? new File(projectFile, IDEA_PROJECT_DIRNAME).getPath() : projectPath;
     IdeaProjectLoader.loadFromPath(project, loadPath, myPathVariables, getStartupScript());
+    final String globalEncoding = myGlobalEncoding;
+    if (globalEncoding != null && project.getProjectCharset() == null) {
+      project.setProjectCharset(globalEncoding);
+    }
     return project;
   }
 

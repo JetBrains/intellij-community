@@ -100,6 +100,10 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable, Co
       return true;
     }
 
+    if (configuration.RESIZE_HEADERS != myGeneralUI.myResizeHeaders.isSelected()) {
+      return true;
+    }
+    
     return false;
   }
 
@@ -109,6 +113,7 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable, Co
     configuration.DEFAULT_LAYOUT_MANAGER = (String)myGeneralUI.myLayoutManagerCombo.getSelectedItem();
     configuration.INSTRUMENT_CLASSES = myGeneralUI.myRbInstrumentClasses.isSelected();
     configuration.DEFAULT_FIELD_ACCESSIBILITY = (String)myGeneralUI .myDefaultFieldAccessibilityCombo.getSelectedItem();
+    configuration.RESIZE_HEADERS = myGeneralUI.myResizeHeaders.isSelected();
 
     if (configuration.INSTRUMENT_CLASSES && !myProject.isDefault()) {
       final DispatchThreadProgressWindow progressWindow = new DispatchThreadProgressWindow(false, myProject);
@@ -140,6 +145,8 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable, Co
     myGeneralUI.myLayoutManagerCombo.setSelectedItem(configuration.DEFAULT_LAYOUT_MANAGER);
 
     myGeneralUI.myDefaultFieldAccessibilityCombo.setSelectedItem(configuration.DEFAULT_FIELD_ACCESSIBILITY);
+    
+    myGeneralUI.myResizeHeaders.setSelected(configuration.RESIZE_HEADERS);
   }
 
   public void disposeUIResources() {
@@ -153,6 +160,7 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable, Co
     public JCheckBox myChkCopyFormsRuntime;
     private JComboBox myLayoutManagerCombo;
     private JComboBox myDefaultFieldAccessibilityCombo;
+    private JCheckBox myResizeHeaders;
   }
 
   private final class MyApplyRunnable implements Runnable {

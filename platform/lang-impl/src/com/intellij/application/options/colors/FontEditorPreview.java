@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -118,7 +118,7 @@ public class FontEditorPreview implements PreviewPanel{
   public void blinkSelectedHighlightType(Object description) {
   }
 
-  public void addListener(final ColorAndFontSettingsListener listener) {
+  public void addListener(@NotNull final ColorAndFontSettingsListener listener) {
     myDispatcher.addListener(listener);
   }
 

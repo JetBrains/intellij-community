@@ -75,12 +75,10 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
   @NonNls public static final String HELP_ID = "ideaInterface.editor";
 
   private TabInfo.DragOutDelegate myDragOutDelegate = new MyDragOutDelegate();
-  private DockManager myDockManager;
 
-  EditorTabbedContainer(final EditorWindow window, Project project, DockManager dockManager, final int tabPlacement) {
+  EditorTabbedContainer(final EditorWindow window, Project project, final int tabPlacement) {
     myWindow = window;
     myProject = project;
-    myDockManager = dockManager;
     final ActionManager actionManager = ActionManager.getInstance();
     myTabs = new JBEditorTabs(project, actionManager, IdeFocusManager.getInstance(project), this); 
     ((JBTabsImpl)myTabs).setEditorTabs(true);
@@ -323,7 +321,7 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
     ((JBTabsImpl)myTabs).setPaintBlocked(blocked, true);
   }
 
-  private class MyQueryable implements Queryable {
+  private static class MyQueryable implements Queryable {
 
     private final TabInfo myTab;
 
@@ -347,6 +345,7 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
     return file.getPresentableName();
   }
 
+  @Nullable
   public static Color calcTabColor(final Project project, final VirtualFile file) {
     for (EditorTabColorProvider provider : Extensions.getExtensions(EditorTabColorProvider.EP_NAME)) {
       final Color result = provider.getEditorTabColor(project, file);
@@ -458,6 +457,10 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
     });
   }
 
+  private boolean isFloating() {
+    return myWindow.getOwner().isFloating();
+  }
+
   private class TabMouseListener extends MouseAdapter {
     @Override
     public void mousePressed(final MouseEvent e) {
@@ -470,7 +473,7 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
         }
       }
 
-      if (UIUtil.isActionClick(e) && (e.getClickCount() % 2) == 0) {
+      if (UIUtil.isActionClick(e) && (e.getClickCount() % 2) == 0 && !isFloating()) {
         final ActionManager mgr = ActionManager.getInstance();
         mgr.tryToExecute(mgr.getAction("HideAllWindows"), e, null, ActionPlaces.UNKNOWN, true);
       }
@@ -580,7 +583,7 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
         myImg = img;
         myFile = file;
         myPresentation = presentation;
-        myContainer = new DockableEditorTabbedContainer(myProject, myDockManager);
+        myContainer = new DockableEditorTabbedContainer(myProject);
         myEditorWindow = window;
         myPreferredSize = myEditorWindow.getSize();
       }
@@ -603,10 +606,6 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
       @Override
       public String getDockContainerType() {
         return DockableEditorContainerFactory.TYPE;
-      }
-
-      public EditorWindow getEditorWindow() {
-        return myEditorWindow;
       }
 
       @Override

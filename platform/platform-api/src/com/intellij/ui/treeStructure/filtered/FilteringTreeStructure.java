@@ -56,21 +56,22 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
     myLeaves.clear();
     myNodesCache.clear();
     myDescriptors2Nodes.clear();
-    addToCache(myRoot);
+    addToCache(myRoot, false);
   }
 
-  private void addToCache(FilteringNode node) {
+  private void addToCache(FilteringNode node, boolean duplicate) {
     Object delegate = node.getDelegate();
     Object[] delegates = myBaseStructure.getChildElements(delegate);
-    if (delegates == null || delegates.length == 0) {
+    if (delegates == null || delegates.length == 0 || duplicate) {
       myLeaves.add(node);
     } else {
       ArrayList<FilteringNode> nodes = new ArrayList<FilteringNode>(delegates.length);
       for (Object d : delegates) {
         FilteringNode n = new FilteringNode(node, d);
+        boolean isDuplicate = myDescriptors2Nodes.containsKey(d);
         myDescriptors2Nodes.put(d, n);
         nodes.add(n);
-        addToCache(n);
+        addToCache(n, isDuplicate);
       }
       myNodesCache.put(node, nodes);
     }

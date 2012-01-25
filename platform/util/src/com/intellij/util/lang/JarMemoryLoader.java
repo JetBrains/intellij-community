@@ -1,14 +1,13 @@
 package com.intellij.util.lang;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.zip.ZipShort;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.Nullable;
 import sun.misc.Resource;
 
 import java.io.*;
 import java.net.URL;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -20,9 +19,9 @@ import java.util.zip.ZipInputStream;
 public class JarMemoryLoader {
 
   public static final String SIZE_ENTRY = "META-INF/jb/$$size$$";
-  private static final Logger LOG = Logger.getInstance(JarMemoryLoader.class);
+  //private static final Logger LOG = Logger.getInstance(JarMemoryLoader.class);
 
-  private final Map<String, Resource> myResources = new HashMap<String, Resource>();
+  private final Map<String, Resource> myResources = new THashMap<String, Resource>();
 
   public Resource getResource(String entryName) {
     return myResources.remove(entryName);
@@ -34,9 +33,9 @@ public class JarMemoryLoader {
     try {
 //      long start = System.currentTimeMillis();
       JarMemoryLoader loader = load(inputStream, baseUrl);
-      if (loader != null) {
+//      if (loader != null) {
 //        LOG.info(loader.myResources.size() + " classes from " + file.getName() + " preloaded in " + (System.currentTimeMillis() - start) + " ms");
-      }
+//      }
       return loader;
     }
     finally {

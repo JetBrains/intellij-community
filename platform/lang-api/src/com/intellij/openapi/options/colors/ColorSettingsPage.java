@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,15 +28,8 @@ import java.util.Map;
 /**
  * Interface for a custom page shown in the "Colors and Fonts" settings dialog.
  */
-public interface ColorSettingsPage {
+public interface ColorSettingsPage extends ColorAndFontDescriptorsProvider {
   ExtensionPointName<ColorSettingsPage> EP_NAME = ExtensionPointName.create("com.intellij.colorSettingsPage");
-
-  /**
-   * Returns the title of the page, shown as text in the dialog tab.
-   *
-   * @return the title of the custom page.
-   */
-  @NotNull String getDisplayName();
 
   /**
    * Returns the icon for the page, shown in the dialog tab.
@@ -44,25 +37,6 @@ public interface ColorSettingsPage {
    * @return the icon for the page, or null if the page does not have a custom icon.
    */
   @Nullable Icon getIcon();
-
-  /**
-   * Returns the list of descriptors specifying the {@link TextAttributesKey} instances
-   * for which colors are specified in the page. For such attribute keys, the user can choose
-   * all highlighting attributes (font type, background color, foreground color, error stripe color and
-   * effects).
-   *
-   * @return the list of attribute descriptors.
-   */
-  @NotNull AttributesDescriptor[] getAttributeDescriptors();
-
-  /**
-   * Returns the list of descriptors specifying the {@link com.intellij.openapi.editor.colors.ColorKey}
-   * instances for which colors are specified in the page. For such color keys, the user can
-   * choose only the background or foreground color.
-   *
-   * @return the list of color descriptors.
-   */
-  @NotNull ColorDescriptor[] getColorDescriptors();
 
   /**
    * Returns the syntax highlighter which is used to highlight the text shown in the preview

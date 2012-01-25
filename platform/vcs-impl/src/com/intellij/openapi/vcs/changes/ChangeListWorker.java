@@ -98,29 +98,10 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
   }
 
   public void onAfterWorkerSwitch(@NotNull final ChangeListWorker previous) {
-    final boolean somethingChanged = myDelta.step(previous.myIdx, myIdx);
-    checkForMultipleCopiesNotMove();
+    checkForMultipleCopiesNotMove(myDelta.step(previous.myIdx, myIdx));
   }
 
-  public boolean takeData(@NotNull final ChangeListWorker worker) {
-    myMap.clear();
-    myMap.putAll(worker.myMap);
-    myDefault = worker.myDefault;
-
-    myListsToDisappear.clear();
-    myListsToDisappear.addAll(worker.myListsToDisappear);
-
-    final boolean somethingChanged = myDelta.step(myIdx, worker.myIdx);
-    myIdx = new ChangeListsIndexes(worker.myIdx);
-    checkForMultipleCopiesNotMove();
-    
-    myLocallyDeleted.takeFrom(worker.myLocallyDeleted);
-    mySwitchedHolder.takeFrom(worker.mySwitchedHolder);
-
-    return somethingChanged;
-  }
-
-  private void checkForMultipleCopiesNotMove() {
+  private void checkForMultipleCopiesNotMove(boolean somethingChanged) {
     final MultiMap<FilePath, Pair<Change, String>> moves = new MultiMap<FilePath, Pair<Change, String>>() {
       protected Collection<Pair<Change, String>> createCollection() {
         return new LinkedList<Pair<Change, String>>();
@@ -139,7 +120,6 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
         }
       }
     }
-    boolean somethingChanged = false;
     for (FilePath filePath : moves.keySet()) {
       final List<Pair<Change, String>> copies = (List<Pair<Change, String>>) moves.get(filePath);
       if (copies.size() == 1) continue;

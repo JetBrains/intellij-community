@@ -23,6 +23,7 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.SameColor;
 import com.intellij.util.ui.UIUtil;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,7 +38,7 @@ import java.util.Map;
  */
 public abstract class AbstractNavBarUI implements NavBarUI {
   
-  private Map<NavBarItem, Map<ImageType, BufferedImage>> myCache = new HashMap<NavBarItem, Map<ImageType, BufferedImage>>(); 
+  private Map<NavBarItem, Map<ImageType, BufferedImage>> myCache = new THashMap<NavBarItem, Map<ImageType, BufferedImage>>();
   
   private enum ImageType {
     INACTIVE, NEXT_ACTIVE, ACTIVE, INACTIVE_FLOATING, NEXT_ACTIVE_FLOATING, ACTIVE_FLOATING,

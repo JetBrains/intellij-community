@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import gnu.trove.TIntArrayList;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import static com.intellij.refactoring.IntroduceParameterRefactoring.*;
 
 public interface IntroduceParameterData {
   @NotNull
@@ -37,9 +40,7 @@ public interface IntroduceParameterData {
   @NotNull
   String getParameterName();
 
-  /**
-   * @see com.intellij.refactoring.IntroduceParameterRefactoring
-   */
+  @MagicConstant(intValues = {REPLACE_FIELDS_WITH_GETTERS_ALL, REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, REPLACE_FIELDS_WITH_GETTERS_NONE})
   int getReplaceFieldsWithGetters();
 
   boolean isDeclareFinal();

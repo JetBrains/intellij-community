@@ -35,6 +35,7 @@ import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -50,6 +51,7 @@ import com.intellij.psi.util.*;
 import com.intellij.slicer.*;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ConcurrentSoftValueHashMap;
 import gnu.trove.THashSet;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.Nls;
@@ -284,6 +286,20 @@ public class MagicConstantInspection extends LocalInspectionTool {
       result = 31 * result + (canBeOred ? 1 : 0);
       return result;
     }
+
+    public boolean isSubsetOf(@NotNull AllowedValues other, @NotNull PsiManager manager) {
+      for (PsiAnnotationMemberValue value : values) {
+        boolean found = false;
+        for (PsiAnnotationMemberValue otherValue : other.values) {
+          if (same(value, otherValue, manager)) {
+            found = true;
+            break;
+          }
+        }
+        if (!found) return false;
+      }
+      return true;
+    }
   }
 
   private static AllowedValues getAllowedValuesFromMagic(@NotNull PsiModifierListOwner element,
@@ -480,7 +496,7 @@ public class MagicConstantInspection extends LocalInspectionTool {
                                         return value.getText();
                                       }
                                     }, ", ");
-    holder.registerProblem(argument, "Must be one of the: "+ values);
+    holder.registerProblem(argument, "Must be one of: "+ values);
   }
 
   private static boolean isAllowed(@NotNull final PsiElement scope,
@@ -499,9 +515,9 @@ public class MagicConstantInspection extends LocalInspectionTool {
   }
 
   private static boolean isGoodExpression(PsiExpression expression,
-                                          AllowedValues allowedValues,
-                                          PsiElement scope,
-                                          PsiManager manager) {
+                                          @NotNull AllowedValues allowedValues,
+                                          @NotNull PsiElement scope,
+                                          @NotNull PsiManager manager) {
     expression = PsiUtil.deparenthesizeExpression(expression);
     if (expression == null) return true;
     if (expression instanceof PsiConditionalExpression) {
@@ -515,18 +531,24 @@ public class MagicConstantInspection extends LocalInspectionTool {
     if (isOneOf(expression, allowedValues, manager)) return true;
 
     if (allowedValues.canBeOred) {
-      if (expression instanceof PsiPolyadicExpression &&
-          JavaTokenType.OR.equals(((PsiPolyadicExpression)expression).getOperationTokenType())) {
-        for (PsiExpression operand : ((PsiPolyadicExpression)expression).getOperands()) {
-          if (!isAllowed(scope, operand, allowedValues, manager)) return false;
-        }
-        return true;
-      }
-      //todo & ~(CONST | CONST)
-      PsiExpression zero = JavaPsiFacade.getElementFactory(manager.getProject()).createExpressionFromText("0", expression);
+      PsiExpression zero = getLiteralExpression(expression, manager, "0");
       if (same(expression, zero, manager)) return true;
-      PsiExpression mOne = JavaPsiFacade.getElementFactory(manager.getProject()).createExpressionFromText("-1", expression);
+      PsiExpression mOne = getLiteralExpression(expression, manager, "-1");
       if (same(expression, mOne, manager)) return true;
+      if (expression instanceof PsiPolyadicExpression) {
+        IElementType tokenType = ((PsiPolyadicExpression)expression).getOperationTokenType();
+        if (JavaTokenType.OR.equals(tokenType) || JavaTokenType.AND.equals(tokenType)) {
+          for (PsiExpression operand : ((PsiPolyadicExpression)expression).getOperands()) {
+            if (!isAllowed(scope, operand, allowedValues, manager)) return false;
+          }
+          return true;
+        }
+      }
+      if (expression instanceof PsiPrefixExpression &&
+          JavaTokenType.TILDE.equals(((PsiPrefixExpression)expression).getOperationTokenType())) {
+        PsiExpression operand = ((PsiPrefixExpression)expression).getOperand();
+        return operand == null || isAllowed(scope, operand, allowedValues, manager);
+      }
     }
 
     PsiElement resolved = null;
@@ -540,9 +562,24 @@ public class MagicConstantInspection extends LocalInspectionTool {
     AllowedValues allowedForRef;
     if (resolved instanceof PsiModifierListOwner &&
         (allowedForRef = getAllowedValues((PsiModifierListOwner)resolved, getType((PsiModifierListOwner)resolved), null)) != null &&
-        Comparing.equal(allowedValues, allowedForRef)) return true;
+        allowedForRef.isSubsetOf(allowedValues, manager)) return true;
 
     return PsiType.NULL.equals(expression.getType());
+  }
+
+  private static Key<Map<String, PsiExpression>> LITERAL_EXPRESSION_CACHE = Key.create("LITERAL_EXPRESSION_CACHE");
+  private static PsiExpression getLiteralExpression(PsiExpression context, PsiManager manager, @NotNull String text) {
+    Map<String, PsiExpression> cache = LITERAL_EXPRESSION_CACHE.get(manager);
+    if (cache == null) {
+      cache = new ConcurrentSoftValueHashMap<String, PsiExpression>();
+      cache = manager.putUserDataIfAbsent(LITERAL_EXPRESSION_CACHE, cache);
+    }
+    PsiExpression expression = cache.get(text);
+    if (expression == null) {
+      expression = JavaPsiFacade.getElementFactory(manager.getProject()).createExpressionFromText(text, context);
+      cache.put(text, expression);
+    }
+    return expression;
   }
 
   private static boolean isOneOf(@NotNull PsiExpression expression, @NotNull AllowedValues allowedValues, @NotNull PsiManager manager) {

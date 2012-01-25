@@ -141,6 +141,7 @@ public abstract class PsiAnchor {
     private final VirtualFile myVirtualFile;
     private final Project myProject;
     private final Language myLanguage;
+    private final Language myFileLanguage;
     private final int myStartOffset;
     private final int myEndOffset;
     private final Class myClass;
@@ -157,6 +158,7 @@ public abstract class PsiAnchor {
       myEndOffset = endOffset;
       myClass = aClass;
       myLanguage = language;
+      myFileLanguage = file.getLanguage();
     }
 
     @Override
@@ -178,8 +180,9 @@ public abstract class PsiAnchor {
     }
 
     @Override
+    @Nullable
     public PsiFile getFile() {
-      return SelfElementInfo.restoreFileFromVirtual(myVirtualFile, myProject);
+      return SelfElementInfo.restoreFileFromVirtual(myVirtualFile, myProject, myFileLanguage);
     }
 
     @Override
@@ -271,6 +274,7 @@ public abstract class PsiAnchor {
     }
 
     @Override
+    @Nullable
     public PsiFile getFile() {
       return SelfElementInfo.restoreFileFromVirtual(myFile, myProject);
     }
@@ -320,6 +324,7 @@ public abstract class PsiAnchor {
     }
   }
 
+  @Nullable
   public static PsiElement restoreFromStubIndex(PsiFileWithStubSupport fileImpl,
                                                 int index,
                                                 IStubElementType elementType) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,22 @@
 
 package com.intellij.application.options.colors;
 
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.options.colors.ColorSettingsPage;
+import org.jetbrains.annotations.NotNull;
+
 /**
+ * Generalises {@link ColorSettingsPage} in a way that allows to provide custom {@link PreviewPanel preview panel}.
+ * 
  * @author yole
  */
 public interface ColorAndFontPanelFactory {
-  NewColorAndFontPanel createPanel(ColorAndFontOptions options);
+
+  ExtensionPointName<ColorAndFontPanelFactory> EP_NAME = ExtensionPointName.create("com.intellij.colorAndFontPanelFactory");
+  
+  @NotNull
+  NewColorAndFontPanel createPanel(@NotNull ColorAndFontOptions options);
+  
+  @NotNull
   String getPanelDisplayName();
 }

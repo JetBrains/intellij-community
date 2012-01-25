@@ -117,7 +117,7 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
     if (loc == StandardLocation.CLASS_OUTPUT) {
       if (myOutputsMap.size() > 1 && sourceFile != null) {
         // multiple outputs case
-        final File outputDir = findOutputDir(new File(Paths.toURI(sourceFile.toUri().getPath())));
+        final File outputDir = findOutputDir(Paths.convertToFile(sourceFile.toUri()));
         if (outputDir != null) {
           return outputDir;
         }

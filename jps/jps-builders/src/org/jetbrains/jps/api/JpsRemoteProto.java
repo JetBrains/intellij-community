@@ -2277,6 +2277,13 @@ public final class JpsRemoteProto {
           return globalLibrary_.get(index);
         }
         
+        // optional string global_encoding = 3;
+        public static final int GLOBAL_ENCODING_FIELD_NUMBER = 3;
+        private boolean hasGlobalEncoding;
+        private java.lang.String globalEncoding_ = "";
+        public boolean hasGlobalEncoding() { return hasGlobalEncoding; }
+        public java.lang.String getGlobalEncoding() { return globalEncoding_; }
+        
         private void initFields() {
         }
         public final boolean isInitialized() {
@@ -2298,6 +2305,9 @@ public final class JpsRemoteProto {
           for (org.jetbrains.jps.api.JpsRemoteProto.Message.Request.SetupCommand.GlobalLibrary element : getGlobalLibraryList()) {
             output.writeMessage(2, element);
           }
+          if (hasGlobalEncoding()) {
+            output.writeString(3, getGlobalEncoding());
+          }
         }
         
         private int memoizedSerializedSize = -1;
@@ -2313,6 +2323,10 @@ public final class JpsRemoteProto {
           for (org.jetbrains.jps.api.JpsRemoteProto.Message.Request.SetupCommand.GlobalLibrary element : getGlobalLibraryList()) {
             size += com.google.protobuf.CodedOutputStream
               .computeMessageSize(2, element);
+          }
+          if (hasGlobalEncoding()) {
+            size += com.google.protobuf.CodedOutputStream
+              .computeStringSize(3, getGlobalEncoding());
           }
           memoizedSerializedSize = size;
           return size;
@@ -2478,6 +2492,9 @@ public final class JpsRemoteProto {
               }
               result.globalLibrary_.addAll(other.globalLibrary_);
             }
+            if (other.hasGlobalEncoding()) {
+              setGlobalEncoding(other.getGlobalEncoding());
+            }
             return this;
           }
           
@@ -2506,6 +2523,10 @@ public final class JpsRemoteProto {
                   org.jetbrains.jps.api.JpsRemoteProto.Message.Request.SetupCommand.GlobalLibrary.Builder subBuilder = org.jetbrains.jps.api.JpsRemoteProto.Message.Request.SetupCommand.GlobalLibrary.newBuilder();
                   input.readMessage(subBuilder, extensionRegistry);
                   addGlobalLibrary(subBuilder.buildPartial());
+                  break;
+                }
+                case 26: {
+                  setGlobalEncoding(input.readString());
                   break;
                 }
               }
@@ -2612,6 +2633,27 @@ public final class JpsRemoteProto {
           }
           public Builder clearGlobalLibrary() {
             result.globalLibrary_ = java.util.Collections.emptyList();
+            return this;
+          }
+          
+          // optional string global_encoding = 3;
+          public boolean hasGlobalEncoding() {
+            return result.hasGlobalEncoding();
+          }
+          public java.lang.String getGlobalEncoding() {
+            return result.getGlobalEncoding();
+          }
+          public Builder setGlobalEncoding(java.lang.String value) {
+            if (value == null) {
+    throw new NullPointerException();
+  }
+  result.hasGlobalEncoding = true;
+            result.globalEncoding_ = value;
+            return this;
+          }
+          public Builder clearGlobalEncoding() {
+            result.hasGlobalEncoding = false;
+            result.globalEncoding_ = getDefaultInstance().getGlobalEncoding();
             return this;
           }
           

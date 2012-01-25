@@ -42,7 +42,7 @@ public class ImplementationSearcher {
     boolean onRef = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       @Override
       public Boolean compute() {
-        return targetElementUtil.findTargetElement(editor, getFlags() & ~TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED, offset) == null;
+        return targetElementUtil.findTargetElement(editor, getFlags() & ~(TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED | TargetElementUtilBase.LOOKUP_ITEM_ACCEPTED), offset) == null;
       }
     });
     return searchImplementations(element, offset, onRef && ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {

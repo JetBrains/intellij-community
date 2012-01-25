@@ -1,5 +1,5 @@
 def foo() {
-    foo("foo");
+    foo("foo")
 }
 
 def foo(String anObject) {
