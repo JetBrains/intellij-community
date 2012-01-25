@@ -10,6 +10,7 @@ import org.jboss.netty.handler.codec.protobuf.ProtobufDecoder;
 import org.jboss.netty.handler.codec.protobuf.ProtobufEncoder;
 import org.jboss.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import org.jboss.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
+import org.jetbrains.jps.api.GlobalOptions;
 import org.jetbrains.jps.api.JpsRemoteProto;
 import org.jetbrains.jps.incremental.Paths;
 
@@ -27,7 +28,6 @@ public class Server {
   private static final int MAX_SIMULTANEOUS_BUILD_SESSIONS = Math.max(2, Runtime.getRuntime().availableProcessors());
   public static final String SERVER_SUCCESS_START_MESSAGE = "Compile Server started successfully. Listening on port: ";
   public static final String SERVER_ERROR_START_MESSAGE = "Error starting Compile Server: ";
-  public static final String USE_MEMORY_TEMP_CACHE_OPTION = "use.memory.temp.cache";
 
   private final ChannelGroup myAllOpenChannels = new DefaultChannelGroup("compile-server");
   private final ChannelFactory myChannelFactory;
@@ -99,7 +99,7 @@ public class Server {
         }
       });
 
-      ServerState.getInstance().setKeepTempCachesInMemory(System.getProperty(USE_MEMORY_TEMP_CACHE_OPTION) != null);
+      ServerState.getInstance().setKeepTempCachesInMemory(System.getProperty(GlobalOptions.USE_MEMORY_TEMP_CACHE_OPTION) != null);
 
       System.out.println("Server classpath: " + System.getProperty("java.class.path"));
       System.err.println(SERVER_SUCCESS_START_MESSAGE + port);

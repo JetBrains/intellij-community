@@ -18,6 +18,7 @@ import org.jetbrains.jps.Module;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.Project;
 import org.jetbrains.jps.ProjectPaths;
+import org.jetbrains.jps.api.GlobalOptions;
 import org.jetbrains.jps.api.RequestFuture;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
@@ -36,6 +37,7 @@ import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
 import java.io.*;
 import java.net.MalformedURLException;
+import java.net.ServerSocket;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.*;
@@ -48,9 +50,9 @@ import java.util.concurrent.ExecutorService;
  */
 public class JavaBuilder extends Builder{
   public static final String BUILDER_NAME = "java";
-
   private static final String JAVA_EXTENSION = ".java";
   private static final String FORM_EXTENSION = ".form";
+  private static final boolean USE_EMBEDDED_JAVAC = System.getProperty(GlobalOptions.USE_EXTERNAL_JAVAC_OPTION) == null;
 
   private static final FileFilter JAVA_SOURCES_FILTER = new FileFilter() {
     public boolean accept(File file) {
@@ -222,7 +224,6 @@ public class JavaBuilder extends Builder{
     final Collection<File> classpath = paths.getCompilationClasspath(chunk, context.isCompilingTests(), false/*context.isProjectRebuild()*/);
     final Collection<File> platformCp = paths.getPlatformCompilationClasspath(chunk, context.isCompilingTests(), false/*context.isProjectRebuild()*/);
     final Map<File, Set<File>> outs = buildOutputDirectoriesMap(context, chunk);
-    final List<String> options = getCompilationOptions(context, chunk);
 
     // begin compilation round
     final DiagnosticSink diagnosticSink = new DiagnosticSink(context);
@@ -234,7 +235,7 @@ public class JavaBuilder extends Builder{
         final Set<File> sourcePath = TEMPORARY_SOURCE_ROOTS_KEY.get(context,Collections.<File>emptySet());
 
         final boolean compiledOk = compileJava(
-          options, files, classpath, platformCp, sourcePath, outs, context, diagnosticSink, outputSink
+          files, classpath, platformCp, sourcePath, outs, context, diagnosticSink, outputSink
         );
 
         final Map<File, String> chunkSourcePath = ProjectPaths.getSourceRootsWithDependents(chunk, context.isCompilingTests());
@@ -291,12 +292,12 @@ public class JavaBuilder extends Builder{
     return exitCode;
   }
 
-  private boolean compileJava(List<String> options, Collection<File> files, Collection<File> classpath, Collection<File> platformCp, Collection<File> sourcePath, Map<File, Set<File>> outs, CompileContext context, DiagnosticOutputConsumer diagnosticSink, final OutputFileConsumer outputSink) throws Exception {
-    final boolean useEmbeddedJavac = true; // todo: make configurable
+  private boolean compileJava(Collection<File> files, Collection<File> classpath, Collection<File> platformCp, Collection<File> sourcePath, Map<File, Set<File>> outs, CompileContext context, DiagnosticOutputConsumer diagnosticSink, final OutputFileConsumer outputSink) throws Exception {
+    final List<String> options = getCompilationOptions(context);
     final ClassProcessingConsumer classesConsumer = new ClassProcessingConsumer(context, outputSink);
     try {
       final boolean rc;
-      if (useEmbeddedJavac) {
+      if (USE_EMBEDDED_JAVAC) {
         rc = JavacMain.compile(options, files, classpath, platformCp, sourcePath, outs, diagnosticSink, classesConsumer, context.getCancelStatus());
       }
       else {
@@ -326,13 +327,12 @@ public class JavaBuilder extends Builder{
       return descriptor.client;
     }
     // start server here
-    final String javaHome = System.getProperty("java.home");
+    final String vmExecPath = System.getProperty(GlobalOptions.VM_EXE_PATH_OPTION, System.getProperty("java.home") + "/bin/java");
+    final String hostString = System.getProperty(GlobalOptions.HOSTNAME_OPTION, "localhost");
+    final int port = findFreePort();
+    final int heapSize = getJavacServerHeapSize(context);
 
-    final String hostString = "localhost"; // todo: obtain from IDEA
-    final int port = 9999; // todo: obtain from IDEA
-    final int heapSize = 512; // todo: make configurable; either obtain from IDEA or calculate
-
-    final BaseOSProcessHandler processHandler = JavacServerBootstrap.launchJavacServer(javaHome + "/bin/java", heapSize, port, Paths.getSystemRoot());
+    final BaseOSProcessHandler processHandler = JavacServerBootstrap.launchJavacServer(vmExecPath, heapSize, port, Paths.getSystemRoot());
     final JavacServerClient client = new JavacServerClient();
     try {
       client.connect(hostString, port);
@@ -343,6 +343,46 @@ public class JavaBuilder extends Builder{
     }
     ExternalJavacDescriptor.KEY.set(context, new ExternalJavacDescriptor(processHandler, client));
     return client;
+  }
+
+  private static int findFreePort() {
+    try {
+      final ServerSocket serverSocket = new ServerSocket(0);
+      try {
+        return serverSocket.getLocalPort();
+      }
+      finally {
+        //workaround for linux : calling close() immediately after opening socket
+        //may result that socket is not closed
+        synchronized(serverSocket) {
+          try {
+            serverSocket.wait(1);
+          }
+          catch (Throwable ignored) {
+          }
+        }
+        serverSocket.close();
+      }
+    }
+    catch (IOException e) {
+      e.printStackTrace(System.err);
+      return JavacServer.DEFAULT_SERVER_PORT;
+    }
+  }
+
+  private static int getJavacServerHeapSize(CompileContext context) {
+    int heapSize = 512;
+    final Project project = context.getProject();
+    final Map<String, String> javacOpts = project.getCompilerConfiguration().getJavacOptions();
+    final String hSize = javacOpts.get("MAXIMUM_HEAP_SIZE");
+    if (hSize != null) {
+      try {
+        heapSize = Integer.parseInt(hSize);
+      }
+      catch (NumberFormatException ignored) {
+      }
+    }
+    return heapSize;
   }
 
   private static ClassLoader createInstrumentationClassLoader(Collection<File> classpath, Collection<File> platformCp, Map<File, String> chunkSourcePath, OutputFilesSink outputSink)
@@ -361,7 +401,7 @@ public class JavaBuilder extends Builder{
     return new CompiledClassesLoader(outputSink, urls.toArray(new URL[urls.size()]));
   }
 
-  private static List<String> getCompilationOptions(CompileContext context, ModuleChunk chunk) {
+  private static List<String> getCompilationOptions(CompileContext context) {
     final List<String> options = new ArrayList<String>();
     options.add("-verbose");
 
