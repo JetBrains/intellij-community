@@ -321,7 +321,7 @@ public class FileStructurePopup implements Disposable {
       .setModalContext(false)
       .setFocusable(true)
       .setMovable(true)
-      .setBelongsToGlobalPopupStack(true)      
+      .setBelongsToGlobalPopupStack(true)
       //.setCancelOnClickOutside(false) //for debug and snapshots
       .setCancelKeyEnabled(false)
       .setDimensionServiceKey(null, getDimensionServiceKey(), false)
@@ -566,6 +566,9 @@ public class FileStructurePopup implements Disposable {
           final Object node = ContainerUtil.getFirstItem(myAbstractTreeBuilder.getSelectedElements());
           if (!(node instanceof FilteringTreeStructure.FilteringNode)) return null;
           return getPsi((FilteringTreeStructure.FilteringNode)node);
+        }
+        if (LangDataKeys.POSITION_ADJUSTER_POPUP.is(dataId)) {
+          return myPopup;
         }
         return null;
       }
