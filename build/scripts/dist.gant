@@ -91,14 +91,16 @@ def layoutAll(Map args, String home, String out, Paths _paths = null) {
 
   layout(paths.distAll) {
     dir("bin") {
-      fileset(dir: "${home}/bin") { include(name: "*.*") }
+      fileset(dir: "${home}/bin") {
+        include(name: "*.*")
+      }
     }
     dir("license") {
       fileset(dir: "${home}/license")
     }
     fileset(file: "${home}/LICENSE.txt")
   }
-  patchPropertiesFile(paths.distAll)
+  patchPropertiesFile(paths.distAll, args + [appendices: ["$home/build/conf/ideaCE.properties"]])
 
   layoutWin(args, home, paths)
   layoutMac(args, home, paths)
@@ -145,8 +147,8 @@ private layoutMac(Map _args, String home, Paths paths) {
         <key>CFBundleTypeRole</key>
         <string>Editor</string>
       </dict>
-  """
-  args."idea.properties.path" = "$home/bin/idea.properties"
+"""
+  args."idea.properties.path" = "${paths.distAll}/bin/idea.properties"
   args.mac_no_yjp = true
   layoutMacApp(target, home, args)
 }

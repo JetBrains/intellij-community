@@ -252,7 +252,6 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
 
   String version = isEap() ? "EAP $args.buildNumber" : "${p("component.version.major")}.${p("component.version.minor")}"
 
-  args.get("idea.properties", [:])["idea.fatal.error.notification"] = isEap() ? "enabled" : "disabled";
   String properties = readIdeaProperties(args)
 
   String classPath = classPathLibs.collect {"\$APP_PACKAGE/lib/${it}" }.join(":")
@@ -376,9 +375,12 @@ binding.setVariable("unixVMOptions", { String target, String name ->
 
 binding.setVariable("unixReadme", { String target, String home, Map args ->
   String fullName = args.fullName != null ? args.fullName : p("component.names.fullname")
+  String settings_dir = args.system_selector.replaceFirst("\\d+", "")
   copyAndPatchFile("$home/build/Install-Linux-tar.txt", "$target/Install-Linux-tar.txt",
-                   ["product_full": fullName, "product": p("component.names.product").toLowerCase(),
-                    "system_selector": args.system_selector, "settings_dir": fullName.replace(" ", "")], "@@")
+                   ["product_full": fullName,
+                    "product": p("component.names.product").toLowerCase(),
+                    "system_selector": args.system_selector,
+                    "settings_dir": settings_dir], "@@")
   ant.fixcrlf(file: "$target/bin/Install-Linux-tar.txt", eol: "unix")
 })
 
@@ -405,12 +407,24 @@ binding.setVariable("forceDelete", { String dirPath ->
   }
 })
 
-binding.setVariable("copyPropertiesFile", { String source, String target ->
-  ant.copy(file: source, tofile: "$target/bin/idea.properties", overwrite: "true")
-  patchPropertiesFile(target)
-})
+binding.setVariable("patchPropertiesFile", { String target, Map args = [:] ->
+  String file = "$target/bin/idea.properties"
 
-binding.setVariable("patchPropertiesFile", { String target ->
+  if (args.appendices != null) {
+    ant.concat(destfile: file, append:  true) {
+      args.appendices.each {
+        fileset(file: it)
+      }
+    }
+  }
+
+  String product_uc = args.product_uc != null ? args.product_uc : p("component.names.product").toUpperCase()
+  String settings_dir = args.system_selector.replaceFirst("\\d+", "")
+  ant.replace(file: file) {
+    replacefilter(token: "@@product_uc@@", value: product_uc)
+    replacefilter(token: "@@settings_dir@@", value: settings_dir)
+  }
+
   String message = (isEap() ? """
 #-----------------------------------------------------------------------
 # Change to 'disabled' if you don't want to receive instant visual notifications
@@ -425,7 +439,7 @@ idea.fatal.error.notification=enabled
 #-----------------------------------------------------------------------
 idea.fatal.error.notification=disabled
 """)
-  ant.echo(file: "$target/bin/idea.properties", append: "true", message: message)
+  ant.echo(file: file, append: true, message: message)
 })
 
 binding.setVariable("zipSources", { String home, String targetDir ->
@@ -458,8 +472,6 @@ binding.setVariable("zipSources", { String home, String targetDir ->
  *                       "idea.properties" : ["idea.max.intellisense.filesize" : 3000,
  *                                           "idea.cycle.buffer.size" : null,
  *                                           "idea.is.internal" : true ])
-
-layoutMacApp("idea.properties.path" : "/Users/romeo/work/git/IDEA_master/ruby/build/idea.properties")
  * @param args
  * @return text xml properties description in xml
  */
@@ -508,10 +520,10 @@ private String readIdeaProperties(Map args) {
   ideaProperties.each { key, value ->
     if (value != null) {
       buff.append(
-  """
+"""
         <key>$key</key>
         <string>$value</string>
-  """
+"""
       )
     }
   }
@@ -520,6 +532,10 @@ private String readIdeaProperties(Map args) {
 
 binding.setVariable("buildWinZip", { String zipPath, List paths ->
   project.stage(".win.zip")
+
+  paths.each {
+    ant.fixcrlf(file: "$it/bin/idea.properties", eol: "dos")
+  }
 
   ant.zip(zipfile: zipPath) {
     paths.each {
@@ -565,6 +581,10 @@ binding.setVariable("buildMacZip", { String zipRoot, String zipPath, List paths,
 
 binding.setVariable("buildTarGz", { String tarRoot, String tarPath, List paths ->
   project.stage(".tar.gz")
+
+  paths.each {
+    ant.fixcrlf(file: "$it/bin/idea.properties", eol: "dos")
+  }
 
   ant.tar(tarfile: tarPath) {
     paths.each {
