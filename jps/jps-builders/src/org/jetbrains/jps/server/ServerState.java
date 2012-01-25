@@ -2,6 +2,7 @@ package org.jetbrains.jps.server;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import org.codehaus.groovy.runtime.MethodClosure;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.Library;
@@ -43,7 +44,7 @@ class ServerState {
       clearCahedState();
       myGlobalLibraries.addAll(libs);
       myPathVariables.putAll(pathVars);
-      myGlobalEncoding = globalEncoding;
+      myGlobalEncoding = StringUtil.isEmpty(globalEncoding)? null : globalEncoding;
     }
   }
 
