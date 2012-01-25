@@ -1,11 +1,12 @@
 package org.jetbrains.ether.dependencyView;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Opcodes;
+
+import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,7 +22,7 @@ import java.util.*;
  * To change this template use File | Settings | File Templates.
  */
 public class Mappings {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.ether.dependencyView.Mappings");
+  private final static Logger LOG = Logger.getInstance ("#org.jetbrains.ether.dependencyView.Mappings");
 
   private final static String CLASS_TO_SUBCLASSES = "classToSubclasses.tab";
   private final static String CLASS_TO_CLASS = "classToClass.tab";

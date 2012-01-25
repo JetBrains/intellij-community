@@ -31,6 +31,7 @@
     <orderEntry type="library" name="jna" level="project" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="java-runtime" scope="RUNTIME" />
+    <orderEntry type="library" name="Log4J" level="project" />
   </component>
 </module>
 
