@@ -1,5 +1,5 @@
-def foo(def anObject) {
-    <selection>print(anObject)</selection>
+<caret>def foo(def anObject) {
+    print(anObject)
 }
 
 foo('a' + 1)
