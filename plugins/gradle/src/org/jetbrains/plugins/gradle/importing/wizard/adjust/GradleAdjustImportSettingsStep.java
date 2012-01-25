@@ -192,7 +192,7 @@ public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWiza
       Collection<GradleDependency> dependencies = module.getDependencies();
       if (!dependencies.isEmpty()) {
         DefaultMutableTreeNode dependenciesNode
-          = new DefaultMutableTreeNode(GradleBundle.message("gradle.import.structure.tree.node.dependencies"));
+          = new DefaultMutableTreeNode(GradleBundle.message("gradle.project.structure.tree.node.dependencies"));
         final List<GradleModuleDependency> moduleDependencies = new ArrayList<GradleModuleDependency>();
         final List<GradleLibraryDependency> libraryDependencies = new ArrayList<GradleLibraryDependency>();
         GradleEntityVisitor visitor = new GradleEntityVisitorAdapter() {

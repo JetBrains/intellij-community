@@ -10,8 +10,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public class GradleLibraryDependency extends AbstractGradleDependency<GradleLibrary> implements Named {
 
-  public GradleLibraryDependency(@NotNull GradleLibrary library) {
-    super(library);
+  public GradleLibraryDependency(@NotNull GradleModule ownerModule, @NotNull GradleLibrary library) {
+    super(ownerModule, library);
   }
 
   @Override
@@ -22,7 +22,7 @@ public class GradleLibraryDependency extends AbstractGradleDependency<GradleLibr
   @NotNull
   @Override
   public GradleLibraryDependency clone(@NotNull GradleEntityCloneContext context) {
-    GradleLibraryDependency result = new GradleLibraryDependency(getTarget().clone(context));
+    GradleLibraryDependency result = new GradleLibraryDependency(getOwnerModule().clone(context), getTarget().clone(context));
     copyTo(result);
     return result;
   }

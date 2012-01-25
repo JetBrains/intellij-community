@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -47,6 +46,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -103,19 +103,25 @@ public class GroovyIntroduceParameterMethodUsagesProcessor implements IntroduceP
     final GrClosureSignatureUtil.ArgInfo<PsiElement>[] actualArgs =
       GrClosureSignatureUtil.mapParametersToArguments(signature, argList, callExpression, callExpression.getClosureArguments(), true);
 
+    final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(data.getProject());
+
     if (method != null && IntroduceParameterUtil.isMethodInUsages(data, method, usages)) {
-      argList.addAfter(GroovyPsiElementFactory.getInstance(data.getProject()).createExpressionFromText(data.getParameterName()), anchor);
+      argList.addAfter(factory.createExpressionFromText(data.getParameterName()), anchor);
     }
     else {
-      PsiElement initializer = ExpressionConverter
-        .getExpression(data.getParameterInitializer().getExpression(), GroovyFileType.GROOVY_LANGUAGE, data.getProject());
+      final PsiElement _expr = data.getParameterInitializer().getExpression();
+      PsiElement initializer = ExpressionConverter.getExpression(_expr, GroovyFileType.GROOVY_LANGUAGE, data.getProject());
       LOG.assertTrue(initializer instanceof GrExpression);
 
-      GrExpression newArg = (GrExpression)argList.addAfter(initializer, anchor);
+      GrExpression newArg = addClosureToCall(initializer, argList);
+      if (newArg == null) {
+        newArg = (GrExpression)argList.addAfter(initializer, anchor);
+      }
       final PsiMethod methodToReplaceIn = data.getMethodToReplaceIn();
       new OldReferencesResolver(callExpression, newArg, methodToReplaceIn, data.getReplaceFieldsWithGetters(), initializer,
                                 signature, actualArgs, methodToReplaceIn.getParameterList().getParameters()).resolve();
       ChangeContextUtil.clearContextInfo(initializer);
+      GrReferenceAdjuster.shortenReferences(newArg);
     }
 
     if (actualArgs == null) {
@@ -124,7 +130,37 @@ public class GroovyIntroduceParameterMethodUsagesProcessor implements IntroduceP
     else {
       removeParametersFromCall(actualArgs, data.getParametersToRemove());
     }
+
+    if (argList.getAllArguments().length == 0 && hasClosureArgs(argList)) {
+      final GrArgumentList emptyArgList = ((GrMethodCallExpression)factory.createExpressionFromText("foo{}")).getArgumentList();
+      LOG.assertTrue(emptyArgList != null);
+      argList.replace(emptyArgList);
+    }
     return false;
+  }
+
+  private static boolean hasClosureArgs(GrArgumentList list) {
+    final PsiElement parent = list.getParent();
+    return parent instanceof GrMethodCallExpression && ((GrMethodCallExpression)parent).getClosureArguments().length > 0;
+  }
+
+  @Nullable
+  private static GrExpression addClosureToCall(PsiElement initializer, GrArgumentList list) {
+    if (!(initializer instanceof GrClosableBlock)) return null;
+
+    final PsiElement parent = list.getParent();
+    if (!(parent instanceof GrMethodCallExpression)) return null;
+
+    PsiElement anchor;
+    final GrClosableBlock[] cls = ((GrMethodCallExpression)parent).getClosureArguments();
+    if (cls.length > 0) {
+      anchor = cls[cls.length - 1];
+    }
+    else {
+      anchor = list;
+    }
+
+    return (GrExpression)parent.addAfter(initializer, anchor);
   }
 
   @Nullable
@@ -233,7 +269,7 @@ public class GroovyIntroduceParameterMethodUsagesProcessor implements IntroduceP
     final String typeText = forcedType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) ? null : forcedType.getCanonicalText();
 
     GrParameter parameter = factory.createParameter(data.getParameterName(), typeText, method);
-    parameter.getModifierList().setModifierProperty(GrModifier.FINAL, data.isDeclareFinal());
+    parameter.getModifierList().setModifierProperty(PsiModifier.FINAL, data.isDeclareFinal());
     final PsiParameter anchorParameter = getAnchorParameter(method);
     final GrParameterList parameterList = method.getParameterList();
     parameter = (GrParameter)parameterList.addAfter(parameter, anchorParameter);

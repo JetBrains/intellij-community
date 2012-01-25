@@ -34,6 +34,7 @@ import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyResultOfAssignmentUsedInspection
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyUncheckedAssignmentOfMemberOfRawTypeInspection
+import org.jetbrains.plugins.groovy.codeInspection.confusing.ClashingGettersInspection
 import org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyOctalIntegerInspection
 import org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyResultOfIncrementOrDecrementUsedInspection
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialConditionalInspection
@@ -623,5 +624,22 @@ class Baz implements I {
 ''')
 
     myFixture.testHighlighting(false, false, false)
+  }
+
+  void testClashingGetters() {
+    myFixture.configureByText('a.groovy', '''\
+class Foo {
+
+  boolean <warning descr="Getter 'getX' clashes with getter 'isX'">getX</warning>() { true }
+  boolean <warning descr="Getter 'isX' clashes with getter 'getX'">isX</warning>() { false }
+
+  boolean getY() {true}
+
+  boolean isZ() {false}
+}
+
+def result = new Foo().x''')
+    myFixture.enableInspections(new ClashingGettersInspection())
+    myFixture.testHighlighting(true, false, false)
   }
 }

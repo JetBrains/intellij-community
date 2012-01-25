@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,16 +19,20 @@ package org.jetbrains.plugins.groovy.refactoring.introduce.parameter.java2groovy
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.IntroduceParameterRefactoring;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
@@ -45,6 +49,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static com.intellij.codeInsight.ChangeContextUtil.*;
+import static com.intellij.refactoring.IntroduceParameterRefactoring.*;
 
 /**
  * @author Maxim.Medvedev
@@ -52,8 +57,7 @@ import static com.intellij.codeInsight.ChangeContextUtil.*;
  */
 
 public class OldReferencesResolver {
-  private static final Logger LOG =
-    Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.introduce.parameter.java2groovy.OldReferencesResolver");
+  private static final Logger LOG = Logger.getInstance(OldReferencesResolver.class);
 
   private final GrCall myContext;
   private final GrExpression myExpr;
@@ -67,6 +71,8 @@ public class OldReferencesResolver {
   private final PsiManager myManager;
   private final PsiParameter[] myParameters;
   private final GrClosureSignature mySignature;
+  
+  private final Set<PsiParameter> myParamsToNotInline = new HashSet<PsiParameter>();
 
   public OldReferencesResolver(GrCall context,
                                GrExpression expr,
@@ -146,7 +152,7 @@ public class OldReferencesResolver {
       //newExpr = ((GrReferenceExpression)newExpr).getReferenceNameElement();
       final GroovyResolveResult adv = oldRef.advancedResolve();
       final PsiElement scope = getClassContainingResolve(adv);
-      final PsiElement owner = PsiTreeUtil.getContextOfType(oldExpr, PsiClass.class);
+      final PsiElement owner = PsiUtil.getContextClass(oldExpr);
 
       if (myToReplaceIn instanceof GrClosableBlock || (owner != null && scope != null && PsiTreeUtil.isContextAncestor(owner, scope, false))) {
 
@@ -157,12 +163,7 @@ public class OldReferencesResolver {
           int index = ArrayUtil.indexOf(myParameters, subj);
           if (index < 0) return;
           if (index < myParameters.length) {
-            GrExpression actualArg = getActualArg(index);
-            int copyingSafetyLevel = GroovyRefactoringUtil.verifySafeCopyExpression(actualArg);
-            if (copyingSafetyLevel == RefactoringUtil.EXPR_COPY_PROHIBITED) {
-              actualArg = factory.createExpressionFromText(getTempVar(actualArg));
-            }
-            newExpr = newExpr.replace(actualArg);
+            newExpr = inlineParam(newExpr, getActualArg(index), ((PsiParameter)subj));
           }
         }
         // "naked" field and methods  (should become qualified)
@@ -194,9 +195,9 @@ public class OldReferencesResolver {
 
         if (subj instanceof PsiField) {
           // probably replacing field with a getter
-          if (myReplaceFieldsWithGetters != IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE) {
-            if (myReplaceFieldsWithGetters == IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_ALL ||
-                myReplaceFieldsWithGetters == IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE &&
+          if (myReplaceFieldsWithGetters != REPLACE_FIELDS_WITH_GETTERS_NONE) {
+            if (myReplaceFieldsWithGetters == REPLACE_FIELDS_WITH_GETTERS_ALL ||
+                myReplaceFieldsWithGetters == REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE &&
                 !JavaPsiFacade.getInstance(myProject).getResolveHelper().isAccessible((PsiMember)subj, newExpr, null)) {
               newExpr = replaceFieldWithGetter(newExpr, (PsiField)subj);
             }
@@ -204,15 +205,7 @@ public class OldReferencesResolver {
         }
       }
     }
-    else if (oldExpr instanceof GrThisReferenceExpression &&
-             (((GrThisReferenceExpression)oldExpr).getQualifier() == null ||
-              myManager.areElementsEquivalent(((GrThisReferenceExpression)oldExpr).getQualifier().resolve(), PsiUtil.getContextClass(myToReplaceIn)))) {
-      if (myInstanceRef != null) {
-        newExpr.replace(getInstanceRef(factory));
-      }
-      return;
-    }
-    else if (oldExpr instanceof GrSuperReferenceExpression && ((GrSuperReferenceExpression)oldExpr).getQualifier() == null) {
+    else if (isThisReferenceToContainingClass(oldExpr) || isSimpleSuperReference(oldExpr)) {
       if (myInstanceRef != null) {
         newExpr.replace(getInstanceRef(factory));
       }
@@ -264,6 +257,60 @@ public class OldReferencesResolver {
         }
       }
     }
+  }
+
+  private PsiElement inlineParam(PsiElement newExpr, GrExpression actualArg, PsiParameter parameter) {
+    if (myParamsToNotInline.contains(parameter)) return newExpr;
+    
+    GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(myProject);
+
+    if (myExpr instanceof GrClosableBlock) {
+      int count = 0;
+      for (PsiReference reference : ReferencesSearch.search(parameter, new LocalSearchScope(myParameterInitializer))) {
+        count++;
+        if (count > 1) break;
+      }
+      if (count > 1) {
+        myParamsToNotInline.add(parameter);
+
+        final PsiType type;
+        if (parameter instanceof GrParameter) {
+          type = ((GrParameter)parameter).getDeclaredType();
+        }
+        else {
+          type = parameter.getType();
+        }
+        final GrVariableDeclaration declaration =
+          factory.createVariableDeclaration(ArrayUtil.EMPTY_STRING_ARRAY, actualArg, type, parameter.getName());
+
+        final GrStatement[] statements = ((GrClosableBlock)myExpr).getStatements();
+        GrStatement anchor = statements.length > 0 ? statements[0] : null;
+        return ((GrClosableBlock)myExpr).addStatementBefore(declaration, anchor);
+      }
+    }
+
+
+    int copyingSafetyLevel = GroovyRefactoringUtil.verifySafeCopyExpression(actualArg);
+    if (copyingSafetyLevel == RefactoringUtil.EXPR_COPY_PROHIBITED) {
+      actualArg = factory.createExpressionFromText(getTempVar(actualArg));
+    }
+    newExpr = newExpr.replace(actualArg);
+    return newExpr;
+  }
+
+  private static boolean isSimpleSuperReference(PsiElement oldExpr) {
+    return oldExpr instanceof GrSuperReferenceExpression && ((GrSuperReferenceExpression)oldExpr).getQualifier() == null;
+  }
+
+  private boolean isThisReferenceToContainingClass(PsiElement oldExpr) {
+    if (!(oldExpr instanceof GrThisReferenceExpression)) return false;
+
+    final GrReferenceExpression qualifier = ((GrThisReferenceExpression)oldExpr).getQualifier();
+    if (qualifier == null) return true;
+
+    final PsiClass contextClass = PsiUtil.getContextClass(myToReplaceIn);
+    final PsiElement resolved = qualifier.resolve();
+    return myManager.areElementsEquivalent(resolved, contextClass);
   }
 
   @NotNull
@@ -369,7 +416,7 @@ public class OldReferencesResolver {
         return ((PsiMember)elem).getContainingClass();
       }
       else {
-        return PsiTreeUtil.getParentOfType(elem, PsiClass.class);
+        return PsiUtil.getContextClass(elem);
       }
     }
     return null;

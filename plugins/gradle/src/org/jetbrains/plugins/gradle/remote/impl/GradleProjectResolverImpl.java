@@ -253,7 +253,8 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
     );
   }
 
-  private static void populateDependencies(@NotNull IdeaModule gradleModule, @NotNull GradleModule intellijModule, 
+  private static void populateDependencies(@NotNull IdeaModule gradleModule,
+                                           @NotNull GradleModule intellijModule, 
                                            @NotNull GradleProject intellijProject)
   {
     DomainObjectSet<? extends IdeaDependency> dependencies = gradleModule.getDependencies();
@@ -266,10 +267,10 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
       }
       AbstractGradleDependency intellijDependency = null;
       if (dependency instanceof IdeaModuleDependency) {
-        intellijDependency = buildDependency((IdeaModuleDependency)dependency, intellijProject);
+        intellijDependency = buildDependency(intellijModule, (IdeaModuleDependency)dependency, intellijProject);
       }
       else if (dependency instanceof IdeaSingleEntryLibraryDependency) {
-        intellijDependency = buildDependency((IdeaSingleEntryLibraryDependency)dependency, intellijProject);
+        intellijDependency = buildDependency(intellijModule, (IdeaSingleEntryLibraryDependency)dependency, intellijProject);
       }
 
       if (intellijDependency == null) {
@@ -286,7 +287,9 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
   }
 
   @NotNull
-  private static AbstractGradleDependency buildDependency(@NotNull IdeaModuleDependency dependency, @NotNull GradleProject intellijProject)
+  private static AbstractGradleDependency buildDependency(@NotNull GradleModule ownerModule,
+                                                          @NotNull IdeaModuleDependency dependency,
+                                                          @NotNull GradleProject intellijProject)
     throws IllegalStateException
   {
     IdeaModule module = dependency.getDependencyModule();
@@ -307,7 +310,7 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
     for (GradleModule gradleModule : intellijProject.getModules()) {
       registeredModuleNames.add(gradleModule.getName());
       if (gradleModule.getName().equals(moduleName)) {
-        return new GradleModuleDependency(gradleModule);
+        return new GradleModuleDependency(ownerModule, gradleModule);
       }
     }
     throw new IllegalStateException(String.format(
@@ -317,7 +320,8 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
   }
 
   @NotNull
-  private static AbstractGradleDependency buildDependency(@NotNull IdeaSingleEntryLibraryDependency dependency, 
+  private static AbstractGradleDependency buildDependency(@NotNull GradleModule ownerModule,
+                                                          @NotNull IdeaSingleEntryLibraryDependency dependency, 
                                                           @NotNull GradleProject intellijProject)
     throws IllegalStateException
   {
@@ -345,12 +349,12 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
     if (!intellijProject.addLibrary(library)) {
       for (GradleLibrary registeredLibrary : intellijProject.getLibraries()) {
         if (registeredLibrary.equals(library)) {
-          return new GradleLibraryDependency(registeredLibrary);
+          return new GradleLibraryDependency(ownerModule, registeredLibrary);
         }
       }
     }
     
-    return new GradleLibraryDependency(library);
+    return new GradleLibraryDependency(ownerModule, library);
   }
 
   @Nullable

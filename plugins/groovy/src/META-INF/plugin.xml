@@ -573,6 +573,9 @@
     <localInspection language="Groovy" groupPath="Groovy" shortName="GrFieldAlreadyDefined" bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
                      key="field.already.defined" groupName="Potentially confusing code constructs" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GrFieldAlreadyDefinedInspection"/>
+    <localInspection language="Groovy" groupPath="Groovy" shortName="ClashingGetters" bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
+                     key="clashing.getters" groupName="Potentially confusing code constructs" enabledByDefault="false" level="WARNING"
+                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.ClashingGettersInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyNestedConditional" displayName="Nested conditional expression"
                      groupName="Potentially confusing code constructs" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyNestedConditionalInspection"/>
@@ -1036,6 +1039,10 @@
               class="org.jetbrains.plugins.groovy.actions.DumpGroovyStubsAction"
               text="dump groovy stubs"
               description="" internal="true"/>
+      <action id="Groovy.Extract.Closure" class="org.jetbrains.plugins.groovy.refactoring.extract.closure.ExtractClosureAction"
+              text="Closure...">
+        <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt shift M"/>
+      </action>
       <add-to-group group-id="Internal"/>
     </group>
 
@@ -1085,6 +1092,11 @@
             icon="/org/jetbrains/plugins/groovy/images/GroovyDoc.png">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>
+
+    <!--<action id="Groovy.Extract.Closure" class="org.jetbrains.plugins.groovy.refactoring.extract.closure.ExtractClosureAction" text="Closure...">
+      <add-to-group group-id="IntroduceActionsGroup" anchor="after" relative-to-action="ExtractMethod"/>
+      <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt shift M"/>
+    </action>-->
 
     <group id="Mvc.Actions" popup="true" class="org.jetbrains.plugins.groovy.mvc.MvcActionGroup">
       <action id="Mvc.Upgrade"

@@ -1,6 +1,6 @@
 class Base {
     def foo() {
-        foo(123);
+        foo(123)
     }
 
     def foo(int anObject){}
@@ -8,7 +8,7 @@ class Base {
 
 class Inh extends Base {
     def foo() {
-        foo(123);
+        foo(123)
     }
 
     def foo(int anObject) {print anObject}
