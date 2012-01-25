@@ -31,16 +31,15 @@ import java.util.List;
  * @author yole
  */
 public class IncreaseIndentAction extends AbstractGuiEditorAction {
-  private final IndentProperty myIndentProperty = new IndentProperty();
-
   public IncreaseIndentAction() {
     super(true);
   }
 
   protected void actionPerformed(final GuiEditor editor, final List<RadComponent> selection, final AnActionEvent e) {
+    IndentProperty indentProperty = IndentProperty.getInstance(editor.getProject());
     for(RadComponent c: selection) {
-      int indent = myIndentProperty.getValue(c).intValue();
-      myIndentProperty.setValueEx(c, adjustIndent(indent));
+      int indent = indentProperty.getValue(c).intValue();
+      indentProperty.setValueEx(c, adjustIndent(indent));
     }
   }
 
