@@ -30,7 +30,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.lang.ref.SoftReference;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   protected PyType myType;
@@ -41,6 +43,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   private final Map<FutureFeature, Boolean> myFutureFeatures;
   private List<String> myDunderAll;
   private boolean myDunderAllCalculated;
+  private final Map<String, SoftReference<PsiElement>> myExportedNames = new ConcurrentHashMap<String, SoftReference<PsiElement>>();
 
   public PyFileImpl(FileViewProvider viewProvider) {
     this(viewProvider, PythonLanguage.getInstance());
@@ -235,6 +238,13 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   }
 
   public PsiElement findExportedName(String name) {
+    final SoftReference<PsiElement> ref = myExportedNames.get(name);
+    if (ref != null) {
+      final PsiElement result = ref.get();
+      if (result != null) {
+        return result;
+      }
+    }
     final List<String> stack = myFindExportedNameStack.get();
     if (stack.contains(name)) {
       return null;
@@ -252,6 +262,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
         else {
           PsiElement element = findNameInStub(child, name);
           if (element != null) {
+            myExportedNames.put(name, new SoftReference<PsiElement>(element));
             return element;
           }
         }
@@ -264,6 +275,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
           PsiElement child = exceptChildren.get(j);
           PsiElement element = findNameInStub(child, name);
           if (element != null) {
+            myExportedNames.put(name, new SoftReference<PsiElement>(element));
             return element;
           }
         }
@@ -582,6 +594,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     ControlFlowCache.clear(this);
     myDunderAllCalculated = false;
     myFutureFeatures.clear(); // probably no need to synchronize
+    myExportedNames.clear();
   }
 
   private static class ArrayListThreadLocal extends ThreadLocal<List<String>> {
