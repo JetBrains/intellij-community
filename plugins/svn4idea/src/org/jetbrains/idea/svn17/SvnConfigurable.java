@@ -71,6 +71,7 @@ public class SvnConfigurable implements Configurable {
   private HyperlinkLabel myLinkLabel;
   private JRadioButton myJavaHLAcceleration;
   private JRadioButton myNoAcceleration;
+  private JLabel myJavaHLInfo;
 
   @NonNls private static final String HELP_ID = "project.propSubversion";
 
@@ -229,9 +230,17 @@ public class SvnConfigurable implements Configurable {
 
   private void setAcceleration(SvnConfiguration17.UseAcceleration acceleration) {
     if (! CheckJavaHL.isPresent()) {
-      myJavaHLAcceleration.setText(myJavaHLAcceleration.getText() + ". " + CheckJavaHL.getProblemDescription());
+      myJavaHLInfo.setText(CheckJavaHL.getProblemDescription());
+      myJavaHLInfo.setForeground(Color.red);
+      myJavaHLInfo.setEnabled(true);
       myJavaHLAcceleration.setEnabled(false);
-      myJavaHLAcceleration.setForeground(Color.red);
+      /*myJavaHLAcceleration.setText(myJavaHLAcceleration.getText() + ". " + CheckJavaHL.getProblemDescription());
+      myJavaHLAcceleration.setEnabled(false);
+      myJavaHLAcceleration.setForeground(Color.red);*/
+    } else {
+      myJavaHLInfo.setText("You need to have JavaHL 1.7.2");
+      myJavaHLInfo.setForeground(UIUtil.getInactiveTextColor());
+      myJavaHLAcceleration.setEnabled(true);
     }
 
     if (SvnConfiguration17.UseAcceleration.javaHL.equals(acceleration)) {

@@ -56,11 +56,11 @@ public class CheckJavaHL {
   private static boolean checkVersion(Class<?> aClass) {
     try {
       Version v = (Version)aClass.newInstance();
-      boolean atLeast = true;
-      /*boolean atLeast = v.isAtLeast(1, 7, 0);
+      //boolean atLeast = true;
+      boolean atLeast = v.isAtLeast(1, 7, 0);
       if (! atLeast) {
         ourProblemDescription = "JavaHL library version is old: " + v.toString();
-      }*/
+      }
       return atLeast;
     }
     catch (InstantiationException e) {
