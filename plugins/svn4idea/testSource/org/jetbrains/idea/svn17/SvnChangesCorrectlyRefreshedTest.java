@@ -46,7 +46,7 @@ public class SvnChangesCorrectlyRefreshedTest extends SvnTestCase {
     private static final String ourS1Contents = "123";
     private static final String ourS2Contents = "abc";
 
-    private SubTree(final VirtualFile base) throws Throwable {
+    private SubTree(final VirtualFile base) throws Exception {
       myRootDir = createDirInCommand(base, "root");
       mySourceDir = createDirInCommand(myRootDir, "source");
       myS1File = createFileInCommand(mySourceDir, "s1.txt", ourS1Contents);
@@ -68,7 +68,7 @@ public class SvnChangesCorrectlyRefreshedTest extends SvnTestCase {
   }
 
   @Test
-  public void testModificationAndAfterRevert() throws Throwable {
+  public void testModificationAndAfterRevert() throws Exception {
     final SubTree subTree = new SubTree(myWorkingCopyDir);
     checkin();
     sleep300();
