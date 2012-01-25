@@ -49,6 +49,21 @@ public class TestMessageManager extends MessageManager {
     public String getTitle() {
       return myTitle;
     }
+
+    @NotNull
+    public String getDescription() {
+      return myDescription;
+    }
+
+    @NotNull
+    public String getYesText() {
+      return myYesText;
+    }
+
+    @NotNull
+    public String getNoText() {
+      return myNoText;
+    }
   }
   
   @Nullable

@@ -19,9 +19,13 @@ import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitBranch;
 import git4idea.GitVcs;
 import git4idea.repo.GitRepository;
-import git4idea.test.*;
+import git4idea.test.GitTestScenarioGenerator;
+import git4idea.test.GitTestUtil;
+import git4idea.test.TestMessageManager;
+import git4idea.test.TestNotificationManager;
 import git4idea.tests.TestDialogHandler;
 import git4idea.tests.TestDialogManager;
+import git4idea.util.UntrackedFilesNotifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.testng.annotations.AfterMethod;
@@ -37,9 +41,7 @@ import java.util.Collection;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static git4idea.test.GitExec.*;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.*;
 
 /**
  * @author Kirill Likhodedov
@@ -216,6 +218,55 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
     assertBranch(myContrib, "master");
   }
 
+  @Test
+  public void checkout_branch_with_untracked_files_overwritten_by_checkout_in_first_repo_should_show_notification() throws Exception {
+    prepareUntrackedFilesAndBranchWithSameTrackedFiles(myUltimate);
+    branch(myCommunity, "feature");
+    branch(myContrib, "feature");
+
+    doCheckout("feature", null);
+    assertNotify(NotificationType.ERROR, UntrackedFilesNotifier.createUntrackedFilesOverwrittenDescription("checkout", false));
+  }
+
+  @Test
+  public void checkout_branch_with_untracked_files_overwritten_by_checkout_in_second_repo_should_show_rollback_proposal_with_file_list() throws Exception {
+    prepareUntrackedFilesAndBranchWithSameTrackedFiles(myCommunity);
+    branch(myUltimate, "feature");
+    branch(myContrib, "feature");
+
+    Class gitCheckoutOperationClass = Class.forName("git4idea.branch.GitCheckoutOperation");
+    Class[] classes = gitCheckoutOperationClass.getDeclaredClasses();
+    Class untrackedFilesDialogClass = null;
+    for (Class aClass : classes) {
+      if (aClass.getName().endsWith("UntrackedFilesDialog")) {
+        untrackedFilesDialogClass = aClass;
+      }
+    }
+    assertNotNull(untrackedFilesDialogClass);
+    
+    final AtomicBoolean dialogShown = new AtomicBoolean();
+    final Class finalUntrackedFilesDialogClass = untrackedFilesDialogClass;
+    myDialogManager.registerDialogHandler(untrackedFilesDialogClass, new TestDialogHandler() {
+      @Override
+      public int handleDialog(Object dialog) {
+        if (dialog.getClass().equals(finalUntrackedFilesDialogClass)) {
+          dialogShown.set(true);
+        }
+        return DialogWrapper.CANCEL_EXIT_CODE;
+      }
+    });
+
+    doCheckout("feature", null);
+    assertTrue(dialogShown.get());
+  }
+
+  private static void prepareUntrackedFilesAndBranchWithSameTrackedFiles(GitRepository repository) throws IOException {
+    checkout(repository, "-b", "feature");
+    createAddCommit(repository, "untracked.txt");
+    checkout(repository, "master");
+    create(repository, "untracked.txt");
+  }
+
   private void prepareBranchForSimpleCheckout() throws IOException {
     for (GitRepository repository : myRepositories) {
       checkout(repository, "-b", "feature");
@@ -383,9 +434,24 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
   }
 
   private void assertMessage(String title) {
+    assertMessage(title, null, null, null);
+  }
+  
+  private void assertMessage(@Nullable String title, @Nullable String description, @Nullable String yesButton, @Nullable String noButton) {
     TestMessageManager.Message message = myMessageManager.getLastMessage();
     assertNotNull(message);
-    assertEquals(message.getTitle(), title);
+    if (title != null) {
+      assertEquals(message.getTitle(), title);
+    }
+    if (description != null) {
+      assertEquals(message.getDescription(), description);
+    }
+    if (yesButton != null) {
+      assertEquals(message.getYesText(), yesButton);
+    }
+    if (noButton != null) {
+      assertEquals(message.getNoText(), noButton);
+    }
   }
 
 }
