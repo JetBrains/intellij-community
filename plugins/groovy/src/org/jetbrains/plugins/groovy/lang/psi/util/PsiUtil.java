@@ -540,7 +540,7 @@ public class PsiUtil {
   @Nullable
   public static PsiClass getContextClass(PsiElement context) {
     while (context != null) {
-      if (context instanceof GrTypeDefinition) {
+      if (context instanceof PsiClass) {
         return (PsiClass)context;
       }
       else if (context instanceof GroovyFileBase && context.isPhysical()) {
@@ -975,8 +975,9 @@ public class PsiUtil {
       if (modifier.equals(visibilityModifier)) break;
     }
     for (; index < visibilityModifiers.length && !isAccessible(place, owner); index++) {
+      @PsiModifier.ModifierConstant
       String modifier = visibilityModifiers[index];
-      owner.getModifierList().setModifierProperty(modifier, true);
+      com.intellij.psi.util.PsiUtil.setModifierProperty(owner, modifier, true);
     }
   }
 
@@ -1147,6 +1148,7 @@ public class PsiUtil {
         return false;
       }
     }
+    //noinspection SuspiciousMethodCalls
     return ControlFlowUtils.collectReturns(controlFlowOwner, true).contains(expr);
   }
 
