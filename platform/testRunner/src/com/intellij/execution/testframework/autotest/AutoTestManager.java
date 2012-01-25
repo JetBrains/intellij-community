@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.impl.PsiAwareFileEditorManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.content.Content;
@@ -24,6 +25,7 @@ import java.util.Collection;
  */
 public class AutoTestManager {
   private final Project myProject;
+  private final PsiAwareFileEditorManagerImpl myManager;
   private final Alarm myAutoTestAlarm;
 
   private static final int AUTOTEST_DELAY = 2000;
@@ -37,8 +39,11 @@ public class AutoTestManager {
 
   private final Collection<Content> myEnabledDescriptors = new WeakList<Content>();
 
-  public AutoTestManager(Project project) {
+  public AutoTestManager(Project project, FileEditorManager manager) {
     myProject = project;
+    myManager = manager instanceof PsiAwareFileEditorManagerImpl ?
+                (PsiAwareFileEditorManagerImpl)manager :
+                null;
     myAutoTestAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
     myRunTestsRunnable = new Runnable() {
       public void run() {
@@ -73,6 +78,14 @@ public class AutoTestManager {
   }
 
   public void runAutoTests() {
+    if (myManager != null) {
+      for (FileEditor editor : myManager.getAllEditors()) {
+        final VirtualFile file = myManager.getFile(editor);
+        if (file != null && myManager.isProblem(file)) {
+          return;
+        }
+      }
+    }
     for (Content content : myEnabledDescriptors) {
       runAutoTest(content);
     }
