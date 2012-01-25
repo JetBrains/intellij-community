@@ -15,23 +15,21 @@
  */
 package com.intellij.openapi.vcs.actions;
 
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
 import com.intellij.openapi.vcs.diff.DiffMixin;
 import com.intellij.openapi.vcs.history.VcsRevisionDescription;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -73,7 +71,7 @@ public class ShowBaseRevisionAction extends AbstractVcsAction {
 
     @Override
     public void run(@NotNull ProgressIndicator indicator) {
-      myDescription = ((DiffMixin)vcs.getDiffProvider()).getCurrentRevisionDescription(selectedFile);
+      myDescription = ObjectUtils.assertNotNull((DiffMixin)vcs.getDiffProvider()).getCurrentRevisionDescription(selectedFile);
     }
 
     @Override
@@ -104,18 +102,6 @@ public class ShowBaseRevisionAction extends AbstractVcsAction {
   protected void update(VcsContext vcsContext, Presentation presentation) {
     final AbstractVcs vcs = AbstractShowDiffAction.isEnabled(vcsContext, null);
     presentation.setEnabled(vcs != null);
-  }
-  
-  private static boolean isVisible(VcsContext vcsContext) {
-    final Project project = vcsContext.getProject();
-    if (project == null) return false;
-    final AbstractVcs[] vcss = ProjectLevelVcsManager.getInstance(project).getAllActiveVcss();
-    for (AbstractVcs vcs : vcss) {
-      if (vcs.getDiffProvider() instanceof DiffMixin) {
-        return true;
-      }
-    }
-    return false;
   }
 
   static class NotificationPanel extends JPanel {
