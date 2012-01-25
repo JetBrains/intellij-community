@@ -48,6 +48,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.NetUtils;
@@ -354,7 +355,7 @@ public class CompileServerManager implements ApplicationComponent{
     fillSdks(globals);
     fillGlobalLibraries(globals);
 
-    return client.sendSetupRequest(data, globals);
+    return client.sendSetupRequest(data, globals, EncodingManager.getInstance().getDefaultCharsetName());
   }
 
   private static void fillSdks(List<GlobalLibrary> globals) {

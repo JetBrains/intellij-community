@@ -68,6 +68,7 @@ message Message {
 
       repeated PathVariable path_variable = 1;
       repeated GlobalLibrary global_library = 2;
+      optional string global_encoding = 3;
     }
 
     message ReloadProjectCommand {
