@@ -174,14 +174,14 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
   }
   
   @Test
-  public void checkout_branch_without_problems() throws Exception {
+  public void checkout_without_problems() throws Exception {
     prepareBranchForSimpleCheckout();
     doCheckout("feature", null);
     assertNotify(NotificationType.INFORMATION, "Checked out feature");
   }
   
   @Test
-  public void checkout_branch_with_unmerged_files_in_first_repo_should_show_notification() throws Exception {
+  public void checkout_with_unmerged_files_in_first_repo_should_show_notification() throws Exception {
     prepareBranchForSimpleCheckout();
     GitTestScenarioGenerator.prepareUnmergedFiles(myUltimate);
     doCheckout("feature", null);
@@ -189,7 +189,7 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
   }
   
   @Test
-  public void checkout_branch_with_unmerged_file_in_second_repo_should_propose_to_rollback() throws Exception {
+  public void checkout_with_unmerged_file_in_second_repo_should_propose_to_rollback() throws Exception {
     prepareBranchForSimpleCheckout();
     GitTestScenarioGenerator.prepareUnmergedFiles(myCommunity);
     doCheckout("feature", null);
@@ -219,7 +219,7 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
   }
 
   @Test
-  public void checkout_branch_with_untracked_files_overwritten_by_checkout_in_first_repo_should_show_notification() throws Exception {
+  public void checkout_with_untracked_files_overwritten_by_checkout_in_first_repo_should_show_notification() throws Exception {
     prepareUntrackedFilesAndBranchWithSameTrackedFiles(myUltimate);
     branch(myCommunity, "feature");
     branch(myContrib, "feature");
@@ -229,7 +229,7 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
   }
 
   @Test
-  public void checkout_branch_with_untracked_files_overwritten_by_checkout_in_second_repo_should_show_rollback_proposal_with_file_list() throws Exception {
+  public void checkout_with_untracked_files_overwritten_by_checkout_in_second_repo_should_show_rollback_proposal_with_file_list() throws Exception {
     prepareUntrackedFilesAndBranchWithSameTrackedFiles(myCommunity);
     branch(myUltimate, "feature");
     branch(myContrib, "feature");
@@ -258,6 +258,97 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
 
     doCheckout("feature", null);
     assertTrue(dialogShown.get());
+  }
+
+  @Test
+  public void checkout_with_local_changes_overwritten_by_checkout_should_show_smart_checkout_dialog() throws Exception {
+    prepareLocalChangesAndBranchWithSameModifiedFilesWithoutConflicts(myUltimate);
+    branch(myCommunity, "feature");
+    branch(myContrib, "feature");
+
+    final AtomicBoolean dialogShown = new AtomicBoolean();
+    myDialogManager.registerDialogHandler(GitWouldBeOverwrittenByCheckoutDialog.class, new TestDialogHandler<GitWouldBeOverwrittenByCheckoutDialog>() {
+      @Override
+      public int handleDialog(GitWouldBeOverwrittenByCheckoutDialog dialog) {
+        dialogShown.set(true);
+        return DialogWrapper.CANCEL_EXIT_CODE;
+      }
+    });
+
+    doCheckout("feature", null);
+    assertTrue(dialogShown.get());
+  }
+
+  @Test
+  public void agree_to_smart_checkout_should_smart_checkout() throws Exception {
+    prepareLocalChangesAndBranchWithSameModifiedFilesWithoutConflicts(myUltimate);
+    prepareLocalChangesAndBranchWithSameModifiedFilesWithoutConflicts(myCommunity);
+    prepareLocalChangesAndBranchWithSameModifiedFilesWithoutConflicts(myContrib);
+    myDialogManager.registerDialogHandler(GitWouldBeOverwrittenByCheckoutDialog.class,
+      new TestDialogHandler<GitWouldBeOverwrittenByCheckoutDialog>() {
+        @Override
+        public int handleDialog(GitWouldBeOverwrittenByCheckoutDialog dialog) {
+          return DialogWrapper.OK_EXIT_CODE;
+        }
+    });
+
+    doCheckout("feature", null);
+    assertBranch("feature");
+    for (GitRepository repository : myRepositories) {
+      refresh(repository);
+      assertBranch(repository, "feature");
+      assertEquals(read(repository, "local.txt"), "master\ninitial content\nfeature content\n");
+    }
+  }
+
+  @Test
+  public void deny_to_smart_checkout_in_first_repo_should_show_notification() throws Exception {
+    prepareLocalChangesAndBranchWithSameModifiedFilesWithoutConflicts(myUltimate);
+    branch(myCommunity, "feature");
+    branch(myContrib, "feature");
+
+    myDialogManager.registerDialogHandler(GitWouldBeOverwrittenByCheckoutDialog.class, new TestDialogHandler<GitWouldBeOverwrittenByCheckoutDialog>() {
+      @Override
+      public int handleDialog(GitWouldBeOverwrittenByCheckoutDialog dialog) {
+        return DialogWrapper.CANCEL_EXIT_CODE;
+      }
+    });
+
+    doCheckout("feature", null);
+    assertNotify(NotificationType.ERROR, "Couldn't checkout feature", stripHtmlAndBreaks("Local changes would be overwritten by checkout." +
+                                                                                  "Stash or commit them before checking out a branch."));
+    assertBranch("master");
+  }
+
+  @Test
+  public void deny_to_smart_checkout_in_second_repo_should_show_rollback_proposal() throws Exception {
+    prepareLocalChangesAndBranchWithSameModifiedFilesWithoutConflicts(myCommunity);
+    branch(myUltimate, "feature");
+    branch(myContrib, "feature");
+    myDialogManager.registerDialogHandler(GitWouldBeOverwrittenByCheckoutDialog.class, new TestDialogHandler<GitWouldBeOverwrittenByCheckoutDialog>() {
+      @Override
+      public int handleDialog(GitWouldBeOverwrittenByCheckoutDialog dialog) {
+        return DialogWrapper.CANCEL_EXIT_CODE;
+      }
+    });
+
+    doCheckout("feature", null);
+    assertMessage("Couldn't checkout feature", 
+                  "Local changes would be overwritten by checkout.<br/>Stash or commit them before checking out a branch.<br/>" + 
+                  "However checkout has succeeded for the following repositories:<br/>" +
+                   myUltimate.getPresentableUrl() +
+                   "<br/>You may rollback (checkout back to master) not to let branches diverge.",
+                  "Rollback", "Don't rollback");
+  }
+
+  private static void prepareLocalChangesAndBranchWithSameModifiedFilesWithoutConflicts(GitRepository repository) throws IOException {
+    create(repository, "local.txt", "initial content\n");
+    addCommit(repository);
+    checkout(repository, "-b", "feature");
+    edit(repository, "local.txt", "initial content\nfeature content\n");
+    addCommit(repository);
+    checkout(repository, "master");
+    edit(repository, "local.txt", "master\ninitial content\n");
   }
 
   private static void prepareUntrackedFilesAndBranchWithSameTrackedFiles(GitRepository repository) throws IOException {
@@ -422,15 +513,16 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
   private void assertNotify(NotificationType type, @Nullable String title, String content) {
     Notification notification = myNotificationManager.getLastNotification();
     assertNotNull(notification);
-    assertEquals(stripHtml(notification.getContent()), stripHtml(content));
+    assertEquals(stripHtmlAndBreaks(notification.getContent()), stripHtmlAndBreaks(content));
     assertEquals(notification.getType(), type);
     if (title != null) {
-      assertEquals(stripHtml(notification.getTitle()), stripHtml(title));
+      assertEquals(stripHtmlAndBreaks(notification.getTitle()), stripHtmlAndBreaks(title));
     }
   }
 
-  private static String stripHtml(String text) {
-    return StringUtil.stripHtml(text, true);
+  @NotNull
+  private static String stripHtmlAndBreaks(@NotNull String text) {
+    return StringUtil.stripHtml(text, true).replace("\n", "");
   }
 
   private void assertMessage(String title) {

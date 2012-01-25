@@ -61,17 +61,33 @@ public class GitExec {
       }
     });
   }
+  
+  @NotNull
+  public static String read(final @NotNull GitRepository repository, @NotNull String filePath) throws IOException {
+    final VirtualFile file = repository.getRoot().findFileByRelativePath(filePath);
+    assert file != null;
+    return new String(file.contentsToByteArray());
+  }
 
   public static void add(@NotNull GitRepository repository, @NotNull String filePath) throws IOException {
     run(repository, "add", filePath);
+  }
+
+  public static void add(@NotNull GitRepository repository) throws IOException {
+    run(repository, "add", ".");
   }
 
   public static void commit(@NotNull GitRepository repository) throws IOException {
     run(repository, "commit", "-m", "message");
   }
   
-  public static void addCommit(GitRepository repository, String filePath) throws IOException {
+  public static void addCommit(@NotNull GitRepository repository, @NotNull String filePath) throws IOException {
     add(repository, filePath);
+    commit(repository);
+  }
+  
+  public static void addCommit(@NotNull GitRepository repository) throws IOException {
+    add(repository);
     commit(repository);
   }
 
