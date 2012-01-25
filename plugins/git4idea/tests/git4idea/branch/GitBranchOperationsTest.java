@@ -130,47 +130,102 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
   }
 
   @Test
-  public void createNewBranchWithoutProblems() throws Exception {
+  public void create_new_branch_without_problems() throws Exception {
     doCheckoutNewBranch();
     assertNotify(NotificationType.INFORMATION, "Branch new_branch was created");
   }
 
   @Test
-  public void createNewBranchWithUnmergedFilesInFirstRepoShouldShowNotification() throws Exception {
+  public void create_new_branch_with_unmerged_files_in_first_repo_should_show_notification() throws Exception {
     GitTestScenarioGenerator.prepareUnmergedFiles(myUltimate);
     doCheckoutNewBranch();
     assertNotify(NotificationType.ERROR, GitBranchOperation.UNMERGED_FILES_ERROR_NOTIFICATION_DESCRIPTION);
   }
   
   @Test
-  public void createNewBranchWithUnmergedFilesInSecondRepoShouldProposeToRollback() throws Exception {
+  public void create_new_branch_with_unmerged_files_in_second_repo_should_propose_to_rollback() throws Exception {
     GitTestScenarioGenerator.prepareUnmergedFiles(myCommunity, myContrib);
     doCheckoutNewBranch();
     assertMessage(GitBranchOperation.UNMERGED_FILES_ERROR_TITLE);
   }
 
   @Test
-  public void rollbackCreateNewBranch() throws Exception {
+  public void rollback_create_new_branch_should_delete_branch() throws Exception {
     GitTestScenarioGenerator.prepareUnmergedFiles(myCommunity, myContrib);
     myMessageManager.nextAnswer(Messages.OK);
     doCheckoutNewBranch();
     assertMessage(GitBranchOperation.UNMERGED_FILES_ERROR_TITLE);
     assertBranch("master");
+    assertTrue(!branch(myUltimate).contains(NEW_BRANCH));
   }
 
   @Test
-  public void denyRollbackCreateNewBranch() throws Exception {
+  public void deny_rollback_create_new_branch() throws Exception {
     GitTestScenarioGenerator.prepareUnmergedFiles(myCommunity, myContrib);
     myMessageManager.nextAnswer(Messages.CANCEL);
     doCheckoutNewBranch();
     assertMessage(GitBranchOperation.UNMERGED_FILES_ERROR_TITLE);
+
     assertBranch(myUltimate, NEW_BRANCH);
     assertBranch(myCommunity, MASTER);
     assertBranch(myContrib, MASTER);
   }
+  
+  @Test
+  public void checkout_branch_without_problems() throws Exception {
+    prepareBranchForSimpleCheckout();
+    doCheckout("feature", null);
+    assertNotify(NotificationType.INFORMATION, "Checked out feature");
+  }
+  
+  @Test
+  public void checkout_branch_with_unmerged_files_in_first_repo_should_show_notification() throws Exception {
+    prepareBranchForSimpleCheckout();
+    GitTestScenarioGenerator.prepareUnmergedFiles(myUltimate);
+    doCheckout("feature", null);
+    assertNotify(NotificationType.ERROR, GitBranchOperation.UNMERGED_FILES_ERROR_NOTIFICATION_DESCRIPTION);
+  }
+  
+  @Test
+  public void checkout_branch_with_unmerged_file_in_second_repo_should_propose_to_rollback() throws Exception {
+    prepareBranchForSimpleCheckout();
+    GitTestScenarioGenerator.prepareUnmergedFiles(myCommunity);
+    doCheckout("feature", null);
+    assertMessage(GitBranchOperation.UNMERGED_FILES_ERROR_TITLE);
+  }
 
   @Test
-  public void deleteBranchWithoutProblems() throws Exception {
+  public void rollback_checkout_should_return_to_previous_branch() throws Exception {
+    prepareBranchForSimpleCheckout();
+    GitTestScenarioGenerator.prepareUnmergedFiles(myCommunity);
+    myMessageManager.nextAnswer(Messages.OK);
+    doCheckout("feature", null);
+    assertMessage(GitBranchOperation.UNMERGED_FILES_ERROR_TITLE);
+    assertBranch("master");
+  }
+
+  @Test
+  public void deny_rollback_checkout_should_do_nothing() throws Exception {
+    prepareBranchForSimpleCheckout();
+    GitTestScenarioGenerator.prepareUnmergedFiles(myCommunity);
+    myMessageManager.nextAnswer(Messages.CANCEL);
+    doCheckout("feature", null);
+    assertMessage(GitBranchOperation.UNMERGED_FILES_ERROR_TITLE);
+    assertBranch(myUltimate, "feature");
+    assertBranch(myCommunity, "master");
+    assertBranch(myContrib, "master");
+  }
+
+  private void prepareBranchForSimpleCheckout() throws IOException {
+    for (GitRepository repository : myRepositories) {
+      checkout(repository, "-b", "feature");
+      createAddCommit(repository, "feature_file.txt");
+      checkout(repository, "master");
+    }
+  }
+
+  @Test
+  public void delete_branch_without_problems() throws Exception {
     for (GitRepository repository : myRepositories) {
       branch(repository, "master1");
       refresh(repository);
@@ -180,7 +235,7 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
   }
   
   @Test
-  public void deleteUnmergedBranchShouldShowDialog() throws Exception {
+  public void delete_unmerged_branch_should_show_dialog() throws Exception {
     prepareUnmergedBranch(myUltimate, myCommunity, myContrib);
 
     final AtomicBoolean dialogShown = new AtomicBoolean();
@@ -196,7 +251,7 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
   }
   
   @Test
-  public void okInUnmergedBranchDialogShouldForceDeleteBranch() throws Exception {
+  public void ok_in_unmerged_branch_dialog_should_force_delete_branch() throws Exception {
     prepareUnmergedBranch(myUltimate, myCommunity, myContrib);
     registerNotFullyMergedDialog(DialogWrapper.OK_EXIT_CODE);
     doDeleteBranch("unmerged_branch");
@@ -274,24 +329,32 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
   }
 
   private void doCheckoutNewBranch() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    callPrivateBranchOperationsProcessorMethod("doCheckoutNewBranch", NEW_BRANCH);
+  }
+
+  private void callPrivateBranchOperationsProcessorMethod(String methodName, String branchName) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
     // call private doCheckoutNewBranch instead of public checkoutNewBranch to avoid dealing with background process creation
+    // same for other branch operations
     GitBranchOperationsProcessor processor = new GitBranchOperationsProcessor(myProject, myRepositories, myCommunity);
-    Method doCheckoutNewBranch = GitBranchOperationsProcessor.class.getDeclaredMethod("doCheckoutNewBranch", String.class, ProgressIndicator.class);
-    doCheckoutNewBranch.setAccessible(true);
-    doCheckoutNewBranch.invoke(processor, NEW_BRANCH, new EmptyProgressIndicator());
+    Method method = GitBranchOperationsProcessor.class.getDeclaredMethod(methodName, String.class, ProgressIndicator.class);
+    method.setAccessible(true);
+    method.invoke(processor, branchName, new EmptyProgressIndicator());
   }
 
   private void doDeleteBranch(@NotNull String branchName) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-    // call private doDelete instead of public deleteBranch to avoid dealing with background process creation
+    callPrivateBranchOperationsProcessorMethod("doDelete", branchName);
+  }
+  
+  private void doCheckout(@NotNull String branchName, @Nullable String newBranch) throws InvocationTargetException, NoSuchMethodException, IllegalAccessException {
     GitBranchOperationsProcessor processor = new GitBranchOperationsProcessor(myProject, myRepositories, myCommunity);
-    Method doCheckoutNewBranch = GitBranchOperationsProcessor.class.getDeclaredMethod("doDelete", String.class, ProgressIndicator.class);
-    doCheckoutNewBranch.setAccessible(true);
-    doCheckoutNewBranch.invoke(processor, branchName, new EmptyProgressIndicator());
+    Method doCheckout = GitBranchOperationsProcessor.class.getDeclaredMethod("doCheckout", ProgressIndicator.class, String.class, String.class);
+    doCheckout.setAccessible(true);
+    doCheckout.invoke(processor, new EmptyProgressIndicator(), branchName, newBranch);
   }
 
-  private void assertBranch(String master) {
+  private void assertBranch(String branch) {
     for (GitRepository repository : myRepositories) {
-      assertBranch(repository, master);
+      assertBranch(repository, branch);
     }
   }
 

@@ -38,6 +38,7 @@ import com.intellij.util.continuation.ContinuationContext;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import git4idea.DialogManager;
 import git4idea.GitVcs;
 import git4idea.commands.*;
 import git4idea.merge.GitConflictResolver;
@@ -206,7 +207,7 @@ public class GitCheckoutOperation extends GitBranchOperation {
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
-        dialog.show();
+        DialogManager.getInstance(myProject).showDialog(dialog);
       }
     });
 

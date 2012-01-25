@@ -22,6 +22,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.UIUtil;
+import git4idea.DialogManager;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -49,7 +50,7 @@ class GitWouldBeOverwrittenByCheckoutDialog extends DialogWrapper {
       @Override
       public void run() {
         GitWouldBeOverwrittenByCheckoutDialog dialog = new GitWouldBeOverwrittenByCheckoutDialog(project, changes);
-        dialog.show();
+        DialogManager.getInstance(project).showDialog(dialog);
         ok.set(dialog.isOK());
       }
     });
