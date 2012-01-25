@@ -992,11 +992,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     private void getVersion(final VcsFileRevision revision) {
       final VirtualFile file = getVirtualFile();
       final Project project = myVcs.getProject();
-      if ((file != null) && !file.isWritable()) {
-        if (ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(file).hasReadonlyFiles()) {
-          return;
-        }
-      }
 
       new Task.Backgroundable(project, VcsBundle.message("show.diff.progress.title")) {
         @Override
@@ -1034,6 +1029,12 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
                   public void run() {
                     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
                       public void run() {
+                        if (file != null && !file.isWritable()) {
+                          if (ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(file).hasReadonlyFiles()) {
+                            return;
+                          }
+                        }
+
                         try {
                           write(revisionContent);
                         } catch (IOException e) {
