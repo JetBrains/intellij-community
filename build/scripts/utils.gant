@@ -583,7 +583,7 @@ binding.setVariable("buildTarGz", { String tarRoot, String tarPath, List paths -
   project.stage(".tar.gz")
 
   paths.each {
-    ant.fixcrlf(file: "$it/bin/idea.properties", eol: "dos")
+    ant.fixcrlf(file: "$it/bin/idea.properties", eol: "unix")
   }
 
   ant.tar(tarfile: tarPath) {
