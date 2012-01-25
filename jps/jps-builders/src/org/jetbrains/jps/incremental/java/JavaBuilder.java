@@ -6,6 +6,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.uiDesigner.compiler.*;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
@@ -436,7 +437,7 @@ public class JavaBuilder extends Builder{
       }
     }
 
-    if (!isEncodingSet && project.getProjectCharset() != null) {
+    if (!isEncodingSet && !StringUtil.isEmpty(project.getProjectCharset())) {
       options.add("-encoding");
       options.add(project.getProjectCharset());
     }
