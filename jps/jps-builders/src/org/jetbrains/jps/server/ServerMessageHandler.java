@@ -82,7 +82,7 @@ class ServerMessageHandler extends SimpleChannelHandler {
               new GlobalLibrary(library.getName(), library.getPathList())
             );
           }
-          facade.setGlobals(libs, pathVars);
+          facade.setGlobals(libs, pathVars, setupCommand.getGlobalEncoding());
           reply = ProtoUtil.toMessage(sessionId, ProtoUtil.createCommandCompletedEvent(null));
           break;
 

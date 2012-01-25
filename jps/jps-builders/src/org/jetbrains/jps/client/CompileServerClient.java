@@ -48,9 +48,9 @@ public class CompileServerClient extends SimpleProtobufClient<JpsServerResponseH
   }
 
   @NotNull
-  public RequestFuture sendSetupRequest(final Map<String, String> pathVariables, final List<GlobalLibrary> sdkAndLibs) throws Exception {
+  public RequestFuture sendSetupRequest(final Map<String, String> pathVariables, final List<GlobalLibrary> sdkAndLibs, final String globalEncoding) throws Exception {
     checkConnected();
-    return sendRequest(ProtoUtil.createSetupRequest(pathVariables, sdkAndLibs), null);
+    return sendRequest(ProtoUtil.createSetupRequest(pathVariables, sdkAndLibs, globalEncoding), null);
   }
 
   @NotNull

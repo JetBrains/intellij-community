@@ -86,7 +86,7 @@ public class ProtoUtil {
     return JpsRemoteProto.Message.Request.newBuilder().setRequestType(JpsRemoteProto.Message.Request.Type.FS_EVENT).setFsEvent(builder.build()).build();
   }
 
-  public static JpsRemoteProto.Message.Request createSetupRequest(final Map<String, String> pathVars, List<GlobalLibrary> sdkAndLibs) {
+  public static JpsRemoteProto.Message.Request createSetupRequest(final Map<String, String> pathVars, List<GlobalLibrary> sdkAndLibs, @Nullable String globalEncoding) {
     final JpsRemoteProto.Message.Request.SetupCommand.Builder cmdBuilder = JpsRemoteProto.Message.Request.SetupCommand.newBuilder();
 
     if (!pathVars.isEmpty()) {
@@ -112,6 +112,8 @@ public class ProtoUtil {
         cmdBuilder.addGlobalLibrary(libBuilder.build());
       }
     }
+
+    cmdBuilder.setGlobalEncoding(globalEncoding);
 
     return JpsRemoteProto.Message.Request.newBuilder().setRequestType(JpsRemoteProto.Message.Request.Type.SETUP_COMMAND).setSetupCommand(cmdBuilder.build()).build();
   }
