@@ -275,7 +275,7 @@ public class GitCheckoutOperation extends GitBranchOperation {
       catch (VcsException e) {
         // ignoring the exception: this is not fatal if we won't collect such a diff from other repositories. 
         // At worst, use will get double dialog proposing the smart checkout.
-        LOG.warn(String.format("Couldn't collect diff between %s and %s in %s", myPreviousBranch, myStartPointReference, repository.getRoot()));
+        LOG.warn(String.format("Couldn't collect diff between %s and %s in %s", myPreviousBranch, myStartPointReference, repository.getRoot()), e);
       }
     }
     return changes;
