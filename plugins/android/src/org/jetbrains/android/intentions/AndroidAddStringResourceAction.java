@@ -45,8 +45,12 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.xml.Converter;
+import com.intellij.util.xml.DomManager;
+import com.intellij.util.xml.GenericAttributeValue;
 import org.jetbrains.android.AndroidFileTemplateProvider;
 import org.jetbrains.android.actions.CreateXmlResourceDialog;
+import org.jetbrains.android.dom.converters.ResourceReferenceConverter;
 import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.android.dom.resources.ResourceElement;
 import org.jetbrains.android.dom.resources.ResourceValue;
@@ -107,7 +111,29 @@ public class AndroidAddStringResourceAction extends AbstractIntentionAction {
       }
     }
     else if (file instanceof XmlFile && element instanceof XmlAttributeValue) {
-      return ((XmlAttributeValue)element).getValue();
+      final XmlAttribute attribute = PsiTreeUtil.getParentOfType(element, XmlAttribute.class);
+
+      if (attribute != null) {
+        final GenericAttributeValue domAttribute = DomManager.getDomManager(element.getProject()).getDomElement(attribute);
+
+        if (domAttribute != null) {
+          final Converter converter = domAttribute.getConverter();
+
+          if (converter instanceof ResourceReferenceConverter) {
+            final ResourceValue value = (ResourceValue)domAttribute.getValue();
+
+            if (value != null && !value.isReference()) {
+              final Set<String> types = ((ResourceReferenceConverter)converter).getResourceTypes(domAttribute);
+
+              for (String type : types) {
+                if (ResourceType.STRING.getName().equals(type)) {
+                  return ((XmlAttributeValue)element).getValue();
+                }
+              }
+            }
+          }
+        }
+      }
     }
     return null;
   }
@@ -141,25 +167,25 @@ public class AndroidAddStringResourceAction extends AbstractIntentionAction {
   static void doInvoke(Project project, Editor editor, PsiFile file, @Nullable String resName) {
     final AndroidFacet facet = AndroidFacet.getInstance(file);
     assert facet != null;
-    
+
     final PsiElement element = getPsiElement(file, editor);
     assert element != null;
-    
+
     String value = getStringLiteralValue(element, file);
     assert value != null;
     value = value.replace("'", "\\'").replace("\"", "\\\"");
-    
+
     final String aPackage = getPackage(facet);
     if (aPackage == null) {
       Messages.showErrorDialog(project, AndroidBundle.message("package.not.found.error"), CommonBundle.getErrorTitle());
       return;
     }
-    
+
     if (resName == null) {
       final CreateXmlResourceDialog dialog = new CreateXmlResourceDialog(facet.getModule(), ResourceType.STRING);
       dialog.setTitle("Extract String Resource");
       dialog.show();
-      
+
       if (!dialog.isOK()) {
         return;
       }
@@ -180,7 +206,7 @@ public class AndroidAddStringResourceAction extends AbstractIntentionAction {
       assert ApplicationManager.getApplication().isUnitTestMode();
       doCreate(facet.getModule(), resName, ResourceType.STRING, "strings.xml", "values", value);
     }
-    
+
     if (resName == null) {
       return;
     }
@@ -194,7 +220,7 @@ public class AndroidAddStringResourceAction extends AbstractIntentionAction {
         attribute.setValue(ResourceValue.referenceTo('@', null, ResourceType.STRING.getName(), resName).toString());
       }
     }
-    
+
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     UndoUtil.markPsiFileForUndo(file);
 
