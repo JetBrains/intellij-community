@@ -293,7 +293,7 @@ public class ReferenceParser {
       if (expect(builder, JavaTokenType.GT)) {
         break;
       }
-      else if (!expectOrError(builder, JavaTokenType.COMMA, JavaErrorMessages.message("expected.gt.or.comma"))) {
+      else if (!expectOrError(builder, JavaTokenType.COMMA, "expected.gt.or.comma")) {
         isOk = false;
         break;
       }
