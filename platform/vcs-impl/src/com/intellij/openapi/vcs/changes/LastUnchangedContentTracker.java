@@ -37,8 +37,13 @@ public class LastUnchangedContentTracker {
   private static final Key<Long> LAST_TS_KEY = Key.create("LAST_TS_KEY");
   private static final FileAttribute LAST_TS_ATTR = new FileAttribute("LAST_TS_ATTR", 0, true);
   private static final FileAttribute ACQUIRED_CONTENT_ATTR = new FileAttribute("ACQUIRED_CONTENT_ATTR", 1, true);
+  public static final Key<Boolean> VCS_INVALID_FILE_STATUS = Key.create("VCS_INVALID_FILE_STATUS");
 
   public static void updateLastUnchangedContent(@NotNull VirtualFile file) {
+    if (Boolean.TRUE.equals(file.getUserData(VCS_INVALID_FILE_STATUS))) {
+      return;
+    }
+
     Long lastTs = getLastSavedStamp(file);
     final long stamp = file.getModificationStamp();
     if (lastTs != null && stamp == lastTs) {
@@ -51,6 +56,7 @@ public class LastUnchangedContentTracker {
     }
 
     saveContentReference(file, getFS().acquireContent(file));
+    file.putUserData(VCS_INVALID_FILE_STATUS, Boolean.TRUE);
   }
 
   @Nullable 
