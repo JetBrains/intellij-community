@@ -53,8 +53,8 @@ public class UsageInfo {
       endOffset = elementRange.getEndOffset() - elementRange.getStartOffset();
     }
 
-    LOG.assertTrue(startOffset >= 0, startOffset);
-    LOG.assertTrue(endOffset >= startOffset, endOffset-startOffset);
+    LOG.assertTrue(startOffset >= 0, "element " + element + "; startOffset " +startOffset);
+    LOG.assertTrue(endOffset >= startOffset, "element " + element + "; diff " + (endOffset-startOffset));
 
     if (startOffset != element.getTextOffset() - elementRange.getStartOffset() || endOffset != elementRange.getLength()) {
       PsiFile file = element.getContainingFile();
