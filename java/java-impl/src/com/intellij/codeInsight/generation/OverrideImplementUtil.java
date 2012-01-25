@@ -222,11 +222,17 @@ public class OverrideImplementUtil {
   }
 
   public static boolean isInsertOverride(PsiMethod superMethod, PsiClass targetClass) {
+    if (!CodeStyleSettingsManager.getSettings(targetClass.getProject()).INSERT_OVERRIDE_ANNOTATION) {
+      return false;
+    }
+    return canInsertOverride(superMethod, targetClass);
+  }
+
+  public static boolean canInsertOverride(PsiMethod superMethod, PsiClass targetClass) {
     if (superMethod.isConstructor()) {
       return false;
     }
-    if (!CodeStyleSettingsManager.getSettings(targetClass.getProject()).INSERT_OVERRIDE_ANNOTATION
-        || !PsiUtil.isLanguageLevel5OrHigher(targetClass)) {
+    if (!PsiUtil.isLanguageLevel5OrHigher(targetClass)) {
       return false;
     }
     if (PsiUtil.isLanguageLevel6OrHigher(targetClass)) return true;
@@ -329,7 +335,7 @@ public class OverrideImplementUtil {
   }
 
   public static void annotateOnOverrideImplement(PsiMethod method, PsiClass targetClass, PsiMethod overridden, boolean insertOverride) {
-    if (insertOverride && isInsertOverride(overridden, targetClass)) {
+    if (insertOverride && canInsertOverride(overridden, targetClass)) {
       annotate(method, Override.class.getName());
     }
     final Module module = ModuleUtil.findModuleForPsiElement(targetClass);
