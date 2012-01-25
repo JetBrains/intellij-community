@@ -15,9 +15,7 @@
  */
 package org.jetbrains.idea.svn.actions;
 
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.AbstractVcsHelper;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -41,10 +39,9 @@ public class ShowPropertiesAction extends BasicAction {
   }
 
   protected boolean isEnabled(Project project, SvnVcs vcs, VirtualFile file) {
-    if (!file.isDirectory()) {
-      file = file.getParent();
-    }
-    return file != null && file.getPath() != null && SVNWCUtil.isVersionedDirectory(new File(file.getPath()));
+    if (file == null) return false;
+    final FileStatus status = FileStatusManager.getInstance(project).getStatus(file);
+    return status != null && ! FileStatus.UNKNOWN.equals(status) && ! FileStatus.IGNORED.equals(status);
   }
 
   protected boolean needsFiles() {
