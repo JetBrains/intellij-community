@@ -36,7 +36,6 @@ import com.intellij.util.PairFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -114,7 +113,7 @@ public class ExtractClosureHandler extends ExtractHandlerBase implements Refacto
                          @NotNull PairFunction<GrParametersOwner, PsiElement, Object> callback) {
     final List<GrParametersOwner> scopes = new ArrayList<GrParametersOwner>();
     while (true) {
-      final GrParametersOwner parent = PsiTreeUtil.getParentOfType(place, GrMethod.class, GrClosableBlock.class);
+      final GrParametersOwner parent = PsiTreeUtil.getParentOfType(place, GrMethod.class/*, GrClosableBlock.class*/); //todo implement extract closure from closure
       if (parent == null) break;
       scopes.add(parent);
       place = parent;
@@ -144,7 +143,7 @@ public class ExtractClosureHandler extends ExtractHandlerBase implements Refacto
   @Override
   public void performRefactoring(@NotNull final InitialInfo info,
                                  @NotNull GrMemberOwner owner,
-                                 GrStatementOwner declarationOwner,
+                                 final GrStatementOwner declarationOwner,
                                  final Editor editor,
                                  PsiElement startElement) {
     findScope(startElement, editor, new PairFunction<GrParametersOwner, PsiElement, Object>() {
@@ -154,7 +153,7 @@ public class ExtractClosureHandler extends ExtractHandlerBase implements Refacto
         if (helper == null) return null;
 
         if (helper.getOwner() instanceof GrMethod) {
-          new ExtractClosureFromMethodProcessor(helper, editor).run();
+          new ExtractClosureFromMethodProcessor(helper, editor, declarationOwner).run();
         }
         return null;
       }
