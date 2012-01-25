@@ -86,8 +86,7 @@ class InjectedSelfElementInfo extends SelfElementInfo {
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(hostFile.getProject());
     Document document = documentManager.getDocument(hostFile);
     if (document != null && documentManager.isUncommited(document)) {
-      List<DocumentWindow> documents = InjectedLanguageUtil.getCachedInjectedDocuments(hostFile);
-      for (DocumentWindow documentWindow : documents) {
+      for (DocumentWindow documentWindow : InjectedLanguageUtil.getCachedInjectedDocuments(hostFile)) {
         PsiFile injected = documentManager.getPsiFile(documentWindow);
         if (injected != null) {
           visitor.visit(injected, Collections.<PsiLanguageInjectionHost.Shred>emptyList());
