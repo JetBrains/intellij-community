@@ -101,11 +101,11 @@
       </component>
       <component id="b9ad7" class="javax.swing.JCheckBox" binding="myResizeHeaders">
         <constraints>
-          <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+          <grid row="5" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
           <margin top="10" left="0" bottom="2" right="2"/>
-          <text value="Resize column and row headers over mouse"/>
+          <text value="&amp;Resize column and row headers with mouse"/>
         </properties>
       </component>
     </children>
