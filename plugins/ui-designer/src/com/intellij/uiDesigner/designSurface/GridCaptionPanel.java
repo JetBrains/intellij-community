@@ -25,6 +25,7 @@ import com.intellij.ui.LightColors;
 import com.intellij.uiDesigner.CaptionSelection;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.GridChangeUtil;
+import com.intellij.uiDesigner.GuiDesignerConfiguration;
 import com.intellij.uiDesigner.componentTree.ComponentSelectionListener;
 import com.intellij.uiDesigner.radComponents.RadAbstractGridLayoutManager;
 import com.intellij.uiDesigner.radComponents.RadComponent;
@@ -272,6 +273,12 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
     });
   }
 
+  private boolean canResizeCells() {
+    return GuiDesignerConfiguration.getInstance(myEditor.getProject()).RESIZE_HEADERS &&
+           mySelectedContainer != null &&
+           mySelectedContainer.getGridLayoutManager().canResizeCells();
+  }
+
   private int getCellAt(Point pnt) {
     if (mySelectedContainer == null) return -1;
     pnt = SwingUtilities.convertPoint(this, pnt, mySelectedContainer.getDelegee());
@@ -321,9 +328,8 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
       requestFocus();
       Point pnt = SwingUtilities.convertPoint(GridCaptionPanel.this, e.getPoint(),
                                               mySelectedContainer.getDelegee());
-      RadAbstractGridLayoutManager layout = mySelectedContainer.getGridLayoutManager();
-      if (layout.canResizeCells()) {
-        myResizeLine = layout.getGridLineNear(mySelectedContainer, myIsRow, pnt, 4);
+      if (canResizeCells()) {
+        myResizeLine = mySelectedContainer.getGridLayoutManager().getGridLineNear(mySelectedContainer, myIsRow, pnt, 4);
       }
       if (!checkShowPopupMenu(e)) {
         int cell = getCellAt(e.getPoint());
@@ -393,7 +399,10 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
     }
 
     public void mouseMoved(MouseEvent e) {
-      if (mySelectedContainer == null || !mySelectedContainer.getGridLayoutManager().canResizeCells()) return;
+      if (!canResizeCells()) {
+        return;
+      }
+
       Point pnt = SwingUtilities.convertPoint(GridCaptionPanel.this, e.getPoint(),
                                               mySelectedContainer.getDelegee());
       int gridLine = mySelectedContainer.getGridLayoutManager().getGridLineNear(mySelectedContainer, myIsRow, pnt, 4);
