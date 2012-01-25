@@ -45,6 +45,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.*;
 import com.intellij.ui.popup.AbstractPopup;
+import com.intellij.ui.popup.PopupUpdateProcessor;
 import com.intellij.ui.speedSearch.ElementFilter;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.ui.treeStructure.Tree;
@@ -64,6 +65,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
@@ -143,10 +146,18 @@ public class FileStructurePopup implements Disposable {
         return "structure view tree structure(model=" + myTreeModel + ")";
       }
     };
-    myTree = new Tree(new DefaultMutableTreeNode(myTreeStructure.getRootElement()));
-    myTree.setCellRenderer(new NodeRenderer(){
+    myTree = new JBTreeWithHintProvider(new DefaultMutableTreeNode(myTreeStructure.getRootElement())) {
       @Override
-      protected void doAppend(@NotNull @Nls String fragment, @NotNull SimpleTextAttributes attributes, boolean isMainText, boolean selected) {
+      protected PsiElement getPsiElementForHint(Object selectedValue) {
+        return getPsi((FilteringTreeStructure.FilteringNode)((DefaultMutableTreeNode)selectedValue).getUserObject());
+      }
+    };
+    myTree.setCellRenderer(new NodeRenderer() {
+      @Override
+      protected void doAppend(@NotNull @Nls String fragment,
+                              @NotNull SimpleTextAttributes attributes,
+                              boolean isMainText,
+                              boolean selected) {
         SpeedSearchUtil.appendFragmentsForSpeedSearch(myTree, fragment, attributes, selected, this);
       }
 
@@ -310,7 +321,7 @@ public class FileStructurePopup implements Disposable {
       .setModalContext(false)
       .setFocusable(true)
       .setMovable(true)
-      .setBelongsToGlobalPopupStack(true)
+      .setBelongsToGlobalPopupStack(true)      
       //.setCancelOnClickOutside(false) //for debug and snapshots
       .setCancelKeyEnabled(false)
       .setDimensionServiceKey(null, getDimensionServiceKey(), false)
@@ -322,6 +333,19 @@ public class FileStructurePopup implements Disposable {
         }
       })
       .createPopup();
+    
+    myTree.addTreeSelectionListener(new TreeSelectionListener() {
+      @Override
+      public void valueChanged(TreeSelectionEvent e) {
+        if (myPopup.isVisible()) {
+          final PopupUpdateProcessor updateProcessor = myPopup.getUserData(PopupUpdateProcessor.class);
+          if (updateProcessor != null) {
+            final AbstractTreeNode node = getSelectedNode();
+            updateProcessor.updatePopup(node);
+          }
+        }
+      }
+    });
     Disposer.register(myPopup, this);
     Disposer.register(myPopup, new Disposable() {
       @Override
@@ -342,6 +366,7 @@ public class FileStructurePopup implements Disposable {
     if (shouldSetWidth) {
       myPopup.setSize(new Dimension(myPreferredWidth + 10, myPopup.getSize().height));
     }
+
     myAbstractTreeBuilder.expandAll(new Runnable() {
       @Override
       public void run() {
