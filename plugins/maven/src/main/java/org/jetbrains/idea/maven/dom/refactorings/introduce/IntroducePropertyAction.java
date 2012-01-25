@@ -12,7 +12,6 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -40,7 +39,7 @@ import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.dom.model.MavenDomProperties;
 
-import java.util.Set;
+import java.util.*;
 
 public class IntroducePropertyAction extends BaseRefactoringAction {
   private static String PREFIX = "${";
@@ -126,7 +125,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
       final MavenDomProjectModel model = MavenDomUtil.getMavenDomModel(file, MavenDomProjectModel.class);
       final String selectedString = editor.getDocument().getText(range);
 
-      Set<TextRange> ranges = getPropertiesTextRanges(stringValue);
+      List<TextRange> ranges = getPropertiesTextRanges(stringValue);
       int offsetInElement = range.getStartOffset() - selectedElement.getTextOffset();
 
       if (model == null ||
@@ -302,27 +301,33 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
       @NotNull
       private Set<UsageInfo> getUsages(@NotNull XmlElement xmlElement) {
         String s = xmlElement.getText();
-        Set<UsageInfo> usages = new HashSet<UsageInfo>();
-        if (!StringUtil.isEmptyOrSpaces(s)) {
-          Set<TextRange> ranges = getPropertiesTextRanges(s);
+        if (StringUtil.isEmptyOrSpaces(s)) return Collections.emptySet();
 
-          int start = s.indexOf(mySelectedString);
-          while (start >= 0) {
-            int end = start + mySelectedString.length();
-            boolean isInsideProperty = isInsideTextRanges(ranges, start, end);
-            if (!isInsideProperty) {
-              usages.add(new UsageInfo(xmlElement, start, end));
-            }
-            start = s.indexOf(mySelectedString, end);
+        int start = s.indexOf(mySelectedString);
+        if (start == -1) return Collections.emptySet();
+
+        Set<UsageInfo> usages = new HashSet<UsageInfo>();
+
+        List<TextRange> ranges = getPropertiesTextRanges(s);
+        TextRange elementTextRange = xmlElement.getTextRange();
+        PsiFile containingFile = xmlElement.getContainingFile();
+
+        do {
+          int end = start + mySelectedString.length();
+          boolean isInsideProperty = isInsideTextRanges(ranges, start, end);
+          if (!isInsideProperty) {
+            usages.add(new UsageInfo(containingFile, elementTextRange.getStartOffset() + start, elementTextRange.getStartOffset() + end));
           }
-        }
+          start = s.indexOf(mySelectedString, end);
+        } while (start != -1);
+
         return usages;
       }
     }
   }
 
-  private static Set<TextRange> getPropertiesTextRanges(String s) {
-    Set<TextRange> ranges = new HashSet<TextRange>();
+  private static List<TextRange> getPropertiesTextRanges(String s) {
+    List<TextRange> ranges = new ArrayList<TextRange>();
     int startOffset = s.indexOf(PREFIX);
     while (startOffset >= 0) {
       int endOffset = s.indexOf(SUFFIX, startOffset);
@@ -343,15 +348,13 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
     return ranges;
   }
 
-  private static boolean isInsideTextRanges(@NotNull Set<TextRange> ranges, int start, int end) {
-    boolean isInsideProperty = false;
+  private static boolean isInsideTextRanges(@NotNull Collection<TextRange> ranges, int start, int end) {
     for (TextRange range : ranges) {
       if ((start >= range.getStartOffset() && (end <= range.getEndOffset() || start <= range.getEndOffset())) ||
           (end <= range.getEndOffset() && (end > range.getStartOffset()))) {
-        isInsideProperty = true;
-        break;
+        return true;
       }
     }
-    return isInsideProperty;
+    return false;
   }
 }
