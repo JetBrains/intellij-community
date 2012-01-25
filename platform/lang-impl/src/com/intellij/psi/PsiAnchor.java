@@ -182,7 +182,7 @@ public abstract class PsiAnchor {
     @Override
     @Nullable
     public PsiFile getFile() {
-      return SelfElementInfo.restoreFileFromVirtual(myVirtualFile, myProject, myLanguage);
+      return SelfElementInfo.restoreFileFromVirtual(myVirtualFile, myProject, myFileLanguage);
     }
 
     @Override
@@ -274,6 +274,7 @@ public abstract class PsiAnchor {
     }
 
     @Override
+    @Nullable
     public PsiFile getFile() {
       return SelfElementInfo.restoreFileFromVirtual(myFile, myProject);
     }
@@ -323,6 +324,7 @@ public abstract class PsiAnchor {
     }
   }
 
+  @Nullable
   public static PsiElement restoreFromStubIndex(PsiFileWithStubSupport fileImpl,
                                                 int index,
                                                 IStubElementType elementType) {
