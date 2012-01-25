@@ -27,6 +27,7 @@ import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.auth.SVNUserNameAuthentication;
+import org.tmatesoft.svn.core.internal.wc.ISVNAuthenticationStorage;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -39,9 +40,12 @@ public class SvnAuthenticationProvider implements ISVNAuthenticationProvider {
   private final Project myProject;
   private final SvnAuthenticationNotifier myAuthenticationNotifier;
   private final ISVNAuthenticationProvider mySvnInteractiveAuthenticationProvider;
+  private final ISVNAuthenticationStorage myAuthenticationStorage;
   private static final Set<Thread> ourForceInteractive = new HashSet<Thread>();
 
-  public SvnAuthenticationProvider(final SvnVcs17 svnVcs, final ISVNAuthenticationProvider provider) {
+  public SvnAuthenticationProvider(final SvnVcs17 svnVcs, final ISVNAuthenticationProvider provider,
+                                   final ISVNAuthenticationStorage authenticationStorage) {
+    myAuthenticationStorage = authenticationStorage;
     myProject = svnVcs.getProject();
     myAuthenticationNotifier = svnVcs.getAuthNotifier();
     mySvnInteractiveAuthenticationProvider = provider;
@@ -68,7 +72,9 @@ public class SvnAuthenticationProvider implements ISVNAuthenticationProvider {
       // outside-project url
       return mySvnInteractiveAuthenticationProvider.requestClientAuthentication(kind, url, realm, errorMessage, previousAuth, authMayBeStored);
     } else {
-      myAuthenticationNotifier.ensureNotify(obj);
+      if (myAuthenticationNotifier.ensureNotify(obj)) {
+        return (SVNAuthentication) myAuthenticationStorage.getData(kind, realm);
+      }
     }
     return null;
   }

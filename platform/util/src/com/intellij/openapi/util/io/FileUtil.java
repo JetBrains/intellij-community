@@ -131,7 +131,8 @@ public class FileUtil {
       if (parent == null) {
         return false;
       }
-      if (parent.equals(ancestor)) {
+      // Do not user file.equals as it incorrectly works on MacOS
+      if (pathsEqual(parent.getPath(), ancestor.getPath())) {
         return true;
       }
       parent = getParentFile(parent);

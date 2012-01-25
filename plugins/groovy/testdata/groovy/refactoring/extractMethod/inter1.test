@@ -15,7 +15,7 @@ def i = 6
 i = testMethod()
 
 private int testMethod() {
-    int i
+    def i
     while (true) {
         println "preved"
         i = 42

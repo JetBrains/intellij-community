@@ -27,4 +27,5 @@ public interface GradleProjectStructureChangeVisitor {
   void visit(@NotNull GradleRenameChange change);
   void visit(@NotNull GradleProjectStructureChange change);
   void visit(@NotNull GradleModulePresenceChange change);
+  void visit(@NotNull GradleLibraryDependencyPresenceChange change);
 }

@@ -6,13 +6,13 @@ import com.intellij.find.impl.FindInProjectUtil;
 import com.intellij.find.replaceInProject.ReplaceInProjectManager;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -40,7 +40,7 @@ import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.dom.model.MavenDomProperties;
 
-import java.util.Set;
+import java.util.*;
 
 public class IntroducePropertyAction extends BaseRefactoringAction {
   private static String PREFIX = "${";
@@ -126,7 +126,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
       final MavenDomProjectModel model = MavenDomUtil.getMavenDomModel(file, MavenDomProjectModel.class);
       final String selectedString = editor.getDocument().getText(range);
 
-      Set<TextRange> ranges = getPropertiesTextRanges(stringValue);
+      List<TextRange> ranges = getPropertiesTextRanges(stringValue);
       int offsetInElement = range.getStartOffset() - selectedElement.getTextOffset();
 
       if (model == null ||
@@ -251,78 +251,88 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
           Set<UsageInfo> usages = new HashSet<UsageInfo>();
 
           public void generate(final Processor<Usage> processor) {
+            AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
 
-            ApplicationManager.getApplication().runReadAction(new Runnable() {
-              public void run() {
-                collectUsages(myModel);
-                for (MavenDomProjectModel model : MavenDomProjectProcessorUtils.getChildrenProjects(myModel)) {
-                  collectUsages(model);
-                }
-
-                for (UsageInfo2UsageAdapter adapter : UsageInfo2UsageAdapter.convert(usages.toArray(new UsageInfo[usages.size()]))) {
-                  processor.process(adapter);
-                }
+            try {
+              collectUsages(myModel);
+              for (MavenDomProjectModel model : MavenDomProjectProcessorUtils.getChildrenProjects(myModel)) {
+                collectUsages(model);
               }
 
-              private void collectUsages(@NotNull MavenDomProjectModel model) {
-                if (model.isValid()) {
-                  final XmlElement root = model.getXmlElement();
-                  if (root != null) {
-                    root.acceptChildren(new XmlElementVisitor() {
+              for (UsageInfo usage : usages) {
+                processor.process(UsageInfo2UsageAdapter.CONVERTER.fun(usage));
+              }
+            }
+            finally {
+              accessToken.finish();
+            }
+          }
 
-                      @Override
-                      public void visitXmlText(XmlText text) {
-                        XmlTag xmlTag = PsiTreeUtil.getParentOfType(text, XmlTag.class);
-                        if (xmlTag != null && !xmlTag.getName().equals(myPropertyName)) {
-                          usages.addAll(getUsages(text));
-                        }
-                      }
+          private void collectUsages(@NotNull MavenDomProjectModel model) {
+            if (model.isValid()) {
+              final XmlElement root = model.getXmlElement();
+              if (root != null) {
+                root.acceptChildren(new XmlElementVisitor() {
 
-                      @Override
-                      public void visitXmlAttributeValue(XmlAttributeValue value) {
-                        XmlTag xmlTag = PsiTreeUtil.getParentOfType(value, XmlTag.class);
-                        if (xmlTag != null && !xmlTag.equals(root)) {
-                          usages.addAll(getUsages(value));
-                        }
-                      }
-
-                      @Override
-                      public void visitXmlElement(XmlElement element) {
-                        element.acceptChildren(this);
-                      }
-                    });
+                  @Override
+                  public void visitXmlText(XmlText text) {
+                    XmlTag xmlTag = PsiTreeUtil.getParentOfType(text, XmlTag.class);
+                    if (xmlTag != null && !xmlTag.getName().equals(myPropertyName)) {
+                      usages.addAll(getUsages(text));
+                    }
                   }
-                }
+
+                  @Override
+                  public void visitXmlAttributeValue(XmlAttributeValue value) {
+                    XmlTag xmlTag = PsiTreeUtil.getParentOfType(value, XmlTag.class);
+                    if (xmlTag != null && !xmlTag.equals(root)) {
+                      usages.addAll(getUsages(value));
+                    }
+                  }
+
+                  @Override
+                  public void visitXmlElement(XmlElement element) {
+                    element.acceptChildren(this);
+                  }
+                });
               }
-            });
+            }
+          }
+
+          @NotNull
+          private Set<UsageInfo> getUsages(@NotNull XmlElement xmlElement) {
+            String s = xmlElement.getText();
+            if (StringUtil.isEmptyOrSpaces(s)) return Collections.emptySet();
+
+            int start = s.indexOf(mySelectedString);
+            if (start == -1) return Collections.emptySet();
+
+            Set<UsageInfo> usages = new HashSet<UsageInfo>();
+
+            List<TextRange> ranges = getPropertiesTextRanges(s);
+            TextRange elementTextRange = xmlElement.getTextRange();
+            PsiFile containingFile = xmlElement.getContainingFile();
+
+            do {
+              int end = start + mySelectedString.length();
+              boolean isInsideProperty = isInsideTextRanges(ranges, start, end);
+              if (!isInsideProperty) {
+                usages
+                  .add(new UsageInfo(containingFile, elementTextRange.getStartOffset() + start, elementTextRange.getStartOffset() + end));
+              }
+              start = s.indexOf(mySelectedString, end);
+            }
+            while (start != -1);
+
+            return usages;
           }
         };
-      }
-
-      @NotNull
-      private Set<UsageInfo> getUsages(@NotNull XmlElement xmlElement) {
-        String s = xmlElement.getText();
-        Set<UsageInfo> usages = new HashSet<UsageInfo>();
-        if (!StringUtil.isEmptyOrSpaces(s)) {
-          Set<TextRange> ranges = getPropertiesTextRanges(s);
-
-          int start = s.indexOf(mySelectedString);
-          while (start >= 0) {
-            int end = start + mySelectedString.length();
-            boolean isInsideProperty = isInsideTextRanges(ranges, start, end);
-            if (!isInsideProperty) {
-              usages.add(new UsageInfo(xmlElement, start, end));
-            }
-            start = s.indexOf(mySelectedString, end);
-          }
-        }
-        return usages;
       }
     }
   }
 
-  private static Set<TextRange> getPropertiesTextRanges(String s) {
-    Set<TextRange> ranges = new HashSet<TextRange>();
+  private static List<TextRange> getPropertiesTextRanges(String s) {
+    List<TextRange> ranges = new ArrayList<TextRange>();
     int startOffset = s.indexOf(PREFIX);
     while (startOffset >= 0) {
       int endOffset = s.indexOf(SUFFIX, startOffset);
@@ -343,15 +353,13 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
     return ranges;
   }
 
-  private static boolean isInsideTextRanges(@NotNull Set<TextRange> ranges, int start, int end) {
-    boolean isInsideProperty = false;
+  private static boolean isInsideTextRanges(@NotNull Collection<TextRange> ranges, int start, int end) {
     for (TextRange range : ranges) {
       if ((start >= range.getStartOffset() && (end <= range.getEndOffset() || start <= range.getEndOffset())) ||
           (end <= range.getEndOffset() && (end > range.getStartOffset()))) {
-        isInsideProperty = true;
-        break;
+        return true;
       }
     }
-    return isInsideProperty;
+    return false;
   }
 }

@@ -176,7 +176,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       final Object element = it.next();
       if (isMatchingElement(element, _s)) return element;
     }
-    return isMatchingElement(current, _s) ? current : null;
+    return ( current != null && isMatchingElement(current, _s) ) ? current : null;
   }
 
   @Nullable

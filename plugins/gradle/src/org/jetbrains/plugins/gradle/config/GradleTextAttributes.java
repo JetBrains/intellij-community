@@ -31,8 +31,8 @@ public class GradleTextAttributes {
    * <p/>
    * Example: particular dependency is added at the intellij side but not at the gradle.
    */
-  public static final TextAttributesKey GRADLE_INTELLIJ_LOCAL_CHANGE = TextAttributesKey.createTextAttributesKey(
-    "GRADLE_INTELLIJ_LOCAL_CHANGE",
+  public static final TextAttributesKey INTELLIJ_LOCAL_CHANGE = TextAttributesKey.createTextAttributesKey(
+    "INTELLIJ_LOCAL_CHANGE",
     new TextAttributes(new Color(16, 102, 248), null, null, null, Font.PLAIN)
   );
 

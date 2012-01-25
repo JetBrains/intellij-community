@@ -18,7 +18,9 @@ package org.jetbrains.idea.svn17;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -95,7 +97,7 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
 
     final Ref<Boolean> resultRef = new Ref<Boolean>();
 
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+    final Runnable checker = new Runnable() {
       @Override
       public void run() {
         try {
@@ -106,11 +108,20 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
           if (result) {
             onStateChangedToSuccess(obj);
           }
-        } finally {
+        }
+        finally {
           myVerificationInProgress = false;
         }
       }
-    });
+    };
+    final ApplicationEx application = (ApplicationEx)ApplicationManager.getApplication();
+    // also do not show auth if thread does not have progress indicator
+    if (application.holdsReadLock() || application.isDispatchThread() || ! ProgressManager.getInstance().hasProgressIndicator()) {
+      application.executeOnPooledThread(checker);
+    } else {
+      checker.run();
+      return resultRef.get();
+    }
     return false;
   }
 
@@ -162,6 +173,15 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
     /*VcsBalloonProblemNotifier.showOverChangesView(myVcs.getProject(), "You are not authenticated to '" + obj.getRealm() + "'." +
       "To login, see pending notifications.", MessageType.ERROR);*/
     return super.ensureNotify(obj);
+  }
+
+  @Override
+  protected boolean onFirstNotification(AuthenticationRequest obj) {
+    if (ProgressManager.getInstance().hasProgressIndicator()) {
+      return ask(obj, null);
+    } else {
+      return false;
+    }
   }
 
   @NotNull

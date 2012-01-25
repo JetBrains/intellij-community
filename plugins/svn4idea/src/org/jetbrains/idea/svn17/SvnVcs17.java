@@ -156,6 +156,8 @@ public class SvnVcs17 extends AbstractVcs<CommittedChangeList> {
   private static RareLogger.LogFilter[] ourLogFilters;
   private final SvnLoadedBrachesStorage17 myLoadedBranchesStorage;
 
+  public static final String SVNKIT_HTTP_SSL_PROTOCOLS = "svnkit.http.sslProtocols";
+
   static {
     SVNJNAUtil.setJNAEnabled(true);
     SvnHttpAuthMethodsDefaultChecker.check();
@@ -178,6 +180,11 @@ public class SvnVcs17 extends AbstractVcs<CommittedChangeList> {
       LOG.warn("JNA is not found by svnkit library");
     }
     initLogFilters();
+
+    // Alexander Kitaev says it is default value (SSLv3) - since 8254
+    if (! SystemInfo.JAVA_RUNTIME_VERSION.startsWith("1.7") && System.getProperty(SVNKIT_HTTP_SSL_PROTOCOLS) == null) {
+      System.setProperty(SVNKIT_HTTP_SSL_PROTOCOLS, "SSLv3");
+    }
   }
 
   private static Boolean booleanProperty(final String systemParameterName) {
@@ -394,11 +401,17 @@ public class SvnVcs17 extends AbstractVcs<CommittedChangeList> {
     if (SystemInfo.isWindows) {
       if (! SVNJNAUtil.isJNAPresent()) {
         Notifications.Bus.notify(new Notification(getDisplayName(), "Subversion plugin: no JNA",
-          "A problem with JNA initialization for svnkit library. Encryption is not available.", NotificationType.WARNING), NotificationDisplayType.BALLOON, myProject);
+          "A problem with JNA initialization for svnkit library. Encryption is not available.", NotificationType.WARNING),
+                                 NotificationDisplayType.BALLOON, myProject);
       } else if (! SVNJNAUtil.isWinCryptEnabled()) {
         Notifications.Bus.notify(new Notification(getDisplayName(), "Subversion plugin: no encryption",
-          "A problem with encryption module (Crypt32.dll) initialization for svnkit library. Encryption is not available.", NotificationType.WARNING), NotificationDisplayType.BALLOON, myProject);
+          "A problem with encryption module (Crypt32.dll) initialization for svnkit library. Encryption is not available.",
+          NotificationType.WARNING), NotificationDisplayType.BALLOON, myProject);
       }
+    }
+
+    if (SvnConfiguration17.UseAcceleration.javaHL.equals(SvnConfiguration17.getInstance(myProject).myUseAcceleration)) {
+      CheckJavaHL.runtimeCheck(myProject);
     }
 
     // do one time after project loaded

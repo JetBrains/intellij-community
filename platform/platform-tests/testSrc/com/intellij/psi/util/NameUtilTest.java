@@ -282,6 +282,11 @@ public class NameUtilTest extends UsefulTestCase {
     assertOrderedEquals(new NameUtil.MinusculeMatcher("doge*st", NameUtil.MatchingCaseSensitivity.NONE).matchingFragments(sample),
                         TextRange.from(0, 4), TextRange.from(22, 2));
 
+    sample = "_test";
+    assertOrderedEquals(new NameUtil.MinusculeMatcher("_", NameUtil.MatchingCaseSensitivity.NONE).matchingFragments(sample),
+                        TextRange.from(0, 1));
+    assertOrderedEquals(new NameUtil.MinusculeMatcher("_t", NameUtil.MatchingCaseSensitivity.NONE).matchingFragments(sample),
+                        TextRange.from(0, 2));
   }
 
   public void testMatchingDegree() {

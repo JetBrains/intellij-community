@@ -72,7 +72,7 @@ public class GradleColorAndFontPreviewPanel implements PreviewPanel {
     String intellijLibraryName = GradleBundle.message("gradle.settings.color.text.sample.node.intellij.name",
                                                       ApplicationNamesInfo.getInstance().getProductName());
     DefaultMutableTreeNode intellijLibrary = createNode(
-      intellijLibraryName, GradleIcons.LIB_ICON, GradleTextAttributes.GRADLE_INTELLIJ_LOCAL_CHANGE
+      intellijLibraryName, GradleIcons.LIB_ICON, GradleTextAttributes.INTELLIJ_LOCAL_CHANGE
     );
     
     String syncLibraryName = GradleBundle.message("gradle.settings.color.text.sample.node.sync.name");

@@ -41,7 +41,7 @@ public abstract class GradleEntityPresenceChange<G, I> extends GradleAbstractPro
    *                                     called with one <code>null</code> argument and one non-<code>null</code> argument
    */
   public GradleEntityPresenceChange(@Nullable G gradleEntity, @Nullable I intellijEntity) throws IllegalArgumentException {
-    if (gradleEntity  == null ^ intellijEntity  == null) {
+    if (!(gradleEntity == null ^ intellijEntity == null)) {
       throw new IllegalArgumentException(String.format(
         "Can't construct %s object. Reason: expected that only gradle or intellij entity is null, actual: gradle='%s'; intellij='%s'",
         getClass(), gradleEntity, intellijEntity

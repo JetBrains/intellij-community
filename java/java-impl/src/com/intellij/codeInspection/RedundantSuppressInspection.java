@@ -23,8 +23,10 @@ import com.intellij.codeInspection.reference.RefClass;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefJavaVisitor;
 import com.intellij.codeInspection.reference.RefManagerImpl;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
@@ -32,10 +34,12 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.BidirectionalMap;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -47,6 +51,8 @@ import java.util.Map;
 public class RedundantSuppressInspection extends GlobalInspectionTool{
   private BidirectionalMap<String, QuickFix> myQuickFixes = null;
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.RedundantSuppressInspection");
+  
+  public boolean IGNORE_ALL = false;
 
   @NotNull
   public String getGroupDisplayName() {
@@ -64,6 +70,17 @@ public class RedundantSuppressInspection extends GlobalInspectionTool{
     return "RedundantSuppression";
   }
 
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel("Ignore @SuppressWarning(\"ALL\")", this, "IGNORE_ALL");
+  }
+
+  @Override
+  public void writeSettings(Element node) throws WriteExternalException {
+    if (IGNORE_ALL) {
+      super.writeSettings(node);
+    }
+  }
 
   public void runInspection(final AnalysisScope scope,
                             final InspectionManager manager,
@@ -123,6 +140,7 @@ public class RedundantSuppressInspection extends GlobalInspectionTool{
         String idsString = SuppressManager.getInstance().getSuppressedInspectionIdsIn(owner);
         if (idsString != null && idsString.length() != 0) {
           List<String> ids = StringUtil.split(idsString, ",");
+          if (IGNORE_ALL && ids.contains(SuppressionUtil.ALL)) return;
           Collection<String> suppressed = suppressedScopes.get(owner);
           if (suppressed == null) {
             suppressed = ids;

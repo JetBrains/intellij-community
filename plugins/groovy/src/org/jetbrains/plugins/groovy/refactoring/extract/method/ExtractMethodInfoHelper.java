@@ -16,9 +16,14 @@
 
 package org.jetbrains.plugins.groovy.refactoring.extract.method;
 
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiModifier;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwner;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.refactoring.extract.ExtractInfoHelperBase;
-import org.jetbrains.plugins.groovy.refactoring.extract.ExtractUtil;
 import org.jetbrains.plugins.groovy.refactoring.extract.InitialInfo;
 
 /**
@@ -30,14 +35,16 @@ public class ExtractMethodInfoHelper extends ExtractInfoHelperBase {
   private boolean mySpecifyType = true;
   private String myVisibility;
   private String myName;
+  private final GrMemberOwner myOwner;
 
-  public ExtractMethodInfoHelper(InitialInfo initialInfo, String name) {
+  public ExtractMethodInfoHelper(InitialInfo initialInfo, String name, GrMemberOwner owner) {
     super(initialInfo);
+    myOwner = owner;
 
     myVisibility = PsiModifier.PRIVATE;
     myName = name;
 
-    myIsStatic = ExtractUtil.canBeStatic(initialInfo.getStatements()[0]);
+    myIsStatic = canBeStatic(initialInfo.getStatements()[0]);
   }
 
   public boolean isStatic() {
@@ -66,5 +73,21 @@ public class ExtractMethodInfoHelper extends ExtractInfoHelperBase {
 
   public void setName(String name) {
     myName = name;
+  }
+
+  @NotNull
+  public GrMemberOwner getOwner() {
+    return myOwner;
+  }
+
+  private static boolean canBeStatic(GrStatement statement) {
+    PsiElement parent = statement.getParent();
+    while (parent != null && !(parent instanceof PsiFile)) {
+      if (parent instanceof GrMethod) {
+        return ((GrMethod) parent).hasModifierProperty(PsiModifier.STATIC);
+      }
+      parent = parent.getParent();
+    }
+    return false;
   }
 }

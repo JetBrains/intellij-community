@@ -172,6 +172,7 @@ class XmlMover extends LineMover {
     if (offset + 1 < document.getTextLength()) {
       final int line = document.getLineNumber(offset + 1);
       final LineRange toMove2 = info.toMove2;
+      if (toMove2 == null) return;
       info.toMove2 = new LineRange(toMove2.startLine, Math.min(Math.max(line, toMove2.endLine), document.getLineCount() - 1));
     }
   }

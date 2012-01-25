@@ -69,6 +69,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
   private final Project myProject;
   private ActionToolbar myActionsToolbar;
 
+
   public Editor getEditor() {
     return myEditor;
   }
