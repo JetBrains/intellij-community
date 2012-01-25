@@ -50,8 +50,6 @@ class TabContentLayout extends ContentLayout {
 
   private Map<String, BufferedImage> myCached = new com.intellij.util.containers.HashMap<String, BufferedImage>();
 
-  BaseLabel myIdLabel;
-
   private final MoreIcon myMoreIcon = new MoreIcon() {
     protected Rectangle getIconRec() {
       return myLastLayout.moreRect;
@@ -153,8 +151,10 @@ class TabContentLayout extends ContentLayout {
     data.eachX = 2;
     data.eachY = 0;
 
-    myIdLabel.setBounds(data.eachX, data.eachY, myIdLabel.getPreferredSize().width, bounds.height);
-    data.eachX += myIdLabel.getPreferredSize().width;
+    if (isIdVisible()) {
+      myIdLabel.setBounds(data.eachX, data.eachY, myIdLabel.getPreferredSize().width, bounds.height);
+      data.eachX += myIdLabel.getPreferredSize().width;
+    }
     int tabsStart = data.eachX;
 
     if (manager.getContentCount() == 0) return;
@@ -310,7 +310,7 @@ class TabContentLayout extends ContentLayout {
       }
       
       if (image != null) {
-        g.drawImage(image, r.x, r.y, null);
+        g.drawImage(image, isIdVisible() ? r.x : r.x - 2, r.y, null);
       }
       
       prevSelected = each.isSelected();

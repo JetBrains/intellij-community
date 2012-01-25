@@ -21,6 +21,7 @@ import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManagerEvent;
 
+import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
@@ -40,6 +41,7 @@ abstract class ContentLayout {
   static final int TAB_SHIFT = 2;
 
   ToolWindowContentUi myUi;
+  BaseLabel myIdLabel;
 
   ContentLayout(ToolWindowContentUi ui) {
     myUi = ui;
@@ -76,6 +78,8 @@ abstract class ContentLayout {
         label.setBorder(new EmptyBorder(0, 2, 0, 0));
       }
     }
+
+    label.setVisible(shouldShowId());
   }
 
   protected void fillTabShape(Graphics2D g2d, Shape shape, boolean isSelected, Rectangle bounds) {
@@ -106,4 +110,12 @@ abstract class ContentLayout {
   public abstract String getPreviousContentActionName();
   public abstract String getNextContentActionName();
 
+  protected boolean shouldShowId() {
+    final JComponent component = myUi.myWindow.getComponent();
+    return component != null && !"true".equals(component.getClientProperty(ToolWindowContentUi.HIDE_ID_LABEL));
+  }
+
+  boolean isIdVisible() {
+    return myIdLabel.isVisible();
+  }
 }

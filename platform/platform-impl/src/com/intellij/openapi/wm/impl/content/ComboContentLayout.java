@@ -25,7 +25,6 @@ import java.awt.image.BufferedImage;
 
 class ComboContentLayout extends ContentLayout {
 
-  BaseLabel myIdLabel;
   ContentComboLabel myComboLabel;
   private BufferedImage myImage;
 
@@ -112,7 +111,6 @@ class ComboContentLayout extends ContentLayout {
   @Override
   public void update() {
     updateIdLabel(myIdLabel);
-    myIdLabel.setVisible(!"true".equals(myUi.myWindow.getComponent().getClientProperty(ToolWindowContentUi.HIDE_ID_LABEL)));
     myComboLabel.update();
   }
 
@@ -129,10 +127,6 @@ class ComboContentLayout extends ContentLayout {
 
   boolean isToDrawCombo() {
     return myUi.myManager.getContentCount() > 1;
-  }
-
-  boolean isIdVisible() {
-    return myIdLabel.isVisible();
   }
 
   @Override
