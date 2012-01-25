@@ -683,7 +683,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
   }
 
-  List<VirtualFile> getModifiedWithoutEditing() {
+  @Override
+  public List<VirtualFile> getModifiedWithoutEditing() {
     synchronized (myDataLock) {
       return myComposite.getVFHolder(FileHolder.HolderType.MODIFIED_WITHOUT_EDITING).getFiles();
     }
