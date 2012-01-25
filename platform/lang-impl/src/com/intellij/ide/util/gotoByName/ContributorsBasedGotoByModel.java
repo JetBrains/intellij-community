@@ -58,7 +58,9 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModel 
       @Override
       public boolean process(ChooseByNameContributor contributor) {
         try {
-          ContainerUtil.addAll(names, contributor.getNames(myProject, checkBoxState));
+          if (!myProject.isDisposed()) {
+            ContainerUtil.addAll(names, contributor.getNames(myProject, checkBoxState));
+          }
         }
         catch (ProcessCanceledException ex) {
           // index corruption detected, ignore

@@ -508,9 +508,10 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     final String[] ids = getToolWindowIds();
 
     // Remove ToolWindowsPane
-
-    ((IdeRootPane)myFrame.getRootPane()).setToolWindowsPane(null);
-    myWindowManager.releaseFrame(myFrame);
+    if (myFrame != null) {
+      ((IdeRootPane)myFrame.getRootPane()).setToolWindowsPane(null);
+      myWindowManager.releaseFrame(myFrame);
+    }
     appendUpdateToolWindowsPaneCmd(commandsList);
 
     // Hide all tool windows

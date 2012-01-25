@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.util.PlatformUtils;
 
 /**
 * Created by IntelliJ IDEA.
@@ -40,6 +41,12 @@ public abstract class ShowModulesAction extends ToggleAction {
     super.update(e);
     final Presentation presentation = e.getPresentation();
     final ProjectViewImpl projectView = (ProjectViewImpl)ProjectView.getInstance(myProject);
-    presentation.setVisible(Comparing.strEqual(projectView.getCurrentViewId(), getId()));
+    presentation.setVisible(hasModules() && Comparing.strEqual(projectView.getCurrentViewId(), getId()));
+  }
+
+  private static boolean hasModules() {
+    return PlatformUtils.isIdea() ||
+           PlatformUtils.isCommunity() ||
+           PlatformUtils.isFlexIde();
   }
 }

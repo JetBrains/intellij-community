@@ -116,13 +116,18 @@ public class CoreJavaFileManager extends PackageIndex implements JavaFileManager
 
   @Nullable
   private PsiClass findClassInClasspathEntry(String qName, File file) {
-    String fileName = qName.replace(".", "/") + ".class";
+    // TODO handle inner classes correctly
+    String fileName = qName.replace(".", "/") + ".java";
     VirtualFile classFile = findUnderClasspathEntry(file, fileName);
-    
+    if (classFile == null) {
+      fileName = qName.replace(".", "/") + ".class";
+      classFile = findUnderClasspathEntry(file, fileName);
+    }
+
     if (classFile != null) {
       PsiFile psiFile = myPsiManager.findFile(classFile);
       if (!(psiFile instanceof PsiJavaFile)) {
-        throw new UnsupportedOperationException("no java file for .class");
+        throw new UnsupportedOperationException("no java file for " + fileName);
       }
       final PsiClass[] classes = ((PsiJavaFile)psiFile).getClasses();
       if (classes.length == 1) {

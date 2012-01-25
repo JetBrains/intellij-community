@@ -449,12 +449,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         }
       });
 
-      for (VcsDirtyScope scope : scopes) {
-        if (scope.getVcs().needsLastUnchangedContent()) {
-          updateLastUnchangedContents(scope);
-        }
-      }
-
       myChangesViewManager.scheduleRefresh();
     }
     catch (DisposedException e) {
@@ -624,55 +618,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     } finally {
       if (! myUpdater.isStopped()) {
         dataHolder.notifyDoneProcessingChanges();
-      }
-    }
-  }
-
-  private void updateLastUnchangedContents(VcsDirtyScope scope) {
-    scope.iterateExistingInsideScope(new Processor<VirtualFile>() {
-      @Override
-      public boolean process(VirtualFile file) {
-        if (!file.isDirectory() && getStatus(file) == FileStatus.NOT_CHANGED) {
-          LastUnchangedContentTracker.updateLastUnchangedContent(file);
-        }
-
-        return true;
-      }
-    });
-  }
-
-  public void collectUnchangedFileContents(@Nullable ProgressIndicator indicator) {
-    final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
-    for (VcsDirectoryMapping mapping : vcsManager.getDirectoryMappings()) {
-      final AbstractVcs vcs = vcsManager.findVcsByName(mapping.getVcs());
-      final VirtualFile file = LocalFileSystem.getInstance().findFileByPath(mapping.getDirectory());
-      if (vcs != null && file != null && vcs.needsLastUnchangedContent()) {
-        if (indicator != null) {
-          indicator.setText(mapping.getDirectory());
-        }
-
-        final VcsDirtyScopeImpl scope = new VcsDirtyScopeImpl(vcs, myProject);
-        scope.addDirtyDirRecursively(new FilePathImpl(file));
-        updateLastUnchangedContents(scope);
-      }
-    }
-
-    for (LocalChangeList list : getChangeListsCopy()) {
-      for (Change change : list.getChanges()) {
-        final VirtualFile file = change.getVirtualFile();
-        final ContentRevision before = change.getBeforeRevision();
-        if (file != null && before != null && !LastUnchangedContentTracker.hasSavedContent(file)) {
-          try {
-            final String content = before.getContent();
-            if (content != null) {
-              LastUnchangedContentTracker.forceSavedContent(file, content);
-            }
-          }
-          catch (VcsException e) {
-            LOG.info(e);
-          }
-        }
-        
       }
     }
   }

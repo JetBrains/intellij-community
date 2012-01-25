@@ -397,7 +397,7 @@ public class CompileServerManager implements ApplicationComponent{
   //  commandLine.add((launcherUsed? "-J" : "") + "-D" + CharsetToolkit.FILE_ENCODING_PROPERTY + "=" + CharsetToolkit.getDefaultSystemCharset().name());
   //}
 
-  private Process launchServer(int port) throws ExecutionException {
+  private Process launchServer(final int port) throws ExecutionException {
     // validate tools.jar presence
     final JavaCompiler systemCompiler = ToolProvider.getSystemJavaCompiler();
     if (systemCompiler == null) {
@@ -406,7 +406,8 @@ public class CompileServerManager implements ApplicationComponent{
 
     final Sdk projectJdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
     final GeneralCommandLine cmdLine = new GeneralCommandLine();
-    cmdLine.setExePath(((JavaSdkType)projectJdk.getSdkType()).getVMExecutablePath(projectJdk));
+    final String vmExecutablePath = ((JavaSdkType)projectJdk.getSdkType()).getVMExecutablePath(projectJdk);
+    cmdLine.setExePath(vmExecutablePath);
     cmdLine.addParameter("-server");
     cmdLine.addParameter("-ea");
     cmdLine.addParameter("-XX:MaxPermSize=150m");
@@ -416,12 +417,21 @@ public class CompileServerManager implements ApplicationComponent{
     cmdLine.addParameter("-Xmx" + Registry.intValue("compiler.server.heap.size") + "m");
 
     // debugging
-    cmdLine.addParameter("-XX:+HeapDumpOnOutOfMemoryError");
-    //cmdLine.addParameter("-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5008");
-    
-    if (Registry.is("compiler.server.use.memory.temp.cache")) {
-      cmdLine.addParameter("-D"+Server.USE_MEMORY_TEMP_CACHE_OPTION + "=true");
+    final int debugPort = Registry.intValue("compiler.server.debug.port");
+    if (debugPort > 0) {
+      cmdLine.addParameter("-XX:+HeapDumpOnOutOfMemoryError");
+      cmdLine.addParameter("-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=" + debugPort);
     }
+
+    if (Registry.is("compiler.server.use.memory.temp.cache")) {
+      cmdLine.addParameter("-D"+ GlobalOptions.USE_MEMORY_TEMP_CACHE_OPTION + "=true");
+    }
+    if (Registry.is("compiler.server.use.external.javac.process")) {
+      cmdLine.addParameter("-D"+ GlobalOptions.USE_EXTERNAL_JAVAC_OPTION + "=true");
+    }
+    cmdLine.addParameter("-D"+ GlobalOptions.HOSTNAME_OPTION + "=" + NetUtils.getLocalHostString());
+    cmdLine.addParameter("-D"+ GlobalOptions.VM_EXE_PATH_OPTION + "=" + FileUtil.toSystemIndependentName(vmExecutablePath));
+
     // javac's VM should use the same default locale that IDEA uses in order for javac to print messages in 'correct' language
     final String lang = System.getProperty("user.language");
     if (lang != null) {

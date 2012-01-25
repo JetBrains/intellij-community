@@ -227,6 +227,8 @@ public class FileStructurePopup implements Disposable {
           if (size > max) {
             max = size;
             cur = p.node;
+          } else if (size == max && size == parents.size()) {
+            cur = p.node;
           }
         }
 

@@ -4,8 +4,6 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.PsiReference;
@@ -129,6 +127,11 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
   public void testStaticImported() throws Exception {
     doTest(true);
   }
+
+  public void testQualified() throws Exception {
+    doTest(true);
+  }
+
 
   private void doTest(final boolean inlineDef, String conflictMessage) throws Exception {
     try {
