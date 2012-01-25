@@ -394,11 +394,17 @@ public class SvnVcs17 extends AbstractVcs<CommittedChangeList> {
     if (SystemInfo.isWindows) {
       if (! SVNJNAUtil.isJNAPresent()) {
         Notifications.Bus.notify(new Notification(getDisplayName(), "Subversion plugin: no JNA",
-          "A problem with JNA initialization for svnkit library. Encryption is not available.", NotificationType.WARNING), NotificationDisplayType.BALLOON, myProject);
+          "A problem with JNA initialization for svnkit library. Encryption is not available.", NotificationType.WARNING),
+                                 NotificationDisplayType.BALLOON, myProject);
       } else if (! SVNJNAUtil.isWinCryptEnabled()) {
         Notifications.Bus.notify(new Notification(getDisplayName(), "Subversion plugin: no encryption",
-          "A problem with encryption module (Crypt32.dll) initialization for svnkit library. Encryption is not available.", NotificationType.WARNING), NotificationDisplayType.BALLOON, myProject);
+          "A problem with encryption module (Crypt32.dll) initialization for svnkit library. Encryption is not available.",
+          NotificationType.WARNING), NotificationDisplayType.BALLOON, myProject);
       }
+    }
+
+    if (SvnConfiguration17.UseAcceleration.javaHL.equals(SvnConfiguration17.getInstance(myProject).myUseAcceleration)) {
+      CheckJavaHL.runtimeCheck(myProject);
     }
 
     // do one time after project loaded

@@ -190,7 +190,9 @@ class SvnChangeProviderContext implements StatusReceiver {
   }
 
   void processStatus(final FilePath filePath, final SVNStatus status) throws SVNException {
-    loadEntriesFile(filePath);
+    if (WorkingCopyFormat.ONE_DOT_SEVEN.getFormat() != status.getWorkingCopyFormat()) {
+      loadEntriesFile(filePath);
+    }
     if (status != null) {
       FileStatus fStatus = SvnStatusConvertor.convertStatus(status);
 

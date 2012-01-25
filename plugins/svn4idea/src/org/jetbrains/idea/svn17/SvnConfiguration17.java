@@ -111,6 +111,8 @@ public class SvnConfiguration17 implements PersistentStateComponent<Element> {
   public boolean SHOW_MERGE_SOURCES_IN_ANNOTATE = true;
   public boolean FORCE_UPDATE = false;
 
+  public UseAcceleration myUseAcceleration = UseAcceleration.nothing;
+
   private final Map<File, MergeRootInfo> myMergeRootInfos = new HashMap<File, MergeRootInfo>();
   private final Map<File, UpdateRootInfo> myUpdateRootInfos = new HashMap<File, UpdateRootInfo>();
   private final List<AnnotationListener> myAnnotationListeners;
@@ -377,6 +379,14 @@ public class SvnConfiguration17 implements PersistentStateComponent<Element> {
       catch (DataConversionException e) {
         //
       }
+      final Attribute acceleration = element.getAttribute("myUseAcceleration");
+      if (acceleration != null) {
+        try {
+          myUseAcceleration = UseAcceleration.valueOf(acceleration.getValue());
+        } catch (IllegalArgumentException e) {
+          //
+        }
+      }
     }
   }
 
@@ -410,6 +420,7 @@ public class SvnConfiguration17 implements PersistentStateComponent<Element> {
       element.addContent(new Element("supportedVersion").setText("" + mySupportOptions.myVersion));
     }
     element.setAttribute("maxAnnotateRevisions", "" + myMaxAnnotateRevisions);
+    element.setAttribute("myUseAcceleration", "" + myUseAcceleration);
   }
 
   public boolean isKeepLocks() {
@@ -523,5 +534,11 @@ public class SvnConfiguration17 implements PersistentStateComponent<Element> {
 
   public void setMaxAnnotateRevisions(int maxAnnotateRevisions) {
     myMaxAnnotateRevisions = maxAnnotateRevisions;
+  }
+
+  public enum UseAcceleration {
+    javaHL,
+    commandLine,
+    nothing
   }
 }

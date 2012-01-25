@@ -20,12 +20,14 @@ import org.tmatesoft.svn.core.SVNURL;
 import java.io.File;
 
 public class WorkingCopy {
+  private final boolean myIs17Copy;
   private final File myFile;
   private final SVNURL myUrl;
 
-  public WorkingCopy(File file, SVNURL url) {
+  public WorkingCopy(File file, SVNURL url, boolean is17Copy) {
     myFile = file;
     myUrl = url;
+    myIs17Copy = is17Copy;
   }
 
   public File getFile() {
@@ -51,5 +53,9 @@ public class WorkingCopy {
   @Override
   public int hashCode() {
     return myFile.hashCode();
+  }
+
+  public boolean is17Copy() {
+    return myIs17Copy;
   }
 }
