@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.extract.closure;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -29,6 +30,7 @@ import com.intellij.refactoring.introduceParameter.ChangedMethodCallInfo;
 import com.intellij.refactoring.introduceParameter.ExternalUsageInfo;
 import com.intellij.refactoring.introduceParameter.InternalUsageInfo;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterData;
+import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.usageInfo.DefaultConstructorImplicitUsageInfo;
 import com.intellij.refactoring.util.usageInfo.NoConstructorClassUsageInfo;
@@ -69,6 +71,12 @@ public class ExtractClosureFromMethodProcessor extends ExtractClosureProcessorBa
     super(helper);
     myEditor = editor;
     myMethod = (GrMethod)myHelper.getOwner();
+    setPrepareSuccessfulSwingThreadCallback(new Runnable() {
+      @Override
+      public void run() {
+        //To change body of implemented methods use File | Settings | File Templates.
+      }
+    });
   }
 
   @Override
@@ -106,7 +114,21 @@ public class ExtractClosureFromMethodProcessor extends ExtractClosureProcessorBa
       }
     }
 
-    return showConflicts(conflicts, usagesIn);
+    if (!conflicts.isEmpty() && ApplicationManager.getApplication().isUnitTestMode()) {
+      throw new ConflictsInTestsException(conflicts.values());
+    }
+
+    if (!conflicts.isEmpty()) {
+      final ConflictsDialog conflictsDialog = prepareConflictsDialog(conflicts, usagesIn);
+      conflictsDialog.show();
+      if (!conflictsDialog.isOK()) {
+        if (conflictsDialog.isShowConflicts()) prepareSuccessful();
+        return false;
+      }
+    }
+
+    prepareSuccessful();
+    return true;
   }
 
   @NotNull
