@@ -1159,11 +1159,11 @@ public abstract class ChooseByNameBase {
 
     @Override
     public void calcData(final DataKey key, final DataSink sink) {
-      if (LangDataKeys.CHOOSE_BY_NAME_DROPDOWN.equals(key)) {
+      if (LangDataKeys.POSITION_ADJUSTER_POPUP.equals(key)) {
         if (myDropdownPopup != null && myDropdownPopup.isVisible()) {
           sink.put(key, myDropdownPopup);
         }
-      } else if (LangDataKeys.CHOOSE_BY_NAME_POPUP.equals(key)) {
+      } else if (LangDataKeys.PARENT_POPUP.equals(key)) {
         if (myTextPopup != null && myTextPopup.isVisible()) {
           sink.put(key, myTextPopup);
         }

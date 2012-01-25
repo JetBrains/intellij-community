@@ -88,9 +88,9 @@ public class PopupPositionManager {
       return new PositionAdjuster(SwingUtilities.getWindowAncestor(focusOwner));
     }
 
-    final Component existing = discoverPopup(LangDataKeys.CHOOSE_BY_NAME_DROPDOWN, focusOwner);
+    final Component existing = discoverPopup(LangDataKeys.POSITION_ADJUSTER_POPUP, focusOwner);
     if (existing != null) {
-      return new PositionAdjuster2(existing, discoverPopup(LangDataKeys.CHOOSE_BY_NAME_POPUP, focusOwner));
+      return new PositionAdjuster2(existing, discoverPopup(LangDataKeys.PARENT_POPUP, focusOwner));
     }
 
     //final Window window = SwingUtilities.getWindowAncestor(focusOwner);
@@ -104,7 +104,7 @@ public class PopupPositionManager {
 
     private PositionAdjuster2(final Component relativeTo, final Component topComponent) {
       super(relativeTo);
-      myTopComponent = topComponent;
+      myTopComponent = topComponent == null ? relativeTo : topComponent;
     }
 
     @Override
