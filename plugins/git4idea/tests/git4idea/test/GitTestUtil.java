@@ -22,9 +22,14 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.DialogManager;
+import git4idea.MessageManager;
+import git4idea.NotificationManager;
 import git4idea.tests.GitTestRepository;
+import git4idea.tests.TestDialogManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.picocontainer.MutablePicoContainer;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -227,4 +232,33 @@ public class GitTestUtil {
   public static String stringifyActualExpected(@NotNull Object actual, @NotNull Object expected) {
     return "\nExpected:\n" + expected + "\nActual:\n" + actual;
   }
+
+  /**
+   * Registers {@link git4idea.tests.TestDialogManager} as the {@link git4idea.DialogManager} implementation.
+   * @param project
+   */
+  public static TestDialogManager registerDialogManager(@NotNull Project project) {
+    final String key = "git4idea.DialogManager";
+    final MutablePicoContainer picoContainer = (MutablePicoContainer) project.getPicoContainer();
+    picoContainer.unregisterComponent(key);
+    picoContainer.registerComponentImplementation(key, TestDialogManager.class);
+    return (TestDialogManager)DialogManager.getInstance(project);
+  }
+
+  public static TestMessageManager registerMessageManager(@NotNull Project project) {
+    final String key = "git4idea.MessageManager";
+    final MutablePicoContainer picoContainer = (MutablePicoContainer) project.getPicoContainer();
+    picoContainer.unregisterComponent(key);
+    picoContainer.registerComponentImplementation(key, TestMessageManager.class);
+    return (TestMessageManager)MessageManager.getInstance(project);
+  }
+
+  public static TestNotificationManager registerNotificationManager(Project project) {
+    final String key = "git4idea.NotificationManager";
+    final MutablePicoContainer picoContainer = (MutablePicoContainer) project.getPicoContainer();
+    picoContainer.unregisterComponent(key);
+    picoContainer.registerComponentImplementation(key, TestNotificationManager.class);
+    return (TestNotificationManager)NotificationManager.getInstance(project);
+  }
+
 }
