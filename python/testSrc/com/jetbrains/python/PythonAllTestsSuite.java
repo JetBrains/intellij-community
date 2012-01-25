@@ -90,6 +90,7 @@ public class PythonAllTestsSuite {
     PyDeprecationTest.class,
     PythonHighlightingLexerTest.class,
     PyOldStyleClassInspectionTest.class,
+    PyMissingConstructorTest.class,
     Jinja2ParserTest.class,
     DjangoTemplateParserTest.class
   };
