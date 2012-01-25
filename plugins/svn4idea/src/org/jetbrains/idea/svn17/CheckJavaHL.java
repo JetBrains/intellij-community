@@ -30,6 +30,7 @@ import org.apache.subversion.javahl.types.Version;
  */
 public class CheckJavaHL {
   public static final String VERSION_CLASS = "org.apache.subversion.javahl.types.Version";
+  public static final String CHECK_JAVAHL_VERSION = "svn.check.javahl.version";
   private static boolean ourIsPresent;
   private static String ourProblemDescription;
 
@@ -56,10 +57,13 @@ public class CheckJavaHL {
   private static boolean checkVersion(Class<?> aClass) {
     try {
       Version v = (Version)aClass.newInstance();
-      //boolean atLeast = true;
-      boolean atLeast = v.isAtLeast(1, 7, 0);
-      if (! atLeast) {
-        ourProblemDescription = "JavaHL library version is old: " + v.toString();
+      boolean atLeast = true;
+      Boolean check = Boolean.getBoolean(CHECK_JAVAHL_VERSION);
+      if (Boolean.TRUE.equals(check)) {
+        atLeast = v.isAtLeast(1, 7, 0);
+        if (! atLeast) {
+          ourProblemDescription = "JavaHL library version is old: " + v.toString();
+        }
       }
       return atLeast;
     }
