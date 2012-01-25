@@ -298,11 +298,6 @@ public class PythonInspectionsTest extends PyTestCase {
     doHighlightingTest(PySingleQuotedDocstringInspection.class);
   }
 
-  public void testPyMissingConstructorInspection30() {    //PY-3055
-    setLanguageLevel(LanguageLevel.PYTHON30);
-    doHighlightingTest(PyMissingConstructorInspection.class);
-  }
-
   public void testPyArgumentEqualDefaultInspection() {    //PY-3125
     doHighlightingTest(PyArgumentEqualDefaultInspection.class);
   }
