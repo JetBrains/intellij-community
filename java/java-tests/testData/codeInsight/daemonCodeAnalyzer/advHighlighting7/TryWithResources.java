@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2012 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 class C {
   static class E extends Exception { }
   static class E1 extends E { }
@@ -9,6 +24,8 @@ class C {
     public void doSomething() throws E2 { }
     @Override public void close() throws E3 { }
   }
+
+  static interface I extends AutoCloseable { }
 
   void m1() {
     try (MyResource r = new MyResource()) { r.doSomething(); }
@@ -24,6 +41,8 @@ class C {
     catch (E3 e) { }
 
     try (MyResource r = <error descr="Unhandled exception: C.E1">new MyResource()</error>) { }
+
+    try (<error descr="Unhandled exception from auto-closeable resource: java.lang.Exception">I r = null</error>) { System.out.println(r); }
   }
 
   void m2() throws Exception {
