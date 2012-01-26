@@ -39,7 +39,7 @@ public class ExtractClosureTest extends LightGroovyTestCase {
   }
 
   private void doTest(String before, String after, List<Integer> toRemove, List<Integer> notToUseAsParams) {
-    myFixture.configureByText 'a.groovy', before
+    myFixture.configureByText '______________a____________________.groovy', before
     def model = myFixture.editor.selectionModel
     def handler = new ExtractClosureHandler() {
       @Override
@@ -151,5 +151,89 @@ x.foo {->
 }
 ''', [0], [])
 
+  }
+
+  void testLocalVarAsParam() {
+    doTest('''
+def foo(int x, int y) {
+    int a = 5
+    <selection>print 45+y+a</selection>
+}
+
+foo(2, 3)
+''','''
+def foo(Closure closure) {
+    int a = 5
+    <selection>closure(a)</selection>
+}
+
+foo {int a ->
+    print 45 + 3 + a
+}
+''', [0, 1], [0])
+  }
+
+  void testRPG() {
+    doTest '''
+adventure()
+
+def adventure() {
+
+    try {
+        <selection>killMonsters()
+        collectLoot()</selection>
+    } catch (ArrowToKneeException) {
+        becomeTownGuard()
+    }
+}
+''', '''
+adventure {->
+    killMonsters()
+    collectLoot()
+}
+
+def adventure(Closure closure) {
+
+    try {
+        <caret>closure()
+    } catch (ArrowToKneeException) {
+        becomeTownGuard()
+    }
+}
+'''
+  }
+  
+  void testExpression() {
+    doTest('''
+adventure()
+
+def adventure() {
+    try {
+        def skill = <selection>killMonsters()+collectLoot()</selection>
+    } catch (ArrowToKneeException e) {
+        becomeTownGuard()
+    }
+}
+class ArrowToKneeException extends Exception{}
+def killMonsters(){2}
+def collectLoot(){3}
+def becomeTownGuard(){}
+''', '''
+adventure {->
+    return killMonsters() + collectLoot()
+}
+
+def adventure(Closure<Integer> closure) {
+    try {
+        def skill = <selection>closure()</selection>
+    } catch (ArrowToKneeException e) {
+        becomeTownGuard()
+    }
+}
+class ArrowToKneeException extends Exception{}
+def killMonsters(){2}
+def collectLoot(){3}
+def becomeTownGuard(){}
+''')
   }
 }

@@ -44,7 +44,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
+import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.extract.ExtractUtil;
 import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.AnySupers;
@@ -66,17 +66,13 @@ public class ExtractClosureFromMethodProcessor extends ExtractClosureProcessorBa
 
   private final GrMethod myMethod;
   private Editor myEditor;
+  private final GrStatementOwner myDeclarationOwner;
 
-  public ExtractClosureFromMethodProcessor(@NotNull ExtractClosureHelper helper, Editor editor) {
+  public ExtractClosureFromMethodProcessor(@NotNull ExtractClosureHelper helper, Editor editor, GrStatementOwner declarationOwner) {
     super(helper);
     myEditor = editor;
+    myDeclarationOwner = declarationOwner;
     myMethod = (GrMethod)myHelper.getOwner();
-    setPrepareSuccessfulSwingThreadCallback(new Runnable() {
-      @Override
-      public void run() {
-        //To change body of implemented methods use File | Settings | File Templates.
-      }
-    });
   }
 
   @Override
@@ -91,7 +87,8 @@ public class ExtractClosureFromMethodProcessor extends ExtractClosureProcessorBa
 
     for (UsageInfo info : usagesIn) {
       if (info instanceof OtherLanguageUsageInfo) {
-        conflicts.putValue(info.getElement(), GroovyRefactoringBundle.message("cannot.process.usage.in.language.{0}", CommonRefactoringUtil.htmlEmphasize(info.getElement().getLanguage().getDisplayName())));
+        final String lang = CommonRefactoringUtil.htmlEmphasize(info.getElement().getLanguage().getDisplayName());
+        conflicts.putValue(info.getElement(), GroovyRefactoringBundle.message("cannot.process.usage.in.language.{0}", lang));
       }
     }
 
@@ -212,7 +209,7 @@ public class ExtractClosureFromMethodProcessor extends ExtractClosureProcessorBa
       }
     }
 
-    final GrStatement newStatement = ExtractUtil.replaceStatement(myMethod.getBlock(), myHelper);
+    final GrStatement newStatement = ExtractUtil.replaceStatement(myDeclarationOwner, myHelper);
     if (myEditor != null) {
       PsiDocumentManager.getInstance(myProject).commitDocument(myEditor.getDocument());
       myEditor.getCaretModel().moveToOffset(ExtractUtil.getCaretOffset(newStatement));
@@ -230,7 +227,18 @@ public class ExtractClosureFromMethodProcessor extends ExtractClosureProcessorBa
     private IntroduceParameterDataAdapter() {
       myClosure = generateClosure();
       myWrapper = new GrExpressionWrapper(myClosure);
-      myType = JavaPsiFacade.getElementFactory(myProject).createTypeFromText(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, myMethod);
+
+      PsiType type = myClosure.getType();
+      if (type instanceof PsiClassType) {
+        final PsiType[] parameters = ((PsiClassType)type).getParameters();
+        if (parameters.length == 1 && parameters[0] != null) {
+          if (parameters[0].equalsToText(PsiType.VOID.getBoxedTypeName())) {
+            type = ((PsiClassType)type).rawType();
+          }
+        }
+      }
+
+      myType = type;
     }
 
     @NotNull
