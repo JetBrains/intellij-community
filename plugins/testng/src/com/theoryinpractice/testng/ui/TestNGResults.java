@@ -214,7 +214,8 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
     final String testMethodDescriptor = result.getTestClass() + result.getMethod();
     if (startedMethods.contains(testMethodDescriptor)) {
       total++;
-    } else {
+    }
+    else {
       startedMethods.add(testMethodDescriptor);
     }
     animator.setCurrentTestCase(proxy);
@@ -241,13 +242,15 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
       final PsiElement element = getPackageClassNodeFor(result).getPsiElement();
       if (element instanceof PsiClass) {
         final PsiMethod[] methods = ApplicationManager.getApplication().runReadAction(
-            new Computable<PsiMethod[]>() {
-              public PsiMethod[] compute() {
-                return ((PsiClass)element).findMethodsByName(result.getMethod(), true);
-              }
+          new Computable<PsiMethod[]>() {
+            public PsiMethod[] compute() {
+              return ((PsiClass)element).findMethodsByName(result.getMethod(), true);
             }
+          }
         );
-        if (methods.length > 0 && methods[0] != null && !AnnotationUtil.isAnnotated(methods[0], Arrays.asList(TestNGUtil.CONFIG_ANNOTATIONS_FQN))) {
+        if (methods.length > 0 &&
+            methods[0] != null &&
+            !AnnotationUtil.isAnnotated(methods[0], Arrays.asList(TestNGUtil.CONFIG_ANNOTATIONS_FQN))) {
           for (List<TestProxy> proxies : started.values()) {
             if (proxies != null) {
               for (TestProxy proxy : proxies) {
@@ -283,7 +286,8 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
       if (failedToStart != null) {
         failedToStart.addChild(testCase);
         failedToStart.setTearDownFailure(true);
-      } else {
+      }
+      else {
         failedToStart = testCase;
       }
     }
@@ -294,7 +298,8 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
     if (result.getResult() == MessageHelper.FAILED_TEST) {
       myStatusLine.setStatusColor(ColorProgressBar.RED);
       myStatus = MessageHelper.FAILED_TEST;
-    } else if (result.getResult() == MessageHelper.SKIPPED_TEST && myStatus == MessageHelper.PASSED_TEST) {
+    }
+    else if (result.getResult() == MessageHelper.SKIPPED_TEST && myStatus == MessageHelper.PASSED_TEST) {
       myStatus = MessageHelper.SKIPPED_TEST;
     }
     myStatusLine.setFraction((double)count / total);
@@ -391,6 +396,11 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
 
   public TestTreeView getTreeView() {
     return tree;
+  }
+
+  @Override
+  public TestTreeBuilder getTreeBuilder() {
+    return treeBuilder;
   }
 
   public boolean hasTestSuites() {
