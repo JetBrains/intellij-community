@@ -50,6 +50,7 @@ import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
@@ -78,6 +79,7 @@ import java.lang.reflect.Method;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
 public class ApplicationImpl extends ComponentManagerImpl implements ApplicationEx {
@@ -117,6 +119,8 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   private final AtomicBoolean mySaveSettingsIsInProgress = new AtomicBoolean(false);
   @SuppressWarnings({"UseOfArchaicSystemPropertyAccessors"})
   private static final int ourDumpThreadsOnLongWriteActionWaiting = Integer.getInteger("dump.threads.on.long.write.action.waiting", 0);
+  private final AtomicInteger myAliveThreads = new AtomicInteger(0);
+  private static final int ourReasonableThreadPoolSize = Registry.intValue("core.pooled.threads");
 
   private final ExecutorService ourThreadExecutorsService = new ThreadPoolExecutor(
     3,
@@ -127,6 +131,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     new ThreadFactory() {
       int i;
       public Thread newThread(Runnable r) {
+        final int count = myAliveThreads.incrementAndGet();
         final Thread thread = new Thread(r, "ApplicationImpl pooled thread "+i++) {
           public void interrupt() {
             if (LOG.isDebugEnabled()) {
@@ -144,9 +149,10 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
                 LOG.debug("Worker exits due to exception", t);
               }
             }
+            myAliveThreads.decrementAndGet();
           }
         };
-        if (ApplicationInfoImpl.getShadowInstance().isEAP() && i > 10) {
+        if (ApplicationInfoImpl.getShadowInstance().isEAP() && count > ourReasonableThreadPoolSize) {
           LOG.info("Not enough pooled threads; creating one at:", new Throwable());
         }
         thread.setPriority(Thread.NORM_PRIORITY - 1);
