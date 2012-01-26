@@ -22,11 +22,17 @@ public interface TabsListener {
 
   void beforeSelectionChanged(TabInfo oldSelection, TabInfo newSelection);
   
+  void tabsMoved();
+  
   class Adapter implements TabsListener {
     public void selectionChanged(TabInfo oldSelection, TabInfo newSelection) {
     }
 
     public void beforeSelectionChanged(TabInfo oldSelection, TabInfo newSelection) {
+    }
+
+    @Override
+    public void tabsMoved() {
     }
   }
 

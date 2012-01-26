@@ -835,6 +835,14 @@ public class JBTabsImpl extends JComponent
     }
   }
 
+  void fireTabsMoved() {
+    for (TabsListener eachListener : myTabListeners) {
+      if (eachListener != null) {
+        eachListener.tabsMoved();
+      }
+    }
+  }
+
   private ActionCallback requestFocus(final JComponent toFocus) {
     if (toFocus == null) return new ActionCallback.Done();
 
