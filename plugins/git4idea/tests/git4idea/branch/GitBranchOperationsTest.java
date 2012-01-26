@@ -16,7 +16,6 @@ import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
-import git4idea.GitBranch;
 import git4idea.GitVcs;
 import git4idea.repo.GitRepository;
 import git4idea.test.GitTestScenarioGenerator;
@@ -41,6 +40,7 @@ import java.util.Collection;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static git4idea.test.GitExec.*;
+import static git4idea.util.GitUIUtil.getShortRepositoryName;
 import static org.testng.Assert.*;
 
 /**
@@ -340,6 +340,20 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
                    "<br/>You may rollback (checkout back to master) not to let branches diverge.",
                   "Rollback", "Don't rollback");
   }
+  
+  @Test
+  public void rollback_checkout_branch_as_new_branch_should_delete_branches() throws Exception {
+    prepareBranchForSimpleCheckout();
+    GitTestScenarioGenerator.prepareUnmergedFiles(myCommunity);
+    myMessageManager.nextAnswer(Messages.OK);
+    doCheckout("feature", "newBranch");
+    assertMessage(GitBranchOperation.UNMERGED_FILES_ERROR_TITLE);
+    assertBranch("master");
+    for (GitRepository repository : myRepositories) {
+      assertFalse(branch(repository).contains("newBranch"), "Branch newBranch wasn't deleted from repository " + getShortRepositoryName(
+        repository));
+    }
+  }
 
   private static void prepareLocalChangesAndBranchWithSameModifiedFilesWithoutConflicts(GitRepository repository) throws IOException {
     create(repository, "local.txt", "initial content\n");
@@ -494,16 +508,16 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
     doCheckout.invoke(processor, new EmptyProgressIndicator(), branchName, newBranch);
   }
 
-  private void assertBranch(String branch) {
+  private void assertBranch(String branch) throws IOException {
     for (GitRepository repository : myRepositories) {
       assertBranch(repository, branch);
     }
   }
 
-  private static void assertBranch(GitRepository repository, String branchName) {
-    GitBranch currentBranch = repository.getCurrentBranch();
+  private static void assertBranch(GitRepository repository, String branchName) throws IOException {
+    String currentBranch = currentBranch(repository);
     assertNotNull(currentBranch);
-    assertEquals(currentBranch.getName(), branchName);
+    assertEquals(currentBranch, branchName, "Expected " + branchName + " in [" + getShortRepositoryName(repository) + "]");
   }
 
   private void assertNotify(NotificationType type, String content) {

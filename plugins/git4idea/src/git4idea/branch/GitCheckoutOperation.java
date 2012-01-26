@@ -57,6 +57,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static git4idea.commands.GitMessageWithFilesDetector.Event.LOCAL_CHANGES_OVERWRITTEN_BY_CHECKOUT;
 import static git4idea.commands.GitMessageWithFilesDetector.Event.UNTRACKED_FILES_OVERWRITTEN_BY;
+import static git4idea.util.GitUIUtil.code;
 
 /**
  * Represents {@code git checkout} operation.
@@ -244,15 +245,33 @@ public class GitCheckoutOperation extends GitBranchOperation {
 
   @Override
   protected void rollback() {
-    GitCompoundResult compoundResult = new GitCompoundResult(myProject);
+    GitCompoundResult checkoutResult = new GitCompoundResult(myProject);
+    GitCompoundResult deleteResult = new GitCompoundResult(myProject);
     for (GitRepository repository : getSuccessfulRepositories()) {
       GitCommandResult result = Git.checkout(repository, myPreviousBranch, null);
-      compoundResult.append(repository, result);
+      checkoutResult.append(repository, result);
+      if (result.success() && myNewBranch != null) {
+        /*
+          force delete is needed, because we create new branch from branch other that the current one
+          e.g. being on master create newBranch from feature,
+          then rollback => newBranch is not fully merged to master (although it is obviously fully merged to feature).
+         */
+        deleteResult.append(repository, Git.branchDelete(repository, myNewBranch, true));
+      }
       refresh(repository);
     }
-    if (!compoundResult.totalSuccess()) {
-      GitUIUtil.notify(GitVcs.IMPORTANT_ERROR_NOTIFICATION, myProject, "Error during rolling checkout back",
-                       compoundResult.getErrorOutputWithReposIndication(), NotificationType.ERROR, null);
+    if (!checkoutResult.totalSuccess() || !deleteResult.totalSuccess()) {
+      StringBuilder message = new StringBuilder();
+      if (!checkoutResult.totalSuccess()) {
+        message.append("Errors during checking out ").append(myPreviousBranch).append(": ");
+        message.append(checkoutResult.getErrorOutputWithReposIndication());
+      }
+      if (!deleteResult.totalSuccess()) {
+        message.append("Errors during deleting ").append(code(myNewBranch)).append(": ");
+        message.append(deleteResult.getErrorOutputWithReposIndication());
+      }
+      GitUIUtil.notify(GitVcs.IMPORTANT_ERROR_NOTIFICATION, myProject, "Error during rollback",
+                       message.toString(), NotificationType.ERROR, null);
     }
   }
 
@@ -412,7 +431,7 @@ public class GitCheckoutOperation extends GitBranchOperation {
   private static void refresh(GitRepository... repositories) {
     for (GitRepository repository : repositories) {
       refreshRoot(repository);
-      repository.update(GitRepository.TrackedTopic.ALL_CURRENT);
+      // repository state will be auto-updated with this VFS refresh => no need to call GitRepository#update().
     }
   }
   

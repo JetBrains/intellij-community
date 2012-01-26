@@ -22,6 +22,7 @@ import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.util.ui.UIUtil;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -99,6 +100,17 @@ public class GitExec {
   @NotNull
   public static String branch(@NotNull GitRepository repository, String... params) throws IOException {
     return run(repository, "branch", params);
+  }
+
+  @Nullable
+  public static String currentBranch(@NotNull GitRepository repository) throws IOException {
+    String[] branches = branch(repository).split("\n");
+    for (String branch : branches) {
+      if (branch.trim().startsWith("*")) {
+        return branch.trim().substring(1).trim();
+      }
+    }
+    return null;
   }
 
   public static void checkout(@NotNull GitRepository repository, String... params) throws IOException {
