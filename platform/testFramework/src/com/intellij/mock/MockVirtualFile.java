@@ -3,15 +3,14 @@
  */
 package com.intellij.mock;
 
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.openapi.vfs.*;
+import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -26,8 +25,8 @@ public class MockVirtualFile extends VirtualFile {
   private final boolean myDirectory;
   private final List<VirtualFile> myChildren = new SmartList<VirtualFile>();
   private String myText;
-  private FileType myFileType;
   private final MockVirtualFileSystem myFileSystem = new MockVirtualFileSystem();
+  private long myModStamp = LocalTimeCounter.currentTime();
 
   public MockVirtualFile(final String name) {
     this(false, name);
@@ -36,6 +35,12 @@ public class MockVirtualFile extends VirtualFile {
   public MockVirtualFile(final boolean directory, final String name) {
     myDirectory = directory;
     myName = name;
+  }
+
+  public MockVirtualFile(String name, String text) {
+    myName = name;
+    myText = text;
+    myDirectory = false;
   }
 
   public void setText(final String text) {
@@ -73,9 +78,13 @@ public class MockVirtualFile extends VirtualFile {
     return prefix + "/" + myName;
   }
 
+  private boolean myIsWritable = true;
   @Override
   public boolean isWritable() {
-    throw new UnsupportedOperationException("Method isWritable is not yet implemented in " + getClass().getName());
+    return myIsWritable;
+  }
+  public void setWritable(boolean b) {
+    myIsWritable = b;
   }
 
   @Override
@@ -96,13 +105,28 @@ public class MockVirtualFile extends VirtualFile {
 
   @Override
   public VirtualFile[] getChildren() {
-    return (VirtualFile[])VfsUtil.toVirtualFileArray(myChildren);
+    return VfsUtil.toVirtualFileArray(myChildren);
   }
 
   @Override
   @NotNull
-  public OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException {
-    throw new UnsupportedOperationException("Method getOutputStream is not yet implemented in " + getClass().getName());
+  public OutputStream getOutputStream(Object requestor, final long newModificationStamp, long newTimeStamp) throws IOException {
+    return new ByteArrayOutputStream() {
+      @Override
+      public void close() {
+        myModStamp = newModificationStamp;
+        myText = toString();
+      }
+    };
+  }
+
+  @Override
+  public long getModificationStamp() {
+    return myModStamp;
+  }
+
+  public void setModificationStamp(long modStamp) {
+    myModStamp = modStamp;
   }
 
   @Override
@@ -111,9 +135,11 @@ public class MockVirtualFile extends VirtualFile {
     return myText.getBytes();
   }
 
+
+  private final long myTimeStamp = System.currentTimeMillis();
   @Override
   public long getTimeStamp() {
-    throw new UnsupportedOperationException("Method getTimeStamp is not yet implemented in " + getClass().getName());
+    return myTimeStamp;
   }
 
   @Override
@@ -123,7 +149,16 @@ public class MockVirtualFile extends VirtualFile {
 
   @Override
   public void refresh(boolean asynchronous, boolean recursive, Runnable postRunnable) {
-    throw new UnsupportedOperationException("Method refresh is not yet implemented in " + getClass().getName());
+
+  }
+
+  private long myActualTimeStamp = myTimeStamp;
+  public void setActualTimeStamp(long actualTimeStamp) {
+    myActualTimeStamp = actualTimeStamp;
+  }
+
+  public long getActualTimeStamp() {
+    return myActualTimeStamp;
   }
 
   @Override
@@ -131,6 +166,19 @@ public class MockVirtualFile extends VirtualFile {
     throw new UnsupportedOperationException("Method getInputStream is not yet implemented in " + getClass().getName());
   }
 
+  private VirtualFileListener myListener = null;
+  public void setListener(VirtualFileListener listener) {
+    myListener = listener;
+  }
+
+  public void setContent(Object requestor, String content, boolean fireEvent) {
+    long oldStamp = myModStamp;
+    myText = content;
+    if (fireEvent) {
+      myModStamp = LocalTimeCounter.currentTime();
+      myListener.contentsChanged(new VirtualFileEvent(requestor, this, null, oldStamp, myModStamp));
+    }
+  }
 
   
 }
