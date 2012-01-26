@@ -175,6 +175,7 @@ public abstract class RenamePsiElementProcessor {
   public void substituteElementToRename(@NotNull final PsiElement element, @NotNull Editor editor, @NotNull Pass<PsiElement> renameCallback) {
     final PsiElement psiElement = substituteElementToRename(element, editor);
     if (psiElement == null) return;
+    if (!PsiElementRenameHandler.canRename(psiElement.getProject(), editor, psiElement)) return;
     renameCallback.pass(psiElement);
   }
 
