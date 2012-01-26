@@ -796,9 +796,6 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     final Window window = SwingUtilities.getWindowAncestor(myComponent);
     if (window instanceof IdeFrame.Child) {
       ((IdeFrame.Child)window).setFrameTitle(mySessionName);
-      //final Dimension size = DimensionService.getInstance().getSize("GridCell.Tab.0.center");
-      //final Rectangle bounds = window.getBounds();
-      //window.setBounds(bounds.x, bounds.y, size.width, size.height);
     }
   }
 
