@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,7 @@ import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class StringBufferReplaceableByStringInspection
-  extends BaseInspection {
+public class StringBufferReplaceableByStringInspection extends BaseInspection {
 
   @Override
   @NotNull
@@ -46,21 +45,17 @@ public class StringBufferReplaceableByStringInspection
     return new StringBufferReplaceableByStringBuilderVisitor();
   }
 
-  private static class StringBufferReplaceableByStringBuilderVisitor
-    extends BaseInspectionVisitor {
+  private static class StringBufferReplaceableByStringBuilderVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
       super.visitLocalVariable(variable);
-
-      final PsiCodeBlock codeBlock =
-        PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
+      final PsiCodeBlock codeBlock = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
       if (codeBlock == null) {
         return;
       }
       final PsiType type = variable.getType();
-      if (!TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_STRING_BUFFER,
-                                type) &&
+      if (!TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_STRING_BUFFER, type) &&
           !TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_STRING_BUILDER, type)) {
         return;
       }
@@ -80,8 +75,7 @@ public class StringBufferReplaceableByStringInspection
       if (VariableAccessUtils.variableIsReturned(variable, codeBlock)) {
         return;
       }
-      if (VariableAccessUtils.variableIsPassedAsMethodArgument(variable,
-                                                               codeBlock)) {
+      if (VariableAccessUtils.variableIsPassedAsMethodArgument(variable, codeBlock)) {
         return;
       }
       if (variableIsModified(variable, codeBlock)) {
@@ -90,16 +84,13 @@ public class StringBufferReplaceableByStringInspection
       registerVariableError(variable);
     }
 
-    public static boolean variableIsModified(PsiVariable variable,
-                                             PsiElement context) {
-      final VariableIsModifiedVisitor visitor =
-        new VariableIsModifiedVisitor(variable);
+    public static boolean variableIsModified(PsiVariable variable, PsiElement context) {
+      final VariableIsModifiedVisitor visitor = new VariableIsModifiedVisitor(variable);
       context.accept(visitor);
       return visitor.isModified();
     }
 
-    private static boolean isNewStringBufferOrStringBuilder(
-      PsiExpression expression) {
+    private static boolean isNewStringBufferOrStringBuilder(PsiExpression expression) {
       if (expression == null) {
         return false;
       }
@@ -107,16 +98,12 @@ public class StringBufferReplaceableByStringInspection
         return true;
       }
       else if (expression instanceof PsiMethodCallExpression) {
-        final PsiMethodCallExpression methodCallExpression =
-          (PsiMethodCallExpression)expression;
-        if (!VariableIsModifiedVisitor.isStringBufferUpdate(
-          methodCallExpression)) {
+        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
+        if (!VariableIsModifiedVisitor.isStringBufferUpdate(methodCallExpression)) {
           return false;
         }
-        final PsiReferenceExpression methodExpression =
-          methodCallExpression.getMethodExpression();
-        final PsiExpression qualifier =
-          methodExpression.getQualifierExpression();
+        final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
+        final PsiExpression qualifier = methodExpression.getQualifierExpression();
         return isNewStringBufferOrStringBuilder(qualifier);
       }
       return false;
