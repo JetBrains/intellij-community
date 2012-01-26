@@ -914,7 +914,9 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     if (myComponent.getRootPane() != null) {
       saveUiState();
     }
-    myManager.removeAllContents(true);
+    if (myOriginal != null) {
+      myManager.removeAllContents(true);
+    }
   }
 
   public boolean canChangeSelectionTo(Content content, boolean implicit) {
