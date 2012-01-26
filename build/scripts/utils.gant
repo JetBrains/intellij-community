@@ -533,9 +533,7 @@ private String readIdeaProperties(Map args) {
 binding.setVariable("buildWinZip", { String zipPath, List paths ->
   project.stage(".win.zip")
 
-  paths.each {
-    ant.fixcrlf(file: "$it/bin/idea.properties", eol: "dos")
-  }
+  fixIdeaPropertiesEol(paths, "dos")
 
   ant.zip(zipfile: zipPath) {
     paths.each {
@@ -582,9 +580,7 @@ binding.setVariable("buildMacZip", { String zipRoot, String zipPath, List paths,
 binding.setVariable("buildTarGz", { String tarRoot, String tarPath, List paths ->
   project.stage(".tar.gz")
 
-  paths.each {
-    ant.fixcrlf(file: "$it/bin/idea.properties", eol: "unix")
-  }
+  fixIdeaPropertiesEol(paths, "unix")
 
   ant.tar(tarfile: tarPath) {
     paths.each {
@@ -607,3 +603,12 @@ binding.setVariable("buildTarGz", { String tarRoot, String tarPath, List paths -
   ant.delete(file: tarPath)
   notifyArtifactBuilt(gzPath)
 })
+
+private void fixIdeaPropertiesEol(List paths, String eol) {
+  paths.each {
+    String file = "$it/bin/idea.properties"
+    if (new File(file).exists()) {
+      ant.fixcrlf(file: file, eol: eol)
+    }
+  }
+}

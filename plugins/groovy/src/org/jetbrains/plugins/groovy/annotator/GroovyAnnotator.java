@@ -657,6 +657,35 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     checkNamedArgs(listOrMap.getNamedArguments(), false);
   }
 
+  @Override
+  public void visitClassTypeElement(GrClassTypeElement typeElement) {
+    super.visitClassTypeElement(typeElement);
+
+    final GrCodeReferenceElement ref = typeElement.getReferenceElement();
+    final GrTypeArgumentList argList = ref.getTypeArgumentList();
+    if (argList == null) return;
+
+    final GrTypeElement[] elements = argList.getTypeArgumentElements();
+    for (GrTypeElement element : elements) {
+      checkTypeArgForPrimitive(element, GroovyBundle.message("primitive.type.parameters.are.not.allowed"));
+    }
+  }
+
+  private void checkTypeArgForPrimitive(@Nullable GrTypeElement element, String message) {
+    if (element == null || !(element.getType() instanceof PsiPrimitiveType)) return;
+
+    myHolder.
+      createErrorAnnotation(element, message).
+      registerFix(new GrReplacePrimitiveTypeWithWrapperFix(element));
+  }
+
+  @Override
+  public void visitWildcardTypeArgument(GrWildcardTypeArgument wildcardTypeArgument) {
+    super.visitWildcardTypeArgument(wildcardTypeArgument);
+    
+    checkTypeArgForPrimitive(wildcardTypeArgument.getBoundTypeElement(), GroovyBundle.message("primitive.bound.types.are.not.allowed"));
+  }
+
   private void highlightNamedArgs(GrNamedArgument[] namedArguments) {
     for (GrNamedArgument namedArgument : namedArguments) {
       final GrArgumentLabel label = namedArgument.getLabel();

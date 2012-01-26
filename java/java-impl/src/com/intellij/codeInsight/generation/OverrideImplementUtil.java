@@ -218,7 +218,7 @@ public class OverrideImplementUtil {
     PsiSubstitutor substitutor = aClass.isInheritor(containingClass, true)
                                  ? TypeConversionUtil.getSuperClassSubstitutor(containingClass, aClass, PsiSubstitutor.EMPTY)
                                  : PsiSubstitutor.EMPTY;
-    return overrideOrImplementMethod(aClass, method, substitutor, toCopyJavaDoc, true);
+    return overrideOrImplementMethod(aClass, method, substitutor, toCopyJavaDoc, CodeStyleSettingsManager.getSettings(aClass.getProject()).INSERT_OVERRIDE_ANNOTATION);
   }
 
   public static boolean isInsertOverride(PsiMethod superMethod, PsiClass targetClass) {

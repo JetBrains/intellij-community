@@ -1,5 +1,9 @@
 package org.jetbrains.jps.server;
 
+//import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.Logger;
+import org.apache.log4j.Level;
+import org.apache.log4j.xml.DOMConfigurator;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.*;
 import org.jboss.netty.channel.group.ChannelGroup;
@@ -10,6 +14,8 @@ import org.jboss.netty.handler.codec.protobuf.ProtobufDecoder;
 import org.jboss.netty.handler.codec.protobuf.ProtobufEncoder;
 import org.jboss.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import org.jboss.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.GlobalOptions;
 import org.jetbrains.jps.api.JpsRemoteProto;
 import org.jetbrains.jps.incremental.Paths;
@@ -92,6 +98,63 @@ public class Server {
       }
 
       final Server server = new Server(systemDir);
+
+      DOMConfigurator.configure("log.xml");
+
+      Logger.setFactory(new Logger.Factory() {
+        @Override
+        public Logger getLoggerInstance(String category) {
+          final org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(category);
+          
+          return new Logger(){
+            @Override
+            public boolean isDebugEnabled() {
+              return logger.isDebugEnabled();
+            }
+
+            @Override
+            public void debug(@NonNls String message) {
+              logger.debug(message);
+            }
+
+            @Override
+            public void debug(@Nullable Throwable t) {
+              logger.debug("", t);
+            }
+
+            @Override
+            public void debug(@NonNls String message, @Nullable Throwable t) {
+              logger.debug(message, t);
+            }
+
+            @Override
+            public void error(@NonNls String message, @Nullable Throwable t, @NonNls String... details) {
+              logger.debug(message, t);
+            }
+
+            @Override
+            public void info(@NonNls String message) {
+              logger.info(message);
+            }
+
+            @Override
+            public void info(@NonNls String message, @Nullable Throwable t) {
+              logger.info(message, t);
+            }
+
+            @Override
+            public void warn(@NonNls String message, @Nullable Throwable t) {
+              logger.warn(message, t);
+            }
+
+            @Override
+            public void setLevel(Level level) {
+              logger.setLevel(level);
+            }
+          };
+        }
+      });
+
       server.start(port);
       Runtime.getRuntime().addShutdownHook(new Thread("Shutdown hook thread") {
         public void run() {

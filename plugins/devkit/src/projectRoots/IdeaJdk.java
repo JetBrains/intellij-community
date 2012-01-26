@@ -406,34 +406,7 @@ public class IdeaJdk extends SdkType implements JavaSdkType {
   }
 
   public AdditionalDataConfigurable createAdditionalDataConfigurable(final SdkModel sdkModel, SdkModificator sdkModificator) {
-    final IdeaJdkConfigurable jdkConfigurable = new IdeaJdkConfigurable(sdkModel, sdkModificator);
-    sdkModel.addListener(new SdkModel.Listener() {
-      public void sdkAdded(Sdk sdk) {
-        if (sdk.getSdkType().equals(JavaSdk.getInstance())) {
-          jdkConfigurable.addJavaSdk(sdk);
-        }
-      }
-
-      public void beforeSdkRemove(Sdk sdk) {
-        if (sdk.getSdkType().equals(JavaSdk.getInstance())) {
-          jdkConfigurable.removeJavaSdk(sdk);
-        }
-      }
-
-      public void sdkChanged(Sdk sdk, String previousName) {
-        if (sdk.getSdkType().equals(JavaSdk.getInstance())) {
-          jdkConfigurable.updateJavaSdkList(sdk, previousName);
-        }
-      }
-
-      public void sdkHomeSelected(final Sdk sdk, final String newSdkHome) {
-        if (sdk.getSdkType() instanceof IdeaJdk) {
-          jdkConfigurable.internalJdkUpdate(sdk);
-        }
-      }
-    });
-
-    return jdkConfigurable;
+    return new IdeaJdkConfigurable(sdkModel, sdkModificator);
   }
 
   @Nullable

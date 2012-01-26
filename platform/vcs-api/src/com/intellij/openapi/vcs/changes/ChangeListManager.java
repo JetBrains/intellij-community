@@ -120,18 +120,9 @@ public abstract class ChangeListManager implements ChangeListModification {
   
   public abstract void commitChanges(LocalChangeList changeList, List<Change> changes);
 
-  /**
-   *
-   * @param changeList
-   * @param changes
-   * @return if commit successful
-   */
   public abstract void commitChangesSynchronously(LocalChangeList changeList, List<Change> changes);
 
   /**
-   *
-   * @param changeList
-   * @param changes
    * @return if commit successful
    */
   public abstract boolean commitChangesSynchronouslyWithResult(LocalChangeList changeList, List<Change> changes);
@@ -155,9 +146,13 @@ public abstract class ChangeListManager implements ChangeListModification {
   
   public static boolean isFileChanged(final Project project, final VirtualFile vf) {
     FileStatus status = getInstance(project).getStatus(vf);
-    if (status == null || FileStatus.NOT_CHANGED.equals(status) || FileStatus.UNKNOWN.equals(status) || FileStatus.IGNORED.equals(status)) {
+    if (FileStatus.NOT_CHANGED.equals(status) || FileStatus.UNKNOWN.equals(status) || FileStatus.IGNORED.equals(status)) {
       return false;
     }
     return true;
   }
+
+
+  public abstract List<VirtualFile> getModifiedWithoutEditing();
+
 }

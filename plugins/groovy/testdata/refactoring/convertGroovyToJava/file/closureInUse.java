@@ -14,7 +14,7 @@ new closureInUse(new groovy.lang.Binding(args)).run();
 }
 
 public java.lang.Object run() {
-org.codehaus.groovy.runtime.DefaultGroovyMethods.use(closureInUse.this, IntCat.class, new groovy.lang.Closure<java.lang.Void>(this, this) {
+return org.codehaus.groovy.runtime.DefaultGroovyMethods.use(closureInUse.this, IntCat.class, new groovy.lang.Closure<java.lang.Void>(this, this) {
 public void doCall(java.lang.Object it) {
 IntCat.call(2);
 IntCat.call(2, "a");
@@ -27,7 +27,6 @@ doCall(null);
 }
 
 });
-return null;
 
 }
 

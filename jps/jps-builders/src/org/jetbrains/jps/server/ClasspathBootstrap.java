@@ -90,6 +90,7 @@ public class ClasspathBootstrap {
     cp.add(getResourcePath(NotNullVerifyingInstrumenter.class));  // not-null
     cp.add(getResourcePath(IXMLBuilder.class));  // nano-xml
     cp.add(getResourcePath(GroovyCompilerWrapper.class));  // groovy_rt
+    cp.add(getResourcePath(org.apache.log4j.Logger.class)); // log4j
 
     final Class<StandardJavaFileManager> optimizedFileManagerClass = getOptimizedFileManagerClass();
     if (optimizedFileManagerClass != null) {

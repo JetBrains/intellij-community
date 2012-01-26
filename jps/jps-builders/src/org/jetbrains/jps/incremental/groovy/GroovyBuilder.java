@@ -1,8 +1,10 @@
 package org.jetbrains.jps.incremental.groovy;
 
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.SystemProperties;
+import groovy.util.CharsetToolkit;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ether.dependencyView.Callbacks;
 import org.jetbrains.ether.dependencyView.Mappings;
@@ -89,7 +91,8 @@ public class GroovyBuilder extends Builder {
       }
       Map<String, String> class2Src = buildClassToSourceMap(chunk, context, toCompilePaths, moduleOutputPath);
 
-      String encoding = "UTF-8"; //todo encoding
+      String ideCharset = chunk.getProject().getProjectCharset();
+      String encoding = !Comparing.equal(CharsetToolkit.getDefaultSystemCharset().name(), ideCharset) ? ideCharset : null;
       List<String> patchers = Collections.emptyList(); //todo patchers
       GroovycOSProcessHandler.fillFileWithGroovycParameters(
         tempFile, FileUtil.toCanonicalPath(dir.getPath()), toCompilePaths, FileUtil.toSystemDependentName(moduleOutputPath), class2Src, encoding, patchers

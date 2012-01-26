@@ -56,6 +56,6 @@ public class LangDataKeys extends PlatformDataKeys {
 
   public static final DataKey<ConsoleView> CONSOLE_VIEW = DataKey.create("consoleView");
   
-  public static final DataKey<JBPopup> CHOOSE_BY_NAME_DROPDOWN = DataKey.create("chooseByNameDropDown");
-  public static final DataKey<JBPopup> CHOOSE_BY_NAME_POPUP = DataKey.create("chooseByNamePopup");
+  public static final DataKey<JBPopup> POSITION_ADJUSTER_POPUP = DataKey.create("chooseByNameDropDown");
+  public static final DataKey<JBPopup> PARENT_POPUP = DataKey.create("chooseByNamePopup");
 }

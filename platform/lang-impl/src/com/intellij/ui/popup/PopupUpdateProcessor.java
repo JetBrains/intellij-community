@@ -27,6 +27,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.JBListWithHintProvider;
 import com.intellij.ui.JBTableWithHintProvider;
+import com.intellij.ui.JBTreeWithHintProvider;
 
 import java.awt.*;
 
@@ -76,6 +77,8 @@ public abstract class PopupUpdateProcessor extends JBPopupAdapter {
           ((JBListWithHintProvider)focusedComponent).registerHint(windowEvent.asPopup());
         } else if (focusedComponent instanceof JBTableWithHintProvider) {
           ((JBTableWithHintProvider)focusedComponent).registerHint(windowEvent.asPopup());
+        } else if (focusedComponent instanceof JBTreeWithHintProvider) {
+          ((JBTreeWithHintProvider)focusedComponent).registerHint(windowEvent.asPopup());
         }
       }
     }
