@@ -100,7 +100,7 @@ public class GridCellImpl implements GridCell {
       }
     });
     rebuildPopupGroup();
-    myTabs.addListener(new TabsListener() {
+    myTabs.addListener(new TabsListener.Adapter() {
 
       public void beforeSelectionChanged(TabInfo oldSelection, TabInfo newSelection) {
         if (oldSelection != null && myContext.isStateBeingRestored()) {

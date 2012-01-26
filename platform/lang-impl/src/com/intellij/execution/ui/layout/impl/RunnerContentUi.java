@@ -125,9 +125,13 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   private TabInfo myCurrentOverInfo;
   private RunnerContentUi myOriginal;
   private CopyOnWriteArraySet<Listener> myDockingListeners = new CopyOnWriteArraySet<Listener>();
-  private List<RunnerContentUi> myChildren = new ArrayList<RunnerContentUi>(); 
+  private Set<RunnerContentUi> myChildren = new TreeSet<RunnerContentUi>(new Comparator<RunnerContentUi>() {
+    @Override
+    public int compare(RunnerContentUi o1, RunnerContentUi o2) {
+      return o1.myWindow - o2.myWindow;
+    }
+  }); 
   private int myWindow;
-  private int ourWindowCounter;
 
   public RunnerContentUi(Project project,
                          RunnerLayoutUi ui,
@@ -212,6 +216,11 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
             grid.saveUiState();
           }
         }
+      }
+
+      @Override
+      public void tabsMoved() {
+        saveUiState();
       }
 
       public void selectionChanged(final TabInfo oldSelection, final TabInfo newSelection) {
@@ -594,6 +603,17 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     grid = new GridImpl(this, mySessionName);
     grid.setBorder(new EmptyBorder(1, 0, 0, 0));
 
+    if (myCurrentOver != null) {
+      final int index = ((JBRunnerTabs)myCurrentOver).getDropInfoIndex() + (myOriginal != null ? myOriginal.getTabOffsetFor(this) : 0);
+      for (TabInfo info : myTabs.getTabs()) {
+        final TabImpl tab = getTabFor(info);
+        if (tab != null && tab.getIndex() >= index) {
+          tab.setIndex(tab.getIndex() + 1);
+        }
+      }
+      getStateFor(content).assignTab(myLayoutSettings.getOrCreateTab(index));
+    }
+    
     TabInfo tab = new TabInfo(grid).setObject(getStateFor(content).getTab()).setText("Tab");
 
 
@@ -623,6 +643,15 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     myTabs.sortTabs(myTabsComparator);
 
     return grid;
+  }
+
+  private int getTabOffsetFor(RunnerContentUi ui) {
+    int offset = myTabs.getTabCount();
+    for (RunnerContentUi child : myChildren) {
+      if (child == ui) break;
+      offset += child.myTabs.getTabCount();
+    }
+    return offset;
   }
 
   @Nullable
@@ -775,13 +804,37 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   public void saveUiState() {
     if (isStateBeingRestored()) return;
 
+    if (myOriginal != null) {
+      myOriginal.saveUiState();
+      return;
+    }
+    int offset = updateTabsIndices(myTabs, 0);
+    for (RunnerContentUi child : myChildren) {
+      offset = updateTabsIndices(child.myTabs, offset);
+    }
+
+    doSaveUiState();
+  }
+
+  private int updateTabsIndices(final JBRunnerTabs tabs, int offset) {
+    for (TabInfo each : tabs.getTabs()) {
+      final int index = myTabs.getIndexOf(each);
+      final TabImpl tab = getTabFor(each);
+      if (tab != null) tab.setIndex(index + offset);
+    }
+    return offset + tabs.getTabCount();
+  }
+
+  private void doSaveUiState() {
+    if (isStateBeingRestored()) return;
+
     for (TabInfo each : myTabs.getTabs()) {
       GridImpl eachGrid = getGridFor(each);
       eachGrid.saveUiState();
     }
 
     for (RunnerContentUi child : myChildren) {
-      child.saveUiState();
+      child.doSaveUiState();
     }
   }
 
