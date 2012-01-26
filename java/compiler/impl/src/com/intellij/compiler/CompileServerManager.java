@@ -272,7 +272,7 @@ public class CompileServerManager implements ApplicationComponent{
           return true;
         }
       };
-      final Ref<String> serverStartMessage = new Ref<String>(null);
+      final StringBuilder serverStartMessage = new StringBuilder();
       final Semaphore semaphore  = new Semaphore();
       semaphore.down();
       processHandler.addProcessListener(new ProcessAdapter() {
@@ -298,8 +298,11 @@ public class CompileServerManager implements ApplicationComponent{
               if (text != null) {
                 if (text.contains(Server.SERVER_SUCCESS_START_MESSAGE) || text.contains(Server.SERVER_ERROR_START_MESSAGE)) {
                   processHandler.removeProcessListener(this);
-                  serverStartMessage.set(text);
                 }
+                if (serverStartMessage.length() > 0) {
+                  serverStartMessage.append("\n");
+                }
+                serverStartMessage.append(text);
               }
             }
             finally {
@@ -311,8 +314,8 @@ public class CompileServerManager implements ApplicationComponent{
       processHandler.startNotify();
       semaphore.waitFor();
 
-      final String startupMsg = serverStartMessage.get();
-      if (startupMsg == null || !startupMsg.contains(Server.SERVER_SUCCESS_START_MESSAGE)) {
+      final String startupMsg = serverStartMessage.toString();
+      if (!startupMsg.contains(Server.SERVER_SUCCESS_START_MESSAGE)) {
         throw new Exception("Server startup failed: " + startupMsg);
       }
 
