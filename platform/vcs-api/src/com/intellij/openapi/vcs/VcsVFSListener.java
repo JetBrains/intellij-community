@@ -223,7 +223,7 @@ public abstract class VcsVFSListener implements Disposable {
                                            getSingleFileDeletePromptTemplate(), myRemoveOption);
   }
 
-  protected void beforeContentsChange(VirtualFile file) {
+  protected void beforeContentsChange(VirtualFileEvent event, VirtualFile file) {
   }
 
   private void addFileToMove(final VirtualFile file, final String newParentPath, final String newName) {
@@ -378,10 +378,8 @@ public abstract class VcsVFSListener implements Disposable {
 
     @Override
     public void beforeContentsChange(VirtualFileEvent event) {
-      if (!isEventIgnored(event, false)) {
-        assert !event.getFile().isDirectory();
-        VcsVFSListener.this.beforeContentsChange(event.getFile());
-      }
+      assert !event.getFile().isDirectory();
+      VcsVFSListener.this.beforeContentsChange(event, event.getFile());
     }
   }
 
