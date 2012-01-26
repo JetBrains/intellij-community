@@ -54,17 +54,26 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
 
     @Override
     public ReturnResult beforeCheckin(@Nullable CommitExecutor executor, PairConsumer<Object, Object> additionalDataConsumer) {
-      // empty commit message check
+      if (emptyCommitMessage()) {
+        return ReturnResult.CANCEL;
+      }
+
+      if (commitOrCommitAndPush(executor)) {
+        return warnAboutDetachedHeadIfNeeded();
+      }
+      return ReturnResult.COMMIT;
+    }
+    
+    private boolean emptyCommitMessage() {
       if (myPanel.getCommitMessage().trim().isEmpty()) {
         Messages.showMessageDialog(myPanel.getComponent(), GitBundle.message("git.commit.message.empty"),
                                    GitBundle.message("git.commit.message.empty.title"), Messages.getErrorIcon());
-        return ReturnResult.CANCEL;
+        return true;
       }
-      
-      if (!commitOrCommitAndPush(executor)) {
-        return ReturnResult.COMMIT;
-      }
+      return false;
+    }
 
+    private ReturnResult warnAboutDetachedHeadIfNeeded() {
       // Warning: commit on a detached HEAD
       DetachedRoot detachedRoot = getDetachedRoot();
       if (detachedRoot == null) {
@@ -90,7 +99,7 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
       }
 
       final int choice = Messages.showOkCancelDialog(myPanel.getComponent(), "<html>" + message + "</html>", title,
-                                             "Cancel", "Commit", Messages.getWarningIcon());
+                                                     "Cancel", "Commit", Messages.getWarningIcon());
       if (choice == 1) {
         return ReturnResult.COMMIT;
       } else {
