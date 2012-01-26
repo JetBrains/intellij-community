@@ -99,7 +99,9 @@ public class Server {
 
       final Server server = new Server(systemDir);
 
-      DOMConfigurator.configure("log.xml");
+      if (new File("log.xml").exists()) {
+        DOMConfigurator.configure("log.xml");
+      }
 
       Logger.setFactory(new Logger.Factory() {
         @Override
