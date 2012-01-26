@@ -130,7 +130,7 @@ public class QualifiedNameResolver implements RootVisitor {
 
     if (myAcceptRootAsTopLevelPackage && myQualifiedName.matchesPrefix(PyQualifiedName.fromDottedString(root.getName()))) {
       resolveResult = resolveInRoot(root.getParent(), sdk);
-      if (module != null) {
+      if (resolveResult != null) {
         results.add(resolveResult);
       }
     }
