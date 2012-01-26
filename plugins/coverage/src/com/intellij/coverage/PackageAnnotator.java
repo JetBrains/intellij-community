@@ -3,9 +3,11 @@ package com.intellij.coverage;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
@@ -161,6 +163,44 @@ public class PackageAnnotator {
     }
   }
 
+  public void annotateFilteredClass(PsiClass psiClass, CoverageSuitesBundle bundle, Annotator annotator) {
+    final ProjectData data = bundle.getCoverageData();
+    if (data == null) return;
+    final Module module = ModuleUtil.findModuleForPsiElement(psiClass);
+    if (module != null) {
+      final boolean isInTests = ProjectRootManager.getInstance(module.getProject()).getFileIndex()
+        .isInTestSourceContent(psiClass.getContainingFile().getVirtualFile());
+      final CompilerModuleExtension moduleExtension = CompilerModuleExtension.getInstance(module);
+      final VirtualFile outputPath = isInTests ? moduleExtension.getCompilerOutputPathForTests() : moduleExtension.getCompilerOutputPath();
+      
+      Map<String, PackageCoverageInfo> packageCoverageMap = new HashMap<String, PackageCoverageInfo>();
+      Map<String, PackageCoverageInfo> flattenPackageCoverageMap = new HashMap<String, PackageCoverageInfo>();
+      
+      if (outputPath != null) {
+        final String qualifiedName = psiClass.getQualifiedName();
+        if (qualifiedName == null) return;
+        final String packageVMName = StringUtil.getPackageName(qualifiedName).replace('.', '/');
+        final VirtualFile packageRoot = outputPath.findFileByRelativePath(packageVMName);
+        if (packageRoot != null) {
+          Map<String, ClassCoverageInfo> toplevelClassCoverage = new HashMap<String, ClassCoverageInfo>();
+          for (VirtualFile child : packageRoot.getChildren()) {
+            if (child.getFileType().equals(StdFileTypes.CLASS)) {
+              final String childName = child.getNameWithoutExtension();
+              final String classFqVMName = packageVMName.length() > 0 ? packageVMName + "/" + childName : childName;
+              final String toplevelClassSrcFQName = getSourceToplevelFQName(classFqVMName);
+              if (toplevelClassSrcFQName.equals(qualifiedName)) {
+                collectClassCoverageInformation(child, new PackageCoverageInfo(), data, toplevelClassCoverage, classFqVMName.replace("/", "."), toplevelClassSrcFQName);
+              }
+            }
+          }
+          for (ClassCoverageInfo coverageInfo : toplevelClassCoverage.values()) {
+            annotator.annotateClass(qualifiedName, coverageInfo);
+          }
+        }
+      }
+    }
+  }
+  
   @Nullable
   private DirCoverageInfo[] collectCoverageInformation(final VirtualFile packageOutputRoot,
                                                        final Map<String, PackageCoverageInfo> packageCoverageMap,

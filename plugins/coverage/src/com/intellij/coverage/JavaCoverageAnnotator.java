@@ -1,5 +1,6 @@
 package com.intellij.coverage;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -91,38 +92,51 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
 
     return new Runnable() {
       public void run() {
-        for (PsiPackage aPackage : packages) {
-          new PackageAnnotator(aPackage).annotate(suite, new PackageAnnotator.Annotator() {
-            public void annotatePackage(String packageQualifiedName, PackageAnnotator.PackageCoverageInfo packageCoverageInfo) {
-              myPackageCoverageInfos.put(packageQualifiedName, packageCoverageInfo);
-            }
+        final PackageAnnotator.Annotator annotator = new PackageAnnotator.Annotator() {
+          public void annotatePackage(String packageQualifiedName, PackageAnnotator.PackageCoverageInfo packageCoverageInfo) {
+            myPackageCoverageInfos.put(packageQualifiedName, packageCoverageInfo);
+          }
 
-            public void annotatePackage(String packageQualifiedName,
-                                        PackageAnnotator.PackageCoverageInfo packageCoverageInfo,
-                                        boolean flatten) {
-              if (flatten) {
-                myFlattenPackageCoverageInfos.put(packageQualifiedName, packageCoverageInfo);
-              } else {
-                annotatePackage(packageQualifiedName, packageCoverageInfo);
-              }
+          public void annotatePackage(String packageQualifiedName,
+                                      PackageAnnotator.PackageCoverageInfo packageCoverageInfo,
+                                      boolean flatten) {
+            if (flatten) {
+              myFlattenPackageCoverageInfos.put(packageQualifiedName, packageCoverageInfo);
             }
-
-            public void annotateSourceDirectory(VirtualFile dir,
-                                                PackageAnnotator.PackageCoverageInfo dirCoverageInfo,
-                                                Module module) {
-              myDirCoverageInfos.put(dir, dirCoverageInfo);
+            else {
+              annotatePackage(packageQualifiedName, packageCoverageInfo);
             }
+          }
 
-            public void annotateTestDirectory(VirtualFile virtualFile,
-                                              PackageAnnotator.PackageCoverageInfo packageCoverageInfo,
+          public void annotateSourceDirectory(VirtualFile dir,
+                                              PackageAnnotator.PackageCoverageInfo dirCoverageInfo,
                                               Module module) {
-              myTestDirCoverageInfos.put(virtualFile, packageCoverageInfo);
-            }
+            myDirCoverageInfos.put(dir, dirCoverageInfo);
+          }
 
-            public void annotateClass(String classQualifiedName, PackageAnnotator.ClassCoverageInfo classCoverageInfo) {
-              myClassCoverageInfos.put(classQualifiedName, classCoverageInfo);
+          public void annotateTestDirectory(VirtualFile virtualFile,
+                                            PackageAnnotator.PackageCoverageInfo packageCoverageInfo,
+                                            Module module) {
+            myTestDirCoverageInfos.put(virtualFile, packageCoverageInfo);
+          }
+
+          public void annotateClass(String classQualifiedName, PackageAnnotator.ClassCoverageInfo classCoverageInfo) {
+            myClassCoverageInfos.put(classQualifiedName, classCoverageInfo);
+          }
+        };
+        for (PsiPackage aPackage : packages) {
+          new PackageAnnotator(aPackage).annotate(suite, annotator);
+        }
+        for (final PsiClass aClass : classes) {
+          Runnable runnable = new Runnable() {
+            public void run() {
+              final String packageName = ((PsiClassOwner)aClass.getContainingFile()).getPackageName();
+              final PsiPackage psiPackage = JavaPsiFacade.getInstance(project).findPackage(packageName);
+              if (psiPackage == null) return;
+              new PackageAnnotator(psiPackage).annotateFilteredClass(aClass, suite, annotator);
             }
-          });
+          };
+          ApplicationManager.getApplication().runReadAction(runnable);
         }
         dataManager.triggerPresentationUpdate();
       }
@@ -254,5 +268,10 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
     }
     return (int)((double)info.coveredMethodCount / info.totalMethodCount * 100) +  "% methods, " +
            (int)((double)(info.fullyCoveredLineCount + info.partiallyCoveredLineCount) / info.totalLineCount * 100) + "% lines covered";
+  }
+
+  @Nullable
+  public PackageAnnotator.ClassCoverageInfo getClassCoverageInfo(String classFQName) {
+    return myClassCoverageInfos.get(classFQName);
   }
 }

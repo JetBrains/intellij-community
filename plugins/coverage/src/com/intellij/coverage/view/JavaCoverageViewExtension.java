@@ -12,7 +12,10 @@ import com.intellij.psi.search.GlobalSearchScopes;
 import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * User: anna
@@ -52,6 +55,18 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
             info = JavaCoverageAnnotator.merge(info, coverageInfo);
           } else {
             return "Loading...";
+          }
+        } else {
+          final PackageAnnotator.ClassCoverageInfo classCoverageInfo = myAnnotator.getClassCoverageInfo(((PsiClass)childValue).getQualifiedName());
+          if (classCoverageInfo != null) {
+            info.coveredClassCount += classCoverageInfo.coveredMethodCount > 0 ? 1 : 0;
+            info.totalClassCount ++;
+
+            info.coveredMethodCount += classCoverageInfo.coveredMethodCount;
+            info.totalMethodCount += classCoverageInfo.totalMethodCount;
+
+            info.coveredLineCount += classCoverageInfo.partiallyCoveredLineCount + classCoverageInfo.fullyCoveredLineCount;
+            info.totalLineCount += classCoverageInfo.totalLineCount;
           }
         }
       }
@@ -187,37 +202,29 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
 
       //append package classes
       if (val instanceof PsiPackage) {
-        boolean found = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-          public Boolean compute() {
-            return isInCoverageScope((PsiPackage)val, mySuitesBundle); 
-          }
-        });
         if (!myStateBean.myFlattenPackages) {
           collectSubPackages(children, (PsiPackage)val, mySuitesBundle, myStateBean);
         }
-
-        final PsiClass[] classes = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass[]>() {
-          public PsiClass[] compute() {
-            return ((PsiPackage)val).getClasses(getSearchScope(mySuitesBundle, node.getProject()));
+        if (ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+          public Boolean compute() {
+            return isInCoverageScope((PsiPackage)val, mySuitesBundle);
           }
-        });
-        if (found) {
+        })) {
+          final PsiClass[] classes = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass[]>() {
+            public PsiClass[] compute() {
+              return ((PsiPackage)val).getClasses(getSearchScope(mySuitesBundle, node.getProject()));
+            }
+          });
           for (PsiClass aClass : classes) {
             children.add(new CoverageListNode(aClass, mySuitesBundle, myStateBean));
           }
         }
-        else {                                                                        
-          for (final PsiClass aClass : classes) {
-            final String classFQName = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-              public String compute() {
-                return aClass.getQualifiedName(); 
-              }
-            });
-            for (CoverageSuite suite : mySuitesBundle.getSuites()) {
-              if (((JavaCoverageSuite)suite).isClassFiltered(classFQName)) {
-                children.add(new CoverageListNode(aClass, mySuitesBundle, myStateBean));
-              }
-            }
+      }
+      if (node instanceof CoverageListRootNode) {
+        for (CoverageSuite suite : mySuitesBundle.getSuites()) {
+          final List<PsiClass> classes = ((JavaCoverageSuite)suite).getCurrentSuiteClasses(myProject);
+          for (PsiClass aClass : classes) {
+            children.add(new CoverageListNode(aClass, mySuitesBundle, myStateBean));
           }
         }
       }
@@ -241,19 +248,8 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
   public static boolean isInCoverageScope(PsiElement element, CoverageSuitesBundle suitesBundle) {
     final PsiPackage psiPackage = (PsiPackage)element;
     final String qualifiedName = psiPackage.getQualifiedName();
-    Set<String> filteredClasses = new HashSet<String>();
     for (CoverageSuite suite : suitesBundle.getSuites()) {
       if (((JavaCoverageSuite)suite).isPackageFiltered(qualifiedName)) return true;
-      Collections.addAll(filteredClasses, ((JavaCoverageSuite)suite).getFilteredClassNames());
-    }
-    if (!filteredClasses.isEmpty()) {
-      final PsiClass[] classes = psiPackage.getClasses(getSearchScope(suitesBundle, psiPackage.getProject()));
-      for (PsiClass psiClass : classes) {
-        final String classFQName = psiClass.getQualifiedName();
-        for (CoverageSuite suite : suitesBundle.getSuites()) {
-          if (((JavaCoverageSuite)suite).isClassFiltered(classFQName)) return true;
-        }
-      }
     }
     return false;
   }
