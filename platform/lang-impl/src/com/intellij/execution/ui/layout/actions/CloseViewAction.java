@@ -19,11 +19,19 @@ package com.intellij.execution.ui.layout.actions;
 import com.intellij.execution.ui.actions.BaseViewAction;
 import com.intellij.execution.ui.layout.ViewContext;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.content.Content;
 
+import javax.swing.*;
+
 public class CloseViewAction extends BaseViewAction {
+  private static final Icon ICON = IconLoader.getIcon("/actions/closeNew.png");
+  private static final Icon HOVERED_ICON = IconLoader.getIcon("/actions/closeNewHovered.png");
+
   protected void update(final AnActionEvent e, final ViewContext context, final Content[] content) {
     setEnabled(e, isEnabled(context, content, e.getPlace()));
+    e.getPresentation().setIcon(ICON);
+    e.getPresentation().setHoveredIcon(HOVERED_ICON);
   }
 
   protected void actionPerformed(final AnActionEvent e, final ViewContext context, final Content[] content) {
