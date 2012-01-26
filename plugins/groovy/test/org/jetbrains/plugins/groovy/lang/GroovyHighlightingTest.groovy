@@ -645,4 +645,14 @@ def result = new Foo().x''')
     myFixture.enableInspections(new ClashingGettersInspection())
     myFixture.testHighlighting(true, false, false)
   }
+
+  void testPrimitiveTypeParams() {
+    myFixture.configureByText('a.groovy', '''
+List<<error descr="Primitive type parameters are not allowed">int</error>> list = new ArrayList<int><EOLError descr="'(' expected"></EOLError>
+List<? extends <error descr="Primitive bound types are not allowed">double</error>> l = new ArrayList<double>()
+List<?> list2
+
+''')
+    myFixture.testHighlighting(true, false, false)
+  }
 }
