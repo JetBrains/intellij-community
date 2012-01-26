@@ -3570,6 +3570,10 @@ public class AbstractTreeUi {
     }
   }
 
+  public Comparator getNodeDescriptorComparator() {
+    return myNodeDescriptorComparator;
+  }
+
   private void disposeNode(DefaultMutableTreeNode node) {
     TreeNode parent = node.getParent();
     if (parent instanceof DefaultMutableTreeNode) {
