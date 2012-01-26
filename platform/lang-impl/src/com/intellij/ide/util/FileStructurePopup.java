@@ -228,18 +228,20 @@ public class FileStructurePopup implements Disposable {
         for (ObjectWithWeight p : paths) {
           final Object last = ((TreePath)p.node).getLastPathComponent();
           final List<PsiElement> elements = new ArrayList<PsiElement>();
-          FilteringTreeStructure.FilteringNode node =
-            (FilteringTreeStructure.FilteringNode)((DefaultMutableTreeNode)last).getUserObject();
-          while (node != null) {
-            elements.add(getPsi(node));
-            node = node.getParentNode();
-          }
-          final int size = ContainerUtil.intersection(parents, elements).size();
-          if (size > max) {
-            max = size;
-            cur = p.node;
-          } else if (size == max && size == parents.size()) {
-            cur = p.node;
+          final Object object = ((DefaultMutableTreeNode)last).getUserObject();
+          if (object instanceof FilteringTreeStructure.FilteringNode) {
+            FilteringTreeStructure.FilteringNode node = (FilteringTreeStructure.FilteringNode)object;
+            while (node != null) {
+              elements.add(getPsi(node));
+              node = node.getParentNode();
+            }
+            final int size = ContainerUtil.intersection(parents, elements).size();
+            if (size > max) {
+              max = size;
+              cur = p.node;
+            } else if (size == max && size == parents.size()) {
+              cur = p.node;
+            }
           }
         }
 
