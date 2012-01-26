@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
@@ -66,7 +67,7 @@ public class GrClosureType extends GrLiteralClassType {
     if (myTypeArgs == null) {
       final PsiClass psiClass = resolve();
       if (psiClass != null && psiClass.getTypeParameters().length == 1) {
-        myTypeArgs = new PsiType[]{mySignature.getReturnType()};
+        myTypeArgs = new PsiType[]{TypesUtil.boxPrimitiveType(mySignature.getReturnType(), getPsiManager(), getResolveScope(), true)};
       }
       else {
         myTypeArgs = PsiType.EMPTY_ARRAY;
