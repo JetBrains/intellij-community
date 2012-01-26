@@ -35,6 +35,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author gregsh
@@ -53,60 +55,77 @@ public class GenerateHighlightingMarkupAction extends AnAction {
     PsiFile file = LangDataKeys.PSI_FILE.getData(e.getDataContext());
     if (editor == null || file == null) return;
     final Project project = file.getProject();
-    CommandProcessorEx commandProcessorEx = (CommandProcessorEx)CommandProcessorEx.getInstance();
-    Object commandToken = commandProcessorEx
-      .startCommand(project, e.getPresentation().getText(), e.getPresentation().getText(), UndoConfirmationPolicy.DEFAULT);
+    CommandProcessorEx commandProcessor = (CommandProcessorEx)CommandProcessorEx.getInstance();
+    Object commandToken = commandProcessor.startCommand(project, e.getPresentation().getText(), e.getPresentation().getText(), UndoConfirmationPolicy.DEFAULT);
     AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(getClass());
     try {
-      perform(project, editor.getDocument());
+      perform(project, editor.getDocument(), true);
     }
     finally {
       token.finish();
-      commandProcessorEx.finishCommand(project, commandToken, null);
+      commandProcessor.finishCommand(project, commandToken, null);
     }
   }
 
-  private static void perform(Project project, final Document document) {
+  private static void perform(Project project, final Document document, final boolean compact) {
     final CharSequence sequence = document.getCharsSequence();
     final StringBuilder sb = new StringBuilder();
-    final int[] offset = new int[] {0};
-    final ArrayList<HighlightInfo> infos = new ArrayList<HighlightInfo>();
-    DaemonCodeAnalyzerImpl.processHighlights(
-      document, project, HighlightSeverity.WARNING, 0, sequence.length(),
-      new Processor<HighlightInfo>() {
-        @Override
-        public boolean process(HighlightInfo info) {
-          if (info.severity != HighlightSeverity.WARNING && info.severity != HighlightSeverity.ERROR) return true;
-          offset[0] = appendInfo(info, sb, sequence, offset[0], infos);
-          return true;
-        }
-      });
-    offset[0] = appendInfo(null, sb, sequence, offset[0], infos);
-    sb.append(sequence.subSequence(offset[0], sequence.length()));
+    Pattern pattern = Pattern.compile("<(error|warning|EOLError|EOLWarning)(?:\\s|=|\\w+|\\\"(?:[^\"]|\\\\\\\")*?\\\")*>(.*?)</\\1>");
+    Matcher matcher = pattern.matcher(sequence);
+    if (matcher.find()) {
+      int pos = 0;
+      do {
+        sb.append(sequence, pos, matcher.start(0));
+        sb.append(sequence, matcher.start(2), matcher.end(2));
+        pos = matcher.end(0);
+      }
+      while (matcher.find(pos));
+      sb.append(sequence, pos, sequence.length());
+    }
+    else {
+      final int[] offset = new int[] {0};
+      final ArrayList<HighlightInfo> infos = new ArrayList<HighlightInfo>();
+      DaemonCodeAnalyzerImpl.processHighlights(
+        document, project, HighlightSeverity.WARNING, 0, sequence.length(),
+        new Processor<HighlightInfo>() {
+          @Override
+          public boolean process(HighlightInfo info) {
+            if (info.severity != HighlightSeverity.WARNING && info.severity != HighlightSeverity.ERROR) return true;
+            offset[0] = appendInfo(info, sb, sequence, offset[0], infos, compact);
+            return true;
+          }
+        });
+      offset[0] = appendInfo(null, sb, sequence, offset[0], infos, compact);
+      sb.append(sequence.subSequence(offset[0], sequence.length()));
+    }
     document.setText(sb);
   }
 
-  private static int appendInfo(@Nullable HighlightInfo info, StringBuilder sb, CharSequence sequence, int offset, ArrayList<HighlightInfo> infos) {
+  private static int appendInfo(@Nullable HighlightInfo info,
+                                StringBuilder sb,
+                                CharSequence sequence,
+                                int offset,
+                                ArrayList<HighlightInfo> infos, final boolean compact) {
     if (info == null || !infos.isEmpty() && infos.get(infos.size() - 1).getEndOffset() < info.getStartOffset()) {
       if (infos.size() == 1) {
         HighlightInfo cur = infos.remove(0);
         sb.append(sequence.subSequence(offset, cur.getStartOffset()));
-        sb.append(cur.severity == HighlightSeverity.WARNING ? "<warning>" : "<error>");
+        appendTag(sb, cur, true, compact);
         sb.append(sequence.subSequence(cur.getStartOffset(), cur.getEndOffset()));
-        sb.append(cur.severity == HighlightSeverity.WARNING ? "</warning>" : "</error>");
+        appendTag(sb, cur, false, compact);
         offset = cur.getEndOffset();
       }
       else {
         // process overlapped
         LinkedList<HighlightInfo> stack = new LinkedList<HighlightInfo>();
         for (HighlightInfo cur : infos) {
-          offset = processStack(stack, sb, sequence, offset, cur.getStartOffset());
+          offset = processStack(stack, sb, sequence, offset, cur.getStartOffset(), compact);
           sb.append(sequence.subSequence(offset, cur.getStartOffset()));
           offset = cur.getStartOffset();
-          sb.append(cur.severity == HighlightSeverity.WARNING ? "<warning>" : "<error>");
+          appendTag(sb, cur, true, compact);
           stack.addLast(cur);
         }
-        offset = processStack(stack, sb, sequence, offset, sequence.length());
+        offset = processStack(stack, sb, sequence, offset, sequence.length(), compact);
         infos.clear();
       }
     }
@@ -127,7 +146,8 @@ public class GenerateHighlightingMarkupAction extends AnAction {
                                   StringBuilder sb,
                                   CharSequence sequence,
                                   int offset,
-                                  final int endOffset) {
+                                  final int endOffset,
+                                  final boolean compact) {
     if (stack.isEmpty()) return offset;
     for (HighlightInfo cur = stack.peekLast(); cur != null && cur.getEndOffset() <= endOffset; cur = stack.peekLast()) {
       stack.removeLast();
@@ -138,8 +158,24 @@ public class GenerateHighlightingMarkupAction extends AnAction {
         //System.out.println("Incorrect overlapping infos: " + offset + " > " + cur.getEndOffset());
       }
       offset = cur.getEndOffset();
-      sb.append(cur.severity == HighlightSeverity.WARNING ? "</warning>" : "</error>");
+      appendTag(sb, cur, false, compact);
     }
     return offset;
+  }
+
+  private static void appendTag(StringBuilder sb, HighlightInfo cur, boolean opening, final boolean compact) {
+    sb.append("<");
+    if (!opening) sb.append("/");
+    if (cur.isAfterEndOfLine) {
+      sb.append(cur.severity == HighlightSeverity.WARNING ? "EOLWarning" : "EOLError");
+    }
+    else {
+      sb.append(cur.severity == HighlightSeverity.WARNING ? "warning" : "error");
+    }
+    if (opening && !compact) {
+      sb.append(" descr=\"").append(cur.description).append("\"");
+
+    }
+    sb.append(">");
   }
 }
