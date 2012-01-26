@@ -133,6 +133,7 @@ public class EventLog implements Notifications {
       mainText += content;
     }
 
+    mainText = StringUtil.replace(mainText, "&nbsp;", " ");
     int nlIndex = eolIndex(mainText);
     if (nlIndex >= 0) {
       mainText = mainText.substring(0, nlIndex);
