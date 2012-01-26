@@ -132,6 +132,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     }
   }); 
   private int myWindow;
+  private boolean myDisposing;
 
   public RunnerContentUi(Project project,
                          RunnerLayoutUi ui,
@@ -360,6 +361,10 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     }
     final GridCellImpl gridCell = (GridCellImpl)cell;
     final Content[] contents = gridCell.getContents();
+    storeDefaultIndices(contents);
+    for (Content content : contents) {
+      content.putUserData(RunnerLayout.DROP_INDEX, getStateFor(content).getTab().getIndex());
+    }
     Dimension size = gridCell.getSize();
     if (size == null) {
       size = new Dimension(200, 200);
@@ -373,6 +378,12 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
       getDockManager().createNewDockContainerFor(content, new RelativePoint(location));
     }
     return new ActionCallback.Done();
+  }
+
+  private void storeDefaultIndices(Content[] contents) {
+    for (Content content : contents) {
+      content.putUserData(RunnerLayout.DEFAULT_INDEX, getStateFor(content).getTab().getDefaultIndex());
+    }
   }
 
   @Override
@@ -461,7 +472,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
 
   @Override
   public boolean isEmpty() {
-    return myTabs.isEmptyVisible();
+    return myTabs.isEmptyVisible() || myDisposing;
   }
 
   @Override
@@ -518,7 +529,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
 
   @Override
   public boolean isDisposeWhenEmpty() {
-    return true;
+    return myOriginal != null;
   }
 
   public boolean isCycleRoot() {
@@ -603,15 +614,14 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     grid = new GridImpl(this, mySessionName);
     grid.setBorder(new EmptyBorder(1, 0, 0, 0));
 
-    if (myCurrentOver != null) {
-      final int index = ((JBRunnerTabs)myCurrentOver).getDropInfoIndex() + (myOriginal != null ? myOriginal.getTabOffsetFor(this) : 0);
-      for (TabInfo info : myTabs.getTabs()) {
-        final TabImpl tab = getTabFor(info);
-        if (tab != null && tab.getIndex() >= index) {
-          tab.setIndex(tab.getIndex() + 1);
-        }
-      }
-      getStateFor(content).assignTab(myLayoutSettings.getOrCreateTab(index));
+    if (myCurrentOver != null || myOriginal != null) {
+      Integer forcedDropIndex = content.getUserData(RunnerLayout.DROP_INDEX);
+      final int index = myTabs.getDropInfoIndex() + (myOriginal != null ? myOriginal.getTabOffsetFor(this) : 0);
+      final TabImpl tab = myLayoutSettings.getOrCreateTab(-1);
+      final Integer defaultIndex = content.getUserData(RunnerLayout.DEFAULT_INDEX);
+      tab.setDefaultIndex(defaultIndex != null ? defaultIndex : -1);
+      tab.setIndex(forcedDropIndex != null ? forcedDropIndex : index);
+      getStateFor(content).assignTab(tab);
     }
     
     TabInfo tab = new TabInfo(grid).setObject(getStateFor(content).getTab()).setText("Tab");
@@ -816,9 +826,9 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     doSaveUiState();
   }
 
-  private int updateTabsIndices(final JBRunnerTabs tabs, int offset) {
+  private static int updateTabsIndices(final JBRunnerTabs tabs, int offset) {
     for (TabInfo each : tabs.getTabs()) {
-      final int index = myTabs.getIndexOf(each);
+      final int index = tabs.getIndexOf(each);
       final TabImpl tab = getTabFor(each);
       if (tab != null) tab.setIndex(index + offset);
     }
@@ -915,7 +925,8 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
       saveUiState();
     }
     if (myOriginal != null) {
-      myManager.removeAllContents(true);
+      myDisposing = true;
+      fireContentClosed(null);
     }
   }
 
@@ -1464,6 +1475,8 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
       final JComponent component = info.getComponent();
       final Content[] data = CONTENT_KEY.getData((DataProvider)component);
       final List<Content> contents = Arrays.asList(data);
+
+      storeDefaultIndices(data);
 
       final Dimension size = info.getComponent().getSize();
       final Image image = myTabs.getComponentImage(info);

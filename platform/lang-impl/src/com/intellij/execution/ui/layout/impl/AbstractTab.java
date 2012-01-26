@@ -21,6 +21,7 @@ import javax.swing.*;
 abstract class AbstractTab {
 
   int myIndex;
+  int myDefaultIndex = -1;
   String myDisplayName;
   Icon myIcon;
 
@@ -38,6 +39,7 @@ abstract class AbstractTab {
 
   void copyFrom(final AbstractTab from) {
     myIndex = from.myIndex;
+    myDefaultIndex = from.myDefaultIndex;
     myDisplayName = from.myDisplayName;
     myIcon = from.myIcon;
 

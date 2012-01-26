@@ -307,7 +307,7 @@ public class GridCellImpl implements GridCell {
       if (tab != null) {
         tab.setDetached(myPlaceInGrid, false);
       }
-      _detach(window).notifyWhenDone(result);
+      myContext.detachTo(window, this).notifyWhenDone(result);
     } else {
       result.setDone();
     }
@@ -390,11 +390,6 @@ public class GridCellImpl implements GridCell {
         }
       });
     }
-  }
-
-  private ActionCallback _detach(final int window) {
-    myContext.saveUiState();
-    return myContext.detachTo(window, this);
   }
 
   @Nullable

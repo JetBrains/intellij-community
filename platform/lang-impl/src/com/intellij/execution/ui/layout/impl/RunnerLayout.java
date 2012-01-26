@@ -20,6 +20,7 @@ import com.intellij.execution.ui.layout.LayoutAttractionPolicy;
 import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.execution.ui.layout.Tab;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.content.Content;
@@ -33,7 +34,8 @@ import javax.swing.*;
 import java.util.*;
 
 public class RunnerLayout  {
-
+  public static final Key<Integer> DEFAULT_INDEX = Key.create("RunnerLayoutDefaultIndex");
+  public static final Key<Integer> DROP_INDEX = Key.create("RunnerLayoutDropIndex");  
   private final String myID;
 
   protected Map<String, ViewImpl> myViews = new HashMap<String, ViewImpl>();
@@ -62,10 +64,6 @@ public class RunnerLayout  {
     tab = createNewTab(index);
 
     return tab;
-  }
-
-  public TabImpl getDefaultTab() {
-    return getOrCreateTab(0);
   }
 
   private TabImpl createNewTab(final int index) {
@@ -153,7 +151,9 @@ public class RunnerLayout  {
     }
 
     for (TabImpl eachTab : myTabs) {
-      eachTab.write(parentNode);
+      if (isUsed(eachTab)) {
+        eachTab.write(parentNode);
+      }
     }
 
     parentNode.addContent(XmlSerializer.serialize(myGeneral));
@@ -166,7 +166,7 @@ public class RunnerLayout  {
     myViews.clear();
 
     for (TabImpl each : myTabs) {
-      final TabImpl.Default defaultTab = getOrCreateDefaultTab(each.getIndex());
+      final TabImpl.Default defaultTab = getOrCreateDefaultTab(each.getDefaultIndex());
       each.copyFrom(defaultTab);
     }
   }
