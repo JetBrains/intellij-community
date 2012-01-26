@@ -140,6 +140,7 @@ public class JavaExecutionUtil {
 
   @Nullable
   public static PsiClass findMainClass(final Project project, final String mainClassName, final GlobalSearchScope scope) {
+    if (project.isDefault()) return null;
     final PsiManager psiManager = PsiManager.getInstance(project);
     final String shortName = StringUtil.getShortName(mainClassName);
     final String packageName = StringUtil.getPackageName(mainClassName);

@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.actions;
 
-import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -26,8 +25,6 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.annotations.Nullable;
 
 public abstract class UndoRedoAction extends DumbAwareAction {
   public UndoRedoAction() {
@@ -56,7 +53,7 @@ public abstract class UndoRedoAction extends DumbAwareAction {
     }
 
     UndoManager undoManager = getUndoManager(editor, dataContext);
-    presentation.setEnabled(isAvailable(editor, undoManager));
+    presentation.setEnabled(undoManager != null && isAvailable(editor, undoManager));
 
     Pair<String, String> pair = getActionNameAndDescription(editor, undoManager);
 
