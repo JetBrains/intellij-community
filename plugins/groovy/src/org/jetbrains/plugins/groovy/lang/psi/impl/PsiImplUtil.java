@@ -65,6 +65,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.GrAdditiveExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.GrMultiplicativeExpressionImpl;
@@ -441,8 +442,27 @@ public class PsiImplUtil {
   }
 
   public static boolean isMainMethod(GrMethod method) {
-    return method.getName().equals(MAIN_METHOD) &&
-        method.hasModifierProperty(PsiModifier.STATIC);
+    if (!method.getName().equals(MAIN_METHOD)) return false;
+    else if (!method.hasModifierProperty(PsiModifier.STATIC))return false;
+
+    final GrParameter[] parameters = method.getParameters();
+
+    if (parameters.length == 0) return false;
+    if (parameters.length == 1 && parameters[0].getTypeElementGroovy() == null) return true;
+
+    int args_count = 0;
+    int optional_count = 0;
+
+    for (GrParameter p : parameters) {
+      final GrTypeElement declaredType = p.getTypeElementGroovy();
+      if ((declaredType == null || declaredType.getType().equalsToText(CommonClassNames.JAVA_LANG_STRING + "[]")) &&
+          p.getDefaultInitializer() == null) {
+        args_count++;
+      }
+      if (p.getDefaultInitializer() != null) optional_count++;
+    }
+
+    return optional_count == parameters.length - 1 && args_count == 1;
   }
 
   public static void deleteStatementTail(PsiElement container, @NotNull PsiElement statement) {
