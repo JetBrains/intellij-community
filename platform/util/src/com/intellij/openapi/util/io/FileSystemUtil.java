@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,9 +73,9 @@ public class FileSystemUtil {
 
   private FileSystemUtil() { }
 
-  public static boolean isSymLink(@NotNull final File file) {
+  public static boolean isSymLink(@NotNull final String path) {
     try {
-      return ourMediator != null && file.exists() && ourMediator.isSymLink(file.getAbsolutePath());
+      return ourMediator != null && ourMediator.isSymLink(path);
     }
     catch (Exception e) {
       LOG.warn(e);
@@ -83,15 +83,15 @@ public class FileSystemUtil {
     }
   }
 
-  public static boolean isSymLink(@NotNull final String path) {
-    return isSymLink(new File(path));
+  public static boolean isSymLink(@NotNull final File file) {
+    return isSymLink(file.getAbsolutePath());
   }
 
   @Nullable
-  public static String resolveSymLink(@NotNull final File file) {
-    if (file.exists() && ourMediator != null) {
+  public static String resolveSymLink(@NotNull final String path) {
+    if (ourMediator != null) {
       try {
-        final String realPath = ourMediator.resolveSymLink(file.getAbsolutePath());
+        final String realPath = ourMediator.resolveSymLink(path);
         if (realPath != null && new File(realPath).exists()) {
           return realPath;
         }
@@ -104,18 +104,14 @@ public class FileSystemUtil {
   }
 
   @Nullable
-  public static String resolveSymLink(@NotNull final String path) {
-    return resolveSymLink(new File(path));
+  public static String resolveSymLink(@NotNull final File file) {
+    return resolveSymLink(file.getAbsolutePath());
   }
 
   public static int getPermissions(@NotNull final String path) {
-    return getPermissions(new File(path));
-  }
-
-  public static int getPermissions(@NotNull final File file) {
-    if (file.exists() && SystemInfo.isUnix && ourMediator != null) {
+    if (SystemInfo.isUnix && ourMediator != null) {
       try {
-        return ourMediator.getPermissions(file.getAbsolutePath());
+        return ourMediator.getPermissions(path);
       }
       catch (Exception e) {
         LOG.warn(e);
@@ -124,19 +120,23 @@ public class FileSystemUtil {
     return -1;
   }
 
-  public static void setPermissions(@NotNull final String path, final int permissions) {
-    setPermissions(new File(path), permissions);
+  public static int getPermissions(@NotNull final File file) {
+    return getPermissions(file.getAbsolutePath());
   }
 
-  public static void setPermissions(@NotNull final File file, final int permissions) {
-    if (file.exists() && SystemInfo.isUnix && ourMediator != null) {
+  public static void setPermissions(@NotNull final String path, final int permissions) {
+    if (SystemInfo.isUnix && ourMediator != null) {
       try {
-        ourMediator.setPermissions(file.getAbsolutePath(), permissions);
+        ourMediator.setPermissions(path, permissions);
       }
       catch (Exception e) {
         LOG.warn(e);
       }
     }
+  }
+
+  public static void setPermissions(@NotNull final File file, final int permissions) {
+    setPermissions(file.getAbsolutePath(), permissions);
   }
 
   private interface Mediator {
@@ -156,20 +156,28 @@ public class FileSystemUtil {
     private final Method myGetPath;
     private final Method myIsSymbolicLink;
     private final Object myLinkOptions;
+    private final Object myNoFollowLinkOptions;
     private final Method myGetAttribute;
     private final Method mySetAttribute;
 
     private Jdk7MediatorImpl() throws Exception {
       myDefaultFileSystem = Class.forName("java.nio.file.FileSystems").getMethod("getDefault").invoke(null);
+
       myGetPath = Class.forName("java.nio.file.FileSystem").getMethod("getPath", String.class, String[].class);
       myGetPath.setAccessible(true);
+
       final Class<?> pathClass = Class.forName("java.nio.file.Path");
       myIsSymbolicLink = Class.forName("java.nio.file.Files").getMethod("isSymbolicLink", pathClass);
       myIsSymbolicLink.setAccessible(true);
-      myLinkOptions = Array.newInstance(Class.forName("java.nio.file.LinkOption"), 0);
-      final Class<?> linkOptClass = myLinkOptions.getClass();
-      myGetAttribute = Class.forName("java.nio.file.Files").getMethod("getAttribute", pathClass, String.class, linkOptClass);
-      mySetAttribute = Class.forName("java.nio.file.Files").getMethod("setAttribute", pathClass, String.class, Object.class, linkOptClass);
+
+      final Class<?> linkOptClass = Class.forName("java.nio.file.LinkOption");
+      myLinkOptions = Array.newInstance(linkOptClass, 0);
+      myNoFollowLinkOptions = Array.newInstance(linkOptClass, 1);
+      Array.set(myNoFollowLinkOptions, 0, linkOptClass.getField("NOFOLLOW_LINKS").get(null));
+
+      final Class<?> linkOptArrClass = myLinkOptions.getClass();
+      myGetAttribute = Class.forName("java.nio.file.Files").getMethod("getAttribute", pathClass, String.class, linkOptArrClass);
+      mySetAttribute = Class.forName("java.nio.file.Files").getMethod("setAttribute", pathClass, String.class, Object.class, linkOptArrClass);
     }
 
     @Override
@@ -189,7 +197,7 @@ public class FileSystemUtil {
     @Override
     public int getPermissions(@NotNull final String path) throws Exception {
       final Object pathObj = myGetPath.invoke(myDefaultFileSystem, path, ArrayUtil.EMPTY_STRING_ARRAY);
-      final Object attribute = myGetAttribute.invoke(null, pathObj, POSIX_PERMISSIONS_ATTR, myLinkOptions);
+      final Object attribute = myGetAttribute.invoke(null, pathObj, POSIX_PERMISSIONS_ATTR, myNoFollowLinkOptions);
       return decodePermissions(attribute);
     }
 
