@@ -22,11 +22,14 @@ import com.sun.jna.Library;
 import com.sun.jna.Memory;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
+import com.sun.org.apache.bcel.internal.generic.NEW;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Array;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
 
@@ -188,6 +191,7 @@ public class FileSystemUtil {
 
     @Override
     public String resolveSymLink(@NotNull final String path) throws Exception {
+      if (!new File(path).exists()) return null;
       final Object pathObj = myGetPath.invoke(myDefaultFileSystem, path, ArrayUtil.EMPTY_STRING_ARRAY);
       final Method toRealPath = pathObj.getClass().getMethod("toRealPath", myLinkOptions.getClass());
       toRealPath.setAccessible(true);
