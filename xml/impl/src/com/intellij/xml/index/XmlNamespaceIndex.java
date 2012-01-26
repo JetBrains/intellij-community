@@ -24,10 +24,10 @@ import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileContent;
 import com.intellij.util.indexing.ID;
 import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.UnsyncByteArrayInputStream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.ByteArrayInputStream;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -67,7 +67,7 @@ public class XmlNamespaceIndex extends XmlIndex<String> {
     return new DataIndexer<String, String, FileContent>() {
       @NotNull
       public Map<String, String> map(final FileContent inputData) {
-        final String ns = XsdNamespaceBuilder.computeNamespace(new ByteArrayInputStream(inputData.getContent()));
+        final String ns = XsdNamespaceBuilder.computeNamespace(new UnsyncByteArrayInputStream(inputData.getContent()));
         final HashMap<String, String> map = new HashMap<String, String>(2);
         if (ns != null) {
           map.put(ns, "");

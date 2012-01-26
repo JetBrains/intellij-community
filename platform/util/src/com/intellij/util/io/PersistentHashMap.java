@@ -69,25 +69,12 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
       super(new BufferExposingByteArrayOutputStream());
     }
 
-    public int getBufferSize() {
-      return ((ByteArrayOutputStream)out).size();
+    private void reset() {
+      ((UnsyncByteArrayOutputStream)out).reset();
     }
     
-    public void writeTo(OutputStream stream) throws IOException {
-      ((ByteArrayOutputStream)out).writeTo(stream);
-    }
-
-    public void reset() {
-      ((ByteArrayOutputStream)out).reset();
-    }
-
-    public byte[] toByteArray() {
-      return ((ByteArrayOutputStream)out).toByteArray();
-    }
-    
-    public ByteSequence getInternalBuffer() {
-      final BufferExposingByteArrayOutputStream _out = (BufferExposingByteArrayOutputStream)out;
-      return new ByteSequence(_out.getInternalBuffer(), 0, _out.size());
+    private BufferExposingByteArrayOutputStream getInternalBuffer() {
+      return (BufferExposingByteArrayOutputStream)out;      
     }
   }
 
@@ -110,16 +97,14 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     protected void onDropFromCache(final Key key, final AppendStream value) {
       synchronized (PersistentEnumerator.ourLock) {
         try {
-          final ByteSequence bytes = value.getInternalBuffer();
+          final BufferExposingByteArrayOutputStream bytes = value.getInternalBuffer();
           final int id = enumerate(key);
-          HeaderRecord oldHeaderRecord = readValueId(id);
+          long oldHeaderRecord = readValueId(id);
 
-          HeaderRecord headerRecord = new HeaderRecord(
-            myValueStorage.appendBytes(bytes, oldHeaderRecord.address)
-          );
+          long headerRecord = myValueStorage.appendBytes(bytes.getInternalBuffer(), 0, bytes.size(), oldHeaderRecord);
 
           updateValueId(id, headerRecord, oldHeaderRecord, key, 0);
-          if (oldHeaderRecord == HeaderRecord.EMPTY) {
+          if (oldHeaderRecord == NULL_ADDR) {
             myLiveAndGarbageKeysCounter += LIVE_KEY_MASK;
           }
 
@@ -266,18 +251,18 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
 
       final AppendStream record = new AppendStream();
       myValueExternalizer.save(record, value);
-      final ByteSequence bytes = record.getInternalBuffer();
+      final BufferExposingByteArrayOutputStream bytes = record.getInternalBuffer();
       final int id = enumerate(key);
 
-      HeaderRecord oldheader = readValueId(id);
-      if (oldheader != HeaderRecord.EMPTY) {
+      long oldheader = readValueId(id);
+      if (oldheader != NULL_ADDR) {
         myLiveAndGarbageKeysCounter++;
       }
       else {
         myLiveAndGarbageKeysCounter += LIVE_KEY_MASK;
       }
 
-      HeaderRecord header = new HeaderRecord(myValueStorage.appendBytes(bytes, 0));
+      long header = myValueStorage.appendBytes(bytes.getInternalBuffer(), 0, bytes.size(), 0);
 
       updateValueId(id, header, oldheader, key, 0);
     }
@@ -330,41 +315,39 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
       myAppendCache.clear();
       return myEnumerator.processAllDataObject(processor, new PersistentEnumerator.DataFilter() {
         public boolean accept(final int id) {
-          return readValueId(id).address != NULL_ADDR;
+          return readValueId(id) != NULL_ADDR;
         }
       });
     }
   }
 
-  public final Value get(Key key) throws IOException {
+  public final @Nullable Value get(Key key) throws IOException {
     synchronized (myEnumerator) {
       return doGet(key);
     }
   }
 
-  protected Value doGet(Key key) throws IOException {
+  protected @Nullable Value doGet(Key key) throws IOException {
     synchronized (PersistentEnumerator.ourLock) {
       myAppendCache.remove(key);
       final int id = tryEnumerate(key);
       if (id == PersistentEnumerator.NULL_ID) {
         return null;
       }
-      final HeaderRecord oldHeader = readValueId(id);
-      if (oldHeader.address == PersistentEnumerator.NULL_ID) {
+      final long oldHeader = readValueId(id);
+      if (oldHeader == PersistentEnumerator.NULL_ID) {
         return null;
       }
 
-      Pair<Long, byte[]> readResult = myValueStorage.readBytes(oldHeader.address);
-      if (readResult.first != null && readResult.first != oldHeader.address) {
+      Pair<Long, byte[]> readResult = myValueStorage.readBytes(oldHeader);
+      if (readResult.first != null && readResult.first != oldHeader) {
         myEnumerator.markDirty(true);
 
-        updateValueId(id, new HeaderRecord(readResult.first), oldHeader, key, 0);
-        if (oldHeader != HeaderRecord.EMPTY) {
-          myLiveAndGarbageKeysCounter++;
-        }
+        updateValueId(id, readResult.first, oldHeader, key, 0);
+        myLiveAndGarbageKeysCounter++;
       }
 
-      final DataInputStream input = new DataInputStream(new ByteArrayInputStream(readResult.second));
+      final DataInputStream input = new DataInputStream(new UnsyncByteArrayInputStream(readResult.second));
       try {
         return myValueExternalizer.read(input);
       }
@@ -387,7 +370,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
       if (id == PersistentEnumerator.NULL_ID) {
         return false;
       }
-      return readValueId(id).address != NULL_ADDR;
+      return readValueId(id) != NULL_ADDR;
     }
   }
 
@@ -406,12 +389,12 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
       }
       myEnumerator.markDirty(true);
 
-      final HeaderRecord record = readValueId(id);
-      if (record != HeaderRecord.EMPTY) {
+      final long record = readValueId(id);
+      if (record != NULL_ADDR) {
         myLiveAndGarbageKeysCounter++;
       }
 
-      updateValueId(id, HeaderRecord.EMPTY, record, key, 0);
+      updateValueId(id, NULL_ADDR, record, key, 0);
     }
   }
 
@@ -473,10 +456,10 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
 
       traverseAllRecords(new PersistentEnumerator.RecordsProcessor() {
         public boolean process(final int keyId) throws IOException {
-          final HeaderRecord record = readValueId(keyId);
-          if (record.address != NULL_ADDR) {            
-            Pair<Long, byte[]> readResult = myValueStorage.readBytes(record.address);
-            HeaderRecord value = new HeaderRecord(newStorage.appendBytes(new ByteSequence(readResult.second), 0));
+          final long record = readValueId(keyId);
+          if (record != NULL_ADDR) {
+            Pair<Long, byte[]> readResult = myValueStorage.readBytes(record);
+            long value = newStorage.appendBytes(new ByteSequence(readResult.second), 0);
             updateValueId(keyId, value, record, null, getCurrentKey());
             myLiveAndGarbageKeysCounter += LIVE_KEY_MASK;
           }
@@ -496,10 +479,10 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     }
   }
 
-  private HeaderRecord readValueId(final int keyId) {
+  private long readValueId(final int keyId) {
     long address = myEnumerator.myStorage.getInt(keyId + myParentValueRefOffset);
     if (address == 0 || address == -POSITIVE_VALUE_SHIFT) {
-      return HeaderRecord.EMPTY;
+      return NULL_ADDR;
     }
 
     if (address < 0) {
@@ -509,7 +492,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
       address = ((address << 32) + value) & ~USED_LONG_VALUE_MASK;
     }
 
-    return new HeaderRecord(address);
+    return address;
   }
 
   private int smallKeys;
@@ -517,19 +500,19 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   private int transformedKeys;
   private int requests;
 
-  private int updateValueId(int keyId, HeaderRecord value, HeaderRecord oldValue, @Nullable Key key, int processingKey) throws IOException {
-    final boolean newKey = oldValue == null || oldValue.address == NULL_ADDR;
+  private int updateValueId(int keyId, long value, long oldValue, @Nullable Key key, int processingKey) throws IOException {
+    final boolean newKey = oldValue == NULL_ADDR;
     if (newKey) ++requests;
     boolean defaultSizeInfo = true;
 
     if (myCanReEnumerate) {
-      if (canUseIntAddressForNewRecord(value.address)) {
+      if (canUseIntAddressForNewRecord(value)) {
         defaultSizeInfo = false;
-        myEnumerator.myStorage.putInt(keyId + myParentValueRefOffset, -(int)(value.address + POSITIVE_VALUE_SHIFT));
+        myEnumerator.myStorage.putInt(keyId + myParentValueRefOffset, -(int)(value + POSITIVE_VALUE_SHIFT));
         if (newKey) ++smallKeys;
       } else {
         if (newKey && myWatermarkId == 0) myWatermarkId = keyId;
-        if (keyId < myWatermarkId && (oldValue == null || canUseIntAddressForNewRecord(oldValue.address))) {
+        if (keyId < myWatermarkId && (oldValue == NULL_ADDR || canUseIntAddressForNewRecord(oldValue))) {
           // keyId is result of enumerate, if we do reenumerate then it is no longer accessible unless somebody cached it
           myIntAddressForNewRecord = false;
           keyId = myEnumerator.reenumerate(key == null ? myEnumerator.getValue(keyId, processingKey) : key);
@@ -539,7 +522,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     }
 
     if (defaultSizeInfo) {
-      myEnumerator.myStorage.putLong(keyId + myParentValueRefOffset, value.address | USED_LONG_VALUE_MASK);
+      myEnumerator.myStorage.putLong(keyId + myParentValueRefOffset, value | USED_LONG_VALUE_MASK);
       if (newKey) ++largeKeys;
     }
 
@@ -548,21 +531,11 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
                         ",@"+getBaseFile().getPath());
     }
     if (doHardConsistencyChecks) {
-      HeaderRecord checkRecord = readValueId(keyId);
-      if (checkRecord.address != value.address) {
-        assert false:value.address;
+      long checkRecord = readValueId(keyId);
+      if (checkRecord != value) {
+        assert false:value;
       }
     }
     return keyId;
-  }
-
-  private static class HeaderRecord {
-    final long address;
-
-    HeaderRecord(long address) {
-      this.address = address;
-    }
-
-    static final HeaderRecord EMPTY = new HeaderRecord(NULL_ADDR);
   }
 }

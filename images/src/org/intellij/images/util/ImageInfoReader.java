@@ -16,6 +16,7 @@
 package org.intellij.images.util;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.io.UnsyncByteArrayInputStream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,7 +66,7 @@ public class ImageInfoReader {
 
   @Nullable
   private static Info read(@NotNull final byte[] data) {
-    final DataInputStream is = new DataInputStream(new ByteArrayInputStream(data));
+    final DataInputStream is = new DataInputStream(new UnsyncByteArrayInputStream(data));
     try {
       return readFileData(is);
     }

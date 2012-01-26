@@ -19,7 +19,8 @@
  */
 package com.intellij.psi.stubs;
 
-import java.io.ByteArrayInputStream;
+import com.intellij.util.io.UnsyncByteArrayInputStream;
+
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -45,7 +46,7 @@ public class SerializedStubTree {
   }
 
   public StubElement getStub() {
-    return SerializationManager.getInstance().deserialize(new ByteArrayInputStream(myBytes));
+    return SerializationManager.getInstance().deserialize(new UnsyncByteArrayInputStream(myBytes));
   }
 
   public boolean equals(final Object that) {
