@@ -565,6 +565,7 @@ public class StringUtil {
                                                      @Nullable String additionalChars,
                                                      boolean escapeSlash,
                                                      @NotNull @NonNls StringBuilder buffer) {
+    char prev = 0;
     for (int idx = 0; idx < length; idx++) {
       char ch = str.charAt(idx);
       switch (ch) {
@@ -592,7 +593,7 @@ public class StringUtil {
           if (escapeSlash && ch == '\\') {
             buffer.append("\\\\");
           }
-          else if (additionalChars != null && additionalChars.indexOf(ch) > -1) {
+          else if (additionalChars != null && additionalChars.indexOf(ch) > -1 && (escapeSlash || prev != '\\')) {
             buffer.append("\\").append(ch);
           }
           else if (Character.isISOControl(ch)) {
@@ -608,6 +609,7 @@ public class StringUtil {
             buffer.append(ch);
           }
       }
+      prev = ch;
     }
     return buffer;
   }
