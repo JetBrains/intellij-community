@@ -750,6 +750,7 @@
 
       <group id="Runner.View.Toolbar">
         <reference ref="Runner.MinimizeView"/>
+        <reference ref="Runner.CloseView"/>
       </group>
     </group>
 
