@@ -73,7 +73,7 @@ import java.util.concurrent.TimeUnit;
  *         Date: 9/6/11
  */
 public class CompileServerManager implements ApplicationComponent{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.JpsServerManager");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.CompileServerManager");
   private static final String COMPILE_SERVER_SYSTEM_ROOT = "compile-server";
   private volatile OSProcessHandler myProcessHandler;
   private final File mySystemDirectory;
