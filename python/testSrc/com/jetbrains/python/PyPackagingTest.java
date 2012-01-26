@@ -1,8 +1,10 @@
 package com.jetbrains.python;
 
+import com.google.common.collect.Sets;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -140,6 +142,16 @@ public class PyPackagingTest extends PyTestCase {
 
   private void forAllPythonEnvs(@NotNull Processor<Sdk> processor) {
     final List<String> roots = PyEnvTestCase.getPythonRoots();
+
+    if (PyEnvTestCase.notEnvConfiguration()) {
+      LOG.info("Running under teamcity but not by Env configuration. Skipping.");
+      return;
+    }
+
+    if (PyEnvTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows) {
+      return; //Don't run under Windows as after deleting from created virtualenvs original interpreter got spoiled
+    }
+
     if (roots.size() == 0) {
       String msg = getTestName(false) + ": environments are not defined. Skipping.";
       LOG.warn(msg);
@@ -147,6 +159,9 @@ public class PyPackagingTest extends PyTestCase {
       return;
     }
     for (String root : roots) {
+      if (!PyEnvTestCase.isSuitableForTags(PyEnvTestCase.loadEnvTags(root), Sets.newHashSet("packaging"))) {
+        continue; // Run only on special test-envs as because of downloading packages on every run is is too heavy to run it on all envs
+      }
       final String sdkHome = PythonSdkType.getPythonExecutable(root);
       assertNotNull(sdkHome);
       final Sdk sdk = createTempSdk(sdkHome);
