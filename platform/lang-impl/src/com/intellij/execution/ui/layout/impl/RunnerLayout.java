@@ -172,7 +172,7 @@ public class RunnerLayout  {
   }
 
   public boolean isToolbarHorizontal() {
-    return myGeneral.horizontalToolbar;
+    return false;
   }
 
   public void setToolbarHorizontal(boolean horizontal) {
