@@ -104,12 +104,13 @@ public class GroovyBuilder extends Builder {
 
       // todo CompilerUtil.addLocaleOptions()
       //todo different outputs in a chunk
+      //todo xmx
       //todo module jdk path
       final List<String> cmd = ExternalProcessUtil.buildJavaCommandLine(
         SystemProperties.getJavaHome() + "/bin/java",
         "org.jetbrains.groovy.compiler.rt.GroovycRunner",
         Collections.<String>emptyList(), new ArrayList<String>(cp),
-        Arrays.asList("-Xmx384m"/*, "-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5858"*/),
+        Arrays.asList("-Xmx384m"/*, "-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5239"*/),
         Arrays.<String>asList(myForStubs ? "stubs" : "groovyc", tempFile.getPath())
       );
 
