@@ -61,9 +61,16 @@ public class RequestHint {
     private boolean myMethodExecuted;
 
     public SmartStepFilter(PsiMethod psiMethod) {
-      myDeclaringClassName = JVMNameUtil.getJVMQualifiedName(psiMethod.getContainingClass());
-      myTargetMethodName = psiMethod.isConstructor()? "<init>" : psiMethod.getName();
-      myTargetMethodSignature = JVMNameUtil.getJVMSignature(psiMethod);
+      this(JVMNameUtil.getJVMQualifiedName(psiMethod.getContainingClass()),
+           psiMethod.isConstructor()? "<init>" : psiMethod.getName(),
+           JVMNameUtil.getJVMSignature(psiMethod));
+    }
+
+    public SmartStepFilter(@NotNull JVMName declaringClassName, @NonNls String targetMethodName,
+                           @NotNull JVMName targetMethodSignature) {
+      myDeclaringClassName = declaringClassName;
+      myTargetMethodName = targetMethodName;
+      myTargetMethodSignature = targetMethodSignature;
     }
 
     public String getTargetMethodName() {
