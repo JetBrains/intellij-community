@@ -97,12 +97,12 @@ public class AndroidSdkType extends SdkType implements JavaSdkType {
     }
 
     if (javaSdks.isEmpty()){
-      Messages.showErrorDialog(AndroidBundle.message("no.jdk.for.android.found.error"), "No Java SDK found");
+      Messages.showErrorDialog(AndroidBundle.message("no.jdk.for.android.found.error"), "No Java SDK Found");
       return false;
     }
 
     int choice = Messages
-      .showChooseDialog("Please select Java SDK", "Select internal Java platform", ArrayUtil.toStringArray(javaSdks), javaSdks.get(0),
+      .showChooseDialog("Please select Java SDK", "Select Internal Java Platform", ArrayUtil.toStringArray(javaSdks), javaSdks.get(0),
                         Messages.getQuestionIcon());
 
     if (choice == -1) {
@@ -117,7 +117,7 @@ public class AndroidSdkType extends SdkType implements JavaSdkType {
 
     if (sdkObject == null) {
       String errorMessage = log.getErrorMessage().length() > 0 ? log.getErrorMessage() : AndroidBundle.message("cannot.parse.sdk.error");
-      Messages.showErrorDialog(errorMessage, "SDK parsing error");
+      Messages.showErrorDialog(errorMessage, "SDK Parsing Error");
       return false;
     }
 
@@ -144,7 +144,7 @@ public class AndroidSdkType extends SdkType implements JavaSdkType {
     }
 
     choice =
-      Messages.showChooseDialog("Select build target", "Create new Android SDK", targetNames,
+      Messages.showChooseDialog("Select build target", "Create New Android SDK", targetNames,
                                 newestPlatform != null ? newestPlatform : targetNames[0], Messages.getQuestionIcon());
 
     if (choice == -1) {
@@ -158,35 +158,7 @@ public class AndroidSdkType extends SdkType implements JavaSdkType {
 
   @Override
   public AdditionalDataConfigurable createAdditionalDataConfigurable(SdkModel sdkModel, SdkModificator sdkModificator) {
-    final AndroidSdkConfigurable c = new AndroidSdkConfigurable(sdkModel, sdkModificator);
-
-    sdkModel.addListener(new SdkModel.Listener() {
-      public void sdkAdded(Sdk sdk) {
-        if (sdk.getSdkType().equals(JavaSdk.getInstance())) {
-          c.addJavaSdk(sdk);
-        }
-      }
-
-      public void beforeSdkRemove(Sdk sdk) {
-        if (sdk.getSdkType().equals(JavaSdk.getInstance())) {
-          c.removeJavaSdk(sdk);
-        }
-      }
-
-      public void sdkChanged(Sdk sdk, String previousName) {
-        if (sdk.getSdkType().equals(JavaSdk.getInstance())) {
-          c.updateJavaSdkList(sdk, previousName);
-        }
-      }
-
-      public void sdkHomeSelected(final Sdk sdk, final String newSdkHome) {
-        if (sdk.getSdkType().equals(AndroidSdkType.getInstance())) {
-          c.internalJdkUpdate(sdk);
-        }
-      }
-    });
-
-    return c;
+    return new AndroidSdkConfigurable(sdkModel, sdkModificator);
   }
 
   public void saveAdditionalData(SdkAdditionalData data, Element e) {

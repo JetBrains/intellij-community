@@ -21,10 +21,7 @@ import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.projectRoots.AdditionalDataConfigurable;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkModel;
-import com.intellij.openapi.projectRoots.SdkModificator;
+import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
@@ -64,10 +61,37 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
   private final SdkModel mySdkModel;
   private final SdkModificator mySdkModificator;
   private boolean myFreeze = false;
+  private final SdkModel.Listener myListener;
 
   public IdeaJdkConfigurable(final SdkModel sdkModel, final SdkModificator sdkModificator) {
     mySdkModel = sdkModel;
     mySdkModificator = sdkModificator;
+    myListener = new SdkModel.Listener() {
+      public void sdkAdded(Sdk sdk) {
+        if (sdk.getSdkType().equals(JavaSdk.getInstance())) {
+          addJavaSdk(sdk);
+        }
+      }
+
+      public void beforeSdkRemove(Sdk sdk) {
+        if (sdk.getSdkType().equals(JavaSdk.getInstance())) {
+          removeJavaSdk(sdk);
+        }
+      }
+
+      public void sdkChanged(Sdk sdk, String previousName) {
+        if (sdk.getSdkType().equals(JavaSdk.getInstance())) {
+          updateJavaSdkList(sdk, previousName);
+        }
+      }
+
+      public void sdkHomeSelected(final Sdk sdk, final String newSdkHome) {
+        if (sdk.getSdkType() instanceof IdeaJdk) {
+          internalJdkUpdate(sdk);
+        }
+      }
+    };
+    mySdkModel.addListener(myListener);
   }
 
   private void updateJdkList() {
@@ -157,7 +181,7 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
     return wholePanel;
   }
 
-  public void internalJdkUpdate(final Sdk sdk) {
+  private void internalJdkUpdate(final Sdk sdk) {
     final Sdk javaSdk = ((Sandbox)sdk.getSdkAdditionalData()).getJavaSdk();
     if (myJdksModel.getIndexOf(javaSdk) == -1) {
       myJdksModel.addElement(javaSdk);
@@ -216,17 +240,18 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
   }
 
   public void disposeUIResources() {
+    mySdkModel.removeListener(myListener);
   }
 
-  public void addJavaSdk(final Sdk sdk) {
+  private void addJavaSdk(final Sdk sdk) {
     myJdksModel.addElement(sdk);
   }
 
-  public void removeJavaSdk(final Sdk sdk) {
+  private void removeJavaSdk(final Sdk sdk) {
     myJdksModel.removeElement(sdk);
   }
 
-  public void updateJavaSdkList(Sdk sdk, String previousName) {
+  private void updateJavaSdkList(Sdk sdk, String previousName) {
     final Sdk[] sdks = mySdkModel.getSdks();
     for (Sdk currentSdk : sdks) {
       if (currentSdk.getSdkType() instanceof IdeaJdk){

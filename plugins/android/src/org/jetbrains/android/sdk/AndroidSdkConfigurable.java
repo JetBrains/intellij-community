@@ -26,13 +26,41 @@ import javax.swing.*;
  * @author Eugene.Kudelevsky
  */
 public class AndroidSdkConfigurable implements AdditionalDataConfigurable {
-
   private final AndroidSdkConfigurableForm myForm;
 
   private Sdk mySdk;
+  private final SdkModel.Listener myListener;
+  private final SdkModel mySdkModel;
 
   public AndroidSdkConfigurable(@NotNull SdkModel sdkModel, @NotNull SdkModificator sdkModificator) {
+    mySdkModel = sdkModel;
     myForm = new AndroidSdkConfigurableForm(sdkModel, sdkModificator);
+    myListener = new SdkModel.Listener() {
+      public void sdkAdded(Sdk sdk) {
+        if (sdk.getSdkType().equals(JavaSdk.getInstance())) {
+          myForm.addJavaSdk(sdk);
+        }
+      }
+
+      public void beforeSdkRemove(Sdk sdk) {
+        if (sdk.getSdkType().equals(JavaSdk.getInstance())) {
+          myForm.removeJavaSdk(sdk);
+        }
+      }
+
+      public void sdkChanged(Sdk sdk, String previousName) {
+        if (sdk.getSdkType().equals(JavaSdk.getInstance())) {
+          myForm.updateJdks(sdk, previousName);
+        }
+      }
+
+      public void sdkHomeSelected(final Sdk sdk, final String newSdkHome) {
+        if (sdk.getSdkType().equals(AndroidSdkType.getInstance())) {
+          myForm.internalJdkUpdate(sdk);
+        }
+      }
+    };
+    mySdkModel.addListener(myListener);
   }
 
   @Override
@@ -83,21 +111,6 @@ public class AndroidSdkConfigurable implements AdditionalDataConfigurable {
 
   @Override
   public void disposeUIResources() {
-  }
-
-  public void addJavaSdk(Sdk sdk) {
-    myForm.addJavaSdk(sdk);
-  }
-
-  public void removeJavaSdk(Sdk sdk) {
-    myForm.removeJavaSdk(sdk);
-  }
-
-  public void updateJavaSdkList(Sdk sdk, String previousName) {
-    myForm.updateJdks(sdk, previousName);
-  }
-
-  public void internalJdkUpdate(Sdk sdk) {
-    myForm.internalJdkUpdate(sdk);
+    mySdkModel.removeListener(myListener);
   }
 }
