@@ -110,8 +110,7 @@ public class JavaExecutionUtil {
     if (containingClass != null) {
       final String parentName = getRuntimeQualifiedName(containingClass);
       return parentName + "$" + aClass.getName();
-    }
-    else {
+    } else {
       return aClass.getQualifiedName();
     }
   }

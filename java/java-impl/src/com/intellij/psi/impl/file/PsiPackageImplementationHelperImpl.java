@@ -16,7 +16,6 @@
 package com.intellij.psi.impl.file;
 
 import com.intellij.ide.projectView.ProjectView;
-import com.intellij.ide.projectView.impl.ProjectViewPane;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.GlobalUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
@@ -139,7 +138,7 @@ public class PsiPackageImplementationHelperImpl extends PsiPackageImplementation
         final ProjectView projectView = ProjectView.getInstance(project);
         PsiDirectory[] directories = suggestMostAppropriateDirectories(psiPackage);
         if (directories.length == 0) return;
-        projectView.getProjectViewPaneById(ProjectViewPane.ID).select(directories[0], directories[0].getVirtualFile(), requestFocus);
+        projectView.select(directories[0], directories[0].getVirtualFile(), requestFocus);
       }
     });
   }
