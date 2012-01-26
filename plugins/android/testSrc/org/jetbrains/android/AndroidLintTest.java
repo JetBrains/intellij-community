@@ -140,7 +140,7 @@ public class AndroidLintTest extends AndroidTestCase {
                 "/res/layout/layout.xml", "xml");
   }
 
-  public void testTypographyDashes() throws Exception {
+  /*public void testTypographyDashes() throws Exception {
     doTestWithFix(new AndroidLintInspectionToolProvider.AndroidLintTypographyDashesInspection(),
                   AndroidBundle.message("android.lint.inspections.replace.with.suggested.characters"),
                   "/res/values/typography.xml", "xml");
@@ -150,7 +150,7 @@ public class AndroidLintTest extends AndroidTestCase {
     doTestWithFix(new AndroidLintInspectionToolProvider.AndroidLintTypographyQuotesInspection(),
                   AndroidBundle.message("android.lint.inspections.replace.with.suggested.characters"),
                   "/res/values/typography.xml", "xml");
-  }
+  }*/
 
   private void doTestNoFix(@NotNull AndroidLintInspectionBase inspection, @NotNull String copyTo, @NotNull String extension)
     throws IOException {
