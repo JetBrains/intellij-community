@@ -62,7 +62,9 @@ import org.jetbrains.jps.server.Server;
 import javax.tools.JavaCompiler;
 import javax.tools.ToolProvider;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
 import java.util.concurrent.Future;
 import java.util.concurrent.RunnableFuture;
@@ -75,6 +77,8 @@ import java.util.concurrent.TimeUnit;
 public class CompileServerManager implements ApplicationComponent{
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.CompileServerManager");
   private static final String COMPILE_SERVER_SYSTEM_ROOT = "compile-server";
+  private static final String LOGGER_CONFIG = "log.xml";
+  private static final String DEFAULT_LOGGER_CONFIG = "defaultLogConfig.xml";
   private volatile OSProcessHandler myProcessHandler;
   private final File mySystemDirectory;
   private volatile CompileServerClient myClient = new CompileServerClient();
@@ -465,12 +469,41 @@ public class CompileServerManager implements ApplicationComponent{
 
     final File workDirectory = new File(mySystemDirectory, COMPILE_SERVER_SYSTEM_ROOT);
     workDirectory.mkdirs();
+    ensureLogConfigExists(workDirectory);
 
     cmdLine.addParameter(FileUtil.toSystemIndependentName(workDirectory.getPath()));
 
     cmdLine.setWorkDirectory(workDirectory);
 
+
     return cmdLine.createProcess();
+  }
+
+  private static void ensureLogConfigExists(File workDirectory) {
+    final File logConfig = new File(workDirectory, LOGGER_CONFIG);
+    if (!logConfig.exists()) {
+      FileUtil.createIfDoesntExist(logConfig);
+      try {
+        final InputStream in = Server.class.getResourceAsStream("/" + DEFAULT_LOGGER_CONFIG);
+        if (in != null) {
+          try {
+            final FileOutputStream out = new FileOutputStream(logConfig);
+            try {
+              FileUtil.copy(in, out);
+            }
+            finally {
+              out.close();
+            }
+          }
+          finally {
+            in.close();
+          }
+        }
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
+    }
   }
 
   public void shutdownServer() {
