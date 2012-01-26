@@ -220,11 +220,11 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer implements Foc
   }
 
   public boolean isVisible() {
-    return myDialog.isVisible();
+    return myDialog != null && myDialog.isVisible();
   }
 
   public boolean isShowing() {
-    return myDialog.isShowing();
+    return myDialog != null && myDialog.isShowing();
   }
 
   public void setSize(final int width, final int height) {
