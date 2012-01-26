@@ -1,10 +1,7 @@
 package org.jetbrains.android.inspections.lint;
 
 import com.android.tools.lint.PositionXmlParser;
-import com.android.tools.lint.client.api.IDomParser;
-import com.android.tools.lint.client.api.IssueRegistry;
-import com.android.tools.lint.client.api.Lint;
-import com.android.tools.lint.client.api.LintClient;
+import com.android.tools.lint.client.api.*;
 import com.android.tools.lint.detector.api.Context;
 import com.android.tools.lint.detector.api.Issue;
 import com.android.tools.lint.detector.api.Location;
@@ -83,7 +80,7 @@ class AndroidLintGlobalInspectionContext implements GlobalInspectionContextExten
     final File[] ioContentRoots = toIoFiles(allContentRoots);
     final AnalysisScope scope = context.getRefManager().getScope();
 
-    final LintClient client = new MyLintClient(project, problemMap, scope);
+    final LintClient client = new MyLintClient(project, problemMap, scope, issues);
     final Lint lint = new Lint(new IssueRegistry() {
       @Override
       public List<Issue> getIssues() {
@@ -128,13 +125,21 @@ class AndroidLintGlobalInspectionContext implements GlobalInspectionContextExten
     private final Project myProject;
     private final Map<Issue, Map<File, List<ProblemData>>> myProblemMap;
     private final AnalysisScope myScope;
+    private final Collection<Issue> myIssues;
 
     private MyLintClient(@NotNull Project project,
                          @NotNull Map<Issue, Map<File, List<ProblemData>>> problemMap,
-                         @NotNull AnalysisScope scope) {
+                         @NotNull AnalysisScope scope, 
+                         @NotNull Collection<Issue> issues) {
       myProject = project;
       myProblemMap = problemMap;
       myScope = scope;
+      myIssues = issues;
+    }
+
+    @Override
+    public Configuration getConfiguration(com.android.tools.lint.detector.api.Project project) {
+      return new IntellijLintConfiguration(myIssues);
     }
 
     @Override
@@ -248,6 +253,9 @@ class AndroidLintGlobalInspectionContext implements GlobalInspectionContextExten
     @Override
     public List<File> getJavaSourceFolders(com.android.tools.lint.detector.api.Project project) {
       final Module module = findModuleForLintProject(myProject, project);
+      if (module == null) {
+        return Collections.emptyList();
+      }
       final VirtualFile[] sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots(false);
       final List<File> result = new ArrayList<File>(sourceRoots.length);
 

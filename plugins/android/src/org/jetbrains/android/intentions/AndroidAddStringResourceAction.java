@@ -19,6 +19,7 @@ package org.jetbrains.android.intentions;
 import com.android.resources.ResourceType;
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.intention.AbstractIntentionAction;
+import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.template.*;
@@ -75,7 +76,7 @@ import static org.jetbrains.android.util.AndroidUtils.VIEW_CLASS_NAME;
  * Time: 5:02:31 PM
  * To change this template use File | Settings | File Templates.
  */
-public class AndroidAddStringResourceAction extends AbstractIntentionAction {
+public class AndroidAddStringResourceAction extends AbstractIntentionAction implements HighPriorityAction {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.intentions.AndroidAddStringResourceAction");
 
   private static final String CONTEXT = AndroidUtils.ANDROID_PACKAGE + ".content.Context";
@@ -165,14 +166,19 @@ public class AndroidAddStringResourceAction extends AbstractIntentionAction {
   }
 
   static void doInvoke(Project project, Editor editor, PsiFile file, @Nullable String resName) {
-    final AndroidFacet facet = AndroidFacet.getInstance(file);
-    assert facet != null;
-
     final PsiElement element = getPsiElement(file, editor);
     assert element != null;
 
+    doInvoke(project, editor, file, resName, element);
+  }
+
+  protected static void doInvoke(Project project, Editor editor, PsiFile file, @Nullable String resName, PsiElement element) {
     String value = getStringLiteralValue(element, file);
     assert value != null;
+
+    final AndroidFacet facet = AndroidFacet.getInstance(file);
+    assert facet != null;
+
     value = value.replace("'", "\\'").replace("\"", "\\\"");
 
     final String aPackage = getPackage(facet);
