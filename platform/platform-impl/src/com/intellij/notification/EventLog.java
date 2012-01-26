@@ -415,6 +415,8 @@ public class EventLog implements Notifications {
         Balloon balloon = NotificationsManagerImpl.createBalloon(myNotification, true, true);
         Disposer.register(project, balloon);
         balloon.show(target, Balloon.Position.above);
+        myNotification.hideBalloon();
+        myNotification.setBalloon(balloon);
       }
     }
 

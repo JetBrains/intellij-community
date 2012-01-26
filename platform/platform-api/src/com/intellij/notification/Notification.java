@@ -97,6 +97,11 @@ public class Notification {
 
   public void expire() {
     NotificationsManager.getNotificationsManager().expire(this);
+    hideBalloon();
+    myExpired = true;
+  }
+
+  public void hideBalloon() {
     if (myBalloonRef != null) {
       final Balloon balloon = myBalloonRef.get();
       if (balloon != null) {
@@ -104,7 +109,6 @@ public class Notification {
       }
       myBalloonRef = null;
     }
-    myExpired = true;
   }
 
   public void setBalloon(@Nullable final Balloon balloon) {
