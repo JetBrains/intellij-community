@@ -21,9 +21,11 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.psi.*;
 import com.intellij.ui.AutoScrollFromSourceHandler;
 import com.intellij.ui.AutoScrollToSourceHandler;
+import com.intellij.ui.content.ContentManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.containers.ContainerUtil;
@@ -67,7 +69,7 @@ import java.util.List;
  */
 public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements IdeView {
   private final CopyPasteDelegator myCopyPasteDelegator;
-  private final JPanel myComponent;
+  private final JComponent myComponent;
   private final DeleteProvider myDeletePSIElementProvider;
   private final ModuleDeleteProvider myDeleteModuleProvider = new ModuleDeleteProvider();
 
@@ -120,9 +122,7 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
 
     project.getMessageBus().connect(this).subscribe(PsiModificationTracker.TOPIC, new TreeUpdater());
 
-    myComponent = new JPanel(new BorderLayout());
-    myComponent.add(createComponent(), BorderLayout.CENTER);
-    myComponent.add(createToolbar(), BorderLayout.NORTH);
+    myComponent = createComponent();
     DataManager.registerDataProvider(myComponent, this);
 
     myCopyPasteDelegator = new CopyPasteDelegator(project, myComponent) {
@@ -135,18 +135,33 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
     myDeletePSIElementProvider = new DeleteHandler.DefaultDeleteProvider();
   }
 
-  private JComponent createToolbar() {
+  public void setup(ToolWindowEx toolWindow) {
+    JPanel p = new JPanel(new BorderLayout());
+    p.add(myComponent, BorderLayout.CENTER);
+
+    ContentManager contentManager = toolWindow.getContentManager();
+    Content content = contentManager.getFactory().createContent(p, null, false);
+    content.setDisposer(this);
+    content.setCloseable(false);
+
+    content.setPreferredFocusableComponent(createComponent());
+    contentManager.addContent(content);
+
+    contentManager.setSelectedContent(content, true);
+
     DefaultActionGroup group = new DefaultActionGroup();
+    group.add(new HideEmptyMiddlePackagesAction());
+    group.add(myAutoScrollToSourceHandler.createToggleAction());
+    group.add(myAutoScrollFromSourceHandler.createToggleAction());
 
-    final TreeExpander expander = new DefaultTreeExpander(myTree);
-    final CommonActionsManager actionsManager = CommonActionsManager.getInstance();
-    group.addAction(new ScrollFromSourceAction());
-    group.addAction(myAutoScrollFromSourceHandler.createToggleAction()).setAsSecondary(true);
-    group.addAction(myAutoScrollToSourceHandler.createToggleAction()).setAsSecondary(true);
-    group.add(actionsManager.createCollapseAllAction(expander, myTree));
-    group.addAction(new HideEmptyMiddlePackagesAction()).setAsSecondary(true);
+    toolWindow.setAdditionalGearActions(group);
 
-    return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent();
+    TreeExpander expander = new DefaultTreeExpander(myTree);
+    CommonActionsManager actionsManager = CommonActionsManager.getInstance();
+    AnAction collapseAction = actionsManager.createCollapseAllAction(expander, myTree);
+    collapseAction.getTemplatePresentation().setIcon(IconLoader.getIcon("/general/collapseAll.png"));
+
+    toolWindow.setTitleActions(new AnAction[]{new ScrollFromSourceAction(), collapseAction});
   }
 
   @Override
@@ -156,10 +171,6 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
     myAutoScrollToSourceHandler.install(getTree());
     myAutoScrollToSourceHandler.onMouseClicked(getTree());
     return component;
-  }
-
-  public JPanel getComponent() {
-    return myComponent;
   }
 
   public String getTitle() {
@@ -436,10 +447,9 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
     scrollFromSource();
   }
 
-
   private class ScrollFromSourceAction extends AnAction implements DumbAware {
     private ScrollFromSourceAction() {
-      super("Scroll from Source", "Select the file open in the active editor", IconLoader.getIcon("/general/autoscrollFromSource.png"));
+      super("Scroll from Source", "Select the file open in the active editor", IconLoader.getIcon("/general/locate.png"));
     }
 
     @Override
@@ -475,7 +485,7 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
           myAlarm.cancelAllRequests();
           myAlarm.addRequest(new Runnable() {
             public void run() {
-              if (myProject.isDisposed() || !getComponent().isShowing()) return;
+              if (myProject.isDisposed() || !myComponent.isShowing()) return;
               if (myAutoScrollFromSource) {
                 selectElementAtCaretNotLosingFocus();
               }
