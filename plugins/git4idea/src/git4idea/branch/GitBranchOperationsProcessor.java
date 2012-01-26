@@ -23,14 +23,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitExecutionException;
 import git4idea.GitVcs;
 import git4idea.commands.Git;
 import git4idea.history.GitHistoryUtils;
 import git4idea.history.browser.GitCommit;
-import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
 import git4idea.ui.branch.GitBranchUiUtil;
 import git4idea.ui.branch.GitCompareBranchesDialog;
@@ -123,15 +121,6 @@ public final class GitBranchOperationsProcessor {
 
   private void doCheckoutNewBranch(@NotNull final String name, @NotNull ProgressIndicator indicator) {
     new GitCheckoutNewBranchOperation(myProject, myRepositories, name, getCurrentBranch(), indicator).execute();
-  }
-
-
-  @NotNull
-  static GitConflictResolver prepareConflictResolverForUnmergedFilesBeforeCheckout(Project project, Collection<VirtualFile> roots) {
-    GitConflictResolver.Params params = new GitConflictResolver.Params().
-      setMergeDescription("The following files have unresolved conflicts. You need to resolve them before checking out.").
-      setErrorNotificationTitle("Can't create new branch");
-    return new GitConflictResolver(project, roots, params);
   }
 
   /**

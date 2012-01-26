@@ -210,6 +210,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
     }
     model.setType(TestType.CLASS);
     addListener.addActionListener(new AddTestListenerListener());
+    addListener.setEnabled(!project.isDefault());
     removeListener.addActionListener(new ActionListener()
     {
       public void actionPerformed(ActionEvent event) {

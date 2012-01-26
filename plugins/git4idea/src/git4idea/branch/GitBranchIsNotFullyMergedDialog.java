@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ArrayUtil;
+import git4idea.DialogManager;
 import git4idea.GitBranch;
 import git4idea.history.browser.GitCommit;
 import git4idea.i18n.GitBundle;
@@ -76,7 +77,7 @@ public class GitBranchIsNotFullyMergedDialog extends DialogWrapper {
                                          @NotNull List<String> mergedToBranches, 
                                          @Nullable String currentBranch) {
     GitBranchIsNotFullyMergedDialog dialog = new GitBranchIsNotFullyMergedDialog(project, commits, branchToDelete, currentBranch, mergedToBranches);
-    dialog.show();
+    DialogManager.getInstance(project).showDialog(dialog);
     return dialog.isOK();
   }
 

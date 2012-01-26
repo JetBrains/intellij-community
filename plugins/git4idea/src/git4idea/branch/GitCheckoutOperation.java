@@ -38,6 +38,7 @@ import com.intellij.util.continuation.ContinuationContext;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import git4idea.DialogManager;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.commands.*;
@@ -206,7 +207,7 @@ public class GitCheckoutOperation extends GitBranchOperation {
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
-        dialog.show();
+        DialogManager.getInstance(myProject).showDialog(dialog);
       }
     });
 
@@ -274,7 +275,7 @@ public class GitCheckoutOperation extends GitBranchOperation {
       catch (VcsException e) {
         // ignoring the exception: this is not fatal if we won't collect such a diff from other repositories. 
         // At worst, use will get double dialog proposing the smart checkout.
-        LOG.warn(String.format("Couldn't collect diff between %s and %s in %s", myPreviousBranch, myStartPointReference, repository.getRoot()));
+        LOG.warn(String.format("Couldn't collect diff between %s and %s in %s", myPreviousBranch, myStartPointReference, repository.getRoot()), e);
       }
     }
     return changes;
