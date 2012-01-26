@@ -314,13 +314,6 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
       .setHideOnKeyOutside(hideOnClickOutside).setHideOnFrameResize(false);
 
     final Balloon balloon = builder.createBalloon();
-    balloon.addListener(new JBPopupAdapter() {
-      @Override
-      public void onClosed(LightweightWindowEvent event) {
-        notification.setBalloon(null);
-      }
-    });
-
     notification.setBalloon(balloon);
     return balloon;
   }
