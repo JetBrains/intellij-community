@@ -37,7 +37,7 @@ public class BaseTestProxyNodeDescriptor<T extends AbstractTestProxy> extends No
 
   @Override
   public int getWeight() {
-    return myTestProxy.isLeaf() ? 5 : 10;
+    return myTestProxy.isLeaf() ? 10 : 5;
   }
 
   public String getName() {
