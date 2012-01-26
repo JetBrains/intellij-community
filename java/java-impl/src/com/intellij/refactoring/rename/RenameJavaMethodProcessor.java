@@ -241,7 +241,7 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
 
   @Override
   public void substituteElementToRename(@NotNull PsiElement element,
-                                        @NotNull Editor editor,
+                                        @NotNull final Editor editor,
                                         @NotNull final Pass<PsiElement> renameCallback) {
     PsiMethod psiMethod = (PsiMethod)element;
     if (psiMethod.isConstructor()) {
@@ -251,6 +251,7 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
       SuperMethodWarningUtil.checkSuperMethod(psiMethod, "Rename", new PsiElementProcessor<PsiMethod>() {
         @Override
         public boolean execute(@NotNull PsiMethod method) {
+          if (!PsiElementRenameHandler.canRename(method.getProject(), editor, method)) return false;
           renameCallback.pass(method);
           return false;
         }
