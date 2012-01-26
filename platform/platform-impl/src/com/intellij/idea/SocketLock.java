@@ -162,13 +162,13 @@ public class SocketLock {
         try {
           DataOutputStream out = new DataOutputStream(socket.getOutputStream());
           out.writeUTF(ACTIVATE_COMMAND + StringUtil.join(args, "\0"));
+          out.flush();
           String response = in.readUTF();
           if (response.equals("ok")) {
             return ActivateStatus.ACTIVATED;
           }
         }
         catch(IOException e) {
-
         }
         return ActivateStatus.CANNOT_ACTIVATE;
       }
