@@ -37,11 +37,19 @@ public class Mappings {
   private DependencyContext myContext;
   private org.jetbrains.ether.dependencyView.Logger<DependencyContext.S> myDebugS;
 
-  private void debug(final String s) {
+  private static void debug(final String s) {
     LOG.debug(s);
   }
 
   private void debug(final String comment, final DependencyContext.S s) {
+    myDebugS.debug(comment, s);
+  }
+
+  private void debug(final String comment, final String s) {
+    myDebugS.debug(comment, s);
+  }
+
+  private void debug(final String comment, final boolean s) {
     myDebugS.debug(comment, s);
   }
 
@@ -754,7 +762,7 @@ public class Mappings {
 
       for (DependencyContext.S className : propagated) {
         final String fileName = myContext.getValue(myClassToSourceFile.get(className));
-        debug("Adding " + fileName);
+        debug("Adding ", fileName);
         affectedFiles.add(new File(fileName));
       }
     }
@@ -762,7 +770,7 @@ public class Mappings {
     final String packageName = ClassRepr.getPackageName(myContext.getValue(isField ? owner : member.name));
 
     debug("Softening non-incremental decision: adding all package classes for a recompilation");
-    debug("Package name: " + packageName);
+    debug("Package name: ", packageName);
 
     // Package-local branch    
     for (Map.Entry<DependencyContext.S, DependencyContext.S> e : myClassToSourceFile.entrySet()) {
@@ -771,7 +779,7 @@ public class Mappings {
 
       if (ClassRepr.getPackageName(myContext.getValue(className)).equals(packageName)) {
         final String f = myContext.getValue(fileName);
-        debug("Adding: " + f);
+        debug("Adding: ", f);
         affectedFiles.add(new File(f));
       }
     }
@@ -832,15 +840,15 @@ public class Mappings {
         final boolean signatureChanged = (diff.base() & Difference.SIGNATURE) > 0;
 
         if (superClassChanged || interfacesChanged || signatureChanged) {
-          debug("Superclass changed: " + superClassChanged);
-          debug("Interfaces changed: " + interfacesChanged);
-          debug("Signature changed " + signatureChanged);
+          debug("Superclass changed: ", superClassChanged);
+          debug("Interfaces changed: ", interfacesChanged);
+          debug("Signature changed ", signatureChanged);
 
           final boolean extendsChanged = superClassChanged && !diff.extendsAdded();
           final boolean interfacesRemoved = interfacesChanged && !diff.interfaces().removed().isEmpty();
 
-          debug("Extends changed: " + extendsChanged);
-          debug("Interfaces removed: " + interfacesRemoved);
+          debug("Extends changed: ", extendsChanged);
+          debug("Interfaces removed: ", interfacesRemoved);
 
           u.affectSubclasses(it.name, affectedFiles, affectedUsages, dependants, extendsChanged || interfacesRemoved || signatureChanged);
         }
@@ -910,7 +918,7 @@ public class Mappings {
 
             for (MethodRepr m : diff.methods().added()) {
               if (!m.hasValue()) {
-                debug("Added method with no default value: " + m.name);
+                debug("Added method with no default value: ", m.name);
                 debug("Adding class usage to affected usages");
                 affectedUsages.add(it.createUsage());
               }
@@ -996,7 +1004,7 @@ public class Mappings {
 
                     if (file != null) {
                       final String f = myContext.getValue(file);
-                      debug("Complex condition is satisfied, affecting file " + f);
+                      debug("Complex condition is satisfied, affecting file ", f);
                       affectedFiles.add(new File(f));
                     }
                   }
@@ -1029,7 +1037,7 @@ public class Mappings {
 
                   if (u.methodVisible(outerClass, m)) {
                     final String f = myContext.getValue(sourceFileName);
-                    debug("Affecting file " + f + " due to local overriding");
+                    debug("Affecting file due to local overriding: ", f);
                     affectedFiles.add(new File(f));
                   }
                 }
@@ -1109,7 +1117,7 @@ public class Mappings {
                     debug(
                       "Removed method is not abstract & is overrides some abstract method which is not then over-overriden in subclass ",
                       p);
-                    debug("Affecting subclass source file " + f);
+                    debug("Affecting subclass source file ", f);
                     affectedFiles.add(new File(f));
                   }
                 }
@@ -1220,7 +1228,6 @@ public class Mappings {
           if (!fPrivate) {
             final Collection<DependencyContext.S> subClasses = getAllSubclasses(it.name);
 
-            // if (subClasses != null) {
             for (final DependencyContext.S subClass : subClasses) {
               final ClassRepr r = u.reprByName(subClass);
               final DependencyContext.S sourceFileName = myClassToSourceFile.get(subClass);
@@ -1251,7 +1258,6 @@ public class Mappings {
                 dependants.addAll(deps);
               }
             }
-            // }
           }
 
           final Collection<Pair<FieldRepr, ClassRepr>> overridden = u.findOverridenFields(f, it);
@@ -1401,7 +1407,7 @@ public class Mappings {
 
             if (fName != null) {
               final String f = myContext.getValue(fName);
-              debug("Adding dependent file " + f);
+              debug("Adding dependent file ", f);
               affectedFiles.add(new File(f));
             }
           }
@@ -1429,7 +1435,7 @@ public class Mappings {
             continue filewise;
           }
 
-          debug("Dependent file: " + theFile.getAbsolutePath());
+          debug("Dependent file: ", depFile);
 
           final Collection<UsageRepr.Cluster> depClusters = mySourceFileToUsages.get(depFile);
 
@@ -1483,14 +1489,10 @@ public class Mappings {
       }
     }
 
-    final Collection<File> removedFiles = new HashSet<File>();
-
     if (removed != null) {
       for (String r : removed) {
-        removedFiles.add(new File(r));
+        affectedFiles.remove(new File(r));
       }
-
-      affectedFiles.removeAll(removedFiles);
     }
 
     debug("End of Differentiate, returning true");
@@ -1537,7 +1539,6 @@ public class Mappings {
           mySourceFileToAnnotationUsages.remove(key);
         }
       }
-
 
       myClassToSubclasses.putAll(delta.myClassToSubclasses);
       mySourceFileToClasses.putAll(delta.mySourceFileToClasses);
