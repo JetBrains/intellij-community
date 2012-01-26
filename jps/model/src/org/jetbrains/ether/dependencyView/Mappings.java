@@ -920,13 +920,17 @@ public class Mappings {
 
         debug("Processing added methods: ");
         for (MethodRepr m : diff.methods().added()) {
+          debug("Method: ", m.name);
+          
           if (it.isAnnotation()) {
+            debug("Class is annotation, skipping method analysis");
             continue;
           }
 
           if ((it.access & Opcodes.ACC_INTERFACE) > 0 ||
               (it.access & Opcodes.ACC_ABSTRACT) > 0 ||
               (m.access & Opcodes.ACC_ABSTRACT) > 0) {
+            debug("Class is abstract, or is interface, or added method in abstract => affecting all subclasses");
             u.affectSubclasses(it.name, affectedFiles, affectedUsages, dependants, false);
           }
 
@@ -940,6 +944,7 @@ public class Mappings {
             }
             else {
               propagated = u.propagateMethodAccess(m.name, it.name);
+              debug("Conservative case on overriding methods, affecting method usages");
               u.affectMethodUsages(m, propagated, m.createMetaUsage(myContext, it.name), affectedUsages, dependants);
             }
           }
@@ -956,10 +961,12 @@ public class Mappings {
 
             for (MethodRepr mm : lessSpecific) {
               if (!mm.equals(m)) {
+                debug("Found less specific method, affecting method usages");
                 u.affectMethodUsages(mm, propagated, mm.createUsage(myContext, it.name), affectedUsages, dependants);
               }
             }
 
+            debug("Processing affected by specificity methods");
             for (Pair<MethodRepr, ClassRepr> p : affectedMethods) {
               final MethodRepr mm = p.first;
               final ClassRepr cc = p.second;
@@ -968,7 +975,12 @@ public class Mappings {
 
               }
               else {
+                debug("Method: ", mm.name);
+                debug("Class : ", cc.name);
+                
                 if (overrides.satisfy(mm)) {
+                  debug("Current method overrides that found");
+                  
                   final Option<Boolean> subtypeOf = u.isSubtypeOf(mm.type, m.type);
 
                   if (weakerAccess(mm.access, m.access) ||
@@ -981,11 +993,15 @@ public class Mappings {
                     final DependencyContext.S file = myClassToSourceFile.get(cc.name);
 
                     if (file != null) {
-                      affectedFiles.add(new File(myContext.getValue(file)));
+                      final String f = myContext.getValue(file);                      
+                      debug("Complex condition is satisfied, affecting file " + f);
+                      affectedFiles.add(new File(f));
                     }
                   }
                 }
                 else {
+                  debug("Current method does not override that found");
+                  
                   final Collection<DependencyContext.S> yetPropagated = self.propagateMethodAccess(mm.name, cc.name);
                   final Collection<DependencyContext.S> deps = myClassToClassDependency.get(cc.name);
 
@@ -993,6 +1009,7 @@ public class Mappings {
                     dependants.addAll(deps);
                   }
 
+                  debug("Affecting method usages for that found");
                   u.affectMethodUsages(mm, yetPropagated, mm.createUsage(myContext, cc.name), affectedUsages, dependants);
                 }
               }
@@ -1008,8 +1025,10 @@ public class Mappings {
                 if (r != null && sourceFileName != null) {
                   final DependencyContext.S outerClass = r.outerClassName;
 
-                  if (u.methodVisible(outerClass, m)) {
-                    affectedFiles.add(new File(myContext.getValue(sourceFileName)));
+                  if (u.methodVisible(outerClass, m)) {                                     
+                    final String f = myContext.getValue(sourceFileName);
+                    debug("Affecting file " + f + " due to local overriding");
+                    affectedFiles.add(new File(f));
                   }
                 }
               }
@@ -1020,10 +1039,13 @@ public class Mappings {
         
         debug("Processing removed methods:");        
         for (MethodRepr m : diff.methods().removed()) {
+          debug("Method ", m.name);
+          
           final Collection<Pair<MethodRepr, ClassRepr>> overridenMethods = u.findOverridenMethods(m, it);
           final Collection<DependencyContext.S> propagated = u.propagateMethodAccess(m.name, it.name);
 
           if (overridenMethods.size() == 0) {
+            debug("No overridden methods found, affecting method usages");
             u.affectMethodUsages(m, propagated, m.createUsage(myContext, it.name), affectedUsages, dependants);
           }
           else {
@@ -1040,6 +1062,7 @@ public class Mappings {
             }
 
             if (!clear) {
+              debug("No clearly overridden methods found, affecting method usages");
               u.affectMethodUsages(m, propagated, m.createUsage(myContext, it.name), affectedUsages, dependants);
             }
           }
@@ -1080,7 +1103,10 @@ public class Mappings {
                   final DependencyContext.S source = myClassToSourceFile.get(p);
 
                   if (source != null) {
-                    affectedFiles.add(new File(myContext.getValue(source)));
+                    final String f = myContext.getValue(source);
+                    debug("Removed method is not abstract & is overrides some abstract method which is not then over-overriden in subclass ", p);
+                    debug("Affecting subclass source file " + f);
+                    affectedFiles.add(new File(f));
                   }
                 }
               }
@@ -1095,8 +1121,11 @@ public class Mappings {
           final MethodRepr.Diff d = (MethodRepr.Diff)mr.second;
           final boolean throwsChanged = (d.exceptions().added().size() > 0) || (d.exceptions().changed().size() > 0);
 
+          debug("Method: ", m.name);
+          
           if (it.isAnnotation()) {
             if (d.defaultRemoved()) {
+              debug("Class is annotation, default value is removed => adding annotation query");
               final List<DependencyContext.S> l = new LinkedList<DependencyContext.S>();
               l.add(m.name);
               annotationQuery.add((UsageRepr.AnnotationUsage)UsageRepr
@@ -1112,6 +1141,7 @@ public class Mappings {
             final Set<UsageRepr.Usage> usages = new HashSet<UsageRepr.Usage>();
 
             if (d.packageLocalOn()) {
+              debug("Method became package-local, affecting method usages outside the package");
               u.affectMethodUsages(m, propagated, m.createUsage(myContext, it.name), usages, dependants);
 
               for (UsageRepr.Usage usage : usages) {
@@ -1125,6 +1155,7 @@ public class Mappings {
 
             if ((d.base() & Difference.TYPE) > 0 || (d.base() & Difference.SIGNATURE) > 0 || throwsChanged) {
               if (!affected) {
+                debug("Return type, throws list or signature changed --- affecting method usages");
                 u.affectMethodUsages(m, propagated, m.createUsage(myContext, it.name), usages, dependants);
                 affectedUsages.addAll(usages);
               }
@@ -1134,11 +1165,13 @@ public class Mappings {
                   (d.removedModifiers() & Opcodes.ACC_STATIC) > 0 ||
                   (d.addedModifiers() & Opcodes.ACC_PRIVATE) > 0) {
                 if (!affected) {
+                  debug("Added static or private specifier or removed static specifier --- affecting method usages");
                   u.affectMethodUsages(m, propagated, m.createUsage(myContext, it.name), usages, dependants);
                   affectedUsages.addAll(usages);
                 }
 
                 if ((d.addedModifiers() & Opcodes.ACC_STATIC) > 0) {
+                  debug("Added static specifier --- affecting subclasses");
                   u.affectSubclasses(it.name, affectedFiles, affectedUsages, dependants, false);
                 }
               }
@@ -1146,11 +1179,13 @@ public class Mappings {
                 if ((d.addedModifiers() & Opcodes.ACC_FINAL) > 0 ||
                     (d.addedModifiers() & Opcodes.ACC_PUBLIC) > 0 ||
                     (d.addedModifiers() & Opcodes.ACC_ABSTRACT) > 0) {
+                  debug("Added final, public or abstract specifier --- affecting subclasses");
                   u.affectSubclasses(it.name, affectedFiles, affectedUsages, dependants, false);
                 }
 
                 if ((d.addedModifiers() & Opcodes.ACC_PROTECTED) > 0 && !((d.removedModifiers() & Opcodes.ACC_PRIVATE) > 0)) {
                   if (!constrained) {
+                    debug("Added public or package-local method became protected --- affect method usages with protected constraint");
                     if (!affected) {
                       u.affectMethodUsages(m, propagated, m.createUsage(myContext, it.name), usages, dependants);
                       affectedUsages.addAll(usages);
@@ -1171,6 +1206,8 @@ public class Mappings {
 
         debug("Processing added fields");
         for (FieldRepr f : diff.fields().added()) {
+          debug("Field: ", f.name);
+
           final boolean fPrivate = (f.access & Opcodes.ACC_PRIVATE) > 0;
           final boolean fProtected = (f.access & Opcodes.ACC_PROTECTED) > 0;
           final boolean fPublic = (f.access & Opcodes.ACC_PUBLIC) > 0;
@@ -1292,6 +1329,7 @@ public class Mappings {
             final Collection<DependencyContext.S> propagated = u.propagateFieldAccess(field.name, it.name);
 
             if ((d.base() & Difference.TYPE) > 0 || (d.base() & Difference.SIGNATURE) > 0) {
+              debug("Type or signature changed --- affecting field usages");
               u.affectFieldUsages(field, propagated, field.createUsage(myContext, it.name), affectedUsages, dependants);
             }
             else if ((d.base() & Difference.ACCESS) > 0) {
@@ -1299,7 +1337,7 @@ public class Mappings {
                   (d.removedModifiers() & Opcodes.ACC_STATIC) > 0 ||
                   (d.addedModifiers() & Opcodes.ACC_PRIVATE) > 0 ||
                   (d.addedModifiers() & Opcodes.ACC_VOLATILE) > 0) {
-
+                debug("Added/removed static modifier or added private/volatile modifier --- affecting field usages");
                 u.affectFieldUsages(field, propagated, field.createUsage(myContext, it.name), affectedUsages, dependants);
               }
               else {
@@ -1307,12 +1345,14 @@ public class Mappings {
                 final Set<UsageRepr.Usage> usages = new HashSet<UsageRepr.Usage>();
 
                 if ((d.addedModifiers() & Opcodes.ACC_FINAL) > 0) {
+                  debug("Added final modifier --- affecting field assign usages");
                   u.affectFieldUsages(field, propagated, field.createAssignUsage(myContext, it.name), usages, dependants);
                   affectedUsages.addAll(usages);
                   affected = true;
                 }
 
                 if ((d.removedModifiers() & Opcodes.ACC_PUBLIC) > 0) {
+                  debug("Removed public modifier, affecting field usages with appropriate constraint");
                   if (!affected) {
                     u.affectFieldUsages(field, propagated, field.createUsage(myContext, it.name), usages, dependants);
                     affectedUsages.addAll(usages);
@@ -1433,6 +1473,14 @@ public class Mappings {
         }
       }
     }
+
+    final Collection<File> removedFiles = new HashSet<File>();
+    
+    for (String r : removed) {
+      removedFiles.add(new File(r));
+    }
+
+    affectedFiles.removeAll(removedFiles);
 
     debug("End of Differentiate, returning true");    
     return true;
