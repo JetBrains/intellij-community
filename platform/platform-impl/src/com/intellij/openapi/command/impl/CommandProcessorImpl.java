@@ -57,6 +57,11 @@ public class CommandProcessorImpl extends CommandProcessorEx {
       myUndoConfirmationPolicy = undoConfirmationPolicy;
       myDocument = document;
     }
+
+    @Override
+    public String toString() {
+      return "'" + myName + "', group: '" + myGroupId + "'";
+    }
   }
 
   private CommandDescriptor myCurrentCommand = null;
@@ -219,7 +224,8 @@ public class CommandProcessorImpl extends CommandProcessorEx {
   }
 
   public void leaveModal() {
-    CommandLog.LOG.assertTrue(myCurrentCommand == null);
+    CommandLog.LOG.assertTrue(myCurrentCommand == null, "Command must not run: " + String.valueOf(myCurrentCommand));
+
     myCurrentCommand = myInterruptedCommands.pop();
     if (myCurrentCommand != null) {
       fireCommandStarted();
