@@ -329,6 +329,7 @@ public class EventLog implements Notifications {
       group.add(new DumbAwareAction("Mark all as read", "Mark all unread notifications as read", IconLoader.getIcon("/general/reset.png")) {
         @Override
         public void update(AnActionEvent e) {
+          if (project.isDisposed()) return;
           e.getPresentation().setEnabled(!getProjectComponent(project).myProjectModel.getNotifications().isEmpty());
         }
 
