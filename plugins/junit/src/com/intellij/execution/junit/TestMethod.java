@@ -21,7 +21,10 @@ import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.listeners.RefactoringElementAdapter;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
@@ -106,12 +109,14 @@ class TestMethod extends TestObject {
                                        PsiMethod testMethod,
                                        PsiPackage testPackage) {
     if (testMethod == null) return false;
-    final PsiClass containingClass = testMethod.getContainingClass();
-    if (testClass == null && (containingClass == null || !containingClass.hasModifierProperty(PsiModifier.ABSTRACT))) return false;
+    if (testClass == null) return false;
     final JUnitConfiguration.Data data = configuration.getPersistentData();
+    /*final PsiClass containingClass = testMethod.getContainingClass();
+    if (testClass == null && (containingClass == null || !containingClass.hasModifierProperty(PsiModifier.ABSTRACT))) return false;
+
     if (containingClass != null && containingClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
       return Comparing.equal(testMethod.getName(), data.getMethodName());
-    }
+    }*/
     return
       Comparing.equal(JavaExecutionUtil.getRuntimeQualifiedName(testClass), data.getMainClassName()) &&
       Comparing.equal(testMethod.getName(), data.getMethodName());
