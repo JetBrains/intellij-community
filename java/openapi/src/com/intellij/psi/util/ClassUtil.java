@@ -245,25 +245,18 @@ public class ClassUtil {
 
   @Nullable
   public static String getJVMClassName(PsiClass aClass) {
-    final String qName = aClass.getQualifiedName();
-    if (qName == null) return null;
-    return replaceDotsWithDollars(qName, aClass);
-  }
-
-  private static String replaceDotsWithDollars(final String qName, PsiClass aClass) {
-    StringBuilder qNameBuffer = new StringBuilder(qName);
-
-    int fromIndex = qNameBuffer.length();
-    PsiElement parent = aClass.getParent();
-    while (parent instanceof PsiClass) {
-      final int dotIndex = qNameBuffer.lastIndexOf(".", fromIndex);
-      if (dotIndex < 0) break;
-      qNameBuffer.replace(dotIndex, dotIndex + 1, "$");
-      fromIndex = dotIndex - 1;
-      parent = parent.getParent();
+    final PsiClass containingClass = aClass.getContainingClass();
+    if (containingClass != null) {
+      String parentName = getJVMClassName(containingClass);
+      if (parentName == null) {
+        return null;
+      }
+      
+      return parentName + "$" + aClass.getName();
     }
-    return qNameBuffer.toString();
+    return aClass.getQualifiedName();
   }
+
 
   @Nullable
   public static PsiClass findPsiClassByJVMName(final PsiManager manager, final String jvmClassName) {

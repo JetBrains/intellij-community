@@ -30,6 +30,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -106,13 +107,7 @@ public class JavaExecutionUtil {
 
   @Nullable
   public static String getRuntimeQualifiedName(final PsiClass aClass) {
-    final PsiClass containingClass = aClass.getContainingClass();
-    if (containingClass != null) {
-      final String parentName = getRuntimeQualifiedName(containingClass);
-      return parentName + "$" + aClass.getName();
-    } else {
-      return aClass.getQualifiedName();
-    }
+    return ClassUtil.getJVMClassName(aClass);
   }
 
   @Nullable
