@@ -28,7 +28,7 @@ public class AutoTestManager {
   private final PsiAwareFileEditorManagerImpl myManager;
   private final Alarm myAutoTestAlarm;
 
-  private static final int AUTOTEST_DELAY = 2000;
+  private static final int AUTOTEST_DELAY = 10000;
   private final Runnable myRunTestsRunnable;
   private boolean myListenerAttached;
   private final MyDocumentAdapter myListener;
