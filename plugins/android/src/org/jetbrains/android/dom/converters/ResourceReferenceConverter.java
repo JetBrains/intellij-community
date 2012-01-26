@@ -165,7 +165,12 @@ public class ResourceReferenceConverter extends ResolvingConverter<ResourceValue
   }
 
   private Set<String> getResourceTypes(ConvertContext context) {
-    ResourceType resourceType = context.getInvocationElement().getAnnotation(ResourceType.class);
+    return getResourceTypes(context.getInvocationElement());
+  }
+
+  @NotNull
+  public Set<String> getResourceTypes(@NotNull DomElement element) {
+    ResourceType resourceType = element.getAnnotation(ResourceType.class);
     Set<String> types = new HashSet<String>(myResourceTypes);
     if (resourceType != null) {
       String s = resourceType.value();

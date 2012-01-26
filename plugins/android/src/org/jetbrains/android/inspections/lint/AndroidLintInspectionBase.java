@@ -5,11 +5,13 @@ import com.android.tools.lint.detector.api.Issue;
 import com.android.tools.lint.detector.api.Severity;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -34,12 +36,12 @@ import java.util.Map;
 /**
  * @author Eugene.Kudelevsky
  */
-abstract class AndroidLintInspectionBase extends GlobalInspectionTool {
+public abstract class AndroidLintInspectionBase extends GlobalInspectionTool {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.inspections.lint.AndroidLintInspectionBase");
 
   private static final Map<Issue, String> ourIssue2InspectionShortName = new HashMap<Issue, String>();
 
-  private final Issue myIssue;
+  protected final Issue myIssue;
   private final String[] myGroupPath;
   private final String myDisplayName;
 
@@ -56,6 +58,29 @@ abstract class AndroidLintInspectionBase extends GlobalInspectionTool {
     myDisplayName = displayName;
 
     addIssue(issue, getShortName());
+  }
+
+  @NotNull
+  protected AndroidLintQuickFix[] getQuickFixes(@NotNull String message) {
+    return AndroidLintQuickFix.EMPTY_ARRAY;
+  }
+
+  @NotNull
+  protected IntentionAction[] getIntentions(@NotNull PsiElement startElement, @NotNull PsiElement endElement) {
+    return IntentionAction.EMPTY_ARRAY;
+  }
+  
+  @NotNull
+  private LocalQuickFix[] getLocalQuickFixes(@NotNull PsiElement startElement, @NotNull PsiElement endElement, @NotNull String message) {
+    final AndroidLintQuickFix[] fixes = getQuickFixes(message);
+    final LocalQuickFix[] result = new LocalQuickFix[fixes.length];
+    
+    for (int i = 0; i < fixes.length; i++) {
+      if (fixes[i].isApplicable(startElement, endElement, true)) {
+        result[i] = new MyLocalQuickFix(fixes[i]);
+      }
+    }
+    return result;
   }
 
   @Override
@@ -81,7 +106,7 @@ abstract class AndroidLintInspectionBase extends GlobalInspectionTool {
     for (final Map.Entry<File, List<ProblemData>> entry : file2ProblemList.entrySet()) {
       final File file = entry.getKey();
       final VirtualFile vFile = LocalFileSystem.getInstance().findFileByIoFile(file);
-      
+
       if (vFile == null) {
         continue;
       }
@@ -104,9 +129,9 @@ abstract class AndroidLintInspectionBase extends GlobalInspectionTool {
   }
 
   @NotNull
-  private static ProblemDescriptor[] computeProblemDescriptors(@NotNull PsiFile psiFile,
-                                                               @NotNull InspectionManager manager,
-                                                               @NotNull List<ProblemData> problems) {
+  private ProblemDescriptor[] computeProblemDescriptors(@NotNull PsiFile psiFile,
+                                                        @NotNull InspectionManager manager,
+                                                        @NotNull List<ProblemData> problems) {
     final List<ProblemDescriptor> result = new ArrayList<ProblemDescriptor>();
 
     for (ProblemData problemData : problems) {
@@ -128,9 +153,9 @@ abstract class AndroidLintInspectionBase extends GlobalInspectionTool {
             }
           }
         }
-        
+
         if (f != null) {
-          result.add(manager.createProblemDescriptor(f, message, false, LocalQuickFix.EMPTY_ARRAY,
+          result.add(manager.createProblemDescriptor(f, message, false, getLocalQuickFixes(f, f, message),
                                                      ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
         }
       }
@@ -140,7 +165,8 @@ abstract class AndroidLintInspectionBase extends GlobalInspectionTool {
 
         if (startElement != null && endElement != null) {
           result.add(manager.createProblemDescriptor(startElement, endElement, message + "#loc",
-                                                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false));
+                                                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false,
+                                                     getLocalQuickFixes(startElement, endElement, message)));
         }
       }
     }
@@ -218,7 +244,7 @@ abstract class AndroidLintInspectionBase extends GlobalInspectionTool {
 
   @Override
   public boolean isEnabledByDefault() {
-    return true;
+    return myIssue.isEnabledByDefault();
   }
 
   @NotNull
@@ -252,6 +278,31 @@ abstract class AndroidLintInspectionBase extends GlobalInspectionTool {
       default:
         LOG.error("Unknown severity " + severity);
         return null;
+    }
+  }
+  
+  static class MyLocalQuickFix implements LocalQuickFix {
+    private final AndroidLintQuickFix myLintQuickFix;
+
+    MyLocalQuickFix(@NotNull AndroidLintQuickFix lintQuickFix) {
+      myLintQuickFix = lintQuickFix;
+    }
+
+    @NotNull
+    @Override
+    public String getName() {
+      return myLintQuickFix.getName();
+    }
+
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return AndroidBundle.message("android.lint.quickfixes.family");
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      myLintQuickFix.apply(descriptor.getStartElement(), descriptor.getEndElement(), null);
     }
   }
 }

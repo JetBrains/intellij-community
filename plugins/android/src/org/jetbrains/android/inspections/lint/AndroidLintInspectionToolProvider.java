@@ -1,7 +1,13 @@
 package org.jetbrains.android.inspections.lint;
 
 import com.android.tools.lint.checks.*;
+import com.android.tools.lint.detector.api.Issue;
+import com.android.tools.lint.detector.api.LintConstants;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionToolProvider;
+import com.intellij.psi.PsiElement;
+import org.jetbrains.android.util.AndroidBundle;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene.Kudelevsky
@@ -9,11 +15,11 @@ import com.intellij.codeInspection.InspectionToolProvider;
 public class AndroidLintInspectionToolProvider implements InspectionToolProvider {
   @Override
   public Class[] getInspectionClasses() {
-    return new Class[] {
+    return new Class[]{
       AndroidLintContentDescriptionInspection.class,
       AndroidLintAdapterViewChildrenInspection.class,
       AndroidLintScrollViewCountInspection.class,
-      AndroidLintDeprecatedInspection.class,
+      //AndroidLintDeprecatedInspection.class,
       AndroidLintMissingPrefixInspection.class,
       AndroidLintDuplicateIdsInspection.class,
       AndroidLintGridLayoutInspection.class,
@@ -169,29 +175,44 @@ public class AndroidLintInspectionToolProvider implements InspectionToolProvider
     public AndroidLintContentDescriptionInspection() {
       super("Missing content description", AccessibilityDetector.ISSUE);
     }
+
+    @NotNull
+    protected AndroidLintQuickFix[] getQuickFixes(@NotNull String message) {
+      return new AndroidLintQuickFix[]{
+        new SetAttributeQuickFix(AndroidBundle.message("android.lint.inspections.add.content.description"),
+                                 LintConstants.ATTR_CONTENT_DESCRIPTION, null)
+      };
+    }
   }
 
   public static class AndroidLintAdapterViewChildrenInspection extends AndroidLintInspectionBase {
     public AndroidLintAdapterViewChildrenInspection() {
-      super("AdapterView element cannot have children", ChildCountDetector.ADAPTERVIEW_ISSUE);
+      super(AndroidBundle.message("android.lint.inspections.adapter.view.children"), ChildCountDetector.ADAPTERVIEW_ISSUE);
     }
   }
 
   public static class AndroidLintScrollViewCountInspection extends AndroidLintInspectionBase {
     public AndroidLintScrollViewCountInspection() {
-      super("ScrollView element can have only one child", ChildCountDetector.SCROLLVIEW_ISSUE);
+      super(AndroidBundle.message("android.lint.inspections.scroll.view.children"), ChildCountDetector.SCROLLVIEW_ISSUE);
     }
   }
 
-  public static class AndroidLintDeprecatedInspection extends AndroidLintInspectionBase {
+  // it seems we don't need it because we have our own 'deprecated api' inspection
+  /*public static class AndroidLintDeprecatedInspection extends AndroidLintInspectionBase {
     public AndroidLintDeprecatedInspection() {
-      super("Deprecated XML elements", DeprecationDetector.ISSUE);
+      super(AndroidBundle.message("android.lint.inspections.deprecated"), DeprecationDetector.ISSUE);
     }
-  }
+  }*/
 
   public static class AndroidLintMissingPrefixInspection extends AndroidLintInspectionBase {
     public AndroidLintMissingPrefixInspection() {
-      super("Missing android XML namespace", DetectMissingPrefix.MISSING_NAMESPACE);
+      super(AndroidBundle.message("android.lint.inspections.missing.prefix"), DetectMissingPrefix.MISSING_NAMESPACE);
+    }
+
+    @NotNull
+    @Override
+    protected AndroidLintQuickFix[] getQuickFixes(@NotNull String message) {
+      return new AndroidLintQuickFix[]{new AddMissingPrefixQuickFix()};
     }
   }
 
@@ -211,11 +232,25 @@ public class AndroidLintInspectionToolProvider implements InspectionToolProvider
     public AndroidLintHardcodedTextInspection() {
       super("Hardcoded text", HardcodedValuesDetector.ISSUE);
     }
+
+    @NotNull
+    @Override
+    protected IntentionAction[] getIntentions(@NotNull final PsiElement startElement, @NotNull PsiElement endElement) {
+      return new IntentionAction[]{new AndroidAddStringResourceQuickFix(startElement)};
+    }
   }
 
   public static class AndroidLintInefficientWeightInspection extends AndroidLintInspectionBase {
     public AndroidLintInefficientWeightInspection() {
       super("Inefficient layout weight", InefficientWeightDetector.INEFFICIENT_WEIGHT);
+    }
+
+    @NotNull
+    @Override
+    protected AndroidLintQuickFix[] getQuickFixes(@NotNull String message) {
+      return new AndroidLintQuickFix[]{
+        new InefficientWeightQuickFix()
+      };
     }
   }
 
@@ -228,6 +263,15 @@ public class AndroidLintInspectionToolProvider implements InspectionToolProvider
   public static class AndroidLintDisableBaselineAlignmentInspection extends AndroidLintInspectionBase {
     public AndroidLintDisableBaselineAlignmentInspection() {
       super("Missing baselineAligned attribute", InefficientWeightDetector.BASELINE_WEIGHTS);
+    }
+
+    @NotNull
+    @Override
+    protected AndroidLintQuickFix[] getQuickFixes(@NotNull String message) {
+      return new AndroidLintQuickFix[]{
+        new SetAttributeQuickFix(AndroidBundle.message("android.lint.inspections.set.baseline.attribute"),
+                                 LintConstants.ATTR_BASELINE_ALIGNED, "false")
+      };
     }
   }
 
@@ -253,6 +297,12 @@ public class AndroidLintInspectionToolProvider implements InspectionToolProvider
     public AndroidLintObsoleteLayoutParamInspection() {
       super("Obsolete layout params", ObsoleteLayoutParamsDetector.ISSUE);
     }
+
+    @NotNull
+    @Override
+    protected AndroidLintQuickFix[] getQuickFixes(@NotNull String message) {
+      return new AndroidLintQuickFix[]{new RemoveAttributeQuickFix()};
+    }
   }
 
   public static class AndroidLintProguardInspection extends AndroidLintInspectionBase {
@@ -265,17 +315,38 @@ public class AndroidLintInspectionToolProvider implements InspectionToolProvider
     public AndroidLintPxUsageInspection() {
       super("Using 'px' dimension", PxUsageDetector.ISSUE);
     }
+
+    @NotNull
+    @Override
+    protected AndroidLintQuickFix[] getQuickFixes(@NotNull String message) {
+      return new AndroidLintQuickFix[]{new ConvertToDpQuickFix()};
+    }
   }
 
   public static class AndroidLintScrollViewSizeInspection extends AndroidLintInspectionBase {
     public AndroidLintScrollViewSizeInspection() {
       super("ScrollView size validation", ScrollViewChildDetector.ISSUE);
     }
+
+    @NotNull
+    @Override
+    protected AndroidLintQuickFix[] getQuickFixes(@NotNull String message) {
+      return new AndroidLintQuickFix[]{new SetScrollViewSizeQuickFix()};
+    }
   }
 
   public static class AndroidLintExportedServiceInspection extends AndroidLintInspectionBase {
     public AndroidLintExportedServiceInspection() {
       super("Exported service does not require permission", SecurityDetector.EXPORTED_SERVICE);
+    }
+
+    @NotNull
+    @Override
+    protected AndroidLintQuickFix[] getQuickFixes(@NotNull String message) {
+      return new AndroidLintQuickFix[]{
+        new SetAttributeQuickFix(AndroidBundle.message("android.lint.inspections.add.permission.attribute"),
+                                 LintConstants.ATTR_PERMISSION, null)
+      };
     }
   }
 
@@ -295,6 +366,15 @@ public class AndroidLintInspectionToolProvider implements InspectionToolProvider
     public AndroidLintTextFieldsInspection() {
       super("Text field missing inputType or hint settings", TextFieldDetector.ISSUE);
     }
+
+    @NotNull
+    @Override
+    protected AndroidLintQuickFix[] getQuickFixes(@NotNull String message) {
+      return new AndroidLintQuickFix[]{
+        new SetAttributeQuickFix(AndroidBundle.message("android.lint.inspections.add.input.type.attribute"),
+                                 LintConstants.ATTR_INPUT_TYPE, null)
+      };
+    }
   }
 
   public static class AndroidLintTooManyViewsInspection extends AndroidLintInspectionBase {
@@ -309,31 +389,31 @@ public class AndroidLintInspectionToolProvider implements InspectionToolProvider
     }
   }
 
-  public static class AndroidLintTypographyDashesInspection extends AndroidLintInspectionBase {
+  public static class AndroidLintTypographyDashesInspection extends AndroidLintTypographyInspectionBase {
     public AndroidLintTypographyDashesInspection() {
       super("Hyphen can be replaced by dash", TypographyDetector.DASHES);
     }
   }
 
-  public static class AndroidLintTypographyQuotesInspection extends AndroidLintInspectionBase {
+  public static class AndroidLintTypographyQuotesInspection extends AndroidLintTypographyInspectionBase {
     public AndroidLintTypographyQuotesInspection() {
       super("Straight quotes can be replaced by curvy quotes", TypographyDetector.QUOTES);
     }
   }
 
-  public static class AndroidLintTypographyFractionsInspection extends AndroidLintInspectionBase {
+  public static class AndroidLintTypographyFractionsInspection extends AndroidLintTypographyInspectionBase {
     public AndroidLintTypographyFractionsInspection() {
       super("Fraction string can be replaced with fraction character", TypographyDetector.FRACTIONS);
     }
   }
 
-  public static class AndroidLintTypographyEllipsisInspection extends AndroidLintInspectionBase {
+  public static class AndroidLintTypographyEllipsisInspection extends AndroidLintTypographyInspectionBase {
     public AndroidLintTypographyEllipsisInspection() {
       super("Ellipsis string can be replaced with ellipsis character", TypographyDetector.ELLIPSIS);
     }
   }
 
-  public static class AndroidLintTypographyOtherInspection extends AndroidLintInspectionBase {
+  public static class AndroidLintTypographyOtherInspection extends AndroidLintTypographyInspectionBase {
     public AndroidLintTypographyOtherInspection() {
       super("Other typographical problems", TypographyDetector.OTHER);
     }
@@ -354,6 +434,24 @@ public class AndroidLintInspectionToolProvider implements InspectionToolProvider
   public static class AndroidLintUselessLeafInspection extends AndroidLintInspectionBase {
     public AndroidLintUselessLeafInspection() {
       super("Useless leaf layout", UselessViewDetector.USELESS_LEAF);
+    }
+
+    @NotNull
+    @Override
+    protected AndroidLintQuickFix[] getQuickFixes(@NotNull String message) {
+      return new AndroidLintQuickFix[]{new RemoveUselessViewQuickFix(myIssue)};
+    }
+  }
+
+  private static class AndroidLintTypographyInspectionBase extends AndroidLintInspectionBase {
+    public AndroidLintTypographyInspectionBase(String displayName, Issue issue) {
+      super(displayName, issue);
+    }
+
+    @NotNull
+    @Override
+    protected AndroidLintQuickFix[] getQuickFixes(@NotNull String message) {
+      return new AndroidLintQuickFix[] {new TypographyQuickFix(myIssue, message)};
     }
   }
 }

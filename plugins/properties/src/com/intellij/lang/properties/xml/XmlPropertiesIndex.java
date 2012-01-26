@@ -5,10 +5,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.indexing.*;
-import com.intellij.util.io.DataExternalizer;
-import com.intellij.util.io.EnumeratorStringDescriptor;
-import com.intellij.util.io.IOUtil;
-import com.intellij.util.io.KeyDescriptor;
+import com.intellij.util.io.*;
 import com.intellij.util.xml.NanoXmlUtil;
 import net.n3.nanoxml.StdXMLReader;
 import org.jetbrains.annotations.NotNull;
@@ -91,7 +88,7 @@ public class XmlPropertiesIndex extends FileBasedIndexExtension<XmlPropertiesInd
   private static MyIXMLBuilderAdapter parse(byte[] bytes, boolean stopIfAccepted) {
     StdXMLReader reader;
     try {
-      reader = new StdXMLReader(new ByteArrayInputStream(bytes)) {
+      reader = new StdXMLReader(new UnsyncByteArrayInputStream(bytes)) {
         @Override
         public Reader openStream(String publicID, String systemID) throws IOException {
           if (!"http://java.sun.com/dtd/properties.dtd".equals(systemID)) throw new IOException();

@@ -7,11 +7,11 @@ import com.android.tools.lint.client.api.Lint;
 import com.android.tools.lint.detector.api.Issue;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.codeInspection.ex.CustomEditInspectionToolsSettingsAction;
 import com.intellij.codeInspection.ex.DisableInspectionToolAction;
-import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.ex.EditInspectionToolsSettingsAction;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.ExternalAnnotator;
@@ -22,7 +22,10 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
@@ -30,6 +33,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidRootUtil;
+import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,7 +66,7 @@ public class AndroidLintExternalAnnotator extends ExternalAnnotator<State, State
     }
 
     final FileType fileType = file.getFileType();
-    
+
     if (fileType == StdFileTypes.XML) {
       if (facet.getLocalResourceManager().getFileResourceType(file) == null &&
           AndroidRootUtil.getManifestFile(module) != vFile) {
@@ -95,7 +99,7 @@ public class AndroidLintExternalAnnotator extends ExternalAnnotator<State, State
           return state.getIssues();
         }
       }, client);
-      
+
       lint.analyze(Collections.singletonList(new File(state.getMainFile().getPath())), null);
     }
     finally {
@@ -126,10 +130,10 @@ public class AndroidLintExternalAnnotator extends ExternalAnnotator<State, State
       if (!enabled) {
         continue;
       }
-      result.add(issue);      
+      result.add(issue);
     }
     return result;
-  } 
+  }
 
   @Override
   public void apply(@NotNull PsiFile file, State state, @NotNull AnnotationHolder holder) {
@@ -141,31 +145,41 @@ public class AndroidLintExternalAnnotator extends ExternalAnnotator<State, State
       final Issue issue = problemData.getIssue();
       final String message = problemData.getMessage();
       final TextRange range = problemData.getTextRange();
-      
+
       if (range.getStartOffset() == range.getEndOffset()) {
         continue;
       }
 
-      final Pair<AndroidLintInspectionBase, HighlightDisplayLevel> pair = getHighlighLevelAndInspection(issue, file);
+      final Pair<AndroidLintInspectionBase, HighlightDisplayLevel> pair = AndroidLintUtil.getHighlighLevelAndInspection(issue, file);
       if (pair == null) {
         continue;
       }
       final AndroidLintInspectionBase inspection = pair.getFirst();
       final HighlightDisplayLevel displayLevel = pair.getSecond();
-      
+
       final Annotation annotation = createAnnotation(holder, message, range, displayLevel);
 
       if (inspection != null) {
         final HighlightDisplayKey key = HighlightDisplayKey.find(inspection.getShortName());
-        
+
         if (key != null) {
-          annotation.registerFix(new MyDisableInspectionFix(key));
-          annotation.registerFix(new CustomEditInspectionToolsSettingsAction(key, new Computable<String>() {
-            @Override
-            public String compute() {
-              return "Edit '" + inspection.getDisplayName() + "' inspection settings";
+          final PsiElement startElement = file.findElementAt(range.getStartOffset());
+          final PsiElement endElement = file.findElementAt(range.getEndOffset() - 1);
+
+          if (startElement != null && endElement != null) {
+            for (AndroidLintQuickFix fix : inspection.getQuickFixes(message)) {
+              if (fix.isApplicable(startElement, endElement, false)) {
+                annotation.registerFix(new MyFixingIntention(fix, startElement, endElement));
+              }
             }
-          }));
+
+            for (IntentionAction intention : inspection.getIntentions(startElement, endElement)) {
+              annotation.registerFix(intention);
+            }
+          }
+
+          annotation.registerFix(new MyDisableInspectionFix(key));
+          annotation.registerFix(new MyEditInspectionToolsSettingsAction(key, inspection));
         }
       }
     }
@@ -187,36 +201,6 @@ public class AndroidLintExternalAnnotator extends ExternalAnnotator<State, State
     else {
       return holder.createWarningAnnotation(range, message);
     }
-  }
-
-  @Nullable
-  private static Pair<AndroidLintInspectionBase, HighlightDisplayLevel> getHighlighLevelAndInspection(@NotNull Issue issue,
-                                                                                                      @NotNull PsiElement context) {
-    final String inspectionShortName = AndroidLintInspectionBase.getInspectionShortNameByIssue(issue);
-    if (inspectionShortName == null) {
-      return null;
-    }
-
-    final HighlightDisplayKey key = HighlightDisplayKey.find(inspectionShortName);
-    if (key == null) {
-      return null;
-    }
-
-    final InspectionProfile profile = InspectionProjectProfileManager.getInstance(context.getProject()).getInspectionProfile();
-    if (!profile.isToolEnabled(key, context)) {
-      return null;
-    }
-
-    final InspectionToolWrapper toolWrapper =
-      (InspectionToolWrapper)profile.getInspectionTool(inspectionShortName, context);
-    if (toolWrapper == null) {
-      return null;
-    }
-    
-    final AndroidLintInspectionBase inspection = (AndroidLintInspectionBase)toolWrapper.getTool();
-    final HighlightDisplayLevel errorLevel = profile.getErrorLevel(key, context); 
-    return new Pair<AndroidLintInspectionBase, HighlightDisplayLevel>(inspection,
-                                                                      errorLevel != null ? errorLevel : HighlightDisplayLevel.WARNING);
   }
 
   private static class MyDisableInspectionFix implements IntentionAction, Iconable {
@@ -256,6 +240,92 @@ public class AndroidLintExternalAnnotator extends ExternalAnnotator<State, State
     @Override
     public Icon getIcon(@IconFlags int flags) {
       return myDisableInspectionToolAction.getIcon(flags);
+    }
+  }
+
+  public static class MyFixingIntention implements IntentionAction, HighPriorityAction {
+    private final AndroidLintQuickFix myQuickFix;
+    private final PsiElement myStartElement;
+    private final PsiElement myEndElement;
+
+    public MyFixingIntention(@NotNull AndroidLintQuickFix quickFix, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
+      myQuickFix = quickFix;
+      myStartElement = startElement;
+      myEndElement = endElement;
+    }
+
+    @NotNull
+    @Override
+    public String getText() {
+      return myQuickFix.getName();
+    }
+
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return AndroidBundle.message("android.lint.quickfixes.family");
+    }
+
+    @Override
+    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+      return true;
+    }
+
+    @Override
+    public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+      myQuickFix.apply(myStartElement, myEndElement, editor);
+    }
+
+    @Override
+    public boolean startInWriteAction() {
+      return true;
+    }
+
+    @NotNull
+    public AndroidLintQuickFix getQuickFix() {
+      return myQuickFix;
+    }
+  }
+
+  private static class MyEditInspectionToolsSettingsAction implements IntentionAction, Iconable {
+    private final EditInspectionToolsSettingsAction myEditInspectionToolsSettingsAction;
+    private final AndroidLintInspectionBase myInspection;
+
+    private MyEditInspectionToolsSettingsAction(@NotNull HighlightDisplayKey key, @NotNull final AndroidLintInspectionBase inspection) {
+      myEditInspectionToolsSettingsAction = new EditInspectionToolsSettingsAction(key);
+      myInspection = inspection;
+    }
+
+    @NotNull
+    @Override
+    public String getText() {
+      return "Edit '" + myInspection.getDisplayName() + "' inspection settings";
+    }
+
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return myEditInspectionToolsSettingsAction.getFamilyName();
+    }
+
+    @Override
+    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+      return true;
+    }
+
+    @Override
+    public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+      myEditInspectionToolsSettingsAction.invoke(project, editor, file);
+    }
+
+    @Override
+    public boolean startInWriteAction() {
+      return myEditInspectionToolsSettingsAction.startInWriteAction();
+    }
+
+    @Override
+    public Icon getIcon(@IconFlags int flags) {
+      return myEditInspectionToolsSettingsAction.getIcon(flags);
     }
   }
 }

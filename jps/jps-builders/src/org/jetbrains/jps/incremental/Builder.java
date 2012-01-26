@@ -1,11 +1,13 @@
 package org.jetbrains.jps.incremental;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.ether.dependencyView.Mappings;
 import org.jetbrains.jps.Module;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.incremental.storage.SourceToOutputMapping;
+import sun.util.LocaleServiceProviderPool;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,6 +18,8 @@ import java.util.*;
  *         Date: 9/17/11
  */
 public abstract class Builder {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.Builder");
+  
   private static final Key<Set<File>> ALL_AFFECTED_FILES_KEY = Key.create("_all_affected_files_");
   private static final Key<Set<File>> ALL_COMPILED_FILES_KEY = Key.create("_all_compiled_files_");
 
@@ -70,6 +74,24 @@ public abstract class Builder {
             delta, removedPaths, successfullyCompiled, allCompiledFiles, allAffectedFiles
           );
 
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Differentiate Results:");
+            
+            LOG.debug("   Compiled Files:");
+            
+            for (final File c : allCompiledFiles) {
+              LOG.debug("      " + c.getAbsolutePath());
+            }
+
+            LOG.debug("   Affected Files:");
+
+            for (final File c : allAffectedFiles) {
+              LOG.debug("      " + c.getAbsolutePath());
+            }
+            
+            LOG.debug("End Of Differentiate Results.");            
+          }
+          
           if (incremental) {
             final Set<File> newlyAffectedFiles = new HashSet<File>(allAffectedFiles);
             newlyAffectedFiles.removeAll(affectedBeforeDif);

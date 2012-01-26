@@ -42,8 +42,8 @@ public class Mappings {
     LOG.debug(s);
   }
 
-  private void debug(final DependencyContext.S s) {
-    myDebugS.debug(s);
+  private void debug(final String comment, final DependencyContext.S s) {
+    myDebugS.debug(comment, s);
   }
 
   private MultiMaplet<DependencyContext.S, DependencyContext.S> myClassToSubclasses;
@@ -534,16 +534,25 @@ public class Mappings {
                           final Collection<UsageRepr.Usage> affectedUsages,
                           final Collection<DependencyContext.S> dependants,
                           final boolean usages) {
+      debug("Affecting subclasses of class: ", className);
+      
       final DependencyContext.S fileName = myClassToSourceFile.get(className);
 
       if (fileName == null) {
+        debug("No source file detected for class ", className);
+        debug("End of affectSubclasses");
         return;
       }
 
+      debug("Source file name: ", fileName);
+
       if (usages) {
+        debug("Class usages affection requested");
+
         final ClassRepr classRepr = reprByName(className);
 
         if (classRepr != null) {
+          debug("Added class usage for ", classRepr.name);
           affectedUsages.add(classRepr.createUsage());
         }
       }
@@ -730,32 +739,38 @@ public class Mappings {
 
     // Public branch --- hopeless
     if ((member.access & Opcodes.ACC_PUBLIC) > 0) {
-      debug("Switched to non-incremental mode");
+      debug("Public access, switching to a non-incremental mode");
       return false;
     }
 
     // Protected branch
     if ((member.access & Opcodes.ACC_PROTECTED) > 0) {
-      debug("Softening non-incremental decision: adding all relevant subclasses for a recompilation");
+      debug("Protected access, softening non-incremental decision: adding all relevant subclasses for a recompilation");
+      debug("Root class: ", owner);
 
       final Collection<DependencyContext.S> propagated = self.propagateFieldAccess(isField ? member.name : myContext.get(""), owner);
 
       for (DependencyContext.S className : propagated) {
-        affectedFiles.add(new File(myContext.getValue(myClassToSourceFile.get(className))));
+        final String fileName = myContext.getValue(myClassToSourceFile.get(className));
+        debug("Adding " + fileName);
+        affectedFiles.add(new File(fileName));
       }
     }
 
-    debug("Softening non-incremental decision: adding all package classes for a recompilation");
-
     final String packageName = ClassRepr.getPackageName(myContext.getValue(isField ? owner : member.name));
-
+    
+    debug("Softening non-incremental decision: adding all package classes for a recompilation");
+    debug("Package name: " + packageName);
+    
     // Package-local branch    
     for (Map.Entry<DependencyContext.S, DependencyContext.S> e : myClassToSourceFile.entrySet()) {
       final DependencyContext.S className = e.getKey();
       final DependencyContext.S fileName = e.getValue();
 
       if (ClassRepr.getPackageName(myContext.getValue(className)).equals(packageName)) {
-        affectedFiles.add(new File(myContext.getValue(fileName)));
+        final String f = myContext.getValue(fileName);
+        debug("Adding: " + f);
+        affectedFiles.add(new File(f));
       }
     }
 
@@ -767,6 +782,8 @@ public class Mappings {
                                final Collection<File> filesToCompile,
                                final Collection<File> compiledFiles,
                                final Collection<File> affectedFiles) {
+    debug("Begin of Differentiate:");
+    
     delta.compensateRemovedContent(filesToCompile);
 
     final Util u = new Util(delta);
@@ -798,14 +815,12 @@ public class Mappings {
 
       final Difference.Specifier<ClassRepr> classDiff = Difference.make(pastClasses, classes);
 
-      debug("Processing changed classes");
-
+      debug("Processing changed classes:");
       for (Pair<ClassRepr, Difference> changed : classDiff.changed()) {
         final ClassRepr it = changed.first;
         final ClassRepr.Diff diff = (ClassRepr.Diff)changed.second;
 
-        debug("Changed: ");
-        debug(it.name);
+        debug("Changed: ", it.name);
 
         final int addedModifiers = diff.addedModifiers();
         final int removedModifiers = diff.removedModifiers();
@@ -815,24 +830,34 @@ public class Mappings {
         final boolean signatureChanged = (diff.base() & Difference.SIGNATURE) > 0;
 
         if (superClassChanged || interfacesChanged || signatureChanged) {
+          debug("Superclass changed: " + superClassChanged);
+          debug("Interfaces changed: " + interfacesChanged);
+          debug("Signature changed " + signatureChanged);
+          
           final boolean extendsChanged = superClassChanged && !diff.extendsAdded();
           final boolean interfacesRemoved = interfacesChanged && !diff.interfaces().removed().isEmpty();
 
+          debug("Extends changed: " + extendsChanged);
+          debug("Interfaces removed: " + interfacesRemoved);          
+          
           u.affectSubclasses(it.name, affectedFiles, affectedUsages, dependants, extendsChanged || interfacesRemoved || signatureChanged);
         }
 
         if ((diff.addedModifiers() & Opcodes.ACC_INTERFACE) > 0 || (diff.removedModifiers() & Opcodes.ACC_INTERFACE) > 0) {
+          debug("Class-to-interface or interface-to-class conversion detected, added class usage to affected usages");
           affectedUsages.add(it.createUsage());
         }
 
         if (it.isAnnotation() && it.policy == RetentionPolicy.SOURCE) {
           debug("Annotation, retention policy = SOURCE => a switch to non-incremental mode requested");
           if (!incrementalDecision(it.outerClassName, it, affectedFiles)) {
+            debug("End of Differentiate, returning false");            
             return false;
           }
         }
 
         if ((addedModifiers & Opcodes.ACC_PROTECTED) > 0) {
+          debug("Introduction of 'protected' modifier detected, adding class usage + inheritance constraint to affected usages");
           final UsageRepr.Usage usage = it.createUsage();
 
           affectedUsages.add(usage);
@@ -840,6 +865,7 @@ public class Mappings {
         }
 
         if (diff.packageLocalOn()) {
+          debug("Introduction of 'package local' access detected, adding class usage + package constraint to affected usages");
           final UsageRepr.Usage usage = it.createUsage();
 
           affectedUsages.add(usage);
@@ -847,46 +873,52 @@ public class Mappings {
         }
 
         if ((addedModifiers & Opcodes.ACC_FINAL) > 0 || (addedModifiers & Opcodes.ACC_PRIVATE) > 0) {
+          debug("Introduction of 'private' or 'final' modifier(s) detected, adding class usage to affected usages");
           affectedUsages.add(it.createUsage());
         }
 
-        if ((addedModifiers & Opcodes.ACC_ABSTRACT) > 0) {
-          affectedUsages.add(UsageRepr.createClassNewUsage(myContext, it.name));
-        }
-
-        if ((addedModifiers & Opcodes.ACC_STATIC) > 0 ||
-            (removedModifiers & Opcodes.ACC_STATIC) > 0 ||
-            (addedModifiers & Opcodes.ACC_ABSTRACT) > 0) {
+        if ((addedModifiers & Opcodes.ACC_ABSTRACT) > 0 || (addedModifiers & Opcodes.ACC_STATIC) > 0) {
+          debug("Introduction of 'abstract' or 'static' modifier(s) detected, adding class new usage to affected usages");
           affectedUsages.add(UsageRepr.createClassNewUsage(myContext, it.name));
         }
 
         if (it.isAnnotation()) {
+          debug("Class is annotation, performing annotation-specific analysis");
+          
           if (diff.retentionChanged()) {
+            debug("Retention policy change detected, adding class usage to affected usages");
             affectedUsages.add(it.createUsage());
           }
           else {
             final Collection<ElementType> removedtargets = diff.targets().removed();
 
             if (removedtargets.contains(ElementType.LOCAL_VARIABLE)) {
-              debug("Annotation, removed target contains LOCAL_VARIABLE => a switch to non-incremental mode requested");
+              debug("Removed target contains LOCAL_VARIABLE => a switch to non-incremental mode requested");
               if (!incrementalDecision(it.outerClassName, it, affectedFiles)) {
+                debug("End of Differentiate, returning false");                
                 return false;
               }
             }
 
             if (!removedtargets.isEmpty()) {
+              debug("Removed some annotation targets, adding annotation query");
               annotationQuery.add((UsageRepr.AnnotationUsage)UsageRepr
                 .createAnnotationUsage(myContext, TypeRepr.createClassType(myContext, it.name), null, removedtargets));
             }
 
             for (MethodRepr m : diff.methods().added()) {
               if (!m.hasValue()) {
+                debug("Added method with no default value: " + m.name);
+                debug("Adding class usage to affected usages");
                 affectedUsages.add(it.createUsage());
               }
             }
           }
+          
+          debug("End of annotation-specific analysis");
         }
 
+        debug("Processing added methods: ");
         for (MethodRepr m : diff.methods().added()) {
           if (it.isAnnotation()) {
             continue;
@@ -984,7 +1016,9 @@ public class Mappings {
             }
           }
         }
-
+        debug("End of added methods processing");
+        
+        debug("Processing removed methods:");        
         for (MethodRepr m : diff.methods().removed()) {
           final Collection<Pair<MethodRepr, ClassRepr>> overridenMethods = u.findOverridenMethods(m, it);
           final Collection<DependencyContext.S> propagated = u.propagateMethodAccess(m.name, it.name);
@@ -1053,7 +1087,9 @@ public class Mappings {
             }
           }
         }
-
+        debug("End of removed methods processing");        
+        
+        debug("Processing changed methods:");
         for (Pair<MethodRepr, Difference> mr : diff.methods().changed()) {
           final MethodRepr m = mr.first;
           final MethodRepr.Diff d = (MethodRepr.Diff)mr.second;
@@ -1129,9 +1165,11 @@ public class Mappings {
             }
           }
         }
-
+        debug("End of changed methods processing");        
+        
         final int mask = Opcodes.ACC_STATIC | Opcodes.ACC_FINAL;
 
+        debug("Processing added fields");
         for (FieldRepr f : diff.fields().added()) {
           final boolean fPrivate = (f.access & Opcodes.ACC_PRIVATE) > 0;
           final boolean fProtected = (f.access & Opcodes.ACC_PROTECTED) > 0;
@@ -1214,16 +1252,16 @@ public class Mappings {
             }
           }
         }
-
-        debug("Processing removed fields");
-
+        debug("End of added fields processing");
+        
+        debug("Processing removed fields:");
         for (FieldRepr f : diff.fields().removed()) {
-          debug("Field ");
-          debug(f.name);
+          debug("Field: ", it.name);
 
           if ((f.access & Opcodes.ACC_PRIVATE) == 0 && (f.access & mask) == mask && f.hasValue()) {
             debug("Field had value and was (non-private) final static => a switch to non-incremental mode requested");
             if (!incrementalDecision(it.name, f, affectedFiles)) {
+              debug("End of Differentiate, returning false");              
               return false;
             }
           }
@@ -1231,20 +1269,20 @@ public class Mappings {
           final Collection<DependencyContext.S> propagated = u.propagateFieldAccess(f.name, it.name);
           u.affectFieldUsages(f, propagated, f.createUsage(myContext, it.name), affectedUsages, dependants);
         }
+        debug("End of removed fields processing");
 
-        debug("Processing changed fields");
-
+        debug("Processing changed fields:");
         for (Pair<FieldRepr, Difference> f : diff.fields().changed()) {
           final Difference d = f.second;
           final FieldRepr field = f.first;
 
-          debug("Field ");
-          debug(field.name);
+          debug("Field: ", it.name);
 
           if ((field.access & Opcodes.ACC_PRIVATE) == 0 && (field.access & mask) == mask) {
             if ((d.base() & Difference.ACCESS) > 0 || (d.base() & Difference.VALUE) > 0) {
               debug("Inline field changed it's access or value => a switch to non-incremental mode requested");
               if (!incrementalDecision(it.name, field, affectedFiles)){
+                debug("End of Differentiate, returning false");                
                 return false;
               }
             }
@@ -1293,12 +1331,18 @@ public class Mappings {
             }
           }
         }
+        debug("End of changed fields processing");        
       }
-
+      debug("End of changed classes processing");
+      
+      debug("Processing removed classes:");
       for (ClassRepr c : classDiff.removed()) {
+        debug("Adding usages of class ", c.name);
         affectedUsages.add(c.createUsage());
       }
+      debug("End of removed classes processing.");
 
+      debug("Processing added classes:");
       for (ClassRepr c : classDiff.added()) {
         final Collection<DependencyContext.S> depClasses = myClassToClassDependency.get(c.name);
 
@@ -1307,12 +1351,16 @@ public class Mappings {
             final DependencyContext.S fName = myClassToSourceFile.get(depClass);
 
             if (fName != null) {
-              affectedFiles.add(new File(myContext.getValue(fName)));
+              final String f = myContext.getValue(fName);
+              debug("Adding dependent file " + f); 
+              affectedFiles.add(new File(f));
             }
           }
         }
       }
+      debug("End of added classes processing.");
 
+      debug("Checking dependent files:");
       if (dependants != null) {
         final Set<DependencyContext.S> dependentFiles = new HashSet<DependencyContext.S>();
 
@@ -1332,6 +1380,8 @@ public class Mappings {
             continue filewise;
           }
 
+          debug("Dependent file: " + theFile.getAbsolutePath());
+
           final Collection<UsageRepr.Cluster> depClusters = mySourceFileToUsages.get(depFile);
 
           for (UsageRepr.Cluster depCluster : depClusters) {
@@ -1347,6 +1397,7 @@ public class Mappings {
                   final Util.UsageConstraint constraint = usageConstraints.get(usage);
 
                   if (constraint == null) {
+                    debug("Added file with no constraints");
                     affectedFiles.add(theFile);
                     continue filewise;
                   }
@@ -1354,6 +1405,7 @@ public class Mappings {
                     final Set<DependencyContext.S> residenceClasses = depCluster.getResidence(usage);
                     for (DependencyContext.S residentName : residenceClasses) {
                       if (constraint.checkResidence(residentName)) {
+                        debug("Added file with satisfied constraint");
                         affectedFiles.add(theFile);
                         continue filewise;
                       }
@@ -1369,6 +1421,7 @@ public class Mappings {
                 for (UsageRepr.Usage usage : annotationUsages) {
                   for (UsageRepr.AnnotationUsage query : annotationQuery) {
                     if (query.satisfies(usage)) {
+                      debug("Added file due to annotation query");
                       affectedFiles.add(theFile);
                       continue filewise;
                     }
@@ -1381,6 +1434,7 @@ public class Mappings {
       }
     }
 
+    debug("End of Differentiate, returning true");    
     return true;
   }
 
