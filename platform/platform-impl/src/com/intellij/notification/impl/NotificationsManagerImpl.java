@@ -91,7 +91,7 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
 
   @Override
   public <T extends Notification> T[] getNotificationsOfType(Class<T> klass, @Nullable final Project project) {
-    final List<Notification> notifications = myModel.getByType(null, createFilter(project, false));
+    final List<Notification> notifications = myModel.getFilteredNotifications(createFilter(project, false));
     final List<T> result = new ArrayList<T>();
     for (final Notification notification : notifications) {
       if (klass.isInstance(notification)) {
@@ -327,8 +327,8 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
     return myModel.remove(notification);
   }
 
-  public Collection<Notification> getByType(@Nullable final NotificationType type, @Nullable final Project project) {
-    return myModel.getByType(type, createFilter(project, false));
+  public Collection<Notification> getAllNotifications(@Nullable final Project project) {
+    return myModel.getFilteredNotifications(createFilter(project, false));
   }
 
   private static class ProjectFilter implements PairFunction<Notification, Project, Boolean> {
