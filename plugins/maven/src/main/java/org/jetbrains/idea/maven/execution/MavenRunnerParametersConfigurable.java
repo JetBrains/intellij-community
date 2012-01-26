@@ -64,53 +64,55 @@ public abstract class MavenRunnerParametersConfigurable implements Configurable,
         }
       });
 
-    MyCompletionProvider profilesCompletionProvider = new MyCompletionProvider(project) {
-      @Override
-      protected void addVariants(@NotNull CompletionResultSet result, MavenProjectsManager manager) {
-        for (String profile : manager.getAvailableProfiles()) {
-          result.addElement(LookupElementBuilder.create(profile));
+    if (!project.isDefault()) {
+      MyCompletionProvider profilesCompletionProvider = new MyCompletionProvider(project) {
+        @Override
+        protected void addVariants(@NotNull CompletionResultSet result, MavenProjectsManager manager) {
+          for (String profile : manager.getAvailableProfiles()) {
+            result.addElement(LookupElementBuilder.create(profile));
+          }
         }
-      }
-    };
-    
-    profilesComponent.setComponent(profilesCompletionProvider.createEditor(project));
+      };
 
-    MyCompletionProvider goalsCompletionProvider = new MyCompletionProvider(project) {
-      
-      private volatile List<LookupElement> myCachedElements;
-      
-      @Override
-      protected void addVariants(@NotNull CompletionResultSet result, MavenProjectsManager manager) {
-        List<LookupElement> cachedElements = myCachedElements;
-        if (cachedElements == null) {
-          Set<String> goals = new HashSet<String>();
-          goals.addAll(MavenConstants.PHASES);
+      profilesComponent.setComponent(profilesCompletionProvider.createEditor(project));
 
-          for (MavenProject mavenProject : manager.getProjects()) {
-            for (MavenPlugin plugin : mavenProject.getPlugins()) {
-              MavenPluginInfo pluginInfo = MavenArtifactUtil.readPluginInfo(manager.getLocalRepository(), plugin.getMavenId());
-              if (pluginInfo != null) {
-                for (MavenPluginInfo.Mojo mojo : pluginInfo.getMojos()) {
-                  goals.add(mojo.getDisplayName());
+      MyCompletionProvider goalsCompletionProvider = new MyCompletionProvider(project) {
+
+        private volatile List<LookupElement> myCachedElements;
+
+        @Override
+        protected void addVariants(@NotNull CompletionResultSet result, MavenProjectsManager manager) {
+          List<LookupElement> cachedElements = myCachedElements;
+          if (cachedElements == null) {
+            Set<String> goals = new HashSet<String>();
+            goals.addAll(MavenConstants.PHASES);
+
+            for (MavenProject mavenProject : manager.getProjects()) {
+              for (MavenPlugin plugin : mavenProject.getPlugins()) {
+                MavenPluginInfo pluginInfo = MavenArtifactUtil.readPluginInfo(manager.getLocalRepository(), plugin.getMavenId());
+                if (pluginInfo != null) {
+                  for (MavenPluginInfo.Mojo mojo : pluginInfo.getMojos()) {
+                    goals.add(mojo.getDisplayName());
+                  }
                 }
               }
             }
+
+            cachedElements = new ArrayList<LookupElement>(goals.size());
+            for (String goal : goals) {
+              cachedElements.add(LookupElementBuilder.create(goal).setIcon(MavenIcons.PHASE_ICON));
+            }
+
+            myCachedElements = cachedElements;
           }
 
-          cachedElements = new ArrayList<LookupElement>(goals.size());
-          for (String goal : goals) {
-            cachedElements.add(LookupElementBuilder.create(goal).setIcon(MavenIcons.PHASE_ICON));
-          }
-
-          myCachedElements = cachedElements;
+          result.addAllElements(cachedElements);
         }
+      };
 
-        result.addAllElements(cachedElements);
-      }
-    };
-    
-    goalsComponent.setComponent(goalsCompletionProvider.createEditor(project));
-    
+      goalsComponent.setComponent(goalsCompletionProvider.createEditor(project));
+    }
+
     setAnchor(profilesComponent.getLabel());
   }
 
