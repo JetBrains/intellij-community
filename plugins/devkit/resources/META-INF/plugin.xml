@@ -115,8 +115,8 @@
       <add-to-group anchor="last" group-id="GenerateGroup"/>
     </action>
 
-    <action internal="true" class="org.jetbrains.idea.devkit.actions.GenerateHighlightingMarkupAction" text="Generate Expected Highlighting Markup"
-            id="GenerateHighlightingMarkup">
+    <action internal="true" class="org.jetbrains.idea.devkit.actions.ToggleHighlightingMarkupAction" text="Toggle Expected Highlighting Markup"
+            id="ToggleHighlightingMarkup">
       <add-to-group anchor="last" group-id="Internal"/>
     </action>
 
