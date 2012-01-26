@@ -145,11 +145,8 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
       final String[] lines = LineTokenizer.tokenize(text.toCharArray(), false, true);
       for (int i = 0; i < lines.length; i++) {
         buffer.append(escapeCharCharacters(lines[i], token, escapeSlashes));
-        if (i != lines.length - 1) {
+        if (i != lines.length - 1 || text.endsWith("\n")) {
           buffer.append(breaker);
-        }
-        else if (text.endsWith("\n")) {
-          buffer.append("\\n");
         }
       }
       text = buffer.toString();
