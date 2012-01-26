@@ -49,8 +49,6 @@ import java.util.List;
 import java.util.Set;
 
 public class GridCellImpl implements GridCell {
-  static final String CELL_KEY = "runner-grid-cell";
-
   private final GridImpl myContainer;
 
   private final MutualMap<Content, TabInfo> myContents = new MutualMap<Content, TabInfo>(true);
@@ -260,7 +258,6 @@ public class GridCellImpl implements GridCell {
       myContent = content;
       myContext = context;
       setLayout(new BorderLayout());
-      putClientProperty(CELL_KEY, Boolean.TRUE);
       add(content.getComponent(), BorderLayout.CENTER);
     }
 

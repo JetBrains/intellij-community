@@ -402,15 +402,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     setStateIsBeingRestored(true, this);
     try {
       final Point point = dropTarget != null ? dropTarget.getPoint(myComponent) : null;
-      JComponent component = point != null ? (JComponent)SwingUtilities.getDeepestComponentAt(myComponent, point.x, point.y) : null;
-      boolean hadGrid = false;
-      while (component != null && !(component instanceof JBTabs)) {
-        if (component.getClientProperty(GridCellImpl.CELL_KEY) == Boolean.TRUE) {
-          hadGrid = true;
-          break;
-        }
-        component = (JComponent)component.getParent();
-      }
+      boolean hadGrid = !myTabs.shouldAddToGlobal(point);
 
       for (Content content : contents) {
         dockableGrid.getRunnerUi().myManager.removeContent(content, false);

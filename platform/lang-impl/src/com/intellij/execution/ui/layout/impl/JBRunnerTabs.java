@@ -194,6 +194,15 @@ public class
   public int getToolbarInset() {
     return 8;
   }
+  
+  public boolean shouldAddToGlobal(Point point) {
+    final TabLabel label = getSelectedLabel();
+    if (label == null || point == null) {
+      return true;
+    }
+    final Rectangle bounds = label.getBounds();
+    return point.y <= bounds.y + bounds.height;
+  }
 
   @Override
   public Rectangle layout(JComponent c, Rectangle bounds) {
