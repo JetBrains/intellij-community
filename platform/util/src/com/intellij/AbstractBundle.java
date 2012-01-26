@@ -21,6 +21,7 @@ import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
 import java.util.Locale;
 import java.util.ResourceBundle;
@@ -43,6 +44,7 @@ import java.util.ResourceBundle;
  * @since 8/1/11 2:37 PM
  */
 public abstract class AbstractBundle {
+  private Reference<ResourceBundle> myBundle;
   @NonNls private final String myPathToBundle;
 
   protected AbstractBundle(@NonNls @NotNull String pathToBundle) {
@@ -54,7 +56,13 @@ public abstract class AbstractBundle {
   }
 
   private ResourceBundle getBundle() {
-    return getResourceBundle(myPathToBundle, getClass().getClassLoader());
+    ResourceBundle bundle = null;
+    if (myBundle != null) bundle = myBundle.get();
+    if (bundle == null) {
+      bundle = getResourceBundle(myPathToBundle, getClass().getClassLoader());
+      myBundle = new SoftReference<ResourceBundle>(bundle);
+    }
+    return bundle;
   }
 
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
