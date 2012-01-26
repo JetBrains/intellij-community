@@ -23,10 +23,7 @@ import com.intellij.tasks.impl.BaseRepositoryImpl;
 import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
-import org.apache.xmlrpc.CommonsXmlRpcTransport;
-import org.apache.xmlrpc.XmlRpcClient;
-import org.apache.xmlrpc.XmlRpcException;
-import org.apache.xmlrpc.XmlRpcRequest;
+import org.apache.xmlrpc.*;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -40,6 +37,10 @@ import java.util.*;
 @Tag("Trac")
 @SuppressWarnings({"UseOfObsoleteCollectionType", "unchecked"})
 public class TracRepository extends BaseRepositoryImpl {
+
+  static {
+    XmlRpc.setDefaultInputEncoding("UTF-8");
+  }
 
   private String myDefaultSearch = "status!=closed&owner={username}&summary~={query}";
   private Boolean myMaxSupported;
@@ -96,7 +97,7 @@ public class TracRepository extends BaseRepositoryImpl {
   }
 
   private XmlRpcClient getRpcClient() throws MalformedURLException {
-    return new XmlRpcClient(new URL(getUrl()));
+    return new XmlRpcClient(getUrl());
   }
 
   @Override
