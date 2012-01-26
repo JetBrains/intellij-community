@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -678,9 +678,10 @@ public class FileUtil {
     }
 
     if (SystemInfo.isUnix && fromFile.canExecute()) {
-      final int permissions = FileSystemUtil.getPermissions(fromFile);
-      if (permissions != -1) {
-        FileSystemUtil.setPermissions(toFile, permissions);
+      final int oldPermissions = FileSystemUtil.getPermissions(fromFile);
+      final int newPermissions = FileSystemUtil.getPermissions(toFile);
+      if (oldPermissions != -1 && newPermissions != -1) {
+        FileSystemUtil.setPermissions(toFile, (oldPermissions | newPermissions));
       }
     }
   }
