@@ -67,7 +67,6 @@ public abstract class AbstractTestTreeBuilder extends AbstractTreeBuilder {
   }
 
   public void setTestsComparator(boolean sortAlphabetically) {
-    //TODO: better comparator
     setNodeDescriptorComparator(sortAlphabetically ? AlphaComparator.INSTANCE : null);
     queueUpdate();
   }
