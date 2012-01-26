@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.Gray;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsUtil;
 import com.intellij.ui.tabs.UiDecorator;
@@ -35,6 +36,7 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Dennis.Ushakov
@@ -215,6 +217,19 @@ public class
       bounds.width += 1;
     }
     return super.layout(c, bounds);
+  }
+
+  @Override
+  public void processDropOver(TabInfo over, RelativePoint relativePoint) {
+    super.processDropOver(over, relativePoint);
+    final Point point = relativePoint.getPoint(getComponent());
+    for (Map.Entry<TabInfo, TabLabel> entry : myInfo2Label.entrySet()) {
+      final TabLabel label = entry.getValue();
+      if (label.getBounds().contains(point) && myDropInfo != entry.getKey()) {
+        select(entry.getKey(), false);
+        break;
+      }
+    }
   }
 
   @Override

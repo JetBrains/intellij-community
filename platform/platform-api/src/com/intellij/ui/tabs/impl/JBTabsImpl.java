@@ -163,7 +163,7 @@ public class JBTabsImpl extends JComponent
 
   private boolean myOwnSwitchProvider = true;
   private SwitchProvider mySwitchDelegate;
-  private TabInfo myDropInfo;
+  protected TabInfo myDropInfo;
   private int myDropInfoIndex;
 
   private TabInfo myOldSelection;
