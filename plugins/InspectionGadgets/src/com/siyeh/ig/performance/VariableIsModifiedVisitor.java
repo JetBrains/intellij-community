@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,14 +25,15 @@ import java.util.Set;
 
 class VariableIsModifiedVisitor extends JavaRecursiveElementVisitor {
 
-  @NonNls private static final Set<String> updateNames =
-    new HashSet<String>(9);
+  @NonNls private static final Set<String> updateNames = new HashSet<String>(9);
 
   static {
     updateNames.add("append");
     updateNames.add("appendCodePoint");
+    updateNames.add("capacity"); // does not strictly modify, but is not a String method
     updateNames.add("delete");
     updateNames.add("deleteCharAt");
+    updateNames.add("ensureCapacity"); // does not strictly modify, but is not a String method
     updateNames.add("insert");
     updateNames.add("replace");
     updateNames.add("reverse");
@@ -44,7 +45,6 @@ class VariableIsModifiedVisitor extends JavaRecursiveElementVisitor {
   private final PsiVariable variable;
 
   VariableIsModifiedVisitor(PsiVariable variable) {
-    super();
     this.variable = variable;
   }
 
@@ -65,28 +65,23 @@ class VariableIsModifiedVisitor extends JavaRecursiveElementVisitor {
     if (!isStringBufferUpdate(call)) {
       return;
     }
-    final PsiReferenceExpression methodExpression =
-      call.getMethodExpression();
-    final PsiExpression qualifier =
-      methodExpression.getQualifierExpression();
+    final PsiReferenceExpression methodExpression = call.getMethodExpression();
+    final PsiExpression qualifier = methodExpression.getQualifierExpression();
     if (!(qualifier instanceof PsiReferenceExpression)) {
       return;
     }
-    final PsiReferenceExpression reference =
-      (PsiReferenceExpression)qualifier;
+    final PsiReferenceExpression reference = (PsiReferenceExpression)qualifier;
     final PsiElement referent = reference.resolve();
     if (variable.equals(referent)) {
       modified = true;
     }
   }
 
-  public static boolean isStringBufferUpdate(
-    @Nullable PsiMethodCallExpression methodCallExpression) {
+  public static boolean isStringBufferUpdate(@Nullable PsiMethodCallExpression methodCallExpression) {
     if (methodCallExpression == null) {
       return false;
     }
-    final PsiReferenceExpression methodExpression =
-      methodCallExpression.getMethodExpression();
+    final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
     final String methodName = methodExpression.getReferenceName();
     return updateNames.contains(methodName);
   }
