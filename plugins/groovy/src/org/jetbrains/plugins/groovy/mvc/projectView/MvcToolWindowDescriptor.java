@@ -25,17 +25,15 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
-import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentManager;
+import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.mvc.MvcFramework;
 import org.jetbrains.plugins.groovy.mvc.MvcModuleStructureUtil;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.List;
 
 /**
@@ -58,20 +56,8 @@ public abstract class MvcToolWindowDescriptor implements ToolWindowFactory, Cond
     toolWindow.setToHideOnEmptyContent(true);
     toolWindow.setTitle(myFramework.getDisplayName());
 
-    final MvcProjectViewPane view = new MvcProjectViewPane(project, this);
-
-    final JPanel p = new JPanel(new BorderLayout());
-    p.add(view.getComponent(), BorderLayout.CENTER);
-
-    final ContentManager contentManager = toolWindow.getContentManager();
-    final Content content = contentManager.getFactory().createContent(p, null, false);
-    content.setDisposer(view);
-    content.setCloseable(false);
-
-    content.setPreferredFocusableComponent(view.createComponent());
-    contentManager.addContent(content);
-
-    contentManager.setSelectedContent(content, true);
+    MvcProjectViewPane view = new MvcProjectViewPane(project, this);
+    view.setup((ToolWindowEx)toolWindow);
   }
 
   public boolean value(Project project) {

@@ -41,7 +41,7 @@ import java.util.regex.Pattern;
 /**
  * @author gregsh
  */
-public class GenerateHighlightingMarkupAction extends AnAction {
+public class ToggleHighlightingMarkupAction extends AnAction {
   @Override
   public void update(AnActionEvent e) {
     Editor editor = PlatformDataKeys.EDITOR.getData(e.getDataContext());
@@ -59,7 +59,7 @@ public class GenerateHighlightingMarkupAction extends AnAction {
     Object commandToken = commandProcessor.startCommand(project, e.getPresentation().getText(), e.getPresentation().getText(), UndoConfirmationPolicy.DEFAULT);
     AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(getClass());
     try {
-      perform(project, editor.getDocument(), true);
+      perform(project, editor.getDocument());
     }
     finally {
       token.finish();
@@ -67,16 +67,27 @@ public class GenerateHighlightingMarkupAction extends AnAction {
     }
   }
 
-  private static void perform(Project project, final Document document, final boolean compact) {
+  private static void perform(Project project, final Document document) {
     final CharSequence sequence = document.getCharsSequence();
     final StringBuilder sb = new StringBuilder();
-    Pattern pattern = Pattern.compile("<(error|warning|EOLError|EOLWarning)(?:\\s|=|\\w+|\\\"(?:[^\"]|\\\\\\\")*?\\\")*>(.*?)</\\1>");
+    Pattern pattern = Pattern.compile("<(error|warning|EOLError|EOLWarning)((?:\\s|=|\\w+|\\\"(?:[^\"]|\\\\\\\")*?\\\")*?)>(.*?)</\\1>");
     Matcher matcher = pattern.matcher(sequence);
     if (matcher.find()) {
+      boolean compactMode = false;
       int pos = 0;
       do {
-        sb.append(sequence, pos, matcher.start(0));
-        sb.append(sequence, matcher.start(2), matcher.end(2));
+        if (matcher.start(2) < matcher.end(2)) {
+          if (!compactMode) {
+            sb.setLength(pos = 0);
+            compactMode = true;
+          }
+          sb.append(sequence, pos, matcher.start(2));
+          sb.append(sequence, matcher.end(2), matcher.end(0));
+        }
+        else if (!compactMode) {
+          sb.append(sequence, pos, matcher.start(0));
+          sb.append(sequence, matcher.start(3), matcher.end(3));
+        }
         pos = matcher.end(0);
       }
       while (matcher.find(pos));
@@ -91,11 +102,11 @@ public class GenerateHighlightingMarkupAction extends AnAction {
           @Override
           public boolean process(HighlightInfo info) {
             if (info.severity != HighlightSeverity.WARNING && info.severity != HighlightSeverity.ERROR) return true;
-            offset[0] = appendInfo(info, sb, sequence, offset[0], infos, compact);
+            offset[0] = appendInfo(info, sb, sequence, offset[0], infos, false);
             return true;
           }
         });
-      offset[0] = appendInfo(null, sb, sequence, offset[0], infos, compact);
+      offset[0] = appendInfo(null, sb, sequence, offset[0], infos, false);
       sb.append(sequence.subSequence(offset[0], sequence.length()));
     }
     document.setText(sb);

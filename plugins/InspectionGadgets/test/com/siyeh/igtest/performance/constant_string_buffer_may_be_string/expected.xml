@@ -4,13 +4,13 @@
     <file>StringBufferReplaceableByString.java</file>
     <line>6</line>
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Constant StringBuffer may be String</problem_class>
-    <description>Constant StringBuffer &lt;code&gt;builder&lt;/code&gt; may be declared as String #loc</description>
+    <description>Constant &lt;code&gt;StringBuilder builder&lt;/code&gt; may be declared as 'String' #loc</description>
   </problem>
 
   <problem>
     <file>StringBufferReplaceableByString.java</file>
     <line>7</line>
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Constant StringBuffer may be String</problem_class>
-    <description>Constant StringBuffer &lt;code&gt;buffer&lt;/code&gt; may be declared as String #loc</description>
+    <description>Constant &lt;code&gt;StringBuffer buffer&lt;/code&gt; may be declared as 'String' #loc</description>
   </problem>
 </problems>

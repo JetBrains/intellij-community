@@ -177,6 +177,20 @@ class DependencyContext {
           log.debug(comment + getValue(s));
         }
       }
+
+      @Override
+      public void debug(String comment, String t) {
+        if (log.isDebugEnabled()){
+          log.debug(comment + t);
+        }
+      }
+
+      @Override
+      public void debug(String comment, boolean t) {
+        if (log.isDebugEnabled()) {
+          log.debug(comment + Boolean.toString(t));
+        }
+      }
     };
   }
 }

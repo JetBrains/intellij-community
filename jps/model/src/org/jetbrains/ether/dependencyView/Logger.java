@@ -24,4 +24,6 @@ package org.jetbrains.ether.dependencyView;
  */
 public interface Logger<T> {
   void debug(String comment, T t);
+  void debug(String comment, String t);
+  void debug(String comment, boolean t);
 }
