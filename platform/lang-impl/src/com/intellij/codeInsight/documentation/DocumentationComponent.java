@@ -268,10 +268,14 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     myScrollPane.setViewportBorder(JBScrollPane.createIndentBorder());
 
     final DefaultActionGroup actions = new DefaultActionGroup();
-    actions.add(new BackAction());
-    actions.add(new ForwardAction());
+    final BackAction back = new BackAction();
+    final ForwardAction forward = new ForwardAction();
+    actions.add(back);
+    actions.add(forward);
     actions.add(myExternalDocAction = new ExternalDocAction());
-
+    back.registerCustomShortcutSet(CustomShortcutSet.fromString("LEFT"), this);
+    forward.registerCustomShortcutSet(CustomShortcutSet.fromString("RIGHT"), this);
+    myExternalDocAction.registerCustomShortcutSet(CustomShortcutSet.fromString("UP"), this);
     if (additionalActions != null) {
       for (final AnAction action : additionalActions) {
         actions.add(action);
