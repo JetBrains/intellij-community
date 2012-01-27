@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.formatter;
 
-import com.intellij.formatting.Alignment;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
@@ -28,8 +27,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-
-import java.util.Map;
 
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mRCURLY;
 import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.WHITE_SPACES_SET;
@@ -81,12 +78,11 @@ public class GeeseUtil {
     return next;
   }
 
-  @Nullable
-  static Alignment calculateRBraceAlignment(PsiElement rBrace, Map<PsiElement, Alignment> alignments) {
+  static void calculateRBraceAlignment(PsiElement rBrace, AlignmentProvider alignments) {
     int leadingBraceCount = 0;
     PsiElement next;
 
-    if (!isClosureContainLF(rBrace)) return null;
+    if (!isClosureContainLF(rBrace)) return;
 
     for (next = getPreviousNonWhitespaceToken(rBrace);
          isClosureRBrace(next) && isClosureContainLF(next);
@@ -131,7 +127,7 @@ public class GeeseUtil {
     int endOffset = rBrace.getTextRange().getStartOffset();
 
     if (rBrace.getContainingFile().getText().substring(startOffset, endOffset).indexOf('\n') < 0) {
-      return null;
+      return;
     }
 
     while (true) {
@@ -143,13 +139,7 @@ public class GeeseUtil {
         break;
       }
     }
-
-    Alignment alignment = alignments.get(cur);
-    if (alignment == null) {
-      alignment = Alignment.createAlignment(true);
-      alignments.put(cur, alignment);
-    }
-    return alignment;
+    alignments.addPair(rBrace, cur);
   }
 
   public static boolean isClosureContainLF(PsiElement rBrace) {

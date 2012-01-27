@@ -612,7 +612,6 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     if (grid != null || !createIfMissing) return grid;
 
     grid = new GridImpl(this, mySessionName);
-    grid.setBorder(new EmptyBorder(1, 0, 0, 0));
 
     if (myCurrentOver != null || myOriginal != null) {
       Integer forcedDropIndex = content.getUserData(RunnerLayout.DROP_INDEX);
@@ -744,7 +743,11 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     for (TabInfo each : tabs) {
       hasToolbarContent |= updateTabUI(each);
     }
-    myTabs.getPresentation().setHideTabs(!hasToolbarContent && tabs.size() <= 1 && myOriginal == null);
+    int tabsCount = tabs.size();
+    for (RunnerContentUi child : myChildren) {
+      tabsCount += child.myTabs.getTabCount();
+    }
+    myTabs.getPresentation().setHideTabs(!hasToolbarContent && tabsCount <= 1 && myOriginal == null);
     myTabs.updateTabActions(validateNow);
 
     if (validateNow) {

@@ -65,9 +65,9 @@ public class
     Insets insets = getTabsBorder().getEffectiveBorder();
 
     int _x = effectiveBounds.x + insets.left;
-    int _y = effectiveBounds.y + insets.top + 5;
+    int _y = effectiveBounds.y + insets.top + 3;
     int _width = effectiveBounds.width - insets.left - insets.right;
-    int _height = effectiveBounds.height - insets.top - insets.bottom - 5;
+    int _height = effectiveBounds.height - insets.top - insets.bottom - 3;
     _height -= TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT;
 
     g2d
@@ -113,10 +113,10 @@ public class
     height -= TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT;
 
     rectangle = new Rectangle(maxOffset, y, r2.width - maxOffset - insets.left - insets.right, height);
-    
+
     g2d.setPaint(UIUtil.getPanelBackground());
     g2d.fillRect(rectangle.x, rectangle.y, rectangle.width, rectangle.height);
-    g2d.fillRect(0, 0, rectangle.x + rectangle.width, 5);
+    g2d.fillRect(0, 0, rectangle.x + rectangle.width, 3);
     g2d.fillRect(2, maxLength, getSize().width, getSize().height);
     g2d.drawLine(0, 0, 0, getSize().height);
   }
@@ -126,7 +126,7 @@ public class
 
     TabLabel label = getSelectedLabel();
     Rectangle r = label.getBounds();
-    r = new Rectangle(r.x, r.y + 5, r.width, r.height - 5);
+    r = new Rectangle(r.x, r.y + 3, r.width, r.height - 3);
 
     ShapeInfo selectedShape = _computeSelectedLabelShape(r);
 
@@ -138,15 +138,22 @@ public class
     int _height = r.height;
 
     if (!isHideTabs()) {
-      g2d.setPaint(new GradientPaint(_x, _y, new SameColor(255), _x, _y + _height, UIUtil.getPanelBackground()));
+      g2d.setPaint(new GradientPaint(_x, _y, new SameColor(255), _x, _y + _height - 3, UIUtil.getPanelBackground()));
 
       g2d.fill(selectedShape.fillPath.getShape());
 
       g2d.setColor(new Color(255, 255, 255, 180));
       g2d.draw(selectedShape.fillPath.getShape());
+
+      // fix right side due to swing stupidity (fill & draw will occupy different shapes)
+      g2d.draw(selectedShape.labelPath
+                 .transformLine(selectedShape.labelPath.getMaxX() - selectedShape.labelPath.deltaX(1), selectedShape.labelPath.getY() +
+                                                                                                       selectedShape.labelPath.deltaY(1),
+                                selectedShape.labelPath.getMaxX() - selectedShape.labelPath.deltaX(1), selectedShape.labelPath.getMaxY() -
+                                                                                                       selectedShape.labelPath.deltaY(4)));
     }
     g2d.setColor(UIUtil.getPanelBackground());
-    g2d.fillRect(2, selectedShape.labelPath.getMaxY() - 3, selectedShape.path.getMaxX() - 3, 4);
+    g2d.fillRect(2, selectedShape.labelPath.getMaxY() - 2, selectedShape.path.getMaxX() - 2, 3);
     g2d.drawLine(1, selectedShape.labelPath.getMaxY(), 1, getHeight() - 1);
     g2d.drawLine(selectedShape.path.getMaxX() - 1, selectedShape.labelPath.getMaxY() - 4,
                  selectedShape.path.getMaxX() - 1, getHeight() - 1);
@@ -199,7 +206,7 @@ public class
   public int getToolbarInset() {
     return 8;
   }
-  
+
   public boolean shouldAddToGlobal(Point point) {
     final TabLabel label = getSelectedLabel();
     if (label == null || point == null) {
@@ -218,6 +225,10 @@ public class
     if (c instanceof GridImpl) {
       bounds.x -= 1;
       bounds.width += 1;
+      if (!isHideTabs()) {
+        bounds.y -= 1;
+        bounds.height += 1;
+      }
     }
     return super.layout(c, bounds);
   }
@@ -249,7 +260,7 @@ public class
     public void apply(UiDecorator.UiDecoration decoration) {
       setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
       myLabel.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
-      setBorder(new EmptyBorder(7, 5, 7, 5));
+      setBorder(new EmptyBorder(5, 5, 7, 5));
     }
 
     @Override
