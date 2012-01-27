@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,14 +23,12 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 
 import javax.swing.*;
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 
 public class PluginConfigurationType implements ConfigurationType {
@@ -53,7 +51,7 @@ public class PluginConfigurationType implements ConfigurationType {
         final PluginRunConfiguration pluginRunConfiguration = (PluginRunConfiguration)template;
         if (pluginRunConfiguration.getModule() == null) {
           final Module[] modules = pluginRunConfiguration.getModules();
-          if (modules != null && modules.length > 0){
+          if (modules.length > 0){
             pluginRunConfiguration.setModule(modules[0]);
           }
         }
@@ -84,47 +82,19 @@ public class PluginConfigurationType implements ConfigurationType {
     return "#org.jetbrains.idea.devkit.run.PluginConfigurationType";
   }
 
-  public String getVmParameters() {
+  @NotNull
+  private String getVmParameters() {
     if (myVmParameters == null) {
-      myVmParameters = "";
-
-      String vmParameters = readFile(new File(PathManager.getBinPath(), "idea.plugins.vmoptions"));
-      if (vmParameters != null) {
-        myVmParameters = vmParameters;
-      } else if ((vmParameters = readFile(new File(VMOptions.getSettingsFilePath()))) != null) {
-        myVmParameters = vmParameters;
-      }
-    }
-    return myVmParameters;
-  }
-
-  @Nullable
-  private static String readFile(@NotNull File file) {
-    if (file.exists()) {
-      final StringBuilder lines = new StringBuilder();
-      BufferedReader reader = null;
+      String vmOptions;
       try {
-        reader = new BufferedReader(new FileReader(file));
-        String line;
-        while ((line = reader.readLine()) != null) {
-          lines.append(" ").append(line);
-        }
+        vmOptions = FileUtil.loadFile(new File(PathManager.getBinPath(), "idea.plugins.vmoptions")).replaceAll("\\s+", " ");
       }
       catch (IOException e) {
-        //skip
+        vmOptions = VMOptions.read();
       }
-      finally {
-        if (reader != null) {
-          try {
-            reader.close();
-          }
-          catch (IOException e) {
-            //skip
-          }
-        }
-      }
-      return lines.toString();
+      myVmParameters = vmOptions != null ? vmOptions.trim() : "";
     }
-    return null;
+
+    return myVmParameters;
   }
 }
