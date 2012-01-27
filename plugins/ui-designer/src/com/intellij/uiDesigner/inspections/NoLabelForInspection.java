@@ -34,6 +34,8 @@ import com.intellij.uiDesigner.quickFixes.QuickFix;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.List;
 import javax.swing.*;
 
 /**
@@ -58,6 +60,7 @@ public class NoLabelForInspection extends BaseFormInspection {
       }
       final Ref<Boolean> found = new Ref<Boolean>(Boolean.FALSE);
       final Ref<RadComponent> candidateLabel = new Ref<RadComponent>();
+      final List<RadComponent> allLabels = new ArrayList<RadComponent>();
       FormEditingUtil.iterate(root, new FormEditingUtil.ComponentVisitor() {
         public boolean visit(final IComponent c2) {
           if (FormInspectionUtil.isComponentClass(module, c2, JLabel.class)) {
@@ -70,6 +73,7 @@ public class NoLabelForInspection extends BaseFormInspection {
                      (prop == null || StringUtil.isEmpty((String)prop.getPropertyValue(c2)))) {
               RadComponent radComponent = (RadComponent) component;
               final RadComponent radComponent2 = ((RadComponent)c2);
+              allLabels.add(radComponent2);
               if (radComponent.getParent() == radComponent2.getParent() && radComponent.getParent().getLayoutManager().isGrid()) {
                 GridConstraints gc1 = radComponent.getConstraints();
                 GridConstraints gc2 = radComponent2.getConstraints();
@@ -86,12 +90,20 @@ public class NoLabelForInspection extends BaseFormInspection {
         }
       });
       if (!found.get().booleanValue()) {
-        collector.addError(getID(), component, null, UIDesignerBundle.message("inspection.no.label.for.error"),
-                           candidateLabel.isNull() ? null : new EditorQuickFixProvider() {
-                             public QuickFix createQuickFix(GuiEditor editor, RadComponent component) {
-                               return new MyQuickFix(editor, component, candidateLabel.get());
-                             }
-                           });
+        if (!candidateLabel.isNull()) {
+          allLabels.clear();
+          allLabels.add(candidateLabel.get());
+        }
+        EditorQuickFixProvider[] quickFixProviders = new EditorQuickFixProvider[allLabels.size()];
+        for (int i = 0; i < quickFixProviders.length; i++) {
+          final RadComponent label = allLabels.get(i);
+          quickFixProviders[i] = new EditorQuickFixProvider() {
+            public QuickFix createQuickFix(GuiEditor editor, RadComponent component) {
+              return new MyQuickFix(editor, component, label);
+            }
+          };
+        }
+        collector.addError(getID(), component, null, UIDesignerBundle.message("inspection.no.label.for.error"), quickFixProviders);
       }
     }
   }
