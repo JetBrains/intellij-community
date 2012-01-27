@@ -28,6 +28,7 @@ import com.intellij.openapi.command.CommandProcessorEx;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Processor;
@@ -59,7 +60,14 @@ public class ToggleHighlightingMarkupAction extends AnAction {
     Object commandToken = commandProcessor.startCommand(project, e.getPresentation().getText(), e.getPresentation().getText(), UndoConfirmationPolicy.DEFAULT);
     AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(getClass());
     try {
-      perform(project, editor.getDocument());
+      final SelectionModel selectionModel = editor.getSelectionModel();
+      int[] starts = selectionModel.getBlockSelectionStarts();
+      int[] ends = selectionModel.getBlockSelectionEnds();
+
+      int startOffset = starts.length == 0? 0 : starts[0];
+      int endOffset = ends.length == 0? editor.getDocument().getTextLength() : ends[ends.length - 1];
+
+      perform(project, editor.getDocument(), startOffset, endOffset);
     }
     finally {
       token.finish();
@@ -67,15 +75,17 @@ public class ToggleHighlightingMarkupAction extends AnAction {
     }
   }
 
-  private static void perform(Project project, final Document document) {
+  private static void perform(Project project, final Document document, int startOffset, final int endOffset) {
     final CharSequence sequence = document.getCharsSequence();
     final StringBuilder sb = new StringBuilder();
-    Pattern pattern = Pattern.compile("<(error|warning|EOLError|EOLWarning)((?:\\s|=|\\w+|\\\"(?:[^\"]|\\\\\\\")*?\\\")*?)>(.*?)</\\1>");
+    Pattern pattern = Pattern.compile("<(error|warning|EOLError|EOLWarning|info|weak_warning)((?:\\s|=|\\w+|\\\"(?:[^\"]|\\\\\\\")*?\\\")*?)>(.*?)</\\1>");
     Matcher matcher = pattern.matcher(sequence);
-    if (matcher.find()) {
+    sb.append(sequence, 0, startOffset);
+    if (matcher.find(startOffset)) {
       boolean compactMode = false;
-      int pos = 0;
+      int pos = startOffset;
       do {
+        if (matcher.start(0) >= endOffset) break;
         if (matcher.start(2) < matcher.end(2)) {
           if (!compactMode) {
             sb.setLength(pos = 0);
@@ -94,7 +104,7 @@ public class ToggleHighlightingMarkupAction extends AnAction {
       sb.append(sequence, pos, sequence.length());
     }
     else {
-      final int[] offset = new int[] {0};
+      final int[] offset = new int[] {startOffset};
       final ArrayList<HighlightInfo> infos = new ArrayList<HighlightInfo>();
       DaemonCodeAnalyzerImpl.processHighlights(
         document, project, HighlightSeverity.WARNING, 0, sequence.length(),
@@ -102,6 +112,7 @@ public class ToggleHighlightingMarkupAction extends AnAction {
           @Override
           public boolean process(HighlightInfo info) {
             if (info.severity != HighlightSeverity.WARNING && info.severity != HighlightSeverity.ERROR) return true;
+            if (info.getStartOffset() >= endOffset) return false;
             offset[0] = appendInfo(info, sb, sequence, offset[0], infos, false);
             return true;
           }
