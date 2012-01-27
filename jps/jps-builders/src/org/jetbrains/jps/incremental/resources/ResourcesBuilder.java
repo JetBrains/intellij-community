@@ -1,4 +1,4 @@
-package org.jetbrains.jps.incremental.resourses;
+package org.jetbrains.jps.incremental.resources;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
