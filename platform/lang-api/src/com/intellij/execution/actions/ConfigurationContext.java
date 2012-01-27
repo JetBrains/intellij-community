@@ -112,7 +112,7 @@ public class ConfigurationContext {
     return myConfiguration;
   }
 
-  Location getLocation() {
+  public Location getLocation() {
     return myLocation;
   }
 
