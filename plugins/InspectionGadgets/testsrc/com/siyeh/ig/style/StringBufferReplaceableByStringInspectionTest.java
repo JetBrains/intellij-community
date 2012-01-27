@@ -1,11 +1,11 @@
-package com.siyeh.ig.performance;
+package com.siyeh.ig.style;
 
 import com.siyeh.ig.IGInspectionTestCase;
 
 public class StringBufferReplaceableByStringInspectionTest extends IGInspectionTestCase {
 
   public void test() throws Exception {
-    doTest("com/siyeh/igtest/performance/constant_string_buffer_may_be_string",
+    doTest("com/siyeh/igtest/performance/string_buffer_replaceable_by_string",
            new StringBufferReplaceableByStringInspection());
   }
 }
