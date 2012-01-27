@@ -132,6 +132,10 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
     doTest(true);
   }
 
+  public void testNonEqAssignment() throws Exception {
+    doTest(false, "Cannot perform refactoring.\n" +
+                  "Variable 'x' is accessed for writing.");
+  }
 
   private void doTest(final boolean inlineDef, String conflictMessage) throws Exception {
     try {
