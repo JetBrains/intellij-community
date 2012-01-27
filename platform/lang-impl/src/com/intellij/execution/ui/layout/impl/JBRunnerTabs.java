@@ -225,8 +225,10 @@ public class
     if (c instanceof GridImpl) {
       bounds.x -= 1;
       bounds.width += 1;
-      bounds.y -= 1;
-      bounds.height += 1;
+      if (!isHideTabs()) {
+        bounds.y -= 1;
+        bounds.height += 1;
+      }
     }
     return super.layout(c, bounds);
   }
