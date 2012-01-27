@@ -31,16 +31,9 @@ else
         JDK="$JAVA_LOCATION"
       fi
     elif [ "$OS_TYPE" = "Darwin" ]; then
-      if [ -h "$JAVA_BIN_PATH" ]; then
-        JAVA_LOCATION=`readlink "$JAVA_BIN_PATH" | xargs dirname | xargs dirname | xargs dirname`
-        if [ -x "$JAVA_LOCATION/CurrentJDK/Home/bin/java" ]; then
-          JDK="$JAVA_LOCATION/CurrentJDK/Home"
-        fi
-      else
-        JAVA_LOCATION=`echo "$JAVA_BIN_PATH" | xargs dirname | xargs dirname`
-        if [ -f "$JAVA_LOCATION/lib/tools.jar" ]; then
-          JDK="$JAVA_LOCATION"
-        fi
+      JAVA_LOCATION=`/usr/libexec/java_home`
+      if [ -x "$JAVA_LOCATION/bin/java" ]; then
+        JDK="$JAVA_LOCATION"
       fi
     fi
 
