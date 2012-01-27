@@ -35,6 +35,6 @@ public class TracIntegrationTest extends TaskManagerTestCase {
 
     Task task = repository.findTask("5358");
     assertNotNull(task);
-//    assertEquals("Artikel können nicht in den Warenkorb gelegt werden", task.getSummary());
+    assertEquals("Artikel k\u00f6nnen nicht in den Warenkorb gelegt werden", task.getSummary());
   }
 }
