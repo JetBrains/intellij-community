@@ -42,6 +42,9 @@ public class DefaultLightProjectDescriptor implements LightProjectDescriptor {
 
   @Override
   public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
-    model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(LanguageLevel.HIGHEST);
+    LanguageLevelModuleExtension extension = model.getModuleExtension(LanguageLevelModuleExtension.class);
+    if (extension != null) {
+      extension.setLanguageLevel(LanguageLevel.HIGHEST);
+    }
   }
 }

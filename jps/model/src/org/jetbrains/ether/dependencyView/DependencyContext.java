@@ -172,9 +172,23 @@ class DependencyContext {
   public Logger<S> getLogger(final com.intellij.openapi.diagnostic.Logger log) {
     return new Logger<S>() {
       @Override
-      public void debug(S s) {
+      public void debug(String comment, S s) {
         if (log.isDebugEnabled()) {
-          log.debug(getValue(s));
+          log.debug(comment + getValue(s));
+        }
+      }
+
+      @Override
+      public void debug(String comment, String t) {
+        if (log.isDebugEnabled()){
+          log.debug(comment + t);
+        }
+      }
+
+      @Override
+      public void debug(String comment, boolean t) {
+        if (log.isDebugEnabled()) {
+          log.debug(comment + Boolean.toString(t));
         }
       }
     };

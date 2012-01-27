@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ public class JavaLexerTest extends LexerTestCase {
            "DOUBLE_LITERAL ('1e137')");
   }
 
-  public void testTigerNumericLiterals() throws Exception {
+  public void testTigerNumericLiterals() {
     doTest("0xap0f 0xab.p0F 0x.abcP0f 0xabc.defP0F",
            "FLOAT_LITERAL ('0xap0f')\nWHITE_SPACE (' ')\n" +
            "FLOAT_LITERAL ('0xab.p0F')\nWHITE_SPACE (' ')\n" +
@@ -115,7 +115,7 @@ public class JavaLexerTest extends LexerTestCase {
            "DOUBLE_LITERAL ('0xa_bc.de_fP1_234D')");
   }
 
-  public void testMalformedCoinLiterals() throws Exception {
+  public void testMalformedCoinLiterals() {
     doTest("0_ _1 0_8 0x_f 0b_1 0B2 0x1.0_p-1 1.0e_1022",
            "INTEGER_LITERAL ('0')\nIDENTIFIER ('_')\nWHITE_SPACE (' ')\n" +
            "IDENTIFIER ('_1')\nWHITE_SPACE (' ')\n" +
@@ -125,6 +125,13 @@ public class JavaLexerTest extends LexerTestCase {
            "INTEGER_LITERAL ('0B')\nINTEGER_LITERAL ('2')\nWHITE_SPACE (' ')\n" +
            "INTEGER_LITERAL ('0x1')\nDOUBLE_LITERAL ('.0')\nIDENTIFIER ('_p')\nMINUS ('-')\nINTEGER_LITERAL ('1')\nWHITE_SPACE (' ')\n" +
            "DOUBLE_LITERAL ('1.0e')\nIDENTIFIER ('_1022')");
+  }
+
+  public void testMalformedOperators() {
+    doTest("(i > = 0)",
+           "LPARENTH ('(')\nIDENTIFIER ('i')\nWHITE_SPACE (' ')\n" +
+           "GT ('>')\nWHITE_SPACE (' ')\nEQ ('=')\n" +
+           "WHITE_SPACE (' ')\nINTEGER_LITERAL ('0')\nRPARENTH (')')\n");
   }
 
   @Override

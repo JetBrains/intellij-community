@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -404,7 +404,7 @@ public class ExpressionParser {
           final PsiBuilder.Marker refExpr = expr.precede();
           myReferenceParser.parseReferenceParameterList(builder, false, false);
 
-          if (!JavaParserUtil.expectOrError(builder, JavaTokenType.IDENTIFIER, JavaErrorMessages.message("expected.identifier"))) {
+          if (!JavaParserUtil.expectOrError(builder, JavaTokenType.IDENTIFIER, "expected.identifier")) {
             refExpr.done(JavaElementType.REFERENCE_EXPRESSION);
             startMarker.drop();
             return refExpr;
@@ -726,7 +726,7 @@ public class ExpressionParser {
         }
         bracketCount++;
 
-        if (!JavaParserUtil.expectOrError(builder, JavaTokenType.RBRACKET, JavaErrorMessages.message("expected.rbracket"))) {
+        if (!JavaParserUtil.expectOrError(builder, JavaTokenType.RBRACKET, "expected.rbracket")) {
           newExpr.done(JavaElementType.NEW_EXPRESSION);
           return newExpr;
         }
@@ -812,7 +812,7 @@ public class ExpressionParser {
       }
     }
 
-    final boolean closed = JavaParserUtil.expectOrError(builder, JavaTokenType.RPARENTH, JavaErrorMessages.message("expected.rparen"));
+    final boolean closed = JavaParserUtil.expectOrError(builder, JavaTokenType.RPARENTH, "expected.rparen");
 
     list.done(JavaElementType.EXPRESSION_LIST);
     if (!closed) {
@@ -827,35 +827,29 @@ public class ExpressionParser {
 
   @Nullable
   private static IElementType getGtTokenType(final PsiBuilder builder) {
-    final PsiBuilder.Marker sp = builder.mark();
-
     IElementType tokenType = builder.getTokenType();
-    if (tokenType == JavaTokenType.GT) {
-      builder.advanceLexer();
-      if (builder.getTokenType() == JavaTokenType.GT) {
-        builder.advanceLexer();
-        if (builder.getTokenType() == JavaTokenType.GT) {
-          builder.advanceLexer();
-          if (builder.getTokenType() == JavaTokenType.EQ) {
-            tokenType = JavaTokenType.GTGTGTEQ;
-          }
-          else {
-            tokenType = JavaTokenType.GTGTGT;
-          }
-        }
-        else if (builder.getTokenType() == JavaTokenType.EQ) {
-          tokenType = JavaTokenType.GTGTEQ;
+    if (tokenType != JavaTokenType.GT) return tokenType;
+
+    if (builder.rawLookup(1) == JavaTokenType.GT) {
+      if (builder.rawLookup(2) == JavaTokenType.GT) {
+        if (builder.rawLookup(3) == JavaTokenType.EQ) {
+          tokenType = JavaTokenType.GTGTGTEQ;
         }
         else {
-          tokenType = JavaTokenType.GTGT;
+          tokenType = JavaTokenType.GTGTGT;
         }
       }
-      else if (builder.getTokenType() == JavaTokenType.EQ) {
-        tokenType = JavaTokenType.GE;
+      else if (builder.rawLookup(2) == JavaTokenType.EQ) {
+        tokenType = JavaTokenType.GTGTEQ;
+      }
+      else {
+        tokenType = JavaTokenType.GTGT;
       }
     }
+    else if (builder.rawLookup(1) == JavaTokenType.EQ) {
+      tokenType = JavaTokenType.GE;
+    }
 
-    sp.rollbackTo();
     return tokenType;
   }
 

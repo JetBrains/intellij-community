@@ -539,6 +539,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
       return null;
     }
     Object[] children = getTreeStructure().getChildElements(parent);
+    Arrays.sort(children, getUi().getNodeDescriptorComparator());
     int idx = -1;
     for (int i = 0; i < children.length; i++) {
       if (obj.equals(children[i])) {
@@ -584,6 +585,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
       return null;
     }
     Object[] children = getTreeStructure().getChildElements(parent);
+    Arrays.sort(children, getUi().getNodeDescriptorComparator());
     int idx = -1;
     for (int i = 0; i < children.length; i++) {
       if (obj.equals(children[i])) {

@@ -2,7 +2,6 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.util.io.FileUtil;
 import gnu.trove.TIntIntHashMap;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -130,10 +129,11 @@ class IntToIntBtree {
     return pageStart;
   }
 
-  public @Nullable Integer get(int key) {
+  public boolean get(int key, int[] result) {
     if (hasCachedMappings) {
       if (myCachedMappings.containsKey(key)) {
-        return myCachedMappings.get(key);
+        result[0] = myCachedMappings.get(key);
+        return true;
       }
     }
 
@@ -141,8 +141,9 @@ class IntToIntBtree {
     currentIndexNode.setAddress(root.address);
     int index = currentIndexNode.locate(key, false);
 
-    if (index < 0) return null;
-    return currentIndexNode.addressAt(index);
+    if (index < 0) return false;
+    result[0] = currentIndexNode.addressAt(index);
+    return true;
   }
 
   public void put(int key, int value) {

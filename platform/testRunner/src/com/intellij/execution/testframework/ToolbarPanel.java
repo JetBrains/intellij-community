@@ -28,6 +28,7 @@ import com.intellij.execution.testframework.actions.ShowStatisticsAction;
 import com.intellij.execution.testframework.actions.TestFrameworkActions;
 import com.intellij.execution.testframework.actions.TestTreeExpander;
 import com.intellij.execution.testframework.export.ExportTestResultsAction;
+import com.intellij.execution.testframework.ui.AbstractTestTreeBuilder;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.OccurenceNavigator;
 import com.intellij.openapi.Disposable;
@@ -54,18 +55,24 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
   public ToolbarPanel(final TestConsoleProperties properties,
                       final RunnerSettings runnerSettings,
                       final ConfigurationPerRunnerSettings configurationSettings, JComponent parent) {
-    super (new BorderLayout());
+    super(new BorderLayout());
     final DefaultActionGroup actionGroup = new DefaultActionGroup(null, false);
     actionGroup.addAction(new ToggleBooleanProperty(ExecutionBundle.message("junit.run.hide.passed.action.name"),
                                                     ExecutionBundle.message("junit.run.hide.passed.action.description"),
                                                     TestsUIUtil.loadIcon("hidePassed"),
                                                     properties, TestConsoleProperties.HIDE_PASSED_TESTS));
     actionGroup.addSeparator();
-    
+
     actionGroup.addAction(new ToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.track.test.action.name"),
                                                     ExecutionBundle.message("junit.runing.info.track.test.action.description"),
                                                     TestsUIUtil.loadIcon("trackTests"),
                                                     properties, TestConsoleProperties.TRACK_RUNNING_TEST)).setAsSecondary(true);
+
+    actionGroup.addAction(new ToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.sort.alphabetically.action.name"),
+                                                    ExecutionBundle.message("junit.runing.info.sort.alphabetically.action.description"),
+                                                    IconLoader.getIcon("/objectBrowser/sorted.png"),
+                                                    properties, TestConsoleProperties.SORT_ALPHABETICALLY));
+    actionGroup.addSeparator();
 
     AnAction action = CommonActionsManager.getInstance().createCollapseAllAction(myTreeExpander, parent);
     action.getTemplatePresentation().setDescription(ExecutionBundle.message("junit.runing.info.collapse.test.action.name"));
@@ -92,7 +99,8 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
     myScrollToSource = new ScrollToTestSourceAction(properties);
     actionGroup.addAction(myScrollToSource).setAsSecondary(true);
     actionGroup.addAction(new ToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.open.source.at.exception.action.name"),
-                                                    ExecutionBundle.message("junit.runing.info.open.source.at.exception.action.description"),
+                                                    ExecutionBundle
+                                                      .message("junit.runing.info.open.source.at.exception.action.description"),
                                                     IconLoader.getIcon("/runConfigurations/sourceAtException.png"),
                                                     properties, TestConsoleProperties.OPEN_FAILURE_LINE)).setAsSecondary(true);
 
@@ -110,8 +118,8 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
     appendAdditionalActions(actionGroup, properties, runnerSettings, configurationSettings, parent);
 
     add(ActionManager.getInstance().
-        createActionToolbar(ActionPlaces.TESTTREE_VIEW_TOOLBAR, actionGroup, true).
-        getComponent(), BorderLayout.CENTER);
+      createActionToolbar(ActionPlaces.TESTTREE_VIEW_TOOLBAR, actionGroup, true).
+      getComponent(), BorderLayout.CENTER);
   }
 
   protected void appendAdditionalActions(DefaultActionGroup actionGroup, TestConsoleProperties properties, RunnerSettings runnerSettings,
@@ -128,6 +136,15 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
     for (ToggleModelAction action : myActions) {
       action.setModel(model);
     }
+    TestFrameworkActions.addPropertyListener(TestConsoleProperties.SORT_ALPHABETICALLY, new TestFrameworkPropertyListener<Boolean>() {
+      @Override
+      public void onChanged(Boolean value) {
+        final AbstractTestTreeBuilder builder = model.getTreeBuilder();
+        if (builder != null) {
+          builder.setTestsComparator(value);
+        }
+      }
+    }, model, true);
   }
 
   public boolean hasNextOccurence() {
@@ -158,5 +175,4 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
     myScrollToSource.setModel(null);
     myExportAction.setModel(null);
   }
-
 }

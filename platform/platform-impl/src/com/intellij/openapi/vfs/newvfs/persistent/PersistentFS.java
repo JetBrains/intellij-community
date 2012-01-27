@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -508,7 +508,9 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     }
     else {
       try {
-        return FileUtil.loadBytes(contentStream, (int)file.getLength());
+        final int length = (int)file.getLength();
+        assert length >= 0 : file;
+        return FileUtil.loadBytes(contentStream, length);
       }
       catch (IOException e) {
         throw FSRecords.handleError(e);

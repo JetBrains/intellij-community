@@ -27,36 +27,26 @@ import javax.swing.tree.DefaultTreeModel;
 /**
  * @author Hani Suleiman Date: Jul 28, 2005 Time: 10:49:36 PM
  */
-public class TestTreeBuilder extends AbstractTestTreeBuilder
-{
-    public TestTreeBuilder(JTree tree, AbstractTreeStructure structure) {
-        super(tree, new DefaultTreeModel(new DefaultMutableTreeNode(structure.getRootElement())), structure, IndexComparator.INSTANCE);
-        initRootNode();
-    }
+public class TestTreeBuilder extends AbstractTestTreeBuilder {
+  public TestTreeBuilder(JTree tree, AbstractTreeStructure structure) {
+    super(tree, new DefaultTreeModel(new DefaultMutableTreeNode(structure.getRootElement())), structure, IndexComparator.INSTANCE);
+    initRootNode();
+  }
 
-    @Override
-    protected boolean isSmartExpand() {
-        return false;
-    }
+  @Override
+  protected boolean isAutoExpandNode(NodeDescriptor descriptor) {
+    return descriptor.getElement() == getTreeStructure().getRootElement();
+  }
 
-    @Override
-    protected boolean isAlwaysShowPlus(NodeDescriptor descriptor) {
-        return false;
+  public void addItem(TestProxy parent, TestProxy proxy) {
+    parent.addChild(proxy);
+    DefaultMutableTreeNode parentNode = getNodeForElement(parent);
+    if (parentNode != null) {
+      updateSubtree(parentNode);
     }
+  }
 
-    @Override
-    protected boolean isAutoExpandNode(NodeDescriptor descriptor) {
-        return descriptor.getElement() == getTreeStructure().getRootElement();
-    }
-
-    public void addItem(TestProxy parent, TestProxy proxy) {
-        parent.addChild(proxy);
-        DefaultMutableTreeNode parentNode = getNodeForElement(parent);
-        if (parentNode != null)
-            updateSubtree(parentNode);
-    }
-
-    public TestProxy getRoot() {
-        return (TestProxy) getTreeStructure().getRootElement();
-    }
+  public TestProxy getRoot() {
+    return (TestProxy)getTreeStructure().getRootElement();
+  }
 }

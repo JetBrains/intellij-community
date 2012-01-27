@@ -4,7 +4,7 @@ import android.content.Context;
 import android.content.res.Resources;
 
 public class Class extends Context {
-  public void f(Resources resourc<caret>es) {
+  public void f(Context resourc<caret>es) {
     String s = "hello";
   }
 }

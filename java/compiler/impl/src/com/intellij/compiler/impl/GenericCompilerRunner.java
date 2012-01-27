@@ -53,14 +53,12 @@ public class GenericCompilerRunner {
   private final Project myProject;
 
   public GenericCompilerRunner(CompileContext context,
-                               CompilerFilter compilerFilter,
-                               CompilerManager compilerManager,
                                boolean forceCompile,
-                               boolean onlyCheckStatus) {
+                               boolean onlyCheckStatus, final GenericCompiler[] compilers) {
     myContext = context;
     myForceCompile = forceCompile;
     myOnlyCheckStatus = onlyCheckStatus;
-    myCompilers = compilerManager.getCompilers(GenericCompiler.class, compilerFilter);
+    myCompilers = compilers;
     myProject = myContext.getProject();
   }
 
@@ -69,7 +67,7 @@ public class GenericCompilerRunner {
     try {
       for (GenericCompiler<?,?,?> compiler : myCompilers) {
         if (compiler.getOrderPlace().equals(place)) {
-          didSomething = invokeCompiler(compiler);
+          didSomething |= invokeCompiler(compiler);
         }
       }
     }

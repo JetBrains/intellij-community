@@ -187,7 +187,7 @@ public class DockableEditorTabbedContainer implements DockContainer.Persistent {
   }
 
   @Override
-  public JComponent getComponent() {
+  public JComponent getContainerComponent() {
     return mySplitters;
   }
 
@@ -196,7 +196,7 @@ public class DockableEditorTabbedContainer implements DockContainer.Persistent {
   }
 
   public void close(VirtualFile file) {
-    mySplitters.getCurrentWindow().closeFile(file);
+    mySplitters.closeFile(file, false);
   }
 
   @Override

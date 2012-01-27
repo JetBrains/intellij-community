@@ -41,6 +41,7 @@ import java.util.HashMap;
 
 public abstract class TestConsoleProperties extends StoringPropertyContainer implements Disposable {
   public static final BooleanProperty SCROLL_TO_STACK_TRACE = new BooleanProperty("scrollToStackTrace", false);
+  public static final BooleanProperty SORT_ALPHABETICALLY = new BooleanProperty("sortTestsAlphabetically", false);
   public static final BooleanProperty SELECT_FIRST_DEFECT = new BooleanProperty("selectFirtsDefect", false);
   public static final BooleanProperty TRACK_RUNNING_TEST = new BooleanProperty("trackRunningTest", true);
   public static final BooleanProperty HIDE_PASSED_TESTS = new BooleanProperty("hidePassedTests", true);
@@ -69,7 +70,7 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
   public GlobalSearchScope getScope() {
     Module[] modules = getConfiguration().getModules();
     if (modules.length == 0) return GlobalSearchScope.allScope(myProject);
-   
+
     GlobalSearchScope scope = GlobalSearchScope.EMPTY_SCOPE;
     for (Module each : modules) {
       scope = scope.uniteWith(GlobalSearchScope.moduleRuntimeScope(each, true));
@@ -135,12 +136,12 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
   /**
    * Allows to make console editable and disable/enable input sending in process stdin stream.
    * Normally tests shouldn't ask anything in stdin so console is view only by default.
-   *
+   * <p/>
    * NB1: Process input support feature isn't fully implemented. Input text will be lost after
    * switching to any other test/suite in tests results view. It's highly not recommended to change
    * default behaviour. Please do it only in critical cases and only if you are sure that you need this feature.
-   *
-   *
+   * <p/>
+   * <p/>
    * NB2: If you are using Service Messages based test runner please ensure that before each service message
    * (e.g. #teamcity[...]) you always send "\n" to the output stream.
    *

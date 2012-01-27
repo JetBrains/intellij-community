@@ -27,7 +27,6 @@ import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -108,9 +107,9 @@ public class TestsPattern extends TestObject {
                                        PsiClass testClass,
                                        PsiMethod testMethod,
                                        PsiPackage testPackage) {
-    if (testMethod != null && Comparing.strEqual(testMethod.getName(), configuration.getPersistentData().METHOD_NAME)) {
+    /*if (testMethod != null && Comparing.strEqual(testMethod.getName(), configuration.getPersistentData().METHOD_NAME)) {
       return true;
-    }
+    }*/
     return false;
   }
 

@@ -314,7 +314,7 @@ public class IncProjectBuilder {
     finally {
       try {
         for (BuilderCategory category : BuilderCategory.values()) {
-          for (Builder builder : myBuilderRegistry.getBuilders(category)) {
+          for (ModuleLevelBuilder builder : myBuilderRegistry.getBuilders(category)) {
             builder.cleanupResources(context, chunk);
           }
         }
@@ -334,7 +334,7 @@ public class IncProjectBuilder {
   }
 
   private void runBuilders(CompileContext context, ModuleChunk chunk, BuilderCategory category) throws ProjectBuildException {
-    final List<Builder> builders = myBuilderRegistry.getBuilders(category);
+    final List<ModuleLevelBuilder> builders = myBuilderRegistry.getBuilders(category);
     if (builders.isEmpty()) {
       return;
     }
@@ -347,16 +347,16 @@ public class IncProjectBuilder {
     do {
       nextPassRequired = false;
       context.beforeNextCompileRound(chunk);
-      for (Builder builder : builders) {
-        final Builder.ExitCode buildResult = builder.build(context, chunk);
+      for (ModuleLevelBuilder builder : builders) {
+        final ModuleLevelBuilder.ExitCode buildResult = builder.build(context, chunk);
 
-        if (buildResult == Builder.ExitCode.ABORT) {
+        if (buildResult == ModuleLevelBuilder.ExitCode.ABORT) {
           throw new ProjectBuildException("Builder " + builder.getDescription() + " requested build stop");
         }
         if (myCancelStatus.isCanceled()) {
           throw new ProjectBuildException(CANCELED_MESSAGE);
         }
-        if (buildResult == Builder.ExitCode.ADDITIONAL_PASS_REQUIRED) {
+        if (buildResult == ModuleLevelBuilder.ExitCode.ADDITIONAL_PASS_REQUIRED) {
           if (!nextPassRequired) {
             // recalculate basis
             myModulesProcessed -= (stagesPassed * modulesInChunk) / stageCount;

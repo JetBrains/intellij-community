@@ -42,6 +42,7 @@ import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl;
+import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.UIUtil;
@@ -243,6 +244,33 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
   }
 
   protected List<String> make() {
+    return runCompiler(new Consumer<ErrorReportingCallback>() {
+      @Override
+      public void consume(ErrorReportingCallback callback) {
+        CompilerManager.getInstance(getProject()).make(callback);
+      }
+    });
+  }
+
+  protected List<String> compileModule(final Module module) {
+    return runCompiler(new Consumer<ErrorReportingCallback>() {
+      @Override
+      public void consume(ErrorReportingCallback callback) {
+        CompilerManager.getInstance(getProject()).compile(module, callback);
+      }
+    });
+  }
+
+  protected List<String> compileFiles(final VirtualFile... files) {
+    return runCompiler(new Consumer<ErrorReportingCallback>() {
+      @Override
+      public void consume(ErrorReportingCallback callback) {
+        CompilerManager.getInstance(getProject()).compile(files, callback);
+      }
+    });
+  }
+
+  private List<String> runCompiler(final Consumer<ErrorReportingCallback> runnable) {
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
     final ErrorReportingCallback callback = new ErrorReportingCallback(semaphore);
@@ -258,7 +286,7 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
               assert ioFile.exists();
             }
           }
-          CompilerManager.getInstance(getProject()).make(callback);
+          runnable.consume(callback);
         }
         catch (Exception e) {
           throw new RuntimeException(e);

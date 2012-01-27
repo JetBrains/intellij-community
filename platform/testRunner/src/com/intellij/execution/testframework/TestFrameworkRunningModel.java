@@ -20,20 +20,23 @@
  */
 package com.intellij.execution.testframework;
 
+import com.intellij.execution.testframework.ui.AbstractTestTreeBuilder;
 import com.intellij.openapi.Disposable;
 
 public interface TestFrameworkRunningModel extends Disposable {
   TestConsoleProperties getProperties();
 
-  void setFilter(final Filter filter);
+  void setFilter(Filter filter);
 
   boolean isRunning();
 
   TestTreeView getTreeView();
 
+  AbstractTestTreeBuilder getTreeBuilder();
+
   boolean hasTestSuites();
 
   AbstractTestProxy getRoot();
 
-  void selectAndNotify(final AbstractTestProxy testProxy);
+  void selectAndNotify(AbstractTestProxy testProxy);
 }

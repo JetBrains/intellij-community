@@ -1,6 +1,7 @@
 package org.jetbrains.android.inspections.lint;
 
 import com.android.tools.lint.PositionXmlParser;
+import com.android.tools.lint.client.api.Configuration;
 import com.android.tools.lint.client.api.IDomParser;
 import com.android.tools.lint.client.api.LintClient;
 import com.android.tools.lint.detector.api.Context;
@@ -41,6 +42,11 @@ class IntellijLintClient extends LintClient implements Disposable {
 
   public IntellijLintClient(@NotNull State state) {
     myState = state;
+  }
+
+  @Override
+  public Configuration getConfiguration(com.android.tools.lint.detector.api.Project project) {
+    return new IntellijLintConfiguration(myState.getIssues());
   }
 
   @Override

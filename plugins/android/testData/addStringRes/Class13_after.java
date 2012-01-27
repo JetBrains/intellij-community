@@ -5,7 +5,7 @@ import android.content.res.Resources;
 import p1.p2.R;
 
 public class Class extends Context {
-  public void f(Resources resources) {
-    String s = resources.getString(R.string.hello);
+  public void f(Context resources) {
+    String s = getString(R.string.hello);
   }
 }

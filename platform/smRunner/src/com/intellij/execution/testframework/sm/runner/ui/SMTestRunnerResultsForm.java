@@ -54,7 +54,8 @@ import java.util.Set;
 /**
  * @author: Roman Chernyatchik
  */
-public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFrameworkRunningModel, TestResultsViewer, SMTRunnerEventsListener {
+public class SMTestRunnerResultsForm extends TestResultsPanel
+  implements TestFrameworkRunningModel, TestResultsViewer, SMTRunnerEventsListener {
   @NonNls private static final String DEFAULT_SM_RUNNER_SPLITTER_PROPERTY = "SMTestRunner.Splitter.Proportion";
 
   public static final Color DARK_YELLOW = Color.YELLOW.darker();
@@ -131,12 +132,12 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
 
     final KeyStroke shiftEnterKey = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_MASK);
     SMRunnerUtil.registerAsAction(shiftEnterKey, "show-statistics-for-test-proxy",
-                            new Runnable() {
-                              public void run() {
-                                showStatisticsForSelectedProxy();
-                              }
-                            },
-                            myTreeView);
+                                  new Runnable() {
+                                    public void run() {
+                                      showStatisticsForSelectedProxy();
+                                    }
+                                  },
+                                  myTreeView);
   }
 
   protected ToolbarPanel createToolbarPanel() {
@@ -161,7 +162,9 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
 
     final SMTRunnerTreeStructure structure = new SMTRunnerTreeStructure(myProject, myTestsRootNode);
     myTreeBuilder = new SMTRunnerTreeBuilder(myTreeView, structure);
+    myTreeBuilder.setTestsComparator(TestConsoleProperties.SORT_ALPHABETICALLY.value(myProperties));
     Disposer.register(this, myTreeBuilder);
+
     myAnimator = new MyAnimator(this, myTreeBuilder);
 
     //TODO always hide root node
@@ -192,6 +195,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
 
   /**
    * Is used for navigation from tree view to other UI components
+   *
    * @param handler
    */
   public void setShowStatisticForProxyHandler(final PropagateSelectionHandler handler) {
@@ -200,8 +204,9 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
 
   /**
    * Returns root node, fake parent suite for all tests and suites
-   * @return
+   *
    * @param testsRoot
+   * @return
    */
   public void onTestingStarted(@NotNull SMTestProxy.SMRootTestProxy testsRoot) {
     myAnimator.setCurrentTestCase(myTestsRootNode);
@@ -333,6 +338,11 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
     return myTreeView;
   }
 
+  @Override
+  public SMTRunnerTreeBuilder getTreeBuilder() {
+    return myTreeBuilder;
+  }
+
   public boolean hasTestSuites() {
     return getRoot().getChildren().size() > 0;
   }
@@ -345,10 +355,11 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
   /**
    * Manual test proxy selection in tests tree. E.g. do select root node on
    * testing started or do select current node if TRACK_RUNNING_TEST is enabled
-   *
-   *
+   * <p/>
+   * <p/>
    * Will select proxy in Event Dispatch Thread. Invocation of this
    * method may be not in event dispatch thread
+   *
    * @param testProxy Test or suite
    */
   public void selectAndNotify(@Nullable final AbstractTestProxy testProxy) {
@@ -469,7 +480,8 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
   private void updateStatusLabel(final boolean testingFinished) {
     if (myTestsFailuresCount > 0) {
       myStatusLine.setStatusColor(ColorProgressBar.RED);
-    } else if (myContainsIgnoredTests) {
+    }
+    else if (myContainsIgnoredTests) {
       myStatusLine.setStatusColor(DARK_YELLOW);
     }
 
@@ -477,7 +489,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
       if (myTestsTotal == 0) {
         myStatusLine.setStatusColor(myTestsRootNode.wasLaunched() || !myTestsRootNode.isTestsReporterAttached()
                                     ? Color.LIGHT_GRAY
-                                    : ColorProgressBar.RED );
+                                    : ColorProgressBar.RED);
       }
       // else color will be according failed/passed tests
     }
@@ -486,9 +498,9 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
     // initializing will be "launchedAndFinished"
     final boolean launchedAndFinished = myTestsRootNode.wasLaunched() && !myTestsRootNode.isInProgress();
     myStatusLine.setText(TestsPresentationUtil.getProgressStatus_Text(myStartTime, myEndTime,
-                                                                       myTestsTotal, myTestsCurrentCount,
-                                                                       myTestsFailuresCount, myMentionedCategories,
-                                                                       launchedAndFinished));
+                                                                      myTestsTotal, myTestsCurrentCount,
+                                                                      myTestsFailuresCount, myMentionedCategories,
+                                                                      launchedAndFinished));
   }
 
   /**
@@ -501,12 +513,13 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
   /**
    * On event change selection and probably requests focus. Is used when we want
    * navigate from other component to this
+   *
    * @return Listener
    */
   public PropagateSelectionHandler createSelectMeListener() {
     return new PropagateSelectionHandler() {
       public void handlePropagateSelectionRequest(@Nullable final SMTestProxy selectedTestProxy, @NotNull final Object sender,
-                                    final boolean requestFocus) {
+                                                  final boolean requestFocus) {
         SMRunnerUtil.addToInvokeLater(new Runnable() {
           public void run() {
             selectWithoutNotify(selectedTestProxy);
@@ -543,7 +556,8 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
     if (!isModeConsistent(isCustomMessage)) return;
 
     // for mixed tests results : mention category only if it contained tests
-    myMentionedCategories.add(myCurrentCustomProgressCategory != null ? myCurrentCustomProgressCategory : TestsPresentationUtil.DEFAULT_TESTS_CATEGORY);
+    myMentionedCategories
+      .add(myCurrentCustomProgressCategory != null ? myCurrentCustomProgressCategory : TestsPresentationUtil.DEFAULT_TESTS_CATEGORY);
 
     // Counters
     myTestsCurrentCount++;
@@ -558,7 +572,8 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
     if (myTestsTotal != 0) {
       // if total is set
       myStatusLine.setFraction((double)myTestsCurrentCount / myTestsTotal);
-    } else {
+    }
+    else {
       // if at least one test was launcher than just set progress in the middle to show user that tests are running
       myStatusLine.setFraction(myTestsCurrentCount > 1 ? 0.5 : 0); // > 1 because count already ++
     }
@@ -583,34 +598,34 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
   }
 
 
- private static class MyFocusTraversalPolicy extends FocusTraversalPolicy {
-   final List<Component> myComponents;
+  private static class MyFocusTraversalPolicy extends FocusTraversalPolicy {
+    final List<Component> myComponents;
 
-   private MyFocusTraversalPolicy(final List<Component> components) {
-     myComponents = components;
-   }
+    private MyFocusTraversalPolicy(final List<Component> components) {
+      myComponents = components;
+    }
 
-   public Component getComponentAfter(final Container container, final Component component) {
-     return myComponents.get((myComponents.indexOf(component) + 1) % myComponents.size());
-   }
+    public Component getComponentAfter(final Container container, final Component component) {
+      return myComponents.get((myComponents.indexOf(component) + 1) % myComponents.size());
+    }
 
-   public Component getComponentBefore(final Container container, final Component component) {
-     final int prevIndex = myComponents.indexOf(component) - 1;
-     final int normalizedIndex = prevIndex < 0 ? myComponents.size() - 1 : prevIndex;
+    public Component getComponentBefore(final Container container, final Component component) {
+      final int prevIndex = myComponents.indexOf(component) - 1;
+      final int normalizedIndex = prevIndex < 0 ? myComponents.size() - 1 : prevIndex;
 
-     return myComponents.get(normalizedIndex);
-   }
+      return myComponents.get(normalizedIndex);
+    }
 
-   public Component getFirstComponent(final Container container) {
-     return myComponents.get(0);
-   }
+    public Component getFirstComponent(final Container container) {
+      return myComponents.get(0);
+    }
 
-   public Component getLastComponent(final Container container) {
-     return myComponents.get(myComponents.size() - 1);
-   }
+    public Component getLastComponent(final Container container) {
+      return myComponents.get(myComponents.size() - 1);
+    }
 
-   public Component getDefaultComponent(final Container container) {
-     return getFirstComponent(container);
-   }
+    public Component getDefaultComponent(final Container container) {
+      return getFirstComponent(container);
+    }
   }
 }

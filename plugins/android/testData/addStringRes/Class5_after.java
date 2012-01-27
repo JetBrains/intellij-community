@@ -5,6 +5,6 @@ import p1.p2.R;
 
 public class Class extends Context {
   public void f(Context context) {
-    String s = r.getString(R.string.hello);
+    String s = getString(R.string.hello);
   }
 }

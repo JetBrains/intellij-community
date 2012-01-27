@@ -272,6 +272,17 @@ public class TableScrollingUtil {
         moveEnd(list);
       }
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0)), list);
+
+    new AnAction() {
+      public void actionPerformed(AnActionEvent e) {
+        moveHome(list);
+      }
+    }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_HOME, 0)), list);
+    new AnAction() {
+      public void actionPerformed(AnActionEvent e) {
+        moveEnd(list);
+      }
+    }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_END, 0)), list);
   }
 
 }

@@ -1824,10 +1824,6 @@
                      bundle="com.siyeh.InspectionGadgetsBundle" key="string.buffer.must.have.initial.capacity.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.performance.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.performance.StringBufferMustHaveInitialCapacityInspection"/>
-    <localInspection language="JAVA" shortName="StringBufferReplaceableByString" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="string.buffer.replaceable.by.string.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.performance.issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.performance.StringBufferReplaceableByStringInspection"/>
     <localInspection language="JAVA" shortName="StringBufferToStringInConcatenation" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="string.buffer.to.string.in.concatenation.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.performance.issues" enabledByDefault="false" level="WARNING"
@@ -2188,6 +2184,10 @@
                      key="simplifiable.equals.expression.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.style.SimplifiableEqualsExpressionInspection"/>
+    <localInspection language="JAVA" shortName="StringBufferReplaceableByString" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="string.buffer.replaceable.by.string.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.performance.issues" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.siyeh.ig.style.StringBufferReplaceableByStringInspection"/>
     <localInspection language="JAVA" suppressId="TypeParameterExplicitlyExtendsObject" shortName="TypeParameterExtendsObject"
                      bundle="com.siyeh.InspectionGadgetsBundle" key="type.parameter.extends.object.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues" enabledByDefault="true"
