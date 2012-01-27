@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -827,35 +827,29 @@ public class ExpressionParser {
 
   @Nullable
   private static IElementType getGtTokenType(final PsiBuilder builder) {
-    final PsiBuilder.Marker sp = builder.mark();
-
     IElementType tokenType = builder.getTokenType();
-    if (tokenType == JavaTokenType.GT) {
-      builder.advanceLexer();
-      if (builder.getTokenType() == JavaTokenType.GT) {
-        builder.advanceLexer();
-        if (builder.getTokenType() == JavaTokenType.GT) {
-          builder.advanceLexer();
-          if (builder.getTokenType() == JavaTokenType.EQ) {
-            tokenType = JavaTokenType.GTGTGTEQ;
-          }
-          else {
-            tokenType = JavaTokenType.GTGTGT;
-          }
-        }
-        else if (builder.getTokenType() == JavaTokenType.EQ) {
-          tokenType = JavaTokenType.GTGTEQ;
+    if (tokenType != JavaTokenType.GT) return tokenType;
+
+    if (builder.rawLookup(1) == JavaTokenType.GT) {
+      if (builder.rawLookup(2) == JavaTokenType.GT) {
+        if (builder.rawLookup(3) == JavaTokenType.EQ) {
+          tokenType = JavaTokenType.GTGTGTEQ;
         }
         else {
-          tokenType = JavaTokenType.GTGT;
+          tokenType = JavaTokenType.GTGTGT;
         }
       }
-      else if (builder.getTokenType() == JavaTokenType.EQ) {
-        tokenType = JavaTokenType.GE;
+      else if (builder.rawLookup(2) == JavaTokenType.EQ) {
+        tokenType = JavaTokenType.GTGTEQ;
+      }
+      else {
+        tokenType = JavaTokenType.GTGT;
       }
     }
+    else if (builder.rawLookup(1) == JavaTokenType.EQ) {
+      tokenType = JavaTokenType.GE;
+    }
 
-    sp.rollbackTo();
     return tokenType;
   }
 
