@@ -1,6 +1,5 @@
 package com.intellij.appengine.enhancement;
 
-import com.intellij.appengine.facet.AppEngineFacet;
 import com.intellij.openapi.compiler.generic.CompileItem;
 import com.intellij.openapi.compiler.generic.DummyPersistentState;
 import com.intellij.openapi.compiler.generic.VirtualFileWithDependenciesState;
