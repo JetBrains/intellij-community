@@ -16,7 +16,7 @@ public class BuilderRegistry {
   private static class Holder {
     static final BuilderRegistry ourInstance = new BuilderRegistry();
   }
-  private final Map<BuilderCategory, List<Builder>> myBuilders = new HashMap<BuilderCategory, List<Builder>>();
+  private final Map<BuilderCategory, List<ModuleLevelBuilder>> myBuilders = new HashMap<BuilderCategory, List<ModuleLevelBuilder>>();
   private ExecutorService myTasksExecutor;
 
   public static BuilderRegistry getInstance() {
@@ -25,7 +25,7 @@ public class BuilderRegistry {
 
   private BuilderRegistry() {
     for (BuilderCategory category : BuilderCategory.values()) {
-      myBuilders.put(category, new ArrayList<Builder>());
+      myBuilders.put(category, new ArrayList<ModuleLevelBuilder>());
     }
     final Runtime runtime = Runtime.getRuntime();
     myTasksExecutor = Executors.newFixedThreadPool(runtime.availableProcessors());
@@ -60,7 +60,7 @@ public class BuilderRegistry {
     return Collections.emptyList(); // todo
   }
 
-  public List<Builder> getBuilders(BuilderCategory category){
+  public List<ModuleLevelBuilder> getBuilders(BuilderCategory category){
     return Collections.unmodifiableList(myBuilders.get(category)); // todo
   }
 

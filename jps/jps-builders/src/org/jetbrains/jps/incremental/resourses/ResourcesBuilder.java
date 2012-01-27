@@ -19,7 +19,7 @@ import java.util.Locale;
  * @author Eugene Zhuravlev
  *         Date: 10/6/11
  */
-public class ResourcesBuilder extends Builder{
+public class ResourcesBuilder extends ModuleLevelBuilder {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.resourses.ResourcesBuilder");
   public static final String BUILDER_NAME = "resources";
 

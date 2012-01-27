@@ -49,7 +49,7 @@ import java.util.concurrent.ExecutorService;
  * @author Eugene Zhuravlev
  *         Date: 9/21/11
  */
-public class JavaBuilder extends Builder{
+public class JavaBuilder extends ModuleLevelBuilder {
   public static final String BUILDER_NAME = "java";
   private static final String JAVA_EXTENSION = ".java";
   private static final String FORM_EXTENSION = ".form";

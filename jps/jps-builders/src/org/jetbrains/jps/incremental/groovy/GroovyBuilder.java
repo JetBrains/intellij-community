@@ -29,7 +29,7 @@ import java.util.*;
  * @author Eugene Zhuravlev
  *         Date: 10/25/11
  */
-public class GroovyBuilder extends Builder {
+public class GroovyBuilder extends ModuleLevelBuilder {
   public static final String BUILDER_NAME = "groovy";
   private final boolean myForStubs;
   private final String myBuilderName;
@@ -43,7 +43,7 @@ public class GroovyBuilder extends Builder {
     return myBuilderName;
   }
 
-  public Builder.ExitCode build(final CompileContext context, ModuleChunk chunk) throws ProjectBuildException {
+  public ModuleLevelBuilder.ExitCode build(final CompileContext context, ModuleChunk chunk) throws ProjectBuildException {
     ExitCode exitCode = ExitCode.OK;
     final Map<File, Module> toCompile = new HashMap<File, Module>();
     try {
