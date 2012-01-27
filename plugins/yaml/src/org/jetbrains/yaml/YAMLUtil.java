@@ -176,7 +176,7 @@ public class YAMLUtil {
           String indent = keyValue.getValueIndent();
           // Generate items
           final StringBuilder builder = new StringBuilder();
-          builder.append("foo:");
+          builder.append(keyValue.getKeyText() + ":");
           for (int j=i;j<keyLength;j++){
             builder.append("\n").append(indent.length() == 0 ? "  " : indent);
             builder.append(key[j]).append(":");
@@ -188,6 +188,11 @@ public class YAMLUtil {
               .createFileFromText("temp." + YAMLFileType.YML.getDefaultExtension(), YAMLFileType.YML,
                                   builder.toString(), LocalTimeCounter.currentTime(), true);
           final YAMLKeyValue topKeyValue = (YAMLKeyValue) yamlFile.getDocuments().get(0).getYAMLElements().get(0);
+          // In case if value is null, we can just replace target keyvalue with generated one.
+          if (value == null) {
+            final YAMLKeyValue newKewValue = (YAMLKeyValue)keyValue.replace(topKeyValue);
+            return (YAMLKeyValue) newKewValue.getLastChild();
+          }
           final ASTNode generatedNode = topKeyValue.getNode();
           @SuppressWarnings({"ConstantConditions"})
           final ASTNode[] generatedChildren = generatedNode.getChildren(null);
