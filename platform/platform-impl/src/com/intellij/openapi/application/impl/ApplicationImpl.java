@@ -1118,28 +1118,29 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       fireBeforeWriteActionStart(_clazz);
       final AtomicBoolean stopped = new AtomicBoolean(false);
 
-      if (ourDumpThreadsOnLongWriteActionWaiting > 0) {
-        executeOnPooledThread(new Runnable() {
-          @Override
-          public void run() {
-            while (!stopped.get()) {
-              try {
-                Thread.sleep(ourDumpThreadsOnLongWriteActionWaiting);
-                if (!stopped.get()) {
-                  PerformanceWatcher.getInstance().dumpThreads(true);
-                }
-              }
-              catch (InterruptedException ignored) {
-              }
-            }
-          }
-        });
-      }
-
       LOG.assertTrue(myActionsLock.isWriteLockAcquired(Thread.currentThread())
                      || !Thread.holdsLock(PsiLock.LOCK), "Thread must not hold PsiLock while performing writeAction");
       try {
-        myActionsLock.writeLock().acquire();
+        if (!myActionsLock.writeLock().attempt(0)) {
+          if (ourDumpThreadsOnLongWriteActionWaiting > 0) {
+            executeOnPooledThread(new Runnable() {
+              @Override
+              public void run() {
+                while (!stopped.get()) {
+                  try {
+                    Thread.sleep(ourDumpThreadsOnLongWriteActionWaiting);
+                    if (!stopped.get()) {
+                      PerformanceWatcher.getInstance().dumpThreads(true);
+                    }
+                  }
+                  catch (InterruptedException ignored) {
+                  }
+                }
+              }
+            });
+          }
+          myActionsLock.writeLock().acquire();
+        }
         acquired();
       }
       catch (InterruptedException e) {
