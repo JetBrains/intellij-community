@@ -137,18 +137,21 @@ public class
     int _y = r.y;
     int _height = r.height;
 
-    g2d.setPaint(new GradientPaint(_x, _y, new SameColor(255), _x, _y + _height, UIUtil.getPanelBackground()));
+    if (!isHideTabs()) {
+      g2d.setPaint(new GradientPaint(_x, _y, new SameColor(255), _x, _y + _height, UIUtil.getPanelBackground()));
 
-    g2d.fill(selectedShape.fillPath.getShape());
+      g2d.fill(selectedShape.fillPath.getShape());
 
-    g2d.setColor(new Color(255, 255, 255, 180));
-    g2d.draw(selectedShape.fillPath.getShape());
-
+      g2d.setColor(new Color(255, 255, 255, 180));
+      g2d.draw(selectedShape.fillPath.getShape());
+    }
     g2d.setColor(UIUtil.getPanelBackground());
     g2d.fillRect(2, selectedShape.labelPath.getMaxY() - 3, selectedShape.path.getMaxX() - 3, 4);
     g2d.drawLine(1, selectedShape.labelPath.getMaxY(), 1, getHeight() - 1);
     g2d.drawLine(selectedShape.path.getMaxX() - 1, selectedShape.labelPath.getMaxY() - 4,
                  selectedShape.path.getMaxX() - 1, getHeight() - 1);
+
+    if (isHideTabs()) return;
     g2d.setColor(new Color(0, 0, 0, 50));
     g2d.drawLine(1, selectedShape.labelPath.getMaxY(), 1, getHeight() - 1);
     g2d.drawLine(selectedShape.path.getMaxX() - 1, selectedShape.labelPath.getMaxY() - 4,
