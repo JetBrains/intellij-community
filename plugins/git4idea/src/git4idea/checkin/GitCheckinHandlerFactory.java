@@ -30,6 +30,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PairConsumer;
 import git4idea.GitVcs;
 import git4idea.config.GitConfigUtil;
+import git4idea.config.GitVersion;
+import git4idea.config.GitVersionSpecialty;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -82,10 +84,13 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
 
     private ReturnResult checkUserName() {
       Project project = myPanel.getProject();
+      GitVcs vcs = GitVcs.getInstance(project);
+      assert vcs != null;
+
       Collection<VirtualFile> notDefined = new ArrayList<VirtualFile>();
       Map<VirtualFile, Pair<String, String>> defined = new HashMap<VirtualFile, Pair<String, String>>();
       Collection<VirtualFile> allRoots = new ArrayList<VirtualFile>(Arrays.asList(
-        ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(GitVcs.getInstance(project))));
+        ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(vcs)));
 
       Collection<VirtualFile> affectedRoots = myPanel.getRoots();
       for (VirtualFile root : affectedRoots) {
@@ -108,6 +113,17 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
       
       if (notDefined.isEmpty()) {
         return ReturnResult.COMMIT;
+      }
+
+      GitVersion version = vcs.getVersion();
+      if (System.getenv("HOME") == null && GitVersionSpecialty.DOESNT_DEFINE_HOME_ENV_VAR.existsIn(version)) {
+        Messages.showErrorDialog(project,
+                                 "You are using Git " + version + " which doesn't define %HOME% environment variable properly.\n" +
+                                 "Consider updating Git to a newer version " +
+                                 "or define %HOME% to point to the place where the global .gitconfig is stored \n" +
+                                 "(it is usually %USERPROFILE% or %HOMEDRIVE%%HOMEPATH%).",
+                                 "HOME Variable Is Not Defined");
+        return ReturnResult.CANCEL;
       }
 
       if (defined.isEmpty() && allRoots.size() > affectedRoots.size()) {
