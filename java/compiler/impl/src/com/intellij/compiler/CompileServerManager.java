@@ -59,8 +59,7 @@ import org.jetbrains.jps.client.CompileServerClient;
 import org.jetbrains.jps.server.ClasspathBootstrap;
 import org.jetbrains.jps.server.Server;
 
-import javax.tools.JavaCompiler;
-import javax.tools.ToolProvider;
+import javax.tools.*;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -417,12 +416,18 @@ public class CompileServerManager implements ApplicationComponent{
     final String vmExecutablePath = ((JavaSdkType)projectJdk.getSdkType()).getVMExecutablePath(projectJdk);
     cmdLine.setExePath(vmExecutablePath);
     cmdLine.addParameter("-server");
-    cmdLine.addParameter("-ea");
     cmdLine.addParameter("-XX:MaxPermSize=150m");
     cmdLine.addParameter("-XX:ReservedCodeCacheSize=64m");
+    cmdLine.addParameter("-Xmx" + Registry.intValue("compiler.server.heap.size") + "m");
     cmdLine.addParameter("-Djava.awt.headless=true");
     //cmdLine.addParameter("-DuseJavaUtilZip");
-    cmdLine.addParameter("-Xmx" + Registry.intValue("compiler.server.heap.size") + "m");
+    final String additionalOptions = Registry.stringValue("compiler.server.vm.options");
+    if (!StringUtil.isEmpty(additionalOptions)) {
+      final StringTokenizer tokenizer = new StringTokenizer(additionalOptions, " ", false);
+      while (tokenizer.hasMoreTokens()) {
+        cmdLine.addParameter(tokenizer.nextToken());
+      }
+    }
 
     // debugging
     final int debugPort = Registry.intValue("compiler.server.debug.port");
