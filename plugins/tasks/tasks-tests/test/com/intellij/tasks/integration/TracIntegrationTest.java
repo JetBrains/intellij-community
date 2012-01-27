@@ -23,14 +23,11 @@ import com.intellij.tasks.trac.TracRepository;
  * @author Dmitry Avdeev
  *         Date: 1/25/12
  */
-public class TracIntegrationTest extends TaskManagerTestCase {
+public abstract class TracIntegrationTest extends TaskManagerTestCase {
 
   public void testTracEncoding() throws Exception {
 
     TracRepository repository = new TracRepository();
-    repository.setUrl("http://trac.shopware.de/trac/login/rpc");
-    repository.setPassword("jetbrains");
-    repository.setUsername("jetbrains");
     repository.setUseHttpAuthentication(true);
 
     Task task = repository.findTask("5358");
