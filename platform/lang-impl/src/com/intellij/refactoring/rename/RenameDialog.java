@@ -118,7 +118,7 @@ public class RenameDialog extends RefactoringDialog {
     myNameSuggestionsField = new NameSuggestionsField(suggestedNames, myProject, FileTypes.PLAIN_TEXT, myEditor) {
       @Override
       protected boolean shouldSelectAll() {
-        return myEditor.getSettings().isPreselectRename();
+        return myEditor == null || myEditor.getSettings().isPreselectRename();
       }
     };
     if (myPsiElement instanceof PsiFile && myEditor == null) {
