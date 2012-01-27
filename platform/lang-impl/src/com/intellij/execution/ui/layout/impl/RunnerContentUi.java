@@ -744,6 +744,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     for (TabInfo each : tabs) {
       hasToolbarContent |= updateTabUI(each);
     }
+    myTabs.getPresentation().setHideTabs(!hasToolbarContent && tabs.size() <= 1 && myOriginal == null);
     myTabs.updateTabActions(validateNow);
 
     if (validateNow) {
