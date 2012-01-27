@@ -1614,8 +1614,8 @@ public class JBTabsImpl extends JComponent
     if (paintFocused) {
       final Color bgColor = getActiveTabColor(getActiveTabFillIn());
       if (bgColor == null) {
-        shapeInfo.from = UIUtil.getFocusedFillColor();
-        shapeInfo.to = UIUtil.getFocusedFillColor();
+        shapeInfo.from = getFocusedTopFillColor();
+        shapeInfo.to = getFocusedBottomFillColor();
       }
       else {
         bgPreFill = bgColor;
@@ -1672,6 +1672,14 @@ public class JBTabsImpl extends JComponent
     }
 
     paintBorder(g2d, shapeInfo, borderColor);
+  }
+
+  protected Color getFocusedTopFillColor() {
+    return UIUtil.getFocusedFillColor();
+  }
+
+  protected Color getFocusedBottomFillColor() {
+    return UIUtil.getFocusedFillColor();
   }
 
   protected ShapeInfo computeSelectedLabelShape() {

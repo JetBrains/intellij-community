@@ -67,7 +67,17 @@ public class GridCellImpl implements GridCell {
 
     myPlaceInGrid = placeInGrid;
     myPlaceholder = placeholder;
-    myTabs = new JBTabsImpl(myContext.getProject(), myContext.getActionManager(), myContext.getFocusManager(), container).setDataProvider(new DataProvider() {
+    myTabs = new JBTabsImpl(myContext.getProject(), myContext.getActionManager(), myContext.getFocusManager(), container) {
+      @Override
+      protected Color getFocusedTopFillColor() {
+        return new Color(202, 211, 227);
+      }
+
+      @Override
+      protected Color getFocusedBottomFillColor() {
+        return new Color(194, 203, 219);
+      }
+    }.setDataProvider(new DataProvider() {
       @Nullable
       public Object getData(@NonNls final String dataId) {
         if (ViewContext.CONTENT_KEY.is(dataId)) {
@@ -89,8 +99,8 @@ public class GridCellImpl implements GridCell {
         return new UiDecoration(null, new Insets(1, -1, 1, -1));
       }
     }).setSideComponentVertical(!context.getLayoutSettings().isToolbarHorizontal())
-      .setStealthTabMode(true)
-      .setFocusCycle(false).setPaintFocus(true).setProvideSwitchTargets(false).setTabDraggingEnabled(true);
+      .setStealthTabMode(true).setFocusCycle(false).setPaintFocus(true)
+      .setProvideSwitchTargets(false).setTabDraggingEnabled(true);
 
     myTabs.addTabMouseListener(new MouseAdapter() {
       public void mousePressed(final MouseEvent e) {
