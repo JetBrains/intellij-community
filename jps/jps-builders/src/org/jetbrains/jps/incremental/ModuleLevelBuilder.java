@@ -71,19 +71,14 @@ public abstract class ModuleLevelBuilder extends Builder {
 
           if (LOG.isDebugEnabled()) {
             LOG.debug("Differentiate Results:");
-
             LOG.debug("   Compiled Files:");
-
             for (final File c : allCompiledFiles) {
               LOG.debug("      " + c.getAbsolutePath());
             }
-
             LOG.debug("   Affected Files:");
-
             for (final File c : allAffectedFiles) {
               LOG.debug("      " + c.getAbsolutePath());
             }
-
             LOG.debug("End Of Differentiate Results.");
           }
 

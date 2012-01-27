@@ -1436,7 +1436,6 @@ public class Mappings {
           }
 
           debug("Dependent file: ", depFile);
-
           final Collection<UsageRepr.Cluster> depClusters = mySourceFileToUsages.get(depFile);
 
           for (UsageRepr.Cluster depCluster : depClusters) {
