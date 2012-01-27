@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,8 @@ public class ExpressionParserTest extends JavaParsingTestCase {
 
   public void testBinary0() { doParserTest("a + b"); }
   public void testBinary1() { doParserTest("a < b"); }
+  public void testBinary2() { doParserTest("a > = b"); }
+  public void testBinary3() { doParserTest("a >/**/= b"); }
 
   public void testCond0() { doParserTest("cond ? true : false"); }
   public void testCond1() { doParserTest("cond ?"); }
