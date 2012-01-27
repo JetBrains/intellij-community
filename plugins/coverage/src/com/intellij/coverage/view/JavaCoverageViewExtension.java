@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopes;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.annotations.Nullable;
 
@@ -109,13 +110,28 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
   }
 
   @Override
-  public PsiElement getElementToSelect(VirtualFile virtualFile) {
-    final PsiElement psiElement = super.getElementToSelect(virtualFile);
-    if (psiElement instanceof PsiClassOwner) {
-      final PsiClass[] classes = ((PsiClassOwner)psiElement).getClasses();
-      if (classes.length > 0) return classes[0];
+  public PsiElement getElementToSelect(Object object) {
+    PsiElement psiElement = super.getElementToSelect(object);
+    if (psiElement != null) {
+      final PsiFile containingFile = psiElement.getContainingFile();
+      if (containingFile instanceof PsiClassOwner) {
+        final PsiClass[] classes = ((PsiClassOwner)containingFile).getClasses();
+        if (classes.length == 1) return classes[0];
+        for (PsiClass aClass : classes) {
+          if (PsiTreeUtil.isAncestor(aClass, psiElement, false)) return aClass;
+        }
+      }
     }
     return psiElement;
+  }
+
+  @Override
+  public VirtualFile getVirtualFile(Object object) {
+    if (object instanceof PsiPackage) {
+      final PsiDirectory[] directories = ((PsiPackage)object).getDirectories();
+      return directories.length > 0 ? directories[0].getVirtualFile() : null;
+    }
+    return super.getVirtualFile(object);
   }
 
   @Nullable
@@ -255,11 +271,14 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
   }
 
   @Override
-  public boolean canSelectInCoverageView(VirtualFile file) {
-    final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
+  public boolean canSelectInCoverageView(Object object) {
+    final PsiFile psiFile = object instanceof VirtualFile ? PsiManager.getInstance(myProject).findFile((VirtualFile)object) : null;
     if (psiFile instanceof PsiClassOwner) {
       final String packageName = ((PsiClassOwner)psiFile).getPackageName();
       return isInCoverageScope(JavaPsiFacade.getInstance(myProject).findPackage(packageName), mySuitesBundle);
+    }
+    if (object instanceof PsiPackage) {
+      return isInCoverageScope((PsiElement)object, mySuitesBundle);
     }
     return false;
   }
