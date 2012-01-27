@@ -1,12 +1,11 @@
 package org.jetbrains.ether.dependencyView;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Opcodes;
-
-import com.intellij.openapi.diagnostic.Logger;
-import org.jetbrains.annotations.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -22,7 +21,7 @@ import java.util.*;
  * To change this template use File | Settings | File Templates.
  */
 public class Mappings {
-  private final static Logger LOG = Logger.getInstance ("#org.jetbrains.ether.dependencyView.Mappings");
+  private final static Logger LOG = Logger.getInstance("#org.jetbrains.ether.dependencyView.Mappings");
 
   private final static String CLASS_TO_SUBCLASSES = "classToSubclasses.tab";
   private final static String CLASS_TO_CLASS = "classToClass.tab";
@@ -38,12 +37,20 @@ public class Mappings {
   private DependencyContext myContext;
   private org.jetbrains.ether.dependencyView.Logger<DependencyContext.S> myDebugS;
 
-  private void debug(final String s) {
+  private static void debug(final String s) {
     LOG.debug(s);
   }
 
-  private void debug(final DependencyContext.S s) {
-    myDebugS.debug(s);
+  private void debug(final String comment, final DependencyContext.S s) {
+    myDebugS.debug(comment, s);
+  }
+
+  private void debug(final String comment, final String s) {
+    myDebugS.debug(comment, s);
+  }
+
+  private void debug(final String comment, final boolean s) {
+    myDebugS.debug(comment, s);
   }
 
   private MultiMaplet<DependencyContext.S, DependencyContext.S> myClassToSubclasses;
@@ -534,16 +541,25 @@ public class Mappings {
                           final Collection<UsageRepr.Usage> affectedUsages,
                           final Collection<DependencyContext.S> dependants,
                           final boolean usages) {
+      debug("Affecting subclasses of class: ", className);
+
       final DependencyContext.S fileName = myClassToSourceFile.get(className);
 
       if (fileName == null) {
+        debug("No source file detected for class ", className);
+        debug("End of affectSubclasses");
         return;
       }
 
+      debug("Source file name: ", fileName);
+
       if (usages) {
+        debug("Class usages affection requested");
+
         final ClassRepr classRepr = reprByName(className);
 
         if (classRepr != null) {
+          debug("Added class usage for ", classRepr.name);
           affectedUsages.add(classRepr.createUsage());
         }
       }
@@ -579,6 +595,7 @@ public class Mappings {
           dependents.addAll(deps);
         }
 
+        debug("Affect field usage referenced of class ", p);
         affectedUsages
           .add(rootUsage instanceof UsageRepr.FieldAssignUsage ? field.createAssignUsage(myContext, p) : field.createUsage(myContext, p));
       }
@@ -597,6 +614,8 @@ public class Mappings {
         if (deps != null) {
           dependents.addAll(deps);
         }
+
+        debug("Affect method usage referenced of class ", p);
 
         affectedUsages
           .add(rootUsage instanceof UsageRepr.MetaMethodUsage ? method.createMetaUsage(myContext, p) : method.createUsage(myContext, p));
@@ -730,24 +749,28 @@ public class Mappings {
 
     // Public branch --- hopeless
     if ((member.access & Opcodes.ACC_PUBLIC) > 0) {
-      debug("Switched to non-incremental mode");
+      debug("Public access, switching to a non-incremental mode");
       return false;
     }
 
     // Protected branch
     if ((member.access & Opcodes.ACC_PROTECTED) > 0) {
-      debug("Softening non-incremental decision: adding all relevant subclasses for a recompilation");
+      debug("Protected access, softening non-incremental decision: adding all relevant subclasses for a recompilation");
+      debug("Root class: ", owner);
 
       final Collection<DependencyContext.S> propagated = self.propagateFieldAccess(isField ? member.name : myContext.get(""), owner);
 
       for (DependencyContext.S className : propagated) {
-        affectedFiles.add(new File(myContext.getValue(myClassToSourceFile.get(className))));
+        final String fileName = myContext.getValue(myClassToSourceFile.get(className));
+        debug("Adding ", fileName);
+        affectedFiles.add(new File(fileName));
       }
     }
 
-    debug("Softening non-incremental decision: adding all package classes for a recompilation");
-
     final String packageName = ClassRepr.getPackageName(myContext.getValue(isField ? owner : member.name));
+
+    debug("Softening non-incremental decision: adding all package classes for a recompilation");
+    debug("Package name: ", packageName);
 
     // Package-local branch    
     for (Map.Entry<DependencyContext.S, DependencyContext.S> e : myClassToSourceFile.entrySet()) {
@@ -755,7 +778,9 @@ public class Mappings {
       final DependencyContext.S fileName = e.getValue();
 
       if (ClassRepr.getPackageName(myContext.getValue(className)).equals(packageName)) {
-        affectedFiles.add(new File(myContext.getValue(fileName)));
+        final String f = myContext.getValue(fileName);
+        debug("Adding: ", f);
+        affectedFiles.add(new File(f));
       }
     }
 
@@ -767,6 +792,8 @@ public class Mappings {
                                final Collection<File> filesToCompile,
                                final Collection<File> compiledFiles,
                                final Collection<File> affectedFiles) {
+    debug("Begin of Differentiate:");
+
     delta.compensateRemovedContent(filesToCompile);
 
     final Util u = new Util(delta);
@@ -798,14 +825,12 @@ public class Mappings {
 
       final Difference.Specifier<ClassRepr> classDiff = Difference.make(pastClasses, classes);
 
-      debug("Processing changed classes");
-
+      debug("Processing changed classes:");
       for (Pair<ClassRepr, Difference> changed : classDiff.changed()) {
         final ClassRepr it = changed.first;
         final ClassRepr.Diff diff = (ClassRepr.Diff)changed.second;
 
-        debug("Changed: ");
-        debug(it.name);
+        debug("Changed: ", it.name);
 
         final int addedModifiers = diff.addedModifiers();
         final int removedModifiers = diff.removedModifiers();
@@ -815,24 +840,34 @@ public class Mappings {
         final boolean signatureChanged = (diff.base() & Difference.SIGNATURE) > 0;
 
         if (superClassChanged || interfacesChanged || signatureChanged) {
+          debug("Superclass changed: ", superClassChanged);
+          debug("Interfaces changed: ", interfacesChanged);
+          debug("Signature changed ", signatureChanged);
+
           final boolean extendsChanged = superClassChanged && !diff.extendsAdded();
           final boolean interfacesRemoved = interfacesChanged && !diff.interfaces().removed().isEmpty();
+
+          debug("Extends changed: ", extendsChanged);
+          debug("Interfaces removed: ", interfacesRemoved);
 
           u.affectSubclasses(it.name, affectedFiles, affectedUsages, dependants, extendsChanged || interfacesRemoved || signatureChanged);
         }
 
         if ((diff.addedModifiers() & Opcodes.ACC_INTERFACE) > 0 || (diff.removedModifiers() & Opcodes.ACC_INTERFACE) > 0) {
+          debug("Class-to-interface or interface-to-class conversion detected, added class usage to affected usages");
           affectedUsages.add(it.createUsage());
         }
 
         if (it.isAnnotation() && it.policy == RetentionPolicy.SOURCE) {
           debug("Annotation, retention policy = SOURCE => a switch to non-incremental mode requested");
           if (!incrementalDecision(it.outerClassName, it, affectedFiles)) {
+            debug("End of Differentiate, returning false");
             return false;
           }
         }
 
         if ((addedModifiers & Opcodes.ACC_PROTECTED) > 0) {
+          debug("Introduction of 'protected' modifier detected, adding class usage + inheritance constraint to affected usages");
           final UsageRepr.Usage usage = it.createUsage();
 
           affectedUsages.add(usage);
@@ -840,6 +875,7 @@ public class Mappings {
         }
 
         if (diff.packageLocalOn()) {
+          debug("Introduction of 'package local' access detected, adding class usage + package constraint to affected usages");
           final UsageRepr.Usage usage = it.createUsage();
 
           affectedUsages.add(usage);
@@ -847,54 +883,64 @@ public class Mappings {
         }
 
         if ((addedModifiers & Opcodes.ACC_FINAL) > 0 || (addedModifiers & Opcodes.ACC_PRIVATE) > 0) {
+          debug("Introduction of 'private' or 'final' modifier(s) detected, adding class usage to affected usages");
           affectedUsages.add(it.createUsage());
         }
 
-        if ((addedModifiers & Opcodes.ACC_ABSTRACT) > 0) {
-          affectedUsages.add(UsageRepr.createClassNewUsage(myContext, it.name));
-        }
-
-        if ((addedModifiers & Opcodes.ACC_STATIC) > 0 ||
-            (removedModifiers & Opcodes.ACC_STATIC) > 0 ||
-            (addedModifiers & Opcodes.ACC_ABSTRACT) > 0) {
+        if ((addedModifiers & Opcodes.ACC_ABSTRACT) > 0 || (addedModifiers & Opcodes.ACC_STATIC) > 0) {
+          debug("Introduction of 'abstract' or 'static' modifier(s) detected, adding class new usage to affected usages");
           affectedUsages.add(UsageRepr.createClassNewUsage(myContext, it.name));
         }
 
         if (it.isAnnotation()) {
+          debug("Class is annotation, performing annotation-specific analysis");
+
           if (diff.retentionChanged()) {
+            debug("Retention policy change detected, adding class usage to affected usages");
             affectedUsages.add(it.createUsage());
           }
           else {
             final Collection<ElementType> removedtargets = diff.targets().removed();
 
             if (removedtargets.contains(ElementType.LOCAL_VARIABLE)) {
-              debug("Annotation, removed target contains LOCAL_VARIABLE => a switch to non-incremental mode requested");
+              debug("Removed target contains LOCAL_VARIABLE => a switch to non-incremental mode requested");
               if (!incrementalDecision(it.outerClassName, it, affectedFiles)) {
+                debug("End of Differentiate, returning false");
                 return false;
               }
             }
 
             if (!removedtargets.isEmpty()) {
+              debug("Removed some annotation targets, adding annotation query");
               annotationQuery.add((UsageRepr.AnnotationUsage)UsageRepr
                 .createAnnotationUsage(myContext, TypeRepr.createClassType(myContext, it.name), null, removedtargets));
             }
 
             for (MethodRepr m : diff.methods().added()) {
               if (!m.hasValue()) {
+                debug("Added method with no default value: ", m.name);
+                debug("Adding class usage to affected usages");
                 affectedUsages.add(it.createUsage());
               }
             }
           }
+
+          debug("End of annotation-specific analysis");
         }
 
+        debug("Processing added methods: ");
         for (MethodRepr m : diff.methods().added()) {
+          debug("Method: ", m.name);
+
           if (it.isAnnotation()) {
+            debug("Class is annotation, skipping method analysis");
             continue;
           }
 
           if ((it.access & Opcodes.ACC_INTERFACE) > 0 ||
               (it.access & Opcodes.ACC_ABSTRACT) > 0 ||
               (m.access & Opcodes.ACC_ABSTRACT) > 0) {
+            debug("Class is abstract, or is interface, or added method in abstract => affecting all subclasses");
             u.affectSubclasses(it.name, affectedFiles, affectedUsages, dependants, false);
           }
 
@@ -908,6 +954,7 @@ public class Mappings {
             }
             else {
               propagated = u.propagateMethodAccess(m.name, it.name);
+              debug("Conservative case on overriding methods, affecting method usages");
               u.affectMethodUsages(m, propagated, m.createMetaUsage(myContext, it.name), affectedUsages, dependants);
             }
           }
@@ -924,10 +971,12 @@ public class Mappings {
 
             for (MethodRepr mm : lessSpecific) {
               if (!mm.equals(m)) {
+                debug("Found less specific method, affecting method usages");
                 u.affectMethodUsages(mm, propagated, mm.createUsage(myContext, it.name), affectedUsages, dependants);
               }
             }
 
+            debug("Processing affected by specificity methods");
             for (Pair<MethodRepr, ClassRepr> p : affectedMethods) {
               final MethodRepr mm = p.first;
               final ClassRepr cc = p.second;
@@ -936,7 +985,12 @@ public class Mappings {
 
               }
               else {
+                debug("Method: ", mm.name);
+                debug("Class : ", cc.name);
+
                 if (overrides.satisfy(mm)) {
+                  debug("Current method overrides that found");
+
                   final Option<Boolean> subtypeOf = u.isSubtypeOf(mm.type, m.type);
 
                   if (weakerAccess(mm.access, m.access) ||
@@ -949,11 +1003,15 @@ public class Mappings {
                     final DependencyContext.S file = myClassToSourceFile.get(cc.name);
 
                     if (file != null) {
-                      affectedFiles.add(new File(myContext.getValue(file)));
+                      final String f = myContext.getValue(file);
+                      debug("Complex condition is satisfied, affecting file ", f);
+                      affectedFiles.add(new File(f));
                     }
                   }
                 }
                 else {
+                  debug("Current method does not override that found");
+
                   final Collection<DependencyContext.S> yetPropagated = self.propagateMethodAccess(mm.name, cc.name);
                   final Collection<DependencyContext.S> deps = myClassToClassDependency.get(cc.name);
 
@@ -961,6 +1019,7 @@ public class Mappings {
                     dependants.addAll(deps);
                   }
 
+                  debug("Affecting method usages for that found");
                   u.affectMethodUsages(mm, yetPropagated, mm.createUsage(myContext, cc.name), affectedUsages, dependants);
                 }
               }
@@ -977,19 +1036,26 @@ public class Mappings {
                   final DependencyContext.S outerClass = r.outerClassName;
 
                   if (u.methodVisible(outerClass, m)) {
-                    affectedFiles.add(new File(myContext.getValue(sourceFileName)));
+                    final String f = myContext.getValue(sourceFileName);
+                    debug("Affecting file due to local overriding: ", f);
+                    affectedFiles.add(new File(f));
                   }
                 }
               }
             }
           }
         }
+        debug("End of added methods processing");
 
+        debug("Processing removed methods:");
         for (MethodRepr m : diff.methods().removed()) {
+          debug("Method ", m.name);
+
           final Collection<Pair<MethodRepr, ClassRepr>> overridenMethods = u.findOverridenMethods(m, it);
           final Collection<DependencyContext.S> propagated = u.propagateMethodAccess(m.name, it.name);
 
           if (overridenMethods.size() == 0) {
+            debug("No overridden methods found, affecting method usages");
             u.affectMethodUsages(m, propagated, m.createUsage(myContext, it.name), affectedUsages, dependants);
           }
           else {
@@ -1006,6 +1072,7 @@ public class Mappings {
             }
 
             if (!clear) {
+              debug("No clearly overridden methods found, affecting method usages");
               u.affectMethodUsages(m, propagated, m.createUsage(myContext, it.name), affectedUsages, dependants);
             }
           }
@@ -1046,21 +1113,31 @@ public class Mappings {
                   final DependencyContext.S source = myClassToSourceFile.get(p);
 
                   if (source != null) {
-                    affectedFiles.add(new File(myContext.getValue(source)));
+                    final String f = myContext.getValue(source);
+                    debug(
+                      "Removed method is not abstract & is overrides some abstract method which is not then over-overriden in subclass ",
+                      p);
+                    debug("Affecting subclass source file ", f);
+                    affectedFiles.add(new File(f));
                   }
                 }
               }
             }
           }
         }
+        debug("End of removed methods processing");
 
+        debug("Processing changed methods:");
         for (Pair<MethodRepr, Difference> mr : diff.methods().changed()) {
           final MethodRepr m = mr.first;
           final MethodRepr.Diff d = (MethodRepr.Diff)mr.second;
           final boolean throwsChanged = (d.exceptions().added().size() > 0) || (d.exceptions().changed().size() > 0);
 
+          debug("Method: ", m.name);
+
           if (it.isAnnotation()) {
             if (d.defaultRemoved()) {
+              debug("Class is annotation, default value is removed => adding annotation query");
               final List<DependencyContext.S> l = new LinkedList<DependencyContext.S>();
               l.add(m.name);
               annotationQuery.add((UsageRepr.AnnotationUsage)UsageRepr
@@ -1076,6 +1153,7 @@ public class Mappings {
             final Set<UsageRepr.Usage> usages = new HashSet<UsageRepr.Usage>();
 
             if (d.packageLocalOn()) {
+              debug("Method became package-local, affecting method usages outside the package");
               u.affectMethodUsages(m, propagated, m.createUsage(myContext, it.name), usages, dependants);
 
               for (UsageRepr.Usage usage : usages) {
@@ -1089,6 +1167,7 @@ public class Mappings {
 
             if ((d.base() & Difference.TYPE) > 0 || (d.base() & Difference.SIGNATURE) > 0 || throwsChanged) {
               if (!affected) {
+                debug("Return type, throws list or signature changed --- affecting method usages");
                 u.affectMethodUsages(m, propagated, m.createUsage(myContext, it.name), usages, dependants);
                 affectedUsages.addAll(usages);
               }
@@ -1098,11 +1177,13 @@ public class Mappings {
                   (d.removedModifiers() & Opcodes.ACC_STATIC) > 0 ||
                   (d.addedModifiers() & Opcodes.ACC_PRIVATE) > 0) {
                 if (!affected) {
+                  debug("Added static or private specifier or removed static specifier --- affecting method usages");
                   u.affectMethodUsages(m, propagated, m.createUsage(myContext, it.name), usages, dependants);
                   affectedUsages.addAll(usages);
                 }
 
                 if ((d.addedModifiers() & Opcodes.ACC_STATIC) > 0) {
+                  debug("Added static specifier --- affecting subclasses");
                   u.affectSubclasses(it.name, affectedFiles, affectedUsages, dependants, false);
                 }
               }
@@ -1110,11 +1191,13 @@ public class Mappings {
                 if ((d.addedModifiers() & Opcodes.ACC_FINAL) > 0 ||
                     (d.addedModifiers() & Opcodes.ACC_PUBLIC) > 0 ||
                     (d.addedModifiers() & Opcodes.ACC_ABSTRACT) > 0) {
+                  debug("Added final, public or abstract specifier --- affecting subclasses");
                   u.affectSubclasses(it.name, affectedFiles, affectedUsages, dependants, false);
                 }
 
                 if ((d.addedModifiers() & Opcodes.ACC_PROTECTED) > 0 && !((d.removedModifiers() & Opcodes.ACC_PRIVATE) > 0)) {
                   if (!constrained) {
+                    debug("Added public or package-local method became protected --- affect method usages with protected constraint");
                     if (!affected) {
                       u.affectMethodUsages(m, propagated, m.createUsage(myContext, it.name), usages, dependants);
                       affectedUsages.addAll(usages);
@@ -1129,10 +1212,14 @@ public class Mappings {
             }
           }
         }
+        debug("End of changed methods processing");
 
         final int mask = Opcodes.ACC_STATIC | Opcodes.ACC_FINAL;
 
+        debug("Processing added fields");
         for (FieldRepr f : diff.fields().added()) {
+          debug("Field: ", f.name);
+
           final boolean fPrivate = (f.access & Opcodes.ACC_PRIVATE) > 0;
           final boolean fProtected = (f.access & Opcodes.ACC_PROTECTED) > 0;
           final boolean fPublic = (f.access & Opcodes.ACC_PUBLIC) > 0;
@@ -1141,32 +1228,34 @@ public class Mappings {
           if (!fPrivate) {
             final Collection<DependencyContext.S> subClasses = getAllSubclasses(it.name);
 
-            if (subClasses != null) {
-              for (final DependencyContext.S subClass : subClasses) {
-                final ClassRepr r = u.reprByName(subClass);
-                final DependencyContext.S sourceFileName = myClassToSourceFile.get(subClass);
+            for (final DependencyContext.S subClass : subClasses) {
+              final ClassRepr r = u.reprByName(subClass);
+              final DependencyContext.S sourceFileName = myClassToSourceFile.get(subClass);
 
-                if (r != null && sourceFileName != null) {
-                  if (r.isLocal) {
+              if (r != null && sourceFileName != null) {
+                if (r.isLocal) {
+                  debug("Affecting local subclass (introduced field can potentially hide surrounding method parameters/local variables): ",
+                        sourceFileName);
+                  affectedFiles.add(new File(myContext.getValue(sourceFileName)));
+                }
+                else {
+                  final DependencyContext.S outerClass = r.outerClassName;
+
+                  if (!empty(outerClass) && u.fieldVisible(outerClass, f)) {
+                    debug("Affecting inner subclass (introduced field can potentially hide surrounding class fields): ", sourceFileName);
                     affectedFiles.add(new File(myContext.getValue(sourceFileName)));
                   }
-                  else {
-                    final DependencyContext.S outerClass = r.outerClassName;
-
-                    if (!empty(outerClass) && u.fieldVisible(outerClass, f)) {
-                      affectedFiles.add(new File(myContext.getValue(sourceFileName)));
-                    }
-                  }
                 }
+              }
 
-                final Collection<DependencyContext.S> propagated = u.propagateFieldAccess(f.name, subClass);
-                u.affectFieldUsages(f, propagated, f.createUsage(myContext, subClass), affectedUsages, dependants);
+              debug("Affecting field usages referenced from subclass ", subClass);
+              final Collection<DependencyContext.S> propagated = u.propagateFieldAccess(f.name, subClass);
+              u.affectFieldUsages(f, propagated, f.createUsage(myContext, subClass), affectedUsages, dependants);
 
-                final Collection<DependencyContext.S> deps = myClassToClassDependency.get(subClass);
+              final Collection<DependencyContext.S> deps = myClassToClassDependency.get(subClass);
 
-                if (deps != null) {
-                  dependants.addAll(deps);
-                }
+              if (deps != null) {
+                dependants.addAll(deps);
               }
             }
           }
@@ -1186,6 +1275,7 @@ public class Mappings {
               final Collection<DependencyContext.S> propagated = o.propagateFieldAccess(ff.name, cc.name);
               final Set<UsageRepr.Usage> localUsages = new HashSet<UsageRepr.Usage>();
 
+              debug("Affecting usages of overridden field in class ", cc.name);
               u.affectFieldUsages(ff, propagated, ff.createUsage(myContext, cc.name), localUsages, dependants);
 
               if (fPrivate || (fPublic && (ffPublic || ffPLocal)) || (fProtected && ffProtected) || (fPLocal && ffPLocal)) {
@@ -1214,16 +1304,16 @@ public class Mappings {
             }
           }
         }
+        debug("End of added fields processing");
 
-        debug("Processing removed fields");
-
+        debug("Processing removed fields:");
         for (FieldRepr f : diff.fields().removed()) {
-          debug("Field ");
-          debug(f.name);
+          debug("Field: ", it.name);
 
           if ((f.access & Opcodes.ACC_PRIVATE) == 0 && (f.access & mask) == mask && f.hasValue()) {
             debug("Field had value and was (non-private) final static => a switch to non-incremental mode requested");
             if (!incrementalDecision(it.name, f, affectedFiles)) {
+              debug("End of Differentiate, returning false");
               return false;
             }
           }
@@ -1231,20 +1321,20 @@ public class Mappings {
           final Collection<DependencyContext.S> propagated = u.propagateFieldAccess(f.name, it.name);
           u.affectFieldUsages(f, propagated, f.createUsage(myContext, it.name), affectedUsages, dependants);
         }
+        debug("End of removed fields processing");
 
-        debug("Processing changed fields");
-
+        debug("Processing changed fields:");
         for (Pair<FieldRepr, Difference> f : diff.fields().changed()) {
           final Difference d = f.second;
           final FieldRepr field = f.first;
 
-          debug("Field ");
-          debug(field.name);
+          debug("Field: ", it.name);
 
           if ((field.access & Opcodes.ACC_PRIVATE) == 0 && (field.access & mask) == mask) {
             if ((d.base() & Difference.ACCESS) > 0 || (d.base() & Difference.VALUE) > 0) {
               debug("Inline field changed it's access or value => a switch to non-incremental mode requested");
-              if (!incrementalDecision(it.name, field, affectedFiles)){
+              if (!incrementalDecision(it.name, field, affectedFiles)) {
+                debug("End of Differentiate, returning false");
                 return false;
               }
             }
@@ -1254,6 +1344,7 @@ public class Mappings {
             final Collection<DependencyContext.S> propagated = u.propagateFieldAccess(field.name, it.name);
 
             if ((d.base() & Difference.TYPE) > 0 || (d.base() & Difference.SIGNATURE) > 0) {
+              debug("Type or signature changed --- affecting field usages");
               u.affectFieldUsages(field, propagated, field.createUsage(myContext, it.name), affectedUsages, dependants);
             }
             else if ((d.base() & Difference.ACCESS) > 0) {
@@ -1261,7 +1352,7 @@ public class Mappings {
                   (d.removedModifiers() & Opcodes.ACC_STATIC) > 0 ||
                   (d.addedModifiers() & Opcodes.ACC_PRIVATE) > 0 ||
                   (d.addedModifiers() & Opcodes.ACC_VOLATILE) > 0) {
-
+                debug("Added/removed static modifier or added private/volatile modifier --- affecting field usages");
                 u.affectFieldUsages(field, propagated, field.createUsage(myContext, it.name), affectedUsages, dependants);
               }
               else {
@@ -1269,12 +1360,14 @@ public class Mappings {
                 final Set<UsageRepr.Usage> usages = new HashSet<UsageRepr.Usage>();
 
                 if ((d.addedModifiers() & Opcodes.ACC_FINAL) > 0) {
+                  debug("Added final modifier --- affecting field assign usages");
                   u.affectFieldUsages(field, propagated, field.createAssignUsage(myContext, it.name), usages, dependants);
                   affectedUsages.addAll(usages);
                   affected = true;
                 }
 
                 if ((d.removedModifiers() & Opcodes.ACC_PUBLIC) > 0) {
+                  debug("Removed public modifier, affecting field usages with appropriate constraint");
                   if (!affected) {
                     u.affectFieldUsages(field, propagated, field.createUsage(myContext, it.name), usages, dependants);
                     affectedUsages.addAll(usages);
@@ -1293,12 +1386,18 @@ public class Mappings {
             }
           }
         }
+        debug("End of changed fields processing");
       }
+      debug("End of changed classes processing");
 
+      debug("Processing removed classes:");
       for (ClassRepr c : classDiff.removed()) {
+        debug("Adding usages of class ", c.name);
         affectedUsages.add(c.createUsage());
       }
+      debug("End of removed classes processing.");
 
+      debug("Processing added classes:");
       for (ClassRepr c : classDiff.added()) {
         final Collection<DependencyContext.S> depClasses = myClassToClassDependency.get(c.name);
 
@@ -1307,12 +1406,16 @@ public class Mappings {
             final DependencyContext.S fName = myClassToSourceFile.get(depClass);
 
             if (fName != null) {
-              affectedFiles.add(new File(myContext.getValue(fName)));
+              final String f = myContext.getValue(fName);
+              debug("Adding dependent file ", f);
+              affectedFiles.add(new File(f));
             }
           }
         }
       }
+      debug("End of added classes processing.");
 
+      debug("Checking dependent files:");
       if (dependants != null) {
         final Set<DependencyContext.S> dependentFiles = new HashSet<DependencyContext.S>();
 
@@ -1332,6 +1435,8 @@ public class Mappings {
             continue filewise;
           }
 
+          debug("Dependent file: ", depFile);
+
           final Collection<UsageRepr.Cluster> depClusters = mySourceFileToUsages.get(depFile);
 
           for (UsageRepr.Cluster depCluster : depClusters) {
@@ -1347,6 +1452,7 @@ public class Mappings {
                   final Util.UsageConstraint constraint = usageConstraints.get(usage);
 
                   if (constraint == null) {
+                    debug("Added file with no constraints");
                     affectedFiles.add(theFile);
                     continue filewise;
                   }
@@ -1354,6 +1460,7 @@ public class Mappings {
                     final Set<DependencyContext.S> residenceClasses = depCluster.getResidence(usage);
                     for (DependencyContext.S residentName : residenceClasses) {
                       if (constraint.checkResidence(residentName)) {
+                        debug("Added file with satisfied constraint");
                         affectedFiles.add(theFile);
                         continue filewise;
                       }
@@ -1369,6 +1476,7 @@ public class Mappings {
                 for (UsageRepr.Usage usage : annotationUsages) {
                   for (UsageRepr.AnnotationUsage query : annotationQuery) {
                     if (query.satisfies(usage)) {
+                      debug("Added file due to annotation query");
                       affectedFiles.add(theFile);
                       continue filewise;
                     }
@@ -1381,6 +1489,13 @@ public class Mappings {
       }
     }
 
+    if (removed != null) {
+      for (String r : removed) {
+        affectedFiles.remove(new File(r));
+      }
+    }
+
+    debug("End of Differentiate, returning true");
     return true;
   }
 
@@ -1424,7 +1539,6 @@ public class Mappings {
           mySourceFileToAnnotationUsages.remove(key);
         }
       }
-
 
       myClassToSubclasses.putAll(delta.myClassToSubclasses);
       mySourceFileToClasses.putAll(delta.mySourceFileToClasses);

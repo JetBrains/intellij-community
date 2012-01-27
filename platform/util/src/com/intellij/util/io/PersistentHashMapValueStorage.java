@@ -79,10 +79,13 @@ public class PersistentHashMapValueStorage {
   private static final int INT_LENGTH_LONG_ADDRESS = 4 + 8;
 
   public long appendBytes(ByteSequence data, long prevChunkAddress) throws IOException {
+    return appendBytes(data.getBytes(), data.getOffset(), data.getLength(), prevChunkAddress);
+  }
+
+  public long appendBytes(byte[] data, int offset, int dataLength, long prevChunkAddress) throws IOException {
     assert !myCompactionMode;
     long result = mySize;
     final CacheValue<DataOutputStream> appender = ourAppendersCache.get(myPath);
-    int dataLength = data.getLength();
     int serviceFieldsSizeIncrease;
 
     try {
@@ -102,7 +105,7 @@ public class PersistentHashMapValueStorage {
         dataOutputStream.writeLong(prevChunkAddress);
         serviceFieldsSizeIncrease = INT_LENGTH_LONG_ADDRESS;
       }
-      dataOutputStream.write(data.getBytes(), data.getOffset(), dataLength);
+      dataOutputStream.write(data, offset, dataLength);
       if (requests % IOStatistics.KEYS_FACTOR == 0 && IOStatistics.DEBUG) {
         IOStatistics.dump("Small writes:"+smallWritesCount +", bytes:"+smallWrites + ", largeWrites:"+largeWritesCount
                           + ", bytes:"+largeWrites+", total:"+requests + "@"+myFile.getPath());

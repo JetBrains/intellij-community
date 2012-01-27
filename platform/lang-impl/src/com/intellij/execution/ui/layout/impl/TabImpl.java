@@ -40,6 +40,10 @@ public class TabImpl extends AbstractTab implements Tab {
     return myIndex;
   }
 
+  public int getDefaultIndex() {
+    return myDefaultIndex >= 0 ? myDefaultIndex : myIndex;
+  }
+
   public String getDisplayName() {
     return myDisplayName;
   }
@@ -50,6 +54,10 @@ public class TabImpl extends AbstractTab implements Tab {
 
   public void setIndex(final int index) {
     myIndex = index;
+  }
+
+  public void setDefaultIndex(final int index) {
+    myDefaultIndex = index;
   }
 
   public void setDisplayName(final String displayName) {
@@ -161,6 +169,7 @@ public class TabImpl extends AbstractTab implements Tab {
 
     public Default(final int index, final String displayName, final Icon icon) {
       myIndex = index;
+      myDefaultIndex = index;
       myDisplayName = displayName;
       myIcon = icon;
     }

@@ -22,6 +22,7 @@ public interface Tab {
   void setDetached(final PlaceInGrid placeInGrid, final boolean detached);
 
   int getIndex();
+  int getDefaultIndex();
 
   boolean isDetached(final PlaceInGrid placeInGrid);
 }

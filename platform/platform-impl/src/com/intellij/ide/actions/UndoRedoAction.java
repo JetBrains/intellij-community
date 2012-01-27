@@ -53,7 +53,11 @@ public abstract class UndoRedoAction extends DumbAwareAction {
     }
 
     UndoManager undoManager = getUndoManager(editor, dataContext);
-    presentation.setEnabled(undoManager != null && isAvailable(editor, undoManager));
+    if (undoManager == null) {
+      presentation.setEnabled(false);
+      return;
+    }
+    presentation.setEnabled(isAvailable(editor, undoManager));
 
     Pair<String, String> pair = getActionNameAndDescription(editor, undoManager);
 

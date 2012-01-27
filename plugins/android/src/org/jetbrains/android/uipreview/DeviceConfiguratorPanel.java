@@ -252,7 +252,7 @@ public abstract class DeviceConfiguratorPanel extends JPanel {
     applyEditors();
   }
 
-  protected void doApplyEditors() throws InvalidOptionValueException {
+  public void doApplyEditors() throws InvalidOptionValueException {
     try {
       final FolderConfiguration newConfig = new FolderConfiguration();
 

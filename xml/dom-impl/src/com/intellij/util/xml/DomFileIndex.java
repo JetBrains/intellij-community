@@ -22,12 +22,12 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
+import com.intellij.util.io.UnsyncByteArrayInputStream;
 import com.intellij.util.xml.impl.DomApplicationComponent;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.ByteArrayInputStream;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
@@ -50,7 +50,7 @@ public class DomFileIndex extends ScalarIndexExtension<String>{
       @NotNull
       public Map<String, Void> map(final FileContent inputData) {
         final Set<String> namespaces = new THashSet<String>();
-        final XmlFileHeader header = NanoXmlUtil.parseHeader(new ByteArrayInputStream(inputData.getContent()));
+        final XmlFileHeader header = NanoXmlUtil.parseHeader(new UnsyncByteArrayInputStream(inputData.getContent()));
         ContainerUtil.addIfNotNull(header.getPublicId(), namespaces);
         ContainerUtil.addIfNotNull(header.getSystemId(), namespaces);
         ContainerUtil.addIfNotNull(header.getRootTagNamespace(), namespaces);

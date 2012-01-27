@@ -43,7 +43,7 @@ import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 
 public class TabLabel extends JPanel {
-  private final SimpleColoredComponent myLabel = new SimpleColoredComponent() {
+  protected final SimpleColoredComponent myLabel = new SimpleColoredComponent() {
     @Override
     protected boolean shouldDrawMacShadow() {
       return SystemInfo.isMac;
@@ -54,7 +54,7 @@ public class TabLabel extends JPanel {
   private Icon myOverlayedIcon;
 
   private final TabInfo myInfo;
-  private ActionPanel myActionPanel;
+  protected ActionPanel myActionPanel;
   private boolean myCentered;
 
   private final Wrapper myLabelPlaceholder = new Wrapper();
@@ -224,7 +224,7 @@ public class TabLabel extends JPanel {
     });
   }
 
-  private int getNonSelectedOffset() {
+  protected int getNonSelectedOffset() {
     if (myTabs.isEditorTabs()) {
       int offset = (TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT / 2);
       if (myTabs.isSingleRow()) {
@@ -237,7 +237,7 @@ public class TabLabel extends JPanel {
     return 2;
   }
 
-  private int getSelectedOffset() {
+  protected int getSelectedOffset() {
     return  myTabs.isEditorTabs() ? -(TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT / 2) + 1 : 1;
   }
 

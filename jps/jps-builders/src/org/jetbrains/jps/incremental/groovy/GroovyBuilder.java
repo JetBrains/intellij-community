@@ -29,7 +29,7 @@ import java.util.*;
  * @author Eugene Zhuravlev
  *         Date: 10/25/11
  */
-public class GroovyBuilder extends Builder {
+public class GroovyBuilder extends ModuleLevelBuilder {
   public static final String BUILDER_NAME = "groovy";
   private final boolean myForStubs;
   private final String myBuilderName;
@@ -43,7 +43,7 @@ public class GroovyBuilder extends Builder {
     return myBuilderName;
   }
 
-  public Builder.ExitCode build(final CompileContext context, ModuleChunk chunk) throws ProjectBuildException {
+  public ModuleLevelBuilder.ExitCode build(final CompileContext context, ModuleChunk chunk) throws ProjectBuildException {
     ExitCode exitCode = ExitCode.OK;
     final Map<File, Module> toCompile = new HashMap<File, Module>();
     try {
@@ -104,12 +104,13 @@ public class GroovyBuilder extends Builder {
 
       // todo CompilerUtil.addLocaleOptions()
       //todo different outputs in a chunk
+      //todo xmx
       //todo module jdk path
       final List<String> cmd = ExternalProcessUtil.buildJavaCommandLine(
         SystemProperties.getJavaHome() + "/bin/java",
         "org.jetbrains.groovy.compiler.rt.GroovycRunner",
         Collections.<String>emptyList(), new ArrayList<String>(cp),
-        Arrays.asList("-Xmx384m"/*, "-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5858"*/),
+        Arrays.asList("-Xmx384m"/*, "-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5239"*/),
         Arrays.<String>asList(myForStubs ? "stubs" : "groovyc", tempFile.getPath())
       );
 

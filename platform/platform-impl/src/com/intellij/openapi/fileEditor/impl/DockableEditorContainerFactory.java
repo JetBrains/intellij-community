@@ -22,6 +22,7 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockContainerFactory;
 import com.intellij.ui.docking.DockManager;
+import com.intellij.ui.docking.DockableContent;
 import org.jdom.Element;
 
 public class DockableEditorContainerFactory implements DockContainerFactory.Persistent {
@@ -39,7 +40,7 @@ public class DockableEditorContainerFactory implements DockContainerFactory.Pers
   }
 
   @Override
-  public DockContainer createContainer() {
+  public DockContainer createContainer(DockableContent content) {
     return createContainer(false);
   }
 

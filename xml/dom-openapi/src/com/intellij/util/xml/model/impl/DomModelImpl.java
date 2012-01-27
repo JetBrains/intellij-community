@@ -17,6 +17,7 @@
 package com.intellij.util.xml.model.impl;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;

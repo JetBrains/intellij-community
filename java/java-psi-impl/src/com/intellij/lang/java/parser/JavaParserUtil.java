@@ -39,6 +39,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.util.List;
 
@@ -258,9 +259,10 @@ public class JavaParserUtil {
     }
   }
 
-  public static boolean expectOrError(final PsiBuilder builder, final IElementType expectedType, final String errorMessage) {
+  public static boolean expectOrError(final PsiBuilder builder, final IElementType expectedType,
+                                      @PropertyKey(resourceBundle = JavaErrorMessages.BUNDLE) String errorMessageKey) {
     if (!PsiBuilderUtil.expect(builder, expectedType)) {
-      error(builder, errorMessage);
+      error(builder, JavaErrorMessages.message(errorMessageKey));
       return false;
     }
     return true;
@@ -275,7 +277,7 @@ public class JavaParserUtil {
   }
 
   public static void semicolon(final PsiBuilder builder) {
-    expectOrError(builder, JavaTokenType.SEMICOLON, JavaErrorMessages.message("expected.semicolon"));
+    expectOrError(builder, JavaTokenType.SEMICOLON, "expected.semicolon");
   }
 
   public static PsiBuilder braceMatchingBuilder(final PsiBuilder builder) {

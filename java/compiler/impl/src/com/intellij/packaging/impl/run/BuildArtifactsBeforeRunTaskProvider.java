@@ -99,6 +99,7 @@ public class BuildArtifactsBeforeRunTaskProvider extends BeforeRunTaskProvider<B
   }
 
   public BuildArtifactsBeforeRunTask createTask(RunConfiguration runConfiguration) {
+    if (myProject.isDefault()) return null;
     return new BuildArtifactsBeforeRunTask(myProject);
   }
 

@@ -65,6 +65,14 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
     assertOutput("Foo", "239");
 
     setFileText(file, "class Bar {}");
+    makeShouldFail()
+
+    setFileText(file, barText);
+    make();
+    assertOutput("Foo", "239");
+  }
+
+  private void makeShouldFail() {
     try {
       make();
       fail("Make should fail");
@@ -74,10 +82,6 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
         throw e;
       }
     }
-
-    setFileText(file, barText);
-    make();
-    assertOutput("Foo", "239");
   }
 
   public void testRenameToJava() throws Throwable {
@@ -475,9 +479,9 @@ class Indirect {
   }
 
   public void testDontRecompileUnneeded() {
-    myFixture.addFileToProject('Base.groovy', 'class Base { }').virtualFile
+    myFixture.addFileToProject('Base.groovy', 'class Base { }')
     def foo = myFixture.addFileToProject('Foo.groovy', 'class Foo extends Base { }').virtualFile
-    myFixture.addFileToProject('Bar.groovy', 'class Bar extends Foo { }').virtualFile
+    myFixture.addFileToProject('Bar.groovy', 'class Bar extends Foo { }')
     def main = myFixture.addFileToProject('Main.groovy', 'class Main extends Bar { }').virtualFile
     assertEmpty make()
     long oldBaseStamp = findClassFile("Base").modificationStamp
@@ -490,17 +494,34 @@ class Indirect {
     assert oldBaseStamp == findClassFile("Base").modificationStamp
   }
 
+  public void _testPartialCrossRecompile() {
+    def used = myFixture.addFileToProject('Used.groovy', 'class Used { }')
+    def java = myFixture.addFileToProject('Java.java', 'class Java { void foo(Used used) {} }')
+    def main = myFixture.addFileToProject('Main.groovy', 'class Main extends Java {  }').virtualFile
+
+    assertEmpty compileModule(myModule)
+    assertEmpty compileFiles(used.virtualFile, main)
+    assertEmpty compileModule(myModule)
+    assertEmpty compileModule(myModule)
+    
+    setFileText(used, 'class Used2 {}')
+    makeShouldFail()
+    assert findClassFile('Used') == null
+    assert findClassFile('Used2') == null
+
+    setFileText(used, 'class Used3 {}')
+    setFileText(java, 'class Java { void foo(Used3 used) {} }')
+    assertEmpty make()
+
+    assert findClassFile('Used2') == null
+  }
+
   public static class IdeaModeTest extends GroovyCompilerTest {
     @Override protected boolean useJps() { false }
   }
 
   public static class JpsModeTest extends GroovyCompilerTest {
     @Override protected boolean useJps() { true }
-
-    @Override
-    void testCorrectFailAndCorrect() {
-      super.testCorrectFailAndCorrect()
-    }
   }
 
 }

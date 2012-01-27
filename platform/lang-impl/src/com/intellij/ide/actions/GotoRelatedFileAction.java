@@ -32,6 +32,8 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.hash.*;
+import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,6 +41,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.*;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -207,7 +210,7 @@ public class GotoRelatedFileAction extends AnAction {
       }
     }
 
-    List<GotoRelatedItem> items = new ArrayList<GotoRelatedItem>();
+    Set<GotoRelatedItem> items = new HashSet<GotoRelatedItem> ();
 
     for (GotoRelatedProvider provider : Extensions.getExtensions(GotoRelatedProvider.EP_NAME)) {
       items.addAll(provider.getItems(contextElement));
@@ -215,7 +218,7 @@ public class GotoRelatedFileAction extends AnAction {
         items.addAll(provider.getItems(dataContext));
       }
     }
-    return items;
+    return new ArrayList<GotoRelatedItem>(items);
   }
 
   @Override

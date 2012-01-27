@@ -18,6 +18,8 @@ package com.intellij.notification;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.JBPopupAdapter;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -97,6 +99,11 @@ public class Notification {
 
   public void expire() {
     NotificationsManager.getNotificationsManager().expire(this);
+    hideBalloon();
+    myExpired = true;
+  }
+
+  public void hideBalloon() {
     if (myBalloonRef != null) {
       final Balloon balloon = myBalloonRef.get();
       if (balloon != null) {
@@ -104,15 +111,20 @@ public class Notification {
       }
       myBalloonRef = null;
     }
-    myExpired = true;
   }
 
-  public void setBalloon(@Nullable final Balloon balloon) {
-    if (balloon != null) {
-      myBalloonRef = new WeakReference<Balloon>(balloon);
-    } else {
-      myBalloonRef = null;
-    }
+  public void setBalloon(@NotNull final Balloon balloon) {
+    hideBalloon();
+    myBalloonRef = new WeakReference<Balloon>(balloon);
+    balloon.addListener(new JBPopupAdapter() {
+      @Override
+      public void onClosed(LightweightWindowEvent event) {
+        WeakReference<Balloon> ref = myBalloonRef;
+        if (ref != null && ref.get() == balloon) {
+          myBalloonRef = null;
+        }
+      }
+    });
   }
 
   @Nullable

@@ -32,4 +32,8 @@ public interface View {
   void assignTab(Tab tab);
 
   void setTabIndex(int tabIndex);
+
+  int getWindow();
+
+  void setWindow(int windowNumber);
 }

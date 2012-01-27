@@ -365,7 +365,7 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
   public void bePatternConfiguration(List<PsiClass> classes, PsiMethod method) {
     Set<String> patterns = new HashSet<String>();
     for (PsiClass pattern : classes) {
-      patterns.add(pattern.getQualifiedName());
+      patterns.add(JavaExecutionUtil.getRuntimeQualifiedName(pattern));
     }
     myData.setPatterns(patterns);
     myData.METHOD_NAME = method.getName();

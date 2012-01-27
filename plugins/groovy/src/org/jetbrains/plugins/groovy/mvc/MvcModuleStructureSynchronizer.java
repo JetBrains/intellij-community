@@ -33,10 +33,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Trinity;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileAdapter;
-import com.intellij.openapi.vfs.VirtualFileEvent;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -194,6 +191,18 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
         final String fileName = event.getFileName();
         if (MvcModuleStructureUtil.APPLICATION_PROPERTIES.equals(fileName)) {
           queue(SyncAction.UpdateProjectStructure, event.getFile());
+        }
+      }
+
+      @Override
+      public void fileMoved(VirtualFileMoveEvent event) {
+        myModificationCount++;
+      }
+
+      @Override
+      public void propertyChanged(VirtualFilePropertyEvent event) {
+        if (VirtualFile.PROP_NAME.equals(event.getPropertyName())) {
+          myModificationCount++;
         }
       }
     }));

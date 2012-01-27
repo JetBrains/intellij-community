@@ -556,33 +556,12 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     assertDispatchThread();
     runChange(new FileEditorManagerChange() {
       public void run(EditorsSplitters splitters) {
-        final List<EditorWindow> windows = splitters.findWindows(file);
-        if (!windows.isEmpty()) {
-          final VirtualFile nextFile = splitters.findNextFile(file);
-          for (final EditorWindow window : windows) {
-            LOG.assertTrue(window.getSelectedEditor() != null);
-            window.closeFile(file, false, moveFocus);
-            if (window.getTabCount() == 0 && nextFile != null) {
-              EditorWithProviderComposite newComposite = newEditorComposite(nextFile);
-              window.setEditor(newComposite, moveFocus); // newComposite can be null
-            }
-          }
-          // cleanup windows with no tabs
-          for (final EditorWindow window : windows) {
-            if (window.isDisposed()) {
-              // call to window.unsplit() which might make its sibling disposed
-              continue;
-            }
-            if (window.getTabCount() == 0) {
-              window.unsplit(false);
-            }
-          }
-        }
+        splitters.closeFile(file, moveFocus);
       }
     }, closeAllCopies ? null : getActiveSplitters(true).getResult());
   }
 
-//-------------------------------------- Open File ----------------------------------------
+  //-------------------------------------- Open File ----------------------------------------
 
   @NotNull
   public Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull final VirtualFile file,
@@ -865,7 +844,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
 
 
   @Nullable
-  private EditorWithProviderComposite newEditorComposite(final VirtualFile file) {
+  EditorWithProviderComposite newEditorComposite(final VirtualFile file) {
     if (file == null) {
       return null;
     }
