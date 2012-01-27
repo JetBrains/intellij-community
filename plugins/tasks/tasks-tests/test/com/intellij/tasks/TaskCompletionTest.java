@@ -9,6 +9,7 @@ import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.tasks.impl.TaskCompletionContributor;
 import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.testFramework.MapDataContext;
+import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
 import java.util.Arrays;
@@ -17,6 +18,11 @@ import java.util.Arrays;
  * @author Dmitry Avdeev
  */
 public class TaskCompletionTest extends LightCodeInsightFixtureTestCase {
+
+  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
+  public TaskCompletionTest() {
+    PlatformTestCase.setPlatformPrefix("PlatformLangXml");
+  }
 
   public void testTaskCompletion() throws Exception {
     doTest("<caret>", "TEST-001: Test task<caret>");

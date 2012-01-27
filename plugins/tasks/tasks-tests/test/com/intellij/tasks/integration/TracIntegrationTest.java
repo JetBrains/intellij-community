@@ -18,40 +18,23 @@ package com.intellij.tasks.integration;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskManagerTestCase;
 import com.intellij.tasks.trac.TracRepository;
-import org.apache.xmlrpc.CommonsXmlRpcTransport;
-import org.apache.xmlrpc.XmlRpc;
-import org.apache.xmlrpc.XmlRpcClient;
-import org.apache.xmlrpc.XmlRpcRequest;
-
-import java.net.URL;
-import java.util.Arrays;
-import java.util.Vector;
 
 /**
  * @author Dmitry Avdeev
  *         Date: 1/25/12
  */
-public abstract class TracIntegrationTest extends TaskManagerTestCase {
+public class TracIntegrationTest extends TaskManagerTestCase {
 
   public void testTracEncoding() throws Exception {
 
-    XmlRpc.setDefaultInputEncoding("UTF-8");
-    XmlRpcClient client = new XmlRpcClient("http://trac.shopware.de/trac/login/rpc");
- //   client.setBasicAuthentication();
-
-    CommonsXmlRpcTransport transport = new CommonsXmlRpcTransport(new URL("http://trac.shopware.de/trac/login/rpc"));
-    transport.setBasicAuthentication("jetbrains", "jetbrains");
-    Object o = client.execute(new XmlRpcRequest("ticket.get", new Vector(Arrays.asList("5358"))),
-            transport);
-
-    System.out.println(o);
-
     TracRepository repository = new TracRepository();
+    repository.setUrl("http://trac.shopware.de/trac/login/rpc");
     repository.setPassword("jetbrains");
     repository.setUsername("jetbrains");
-    repository.setUrl("http://trac.shopware.de/trac/login/rpc");
-    Task[] issues = repository.getIssues("", 10, 0);
+    repository.setUseHttpAuthentication(true);
+
     Task task = repository.findTask("5358");
-    System.out.println(task.getDescription());
+    assertNotNull(task);
+    assertEquals("Artikel können nicht in den Warenkorb gelegt werden", task.getSummary());
   }
 }
