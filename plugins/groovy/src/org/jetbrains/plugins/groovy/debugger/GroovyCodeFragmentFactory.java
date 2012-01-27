@@ -98,15 +98,33 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
     if (!isStatic) {
       javaText.append("java.lang.Object |thiz0;\n");
 
+      String fileName;
+
       PsiElement originalContext = context.getContainingFile().getContext();
-      String fileName = originalContext == null ? null : originalContext.getContainingFile().getOriginalFile().getName();
+      if (originalContext == null) {
+        fileName = null; // The class is not reloaded by springloaded if context is in physical file.
+      }
+      else {
+        fileName = originalContext.getContainingFile().getOriginalFile().getName();
+      }
 
       if (fileName == null) {
+        // The class could not be reloaded by springloaded
         javaText.append("|thiz0 = this;\n");
       }
       else {
+        // Class could be reloaded by springloaded
+
         String s = StringUtil.escapeStringCharacters(Pattern.quote(fileName));
-        javaText.append("if (java.util.Arrays.toString(new Exception().getStackTrace()).matches(\"[^,]+\\\\$\\\\$[A-Za-z0-9]{8}\\\\.[^,]+\\\\(" + s + ":\\\\d+\\\\), .+com\\\\.springsource\\\\.loaded\\\\..+\")) {\n");
+        // We believe what class is reloaded if stacktrace matches one of two patterns:
+        // 1.) [com.package.Foo$$ENLbVXwm.methodName(FileName.groovy:12), com.package.Foo$$DNLbVXwm.methodName(Unknown Source), *
+        // 2.) [com.package.Foo$$ENLbVXwm.methodName(FileName.groovy:12), * com.springsource.loaded. *
+        // Pattern below test this.
+
+        //javaText.append("System.out.println(java.util.Arrays.toString(new Exception().getStackTrace()));\n");
+        //javaText.append("System.out.println(\"\\\\[([^,()]+\\\\$\\\\$)[A-Za-z0-9]{8}(\\\\.[^,()]+)\\\\(" + s + ":\\\\d+\\\\), (\\\\1[A-Za-z0-9]{8}\\\\2\\\\(Unknown Source\\\\), |.+com\\\\.springsource\\\\.loaded\\\\.).+\")\n");
+
+        javaText.append("if (java.util.Arrays.toString(new Exception().getStackTrace()).matches(\"\\\\[([^,()]+\\\\$\\\\$)[A-Za-z0-9]{8}(\\\\.[^,()]+)\\\\(" + s + ":\\\\d+\\\\), (\\\\1[A-Za-z0-9]{8}\\\\2\\\\(Unknown Source\\\\), №.+com\\\\.springsource\\\\.loaded\\\\.).+\")) {\n");
         javaText.append("  |thiz0 = thiz;\n");
         javaText.append(" } else {\n");
         javaText.append("  |thiz0 = this;\n");
@@ -157,7 +175,8 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
 
     final PsiElementFactory factory = JavaPsiFacade.getInstance(toEval.getProject()).getElementFactory();
 
-    final String hiddenJavaVars = StringUtil.replace(javaText.toString(), "|", "_$$_$$$_$$$$$$$$$_" + new Random().nextInt(42));
+    String hiddenJavaVars = StringUtil.replace(javaText.toString(), "|", "_$$_$$$_$$$$$$$$$_" + new Random().nextInt(42));
+    hiddenJavaVars = hiddenJavaVars.replace('№', '|');
     final String finalText = StringUtil.replace(StringUtil.replace(hiddenJavaVars, TEXT, groovyText), IMPORTS, imports);
     JavaCodeFragment result = JavaCodeFragmentFactory.getInstance(project).createCodeBlockCodeFragment(finalText, null, true);
     if (contextClass != null) {
