@@ -1,10 +1,8 @@
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
-import com.intellij.util.io.DataExternalizer;
-import com.intellij.util.io.DataInputOutputUtil;
-import com.intellij.util.io.KeyDescriptor;
-import com.intellij.util.io.PersistentHashMap;
+import com.intellij.util.io.*;
+import com.intellij.util.io.DataOutputStream;
 import gnu.trove.TIntHashSet;
 
 import java.io.*;

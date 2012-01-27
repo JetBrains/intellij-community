@@ -53,6 +53,7 @@ import com.intellij.util.containers.SLRUCache;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.IndexInfrastructure;
 import com.intellij.util.io.*;
+import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.*;
 import org.jetbrains.annotations.NonNls;
@@ -599,7 +600,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
   }
 
   private static void saveSourceInfo(VirtualFile file, SourceFileInfo descriptor) {
-    final DataOutputStream out = ourSourceFileAttribute.writeAttribute(file);
+    final java.io.DataOutputStream out = ourSourceFileAttribute.writeAttribute(file);
     try {
       try {
         descriptor.save(out);
@@ -642,7 +643,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
   }
 
   private static void saveOutputInfo(VirtualFile file, OutputFileInfo descriptor) {
-    final DataOutputStream out = ourOutputFileAttribute.writeAttribute(file);
+    final java.io.DataOutputStream out = ourOutputFileAttribute.writeAttribute(file);
     try {
       try {
         descriptor.save(out);

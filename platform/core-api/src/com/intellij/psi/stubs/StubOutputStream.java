@@ -17,10 +17,10 @@
 package com.intellij.psi.stubs;
 
 import com.intellij.util.io.DataInputOutputUtil;
+import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.PersistentStringEnumerator;
 
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
