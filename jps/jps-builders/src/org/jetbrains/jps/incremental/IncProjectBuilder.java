@@ -1,11 +1,13 @@
 package org.jetbrains.jps.incremental;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.PersistentEnumerator;
 import org.jetbrains.jps.*;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.api.RequestFuture;
 import org.jetbrains.jps.incremental.java.ExternalJavacDescriptor;
+import org.jetbrains.jps.incremental.java.JavaBuilder;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
@@ -26,6 +28,7 @@ import java.util.concurrent.ExecutionException;
  *         Date: 9/17/11
  */
 public class IncProjectBuilder {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.IncProjectBuilder");
   public static final String JPS_SERVER_NAME = "JPS BUILD";
   private static final String CANCELED_MESSAGE = "The build has been canceled";
 
@@ -121,14 +124,18 @@ public class IncProjectBuilder {
     cleanupJavacNameTable();
   }
 
+  private static boolean ourClenupFailed = false;
   private static void cleanupJavacNameTable() {
     try {
-      final Field freelistField = Class.forName("com.sun.tools.javac.util.Name$Table").getDeclaredField("freelist");
-      freelistField.setAccessible(true);
-      freelistField.set(null, com.sun.tools.javac.util.List.nil());
+      if (JavaBuilder.USE_EMBEDDED_JAVAC && !ourClenupFailed) {
+        final Field freelistField = Class.forName("com.sun.tools.javac.util.Name$Table").getDeclaredField("freelist");
+        freelistField.setAccessible(true);
+        freelistField.set(null, com.sun.tools.javac.util.List.nil());
+      }
     }
     catch (Throwable e) {
-      e.printStackTrace();
+      ourClenupFailed = true;
+      LOG.info(e);
     }
   }
 

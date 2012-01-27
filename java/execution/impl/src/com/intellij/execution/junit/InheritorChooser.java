@@ -15,7 +15,9 @@
  */
 package com.intellij.execution.junit;
 
+import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
+import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -51,6 +53,13 @@ public class InheritorChooser {
                                           final PsiMethod psiMethod,
                                           final PsiClass containingClass) {
     if (containingClass != null && containingClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+      final Location location = context.getLocation();
+      if (location instanceof MethodLocation) {
+        final PsiClass aClass = ((MethodLocation)location).getContainingClass();
+        if (aClass != null && !aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+          return false;
+        }
+      }
       final List<PsiClass> classes = new ArrayList<PsiClass>();
       if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
         @Override

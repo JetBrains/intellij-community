@@ -102,7 +102,7 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
       myActionVisible = e.getPresentation().isVisible();
     }
     boolean enabled = isEnabled() && isContextComponentOk() && myActionEnabled;
-    if (enabled) {
+    if (enabled && myUpdaters != null) {
       for (AnActionButtonUpdater updater : myUpdaters) {
         if (!updater.isEnabled(e)) {
           enabled = false;

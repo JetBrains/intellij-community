@@ -160,10 +160,25 @@ public class JavaVariableInplaceIntroducer extends InplaceVariableIntroducer<Psi
                 final PsiElement[] vars = element.getDeclaredElements();
                 if (vars.length > 0 && vars[0] instanceof PsiVariable) {
                   final PsiFile containingFile = element.getContainingFile();
+                  //todo pull up method restore state
                   final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myProject);
-                  for (RangeMarker occurrenceMarker : getOccurrenceMarkers()) {
+                  final RangeMarker exprMarker = getExprMarker();
+                  if (exprMarker != null) {
+                    myExpr = AbstractJavaInplaceIntroducer.restoreExpression(containingFile, (PsiVariable)vars[0], elementFactory, exprMarker, myExpressionText);
+                    if (myExpr != null && myExpr.isPhysical()) {
+                      myExprMarker = createMarker(myExpr);
+                    }
+                  }
+                  List<RangeMarker> markers = getOccurrenceMarkers();
+                  for (RangeMarker occurrenceMarker : markers) {
+                    if (getExprMarker() != null && occurrenceMarker.getStartOffset() == getExprMarker().getStartOffset() && myExpr != null) {
+                      continue;
+                    }
                     if (AbstractJavaInplaceIntroducer
-                          .restoreExpression(containingFile, (PsiVariable)vars[0], elementFactory, occurrenceMarker, myExpressionText) == null) return;
+                          .restoreExpression(containingFile, (PsiVariable)vars[0], elementFactory, occurrenceMarker, myExpressionText) ==
+                        null) {
+                      return;
+                    }
                   }
                   element.delete();
                 }
