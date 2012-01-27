@@ -17,7 +17,6 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
@@ -81,15 +80,6 @@ public class LastUnchangedContentTracker {
     }
 
     LOG.assertTrue(contentId > 0, contentId);
-    if (ChangeListManagerImpl.DEBUG) {
-      System.out.println("LastUnchangedContentTracker.saveCurrentContent");
-      try {
-        System.out.println("content = " + VfsUtil.loadText(file));
-      }
-      catch (IOException e) {
-        e.printStackTrace();
-      }
-    }
 
     long stamp = file.getModificationStamp();
     try {

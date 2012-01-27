@@ -240,6 +240,9 @@ public abstract class VcsVFSListener implements Disposable {
     }
   }
 
+  protected boolean filterOutUnknownFiles() {
+    return true;
+  }
 
   protected void processMovedFile(VirtualFile file, String newParentPath, String newName) {
     final FileStatus status = FileStatusManager.getInstance(myProject).getStatus(file);
@@ -249,7 +252,7 @@ public abstract class VcsVFSListener implements Disposable {
         myDirtyFiles.add(file); // will be at new path
       }
     }
-    if (status != FileStatus.UNKNOWN && status != FileStatus.IGNORED) {
+    if (!(filterOutUnknownFiles() && status == FileStatus.UNKNOWN) && status != FileStatus.IGNORED) {
       final String newPath = newParentPath + "/" + newName;
       boolean foundExistingInfo = false;
       for (MovedFileInfo info : myMovedFiles) {
