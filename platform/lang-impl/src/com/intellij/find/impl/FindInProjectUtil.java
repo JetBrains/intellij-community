@@ -442,7 +442,7 @@ public class FindInProjectUtil {
 
   @Nullable
   private static GlobalSearchScope toGlobal(Project project, @Nullable SearchScope scope) {
-    if (scope instanceof GlobalSearchScope) {
+    if (scope instanceof GlobalSearchScope || scope == null) {
       return (GlobalSearchScope)scope;
     }
     Set<VirtualFile> files = new HashSet<VirtualFile>();
