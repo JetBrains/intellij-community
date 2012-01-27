@@ -612,7 +612,6 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     if (grid != null || !createIfMissing) return grid;
 
     grid = new GridImpl(this, mySessionName);
-    grid.setBorder(new EmptyBorder(1, 0, 0, 0));
 
     if (myCurrentOver != null || myOriginal != null) {
       Integer forcedDropIndex = content.getUserData(RunnerLayout.DROP_INDEX);
