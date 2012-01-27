@@ -332,7 +332,9 @@ public class JavaBuilder extends ModuleLevelBuilder {
     final int port = findFreePort();
     final int heapSize = getJavacServerHeapSize(context);
 
-    final BaseOSProcessHandler processHandler = JavacServerBootstrap.launchJavacServer(vmExecPath, heapSize, port, Paths.getSystemRoot());
+    final BaseOSProcessHandler processHandler = JavacServerBootstrap.launchJavacServer(
+      vmExecPath, heapSize, port, Paths.getSystemRoot(), getCompilationVMOptions(context)
+    );
     final JavacServerClient client = new JavacServerClient();
     try {
       client.connect(hostString, port);
@@ -401,8 +403,31 @@ public class JavaBuilder extends ModuleLevelBuilder {
     return new CompiledClassesLoader(outputSink, urls.toArray(new URL[urls.size()]));
   }
 
+  private static final Key<List<String>> JAVAC_OPTIONS = Key.create("_javac_options_");
+  private static final Key<List<String>> JAVAC_VM_OPTIONS = Key.create("_javac_vm_options_");
+
+  private static List<String> getCompilationVMOptions(CompileContext context) {
+    List<String> cached = JAVAC_VM_OPTIONS.get(context);
+    if (cached == null) {
+      loadJavacOptions(context);
+      cached = JAVAC_VM_OPTIONS.get(context);
+    }
+    return cached;
+  }
+
   private static List<String> getCompilationOptions(CompileContext context) {
+    List<String> cached = JAVAC_OPTIONS.get(context);
+    if (cached == null) {
+      loadJavacOptions(context);
+      cached = JAVAC_OPTIONS.get(context);
+    }
+    return cached;
+  }
+
+  private static void loadJavacOptions(CompileContext context) {
     final List<String> options = new ArrayList<String>();
+    final List<String> vmOptions = new ArrayList<String>();
+
     options.add("-verbose");
 
     final Project project = context.getProject();
@@ -429,7 +454,12 @@ public class JavaBuilder extends ModuleLevelBuilder {
         if ("-g".equals(token) || "-deprecation".equals(token) || "-nowarn".equals(token) || "-verbose".equals(token)){
           continue;
         }
-        options.add(token);
+        if (token.startsWith("-J-")) {
+          vmOptions.add(token.substring("-J".length()));
+        }
+        else {
+          options.add(token);
+        }
         if ("-encoding".equals(token)) {
           isEncodingSet = true;
         }
@@ -440,7 +470,9 @@ public class JavaBuilder extends ModuleLevelBuilder {
       options.add("-encoding");
       options.add(project.getProjectCharset());
     }
-    return options;
+
+    JAVAC_OPTIONS.set(context, options);
+    JAVAC_VM_OPTIONS.set(context, vmOptions);
   }
 
   private static Map<File, Set<File>> buildOutputDirectoriesMap(CompileContext context, ModuleChunk chunk) {
