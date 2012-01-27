@@ -122,6 +122,7 @@ public interface PlatformIcons {
   Icon TABLE_EXCEPTION = IconLoader.getIcon("/tables/exception.png");
   Icon TABLE_EDIT_ROW = IconLoader.getIcon("/tables/edit.png");
   Icon TABLE_ANALYZE = IconLoader.getIcon("/tables/analyze.png");
+  Icon TABLE_URL = IconLoader.getIcon("/tables/url.png");
 
   Icon COMBOBOX_ARROW_ICON = IconLoader.getIcon("/general/comboArrow.png");
   

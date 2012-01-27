@@ -46,7 +46,6 @@ public class SdkPathEditor extends PathEditor {
       sdkModificator.addRoot(getValueAt(i), myOrderRootType);
     }
     setModified(false);
-    updateButtons();
   }
 
   public void reset(@Nullable SdkModificator modificator) {
