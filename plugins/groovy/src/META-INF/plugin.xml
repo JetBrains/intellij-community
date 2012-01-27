@@ -1046,11 +1046,6 @@
       <add-to-group group-id="Internal"/>
     </group>
 
-    <action id="RenameJavaFileToGroovyFileAction"
-            class="org.jetbrains.plugins.groovy.refactoring.javaToGrovyRename.RenameJavaFileToGroovyFileAction"
-            text="Rename To Groovy" description="Rename Java File to Groovy">
-      <add-to-group group-id="EditorTabPopupMenu" anchor="last"/>
-    </action>
     <action id="ExcludeFromStubGeneration"
             class="org.jetbrains.plugins.groovy.compiler.ExcludeFromStubGenerationAction"
             text="Exclude from stub generation" description="Don't generate Java stubs for this Groovy file on compilation">

@@ -124,7 +124,7 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
         //javaText.append("System.out.println(java.util.Arrays.toString(new Exception().getStackTrace()));\n");
         //javaText.append("System.out.println(\"\\\\[([^,()]+\\\\$\\\\$)[A-Za-z0-9]{8}(\\\\.[^,()]+)\\\\(" + s + ":\\\\d+\\\\), (\\\\1[A-Za-z0-9]{8}\\\\2\\\\(Unknown Source\\\\), |.+com\\\\.springsource\\\\.loaded\\\\.).+\")\n");
 
-        javaText.append("if (java.util.Arrays.toString(new Exception().getStackTrace()).matches(\"\\\\[([^,()]+\\\\$\\\\$)[A-Za-z0-9]{8}(\\\\.[^,()]+)\\\\(" + s + ":\\\\d+\\\\), (\\\\1[A-Za-z0-9]{8}\\\\2\\\\(Unknown Source\\\\), №.+com\\\\.springsource\\\\.loaded\\\\.).+\")) {\n");
+        javaText.append("if (java.util.Arrays.toString(new Exception().getStackTrace()).matches(\"\\\\[([^,()]+\\\\$\\\\$)[A-Za-z0-9]{8}(\\\\.[^,()]+)\\\\(" + s + ":\\\\d+\\\\), (\\\\1[A-Za-z0-9]{8}\\\\2\\\\(Unknown Source\\\\), $OR$.+com\\\\.springsource\\\\.loaded\\\\.).+\")) {\n");
         javaText.append("  |thiz0 = thiz;\n");
         javaText.append(" } else {\n");
         javaText.append("  |thiz0 = this;\n");
@@ -176,7 +176,7 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
     final PsiElementFactory factory = JavaPsiFacade.getInstance(toEval.getProject()).getElementFactory();
 
     String hiddenJavaVars = StringUtil.replace(javaText.toString(), "|", "_$$_$$$_$$$$$$$$$_" + new Random().nextInt(42));
-    hiddenJavaVars = hiddenJavaVars.replace('№', '|');
+    hiddenJavaVars = hiddenJavaVars.replaceAll("\\$OR\\$", "|");
     final String finalText = StringUtil.replace(StringUtil.replace(hiddenJavaVars, TEXT, groovyText), IMPORTS, imports);
     JavaCodeFragment result = JavaCodeFragmentFactory.getInstance(project).createCodeBlockCodeFragment(finalText, null, true);
     if (contextClass != null) {

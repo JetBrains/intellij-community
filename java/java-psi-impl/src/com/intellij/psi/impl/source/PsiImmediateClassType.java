@@ -171,7 +171,7 @@ public class PsiImmediateClassType extends PsiClassType {
     PsiClass parentClass = null;
     if (!aClass.hasModifierProperty(PsiModifier.STATIC)) {
       final PsiElement parent = aClass.getParent();
-      if (parent instanceof PsiClass) {
+      if (parent instanceof PsiClass && !(parent instanceof PsiAnonymousClass)) {
         parentClass = (PsiClass)parent;
       }
     }
