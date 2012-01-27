@@ -198,7 +198,7 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
         return resolveImportElement ? ResolveImportUtil.resolveImportElement(this, PyQualifiedName.fromComponents(name)) : this;
       }
       final PsiNamedElement container = getStubOrPsiParentOfType(PsiNamedElement.class);
-      return new PyImportedModule(container, PyQualifiedName.fromComponents(name));
+      return new PyImportedModule(this, container, PyQualifiedName.fromComponents(name));
     }
   }
 
