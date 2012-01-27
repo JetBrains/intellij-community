@@ -15,26 +15,37 @@
  */
 package git4idea.checkin;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PairConsumer;
 import git4idea.GitVcs;
+import git4idea.config.GitConfigUtil;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.*;
+
 /**
  * Prohibits commiting with an empty messages.
  * @author Kirill Likhodedov
 */
 public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
+  
+  private static final Logger LOG = Logger.getInstance(GitCheckinHandlerFactory.class);
+
   public GitCheckinHandlerFactory() {
     super(GitVcs.getKey());
   }
@@ -57,11 +68,98 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
       if (emptyCommitMessage()) {
         return ReturnResult.CANCEL;
       }
+      
+      ReturnResult result = checkUserName();
+      if (result != ReturnResult.COMMIT) {
+        return result;
+      }
 
       if (commitOrCommitAndPush(executor)) {
         return warnAboutDetachedHeadIfNeeded();
       }
       return ReturnResult.COMMIT;
+    }
+
+    private ReturnResult checkUserName() {
+      Project project = myPanel.getProject();
+      Collection<VirtualFile> notDefined = new ArrayList<VirtualFile>();
+      Map<VirtualFile, Pair<String, String>> defined = new HashMap<VirtualFile, Pair<String, String>>();
+      Collection<VirtualFile> allRoots = new ArrayList<VirtualFile>(Arrays.asList(
+        ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(GitVcs.getInstance(project))));
+
+      Collection<VirtualFile> affectedRoots = myPanel.getRoots();
+      for (VirtualFile root : affectedRoots) {
+        try {
+          Pair<String, String> nameAndEmail = getUserNameAndEmailFromGitConfig(project, root);
+          String name = nameAndEmail.getFirst();
+          String email = nameAndEmail.getSecond();
+          if (name == null || email == null) {
+            notDefined.add(root);
+          }
+          else {
+            defined.put(root, nameAndEmail);
+          }
+        }
+        catch (VcsException e) {
+          LOG.error("Couldn't get user.name and user.email for root " + root, e);
+          // doing nothing - let commit with possibly empty user.name/email
+        }
+      }
+      
+      if (notDefined.isEmpty()) {
+        return ReturnResult.COMMIT;
+      }
+
+      if (defined.isEmpty() && allRoots.size() > affectedRoots.size()) {
+        allRoots.removeAll(affectedRoots);
+        for (VirtualFile root : allRoots) {
+          try {
+            Pair<String, String> nameAndEmail = getUserNameAndEmailFromGitConfig(project, root);
+            String name = nameAndEmail.getFirst();
+            String email = nameAndEmail.getSecond();
+            if (name != null && email != null) {
+              defined.put(root, nameAndEmail);
+              break;
+            }
+          }
+          catch (VcsException e) {
+            LOG.error("Couldn't get user.name and user.email for root " + root, e);
+            // doing nothing - not critical not to find the values for other roots not affected by commit
+          }
+        }
+      }
+
+      GitUserNameNotDefinedDialog dialog = new GitUserNameNotDefinedDialog(project, notDefined, affectedRoots, defined);
+      dialog.show();
+      if (dialog.isOK()) {
+        try {
+          if (dialog.isGlobal()) {
+            GitConfigUtil.setValue(project, notDefined.iterator().next(), GitConfigUtil.USER_NAME, dialog.getUserName(), "--global");
+            GitConfigUtil.setValue(project, notDefined.iterator().next(), GitConfigUtil.USER_EMAIL, dialog.getUserEmail(), "--global");
+          }
+          else {
+            for (VirtualFile root : notDefined) {
+              GitConfigUtil.setValue(project, root, GitConfigUtil.USER_NAME, dialog.getUserName());
+              GitConfigUtil.setValue(project, root, GitConfigUtil.USER_EMAIL, dialog.getUserEmail());
+            }
+          }
+        }
+        catch (VcsException e) {
+          String message = "Couldn't set user.name and user.email";
+          LOG.error(message, e);
+          Messages.showErrorDialog(myPanel.getComponent(), message);
+          return ReturnResult.CANCEL;
+        }
+        return ReturnResult.COMMIT;
+      }
+      return ReturnResult.CLOSE_WINDOW;
+    }
+    
+    @NotNull
+    private Pair<String, String> getUserNameAndEmailFromGitConfig(@NotNull Project project, @NotNull VirtualFile root) throws VcsException {
+      String name = GitConfigUtil.getValue(project, root, GitConfigUtil.USER_NAME);
+      String email = GitConfigUtil.getValue(project, root, GitConfigUtil.USER_EMAIL);
+      return Pair.create(name, email);
     }
     
     private boolean emptyCommitMessage() {
