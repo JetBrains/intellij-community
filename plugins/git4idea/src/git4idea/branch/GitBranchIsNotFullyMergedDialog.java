@@ -28,7 +28,6 @@ import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.ui.GitCommitListWithDiffPanel;
 import git4idea.ui.GitRepositoryComboboxListCellRenderer;
-import git4idea.util.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -94,7 +93,7 @@ public class GitBranchIsNotFullyMergedDialog extends DialogWrapper {
     myMergedToBranches = mergedToBranches;
     myRepositories = commits.keySet();
 
-    myInitialRepository = myRepositories.iterator().next();
+    myInitialRepository = calcInitiallySelectedRepository();
     myCommitListWithDiffPanel = new GitCommitListWithDiffPanel(myProject, new ArrayList<GitCommit>(myCommits.get(myInitialRepository)));
 
     init();
@@ -104,6 +103,16 @@ public class GitBranchIsNotFullyMergedDialog extends DialogWrapper {
     setCancelButtonText("Cancel");
   }
 
+  @NotNull
+  private GitRepository calcInitiallySelectedRepository() {
+    for (GitRepository repository : myRepositories) {
+      if (!myCommits.get(repository).isEmpty()) {
+        return repository;
+      }
+    }
+    throw new AssertionError("The dialog shouldn't be shown. Unmerged commits: " + myCommits);
+  }
+
   private String makeDescription() {
     String currentBranchOrRev;
     boolean onBranch;
@@ -111,8 +120,9 @@ public class GitBranchIsNotFullyMergedDialog extends DialogWrapper {
       LOG.assertTrue(myCurrentBranch != null, "Branches have unexpectedly diverged");
       currentBranchOrRev = myCurrentBranch;
       onBranch = true;
-    } else {
-      GitRepository repository = myRepositories.iterator().next();
+    } 
+    else {
+      GitRepository repository = myInitialRepository;
       if (repository.isOnBranch()) {
         GitBranch currentBranch = repository.getCurrentBranch();
         assert currentBranch != null;
@@ -151,7 +161,7 @@ public class GitBranchIsNotFullyMergedDialog extends DialogWrapper {
     
       final JComboBox repositorySelector = new JComboBox(ArrayUtil.toObjectArray(myRepositories, GitRepository.class));
     repositorySelector.setRenderer(new GitRepositoryComboboxListCellRenderer(repositorySelector));
-    repositorySelector.setSelectedItem(GitUIUtil.getShortRepositoryName(myInitialRepository));
+    repositorySelector.setSelectedItem(myInitialRepository);
     repositorySelector.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
