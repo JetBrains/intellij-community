@@ -2,7 +2,7 @@ package org.jetbrains.jps.incremental;
 
 import org.jetbrains.jps.incremental.groovy.GroovyBuilder;
 import org.jetbrains.jps.incremental.java.JavaBuilder;
-import org.jetbrains.jps.incremental.resourses.ResourcesBuilder;
+import org.jetbrains.jps.incremental.resources.ResourcesBuilder;
 
 import java.util.*;
 import java.util.concurrent.ExecutorService;

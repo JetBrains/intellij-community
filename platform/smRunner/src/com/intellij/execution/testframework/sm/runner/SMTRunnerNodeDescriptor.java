@@ -15,41 +15,18 @@
  */
 package com.intellij.execution.testframework.sm.runner;
 
+import com.intellij.execution.testframework.ui.BaseTestProxyNodeDescriptor;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.Project;
 
 /**
  * @author: Roman Chernyatchik
  */
-public class SMTRunnerNodeDescriptor extends NodeDescriptor<SMTestProxy>
-{
-  private final SMTestProxy myElement;
-
+public class SMTRunnerNodeDescriptor extends BaseTestProxyNodeDescriptor<SMTestProxy> {
   public SMTRunnerNodeDescriptor(final Project project,
-                                final SMTestProxy element,
-                                final NodeDescriptor<SMTestProxy> parentDesc) {
-    super(project, parentDesc);
-    myElement = element;
-    myName = element.getName();
-  }
-
-  @Override
-  public boolean update() {
-    return false;
-  }
-
-  @Override
-  public SMTestProxy getElement() {
-    return myElement;
-  }
-
-  public boolean expandOnDoubleClick() {
-    return !myElement.isLeaf();
-  }
-
-  @Override
-  public String toString() {
-    return myName;
+                                 final SMTestProxy testProxy,
+                                 final NodeDescriptor<SMTestProxy> parentDesc) {
+    super(project, testProxy, parentDesc);
   }
 }
 
