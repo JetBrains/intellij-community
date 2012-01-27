@@ -1,6 +1,7 @@
 package com.intellij.util.lang;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.io.UnsyncByteArrayInputStream;
 import com.intellij.util.io.zip.ZipShort;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.Nullable;
@@ -95,7 +96,7 @@ public class JarMemoryLoader {
 
     @Override
     public InputStream getInputStream() throws IOException {
-      return new ByteArrayInputStream(myContent);
+      return new UnsyncByteArrayInputStream(myContent);
     }
 
     @Override
