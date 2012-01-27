@@ -67,7 +67,7 @@ public class GenericCompilerRunner {
     try {
       for (GenericCompiler<?,?,?> compiler : myCompilers) {
         if (compiler.getOrderPlace().equals(place)) {
-          didSomething = invokeCompiler(compiler);
+          didSomething |= invokeCompiler(compiler);
         }
       }
     }
