@@ -41,7 +41,7 @@ import java.util.regex.Pattern;
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
 public class FileUtil {
   public static final int MEGABYTE = 1024 * 1024;
-  public static final String ASYNC_DELETE_EXTENSION = ".__del__";
+  @NonNls public static final String ASYNC_DELETE_EXTENSION = ".__del__";
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.io.FileUtil");
 
@@ -681,7 +681,7 @@ public class FileUtil {
       final int oldPermissions = FileSystemUtil.getPermissions(fromFile);
       final int newPermissions = FileSystemUtil.getPermissions(toFile);
       if (oldPermissions != -1 && newPermissions != -1) {
-        FileSystemUtil.setPermissions(toFile, (oldPermissions | newPermissions));
+        FileSystemUtil.setPermissions(toFile, oldPermissions | newPermissions);
       }
     }
   }
@@ -713,7 +713,7 @@ public class FileUtil {
   public static void copyDir(@NotNull File fromDir, @NotNull File toDir, boolean copySystemFiles) throws IOException {
     copyDir(fromDir, toDir, copySystemFiles ? null : new FileFilter() {
       public boolean accept(File file) {
-        return !file.getName().startsWith(".");
+        return !StringUtil.startsWithChar(file.getName(), '.');
       }
     });
   }
@@ -939,7 +939,7 @@ public class FileUtil {
     final StringBuilder builder = new StringBuilder(antPattern.length());
     int asteriskCount = 0;
     boolean recursive = true;
-    final int start = ignoreStartingSlash && (antPattern.startsWith("/") || antPattern.startsWith("\\")) ? 1 : 0;
+    final int start = ignoreStartingSlash && (StringUtil.startsWithChar(antPattern, '/') || StringUtil.startsWithChar(antPattern, '\\')) ? 1 : 0;
     for (int idx = start; idx < antPattern.length(); idx++) {
       final char ch = antPattern.charAt(idx);
 
