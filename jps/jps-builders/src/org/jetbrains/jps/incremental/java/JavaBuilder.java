@@ -34,8 +34,7 @@ import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.EmptyVisitor;
 
-import javax.tools.Diagnostic;
-import javax.tools.JavaFileObject;
+import javax.tools.*;
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.ServerSocket;
@@ -53,7 +52,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
   public static final String BUILDER_NAME = "java";
   private static final String JAVA_EXTENSION = ".java";
   private static final String FORM_EXTENSION = ".form";
-  private static final boolean USE_EMBEDDED_JAVAC = System.getProperty(GlobalOptions.USE_EXTERNAL_JAVAC_OPTION) == null;
+  public static final boolean USE_EMBEDDED_JAVAC = System.getProperty(GlobalOptions.USE_EXTERNAL_JAVAC_OPTION) == null;
 
   private static final FileFilter JAVA_SOURCES_FILTER = new FileFilter() {
     public boolean accept(File file) {
