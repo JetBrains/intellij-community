@@ -19,6 +19,7 @@ package org.jetbrains.plugins.groovy.compiler.generator;
 import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.compiler.impl.FileSetCompileScope;
 import com.intellij.compiler.impl.TranslatingCompilerFilesMonitor;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -29,12 +30,12 @@ import com.intellij.openapi.compiler.CompilerPaths;
 import com.intellij.openapi.compiler.ex.CompileContextEx;
 import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.*;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -48,9 +49,9 @@ import com.intellij.util.Chunk;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.compiler.GroovyCompilerBase;
 import org.jetbrains.plugins.groovy.compiler.GroovyCompilerConfiguration;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -75,26 +76,26 @@ public class GroovycStubGenerator extends GroovyCompilerBase {
 
   @Override
   public void compile(CompileContext compileContext, Chunk<Module> moduleChunk, VirtualFile[] virtualFiles, OutputSink sink) {
-    boolean hasJava = false;
-
     final ExcludedEntriesConfiguration excluded = GroovyCompilerConfiguration.getExcludeConfiguration(myProject);
+    
+    @SuppressWarnings("MismatchedQueryAndUpdateOfCollection") FactoryMap<Pair<Module, Boolean>, Boolean> hasJava = new FactoryMap<Pair<Module, Boolean>, Boolean>() {
+      @Override
+      protected Boolean create(Pair<Module, Boolean> key) {
+        return containsJavaSources(key.first, key.second);
+      }
+    };
+
+    ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
 
     List<VirtualFile> total = new ArrayList<VirtualFile>();
     for (final VirtualFile virtualFile : virtualFiles) {
-      final FileType fileType = virtualFile.getFileType();
-      if (fileType == StdFileTypes.JAVA) {
-        hasJava = true;
-      }
-
-      if (!excluded.isExcluded(virtualFile)) {
-        if (fileType == GroovyFileType.GROOVY_FILE_TYPE && GroovyNamesUtil.isIdentifier(virtualFile.getNameWithoutExtension())) {
+      if (!excluded.isExcluded(virtualFile) &&
+          GroovyNamesUtil.isIdentifier(virtualFile.getNameWithoutExtension())) {
+        Module module = index.getModuleForFile(virtualFile);
+        if (module == null || hasJava.get(Pair.create(module, index.isInTestSourceContent(virtualFile)))) {
           total.add(virtualFile);
         }
       }
-    }
-
-    if (!hasJava) {
-      return;
     }
 
     if (total.isEmpty()) {
@@ -106,9 +107,27 @@ public class GroovycStubGenerator extends GroovyCompilerBase {
     //System.out.println("Stub generation took " + (System.currentTimeMillis() - l));
   }
 
-  @Override
-  public boolean isCompilableFile(VirtualFile file, CompileContext context) {
-    return super.isCompilableFile(file, context) || StdFileTypes.JAVA.equals(file.getFileType());
+  private static boolean containsJavaSources(Module module, boolean inTests) {
+    ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
+    for (ContentEntry entry : rootManager.getContentEntries()) {
+      for (SourceFolder folder : entry.getSourceFolders()) {
+        VirtualFile dir = folder.getFile();
+        if (inTests == folder.isTestSource() && dir != null) {
+          if (!rootManager.getFileIndex().iterateContentUnderDirectory(dir, new ContentIterator() {
+            @Override
+            public boolean processFile(VirtualFile fileOrDir) {
+              if (!fileOrDir.isDirectory() && JavaFileType.INSTANCE == fileOrDir.getFileType()) {
+                return false;
+              }
+              return true;
+            }
+          })) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
   }
 
   @Override
