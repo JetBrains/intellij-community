@@ -125,7 +125,7 @@ class ServerState {
       pd = myProjects.get(projectPath);
       if (pd == null) {
         final Project project = loadProject(projectPath, params);
-        final FSState fsState = new FSState();
+        final FSState fsState = new FSState(false);
         ProjectTimestamps timestamps = null;
         BuildDataManager dataManager = null;
         try {
