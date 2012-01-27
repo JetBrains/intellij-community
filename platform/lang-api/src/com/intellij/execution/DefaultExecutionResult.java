@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,11 +36,11 @@ public class DefaultExecutionResult implements ExecutionResult {
   private AnAction[] myRestartActions;
   private final List<AnAction> myStopActions = new ArrayList<AnAction>();
 
-  public DefaultExecutionResult(final ExecutionConsole console, final ProcessHandler processHandler) {
+  public DefaultExecutionResult(final ExecutionConsole console, @NotNull final ProcessHandler processHandler) {
     this(console, processHandler, AnAction.EMPTY_ARRAY);
   }
 
-  public DefaultExecutionResult(final ExecutionConsole console, final ProcessHandler processHandler, final AnAction... actions) {
+  public DefaultExecutionResult(final ExecutionConsole console, @NotNull final ProcessHandler processHandler, final AnAction... actions) {
     myConsole = console;
     myProcessHandler = processHandler;
     myActions = actions;
