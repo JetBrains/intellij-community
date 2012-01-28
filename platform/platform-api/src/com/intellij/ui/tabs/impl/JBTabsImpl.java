@@ -165,6 +165,7 @@ public class JBTabsImpl extends JComponent
   private SwitchProvider mySwitchDelegate;
   protected TabInfo myDropInfo;
   private int myDropInfoIndex;
+  protected boolean myShowDropLocation = true;
 
   private TabInfo myOldSelection;
   private SelectionChangeHandler mySelectionChangeHandler;
@@ -1350,7 +1351,7 @@ public class JBTabsImpl extends JComponent
       List<TabInfo> visible = new ArrayList<TabInfo>();
       visible.addAll(myVisibleInfos);
 
-      if (myDropInfo != null && !visible.contains(myDropInfo)) {
+      if (myDropInfo != null && !visible.contains(myDropInfo) && myShowDropLocation) {
         if (getDropInfoIndex() >= 0 && getDropInfoIndex() < visible.size()) {
           visible.add(getDropInfoIndex(), myDropInfo);
         } else {
@@ -3187,6 +3188,7 @@ public class JBTabsImpl extends JComponent
     if (myDropInfo != null) {
       TabInfo dropInfo = myDropInfo;
       myDropInfo = null;
+      myShowDropLocation = true;
       setDropInfoIndex(-1);
       removeTab(dropInfo, null, false, true);
     }
