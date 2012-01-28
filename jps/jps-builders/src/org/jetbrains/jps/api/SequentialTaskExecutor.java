@@ -1,4 +1,4 @@
-package com.intellij.compiler;
+package org.jetbrains.jps.api;
 
 import java.util.Queue;
 import java.util.concurrent.FutureTask;
