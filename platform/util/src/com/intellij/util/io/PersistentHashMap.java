@@ -124,14 +124,10 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   private final LowMemoryWatcher myAppendCacheFlusher = LowMemoryWatcher.register(new LowMemoryWatcher.ForceableAdapter() {
     public void force() {
       //System.out.println("Flushing caches: " + myFile.getPath());
-      synchronized (myEnumerator) {
-        synchronized (PersistentEnumerator.ourLock) {
-          clearAppenderCaches();
-        }
-      }
+      dropMemoryCaches();
     }
   });
-  
+
   public PersistentHashMap(final File file, KeyDescriptor<Key> keyDescriptor, DataExternalizer<Value> valueExternalizer) throws IOException {
     this(file, keyDescriptor, valueExternalizer, INITIAL_INDEX_SIZE);
   }
@@ -192,6 +188,14 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     catch (Throwable t) {
       LOG.error(t);
       throw new PersistentEnumerator.CorruptedException(file);
+    }
+  }
+
+  public void dropMemoryCaches() {
+    synchronized (myEnumerator) {
+      synchronized (PersistentEnumerator.ourLock) {
+        clearAppenderCaches();
+      }
     }
   }
 

@@ -102,9 +102,6 @@ public class IncProjectBuilder {
   }
 
   private static void flushContext(CompileContext context) {
-    if (context != null) {
-      context.getDataManager().flush();
-    }
     final ExternalJavacDescriptor descriptor = ExternalJavacDescriptor.KEY.get(context);
     if (descriptor != null) {
       try {

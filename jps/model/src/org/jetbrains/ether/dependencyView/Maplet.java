@@ -35,5 +35,5 @@ interface Maplet<K, V> {
   Collection<K> keyCollection();
   Collection<Map.Entry<K, V>> entrySet();
 
-  void flush();
+  void flush(boolean memoryCachesOnly);
 }

@@ -106,8 +106,13 @@ public class PersistentMaplet<K, V> implements Maplet<K, V> {
     }
   }
 
-  public void flush() {
-    myMap.force();
+  public void flush(boolean memoryCachesOnly) {
+    if (memoryCachesOnly) {
+      myMap.dropMemoryCaches();
+    }
+    else {
+      myMap.force();
+    }
   }
 
   @Override

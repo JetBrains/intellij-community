@@ -124,6 +124,6 @@ class TransientMultiMaplet<K, V> implements MultiMaplet<K, V> {
     myMap.clear(); // free memory
   }
 
-  public void flush() {
+  public void flush(boolean memoryCachesOnly) {
   }
 }

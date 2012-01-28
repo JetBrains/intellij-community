@@ -284,10 +284,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
     if (exitCode != ExitCode.ADDITIONAL_PASS_REQUIRED) {
       final Set<File> tempRoots = TEMPORARY_SOURCE_ROOTS_KEY.get(context);
       TEMPORARY_SOURCE_ROOTS_KEY.set(context, null);
-      if (tempRoots != null) {
-        for (File root : tempRoots) {
-          FileUtil.delete(root);
-        }
+      if (tempRoots != null && tempRoots.size() > 0) {
+        FileUtil.asyncDelete(tempRoots);
       }
     }
     return exitCode;
