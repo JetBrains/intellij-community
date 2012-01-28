@@ -33,6 +33,7 @@ import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.io.PagedFileStorage;
 import com.intellij.util.io.PersistentStringEnumerator;
 import com.intellij.util.io.ResizeableMappedFile;
+import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.storage.AbstractStorage;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.io.storage.RefCountingStorage;

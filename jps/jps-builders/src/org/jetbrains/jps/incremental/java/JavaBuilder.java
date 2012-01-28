@@ -125,13 +125,13 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
   public ExitCode build(final CompileContext context, final ModuleChunk chunk) throws ProjectBuildException {
     try {
-      final Map<File, Module> filesToCompile = new HashMap<File, Module>();
-      final List<File> formsToCompile = new ArrayList<File>();
+      final Set<File> filesToCompile = new HashSet<File>();
+      final Set<File> formsToCompile = new HashSet<File>();
 
       context.processFilesToRecompile(chunk, new FileProcessor() {
         public boolean apply(Module module, File file, String sourceRoot) throws Exception {
           if (JAVA_SOURCES_FILTER.accept(file)) {
-            filesToCompile.put(file, module);
+            filesToCompile.add(file);
           }
           else if (FORM_SOURCES_FILTER.accept(file)) {
             formsToCompile.add(file);
@@ -141,37 +141,38 @@ public class JavaBuilder extends ModuleLevelBuilder {
       });
 
       // force compilation of bound source file if the form is dirty
-      for (File form : formsToCompile) {
-        final RootDescriptor descriptor = context.getModuleAndRoot(form);
-        if (descriptor != null) {
-          for (RootDescriptor rd : context.getModuleRoots(descriptor.module)) {
-            final File boundSource = getBoundSource(rd.root, form);
-            if (boundSource != null) {
-              filesToCompile.put(boundSource, rd.module);
-              break;
+      if (!context.isProjectRebuild()) {
+        for (File form : formsToCompile) {
+          final RootDescriptor descriptor = context.getModuleAndRoot(form);
+          if (descriptor != null) {
+            for (RootDescriptor rd : context.getModuleRoots(descriptor.module)) {
+              final File boundSource = getBoundSource(rd.root, form);
+              if (boundSource != null) {
+                filesToCompile.add(boundSource);
+                break;
+              }
             }
           }
         }
-      }
 
-      // form should be considered dirty if the class it is bound to is dirty
-      final SourceToFormMapping sourceToFormMap = context.getDataManager().getSourceToFormMap();
-      for (File srcFile : filesToCompile.keySet()) {
-        final String srcPath = srcFile.getPath();
-        final String formPath = sourceToFormMap.getState(srcPath);
-        if (formPath != null) {
-          final File formFile = new File(formPath);
-          if (formFile.exists()) {
-            context.markDirty(formFile);
-            formsToCompile.add(formFile);
+        // form should be considered dirty if the class it is bound to is dirty
+        final SourceToFormMapping sourceToFormMap = context.getDataManager().getSourceToFormMap();
+        for (File srcFile : filesToCompile) {
+          final String srcPath = srcFile.getPath();
+          final String formPath = sourceToFormMap.getState(srcPath);
+          if (formPath != null) {
+            final File formFile = new File(formPath);
+            if (formFile.exists()) {
+              context.markDirty(formFile);
+              formsToCompile.add(formFile);
+            }
+            sourceToFormMap.remove(srcPath);
           }
-          sourceToFormMap.remove(srcPath);
         }
       }
 
-      deleteCorrespondingOutputFiles(context, filesToCompile);
 
-      return compile(context, chunk, filesToCompile.keySet(), formsToCompile);
+      return compile(context, chunk, filesToCompile, formsToCompile);
     }
     catch (ProjectBuildException e) {
       throw e;
@@ -332,7 +333,9 @@ public class JavaBuilder extends ModuleLevelBuilder {
     final int port = findFreePort();
     final int heapSize = getJavacServerHeapSize(context);
 
-    final BaseOSProcessHandler processHandler = JavacServerBootstrap.launchJavacServer(vmExecPath, heapSize, port, Paths.getSystemRoot());
+    final BaseOSProcessHandler processHandler = JavacServerBootstrap.launchJavacServer(
+      vmExecPath, heapSize, port, Paths.getSystemRoot(), getCompilationVMOptions(context)
+    );
     final JavacServerClient client = new JavacServerClient();
     try {
       client.connect(hostString, port);
@@ -401,8 +404,31 @@ public class JavaBuilder extends ModuleLevelBuilder {
     return new CompiledClassesLoader(outputSink, urls.toArray(new URL[urls.size()]));
   }
 
+  private static final Key<List<String>> JAVAC_OPTIONS = Key.create("_javac_options_");
+  private static final Key<List<String>> JAVAC_VM_OPTIONS = Key.create("_javac_vm_options_");
+
+  private static List<String> getCompilationVMOptions(CompileContext context) {
+    List<String> cached = JAVAC_VM_OPTIONS.get(context);
+    if (cached == null) {
+      loadJavacOptions(context);
+      cached = JAVAC_VM_OPTIONS.get(context);
+    }
+    return cached;
+  }
+
   private static List<String> getCompilationOptions(CompileContext context) {
+    List<String> cached = JAVAC_OPTIONS.get(context);
+    if (cached == null) {
+      loadJavacOptions(context);
+      cached = JAVAC_OPTIONS.get(context);
+    }
+    return cached;
+  }
+
+  private static void loadJavacOptions(CompileContext context) {
     final List<String> options = new ArrayList<String>();
+    final List<String> vmOptions = new ArrayList<String>();
+
     options.add("-verbose");
 
     final Project project = context.getProject();
@@ -429,7 +455,12 @@ public class JavaBuilder extends ModuleLevelBuilder {
         if ("-g".equals(token) || "-deprecation".equals(token) || "-nowarn".equals(token) || "-verbose".equals(token)){
           continue;
         }
-        options.add(token);
+        if (token.startsWith("-J-")) {
+          vmOptions.add(token.substring("-J".length()));
+        }
+        else {
+          options.add(token);
+        }
         if ("-encoding".equals(token)) {
           isEncodingSet = true;
         }
@@ -440,7 +471,9 @@ public class JavaBuilder extends ModuleLevelBuilder {
       options.add("-encoding");
       options.add(project.getProjectCharset());
     }
-    return options;
+
+    JAVAC_OPTIONS.set(context, options);
+    JAVAC_VM_OPTIONS.set(context, vmOptions);
   }
 
   private static Map<File, Set<File>> buildOutputDirectoriesMap(CompileContext context, ModuleChunk chunk) {

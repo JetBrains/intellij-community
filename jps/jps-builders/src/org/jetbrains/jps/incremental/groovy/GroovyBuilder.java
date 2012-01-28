@@ -45,14 +45,14 @@ public class GroovyBuilder extends ModuleLevelBuilder {
 
   public ModuleLevelBuilder.ExitCode build(final CompileContext context, ModuleChunk chunk) throws ProjectBuildException {
     ExitCode exitCode = ExitCode.OK;
-    final Map<File, Module> toCompile = new HashMap<File, Module>();
+    final List<File> toCompile = new ArrayList<File>();
     try {
       context.processFilesToRecompile(chunk, new FileProcessor() {
         @Override
         public boolean apply(Module module, File file, String sourceRoot) throws Exception {
           final String path = file.getPath();
           if (isGroovyFile(path)) { //todo file type check
-            toCompile.put(file, module);
+            toCompile.add(file);
           }
           return true;
         }
@@ -81,7 +81,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
       assert dir != null;
 
       final Set<String> toCompilePaths = new LinkedHashSet<String>();
-      for (File file : toCompile.keySet()) {
+      for (File file : toCompile) {
         toCompilePaths.add(FileUtil.toSystemIndependentName(file.getPath()));
       }
       
@@ -113,8 +113,6 @@ public class GroovyBuilder extends ModuleLevelBuilder {
         Arrays.asList("-Xmx384m"/*, "-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5239"*/),
         Arrays.<String>asList(myForStubs ? "stubs" : "groovyc", tempFile.getPath())
       );
-
-      deleteCorrespondingOutputFiles(context, toCompile);
 
       List<GroovycOSProcessHandler.OutputItem> successfullyCompiled = Collections.emptyList();
       try {
@@ -174,7 +172,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
           }
 
 
-          final boolean needSecondPass = updateMappings(context, delta, chunk, toCompile.keySet(), successfullyCompiledFiles);
+          final boolean needSecondPass = updateMappings(context, delta, chunk, toCompile, successfullyCompiledFiles);
           if (needSecondPass) {
             exitCode = ExitCode.ADDITIONAL_PASS_REQUIRED;
           }

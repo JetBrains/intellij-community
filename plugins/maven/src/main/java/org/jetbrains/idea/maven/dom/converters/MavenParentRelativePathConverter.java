@@ -55,7 +55,7 @@ public class MavenParentRelativePathConverter extends ResolvingConverter<PsiFile
     if (f.isDirectory()) f = f.findFileByRelativePath(MavenConstants.POM_XML);
     if (f == null) return null;
 
-    return PsiManager.getInstance(context.getXmlElement().getProject()).findFile(f);
+    return context.getXmlElement().getManager().findFile(f);
   }
 
   @Override

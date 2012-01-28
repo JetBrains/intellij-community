@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,8 +60,13 @@ public class OutOfMemoryDialog extends DialogWrapper {
         memoryKind == MemoryKind.HEAP ? VMOptions.XMX_OPTION_NAME : memoryKind == MemoryKind.PERM_GEN ? VMOptions.PERM_GEN_OPTION_NAME : VMOptions.CODE_CACHE_OPTION_NAME,
         ApplicationNamesInfo.getInstance().getProductName()));
 
-    mySettingsFileHintLabel.setText(DiagnosticBundle.message("diagnostic.out.of.memory.willBeSavedTo",
-                                                             VMOptions.getSettingsFilePath()));
+    final String path = VMOptions.getSettingsFilePath();
+    if (path != null) {
+      mySettingsFileHintLabel.setText(DiagnosticBundle.message("diagnostic.out.of.memory.willBeSavedTo", path));
+    }
+    else {
+      mySettingsFileHintLabel.setVisible(false);
+    }
 
     myIgnoreAction = new AbstractAction(DiagnosticBundle.message("diagnostic.out.of.memory.ignore")) {
       public void actionPerformed(ActionEvent e) {

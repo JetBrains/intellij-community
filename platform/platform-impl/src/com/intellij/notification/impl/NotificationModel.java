@@ -97,34 +97,14 @@ public class NotificationModel {
     }
   }
 
-  public List<Notification> getByType(@Nullable final NotificationType type, @NotNull PairFunction<Notification, Project, Boolean> filter) {
-    if (type == null) {
-      try {
-        myLock.acquire();
-        return Collections.unmodifiableList(filterNotifications(filter));
-      }
-      finally {
-        myLock.release();
-      }
-    }
-
-    final List<Notification> filtered;
+  public List<Notification> getFilteredNotifications(@NotNull PairFunction<Notification, Project, Boolean> filter) {
     try {
       myLock.acquire();
-      filtered = filterNotifications(filter);
+      return Collections.unmodifiableList(filterNotifications(filter));
     }
     finally {
       myLock.release();
     }
-
-    final List<Notification> result = new ArrayList<Notification>();
-    for (final Notification notification : filtered) {
-      if (type == notification.getType()) {
-        result.add(notification);
-      }
-    }
-
-    return result;
   }
 
   @Nullable

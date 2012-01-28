@@ -26,9 +26,8 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.io.PagePool;
-import com.intellij.util.io.RecordDataOutput;
-import com.intellij.util.io.UnsyncByteArrayInputStream;
+import com.intellij.util.io.*;
+import com.intellij.util.io.DataOutputStream;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.*;

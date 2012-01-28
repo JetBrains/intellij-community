@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.declaration;
 
 import com.intellij.lang.PsiBuilder;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
@@ -150,7 +151,7 @@ public class Declaration implements GroovyElementTypes {
       String text = builder.getTokenText();
       if (!builder.eof()
           && !TokenSets.BUILT_IN_TYPE.contains(builder.getTokenType())
-          && text != null
+          && text != null && StringUtil.isNotEmpty(text)
           && (Character.isLowerCase((text.charAt(0))) || !Character.isLetter(text.charAt(0))) &&
           (ParserUtils.lookAhead(builder, mIDENT, mIDENT) || ParserUtils.lookAhead(builder, mIDENT, mLPAREN))) {
         //call expression

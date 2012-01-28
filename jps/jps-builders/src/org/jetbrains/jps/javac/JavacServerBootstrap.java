@@ -22,7 +22,11 @@ import java.util.List;
  */
 public class JavacServerBootstrap {
 
-  public static BaseOSProcessHandler launchJavacServer(String vmExecutablePath, int heapSize, int port, File workingDir) throws Exception {
+  public static BaseOSProcessHandler launchJavacServer(String vmExecutablePath,
+                                                       int heapSize,
+                                                       int port,
+                                                       File workingDir,
+                                                       List<String> vmOptions) throws Exception {
 
     final List<String> cmdLine = new ArrayList<String>();
     appendParam(cmdLine, vmExecutablePath);
@@ -52,6 +56,10 @@ public class JavacServerBootstrap {
     if (region != null) {
       //noinspection HardCodedStringLiteral
       appendParam(cmdLine, "-Duser.region=" + region);
+    }
+
+    for (String option : vmOptions) {
+      appendParam(cmdLine, option);
     }
 
     appendParam(cmdLine, "-classpath");
@@ -87,8 +95,13 @@ public class JavacServerBootstrap {
     processHandler.addProcessListener(new ProcessAdapter() {
       public void onTextAvailable(ProcessEvent event, Key outputType) {
         final String text = event.getText();
-        if (text != null && text.length() > 0) {
-          System.out.print("JAVAC_SERVER [" + outputType.toString() + "]: " + text);
+        if (!StringUtil.isEmpty(text)) {
+          if (outputType == ProcessOutputTypes.STDOUT) {
+            System.out.print("JAVAC_SERVER: " + text);
+          }
+          else if (outputType == ProcessOutputTypes.STDERR){
+            System.err.print("JAVAC_SERVER: " + text);
+          }
         }
       }
     });

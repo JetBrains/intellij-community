@@ -31,7 +31,7 @@ public class RefDirectoryImpl extends RefElementImpl implements RefDirectory{
   protected RefDirectoryImpl(PsiDirectory psiElement, RefManager refManager) {
     super(psiElement.getName(), psiElement, refManager);
     final PsiDirectory parentDirectory = psiElement.getParentDirectory();
-    if (parentDirectory != null && PsiManager.getInstance(parentDirectory.getProject()).isInProject(parentDirectory)) {
+    if (parentDirectory != null && parentDirectory.getManager().isInProject(parentDirectory)) {
       final RefElementImpl refElement = (RefElementImpl)refManager.getReference(parentDirectory);
       if (refElement != null) {
         refElement.add(this);

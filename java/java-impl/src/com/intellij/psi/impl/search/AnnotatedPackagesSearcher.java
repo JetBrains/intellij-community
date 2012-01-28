@@ -47,7 +47,7 @@ public class AnnotatedPackagesSearcher implements QueryExecutor<PsiPackage, Anno
     final String annotationFQN = annClass.getQualifiedName();
     assert annotationFQN != null;
 
-    final PsiManagerImpl psiManager = (PsiManagerImpl)PsiManager.getInstance(annClass.getProject());
+    final PsiManagerImpl psiManager = (PsiManagerImpl)annClass.getManager();
     final SearchScope useScope = p.getScope();
 
     final String annotationShortName = annClass.getName();

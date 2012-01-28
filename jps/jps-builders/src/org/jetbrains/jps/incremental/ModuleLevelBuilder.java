@@ -2,15 +2,16 @@ package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.ether.dependencyView.Mappings;
 import org.jetbrains.jps.Module;
 import org.jetbrains.jps.ModuleChunk;
-import org.jetbrains.jps.incremental.storage.SourceToOutputMapping;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
@@ -71,19 +72,14 @@ public abstract class ModuleLevelBuilder extends Builder {
 
           if (LOG.isDebugEnabled()) {
             LOG.debug("Differentiate Results:");
-
             LOG.debug("   Compiled Files:");
-
             for (final File c : allCompiledFiles) {
               LOG.debug("      " + c.getAbsolutePath());
             }
-
             LOG.debug("   Affected Files:");
-
             for (final File c : allAffectedFiles) {
               LOG.debug("      " + c.getAbsolutePath());
             }
-
             LOG.debug("End Of Differentiate Results.");
           }
 
@@ -116,25 +112,6 @@ public abstract class ModuleLevelBuilder extends Builder {
         throw ((IOException)cause);
       }
       throw e;
-    }
-  }
-
-  // delete all class files that according to mappings correspond to given sources
-  public static void deleteCorrespondingOutputFiles(CompileContext context, Map<File, Module> sources) throws Exception {
-    if (!context.isProjectRebuild() && !sources.isEmpty()) {
-      for (Map.Entry<File, Module> pair : sources.entrySet()) {
-        final File file = pair.getKey();
-        final String srcPath = FileUtil.toSystemIndependentName(file.getPath());
-        final String moduleName = pair.getValue().getName().toLowerCase(Locale.US);
-        final SourceToOutputMapping srcToOut = context.getDataManager().getSourceToOutputMap(moduleName, context.isCompilingTests());
-        final Collection<String> outputs = srcToOut.getState(srcPath);
-        if (outputs != null) {
-          for (String output : outputs) {
-            FileUtil.delete(new File(output));
-          }
-          srcToOut.remove(srcPath);
-        }
-      }
     }
   }
 

@@ -24,7 +24,12 @@ public class FSState {
   private volatile FilesDelta myCurrentRoundDelta;
   private volatile FilesDelta myLastRoundDelta;
 
-  public FSState() {
+  // when true, will always determine dirty files by scanning FS and comparing timestamps
+  // alternatively, when false, after first scan will rely on extarnal notifications about changes
+  private final boolean myAlwaysScanFS;
+
+  public FSState(boolean alwaysScanFS) {
+    myAlwaysScanFS = alwaysScanFS;
   }
 
   public void onRebuild() {
@@ -35,6 +40,9 @@ public class FSState {
   }
 
   public boolean markInitialScanPerformed(Module module, boolean forTests) {
+    if (myAlwaysScanFS) {
+      return true;
+    }
     final Set<Module> map = forTests ? myInitialTestsScanPerformed : myInitialProductionScanPerformed;
     return map.add(module);
   }

@@ -70,7 +70,7 @@ public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
     super(file.getProject(), editor.getDocument(), true);
     myFile = file;
     myEditor = editor;
-    final FileViewProvider viewProvider = PsiManager.getInstance(file.getProject()).findViewProvider(file.getVirtualFile());
+    final FileViewProvider viewProvider = file.getManager().findViewProvider(file.getVirtualFile());
     myInfoProvider = BreadcrumbsXmlWrapper.findInfoProvider(viewProvider);
   }
 

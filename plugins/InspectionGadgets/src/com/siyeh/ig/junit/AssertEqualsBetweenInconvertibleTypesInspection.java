@@ -123,8 +123,7 @@ public class AssertEqualsBetweenInconvertibleTypesInspection
       if (!parameterType1.equals(parameterType2)) {
         return;
       }
-      final PsiManager manager =
-        PsiManager.getInstance(expression.getProject());
+      final PsiManager manager = expression.getManager();
       final GlobalSearchScope scope = expression.getResolveScope();
       if (type2 instanceof PsiPrimitiveType &&
           parameterType2.equals(PsiType.getJavaLangObject(manager,
