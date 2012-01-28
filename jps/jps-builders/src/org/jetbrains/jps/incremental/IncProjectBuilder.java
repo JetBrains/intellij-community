@@ -340,7 +340,7 @@ public class IncProjectBuilder {
     }
   }
 
-  private void runBuilders(CompileContext context, ModuleChunk chunk, BuilderCategory category) throws ProjectBuildException {
+  private void runBuilders(final CompileContext context, ModuleChunk chunk, BuilderCategory category) throws ProjectBuildException {
     final List<ModuleLevelBuilder> builders = myBuilderRegistry.getBuilders(category);
     if (builders.isEmpty()) {
       return;
@@ -354,6 +354,11 @@ public class IncProjectBuilder {
     do {
       nextPassRequired = false;
       context.beforeNextCompileRound(chunk);
+
+      if (!context.isProjectRebuild()) {
+        syncOutputFiles(context, chunk);
+      }
+
       for (ModuleLevelBuilder builder : builders) {
         final ModuleLevelBuilder.ExitCode buildResult = builder.build(context, chunk);
 
@@ -379,5 +384,35 @@ public class IncProjectBuilder {
       }
     }
     while (nextPassRequired);
+  }
+
+  private static void syncOutputFiles(CompileContext context, ModuleChunk chunk) throws ProjectBuildException {
+    final BuildDataManager dataManager = context.getDataManager();
+    final boolean compilingTests = context.isCompilingTests();
+    try {
+      context.processFilesToRecompile(chunk, new FileProcessor() {
+        private final Map<Module, SourceToOutputMapping> storageMap = new HashMap<Module, SourceToOutputMapping>();
+        @Override
+        public boolean apply(Module module, File file, String sourceRoot) throws Exception {
+          SourceToOutputMapping srcToOut = storageMap.get(module);
+          if (srcToOut == null) {
+            srcToOut = dataManager.getSourceToOutputMap(module.getName().toLowerCase(Locale.US), compilingTests);
+            storageMap.put(module, srcToOut);
+          }
+          final String srcPath = FileUtil.toSystemIndependentName(file.getPath());
+          final Collection<String> outputs = srcToOut.getState(srcPath);
+          if (outputs != null) {
+            for (String output : outputs) {
+              FileUtil.delete(new File(output));
+            }
+            srcToOut.remove(srcPath);
+          }
+          return true;
+        }
+      });
+    }
+    catch (Exception e) {
+      throw new ProjectBuildException(e);
+    }
   }
 }

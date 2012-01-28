@@ -125,13 +125,13 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
   public ExitCode build(final CompileContext context, final ModuleChunk chunk) throws ProjectBuildException {
     try {
-      final Map<File, Module> filesToCompile = new HashMap<File, Module>();
-      final List<File> formsToCompile = new ArrayList<File>();
+      final Set<File> filesToCompile = new HashSet<File>();
+      final Set<File> formsToCompile = new HashSet<File>();
 
       context.processFilesToRecompile(chunk, new FileProcessor() {
         public boolean apply(Module module, File file, String sourceRoot) throws Exception {
           if (JAVA_SOURCES_FILTER.accept(file)) {
-            filesToCompile.put(file, module);
+            filesToCompile.add(file);
           }
           else if (FORM_SOURCES_FILTER.accept(file)) {
             formsToCompile.add(file);
@@ -141,37 +141,38 @@ public class JavaBuilder extends ModuleLevelBuilder {
       });
 
       // force compilation of bound source file if the form is dirty
-      for (File form : formsToCompile) {
-        final RootDescriptor descriptor = context.getModuleAndRoot(form);
-        if (descriptor != null) {
-          for (RootDescriptor rd : context.getModuleRoots(descriptor.module)) {
-            final File boundSource = getBoundSource(rd.root, form);
-            if (boundSource != null) {
-              filesToCompile.put(boundSource, rd.module);
-              break;
+      if (!context.isProjectRebuild()) {
+        for (File form : formsToCompile) {
+          final RootDescriptor descriptor = context.getModuleAndRoot(form);
+          if (descriptor != null) {
+            for (RootDescriptor rd : context.getModuleRoots(descriptor.module)) {
+              final File boundSource = getBoundSource(rd.root, form);
+              if (boundSource != null) {
+                filesToCompile.add(boundSource);
+                break;
+              }
             }
           }
         }
-      }
 
-      // form should be considered dirty if the class it is bound to is dirty
-      final SourceToFormMapping sourceToFormMap = context.getDataManager().getSourceToFormMap();
-      for (File srcFile : filesToCompile.keySet()) {
-        final String srcPath = srcFile.getPath();
-        final String formPath = sourceToFormMap.getState(srcPath);
-        if (formPath != null) {
-          final File formFile = new File(formPath);
-          if (formFile.exists()) {
-            context.markDirty(formFile);
-            formsToCompile.add(formFile);
+        // form should be considered dirty if the class it is bound to is dirty
+        final SourceToFormMapping sourceToFormMap = context.getDataManager().getSourceToFormMap();
+        for (File srcFile : filesToCompile) {
+          final String srcPath = srcFile.getPath();
+          final String formPath = sourceToFormMap.getState(srcPath);
+          if (formPath != null) {
+            final File formFile = new File(formPath);
+            if (formFile.exists()) {
+              context.markDirty(formFile);
+              formsToCompile.add(formFile);
+            }
+            sourceToFormMap.remove(srcPath);
           }
-          sourceToFormMap.remove(srcPath);
         }
       }
 
-      deleteCorrespondingOutputFiles(context, filesToCompile);
 
-      return compile(context, chunk, filesToCompile.keySet(), formsToCompile);
+      return compile(context, chunk, filesToCompile, formsToCompile);
     }
     catch (ProjectBuildException e) {
       throw e;

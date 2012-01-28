@@ -281,7 +281,10 @@ public class CompileServerManager implements ApplicationComponent{
       processHandler.addProcessListener(new ProcessAdapter() {
         public void onTextAvailable(ProcessEvent event, Key outputType) {
           // re-translate server's output to idea.log
-          LOG.info("COMPILE_SERVER [" +outputType.toString() +"]: "+ event.getText());
+          final String text = event.getText();
+          if (!StringUtil.isEmpty(text)) {
+            LOG.info("COMPILE_SERVER [" +outputType.toString() +"]: "+ text);
+          }
         }
       });
       processHandler.addProcessListener(new ProcessAdapter() {
