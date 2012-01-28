@@ -83,6 +83,7 @@ public class GitFetcher {
       }
     }
     
+    repository.update(GitRepository.TrackedTopic.BRANCHES);
     return result;
   }
 
