@@ -494,20 +494,21 @@ class Indirect {
     assert oldBaseStamp == findClassFile("Base").modificationStamp
   }
 
-  public void _testPartialCrossRecompile() {
+  public void testPartialCrossRecompile() {
     def used = myFixture.addFileToProject('Used.groovy', 'class Used { }')
     def java = myFixture.addFileToProject('Java.java', 'class Java { void foo(Used used) {} }')
     def main = myFixture.addFileToProject('Main.groovy', 'class Main extends Java {  }').virtualFile
 
     assertEmpty compileModule(myModule)
-    assertEmpty compileFiles(used.virtualFile, main)
+    if (!useJps()) {
+      assertEmpty compileFiles(used.virtualFile, main)
+    }
     assertEmpty compileModule(myModule)
     assertEmpty compileModule(myModule)
     
     setFileText(used, 'class Used2 {}')
     makeShouldFail()
     assert findClassFile('Used') == null
-    assert findClassFile('Used2') == null
 
     setFileText(used, 'class Used3 {}')
     setFileText(java, 'class Java { void foo(Used3 used) {} }')
