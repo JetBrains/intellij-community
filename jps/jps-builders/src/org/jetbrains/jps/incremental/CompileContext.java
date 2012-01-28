@@ -170,9 +170,7 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
   }
 
   void onChunkBuildComplete(@NotNull ModuleChunk chunk) throws Exception {
-    final Mappings mappings = myDataManager.getMappings();
-    mappings.clearMemoryCaches();
-    myDataManager.flush();
+    myDataManager.flush(true);
 
     try {
       if (!myErrorsFound && !myCancelStatus.isCanceled()) {

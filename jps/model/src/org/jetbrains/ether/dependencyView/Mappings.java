@@ -163,10 +163,6 @@ public class Mappings {
     }
   }
 
-  public void clearMemoryCaches() {
-    myContext.clearMemoryCaches();
-  }
-
   private void compensateRemovedContent(final Collection<File> compiled) {
     for (File file : compiled) {
       final DependencyContext.S key = myContext.get(FileUtil.toSystemIndependentName(file.getAbsolutePath()));
@@ -1663,19 +1659,24 @@ public class Mappings {
     }
   }
 
-  public void flush() {
-    myClassToSubclasses.flush();
-    myClassToClassDependency.flush();
-    mySourceFileToClasses.flush();
-    mySourceFileToAnnotationUsages.flush();
-    mySourceFileToUsages.flush();
-    myClassToSourceFile.flush();
+  public void flush(final boolean memoryCachesOnly) {
+    myClassToSubclasses.flush(memoryCachesOnly);
+    myClassToClassDependency.flush(memoryCachesOnly);
+    mySourceFileToClasses.flush(memoryCachesOnly);
+    mySourceFileToAnnotationUsages.flush(memoryCachesOnly);
+    mySourceFileToUsages.flush(memoryCachesOnly);
+    myClassToSourceFile.flush(memoryCachesOnly);
 
     if (!myIsDelta) {
       // flush if you own the context
       final DependencyContext context = myContext;
       if (context != null) {
-        context.flush();
+        if (memoryCachesOnly) {
+          context.clearMemoryCaches();
+        }
+        else {
+          context.flush();
+        }
       }
     }
   }

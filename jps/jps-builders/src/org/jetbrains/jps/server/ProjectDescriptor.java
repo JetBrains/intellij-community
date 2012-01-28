@@ -53,5 +53,9 @@ public final class ProjectDescriptor {
         }
       }
     }
+    else {
+      timestamps.getStorage().force();
+      dataManager.flush(false);
+    }
   }
 }

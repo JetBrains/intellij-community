@@ -85,20 +85,37 @@ public class BuildDataManager {
     }
   }
 
-  public void flush() {
+  public void flush(boolean memoryCachesOnly) {
     synchronized (mySourceToOutputLock) {
       for (Map.Entry<String, SourceToOutputMapping> entry : myProductionSourceToOutputs.entrySet()) {
-        entry.getValue().force();
+        final SourceToOutputMapping mapping = entry.getValue();
+        if (memoryCachesOnly) {
+          mapping.dropMemoryCache();
+        }
+        else {
+          mapping.force();
+        }
       }
       for (Map.Entry<String, SourceToOutputMapping> entry : myTestSourceToOutputs.entrySet()) {
-        entry.getValue().force();
+        final SourceToOutputMapping mapping = entry.getValue();
+        if (memoryCachesOnly) {
+          mapping.dropMemoryCache();
+        }
+        else {
+          mapping.force();
+        }
       }
     }
-    mySrcToFormMap.force();
+    if (memoryCachesOnly) {
+      mySrcToFormMap.dropMemoryCache();
+    }
+    else {
+      mySrcToFormMap.force();
+    }
     final Mappings mappings = myMappings;
     if (mappings != null) {
       synchronized (mappings) {
-        mappings.flush();
+        mappings.flush(memoryCachesOnly);
       }
     }
   }
