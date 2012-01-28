@@ -283,7 +283,7 @@ public class CompileServerManager implements ApplicationComponent{
           // re-translate server's output to idea.log
           final String text = event.getText();
           if (!StringUtil.isEmpty(text)) {
-            LOG.info("COMPILE_SERVER [" +outputType.toString() +"]: "+ text);
+            LOG.info("COMPILE_SERVER [" +outputType.toString() +"]: "+ text.trim());
           }
         }
       });

@@ -95,8 +95,13 @@ public class JavacServerBootstrap {
     processHandler.addProcessListener(new ProcessAdapter() {
       public void onTextAvailable(ProcessEvent event, Key outputType) {
         final String text = event.getText();
-        if (text != null && text.length() > 0) {
-          System.out.print("JAVAC_SERVER [" + outputType.toString() + "]: " + text);
+        if (!StringUtil.isEmpty(text)) {
+          if (outputType == ProcessOutputTypes.STDOUT) {
+            System.out.print("JAVAC_SERVER: " + text);
+          }
+          else if (outputType == ProcessOutputTypes.STDERR){
+            System.err.print("JAVAC_SERVER: " + text);
+          }
         }
       }
     });
