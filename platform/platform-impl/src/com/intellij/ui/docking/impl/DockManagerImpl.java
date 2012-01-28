@@ -388,7 +388,7 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
 
   private DockWindow createWindowFor(@Nullable String id, DockContainer container) {
     String windowId = id != null ? id : String.valueOf(myWindowIdCounter++);
-    DockWindow window = new DockWindow(windowId, myProject, container);
+    DockWindow window = new DockWindow(windowId, myProject, container, container instanceof DockContainer.Dialog);
     window.setDimensionKey("dock-window-" + windowId);
     myWindows.put(container, window);
     return window;
@@ -405,13 +405,15 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
     private NonOpaquePanel myUiContainer;
     private NonOpaquePanel myDockContentUiContainer;
 
-    private DockWindow(String id, Project project, DockContainer container) {
-      super(project);
+    private DockWindow(String id, Project project, DockContainer container, boolean dialog) {
+      super(project, null, dialog);
       myId = id;
       myContainer = container;
       setProject(project);
 
-      setStatusBar(WindowManager.getInstance().getStatusBar(project).createChild());
+      if (!(container instanceof DockContainer.Dialog)) {
+        setStatusBar(WindowManager.getInstance().getStatusBar(project).createChild());
+      }
 
       myUiContainer = new NonOpaquePanel(new BorderLayout());
 
@@ -428,7 +430,9 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
       center.add(myDockContentUiContainer, BorderLayout.CENTER);
 
       myUiContainer.add(center, BorderLayout.CENTER);
-      myUiContainer.add(myStatusBar.getComponent(), BorderLayout.SOUTH);
+      if (!(container instanceof DockContainer.Dialog)) {
+        myUiContainer.add(myStatusBar.getComponent(), BorderLayout.SOUTH);
+      }
 
       setComponent(myUiContainer);
       addDisposable(container);
@@ -480,7 +484,8 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
     }
 
     private void updateNorthPanel() {
-      myNorthPanel.setVisible(UISettings.getInstance().SHOW_NAVIGATION_BAR);
+      myNorthPanel.setVisible(UISettings.getInstance().SHOW_NAVIGATION_BAR &&
+                              !(myContainer instanceof DockContainer.Dialog));
 
       IdeRootPaneNorthExtension[] extensions = Extensions.getArea(myProject).getExtensionPoint(IdeRootPaneNorthExtension.EP_NAME).getExtensions();
       HashSet<String> processedKeys = new HashSet<String>();
@@ -541,6 +546,20 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
     @Override
     protected JFrame createJFrame(IdeFrame parent) {
       JFrame frame = super.createJFrame(parent);
+      installListeners(frame);
+
+      return frame;
+    }
+
+    @Override
+    protected JDialog createJDialog(IdeFrame parent) {
+      JDialog frame = super.createJDialog(parent);
+      installListeners(frame);
+
+      return frame;
+    }
+
+    private void installListeners(Window frame) {
       frame.addWindowListener(new WindowAdapter() {
         @Override
         public void windowClosing(WindowEvent e) {
@@ -548,9 +567,7 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
         }
       });
 
-      new UiNotifyConnector(frame.getContentPane(), myContainer);
-
-      return frame;
+      new UiNotifyConnector(((RootPaneContainer)frame).getContentPane(), myContainer);
     }
   }
 
