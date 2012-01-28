@@ -50,7 +50,7 @@ public class QualifiedNameResolver implements RootVisitor {
 
   public QualifiedNameResolver fromElement(@NotNull PsiElement foothold) {
     myFootholdFile = foothold.getContainingFile().getOriginalFile();
-    myPsiManager = PsiManager.getInstance(foothold.getProject());
+    myPsiManager = foothold.getManager();
     setModule(ModuleUtil.findModuleForPsiElement(myFootholdFile));
     if (PydevConsoleRunner.isInPydevConsole(foothold)) {
       withAllModules();
