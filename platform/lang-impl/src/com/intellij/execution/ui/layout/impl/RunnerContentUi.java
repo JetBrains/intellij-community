@@ -431,7 +431,6 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
           getStateFor(content).assignTab(getTabFor(getSelectedGrid()));
           getStateFor(content).setPlaceInGrid(myLayoutSettings.getDefaultGridPlace(content));
         } else if (contents.size() == 1 && !wasRestoring) {
-          getStateFor(content).assignTab(myLayoutSettings.createNewTab());
           getStateFor(content).setPlaceInGrid(myLayoutSettings.getDefaultGridPlace(content));
         }
         getStateFor(content).setWindow(myWindow);
@@ -616,7 +615,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     if (myCurrentOver != null || myOriginal != null) {
       Integer forcedDropIndex = content.getUserData(RunnerLayout.DROP_INDEX);
       final int index = myTabs.getDropInfoIndex() + (myOriginal != null ? myOriginal.getTabOffsetFor(this) : 0);
-      final TabImpl tab = myLayoutSettings.getOrCreateTab(-1);
+      final TabImpl tab = myLayoutSettings.getOrCreateTab(forcedDropIndex != null ? forcedDropIndex : -1);
       final Integer defaultIndex = content.getUserData(RunnerLayout.DEFAULT_INDEX);
       tab.setDefaultIndex(defaultIndex != null ? defaultIndex : -1);
       tab.setIndex(forcedDropIndex != null ? forcedDropIndex : index);
@@ -834,7 +833,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     for (TabInfo each : tabs.getTabs()) {
       final int index = tabs.getIndexOf(each);
       final TabImpl tab = getTabFor(each);
-      if (tab != null) tab.setIndex(index + offset);
+      if (tab != null) tab.setIndex(index >= 0 ? index + offset : index);
     }
     return offset + tabs.getTabCount();
   }
@@ -979,7 +978,15 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
       Collections.addAll(contents, child.myManager.getContents());
     }
     Content[] all = contents.toArray(new Content[contents.size()]);
-
+    Arrays.sort(all, new Comparator<Content>() {
+      @Override
+      public int compare(Content content, Content content1) {
+        final int i = getStateFor(content).getTab().getDefaultIndex();
+        final int i1 = getStateFor(content1).getTab().getDefaultIndex();
+        return i - i1;
+      }
+    });
+    
     setStateIsBeingRestored(true, this);
     try {
       for (RunnerContentUi child : children) {
@@ -996,7 +1003,6 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     for (Content each : all) {
       myManager.addContent(each);
     }
-    restoreLastUiState();
 
     updateTabsUI(true);
   }
