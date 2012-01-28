@@ -36,11 +36,11 @@ public class GitBranchesAction extends DumbAwareAction {
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     assert project != null;
+    GitRepositoryManager repositoryManager = GitRepositoryManager.getInstance(project);
 
     VirtualFile file = e.getData(PlatformDataKeys.VIRTUAL_FILE);
-    GitRepositoryManager repositoryManager = GitRepositoryManager.getInstance(project);
     GitRepository repository = (file == null ?
-                                repositoryManager.getRepositoryForRoot(GitBranchUiUtil.guessGitRoot(project)) :
+                                GitBranchUiUtil.getCurrentRepository(project):
                                 repositoryManager.getRepositoryForFile(file));
     if (repository == null) {
       return;

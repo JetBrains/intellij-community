@@ -19,9 +19,11 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsListener;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import git4idea.GitVcs;
@@ -44,6 +46,7 @@ public final class GitRepositoryManager extends AbstractProjectComponent impleme
   private final Set<GitRepositoryChangeListener> myListeners = new HashSet<GitRepositoryChangeListener>();
 
   private final ReentrantReadWriteLock REPO_LOCK = new ReentrantReadWriteLock();
+  private final ProjectFileIndex myFileIndex;
 
   public static GitRepositoryManager getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, GitRepositoryManager.class);
@@ -54,6 +57,7 @@ public final class GitRepositoryManager extends AbstractProjectComponent impleme
     myVcsManager = ProjectLevelVcsManager.getInstance(myProject);
     myVcs = GitVcs.getInstance(myProject);
     assert myVcs != null;
+    myFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
   }
 
   @Override
@@ -97,9 +101,51 @@ public final class GitRepositoryManager extends AbstractProjectComponent impleme
    */
   @Nullable
   public GitRepository getRepositoryForFile(@NotNull VirtualFile file) {
-    final VirtualFile vcsRoot = myVcsManager.getVcsRootFor(file);
+    final VirtualFile vcsRoot = getVcsRootFor(file);
     if (vcsRoot == null) { return null; }
     return getRepositoryForRoot(vcsRoot);
+  }
+
+  @Nullable
+  private VirtualFile getVcsRootFor(@NotNull VirtualFile file) {
+    if (myFileIndex.isInLibrarySource(file) || myFileIndex.isInLibraryClasses(file)) {
+      return getVcsRootForLibraryFile(file);
+    }
+    return myVcsManager.getVcsRootFor(file);
+  }
+
+  @Nullable
+  private VirtualFile getVcsRootForLibraryFile(@NotNull VirtualFile file) {
+    // for a file inside .jar/.zip consider the .jar/.zip file itself
+    VirtualFile root = myVcsManager.getVcsRootFor(VfsUtilCore.getVirtualFileForJar(file));
+    if (root != null) {
+      return root;
+    }
+    
+    // for other libs which don't have jars inside the project dir (such as JDK) take the owner module of the lib
+    List<OrderEntry> entries = myFileIndex.getOrderEntriesForFile(file);
+    Set<VirtualFile> libraryRoots = new HashSet<VirtualFile>();
+    for (OrderEntry entry : entries) {
+      if (entry instanceof LibraryOrderEntry || entry instanceof JdkOrderEntry) {
+        libraryRoots.add(myVcsManager.getVcsRootFor(entry.getOwnerModule().getModuleFile()));
+      }
+    }
+
+    if (libraryRoots.size() == 0) {
+      return null;
+    }
+
+    // if the lib is used in several modules, take the top module
+    // (for modules of the same level we can't guess anything => take the first one)
+    Iterator<VirtualFile> libIterator = libraryRoots.iterator();
+    VirtualFile topLibraryRoot = libIterator.next();
+    while (libIterator.hasNext()) {
+      VirtualFile libRoot = libIterator.next();
+      if (VfsUtilCore.isAncestor(libRoot, topLibraryRoot, true)) {
+        topLibraryRoot = libRoot;
+      }
+    }
+    return topLibraryRoot;
   }
 
   /**

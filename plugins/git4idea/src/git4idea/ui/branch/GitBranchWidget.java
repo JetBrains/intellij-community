@@ -91,8 +91,7 @@ public class GitBranchWidget extends EditorBasedWidget implements StatusBarWidge
     if (project == null) {
       return null;
     }
-    VirtualFile root = GitBranchUiUtil.guessGitRoot(project);
-    GitRepository repo = myRepositoryManager.getRepositoryForRoot(root);
+    GitRepository repo = GitBranchUiUtil.getCurrentRepository(project);
     if (repo == null) {
       return null;
     }
@@ -136,8 +135,7 @@ public class GitBranchWidget extends EditorBasedWidget implements StatusBarWidge
           return;
         }
 
-        VirtualFile root = GitBranchUiUtil.guessGitRoot(project);
-        GitRepository repo = myRepositoryManager.getRepositoryForRoot(root);
+        GitRepository repo = GitBranchUiUtil.getCurrentRepository(getProject());
         if (repo == null) { // the file is not under version control => display nothing
           emptyTextAndTooltip();
           return;
