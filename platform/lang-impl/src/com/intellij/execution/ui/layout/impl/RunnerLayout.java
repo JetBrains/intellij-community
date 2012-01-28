@@ -164,11 +164,7 @@ public class RunnerLayout  {
 
   public void resetToDefault() {
     myViews.clear();
-
-    for (TabImpl each : myTabs) {
-      final TabImpl.Default defaultTab = getOrCreateDefaultTab(each.getDefaultIndex());
-      each.copyFrom(defaultTab);
-    }
+    myTabs.clear();
   }
 
   public boolean isToolbarHorizontal() {
