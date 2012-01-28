@@ -91,7 +91,7 @@ public class GroovyInArgumentCheckInspection extends BaseInspection {
 
       if (component == null) return;
       
-      if (TypesUtil.isAssignable(ltype, component, PsiManager.getInstance(expression.getProject()), expression.getResolveScope(), false)) return;
+      if (TypesUtil.isAssignable(ltype, component, expression.getManager(), expression.getResolveScope(), false)) return;
 
       registerError(expression, ltype, rtype);
     }
@@ -105,7 +105,7 @@ public class GroovyInArgumentCheckInspection extends BaseInspection {
 
       if (lclass == null || rclass == null) return;
 
-      if (PsiManager.getInstance(expression.getProject()).areElementsEquivalent(lclass, rclass)) return;
+      if (expression.getManager().areElementsEquivalent(lclass, rclass)) return;
 
       if (lclass.isInterface() || rclass.isInterface()) return;
 

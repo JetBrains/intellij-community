@@ -931,7 +931,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
         PsiMethod prototype;
         final PsiMethod method = myChangeInfo.getMethod();
         if (!StdLanguages.JAVA.equals(method.getLanguage())) return;
-        PsiManager manager = PsiManager.getInstance(method.getProject());
+        PsiManager manager = method.getManager();
         PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
         final CanonicalTypes.Type returnType = myChangeInfo.getNewReturnType();
         if (returnType != null) {

@@ -149,7 +149,7 @@ public abstract class AndroidLintInspectionBase extends GlobalInspectionTool {
             final VirtualFile manifestFile = AndroidRootUtil.getManifestFile(module);
 
             if (manifestFile != null) {
-              f = PsiManager.getInstance(f.getProject()).findFile(manifestFile);
+              f = f.getManager().findFile(manifestFile);
             }
           }
         }
