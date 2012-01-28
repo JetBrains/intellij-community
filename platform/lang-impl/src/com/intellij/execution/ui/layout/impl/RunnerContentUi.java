@@ -65,7 +65,7 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Facade, ViewContextEx, PropertyChangeListener, SwitchProvider,
-                                        QuickActionProvider, DockContainer {
+                                        QuickActionProvider, DockContainer.Dialog {
 
   @NonNls public static final String LAYOUT = "Runner.Layout";
   @NonNls public static final String VIEW_POPUP = "Runner.View.Popup";
