@@ -55,6 +55,12 @@ public class RunnerLayout  {
   public RunnerLayout(final String ID) {
     myID = ID;
   }
+  
+  @Nullable
+  public String getDefaultDisplayName(final int defaultIndex) {
+    final TabImpl.Default tab = myDefaultTabs.get(defaultIndex);
+    return tab != null ? tab.myDisplayName : null;
+  }
 
   @NotNull
   public TabImpl getOrCreateTab(final int index) {
