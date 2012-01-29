@@ -1,15 +1,3 @@
-Request to make modules:
-module AddFieldToDerived
-End of request
-digraph X {
-  AddFieldToDerived[label="AddFieldToDerived"];
-}
-digraph X {
-  AddFieldToDerived[label="AddFieldToDerived"];
-}
-Propagated modules:
-module AddFieldToDerived
-End of propagated
 Cleaning output files:
 out/production/AddFieldToDerived/Derived.class
 End of files

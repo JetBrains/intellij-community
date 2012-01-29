@@ -1,15 +1,3 @@
-Request to make modules:
-module AddMoreAccessibleMethodToBase
-End of request
-digraph X {
-  AddMoreAccessibleMethodToBase[label="AddMoreAccessibleMethodToBase"];
-}
-digraph X {
-  AddMoreAccessibleMethodToBase[label="AddMoreAccessibleMethodToBase"];
-}
-Propagated modules:
-module AddMoreAccessibleMethodToBase
-End of propagated
 Cleaning output files:
 out/production/AddMoreAccessibleMethodToBase/BaseServer.class
 End of files

@@ -29,6 +29,7 @@ import java.util.concurrent.ExecutionException;
  */
 public class IncProjectBuilder {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.IncProjectBuilder");
+
   public static final String JPS_SERVER_NAME = "JPS BUILD";
   private static final String CANCELED_MESSAGE = "The build has been canceled";
 
@@ -56,7 +57,7 @@ public class IncProjectBuilder {
     myCancelStatus = cs;
     myProductionChunks = new ProjectChunks(pd.project, ClasspathKind.PRODUCTION_COMPILE);
     myTestChunks = new ProjectChunks(pd.project, ClasspathKind.TEST_COMPILE);
-    myTotalModulesWork = (float) pd.rootsIndex.getTotalModuleCount() * 2;  /* multiply by 2 to reflect production and test sources */
+    myTotalModulesWork = (float)pd.rootsIndex.getTotalModuleCount() * 2;  /* multiply by 2 to reflect production and test sources */
     myTotalBuilderCount = builderRegistry.getTotalBuilderCount();
   }
 
@@ -74,10 +75,9 @@ public class IncProjectBuilder {
       catch (ProjectBuildException e) {
         if (e.getCause() instanceof PersistentEnumerator.CorruptedException) {
           // force rebuild
-          myMessageDispatcher.processMessage(new CompilerMessage(
-            JPS_SERVER_NAME, BuildMessage.Kind.INFO,
-            "Internal caches are corrupted or have outdated format, forcing project rebuild: " + e.getMessage())
-          );
+          myMessageDispatcher.processMessage(new CompilerMessage(JPS_SERVER_NAME, BuildMessage.Kind.INFO,
+                                                                 "Internal caches are corrupted or have outdated format, forcing project rebuild: " +
+                                                                 e.getMessage()));
           flushContext(context);
           context = createContext(new AllProjectScope(scope.getProject(), true), false, true);
           runBuild(context);
@@ -122,6 +122,7 @@ public class IncProjectBuilder {
   }
 
   private static boolean ourClenupFailed = false;
+
   private static void cleanupJavacNameTable() {
     try {
       if (JavaBuilder.USE_EMBEDDED_JAVAC && !ourClenupFailed) {
@@ -168,9 +169,8 @@ public class IncProjectBuilder {
     final FSState fsState = myProjectDescriptor.fsState;
     final ModuleRootsIndex rootsIndex = myProjectDescriptor.rootsIndex;
     final BuildDataManager dataManager = myProjectDescriptor.dataManager;
-    return new CompileContext(
-      scope, isMake, isProjectRebuild, myProductionChunks, myTestChunks, fsState, dataManager, tsStorage, myMessageDispatcher, rootsIndex, myCancelStatus
-    );
+    return new CompileContext(scope, isMake, isProjectRebuild, myProductionChunks, myTestChunks, fsState, dataManager, tsStorage,
+                              myMessageDispatcher, rootsIndex, myCancelStatus);
   }
 
   private void cleanOutputRoots(CompileContext context) throws ProjectBuildException {
@@ -235,7 +235,9 @@ public class IncProjectBuilder {
         }
       }
       else {
-        context.processMessage(new CompilerMessage(JPS_SERVER_NAME, BuildMessage.Kind.WARNING, "Output path " + outputRoot.getPath() + " intersects with a source root. The output cannot be cleaned."));
+        context.processMessage(new CompilerMessage(JPS_SERVER_NAME, BuildMessage.Kind.WARNING, "Output path " +
+                                                                                               outputRoot.getPath() +
+                                                                                               " intersects with a source root. The output cannot be cleaned."));
       }
     }
 
@@ -262,7 +264,7 @@ public class IncProjectBuilder {
     }
   }
 
-  private void buildChunk(CompileContext context, ModuleChunk chunk) throws ProjectBuildException{
+  private void buildChunk(CompileContext context, ModuleChunk chunk) throws ProjectBuildException {
     try {
       context.ensureFSStateInitialized(chunk);
       if (context.isMake()) {
@@ -275,7 +277,8 @@ public class IncProjectBuilder {
           allChunkRemovedSources.addAll(deletedPaths);
 
           final String moduleName = module.getName().toLowerCase(Locale.US);
-          final SourceToOutputMapping sourceToOutputStorage = context.getDataManager().getSourceToOutputMap(moduleName, context.isCompilingTests());
+          final SourceToOutputMapping sourceToOutputStorage =
+            context.getDataManager().getSourceToOutputMap(moduleName, context.isCompilingTests());
           // actually delete outputs associated with removed paths
           for (String deletedSource : deletedPaths) {
             // deleting outputs corresponding to non-existing source
@@ -383,12 +386,13 @@ public class IncProjectBuilder {
     while (nextPassRequired);
   }
 
-  private static void syncOutputFiles(CompileContext context, ModuleChunk chunk) throws ProjectBuildException {
+  private static void syncOutputFiles(final CompileContext context, ModuleChunk chunk) throws ProjectBuildException {
     final BuildDataManager dataManager = context.getDataManager();
     final boolean compilingTests = context.isCompilingTests();
     try {
       context.processFilesToRecompile(chunk, new FileProcessor() {
         private final Map<Module, SourceToOutputMapping> storageMap = new HashMap<Module, SourceToOutputMapping>();
+
         @Override
         public boolean apply(Module module, File file, String sourceRoot) throws Exception {
           SourceToOutputMapping srcToOut = storageMap.get(module);
@@ -398,6 +402,23 @@ public class IncProjectBuilder {
           }
           final String srcPath = FileUtil.toSystemIndependentName(file.getPath());
           final Collection<String> outputs = srcToOut.getState(srcPath);
+
+          if (LOG.isDebugEnabled()) {
+            if (outputs != null && context.isMake()) {
+              LOG.info("Cleaning output files:");
+              final String[] buffer = new String[outputs.size()];
+              int i = 0;
+              for (String output : outputs) {
+                buffer[i++] = output;
+              }
+              Arrays.sort(buffer);
+              for (String output : buffer) {
+                LOG.info(output);
+              }
+              LOG.info("End of files");
+            }
+          }
+
           if (outputs != null) {
             for (String output : outputs) {
               FileUtil.delete(new File(output));

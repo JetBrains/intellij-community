@@ -1,15 +1,3 @@
-Request to make modules:
-module RemoveImplements3
-End of request
-digraph X {
-  RemoveImplements3[label="RemoveImplements3"];
-}
-digraph X {
-  RemoveImplements3[label="RemoveImplements3"];
-}
-Propagated modules:
-module RemoveImplements3
-End of propagated
 Cleaning output files:
 out/production/RemoveImplements3/Test.class
 End of files

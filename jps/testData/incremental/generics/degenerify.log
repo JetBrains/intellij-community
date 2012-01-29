@@ -1,15 +1,3 @@
-Request to make modules:
-module Degenerify
-End of request
-digraph X {
-  Degenerify[label="Degenerify"];
-}
-digraph X {
-  Degenerify[label="Degenerify"];
-}
-Propagated modules:
-module Degenerify
-End of propagated
 Cleaning output files:
 out/production/Degenerify/A.class
 End of files

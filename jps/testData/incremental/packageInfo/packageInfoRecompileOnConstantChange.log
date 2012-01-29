@@ -1,15 +1,3 @@
-Request to make modules:
-module PackageInfoRecompileOnConstantChange
-End of request
-digraph X {
-  PackageInfoRecompileOnConstantChange[label="PackageInfoRecompileOnConstantChange"];
-}
-digraph X {
-  PackageInfoRecompileOnConstantChange[label="PackageInfoRecompileOnConstantChange"];
-}
-Propagated modules:
-module PackageInfoRecompileOnConstantChange
-End of propagated
 Cleaning output files:
 out/production/PackageInfoRecompileOnConstantChange/bug/Namespace.class
 End of files

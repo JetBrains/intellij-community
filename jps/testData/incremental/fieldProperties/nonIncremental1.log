@@ -1,15 +1,3 @@
-Request to make modules:
-module nonIncremental1
-End of request
-digraph X {
-  nonIncremental1[label="nonIncremental1"];
-}
-digraph X {
-  nonIncremental1[label="nonIncremental1"];
-}
-Propagated modules:
-module nonIncremental1
-End of propagated
 Cleaning output files:
 out/production/nonIncremental1/A/A.class
 End of files

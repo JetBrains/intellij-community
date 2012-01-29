@@ -1,15 +1,3 @@
-Request to make modules:
-module ConstantChain
-End of request
-digraph X {
-  ConstantChain[label="ConstantChain"];
-}
-digraph X {
-  ConstantChain[label="ConstantChain"];
-}
-Propagated modules:
-module ConstantChain
-End of propagated
 Cleaning output files:
 out/production/ConstantChain/Server.class
 End of files

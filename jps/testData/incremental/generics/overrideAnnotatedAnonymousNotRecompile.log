@@ -1,15 +1,3 @@
-Request to make modules:
-module OverrideAnnotatedAnonymousNotRecompile
-End of request
-digraph X {
-  OverrideAnnotatedAnonymousNotRecompile[label="OverrideAnnotatedAnonymousNotRecompile"];
-}
-digraph X {
-  OverrideAnnotatedAnonymousNotRecompile[label="OverrideAnnotatedAnonymousNotRecompile"];
-}
-Propagated modules:
-module OverrideAnnotatedAnonymousNotRecompile
-End of propagated
 Cleaning output files:
 out/production/OverrideAnnotatedAnonymousNotRecompile/packageA/Base.class
 End of files

@@ -1,15 +1,3 @@
-Request to make modules:
-module MetaAnnotationChanged
-End of request
-digraph X {
-  MetaAnnotationChanged[label="MetaAnnotationChanged"];
-}
-digraph X {
-  MetaAnnotationChanged[label="MetaAnnotationChanged"];
-}
-Propagated modules:
-module MetaAnnotationChanged
-End of propagated
 Cleaning output files:
 out/production/MetaAnnotationChanged/A1.class
 out/production/MetaAnnotationChanged/C1.class

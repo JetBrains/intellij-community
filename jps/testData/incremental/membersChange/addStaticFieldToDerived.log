@@ -1,15 +1,3 @@
-Request to make modules:
-module AddStaticFieldToDerived
-End of request
-digraph X {
-  AddStaticFieldToDerived[label="AddStaticFieldToDerived"];
-}
-digraph X {
-  AddStaticFieldToDerived[label="AddStaticFieldToDerived"];
-}
-Propagated modules:
-module AddStaticFieldToDerived
-End of propagated
 Cleaning output files:
 out/production/AddStaticFieldToDerived/Derived.class
 End of files

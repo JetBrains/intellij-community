@@ -1,15 +1,3 @@
-Request to make modules:
-module ReturnType
-End of request
-digraph X {
-  ReturnType[label="ReturnType"];
-}
-digraph X {
-  ReturnType[label="ReturnType"];
-}
-Propagated modules:
-module ReturnType
-End of propagated
 Cleaning output files:
 out/production/ReturnType/Server.class
 End of files

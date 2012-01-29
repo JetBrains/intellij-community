@@ -1,15 +1,3 @@
-Request to make modules:
-module SetFinal
-End of request
-digraph X {
-  SetFinal[label="SetFinal"];
-}
-digraph X {
-  SetFinal[label="SetFinal"];
-}
-Propagated modules:
-module SetFinal
-End of propagated
 Cleaning output files:
 out/production/SetFinal/Super.class
 End of files

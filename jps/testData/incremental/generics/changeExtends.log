@@ -1,15 +1,3 @@
-Request to make modules:
-module ChangeExtends
-End of request
-digraph X {
-  ChangeExtends[label="ChangeExtends"];
-}
-digraph X {
-  ChangeExtends[label="ChangeExtends"];
-}
-Propagated modules:
-module ChangeExtends
-End of propagated
 Cleaning output files:
 out/production/ChangeExtends/Super.class
 End of files

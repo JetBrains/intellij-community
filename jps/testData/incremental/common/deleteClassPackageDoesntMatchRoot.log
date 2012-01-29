@@ -1,15 +1,3 @@
-Request to make modules:
-module DeleteClassPackageDoesntMatchRoot
-End of request
-digraph X {
-  DeleteClassPackageDoesntMatchRoot[label="DeleteClassPackageDoesntMatchRoot"];
-}
-digraph X {
-  DeleteClassPackageDoesntMatchRoot[label="DeleteClassPackageDoesntMatchRoot"];
-}
-Propagated modules:
-module DeleteClassPackageDoesntMatchRoot
-End of propagated
 Cleaning output files:
 out/production/DeleteClassPackageDoesntMatchRoot/ppp/Server$1.class
 out/production/DeleteClassPackageDoesntMatchRoot/ppp/Server.class

@@ -1,15 +1,3 @@
-Request to make modules:
-module IncAccess
-End of request
-digraph X {
-  IncAccess[label="IncAccess"];
-}
-digraph X {
-  IncAccess[label="IncAccess"];
-}
-Propagated modules:
-module IncAccess
-End of propagated
 Cleaning output files:
 out/production/IncAccess/Base.class
 End of files

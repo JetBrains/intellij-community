@@ -1,15 +1,3 @@
-Request to make modules:
-module TypeChange1
-End of request
-digraph X {
-  TypeChange1[label="TypeChange1"];
-}
-digraph X {
-  TypeChange1[label="TypeChange1"];
-}
-Propagated modules:
-module TypeChange1
-End of propagated
 Cleaning output files:
 out/production/TypeChange1/A.class
 End of files

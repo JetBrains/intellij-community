@@ -1,15 +1,3 @@
-Request to make modules:
-module AddInterfaceMethod2
-End of request
-digraph X {
-  AddInterfaceMethod2[label="AddInterfaceMethod2"];
-}
-digraph X {
-  AddInterfaceMethod2[label="AddInterfaceMethod2"];
-}
-Propagated modules:
-module AddInterfaceMethod2
-End of propagated
 Cleaning output files:
 out/production/AddInterfaceMethod2/Service.class
 End of files

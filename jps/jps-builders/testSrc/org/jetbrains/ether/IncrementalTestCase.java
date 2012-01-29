@@ -19,7 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import junit.framework.TestCase;
 import junitx.framework.FileAssert;
 import org.apache.log4j.Level;
-import org.apache.log4j.xml.DOMConfigurator;
+import org.apache.log4j.PropertyConfigurator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.Project;
@@ -34,6 +34,7 @@ import org.jetbrains.jps.incremental.storage.ProjectTimestamps;
 import org.jetbrains.jps.server.ProjectDescriptor;
 
 import java.io.*;
+import java.util.Properties;
 
 /**
  * Created by IntelliJ IDEA.
@@ -43,6 +44,24 @@ import java.io.*;
  * To change this template use File | Settings | File Templates.
  */
 public abstract class IncrementalTestCase extends TestCase {
+  private static class RootStripper {
+    private String root;
+
+    void setRoot(final String root) {
+      this.root = root;
+    }
+
+    String strip(final String s){
+      if (s.startsWith(root)) {
+        return s.substring(root.length());
+      }
+      
+      return s;
+    }
+  } 
+  
+  private static RootStripper stripper = new RootStripper();
+  
   private final String groupName;
   private final String tempDir = System.getProperty("java.io.tmpdir");
 
@@ -55,7 +74,9 @@ public abstract class IncrementalTestCase extends TestCase {
   }
 
   @Override
-  protected void setUp() throws Exception {    
+  protected void setUp() throws Exception {
+    super.setUp();
+
     baseDir = "jps/testData" + File.separator + "incremental" + File.separator;
 
     for (int i = 0; ; i++) {
@@ -71,6 +92,7 @@ public abstract class IncrementalTestCase extends TestCase {
 
   @Override
   protected void tearDown() throws Exception {
+    super.tearDown();
 //        delete(new File(workDir));
   }
 
@@ -81,7 +103,7 @@ public abstract class IncrementalTestCase extends TestCase {
 
     final String result = Character.toLowerCase(name.charAt("test".length())) + name.substring("test".length() + 1);
 
-    return prefix + File.separator + groupName + File.separator + result;
+    return prefix + groupName + File.separator + result;
   }
 
   private String getBaseDir() {
@@ -94,20 +116,27 @@ public abstract class IncrementalTestCase extends TestCase {
 
   private void delete(final File file) throws Exception {
     if (file.isDirectory()) {
-      for (File f : file.listFiles()) {
-        delete(f);
+      final File[] files = file.listFiles();
+
+      if (files != null) {
+        for (File f : files) {
+          delete(f);
+        }
       }
     }
 
     if (!file.delete()) throw new IOException("could not delete file or directory " + file.getPath());
-
   }
 
-  private void copy(final File input, final File output) throws Exception {
+  private static void copy(final File input, final File output) throws Exception {
     if (input.isDirectory()) {
       if (output.mkdirs()) {
-        for (File f : input.listFiles()) {
-          copy(f, new File(output.getPath() + File.separator + f.getName()));
+        final File[] files = input.listFiles();
+
+        if (files != null) {
+          for (File f : files) {
+            copy(f, new File(output.getPath() + File.separator + f.getName()));
+          }
         }
       }
       else {
@@ -117,12 +146,15 @@ public abstract class IncrementalTestCase extends TestCase {
     else if (input.isFile()) {
       final FileReader in = new FileReader(input);
       final FileWriter out = new FileWriter(output);
-      int c;
 
-      while ((c = in.read()) != -1) out.write(c);
-
-      in.close();
-      out.close();
+      try {
+        int c;
+        while ((c = in.read()) != -1) out.write(c);
+      }
+      finally {
+        in.close();
+        out.close();
+      }
     }
   }
 
@@ -157,61 +189,66 @@ public abstract class IncrementalTestCase extends TestCase {
   }
 
   private void initLoggers() {
-    final String logFile = getWorkDir() + File.separator + "log.xml";
+    final Properties properties = new Properties();
 
-    if (new File(logFile).exists()) {
-      DOMConfigurator.configure(logFile);
-    }
+    properties.setProperty("log4j.rootCategory", "INFO, A1");
+    properties.setProperty("log4j.appender.A1", "org.apache.log4j.FileAppender");
+    properties.setProperty("log4j.appender.A1.file", getWorkDir() + ".log");
+    properties.setProperty("log4j.appender.A1.layout", "org.apache.log4j.PatternLayout");
+    properties.setProperty("log4j.appender.A1.layout.ConversionPattern", "%m%n");
+
+    PropertyConfigurator.configure(properties);
 
     Logger.setFactory(new Logger.Factory() {
       @Override
       public Logger getLoggerInstance(String category) {
         final org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(category);
 
+        final boolean affectedLogger = category.equals("#org.jetbrains.jps.incremental.java.JavaBuilder") ||
+                                       category.equals("#org.jetbrains.jps.incremental.IncProjectBuilder");
+        
+        final String root = getWorkDir() + File.separator;
+        final int pos = root.length();
+
         return new Logger() {
           @Override
           public boolean isDebugEnabled() {
-            return logger.isDebugEnabled();
+            return affectedLogger;
           }
 
           @Override
           public void debug(@NonNls String message) {
-            logger.debug(message);
           }
 
           @Override
           public void debug(@Nullable Throwable t) {
-            logger.debug("", t);
           }
 
           @Override
           public void debug(@NonNls String message, @Nullable Throwable t) {
-            logger.debug(message, t);
           }
 
           @Override
           public void error(@NonNls String message, @Nullable Throwable t, @NonNls String... details) {
-            logger.debug(message, t);
           }
 
           @Override
           public void info(@NonNls String message) {
-            logger.info(message);
+            if (affectedLogger) {
+              logger.info(stripper.strip(message));
+            }
           }
 
           @Override
           public void info(@NonNls String message, @Nullable Throwable t) {
-            logger.info(message, t);
           }
 
           @Override
           public void warn(@NonNls String message, @Nullable Throwable t) {
-            logger.warn(message, t);
           }
 
           @Override
           public void setLevel(Level level) {
-            logger.setLevel(level);
           }
         };
       }
@@ -219,6 +256,8 @@ public abstract class IncrementalTestCase extends TestCase {
   }
 
   public void doTest() throws Exception {
+    stripper.setRoot(getWorkDir() + File.separator);
+    
     initLoggers();
 
     final String projectPath = getWorkDir() + File.separator + ".idea";

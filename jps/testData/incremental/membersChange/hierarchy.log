@@ -1,15 +1,3 @@
-Request to make modules:
-module Hierarchy
-End of request
-digraph X {
-  Hierarchy[label="Hierarchy"];
-}
-digraph X {
-  Hierarchy[label="Hierarchy"];
-}
-Propagated modules:
-module Hierarchy
-End of propagated
 Cleaning output files:
 out/production/Hierarchy/Service.class
 End of files

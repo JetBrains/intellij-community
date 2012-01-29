@@ -1,15 +1,3 @@
-Request to make modules:
-module SetProtected
-End of request
-digraph X {
-  SetProtected[label="SetProtected"];
-}
-digraph X {
-  SetProtected[label="SetProtected"];
-}
-Propagated modules:
-module SetProtected
-End of propagated
 Cleaning output files:
 out/production/SetProtected/A.class
 End of files
