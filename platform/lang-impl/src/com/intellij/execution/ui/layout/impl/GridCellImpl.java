@@ -24,6 +24,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.MutualMap;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.docking.DockContainer;
@@ -76,6 +77,21 @@ public class GridCellImpl implements GridCell {
       @Override
       protected Color getFocusedBottomFillColor() {
         return new Color(194, 203, 219);
+      }
+
+      @Override
+      public void processDropOver(TabInfo over, RelativePoint point) {
+        ((RunnerContentUi)myContext).myTabs.processDropOver(over, point);
+      }
+
+      @Override
+      public Image startDropOver(TabInfo tabInfo, RelativePoint point) {
+        return ((RunnerContentUi)myContext).myTabs.startDropOver(tabInfo, point);
+      }
+
+      @Override
+      public void resetDropOver(TabInfo tabInfo) {
+        ((RunnerContentUi)myContext).myTabs.resetDropOver(tabInfo);
       }
     }.setDataProvider(new DataProvider() {
       @Nullable

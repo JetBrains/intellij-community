@@ -509,7 +509,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
       final Point p = point.getPoint(getComponent());
       Component c = SwingUtilities.getDeepestComponentAt(getComponent(), p.x, p.y);
       while (c != null) {
-        if (c instanceof JBTabs) {
+        if (c instanceof JBRunnerTabs) {
           return (JBTabs)c;
         }
         c = c.getParent();
