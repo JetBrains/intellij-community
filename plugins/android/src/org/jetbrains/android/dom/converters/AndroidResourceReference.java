@@ -41,14 +41,14 @@ import java.util.List;
 /**
  * @author coyote
  */
-public class BaseResourceReference extends PsiReferenceBase.Poly<XmlElement> {
+public class AndroidResourceReference extends PsiReferenceBase.Poly<XmlElement> {
   private final GenericDomValue<ResourceValue> myValue;
   private final AndroidFacet myFacet;
   private final ResourceValue myResourceValue;
 
-  public BaseResourceReference(@NotNull GenericDomValue<ResourceValue> value,
-                               @NotNull AndroidFacet facet,
-                               @NotNull ResourceValue resourceValue) {
+  public AndroidResourceReference(@NotNull GenericDomValue<ResourceValue> value,
+                                  @NotNull AndroidFacet facet,
+                                  @NotNull ResourceValue resourceValue) {
     super(DomUtil.getValueElement(value), null, true);
     myValue = value;
     myFacet = facet;
@@ -100,9 +100,9 @@ public class BaseResourceReference extends PsiReferenceBase.Poly<XmlElement> {
   @Override
   public ResolveResult[] multiResolve(boolean incompleteCode) {
     return ResolveCache.getInstance(myElement.getProject())
-      .resolveWithCaching(this, new ResolveCache.PolyVariantResolver<BaseResourceReference>() {
+      .resolveWithCaching(this, new ResolveCache.PolyVariantResolver<AndroidResourceReference>() {
         @Override
-        public ResolveResult[] resolve(BaseResourceReference reference, boolean incompleteCode) {
+        public ResolveResult[] resolve(AndroidResourceReference reference, boolean incompleteCode) {
           return resolveInner();
         }
       }, false, incompleteCode);

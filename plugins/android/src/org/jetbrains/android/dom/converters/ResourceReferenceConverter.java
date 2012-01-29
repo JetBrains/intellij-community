@@ -294,7 +294,7 @@ public class ResourceReferenceConverter extends ResolvingConverter<ResourceValue
           if (resValue.getPackage() == null && "+id".equals(resValue.getResourceType())) {
             return PsiReference.EMPTY_ARRAY;
           }
-          return new PsiReference[] {new BaseResourceReference(value, facet, resValue)};
+          return new PsiReference[] {new AndroidResourceReference(value, facet, resValue)};
         }
       }
     }
