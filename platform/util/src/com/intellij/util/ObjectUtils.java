@@ -46,4 +46,12 @@ public class ObjectUtils {
   public static <T> T notNull(@Nullable T value, @NotNull T defaultValue) {
     return value != null ? value : defaultValue;
   }
+
+  @Nullable
+  public static <T> T tryCast(@Nullable Object obj, @NotNull Class<T> clazz) {
+    if (clazz.isInstance(obj)) {
+      return clazz.cast(obj);
+    }
+    return null;
+  }
 }
