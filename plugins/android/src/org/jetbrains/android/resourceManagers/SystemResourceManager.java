@@ -20,8 +20,7 @@ import com.android.sdklib.SdkConstants;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.xml.*;
 import com.intellij.util.xml.ConvertContext;
 import org.jetbrains.android.AndroidIdIndex;
@@ -39,7 +38,7 @@ import java.util.*;
  * @author coyote
  */
 public class SystemResourceManager extends ResourceManager {
-  private volatile Map<String, List<PsiElement>> myIdMap;
+  private volatile Map<String, List<SmartPsiElementPointer<? extends PsiElement>>> myIdMap;
 
   private final AndroidPlatform myPlatform;
 
@@ -76,8 +75,31 @@ public class SystemResourceManager extends ResourceManager {
   public List<PsiElement> findIdDeclarations(@NotNull String id) {
     if (myIdMap == null) {
       myIdMap = createIdMap();
+      return doFindIdDeclarations(id, false);
     }
-    return myIdMap.get(id);
+    return doFindIdDeclarations(id, true);
+  }
+
+  private List<PsiElement> doFindIdDeclarations(@NotNull String id, boolean recreateMapIfCannotResolve) {
+    final List<SmartPsiElementPointer<? extends PsiElement>> pointers = myIdMap.get(id);
+
+    if (pointers == null || pointers.size() == 0) {
+      return Collections.emptyList();
+    }
+    final List<PsiElement> result = new ArrayList<PsiElement>();
+
+    for (SmartPsiElementPointer<? extends PsiElement> pointer : pointers) {
+      final PsiElement element = pointer.getElement();
+      
+      if (element != null) {
+        result.add(element);
+      }
+      else if (recreateMapIfCannotResolve) {
+        myIdMap = createIdMap();
+        return doFindIdDeclarations(id, false);
+      }
+    }
+    return result;
   }
 
   @NotNull
@@ -89,13 +111,13 @@ public class SystemResourceManager extends ResourceManager {
   }
 
   @NotNull
-  public Map<String, List<PsiElement>> createIdMap() {
-    Map<String, List<PsiElement>> result = new HashMap<String, List<PsiElement>>();
+  public Map<String, List<SmartPsiElementPointer<? extends PsiElement>>> createIdMap() {
+    Map<String, List<SmartPsiElementPointer<? extends PsiElement>>> result = new HashMap<String, List<SmartPsiElementPointer<? extends PsiElement>>>();
     fillIdMap(result);
     return result;
   }
 
-  protected void fillIdMap(@NotNull Map<String, List<PsiElement>> result) {
+  protected void fillIdMap(@NotNull Map<String, List<SmartPsiElementPointer<? extends PsiElement>>> result) {
     for (String resType : AndroidIdIndex.RES_TYPES_CONTAINING_ID_DECLARATIONS) {
       List<PsiFile> resFiles = findResourceFiles(resType);
       for (PsiFile resFile : resFiles) {
@@ -104,7 +126,7 @@ public class SystemResourceManager extends ResourceManager {
     }
   }
 
-  protected static void collectIdDeclarations(PsiFile psiFile, Map<String, List<PsiElement>> result) {
+  protected static void collectIdDeclarations(PsiFile psiFile, Map<String, List<SmartPsiElementPointer<? extends PsiElement>>> result) {
     if (psiFile instanceof XmlFile) {
       XmlDocument document = ((XmlFile)psiFile).getDocument();
       if (document != null) {
@@ -116,7 +138,7 @@ public class SystemResourceManager extends ResourceManager {
     }
   }
 
-  private static void fillMapRecursively(@NotNull XmlTag tag, Map<String, List<PsiElement>> result) {
+  private static void fillMapRecursively(@NotNull XmlTag tag, @NotNull Map<String, List<SmartPsiElementPointer<? extends PsiElement>>> result) {
     XmlAttribute idAttr = tag.getAttribute("id", SdkConstants.NS_RESOURCES);
     if (idAttr != null) {
       XmlAttributeValue idAttrValue = idAttr.getValueElement();
@@ -124,12 +146,14 @@ public class SystemResourceManager extends ResourceManager {
         if (AndroidResourceUtil.isIdDeclaration(idAttrValue)) {
           String id = AndroidResourceUtil.getResourceNameByReferenceText(idAttrValue.getValue());
           if (id != null) {
-            List<PsiElement> list = result.get(id);
+            List<SmartPsiElementPointer<? extends PsiElement>> list = result.get(id);
+            
             if (list == null) {
-              list = new ArrayList<PsiElement>();
+              list = new ArrayList<SmartPsiElementPointer<? extends PsiElement>>();
               result.put(id, list);
             }
-            list.add(idAttrValue);
+            final SmartPointerManager manager = SmartPointerManager.getInstance(tag.getProject());
+            list.add(manager.createSmartPsiElementPointer(idAttr));
           }
         }
       }
