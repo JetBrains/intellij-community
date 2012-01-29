@@ -25,6 +25,8 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
@@ -40,6 +42,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
   private JLabel myPatternLegendLabel;
   private JCheckBox myCbAutoShowFirstError;
   private JCheckBox myCbUseCompileServer;
+  private JCheckBox myCbMakeProjectOnSave;
 
   public CompilerUIConfigurable(final Project project) {
     myProject = project;
@@ -49,6 +52,12 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
                                  "<b>/</b> &mdash; path separator; <b>/**/</b> &mdash; any number of directories; " +
                                  "<i>&lt;dir_name&gt;</i>:<i>&lt;pattern&gt;</i> &mdash; restrict to source roots with the specified name" +
                                  "</html>");
+    myCbUseCompileServer.addItemListener(new ItemListener() {
+      @Override
+      public void itemStateChanged(ItemEvent e) {
+        myCbMakeProjectOnSave.setEnabled(myCbUseCompileServer.isSelected());
+      }
+    });
   }
 
   public void reset() {
@@ -60,6 +69,8 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     myCbClearOutputDirectory.setSelected(workspaceConfiguration.CLEAR_OUTPUT_DIRECTORY);
     myCbAssertNotNull.setSelected(workspaceConfiguration.ASSERT_NOT_NULL);
     myCbUseCompileServer.setSelected(workspaceConfiguration.USE_COMPILE_SERVER);
+    myCbMakeProjectOnSave.setSelected(workspaceConfiguration.MAKE_PROJECT_ON_SAVE);
+    myCbMakeProjectOnSave.setEnabled(workspaceConfiguration.USE_COMPILE_SERVER);
 
     configuration.convertPatterns();
 
@@ -86,6 +97,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     workspaceConfiguration.CLEAR_OUTPUT_DIRECTORY = myCbClearOutputDirectory.isSelected();
     workspaceConfiguration.ASSERT_NOT_NULL = myCbAssertNotNull.isSelected();
     workspaceConfiguration.USE_COMPILE_SERVER = myCbUseCompileServer.isSelected();
+    workspaceConfiguration.MAKE_PROJECT_ON_SAVE = myCbMakeProjectOnSave.isSelected();
 
     configuration.removeResourceFilePatterns();
     String extensionString = myResourcePatternsField.getText().trim();
@@ -143,6 +155,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     isModified |= ComparingUtils.isModified(myCbAutoShowFirstError, workspaceConfiguration.AUTO_SHOW_ERRORS_IN_EDITOR);
     isModified |= ComparingUtils.isModified(myCbAssertNotNull, workspaceConfiguration.ASSERT_NOT_NULL);
     isModified |= ComparingUtils.isModified(myCbUseCompileServer, workspaceConfiguration.USE_COMPILE_SERVER);
+    isModified |= ComparingUtils.isModified(myCbMakeProjectOnSave, workspaceConfiguration.MAKE_PROJECT_ON_SAVE);
 
     final CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
     isModified |= ComparingUtils.isModified(myCbClearOutputDirectory, workspaceConfiguration.CLEAR_OUTPUT_DIRECTORY);

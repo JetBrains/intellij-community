@@ -23,9 +23,11 @@ import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.notification.Notification;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -40,15 +42,20 @@ import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.problems.Problem;
+import com.intellij.problems.WolfTheProblemSolver;
+import com.intellij.util.Alarm;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.NetUtils;
@@ -68,6 +75,7 @@ import java.util.*;
 import java.util.concurrent.Future;
 import java.util.concurrent.RunnableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Eugene Zhuravlev
@@ -87,6 +95,8 @@ public class CompileServerManager implements ApplicationComponent{
     }
   });
   private final ProjectManager myProjectManager;
+  private static final int MAKE_TRIGGER_DELAY = 5 * 1000 /*5 seconds*/;
+  private final Map<RequestFuture, Project> myAutomakeFutures = new HashMap<RequestFuture, Project>();
 
   public CompileServerManager(final ProjectManager projectManager) {
     myProjectManager = projectManager;
@@ -101,6 +111,50 @@ public class CompileServerManager implements ApplicationComponent{
     mySystemDirectory = system;
 
     projectManager.addProjectManagerListener(new ProjectWatcher());
+    final MessageBusConnection conn = ApplicationManager.getApplication().getMessageBus().connect();
+    conn.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+      private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+      private final AtomicBoolean myAutoMakeInProgress = new AtomicBoolean(false);
+      @Override
+      public void before(List<? extends VFileEvent> events) {
+      }
+
+      @Override
+      public void after(List<? extends VFileEvent> events) {
+        if (shouldTriggerMake(events)) {
+          scheduleMake(new Runnable() {
+            @Override
+            public void run() {
+              if (!myAutoMakeInProgress.getAndSet(true)) {
+                try {
+                  runAutoMake();
+                }
+                finally {
+                  myAutoMakeInProgress.set(false);
+                }
+              }
+              else {
+                scheduleMake(this);
+              }
+            }
+          });
+        }
+      }
+
+      private void scheduleMake(Runnable runnable) {
+        myAlarm.cancelAllRequests();
+        myAlarm.addRequest(runnable, MAKE_TRIGGER_DELAY);
+      }
+
+      private boolean shouldTriggerMake(List<? extends VFileEvent> events) {
+        for (VFileEvent event : events) {
+          if (event.isFromRefresh() || event.getRequestor() instanceof SavingRequestor) {
+            return true;
+          }
+        }
+        return false;
+      }
+    });
 
     ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
       @Override
@@ -198,8 +252,60 @@ public class CompileServerManager implements ApplicationComponent{
     }
   }
 
+  private void runAutoMake() {
+    final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
+    if (openProjects.length > 0) {
+      final List<RequestFuture> futures = new ArrayList<RequestFuture>();
+      for (final Project project : openProjects) {
+        if (project.isDefault()) {
+          continue;
+        }
+        final CompilerWorkspaceConfiguration config = CompilerWorkspaceConfiguration.getInstance(project);
+        if (!config.USE_COMPILE_SERVER || !config.MAKE_PROJECT_ON_SAVE) {
+          continue;
+        }
+        final RequestFuture future = submitCompilationTask(
+          project, false, true, Collections.<String>emptyList(), Collections.<String>emptyList(), new AutoMakeResponseHandler(project)
+        );
+        if (future != null) {
+          futures.add(future);
+          synchronized (myAutomakeFutures) {
+            myAutomakeFutures.put(future, project);
+          }
+        }
+      }
+      try {
+        for (RequestFuture future : futures) {
+          try {
+            future.get();
+          }
+          catch (InterruptedException ignored) {
+          }
+          catch (java.util.concurrent.ExecutionException ignored) {
+          }
+        }
+      }
+      finally {
+        synchronized (myAutomakeFutures) {
+          myAutomakeFutures.keySet().removeAll(futures);
+        }
+      }
+    }
+  }
+
+  public void cancelAutoMakeTasks(Project project) {
+    synchronized (myAutomakeFutures) {
+      for (Map.Entry<RequestFuture, Project> entry : myAutomakeFutures.entrySet()) {
+        if (entry.getValue().equals(project)) {
+          entry.getKey().cancel(true);
+        }
+      }
+    }
+  }
+
   @Nullable
-  public RequestFuture submitCompilationTask(final String projectId, final boolean isRebuild, final boolean isMake, final Collection<String> modules, final Collection<String> paths, final JpsServerResponseHandler handler) {
+  public RequestFuture submitCompilationTask(final Project project, final boolean isRebuild, final boolean isMake, final Collection<String> modules, final Collection<String> paths, final JpsServerResponseHandler handler) {
+    final String projectId = project.getLocation();
     final Ref<RequestFuture> futureRef = new Ref<RequestFuture>(null);
     final RunnableFuture future = myTaskExecutor.submit(new Runnable() {
       public void run() {
@@ -545,6 +651,88 @@ public class CompileServerManager implements ApplicationComponent{
       builder.append(file.getAbsolutePath());
     }
     return builder.toString();
+  }
+
+  private static class AutoMakeResponseHandler extends JpsServerResponseHandler {
+    private JpsRemoteProto.Message.Response.BuildEvent.Status myBuildStatus;
+    private final Project myProject;
+    private final WolfTheProblemSolver myWolf;
+
+    public AutoMakeResponseHandler(Project project) {
+      myProject = project;
+      myBuildStatus = JpsRemoteProto.Message.Response.BuildEvent.Status.SUCCESS;
+      myWolf = WolfTheProblemSolver.getInstance(project);
+    }
+
+    @Override
+    public boolean handleBuildEvent(JpsRemoteProto.Message.Response.BuildEvent event) {
+      final JpsRemoteProto.Message.Response.BuildEvent.Type type = event.getEventType();
+      if (type == JpsRemoteProto.Message.Response.BuildEvent.Type.FILES_GENERATED) {
+        for (JpsRemoteProto.Message.Response.BuildEvent.GeneratedFile gf : event.getGeneratedFilesList()) {
+        }
+      }
+      if (type == JpsRemoteProto.Message.Response.BuildEvent.Type.BUILD_COMPLETED) {
+        if (event.hasCompletionStatus()) {
+          myBuildStatus = event.getCompletionStatus();
+        }
+        return true;
+      }
+      return false;
+    }
+
+    @Override
+    public void handleCompileMessage(JpsRemoteProto.Message.Response.CompileMessage compileResponse) {
+      final JpsRemoteProto.Message.Response.CompileMessage.Kind kind = compileResponse.getKind();
+      if (kind == JpsRemoteProto.Message.Response.CompileMessage.Kind.ERROR) {
+        informWolf(myProject, compileResponse);
+      }
+    }
+
+    @Override
+    public void handleFailure(JpsRemoteProto.Message.Failure failure) {
+      CompilerManager.NOTIFICATION_GROUP.createNotification("Auto make failure: " + failure.getDescription(), MessageType.INFO);
+    }
+
+    @Override
+    public void sessionTerminated() {
+      String statusMessage = "Auto make completed";
+      switch (myBuildStatus) {
+        case SUCCESS:
+          statusMessage = "Auto make completed successfully";
+          break;
+        case UP_TO_DATE:
+          statusMessage = "All files are up-to-date";
+          break;
+        case ERRORS:
+          statusMessage = "Auto make completed with errors";
+          break;
+        case CANCELED:
+          statusMessage = "Auto make has been canceled";
+          break;
+      }
+      final Notification notification = CompilerManager.NOTIFICATION_GROUP.createNotification(statusMessage, MessageType.INFO);
+      if (!myProject.isDisposed()) {
+        notification.notify(myProject);
+      }
+    }
+
+    private void informWolf(Project project, JpsRemoteProto.Message.Response.CompileMessage message) {
+      final String srcPath = message.getSourceFilePath();
+      if (srcPath != null && !project.isDisposed()) {
+        final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(srcPath);
+        if (vFile != null) {
+          final int line = (int)message.getLine();
+          final int column = (int)message.getColumn();
+          if (line > 0 && column > 0) {
+            final Problem problem = myWolf.convertToProblem(vFile, line, column, new String[]{message.getText()});
+            myWolf.weHaveGotProblems(vFile, Collections.singletonList(problem));
+          }
+          else {
+            myWolf.queue(vFile);
+          }
+        }
+      }
+    }
   }
 
   private class ProjectWatcher extends ProjectManagerAdapter {

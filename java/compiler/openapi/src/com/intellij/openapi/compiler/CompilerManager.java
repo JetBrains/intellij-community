@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.compiler;
 
+import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileTypes.FileType;
@@ -34,6 +35,8 @@ import java.util.Set;
  */
 public abstract class CompilerManager {
   public static final Key<Key> CONTENT_ID_KEY = Key.create("COMPILATION_CONTENT_ID_CUSTOM_KEY");
+  public static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.logOnlyGroup("Compiler");
+
   /**
    * Returns the compiler manager instance for the specified project.
    *
