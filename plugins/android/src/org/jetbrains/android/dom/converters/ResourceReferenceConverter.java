@@ -134,13 +134,13 @@ public class ResourceReferenceConverter extends ResolvingConverter<ResourceValue
       if (recommendedTypes.size() == 1) {
         String type = recommendedTypes.iterator().next();
         boolean explicitResourceType = value.startsWith(getTypePrefix(resourcePackage, type)) || myWithExplicitResourceType;
-        addResourceReferenceValuesWithDeps(facet, type, resourcePackage, result, explicitResourceType);
+        addResourceReferenceValues(facet, type, resourcePackage, result, explicitResourceType);
       }
       else {
         for (String type : ResourceManager.REFERABLE_RESOURCE_TYPES) {
           String typePrefix = getTypePrefix(resourcePackage, type);
           if (value.startsWith(typePrefix)) {
-            addResourceReferenceValuesWithDeps(facet, type, resourcePackage, result, true);
+            addResourceReferenceValues(facet, type, resourcePackage, result, true);
           }
           else if (recommendedTypes.contains(type)) {
             result.add(ResourceValue.literal(typePrefix));
@@ -180,20 +180,6 @@ public class ResourceReferenceConverter extends ResolvingConverter<ResourceValue
       types.addAll(ResourceManager.REFERABLE_RESOURCE_TYPES);
     }
     return types;
-  }
-
-  private void addResourceReferenceValuesWithDeps(@NotNull AndroidFacet facet,
-                                                  @NotNull String type,
-                                                  @Nullable String resPackage,
-                                                  @NotNull Collection<ResourceValue> result,
-                                                  boolean explicitResourceType) {
-    addResourceReferenceValues(facet, type, resPackage, result, explicitResourceType);
-    /*for (Module depModule : ModuleRootManager.getInstance(facet.getModule()).getDependencies()) {
-      AndroidFacet depFacet = AndroidFacet.getInstance(depModule);
-      if (depFacet != null) {
-        addResourceReferenceValues(depFacet, type, resPackage, result, explicitResourceType);
-      }
-    }*/
   }
 
   private void addResourceReferenceValues(AndroidFacet facet,
@@ -310,7 +296,7 @@ public class ResourceReferenceConverter extends ResolvingConverter<ResourceValue
           }
           List<PsiElement> elements = new ArrayList<PsiElement>();
           List<PsiFile> files = new ArrayList<PsiFile>();
-          collectTargetsWithDependencies(facet, resValue, elements, files);
+          collectTargets(facet, resValue, elements, files);
           if (files.size() > 0) {
             return new PsiReference[]{new FileResourceReference(value, files)};
           }
@@ -319,19 +305,6 @@ public class ResourceReferenceConverter extends ResolvingConverter<ResourceValue
       }
     }
     return PsiReference.EMPTY_ARRAY;
-  }
-
-  private static void collectTargetsWithDependencies(AndroidFacet facet,
-                                                     ResourceValue resValue,
-                                                     List<PsiElement> elements,
-                                                     List<PsiFile> files) {
-    collectTargets(facet, resValue, elements, files);
-    /*for (Module depModule : ModuleRootManager.getInstance(facet.getModule()).getDependencies()) {
-      AndroidFacet depFacet = AndroidFacet.getInstance(depModule);
-      if (depFacet != null) {
-        collectTargets(depFacet, resValue, elements, files);
-      }
-    }*/
   }
 
   private static void collectTargets(AndroidFacet facet, ResourceValue resValue, List<PsiElement> elements, List<PsiFile> files) {
