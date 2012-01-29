@@ -294,43 +294,11 @@ public class ResourceReferenceConverter extends ResolvingConverter<ResourceValue
           if (resValue.getPackage() == null && "+id".equals(resValue.getResourceType())) {
             return PsiReference.EMPTY_ARRAY;
           }
-          List<PsiElement> elements = new ArrayList<PsiElement>();
-          List<PsiFile> files = new ArrayList<PsiFile>();
-          collectTargets(facet, resValue, elements, files);
-          if (files.size() > 0) {
-            return new PsiReference[]{new FileResourceReference(value, files)};
-          }
-          return new PsiReference[]{new ValueResourceReference(value, elements)};
+          return new PsiReference[] {new BaseResourceReference(value, facet, resValue)};
         }
       }
     }
     return PsiReference.EMPTY_ARRAY;
-  }
-
-  private static void collectTargets(AndroidFacet facet, ResourceValue resValue, List<PsiElement> elements, List<PsiFile> files) {
-    String resType = resValue.getResourceType();
-    if (resType == null) {
-      return;
-    }
-    ResourceManager manager = facet.getResourceManager(resValue.getPackage());
-    if (manager != null) {
-      String resName = resValue.getResourceName();
-      if (resName != null) {
-        List<ResourceElement> valueResources = manager.findValueResources(resType, resName, false);
-        for (ResourceElement resource : valueResources) {
-          elements.add(resource.getName().getXmlAttributeValue());
-        }
-        if (resType.equals("id")) {
-          List<PsiElement> idAttrs = manager.findIdDeclarations(resName);
-          if (idAttrs != null) {
-            elements.addAll(idAttrs);
-          }
-        }
-        if (elements.size() == 0) {
-          files.addAll(manager.findResourceFiles(resType, resName, false));
-        }
-      }
-    }
   }
 
   private static class MyLocalQuickFix implements LocalQuickFix {
