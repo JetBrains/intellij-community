@@ -7,8 +7,8 @@ package org.jetbrains.ether;
  * Time: 12:57
  * To change this template use File | Settings | File Templates.
  */
-public class TestClassRename extends IncrementalTestCase {
-  public TestClassRename() throws Exception {
+public class ClassRenameTest extends IncrementalTestCase {
+  public ClassRenameTest() throws Exception {
     super("changeName");
   }
 

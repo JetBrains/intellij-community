@@ -7,8 +7,8 @@ package org.jetbrains.ether;
  * Time: 20:43
  * To change this template use File | Settings | File Templates.
  */
-public class TestMethodProperties extends IncrementalTestCase {
-  public TestMethodProperties() throws Exception {
+public class MethodPropertyTest extends IncrementalTestCase {
+  public MethodPropertyTest() throws Exception {
     super("methodProperties");
   }
 

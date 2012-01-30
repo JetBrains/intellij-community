@@ -7,8 +7,8 @@ package org.jetbrains.ether;
  * Time: 3:13
  * To change this template use File | Settings | File Templates.
  */
-public class TestCommon extends IncrementalTestCase {
-  public TestCommon() throws Exception {
+public class CommonTest extends IncrementalTestCase {
+  public CommonTest() throws Exception {
     super("common");
   }
 

@@ -7,8 +7,8 @@ package org.jetbrains.ether;
  * Time: 0:35
  * To change this template use File | Settings | File Templates.
  */
-public class TestAnnotations extends IncrementalTestCase {
-  public TestAnnotations() throws Exception {
+public class AnnotationTest extends IncrementalTestCase {
+  public AnnotationTest() throws Exception {
     super("annotations");
   }
 

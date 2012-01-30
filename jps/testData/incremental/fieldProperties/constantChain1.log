@@ -5,11 +5,13 @@ Compiling files:
 src/A.java
 End of files
 Cleaning output files:
+out/production/ConstantChain1/A.class
 out/production/ConstantChain1/B.class
 out/production/ConstantChain1/C.class
 out/production/ConstantChain1/Client.class
 End of files
 Compiling files:
+src/A.java
 src/B.java
 src/C.java
 src/Client.java
