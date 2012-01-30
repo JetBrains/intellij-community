@@ -138,7 +138,7 @@ public class PsiScopesUtil {
     }
   }
 
-  public static boolean resolveAndWalk(PsiScopeProcessor processor, PsiJavaCodeReferenceElement ref, PsiElement maxScope) {
+  public static boolean resolveAndWalk(PsiScopeProcessor processor, PsiJavaCodeReferenceElement ref, @Nullable PsiElement maxScope) {
     return resolveAndWalk(processor, ref, maxScope, false);
   }
 
