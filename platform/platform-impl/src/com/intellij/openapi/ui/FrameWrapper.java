@@ -445,6 +445,7 @@ public class FrameWrapper implements Disposable, DataProvider {
       super((JFrame)parent);
       myParent = parent;
       setGlassPane(new IdeGlassPaneImpl(getRootPane()));
+      getRootPane().putClientProperty("Window.style", "small");
 
       MouseGestureManager.getInstance().add(this);
       setFocusTraversalPolicy(new LayoutFocusTraversalPolicyExt());
