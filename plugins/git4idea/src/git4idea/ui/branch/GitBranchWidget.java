@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.impl.status.EditorBasedWidget;
 import com.intellij.util.Consumer;
+import git4idea.config.GitVcsSettings;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryChangeListener;
 import git4idea.repo.GitRepositoryManager;
@@ -39,14 +40,14 @@ import java.awt.event.MouseEvent;
 public class GitBranchWidget extends EditorBasedWidget implements StatusBarWidget.MultipleTextValuesPresentation,
                                                                   StatusBarWidget.Multiframe,
                                                                   GitRepositoryChangeListener {
-  private final GitRepositoryManager myRepositoryManager;
+  private final GitVcsSettings mySettings;
   private volatile String myText = "";
   private volatile String myTooltip = "";
 
   public GitBranchWidget(Project project) {
     super(project);
-    myRepositoryManager = GitRepositoryManager.getInstance(project);
-    myRepositoryManager.addListenerToAllRepositories(this);
+    GitRepositoryManager.getInstance(project).addListenerToAllRepositories(this);
+    mySettings = GitVcsSettings.getInstance(project);
   }
 
   @Override
@@ -95,7 +96,7 @@ public class GitBranchWidget extends EditorBasedWidget implements StatusBarWidge
     if (repo == null) {
       return null;
     }
-    return GitBranchPopup.getInstance(getProject(), repo).asListPopup();
+    return GitBranchPopup.getInstance(project, repo).asListPopup();
   }
 
   @Override
@@ -144,6 +145,7 @@ public class GitBranchWidget extends EditorBasedWidget implements StatusBarWidge
         myText = GitBranchUiUtil.getDisplayableBranchText(repo);
         myTooltip = getDisplayableBranchTooltip(repo);
         myStatusBar.updateWidget(ID());
+        mySettings.setRecentRoot(repo.getRoot().getPath());
       }
     });
   }

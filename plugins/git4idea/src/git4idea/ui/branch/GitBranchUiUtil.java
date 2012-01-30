@@ -25,12 +25,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.status.StatusBarUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitBranch;
 import git4idea.GitVcs;
+import git4idea.config.GitVcsSettings;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.validators.GitNewBranchNameValidator;
@@ -184,8 +187,34 @@ public class GitBranchUiUtil {
       return gitRoots[0];
     }
 
-    // TODO: remember last git root we have worked with
-    return null;
+    // remember the last visited Git root
+    GitVcsSettings settings = GitVcsSettings.getInstance(project);
+    if (settings != null) {
+      String recentRootPath = settings.getRecentRootPath();
+      if (recentRootPath != null) {
+        VirtualFile recentRoot = VcsUtil.getVirtualFile(recentRootPath);
+        if (recentRoot != null) {
+          return recentRoot;
+        }
+      }
+    }
+
+    // otherwise return the root of the project dir or the root containing the project dir, if there is such
+    VirtualFile projectBaseDir = project.getBaseDir();
+    if (projectBaseDir == null) {
+      return null;
+    }
+    VirtualFile rootCandidate = null;
+    for (VirtualFile root : gitRoots) {
+      if (root.equals(projectBaseDir)) {
+        return root;
+      }
+      else if (VfsUtilCore.isAncestor(root, projectBaseDir, true)) {
+        rootCandidate = root;
+      }
+    }
+    
+    return rootCandidate;
   }
 
 }
