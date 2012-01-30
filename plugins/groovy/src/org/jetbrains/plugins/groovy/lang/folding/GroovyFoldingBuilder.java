@@ -32,6 +32,7 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -128,7 +129,7 @@ public class GroovyFoldingBuilder implements FoldingBuilder, GroovyElementTypes,
   private static void addFoldingForStrings(List<FoldingDescriptor> descriptors, ASTNode node) {
     if (!isMultiLineStringLiteral(node)) return;
 
-    if (!node.getElementType().equals(GSTRING)) {
+    if (!node.getElementType().equals(GSTRING) && !node.getElementType().equals(REGEX)) {
       descriptors.add(new FoldingDescriptor(node, node.getTextRange()));
       return;
     }
@@ -141,48 +142,46 @@ public class GroovyFoldingBuilder implements FoldingBuilder, GroovyElementTypes,
       descriptors.add(new FoldingDescriptor(node, node.getTextRange()));
       return;
     }
-    final String quote = GrStringUtil.getStartQuote(node.getText());
+    final String start_quote = GrStringUtil.getStartQuote(node.getText());
+    final String end_quote = GrStringUtil.getEndQuote(node.getText());
     final FoldingGroup group = FoldingGroup.newGroup("GString");
     final TextRange nodeRange = node.getTextRange();
     int startOffset = nodeRange.getStartOffset();
 
-
     GrStringInjection injection = injections[0];
-    boolean hasClosableBlock = injection.getClosableBlock() != null;
-    final String holderText = quote + "..." + (hasClosableBlock ? "${" : "$");
     TextRange injectionRange = injection.getTextRange();
-    descriptors.add(new FoldingDescriptor(node, new TextRange(startOffset, injectionRange.getStartOffset() + (hasClosableBlock ? 2 : 1)), group) {
-      @Override
-      public String getPlaceholderText() {
-        return holderText;
-      }
-    });
-    startOffset = injectionRange.getEndOffset() - (hasClosableBlock ? 1 : 0);
+    if (startOffset + 1 < injectionRange.getStartOffset()) {
+      descriptors.add(new GStringFoldingDescriptor(node, startOffset, injectionRange.getStartOffset(), group, start_quote));
+    }
+
+    final String placeholder = " ";
+    startOffset = injectionRange.getEndOffset();
     for (int i = 1; i < injections.length; i++) {
       injection = injections[i];
-      boolean hasClosableBlockNew = injection.getClosableBlock() != null;
       injectionRange = injection.getTextRange();
-      final String text = (hasClosableBlock ? "}" : "") + "..." + (hasClosableBlockNew ? "${" : "$");
-      final int endOffset = injectionRange.getStartOffset() + (hasClosableBlockNew ? 2 : 1);
+      final int endOffset = injectionRange.getStartOffset();
       if (endOffset - startOffset >= 2) {
-        descriptors.add(new FoldingDescriptor(injection.getNode().getTreePrev(),
-                                              new TextRange(startOffset, endOffset), group) {
-          @Override
-          public String getPlaceholderText() {
-            return text;
-          }
-        });
+        descriptors.add(new GStringFoldingDescriptor(injection.getNode().getTreePrev(), startOffset, endOffset, group, placeholder));
       }
-      hasClosableBlock = hasClosableBlockNew;
-      startOffset = injectionRange.getEndOffset() - (hasClosableBlock ? 1 : 0);
+      startOffset = injectionRange.getEndOffset();
     }
-    final String text = (hasClosableBlock ? "}" : "") + "..." + quote;
-    descriptors.add(new FoldingDescriptor(node.getLastChildNode(), new TextRange(startOffset, nodeRange.getEndOffset()), group) {
-      @Override
-      public String getPlaceholderText() {
-        return text;
-      }
-    });
+    if (startOffset + 1 < nodeRange.getEndOffset()) {
+      descriptors.add(new GStringFoldingDescriptor(node.getLastChildNode(), startOffset, nodeRange.getEndOffset(), group, end_quote));
+    }
+  }
+
+  private static class GStringFoldingDescriptor extends FoldingDescriptor {
+    private final String myPlaceholderText;
+
+    private GStringFoldingDescriptor(@NotNull ASTNode node, int start, int end, @Nullable FoldingGroup group, String placeholderText) {
+      super(node, new TextRange(start, end), group);
+      myPlaceholderText = placeholderText;
+    }
+
+    @Override
+    public String getPlaceholderText() {
+      return myPlaceholderText;
+    }
   }
 
   private static void addFoldingsForImports(final List<FoldingDescriptor> descriptors, final GroovyFile file) {
@@ -216,7 +215,21 @@ public class GroovyFoldingBuilder implements FoldingBuilder, GroovyElementTypes,
 
   private static boolean isWellEndedString(PsiElement element) {
     final String text = element.getText();
-    return text.endsWith("'''") || text.endsWith("\"\"\"");
+
+    if (!text.endsWith("'''") && !text.endsWith("\"\"\"") && !text.endsWith("/") && !text.endsWith("/$")) return false;
+
+
+    final IElementType type = element.getNode().getElementType();
+    if (TokenSets.STRING_LITERAL_SET.contains(type)) return true;
+
+    final PsiElement lastChild = element.getLastChild();
+    if (lastChild == null) return false;
+
+    final IElementType lastType = lastChild.getNode().getElementType();
+    if (type == GSTRING) return lastType == mGSTRING_END;
+    if (type == REGEX) return lastType == mREGEX_END || lastChild == mDOLLAR_SLASH_REGEX_END;
+
+    return false;
   }
 
   private static boolean isMultiline(PsiElement element) {
@@ -239,8 +252,9 @@ public class GroovyFoldingBuilder implements FoldingBuilder, GroovyElementTypes,
       return "...";
     }
     if (isMultiLineStringLiteral(node)) {
-      final String quote = GrStringUtil.getStartQuote(node.getText());
-      return quote +"..."+ quote;
+      final String start_quote = GrStringUtil.getStartQuote(node.getText());
+      final String end_quote = GrStringUtil.getEndQuote(node.getText());
+      return start_quote + "..." + end_quote;
     }
     return null;
   }
@@ -283,8 +297,10 @@ public class GroovyFoldingBuilder implements FoldingBuilder, GroovyElementTypes,
   }
 
   private static boolean isMultiLineStringLiteral(ASTNode node) {
-    return (TokenSets.STRING_LITERAL_SET.contains(node.getElementType()) || node.getElementType().equals(GSTRING)) &&
-     isMultiline(node.getPsi()) &&
-     isWellEndedString(node.getPsi());
+    return (TokenSets.STRING_LITERAL_SET.contains(node.getElementType()) ||
+            node.getElementType().equals(GSTRING) ||
+            node.getElementType().equals(REGEX)) &&
+           isMultiline(node.getPsi()) &&
+           isWellEndedString(node.getPsi());
   }
 }

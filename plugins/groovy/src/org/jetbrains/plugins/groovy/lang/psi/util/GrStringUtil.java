@@ -544,6 +544,17 @@ public class GrStringUtil {
     return "";
   }
 
+  public static String getEndQuote(String text) {
+    if (text.startsWith(TRIPLE_QUOTES)) return TRIPLE_QUOTES;
+    if (text.startsWith(QUOTE)) return QUOTE;
+    if (text.startsWith(TRIPLE_DOUBLE_QUOTES)) return TRIPLE_DOUBLE_QUOTES;
+    if (text.startsWith(DOUBLE_QUOTES)) return DOUBLE_QUOTES;
+    if (text.startsWith(SLASH)) return SLASH;
+    if (text.startsWith(SLASH_DOLLAR)) return SLASH_DOLLAR;
+    return "";
+  }
+
+
   public static boolean parseRegexCharacters(@NotNull String chars,
                                              @NotNull StringBuilder outChars,
                                              @Nullable int[] sourceOffsets,
