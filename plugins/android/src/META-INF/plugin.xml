@@ -173,6 +173,7 @@
                        serviceImplementation="org.jetbrains.android.maven.AndroidExternalApklibDependenciesManager"/>
     <xml.xmlExtension implementation="org.jetbrains.android.dom.AndroidXmlExtension" order="first"/>
     <fileBasedIndex implementation="org.jetbrains.android.AndroidIdIndex"/>
+    <fileBasedIndex implementation="org.jetbrains.android.AndroidValueResourcesIndex"/>
     <referencesSearch implementation="org.jetbrains.android.AndroidReferenceSearchExecutor"/>
     <projectService serviceInterface="org.jetbrains.android.compiler.AndroidDexCompilerConfiguration"
                     serviceImplementation="org.jetbrains.android.compiler.AndroidDexCompilerConfiguration"/>

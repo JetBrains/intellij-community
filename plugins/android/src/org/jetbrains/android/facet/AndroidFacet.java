@@ -80,6 +80,7 @@ import org.jetbrains.android.resourceManagers.SystemResourceManager;
 import org.jetbrains.android.sdk.*;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidUtils;
+import org.jetbrains.android.util.ResourceEntry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

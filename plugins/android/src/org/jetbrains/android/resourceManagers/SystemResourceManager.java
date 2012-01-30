@@ -15,31 +15,32 @@
  */
 package org.jetbrains.android.resourceManagers;
 
-import com.android.resources.ResourceFolderType;
 import com.android.resources.ResourceType;
 import com.android.sdklib.IAndroidTarget;
 import com.android.sdklib.SdkConstants;
-import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.*;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.xml.ConvertContext;
 import org.jetbrains.android.AndroidIdIndex;
+import org.jetbrains.android.AndroidValueResourcesIndex;
 import org.jetbrains.android.dom.attrs.AttributeDefinitions;
 import org.jetbrains.android.dom.resources.ResourceElement;
-import org.jetbrains.android.dom.resources.Resources;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.sdk.AndroidTargetData;
 import org.jetbrains.android.util.AndroidResourceUtil;
-import org.jetbrains.android.util.AndroidUtils;
+import org.jetbrains.android.util.ResourceEntry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,8 +53,6 @@ public class SystemResourceManager extends ResourceManager {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.resourceManagers.SystemResourceManager");
   
   private volatile Map<String, List<SmartPsiElementPointer<? extends PsiElement>>> myIdMap;
-  
-  private volatile Map<ResourceType, Map<String, Set<VirtualFile>>> myValueResourcesMap;
   
   private final AndroidPlatform myPlatform;
 
@@ -83,8 +82,17 @@ public class SystemResourceManager extends ResourceManager {
       LOG.error("Unknown resource type " + resourceType);
       return Collections.emptyList();
     }
-    final Map<String, Set<VirtualFile>> map = getValueResourcesMap().get(type);
-    return map != null ? map.keySet() : Collections.<String>emptyList();
+    final Set<String> result = new HashSet<String>();
+    final ResourceEntry typeMarkerEntry = AndroidValueResourcesIndex.createTypeMarkerEntry(resourceType);
+    final List<Set<ResourceEntry>> values = FileBasedIndex.getInstance()
+      .getValues(AndroidValueResourcesIndex.INDEX_ID, typeMarkerEntry, GlobalSearchScope.moduleWithLibrariesScope(myModule));
+
+    for (Set<ResourceEntry> entrySet : values) {
+      for (ResourceEntry entry : entrySet) {
+        result.add(entry.getName());
+      }
+    }
+    return result;
   }
 
   @Nullable
@@ -96,7 +104,7 @@ public class SystemResourceManager extends ResourceManager {
   @Nullable
   public synchronized AttributeDefinitions getAttributeDefinitions() {
     final AndroidTargetData targetData = myPlatform.getSdk().getTargetData(myPlatform.getTarget());
-    return targetData.getAttrDefs(myModule.getProject());
+    return targetData != null ? targetData.getAttrDefs(myModule.getProject()) : null;
   }
 
   @Nullable
@@ -106,68 +114,6 @@ public class SystemResourceManager extends ResourceManager {
       return doFindIdDeclarations(id, false);
     }
     return doFindIdDeclarations(id, true);
-  }
-
-  @NotNull
-  private synchronized Map<ResourceType, Map<String, Set<VirtualFile>>> getValueResourcesMap() {
-    if (myValueResourcesMap == null) {
-      myValueResourcesMap = new HashMap<ResourceType, Map<String, Set<VirtualFile>>>();
-      
-      for (VirtualFile valueResourceDir : getResourceSubdirs(ResourceFolderType.VALUES.getName())) {
-        for (final VirtualFile valueResourceFile : valueResourceDir.getChildren()) {
-          if (!valueResourceFile.isDirectory() && valueResourceFile.getFileType().equals(StdFileTypes.XML)) {
-            ApplicationManager.getApplication().runReadAction(new Runnable() {
-              @Override
-              public void run() {
-                fillValueResourcesMap(valueResourceFile);
-              }
-            });
-          }
-        }
-      }
-    }
-    return myValueResourcesMap;
-  }
-
-  private void fillValueResourcesMap(@NotNull VirtualFile valueResourceFile) {
-    final Resources roots = AndroidUtils.loadDomElement(myModule, valueResourceFile, Resources.class);
-    if (roots == null) {
-      return;
-    }
-    
-    for (ResourceType resType : ResourceType.values()) {
-      Map<String, Set<VirtualFile>> map = myValueResourcesMap.get(resType);
-
-      if (map == null) {
-        map = new HashMap<String, Set<VirtualFile>>();
-        myValueResourcesMap.put(resType, map);
-      }
-
-      for (ResourceElement element : ResourceManager.getValueResources(resType.getName(), roots)) {
-        final String name = element.getName().getValue();
-
-        if (name != null) {
-          Set<VirtualFile> fileSet = map.get(name);
-
-          if (fileSet == null) {
-            fileSet = new HashSet<VirtualFile>();
-            map.put(name, fileSet);
-          }
-          fileSet.add(valueResourceFile);
-        }
-      }
-    }
-
-    PsiManager.getInstance(myModule.getProject()).dropResolveCaches();
-    final XmlElement element = roots.getXmlElement();
-    
-    if (element != null) {
-      final PsiFile file = element.getContainingFile();
-      
-      if (file != null) {
-        InjectedLanguageManager.getInstance(myModule.getProject()).dropFileCaches(file);
-      }
-    }
   }
 
   private List<PsiElement> doFindIdDeclarations(@NotNull String id, boolean recreateMapIfCannotResolve) {
@@ -210,17 +156,16 @@ public class SystemResourceManager extends ResourceManager {
       LOG.error("Unknown resource type " + resourceType);
       return Collections.emptyList();
     }
-    
-    final Map<String, Set<VirtualFile>> map = getValueResourcesMap().get(type);
-    if (map == null) {
+
+    final Collection<VirtualFile> files = FileBasedIndex.getInstance()
+      .getContainingFiles(AndroidValueResourcesIndex.INDEX_ID, new ResourceEntry(resourceType, resourceName),
+                          GlobalSearchScope.moduleWithLibrariesScope(
+                            myModule));
+
+    if (files.size() == 0) {
       return Collections.emptyList();
     }
-
-    final Set<VirtualFile> fileSet = map.get(resourceName);
-    if (fileSet == null) {
-      return Collections.emptyList();
-    }
-
+    final Set<VirtualFile> fileSet = new HashSet<VirtualFile>(files);
     final List<ResourceElement> result = new ArrayList<ResourceElement>();
     
     for (ResourceElement element : getValueResources(resourceType, fileSet)) {

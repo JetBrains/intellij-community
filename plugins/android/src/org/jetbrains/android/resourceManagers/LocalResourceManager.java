@@ -20,7 +20,6 @@ import com.android.AndroidConstants;
 import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -101,21 +100,7 @@ public class LocalResourceManager extends ResourceManager {
   }
 
   public List<Resources> getResourceElements() {
-    return getResourceElements(getAllResourceFiles());
-  }
-
-  @NotNull
-  private Set<VirtualFile> getAllResourceFiles() {
-    final Set<VirtualFile> files = new HashSet<VirtualFile>();
-
-    for (VirtualFile valueResourceDir : getResourceSubdirs("values")) {
-      for (VirtualFile valueResourceFile : valueResourceDir.getChildren()) {
-        if (!valueResourceFile.isDirectory() && valueResourceFile.getFileType().equals(StdFileTypes.XML)) {
-          files.add(valueResourceFile);
-        }
-      }
-    }
-    return files;
+    return getResourceElements(null);
   }
 
   @NotNull
@@ -141,7 +126,7 @@ public class LocalResourceManager extends ResourceManager {
 
   @NotNull
   public List<ResourceElement> getValueResources(@NotNull final String resourceType) {
-    return getValueResources(resourceType, getAllResourceFiles());
+    return getValueResources(resourceType, null);
   }
 
   private static void collectResourceDirs(Module module, Set<VirtualFile> result, Set<Module> visited) {

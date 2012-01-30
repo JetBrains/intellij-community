@@ -141,7 +141,7 @@ public class CreateXmlResourceDialog extends DialogWrapper {
       return new ValidationInfo("specify module", myModuleCombo);
     }
     else if (!ResourceFolderType.VALUES.getName().equals(
-      ResourceManager.getResourceTypeByDirName(directoryName))) {
+      AndroidResourceUtil.getResourceTypeByDirName(directoryName))) {
       return new ValidationInfo("directory name is not appropriate for value resources");
     }
 
@@ -196,7 +196,7 @@ public class CreateXmlResourceDialog extends DialogWrapper {
       return new ValidationInfo(AndroidBundle.message("not.resource.file.error", FileUtil.toSystemDependentName(resFile.getPath())));
     }
 
-    for (ResourceElement element : ResourceManager.getValueResources(resourceType.getName(), resources)) {
+    for (ResourceElement element : ResourceManager.getValueResourcesFromElement(resourceType.getName(), resources)) {
       if (resourceName.equals(element.getName().getValue())) {
         return new ValidationInfo("resource '" + resourceName + "' already exists in " + FileUtil.toSystemDependentName(
           resFile.getPath()));
