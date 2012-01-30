@@ -524,13 +524,11 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
   @Nullable
   private HighlightInfo processMethod(final PsiMethod method, ProgressIndicator progress, GlobalUsageHelper helper) {
-    boolean isPrivate = method.hasModifierProperty(PsiModifier.PRIVATE);
-    PsiClass containingClass = method.getContainingClass();
-    if (isMethodReferenced(method, progress, isPrivate, containingClass, helper)) return null;
+    if (isMethodReferenced(method, progress, helper)) return null;
     HighlightInfoType highlightInfoType;
     HighlightDisplayKey highlightDisplayKey;
     String key;
-    if (isPrivate) {
+    if (method.hasModifierProperty(PsiModifier.PRIVATE)) {
       highlightInfoType = HighlightInfoType.UNUSED_SYMBOL;
       highlightDisplayKey = myUnusedSymbolKey;
       key = method.isConstructor() ? "private.constructor.is.not.used" : "private.method.is.not.used";
@@ -552,6 +550,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
         return true;
       }
     });
+    PsiClass containingClass = method.getContainingClass();
     if (method.getReturnType() != null || containingClass != null && Comparing.strEqual(containingClass.getName(), method.getName())) {
       //ignore methods with deleted return types as they are always marked as unused without any reason
       ChangeSignatureGestureDetector.getInstance(myProject).dismissForElement(method);
@@ -559,13 +558,13 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     return highlightInfo;
   }
 
-  private static boolean isMethodReferenced(PsiMethod method,
+  public static boolean isMethodReferenced(PsiMethod method,
                                             ProgressIndicator progress,
-                                            boolean aPrivate,
-                                            PsiClass containingClass,
                                             GlobalUsageHelper helper) {
     if (helper.isLocallyUsed(method)) return true;
 
+    boolean aPrivate = method.hasModifierProperty(PsiModifier.PRIVATE);
+    PsiClass containingClass = method.getContainingClass();
     if (HighlightMethodUtil.isSerializationRelatedMethod(method, containingClass)) return true;
     if (aPrivate) {
       if (isIntentionalPrivateConstructor(method, containingClass)) {
@@ -628,8 +627,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     if (containingClass == null) return true;
     final PsiMethod valuesMethod = containingClass.getValuesMethod();
     if (valuesMethod == null) return true;
-    boolean isPrivate = valuesMethod.hasModifierProperty(PsiModifier.PRIVATE);
-    return isMethodReferenced(valuesMethod, progress, isPrivate, containingClass, helper);
+    return isMethodReferenced(valuesMethod, progress, helper);
   }
 
   private static boolean canBeReferencedViaWeirdNames(PsiMember member) {

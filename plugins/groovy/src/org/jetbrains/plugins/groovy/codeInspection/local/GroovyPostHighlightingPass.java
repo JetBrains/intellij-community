@@ -48,12 +48,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyUnusedDeclarationInspection;
 import org.jetbrains.plugins.groovy.lang.editor.GroovyImportOptimizer;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 
 import java.util.ArrayList;
@@ -110,10 +112,19 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
 
         if (deadCodeEnabled && element instanceof GrNamedElement && !PostHighlightingPass.isImplicitUsage((GrNamedElement)element, progress)) {
           PsiElement nameId = ((GrNamedElement)element).getNameIdentifierGroovy();
-          String name = ((GrNamedElement)element).getName();
-          if (element instanceof GrTypeDefinition && PostHighlightingPass.isClassUsed((GrTypeDefinition)element, progress, usageHelper)) {
-            unusedDeclarations.add(
-              PostHighlightingPass.createUnusedSymbolInfo(nameId, "Class " + name + " is unused", HighlightInfoType.UNUSED_SYMBOL));
+          if (nameId.getNode().getElementType() == GroovyTokenTypes.mIDENT) {
+            String name = ((GrNamedElement)element).getName();
+            if (element instanceof GrTypeDefinition && PostHighlightingPass.isClassUsed((GrTypeDefinition)element, progress, usageHelper)) {
+              unusedDeclarations.add(
+                PostHighlightingPass.createUnusedSymbolInfo(nameId, "Class " + name + " is unused", HighlightInfoType.UNUSED_SYMBOL));
+            }
+            else if (element instanceof GrMethod) {
+              GrMethod method = (GrMethod)element;
+              if (!PostHighlightingPass.isMethodReferenced(method, progress, usageHelper)) {
+                unusedDeclarations.add(
+                  PostHighlightingPass.createUnusedSymbolInfo(nameId, (method.isConstructor() ? "Constructor" : "Method") +" " + name + " is unused", HighlightInfoType.UNUSED_SYMBOL));
+              }
+            }
           }
         }
         
