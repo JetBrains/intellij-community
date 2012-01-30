@@ -14,7 +14,6 @@ import org.jetbrains.jps.Module;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.java.JavaBuilder;
-import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.FileGeneratedEvent;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
@@ -128,22 +127,10 @@ public class GroovyBuilder extends ModuleLevelBuilder {
 
         successfullyCompiled = handler.getSuccessfullyCompiled();
 
-        final List<CompilerMessage> messages = handler.getCompilerMessages();
-        for (CompilerMessage message : messages) {
+        for (CompilerMessage message : handler.getCompilerMessages()) {
           context.processMessage(message);
         }
 
-        boolean hasMessages = !messages.isEmpty();
-
-        final StringBuffer unparsedBuffer = handler.getStdErr();
-        if (unparsedBuffer.length() != 0) {
-          context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.INFO, unparsedBuffer.toString()));
-        }
-
-        final int exitValue = handler.getProcess().exitValue();
-        if (!hasMessages && exitValue != 0) {
-          context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "Internal groovyc error: code " + exitValue));
-        }
       }
       finally {
         if (!myForStubs) {

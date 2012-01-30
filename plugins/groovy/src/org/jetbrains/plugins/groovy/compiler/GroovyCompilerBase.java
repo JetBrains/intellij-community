@@ -219,27 +219,12 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
         toRecompile.add(vFile);
       }
 
-      final List<CompilerMessage> messages = processHandler.getCompilerMessages();
-      for (CompilerMessage compilerMessage : messages) {
-        final CompilerMessageCategory category = getMessageCategory(compilerMessage);
-
+      for (CompilerMessage compilerMessage : processHandler.getCompilerMessages()) {
         final String url = compilerMessage.getSourcePath();
-
-        compileContext.addMessage(category, compilerMessage.getMessageText(), VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(url)),
+        compileContext.addMessage(getMessageCategory(compilerMessage), compilerMessage.getMessageText(),
+                                  url == null ? null : VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(url)),
                                   (int)compilerMessage.getLine(),
                                   (int)compilerMessage.getColumn());
-      }
-
-      boolean hasMessages = !messages.isEmpty();
-
-      StringBuffer unparsedBuffer = processHandler.getStdErr();
-      if (unparsedBuffer.length() != 0) {
-        compileContext.addMessage(CompilerMessageCategory.INFORMATION, unparsedBuffer.toString(), null, -1, -1);
-      }
-
-      final int exitCode = processHandler.getProcess().exitValue();
-      if (!hasMessages && exitCode != 0) {
-        compileContext.addMessage(CompilerMessageCategory.ERROR, "Internal groovyc error: code " + exitCode, null, -1, -1);
       }
 
       List<GroovycOSProcessHandler.OutputItem> outputItems = processHandler.getSuccessfullyCompiled();
