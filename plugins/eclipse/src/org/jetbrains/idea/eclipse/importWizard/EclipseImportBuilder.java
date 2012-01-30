@@ -50,6 +50,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.util.Function;
+import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -198,12 +199,14 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
       final ModifiableModuleModel moduleModel = model != null ? model : ModuleManager.getInstance(project).getModifiableModel();
       final ModifiableRootModel[] rootModels = new ModifiableRootModel[getParameters().projectsToConvert.size()];
       final Set<File> files = new HashSet<File>();
+      final Set<String> moduleNames = new THashSet<String>(getParameters().projectsToConvert.size());
       for (String path : getParameters().projectsToConvert) {
         String modulesDirectory = getParameters().converterOptions.commonModulesDirectory;
         if (modulesDirectory == null) {
           modulesDirectory = path;
         }
         final String moduleName = EclipseProjectFinder.findProjectName(path);
+        moduleNames.add(moduleName);
         final File imlFile = new File(modulesDirectory + File.separator + moduleName + IdeaXml.IML_EXT);
         if (imlFile.isFile()) {
           files.add(imlFile);
@@ -266,7 +269,7 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
         rootModels[idx++] = rootModel;
 
         final File classpathFile = new File(path, EclipseXml.DOT_CLASSPATH_EXT);
-        final EclipseClasspathReader classpathReader = new EclipseClasspathReader(path, project, getParameters().projectsToConvert);
+        final EclipseClasspathReader classpathReader = new EclipseClasspathReader(path, project, getParameters().projectsToConvert, moduleNames);
         classpathReader.init(rootModel);
         if (classpathFile.exists()) {
           final Element classpathElement = JDOMUtil.loadDocument(classpathFile).getRootElement();

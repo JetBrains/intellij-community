@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.roots.ui.configuration;
 
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
@@ -90,14 +91,19 @@ public class ProjectJdkConfigurable implements UnnamedConfigurable {
       });
       myJdkPanel.add(new JLabel(ProjectBundle.message("module.libraries.target.jdk.project.radio")), new GridBagConstraints(0, 0, 3, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 0, 4, 0), 0, 0));
       myJdkPanel.add(myCbProjectJdk, new GridBagConstraints(0, 1, 1, 1, 0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 4, 0, 0), 0, 0));
-      final JButton setUpButton = myCbProjectJdk.createSetupButton(myProject, myJdksModel, new JdkComboBox.NoneJdkComboBoxItem());
+      final JButton setUpButton = new JButton(ApplicationBundle.message("button.new"));
+      myCbProjectJdk.setSetupButton(setUpButton, myProject, myJdksModel, new JdkComboBox.NoneJdkComboBoxItem(), null, false);
       myJdkPanel.add(setUpButton, new GridBagConstraints(1, 1, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 4, 0, 0), 0, 0));
-      myCbProjectJdk.appendEditButton(myProject, myJdkPanel, new GridBagConstraints(GridBagConstraints.RELATIVE, 1, 1, 1, 1.0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 4, 0, 0), 0, 0), new Computable<Sdk>() {
+      final JButton editButton = new JButton(ApplicationBundle.message("button.edit"));
+      myCbProjectJdk.setEditButton(editButton, myProject, new Computable<Sdk>() {
         @Nullable
         public Sdk compute() {
           return myJdksModel.getProjectSdk();
         }
       });
+
+      myJdkPanel.add(editButton, new GridBagConstraints(GridBagConstraints.RELATIVE, 1, 1, 1, 1.0, 0, GridBagConstraints.NORTHWEST,
+                                                            GridBagConstraints.NONE, new Insets(0, 4, 0, 0), 0, 0));
     }
     return myJdkPanel;
   }

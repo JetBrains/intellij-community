@@ -28,7 +28,7 @@ import java.util.regex.Pattern;
  */
 class GitPushRejectedDetector implements GitLineHandlerListener {
 
-  private static final Pattern REJECTED_PATTERN = Pattern.compile("\\s+! \\[rejected\\]\\s+(\\w+) -> (\\w+) .*");
+  private static final Pattern REJECTED_PATTERN = Pattern.compile("\\s+! \\[rejected\\]\\s+(\\S+) -> (\\S+) .*");
   
   private final Collection<RejectedRef> myRejectedRefs = new ArrayList<RejectedRef>();
 

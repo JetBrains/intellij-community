@@ -36,7 +36,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
-import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static git4idea.test.GitExec.*;
@@ -51,7 +51,7 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
   private static final String NEW_BRANCH = "new_branch";
   private static final String MASTER = "master";
 
-  private Collection<GitRepository> myRepositories;
+  private List<GitRepository> myRepositories;
   private GitRepository myUltimate;
   private GitRepository myCommunity;
   private GitRepository myContrib;

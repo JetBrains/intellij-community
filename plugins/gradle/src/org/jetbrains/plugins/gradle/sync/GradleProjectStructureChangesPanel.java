@@ -8,6 +8,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.RootPolicy;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -25,6 +26,8 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.MutableTreeNode;
+import javax.swing.tree.TreeNode;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -51,6 +54,9 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
    */
   private final Map<String, DefaultMutableTreeNode> myModuleDependencies = new HashMap<String, DefaultMutableTreeNode>();
   private final Map<String, DefaultMutableTreeNode> myModules            = new HashMap<String, DefaultMutableTreeNode>();
+
+  private final TreeNode[] myNodeHolder  = new TreeNode[1];
+  private final int[]      myIndexHolder = new int[1];
   
   private final GradleProjectStructureChangesModel myChangesModel;
 
@@ -62,11 +68,15 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
     myChangesModel = model;
     myChangesModel.addListener(new GradleProjectStructureChangeListener() {
       @Override
-      public void onChanges(@NotNull final Collection<GradleProjectStructureChange> changes) {
+      public void onChanges(@NotNull final Collection<GradleProjectStructureChange> oldChanges,
+                            @NotNull final Collection<GradleProjectStructureChange> currentChanges)
+      {
         UIUtil.invokeLaterIfNeeded(new Runnable() {
           @Override
           public void run() {
-            updateTree(changes); 
+            updateTree(currentChanges);
+            processObsoleteChanges(ContainerUtil.subtract(oldChanges, currentChanges));    
+
           }
         });
       }
@@ -84,6 +94,7 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
     constraints.fill = GridBagConstraints.BOTH;
     constraints.weightx = constraints.weighty = 1;
     myContent.add(tree, constraints);
+    myContent.setBackground(tree.getBackground());
     return treeModel;
   }
 
@@ -236,5 +247,84 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
         }
       });
     }
+  }
+
+  /**
+   * Updates the tree state considering that the given changes are obsolete.
+   * <p/>
+   * Example:
+   * <pre>
+   * <ol>
+   *   <li>There is a particular intellij-local library (change from the gradle project structure);</li>
+   *   <li>Corresponding node is shown at the current UI;</li>
+   *   <li>The library is removed, i.e. corresponding change has become obsolete;</li>
+   *   <li>This method is notified within the obsolete change and is expected to remove the corresponding node;</li>
+   * </ol>
+   * </pre>
+   */
+  private void processObsoleteChanges(Collection<GradleProjectStructureChange> changes) {
+    for (GradleProjectStructureChange change : changes) {
+      change.invite(new GradleProjectStructureChangeVisitor() {
+        @Override
+        public void visit(@NotNull GradleRenameChange change) {
+          // TODO den implement 
+        }
+
+        @Override
+        public void visit(@NotNull GradleProjectStructureChange change) {
+          // TODO den implement 
+        }
+
+        @Override
+        public void visit(@NotNull GradleModulePresenceChange change) {
+          // TODO den implement 
+        }
+
+        @Override
+        public void visit(@NotNull GradleLibraryDependencyPresenceChange change) {
+          // We need to remove the corresponding node then.
+          String moduleName;
+          Object library;
+          final GradleLibraryDependency gradleEntity = change.getGradleEntity();
+          final LibraryOrderEntry intellijEntity = change.getIntellijEntity();
+          assert gradleEntity != null || intellijEntity != null;
+          if (gradleEntity == null) {
+            moduleName = intellijEntity.getOwnerModule().getName();
+            library = intellijEntity;
+          }
+          else {
+            moduleName = gradleEntity.getOwnerModule().getName();
+            library = gradleEntity;
+          }
+          final DefaultMutableTreeNode holder = myModuleDependencies.get(moduleName);
+          if (holder == null) {
+            return;
+          }
+          for (DefaultMutableTreeNode node = holder.getFirstLeaf(); node != null; node = node.getNextSibling()) {
+            GradleProjectStructureNodeDescriptor<?> descriptor = (GradleProjectStructureNodeDescriptor<?>)node.getUserObject();
+            if (descriptor.getElement().equals(library)) {
+              removeNode(node);
+              return;
+            }
+          }
+        }
+      });
+    }
+  }
+
+  private void removeNode(@NotNull TreeNode node) {
+    final MutableTreeNode parent = (MutableTreeNode)node.getParent();
+    if (parent == null) {
+      return;
+    }
+    int i = parent.getIndex(node);
+    if (i <= 0) {
+      assert false : node;
+      return;
+    }
+    parent.remove(i);
+    myIndexHolder[0] = i;
+    myNodeHolder[0] = node;
+    myTreeModel.nodesWereRemoved(parent, myIndexHolder, myNodeHolder);
   }
 }

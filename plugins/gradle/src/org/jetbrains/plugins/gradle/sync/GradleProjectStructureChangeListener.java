@@ -18,7 +18,9 @@ public interface GradleProjectStructureChangeListener {
   /**
    * Notifies current listener on the newly discovered changes between the gradle and intellij project models.
    * 
-   * @param changes  newly discovered changes between the gradle and intellij project models.
+   * @param oldChanges      changes between the gradle and intellij project models that had been known prior to the current update
+   * @param currentChanges  the most up-to-date changes between the gradle and intellij project models
    */
-  void onChanges(@NotNull Collection<GradleProjectStructureChange> changes);
+  void onChanges(@NotNull Collection<GradleProjectStructureChange> oldChanges,
+                 @NotNull Collection<GradleProjectStructureChange> currentChanges);
 }

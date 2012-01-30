@@ -31,6 +31,7 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -45,25 +46,29 @@ import org.jetbrains.idea.eclipse.config.EclipseModuleManager;
 import org.jetbrains.idea.eclipse.importWizard.EclipseProjectFinder;
 import org.jetbrains.idea.eclipse.util.ErrorLog;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.io.*;
+import java.util.*;
+import java.util.jar.Manifest;
 import java.util.regex.PatternSyntaxException;
 
-import static org.jetbrains.idea.eclipse.conversion.EPathUtil.*;
+import static org.jetbrains.idea.eclipse.conversion.EPathUtil.expandEclipsePath2Url;
 
 public class EclipseClasspathReader {
   private final String myRootPath;
   private final Project myProject;
   @Nullable private final List<String> myCurrentRoots;
   private ContentEntry myContentEntry;
+  @Nullable private final Set<String> myModuleNames;
 
   public EclipseClasspathReader(final String rootPath, final Project project, @Nullable List<String> currentRoots) {
+    this(rootPath, project, currentRoots, null);
+  }
+
+  public EclipseClasspathReader(final String rootPath, final Project project, @Nullable List<String> currentRoots, @Nullable Set<String> moduleNames) {
     myRootPath = FileUtil.toSystemIndependentName(rootPath);
     myProject = project;
     myCurrentRoots = currentRoots;
+    myModuleNames = moduleNames;
   }
 
   public void init(ModifiableRootModel model) {
@@ -236,6 +241,7 @@ public class EclipseClasspathReader {
     }
     else if (kind.equals(EclipseXml.CON_KIND)) {
       if (path.equals(EclipseXml.ECLIPSE_PLATFORM)) {
+        readRequiredBundles(rootModel, refsToModules);
         addNamedLibrary(rootModel, unknownLibraries, exported, IdeaXml.ECLIPSE_LIBRARY, LibraryTablesRegistrar.APPLICATION_LEVEL);
       }
       else if (path.startsWith(EclipseXml.JRE_CONTAINER)) {
@@ -273,6 +279,53 @@ public class EclipseClasspathReader {
     }
     else {
       throw new ConversionException("Unknown classpathentry/@kind: " + kind);
+    }
+  }
+
+  private void readRequiredBundles(ModifiableRootModel rootModel, Set<String> refsToModules) throws ConversionException {
+    if (myModuleNames == null) {
+      return;
+    }
+
+    final File manifestFile = new File(myRootPath, "META-INF/MANIFEST.MF");
+    if (!manifestFile.exists()) {
+      return;
+    }
+
+    InputStream in = null;
+    try {
+      in = new BufferedInputStream(new FileInputStream(manifestFile));
+      final Manifest manifest = new Manifest(in);
+      final String attributes = manifest.getMainAttributes().getValue("Require-Bundle");
+      if (!StringUtil.isEmpty(attributes)) {
+        final StringTokenizer tokenizer = new StringTokenizer(attributes, ",");
+        while (tokenizer.hasMoreTokens()) {
+          String bundle = tokenizer.nextToken().trim();
+          if (!bundle.isEmpty()) {
+            final int constraintIndex = bundle.indexOf(';');
+            if (constraintIndex != -1) {
+              bundle = bundle.substring(0, constraintIndex).trim();
+            }
+
+            if (myModuleNames.contains(bundle)) {
+              refsToModules.add(bundle);
+              rootModel.addInvalidModuleEntry(bundle);
+            }
+          }
+        }
+      }
+    }
+    catch (IOException e) {
+      throw new ConversionException(e.getMessage());
+    }
+    finally {
+      if (in != null) {
+        try {
+          in.close();
+        }
+        catch (IOException ignored) {
+        }
+      }
     }
   }
 

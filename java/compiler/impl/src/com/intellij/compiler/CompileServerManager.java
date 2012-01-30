@@ -695,13 +695,13 @@ public class CompileServerManager implements ApplicationComponent{
 
     @Override
     public void sessionTerminated() {
-      String statusMessage = "Auto make completed";
+      String statusMessage = null/*"Auto make completed"*/;
       switch (myBuildStatus) {
         case SUCCESS:
-          statusMessage = "Auto make completed successfully";
+          //statusMessage = "Auto make completed successfully";
           break;
         case UP_TO_DATE:
-          statusMessage = "All files are up-to-date";
+          //statusMessage = "All files are up-to-date";
           break;
         case ERRORS:
           statusMessage = "Auto make completed with errors";
@@ -710,9 +710,11 @@ public class CompileServerManager implements ApplicationComponent{
           statusMessage = "Auto make has been canceled";
           break;
       }
-      final Notification notification = CompilerManager.NOTIFICATION_GROUP.createNotification(statusMessage, MessageType.INFO);
-      if (!myProject.isDisposed()) {
-        notification.notify(myProject);
+      if (statusMessage != null) {
+        final Notification notification = CompilerManager.NOTIFICATION_GROUP.createNotification(statusMessage, MessageType.INFO);
+        if (!myProject.isDisposed()) {
+          notification.notify(myProject);
+        }
       }
     }
 

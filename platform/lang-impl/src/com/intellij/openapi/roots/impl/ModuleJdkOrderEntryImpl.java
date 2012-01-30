@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.roots.impl;
 
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleJdkOrderEntry;
@@ -29,6 +30,7 @@ import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author dsl
@@ -62,8 +64,7 @@ public class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implement
 
     final String jdkName = jdkNameAttribute.getValue();
     final String jdkType = element.getAttributeValue(JDK_TYPE_ATTR);
-    final ProjectJdkTable projectJdkTable = ProjectJdkTable.getInstance();
-    final Sdk jdkByName = projectJdkTable.findJdk(jdkName, jdkType);
+    final Sdk jdkByName = findJdk(jdkName, jdkType);
     if (jdkByName == null) {
       init(null, jdkName, jdkType);
     }
@@ -72,6 +73,26 @@ public class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implement
     }
   }
 
+  public abstract static class SdkFinder {
+    private static final ExtensionPointName<SdkFinder> EP_NAME = ExtensionPointName.create("com.intellij.sdkFinder");
+
+    @Nullable
+    public Sdk findSdk(String name, String sdkType) {
+      return null;
+    }
+  }
+
+  @Nullable
+  private static Sdk findJdk(final String jdkName, final String jdkType) {
+    for (SdkFinder sdkFinder : SdkFinder.EP_NAME.getExtensions()) {
+      final Sdk sdk = sdkFinder.findSdk(jdkName, jdkType);
+      if (sdk != null) {
+        return sdk;
+      }
+    }
+    final ProjectJdkTable projectJdkTable = ProjectJdkTable.getInstance();
+    return projectJdkTable.findJdk(jdkName, jdkType);
+  }
 
 
   private ModuleJdkOrderEntryImpl(ModuleJdkOrderEntryImpl that, RootModelImpl rootModel, ProjectRootManagerImpl projectRootManager) {

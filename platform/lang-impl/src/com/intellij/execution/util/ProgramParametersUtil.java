@@ -17,6 +17,7 @@ package com.intellij.execution.util;
 
 import com.intellij.execution.CommonProgramRunConfigurationParameters;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
+import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.configurations.SimpleProgramParameters;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.module.Module;
@@ -26,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -36,6 +38,19 @@ public class ProgramParametersUtil {
 
     parameters.getProgramParametersList().addParametersString(configuration.getProgramParameters());
 
+    parameters.setWorkingDirectory(getWorkingDir(configuration, project, module));
+
+    parameters.setupEnvs(configuration.getEnvs(), configuration.isPassParentEnvs());
+    if (parameters.getEnv() != null) {
+      Map<String, String> expanded = new HashMap<String, String>();
+      for (Map.Entry<String, String> each : parameters.getEnv().entrySet()) {
+        expanded.put(each.getKey(), expandPath(each.getValue(), module, project));
+      }
+      parameters.setEnv(expanded);
+    }
+  }
+
+  public static String getWorkingDir(CommonProgramRunConfigurationParameters configuration, Project project, Module module) {
     String workingDirectory = configuration.getWorkingDirectory();
     VirtualFile baseDir = project.getBaseDir();
 
@@ -46,15 +61,14 @@ public class ProgramParametersUtil {
     if (!FileUtil.isAbsolute(workingDirectory) && baseDir != null) {
       workingDirectory = baseDir.getPath() + "/" + workingDirectory;
     }
-    parameters.setWorkingDirectory(workingDirectory);
+    return workingDirectory;
+  }
 
-    parameters.setupEnvs(configuration.getEnvs(), configuration.isPassParentEnvs());
-    if (parameters.getEnv() != null) {
-      Map<String, String> expanded = new HashMap<String, String>();
-      for (Map.Entry<String, String> each : parameters.getEnv().entrySet()) {
-        expanded.put(each.getKey(), expandPath(each.getValue(), module, project));
-      }
-      parameters.setEnv(expanded);
+  public static void checkWorkingDirectoryExist(CommonProgramRunConfigurationParameters configuration, Project project, Module module)
+    throws RuntimeConfigurationWarning {
+    final String workingDir = getWorkingDir(configuration, project, module);
+    if (!new File(workingDir).exists()) {
+      throw new RuntimeConfigurationWarning("Working directory '" + workingDir + "' doesn't exist");
     }
   }
 
