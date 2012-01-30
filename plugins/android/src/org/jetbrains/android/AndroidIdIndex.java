@@ -21,18 +21,16 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.XmlRecursiveElementVisitor;
-import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
+import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.xml.NanoXmlUtil;
 import org.jetbrains.android.util.AndroidResourceUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.ByteArrayInputStream;
 import java.util.Collections;
 import java.util.Map;
 
@@ -46,52 +44,40 @@ public class AndroidIdIndex extends ScalarIndexExtension<String> {
 
   private static final FileBasedIndex.InputFilter INPUT_FILTER = new FileBasedIndex.InputFilter() {
     public boolean acceptInput(final VirtualFile file) {
-      if ((file.getFileSystem() == LocalFileSystem.getInstance() || file.getFileSystem() instanceof TempFileSystem) &&
-          file.getFileType() == StdFileTypes.XML) {
-        VirtualFile parent = file.getParent();
-        if (parent == null || !parent.isDirectory()) {
-          return false;
-        }
-        final String resourceType = AndroidResourceUtil.getResourceTypeByDirName(parent.getName());
-        if (resourceType == null || !canContainIdDeclaration(resourceType)) {
-          return false;
-        }
-        parent = parent.getParent();
-        return parent != null && SdkConstants.FD_RES.equals(parent.getName());
-      }
-      return false;
+      return (file.getFileSystem() == LocalFileSystem.getInstance() || file.getFileSystem() instanceof TempFileSystem) &&
+             file.getFileType() == StdFileTypes.XML;
     }
   };
 
   private static final DataIndexer<String, Void, FileContent> INDEXER = new DataIndexer<String, Void, FileContent>() {
     @NotNull
     public Map<String, Void> map(FileContent inputData) {
-      PsiFile file = inputData.getPsiFile();
-      if (file instanceof XmlFile) {
-        final HashMap<String, Void> ids = new HashMap<String, Void>();
-        file.accept(new XmlRecursiveElementVisitor() {
-          @Override
-          public void visitXmlAttributeValue(XmlAttributeValue attributeValue) {
-            if (AndroidResourceUtil.isIdDeclaration(attributeValue)) {
-              String id = AndroidResourceUtil.getResourceNameByReferenceText(attributeValue.getValue());
-              if (id != null) {
-                if (ids.isEmpty()) {
-                  ids.put(MARKER, null);
-                }
-                ids.put(id, null);
+      final CharSequence content = inputData.getContentAsText();
+
+      if (content == null || CharArrayUtil.indexOf(content, SdkConstants.NS_RESOURCES, 0) == -1) {
+        return Collections.emptyMap();
+      }
+      final HashMap<String, Void> ids = new HashMap<String, Void>();
+      
+      NanoXmlUtil.parse(new ByteArrayInputStream(inputData.getContent()), new NanoXmlUtil.IXMLBuilderAdapter() {
+        @Override
+        public void addAttribute(String key, String nsPrefix, String nsURI, String value, String type) throws Exception {
+          super.addAttribute(key, nsPrefix, nsURI, value, type);
+
+          if (AndroidResourceUtil.isIdDeclaration(value)) {
+            String id = AndroidResourceUtil.getResourceNameByReferenceText(value);
+            if (id != null) {
+              if (ids.isEmpty()) {
+                ids.put(MARKER, null);
               }
+              ids.put(id, null);
             }
           }
-        });
-        return ids;
-      }
-      return Collections.emptyMap();
+        }
+      });
+      return ids;
     }
   };
-
-  private static boolean canContainIdDeclaration(@NotNull String resType) {
-    return ArrayUtil.find(RES_TYPES_CONTAINING_ID_DECLARATIONS, resType) >= 0;
-  }
 
   @Override
   public ID<String, Void> getName() {
@@ -120,6 +106,6 @@ public class AndroidIdIndex extends ScalarIndexExtension<String> {
 
   @Override
   public int getVersion() {
-    return 1;
+    return 2;
   }
 }
