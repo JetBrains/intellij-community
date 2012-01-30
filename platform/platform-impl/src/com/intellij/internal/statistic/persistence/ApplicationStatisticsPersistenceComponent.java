@@ -19,7 +19,6 @@ package com.intellij.internal.statistic.persistence;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.internal.statistic.AbstractApplicationUsagesCollector;
 import com.intellij.internal.statistic.UsagesCollector;
-import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
@@ -29,6 +28,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
@@ -218,6 +218,7 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
   }
 
   private static void doPersistProjectUsages(@NotNull Project project) {
+    if (DumbService.isDumb(project)) return;
     for (UsagesCollector usagesCollector : Extensions.getExtensions(UsagesCollector.EP_NAME)) {
       if (usagesCollector instanceof AbstractApplicationUsagesCollector) {
         ((AbstractApplicationUsagesCollector)usagesCollector).persistProjectUsages(project);
