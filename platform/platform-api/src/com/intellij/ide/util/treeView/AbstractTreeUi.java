@@ -2362,7 +2362,7 @@ public class AbstractTreeUi {
 
     final ActionCallback done = new ActionCallback();
 
-    invokeLaterIfNeeded(new Runnable() {
+    final Runnable cancelUpdate = new Runnable() {
       public void run() {
         if (isReleased()) {
           done.setRejected();
@@ -2371,21 +2371,29 @@ public class AbstractTreeUi {
 
         if (myResettingToReadyNow.get()) {
           _getReady().notify(done);
-        } else if (isReady()) {
+        }
+        else if (isReady()) {
           resetToReadyNow();
           done.setDone();
-        } else {
+        }
+        else {
           if (isIdle() && hasPendingWork()) {
             resetToReadyNow();
             done.setDone();
-          } else {
+          }
+          else {
             _getReady().notify(done);
           }
         }
 
         maybeReady();
       }
-    }, false);
+    };
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      cancelUpdate.run();
+    } else {
+      invokeLaterIfNeeded(cancelUpdate, false);
+    }
 
     if (isEdt() || isPassthroughMode()) {
       maybeReady();

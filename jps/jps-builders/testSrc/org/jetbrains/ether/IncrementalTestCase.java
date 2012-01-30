@@ -59,7 +59,61 @@ public abstract class IncrementalTestCase extends TestCase {
       return s;
     }
   } 
-  
+
+  static {
+    Logger.setFactory(new Logger.Factory() {
+          @Override
+          public Logger getLoggerInstance(String category) {
+            final org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(category);
+
+            final boolean affectedLogger = category.equals("#org.jetbrains.jps.incremental.java.JavaBuilder") ||
+                                           category.equals("#org.jetbrains.jps.incremental.IncProjectBuilder");
+
+            return new Logger() {
+              @Override
+              public boolean isDebugEnabled() {
+                return affectedLogger;
+              }
+
+              @Override
+              public void debug(@NonNls String message) {
+              }
+
+              @Override
+              public void debug(@Nullable Throwable t) {
+              }
+
+              @Override
+              public void debug(@NonNls String message, @Nullable Throwable t) {
+              }
+
+              @Override
+              public void error(@NonNls String message, @Nullable Throwable t, @NonNls String... details) {
+              }
+
+              @Override
+              public void info(@NonNls String message) {
+                if (affectedLogger) {
+                  logger.info(stripper.strip(message));
+                }
+              }
+
+              @Override
+              public void info(@NonNls String message, @Nullable Throwable t) {
+              }
+
+              @Override
+              public void warn(@NonNls String message, @Nullable Throwable t) {
+              }
+
+              @Override
+              public void setLevel(Level level) {
+              }
+            };
+          }
+        });
+  }
+
   private static RootStripper stripper = new RootStripper();
   
   private final String groupName;
@@ -198,61 +252,6 @@ public abstract class IncrementalTestCase extends TestCase {
     properties.setProperty("log4j.appender.A1.layout.ConversionPattern", "%m%n");
 
     PropertyConfigurator.configure(properties);
-
-    Logger.setFactory(new Logger.Factory() {
-      @Override
-      public Logger getLoggerInstance(String category) {
-        final org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(category);
-
-        final boolean affectedLogger = category.equals("#org.jetbrains.jps.incremental.java.JavaBuilder") ||
-                                       category.equals("#org.jetbrains.jps.incremental.IncProjectBuilder");
-        
-        final String root = getWorkDir() + File.separator;
-        final int pos = root.length();
-
-        return new Logger() {
-          @Override
-          public boolean isDebugEnabled() {
-            return affectedLogger;
-          }
-
-          @Override
-          public void debug(@NonNls String message) {
-          }
-
-          @Override
-          public void debug(@Nullable Throwable t) {
-          }
-
-          @Override
-          public void debug(@NonNls String message, @Nullable Throwable t) {
-          }
-
-          @Override
-          public void error(@NonNls String message, @Nullable Throwable t, @NonNls String... details) {
-          }
-
-          @Override
-          public void info(@NonNls String message) {
-            if (affectedLogger) {
-              logger.info(stripper.strip(message));
-            }
-          }
-
-          @Override
-          public void info(@NonNls String message, @Nullable Throwable t) {
-          }
-
-          @Override
-          public void warn(@NonNls String message, @Nullable Throwable t) {
-          }
-
-          @Override
-          public void setLevel(Level level) {
-          }
-        };
-      }
-    });
   }
 
   public void doTest() throws Exception {

@@ -90,7 +90,7 @@ public class ViewStructureAction extends AnAction {
   }
   
   @Nullable
-  private static FileStructurePopup createPopup(final Editor editor, Project project, Navigatable navigatable, final FileEditor fileEditor) {
+  public static FileStructurePopup createPopup(final Editor editor, Project project, @Nullable Navigatable navigatable, final FileEditor fileEditor) {
     final StructureViewBuilder structureViewBuilder = fileEditor.getStructureViewBuilder();
     if (structureViewBuilder == null) return null;
     StructureView structureView = structureViewBuilder.createStructureView(fileEditor, project);

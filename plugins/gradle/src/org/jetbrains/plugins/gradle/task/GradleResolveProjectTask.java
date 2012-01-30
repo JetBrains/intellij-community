@@ -43,7 +43,12 @@ public class GradleResolveProjectTask extends AbstractGradleTask {
       return;
     }
     final GradleProjectStructureChangesModel model = myIntellijProject.getComponent(GradleProjectStructureChangesModel.class);
-    model.update(project);
+    if (model != null) {
+      // This task may be called during the 'import from gradle' processing, hence, no project-level IoC is up.
+      // Model update is necessary for the correct tool window project structure diff showing but we don't have
+      // gradle tool window on this stage.
+      model.update(project);
+    }
   }
 
   @Nullable

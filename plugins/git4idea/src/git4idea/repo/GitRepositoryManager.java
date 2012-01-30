@@ -33,6 +33,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import static git4idea.GitUtil.sortRepositories;
+
 /**
  * GitRepositoryManager initializes and stores {@link GitRepository GitRepositories} for Git roots defined in the project.
  * @author Kirill Likhodedov
@@ -152,10 +154,10 @@ public final class GitRepositoryManager extends AbstractProjectComponent impleme
    * @return all repositories tracked by the manager.
    */
   @NotNull
-  public Collection<GitRepository> getRepositories() {
+  public List<GitRepository> getRepositories() {
     try {
       REPO_LOCK.readLock().lock();
-      return myRepositories.values();
+      return sortRepositories(myRepositories.values());
     }
     finally {
       REPO_LOCK.readLock().unlock();

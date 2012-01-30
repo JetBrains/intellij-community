@@ -18,6 +18,7 @@ package com.intellij.execution.ui.layout.impl;
 
 import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.layout.*;
+import com.intellij.execution.ui.layout.actions.CloseViewAction;
 import com.intellij.execution.ui.layout.actions.RestoreViewAction;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
@@ -56,6 +57,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -233,6 +235,19 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
 
         if (oldSelection != null) {
           getGridFor(oldSelection).processRemoveFromUi();
+        }
+      }
+    });
+    myTabs.addTabMouseListener(new MouseAdapter() {
+      @Override
+      public void mousePressed(MouseEvent e) {
+        if (UIUtil.isCloseClick(e)) {
+          final TabInfo tabInfo = myTabs.findInfo(e);
+          final GridImpl grid = getGridFor(tabInfo);
+          final Content[] contents = grid != null ? CONTENT_KEY.getData(grid) : null;
+          if (contents != null && CloseViewAction.isEnabled(contents)) {
+            CloseViewAction.perform(RunnerContentUi.this, contents[0]);
+          }
         }
       }
     });
