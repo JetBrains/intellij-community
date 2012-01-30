@@ -82,14 +82,36 @@ public class SystemResourceManager extends ResourceManager {
       LOG.error("Unknown resource type " + resourceType);
       return Collections.emptyList();
     }
-    final Set<String> result = new HashSet<String>();
-    final ResourceEntry typeMarkerEntry = AndroidValueResourcesIndex.createTypeMarkerEntry(resourceType);
-    final List<Set<ResourceEntry>> values = FileBasedIndex.getInstance()
-      .getValues(AndroidValueResourcesIndex.INDEX_ID, typeMarkerEntry, GlobalSearchScope.moduleWithLibrariesScope(myModule));
 
-    for (Set<ResourceEntry> entrySet : values) {
+    final FileBasedIndex index = FileBasedIndex.getInstance();
+    final ResourceEntry typeMarkerEntry = AndroidValueResourcesIndex.createTypeMarkerEntry(resourceType);
+    final GlobalSearchScope scope = GlobalSearchScope.allScope(myModule.getProject());
+    
+    final Map<VirtualFile, Set<ResourceEntry>> file2resourceSet = new HashMap<VirtualFile, Set<ResourceEntry>>();
+
+    for (Set<ResourceEntry> entrySet : index.getValues(AndroidValueResourcesIndex.INDEX_ID, typeMarkerEntry, scope)) {
       for (ResourceEntry entry : entrySet) {
-        result.add(entry.getName());
+        final Collection<VirtualFile> files = index.getContainingFiles(AndroidValueResourcesIndex.INDEX_ID, entry, scope);
+
+        for (VirtualFile file : files) {
+          Set<ResourceEntry> resourcesInFile = file2resourceSet.get(file);
+          
+          if (resourcesInFile == null) {
+            resourcesInFile = new HashSet<ResourceEntry>();
+            file2resourceSet.put(file, resourcesInFile);
+          }
+          resourcesInFile.add(entry);
+        }
+      }
+    }
+    final Set<String> result = new HashSet<String>();
+    final Set<VirtualFile> resourceFiles = getAllResourceFiles();
+
+    for (Map.Entry<VirtualFile, Set<ResourceEntry>> entry : file2resourceSet.entrySet()) {
+      if (resourceFiles.contains(entry.getKey())) {
+        for (ResourceEntry resourceEntry : entry.getValue()) {
+          result.add(resourceEntry.getName());
+        }
       }
     }
     return result;
@@ -159,8 +181,7 @@ public class SystemResourceManager extends ResourceManager {
 
     final Collection<VirtualFile> files = FileBasedIndex.getInstance()
       .getContainingFiles(AndroidValueResourcesIndex.INDEX_ID, new ResourceEntry(resourceType, resourceName),
-                          GlobalSearchScope.moduleWithLibrariesScope(
-                            myModule));
+                          GlobalSearchScope.allScope(myModule.getProject()));
 
     if (files.size() == 0) {
       return Collections.emptyList();

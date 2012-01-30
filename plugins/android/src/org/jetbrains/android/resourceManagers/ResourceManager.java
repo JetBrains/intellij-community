@@ -188,7 +188,7 @@ public abstract class ResourceManager {
   }
 
   @NotNull
-  private Set<VirtualFile> getAllResourceFiles() {
+  protected Set<VirtualFile> getAllResourceFiles() {
     final Set<VirtualFile> files = new HashSet<VirtualFile>();
 
     for (VirtualFile valueResourceDir : getResourceSubdirs("values")) {
