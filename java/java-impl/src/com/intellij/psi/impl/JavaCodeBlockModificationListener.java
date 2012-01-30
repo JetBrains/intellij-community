@@ -68,7 +68,9 @@ public class JavaCodeBlockModificationListener implements PsiTreeChangePreproces
   private void processChange(final PsiElement parent, final PsiElement child1, final PsiElement child2) {
     try {
       if (!isInsideCodeBlock(parent)) {
-        if (parent != null && isClassOwner(parent.getContainingFile()) || isClassOwner(child1) || isClassOwner(child2) || isSourceDir(parent)) {
+        if (parent != null && isClassOwner(parent.getContainingFile()) ||
+            isClassOwner(child1) || isClassOwner(child2) || isSourceDir(parent) ||
+            (parent != null && isClassOwner(parent.getParent()))) {
           myModificationTracker.incCounter();
         }
         else {
