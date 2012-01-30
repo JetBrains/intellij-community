@@ -102,7 +102,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   private final JavaCodeStyleManager myStyleManager;
   private int myCurrentEntryIndex;
   private boolean myHasMissortedImports;
-  private final ImplicitUsageProvider[] myImplicitUsageProviders;
+  private static final ImplicitUsageProvider[] ourImplicitUsageProviders = Extensions.getExtensions(ImplicitUsageProvider.EP_NAME);
   private UnusedDeclarationInspection myDeadCodeInspection;
   private UnusedSymbolLocalInspection myUnusedSymbolInspection;
   private HighlightDisplayKey myUnusedSymbolKey;
@@ -124,8 +124,6 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
     myStyleManager = JavaCodeStyleManager.getInstance(myProject);
     myCurrentEntryIndex = -1;
-
-    myImplicitUsageProviders = Extensions.getExtensions(ImplicitUsageProvider.EP_NAME);
   }
 
   @Override
@@ -346,9 +344,9 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   }
 
 
-  private boolean isImplicitUsage(final PsiModifierListOwner element, ProgressIndicator progress) {
+  public static boolean isImplicitUsage(final PsiModifierListOwner element, ProgressIndicator progress) {
     if (UnusedSymbolLocalInspection.isInjected(element)) return true;
-    for (ImplicitUsageProvider provider : myImplicitUsageProviders) {
+    for (ImplicitUsageProvider provider : ourImplicitUsageProviders) {
       progress.checkCanceled();
       if (provider.isImplicitUsage(element)) {
         return true;
@@ -358,8 +356,8 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     return false;
   }
 
-  private boolean isImplicitRead(final PsiVariable element, ProgressIndicator progress) {
-    for(ImplicitUsageProvider provider: myImplicitUsageProviders) {
+  private static boolean isImplicitRead(final PsiVariable element, ProgressIndicator progress) {
+    for(ImplicitUsageProvider provider: ourImplicitUsageProviders) {
       progress.checkCanceled();
       if (provider.isImplicitRead(element)) {
         return true;
@@ -368,8 +366,8 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     return UnusedSymbolLocalInspection.isInjected(element);
   }
 
-  private boolean isImplicitWrite(final PsiVariable element, ProgressIndicator progress) {
-    for(ImplicitUsageProvider provider: myImplicitUsageProviders) {
+  private static boolean isImplicitWrite(final PsiVariable element, ProgressIndicator progress) {
+    for(ImplicitUsageProvider provider: ourImplicitUsageProviders) {
       progress.checkCanceled();
       if (provider.isImplicitWrite(element)) {
         return true;
