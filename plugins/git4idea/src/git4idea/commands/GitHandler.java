@@ -508,8 +508,8 @@ public abstract class GitHandler {
   public void setSilent(final boolean silent) {
     checkNotStarted();
     mySilent = silent;
-    setStderrSuppressed(true);
-    setStdoutSuppressed(true);
+    setStderrSuppressed(silent);
+    setStdoutSuppressed(silent);
   }
 
   /**
