@@ -65,12 +65,9 @@ class GitBranchPopup  {
   }
 
   /**
-   *
-   * @param project
    * @param currentRepository Current repository, which means the repository of the currently open or selected file.
    *                          In the case of synchronized branch operations current repository matter much less, but sometimes is used,
    *                          for example, it is preselected in the repositories combobox in the compare branches dialog.
-   * @return
    */
   static GitBranchPopup getInstance(@NotNull Project project, @NotNull GitRepository currentRepository) {
     return new GitBranchPopup(project, currentRepository);
