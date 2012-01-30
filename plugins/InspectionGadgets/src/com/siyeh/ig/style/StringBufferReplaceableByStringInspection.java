@@ -66,7 +66,8 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
     public String getName() {
       if (isStringBuilder) {
         return InspectionGadgetsBundle.message("string.builder.replaceable.by.string.quickfix");
-      } else {
+      }
+      else {
         return InspectionGadgetsBundle.message("string.buffer.replaceable.by.string.quickfix");
       }
     }
@@ -110,20 +111,16 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
         final PsiNewExpression newExpression = (PsiNewExpression)initializer;
         final PsiExpressionList argumentList = newExpression.getArgumentList();
         final PsiExpression[] arguments = argumentList.getExpressions();
-        if (arguments.length == 0) {
-          result.append("\"\"");
-        } else if (arguments.length == 1) {
+        if (arguments.length == 1) {
           final PsiExpression argument = arguments[0];
           final PsiType type = argument.getType();
-          if (PsiType.INT.equals(type)) {
-            result.append("\"\"");
-          } else {
+          if (!PsiType.INT.equals(type)) {
             result.append(argument.getText());
           }
-        } else {
-          return null;
         }
-      } else if (initializer instanceof PsiMethodCallExpression) {
+        return result;
+      }
+      else if (initializer instanceof PsiMethodCallExpression) {
         final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)initializer;
         final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
         final PsiExpression qualifier = methodExpression.getQualifierExpression();
@@ -131,20 +128,34 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
         if (result == null) {
           return null;
         }
-        if (!"toString".equals(methodExpression.getReferenceName())) {
+        if ("toString".equals(methodExpression.getReferenceName())) {
+          if (result.length() == 0) {
+            result.append("\"\"");
+          }
+        }
+        else {
           final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
           final PsiExpression[] arguments = argumentList.getExpressions();
           if (arguments.length != 1) {
             return null;
           }
           final PsiExpression argument = arguments[0];
-          result.append('+');
-          result.append(argument.getText());
+          if (result.length() != 0) {
+            result.append('+').append(argument.getText());
+          }
+          else {
+            final PsiType type = argument.getType();
+            if (type instanceof PsiPrimitiveType) {
+              result.append("String.valueOf(").append(argument.getText()).append(")");
+            }
+            else {
+              result.append(argument.getText());
+            }
+          }
         }
-      } else {
-        return null;
+        return result;
       }
-      return result;
+      return null;
     }
   }
 
@@ -261,7 +272,7 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
       }
       completeExpression = grandParent;
       if (found) {
-        return (PsiExpression) completeExpression;
+        return (PsiExpression)completeExpression;
       }
     }
     return null;

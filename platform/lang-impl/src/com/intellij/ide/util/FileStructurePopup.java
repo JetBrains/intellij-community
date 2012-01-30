@@ -149,6 +149,7 @@ public class FileStructurePopup implements Disposable {
     myTree = new JBTreeWithHintProvider(new DefaultMutableTreeNode(myTreeStructure.getRootElement())) {
       @Override
       protected PsiElement getPsiElementForHint(Object selectedValue) {
+        //noinspection ConstantConditions
         return getPsi((FilteringTreeStructure.FilteringNode)((DefaultMutableTreeNode)selectedValue).getUserObject());
       }
     };
@@ -218,12 +219,13 @@ public class FileStructurePopup implements Disposable {
         return current.isEmpty() ? null : findClosestTo(myInitialPsiElement, current);
       }
 
+      @Nullable
       private Object findClosestTo(PsiElement path, ArrayList<ObjectWithWeight> paths) {
         if (path == null || myInitialPsiElement == null) {
           return paths.get(0).node;
         }
         final Set<PsiElement> parents = getAllParents(myInitialPsiElement);
-        Object cur = paths.get(0).node;
+        ArrayList<TreePath> cur = new ArrayList<TreePath>();
         int max = -1;
         for (ObjectWithWeight p : paths) {
           final Object last = ((TreePath)p.node).getLastPathComponent();
@@ -238,14 +240,21 @@ public class FileStructurePopup implements Disposable {
             final int size = ContainerUtil.intersection(parents, elements).size();
             if (size > max) {
               max = size;
-              cur = p.node;
-            } else if (size == max && size == parents.size()) {
-              cur = p.node;
+              cur.clear();
+              cur.add((TreePath)p.node);
+            } else if (size == max) {
+              cur.add((TreePath)p.node);
             }
           }
         }
 
-        return cur;
+        Collections.sort(cur, new Comparator<TreePath>() {
+          @Override
+          public int compare(TreePath o1, TreePath o2) {
+            return o2.getPathCount() - o1.getPathCount();
+          }
+        });
+        return cur.isEmpty() ? null : cur.get(0);
       }
 
       class ObjectWithWeight {
@@ -285,7 +294,7 @@ public class FileStructurePopup implements Disposable {
     mySpeedSearch.setComparator(new SpeedSearchComparator(false, true));
 
     final FileStructurePopupFilter filter = new FileStructurePopupFilter();
-    myFilteringStructure = new FilteringTreeStructure(filter, myTreeStructure, false);
+    myFilteringStructure = new FilteringTreeStructure(filter, myTreeStructure, ApplicationManager.getApplication().isUnitTestMode());
     myAbstractTreeBuilder = new FilteringTreeBuilder(myTree, filter, myFilteringStructure, null) {
       @Override
       protected boolean validateNode(Object child) {
@@ -385,35 +394,37 @@ public class FileStructurePopup implements Disposable {
         });
       }
     });
-    final Alarm alarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, myPopup);
-    alarm.addRequest(new Runnable() {
-      String filter = "";
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      final Alarm alarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, myPopup);
+      alarm.addRequest(new Runnable() {
+        String filter = "";
 
-      @Override
-      public void run() {
-        alarm.cancelAllRequests();
-        String prefix = mySpeedSearch.getEnteredPrefix();
-        myTree.getEmptyText().setText(StringUtil.isEmpty(prefix) ? "Nothing to show" : "Can't find '" + prefix + "'");
-        if (prefix == null) prefix = "";
+        @Override
+        public void run() {
+          alarm.cancelAllRequests();
+          String prefix = mySpeedSearch.getEnteredPrefix();
+          myTree.getEmptyText().setText(StringUtil.isEmpty(prefix) ? "Nothing to show" : "Can't find '" + prefix + "'");
+          if (prefix == null) prefix = "";
 
-        if (!filter.equals(prefix)) {
-          filter = prefix;
-          myAbstractTreeBuilder.refilter(null, false, false).doWhenProcessed(new Runnable() {
-            @Override
-            public void run() {
-              myTree.repaint();
-              //if (mySpeedSearch.isPopupActive()) {
-              //  mySpeedSearch.refreshSelection();
-              //}
-            }
-          });
+          if (!filter.equals(prefix)) {
+            filter = prefix;
+            myAbstractTreeBuilder.refilter(null, false, false).doWhenProcessed(new Runnable() {
+              @Override
+              public void run() {
+                myTree.repaint();
+                //if (mySpeedSearch.isPopupActive()) {
+                //  mySpeedSearch.refreshSelection();
+                //}
+              }
+            });
+          }
+          alarm.addRequest(this, 300);
         }
-        alarm.addRequest(this, 300);
-      }
-    }, 300);
+      }, 300);
+    }
   }
 
-  private void selectPsiElement(PsiElement element) {
+  public void selectPsiElement(PsiElement element) {
     Set<PsiElement> parents = getAllParents(element);
 
     FilteringTreeStructure.FilteringNode node = (FilteringTreeStructure.FilteringNode)myAbstractTreeBuilder.getRootElement();
@@ -478,7 +489,7 @@ public class FileStructurePopup implements Disposable {
   }
 
   @Nullable
-  protected PsiElement getCurrentElement(@Nullable final PsiFile psiFile) {
+  public PsiElement getCurrentElement(@Nullable final PsiFile psiFile) {
     if (psiFile == null) return null;
 
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
@@ -716,6 +727,18 @@ public class FileStructurePopup implements Disposable {
 
   public void setTitle(String title) {
     myTitle = title;
+  }
+
+  public Tree getTree() {
+    return myTree;
+  }
+
+  public TreeSpeedSearch getSpeedSearch() {
+    return mySpeedSearch;
+  }
+
+  public FilteringTreeBuilder getTreeBuilder() {
+    return myAbstractTreeBuilder;
   }
 
   private class FileStructurePopupFilter implements ElementFilter {

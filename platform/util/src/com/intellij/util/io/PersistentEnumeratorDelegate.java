@@ -16,7 +16,6 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.Forceable;
-import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Closeable;
@@ -32,7 +31,7 @@ public class PersistentEnumeratorDelegate<Data> implements Closeable, Forceable 
                    new PersistentEnumerator<Data>(file, dataDescriptor, initialSize);
   }
 
-  private boolean useBtree() {
+  static boolean useBtree() {
     String property = System.getProperty("idea.use.btree");
     return !"false".equals(property);
   }
