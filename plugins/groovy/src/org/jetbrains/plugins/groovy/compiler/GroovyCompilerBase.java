@@ -25,7 +25,6 @@ import com.intellij.compiler.impl.javaCompiler.OutputItemImpl;
 import com.intellij.compiler.make.CacheCorruptedException;
 import com.intellij.compiler.make.DependencyCache;
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
@@ -165,11 +164,10 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
     parameters.setMainClass(GroovycRunner.class.getName());
 
     try {
-      File fileWithParameters = FileUtil.createTempFile("toCompile", "");
       final VirtualFile finalOutputDir = getMainOutput(compileContext, module, tests);
       LOG.assertTrue(finalOutputDir != null, "No output directory for module " + module.getName() + (tests ? " tests" : " production"));
       final Charset ideCharset = EncodingProjectManager.getInstance(myProject).getDefaultCharset();
-      String encoding = !Comparing.equal(CharsetToolkit.getDefaultSystemCharset(), ideCharset) ? ideCharset.name() : null;
+      String encoding = ideCharset != null && !Comparing.equal(CharsetToolkit.getDefaultSystemCharset(), ideCharset) ? ideCharset.name() : null;
       Set<String> paths2Compile = ContainerUtil.map2Set(toCompile, new Function<VirtualFile, String>() {
         @Override
         public String fun(VirtualFile file) {
@@ -186,8 +184,8 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
         }
       }
 
-      GroovycOSProcessHandler
-        .fillFileWithGroovycParameters(fileWithParameters, outputDir.getPath(), paths2Compile, FileUtil.toSystemDependentName(finalOutputDir.getPath()),
+      File fileWithParameters = GroovycOSProcessHandler
+        .fillFileWithGroovycParameters(outputDir.getPath(), paths2Compile, FileUtil.toSystemDependentName(finalOutputDir.getPath()),
                                        class2Src, encoding, patchers);
 
       parameters.getProgramParametersList().add(forStubs ? "stubs" : "groovyc");
@@ -197,23 +195,18 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
       LOG.error(e);
     }
 
-    GroovycOSProcessHandler processHandler;
 
     try {
-      final GeneralCommandLine commandLine = JdkUtil.setupJVMCommandLine(exePath, parameters, true);
-      processHandler = new GroovycOSProcessHandler(commandLine.createProcess(), commandLine.getCommandLineString()) {
+      Process process = JdkUtil.setupJVMCommandLine(exePath, parameters, true).createProcess();
+      GroovycOSProcessHandler processHandler = GroovycOSProcessHandler.runGroovyc(process, new Consumer<String>() {
         @Override
-        protected void updateStatus(@Nullable String status) {
-          compileContext.getProgressIndicator().setText(status == null ? GROOVY_COMPILER_IN_OPERATION : status);
+        public void consume(String s) {
+          compileContext.getProgressIndicator().setText(s);
         }
-      };
-
-      processHandler.startNotify();
-      processHandler.waitFor();
+      });
 
       final List<VirtualFile> toRecompile = new ArrayList<VirtualFile>();
-      Set<File> toRecompileFiles = processHandler.getToRecompileFiles();
-      for (File toRecompileFile : toRecompileFiles) {
+      for (File toRecompileFile : processHandler.getToRecompileFiles()) {
         final VirtualFile vFile = LocalFileSystem.getInstance().findFileByIoFile(toRecompileFile);
         LOG.assertTrue(vFile != null);
         toRecompile.add(vFile);

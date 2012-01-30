@@ -20,7 +20,9 @@ import com.intellij.execution.process.BaseOSProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.groovy.compiler.rt.GroovycRunner;
@@ -42,9 +44,11 @@ public class GroovycOSProcessHandler extends BaseOSProcessHandler {
   private final StringBuffer stdErr = new StringBuffer();
 
   private static final Logger LOG = Logger.getInstance("org.jetbrains.jps.incremental.groovy.GroovycOSProcessHandler");
+  private final Consumer<String> myStatusUpdater;
 
-  public GroovycOSProcessHandler(Process process, String s) {
-    super(process, s, null);
+  private GroovycOSProcessHandler(Process process, Consumer<String> statusUpdater) {
+    super(process, null, null);
+    myStatusUpdater = statusUpdater;
   }
 
   public void notifyTextAvailable(final String text, final Key outputType) {
@@ -69,7 +73,9 @@ public class GroovycOSProcessHandler extends BaseOSProcessHandler {
 
   private final StringBuffer outputBuffer = new StringBuffer();
 
-  protected void updateStatus(@Nullable String status) { }
+  protected void updateStatus(@Nullable String status) {
+    myStatusUpdater.consume(status == null ? GROOVY_COMPILER_IN_OPERATION : status);
+  }
 
   private void parseOutput(String text) {
     final String trimmed = text.trim();
@@ -194,11 +200,12 @@ public class GroovycOSProcessHandler extends BaseOSProcessHandler {
     return stdErr;
   }
 
-  public static void fillFileWithGroovycParameters(File tempFile,
-                                                   final String outputDir,
+  public static File fillFileWithGroovycParameters(final String outputDir,
                                                    final Collection<String> changedSources,
                                                    String finalOutput,
                                                    Map<String, String> class2Src, @Nullable final String encoding, List<String> patchers) throws IOException {
+    File tempFile = FileUtil.createTempFile("ideaGroovyToCompile", ".txt", true);
+
     final Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(tempFile)));
     try {
       for (String file : changedSources) {
@@ -233,6 +240,15 @@ public class GroovycOSProcessHandler extends BaseOSProcessHandler {
     finally {
       writer.close();
     }
+    return tempFile;
+  }
+
+  public static GroovycOSProcessHandler runGroovyc(Process process, Consumer<String> updater) {
+    GroovycOSProcessHandler processHandler = new GroovycOSProcessHandler(process, updater);
+
+    processHandler.startNotify();
+    processHandler.waitFor();
+    return processHandler;
   }
 
   public static class OutputItem {
