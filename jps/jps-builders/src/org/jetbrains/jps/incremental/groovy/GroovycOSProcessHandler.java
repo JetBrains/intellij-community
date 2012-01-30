@@ -181,6 +181,21 @@ public class GroovycOSProcessHandler extends BaseOSProcessHandler {
     return toRecompileFiles;
   }
 
+  public boolean shouldRetry() {
+    if (getProcess().exitValue() != 0) {
+      return true;
+    }
+    for (CompilerMessage message : compilerMessages) {
+      if (message.getKind() == BuildMessage.Kind.ERROR) {
+        return true;
+      }
+    }
+    if (getStdErr().length() > 0) {
+      return true;
+    }
+    return false;
+  }
+
   public List<CompilerMessage> getCompilerMessages() {
     ArrayList<CompilerMessage> messages = new ArrayList<CompilerMessage>(compilerMessages);
     final StringBuffer unparsedBuffer = getStdErr();
