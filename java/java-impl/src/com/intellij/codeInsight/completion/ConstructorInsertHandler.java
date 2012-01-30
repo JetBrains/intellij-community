@@ -72,7 +72,8 @@ class ConstructorInsertHandler implements InsertHandler<LookupElementDecorator<L
     if (delegate instanceof PsiTypeLookupItem) {
       fillTypeArgs = !isRawTypeExpected(context, (PsiTypeLookupItem)delegate) &&
                      psiClass.getTypeParameters().length > 0 &&
-                     ((PsiTypeLookupItem)delegate).calcGenerics(position).isEmpty();
+                     ((PsiTypeLookupItem)delegate).calcGenerics(position).isEmpty() &&
+                     context.getCompletionChar() != '(';
       delegate.handleInsert(context);
       PostprocessReformattingAspect.getInstance(context.getProject()).doPostponedFormatting(context.getFile().getViewProvider());
     }
@@ -99,7 +100,7 @@ class ConstructorInsertHandler implements InsertHandler<LookupElementDecorator<L
       editor.getDocument().insertString(offset, " {}");
       editor.getCaretModel().moveToOffset(offset + 2);
 
-      if (fillTypeArgs && promptTypeArgs(context, context.getOffset(insideRef))) return;
+      if (fillTypeArgs && JavaCompletionUtil.promptTypeArgs(context, context.getOffset(insideRef))) return;
 
       context.setLaterRunnable(generateAnonymousBody(editor, context.getFile()));
     }
@@ -116,7 +117,7 @@ class ConstructorInsertHandler implements InsertHandler<LookupElementDecorator<L
       if (mySmart) {
         FeatureUsageTracker.getInstance().triggerFeatureUsed(JavaCompletionFeatures.AFTER_NEW);
       }
-      if (fillTypeArgs && promptTypeArgs(context, context.getOffset(insideRef))) return;
+      if (fillTypeArgs && JavaCompletionUtil.promptTypeArgs(context, context.getOffset(insideRef))) return;
     }
   }
 
@@ -134,23 +135,6 @@ class ConstructorInsertHandler implements InsertHandler<LookupElementDecorator<L
       }
     }
     return false;
-  }
-
-  static boolean promptTypeArgs(InsertionContext context, int offset) {
-    if (offset < 0) {
-      return false;
-    }
-
-    OffsetKey key = context.trackOffset(offset, false);
-    PostprocessReformattingAspect.getInstance(context.getProject()).doPostponedFormatting();
-    offset = context.getOffset(key);
-    if (offset < 0) {
-      return false;
-    }
-
-    context.getDocument().insertString(offset, "<>");
-    context.getEditor().getCaretModel().moveToOffset(offset + 1);
-    return true;
   }
 
   public static boolean insertParentheses(InsertionContext context,
