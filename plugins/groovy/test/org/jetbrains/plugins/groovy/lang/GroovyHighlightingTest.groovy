@@ -452,6 +452,10 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
     doTest(new GroovyAssignabilityCheckInspection(), new GroovyUnresolvedAccessInspection());
   }
 
+  public void testBuilderMembersAreNotUnresolved() throws Exception {
+    doTest(new GroovyUnresolvedAccessInspection());
+  }
+
   public void testUnknownVarInArgList() {
     doTest(new GroovyAssignabilityCheckInspection());
   }
