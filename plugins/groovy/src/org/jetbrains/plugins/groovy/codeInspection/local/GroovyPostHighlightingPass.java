@@ -54,6 +54,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
@@ -124,6 +125,10 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
                 unusedDeclarations.add(
                   PostHighlightingPass.createUnusedSymbolInfo(nameId, (method.isConstructor() ? "Constructor" : "Method") +" " + name + " is unused", HighlightInfoType.UNUSED_SYMBOL));
               }
+            }
+            else if (element instanceof GrField && PostHighlightingPass.isFieldUnused((GrField)element, progress, usageHelper)) {
+              unusedDeclarations.add(
+                PostHighlightingPass.createUnusedSymbolInfo(nameId, "Property " + name + " is unused", HighlightInfoType.UNUSED_SYMBOL));
             }
           }
         }

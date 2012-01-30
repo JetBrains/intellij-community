@@ -447,13 +447,20 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     else if (isImplicitUsage(field, progress)) {
       return null;
     }
-    else if (!myRefCountHolder.isReferenced(field) && weAreSureThereAreNoUsages(field, progress, helper)) {
-      if (field instanceof PsiEnumConstant && isEnumValuesMethodUsed(field, progress, helper)) {
-        return null;
-      }
+    else if (isFieldUnused(field, progress, helper)) {
       return formatUnusedSymbolHighlightInfo("field.is.not.used", field, "fields", myDeadCodeKey, myDeadCodeInfoType);
     }
     return null;
+  }
+
+  public static boolean isFieldUnused(PsiField field, ProgressIndicator progress, GlobalUsageHelper helper) {
+    if (helper.isLocallyUsed(field) || !weAreSureThereAreNoUsages(field, progress, helper)) {
+      return false;
+    }
+    if (field instanceof PsiEnumConstant && isEnumValuesMethodUsed(field, progress, helper)) {
+      return false;
+    }
+    return true;
   }
 
   private HighlightInfo suggestionsToMakeFieldUsed(final PsiField field, final PsiIdentifier identifier, final String message) {
