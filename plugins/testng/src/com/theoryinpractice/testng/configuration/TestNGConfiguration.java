@@ -29,6 +29,8 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.junit.RefactoringListeners;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.SourceScope;
+import com.intellij.execution.util.JavaParametersUtil;
+import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
@@ -338,6 +340,8 @@ public class TestNGConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
       }
     }
     JavaRunConfigurationExtensionManager.checkConfigurationIsValid(this);
+    ProgramParametersUtil.checkWorkingDirectoryExist(this, getProject(), getConfigurationModule().getModule());
+    JavaParametersUtil.checkAlternativeJRE(this);
     //TODO add various checks here
   }
 

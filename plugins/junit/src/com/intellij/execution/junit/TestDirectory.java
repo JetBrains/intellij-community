@@ -16,16 +16,19 @@
 package com.intellij.execution.junit;
 
 import com.intellij.execution.CantRunException;
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.testframework.SourceScope;
+import com.intellij.execution.util.JavaParametersUtil;
+import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaDirectoryService;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopes;
 
@@ -80,14 +83,8 @@ class TestDirectory extends TestPackage {
 
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
-    if (myConfiguration.isAlternativeJrePathEnabled()) {
-      if (myConfiguration.getAlternativeJrePath() == null ||
-          myConfiguration.getAlternativeJrePath().length() == 0 ||
-          !JavaSdk.checkForJre(myConfiguration.getAlternativeJrePath())) {
-        throw new RuntimeConfigurationWarning(
-          ExecutionBundle.message("jre.path.is.not.valid.jre.home.error.mesage", myConfiguration.getAlternativeJrePath()));
-      }
-    }
+    JavaParametersUtil.checkAlternativeJRE(myConfiguration);
+    ProgramParametersUtil.checkWorkingDirectoryExist(myConfiguration, myConfiguration.getProject(), myConfiguration.getConfigurationModule().getModule());
     final String dirName = myConfiguration.getPersistentData().getDirName();
     if (dirName == null || dirName.isEmpty()) {
       throw new RuntimeConfigurationError("Directory is not specified");
