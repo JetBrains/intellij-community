@@ -13,7 +13,6 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.actions.DocstringQuickFix;
 import com.jetbrains.python.actions.PySuppressInspectionFix;
-import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.documentation.EpydocString;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.SphinxDocString;
@@ -73,9 +72,6 @@ public class PyDocstringInspection extends PyInspection {
     }
 
     private void checkDocString(PyDocStringOwner node) {
-      if (PydevConsoleRunner.isInPydevConsole(node)) {
-        return;
-      }
       final PyStringLiteralExpression docStringExpression = node.getDocStringExpression();
       if (docStringExpression == null) {
         PsiElement marker = null;

@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -17,6 +18,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.IndexingDataKeys;
 import com.jetbrains.python.*;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
+import com.jetbrains.python.inspections.PythonVisitorFilter;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.resolve.VariantsProcessor;
@@ -115,12 +117,27 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof PyElementVisitor) {
-      ((PyElementVisitor)visitor).visitPyFile(this);
+    if (isAcceptedFor(visitor.getClass())) {
+      if (visitor instanceof PyElementVisitor) {
+        ((PyElementVisitor)visitor).visitPyFile(this);
+      }
+      else {
+        super.accept(visitor);
+      }
+    }
+  }
+
+  private boolean isAcceptedFor(@NotNull Class visitorClass) {
+    final FileViewProvider viewProvider = getViewProvider();
+    final Language lang;
+    if (viewProvider instanceof TemplateLanguageFileViewProvider) {
+      lang = viewProvider.getBaseLanguage();
     }
     else {
-      super.accept(visitor);
+      lang = getLanguage();
     }
+    final PythonVisitorFilter filter = PythonVisitorFilter.INSTANCE.forLanguage(lang);
+    return filter == null || filter.isSupported(visitorClass, this);
   }
 
   private final Key<Set<PyFile>> PROCESSED_FILES = Key.create("PyFileImpl.processDeclarations.processedFiles");
