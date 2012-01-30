@@ -104,7 +104,7 @@ public class GitCheckoutNewBranchOperation extends GitBranchOperation {
     GitCompoundResult deleteResult = new GitCompoundResult(myProject);
     Collection<GitRepository> repositories = getSuccessfulRepositories();
     for (GitRepository repository : repositories) {
-      GitCommandResult result = Git.checkout(repository, myPreviousBranch, null);
+      GitCommandResult result = Git.checkout(repository, myPreviousBranch, null, true);
       checkoutResult.append(repository, result);
       if (result.success()) {
         deleteResult.append(repository, Git.branchDelete(repository, myNewBranchName, false));
