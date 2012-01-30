@@ -467,7 +467,7 @@ public class CompileDriver {
         final JpsRemoteProto.Message.Response.BuildEvent.Type eventType = event.getEventType();
         switch (eventType) {
           case BUILD_STARTED:
-            compileContext.getProgressIndicator().setText("Compilation started");
+            //compileContext.getProgressIndicator().setText("Compilation started");
             break;
           case FILES_GENERATED:
             final List<JpsRemoteProto.Message.Response.BuildEvent.GeneratedFile> generated = event.getGeneratedFilesList();

@@ -88,8 +88,13 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
       if(myDebuggerStateManager.myDebuggerSession == session) {
         myDebuggerStateManager.fireStateChanged(newContext, event);
       }
-
-      if(event == DebuggerSession.EVENT_DISPOSE) {
+      if (event == DebuggerSession.EVENT_ATTACHED) {
+        myDispatcher.getMulticaster().sessionAttached(session);
+      }
+      else if (event == DebuggerSession.EVENT_DETACHED) {
+        myDispatcher.getMulticaster().sessionDetached(session);
+      }
+      else if(event == DebuggerSession.EVENT_DISPOSE) {
         dispose(session);
         if(myDebuggerStateManager.myDebuggerSession == session) {
           myDebuggerStateManager.setState(DebuggerContextImpl.EMPTY_CONTEXT, DebuggerSession.STATE_DISPOSED, DebuggerSession.EVENT_DISPOSE, null);
