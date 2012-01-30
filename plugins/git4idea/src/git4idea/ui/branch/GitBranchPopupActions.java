@@ -33,7 +33,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -56,7 +55,7 @@ class GitBranchPopupActions {
     DefaultActionGroup popupGroup = new DefaultActionGroup(null, false);
 
     popupGroup.addAction(new CurrentBranchAction(GitBranchUiUtil.getDisplayableBranchText(myRepository), "in root " + GitUIUtil.getShortRepositoryName(myRepository)));
-    popupGroup.addAction(new NewBranchAction(myProject, Collections.singleton(myRepository), myRepository));
+    popupGroup.addAction(new NewBranchAction(myProject, Collections.singletonList(myRepository), myRepository));
     popupGroup.addAction(new CheckoutRevisionActions(myProject, myRepository));
 
     if (toInsert != null) {
@@ -68,7 +67,7 @@ class GitBranchPopupActions {
     Collections.sort(localBranches);
     for (GitBranch localBranch : localBranches) {
       if (!localBranch.equals(myRepository.getCurrentBranch())) { // don't show current branch in the list
-        popupGroup.add(new LocalBranchActions(myProject, Collections.singleton(myRepository), localBranch.getName(), myRepository));
+        popupGroup.add(new LocalBranchActions(myProject, Collections.singletonList(myRepository), localBranch.getName(), myRepository));
       }
     }
 
@@ -76,7 +75,7 @@ class GitBranchPopupActions {
     List<GitBranch> remoteBranches = new ArrayList<GitBranch>(myRepository.getBranches().getRemoteBranches());
     Collections.sort(remoteBranches);
     for (GitBranch remoteBranch : remoteBranches) {
-      popupGroup.add(new RemoteBranchActions(myProject, Collections.singleton(myRepository), remoteBranch.getName(), myRepository));
+      popupGroup.add(new RemoteBranchActions(myProject, Collections.singletonList(myRepository), remoteBranch.getName(), myRepository));
     }
     
     return popupGroup;
@@ -101,10 +100,10 @@ class GitBranchPopupActions {
 
   static class NewBranchAction extends DumbAwareAction {
     private final Project myProject;
-    private final Collection<GitRepository> myRepositories;
+    private final List<GitRepository> myRepositories;
     @NotNull private final GitRepository mySelectedRepository;
 
-    NewBranchAction(@NotNull Project project, @NotNull Collection<GitRepository> repositories, @NotNull GitRepository selectedRepository) {
+    NewBranchAction(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull GitRepository selectedRepository) {
       super("New Branch", "Create and checkout new branch", IconLoader.getIcon("/general/add.png"));
       myProject = project;
       myRepositories = repositories;
@@ -175,11 +174,11 @@ class GitBranchPopupActions {
   static class LocalBranchActions extends ActionGroup {
 
     private final Project myProject;
-    private final Collection<GitRepository> myRepositories;
+    private final List<GitRepository> myRepositories;
     private String myBranchName;
     @NotNull private final GitRepository mySelectedRepository;
 
-    LocalBranchActions(@NotNull Project project, @NotNull Collection<GitRepository> repositories, @NotNull String branchName,
+    LocalBranchActions(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName,
                        @NotNull GitRepository selectedRepository) {
       super("", true);
       myProject = project;
@@ -202,11 +201,11 @@ class GitBranchPopupActions {
 
     private static class CheckoutAction extends DumbAwareAction {
       private final Project myProject;
-      private final Collection<GitRepository> myRepositories;
+      private final List<GitRepository> myRepositories;
       private final String myBranchName;
       @NotNull private final GitRepository mySelectedRepository;
 
-      CheckoutAction(@NotNull Project project, @NotNull Collection<GitRepository> repositories, @NotNull String branchName,
+      CheckoutAction(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName,
                      @NotNull GitRepository selectedRepository) {
         super("Checkout");
         myProject = project;
@@ -224,11 +223,11 @@ class GitBranchPopupActions {
 
     private static class CheckoutAsNewBranch extends DumbAwareAction {
       private final Project myProject;
-      private final Collection<GitRepository> myRepositories;
+      private final List<GitRepository> myRepositories;
       private final String myBranchName;
       @NotNull private final GitRepository mySelectedRepository;
 
-      CheckoutAsNewBranch(@NotNull Project project, @NotNull Collection<GitRepository> repositories, @NotNull String branchName,
+      CheckoutAsNewBranch(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName,
                           @NotNull GitRepository selectedRepository) {
         super("Checkout as new branch");
         myProject = project;
@@ -254,11 +253,11 @@ class GitBranchPopupActions {
      */
     private static class DeleteAction extends DumbAwareAction {
       private final Project myProject;
-      private final Collection<GitRepository> myRepositories;
+      private final List<GitRepository> myRepositories;
       private final String myBranchName;
       private final GitRepository mySelectedRepository;
 
-      DeleteAction(Project project, Collection<GitRepository> repositories, String branchName, GitRepository selectedRepository) {
+      DeleteAction(Project project, List<GitRepository> repositories, String branchName, GitRepository selectedRepository) {
         super("Delete");
         myProject = project;
         myRepositories = repositories;
@@ -279,11 +278,11 @@ class GitBranchPopupActions {
   static class RemoteBranchActions extends ActionGroup {
 
     private final Project myProject;
-    private final Collection<GitRepository> myRepositories;
+    private final List<GitRepository> myRepositories;
     private String myBranchName;
     @NotNull private final GitRepository mySelectedRepository;
 
-    RemoteBranchActions(@NotNull Project project, @NotNull Collection<GitRepository> repositories, @NotNull String branchName,
+    RemoteBranchActions(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName,
                         @NotNull GitRepository selectedRepository) {
       super("", true);
       myProject = project;
@@ -304,11 +303,11 @@ class GitBranchPopupActions {
 
     private static class CheckoutRemoteBranchAction extends DumbAwareAction {
       private final Project myProject;
-      private final Collection<GitRepository> myRepositories;
+      private final List<GitRepository> myRepositories;
       private final String myRemoteBranchName;
       @NotNull private final GitRepository mySelectedRepository;
 
-      public CheckoutRemoteBranchAction(@NotNull Project project, @NotNull Collection<GitRepository> repositories,
+      public CheckoutRemoteBranchAction(@NotNull Project project, @NotNull List<GitRepository> repositories,
                                         @NotNull String remoteBranchName, @NotNull GitRepository selectedRepository) {
         super("Checkout as new local branch");
         myProject = project;
@@ -339,12 +338,12 @@ class GitBranchPopupActions {
   private static class CompareAction extends DumbAwareAction {
 
     private final Project myProject;
-    private final Collection<GitRepository> myRepositories;
+    private final List<GitRepository> myRepositories;
     private final String myBranchName;
     private final GitRepository mySelectedRepository;
 
     public CompareAction(@NotNull Project project,
-                         @NotNull Collection<GitRepository> repositories,
+                         @NotNull List<GitRepository> repositories,
                          @NotNull String branchName,
                          GitRepository selectedRepository) {
       super("Compare");
