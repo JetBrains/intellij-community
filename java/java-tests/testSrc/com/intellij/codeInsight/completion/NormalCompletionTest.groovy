@@ -1264,4 +1264,10 @@ public class ListUtils {
     checkResult()
   }
 
+  public void testNoClosingWhenChoosingWithParenBeforeIdentifier() {
+    configure()
+    myFixture.type '('
+    checkResult()
+  }
+
 }
