@@ -424,7 +424,8 @@ public class FileStructurePopup implements Disposable {
     }
   }
 
-  public void selectPsiElement(PsiElement element) {
+  @Nullable
+  public FilteringTreeStructure.FilteringNode selectPsiElement(PsiElement element) {
     Set<PsiElement> parents = getAllParents(element);
 
     FilteringTreeStructure.FilteringNode node = (FilteringTreeStructure.FilteringNode)myAbstractTreeBuilder.getRootElement();
@@ -443,11 +444,11 @@ public class FileStructurePopup implements Disposable {
         if (myAbstractTreeBuilder.getSelectedElements().isEmpty()) {
           TreeUtil.selectFirstNode(myTree);
         }
-        return;
-
+        return node;
       }
     }
     TreeUtil.selectFirstNode(myTree);
+    return null;
   }
 
   private static Set<PsiElement> getAllParents(PsiElement element) {
@@ -721,7 +722,7 @@ public class FileStructurePopup implements Disposable {
     }
   }
 
-  private static String getPropertyName(String propertyName) {
+  public static String getPropertyName(String propertyName) {
     return propertyName + ".file.structure.state";
   }
 
