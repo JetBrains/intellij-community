@@ -173,12 +173,23 @@ public class FileUtil {
 
   @NotNull
   public static String loadFile(@NotNull File file) throws IOException {
-    return loadFile(file, null);
+    return loadFile(file, null, false);
+  }
+
+  @NotNull
+  public static String loadFile(@NotNull File file, boolean convertLineSeparators) throws IOException {
+    return loadFile(file, null, convertLineSeparators);
   }
 
   @NotNull
   public static String loadFile(@NotNull File file, String encoding) throws IOException {
-    return new String(loadFileText(file, encoding));
+    return loadFile(file, encoding, false);
+  }
+
+  @NotNull
+  public static String loadFile(@NotNull File file, String encoding, boolean convertLineSeparators) throws IOException {
+    final String s = new String(loadFileText(file, encoding));
+    return convertLineSeparators ? StringUtil.convertLineSeparators(s) : s;
   }
 
   @NotNull
