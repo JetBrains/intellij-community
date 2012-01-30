@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.actions;
 
-import com.apple.eawt.Application;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.help.HelpManager;
@@ -23,12 +22,20 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 
+import java.lang.reflect.Method;
+
 public class HelpTopicsAction extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
     if (SystemInfo.isMac && Registry.is("ide.mac.show.native.help", false)) {
-      Application.getApplication().openHelpViewer();
-    } else {
-      HelpManager.getInstance().invokeHelp("top");
+      try {
+        final Class<?> clazz = Class.forName("com.apple.eawt.Application");
+        final Method appGetter = clazz.getMethod("getApplication");
+        final Object app = appGetter.invoke(null);
+        final Method viewer = app.getClass().getMethod("openHelpViewer");
+        viewer.invoke(app);
+        return;
+      } catch (Throwable ignored) {}
     }
+    HelpManager.getInstance().invokeHelp("top");
   }
 }
