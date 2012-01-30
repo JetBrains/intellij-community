@@ -378,7 +378,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     return UnusedSymbolLocalInspection.isInjected(element);
   }
 
-  private static HighlightInfo createUnusedSymbolInfo(PsiElement element, String message, final HighlightInfoType highlightInfoType) {
+  public static HighlightInfo createUnusedSymbolInfo(PsiElement element, String message, final HighlightInfoType highlightInfoType) {
     HighlightInfo info = HighlightInfo.createHighlightInfo(highlightInfoType, element, message);
     UnusedDeclarationFixProvider[] fixProviders = Extensions.getExtensions(UnusedDeclarationFixProvider.EP_NAME);
     for (UnusedDeclarationFixProvider provider : fixProviders) {
@@ -436,6 +436,9 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
       return null;
     }
     else if (!myRefCountHolder.isReferenced(field) && weAreSureThereAreNoUsages(field, progress)) {
+      if (field instanceof PsiEnumConstant && isEnumValuesMethodUsed(field, progress)) {
+        return null;
+      }
       return formatUnusedSymbolHighlightInfo("field.is.not.used", field, "fields", myDeadCodeKey, myDeadCodeInfoType);
     }
     return null;
@@ -580,49 +583,31 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     if (!myDeadCodeEnabled) return false;
     if (myDeadCodeInspection.isEntryPoint(member)) return false;
 
-    String name = member.getName();
+    return isGloballyUnused(member, progress, myFile, member.getName());
+  }
+
+  public static boolean isGloballyUnused(PsiMember member, ProgressIndicator progress, @Nullable PsiFile fileToIgnoreOccurrencesIn, String name) {
     if (name == null) return false;
     SearchScope useScope = member.getUseScope();
     if (!(useScope instanceof GlobalSearchScope)) return false;
     GlobalSearchScope scope = (GlobalSearchScope)useScope;
     // some classes may have references from within XML outside dependent modules, e.g. our actions
-    if (member instanceof PsiClass) scope = GlobalSearchScope.projectScope(myProject).uniteWith(scope);
+    Project project = member.getProject();
+    if (member instanceof PsiClass) scope = GlobalSearchScope.projectScope(project).uniteWith(scope);
 
-    PsiSearchHelper.SearchCostResult cheapEnough = PsiSearchHelper.SERVICE.getInstance(myFile.getProject())
-        .isCheapEnoughToSearch(name, scope, myFile, progress);
+    PsiSearchHelper.SearchCostResult cheapEnough = PsiSearchHelper.SERVICE.getInstance(project).isCheapEnoughToSearch(name, scope, fileToIgnoreOccurrencesIn, progress);
     if (cheapEnough == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) return false;
 
     //search usages if it cheap
     //if count is 0 there is no usages since we've called myRefCountHolder.isReferenced() before
     if (cheapEnough == PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES) {
-      if (member instanceof PsiEnumConstant) {
-        return !isEnumValuesMethodUsed(member, progress);
-      }
       if (!canBeReferencedViaWeirdNames(member)) return true;
     }
-    FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(myProject)).getFindUsagesManager();
-    FindUsagesOptions findUsagesOptions;
-    if (member instanceof PsiClass) {
-      findUsagesOptions = new JavaClassFindUsagesOptions(myProject);
-    }
-    else if (member instanceof PsiMethod) {
-      findUsagesOptions = new JavaMethodFindUsagesOptions(myProject);
-    }
-    else if (member instanceof PsiField) {
-      findUsagesOptions = new JavaVariableFindUsagesOptions(myProject);
-    }
-    else {
-      LOG.error("unknown member: " + member);
-      return false;
-    }
+    FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager();
+    FindUsagesHandler handler = new JavaFindUsagesHandler(member, new JavaFindUsagesHandlerFactory(project));
+    FindUsagesOptions findUsagesOptions = handler.getFindUsagesOptions();
     findUsagesOptions.searchScope = scope;
-
-    boolean used = findUsagesManager.isUsed(member, findUsagesOptions);
-
-    if (!used && member instanceof PsiEnumConstant) {
-      return !isEnumValuesMethodUsed(member, progress);
-    }
-    return !used;
+    return !findUsagesManager.isUsed(member, findUsagesOptions);
   }
 
   private boolean isEnumValuesMethodUsed(PsiMember member, ProgressIndicator progress) {
