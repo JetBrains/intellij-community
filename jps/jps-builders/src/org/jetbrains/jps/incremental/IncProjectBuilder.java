@@ -390,6 +390,8 @@ public class IncProjectBuilder {
     final BuildDataManager dataManager = context.getDataManager();
     final boolean compilingTests = context.isCompilingTests();
     try {
+      final Collection<String> allOutputs = new LinkedList<String>();
+
       context.processFilesToRecompile(chunk, new FileProcessor() {
         private final Map<Module, SourceToOutputMapping> storageMap = new HashMap<Module, SourceToOutputMapping>();
 
@@ -403,24 +405,11 @@ public class IncProjectBuilder {
           final String srcPath = FileUtil.toSystemIndependentName(file.getPath());
           final Collection<String> outputs = srcToOut.getState(srcPath);
 
-          if (LOG.isDebugEnabled()) {
-            if (outputs != null && context.isMake()) {
-              LOG.info("Cleaning output files:");
-              final String[] buffer = new String[outputs.size()];
-              int i = 0;
-              for (String output : outputs) {
-                buffer[i++] = output;
-              }
-              Arrays.sort(buffer);
-              for (String output : buffer) {
-                LOG.info(output);
-              }
-              LOG.info("End of files");
-            }
-          }
-
           if (outputs != null) {
             for (String output : outputs) {
+              if (LOG.isDebugEnabled()) {
+                allOutputs.add(output);
+              }
               FileUtil.delete(new File(output));
             }
             srcToOut.remove(srcPath);
@@ -428,6 +417,22 @@ public class IncProjectBuilder {
           return true;
         }
       });
+
+      if (LOG.isDebugEnabled()) {
+        if (context.isMake() && allOutputs.size() > 0) {
+          LOG.info("Cleaning output files:");
+          final String[] buffer = new String[allOutputs.size()];
+          int i = 0;
+          for (String output : allOutputs) {
+            buffer[i++] = output;
+          }
+          Arrays.sort(buffer);
+          for (String output : buffer) {
+            LOG.info(output);
+          }
+          LOG.info("End of files");
+        }
+      }
     }
     catch (Exception e) {
       throw new ProjectBuildException(e);
