@@ -39,7 +39,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
-import java.util.Collection;
+import java.util.List;
 
 /**
  * <p>
@@ -154,7 +154,7 @@ class GitBranchPopup  {
   }
 
   private void fillWithCommonRepositoryActions(DefaultActionGroup popupGroup, GitRepositoryManager repositoryManager) {
-    Collection<GitRepository> repositories = repositoryManager.getRepositories();
+    List<GitRepository> repositories = repositoryManager.getRepositories();
     String currentBranch = myMultiRootBranchConfig.getCurrentBranch();
     assert currentBranch != null : "Current branch can't be null if branches have not diverged";
     popupGroup.add(new GitBranchPopupActions.CurrentBranchAction(currentBranch, " in all roots"));
