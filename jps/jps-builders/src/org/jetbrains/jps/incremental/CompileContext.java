@@ -210,6 +210,10 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
     return myDataManager;
   }
 
+  public TimestampStorage getTimestampStorage() {
+    return myTsStorage;
+  }
+
   public void processMessage(BuildMessage msg) {
     if (msg.getKind() == BuildMessage.Kind.ERROR) {
       myErrorsFound = true;

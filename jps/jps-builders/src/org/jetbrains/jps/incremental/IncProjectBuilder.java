@@ -102,6 +102,10 @@ public class IncProjectBuilder {
   }
 
   private static void flushContext(CompileContext context) {
+    if (context != null) {
+      context.getTimestampStorage().force();
+      context.getDataManager().flush(false);
+    }
     final ExternalJavacDescriptor descriptor = ExternalJavacDescriptor.KEY.get(context);
     if (descriptor != null) {
       try {
