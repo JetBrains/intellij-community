@@ -55,6 +55,12 @@ public class RunnerLayout  {
   public RunnerLayout(final String ID) {
     myID = ID;
   }
+  
+  @Nullable
+  public String getDefaultDisplayName(final int defaultIndex) {
+    final TabImpl.Default tab = myDefaultTabs.get(defaultIndex);
+    return tab != null ? tab.myDisplayName : null;
+  }
 
   @NotNull
   public TabImpl getOrCreateTab(final int index) {
@@ -164,11 +170,7 @@ public class RunnerLayout  {
 
   public void resetToDefault() {
     myViews.clear();
-
-    for (TabImpl each : myTabs) {
-      final TabImpl.Default defaultTab = getOrCreateDefaultTab(each.getDefaultIndex());
-      each.copyFrom(defaultTab);
-    }
+    myTabs.clear();
   }
 
   public boolean isToolbarHorizontal() {

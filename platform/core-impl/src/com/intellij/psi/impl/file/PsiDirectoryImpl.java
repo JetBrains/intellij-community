@@ -215,11 +215,12 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
     ProgressIndicatorProvider.checkCanceled();
 
     for (VirtualFile vFile : myFile.getChildren()) {
+      boolean isDir = vFile.isDirectory();
       if (processor instanceof PsiFileSystemItemProcessor &&
-          !((PsiFileSystemItemProcessor)processor).acceptItem(vFile.getName(), vFile.isDirectory())) {
+          !((PsiFileSystemItemProcessor)processor).acceptItem(vFile.getName(), isDir)) {
         continue;
       }
-      if (vFile.isDirectory()) {
+      if (isDir) {
         PsiDirectory dir = myManager.findDirectory(vFile);
         if (dir != null) {
           if (!processor.execute(dir)) return false;

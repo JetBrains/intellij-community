@@ -1,15 +1,3 @@
-Request to make modules:
-module AddExtends
-End of request
-digraph X {
-  AddExtends[label="AddExtends"];
-}
-digraph X {
-  AddExtends[label="AddExtends"];
-}
-Propagated modules:
-module AddExtends
-End of propagated
 Cleaning output files:
 out/production/AddExtends/Super.class
 End of files

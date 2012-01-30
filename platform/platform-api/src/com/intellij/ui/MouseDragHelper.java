@@ -45,6 +45,7 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
   private final Disposable myParentDisposable;
   private Dimension myDelta;
 
+  private boolean myDetachPostponed;
   private boolean myDetachingMode;
 
   public MouseDragHelper(Disposable parent, final JComponent dragComponent) {
@@ -62,7 +63,7 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
       }
 
       public void hideNotify() {
-        detach();
+        detach(true);
       }
     });
 
@@ -74,16 +75,24 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
   }
 
   private void attach() {
+    if (myDetachPostponed) {
+      myDetachPostponed = false;
+      return;
+    }
     myGlassPane = IdeGlassPaneUtil.find(myDragComponent);
     myGlassPane.addMousePreprocessor(this, myParentDisposable);
     myGlassPane.addMouseMotionPreprocessor(this, myParentDisposable);
   }
 
   public void stop() {
-    detach();
+    detach(false);
   }
 
-  private void detach() {
+  private void detach(boolean canPostponeDetach) {
+    if (canPostponeDetach && myDraggingNow) {
+      myDetachPostponed = true;
+      return;
+    }
     if (myGlassPane != null) {
       myGlassPane.removeMousePreprocessor(this);
       myGlassPane.removeMouseMotionPreprocessor(this);
@@ -125,6 +134,10 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
         myPressPointScreen = null;
         myDetachingMode = false;
         e.consume();
+        if (myDetachPostponed) {
+          myDetachPostponed = false;
+          detach(false);
+        }
       }
     }
   }

@@ -51,6 +51,8 @@ public interface DockContainer extends Disposable, Activatable {
 
   boolean isDisposeWhenEmpty();
 
+  interface Dialog extends DockContainer {}
+
   interface Persistent extends DockContainer {
 
     String getDockContainerType();

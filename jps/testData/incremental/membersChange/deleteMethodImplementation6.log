@@ -1,15 +1,3 @@
-Request to make modules:
-module DeleteMethodImplementation6
-End of request
-digraph X {
-  DeleteMethodImplementation6[label="DeleteMethodImplementation6"];
-}
-digraph X {
-  DeleteMethodImplementation6[label="DeleteMethodImplementation6"];
-}
-Propagated modules:
-module DeleteMethodImplementation6
-End of propagated
 Cleaning output files:
 out/production/DeleteMethodImplementation6/BaseImpl.class
 End of files

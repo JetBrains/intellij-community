@@ -17,6 +17,7 @@ package com.intellij.openapi.diff.impl.dir;
 
 import com.intellij.openapi.Disposable;
 
+import javax.swing.*;
 import java.awt.*;
 
 /**
@@ -46,7 +47,7 @@ public class DirDiffWindow {
 
   public void setTitle(String title) {
     if (myDialog == null) {
-      myFrame.getFrame().setTitle(title);
+      ((JFrame)myFrame.getFrame()).setTitle(title);
     } else {
       myDialog.setTitle(title);
     }

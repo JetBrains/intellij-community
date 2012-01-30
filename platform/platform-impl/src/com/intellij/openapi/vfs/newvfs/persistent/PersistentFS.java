@@ -48,6 +48,7 @@ import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
 import java.util.*;
@@ -189,7 +190,8 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
         childrenIds[i] = currentIds[idx];
       }
       else {
-        int childId = createAndCopyRecord(delegate, new FakeVirtualFile(file, name), id);
+        FakeVirtualFile child = new FakeVirtualFile(file, name);
+        int childId = createAndCopyRecord(delegate, child, id, delegate.isDirectory(child));
         childrenIds[i] = childId;
       }
     }
@@ -283,12 +285,16 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     return FSRecords.getModCount();
   }
 
-  private static boolean copyRecordFromDelegateFS(final int id, final int parentId, final VirtualFile file, NewVirtualFileSystem delegate) {
+  private static boolean copyRecordFromDelegateFS(final int id,
+                                                  final int parentId,
+                                                  final VirtualFile file,
+                                                  NewVirtualFileSystem delegate,
+                                                  boolean isDir) {
     String name = file.getName();
 
-    if (name.length() > 0 && namesEqual(delegate, name, FSRecords.getName(id))) return false; // TODO: Handle root attributes change.
+    if (!name.isEmpty() && namesEqual(delegate, name, FSRecords.getName(id))) return false; // TODO: Handle root attributes change.
 
-    if (name.length() == 0) {            // TODO: hack
+    if (name.isEmpty()) {            // TODO: hack
       if (areChildrenLoaded(id)) return false;
     }
 
@@ -299,11 +305,9 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
 
     FSRecords.setTimestamp(id, delegate.getTimeStamp(file));
 
-    boolean directory = delegate.isDirectory(file);
+    FSRecords.setLength(id, isDir ? -1L : delegate.getLength(file));
 
-    FSRecords.setLength(id, directory ? -1L : delegate.getLength(file));
-
-    FSRecords.setFlags(id, (directory ? IS_DIRECTORY_FLAG : 0) |
+    FSRecords.setFlags(id, (isDir ? IS_DIRECTORY_FLAG : 0) |
                            (delegate.isWritable(file) ? 0 : IS_READ_ONLY) |
                            (delegate.isSymLink(file) ? IS_SYMLINK : 0) |
                            (delegate.isSpecialFile(file) ? IS_SPECIAL : 0), true);
@@ -398,8 +402,10 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     }
 
     VirtualFile fake = new FakeVirtualFile(parent, childName);
-    if (delegate.exists(fake)) {
-      int child = createAndCopyRecord(delegate, fake, parentId);
+    int attributes = delegate.getBooleanAttributes(fake, NewVirtualFileSystem.BA_EXISTS | NewVirtualFileSystem.BA_DIRECTORY);
+    if ((attributes & NewVirtualFileSystem.BA_EXISTS) != 0) {
+      boolean isDir = (attributes & NewVirtualFileSystem.BA_DIRECTORY) != 0;
+      int child = createAndCopyRecord(delegate, fake, parentId, isDir);
       FSRecords.updateList(parentId, ArrayUtil.append(children, child));
       return child;
     }
@@ -722,13 +728,13 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     synchronized (LOCK) {
       final String rootUrl = fs.getProtocol() + "://" + basePath;
       VirtualFileSystemEntry root = myRoots.get(rootUrl);
-      if (root == null && basePath.length() == 0) {
+      if (root == null && basePath.isEmpty()) {
         root = myFakeRoot;
       }
       if (root == null) {
         try {
           final int rootId = FSRecords.findRootRecord(rootUrl);
-          if (basePath.length() > 0) {
+          if (!basePath.isEmpty()) {
             root = new VirtualDirectoryImpl(basePath, null, fs, rootId) {
               @NotNull
               @Override
@@ -756,14 +762,14 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
 
               @Override
               public VirtualFileSystemEntry findChild(@NotNull String name) {
-                if (name.length() == 0) return null;
+                if (name.isEmpty()) return null;
                 return findRoot(name, fs);
               }
             };
           }
           if (!fs.exists(root)) return null;
 
-          boolean newRoot = copyRecordFromDelegateFS(rootId, 0, root, fs);
+          boolean newRoot = copyRecordFromDelegateFS(rootId, 0, root, fs, true);
           if (!newRoot) {
             if (fs.getTimeStamp(root) != FSRecords.getTimestamp(rootId)) {
               root.markDirtyRecursively();
@@ -774,7 +780,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
           throw new RuntimeException(e);
         }
 
-        if (basePath.length() > 0) {
+        if (!basePath.isEmpty()) {
           myRoots.put(rootUrl, root);
           myRootsById.put(root.getId(), root);
         }
@@ -949,10 +955,12 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
 
   private static void executeCreateChild(final VirtualFile parent, final String name) {
     final NewVirtualFileSystem delegate = getDelegate(parent);
-    VirtualFile fakeFile = new FakeVirtualFile(parent, name);
-    if (delegate.exists(fakeFile)) {
+    VirtualFile fake = new FakeVirtualFile(parent, name);
+    int attributes = delegate.getBooleanAttributes(fake, NewVirtualFileSystem.BA_EXISTS | NewVirtualFileSystem.BA_DIRECTORY);
+    if ((attributes & NewVirtualFileSystem.BA_EXISTS) != 0) {
       final int parentId = getFileId(parent);
-      int childId = createAndCopyRecord(delegate, fakeFile, parentId);
+      boolean isDir = (attributes & NewVirtualFileSystem.BA_DIRECTORY) != 0;
+      int childId = createAndCopyRecord(delegate, fake, parentId, isDir);
 
       appendIdToParentList(parentId, childId);
       final VirtualDirectoryImpl dir = (VirtualDirectoryImpl)parent;
@@ -960,9 +968,9 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     }
   }
 
-  private static int createAndCopyRecord(NewVirtualFileSystem delegateSystem, VirtualFile delegateFile, int parentId) {
+  private static int createAndCopyRecord(NewVirtualFileSystem delegateSystem, VirtualFile delegateFile, int parentId, boolean isDir) {
     int childId = FSRecords.createRecord();
-    copyRecordFromDelegateFS(childId, parentId, delegateFile, delegateSystem);
+    copyRecordFromDelegateFS(childId, parentId, delegateFile, delegateSystem, isDir);
     return childId;
   }
 
@@ -1067,7 +1075,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     FSRecords.setLength(getFileId(file), delegate.getLength(file));
     FSRecords.setTimestamp(getFileId(file), delegate.getTimeStamp(file));
 
-    ((NewVirtualFile)file).setModificationStamp(newModificationStamp);
+    ((VirtualFileSystemEntry)file).setModificationStamp(newModificationStamp);
   }
 
   @SuppressWarnings({"UnusedDeclaration"})
@@ -1092,6 +1100,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     return FSRecords.getName(id);
   }
 
+  @TestOnly
   public void cleanPersistedContents() {
     try {
       final int[] roots = FSRecords.listRoots();
@@ -1104,6 +1113,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     }
   }
 
+  @TestOnly
   private static void cleanPersistedContentsRecursively(int id) {
     if (isDirectory(id)) {
       for (int child : FSRecords.list(id)) {
@@ -1116,11 +1126,12 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
   }
 
   public static NewVirtualFileSystem replaceWithNativeFS(NewVirtualFileSystem delegate) {
-    if (delegate.getProtocol().equals(LocalFileSystem.PROTOCOL) && Registry.is("filesystem.useNative")) {
-        if (SystemInfo.isWindows && Win32LocalFileSystem.isAvailable()) {
-          delegate = Win32LocalFileSystem.getWin32Instance();
-        }
-      }
+    if (delegate.getProtocol().equals(LocalFileSystem.PROTOCOL) &&
+        Registry.is("filesystem.useNative") &&
+        SystemInfo.isWindows &&
+        Win32LocalFileSystem.isAvailable()) {
+      delegate = Win32LocalFileSystem.getWin32Instance();
+    }
     return delegate;
   }
 }

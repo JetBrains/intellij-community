@@ -1,15 +1,3 @@
-Request to make modules:
-module StringConstantLessAccessible
-End of request
-digraph X {
-  StringConstantLessAccessible[label="StringConstantLessAccessible"];
-}
-digraph X {
-  StringConstantLessAccessible[label="StringConstantLessAccessible"];
-}
-Propagated modules:
-module StringConstantLessAccessible
-End of propagated
 Cleaning output files:
 out/production/StringConstantLessAccessible/Server.class
 End of files

@@ -1,15 +1,3 @@
-Request to make modules:
-module ChangeBound
-End of request
-digraph X {
-  ChangeBound[label="ChangeBound"];
-}
-digraph X {
-  ChangeBound[label="ChangeBound"];
-}
-Propagated modules:
-module ChangeBound
-End of propagated
 Cleaning output files:
 out/production/ChangeBound/A.class
 End of files

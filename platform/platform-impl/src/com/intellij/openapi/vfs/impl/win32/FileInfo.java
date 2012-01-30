@@ -15,23 +15,28 @@
  */
 package com.intellij.openapi.vfs.impl.win32;
 
+import org.intellij.lang.annotations.MagicConstant;
+
 /**
  * @author Dmitry Avdeev
  */
 public class FileInfo {
 
-    static {
-        initIDs();
-    }
+  static {
+    initIDs();
+  }
 
-    private static native void initIDs();
-    
-    public String name;
-    public int attributes;
-    public long timestamp;
-    public long length;
+  private static native void initIDs();
 
-    public String toString() {
-        return name;
-    }
+  public String name;
+
+  @MagicConstant(flagsFromClass = Win32Kernel.class)
+  public int attributes;
+
+  public long timestamp;
+  public long length;
+
+  public String toString() {
+    return name;
+  }
 }

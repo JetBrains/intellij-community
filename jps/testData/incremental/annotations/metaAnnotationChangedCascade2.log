@@ -1,15 +1,3 @@
-Request to make modules:
-module MetaAnnotationChangedCascade2
-End of request
-digraph X {
-  MetaAnnotationChangedCascade2[label="MetaAnnotationChangedCascade2"];
-}
-digraph X {
-  MetaAnnotationChangedCascade2[label="MetaAnnotationChangedCascade2"];
-}
-Propagated modules:
-module MetaAnnotationChangedCascade2
-End of propagated
 Cleaning output files:
 out/production/MetaAnnotationChangedCascade2/A.class
 out/production/MetaAnnotationChangedCascade2/C.class

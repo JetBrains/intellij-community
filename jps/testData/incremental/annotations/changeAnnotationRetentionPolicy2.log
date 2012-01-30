@@ -1,15 +1,3 @@
-Request to make modules:
-module ChangeAnnotationRetentionPolicy2
-End of request
-digraph X {
-  ChangeAnnotationRetentionPolicy2[label="ChangeAnnotationRetentionPolicy2"];
-}
-digraph X {
-  ChangeAnnotationRetentionPolicy2[label="ChangeAnnotationRetentionPolicy2"];
-}
-Propagated modules:
-module ChangeAnnotationRetentionPolicy2
-End of propagated
 Cleaning output files:
 out/production/ChangeAnnotationRetentionPolicy2/A.class
 End of files

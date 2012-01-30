@@ -47,6 +47,8 @@ import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.Semaphore
+import com.intellij.execution.process.OSProcessManager
+import com.intellij.execution.process.OSProcessHandler
 
 /**
  * @author peter
@@ -94,13 +96,21 @@ class GroovyDebuggerTest extends GroovyCompilerTestCase {
       runProcess(mainClass, myModule, DefaultDebugExecutor, [onTextAvailable: { evt, type -> if (trace) print evt.text}] as ProcessAdapter, runner)
     }
     cl.call()
+    def handler = debugProcess.executionResult.processHandler
     if (trace) {
-      println "terminated1?: " + debugProcess.executionResult.processHandler.isProcessTerminated()
+      println "terminated1?: " + handler.isProcessTerminated()
     }
     resume()
-    debugProcess.executionResult.processHandler.waitFor()
+    if (!handler.waitFor(20000)) {
+      if (handler instanceof OSProcessHandler) {
+        OSProcessManager.instance.killProcessTree(handler.process)
+      } else {
+        println "can't terminate $handler"
+      }
+      fail('too long waiting for process termination')
+    }
     if (trace) {
-      println "terminated2?: " + debugProcess.executionResult.processHandler.isProcessTerminated()
+      println "terminated2?: " + handler.isProcessTerminated()
     }
   }
 

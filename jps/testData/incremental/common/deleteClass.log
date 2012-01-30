@@ -1,15 +1,3 @@
-Request to make modules:
-module DeleteClass
-End of request
-digraph X {
-  DeleteClass[label="DeleteClass"];
-}
-digraph X {
-  DeleteClass[label="DeleteClass"];
-}
-Propagated modules:
-module DeleteClass
-End of propagated
 Cleaning output files:
 out/production/DeleteClass/packageA/Server.class
 End of files

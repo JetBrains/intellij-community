@@ -1,15 +1,3 @@
-Request to make modules:
-module AddParameterizedMethodToBase
-End of request
-digraph X {
-  AddParameterizedMethodToBase[label="AddParameterizedMethodToBase"];
-}
-digraph X {
-  AddParameterizedMethodToBase[label="AddParameterizedMethodToBase"];
-}
-Propagated modules:
-module AddParameterizedMethodToBase
-End of propagated
 Cleaning output files:
 out/production/AddParameterizedMethodToBase/C.class
 End of files

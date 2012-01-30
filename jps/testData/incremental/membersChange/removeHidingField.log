@@ -1,15 +1,3 @@
-Request to make modules:
-module RemoveHidingField
-End of request
-digraph X {
-  RemoveHidingField[label="RemoveHidingField"];
-}
-digraph X {
-  RemoveHidingField[label="RemoveHidingField"];
-}
-Propagated modules:
-module RemoveHidingField
-End of propagated
 Cleaning output files:
 out/production/RemoveHidingField/BaseAction.class
 End of files

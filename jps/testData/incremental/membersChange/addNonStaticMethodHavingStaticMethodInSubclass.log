@@ -1,15 +1,3 @@
-Request to make modules:
-module AddNonStaticMethodHavingStaticMethodInSubclass
-End of request
-digraph X {
-  AddNonStaticMethodHavingStaticMethodInSubclass[label="AddNonStaticMethodHavingStaticMethodInSubclass"];
-}
-digraph X {
-  AddNonStaticMethodHavingStaticMethodInSubclass[label="AddNonStaticMethodHavingStaticMethodInSubclass"];
-}
-Propagated modules:
-module AddNonStaticMethodHavingStaticMethodInSubclass
-End of propagated
 Cleaning output files:
 out/production/AddNonStaticMethodHavingStaticMethodInSubclass/BaseServer.class
 End of files

@@ -1,15 +1,3 @@
-Request to make modules:
-module InnerConstantChange
-End of request
-digraph X {
-  InnerConstantChange[label="InnerConstantChange"];
-}
-digraph X {
-  InnerConstantChange[label="InnerConstantChange"];
-}
-Propagated modules:
-module InnerConstantChange
-End of propagated
 Cleaning output files:
 out/production/InnerConstantChange/Server$Inner.class
 out/production/InnerConstantChange/Server.class

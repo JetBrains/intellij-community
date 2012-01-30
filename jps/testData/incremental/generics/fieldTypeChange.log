@@ -1,15 +1,3 @@
-Request to make modules:
-module FieldTypeChange
-End of request
-digraph X {
-  FieldTypeChange[label="FieldTypeChange"];
-}
-digraph X {
-  FieldTypeChange[label="FieldTypeChange"];
-}
-Propagated modules:
-module FieldTypeChange
-End of propagated
 Cleaning output files:
 out/production/FieldTypeChange/Server.class
 End of files

@@ -1,15 +1,3 @@
-Request to make modules:
-module addMethod
-End of request
-digraph X {
-  addMethod[label="addMethod"];
-}
-digraph X {
-  addMethod[label="addMethod"];
-}
-Propagated modules:
-module addMethod
-End of propagated
 Cleaning output files:
 out/production/addMethod/A.class
 End of files

@@ -1,15 +1,3 @@
-Request to make modules:
-module AddStatic
-End of request
-digraph X {
-  AddStatic[label="AddStatic"];
-}
-digraph X {
-  AddStatic[label="AddStatic"];
-}
-Propagated modules:
-module AddStatic
-End of propagated
 Cleaning output files:
 out/production/AddStatic/A$B.class
 out/production/AddStatic/A.class

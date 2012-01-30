@@ -1,15 +1,3 @@
-Request to make modules:
-module AddAnnotationTypeMemberWithDefaultValue
-End of request
-digraph X {
-  AddAnnotationTypeMemberWithDefaultValue[label="AddAnnotationTypeMemberWithDefaultValue"];
-}
-digraph X {
-  AddAnnotationTypeMemberWithDefaultValue[label="AddAnnotationTypeMemberWithDefaultValue"];
-}
-Propagated modules:
-module AddAnnotationTypeMemberWithDefaultValue
-End of propagated
 Cleaning output files:
 out/production/AddAnnotationTypeMemberWithDefaultValue/A.class
 End of files

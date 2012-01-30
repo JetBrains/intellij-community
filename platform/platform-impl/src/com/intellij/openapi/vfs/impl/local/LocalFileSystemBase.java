@@ -25,10 +25,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
-import com.intellij.openapi.vfs.newvfs.ManagingFS;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
-import com.intellij.openapi.vfs.newvfs.RefreshQueue;
-import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
+import com.intellij.openapi.vfs.newvfs.*;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
@@ -140,10 +137,6 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   private static final Method JAVA_IO_FILESYSTEM_GET_BOOLEAN_ATTRIBUTES_METHOD;
   private static final Object/* java.io.FileSystem */ JAVA_IO_FILESYSTEM;
   // copied from FileSystem
-  private static final int BA_EXISTS    = 0x01;
-  private static final int BA_REGULAR   = 0x02;
-  private static final int BA_DIRECTORY = 0x04;
-  private static final int BA_HIDDEN    = 0x08;
 
   static {
     Object fs;
@@ -169,6 +162,8 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     JAVA_IO_FILESYSTEM = fs;
     JAVA_IO_FILESYSTEM_GET_BOOLEAN_ATTRIBUTES_METHOD = getBooleanAttributes;
   }
+
+
 
   @NotNull
   private static File convertToIOFileAndCheck(@NotNull final VirtualFile file) throws FileNotFoundException {
@@ -767,6 +762,17 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     catch (IOException e) {
       return originalFileName;
     }
+  }
+
+  @Override
+  public int getBooleanAttributes(@NotNull VirtualFile file, int flags) {
+    int attributes = getBooleanAttributes(convertToIOFile(file));
+    if (attributes != -1) return attributes & flags;
+    return ((flags & BA_EXISTS) != 0 && exists(file) ? BA_EXISTS : 0) |
+           ((flags & BA_DIRECTORY) != 0 && isDirectory(file) ? BA_DIRECTORY : 0) |
+           ((flags & BA_REGULAR) != 0 && !isSpecialFile(file) ? BA_REGULAR : 0) |
+           ((flags & BA_HIDDEN) != 0 && convertToIOFile(file).isHidden() ? BA_HIDDEN : 0)
+      ;
   }
 
   @Override

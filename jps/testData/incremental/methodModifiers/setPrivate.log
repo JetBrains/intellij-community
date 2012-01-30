@@ -1,15 +1,3 @@
-Request to make modules:
-module SetPrivate
-End of request
-digraph X {
-  SetPrivate[label="SetPrivate"];
-}
-digraph X {
-  SetPrivate[label="SetPrivate"];
-}
-Propagated modules:
-module SetPrivate
-End of propagated
 Cleaning output files:
 out/production/SetPrivate/A.class
 End of files

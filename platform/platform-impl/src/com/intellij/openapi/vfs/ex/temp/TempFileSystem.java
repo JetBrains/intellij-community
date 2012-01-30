@@ -270,7 +270,7 @@ public class TempFileSystem extends NewVirtualFileSystem {
     }
   }
 
-  private static abstract class FSItem {
+  private abstract static class FSItem {
     private final FSDir myParent;
     private String myName;
     private long myTimestamp;
@@ -364,5 +364,14 @@ public class TempFileSystem extends NewVirtualFileSystem {
     public boolean isDirectory() {
       return false;
     }
+  }
+
+  @Override
+  public int getBooleanAttributes(@NotNull VirtualFile file, int flags) {
+    FSItem item = convert(file);
+    int isDir = item instanceof FSDir ? BA_DIRECTORY : 0;
+    int exists = item == null ? 0 : BA_EXISTS;
+    int regular = isDir == 0 ? BA_REGULAR : 0;
+    return isDir | exists | regular;
   }
 }

@@ -1,15 +1,3 @@
-Request to make modules:
-module Inner
-End of request
-digraph X {
-  Inner[label="Inner"];
-}
-digraph X {
-  Inner[label="Inner"];
-}
-Propagated modules:
-module Inner
-End of propagated
 Cleaning output files:
 out/production/Inner/Server.class
 End of files

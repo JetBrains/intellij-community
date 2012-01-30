@@ -1,15 +1,3 @@
-Request to make modules:
-module AddFieldToInterface2
-End of request
-digraph X {
-  AddFieldToInterface2[label="AddFieldToInterface2"];
-}
-digraph X {
-  AddFieldToInterface2[label="AddFieldToInterface2"];
-}
-Propagated modules:
-module AddFieldToInterface2
-End of propagated
 Cleaning output files:
 out/production/AddFieldToInterface2/BaseInterface.class
 End of files

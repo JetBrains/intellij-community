@@ -1,15 +1,3 @@
-Request to make modules:
-module SetAbstract
-End of request
-digraph X {
-  SetAbstract[label="SetAbstract"];
-}
-digraph X {
-  SetAbstract[label="SetAbstract"];
-}
-Propagated modules:
-module SetAbstract
-End of propagated
 Cleaning output files:
 out/production/SetAbstract/Super.class
 End of files

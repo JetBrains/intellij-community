@@ -1,15 +1,3 @@
-Request to make modules:
-module RenameMethod
-End of request
-digraph X {
-  RenameMethod[label="RenameMethod"];
-}
-digraph X {
-  RenameMethod[label="RenameMethod"];
-}
-Propagated modules:
-module RenameMethod
-End of propagated
 Cleaning output files:
 out/production/RenameMethod/packageA/Server.class
 End of files

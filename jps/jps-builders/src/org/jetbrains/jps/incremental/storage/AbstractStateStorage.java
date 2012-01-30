@@ -34,7 +34,9 @@ public abstract class AbstractStateStorage<Key, T> {
 
   public void dropMemoryCache() {
     synchronized (myDataLock) {
-      myMap.dropMemoryCaches();
+      if (myMap.isDirty()) {
+        myMap.dropMemoryCaches();
+      }
     }
   }
 

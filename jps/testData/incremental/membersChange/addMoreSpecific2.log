@@ -1,15 +1,3 @@
-Request to make modules:
-module AddMoreSpecific2
-End of request
-digraph X {
-  AddMoreSpecific2[label="AddMoreSpecific2"];
-}
-digraph X {
-  AddMoreSpecific2[label="AddMoreSpecific2"];
-}
-Propagated modules:
-module AddMoreSpecific2
-End of propagated
 Cleaning output files:
 out/production/AddMoreSpecific2/Base.class
 End of files

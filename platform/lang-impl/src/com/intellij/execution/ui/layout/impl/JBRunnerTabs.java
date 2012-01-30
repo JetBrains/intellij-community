@@ -235,8 +235,9 @@ public class
 
   @Override
   public void processDropOver(TabInfo over, RelativePoint relativePoint) {
-    super.processDropOver(over, relativePoint);
     final Point point = relativePoint.getPoint(getComponent());
+    myShowDropLocation = shouldAddToGlobal(point);
+    super.processDropOver(over, relativePoint);
     for (Map.Entry<TabInfo, TabLabel> entry : myInfo2Label.entrySet()) {
       final TabLabel label = entry.getValue();
       if (label.getBounds().contains(point) && myDropInfo != entry.getKey()) {

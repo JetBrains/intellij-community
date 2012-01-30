@@ -1,15 +1,3 @@
-Request to make modules:
-module AddHidingField
-End of request
-digraph X {
-  AddHidingField[label="AddHidingField"];
-}
-digraph X {
-  AddHidingField[label="AddHidingField"];
-}
-Propagated modules:
-module AddHidingField
-End of propagated
 Cleaning output files:
 out/production/AddHidingField/BaseAction.class
 End of files

@@ -1,15 +1,3 @@
-Request to make modules:
-module ChangeVarargSignature
-End of request
-digraph X {
-  ChangeVarargSignature[label="ChangeVarargSignature"];
-}
-digraph X {
-  ChangeVarargSignature[label="ChangeVarargSignature"];
-}
-Propagated modules:
-module ChangeVarargSignature
-End of propagated
 Cleaning output files:
 out/production/ChangeVarargSignature/packageA/Base.class
 End of files

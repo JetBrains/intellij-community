@@ -1,15 +1,3 @@
-Request to make modules:
-module ChangeImplements
-End of request
-digraph X {
-  ChangeImplements[label="ChangeImplements"];
-}
-digraph X {
-  ChangeImplements[label="ChangeImplements"];
-}
-Propagated modules:
-module ChangeImplements
-End of propagated
 Cleaning output files:
 out/production/ChangeImplements/Super.class
 End of files

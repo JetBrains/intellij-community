@@ -4,6 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import org.jboss.netty.channel.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.*;
 import org.jetbrains.jps.incremental.MessageHandler;
@@ -13,8 +14,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.PrintStream;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.RunnableFuture;
 
 /**
  * @author Eugene Zhuravlev
@@ -23,7 +25,8 @@ import java.util.concurrent.ExecutorService;
 class ServerMessageHandler extends SimpleChannelHandler {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.server.ServerMessageHandler");
 
-  private final ConcurrentHashMap<String, CompilationTask> myBuildsInProgress = new ConcurrentHashMap<String, CompilationTask>();
+  private final Map<String, SequentialTaskExecutor> myTaskExecutors = new HashMap<String, SequentialTaskExecutor>();
+  private final List<Pair<RunnableFuture, CompilationTask>> myBuildsInProgress = Collections.synchronizedList(new LinkedList<Pair<RunnableFuture, CompilationTask>>());
   private final ExecutorService myBuildsExecutor;
   private final Server myServer;
 
@@ -60,10 +63,16 @@ class ServerMessageHandler extends SimpleChannelHandler {
         case CANCEL_BUILD_COMMAND:
           final JpsRemoteProto.Message.Request.CancelBuildCommand cancelCommand = request.getCancelBuildCommand();
           final UUID targetSessionId = ProtoUtil.fromProtoUUID(cancelCommand.getTargetSessionId());
-          for (CompilationTask task : myBuildsInProgress.values()) {
-            if (task.getSessionId().equals(targetSessionId)) {
-              task.cancel();
-              break;
+          synchronized (myBuildsInProgress) {
+            for (Iterator<Pair<RunnableFuture, CompilationTask>> it = myBuildsInProgress.iterator(); it.hasNext(); ) {
+              final Pair<RunnableFuture, CompilationTask> pair = it.next();
+              final CompilationTask task = pair.second;
+              if (task.getSessionId().equals(targetSessionId)) {
+                it.remove();
+                task.cancel();
+                pair.first.cancel(true);
+                break;
+              }
             }
           }
           reply = ProtoUtil.toMessage(sessionId, ProtoUtil.createCommandCompletedEvent(null));
@@ -91,18 +100,29 @@ class ServerMessageHandler extends SimpleChannelHandler {
           // todo pay attention to policy
           myBuildsExecutor.submit(new Runnable() {
             public void run() {
-              for (Map.Entry<String, CompilationTask> entry : myBuildsInProgress.entrySet()) {
-                final CompilationTask task = entry.getValue();
-                task.cancel();
+              final List<RunnableFuture> futures = new ArrayList<RunnableFuture>();
+
+              synchronized (myBuildsInProgress) {
+                for (Iterator<Pair<RunnableFuture, CompilationTask>> it = myBuildsInProgress.iterator(); it.hasNext(); ) {
+                  final Pair<RunnableFuture, CompilationTask> pair = it.next();
+                  it.remove();
+                  pair.second.cancel();
+                  final RunnableFuture future = pair.first;
+                  futures.add(future);
+                  future.cancel(true);
+                }
               }
 
               facade.clearCahedState();
 
-              while (!myBuildsInProgress.isEmpty()) {
+              // wait until really stopped
+              for (RunnableFuture future : futures) {
                 try {
-                  Thread.sleep(100L);
+                  future.get();
                 }
                 catch (InterruptedException ignored) {
+                }
+                catch (ExecutionException ignored) {
                 }
               }
 
@@ -149,24 +169,37 @@ class ServerMessageHandler extends SimpleChannelHandler {
 
     switch (compileType) {
       // todo
-      case CLEAN:
       case MAKE:
       case FORCED_COMPILATION:
       case REBUILD: {
-        final CompilationTask task = new CompilationTask(sessionId, channelContext, projectId, compileRequest.getModuleNameList(), compileRequest.getFilePathList());
-        if (myBuildsInProgress.putIfAbsent(projectId, task) == null) {
-          task.getBuildParams().buildType = convertCompileType(compileType);
-          task.getBuildParams().useInProcessJavac = true;
-          myBuildsExecutor.submit(task);
-        }
-        else {
-          return ProtoUtil.toMessage(sessionId, ProtoUtil.createFailure("Project is being compiled already"));
-        }
+        final BuildType buildType = convertCompileType(compileType);
+        final CompilationTask task = new CompilationTask(
+          sessionId, channelContext, projectId, buildType, compileRequest.getModuleNameList(), compileRequest.getFilePathList()
+        );
+        final RunnableFuture future = getCompileTaskExecutor(projectId).submit(task);
+        myBuildsInProgress.add(new Pair<RunnableFuture, CompilationTask>(future, task));
         return null;
       }
 
       default:
         return ProtoUtil.toMessage(sessionId, ProtoUtil.createFailure("Unsupported command: '" + compileType + "'"));
+    }
+  }
+
+  @NotNull
+  private SequentialTaskExecutor getCompileTaskExecutor(String projectId) {
+    synchronized (myTaskExecutors) {
+      SequentialTaskExecutor executor = myTaskExecutors.get(projectId);
+      if (executor == null) {
+        executor = new SequentialTaskExecutor(new SequentialTaskExecutor.AsyncTaskExecutor() {
+          @Override
+          public void submit(Runnable runnable) {
+            myBuildsExecutor.submit(runnable);
+          }
+        });
+        myTaskExecutors.put(projectId, executor);
+      }
+      return executor;
     }
   }
 
@@ -182,22 +215,23 @@ class ServerMessageHandler extends SimpleChannelHandler {
     private final UUID mySessionId;
     private final ChannelHandlerContext myChannelContext;
     private final String myProjectPath;
+    private final BuildType myBuildType;
     private final Collection<String> myPaths;
     private final Set<String> myModules;
-    private final BuildParameters myParams;
     private volatile boolean myCanceled = false;
 
-    public CompilationTask(UUID sessionId, ChannelHandlerContext channelContext, String projectId, Collection<String> modules, Collection<String> paths) {
+    public CompilationTask(UUID sessionId,
+                           ChannelHandlerContext channelContext,
+                           String projectId,
+                           BuildType buildType,
+                           Collection<String> modules,
+                           Collection<String> paths) {
       mySessionId = sessionId;
       myChannelContext = channelContext;
       myProjectPath = projectId;
+      myBuildType = buildType;
       myPaths = paths;
       myModules = new HashSet<String>(modules);
-      myParams = new BuildParameters();
-    }
-
-    public BuildParameters getBuildParams() {
-      return myParams;
     }
 
     public UUID getSessionId() {
@@ -214,7 +248,7 @@ class ServerMessageHandler extends SimpleChannelHandler {
       final Ref<Boolean> hasErrors = new Ref<Boolean>(false);
       final Ref<Boolean> markedFilesUptodate = new Ref<Boolean>(false);
       try {
-        ServerState.getInstance().startBuild(myProjectPath, myModules, myPaths, myParams, new MessageHandler() {
+        ServerState.getInstance().startBuild(myProjectPath, myBuildType, myModules, myPaths, new MessageHandler() {
           public void processMessage(BuildMessage buildMessage) {
             final JpsRemoteProto.Message.Response response;
             if (buildMessage instanceof FileGeneratedEvent) {
@@ -299,7 +333,16 @@ class ServerMessageHandler extends SimpleChannelHandler {
       finally {
         Channels.write(myChannelContext.getChannel(), lastMessage).addListener(new ChannelFutureListener() {
           public void operationComplete(ChannelFuture future) throws Exception {
-            myBuildsInProgress.remove(myProjectPath);
+            final UUID sessionId = getSessionId();
+            synchronized (myBuildsInProgress) {
+              for (Iterator<Pair<RunnableFuture, CompilationTask>> it = myBuildsInProgress.iterator(); it.hasNext(); ) {
+                final CompilationTask task = it.next().second;
+                if (sessionId.equals(task.getSessionId())) {
+                  it.remove();
+                  break;
+                }
+              }
+            }
           }
         });
       }

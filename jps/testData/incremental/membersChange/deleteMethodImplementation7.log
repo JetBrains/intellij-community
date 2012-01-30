@@ -1,15 +1,3 @@
-Request to make modules:
-module DeleteMethodImplementation7
-End of request
-digraph X {
-  DeleteMethodImplementation7[label="DeleteMethodImplementation7"];
-}
-digraph X {
-  DeleteMethodImplementation7[label="DeleteMethodImplementation7"];
-}
-Propagated modules:
-module DeleteMethodImplementation7
-End of propagated
 Cleaning output files:
 out/production/DeleteMethodImplementation7/BaseImpl.class
 out/production/DeleteMethodImplementation7/BaseImplImpl.class

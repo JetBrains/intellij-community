@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileSystem;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -103,4 +104,48 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
   public String getCanonicallyCasedName(@NotNull VirtualFile file) {
     return file.getName();
   }
+
+  public static final int BA_EXISTS    = 0x01;
+  public static final int BA_REGULAR   = 0x02;
+  public static final int BA_DIRECTORY = 0x04;
+  public static final int BA_HIDDEN    = 0x08;
+
+  @MagicConstant(flags = {BA_EXISTS, BA_REGULAR, BA_DIRECTORY, BA_HIDDEN})
+  public @interface FileBooleanAttributes {}
+
+  /**
+   * Queries the file about several attributes at once, and returns them ORed together.
+   * This method is typically faster than several methods calls querying corresponding file attributes one by one.
+   *
+   * @param file  to query.
+   * @param flags Attributes to query the file for.
+   *              Each attribute is an int constant from this class.
+   *              Following attributes are defined:
+   *              <ul>
+   *              <li>{@link #BA_EXISTS} is set if {@link java.io.File#exists()} returns true</li>
+   *              <li>{@link #BA_DIRECTORY} is set if {@link java.io.File#isDirectory()} returns true</li>
+   *              <li>{@link #BA_HIDDEN} is set if {@link java.io.File#isHidden()} returns true</li>
+   *              <li>{@link #BA_REGULAR} is set if {@link java.io.File#isFile()} returns true</li>
+   *              </ul>
+   *              Attributes can be bitwise ORed together to query several file attributes at once.
+   *              <code>-1</code> as an argument value will query all attributes.
+   * @return Attributes mask for the file, where the bit is set if the corresponding attribute for the file is true.
+   *         That is, the return value is <pre>{@code
+   *           (file.exists() ? BA_EXISTS : 0) |
+   *           (file.isDirectory()() ? BA_DIRECTORY : 0) |
+   *           (file.isRegular()() ? BA_REGULAR : 0) |
+   *           (file.isHidden()() ? BA_HIDDEN : 0)
+   *           }</pre>
+   *         Except that the bit in the return value is undefined if the corresponding bit in the flags parameter is not set.
+   *  <p>
+   *  Example usage:
+   *  <pre>{@code
+   *  int attributes = getBooleanAttributes(file, BA_EXISTS | BA_DIRECTORY);
+   *  if ((attributes & BA_EXISTS) != 0) {
+   *    // file exists
+   *    boolean isDirectory = (attributes & BA_DIRECTORY) != 0;
+   *  }}</pre>
+   */
+  @FileBooleanAttributes
+  public abstract int getBooleanAttributes(@NotNull final VirtualFile file, @FileBooleanAttributes int flags);
 }

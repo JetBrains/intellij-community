@@ -731,7 +731,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     initPlatformPrefix(IDEA_MARKER_CLASS, "PlatformLangXml");
   }
 
-  protected static void initPlatformPrefix(String classToTest, String prefix) {
+  public static void initPlatformPrefix(String classToTest, String prefix) {
     if (!ourPlatformPrefixInitialized) {
       ourPlatformPrefixInitialized = true;
       boolean isUltimate = true;
