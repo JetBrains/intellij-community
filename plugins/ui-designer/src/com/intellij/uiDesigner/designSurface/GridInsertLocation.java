@@ -107,7 +107,7 @@ public class GridInsertLocation extends GridDropLocation {
   }
 
   @Override public boolean canDrop(ComponentDragObject dragObject) {
-    Rectangle rc = getDragObjectDimensions(dragObject);
+    Rectangle rc = getDragObjectDimensions(dragObject, true);
     int size = isRowInsert() ? rc.width : rc.height;
     if (isInsertInsideComponent(size)) {
       LOG.debug("GridInsertLocation.canDrop()=false because insert inside component");
@@ -165,12 +165,12 @@ public class GridInsertLocation extends GridDropLocation {
     final int insertCol = getColumn();
     final int insertRow = getRow();
 
-    Rectangle feedbackRect = getGridFeedbackRect(dragObject, isColumnInsert(), isRowInsert());
+    Rectangle feedbackRect = getGridFeedbackRect(dragObject, isColumnInsert(), isRowInsert(), false);
     if (feedbackRect == null) {
       feedbackLayer.removeFeedback();
       return;
     }
-    Rectangle cellRect = getGridFeedbackCellRect(dragObject, isColumnInsert(), isRowInsert());
+    Rectangle cellRect = getGridFeedbackCellRect(dragObject, isColumnInsert(), isRowInsert(), false);
     assert cellRect != null;
 
     final RadAbstractGridLayoutManager layoutManager = getContainer().getGridLayoutManager();
@@ -185,15 +185,25 @@ public class GridInsertLocation extends GridDropLocation {
 
     Rectangle rcFeedback = null;
     if (dragObject.getComponentCount() == 1) {
-      int cellWidth = vGridLines [insertCol+1] - vGridLines [insertCol];
-      int cellHeight = hGridLines [insertRow+1] - hGridLines [insertRow];
+      int lastColIndex = insertCol + dragObject.getColSpan(0);
+      if (lastColIndex > vGridLines.length - 1) {
+        lastColIndex = insertCol + 1;
+      }
+      
+      int lastRowIndex = insertRow + dragObject.getRowSpan(0);
+      if (lastRowIndex > hGridLines.length - 1) {
+        lastRowIndex = insertRow + 1;
+      }
+      
+      int cellWidth = vGridLines [lastColIndex] - vGridLines [insertCol];
+      int cellHeight = hGridLines [lastRowIndex] - hGridLines [insertRow];
       RadComponent component = layoutManager.getComponentAtGrid(getContainer(), insertRow, insertCol);
       if (component != null) {
         Rectangle bounds = component.getBounds();
         bounds.translate(-vGridLines [insertCol], -hGridLines [insertRow]);
 
-        int spaceToRight = vGridLines [insertCol+1] - vGridLines [insertCol] - (bounds.x + bounds.width);
-        int spaceBelow = hGridLines [insertRow+1] - hGridLines [insertRow] - (bounds.y + bounds.height);
+        int spaceToRight = vGridLines [lastColIndex] - vGridLines [insertCol] - (bounds.x + bounds.width);
+        int spaceBelow = hGridLines [lastRowIndex] - hGridLines [insertRow] - (bounds.y + bounds.height);
         if (myMode == GridInsertMode.RowBefore && bounds.y > INSERT_RECT_MIN_SIZE) {
           rcFeedback = new Rectangle(0, 0, cellWidth, bounds.y);
         }
@@ -325,7 +335,8 @@ public class GridInsertLocation extends GridDropLocation {
 
     int cellsToInsert = 1;
     if (components.length > 0) {
-      Rectangle rc = getDragObjectDimensions(dragObject);
+      int cellSize = container.getGridCellCount(isRowInsert());
+      Rectangle rc = getDragObjectDimensions(dragObject, cell < cellSize - 1);
       int size = isRowInsert() ? rc.height : rc.width;
       if (size > 0) {
         cellsToInsert = size;
