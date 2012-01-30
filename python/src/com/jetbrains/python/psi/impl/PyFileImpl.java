@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -17,6 +18,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.IndexingDataKeys;
 import com.jetbrains.python.*;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
+import com.jetbrains.python.inspections.PythonVisitorFilter;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.resolve.VariantsProcessor;
@@ -28,7 +30,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.lang.ref.SoftReference;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   protected PyType myType;
@@ -39,6 +43,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   private final Map<FutureFeature, Boolean> myFutureFeatures;
   private List<String> myDunderAll;
   private boolean myDunderAllCalculated;
+  private final Map<String, SoftReference<PsiElement>> myExportedNames = new ConcurrentHashMap<String, SoftReference<PsiElement>>();
 
   public PyFileImpl(FileViewProvider viewProvider) {
     this(viewProvider, PythonLanguage.getInstance());
@@ -115,12 +120,27 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof PyElementVisitor) {
-      ((PyElementVisitor)visitor).visitPyFile(this);
+    if (isAcceptedFor(visitor.getClass())) {
+      if (visitor instanceof PyElementVisitor) {
+        ((PyElementVisitor)visitor).visitPyFile(this);
+      }
+      else {
+        super.accept(visitor);
+      }
+    }
+  }
+
+  private boolean isAcceptedFor(@NotNull Class visitorClass) {
+    final FileViewProvider viewProvider = getViewProvider();
+    final Language lang;
+    if (viewProvider instanceof TemplateLanguageFileViewProvider) {
+      lang = viewProvider.getBaseLanguage();
     }
     else {
-      super.accept(visitor);
+      lang = getLanguage();
     }
+    final PythonVisitorFilter filter = PythonVisitorFilter.INSTANCE.forLanguage(lang);
+    return filter == null || filter.isSupported(visitorClass, this);
   }
 
   private final Key<Set<PyFile>> PROCESSED_FILES = Key.create("PyFileImpl.processDeclarations.processedFiles");
@@ -218,6 +238,13 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   }
 
   public PsiElement findExportedName(String name) {
+    final SoftReference<PsiElement> ref = myExportedNames.get(name);
+    if (ref != null) {
+      final PsiElement result = ref.get();
+      if (result != null) {
+        return result;
+      }
+    }
     final List<String> stack = myFindExportedNameStack.get();
     if (stack.contains(name)) {
       return null;
@@ -235,6 +262,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
         else {
           PsiElement element = findNameInStub(child, name);
           if (element != null) {
+            myExportedNames.put(name, new SoftReference<PsiElement>(element));
             return element;
           }
         }
@@ -247,6 +275,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
           PsiElement child = exceptChildren.get(j);
           PsiElement element = findNameInStub(child, name);
           if (element != null) {
+            myExportedNames.put(name, new SoftReference<PsiElement>(element));
             return element;
           }
         }
@@ -565,6 +594,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     ControlFlowCache.clear(this);
     myDunderAllCalculated = false;
     myFutureFeatures.clear(); // probably no need to synchronize
+    myExportedNames.clear();
   }
 
   private static class ArrayListThreadLocal extends ThreadLocal<List<String>> {

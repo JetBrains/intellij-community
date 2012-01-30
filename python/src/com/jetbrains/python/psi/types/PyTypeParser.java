@@ -188,7 +188,7 @@ public class PyTypeParser {
         final TextRange first = ranges.get(0);
         for (TextRange range : ranges) {
           final PyQualifiedName moduleName = PyQualifiedName.fromDottedString(first.union(range).substring(type));
-          final PyType t = new PyImportedModuleType(new PyImportedModule(anchor.getContainingFile(), moduleName));
+          final PyType t = new PyImportedModuleType(new PyImportedModule(null, anchor.getContainingFile(), moduleName));
           types.put(range.shiftRight(offset), t);
         }
       }

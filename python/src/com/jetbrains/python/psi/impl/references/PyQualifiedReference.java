@@ -21,6 +21,7 @@ import com.intellij.util.indexing.FileBasedIndex;
 import com.jetbrains.cython.types.CythonStructType;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyImportedModule;
@@ -352,7 +353,9 @@ public class PyQualifiedReference extends PyReferenceImpl {
     PyQualifiedName qualifierPath = PyQualifiedName.fromReferenceChain(PyResolveUtil.unwindQualifiers(qualifier));
     if (qualifierPath != null) {
       AssignmentCollectProcessor proc = new AssignmentCollectProcessor(qualifierPath);
-      PyResolveUtil.treeCrawlUp(proc, qualifier);
+      final ScopeOwner roof = ScopeUtil.getResolveScopeOwner(qualifier);
+      PyResolveUtil.scopeCrawlUp(proc, qualifier, null, roof);
+      //PyResolveUtil.treeCrawlUp(proc, qualifier);
       return proc.getResult();
     }
     else {
