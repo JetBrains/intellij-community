@@ -24,6 +24,7 @@ import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.AnnotationSession;
@@ -40,6 +41,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
@@ -76,14 +78,20 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
   }
 
   public void doCollectInformation(final ProgressIndicator progress) {
-    InspectionProfile profile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile();
+    final InspectionProfile profile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile();
     final boolean deadCodeEnabled = profile.isToolEnabled(HighlightDisplayKey.find(GroovyUnusedDeclarationInspection.SHORT_NAME), myFile);
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     VirtualFile virtualFile = myFile.getViewProvider().getVirtualFile();
     if (!fileIndex.isInContent(virtualFile)) {
       return;
     }
-
+    final UnusedDeclarationInspection deadCodeInspection = (UnusedDeclarationInspection)profile.getInspectionTool(UnusedDeclarationInspection.SHORT_NAME, myFile);
+    final GlobalUsageHelper usageHelper = new GlobalUsageHelper() {
+      @Override
+      public boolean shouldCheckUsages(@NotNull PsiMember member) {
+        return deadCodeInspection == null || !deadCodeInspection.isEntryPoint(member);
+      }
+    };
 
     final List<HighlightInfo> unusedDeclarations = new ArrayList<HighlightInfo>();
     final Set<GrImportStatement> unusedImports = new HashSet<GrImportStatement>(GroovyImportOptimizer.getValidImportStatements(myFile));
@@ -103,7 +111,7 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
         if (deadCodeEnabled && element instanceof GrNamedElement && !PostHighlightingPass.isImplicitUsage((GrNamedElement)element, progress)) {
           PsiElement nameId = ((GrNamedElement)element).getNameIdentifierGroovy();
           String name = ((GrNamedElement)element).getName();
-          if (element instanceof GrTypeDefinition && PostHighlightingPass.isGloballyUnused((GrTypeDefinition)element, progress, null, name)) {
+          if (element instanceof GrTypeDefinition && PostHighlightingPass.isClassUsed((GrTypeDefinition)element, progress, usageHelper)) {
             unusedDeclarations.add(
               PostHighlightingPass.createUnusedSymbolInfo(nameId, "Class " + name + " is unused", HighlightInfoType.UNUSED_SYMBOL));
           }
