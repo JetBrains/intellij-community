@@ -46,7 +46,7 @@ import java.util.Comparator;
  * @author Eugene Zhuravlev
  * @since May 18, 2005
  */
-class JdkComboBox extends ComboBoxWithWidePopup {
+public class JdkComboBox extends ComboBoxWithWidePopup {
 
   public JdkComboBox(@NotNull final ProjectSdksModel jdkModel) {
     super(new JdkComboBoxModel(jdkModel));
@@ -105,6 +105,16 @@ class JdkComboBox extends ComboBoxWithWidePopup {
                                 final JdkComboBoxItem firstItem,
                                 @Nullable final Condition<Sdk> additionalSetup,
                                 final boolean moduleJdkSetup) {
+    setSetupButton(setUpButton, project, jdksModel, firstItem, additionalSetup,
+                   ProjectBundle.message("project.roots.set.up.jdk.title", moduleJdkSetup ? 1 : 2));
+  }
+
+  public void setSetupButton(final JButton setUpButton,
+                                final Project project,
+                                final ProjectSdksModel jdksModel,
+                                final JdkComboBoxItem firstItem,
+                                @Nullable final Condition<Sdk> additionalSetup,
+                                final String actionGroupTitle) {
     setUpButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         final JdkListConfigurable configurable = JdkListConfigurable.getInstance(project);
@@ -122,7 +132,7 @@ class JdkComboBox extends ComboBoxWithWidePopup {
           }
         });
         JBPopupFactory.getInstance()
-          .createActionGroupPopup(ProjectBundle.message("project.roots.set.up.jdk.title", moduleJdkSetup ? 1 : 2), group,
+          .createActionGroupPopup(actionGroupTitle, group,
                                   DataManager.getInstance().getDataContext(JdkComboBox.this), JBPopupFactory.ActionSelectionAid.MNEMONICS,
                                   false)
           .showUnderneathOf(setUpButton);
@@ -253,6 +263,11 @@ class JdkComboBox extends ComboBoxWithWidePopup {
       return myJdk;
     }
 
+    @Nullable
+    public String getSdkName() {
+      return myJdk != null ? myJdk.getName() : null;
+    }
+    
     public String toString() {
       return myJdk.getName();
     }
@@ -279,15 +294,19 @@ class JdkComboBox extends ComboBoxWithWidePopup {
   }
 
   private static class InvalidJdkComboBoxItem extends JdkComboBoxItem {
-    private final String myName;
+    private final String mySdkName;
 
     public InvalidJdkComboBoxItem(String name) {
       super(null);
-      myName = ProjectBundle.message("jdk.combo.box.invalid.item", name);
+      mySdkName = name;
+    }
+
+    public String getSdkName() {
+      return mySdkName;
     }
 
     public String toString() {
-      return myName;
+      return ProjectBundle.message("jdk.combo.box.invalid.item", mySdkName);
     }
   }
 }
