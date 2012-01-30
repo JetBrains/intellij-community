@@ -43,6 +43,7 @@ import java.util.List;
  */
 public class JavaAnonymousClassesNodeProvider implements FileStructureNodeProvider<JavaAnonymousClassTreeElement>, PropertyOwner {
   public static final String ID = "SHOW_ANONYMOUS";
+  public static final String JAVA_ANONYMOUS_PROPERTY_NAME = "java.anonymous.provider";
 
   @Override
   public Collection<JavaAnonymousClassTreeElement> provideNodes(TreeElement node) {
@@ -87,6 +88,6 @@ public class JavaAnonymousClassesNodeProvider implements FileStructureNodeProvid
   @NotNull
   @Override
   public String getPropertyName() {
-    return "java.anonymous.provider";
+    return JAVA_ANONYMOUS_PROPERTY_NAME;
   }
 }

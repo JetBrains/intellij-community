@@ -66,8 +66,8 @@ public abstract class FileStructureTestBase extends CodeInsightFixtureTestCase {
   }
 
   protected void checkTree() throws Exception {
-    final String expected = FileUtil.loadFile(new File(getTestDataPath() + "/" + getTreeFileName()));
-    Assert.assertEquals(expected, PlatformTestUtil.print(getTree(), true));
+    final String expected = FileUtil.loadFile(new File(getTestDataPath() + "/" + getTreeFileName()), true);
+    Assert.assertEquals(expected.trim(), PlatformTestUtil.print(getTree(), true).trim());
   }
 
 
@@ -78,7 +78,8 @@ public abstract class FileStructureTestBase extends CodeInsightFixtureTestCase {
         getStructure().rebuild();
         updateTree();
         TreeUtil.expandAll(getTree());
-        myPopup.selectPsiElement(getFile());
+        final FilteringTreeStructure.FilteringNode node = myPopup.selectPsiElement(myPopup.getCurrentElement(getFile()));
+        getTree().getSelectionModel().setSelectionPath(getTree().getPath(node));
       }
     });
   }

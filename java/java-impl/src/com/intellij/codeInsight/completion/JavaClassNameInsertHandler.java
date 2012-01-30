@@ -125,8 +125,8 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
       }
     }
 
-    if (fillTypeArgs) {
-      ConstructorInsertHandler.promptTypeArgs(context, context.getOffset(refEnd));
+    if (fillTypeArgs && context.getCompletionChar() != '(') {
+      JavaCompletionUtil.promptTypeArgs(context, context.getOffset(refEnd));
     }
   }
 

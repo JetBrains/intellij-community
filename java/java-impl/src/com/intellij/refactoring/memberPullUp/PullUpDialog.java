@@ -17,7 +17,10 @@ package com.intellij.refactoring.memberPullUp;
 
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
+import com.intellij.psi.statistics.StatisticsInfo;
+import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
@@ -57,6 +60,7 @@ public class PullUpDialog extends RefactoringDialog {
   private List<MemberInfo> myMemberInfos;
   private DocCommentPanel myJavaDocPanel;
   private JComboBox myClassCombo;
+  private static final String PULL_UP_STATISTICS_KEY = "pull.up##";
 
   public interface Callback {
     boolean checkConflicts(PullUpDialog dialog);
@@ -127,11 +131,10 @@ public class PullUpDialog extends RefactoringDialog {
     myClassCombo.setRenderer(new ClassCellRenderer(myClassCombo.getRenderer()));
     classComboLabel.setText(RefactoringBundle.message("pull.up.members.to", UsageViewUtil.getLongName(myClass)));
     classComboLabel.setLabelFor(myClassCombo);
-
-    PsiClass nearestBase = RefactoringHierarchyUtil.getNearestBaseClass(myClass, false);
+    final PsiClass preselection = getPreselection();
     int indexToSelect = 0;
-    if (nearestBase != null) {
-      indexToSelect = mySuperClasses.indexOf(nearestBase);
+    if (preselection != null) {
+      indexToSelect = mySuperClasses.indexOf(preselection);
     }
     myClassCombo.setSelectedIndex(indexToSelect);
     myClassCombo.addItemListener(new ItemListener() {
@@ -152,6 +155,27 @@ public class PullUpDialog extends RefactoringDialog {
     return panel;
   }
 
+  private PsiClass getPreselection() {
+    PsiClass preselection = RefactoringHierarchyUtil.getNearestBaseClass(myClass, false);
+
+    final String statKey = PULL_UP_STATISTICS_KEY + myClass.getQualifiedName();
+    for (StatisticsInfo info : StatisticsManager.getInstance().getAllValues(statKey)) {
+      final String superClassName = info.getValue();
+      PsiClass superClass = null;
+      for (PsiClass aClass : mySuperClasses) {
+        if (Comparing.strEqual(superClassName, aClass.getQualifiedName())) {
+          superClass = aClass;
+          break;
+        }
+      }
+      if (superClass != null && StatisticsManager.getInstance().getUseCount(info) > 0) {
+        preselection = superClass;
+        break;
+      }
+    }
+    return preselection;
+  }
+
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp(HelpID.MEMBERS_PULL_UP);
   }
@@ -168,7 +192,9 @@ public class PullUpDialog extends RefactoringDialog {
   protected void doAction() {
     if (!myCallback.checkConflicts(this)) return;
     JavaRefactoringSettings.getInstance().PULL_UP_MEMBERS_JAVADOC = myJavaDocPanel.getPolicy();
-
+    StatisticsManager
+            .getInstance().incUseCount(new StatisticsInfo(PULL_UP_STATISTICS_KEY + myClass.getQualifiedName(), getSuperClass().getQualifiedName()));
+    
     invokeRefactoring(new PullUpHelper(myClass, getSuperClass(), getSelectedMemberInfos(),
                                                new DocCommentPolicy(getJavaDocPolicy())));
     close(OK_EXIT_CODE);

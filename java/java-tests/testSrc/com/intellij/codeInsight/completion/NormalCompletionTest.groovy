@@ -1258,4 +1258,16 @@ public class ListUtils {
     }
   }
 
+  public void testNoGenericsWhenChoosingWithParen() {
+    configure()
+    myFixture.type 'Ma('
+    checkResult()
+  }
+
+  public void testNoClosingWhenChoosingWithParenBeforeIdentifier() {
+    configure()
+    myFixture.type '('
+    checkResult()
+  }
+
 }

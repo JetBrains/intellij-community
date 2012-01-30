@@ -93,6 +93,7 @@ public class TestNGUtil
   }
 
   public static final String TEST_ANNOTATION_FQN = Test.class.getName();
+  public static final String FACTORY_ANNOTATION_FQN = Factory.class.getName();
   public static final String[] CONFIG_ANNOTATIONS_FQN = {
       Configuration.class.getName(),
       Factory.class.getName(),
@@ -199,6 +200,7 @@ public class TestNGUtil
       PsiClass psiClass = (PsiClass) element;
       for (PsiMethod method : psiClass.getAllMethods()) {
         if (AnnotationUtil.isAnnotated(method, TEST_ANNOTATION_FQN, false, true)) return true;
+        if (AnnotationUtil.isAnnotated(method, FACTORY_ANNOTATION_FQN, false, true)) return true;
         if (hasTestJavaDoc(method, checkJavadoc)) return true;
       }
     } else if (element instanceof PsiMethod) {

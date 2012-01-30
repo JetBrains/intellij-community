@@ -17,9 +17,11 @@ package com.intellij.execution.util;
 
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.CommonJavaRunConfigurationParameters;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RunConfigurationModule;
+import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.openapi.module.Module;
@@ -121,5 +123,16 @@ public class JavaParametersUtil {
     final Sdk jdk = JavaSdk.getInstance().createJdk("", jreHome);
     if (jdk == null) throw CantRunException.noJdkConfigured();
     return jdk;
+  }
+
+  public static void checkAlternativeJRE(CommonJavaRunConfigurationParameters configuration) throws RuntimeConfigurationWarning {
+    if (configuration.isAlternativeJrePathEnabled()) {
+      if (configuration.getAlternativeJrePath() == null ||
+          configuration.getAlternativeJrePath().length() == 0 ||
+          !JavaSdk.checkForJre(configuration.getAlternativeJrePath())) {
+        throw new RuntimeConfigurationWarning(
+          ExecutionBundle.message("jre.path.is.not.valid.jre.home.error.mesage", configuration.getAlternativeJrePath()));
+      }
+    }
   }
 }

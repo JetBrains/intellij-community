@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.debugger.impl;
+package com.intellij.ide.fileStructure;
 
 /**
- * @author lex
+ * @author Konstantin Bulenkov
  */
-public class EventQueueClosedException extends Exception {
+public class JavaFileStructureSelectionTest extends JavaFileStructureTestCase {
   @Override
-  public Throwable fillInStackTrace() {
-    return this;
+  protected String getTestDataFolderName() {
+    return "selection";
   }
+
+  public void testField() throws Exception {checkTree();}
+  public void testMethod() throws Exception {checkTree();}
+  public void testConstructor() throws Exception {checkTree();}
+  public void testInsideClass() throws Exception {checkTree();}
 }

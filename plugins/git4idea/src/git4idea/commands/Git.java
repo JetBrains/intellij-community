@@ -138,12 +138,17 @@ public class Git {
   public static GitCommandResult checkout(@NotNull GitRepository repository,
                                           @NotNull String reference,
                                           @Nullable String newBranch,
+                                          boolean force,
                                           @NotNull GitLineHandlerListener... listeners) {
     final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.CHECKOUT);
     h.setSilent(false);
+    if (force) {
+      h.addParameters("--force");
+    }
     if (newBranch == null) { // simply checkout
       h.addParameters(reference);
-    } else { // checkout reference as new branch
+    } 
+    else { // checkout reference as new branch
       h.addParameters("-b", newBranch, reference);
     }
     for (GitLineHandlerListener listener : listeners) {

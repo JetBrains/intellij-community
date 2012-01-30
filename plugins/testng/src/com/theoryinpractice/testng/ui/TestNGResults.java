@@ -211,7 +211,7 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
         dups.add(proxy);
       }
     }
-    final String testMethodDescriptor = result.getTestClass() + result.getMethod();
+    final String testMethodDescriptor = TestProxy.toDisplayText(result, project);
     if (startedMethods.contains(testMethodDescriptor)) {
       total++;
     }

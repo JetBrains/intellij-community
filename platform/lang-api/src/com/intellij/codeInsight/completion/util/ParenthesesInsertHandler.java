@@ -15,12 +15,12 @@
  */
 package com.intellij.codeInsight.completion.util;
 
-import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
@@ -58,22 +58,22 @@ public abstract class ParenthesesInsertHandler<T extends LookupElement> implemen
 
   private final boolean mySpaceBeforeParentheses;
   private final boolean mySpaceBetweenParentheses;
-  private final boolean myInsertRightParenthesis;
+  private final boolean myMayInsertRightParenthesis;
   private final boolean myAllowParametersOnNextLine;
 
   protected ParenthesesInsertHandler(final boolean spaceBeforeParentheses,
                                      final boolean spaceBetweenParentheses,
-                                     final boolean insertRightParenthesis) {
-    this(spaceBeforeParentheses, spaceBetweenParentheses, insertRightParenthesis, false);
+                                     final boolean mayInsertRightParenthesis) {
+    this(spaceBeforeParentheses, spaceBetweenParentheses, mayInsertRightParenthesis, false);
   }
 
   protected ParenthesesInsertHandler(boolean spaceBeforeParentheses,
                                      boolean spaceBetweenParentheses,
-                                     boolean insertRightParenthesis,
+                                     boolean mayInsertRightParenthesis,
                                      boolean allowParametersOnNextLine) {
     mySpaceBeforeParentheses = spaceBeforeParentheses;
     mySpaceBetweenParentheses = spaceBetweenParentheses;
-    myInsertRightParenthesis = insertRightParenthesis;
+    myMayInsertRightParenthesis = mayInsertRightParenthesis;
     myAllowParametersOnNextLine = allowParametersOnNextLine;
   }
 
@@ -138,7 +138,15 @@ public abstract class ParenthesesInsertHandler<T extends LookupElement> implemen
       editor.getCaretModel().moveToOffset(context.getTailOffset());
     }
 
-    if (!myInsertRightParenthesis) return;
+    if (!myMayInsertRightParenthesis) return;
+
+    if (context.getCompletionChar() == '(') {
+      //todo use BraceMatchingUtil.isPairedBracesAllowedBeforeTypeInFileType
+      int tail = context.getTailOffset();
+      if (tail < document.getTextLength() && StringUtil.isJavaIdentifierPart(document.getCharsSequence().charAt(tail))) {
+        return;
+      }
+    }
 
     document.insertString(context.getTailOffset(), getSpace(mySpaceBetweenParentheses) + ")");
     if (!putCaretInside) {

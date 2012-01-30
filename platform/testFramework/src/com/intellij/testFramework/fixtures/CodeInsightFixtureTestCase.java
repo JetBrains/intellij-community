@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.EmptyModuleFixtureBuilder;
+import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
@@ -29,7 +30,7 @@ import java.io.File;
 /**
  * @author yole
  */
-public abstract class CodeInsightFixtureTestCase extends UsefulTestCase {
+public abstract class CodeInsightFixtureTestCase<T extends ModuleFixtureBuilder> extends UsefulTestCase {
   protected CodeInsightTestFixture myFixture;
   protected Module myModule;
 
@@ -39,7 +40,7 @@ public abstract class CodeInsightFixtureTestCase extends UsefulTestCase {
 
     final TestFixtureBuilder<IdeaProjectTestFixture> projectBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder();
     myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(projectBuilder.getFixture());
-    final EmptyModuleFixtureBuilder moduleFixtureBuilder = projectBuilder.addModule(EmptyModuleFixtureBuilder.class);
+    final T moduleFixtureBuilder = projectBuilder.addModule(getModuleBuilderClass());
     moduleFixtureBuilder.addSourceContentRoot(myFixture.getTempDirPath());
     tuneFixture(moduleFixtureBuilder);
 
@@ -48,6 +49,10 @@ public abstract class CodeInsightFixtureTestCase extends UsefulTestCase {
     myModule = moduleFixtureBuilder.getFixture().getModule();
   }
 
+  protected Class<T> getModuleBuilderClass() {
+    return (Class<T>)EmptyModuleFixtureBuilder.class;
+  }
+  
   @Override
   protected void tearDown() throws Exception {
     myFixture.tearDown();
@@ -56,7 +61,7 @@ public abstract class CodeInsightFixtureTestCase extends UsefulTestCase {
     super.tearDown();
   }
 
-  protected void tuneFixture(final EmptyModuleFixtureBuilder moduleBuilder) {}
+  protected void tuneFixture(final T moduleBuilder) {}
 
   /**
    * Return relative path to the test data. Path is relative to the

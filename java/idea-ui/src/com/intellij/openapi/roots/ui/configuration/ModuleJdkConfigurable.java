@@ -17,6 +17,7 @@
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
@@ -119,17 +120,18 @@ public abstract class ModuleJdkConfigurable implements Disposable {
                                                          GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
                                                          new Insets(6, 6, 12, 0), 0, 0));
     final Project project = getRootModel().getModule().getProject();
-    final JButton setUpButton = myCbModuleJdk
-      .createSetupButton(project, myJdksModel, new JdkComboBox.ProjectJdkComboBoxItem(), new Condition<Sdk>(){
+    final JButton setUpButton = new JButton(ApplicationBundle.message("button.new"));
+    myCbModuleJdk
+      .setSetupButton(setUpButton, project, myJdksModel, new JdkComboBox.ProjectJdkComboBoxItem(), new Condition<Sdk>() {
         public boolean value(Sdk jdk) {
           final Sdk projectJdk = myJdksModel.getProjectSdk();
-          if (projectJdk == null){
+          if (projectJdk == null) {
             final int res =
               Messages.showYesNoDialog(myJdkPanel,
                                        ProjectBundle.message("project.roots.no.jdk.on.project.message"),
-                                       ProjectBundle.message("project.roots.no.jdk.on.projecct.title"),
+                                       ProjectBundle.message("project.roots.no.jdk.on.project.title"),
                                        Messages.getInformationIcon());
-            if (res == DialogWrapper.OK_EXIT_CODE){
+            if (res == DialogWrapper.OK_EXIT_CODE) {
               myJdksModel.setProjectSdk(jdk);
               return true;
             }
@@ -140,12 +142,16 @@ public abstract class ModuleJdkConfigurable implements Disposable {
     myJdkPanel.add(setUpButton, new GridBagConstraints(2, 0, 1, 1, 0, 0,
                                                        GridBagConstraints.WEST, GridBagConstraints.NONE,
                                                        new Insets(0, 4, 7, 0), 0, 0));
-    myCbModuleJdk.appendEditButton(getRootModel().getModule().getProject(), myJdkPanel, new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 1.0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 4, 7, 0), 0, 0) , new Computable<Sdk>() {
+    final JButton editButton = new JButton(ApplicationBundle.message("button.edit"));
+    myCbModuleJdk.setEditButton(editButton, getRootModel().getModule().getProject(), new Computable<Sdk>() {
       @Nullable
       public Sdk compute() {
         return getRootModel().getSdk();
       }
     });
+    myJdkPanel.add(editButton,
+                   new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 1.0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE,
+                                          new Insets(0, 4, 7, 0), 0, 0));
   }
 
   private void clearCaches() {

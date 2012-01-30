@@ -323,48 +323,51 @@ public class ColorSampleLookupValue implements LookupValueWithUIHint, DeferredUs
 
   public static ColorSampleLookupValue[] getColors() {
     if (ourColors == null) {
-      ourColorNameToHexCodeMap = new HashMap<String, String>(25);
-      ourHexCodeToColorNameMap = new HashMap<String, String>(25);
-      List<ColorSampleLookupValue> colorsList = new LinkedList<ColorSampleLookupValue>();
-      StringTokenizer tokenizer = new StringTokenizer(systemColorsString, "\n");
+      synchronized (ColorSampleLookupValue.class) {
+        if (ourColors == null) {
+          ourColorNameToHexCodeMap = new HashMap<String, String>(25);
+          ourHexCodeToColorNameMap = new HashMap<String, String>(25);
+          List<ColorSampleLookupValue> colorsList = new LinkedList<ColorSampleLookupValue>();
+          StringTokenizer tokenizer = new StringTokenizer(systemColorsString, "\n");
 
-      while (tokenizer.hasMoreTokens()) {
-        String name = tokenizer.nextToken();
-        colorsList.add(new ColorSampleLookupValue(name, name, false));
-        tokenizer.nextToken();
-      }
+          while (tokenizer.hasMoreTokens()) {
+            String name = tokenizer.nextToken();
+            colorsList.add(new ColorSampleLookupValue(name, name, false));
+            tokenizer.nextToken();
+          }
 
-      tokenizer = new StringTokenizer(standardColorsString, ", \n");
-      HashMap<String, String> standardColors = new HashMap<String, String>();
+          tokenizer = new StringTokenizer(standardColorsString, ", \n");
+          HashMap<String, String> standardColors = new HashMap<String, String>();
 
-      while (tokenizer.hasMoreTokens()) {
-        String name = tokenizer.nextToken();
-        String value = tokenizer.nextToken();
-        standardColors.put(name, name);
-        ourColorNameToHexCodeMap.put(name, value);
-        ourHexCodeToColorNameMap.put(value, name);
+          while (tokenizer.hasMoreTokens()) {
+            String name = tokenizer.nextToken();
+            String value = tokenizer.nextToken();
+            standardColors.put(name, name);
+            ourColorNameToHexCodeMap.put(name, value);
+            ourHexCodeToColorNameMap.put(value, name);
 
-        colorsList.add(new ColorSampleLookupValue(name, value, true));
-      }
+            colorsList.add(new ColorSampleLookupValue(name, value, true));
+          }
 
-      tokenizer = new StringTokenizer(colorsString, " \t\n");
+          tokenizer = new StringTokenizer(colorsString, " \t\n");
 
-      while (tokenizer.hasMoreTokens()) {
-        String name = tokenizer.nextToken();
-        String hexValue = tokenizer.nextToken();
+          while (tokenizer.hasMoreTokens()) {
+            String name = tokenizer.nextToken();
+            String hexValue = tokenizer.nextToken();
 
-        tokenizer.nextToken(); // skip rgb
+            tokenizer.nextToken(); // skip rgb
 
-        if (!standardColors.containsKey(name)) {
-          colorsList.add(new ColorSampleLookupValue(name, hexValue, false));
-          ourColorNameToHexCodeMap.put(name, hexValue);
-          ourHexCodeToColorNameMap.put(hexValue, name);
+            if (!standardColors.containsKey(name)) {
+              colorsList.add(new ColorSampleLookupValue(name, hexValue, false));
+              ourColorNameToHexCodeMap.put(name, hexValue);
+              ourHexCodeToColorNameMap.put(hexValue, name);
+            }
+          }
+
+          colorsList.toArray(ourColors = new ColorSampleLookupValue[colorsList.size()]);
         }
       }
-
-      colorsList.toArray(ourColors = new ColorSampleLookupValue[colorsList.size()]);
     }
-
     return ourColors;
   }
 
@@ -389,12 +392,12 @@ public class ColorSampleLookupValue implements LookupValueWithUIHint, DeferredUs
     return myName == null || Character.isLowerCase(myName.charAt(0)) ? HIGHER : NORMAL;
   }
 
-  public static String getHexCodeForColorName(String colorName) {
+  public static synchronized String getHexCodeForColorName(String colorName) {
     getColors(); // to guarantee initialization
     return ourColorNameToHexCodeMap.get(colorName);
   }
 
-  public static String getColorNameForHexCode(String colorName) {
+  public static synchronized String getColorNameForHexCode(String colorName) {
     getColors(); // to guarantee initialization
     return ourHexCodeToColorNameMap.get(colorName);
   }

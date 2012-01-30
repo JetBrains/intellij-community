@@ -39,8 +39,12 @@ public class ProjectJdksEditor extends DialogWrapper {
 
 
   public ProjectJdksEditor(final Sdk jdk, Project project, Component parent) {
+    this(jdk, parent, new ProjectJdksConfigurable(project));
+  }
+  
+  public ProjectJdksEditor(final Sdk jdk, Component parent, ProjectJdksConfigurable configurable) {
     super(parent, true);
-    myConfigurable = new ProjectJdksConfigurable(project);
+    myConfigurable = configurable;
     SwingUtilities.invokeLater(new Runnable(){
       public void run() {
         myConfigurable.selectNodeInTree(jdk != null ? jdk.getName() : null);

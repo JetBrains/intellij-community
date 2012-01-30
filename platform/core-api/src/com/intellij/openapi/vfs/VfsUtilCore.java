@@ -16,12 +16,14 @@
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
+import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.util.HashSet;
 import java.util.Set;
@@ -179,5 +181,15 @@ public class VfsUtilCore {
       visitChildrenRecursively(child, visitor, visitedSymlinks);
     }
     visitor.afterChildrenVisited(file);
+  }
+
+  public static String loadText(@NotNull VirtualFile file) throws IOException{
+    InputStreamReader reader = new InputStreamReader(file.getInputStream(), file.getCharset());
+    try {
+      return new String(FileUtil.loadText(reader, (int)file.getLength()));
+    }
+    finally {
+      reader.close();
+    }
   }
 }
