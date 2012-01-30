@@ -48,10 +48,15 @@ final class BeanStep extends StepAdapter{
   private JRadioButton myRbBindToExistingBean;
   JTextField myTfShortClassName;
   private TextFieldWithBrowseButton myTfWithBtnChoosePackage;
+  private JLabel myPackageLabel;
+  private JLabel myExistClassLabel;
   private final WizardData myData;
 
   public BeanStep(@NotNull final WizardData data) {
     myData = data;
+
+    myPackageLabel.setLabelFor(myTfWithBtnChoosePackage.getTextField());
+    myExistClassLabel.setLabelFor(myTfWitgBtnChooseClass.getTextField());
 
     final ItemListener itemListener = new ItemListener() {
       public void itemStateChanged(final ItemEvent e) {
