@@ -13,7 +13,7 @@
       <root url="jar://$PROJECT_DIR$/lib/dev/jmock-junit4-2.5.1.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/dev/jmock-legacy-2.5.1.jar!/" />
     </CLASSES>
-    <JAVADOC/>
+    <JAVADOC />
     <SOURCES>
       <root url="jar://$PROJECT_DIR$/lib/dev/hamcrest-core-1.1.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/dev/hamcrest-library-1.1.jar!/" />
