@@ -23,7 +23,6 @@ import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
@@ -55,6 +54,7 @@ import javax.swing.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static com.intellij.openapi.util.text.StringUtil.*;
 import static git4idea.commands.GitMessageWithFilesDetector.Event.LOCAL_CHANGES_OVERWRITTEN_BY_CHECKOUT;
 import static git4idea.commands.GitMessageWithFilesDetector.Event.UNTRACKED_FILES_OVERWRITTEN_BY;
 import static git4idea.util.GitUIUtil.code;
@@ -203,7 +203,7 @@ public class GitCheckoutOperation extends GitBranchOperation {
     String description = UntrackedFilesNotifier.createUntrackedFilesOverwrittenDescription("checkout", true);
 
     final SelectFilesDialog dialog = new UntrackedFilesDialog(myProject, new ArrayList<VirtualFile>(untrackedFiles),
-                                                              StringUtil.stripHtml(description, true));
+                                                              stripHtml(description, true));
     dialog.setTitle(title);
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
@@ -238,7 +238,7 @@ public class GitCheckoutOperation extends GitBranchOperation {
   @NotNull
   @Override
   protected String getRollbackProposal() {
-    return "However checkout has succeeded for the following repositories:<br/>" +
+    return "However checkout has succeeded for the following " + repositories() + ":<br/>" +
            successfulRepositoriesJoined() +
            "<br/>You may rollback (checkout back to " + myPreviousBranch + ") not to let branches diverge.";
   }
@@ -376,7 +376,7 @@ public class GitCheckoutOperation extends GitBranchOperation {
       LOG.info("Couldn't save local changes", e);
       notifyError("Couldn't save uncommitted changes.",
                   String.format("Tried to save uncommitted changes in %s before checkout, but failed with an error.<br/>%s",
-                                saver.getSaverName(), StringUtil.join(e.getMessages())));
+                                saver.getSaverName(), join(e.getMessages())));
       return false;
     }
   }

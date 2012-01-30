@@ -93,7 +93,7 @@ public class GitCheckoutNewBranchOperation extends GitBranchOperation {
   @NotNull
   @Override
   protected String getRollbackProposal() {
-    return "However checkout has succeeded for the following repositories:<br/>" +
+    return "However checkout has succeeded for the following " + repositories() + ":<br/>" +
            successfulRepositoriesJoined() +
            "<br/>You may rollback (checkout back to " + myPreviousBranch + ") not to let branches diverge.";
   }
