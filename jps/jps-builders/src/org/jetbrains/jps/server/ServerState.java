@@ -245,14 +245,20 @@ class ServerState {
     return compileScope;
   }
 
+
+  private static boolean ourCleanupFailed = false;
+
   private static void clearZipIndexCache() {
-    try {
-      final Class<?> indexClass = Class.forName("com.sun.tools.javac.zip.ZipFileIndex");
-      final Method clearMethod = indexClass.getMethod("clearCache");
-      clearMethod.invoke(null);
-    }
-    catch (Throwable ex) {
-      LOG.info(ex);
+    if (!ourCleanupFailed) {
+      try {
+        final Class<?> indexClass = Class.forName("com.sun.tools.javac.zip.ZipFileIndex");
+        final Method clearMethod = indexClass.getMethod("clearCache");
+        clearMethod.invoke(null);
+      }
+      catch (Throwable ex) {
+        ourCleanupFailed = true;
+        LOG.info(ex);
+      }
     }
   }
 
