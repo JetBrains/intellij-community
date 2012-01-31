@@ -4,8 +4,6 @@ import com.google.common.collect.ImmutableSet;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.module.ModuleUtil;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -15,12 +13,9 @@ import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyDynamicMember;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.impl.ResolveResultList;
-import com.jetbrains.python.psi.resolve.CompletionVariantsProcessor;
-import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.resolve.RatedResolveResult;
-import com.jetbrains.python.psi.resolve.ResolveImportUtil;
+import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,7 +33,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
 
   protected static ImmutableSet<String> ourPossibleFields = ImmutableSet.of("__name__", "__file__", "__path__", "__doc__", "__dict__");
 
-  public PyModuleType(PyFile source) {
+  public PyModuleType(@NotNull PyFile source) {
     myModule = source;
   }
 
@@ -48,22 +43,55 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
 
   @Nullable
   public List<? extends RatedResolveResult> resolveMember(final String name,
-                                                          PyExpression location,
+                                                          @Nullable PyExpression location,
                                                           AccessDirection direction,
                                                           PyResolveContext resolveContext) {
-    for(PyModuleMembersProvider provider: Extensions.getExtensions(PyModuleMembersProvider.EP_NAME)) {
+    for (PyModuleMembersProvider provider : Extensions.getExtensions(PyModuleMembersProvider.EP_NAME)) {
       final PsiElement element = provider.resolveMember(myModule, name);
       if (element != null) {
         return ResolveResultList.to(element);
       }
     }
-
-    Sdk sdk = ModuleUtil.findModuleForPsiElement(myModule) != null ? null : PyBuiltinCache.findSdkForNonModuleFile(myModule);
-    final PsiElement result = ResolveImportUtil.resolveChild(myModule, name, myModule, null, sdk, false, true);
-    if (result != null) return ResolveResultList.to(result);
+    final PsiElement attribute = myModule.getElementNamed(name);
+    if (attribute != null) {
+      return ResolveResultList.to(attribute);
+    }
+    if (location != null && isPackage(myModule)) {
+      final PsiFile file = location.getContainingFile();
+      if (file instanceof PyFile) {
+        final PyQualifiedName packageQName = ResolveImportUtil.findCanonicalImportPath(myModule, location);
+        if (packageQName != null) {
+          final List<PyImportElement> imports = ((PyFile)file).getImportTargets();
+          for (PyImportElement importElement : imports) {
+            final PyStatement stmt = importElement.getContainingImportStatement();
+            PyQualifiedName importedQName = null;
+            if (stmt instanceof PyFromImportStatement) {
+              importedQName = ((PyFromImportStatement)stmt).getImportSourceQName();
+            }
+            else if (stmt instanceof PyImportStatement) {
+              importedQName = importElement.getImportedQName();
+            }
+            final PyQualifiedName submoduleQName = packageQName.append(name);
+            if (importedQName != null && importedQName.matchesPrefix(submoduleQName)) {
+              final PsiElement submodule = ResolveImportUtil.resolveChild(myModule, name, myModule, null, null, false, true);
+              if (submodule != null) {
+                final ResolveResultList results = new ResolveResultList();
+                results.poke(submodule, RatedResolveResult.RATE_NORMAL);
+                results.add(new ImportedResolveResult(submodule, RatedResolveResult.RATE_LOW,
+                                                      Collections.<PsiElement>singletonList(importElement)));
+                return results;
+              }
+            }
+          }
+        }
+      }
+    }
     return Collections.emptyList();
   }
 
+  private static boolean isPackage(@NotNull PyFile file) {
+    return PyUtil.turnInitIntoDir(file) != null;
+  }
 
   /**
    * @param directory the module directory
@@ -98,7 +126,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
       return "pyd".equalsIgnoreCase(ext);
     }
     else {
-      return "so".equals(ext);      
+      return "so".equals(ext);
     }
   }
 
@@ -118,7 +146,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
       final CompletionVariantsProcessor processor = new CompletionVariantsProcessor(location, new Condition<PsiElement>() {
         @Override
         public boolean value(PsiElement psiElement) {
-          return !(psiElement instanceof PyImportElement) || 
+          return !(psiElement instanceof PyImportElement) ||
                  PsiTreeUtil.getParentOfType(psiElement, PyImportStatementBase.class) instanceof PyFromImportStatement;
         }
       }, new PyUtil.UnderscoreFilter(0));
