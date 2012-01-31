@@ -616,11 +616,12 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     SearchScope useScope = member.getUseScope();
     Project project = member.getProject();
     if (useScope instanceof GlobalSearchScope) {
-      GlobalSearchScope scope = (GlobalSearchScope)useScope;
       // some classes may have references from within XML outside dependent modules, e.g. our actions
-      if (member instanceof PsiClass) scope = GlobalSearchScope.projectScope(project).uniteWith(scope);
+      if (member instanceof PsiClass) {
+        useScope = GlobalSearchScope.projectScope(project).uniteWith((GlobalSearchScope)useScope);
+      }
 
-      PsiSearchHelper.SearchCostResult cheapEnough = PsiSearchHelper.SERVICE.getInstance(project).isCheapEnoughToSearch(name, scope,
+      PsiSearchHelper.SearchCostResult cheapEnough = PsiSearchHelper.SERVICE.getInstance(project).isCheapEnoughToSearch(name, (GlobalSearchScope)useScope,
                                                                                                                         helper.shouldIgnoreUsagesInCurrentFile() ? member.getContainingFile() : null,
                                                                                                                         progress);
       if (cheapEnough == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) return false;
