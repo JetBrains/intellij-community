@@ -48,7 +48,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   private boolean myMayRequestCurrentWindow;
 
   protected ChooseByNamePopup(final Project project, final ChooseByNameModel model, ChooseByNameItemProvider provider, final ChooseByNamePopup oldPopup,
-                            @Nullable final String predefinedText, boolean mayRequestOpenInCurrentWundow, int initialIndex) {
+                            @Nullable final String predefinedText, boolean mayRequestOpenInCurrentWindow, int initialIndex) {
     super(project, model, provider, oldPopup != null ? oldPopup.getEnteredText() : predefinedText, initialIndex);
     if (oldPopup == null && predefinedText != null) {
       setPreselectInitialText(true);
@@ -56,7 +56,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     if (oldPopup != null) { //inherit old focus owner
       myOldFocusOwner = oldPopup.myPreviouslyFocusedComponent;
     }
-    myMayRequestCurrentWindow = mayRequestOpenInCurrentWundow;
+    myMayRequestCurrentWindow = mayRequestOpenInCurrentWindow;
   }
 
   public String getEnteredText() {
@@ -113,13 +113,13 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
 
     preferredScrollPaneSize.width = Math.max(myTextFieldPanel.getWidth(), preferredScrollPaneSize.width);
 
-    Rectangle prefferedBounds = new Rectangle(bounds.x, bounds.y, preferredScrollPaneSize.width, preferredScrollPaneSize.height);
-    Rectangle original = new Rectangle(prefferedBounds);
+    Rectangle preferredBounds = new Rectangle(bounds.x, bounds.y, preferredScrollPaneSize.width, preferredScrollPaneSize.height);
+    Rectangle original = new Rectangle(preferredBounds);
 
-    ScreenUtil.fitToScreen(prefferedBounds);
-    if (original.width > prefferedBounds.width) {
+    ScreenUtil.fitToScreen(preferredBounds);
+    if (original.width > preferredBounds.width) {
       int height = myListScrollPane.getHorizontalScrollBar().getPreferredSize().height;
-      prefferedBounds.height += height;
+      preferredBounds.height += height;
     }
 
     myListScrollPane.setVisible(true);
@@ -136,12 +136,18 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
         }
       });
       myDropdownPopup = builder.createPopup();
-      myDropdownPopup.setLocation(prefferedBounds.getLocation());
-      myDropdownPopup.setSize(prefferedBounds.getSize());
+      myDropdownPopup.setLocation(preferredBounds.getLocation());
+      myDropdownPopup.setSize(preferredBounds.getSize());
       myDropdownPopup.show(layeredPane);
     } else {
-      myDropdownPopup.setLocation(prefferedBounds.getLocation());
-      myDropdownPopup.setSize(prefferedBounds.getSize());
+      myDropdownPopup.setLocation(preferredBounds.getLocation());
+
+      // in 'focus follows mouse' mode, to avoid focus escaping to editor, don't reduce popup size when list size is reduced
+      final Dimension currentSize = myDropdownPopup.getSize();
+      if (UISettings.getInstance().HIDE_NAVIGATION_ON_FOCUS_LOSS ||
+          preferredBounds.width > currentSize.width || preferredBounds.height > currentSize.height) {
+        myDropdownPopup.setSize(preferredBounds.getSize());
+      }
     }
   }
 
