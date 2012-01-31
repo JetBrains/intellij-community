@@ -21,6 +21,7 @@ import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
@@ -122,7 +123,7 @@ public class ResourceReferenceConverter extends ResolvingConverter<ResourceValue
     String value = getValue(element);
     assert value != null;
 
-    if (!myQuiet || value.startsWith("@")) {
+    if (!myQuiet || StringUtil.startsWithChar(value, '@')) {
       String resourcePackage = null;
       String systemPrefix = getPackagePrefix(SYSTEM_RESOURCE_PACKAGE);
       if (value.startsWith(systemPrefix)) {
