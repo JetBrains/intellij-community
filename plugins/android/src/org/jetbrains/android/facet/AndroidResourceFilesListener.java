@@ -16,6 +16,7 @@
 
 package org.jetbrains.android.facet;
 
+import com.android.resources.ResourceFolderType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.GeneratingCompiler;
 import com.intellij.openapi.module.Module;
@@ -31,6 +32,7 @@ import org.jetbrains.android.compiler.*;
 import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.android.fileTypes.AndroidIdlFileType;
 import org.jetbrains.android.fileTypes.AndroidRenderscriptFileType;
+import org.jetbrains.android.util.AndroidResourceUtil;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.android.util.ResourceEntry;
 import org.jetbrains.annotations.NotNull;
@@ -147,7 +149,7 @@ class AndroidResourceFilesListener extends VirtualFileAdapter {
       final GeneratingCompiler compilerToRun = ApplicationManager.getApplication().runReadAction(new Computable<GeneratingCompiler>() {
         @Nullable
         public GeneratingCompiler compute() {
-          return computeCompilerToRun();
+          return computeCompilerToRunAndInvalidateLocalAttributesMap();
         }
       });
 
@@ -175,7 +177,7 @@ class AndroidResourceFilesListener extends VirtualFileAdapter {
     }
 
     @Nullable
-    private GeneratingCompiler computeCompilerToRun() {
+    private GeneratingCompiler computeCompilerToRunAndInvalidateLocalAttributesMap() {
       if (myFacet.isDisposed()) {
         return null;
       }
@@ -197,10 +199,18 @@ class AndroidResourceFilesListener extends VirtualFileAdapter {
         return null;
       }
 
-      parent = parent.getParent();
+      final VirtualFile gp = parent.getParent();
+
+      final VirtualFile resourceDir = AndroidRootUtil.getResourceDir(module);
+
+      if (gp == resourceDir &&
+          ResourceFolderType.VALUES.getName().equals(AndroidResourceUtil.getResourceTypeByDirName(parent.getName()))) {
+        myFacet.getLocalResourceManager().invalidateAttributeDefinitions();
+      }
+
       if (AndroidAptCompiler.isToCompileModule(module, myFacet.getConfiguration()) &&
-          (myFacet.getConfiguration().REGENERATE_R_JAVA && parent == AndroidRootUtil.getResourceDir(module) ||
-           AndroidRootUtil.getManifestFile(module) == file)) {
+          (myFacet.getConfiguration().REGENERATE_R_JAVA && (gp == resourceDir ||
+           AndroidRootUtil.getManifestFile(module) == file))) {
         final Manifest manifest = myFacet.getManifest();
         final String aPackage = manifest != null ? manifest.getPackage().getValue() : null;
 
@@ -209,8 +219,6 @@ class AndroidResourceFilesListener extends VirtualFileAdapter {
           AndroidCompileUtil.removeDuplicatingClasses(myModule, myCachedPackage, AndroidUtils.R_CLASS_NAME, null, aptGenDirPath);
         }
         myCachedPackage = aPackage;
-        myFacet.getLocalResourceManager().invalidateAttributeDefinitions();
-
         return new AndroidAptCompiler();
       }
 
