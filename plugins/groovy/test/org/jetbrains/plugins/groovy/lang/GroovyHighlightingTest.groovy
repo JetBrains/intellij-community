@@ -16,7 +16,7 @@
 package org.jetbrains.plugins.groovy.lang;
 
 
-import com.intellij.codeInspection.LocalInspectionTool
+import com.intellij.codeInspection.InspectionProfileEntry
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
@@ -31,6 +31,7 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.siyeh.ig.junit.JUnitAbstractTestClassNamingConventionInspection
 import com.siyeh.ig.junit.JUnitTestClassNamingConventionInspection
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.plugins.groovy.codeInspection.GroovyUnusedDeclarationInspection
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyResultOfAssignmentUsedInspection
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyUncheckedAssignmentOfMemberOfRawTypeInspection
@@ -48,6 +49,7 @@ import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.Groov
 import org.jetbrains.plugins.groovy.codeInspection.unusedDef.UnusedDefInspection
 import org.jetbrains.plugins.groovy.util.TestUtils
 import org.jetbrains.plugins.groovy.codeInspection.bugs.*
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection
 
 /**
  * @author peter
@@ -83,7 +85,7 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
     doTest();
   }
 
-  private void doTest(LocalInspectionTool... tools) {
+  private void doTest(InspectionProfileEntry... tools) {
     myFixture.enableInspections(tools);
     myFixture.testHighlighting(true, false, false, getTestName(false) + ".groovy");
   }
@@ -415,7 +417,7 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
     doTest(new GroovyAssignabilityCheckInspection());
   }
 
-  public void _testInnerClassConstructorThis() {
+  public void testInnerClassConstructorThis() {
     myFixture.enableInspections(new GroovyResultOfAssignmentUsedInspection());
     myFixture.testHighlighting(true, true, true, getTestName(false) + ".groovy");
   }
@@ -450,6 +452,10 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
 
   public void testPassingCollectionSubtractionIntoGenericMethod() throws Exception {
     doTest(new GroovyAssignabilityCheckInspection(), new GroovyUnresolvedAccessInspection());
+  }
+
+  public void testBuilderMembersAreNotUnresolved() throws Exception {
+    doTest(new GroovyUnresolvedAccessInspection());
   }
 
   public void testUnknownVarInArgList() {
@@ -654,5 +660,9 @@ List<?> list2
 
 ''')
     myFixture.testHighlighting(true, false, false)
+  }
+
+  public void testGloballyUnusedSymbols() {
+    doTest(new GroovyUnusedDeclarationInspection(), new UnusedDeclarationInspection())
   }
 }

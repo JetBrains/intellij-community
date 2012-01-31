@@ -16,18 +16,23 @@
 
 package org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiPackage;
+import com.intellij.psi.*;
+import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.annotator.GroovyAnnotator;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.gpp.GppTypeConverter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+
+import java.util.Iterator;
+import java.util.List;
 
 import static org.jetbrains.plugins.groovy.annotator.GroovyAnnotator.isDeclarationAssignment;
 
@@ -72,10 +77,70 @@ public class GroovyUnresolvedAccessInspection extends BaseInspection {
       if (!(parent instanceof GrCall) && ResolveUtil.isKeyOfMap(refExpr)) return; // It's a key of map.
 
       if (!GroovyAnnotator.shouldHighlightAsUnresolved(refExpr)) return;
+      
+      if (qualifier != null && isBuilderInvocation(refExpr)) return;
 
       PsiElement refNameElement = refExpr.getReferenceNameElement();
       registerError(refNameElement == null ? refExpr : refNameElement);
     }
 
+  }
+  private static boolean isBuilderInvocation(@NotNull GrReferenceExpression refExpr) {
+    GrExpression qualifier = refExpr.getQualifier();
+    PsiType type = qualifier == null ? null : qualifier.getType();
+    if (type instanceof PsiClassType) {
+      PsiClass target = ((PsiClassType)type).resolve();
+      if (target != null) {
+        for (PsiMethod method : findBuilderMetaMethods(refExpr, target)) {
+          PsiClass containingClass = method.getContainingClass();
+          if (containingClass != null &&
+              method.getParameterList().getParameters()[0].getType().equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+            String qname = containingClass.getQualifiedName();
+            if (!GroovyCommonClassNames.GROOVY_OBJECT.equals(qname) && !GroovyCommonClassNames.GROOVY_OBJECT_SUPPORT.equals(qname)) {
+              return true;
+            }
+          }
+        }
+      }
+    }
+
+    return false;
+  }
+
+  private static List<PsiMethod> findBuilderMetaMethods(GrReferenceExpression refExpr, PsiClass target) {
+    boolean gpp = GppTypeConverter.hasTypedContext(target) && GppTypeConverter.hasTypedContext(refExpr);
+    if (refExpr.getParent() instanceof GrCall) {
+      List<PsiMethod> toSearch =
+        CollectionFactory.arrayList(target.findMethodsByName(gpp ? "invokeUnresolvedMethod" : "invokeMethod", true));
+      for (Iterator<PsiMethod> iterator = toSearch.iterator(); iterator.hasNext(); ) {
+        PsiMethod method = iterator.next();
+        if (!gpp &&
+            (method.getParameterList().getParametersCount() != 2 || method.getParameterList().getParameters()[1].getType()
+          .equalsToText(CommonClassNames.JAVA_LANG_OBJECT + "[]"))) {
+          iterator.remove();
+        }
+      }
+      return toSearch;
+    }
+
+    if (PsiUtil.isLValue(refExpr)) {
+      List<PsiMethod> toSearch = CollectionFactory.arrayList(target.findMethodsByName(gpp ? "setUnresolvedProperty" : "setProperty", true));
+      for (Iterator<PsiMethod> iterator = toSearch.iterator(); iterator.hasNext(); ) {
+        PsiMethod method = iterator.next();
+        if (method.getParameterList().getParametersCount() != 2 || (!gpp && !method.getParameterList().getParameters()[1].getType()
+          .equalsToText(CommonClassNames.JAVA_LANG_OBJECT))) {
+          iterator.remove();
+        }
+      }
+      return toSearch;
+    }
+
+    List<PsiMethod> toSearch = CollectionFactory.arrayList(target.findMethodsByName(gpp ? "getUnresolvedProperty" : "getProperty", true));
+    for (Iterator<PsiMethod> iterator = toSearch.iterator(); iterator.hasNext(); ) {
+      if (iterator.next().getParameterList().getParametersCount() != 1) {
+        iterator.remove();
+      }
+    }
+    return toSearch;
   }
 }

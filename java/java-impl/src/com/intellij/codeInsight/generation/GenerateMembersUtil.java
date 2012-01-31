@@ -21,6 +21,7 @@ import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -40,9 +41,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class GenerateMembersUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.GenerateMembersUtil");
@@ -279,7 +278,9 @@ public class GenerateMembersUtil {
 
         PsiParameter newParameter = factory.createParameter(paramName, substituted);
         if (parameter.getLanguage() == StdLanguages.JAVA) {
-          newParameter.getModifierList().replace(parameter.getModifierList());
+          PsiModifierList modifierList = newParameter.getModifierList();
+          modifierList = (PsiModifierList)modifierList.replace(parameter.getModifierList());
+          processAnnotations(project, modifierList);
         }
         newMethod.getParameterList().add(newParameter);
       }
@@ -309,6 +310,23 @@ public class GenerateMembersUtil {
     catch (IncorrectOperationException e) {
       LOG.error(e);
       return method;
+    }
+  }
+
+  private static void processAnnotations(Project project, PsiModifierList modifierList) {
+    final Set<String> toRemove = new HashSet<String>();
+    for (PsiAnnotation annotation : modifierList.getAnnotations()) {
+      final String qualifiedName = annotation.getQualifiedName();
+      for (OverrideImplementsAnnotationsHandler handler : Extensions.getExtensions(OverrideImplementsAnnotationsHandler.EP_NAME)) {
+        final String[] annotations2Remove = handler.annotationsToRemove(project, qualifiedName);
+        Collections.addAll(toRemove, annotations2Remove);
+      }
+    }
+    for (String fqn : toRemove) {
+      final PsiAnnotation psiAnnotation = modifierList.findAnnotation(fqn);
+      if (psiAnnotation != null) {
+        psiAnnotation.delete();
+      }
     }
   }
 

@@ -128,12 +128,17 @@ public class CompileServerManager implements ApplicationComponent{
             @Override
             public void run() {
               if (!myAutoMakeInProgress.getAndSet(true)) {
-                try {
-                  runAutoMake();
-                }
-                finally {
-                  myAutoMakeInProgress.set(false);
-                }
+                ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+                  @Override
+                  public void run() {
+                    try {
+                      runAutoMake();
+                    }
+                    finally {
+                      myAutoMakeInProgress.set(false);
+                    }
+                  }
+                });
               }
               else {
                 scheduleMake(this);

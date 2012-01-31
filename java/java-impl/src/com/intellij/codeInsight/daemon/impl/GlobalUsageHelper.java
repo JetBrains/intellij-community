@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.codeInsight.daemon.impl;
 
-package org.jetbrains.plugins.groovy.lang.psi;
-
-import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
- * @author ven
+ * @author peter
  */
-public interface GrNamedElement extends PsiNamedElement, GroovyPsiElement, PsiModifierListOwner {
-  @NotNull
-  PsiElement getNameIdentifierGroovy();
+public abstract class GlobalUsageHelper {
+  final Map<PsiClass,Boolean> unusedClassCache = new HashMap<PsiClass, Boolean>();
+
+  public abstract boolean shouldCheckUsages(@NotNull PsiMember member);
+  public abstract boolean isLocallyUsed(@NotNull PsiNamedElement member);
+  public abstract boolean shouldIgnoreUsagesInCurrentFile();
 }

@@ -13,13 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.refactoring.rename;
+package com.intellij.refactoring.actions;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiClassOwner;
 import com.intellij.psi.PsiFile;
+import com.intellij.refactoring.rename.PsiElementRenameHandler;
 
 /**
  * @author ven
@@ -34,13 +36,13 @@ public class RenameFileAction extends AnAction implements DumbAware {
     assert virtualFile != null;
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     assert project != null;
-    new RenameDialog(project, file, file, null).show();
+    PsiElementRenameHandler.invoke(file, project, file, null);
   }
 
   public void update(AnActionEvent e) {
     PsiFile file = e.getData(LangDataKeys.PSI_FILE);
     Presentation presentation = e.getPresentation();
-    boolean enabled = file != null && e.getPlace() != ActionPlaces.EDITOR_POPUP && e.getData(PlatformDataKeys.PROJECT) != null;
+    boolean enabled = file instanceof PsiClassOwner && e.getPlace() != ActionPlaces.EDITOR_POPUP && e.getData(PlatformDataKeys.PROJECT) != null;
     presentation.setEnabled(enabled);
     presentation.setVisible(enabled);
     if (enabled) {

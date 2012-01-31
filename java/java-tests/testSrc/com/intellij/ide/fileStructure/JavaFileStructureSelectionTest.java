@@ -24,8 +24,10 @@ public class JavaFileStructureSelectionTest extends JavaFileStructureTestCase {
     return "selection";
   }
 
-  public void testField() throws Exception {checkTree();}
-  public void testMethod() throws Exception {checkTree();}
-  public void testConstructor() throws Exception {checkTree();}
-  public void testInsideClass() throws Exception {checkTree();}
+  public void testField()                 throws Exception {checkTree();}
+  public void testMethod()                throws Exception {checkTree();}
+  public void testConstructor()           throws Exception {checkTree();}
+  public void testInsideClass()           throws Exception {checkTree();}
+  public void testAnonymous()             throws Exception {checkTree();}
+  public void testAnonymousInAnonymous()  throws Exception {checkTree();}
 }

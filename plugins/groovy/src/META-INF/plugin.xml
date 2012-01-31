@@ -382,6 +382,10 @@
     <copyPastePreProcessor implementation="org.jetbrains.plugins.groovy.lang.editor.GroovyLiteralCopyPasteProcessor"/>
     <copyPastePostProcessor implementation="org.jetbrains.plugins.groovy.lang.editor.GroovyReferenceCopyPasteProcessor"/>
 
+    <specialTool shortName="GroovyUnusedDeclaration" displayName="Unused declaration"
+                 groupName="Declaration Redundancy" enabledByDefault="true" level="WARNING"
+                 implementationClass="org.jetbrains.plugins.groovy.codeInspection.GroovyUnusedDeclarationInspection"/>
+
     <localInspection language="Groovy" groupPath="Groovy" shortName="SecondUnsafeCall" bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
                      key="second.unsafe.call" groupName="Probable bugs" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.secondUnsafeCall.SecondUnsafeCallInspection"/>
@@ -712,6 +716,8 @@
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovySingletonAnnotation" displayName="Check '@Singleton' annotation conventions"
                      groupName="Annotations verifying" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.annotator.inspections.GroovySingletonAnnotationInspection"/>
+
+    <implicitUsageProvider implementation="org.jetbrains.plugins.groovy.gpp.GppImplicitUsageProvider"/>
 
     <!-- control flow -->
     <intentionAction>

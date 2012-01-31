@@ -42,7 +42,7 @@ public class GroovyUnusedImportsPassFactory extends AbstractProjectComponent imp
   @Nullable
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
     if (!(file instanceof GroovyFile)) return null;
-    return new GroovyUnusedImportPass((GroovyFile)file, editor);
+    return new GroovyPostHighlightingPass((GroovyFile)file, editor);
   }
 
   @NonNls

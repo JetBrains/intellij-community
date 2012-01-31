@@ -1258,16 +1258,10 @@ public class ListUtils {
     }
   }
 
-  public void testNoGenericsWhenChoosingWithParen() {
-    configure()
-    myFixture.type 'Ma('
-    checkResult()
-  }
+  public void testNoGenericsWhenChoosingWithParen() { doTest('Ma(') }
 
-  public void testNoClosingWhenChoosingWithParenBeforeIdentifier() {
-    configure()
-    myFixture.type '('
-    checkResult()
-  }
+  public void testNoClosingWhenChoosingWithParenBeforeIdentifier() { doTest '(' }
+
+  public void testPackageInMemberType() { doTest() }
 
 }

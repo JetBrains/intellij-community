@@ -65,6 +65,8 @@
     <extensionPoint name="unusedDeclarationFixProvider"
                     interface="com.intellij.codeInspection.reference.UnusedDeclarationFixProvider"/>
 
+    <extensionPoint name="canBeFinal"
+                    interface="com.intellij.codeInspection.canBeFinal.CanBeFinalHandler"/>
     <!-- PsiMember -->
     <extensionPoint name="javaDocNotNecessary"
                     interface="com.intellij.openapi.util.Condition"/>

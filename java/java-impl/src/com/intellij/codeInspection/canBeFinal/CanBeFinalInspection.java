@@ -139,6 +139,9 @@ public class CanBeFinalInspection extends GlobalJavaInspectionTool {
       if (refElement.isFinal()) return null;
       if (!((RefElementImpl)refElement).checkFlag(CanBeFinalAnnotator.CAN_BE_FINAL_MASK)) return null;
 
+      final PsiMember psiMember = (PsiMember)refElement.getElement();
+      if (!CanBeFinalHandler.allowToBeFinal(psiMember)) return null;
+
       PsiIdentifier psiIdentifier = null;
       if (refElement instanceof RefClass) {
         RefClass refClass = (RefClass)refElement;

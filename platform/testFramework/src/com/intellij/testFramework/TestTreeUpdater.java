@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.testFramework;
 
-package org.jetbrains.plugins.groovy.lang.psi;
-
-import com.intellij.psi.PsiModifierListOwner;
-import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.ide.util.treeView.AbstractTreeBuilder;
+import com.intellij.ide.util.treeView.AbstractTreeUpdater;
 
 /**
- * @author ven
+ * @author Konstantin Bulenkov
  */
-public interface GrNamedElement extends PsiNamedElement, GroovyPsiElement, PsiModifierListOwner {
-  @NotNull
-  PsiElement getNameIdentifierGroovy();
+public class TestTreeUpdater extends AbstractTreeUpdater {
+  public TestTreeUpdater(AbstractTreeBuilder treeBuilder) {
+    super(treeBuilder);
+  }
 }
