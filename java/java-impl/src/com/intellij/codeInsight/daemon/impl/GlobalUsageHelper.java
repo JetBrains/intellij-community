@@ -31,5 +31,5 @@ public abstract class GlobalUsageHelper {
 
   public abstract boolean shouldCheckUsages(@NotNull PsiMember member);
   public abstract boolean isLocallyUsed(@NotNull PsiNamedElement member);
-  public abstract boolean shouldIgnoreUsagesInCurrentFile();
+  public abstract boolean isCurrentFileAlreadyChecked();
 }

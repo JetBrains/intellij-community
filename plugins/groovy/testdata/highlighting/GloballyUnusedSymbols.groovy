@@ -1,8 +1,8 @@
 
 class <warning descr="Class UnusedClass is unused">UnusedClass</warning> {}
-class Bar {
+class Bar<T, <warning descr="Class Unused is unused">Unused</warning>> {
   int <warning descr="Property unusedProperty is unused">unusedProperty</warning> = 2
-  int usedProperty = 39
+  T usedProperty = null
   int usedProperty2 = 39
   int usedProperty3 = 39
   def <warning descr="Method unusedMethod is unused">unusedMethod</warning>() {}

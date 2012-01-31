@@ -261,7 +261,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
       }
 
       @Override
-      public boolean shouldIgnoreUsagesInCurrentFile() {
+      public boolean isCurrentFileAlreadyChecked() {
         return true;
       }
 
@@ -585,7 +585,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
       if (isImplicitUsage(method, progress)) {
         return true;
       }
-      if (!helper.shouldIgnoreUsagesInCurrentFile()) {
+      if (!helper.isCurrentFileAlreadyChecked()) {
         return !weAreSureThereAreNoUsages(method, progress, helper);
       }
     }
@@ -622,7 +622,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
       }
 
       PsiSearchHelper.SearchCostResult cheapEnough = PsiSearchHelper.SERVICE.getInstance(project).isCheapEnoughToSearch(name, (GlobalSearchScope)useScope,
-                                                                                                                        helper.shouldIgnoreUsagesInCurrentFile() ? member.getContainingFile() : null,
+                                                                                                                        helper.isCurrentFileAlreadyChecked() ? member.getContainingFile() : null,
                                                                                                                         progress);
       if (cheapEnough == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) return false;
 
@@ -702,9 +702,11 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
   private static boolean isReallyUsed(PsiClass aClass, ProgressIndicator progress, GlobalUsageHelper helper) {
     if (isImplicitUsage(aClass, progress) || helper.isLocallyUsed(aClass)) return true;
-    if (aClass.getContainingClass() != null && aClass.hasModifierProperty(PsiModifier.PRIVATE) ||
-           aClass.getParent() instanceof PsiDeclarationStatement ||
-           aClass instanceof PsiTypeParameter) return false;
+    if (helper.isCurrentFileAlreadyChecked()) {
+      if (aClass.getContainingClass() != null && aClass.hasModifierProperty(PsiModifier.PRIVATE) ||
+             aClass.getParent() instanceof PsiDeclarationStatement ||
+             aClass instanceof PsiTypeParameter) return false;
+    }
     return !weAreSureThereAreNoUsages(aClass, progress, helper);
   }
 

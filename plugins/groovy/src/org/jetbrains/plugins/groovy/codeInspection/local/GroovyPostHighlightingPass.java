@@ -87,7 +87,7 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
     }
     final UnusedDeclarationInspection deadCodeInspection = (UnusedDeclarationInspection)profile.getInspectionTool(UnusedDeclarationInspection.SHORT_NAME, myFile);
     final GlobalUsageHelper usageHelper = new GlobalUsageHelper() {
-      public boolean shouldIgnoreUsagesInCurrentFile() {
+      public boolean isCurrentFileAlreadyChecked() {
         return false;
       }
 
