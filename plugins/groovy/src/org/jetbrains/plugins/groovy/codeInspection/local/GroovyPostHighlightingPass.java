@@ -198,6 +198,10 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
   }
 
   public void doApplyInformationToEditor() {
+    if (myUnusedDeclarations == null || myUnusedImports == null) {
+      return;
+    }
+
     AnnotationHolder annotationHolder = new AnnotationHolderImpl(new AnnotationSession(myFile));
     List<HighlightInfo> infos = new ArrayList<HighlightInfo>(myUnusedDeclarations);
     for (GrImportStatement unusedImport : myUnusedImports) {
@@ -216,7 +220,7 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
         public void run() {
           optimize.run();
         }
-      },myFile,myEditor);
+      }, myFile, myEditor);
     }
   }
 
