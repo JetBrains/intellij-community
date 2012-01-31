@@ -113,7 +113,7 @@ public class JavaCompletionContributor extends CompletionContributor {
       return new AndFilter(ElementClassFilter.CLASS, new NotFilter(new AssignableFromContextFilter()));
     }
 
-    if (JavaCompletionData.DECLARATION_START.isAcceptable(position, position) ||
+    if (JavaCompletionData.DECLARATION_START.accepts(position) ||
         JavaCompletionData.INSIDE_PARAMETER_LIST.accepts(position)) {
       return new OrFilter(ElementClassFilter.CLASS, ElementClassFilter.PACKAGE_FILTER);
     }

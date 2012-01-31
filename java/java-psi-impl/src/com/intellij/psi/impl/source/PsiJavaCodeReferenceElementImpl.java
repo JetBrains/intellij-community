@@ -775,6 +775,9 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
            break;
     case CLASS_NAME_KIND:
       addClassFilter(filter);
+      if (isQualified()) {
+        filter.addFilter(ElementClassFilter.PACKAGE_FILTER);
+      }
       break;
     case PACKAGE_NAME_KIND:
            filter.addFilter(ElementClassFilter.PACKAGE_FILTER);

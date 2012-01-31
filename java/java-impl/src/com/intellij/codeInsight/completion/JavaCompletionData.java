@@ -166,16 +166,18 @@ public class JavaCompletionData extends JavaAwareCompletionData{
     defineScopeEquivalence(PsiMethod.class, JavaCodeFragment.class);
   }
 
-  public static final AndFilter DECLARATION_START = new AndFilter(
-    CLASS_BODY,
-    new OrFilter(
-      END_OF_BLOCK,
-      new LeftNeighbour(new OrFilter(
-        new SuperParentFilter(new ClassFilter(PsiModifierList.class)),
-        new AndFilter (new TokenTypeFilter(JavaTokenType.GT),
-                       new SuperParentFilter(new ClassFilter(PsiTypeParameterList.class)))))
-    ),
-    new PatternFilter(not(psiElement().afterLeaf("@", "."))));
+  public static final ElementPattern<PsiElement> DECLARATION_START = psiElement().andNot(psiElement().afterLeaf("@", ".")).
+    andOr(
+      psiElement().and(new FilterPattern(CLASS_BODY)).
+        andOr(
+          new FilterPattern(END_OF_BLOCK),
+          psiElement().afterLeaf(or(
+            psiElement().inside(PsiModifierList.class),
+            psiElement().withElementType(JavaTokenType.GT).inside(PsiTypeParameterList.class)
+          ))),
+      psiElement().withParents(PsiJavaCodeReferenceElement.class, PsiTypeElement.class, PsiMember.class),
+      psiElement().withParents(PsiJavaCodeReferenceElement.class, PsiTypeElement.class, PsiClassLevelDeclarationStatement.class)
+    );
 
   private void declareCompletionSpaces() {
     declareFinalScope(PsiFile.class);
@@ -578,9 +580,7 @@ public class JavaCompletionData extends JavaAwareCompletionData{
       .afterLeaf(psiElement().withText("(").withParent(psiElement(PsiParenthesizedExpression.class, PsiTypeCastExpression.class)))
       .accepts(position);
 
-    boolean declaration = DECLARATION_START.isAcceptable(position, position) ||
-                          psiElement().withParents(PsiJavaCodeReferenceElement.class, PsiTypeElement.class, PsiMember.class).accepts(position) ||
-                          psiElement().withParents(PsiJavaCodeReferenceElement.class, PsiTypeElement.class, PsiClassLevelDeclarationStatement.class).accepts(position);
+    boolean declaration = DECLARATION_START.accepts(position);
     if (START_FOR.accepts(position) ||
         INSIDE_PARAMETER_LIST.accepts(position) && !AFTER_DOT.accepts(position) ||
         VARIABLE_AFTER_FINAL.accepts(position) ||
