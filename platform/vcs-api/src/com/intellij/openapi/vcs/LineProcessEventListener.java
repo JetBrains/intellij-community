@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.commands;
+package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vcs.LineProcessEventListener;
 
 /**
- * Listener for line events
+ * Created with IntelliJ IDEA.
+ * User: Irina.Chernushina
+ * Date: 1/25/12
+ * Time: 5:08 PM
  */
-public interface GitLineHandlerListener extends LineProcessEventListener {
+public interface LineProcessEventListener extends ProcessEventListener {
   /**
    * This method is invoked when line (as separated by \n or \r) becomes available.
    *
