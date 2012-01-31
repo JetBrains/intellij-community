@@ -36,7 +36,7 @@ import java.io.File;
  * @author Konstantin Bulenkov
  */
 public abstract class FileStructureTestBase extends CodeInsightFixtureTestCase {
-  FileStructurePopup myPopup;
+  protected FileStructurePopup myPopup;
 
   @Before
   public void setUp() throws Exception {
@@ -46,6 +46,9 @@ public abstract class FileStructureTestBase extends CodeInsightFixtureTestCase {
                                               myFixture.getProject(),
                                               null,
                                               TextEditorProvider.getInstance().getTextEditor(myFixture.getEditor()));
+    assert myPopup != null;
+    myPopup.createCenterPanel();
+    getBuilder().getUi().getUpdater().setPassThroughMode(true);
     update();
   }
 
@@ -71,15 +74,17 @@ public abstract class FileStructureTestBase extends CodeInsightFixtureTestCase {
   }
 
 
-  private void update() throws InterruptedException {
+  public void update() throws InterruptedException {
     myPopup.getTreeBuilder().refilter().doWhenProcessed(new Runnable() {
       @Override
       public void run() {
+
         getStructure().rebuild();
         updateTree();
+        getBuilder().updateFromRoot();
         TreeUtil.expandAll(getTree());
         final FilteringTreeStructure.FilteringNode node = myPopup.selectPsiElement(myPopup.getCurrentElement(getFile()));
-        getTree().getSelectionModel().setSelectionPath(getTree().getPath(node));
+        getBuilder().getUi().select(node, null);
       }
     });
   }

@@ -13,21 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.fileStructure;
+package com.intellij.testFramework;
+
+import com.intellij.ide.util.treeView.AbstractTreeBuilder;
+import com.intellij.ide.util.treeView.AbstractTreeUpdater;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class JavaFileStructureSelectionTest extends JavaFileStructureTestCase {
-  @Override
-  protected String getTestDataFolderName() {
-    return "selection";
+public class TestTreeUpdater extends AbstractTreeUpdater {
+  public TestTreeUpdater(AbstractTreeBuilder treeBuilder) {
+    super(treeBuilder);
   }
-
-  public void testField()                 throws Exception {checkTree();}
-  public void testMethod()                throws Exception {checkTree();}
-  public void testConstructor()           throws Exception {checkTree();}
-  public void testInsideClass()           throws Exception {checkTree();}
-  public void testAnonymous()             throws Exception {checkTree();}
-  public void testAnonymousInAnonymous()  throws Exception {checkTree();}
 }
