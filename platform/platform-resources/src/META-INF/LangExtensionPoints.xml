@@ -109,7 +109,9 @@
   <extensionPoint name="lang.braceMatcher"
                   beanClass="com.intellij.lang.LanguageExtensionPoint"/>
   <extensionPoint name="lang.foldingBuilder"
-                  beanClass="com.intellij.lang.LanguageExtensionPoint"/>                  
+                  beanClass="com.intellij.lang.LanguageExtensionPoint"/>
+  <extensionPoint name="customFoldingProvider"
+                  interface="com.intellij.lang.folding.CustomFoldingProvider"/>
   <extensionPoint name="lang.psiStructureViewFactory"
                   beanClass="com.intellij.lang.LanguageExtensionPoint"/>
   <extensionPoint name="lang.structureViewExtension"
