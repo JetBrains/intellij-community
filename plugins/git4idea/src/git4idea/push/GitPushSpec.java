@@ -15,15 +15,9 @@
  */
 package git4idea.push;
 
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vcs.VcsException;
 import git4idea.GitBranch;
-import git4idea.GitUtil;
-import git4idea.branch.GitBranchPair;
 import git4idea.repo.GitRemote;
-import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Kirill Likhodedov
@@ -53,23 +47,6 @@ public class GitPushSpec {
   @NotNull
   public GitBranch getDest() {
     return myDest;
-  }
-
-  @Nullable
-  private static GitBranchPair findSourceDestForBranch(GitRepository repository, GitBranch branch) throws VcsException {
-    GitBranch trackedBranch = branch.tracked(repository.getProject(), repository.getRoot());
-    if (trackedBranch != null) {
-      return new GitBranchPair(branch, trackedBranch);
-    }
-    Pair<GitRemote,GitBranch> remoteAndBranch = GitUtil.findMatchingRemoteBranch(repository, branch);
-    if (remoteAndBranch == null) {
-      return null;
-    }
-    GitBranch matchingRemoteBranch = remoteAndBranch.getSecond();
-    if (matchingRemoteBranch != null) {
-      return new GitBranchPair(branch, matchingRemoteBranch);
-    }
-    return null;
   }
 
   @Override
