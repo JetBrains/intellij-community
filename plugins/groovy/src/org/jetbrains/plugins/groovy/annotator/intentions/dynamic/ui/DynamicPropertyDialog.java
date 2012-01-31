@@ -31,13 +31,14 @@ public class DynamicPropertyDialog extends DynamicDialog {
 
   public DynamicPropertyDialog(GrReferenceExpression referenceExpression) {
     super(referenceExpression, QuickfixUtil.createSettings(referenceExpression),
-          GroovyExpectedTypesProvider.calculateTypeConstraints(referenceExpression));
+          GroovyExpectedTypesProvider.calculateTypeConstraints(referenceExpression), false);
     setTitle(GroovyBundle.message("add.dynamic.property", referenceExpression.getReferenceName()));
     setUpTypeLabel(GroovyBundle.message("dynamic.method.property.type"));
   }
 
   public DynamicPropertyDialog(GrArgumentLabel label, PsiClass targetClass) {
     super(label, QuickfixUtil.createSettings(label, targetClass),
-          new SupertypeConstraint[]{SupertypeConstraint.create(label.getNamedArgument().getExpression().getType())});
+          new SupertypeConstraint[]{SupertypeConstraint.create(label.getNamedArgument().getExpression().getType())}, false);
+    setUpTypeLabel(GroovyBundle.message("dynamic.method.property.type"));
   }
 }

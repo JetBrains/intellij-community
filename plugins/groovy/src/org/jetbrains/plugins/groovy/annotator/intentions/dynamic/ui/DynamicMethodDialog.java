@@ -31,8 +31,6 @@ import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesPr
 import javax.swing.*;
 import javax.swing.event.CellEditorListener;
 import javax.swing.event.ChangeEvent;
-import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
 import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.util.EventObject;
@@ -45,7 +43,8 @@ import java.util.List;
 public class DynamicMethodDialog extends DynamicDialog {
 
   public DynamicMethodDialog(GrReferenceExpression referenceExpression) {
-    super(referenceExpression, QuickfixUtil.createSettings(referenceExpression), GroovyExpectedTypesProvider.calculateTypeConstraints((GrExpression)referenceExpression.getParent()));
+    super(referenceExpression, QuickfixUtil.createSettings(referenceExpression),
+          GroovyExpectedTypesProvider.calculateTypeConstraints((GrExpression)referenceExpression.getParent()), true);
     assert getSettings().isMethod();
 
     final List<MyPair> pairs = getSettings().getPairs();
@@ -55,22 +54,17 @@ public class DynamicMethodDialog extends DynamicDialog {
     setUpTypeLabel(GroovyBundle.message("dynamic.method.return.type"));
   }
 
-  protected void setUpTableNameLabel(String text) {
-    super.setUpTableNameLabel(getSettings().getPairs().isEmpty() ? GroovyBundle.message("dynamic.properties.table.no.arguments") : text);
-  }
-
   private void setupParameterTable(final List<MyPair> pairs) {
-    final JTable table = getParametersTable();
 
     MySuggestedNameCellEditor suggestedNameCellEditor = new MySuggestedNameCellEditor(QuickfixUtil.getArgumentsNames(pairs));
-    table.setDefaultEditor(String.class, suggestedNameCellEditor);
+    myParametersTable.setDefaultEditor(String.class, suggestedNameCellEditor);
 
     suggestedNameCellEditor.addCellEditorListener(new CellEditorListener() {
       public void editingStopped(ChangeEvent e) {
-        final int editingColumn = table.getSelectedColumn();
+        final int editingColumn = myParametersTable.getSelectedColumn();
         if (editingColumn != 0) return;
 
-        final int editingRow = table.getSelectedRow();
+        final int editingRow = myParametersTable.getSelectedRow();
         if (editingRow < 0 || editingRow >= pairs.size()) return;
 
         String newNameValue = ((MySuggestedNameCellEditor)e.getSource()).getCellEditorValue();
@@ -84,37 +78,26 @@ public class DynamicMethodDialog extends DynamicDialog {
     });
   }
 
-  protected boolean isTableVisible() {
-    return true;
-  }
-
   private void setupParameterList(List<MyPair> arguments) {
-    final JTable table = getParametersTable();
-
-    //TODO: add header
     final ListTableModel<MyPair> dataModel = new ListTableModel<MyPair>(new NameColumnInfo(), new TypeColumnInfo());
-    dataModel.addTableModelListener(new TableModelListener() {
-      public void tableChanged(TableModelEvent e) {
-        fireDataChanged();
-      }
-    });
     dataModel.setItems(arguments);
-    table.setModel(dataModel);
-    if (!arguments.isEmpty()) {
-      String max0 = arguments.get(0).first;
-      String max1 = arguments.get(0).second;
-      for (MyPair argument : arguments) {
-        if (argument.first.length() > max0.length()) max0 = argument.first;
-        if (argument.second.length() > max1.length()) max1 = argument.second;
-      }
+    myParametersTable.setModel(dataModel);
 
-      final FontMetrics metrics = table.getFontMetrics(table.getFont());
-      final TableColumn column0 = table.getColumnModel().getColumn(0);
-      column0.setPreferredWidth(metrics.stringWidth(max0 + "  "));
+    if (arguments.isEmpty()) return;
 
-      final TableColumn column1 = table.getColumnModel().getColumn(1);
-      column1.setPreferredWidth(metrics.stringWidth(max1 + "  "));
+    String max0 = arguments.get(0).first;
+    String max1 = arguments.get(0).second;
+    for (MyPair argument : arguments) {
+      if (argument.first.length() > max0.length()) max0 = argument.first;
+      if (argument.second.length() > max1.length()) max1 = argument.second;
     }
+
+    final FontMetrics metrics = myParametersTable.getFontMetrics(myParametersTable.getFont());
+    final TableColumn column0 = myParametersTable.getColumnModel().getColumn(0);
+    column0.setPreferredWidth(metrics.stringWidth(max0 + "  "));
+
+    final TableColumn column1 = myParametersTable.getColumnModel().getColumn(1);
+    column1.setPreferredWidth(metrics.stringWidth(max1 + "  "));
   }
 
 
@@ -134,7 +117,7 @@ public class DynamicMethodDialog extends DynamicDialog {
     public void setValue(MyPair pair, String value) {
       PsiType type;
       try {
-        type = GroovyPsiElementFactory.getInstance(getProject()).createTypeElement(value).getType();
+        type = GroovyPsiElementFactory.getInstance(myProject).createTypeElement(value).getType();
       }
       catch (IncorrectOperationException e) {
         return;
@@ -157,12 +140,6 @@ public class DynamicMethodDialog extends DynamicDialog {
     public String valueOf(MyPair pair) {
       return pair.first;
     }
-  }
-
-  protected void updateOkStatus() {
-    super.updateOkStatus();
-
-    if (getParametersTable().isEditing()) setOKActionEnabled(false);
   }
 
   private static class MySuggestedNameCellEditor extends AbstractTableCellEditor {

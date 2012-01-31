@@ -22,18 +22,15 @@ import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.ui.EditorComboBoxEditor;
-import com.intellij.ui.EditorTextField;
-import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.table.JBTable;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
@@ -52,11 +49,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import javax.swing.*;
-import javax.swing.border.Border;
-import javax.swing.event.EventListenerList;
-import java.awt.*;
-import java.awt.event.*;
-import java.util.EventListener;
 import java.util.List;
 
 /**
@@ -64,59 +56,44 @@ import java.util.List;
  * Date: 18.12.2007
  */
 public abstract class DynamicDialog extends DialogWrapper {
+  private static final Logger LOG = Logger.getInstance(DynamicDialog.class);
+
   private JComboBox myClassComboBox;
   private JPanel myPanel;
   private JComboBox myTypeComboBox;
-  private JLabel myClassLabel;
   private JLabel myTypeLabel;
-  private JPanel myTypeStatusPanel;
-  private JLabel myTypeStatusLabel;
-  private JTable myParametersTable;
-  private JLabel myTableLabel;
+  protected JBTable myParametersTable;
   private JCheckBox myStaticCheckBox;
-  private JBScrollPane myTablePane;
+  private JPanel myTablePane;
+
   private final DynamicManager myDynamicManager;
-  private final Project myProject;
-  private final EventListenerList myListenerList = new EventListenerList();
+  protected final Project myProject;
   private final PsiElement myContext;
   private final DynamicElementSettings mySettings;
 
-  private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ui.DynamicDialog");
-
-  public DynamicDialog(PsiElement context, DynamicElementSettings settings, TypeConstraint[] typeConstraints) {
+  public DynamicDialog(PsiElement context, DynamicElementSettings settings, TypeConstraint[] typeConstraints, boolean isTableVisible) {
     super(context.getProject(), true);
     myProject = context.getProject();
-
-    if (!isTableVisible()) {
-      myParametersTable.setVisible(false);
-      myTableLabel.setVisible(false);
-    }
+    mySettings = settings;
     myContext = context;
-    setTitle(GroovyInspectionBundle.message("dynamic.element"));
     myDynamicManager = DynamicManager.getInstance(myProject);
 
-    init();
+    if (isTableVisible) {
+      myTablePane.setBorder(IdeBorderFactory.createTitledBorder(GroovyBundle.message("dynamic.properties.table.name")));
+    }
+    else {
+      myTablePane.setVisible(false);
+    }
 
-    mySettings = settings;
-
+    setTitle(GroovyInspectionBundle.message("dynamic.element"));
     setUpTypeComboBox(typeConstraints);
     setUpContainingClassComboBox();
-    setUpStatusLabel();
     setUpStaticComboBox();
 
-    myTableLabel.setLabelFor(myParametersTable);
-    setUpTableNameLabel(GroovyBundle.message("dynamic.properties.table.name"));
-
-    final Border border2 = BorderFactory.createLineBorder(Color.BLACK);
-    myParametersTable.setBorder(border2);
-    myParametersTable.setBackground(Color.WHITE);
-
-    myTypeLabel.setLabelFor(myTypeComboBox);
-    myClassLabel.setLabelFor(myClassComboBox);
+    init();
   }
 
   private void setUpStaticComboBox() {
-    myStaticCheckBox.setMnemonic(KeyEvent.VK_S);
     myStaticCheckBox.setSelected(mySettings.isStatic());
   }
 
@@ -124,36 +101,18 @@ public abstract class DynamicDialog extends DialogWrapper {
     return mySettings;
   }
 
-  protected void setUpTableNameLabel(String text) {
-    myTableLabel.setText(text);
-  }
-
-  private void setUpStatusLabel() {
-    if (!isTypeCheckerPanelEnable()) {
-      myTypeStatusPanel.setVisible(false);
-      return;
-    }
-    myTypeStatusLabel.setHorizontalTextPosition(SwingConstants.RIGHT);
-
+  @Override
+  protected ValidationInfo doValidate() {
     final GrTypeElement typeElement = getEnteredTypeName();
     if (typeElement == null) {
-      setStatusTextAndIcon(IconLoader.getIcon("/compiler/warning.png"), GroovyInspectionBundle.message("no.type.specified"));
-      return;
+      return new ValidationInfo(GroovyInspectionBundle.message("no.type.specified"), myTypeComboBox);
     }
 
     final PsiType type = typeElement.getType();
     if (type instanceof PsiClassType && ((PsiClassType)type).resolve() == null) {
-      setStatusTextAndIcon(IconLoader.getIcon("/compiler/warning.png"),
-                           GroovyInspectionBundle.message("unresolved.type.status", type.getPresentableText()));
-      return;
+      return new ValidationInfo(GroovyInspectionBundle.message("unresolved.type.status", type.getPresentableText()), myTypeComboBox);
     }
-    setStatusTextAndIcon(null, "");
-  }
-
-  private void setStatusTextAndIcon(@Nullable final Icon icon, final String text) {
-    myTypeStatusLabel.setIcon(icon);
-    myTypeStatusLabel.setText(text);
-    pack();
+    return null;
   }
 
   private void setUpContainingClassComboBox() {
@@ -174,12 +133,6 @@ public abstract class DynamicDialog extends DialogWrapper {
     for (PsiClass aClass : PsiUtil.iterateSupers(targetClass, true)) {
       myClassComboBox.addItem(aClass.getQualifiedName());
     }
-
-    myPanel.registerKeyboardAction(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        myClassComboBox.requestFocus();
-      }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.ALT_MASK), JComponent.WHEN_IN_FOCUSED_WINDOW);
   }
 
   @Nullable
@@ -201,57 +154,8 @@ public abstract class DynamicDialog extends DialogWrapper {
     myTypeComboBox.setEditable(true);
     myTypeComboBox.grabFocus();
 
-    addDataChangeListener();
-
-    myTypeComboBox.addItemListener(
-        new ItemListener() {
-          public void itemStateChanged(ItemEvent e) {
-            fireDataChanged();
-          }
-        }
-    );
-
-    myPanel.registerKeyboardAction(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        myTypeComboBox.requestFocus();
-      }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_T, InputEvent.ALT_MASK), JComponent.WHEN_IN_FOCUSED_WINDOW);
-
-
-    final EditorTextField editorTextField = (EditorTextField) myTypeComboBox.getEditor().getEditorComponent();
-
-    editorTextField.addDocumentListener(new DocumentListener() {
-      public void beforeDocumentChange(DocumentEvent event) {
-      }
-
-      public void documentChanged(DocumentEvent event) {
-        fireDataChanged();
-      }
-    });
-
     PsiType type = typeConstraints.length == 1 ? typeConstraints[0].getDefaultType() : TypesUtil.getJavaLangObject(myContext);
     myTypeComboBox.getEditor().setItem(createDocument(type.getCanonicalText()));
-  }
-
-  protected void addDataChangeListener() {
-    myListenerList.add(DataChangedListener.class, new DataChangedListener());
-  }
-
-  class DataChangedListener implements EventListener {
-    void dataChanged() {
-      updateOkStatus();
-    }
-  }
-
-  protected void updateOkStatus() {
-    GrTypeElement typeElement = getEnteredTypeName();
-    if (typeElement == null) {
-      setOKActionEnabled(false);
-    } else {
-      setOKActionEnabled(true);
-    }
-
-    setUpStatusLabel();
   }
 
   @Nullable
@@ -259,12 +163,10 @@ public abstract class DynamicDialog extends DialogWrapper {
     final Document typeEditorDocument = getTypeEditorDocument();
 
     if (typeEditorDocument == null) return null;
-
     try {
-      final String typeText = typeEditorDocument.getText();
-
-      return GroovyPsiElementFactory.getInstance(myProject).createTypeElement(typeText);
-    } catch (IncorrectOperationException e) {
+      return GroovyPsiElementFactory.getInstance(myProject).createTypeElement(typeEditorDocument.getText());
+    }
+    catch (IncorrectOperationException e) {
       return null;
     }
   }
@@ -273,17 +175,7 @@ public abstract class DynamicDialog extends DialogWrapper {
   public Document getTypeEditorDocument() {
     final Object item = myTypeComboBox.getEditor().getItem();
 
-    return item instanceof Document ? (Document) item : null;
-
-  }
-
-  protected void fireDataChanged() {
-    Object[] list = myListenerList.getListenerList();
-    for (Object aList : list) {
-      if (aList instanceof DataChangedListener) {
-        ((DataChangedListener) aList).dataChanged();
-      }
-    }
+    return item instanceof Document ? (Document)item : null;
   }
 
   @Nullable
@@ -300,7 +192,8 @@ public abstract class DynamicDialog extends DialogWrapper {
 
     if (typeElement == null) {
       mySettings.setType("java.lang.Object");
-    } else {
+    }
+    else {
       PsiType type = typeElement.getType();
       if (type instanceof PsiPrimitiveType) {
         type = TypesUtil.boxPrimitiveType(type, typeElement.getManager(), ProjectScope.getAllScope(myProject));
@@ -310,7 +203,8 @@ public abstract class DynamicDialog extends DialogWrapper {
 
       if (typeQualifiedName != null) {
         mySettings.setType(typeQualifiedName);
-      } else {
+      }
+      else {
         mySettings.setType(type.getPresentableText());
       }
     }
@@ -326,19 +220,23 @@ public abstract class DynamicDialog extends DialogWrapper {
             if (mySettings.isMethod()) {
               final List<MyPair> myPairList = mySettings.getPairs();
               final String[] argumentsTypes = QuickfixUtil.getArgumentsTypes(myPairList);
-              itemElement = myDynamicManager.findConcreteDynamicMethod(mySettings.getContainingClassName(), mySettings.getName(), argumentsTypes);
-            } else {
+              itemElement =
+                myDynamicManager.findConcreteDynamicMethod(mySettings.getContainingClassName(), mySettings.getName(), argumentsTypes);
+            }
+            else {
               itemElement = myDynamicManager.findConcreteDynamicProperty(mySettings.getContainingClassName(), mySettings.getName());
             }
 
             if (itemElement == null) {
-              Messages.showWarningDialog(myProject, GroovyInspectionBundle.message("Cannot.perform.undo.operation"), GroovyInspectionBundle.message("Undo.disable"));
+              Messages.showWarningDialog(myProject, GroovyInspectionBundle.message("Cannot.perform.undo.operation"),
+                                         GroovyInspectionBundle.message("Undo.disable"));
               return;
             }
             final DClassElement classElement = myDynamicManager.getClassElementByItem(itemElement);
 
             if (classElement == null) {
-              Messages.showWarningDialog(myProject, GroovyInspectionBundle.message("Cannot.perform.undo.operation"), GroovyInspectionBundle.message("Undo.disable"));
+              Messages.showWarningDialog(myProject, GroovyInspectionBundle.message("Cannot.perform.undo.operation"),
+                                         GroovyInspectionBundle.message("Undo.disable"));
               return;
             }
 
@@ -367,7 +265,8 @@ public abstract class DynamicDialog extends DialogWrapper {
   public void addElement(final DynamicElementSettings settings) {
     if (settings.isMethod()) {
       myDynamicManager.addMethod(settings);
-    } else {
+    }
+    else {
       myDynamicManager.addProperty(settings);
     }
 
@@ -382,22 +281,6 @@ public abstract class DynamicDialog extends DialogWrapper {
 
   public JComponent getPreferredFocusedComponent() {
     return myTypeComboBox;
-  }
-
-protected boolean isTableVisible() {
-    return false;
-  }
-
-  public JTable getParametersTable() {
-    return myParametersTable;
-  }
-
-  protected static boolean isTypeCheckerPanelEnable() {
-    return true;
-  }
-
-  public Project getProject() {
-    return myProject;
   }
 
   protected void setUpTypeLabel(String typeLabelText) {
