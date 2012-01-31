@@ -241,7 +241,7 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
     }
 
     public Object[] getEqualityObjects() {
-      return NONE;
+      return new Object[]{myDelegate};
     }
 
     @Override

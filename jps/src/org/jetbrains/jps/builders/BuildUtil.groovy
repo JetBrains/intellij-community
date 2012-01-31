@@ -11,7 +11,7 @@ class BuildUtil {
     int attempts = 10;
     while (attempts-- > 0) {
       try {
-        projectBuilder.binding.ant.delete(dir: path)
+        projectBuilder.binding.ant.delete(dir: path, failonerror: false)
         return
       } catch (Exception e) {
         if (attempts == 0) {

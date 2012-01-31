@@ -25,7 +25,10 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
-import com.intellij.openapi.vfs.newvfs.*;
+import com.intellij.openapi.vfs.newvfs.ManagingFS;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.openapi.vfs.newvfs.RefreshQueue;
+import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
@@ -592,8 +595,13 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     assert parent != null;
 
     if (!auxRename(file, newName)) {
-      if (!convertToIOFile(file).renameTo(new File(convertToIOFile(parent), newName))) {
-        throw new IOException("Destination already exists: " + parent.getPath() + "/" + newName);
+      final File dest = new File(convertToIOFile(parent), newName);
+      if (!convertToIOFile(file).renameTo(dest)) {
+        if (dest.exists()) {
+          throw new IOException("Destination already exists: " + parent.getPath() + "/" + newName);
+        } else {
+          throw new IOException("Unable to rename " + file.getPath());
+        }
       }
     }
     auxNotifyCompleted(new ThrowableConsumer<LocalFileOperationsHandler, IOException>() {

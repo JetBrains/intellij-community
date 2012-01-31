@@ -172,18 +172,18 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
     return request != null? request.getOwner() : null;
   }
 
-  public void schedule(E r) {
+  public boolean schedule(E r) {
     if(LOG.isDebugEnabled()) {
       LOG.debug("schedule " + r + " in " + this);
     }
-    myEvents.put(r, r.getPriority().ordinal());
+    return myEvents.put(r, r.getPriority().ordinal());
   }
 
-  public void pushBack(E r) {
+  public boolean pushBack(E r) {
     if(LOG.isDebugEnabled()) {
       LOG.debug("pushBack " + r + " in " + this);
     }
-    myEvents.pushBack(r, r.getPriority().ordinal());
+    return myEvents.pushBack(r, r.getPriority().ordinal());
   }
 
   protected void switchToRequest(WorkerThreadRequest newWorkerThread) {

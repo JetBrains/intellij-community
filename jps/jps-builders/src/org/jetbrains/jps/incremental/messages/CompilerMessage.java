@@ -53,6 +53,7 @@ public class CompilerMessage extends BuildMessage {
     return myCompilerName;
   }
 
+  @Nullable
   public String getSourcePath() {
     return mySourcePath;
   }

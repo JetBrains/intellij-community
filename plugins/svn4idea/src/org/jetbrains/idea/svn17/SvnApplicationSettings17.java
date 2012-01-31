@@ -45,6 +45,7 @@ public class SvnApplicationSettings17 implements PersistentStateComponent<SvnApp
   public static class ConfigurationBean {
     public List<String> myCheckoutURLs = new ArrayList<String>();
     public List<String> myTypedURLs = new ArrayList<String>();
+    public String mySvnCommandLine = "svn";
   }
 
   private ConfigurationBean myConfigurationBean;
@@ -66,6 +67,14 @@ public class SvnApplicationSettings17 implements PersistentStateComponent<SvnApp
   public void loadState(ConfigurationBean object) {
     myConfigurationBean = object;
     getTypedList();
+  }
+  
+  public void setCommandLinePath(final String path) {
+    myConfigurationBean.mySvnCommandLine = path;
+  }
+  
+  public String getCommandLinePath() {
+    return myConfigurationBean.mySvnCommandLine;
   }
 
   private LimitedStringsList getTypedList() {

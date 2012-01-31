@@ -67,7 +67,7 @@ public abstract class ModuleLevelBuilder extends Builder {
           final HashSet<File> affectedBeforeDif = new HashSet<File>(allAffectedFiles);
 
           final boolean incremental = globalMappings.differentiate(
-            delta, removedPaths, successfullyCompiled, allCompiledFiles, allAffectedFiles
+            delta, removedPaths, filesToCompile, allCompiledFiles, allAffectedFiles
           );
 
           if (LOG.isDebugEnabled()) {

@@ -7,8 +7,8 @@ package org.jetbrains.ether;
  * Time: 14:48
  * To change this template use File | Settings | File Templates.
  */
-public class TestPackageInfo extends IncrementalTestCase {
-  public TestPackageInfo() throws Exception {
+public class PackageInfoTest extends IncrementalTestCase {
+  public PackageInfoTest() throws Exception {
     super("packageInfo");
   }
 

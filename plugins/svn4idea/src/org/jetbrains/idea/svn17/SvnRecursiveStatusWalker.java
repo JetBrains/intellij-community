@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.idea.svn17.commandLine.SvnCommandLineStatusClient;
 import org.jetbrains.idea.svn17.portable.JavaHLSvnStatusClient;
 import org.jetbrains.idea.svn17.portable.SvnStatusClientI;
 import org.jetbrains.idea.svn17.portable.SvnkitSvnStatusClient;
@@ -135,6 +136,8 @@ public class SvnRecursiveStatusWalker {
       if (CheckJavaHL.isPresent() && SvnConfiguration17.UseAcceleration.javaHL.equals(myConfiguration17.myUseAcceleration) &&
           Svn17Detector.is17(myProject, file)) {
         return new JavaHLSvnStatusClient(myProject);
+      } else if (SvnConfiguration17.UseAcceleration.commandLine.equals(myConfiguration17.myUseAcceleration)) {
+        return new SvnCommandLineStatusClient(myProject);
       }
       return mySvnClient;
     }

@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.server;
 
+import com.google.common.cache.CacheBuilder;
 import com.intellij.compiler.notNullVerification.NotNullVerifyingInstrumenter;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.FileUtil;
@@ -77,7 +78,7 @@ public class ClasspathBootstrap {
     cp.add(getResourcePath(TIntHash.class));  // trove
     cp.add(getResourcePath(FileUtil.class));  // util module
     cp.add(getResourcePath(Pointer.class));  // jna.jar
-    cp.add(getResourcePath(com.google.common.collect.MapMaker.class));  // guava
+    cp.add(getResourcePath(CacheBuilder.class));  // guava
     cp.add(getResourcePath(FileMonitor.class));  // jna-utils.jar
     cp.add(getResourcePath(ClassWriter.class));  // asm
     cp.add(getResourcePath(org.objectweb.asm.commons.EmptyVisitor.class));  // asm-commons
@@ -123,7 +124,7 @@ public class ClasspathBootstrap {
     cp.add(getResourcePath(TIntHash.class));  // trove
     cp.add(getResourcePath(FileUtil.class));  // util module
     cp.add(getResourcePath(Pointer.class));  // jna.jar
-    cp.add(getResourcePath(com.google.common.collect.MapMaker.class));  // guava
+    cp.add(getResourcePath(CacheBuilder.class));  // guava
     cp.add(getResourcePath(FileMonitor.class));  // jna-utils.jar
     cp.add(getResourcePath(org.jdom.input.SAXBuilder.class));  // jdom
 

@@ -16,6 +16,8 @@
 package org.jetbrains.ether;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import junit.framework.TestCase;
 import junitx.framework.FileAssert;
 import org.apache.log4j.Level;
@@ -141,13 +143,13 @@ public abstract class IncrementalTestCase extends TestCase {
       }
     }
 
-    copy(new File(getBaseDir()), new File(getWorkDir()));
+    FileUtil.copyDir(new File(getBaseDir()), new File(getWorkDir()));
   }
 
   @Override
   protected void tearDown() throws Exception {
     super.tearDown();
-//        delete(new File(workDir));
+    delete(new File(workDir));
   }
 
   private String getDir(final String prefix) {
@@ -168,7 +170,7 @@ public abstract class IncrementalTestCase extends TestCase {
     return getDir(workDir);
   }
 
-  private void delete(final File file) throws Exception {
+  private static void delete(final File file) throws Exception {
     if (file.isDirectory()) {
       final File[] files = file.listFiles();
 
@@ -181,7 +183,6 @@ public abstract class IncrementalTestCase extends TestCase {
 
     if (!file.delete()) throw new IOException("could not delete file or directory " + file.getPath());
   }
-
   private static void copy(final File input, final File output) throws Exception {
     if (input.isDirectory()) {
       if (output.mkdirs()) {
@@ -271,7 +272,9 @@ public abstract class IncrementalTestCase extends TestCase {
 
     builder.build(new AllProjectScope(project, true), false, true);
 
-    Thread.sleep(1000);
+    if (SystemInfo.isUnix) {
+      Thread.sleep(1000);
+    }
 
     modify();
 

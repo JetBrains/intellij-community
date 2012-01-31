@@ -7,8 +7,8 @@ package org.jetbrains.ether;
  * Time: 14:41
  * To change this template use File | Settings | File Templates.
  */
-public class TestMarkDirty extends IncrementalTestCase {
-  public TestMarkDirty() throws Exception {
+public class MarkDirtyTest extends IncrementalTestCase {
+  public MarkDirtyTest() throws Exception {
     super("markDirty");
   }
 

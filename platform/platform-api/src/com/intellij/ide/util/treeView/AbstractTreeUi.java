@@ -3688,7 +3688,7 @@ public class AbstractTreeUi {
   }
 
   public void userSelect(final Object[] elements, final Runnable onDone, final boolean addToSelection, boolean scroll) {
-    _select(elements, onDone, addToSelection, true, false, scroll, false, true, true);
+    _select(elements, onDone, addToSelection, true, false, scroll, false, true, !ApplicationManager.getApplication().isUnitTestMode());
   }
 
   void _select(final Object[] elements,

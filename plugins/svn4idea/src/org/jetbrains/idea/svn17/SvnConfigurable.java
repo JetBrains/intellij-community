@@ -72,6 +72,7 @@ public class SvnConfigurable implements Configurable {
   private JRadioButton myJavaHLAcceleration;
   private JRadioButton myNoAcceleration;
   private JLabel myJavaHLInfo;
+  private JRadioButton myWithCommandLineClient;
 
   @NonNls private static final String HELP_ID = "project.propSubversion";
 
@@ -148,6 +149,7 @@ public class SvnConfigurable implements Configurable {
     ButtonGroup bg = new ButtonGroup();
     bg.add(myNoAcceleration);
     bg.add(myJavaHLAcceleration);
+    bg.add(myWithCommandLineClient);
   }
 
   private static FileChooserDescriptor createFileDescriptor() {
@@ -225,6 +227,7 @@ public class SvnConfigurable implements Configurable {
   private SvnConfiguration17.UseAcceleration acceleration() {
     if (myNoAcceleration.isSelected()) return SvnConfiguration17.UseAcceleration.nothing;
     if (myJavaHLAcceleration.isSelected()) return SvnConfiguration17.UseAcceleration.javaHL;
+    if (myWithCommandLineClient.isSelected()) return SvnConfiguration17.UseAcceleration.commandLine;
     return SvnConfiguration17.UseAcceleration.nothing;
   }
 
@@ -245,6 +248,9 @@ public class SvnConfigurable implements Configurable {
 
     if (SvnConfiguration17.UseAcceleration.javaHL.equals(acceleration)) {
       myJavaHLAcceleration.setSelected(true);
+      return;
+    } else if (SvnConfiguration17.UseAcceleration.commandLine.equals(acceleration)) {
+      myWithCommandLineClient.setSelected(true);
       return;
     }
     myNoAcceleration.setSelected(true);

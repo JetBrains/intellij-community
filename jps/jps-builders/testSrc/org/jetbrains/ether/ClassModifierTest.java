@@ -7,8 +7,8 @@ package org.jetbrains.ether;
  * Time: 13:07
  * To change this template use File | Settings | File Templates.
  */
-public class TestClassModifiers extends IncrementalTestCase {
-  public TestClassModifiers() throws Exception {
+public class ClassModifierTest extends IncrementalTestCase {
+  public ClassModifierTest() throws Exception {
     super("classModifiers");
   }
 

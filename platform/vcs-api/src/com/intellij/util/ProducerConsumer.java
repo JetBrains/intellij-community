@@ -15,6 +15,9 @@
  */
 package com.intellij.util;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.util.concurrency.Semaphore;
+
 import java.util.ArrayDeque;
 
 /**
@@ -29,7 +32,7 @@ public class ProducerConsumer<T> {
   private final Consumer<T> myConsumer;
   private final int myMaxSize;
   private final Object myLock;
-  private final Thread myConsumerThread;
+  private final ConsumerRunnable myConsumerThread;
   private boolean myIsAlive;
 
   public ProducerConsumer(final Consumer<T> consumer) {
@@ -49,29 +52,73 @@ public class ProducerConsumer<T> {
   }
 
   public ProducerConsumer(final Consumer<T> consumer, final int maxSize) {
+    this(consumer, maxSize, false);
+  }
+
+  public ProducerConsumer(final Consumer<T> consumer, final int maxSize, final boolean onPooledThread) {
     myConsumer = consumer;
     myQueue = new ArrayDeque<T>();
     myMaxSize = maxSize;
     myLock = new Object();
-    myConsumerThread = new Thread(new Runnable() {
-      @Override
-      public void run() {
-        synchronized (myLock) {
-          while (myIsAlive) {
-            if (! myQueue.isEmpty()) {
-              myConsumer.consume(myQueue.removeFirst());
-            } else {
-              try {
-                myLock.wait(10);
-              }
-              catch (InterruptedException e) {
-                //
-              }
+
+    if (onPooledThread) {
+      myConsumerThread = new PooledConsumerRunnable();
+      ApplicationManager.getApplication().executeOnPooledThread(myConsumerThread);
+    } else {
+      myConsumerThread = new ConsumerRunnable();
+    }
+  }
+
+  private class PooledConsumerRunnable extends ConsumerRunnable {
+    private final Semaphore mySemaphore;
+
+    private PooledConsumerRunnable() {
+      mySemaphore = new Semaphore();
+      mySemaphore.down();
+    }
+
+    public void start() {
+      mySemaphore.up();
+    }
+
+    @Override
+    protected void waitForStart() {
+      mySemaphore.waitFor();
+    }
+  }
+
+  private class ConsumerRunnable implements Runnable {
+    private Thread myThread;
+    
+    public void start() {
+      myThread.start();
+    }
+
+    public void setThread(Thread thread) {
+      myThread = thread;
+    }
+
+    @Override
+    public void run() {
+      waitForStart();
+      synchronized (myLock) {
+        while (myIsAlive) {
+          if (! myQueue.isEmpty()) {
+            myConsumer.consume(myQueue.removeFirst());
+          } else {
+            try {
+              myLock.wait(10);
+            }
+            catch (InterruptedException e) {
+              //
             }
           }
         }
       }
-    });
+    }
+
+    protected void waitForStart() {
+    }
   }
 
   public void produce(final T t) {

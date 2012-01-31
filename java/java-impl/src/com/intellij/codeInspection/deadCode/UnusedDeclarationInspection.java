@@ -63,7 +63,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.DateFormatUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -460,6 +459,7 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
     }
     if (element instanceof PsiClass) {
       PsiClass aClass = (PsiClass)element;
+      /*
       if (aClass.isAnnotationType()) {
         return true;
       }
@@ -467,6 +467,7 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
       if (aClass.isEnum()) {
         return true;
       }
+      */
       final PsiClass applet = psiFacade.findClass("java.applet.Applet", GlobalSearchScope.allScope(project));
       if (isAddAppletEnabled() && applet != null && aClass.isInheritor(applet, true)) {
         return true;

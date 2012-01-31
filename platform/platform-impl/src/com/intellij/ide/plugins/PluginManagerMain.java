@@ -56,10 +56,8 @@ import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -185,7 +183,8 @@ public abstract class PluginManagerMain implements Disposable {
   protected void modifyPluginsList(ArrayList<IdeaPluginDescriptor> list) {
     IdeaPluginDescriptor[] selected = pluginTable.getSelectedObjects();
     pluginsModel.updatePluginsList(list);
-    pluginsModel.sort();
+    pluginTable.getRowSorter().setSortKeys(Collections.singletonList(pluginsModel.getDefaultSortKey()));
+    //pluginsModel.sort();
     pluginsModel.filter(myFilter.getFilter().toLowerCase());
     if (selected != null) {
       select(selected);

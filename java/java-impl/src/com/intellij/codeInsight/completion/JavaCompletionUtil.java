@@ -44,6 +44,7 @@ import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.element.ExcludeDeclaredFilter;
 import com.intellij.psi.filters.element.ExcludeSillyAssignment;
 import com.intellij.psi.html.HtmlTag;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.scope.BaseScopeProcessor;
@@ -908,5 +909,22 @@ public class JavaCompletionUtil {
       }
     }
     return !hasAccessibleInnerClass(psiClass, position);
+  }
+
+  public static boolean promptTypeArgs(InsertionContext context, int offset) {
+    if (offset < 0) {
+      return false;
+    }
+
+    OffsetKey key = context.trackOffset(offset, false);
+    PostprocessReformattingAspect.getInstance(context.getProject()).doPostponedFormatting();
+    offset = context.getOffset(key);
+    if (offset < 0) {
+      return false;
+    }
+
+    context.getDocument().insertString(offset, "<>");
+    context.getEditor().getCaretModel().moveToOffset(offset + 1);
+    return true;
   }
 }

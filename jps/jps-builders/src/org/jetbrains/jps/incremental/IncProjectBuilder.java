@@ -102,6 +102,10 @@ public class IncProjectBuilder {
   }
 
   private static void flushContext(CompileContext context) {
+    if (context != null) {
+      context.getTimestampStorage().force();
+      context.getDataManager().flush(false);
+    }
     final ExternalJavacDescriptor descriptor = ExternalJavacDescriptor.KEY.get(context);
     if (descriptor != null) {
       try {
@@ -283,6 +287,23 @@ public class IncProjectBuilder {
           for (String deletedSource : deletedPaths) {
             // deleting outputs corresponding to non-existing source
             final Collection<String> outputs = sourceToOutputStorage.getState(deletedSource);
+            
+            if (LOG.isDebugEnabled()) {
+              if (outputs.size() > 0) {
+                final String[] buffer = new String[outputs.size()];
+                int i = 0;
+                for (final String o : outputs) {
+                  buffer[i++] = o;
+                }
+                Arrays.sort(buffer);
+                LOG.info("Cleaning output files:");
+                for(final String o : buffer) {
+                  LOG.info(o);
+                }
+                LOG.info("End of files");
+              }
+            }
+            
             if (outputs != null) {
               for (String output : outputs) {
                 FileUtil.delete(new File(output));

@@ -77,7 +77,7 @@ public class GitUIUtil {
   public static void notifyMessages(Project project, @Nullable String title, @Nullable String description, NotificationType type, boolean important, @Nullable Collection<String> messages) {
     String desc = (description != null ? description.replace("\n", "<br/>") : "");
     if (messages != null && !messages.isEmpty()) {
-      desc += "<hr/>" + StringUtil.join(messages, "<br/>");
+      desc += StringUtil.join(messages, "<hr/><br/>");
     }
     NotificationGroup group = important ? GitVcs.IMPORTANT_ERROR_NOTIFICATION : GitVcs.NOTIFICATION_GROUP_ID;
     notify(group, project, title, desc, type, null);
