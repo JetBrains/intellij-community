@@ -19,6 +19,7 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Queryable;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
@@ -52,6 +53,7 @@ public class ClsClassImpl extends ClsRepositoryPsiElement<PsiClassStub<?>> imple
   private final ClassInnerStuffCache innersCache = new ClassInnerStuffCache(this);
   private final PsiIdentifier myNameIdentifier;
   private final PsiDocComment myDocComment;
+  public static final Key<PsiClass> DELEGATE_KEY = Key.create("DELEGATE");
 
   public ClsClassImpl(final PsiClassStub stub) {
     super(stub);
@@ -540,6 +542,11 @@ public class ClsClassImpl extends ClsRepositoryPsiElement<PsiClassStub<?>> imple
 
   @Nullable
   public PsiClass getSourceMirrorClass() {
+    PsiClass delegate = getUserData(DELEGATE_KEY);
+    if (delegate instanceof ClsClassImpl) {
+      return ((ClsClassImpl)delegate).getSourceMirrorClass();
+    }
+
     PsiElement parent = getParent();
     final String name = getName();
     if (parent instanceof PsiFile) {
