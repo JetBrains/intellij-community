@@ -455,12 +455,15 @@ public class AndroidUtils {
     LOG.info(commandLine.getCommandLineString());
     OSProcessHandler handler = new OSProcessHandler(commandLine.createProcess(), "");
 
+    final StringBuffer buffer = new StringBuffer();
+    final ProcessAdapter listener = new ProcessAdapter() {
+      public void onTextAvailable(final ProcessEvent event, final Key outputType) {
+        buffer.append(event.getText());
+      }
+    };
+
     if (timeout == null || timeout > 0) {
-      handler.addProcessListener(new ProcessAdapter() {
-        public void onTextAvailable(final ProcessEvent event, final Key outputType) {
-          messageBuilder.append(event.getText());
-        }
-      });
+      handler.addProcessListener(listener);
     }
 
     handler.startNotify();
@@ -483,7 +486,9 @@ public class AndroidUtils {
     }
 
     if (timeout == null || timeout > 0) {
-      String message = messageBuilder.toString();
+      handler.removeProcessListener(listener);
+      final String message = buffer.toString();
+      messageBuilder.append(message);
       LOG.info(message);
     }
 
