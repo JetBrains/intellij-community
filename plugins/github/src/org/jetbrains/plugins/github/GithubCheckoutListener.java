@@ -39,10 +39,13 @@ public class GithubCheckoutListener implements CheckoutListener {
   }
 
   @Nullable
-  private Pair<String, String> getGithubProjectInfo(final Project project) {
+  private static Pair<String, String> getGithubProjectInfo(final Project project) {
     final VirtualFile root = project.getBaseDir();
+    if (root == null) {
+      return null;
+    }
     // Check if git is already initialized and presence of remote branch
-    final GitRepository gitRepository = GitRepositoryManager.getInstance(project).getRepositoryForFile(project.getBaseDir());
+    final GitRepository gitRepository = GitRepositoryManager.getInstance(project).getRepositoryForFile(root);
     if (gitRepository == null){
       return null;
     }
@@ -53,6 +56,9 @@ public class GithubCheckoutListener implements CheckoutListener {
       return null;
     }
     String url = GithubUtil.getGithubUrl(gitRemote);
+    if (url == null) {
+      return null;
+    }
     int i = url.lastIndexOf("/");
     if (i == -1){
       return null;
@@ -77,7 +83,7 @@ public class GithubCheckoutListener implements CheckoutListener {
     return Pair.create(author, name);
   }
 
-  private void processProject(final Project openedProject, final GithubSettings settings, final String author, final String name) {
+  private static void processProject(final Project openedProject, final GithubSettings settings, final String author, final String name) {
     // try to enable git tasks integration
     final Runnable taskInitializationRunnable = new Runnable() {
       public void run() {
@@ -96,11 +102,11 @@ public class GithubCheckoutListener implements CheckoutListener {
     }
   }
 
-  private void enableGithubTrackerIntegration(final Project project,
-                                              final String login,
-                                              final String password,
-                                              final String author,
-                                              final String name) {
+  private static void enableGithubTrackerIntegration(final Project project,
+                                                     final String login,
+                                                     final String password,
+                                                     final String author,
+                                                     final String name) {
     // Look for github repository type
     final TaskManagerImpl manager = (TaskManagerImpl)TaskManager.getManager(project);
     final TaskRepository[] allRepositories = manager.getAllRepositories();
