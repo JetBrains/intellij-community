@@ -450,7 +450,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
 
       for (Content content : contents) {
         final View view = getStateFor(content);
-        //if (view.isMinimizedInGrid()) continue;
+        if (view.isMinimizedInGrid()) continue;
         prev.myManager.removeContent(content, false);
         myManager.removeContent(content, false);
         if (hadGrid && contents.size() == 1 && !wasRestoring) {
