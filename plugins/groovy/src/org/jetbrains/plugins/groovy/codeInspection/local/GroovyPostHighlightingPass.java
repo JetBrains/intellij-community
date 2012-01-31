@@ -39,10 +39,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiMember;
-import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
+import com.intellij.psi.*;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
@@ -90,6 +87,14 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
     }
     final UnusedDeclarationInspection deadCodeInspection = (UnusedDeclarationInspection)profile.getInspectionTool(UnusedDeclarationInspection.SHORT_NAME, myFile);
     final GlobalUsageHelper usageHelper = new GlobalUsageHelper() {
+      public boolean shouldIgnoreUsagesInCurrentFile() {
+        return false;
+      }
+
+      public boolean isLocallyUsed(@NotNull PsiNamedElement member) {
+        return false;
+      }
+
       @Override
       public boolean shouldCheckUsages(@NotNull PsiMember member) {
         return deadCodeInspection == null || !deadCodeInspection.isEntryPoint(member);
@@ -115,7 +120,7 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
           PsiElement nameId = ((GrNamedElement)element).getNameIdentifierGroovy();
           if (nameId.getNode().getElementType() == GroovyTokenTypes.mIDENT) {
             String name = ((GrNamedElement)element).getName();
-            if (element instanceof GrTypeDefinition && PostHighlightingPass.isClassUsed((GrTypeDefinition)element, progress, usageHelper)) {
+            if (element instanceof GrTypeDefinition && !PostHighlightingPass.isClassUsed((GrTypeDefinition)element, progress, usageHelper)) {
               unusedDeclarations.add(
                 PostHighlightingPass.createUnusedSymbolInfo(nameId, "Class " + name + " is unused", HighlightInfoType.UNUSED_SYMBOL));
             }

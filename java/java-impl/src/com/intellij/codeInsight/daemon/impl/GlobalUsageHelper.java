@@ -30,11 +30,6 @@ public abstract class GlobalUsageHelper {
   final Map<PsiClass,Boolean> unusedClassCache = new HashMap<PsiClass, Boolean>();
 
   public abstract boolean shouldCheckUsages(@NotNull PsiMember member);
-  public boolean isLocallyUsed(@NotNull PsiNamedElement member) {
-    return false;
-  }
-
-  public boolean shouldIgnoreUsagesInCurrentFile() {
-    return false;
-  }
+  public abstract boolean isLocallyUsed(@NotNull PsiNamedElement member);
+  public abstract boolean shouldIgnoreUsagesInCurrentFile();
 }

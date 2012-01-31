@@ -261,8 +261,13 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
       }
 
       @Override
+      public boolean shouldIgnoreUsagesInCurrentFile() {
+        return true;
+      }
+
+      @Override
       public boolean isLocallyUsed(@NotNull PsiNamedElement member) {
-        return myRefCountHolder.isReferenced(myFile);
+        return myRefCountHolder.isReferenced(member);
       }
     };
 
@@ -390,7 +395,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     return UnusedSymbolLocalInspection.isInjected(element);
   }
 
-  public static HighlightInfo createUnusedSymbolInfo(PsiElement element, String message, final HighlightInfoType highlightInfoType) {
+  public static HighlightInfo createUnusedSymbolInfo(@NotNull PsiElement element, @Nullable String message, @NotNull final HighlightInfoType highlightInfoType) {
     HighlightInfo info = HighlightInfo.createHighlightInfo(highlightInfoType, element, message);
     UnusedDeclarationFixProvider[] fixProviders = Extensions.getExtensions(UnusedDeclarationFixProvider.EP_NAME);
     for (UnusedDeclarationFixProvider provider : fixProviders) {
@@ -580,6 +585,9 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
       if (isImplicitUsage(method, progress)) {
         return true;
       }
+      if (!helper.shouldIgnoreUsagesInCurrentFile()) {
+        return !weAreSureThereAreNoUsages(method, progress, helper);
+      }
     }
     else {
       //class maybe used in some weird way, e.g. from XML, therefore the only constructor is used too
@@ -606,26 +614,27 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     String name = member.getName();
     if (name == null) return false;
     SearchScope useScope = member.getUseScope();
-    if (!(useScope instanceof GlobalSearchScope)) return false;
-    GlobalSearchScope scope = (GlobalSearchScope)useScope;
-    // some classes may have references from within XML outside dependent modules, e.g. our actions
     Project project = member.getProject();
-    if (member instanceof PsiClass) scope = GlobalSearchScope.projectScope(project).uniteWith(scope);
+    if (useScope instanceof GlobalSearchScope) {
+      GlobalSearchScope scope = (GlobalSearchScope)useScope;
+      // some classes may have references from within XML outside dependent modules, e.g. our actions
+      if (member instanceof PsiClass) scope = GlobalSearchScope.projectScope(project).uniteWith(scope);
 
-    PsiSearchHelper.SearchCostResult cheapEnough = PsiSearchHelper.SERVICE.getInstance(project).isCheapEnoughToSearch(name, scope,
-                                                                                                                      helper.shouldIgnoreUsagesInCurrentFile() ? member.getContainingFile() : null,
-                                                                                                                      progress);
-    if (cheapEnough == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) return false;
+      PsiSearchHelper.SearchCostResult cheapEnough = PsiSearchHelper.SERVICE.getInstance(project).isCheapEnoughToSearch(name, scope,
+                                                                                                                        helper.shouldIgnoreUsagesInCurrentFile() ? member.getContainingFile() : null,
+                                                                                                                        progress);
+      if (cheapEnough == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) return false;
 
-    //search usages if it cheap
-    //if count is 0 there is no usages since we've called myRefCountHolder.isReferenced() before
-    if (cheapEnough == PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES) {
-      if (!canBeReferencedViaWeirdNames(member)) return true;
+      //search usages if it cheap
+      //if count is 0 there is no usages since we've called myRefCountHolder.isReferenced() before
+      if (cheapEnough == PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES) {
+        if (!canBeReferencedViaWeirdNames(member)) return true;
+      }
     }
     FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager();
     FindUsagesHandler handler = new JavaFindUsagesHandler(member, new JavaFindUsagesHandlerFactory(project));
     FindUsagesOptions findUsagesOptions = handler.getFindUsagesOptions();
-    findUsagesOptions.searchScope = scope;
+    findUsagesOptions.searchScope = useScope;
     return !findUsagesManager.isUsed(member, findUsagesOptions);
   }
 
@@ -684,7 +693,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     if (aClass == null) return true;
     Boolean result = helper.unusedClassCache.get(aClass);
     if (result == null) {
-      result = !isReallyUsed(aClass, progress, helper);
+      result = isReallyUsed(aClass, progress, helper);
       helper.unusedClassCache.put(aClass, result);
     }
     return result;

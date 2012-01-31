@@ -10,7 +10,10 @@ class Bar {
 
   Bar getUsedPropertyGetter() {}
 
-  public static void main(String[] args) {}
+  public static void main(String[] args) { usedPrivately() }
+
+  private static void usedPrivately() {}
+  private void <warning descr="Method unusedPrivately is unused">unusedPrivately</warning>() {}
 
 }
 println new Bar().usedMethod().usedProperty
