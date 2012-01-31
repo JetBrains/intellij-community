@@ -44,9 +44,9 @@ public abstract class ExecutableValidator {
   private final NotificationGroup myNotificationGroup = new NotificationGroup(NOTIFICATION_ID, NotificationDisplayType.TOOL_WINDOW, true,
                                                                               ToolWindowId.VCS);
 
-  private final Project myProject;
+  protected final Project myProject;
   private final String myNotificationErrorTitle;
-  private final String myNotificationErrorDescription;
+  private String myNotificationErrorDescription;
 
   /**
    * Configures notification and dialog by setting text messages and titles specific to the whoever uses the validator.
@@ -89,6 +89,10 @@ public abstract class ExecutableValidator {
     } catch (Throwable e) {
       return false;
     }
+  }
+
+  public void setNotificationErrorDescription(String notificationErrorDescription) {
+    myNotificationErrorDescription = notificationErrorDescription;
   }
 
   /**

@@ -26,6 +26,7 @@ import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn17.SvnApplicationSettings17;
+import org.jetbrains.idea.svn17.SvnVcs17;
 
 import java.io.File;
 import java.io.OutputStream;
@@ -72,9 +73,14 @@ public abstract class SvnCommand {
 
       try {
         myProcess = startProcess();
-        startHandlingStreams();
+        if (myProcess != null) {
+          startHandlingStreams();
+        } else {
+          SvnVcs17.getInstance(myProject).checkCommandLineVersion();
+          myListeners.getMulticaster().startFailed(null);
+        }
       } catch (Throwable t) {
-        // todo check executable
+        SvnVcs17.getInstance(myProject).checkCommandLineVersion();
         myListeners.getMulticaster().startFailed(t);
       }
     }
