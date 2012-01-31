@@ -430,9 +430,17 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
 
   @Override
   public void add(DockableContent dockable, RelativePoint dropTarget) {
+    final DockableGrid dockableGrid = (DockableGrid)dockable;
+    final RunnerContentUi prev = dockableGrid.getRunnerUi();
+    if (prev == this) {
+      for (TabInfo info : myTabs.getTabs()) {
+        info.setHidden(false);
+      }
+      return;
+    }
+
     saveUiState();
 
-    final DockableGrid dockableGrid = (DockableGrid)dockable;
     final List<Content> contents = dockableGrid.getContents();
     final boolean wasRestoring = myOriginal != null && myOriginal.isStateBeingRestored();
     setStateIsBeingRestored(true, this);
@@ -441,16 +449,18 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
       boolean hadGrid = !myTabs.shouldAddToGlobal(point);
 
       for (Content content : contents) {
-        dockableGrid.getRunnerUi().myManager.removeContent(content, false);
+        final View view = getStateFor(content);
+        //if (view.isMinimizedInGrid()) continue;
+        prev.myManager.removeContent(content, false);
         myManager.removeContent(content, false);
         if (hadGrid && contents.size() == 1 && !wasRestoring) {
-          getStateFor(content).assignTab(getTabFor(getSelectedGrid()));
-          getStateFor(content).setPlaceInGrid(myLayoutSettings.getDefaultGridPlace(content));
+          view.assignTab(getTabFor(getSelectedGrid()));
+          view.setPlaceInGrid(myLayoutSettings.getDefaultGridPlace(content));
         } else if (contents.size() == 1 && !wasRestoring) {
-          getStateFor(content).assignTab(null);
-          getStateFor(content).setPlaceInGrid(myLayoutSettings.getDefaultGridPlace(content));
+          view.assignTab(null);
+          view.setPlaceInGrid(myLayoutSettings.getDefaultGridPlace(content));
         }
-        getStateFor(content).setWindow(myWindow);
+        view.setWindow(myWindow);
         myManager.addContent(content);
       }
     } finally {
