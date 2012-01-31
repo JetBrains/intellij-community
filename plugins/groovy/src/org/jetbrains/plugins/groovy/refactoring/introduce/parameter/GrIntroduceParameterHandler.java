@@ -221,9 +221,9 @@ public class GrIntroduceParameterHandler implements RefactoringActionHandler, Me
     final PsiElement expr = PsiUtil.skipParentheses(expression, false);
     if (expr == null) return PsiElement.EMPTY_ARRAY;
 
-    final PsiElement[] occurrences = GroovyRefactoringUtil.getExpressionOccurrences(expr, scope, true);
+    final PsiElement[] occurrences = GroovyRefactoringUtil.getExpressionOccurrences(expr, scope);
     if (occurrences == null || occurrences.length == 0) {
-      throw new GrIntroduceRefactoringError(GroovyRefactoringBundle.message("no.occurences.found"));
+      throw new GrIntroduceRefactoringError(GroovyRefactoringBundle.message("no.occurrences.found"));
     }
     return occurrences;
   }

@@ -187,6 +187,7 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
     return findChildrenByClass(GrStatement.class);
   }
 
+  @NotNull
   public GrStatement addStatementBefore(@NotNull GrStatement statement, @Nullable GrStatement anchor) throws IncorrectOperationException {
     final PsiElement result = addBefore(statement, anchor);
     if (anchor != null) {
