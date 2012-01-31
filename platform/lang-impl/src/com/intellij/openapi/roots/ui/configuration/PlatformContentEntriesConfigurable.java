@@ -86,7 +86,7 @@ public class PlatformContentEntriesConfigurable implements Configurable {
   }
 
   public boolean isModified() {
-    return myEditor.isModified();
+    return myEditor != null && myEditor.isModified();
   }
 
   public void apply() throws ConfigurationException {
