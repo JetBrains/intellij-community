@@ -91,6 +91,17 @@ public class GroovyBuilder extends ModuleLevelBuilder {
           }
         });
 
+        if (myForStubs && handler.shouldRetry()) {
+          File marker = new File(moduleOutput, "groovy_stubs_retry");
+          if (marker.exists()) {
+            FileUtil.delete(marker);
+          } else {
+            FileUtil.createIfDoesntExist(marker);
+            exitCode = ExitCode.CHUNK_REBUILD_REQUIRED;
+            return exitCode;
+          }
+        }
+
         successfullyCompiled = handler.getSuccessfullyCompiled();
 
         for (CompilerMessage message : handler.getCompilerMessages()) {

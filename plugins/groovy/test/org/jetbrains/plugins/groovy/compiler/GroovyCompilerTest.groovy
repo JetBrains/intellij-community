@@ -503,6 +503,11 @@ class Indirect {
     if (!useJps()) {
       assertEmpty compileFiles(used.virtualFile, main)
     }
+
+    touch(used.virtualFile)
+    touch(main)
+    assertEmpty make()
+
     assertEmpty compileModule(myModule)
     assertEmpty compileModule(myModule)
     
