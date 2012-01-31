@@ -32,11 +32,14 @@ public class CoreJarVirtualFile extends VirtualFile {
   private final CoreJarFileSystem myFileSystem;
   private final CoreJarHandler myHandler;
   private final String myPathInJar;
+  private final VirtualFile myParent;
+  private VirtualFile[] myChildren;
 
   public CoreJarVirtualFile(CoreJarFileSystem fileSystem, CoreJarHandler handler, String pathInJar) {
     myFileSystem = fileSystem;
     myHandler = handler;
     myPathInJar = pathInJar;
+    myParent = calcParent();
   }
 
   @NotNull
@@ -77,6 +80,10 @@ public class CoreJarVirtualFile extends VirtualFile {
 
   @Override
   public VirtualFile getParent() {
+    return myParent;
+  }
+
+  private VirtualFile calcParent() {
     if (myPathInJar.length() == 0) {
       return null;
     }
@@ -89,6 +96,15 @@ public class CoreJarVirtualFile extends VirtualFile {
 
   @Override
   public VirtualFile[] getChildren() {
+    VirtualFile[] answer = myChildren;
+    if (answer == null) {
+      answer = calcChildren();
+      myChildren = answer;
+    }
+    return answer;
+  }
+
+  private VirtualFile[] calcChildren() {
     List<VirtualFile> result = new ArrayList<VirtualFile>();
     final String[] children = myHandler.list(this);
     for (String child : children) {
