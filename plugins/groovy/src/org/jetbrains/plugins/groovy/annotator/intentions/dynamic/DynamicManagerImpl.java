@@ -306,7 +306,7 @@ public class DynamicManagerImpl extends DynamicManager {
     removeItemFromTree(element, classElement);
   }
 
-  public void replaceDynamicMethodType(String className, String name, List<MyPair> myPairList, String oldType, String newType) {
+  public void replaceDynamicMethodType(String className, String name, List<ParamInfo> myPairList, String oldType, String newType) {
     final DMethodElement method = findConcreteDynamicMethod(className, name, QuickfixUtil.getArgumentsTypes(myPairList));
 
     if (method == null) return;
@@ -441,7 +441,7 @@ public class DynamicManagerImpl extends DynamicManager {
   public DItemElement createDynamicElement(DynamicElementSettings settings) {
     DItemElement itemElement;
     if (settings.isMethod()) {
-      itemElement = new DMethodElement(settings.isStatic(), settings.getName(), settings.getType(), settings.getPairs());
+      itemElement = new DMethodElement(settings.isStatic(), settings.getName(), settings.getType(), settings.getParams());
     } else {
       itemElement = new DPropertyElement(settings.isStatic(), settings.getName(), settings.getType());
     }

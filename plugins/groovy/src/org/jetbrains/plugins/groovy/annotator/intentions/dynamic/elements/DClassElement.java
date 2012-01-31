@@ -19,7 +19,7 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManager;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.MyPair;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ParamInfo;
 
 import java.util.*;
 
@@ -111,7 +111,7 @@ public class DClassElement implements DNamedElement {
   @Nullable
   public DMethodElement getMethod(String methodName, String[] parametersTypes) {
     for (DMethodElement method : myMethods) {
-      final List<MyPair> myPairList = method.getPairs();
+      final List<ParamInfo> myPairList = method.getPairs();
       if (method.getName().equals(methodName)
           && Arrays.equals(QuickfixUtil.getArgumentsTypes(myPairList), parametersTypes)) return method;
     }

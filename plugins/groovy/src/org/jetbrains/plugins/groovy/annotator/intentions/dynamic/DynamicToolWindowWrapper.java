@@ -306,7 +306,7 @@ public class DynamicToolWindowWrapper {
           DynamicManager.getInstance(myProject).replaceDynamicPropertyType(className, name, (String)oldTypeValue, newTypeValue);
 
         } else if (dynamicElement instanceof DMethodElement) {
-          final List<MyPair> myPairList = ((DMethodElement)dynamicElement).getPairs();
+          final List<ParamInfo> myPairList = ((DMethodElement)dynamicElement).getPairs();
           DynamicManager.getInstance(myProject).replaceDynamicMethodType(className, name, myPairList, (String)oldTypeValue, newTypeValue);
         }
       }

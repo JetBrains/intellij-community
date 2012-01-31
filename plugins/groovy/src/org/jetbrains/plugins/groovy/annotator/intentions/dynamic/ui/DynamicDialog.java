@@ -37,7 +37,7 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManager;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.MyPair;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ParamInfo;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DClassElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DItemElement;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
@@ -218,7 +218,7 @@ public abstract class DynamicDialog extends DialogWrapper {
 
             final DItemElement itemElement;
             if (mySettings.isMethod()) {
-              final List<MyPair> myPairList = mySettings.getPairs();
+              final List<ParamInfo> myPairList = mySettings.getParams();
               final String[] argumentsTypes = QuickfixUtil.getArgumentsTypes(myPairList);
               itemElement =
                 myDynamicManager.findConcreteDynamicMethod(mySettings.getContainingClassName(), mySettings.getName(), argumentsTypes);
