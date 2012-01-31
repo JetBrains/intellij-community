@@ -82,7 +82,7 @@ public class Key<T> {
     return get(holder) != null;
   }
 
-  public void set(@Nullable UserDataHolder holder, T value) {
+  public void set(@Nullable UserDataHolder holder, @Nullable T value) {
     if (holder != null) {
       holder.putUserData(this, value);
     }
