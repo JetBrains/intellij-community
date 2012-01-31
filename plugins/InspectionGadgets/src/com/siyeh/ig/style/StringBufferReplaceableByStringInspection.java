@@ -24,6 +24,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
@@ -141,7 +142,13 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
           }
           final PsiExpression argument = arguments[0];
           if (result.length() != 0) {
-            result.append('+').append(argument.getText());
+            result.append('+');
+            if (ParenthesesUtils.getPrecedence(argument) > ParenthesesUtils.ADDITIVE_PRECEDENCE) {
+              result.append('(').append(argument.getText()).append(')');
+            }
+            else {
+              result.append(argument.getText());
+            }
           }
           else {
             final PsiType type = argument.getType();
@@ -149,7 +156,12 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
               result.append("String.valueOf(").append(argument.getText()).append(")");
             }
             else {
-              result.append(argument.getText());
+              if (ParenthesesUtils.getPrecedence(argument) > ParenthesesUtils.ADDITIVE_PRECEDENCE) {
+                result.append('(').append(argument.getText()).append(')');
+              }
+              else {
+                result.append(argument.getText());
+              }
             }
           }
         }
