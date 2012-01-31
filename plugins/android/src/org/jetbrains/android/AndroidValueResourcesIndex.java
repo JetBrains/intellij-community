@@ -10,6 +10,7 @@ import com.intellij.util.containers.HashSet;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
+import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.xml.NanoXmlUtil;
 import org.jetbrains.android.util.AndroidResourceUtil;
 import org.jetbrains.android.util.ResourceEntry;
@@ -29,7 +30,7 @@ import java.util.Set;
  */
 public class AndroidValueResourcesIndex extends FileBasedIndexExtension<ResourceEntry, Set<ResourceEntry>> {
   public static final ID<ResourceEntry, Set<ResourceEntry>> INDEX_ID = ID.create("android.value.resources.index");
-  
+
   private final FileBasedIndex.InputFilter myInputFilter = new FileBasedIndex.InputFilter() {
     public boolean acceptInput(final VirtualFile file) {
       return (file.getFileSystem() == LocalFileSystem.getInstance() || file.getFileSystem() instanceof TempFileSystem) &&
@@ -41,6 +42,10 @@ public class AndroidValueResourcesIndex extends FileBasedIndexExtension<Resource
     new DataIndexer<ResourceEntry, Set<ResourceEntry>, FileContent>() {
     @NotNull
     public Map<ResourceEntry, Set<ResourceEntry>> map(FileContent inputData) {
+
+      if (CharArrayUtil.indexOf(inputData.getContentAsText(), "<resources", 0) < 0) {
+        return Collections.emptyMap();
+      }
       final Map<ResourceEntry, Set<ResourceEntry>> result = new HashMap<ResourceEntry, Set<ResourceEntry>>();
       
       NanoXmlUtil.parse(new ByteArrayInputStream(inputData.getContent()), new NanoXmlUtil.IXMLBuilderAdapter() {
