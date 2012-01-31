@@ -1,8 +1,6 @@
 package com.jetbrains.python.psi.impl;
 
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
@@ -84,15 +82,9 @@ public abstract class PropertyBunch<MType> {
   protected static boolean resolvesLocally(@NotNull PyReferenceExpression ref) {
     final String name = ref.getName();
     if (name != null) {
-      PsiElement outermost_context = ref;
-      PsiElement seeker = ref;
-      do {
-        seeker = PsiTreeUtil.getParentOfType(seeker, PyFunction.class);
-        if (seeker != null) outermost_context = seeker;
-      } while (seeker != null);
       final ResolveProcessor processor = new ResolveProcessor(name);
-      PyResolveUtil.treeCrawlUp(processor, true, outermost_context);
-      return (processor.getResult() != null || processor.getDefiners().size() > 0);
+      PyResolveUtil.scopeCrawlUp(processor, ref, name, null);
+      return processor.getResult() != null;
     }
     return false;
   }
@@ -101,7 +93,7 @@ public abstract class PropertyBunch<MType> {
    * Tries to form a bunch from data available at a possible property() call site.
    * @param source should be a PyCallExpression (if not, null is immediately returned).
    * @param target what to fill with data (return type contravariance prevents us from creating it inside).
-   * @return true if target was successfully filled. 
+   * @return true if target was successfully filled.
    */
   protected static <MType> boolean fillFromCall(PyExpression source, PropertyBunch<MType> target) {
     PyCallExpression call = findPropertyCallSite(source);

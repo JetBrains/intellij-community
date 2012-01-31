@@ -620,7 +620,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       }
       // PY-1315 Unused imports inspection shouldn't work in python repl console
       final NameDefiner first = myAllImports.iterator().next();
-      if (first.getContainingFile() instanceof PyExpressionCodeFragment || PydevConsoleRunner.isInPydevConsole(first)){
+      if (first.getContainingFile() instanceof PyExpressionCodeFragment || PydevConsoleRunner.isInPydevConsole(first)) {
         return Collections.emptyList();
       }
       List<PsiElement> result = new ArrayList<PsiElement>();

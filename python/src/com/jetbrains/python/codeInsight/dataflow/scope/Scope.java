@@ -7,6 +7,7 @@ import com.jetbrains.python.psi.NameDefiner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -30,4 +31,7 @@ public interface Scope {
 
   @Nullable
   PsiNamedElement getNamedElement(String name);
+
+  @NotNull
+  Collection<PsiNamedElement> getNamedElements();
 }

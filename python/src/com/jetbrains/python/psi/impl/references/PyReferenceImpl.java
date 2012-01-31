@@ -503,15 +503,20 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     // include our own names
     final int underscores = PyUtil.getInitialUnderscores(myElement.getName());
     final CompletionVariantsProcessor processor = new CompletionVariantsProcessor(myElement);
-    PyResolveUtil.treeCrawlUp(processor, realContext); // names from here
-    PyResolveUtil.scanOuterContext(processor, realContext); // possible names from around us at call time
+    final ScopeOwner owner = realContext instanceof ScopeOwner ? (ScopeOwner)realContext : ScopeUtil.getScopeOwner(realContext);
+    if (owner != null) {
+      PyResolveUtil.scopeCrawlUp(processor, owner, null);
+    }
 
     // in a call, include function's arg names
     PythonDataflowUtil.collectFunctionArgNames(myElement, ret);
 
     // include builtin names
     processor.setNotice("__builtin__");
-    PyResolveUtil.treeCrawlUp(processor, true, PyBuiltinCache.getInstance(getElement()).getBuiltinsFile()); // names from __builtin__
+    final PyFile builtinsFile = PyBuiltinCache.getInstance(getElement()).getBuiltinsFile();
+    if (builtinsFile != null) {
+      PyResolveUtil.scopeCrawlUp(processor, builtinsFile, null);
+    }
 
     if (underscores >= 2) {
       // if we're a normal module, add module's attrs

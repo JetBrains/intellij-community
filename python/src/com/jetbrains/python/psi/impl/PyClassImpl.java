@@ -886,7 +886,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
       }
     }
     else if (anchor != null) {
-      PyResolveUtil.treeCrawlUp(new PsiScopeProcessor() {
+      PyResolveUtil.scopeCrawlUp(new PsiScopeProcessor() {
         @Override
         public boolean execute(PsiElement element, ResolveState state) {
           if (element instanceof PyAssignmentStatement) {
@@ -904,7 +904,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
         @Override
         public void handleEvent(Event event, @Nullable Object associated) {
         }
-      }, false, anchor, method);
+      }, anchor, null, method);
     }
     else {
       final PyStatementList statementList = method.getStatementList();
@@ -922,7 +922,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   private static void collectNewTargets(Map<String, PyTargetExpression> collected, PyAssignmentStatement node) {
     final PyExpression[] targets = node.getTargets();
     for (PyExpression target : targets) {
-      if (target instanceof PyTargetExpression && PyUtil.isInstanceAttribute(target) && !collected.containsKey(target.getName())) {
+      if (target instanceof PyTargetExpression && PyUtil.isInstanceAttribute(target)) {
         collected.put(target.getName(), (PyTargetExpression)target);
       }
     }
@@ -988,8 +988,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
       }
     }
     else {
-      final PsiElement the_psi = getNode().getPsi();
-      PyResolveUtil.treeCrawlUp(processor, true, the_psi, the_psi);
+      PyResolveUtil.scopeCrawlUp(processor, this, this);
     }
     return true;
   }
