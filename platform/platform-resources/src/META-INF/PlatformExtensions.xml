@@ -63,8 +63,6 @@
 
   <applicationService serviceInterface="com.intellij.openapi.ui.DialogWrapperPeerFactory"
                       serviceImplementation="com.intellij.openapi.ui.impl.DialogWrapperPeerFactoryImpl"/>
-  <applicationService serviceInterface="com.intellij.openapi.vcs.FileStatusFactory"
-                      serviceImplementation="com.intellij.openapi.vcs.impl.FileStatusFactoryImpl"/>
   <applicationService serviceInterface="com.intellij.ui.content.ContentFactory"
                       serviceImplementation="com.intellij.ui.content.ContentFactoryImpl"/>
   <applicationService serviceInterface="com.intellij.ui.TreeUIHelper"
