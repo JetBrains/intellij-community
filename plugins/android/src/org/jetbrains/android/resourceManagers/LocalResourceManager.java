@@ -20,7 +20,6 @@ import com.android.AndroidConstants;
 import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -28,14 +27,10 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
-import com.intellij.util.indexing.FileBasedIndex;
-import com.intellij.util.xml.GenericAttributeValue;
 import org.jetbrains.android.AndroidFileTemplateProvider;
-import org.jetbrains.android.AndroidIdIndex;
 import org.jetbrains.android.actions.CreateResourceFileAction;
 import org.jetbrains.android.dom.attrs.AttributeDefinitions;
 import org.jetbrains.android.dom.resources.Attr;
@@ -52,7 +47,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -101,21 +95,7 @@ public class LocalResourceManager extends ResourceManager {
   }
 
   public List<Resources> getResourceElements() {
-    return getResourceElements(getAllResourceFiles());
-  }
-
-  @NotNull
-  private Set<VirtualFile> getAllResourceFiles() {
-    final Set<VirtualFile> files = new HashSet<VirtualFile>();
-
-    for (VirtualFile valueResourceDir : getResourceSubdirs("values")) {
-      for (VirtualFile valueResourceFile : valueResourceDir.getChildren()) {
-        if (!valueResourceFile.isDirectory() && valueResourceFile.getFileType().equals(StdFileTypes.XML)) {
-          files.add(valueResourceFile);
-        }
-      }
-    }
-    return files;
+    return getResourceElements(null);
   }
 
   @NotNull
@@ -125,23 +105,8 @@ public class LocalResourceManager extends ResourceManager {
   }
 
   @NotNull
-  @Override
-  public Collection<String> getValueResourceNames(@NotNull String resourceType) {
-    final List<String> result = new ArrayList<String>();
-    
-    for (ResourceElement element : getValueResources(resourceType)) {
-      final String name = element.getName().getValue();
-      
-      if (name != null) {
-        result.add(name);
-      }
-    }
-    return result;
-  }
-
-  @NotNull
   public List<ResourceElement> getValueResources(@NotNull final String resourceType) {
-    return getValueResources(resourceType, getAllResourceFiles());
+    return getValueResources(resourceType, null);
   }
 
   private static void collectResourceDirs(Module module, Set<VirtualFile> result, Set<Module> visited) {
@@ -191,43 +156,6 @@ public class LocalResourceManager extends ResourceManager {
 
   public void invalidateAttributeDefinitions() {
     myAttrDefs = null;
-  }
-
-  @Nullable
-  public List<PsiElement> findIdDeclarations(@NotNull String id) {
-    List<PsiElement> declarations = new ArrayList<PsiElement>();
-    AndroidResourceUtil.collectIdDeclarations(id, myModule, declarations);
-    return declarations;
-  }
-
-  @NotNull
-  public Collection<String> getIds() {
-    List<String> result = new ArrayList<String>();
-    Project project = myModule.getProject();
-    GlobalSearchScope scope = GlobalSearchScope.projectScope(myModule.getProject());
-    for (String key : FileBasedIndex.getInstance().getAllKeys(AndroidIdIndex.INDEX_ID, project)) {
-      if (!AndroidIdIndex.MARKER.equals(key)) {
-        if (FileBasedIndex.getInstance().getValues(AndroidIdIndex.INDEX_ID, key, scope).size() > 0) {
-          result.add(key);
-        }
-      }
-    }
-    return result;
-  }
-
-  @NotNull
-  @Override
-  public List<ResourceElement> findValueResources(@NotNull String resourceType,
-                                                  @NotNull String resourceName,
-                                                  boolean distinguishDelimetersInName) {
-    List<ResourceElement> elements = new ArrayList<ResourceElement>();
-    for (ResourceElement element : getValueResources(resourceType)) {
-      GenericAttributeValue<String> name = element.getName();
-      if (name != null && equal(resourceName, name.getValue(), distinguishDelimetersInName)) {
-        elements.add(element);
-      }
-    }
-    return elements;
   }
 
   @NotNull
