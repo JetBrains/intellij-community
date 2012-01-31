@@ -497,7 +497,7 @@ public class CompileDriver {
                   break;
               }
             }
-            compileContext.putUserData(COMPILE_SERVER_BUILD_STATUS, status);
+            compileContext.putUserDataIfAbsent(COMPILE_SERVER_BUILD_STATUS, status);
             break;
         }
         return eventType == JpsRemoteProto.Message.Response.BuildEvent.Type.BUILD_COMPLETED;
@@ -511,6 +511,7 @@ public class CompileDriver {
           LOG.info(trace);
           System.out.println(trace);
         }
+        compileContext.putUserData(COMPILE_SERVER_BUILD_STATUS, ExitStatus.ERRORS);
       }
 
       @Override
