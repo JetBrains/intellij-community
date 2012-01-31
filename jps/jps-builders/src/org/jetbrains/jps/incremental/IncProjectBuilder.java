@@ -367,6 +367,7 @@ public class IncProjectBuilder {
       return;
     }
 
+    boolean rebuildFromScratchRequested = false;
     float stageCount = myTotalBuilderCount;
     int stagesPassed = 0;
     final int modulesInChunk = chunk.getModules().size();
@@ -397,6 +398,27 @@ public class IncProjectBuilder {
             myModulesProcessed += (stagesPassed * modulesInChunk) / stageCount;
           }
           nextPassRequired = true;
+        }
+        else if (buildResult == ModuleLevelBuilder.ExitCode.CHUNK_REBUILD_REQUIRED) {
+          if (!rebuildFromScratchRequested) {
+            // allow rebuild from scratch only once per chunk
+            rebuildFromScratchRequested = true;
+            try {
+              // forcibly mark all files in the chunk dirty
+              context.markDirty(chunk);
+              // reverting to the beginning
+              myModulesProcessed -= (stagesPassed * modulesInChunk) / stageCount;
+              stagesPassed = 0;
+              nextPassRequired = true;
+              break;
+            }
+            catch (Exception e) {
+              throw new ProjectBuildException(e);
+            }
+          }
+          else {
+            LOG.info("Builder " + builder.getDescription() + " requested second chunk rebuild");
+          }
         }
 
         stagesPassed++;
