@@ -40,11 +40,15 @@ public interface JBTabsPresentation {
 
   JBTabsPresentation setSideComponentVertical(boolean vertical);
 
+  JBTabsPresentation setSideComponentOnTabs(boolean onTabs);
+
   JBTabsPresentation setSingleRow(boolean singleRow);
 
   boolean isSingleRow();
 
   boolean isSideComponentVertical();
+
+  boolean isSideComponentOnTabs();
 
   JBTabsPresentation setUiDecorator(@Nullable UiDecorator decorator);
 

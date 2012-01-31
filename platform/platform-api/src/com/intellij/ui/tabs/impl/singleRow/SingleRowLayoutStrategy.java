@@ -128,7 +128,7 @@ public abstract class SingleRowLayoutStrategy {
 
     @Override
     public boolean isSideComponentOnTabs() {
-      return !myTabs.isSideComponentVertical();
+      return !myTabs.isSideComponentVertical() && myTabs.isSideComponentOnTabs();
     }
 
     public ShapeTransform createShapeTransform(Rectangle labelRec) {
@@ -157,15 +157,23 @@ public abstract class SingleRowLayoutStrategy {
       if (myTabs.isHideTabs()) {
         myTabs.layoutComp(data, 0, 0, 0, 0);
       } else {
-        final int x = data.vToolbar != null ? data.vToolbar.getPreferredSize().width + 1 : 0;
-        final int y = data.compPosition + myTabs.myHeaderFitSize.height + (myTabs.isEditorTabs() ? 0 : 1);
+        final int vToolbarWidth = data.vToolbar != null ? data.vToolbar.getPreferredSize().width : 0;
+        final int x = vToolbarWidth > 0 ? vToolbarWidth + 1 : 0;
+        final int hToolbarHeight = !myTabs.isSideComponentOnTabs() && data.hToolbar != null ? data.hToolbar.getPreferredSize().height : 0;
+        final int y = data.compPosition + myTabs.myHeaderFitSize.height + (myTabs.isEditorTabs() ? 0 : 1) +
+                      (hToolbarHeight > 0 ? hToolbarHeight - 2 : 0);
 
         if (data.hToolbar != null) {
-          myTabs.layoutComp(x, y, data.comp, 0, 0);
-          int toolbarX = data.moreRect != null ? (int)data.moreRect.getMaxX() + myTabs.getToolbarInset() : (data.position + myTabs.getToolbarInset());
-          final Rectangle rec =
-            new Rectangle(toolbarX, data.insets.top + 1, myTabs.getSize().width - data.insets.left - toolbarX, myTabs.myHeaderFitSize.height);
-          myTabs.layout(data.hToolbar, rec);
+          final Rectangle compBounds = myTabs.layoutComp(x, y, data.comp, 0, 0);
+          if (myTabs.isSideComponentOnTabs()) {
+            int toolbarX = data.moreRect != null ? (int)data.moreRect.getMaxX() + myTabs.getToolbarInset() : (data.position + myTabs.getToolbarInset());
+            final Rectangle rec =
+              new Rectangle(toolbarX, data.insets.top + 1, myTabs.getSize().width - data.insets.left - toolbarX, myTabs.myHeaderFitSize.height);
+            myTabs.layout(data.hToolbar, rec);
+          } else {
+            final int toolbarHeight = data.hToolbar.getPreferredSize().height - 2;
+            myTabs.layout(data.hToolbar, compBounds.x, compBounds.y - toolbarHeight - 1, compBounds.width, toolbarHeight);
+          }
         } else if (data.vToolbar != null) {
           final Rectangle compBounds = myTabs.layoutComp(x, y, data.comp, 0, 0);
           final int toolbarWidth = data.vToolbar.getPreferredSize().width;
