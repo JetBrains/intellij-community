@@ -264,7 +264,7 @@ public class AndroidResourcesLineMarkerProvider implements LineMarkerProvider {
             if (resourceMap != null) {
               targets = new ArrayList<PsiElement>();
               if (resType.equals("id")) {
-                AndroidResourceUtil.collectIdDeclarations(fieldName, manager.getModule(), targets);
+                manager.collectIdDeclarations(fieldName, targets);
               }
               List<PsiElement> resources = resourceMap.get(new MyResourceEntry(fieldName, resType));
               if (resources != null) {

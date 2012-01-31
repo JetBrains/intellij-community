@@ -24,18 +24,14 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
-import com.intellij.util.indexing.FileBasedIndex;
-import org.jetbrains.android.AndroidIdIndex;
 import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.android.dom.resources.*;
 import org.jetbrains.android.facet.AndroidFacet;
@@ -280,7 +276,7 @@ public class AndroidResourceUtil {
     if (type != null) {
       String name = field.getName();
       if (type.equals("id")) {
-        collectIdDeclarations(name, manager.getModule(), targets);
+        manager.collectIdDeclarations(name, targets);
       }
       for (PsiFile file : manager.findResourceFiles(type, name, false)) {
         targets.add(file);
@@ -366,28 +362,6 @@ public class AndroidResourceUtil {
       return text.substring(i + 1, text.length());
     }
     return null;
-  }
-
-  public static void collectIdDeclarations(@NotNull final String id, Module module, final List<PsiElement> targets) {
-    Collection<VirtualFile> files =
-      FileBasedIndex.getInstance().getContainingFiles(AndroidIdIndex.INDEX_ID, id, GlobalSearchScope.projectScope(module.getProject()));
-    PsiManager psiManager = PsiManager.getInstance(module.getProject());
-    for (VirtualFile file : files) {
-      PsiFile psiFile = psiManager.findFile(file);
-      if (psiFile instanceof XmlFile) {
-        psiFile.accept(new XmlRecursiveElementVisitor() {
-          @Override
-          public void visitXmlAttributeValue(XmlAttributeValue attributeValue) {
-            if (isIdDeclaration(attributeValue)) {
-              String idInAttr = getResourceNameByReferenceText(attributeValue.getValue());
-              if (id.equals(idInAttr)) {
-                targets.add(attributeValue);
-              }
-            }
-          }
-        });
-      }
-    }
   }
 
   public static boolean isRJavaField(@NotNull PsiFile file, @NotNull PsiField field) {
