@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.psiutils.BoolUtils;
@@ -46,8 +46,7 @@ public abstract class Intention extends PsiElementBaseIntentionAction {
   }
 
   @Override
-  public void invoke(Project project, Editor editor, PsiElement element)
-    throws IncorrectOperationException {
+  public void invoke(Project project, Editor editor, PsiElement element) throws IncorrectOperationException {
     if (!isWritable(project, element)) {
       return;
     }
@@ -58,33 +57,25 @@ public abstract class Intention extends PsiElementBaseIntentionAction {
     processIntention(matchingElement);
   }
 
-  protected abstract void processIntention(@NotNull PsiElement element)
-    throws IncorrectOperationException;
+  protected abstract void processIntention(@NotNull PsiElement element) throws IncorrectOperationException;
 
   @NotNull
   protected abstract PsiElementPredicate getElementPredicate();
 
-  protected static void replaceExpression(@NotNull String newExpression,
-                                          @NotNull PsiExpression expression)
+  protected static void replaceExpression(@NotNull String newExpression, @NotNull PsiExpression expression)
     throws IncorrectOperationException {
     final Project project = expression.getProject();
-    final PsiElementFactory factory =
-      JavaPsiFacade.getElementFactory(project);
-    final PsiExpression newCall =
-      factory.createExpressionFromText(newExpression, expression);
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+    final PsiExpression newCall = factory.createExpressionFromText(newExpression, expression);
     final PsiElement insertedElement = expression.replace(newCall);
-    final CodeStyleManager codeStyleManager =
-      CodeStyleManager.getInstance(project);
+    final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
     codeStyleManager.reformat(insertedElement);
   }
 
-  protected static void replaceExpressionWithNegatedExpression(
-    @NotNull PsiExpression newExpression,
-    @NotNull PsiExpression expression)
+  protected static void replaceExpressionWithNegatedExpression(@NotNull PsiExpression newExpression, @NotNull PsiExpression expression)
     throws IncorrectOperationException {
     final Project project = expression.getProject();
-    final PsiElementFactory factory =
-      JavaPsiFacade.getElementFactory(project);
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     PsiExpression expressionToReplace = expression;
     final String newExpressionText = newExpression.getText();
     final String expString;
@@ -93,36 +84,29 @@ public abstract class Intention extends PsiElementBaseIntentionAction {
       expString = newExpressionText;
     }
     else if (ComparisonUtils.isComparison(newExpression)) {
-      final PsiBinaryExpression binaryExpression =
-        (PsiBinaryExpression)newExpression;
-      final String negatedComparison =
-        ComparisonUtils.getNegatedComparison(binaryExpression.getOperationTokenType());
+      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)newExpression;
+      final String negatedComparison = ComparisonUtils.getNegatedComparison(binaryExpression.getOperationTokenType());
       final PsiExpression lhs = binaryExpression.getLOperand();
       final PsiExpression rhs = binaryExpression.getROperand();
       assert rhs != null;
       expString = lhs.getText() + negatedComparison + rhs.getText();
     }
     else {
-      if (ParenthesesUtils.getPrecedence(newExpression) >
-          ParenthesesUtils.PREFIX_PRECEDENCE) {
+      if (ParenthesesUtils.getPrecedence(newExpression) > ParenthesesUtils.PREFIX_PRECEDENCE) {
         expString = "!(" + newExpressionText + ')';
       }
       else {
         expString = '!' + newExpressionText;
       }
     }
-    final PsiExpression newCall =
-      factory.createExpressionFromText(expString, expression);
+    final PsiExpression newCall = factory.createExpressionFromText(expString, expression);
     assert expressionToReplace != null;
     final PsiElement insertedElement = expressionToReplace.replace(newCall);
-    final CodeStyleManager codeStyleManager =
-      CodeStyleManager.getInstance(project);
+    final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
     codeStyleManager.reformat(insertedElement);
   }
 
-  protected static void replaceExpressionWithNegatedExpressionString(
-    @NotNull String newExpression,
-    @NotNull PsiExpression expression)
+  protected static void replaceExpressionWithNegatedExpressionString(@NotNull String newExpression, @NotNull PsiExpression expression)
     throws IncorrectOperationException {
     final Project project = expression.getProject();
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
@@ -130,52 +114,44 @@ public abstract class Intention extends PsiElementBaseIntentionAction {
     PsiExpression expressionToReplace = expression;
     final String expString;
     if (BoolUtils.isNegated(expression)) {
-      expressionToReplace = BoolUtils.findNegation(expression);
+      expressionToReplace = BoolUtils.findNegation(expressionToReplace);
       expString = newExpression;
     }
     else {
+      PsiElement parent = expressionToReplace.getParent();
+      while (parent instanceof PsiParenthesizedExpression) {
+        expressionToReplace = (PsiExpression)parent;
+        parent = parent.getParent();
+      }
       expString = "!(" + newExpression + ')';
     }
-    final PsiExpression newCall =
-      factory.createExpressionFromText(expString, expression);
+    final PsiExpression newCall = factory.createExpressionFromText(expString, expression);
     assert expressionToReplace != null;
     final PsiElement insertedElement = expressionToReplace.replace(newCall);
-    final CodeStyleManager codeStyleManager =
-      CodeStyleManager.getInstance(project);
+    final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
     codeStyleManager.reformat(insertedElement);
   }
 
-  protected static void replaceStatement(
-    @NonNls @NotNull String newStatementText,
-    @NonNls @NotNull PsiStatement statement)
+  protected static void replaceStatement(@NonNls @NotNull String newStatementText, @NonNls @NotNull PsiStatement statement)
     throws IncorrectOperationException {
     final Project project = statement.getProject();
-    final PsiElementFactory factory =
-      JavaPsiFacade.getElementFactory(project);
-    final PsiStatement newStatement =
-      factory.createStatementFromText(newStatementText, statement);
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+    final PsiStatement newStatement = factory.createStatementFromText(newStatementText, statement);
     final PsiElement insertedElement = statement.replace(newStatement);
-    final CodeStyleManager codeStyleManager =
-      CodeStyleManager.getInstance(project);
+    final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
     codeStyleManager.reformat(insertedElement);
   }
 
-  protected static void replaceStatementAndShorten(
-    @NonNls @NotNull String newStatementText,
-    @NonNls @NotNull PsiStatement statement)
+  protected static void replaceStatementAndShorten(@NonNls @NotNull String newStatementText, @NonNls @NotNull PsiStatement statement)
     throws IncorrectOperationException {
     final Project project = statement.getProject();
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     final PsiElementFactory factory = psiFacade.getElementFactory();
-    final PsiStatement newStatement =
-      factory.createStatementFromText(newStatementText, statement);
+    final PsiStatement newStatement = factory.createStatementFromText(newStatementText, statement);
     final PsiElement insertedElement = statement.replace(newStatement);
-    final JavaCodeStyleManager javaCodeStyleManager =
-      JavaCodeStyleManager.getInstance(project);
-    final PsiElement shortenedElement =
-      javaCodeStyleManager.shortenClassReferences(insertedElement);
-    final CodeStyleManager codeStyleManager =
-      CodeStyleManager.getInstance(project);
+    final JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(project);
+    final PsiElement shortenedElement = javaCodeStyleManager.shortenClassReferences(insertedElement);
+    final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
     codeStyleManager.reformat(shortenedElement);
   }
 
@@ -202,8 +178,7 @@ public abstract class Intention extends PsiElementBaseIntentionAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor,
-                             @NotNull PsiElement element) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
     return findMatchingElement(element, editor) != null;
   }
 
@@ -213,14 +188,12 @@ public abstract class Intention extends PsiElementBaseIntentionAction {
   }
 
   private static boolean isWritable(Project project, PsiElement element) {
-    final VirtualFile virtualFile = PsiUtil.getVirtualFile(element);
+    final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(element);
     if (virtualFile == null) {
       return true;
     }
-    final ReadonlyStatusHandler readonlyStatusHandler =
-      ReadonlyStatusHandler.getInstance(project);
-    final ReadonlyStatusHandler.OperationStatus operationStatus =
-      readonlyStatusHandler.ensureFilesWritable(virtualFile);
+    final ReadonlyStatusHandler readonlyStatusHandler = ReadonlyStatusHandler.getInstance(project);
+    final ReadonlyStatusHandler.OperationStatus operationStatus = readonlyStatusHandler.ensureFilesWritable(virtualFile);
     return !operationStatus.hasReadonlyFiles();
   }
 
