@@ -122,10 +122,7 @@ public final class GitPusher {
   }
 
   /**
-   *
-   *
-   *
-   * @param pushSpec which branches in which repositories should be pushed.
+   * @param pushSpecs which branches in which repositories should be pushed.
    *                               The most common situation is all repositories in the project with a single currently active branch for
    *                               each of them.
    * @throws VcsException if couldn't query 'git log' about commits to be pushed.
@@ -155,11 +152,7 @@ public final class GitPusher {
       if (pushSpec == null) {
         continue;
       }
-      if (!pushSpec.isPushAll()) {
-        res.put(repository, Collections.singletonList(new GitBranchPair(pushSpec.getSource(), pushSpec.getDest())));
-      } else {
-        res.put(repository, GitPushSpec.getBranchesForPushAll(repository));
-      }
+      res.put(repository, Collections.singletonList(new GitBranchPair(pushSpec.getSource(), pushSpec.getDest())));
     }
     return res;
   }
@@ -306,51 +299,19 @@ public final class GitPusher {
       return GitSimplePushResult.notPushed();
     }
 
-    if (pushSpec.isPushAll()) {
-      // TODO support pushing to different branches with http remotes from one and ssh from other.
-      // Currently it is a hack - get just one remote url and hope that others are the same type and the same server.
-      String remoteUrl = null;
-      for (GitBranch branch : commitsByBranch.getBranches()) {
-        if (remoteUrl != null) {
-          break;
-        }
-        try {
-          String remoteName = branch.getTrackedRemoteName(repository.getProject(), repository.getRoot());
-          GitRemote remote = GitUtil.findRemoteByName(repository, remoteName);
-          if (remote != null) {
-            if (!remote.getPushUrls().isEmpty()) {
-              remoteUrl = remote.getPushUrls().iterator().next();
-            }
-          }
-        }
-        catch (VcsException e) {
-          LOG.info(e);
-        }
-      }
-
-      if (remoteUrl == null) {
-        return pushNatively(repository, pushSpec);
-      }
-      else {
-        return GitHttpAdapter.shouldUseJGit(remoteUrl) ? GitHttpAdapter.push(repository, null, remoteUrl, null) : pushNatively(repository, pushSpec);
+    GitRemote remote = pushSpec.getRemote();
+    String httpUrl = null;
+    for (String pushUrl : remote.getPushUrls()) {
+      if (GitHttpAdapter.shouldUseJGit(pushUrl)) {
+        httpUrl = pushUrl;
+        break;            // TODO support http and ssh urls in one origin
       }
     }
+    if (httpUrl != null) {
+      return GitHttpAdapter.push(repository, remote, httpUrl, formPushSpec(pushSpec, remote));
+    }
     else {
-      GitRemote remote = pushSpec.getRemote();
-      assert remote != null : "Remote can't be null for pushSpec " + pushSpec;
-      String httpUrl = null;
-      for (String pushUrl : remote.getPushUrls()) {
-        if (GitHttpAdapter.shouldUseJGit(pushUrl)) {
-          httpUrl = pushUrl;
-          break;            // TODO support http and ssh urls in one origin
-        }
-      }
-      if (httpUrl != null) {
-        return GitHttpAdapter.push(repository, remote, httpUrl, formPushSpec(pushSpec, remote));
-      }
-      else {
-        return pushNatively(repository, pushSpec);
-      }
+      return pushNatively(repository, pushSpec);
     }
   }
 
