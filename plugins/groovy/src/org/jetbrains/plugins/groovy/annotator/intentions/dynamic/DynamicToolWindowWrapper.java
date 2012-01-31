@@ -63,7 +63,10 @@ import javax.swing.*;
 import javax.swing.event.CellEditorListener;
 import javax.swing.event.ChangeEvent;
 import javax.swing.table.TableCellRenderer;
-import javax.swing.tree.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.MutableTreeNode;
+import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -362,7 +365,7 @@ public class DynamicToolWindowWrapper {
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_F2, InputEvent.CTRL_MASK), JComponent.WHEN_FOCUSED);
 
-    // todo use "myTreeTable.setAutoCreateRowSorter(true);" since 1.6
+    myTreeTable.setAutoCreateRowSorter(true);
 
     myTreeTable.getTree().setShowsRootHandles(true);
     myTreeTable.getTableHeader().setReorderingAllowed(false);
@@ -371,10 +374,10 @@ public class DynamicToolWindowWrapper {
     myTreeTable.getColumn(myColumnNames[CLASS_OR_ELEMENT_NAME_COLUMN]).setPreferredWidth(200);
     myTreeTable.getColumn(myColumnNames[TYPE_COLUMN]).setPreferredWidth(160);
 
-    JScrollPane scrollpane = ScrollPaneFactory.createScrollPane(myTreeTable);
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTreeTable);
 
-    scrollpane.setPreferredSize(new Dimension(600, 400));
-    return scrollpane;
+    scrollPane.setPreferredSize(new Dimension(600, 400));
+    return scrollPane;
   }
 
   private void deleteRow() {
@@ -568,7 +571,7 @@ public class DynamicToolWindowWrapper {
 
           filterText = getFilter();
           if (filterText == null || filterText.isEmpty()) {
-            ((DItemElement)childObject).setHightlightedText("");
+            ((DItemElement)childObject).setHighlightedText("");
 
             dynamicNodes.add(dynamicNode);
             dynamicNode = (DefaultMutableTreeNode)classNode.getChildAfter(dynamicNode);
@@ -578,7 +581,7 @@ public class DynamicToolWindowWrapper {
           final String name = (((DItemElement)childObject)).getName();
 
           if (name.contains(filterText)) {
-            ((DItemElement)childObject).setHightlightedText(filterText);
+            ((DItemElement)childObject).setHighlightedText(filterText);
             dynamicNodes.add(dynamicNode);
           }
 
@@ -641,7 +644,7 @@ public class DynamicToolWindowWrapper {
 
       if (value instanceof DItemElement) {
         final DItemElement itemElement = ((DItemElement)value);
-        final String substringToHighlight = itemElement.getHightlightedText();
+        final String substringToHighlight = itemElement.getHighlightedText();
         final String name = itemElement.getName();
 
         if (substringToHighlight != null) {

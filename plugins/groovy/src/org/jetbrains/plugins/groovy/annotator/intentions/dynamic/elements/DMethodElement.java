@@ -39,6 +39,7 @@ public class DMethodElement extends DItemElement {
   public List<MyPair> myPairs = new ArrayList<MyPair>();
   private PsiMethod myImplicitMethod;
 
+  @SuppressWarnings("UnusedDeclaration") //for serialization
   public DMethodElement() {
     super(null, null, null);
   }
@@ -71,8 +72,8 @@ public class DMethodElement extends DItemElement {
     }
 
     final String[] argumentsTypes = QuickfixUtil.getArgumentsTypes(myPairs);
-    final GrMethod method = GroovyPsiElementFactory.getInstance(manager.getProject())
-        .createMethodFromText(staticModifier, getName(), type, argumentsTypes, null);
+    final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(manager.getProject());
+    final GrMethod method = factory.createMethodFromText(staticModifier, getName(), type, argumentsTypes, null);
 
     myImplicitMethod = new GrDynamicImplicitMethod(manager, method, containingClassName) {
       @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,11 +43,9 @@ import java.util.List;
  * Date: 18.02.2008
  */
 public class DynamicMethodDialog extends DynamicDialog {
-  private final GrReferenceExpression myReferenceExpression;
 
   public DynamicMethodDialog(GrReferenceExpression referenceExpression) {
     super(referenceExpression, QuickfixUtil.createSettings(referenceExpression), GroovyExpectedTypesProvider.calculateTypeConstraints((GrExpression)referenceExpression.getParent()));
-    myReferenceExpression = referenceExpression;
     assert getSettings().isMethod();
 
     final List<MyPair> pairs = getSettings().getPairs();

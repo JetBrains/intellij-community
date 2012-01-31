@@ -33,6 +33,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.ui.EditorComboBoxEditor;
 import com.intellij.ui.EditorTextField;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
@@ -73,6 +74,7 @@ public abstract class DynamicDialog extends DialogWrapper {
   private JTable myParametersTable;
   private JLabel myTableLabel;
   private JCheckBox myStaticCheckBox;
+  private JBScrollPane myTablePane;
   private final DynamicManager myDynamicManager;
   private final Project myProject;
   private final EventListenerList myListenerList = new EventListenerList();

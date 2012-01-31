@@ -238,6 +238,7 @@ public class DynamicManagerImpl extends DynamicManager {
     return myRootElement;
   }
 
+  @Nullable
   public String replaceDynamicPropertyName(String className, String oldPropertyName, String newPropertyName) {
     final DClassElement classElement = findClassElement(getRootElement(), className);
     if (classElement == null) return null;
@@ -253,6 +254,7 @@ public class DynamicManagerImpl extends DynamicManager {
     return newPropertyName;
   }
 
+  @Nullable
   public String replaceDynamicPropertyType(String className, String propertyName, String oldPropertyType, String newPropertyType) {
     final DPropertyElement property = findConcreteDynamicProperty(className, propertyName);
 
@@ -268,8 +270,11 @@ public class DynamicManagerImpl extends DynamicManager {
   */
 
   @Nullable
-  public DMethodElement findConcreteDynamicMethod(DRootElement rootElement, String conatainingClassName, String methodName, String[] parametersTypes) {
-    DClassElement classElement = findClassElement(rootElement, conatainingClassName);
+  private static DMethodElement findConcreteDynamicMethod(DRootElement rootElement,
+                                                          String containingClassName,
+                                                          String methodName,
+                                                          String[] parametersTypes) {
+    DClassElement classElement = findClassElement(rootElement, containingClassName);
     if (classElement == null) return null;
 
     return classElement.getMethod(methodName, parametersTypes);
@@ -277,8 +282,8 @@ public class DynamicManagerImpl extends DynamicManager {
 
   //  @Nullable
 
-  public DMethodElement findConcreteDynamicMethod(String conatainingClassName, String name, String[] parameterTypes) {
-    return findConcreteDynamicMethod(getRootElement(), conatainingClassName, name, parameterTypes);
+  public DMethodElement findConcreteDynamicMethod(String containingClassName, String name, String[] parameterTypes) {
+    return findConcreteDynamicMethod(getRootElement(), containingClassName, name, parameterTypes);
   }
 
   private void removeMethodElement(DMethodElement methodElement) {
@@ -385,8 +390,8 @@ public class DynamicManagerImpl extends DynamicManager {
   }
 
   @Nullable
-  public DPropertyElement findConcreteDynamicProperty(final String conatainingClassName, final String propertyName) {
-    return findConcreteDynamicProperty(getRootElement(), conatainingClassName, propertyName);
+  public DPropertyElement findConcreteDynamicProperty(final String containingClassName, final String propertyName) {
+    return findConcreteDynamicProperty(getRootElement(), containingClassName, propertyName);
   }
 
   @Nullable

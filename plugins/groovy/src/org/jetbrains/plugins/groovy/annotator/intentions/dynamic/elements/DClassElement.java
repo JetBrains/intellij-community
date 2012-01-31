@@ -31,16 +31,10 @@ public class DClassElement implements DNamedElement {
   public String myName;
   public Set<DPropertyElement> myProperties = new HashSet<DPropertyElement>();
   public Set<DMethodElement> myMethods = new HashSet<DMethodElement>();
-  private Project myProject;
-
-  public DClassElement() {
-  }
 
   public DClassElement(Project project, String name) {
-    myProject = project;
     myName = name;
-
-    DynamicManager.getInstance(myProject).getRootElement().mergeAddClass(this);
+    DynamicManager.getInstance(project).getRootElement().mergeAddClass(this);
   }
 
   public void addMethod(DMethodElement methodElement) {
@@ -61,6 +55,7 @@ public class DClassElement implements DNamedElement {
     }
   }
 
+  @Nullable
   public DPropertyElement getPropertyByName(String propertyName) {
     for (final DPropertyElement property : myProperties) {
       if (propertyName.equals(property.getName())) {

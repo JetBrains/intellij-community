@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,15 @@
  */
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
 
-import java.util.Arrays;
-
 /**
  * User: Dmitry.Krasilschikov
  * Date: 29.02.2008
  */
-public class MyPair  {
+public class MyPair {
   public String first = null;
   public String second = null;
 
-  public MyPair() {
-  }
+  public MyPair() {}
 
   public MyPair(String first, String second) {
     this.first = first;
@@ -36,7 +33,7 @@ public class MyPair  {
   public void setFirst(String first) {
     this.first = first;
   }
-  
+
   public void setSecond(String second) {
     this.second = second;
   }
@@ -44,16 +41,12 @@ public class MyPair  {
   public final int hashCode() {
     int hashCode = 0;
     if (first != null) {
-      hashCode += hashCode(first);
+      hashCode += first.hashCode();
     }
     if (second != null) {
-      hashCode += hashCode(second);
+      hashCode += second.hashCode();
     }
     return hashCode;
-  }
-
-  private static int hashCode(final Object o) {
-    return (o instanceof Object[]) ? Arrays.hashCode((Object[]) o) : o.hashCode();
   }
 
   public String toString() {
