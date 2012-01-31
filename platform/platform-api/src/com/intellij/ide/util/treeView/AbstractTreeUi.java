@@ -2389,7 +2389,7 @@ public class AbstractTreeUi {
         maybeReady();
       }
     };
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    if (ApplicationManager.getApplication().isUnitTestMode() && isEdt()) {
       cancelUpdate.run();
     } else {
       invokeLaterIfNeeded(cancelUpdate, false);
@@ -3688,7 +3688,7 @@ public class AbstractTreeUi {
   }
 
   public void userSelect(final Object[] elements, final Runnable onDone, final boolean addToSelection, boolean scroll) {
-    _select(elements, onDone, addToSelection, true, false, scroll, false, true, !ApplicationManager.getApplication().isUnitTestMode());
+    _select(elements, onDone, addToSelection, true, false, scroll, false, true, !ApplicationManager.getApplication().isUnitTestMode() && !isEdt());
   }
 
   void _select(final Object[] elements,

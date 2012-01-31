@@ -1324,7 +1324,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   }
 
   public boolean isHorizontalToolbar() {
-    return false;
+    return myLayoutSettings.isToolbarHorizontal();
   }
 
   public ActionCallback select(final Content content, final boolean requestFocus) {

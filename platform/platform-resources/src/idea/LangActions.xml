@@ -731,10 +731,10 @@
     </group>
 
     <group id="RunnerLayoutActions">
-      <group id="Runner.Layout" icon="/debugger/restoreLayout.png">
+      <group id="Runner.Layout" icon="/debugger/restoreLayout.png" popup="true">
         <action id="Runner.RestoreLayout" class="com.intellij.execution.ui.layout.actions.RestoreLayoutAction"
                 icon="/debugger/restoreLayout.png"/>
-        <!--action id="Runner.ToggleToolbarLayout" class="com.intellij.execution.ui.layout.actions.ToggleToolbarLayoutAction"/-->
+        <action id="Runner.ToggleToolbarLayout" class="com.intellij.execution.ui.layout.actions.ToggleToolbarLayoutAction"/>
       </group>
 
 
