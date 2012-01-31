@@ -106,7 +106,7 @@ public class GradleProjectStructureChangesModelTest {
     treeModel = container.getComponentInstance(GradleProjectStructureTreeModel) as GradleProjectStructureTreeModel
     changesModel.addListener({ old, current ->
       treeModel.update(current)
-      treeModel.pruneObsoleteNodes(ContainerUtil.<GradleProjectStructureChange>subtract(old, current));
+      treeModel.pruneObsoleteNodes(ContainerUtil.subtract(old, current));
     } as GradleProjectStructureChangeListener)
     changesModel.update(gradle.project)
   }

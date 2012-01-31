@@ -67,9 +67,10 @@
   <actions>
     <action id="Gradle.LinkToProject" class="org.jetbrains.plugins.gradle.action.GradleLinkToProjectAction" icon="/general/add.png"/>
     <action id="Gradle.RefreshProject" class="org.jetbrains.plugins.gradle.action.GradleRefreshProjectAction" icon="/actions/sync.png"/>
+    <action id="Gradle.OpenScript" class="org.jetbrains.plugins.gradle.action.GradleOpenScriptAction" icon="/icons/gradle.png"/>
     <group id="Gradle.ChangeActionsToolbar">
-      <reference id="Gradle.LinkToProject"/>
       <reference id="Gradle.RefreshProject"/>
+      <reference id="Gradle.OpenScript"/>
     </group>
   </actions>
   

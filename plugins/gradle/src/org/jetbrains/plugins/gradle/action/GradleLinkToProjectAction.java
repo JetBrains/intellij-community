@@ -11,8 +11,6 @@ import org.jetbrains.plugins.gradle.config.GradleSettings;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
-import java.io.File;
-
 /**
  * Allows to link gradle project to the current IntelliJ IDEA project.
  * <p/>
@@ -26,17 +24,6 @@ public class GradleLinkToProjectAction extends AnAction implements DumbAware {
   public GradleLinkToProjectAction() {
     getTemplatePresentation().setText(GradleBundle.message("gradle.action.link.project.text"));
     getTemplatePresentation().setDescription(GradleBundle.message("gradle.action.link.project.description"));
-  }
-
-  @Override
-  public void update(AnActionEvent e) {
-    final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
-    if (project == null) {
-      e.getPresentation().setVisible(false);
-      return;
-    }
-    final String path = GradleSettings.getInstance(project).LINKED_PROJECT_FILE_PATH;
-    e.getPresentation().setVisible(path == null || !new File(path).isFile());
   }
 
   @Override
