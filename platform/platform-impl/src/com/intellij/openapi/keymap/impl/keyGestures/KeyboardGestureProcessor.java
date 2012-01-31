@@ -94,7 +94,7 @@ public class KeyboardGestureProcessor {
   }
 
   private Shortcut getCurrentShortcut() {
-    return KeyboardModifierGestureShortuct.newInstance(myContext.modifierType, myContext.actionShortcut);
+    return KeyboardModifierGestureShortcut.newInstance(myContext.modifierType, myContext.actionShortcut);
   }
 
   void setState(KeyGestureState state) {

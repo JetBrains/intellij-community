@@ -17,7 +17,7 @@ package com.intellij.openapi.actionSystem;
 
 import javax.swing.*;
 
-public class KeyboardModifierGestureShortuct extends Shortcut {
+public class KeyboardModifierGestureShortcut extends Shortcut {
 
   private final KeyStroke myStroke;
   private final KeyboardGestureAction.ModifierType myType;
@@ -33,7 +33,7 @@ public class KeyboardModifierGestureShortuct extends Shortcut {
     throw new IllegalArgumentException(type.toString());
   }
 
-  protected KeyboardModifierGestureShortuct(final KeyStroke stroke, KeyboardGestureAction.ModifierType type) {
+  protected KeyboardModifierGestureShortcut(final KeyStroke stroke, KeyboardGestureAction.ModifierType type) {
     myStroke = stroke;
     myType = type;
   }
@@ -51,9 +51,9 @@ public class KeyboardModifierGestureShortuct extends Shortcut {
   }
 
   public boolean startsWith(final Shortcut sc) {
-    if (!(sc instanceof KeyboardModifierGestureShortuct)) return false;
+    if (!(sc instanceof KeyboardModifierGestureShortcut)) return false;
 
-    final KeyboardModifierGestureShortuct other = (KeyboardModifierGestureShortuct)sc;
+    final KeyboardModifierGestureShortcut other = (KeyboardModifierGestureShortcut)sc;
     if (myType.equals(other.myType)) {
       if (myStroke.getModifiers() != other.myStroke.getModifiers()) return false;
       return other.myStroke.getKeyCode() != -1 || other.myStroke.getKeyCode() == myStroke.getKeyCode();
@@ -67,7 +67,7 @@ public class KeyboardModifierGestureShortuct extends Shortcut {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
-    final KeyboardModifierGestureShortuct that = (KeyboardModifierGestureShortuct)o;
+    final KeyboardModifierGestureShortcut that = (KeyboardModifierGestureShortcut)o;
 
     if (myStroke != null ? !myStroke.equals(that.myStroke) : that.myStroke != null) return false;
     if (myType != that.myType) return false;
@@ -83,13 +83,13 @@ public class KeyboardModifierGestureShortuct extends Shortcut {
     return result;
   }
 
-  public static class DblClick extends KeyboardModifierGestureShortuct {
+  public static class DblClick extends KeyboardModifierGestureShortcut {
     public DblClick(final KeyStroke stroke) {
       super(stroke, KeyboardGestureAction.ModifierType.dblClick);
     }
   }
 
-  public static class Hold extends KeyboardModifierGestureShortuct {
+  public static class Hold extends KeyboardModifierGestureShortcut {
     public Hold(final KeyStroke stroke) {
       super(stroke, KeyboardGestureAction.ModifierType.hold);
     }
