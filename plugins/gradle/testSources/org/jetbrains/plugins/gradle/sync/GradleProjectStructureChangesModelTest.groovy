@@ -55,6 +55,7 @@ public class GradleProjectStructureChangesModelTest {
   
   @Test
   public void mergeGradleLocalToIntellij() {
+    // Configure initial projects state.
     init(
       gradle {
         module {
@@ -70,6 +71,7 @@ public class GradleProjectStructureChangesModelTest {
       } } }
     )
     
+    // Check that the initial projects state is correctly parsed.
     checkChanges {
       presence {
         lib(gradle: gradle.modules.dependencies.flatten().findAll { it.name == "lib2" })
@@ -82,11 +84,14 @@ public class GradleProjectStructureChangesModelTest {
             lib2('gradle')
     } } } }
 
+    // Define changed project state.
     gradle {
       module {
         dependencies {
           lib(name: "lib1")
     } } }
+    
+    // Apply the changed project state and check if it's correctly parsed.
     changesModel.update(gradle.project)
     assertEquals([].toSet(), changesModel.changes)
     checkTree {
