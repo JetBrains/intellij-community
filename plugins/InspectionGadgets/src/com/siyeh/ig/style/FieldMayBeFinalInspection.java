@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.style;
 
+import com.intellij.codeInspection.canBeFinal.CanBeFinalHandler;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
@@ -65,6 +66,7 @@ public class FieldMayBeFinalInspection extends BaseInspection {
           !field.hasModifierProperty(PsiModifier.PRIVATE)) {
         return;
       }
+      if (!CanBeFinalHandler.allowToBeFinal(field)) return;
       if (!FinalUtils.canBeFinal(field)) {
         return;
       }
