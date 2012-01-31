@@ -432,12 +432,6 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   public void add(DockableContent dockable, RelativePoint dropTarget) {
     final DockableGrid dockableGrid = (DockableGrid)dockable;
     final RunnerContentUi prev = dockableGrid.getRunnerUi();
-    if (prev == this) {
-      for (TabInfo info : myTabs.getTabs()) {
-        info.setHidden(false);
-      }
-      return;
-    }
 
     saveUiState();
 
@@ -453,7 +447,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
         if (view.isMinimizedInGrid()) continue;
         prev.myManager.removeContent(content, false);
         myManager.removeContent(content, false);
-        if (hadGrid && contents.size() == 1 && !wasRestoring) {
+        if (hadGrid && !wasRestoring) {
           view.assignTab(getTabFor(getSelectedGrid()));
           view.setPlaceInGrid(myLayoutSettings.getDefaultGridPlace(content));
         } else if (contents.size() == 1 && !wasRestoring) {
@@ -585,7 +579,6 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
         }
 
         updateTabsUI(false);
-
 
         event.getContent().addPropertyChangeListener(RunnerContentUi.this);
         fireContentOpened(event.getContent());
@@ -836,8 +829,14 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
       }
     }
 
+    tab.setHidden(true);
+    for (Content content : contents) {
+      if (!grid.isMinimized(content)) {
+        tab.setHidden(false);
+        break;
+      }
+    }
     if (icon == null && contents.size() == 1) {
-      tab.setHidden(grid.isMinimized(contents.get(0)));
       icon = contents.get(0).getIcon();
     }
 
@@ -1030,6 +1029,10 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     Collections.addAll(contents, myManager.getContents());
     for (RunnerContentUi child : children) {
       Collections.addAll(contents, child.myManager.getContents());
+    }
+    for (AnAction action : myMinimizedViewActions.getChildren(null)) {
+      final Content content = ((RestoreViewAction)action).getContent();
+      contents.add(content);
     }
     Content[] all = contents.toArray(new Content[contents.size()]);
     Arrays.sort(all, new Comparator<Content>() {
@@ -1290,16 +1293,20 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
 
   public void minimize(final Content content, final CellTransform.Restore restore) {
     final Ref<AnAction> restoreAction = new Ref<AnAction>();
+    myManager.removeContent(content, false);
     restoreAction.set(new RestoreViewAction(content, new CellTransform.Restore() {
       public ActionCallback restoreInGrid() {
         myMinimizedViewActions.remove(restoreAction.get());
-        return restore.restoreInGrid().doWhenDone(new Runnable() {
-          public void run() {
-            saveUiState();
-            select(content, true);
-            updateTabsUI(false);
-          }
-        });
+        final GridImpl grid = getGridFor(content, false);
+        if (grid == null) {
+          getStateFor(content).assignTab(myLayoutSettings.getOrCreateTab(-1));
+        }
+        getStateFor(content).setMinimizedInGrid(false);
+        myManager.addContent(content);
+        saveUiState();
+        select(content, true);
+        updateTabsUI(false);
+        return new ActionCallback.Done();
       }
     }));
 
