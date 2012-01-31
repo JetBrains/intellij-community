@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,25 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.commands;
+package org.jetbrains.idea.svn17.commandLine;
 
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.LineHandlerHelper;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vcs.LineProcessEventListener;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 
 /**
- * The handler that is based on per-line processing of the text.
+ * Created with IntelliJ IDEA.
+ * User: Irina.Chernushina
+ * Date: 1/25/12
+ * Time: 4:05 PM
+ *
+ * honestly stolen from GitLineHandler
  */
-public class GitLineHandler extends GitTextHandler {
+public class SvnLineCommand extends SvnTextCommand {
   /**
    * the partial line from stdout stream
    */
@@ -40,62 +43,26 @@ public class GitLineHandler extends GitTextHandler {
    * the partial line from stderr stream
    */
   private final StringBuilder myStderrLine = new StringBuilder();
-  /**
-   * Line listeners
-   */
-  private final EventDispatcher<GitLineHandlerListener> myLineListeners = EventDispatcher.create(GitLineHandlerListener.class);
+  private final EventDispatcher<LineProcessEventListener> myLineListeners;
 
-  /**
-   * A constructor
-   *
-   * @param project   a project
-   * @param directory a process directory
-   * @param command   a command to execute
-   */
-  @SuppressWarnings({"WeakerAccess"})
-  public GitLineHandler(@NotNull Project project, @NotNull File directory, @NotNull GitCommand command) {
-    super(project, directory, command);
+  public SvnLineCommand(Project project, File workingDirectory, @NotNull SvnCommandName commandName) {
+    super(project, workingDirectory, commandName);
+    myLineListeners = EventDispatcher.create(LineProcessEventListener.class);
   }
 
-  /**
-   * A constructor
-   *
-   * @param project a project
-   * @param vcsRoot a process directory
-   * @param command a command to execute
-   */
-  public GitLineHandler(@NotNull final Project project, @NotNull final VirtualFile vcsRoot, @NotNull final GitCommand command) {
-    super(project, vcsRoot, command);
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  protected void processTerminated(final int exitCode) {
+  @Override
+  protected void processTerminated(int exitCode) {
     // force newline
     if (myStdoutLine.length() != 0) {
       onTextAvailable("\n\r", ProcessOutputTypes.STDOUT);
     }
-    else if (!isStderrSuppressed() && myStderrLine.length() != 0) {
+    else if (myStderrLine.length() != 0) {
       onTextAvailable("\n\r", ProcessOutputTypes.STDERR);
     }
   }
 
-
-  /**
-   * Add listener
-   *
-   * @param listener a listener to add
-   */
-  public void addLineListener(GitLineHandlerListener listener) {
-    super.addListener(listener);
-    myLineListeners.addListener(listener);
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  protected void onTextAvailable(final String text, final Key outputType) {
+  @Override
+  protected void onTextAvailable(String text, Key outputType) {
     Iterator<String> lines = LineHandlerHelper.splitText(text).iterator();
     if (ProcessOutputTypes.STDOUT == outputType) {
       notifyLines(outputType, lines, myStdoutLine);
@@ -105,13 +72,6 @@ public class GitLineHandler extends GitTextHandler {
     }
   }
 
-  /**
-   * Notify listeners for each complete line. Note that in the case of stderr, the last line is saved.
-   *
-   * @param outputType  output type
-   * @param lines       line iterator
-   * @param lineBuilder a line builder
-   */
   private void notifyLines(final Key outputType, final Iterator<String> lines, final StringBuilder lineBuilder) {
     if (!lines.hasNext()) return;
     if (lineBuilder.length() > 0) {
@@ -141,23 +101,13 @@ public class GitLineHandler extends GitTextHandler {
     }
   }
 
-  /**
-   * Notify single line
-   *
-   * @param line       a line to notify
-   * @param outputType output type
-   */
   private void notifyLine(final String line, final Key outputType) {
     String trimmed = LineHandlerHelper.trimLineSeparator(line);
-    // if line ends with return, then it is a progress line, ignore it
-    if (myVcs != null && !"\r".equals(line.substring(trimmed.length()))) {
-      if (outputType == ProcessOutputTypes.STDOUT && !isStdoutSuppressed()) {
-        myVcs.showMessages(trimmed);
-      }
-      else if (outputType == ProcessOutputTypes.STDERR && !isStderrSuppressed()) {
-        myVcs.showErrorMessages(trimmed);
-      }
-    }
     myLineListeners.getMulticaster().onLineAvailable(trimmed, outputType);
+  }
+
+  public void addListener(LineProcessEventListener listener) {
+    myLineListeners.addListener(listener);
+    super.addListener(listener);
   }
 }

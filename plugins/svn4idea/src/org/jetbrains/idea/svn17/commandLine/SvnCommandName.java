@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.commands;
-
-import com.intellij.openapi.vcs.ProcessEventListener;
+package org.jetbrains.idea.svn17.commandLine;
 
 /**
- * Listener for event common for all handlers
+ * Created with IntelliJ IDEA.
+ * User: Irina.Chernushina
+ * Date: 1/25/12
+ * Time: 1:49 PM
  */
-public interface GitHandlerListener extends ProcessEventListener {
+public enum SvnCommandName {
+  version("--version"),
+  info("info"),
+  st("st"),
+  up("up");
+  
+  private final String myName;
+
+  private SvnCommandName(String name) {
+    myName = name;
+  }
+
+  public String getName() {
+    return myName;
+  }
 }

@@ -26,7 +26,10 @@ import org.tmatesoft.svn.core.wc.SVNConflictAction;
  */
 public class ConflictActionConvertor {
   public static SVNConflictAction create(final ConflictDescriptor conflict) {
-    ConflictDescriptor.Action action = conflict.getAction();
+    return create(conflict.getAction());
+  }
+
+  public static SVNConflictAction create(ConflictDescriptor.Action action) {
     if (ConflictDescriptor.Action.add.equals(action)) {
       return SVNConflictAction.ADD;
     } else if (ConflictDescriptor.Action.delete.equals(action)) {

@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.ProcessEventListener;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -83,7 +84,7 @@ public abstract class GitHandler {
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
   private boolean myNoSSHFlag = false;
 
-  private final EventDispatcher<GitHandlerListener> myListeners = EventDispatcher.create(GitHandlerListener.class);
+  private final EventDispatcher<ProcessEventListener> myListeners = EventDispatcher.create(ProcessEventListener.class);
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
   private boolean mySilent; // if true, the command execution is not logged in version control view
 
@@ -135,7 +136,7 @@ public abstract class GitHandler {
   /**
    * @return multicaster for listeners
    */
-  protected GitHandlerListener listeners() {
+  protected ProcessEventListener listeners() {
     return myListeners.getMulticaster();
   }
 
@@ -237,7 +238,7 @@ public abstract class GitHandler {
    *
    * @param listener a listener
    */
-  protected void addListener(GitHandlerListener listener) {
+  protected void addListener(ProcessEventListener listener) {
     myListeners.addListener(listener);
   }
 
