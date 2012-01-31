@@ -386,7 +386,7 @@ public class Messages {
 
 
   public static int showTwoStepConfirmationDialog(String message, String title, String checkboxText, Icon icon) {
-    return showCheckboxMessageDialog(message, title, new String[]{OK_BUTTON, CANCEL_BUTTON}, checkboxText, true, -1, -1, icon, null);
+    return showCheckboxMessageDialog(message, title, new String[]{OK_BUTTON}, checkboxText, true, -1, -1, icon, null);
   }
 
   public static void showErrorDialog(Project project, @Nls String message, @Nls String title) {
