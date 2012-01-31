@@ -18,13 +18,14 @@ public class ConsoleVisitorFilter implements PythonVisitorFilter {
       //inspections
       if (visitorClass == PyUnusedLocalInspectionVisitor.class || visitorClass == PyUnboundLocalVariableInspection.Visitor.class ||
           visitorClass == PyStatementEffectInspection.Visitor.class || visitorClass == PySingleQuotedDocstringInspection.Visitor.class ||
-          visitorClass == PyDocstringInspection.Visitor.class || visitorClass == PyDocstringInspection.Visitor.class) {
+          visitorClass == PyDocstringInspection.Visitor.class) {
         return false;
       }
 
       //annotators
-      if (visitorClass == DocStringAnnotator.class)
+      if (visitorClass == DocStringAnnotator.class) {
         return false;
+      }
     }
     return true;
   }
