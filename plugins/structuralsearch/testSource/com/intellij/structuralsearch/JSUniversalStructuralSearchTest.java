@@ -1,8 +1,13 @@
 package com.intellij.structuralsearch;
 
 import com.intellij.dupLocator.equivalence.EquivalenceDescriptorProvider;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.Language;
+import com.intellij.lang.javascript.ActionScriptFileType;
+import com.intellij.lang.javascript.JSLanguageDialect;
 import com.intellij.lang.javascript.JavaScriptSupportLoader;
+import com.intellij.lang.javascript.dialects.ui.JSLanguageLevel;
+import com.intellij.lang.javascript.settings.JSRootConfiguration;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.util.io.FileUtil;
@@ -177,6 +182,8 @@ public class JSUniversalStructuralSearchTest extends StructuralSearchTestCase {
 
 
   public void testLoop() {
+    JSRootConfiguration.storeLanguageLevel(JSLanguageLevel.JS_1_7.getId(), getProject());
+    final JSLanguageDialect dialect = JSLanguageLevel.JS_1_7.getDialect();
     String s = "for (var i = 0; i < n ; i++) {\n" +
                "  doc.print(i);\n" +
                "}\n" +
@@ -188,33 +195,34 @@ public class JSUniversalStructuralSearchTest extends StructuralSearchTestCase {
                "  doc.print(i);\n" +
                "  i++;\n" +
                "}";
-    doTest(s, "var $i$ = $value$", 2, 2);
+    doTest(s, "var $i$ = $value$", 2, 2, dialect);
     doTest(s, "for (var $var$ = $start$; $var$ < $end$; $var$++)\n" +
-              "  $exp$;", 1, 0);
+              "  $exp$;", 1, 0, dialect);
     doTest(s, "for each(var $var$ in $list$){\n" +
               "  $exp$;\n" +
-              "}", 1, 1);
+              "}", 1, 1, dialect);
     doTest(s, "for (var $var$ = $start$; $var$ < $end$; $var$++) {\n" +
               "  $exp$;\n" +
-              "}", 1, 1);
+              "}", 1, 1, dialect);
     doTest(s, "for(var $var$ = $start$; $endexp$; $incexp$) {\n" +
               "  $exp$;\n" +
-              "}", 1, 1);
+              "}", 1, 1, dialect);
     doTest(s, "while( $var$ < $end$) {\n" +
               "  $exp$;\n" +
-              "}", 0, 0);
-    doTest(s, "while($condition$)", 1, 1);
+              "}", 0, 0, dialect);
+    doTest(s, "while($condition$)", 1, 1, dialect);
 
     // universal matcher can match pattern variable to BLOCK
-    doTest(s, "while( $var$ < $end$) $exp$", 1, 1);
+    doTest(s, "while( $var$ < $end$) $exp$", 1, 1, dialect);
 
-    doTest(s, "while( $var$ < $end$) $exp$;", 0, 0);
+    doTest(s, "while( $var$ < $end$) $exp$;", 0, 0, dialect);
 
     doTest(s, "for each(var $var$ in $list$)\n" +
-              "  $exp$;", 1, 0);
-    doTest(s, "for (var $var$ = $start$; $var$ < $end$; $var$++)", 1, 1);
+              "  $exp$;", 1, 0, dialect);
+    doTest(s, "for (var $var$ = $start$; $var$ < $end$; $var$++)", 1, 1, dialect);
     doTest(s, "for (var $var$ = $start$; $var$ < $end$; $var$++) {\n" +
-              "}", 0, 0);
+              "}", 0, 0, dialect);
+    PropertiesComponent.getInstance(getProject()).unsetValue(JSRootConfiguration.JS_LANGUAGE_LEVEL_PROPERTY_NAME);
   }
 
   public void testFunc1() {
@@ -407,6 +415,13 @@ public class JSUniversalStructuralSearchTest extends StructuralSearchTestCase {
     doTest(source, pattern, expected, expectedWithDefaultEquivalence, JavaScriptSupportLoader.JAVASCRIPT, "as");
   }
 
+  private void doTest(String source, String pattern, int expected, int expectedWithDefaultEquivalence, Language dialect) {
+    doTest(source, pattern, expected, expectedWithDefaultEquivalence, JavaScriptSupportLoader.JAVASCRIPT, "js",
+           JavaScriptSupportLoader.JAVASCRIPT, "js", false, dialect);
+    source = "class A { function f() { " + source + "} }";
+    doTest(source, pattern, expected, expectedWithDefaultEquivalence, ActionScriptFileType.INSTANCE, "as");
+  }
+
   private void doTest(String source,
                       String pattern,
                       int expected,
@@ -437,12 +452,26 @@ public class JSUniversalStructuralSearchTest extends StructuralSearchTestCase {
                       FileType sourceFileType,
                       String sourceFileExtension,
                       boolean physicalSourceFile) {
-    findAndCheck(source, pattern, expected, patternFileType, patternFileExtension, sourceFileType,
-                 sourceFileExtension, physicalSourceFile);
+    doTest(source, pattern, expected, expectedWithDefaultEquivalence,patternFileType, patternFileExtension,sourceFileType, sourceFileExtension, physicalSourceFile,
+           "as".equals(patternFileExtension) ? JavaScriptSupportLoader.ECMA_SCRIPT_L4 : null);
+  }
+
+  private void doTest(String source,
+                      String pattern,
+                      int expected,
+                      int expectedWithDefaultEquivalence,
+                      FileType patternFileType,
+                      String patternFileExtension,
+                      FileType sourceFileType,
+                      String sourceFileExtension,
+                      boolean physicalSourceFile,
+                      Language dialect) {
+    findAndCheck(source, pattern, expected, patternFileType, sourceFileType,
+                 sourceFileExtension, physicalSourceFile, dialect);
     try {
       EquivalenceDescriptorProvider.ourUseDefaultEquivalence = true;
-      findAndCheck(source, pattern, expectedWithDefaultEquivalence, patternFileType, patternFileExtension, sourceFileType, sourceFileExtension,
-                 physicalSourceFile);
+      findAndCheck(source, pattern, expectedWithDefaultEquivalence, patternFileType, sourceFileType, sourceFileExtension,
+                   physicalSourceFile, dialect);
     }
     finally {
       EquivalenceDescriptorProvider.ourUseDefaultEquivalence = false;
@@ -453,12 +482,10 @@ public class JSUniversalStructuralSearchTest extends StructuralSearchTestCase {
                             String pattern,
                             int expectedOccurences,
                             FileType patternFileType,
-                            String patternFileExtension,
-                            FileType sourceFileType, String sourceFileExtension, boolean physicalSourceFile) {
-    Language patternDialect = "as".equals(patternFileExtension) ? JavaScriptSupportLoader.ECMA_SCRIPT_L4 : null;
+                            FileType sourceFileType, String sourceFileExtension, boolean physicalSourceFile, Language dialect) {
 
     assertEquals(expectedOccurences,
-                 findMatches(source, pattern, true, patternFileType, patternDialect, sourceFileType, sourceFileExtension,
+                 findMatches(source, pattern, true, patternFileType, dialect, sourceFileType, sourceFileExtension,
                              physicalSourceFile).size());
   }
 }
