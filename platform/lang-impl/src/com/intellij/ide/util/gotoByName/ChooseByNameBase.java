@@ -118,7 +118,7 @@ public abstract class ChooseByNameBase {
 
   private volatile boolean myListIsUpToDate = false;
   private boolean myDisposedFlag = false;
-  private ActionCallback myPosponedOkAction;
+  private ActionCallback myPostponedOkAction;
 
   private final String[][] myNames = new String[2][];
   private CalcElementsThread myCalcElementsThread;
@@ -141,8 +141,8 @@ public abstract class ChooseByNameBase {
   private String myFindUsagesTitle;
 
   public boolean checkDisposed() {
-    if (myDisposedFlag && myPosponedOkAction != null && !myPosponedOkAction.isProcessed()) {
-      myPosponedOkAction.setRejected();
+    if (myDisposedFlag && myPostponedOkAction != null && !myPostponedOkAction.isProcessed()) {
+      myPostponedOkAction.setRejected();
     }
     
     return myDisposedFlag;
@@ -679,8 +679,8 @@ public abstract class ChooseByNameBase {
 
     final String text = myTextField.getText();
     if (ok && !myListIsUpToDate && text != null && text.trim().length() > 0) {
-      myPosponedOkAction = new ActionCallback();
-      IdeFocusManager.getInstance(myProject).typeAheadUntil(myPosponedOkAction);
+      myPostponedOkAction = new ActionCallback();
+      IdeFocusManager.getInstance(myProject).typeAheadUntil(myPostponedOkAction);
       return true;
     }
 
@@ -1067,7 +1067,7 @@ public abstract class ChooseByNameBase {
     }
 
     private void doPostponedOkIfNeeded() {
-      if (myPosponedOkAction != null) {
+      if (myPostponedOkAction != null) {
         if (getChosenElement() != null) {
           doClose(true);
         }
@@ -1077,16 +1077,16 @@ public abstract class ChooseByNameBase {
   }
 
   private void clearPosponedOkAction(boolean success) {
-    if (myPosponedOkAction != null) {
+    if (myPostponedOkAction != null) {
       if (success) {
-        myPosponedOkAction.setDone();
+        myPostponedOkAction.setDone();
       }
       else {
-        myPosponedOkAction.setRejected();
+        myPostponedOkAction.setRejected();
       }
     }
 
-    myPosponedOkAction = null;
+    myPostponedOkAction = null;
   }
 
   protected abstract void showList();
