@@ -34,7 +34,7 @@ public class ForwardAction extends AnAction implements DumbAware {
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
     Project project = PlatformDataKeys.PROJECT.getData(event.getDataContext());
-    if (project == null) {
+    if (project == null || project.isDisposed()) {
       presentation.setEnabled(false);
       return;
     }
