@@ -53,13 +53,13 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
 
   void doAndWaitForBuilder(final Runnable runnable, final Condition condition) throws Exception {
     final Ref<Boolean> started = new Ref<Boolean>();
-    invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
+    //invokeLaterIfNeeded(new Runnable() {
+    //  @Override
+    //  public void run() {
         started.set(true);
         runnable.run();
-      }
-    });
+    //  }
+    //});
 
     waitBuilderToCome(new Condition() {
       @Override

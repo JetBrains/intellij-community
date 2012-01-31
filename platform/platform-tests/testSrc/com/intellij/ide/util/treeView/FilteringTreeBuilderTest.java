@@ -1,7 +1,7 @@
 package com.intellij.ide.util.treeView;
 
+import com.intellij.idea.Bombed;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.ui.TreeUIHelper;
@@ -10,8 +10,10 @@ import com.intellij.ui.treeStructure.*;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
 
+import java.util.Calendar;
 import java.util.LinkedHashMap;
 
+@Bombed(month = Calendar.FEBRUARY, day = 10, year = 2012, user = "kb")
 public class FilteringTreeBuilderTest extends BaseTreeTestCase  {
   private FilteringTreeBuilder myBuilder;
   private MyFilter myFilter;
@@ -163,18 +165,18 @@ public class FilteringTreeBuilderTest extends BaseTreeTestCase  {
   }
 
   private void update(final String text, final Object selection) throws Exception {
-    final ActionCallback result = new ActionCallback();
-    doAndWaitForBuilder(new Runnable() {
-      @Override
-      public void run() {
-        myFilter.update(text, selection).notify(result);
-      }
-    }, new Condition<Object>() {
-      @Override
-      public boolean value(Object o) {
-        return result.isProcessed();
-      }
-    });
+    //final ActionCallback result = new ActionCallback();
+    //doAndWaitForBuilder(new Runnable() {
+    //  @Override
+    //  public void run() {
+        myFilter.update(text, selection)/*.notify(result)*/;
+    //  }
+    //}, new Condition<Object>() {
+    //  @Override
+    //  public boolean value(Object o) {
+    //    return result.isProcessed();
+    //  }
+    //});
   }
 
   private class Node extends CachingSimpleNode {
