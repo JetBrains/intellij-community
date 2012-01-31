@@ -15,6 +15,7 @@
  */
 package com.intellij.core;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.PackageIndex;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -39,6 +40,8 @@ import java.util.List;
  * @author yole
  */
 public class CoreJavaFileManager extends PackageIndex implements JavaFileManager {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.core.CoreJavaFileManager");
+
   private final CoreLocalFileSystem myLocalFileSystem;
   private final CoreJarFileSystem myJarFileSystem;
   private final List<File> myClasspath = new ArrayList<File>();
@@ -85,11 +88,17 @@ public class CoreJavaFileManager extends PackageIndex implements JavaFileManager
   
   @Nullable
   private VirtualFile findUnderClasspathEntry(File classpathEntry, String relativeName) {
+    VirtualFile root = findRootInClassPathEntry(classpathEntry);
+    return root != null ? root.findFileByRelativePath(relativeName) : null;
+  }
+
+  @Nullable
+  private VirtualFile findRootInClassPathEntry(File classpathEntry) {
     if (classpathEntry.isFile()) {
-       return myJarFileSystem.findFileByPath(classpathEntry.getPath() + "!/" + relativeName);
+       return myJarFileSystem.findFileByPath(classpathEntry.getPath() + "!/");
     }
     else {
-      return myLocalFileSystem.findFileByPath(new File(classpathEntry, relativeName).getPath());
+      return myLocalFileSystem.findFileByPath(classpathEntry.getPath());
     }
   }
 
@@ -115,25 +124,77 @@ public class CoreJavaFileManager extends PackageIndex implements JavaFileManager
   }
 
   @Nullable
-  private PsiClass findClassInClasspathEntry(String qName, File file) {
-    // TODO handle inner classes correctly
-    String fileName = qName.replace(".", "/") + ".java";
-    VirtualFile classFile = findUnderClasspathEntry(file, fileName);
-    if (classFile == null) {
-      fileName = qName.replace(".", "/") + ".class";
-      classFile = findUnderClasspathEntry(file, fileName);
+  private PsiClass findClassInClasspathEntry(String qName, File rootEntry) {
+    VirtualFile root = findRootInClassPathEntry(rootEntry);
+    if (root == null) return null;
+
+    return findClassInClasspathRoot(qName, root, myPsiManager);
+  }
+
+  @Nullable
+  public static PsiClass findClassInClasspathRoot(String qName, VirtualFile root, PsiManager psiManager) {
+    String pathRest = qName;
+    VirtualFile cur = root;
+
+    while (true) {
+      int dot = pathRest.indexOf('.');
+      if (dot < 0) break;
+
+      String pathComponent = pathRest.substring(0, dot);
+      VirtualFile child = cur.findChild(pathComponent);
+
+      if (child == null) break;
+      pathRest = pathRest.substring(dot + 1);
+      cur = child;
     }
 
-    if (classFile != null) {
-      PsiFile psiFile = myPsiManager.findFile(classFile);
-      if (!(psiFile instanceof PsiJavaFile)) {
-        throw new UnsupportedOperationException("no java file for " + fileName);
+    String className = pathRest.replace('.', '$');
+    int bucks = className.indexOf('$');
+
+    String rootClassName;
+    if (bucks < 0) {
+      rootClassName = className;
+    }
+    else {
+      rootClassName = className.substring(0, bucks);
+      className = className.substring(bucks + 1);
+    }
+
+    VirtualFile vFile = cur.findChild(rootClassName + ".class");
+    if (vFile == null) vFile = cur.findChild(rootClassName + ".java");
+
+    if (vFile != null) {
+      if (!vFile.isValid()) {
+        LOG.error("Invalid child of valid parent: " + vFile.getPath() + "; " + root.isValid() + " path=" + root.getPath());
+        return null;
       }
-      final PsiClass[] classes = ((PsiJavaFile)psiFile).getClasses();
-      if (classes.length == 1) {
-        return classes[0];
+
+      final PsiFile file = psiManager.findFile(vFile);
+      if (file instanceof PsiClassOwner) {
+        final PsiClass[] classes = ((PsiClassOwner)file).getClasses();
+        if (classes.length == 1) {
+          PsiClass curClass = classes[0];
+
+          if (bucks > 0) {
+            while (true) {
+              int b = className.indexOf("$");
+
+              String component = b < 0 ? className : className.substring(0, b);
+              PsiClass inner = curClass.findInnerClassByName(component, false);
+
+              if (inner == null) return null;
+              curClass = inner;
+              className = className.substring(b + 1);
+              if (b < 0) break;
+            }
+          }
+
+
+          return curClass;
+        }
       }
     }
+
     return null;
   }
 
