@@ -23,14 +23,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitExecutionException;
 import git4idea.GitVcs;
 import git4idea.commands.Git;
 import git4idea.history.GitHistoryUtils;
 import git4idea.history.browser.GitCommit;
-import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
 import git4idea.ui.branch.GitBranchUiUtil;
 import git4idea.ui.branch.GitCompareBranchesDialog;
@@ -40,7 +38,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -54,7 +51,7 @@ public final class GitBranchOperationsProcessor {
   private static final Logger LOG = Logger.getInstance(GitBranchOperationsProcessor.class);
 
   private final Project myProject;
-  private final Collection<GitRepository> myRepositories;
+  private final List<GitRepository> myRepositories;
   @Nullable private final Runnable myCallInAwtAfterExecution;
   private final GitRepository mySelectedRepository;
 
@@ -63,16 +60,16 @@ public final class GitBranchOperationsProcessor {
   }
   
   public GitBranchOperationsProcessor(@NotNull GitRepository repository, @Nullable Runnable callInAwtAfterExecution) {
-    this(repository.getProject(), Collections.singleton(repository), repository, callInAwtAfterExecution);
+    this(repository.getProject(), Collections.singletonList(repository), repository, callInAwtAfterExecution);
   }
 
-  public GitBranchOperationsProcessor(@NotNull Project project, @NotNull Collection<GitRepository> repositories,
+  public GitBranchOperationsProcessor(@NotNull Project project, @NotNull List<GitRepository> repositories,
                                       @NotNull GitRepository selectedRepository) {
     this(project, repositories, selectedRepository, null);
   }
 
   public GitBranchOperationsProcessor(@NotNull Project project,
-                                      @NotNull Collection<GitRepository> repositories,
+                                      @NotNull List<GitRepository> repositories,
                                       @NotNull GitRepository selectedRepository,
                                       @Nullable Runnable callInAwtAfterExecution) {
     myProject = project;
@@ -123,15 +120,6 @@ public final class GitBranchOperationsProcessor {
 
   private void doCheckoutNewBranch(@NotNull final String name, @NotNull ProgressIndicator indicator) {
     new GitCheckoutNewBranchOperation(myProject, myRepositories, name, getCurrentBranch(), indicator).execute();
-  }
-
-
-  @NotNull
-  static GitConflictResolver prepareConflictResolverForUnmergedFilesBeforeCheckout(Project project, Collection<VirtualFile> roots) {
-    GitConflictResolver.Params params = new GitConflictResolver.Params().
-      setMergeDescription("The following files have unresolved conflicts. You need to resolve them before checking out.").
-      setErrorNotificationTitle("Can't create new branch");
-    return new GitConflictResolver(project, roots, params);
   }
 
   /**
@@ -216,7 +204,7 @@ public final class GitBranchOperationsProcessor {
     }.runInBackground();
   }
 
-  private GitCommitCompareInfo loadCommitsToCompare(Collection<GitRepository> repositories, String branchName) {
+  private GitCommitCompareInfo loadCommitsToCompare(List<GitRepository> repositories, String branchName) {
     GitCommitCompareInfo compareInfo = new GitCommitCompareInfo();
     for (GitRepository repository : repositories) {
       compareInfo.put(repository, loadCommitsToCompare(repository, branchName));

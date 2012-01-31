@@ -27,6 +27,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
 import static com.intellij.lang.PsiBuilderUtil.expect;
 import static com.intellij.lang.PsiBuilderUtil.nextTokenType;
@@ -86,7 +87,7 @@ public class DeclarationParser {
     }
     parseClassBodyDeclarations(builderWrapper, isAnnotation);
 
-    expectOrError(builder, JavaTokenType.RBRACE, JavaErrorMessages.message("expected.rbrace"));
+    expectOrError(builder, JavaTokenType.RBRACE, "expected.rbrace");
   }
 
   @Nullable
@@ -139,7 +140,7 @@ public class DeclarationParser {
       }
 
       if (declarationsAfterEnd) {
-        expectOrError(builder, JavaTokenType.RBRACE, JavaErrorMessages.message("expected.rbrace"));
+        expectOrError(builder, JavaTokenType.RBRACE, "expected.rbrace");
       }
     }
 
@@ -426,7 +427,7 @@ public class DeclarationParser {
                                                               final boolean anno, final boolean constructor) {
     parseParameterList(builder);
 
-    eatBrackets(builder, constructor, JavaErrorMessages.message("expected.semicolon"));
+    eatBrackets(builder, constructor, "expected.semicolon");
 
     if (areTypeAnnotationsSupported(builder)) {
       final PsiBuilder.Marker receiver = builder.mark();
@@ -489,8 +490,8 @@ public class DeclarationParser {
     builder.advanceLexer();
 
     final IElementType delimiter = resources ? JavaTokenType.SEMICOLON : JavaTokenType.COMMA;
-    final String noDelimiterMsg = JavaErrorMessages.message(resources ? "expected.semicolon" : "expected.comma");
-    final String noElementMsg = JavaErrorMessages.message(resources ? "expected.resource" : "expected.parameter");
+    final String noDelimiterMsg = resources ? "expected.semicolon" : "expected.comma";
+    final String noElementMsg = resources ? "expected.resource" : "expected.parameter";
 
     PsiBuilder.Marker invalidElements = null;
     String errorMessage = null;
@@ -548,7 +549,7 @@ public class DeclarationParser {
 
       if (invalidElements == null) {
         if (builder.getTokenType() == delimiter) {
-          error(builder, noElementMsg);
+          error(builder, JavaErrorMessages.message(noElementMsg));
           builder.advanceLexer();
           if (noElements && resources) {
             noElements = false;
@@ -557,7 +558,7 @@ public class DeclarationParser {
         }
         else {
           invalidElements = builder.mark();
-          errorMessage = delimiterExpected ? noDelimiterMsg : noElementMsg;
+          errorMessage = JavaErrorMessages.message(delimiterExpected ? noDelimiterMsg : noElementMsg);
         }
       }
 
@@ -613,7 +614,7 @@ public class DeclarationParser {
 
     if (expect(builder, JavaTokenType.IDENTIFIER)) {
       if (!resource) {
-        eatBrackets(builder, typeInfo != null && typeInfo.isVarArg, JavaErrorMessages.message("expected.rparen"));
+        eatBrackets(builder, typeInfo != null && typeInfo.isVarArg, "expected.rparen");
         done(param, JavaElementType.PARAMETER);
         return param;
       }
@@ -624,7 +625,7 @@ public class DeclarationParser {
       return modListInfo.first;
     }
 
-    if (expectOrError(builder, JavaTokenType.EQ, JavaErrorMessages.message("expected.eq"))) {
+    if (expectOrError(builder, JavaTokenType.EQ, "expected.eq")) {
       if (myExpressionParser.parse(builder) == null) {
         error(builder, JavaErrorMessages.message("expected.expression"));
       }
@@ -720,7 +721,8 @@ public class DeclarationParser {
     return declaration;
   }
 
-  private static boolean eatBrackets(final PsiBuilder builder, final boolean isError, @Nullable final String error) {
+  private static boolean eatBrackets(final PsiBuilder builder, final boolean isError,
+                                     @Nullable @PropertyKey(resourceBundle = JavaErrorMessages.BUNDLE) String errorKey) {
     if (builder.getTokenType() != JavaTokenType.LBRACKET) return true;
 
     final PsiBuilder.Marker marker = isError ? builder.mark() : null;
@@ -735,7 +737,7 @@ public class DeclarationParser {
     }
 
     if (marker != null) {
-      marker.error(error);
+      marker.error(errorKey != null ? JavaErrorMessages.message(errorKey):null);
     }
 
     return result;
@@ -840,9 +842,9 @@ public class DeclarationParser {
       pair = builder.mark();
     }
 
-    final boolean hasName = expectOrError(builder, JavaTokenType.IDENTIFIER, JavaErrorMessages.message("expected.identifier"));
+    final boolean hasName = expectOrError(builder, JavaTokenType.IDENTIFIER, "expected.identifier");
 
-    expectOrError(builder, JavaTokenType.EQ, JavaErrorMessages.message("expected.eq"));
+    expectOrError(builder, JavaTokenType.EQ, "expected.eq");
 
     parseAnnotationValue(builder);
 

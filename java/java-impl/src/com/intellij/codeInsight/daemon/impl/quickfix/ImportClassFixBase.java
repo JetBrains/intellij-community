@@ -186,7 +186,7 @@ public abstract class ImportClassFixBase<T extends PsiElement & PsiReference> im
         && (JspPsiUtil.isInJspFile(psiFile) ?
             CodeInsightSettings.getInstance().JSP_ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY :
             CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY)
-        && codeAnalyzer.canChangeFileSilently(psiFile)
+        && (ApplicationManager.getApplication().isUnitTestMode() || codeAnalyzer.canChangeFileSilently(psiFile))
         && !autoImportWillInsertUnexpectedCharacters(classes[0])
       ) {
       CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {

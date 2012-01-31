@@ -32,7 +32,7 @@ public class RefFileImpl extends RefElementImpl implements RefFile {
     if (vFile == null) return;
     final VirtualFile parentDirectory = vFile.getParent();
     if (parentDirectory == null) return;
-    final PsiDirectory psiDirectory = PsiManager.getInstance(elem.getProject()).findDirectory(parentDirectory);
+    final PsiDirectory psiDirectory = elem.getManager().findDirectory(parentDirectory);
     if (psiDirectory != null) {
       final RefElement element = getRefManager().getReference(psiDirectory);
       if (element != null) {

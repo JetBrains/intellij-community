@@ -108,7 +108,7 @@ public class GdkMethodDslProvider implements GdslMembersProvider {
       myStatic = isStatic;
       myScope = scope;
       final MultiMap<String, PsiMethod> byName = new MultiMap<String, PsiMethod>();
-      myPsiManager = PsiManager.getInstance(categoryClass.getProject());
+      myPsiManager = categoryClass.getManager();
       for (PsiMethod m : categoryClass.getMethods()) {
         final PsiParameter[] params = m.getParameterList().getParameters();
         if (params.length == 0) continue;

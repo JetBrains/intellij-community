@@ -223,7 +223,7 @@ public abstract class VcsVFSListener implements Disposable {
                                            getSingleFileDeletePromptTemplate(), myRemoveOption);
   }
 
-  protected void beforeContentsChange(VirtualFile file) {
+  protected void beforeContentsChange(VirtualFileEvent event, VirtualFile file) {
   }
 
   private void addFileToMove(final VirtualFile file, final String newParentPath, final String newName) {
@@ -240,6 +240,9 @@ public abstract class VcsVFSListener implements Disposable {
     }
   }
 
+  protected boolean filterOutUnknownFiles() {
+    return true;
+  }
 
   protected void processMovedFile(VirtualFile file, String newParentPath, String newName) {
     final FileStatus status = FileStatusManager.getInstance(myProject).getStatus(file);
@@ -249,7 +252,7 @@ public abstract class VcsVFSListener implements Disposable {
         myDirtyFiles.add(file); // will be at new path
       }
     }
-    if (status != FileStatus.UNKNOWN && status != FileStatus.IGNORED) {
+    if (!(filterOutUnknownFiles() && status == FileStatus.UNKNOWN) && status != FileStatus.IGNORED) {
       final String newPath = newParentPath + "/" + newName;
       boolean foundExistingInfo = false;
       for (MovedFileInfo info : myMovedFiles) {
@@ -378,10 +381,8 @@ public abstract class VcsVFSListener implements Disposable {
 
     @Override
     public void beforeContentsChange(VirtualFileEvent event) {
-      if (!isEventIgnored(event, false)) {
-        assert !event.getFile().isDirectory();
-        VcsVFSListener.this.beforeContentsChange(event.getFile());
-      }
+      assert !event.getFile().isDirectory();
+      VcsVFSListener.this.beforeContentsChange(event, event.getFile());
     }
   }
 

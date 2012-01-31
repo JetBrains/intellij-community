@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.io.PagedFileStorage;
 import com.intellij.util.io.PersistentStringEnumerator;
 import com.intellij.util.io.ResizeableMappedFile;
+import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.storage.AbstractStorage;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.io.storage.RefCountingStorage;
@@ -1039,9 +1040,9 @@ public class FSRecords implements Forceable {
   }
 
   private static void checkFileIsValid(int fileId) {
-    assert fileId > 0 : "assert fileId > 0 failed";
+    assert fileId > 0 : fileId;
     // TODO: This assertion is a bit timey, will remove when bug is caught.
-    assert (getFlags(fileId) & FREE_RECORD_FLAG) == 0 : "Trying to find an attribute of deleted page";
+    assert (getFlags(fileId) & FREE_RECORD_FLAG) == 0 : "Accessing attribute of a deleted page: " + fileId + ":" + getName(fileId);
   }
 
   public static int acquireFileContent(int fileId) {

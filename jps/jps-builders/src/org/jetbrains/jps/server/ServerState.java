@@ -9,7 +9,10 @@ import org.jetbrains.jps.Library;
 import org.jetbrains.jps.Module;
 import org.jetbrains.jps.Project;
 import org.jetbrains.jps.Sdk;
-import org.jetbrains.jps.api.*;
+import org.jetbrains.jps.api.BuildType;
+import org.jetbrains.jps.api.CanceledStatus;
+import org.jetbrains.jps.api.GlobalLibrary;
+import org.jetbrains.jps.api.SdkLibrary;
 import org.jetbrains.jps.idea.IdeaProjectLoader;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
@@ -116,16 +119,16 @@ class ServerState {
     }
   }
 
-  public void startBuild(String projectPath, Set<String> modules, Collection<String> paths, final BuildParameters params, final MessageHandler msgHandler, CanceledStatus cs) throws Throwable{
+  public void startBuild(String projectPath, BuildType buildType, Set<String> modules, Collection<String> paths, final MessageHandler msgHandler, CanceledStatus cs) throws Throwable{
+
     final String projectName = getProjectName(projectPath);
-    BuildType buildType = params.buildType;
 
     ProjectDescriptor pd;
     synchronized (myConfigurationLock) {
       pd = myProjects.get(projectPath);
       if (pd == null) {
-        final Project project = loadProject(projectPath, params);
-        final FSState fsState = new FSState();
+        final Project project = loadProject(projectPath);
+        final FSState fsState = new FSState(false);
         ProjectTimestamps timestamps = null;
         BuildDataManager dataManager = null;
         try {
@@ -242,14 +245,20 @@ class ServerState {
     return compileScope;
   }
 
+
+  private static boolean ourCleanupFailed = false;
+
   private static void clearZipIndexCache() {
-    try {
-      final Class<?> indexClass = Class.forName("com.sun.tools.javac.zip.ZipFileIndex");
-      final Method clearMethod = indexClass.getMethod("clearCache");
-      clearMethod.invoke(null);
-    }
-    catch (Throwable ex) {
-      LOG.info(ex);
+    if (!ourCleanupFailed) {
+      try {
+        final Class<?> indexClass = Class.forName("com.sun.tools.javac.zip.ZipFileIndex");
+        final Method clearMethod = indexClass.getMethod("clearCache");
+        clearMethod.invoke(null);
+      }
+      catch (Throwable ex) {
+        ourCleanupFailed = true;
+        LOG.info(ex);
+      }
     }
   }
 
@@ -262,7 +271,7 @@ class ServerState {
     return name;
   }
 
-  private Project loadProject(String projectPath, BuildParameters params) {
+  private Project loadProject(String projectPath) {
     final Project project = new Project();
     // setup JDKs and global libraries
     final MethodClosure fakeClosure = new MethodClosure(new Object(), "hashCode");

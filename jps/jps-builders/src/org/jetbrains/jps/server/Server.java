@@ -34,6 +34,7 @@ public class Server {
   private static final int MAX_SIMULTANEOUS_BUILD_SESSIONS = Math.max(2, Runtime.getRuntime().availableProcessors());
   public static final String SERVER_SUCCESS_START_MESSAGE = "Compile Server started successfully. Listening on port: ";
   public static final String SERVER_ERROR_START_MESSAGE = "Error starting Compile Server: ";
+  private static final String LOG_FILE_NAME = "log.xml";
 
   private final ChannelGroup myAllOpenChannels = new DefaultChannelGroup("compile-server");
   private final ChannelFactory myChannelFactory;
@@ -98,70 +99,14 @@ public class Server {
       }
 
       final Server server = new Server(systemDir);
-
-      DOMConfigurator.configure("log.xml");
-
-      Logger.setFactory(new Logger.Factory() {
-        @Override
-        public Logger getLoggerInstance(String category) {
-          final org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(category);
-          
-          return new Logger(){
-            @Override
-            public boolean isDebugEnabled() {
-              return logger.isDebugEnabled();
-            }
-
-            @Override
-            public void debug(@NonNls String message) {
-              logger.debug(message);
-            }
-
-            @Override
-            public void debug(@Nullable Throwable t) {
-              logger.debug("", t);
-            }
-
-            @Override
-            public void debug(@NonNls String message, @Nullable Throwable t) {
-              logger.debug(message, t);
-            }
-
-            @Override
-            public void error(@NonNls String message, @Nullable Throwable t, @NonNls String... details) {
-              logger.debug(message, t);
-            }
-
-            @Override
-            public void info(@NonNls String message) {
-              logger.info(message);
-            }
-
-            @Override
-            public void info(@NonNls String message, @Nullable Throwable t) {
-              logger.info(message, t);
-            }
-
-            @Override
-            public void warn(@NonNls String message, @Nullable Throwable t) {
-              logger.warn(message, t);
-            }
-
-            @Override
-            public void setLevel(Level level) {
-              logger.setLevel(level);
-            }
-          };
-        }
-      });
-
-      server.start(port);
       Runtime.getRuntime().addShutdownHook(new Thread("Shutdown hook thread") {
         public void run() {
           server.stop();
         }
       });
 
+      initLoggers();
+      server.start(port);
       ServerState.getInstance().setKeepTempCachesInMemory(System.getProperty(GlobalOptions.USE_MEMORY_TEMP_CACHE_OPTION) != null);
 
       System.out.println("Server classpath: " + System.getProperty("java.class.path"));
@@ -172,6 +117,66 @@ public class Server {
       e.printStackTrace(System.err);
       System.exit(-1);
     }
+  }
+
+  private static void initLoggers() {
+    if (new File(LOG_FILE_NAME).exists()) {
+      DOMConfigurator.configure(LOG_FILE_NAME);
+    }
+
+    Logger.setFactory(new Logger.Factory() {
+      @Override
+      public Logger getLoggerInstance(String category) {
+        final org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(category);
+
+        return new Logger() {
+          @Override
+          public boolean isDebugEnabled() {
+            return logger.isDebugEnabled();
+          }
+
+          @Override
+          public void debug(@NonNls String message) {
+            logger.debug(message);
+          }
+
+          @Override
+          public void debug(@Nullable Throwable t) {
+            logger.debug("", t);
+          }
+
+          @Override
+          public void debug(@NonNls String message, @Nullable Throwable t) {
+            logger.debug(message, t);
+          }
+
+          @Override
+          public void error(@NonNls String message, @Nullable Throwable t, @NonNls String... details) {
+            logger.debug(message, t);
+          }
+
+          @Override
+          public void info(@NonNls String message) {
+            logger.info(message);
+          }
+
+          @Override
+          public void info(@NonNls String message, @Nullable Throwable t) {
+            logger.info(message, t);
+          }
+
+          @Override
+          public void warn(@NonNls String message, @Nullable Throwable t) {
+            logger.warn(message, t);
+          }
+
+          @Override
+          public void setLevel(Level level) {
+            logger.setLevel(level);
+          }
+        };
+      }
+    });
   }
 
   private class ChannelRegistrar extends SimpleChannelUpstreamHandler {

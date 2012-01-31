@@ -1,15 +1,3 @@
-Request to make modules:
-module ChangeReturnType1
-End of request
-digraph X {
-  ChangeReturnType1[label="ChangeReturnType1"];
-}
-digraph X {
-  ChangeReturnType1[label="ChangeReturnType1"];
-}
-Propagated modules:
-module ChangeReturnType1
-End of propagated
 Cleaning output files:
 out/production/ChangeReturnType1/Base.class
 End of files

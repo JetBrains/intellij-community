@@ -15,11 +15,11 @@
  */
 package com.intellij.debugger.impl;
 
-import com.intellij.debugger.impl.DebuggerSession;
-
 import java.util.EventListener;
 
 public interface DebuggerManagerListener extends EventListener{
   void sessionCreated(DebuggerSession session);
+  void sessionAttached(DebuggerSession session);
+  void sessionDetached(DebuggerSession session);
   void sessionRemoved(DebuggerSession session);
 }

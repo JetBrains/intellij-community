@@ -48,7 +48,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrComman
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * Block implementation for Groovy formatter
@@ -62,34 +61,25 @@ public class GroovyBlock implements Block, GroovyElementTypes, ASTBlock {
   final protected Wrap myWrap;
   final protected CommonCodeStyleSettings mySettings;
   final protected GroovyCodeStyleSettings myGroovySettings;
-  final protected Map<PsiElement, Alignment> myInnerAlignments;
+  final protected AlignmentProvider myAlignmentProvider;
 
   protected List<Block> mySubBlocks = null;
 
   public GroovyBlock(@NotNull final ASTNode node,
-                     @Nullable Alignment alignment,
                      @NotNull final Indent indent,
                      @Nullable final Wrap wrap,
                      final CommonCodeStyleSettings settings,
                      GroovyCodeStyleSettings groovySettings,
-                     @NotNull Map<PsiElement, Alignment> innerAlignments) {
+                     @NotNull AlignmentProvider alignmentProvider) {
     myNode = node;
-    if (groovySettings.USE_FLYING_GEESE_BRACES) {
-      PsiElement psi = myNode.getPsi();
-      if (alignment == null) {
-        alignment = innerAlignments.get(psi);
-      }
-      else {
-        innerAlignments.put(psi, alignment);
-      }
-    }
-    myAlignment = alignment;
 
     myIndent = indent;
     myWrap = wrap;
     mySettings = settings;
     myGroovySettings = groovySettings;
-    myInnerAlignments = innerAlignments;
+    myAlignmentProvider = alignmentProvider;
+
+    myAlignment = myAlignmentProvider.getAlignment(node.getPsi());
   }
 
   @NotNull
@@ -106,8 +96,8 @@ public class GroovyBlock implements Block, GroovyElementTypes, ASTBlock {
     return myGroovySettings;
   }
 
-  public Map<PsiElement, Alignment> getInnerAlignments() {
-    return myInnerAlignments;
+  public AlignmentProvider getAlignmentProvider() {
+    return myAlignmentProvider;
   }
 
   @NotNull
@@ -193,7 +183,7 @@ public class GroovyBlock implements Block, GroovyElementTypes, ASTBlock {
         SWITCH_STATEMENT.equals(astNode.getElementType())) {
 //      PsiElement psi = ((GroovyBlock)getSubBlocks().get(newChildIndex)).getNode().getPsi();
       //     if (GeeseUtil.isClosureRBrace(psi)) {
-      //     return new ChildAttributes(Indent.getNoneIndent(), GeeseUtil.calculateRBraceAlignment(psi, myInnerAlignments));
+      //     return new ChildAttributes(Indent.getNoneIndent(), GeeseUtil.calculateRBraceAlignment(psi, myAlignmentProvider));
       //  }
 
       return new ChildAttributes(Indent.getNormalIndent(), null);

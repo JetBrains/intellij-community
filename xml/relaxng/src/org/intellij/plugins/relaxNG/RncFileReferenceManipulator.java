@@ -21,7 +21,7 @@ public class RncFileReferenceManipulator extends AbstractElementManipulator<RncF
     final ASTNode literal = node.findChildByType(RncTokenTypes.LITERAL);
     if (literal != null) {
       assert range.equals(element.getReferenceRange());
-      final PsiManager manager = PsiManager.getInstance(element.getProject());
+      final PsiManager manager = element.getManager();
       final ASTNode newChild = RenameUtil.createLiteralNode(manager, newContent);
       literal.getTreeParent().replaceChild(literal, newChild);
     }

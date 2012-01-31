@@ -35,6 +35,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.docking.DockManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -76,7 +77,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
 
   public RunContentManager getContentManager() {
     if (myContentManager == null) {
-      myContentManager = new RunContentManagerImpl(myProject);
+      myContentManager = new RunContentManagerImpl(myProject, DockManager.getInstance(myProject));
       Disposer.register(myProject, myContentManager);
     }
     return myContentManager;

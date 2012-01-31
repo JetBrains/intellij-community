@@ -17,7 +17,6 @@
 package com.intellij.execution.ui.actions;
 
 import com.intellij.execution.ui.layout.Grid;
-import com.intellij.execution.ui.layout.GridCell;
 import com.intellij.execution.ui.layout.Tab;
 import com.intellij.execution.ui.layout.ViewContext;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -72,11 +71,6 @@ public abstract class BaseViewAction extends DumbAwareAction {
   @Nullable
   private Content[] getContent(final AnActionEvent e) {
     return e.getData(ViewContext.CONTENT_KEY);
-  }
-
-  protected static boolean isDetached(ViewContext context, Content content) {
-    final GridCell cell = context.findCellFor(content);
-    return cell != null && cell.isDetached();
   }
 
   @Nullable

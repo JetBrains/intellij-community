@@ -15,13 +15,11 @@
  */
 package com.intellij.openapi.util.io;
 
+import com.intellij.util.io.UnsyncByteArrayOutputStream;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.ByteArrayOutputStream;
-
-public class BufferExposingByteArrayOutputStream extends ByteArrayOutputStream {
-  public BufferExposingByteArrayOutputStream() {
-  }
+public class BufferExposingByteArrayOutputStream extends UnsyncByteArrayOutputStream {
+  public BufferExposingByteArrayOutputStream() {}
 
   public BufferExposingByteArrayOutputStream(int size) {
     super(size);
@@ -29,14 +27,14 @@ public class BufferExposingByteArrayOutputStream extends ByteArrayOutputStream {
 
   @NotNull
   public byte[] getInternalBuffer() {
-    return buf;
+    return myBuffer;
   }
 
   // moves back the written bytes pointer by {@link #size}, to "unwrite" last {@link #size} bytes
   public int backOff(int size) {
     assert size >= 0 : size;
-    count -= size;
-    assert count >= 0 : count;
-    return count;
+    myCount -= size;
+    assert myCount >= 0 : myCount;
+    return myCount;
   }
 }

@@ -140,10 +140,6 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   private static final Method JAVA_IO_FILESYSTEM_GET_BOOLEAN_ATTRIBUTES_METHOD;
   private static final Object/* java.io.FileSystem */ JAVA_IO_FILESYSTEM;
   // copied from FileSystem
-  private static final int BA_EXISTS    = 0x01;
-  private static final int BA_REGULAR   = 0x02;
-  private static final int BA_DIRECTORY = 0x04;
-  private static final int BA_HIDDEN    = 0x08;
 
   static {
     Object fs;
@@ -170,6 +166,8 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     JAVA_IO_FILESYSTEM_GET_BOOLEAN_ATTRIBUTES_METHOD = getBooleanAttributes;
   }
 
+
+
   @NotNull
   private static File convertToIOFileAndCheck(@NotNull final VirtualFile file) throws FileNotFoundException {
     final File ioFile = convertToIOFile(file);
@@ -188,6 +186,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     return ioFile;
   }
 
+  // todo[r.sh] use NIO2 API after migration to JDK 7
   // returns -1 if could not get attributes
   @MagicConstant(flags = {BA_EXISTS, BA_REGULAR, BA_DIRECTORY, BA_HIDDEN})
   private static int getBooleanAttributes(@NotNull File f) {
@@ -196,8 +195,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
         Object flags = JAVA_IO_FILESYSTEM_GET_BOOLEAN_ATTRIBUTES_METHOD.invoke(JAVA_IO_FILESYSTEM, f);
         return ((Integer)flags).intValue();
       }
-      catch (Exception ignored) {
-      }
+      catch (Exception ignored) { }
     }
     return -1;
   }
@@ -535,7 +533,9 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   public byte[] contentsToByteArray(@NotNull final VirtualFile file) throws IOException {
     final FileInputStream stream = new FileInputStream(convertToIOFileAndCheck(file));
     try {
-      return FileUtil.loadBytes(stream, (int)file.getLength());
+      final int length = (int)file.getLength();
+      assert length >= 0 : file;
+      return FileUtil.loadBytes(stream, length);
     }
     finally {
       stream.close();
@@ -595,8 +595,13 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     assert parent != null;
 
     if (!auxRename(file, newName)) {
-      if (!convertToIOFile(file).renameTo(new File(convertToIOFile(parent), newName))) {
-        throw new IOException("Destination already exists: " + parent.getPath() + "/" + newName);
+      final File dest = new File(convertToIOFile(parent), newName);
+      if (!convertToIOFile(file).renameTo(dest)) {
+        if (dest.exists()) {
+          throw new IOException("Destination already exists: " + parent.getPath() + "/" + newName);
+        } else {
+          throw new IOException("Unable to rename " + file.getPath());
+        }
       }
     }
     auxNotifyCompleted(new ThrowableConsumer<LocalFileOperationsHandler, IOException>() {
@@ -765,6 +770,17 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     catch (IOException e) {
       return originalFileName;
     }
+  }
+
+  @Override
+  public int getBooleanAttributes(@NotNull VirtualFile file, int flags) {
+    int attributes = getBooleanAttributes(convertToIOFile(file));
+    if (attributes != -1) return attributes & flags;
+    return ((flags & BA_EXISTS) != 0 && exists(file) ? BA_EXISTS : 0) |
+           ((flags & BA_DIRECTORY) != 0 && isDirectory(file) ? BA_DIRECTORY : 0) |
+           ((flags & BA_REGULAR) != 0 && !isSpecialFile(file) ? BA_REGULAR : 0) |
+           ((flags & BA_HIDDEN) != 0 && convertToIOFile(file).isHidden() ? BA_HIDDEN : 0)
+      ;
   }
 
   @Override

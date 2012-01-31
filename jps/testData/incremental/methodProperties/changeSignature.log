@@ -1,15 +1,3 @@
-Request to make modules:
-module ChangeSignature
-End of request
-digraph X {
-  ChangeSignature[label="ChangeSignature"];
-}
-digraph X {
-  ChangeSignature[label="ChangeSignature"];
-}
-Propagated modules:
-module ChangeSignature
-End of propagated
 Cleaning output files:
 out/production/ChangeSignature/Server.class
 End of files

@@ -20,7 +20,7 @@ import org.jdom.Element;
 
 public interface DockContainerFactory extends Disposable {
 
-  DockContainer createContainer();
+  DockContainer createContainer(DockableContent content);
 
   interface Persistent extends DockContainerFactory {
 

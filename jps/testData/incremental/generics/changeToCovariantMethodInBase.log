@@ -1,15 +1,3 @@
-Request to make modules:
-module ChangeToCovariantMethodInBase
-End of request
-digraph X {
-  ChangeToCovariantMethodInBase[label="ChangeToCovariantMethodInBase"];
-}
-digraph X {
-  ChangeToCovariantMethodInBase[label="ChangeToCovariantMethodInBase"];
-}
-Propagated modules:
-module ChangeToCovariantMethodInBase
-End of propagated
 Cleaning output files:
 out/production/ChangeToCovariantMethodInBase/maketest/BaseImplementation.class
 End of files

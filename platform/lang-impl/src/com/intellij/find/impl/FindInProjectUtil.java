@@ -207,7 +207,6 @@ public class FindInProjectUtil {
 
     final Collection<PsiFile> psiFiles = getFilesToSearchIn(findModel, project, psiDirectory);
     try {
-      final SearchScope customScope = findModel.getCustomScope();
       final Set<PsiFile> largeFiles = new THashSet<PsiFile>();
 
       int i = 0;
@@ -377,7 +376,7 @@ public class FindInProjectUtil {
 
       if (fastWords.getFirst() && canOptimizeForFastWordSearch(findModel)) return filesForFastWordSearch;
 
-      final SearchScope customScope = findModel.getCustomScope();
+      final GlobalSearchScope customScope = toGlobal(project, findModel.getCustomScope());
 
       class EnumContentIterator implements ContentIterator {
         final List<PsiFile> myFiles = new ArrayList<PsiFile>(filesForFastWordSearch);
@@ -385,7 +384,9 @@ public class FindInProjectUtil {
 
         @Override
         public boolean processFile(VirtualFile virtualFile) {
-          if (!virtualFile.isDirectory() && (fileMaskRegExp == null || fileMaskRegExp.matcher(virtualFile.getName()).matches()) && (!(customScope instanceof GlobalSearchScope) || ((GlobalSearchScope)customScope).contains(virtualFile))) {
+          if (!virtualFile.isDirectory() &&
+              (fileMaskRegExp == null || fileMaskRegExp.matcher(virtualFile.getName()).matches()) &&
+              (customScope == null || customScope.contains(virtualFile))) {
             final PsiFile psiFile = psiManager.findFile(virtualFile);
             if (psiFile != null && !filesForFastWordSearch.contains(psiFile)) {
               myFiles.add(psiFile);
@@ -437,6 +438,21 @@ public class FindInProjectUtil {
       if (!FileIndexImplUtil.iterateRecursively(file, contentFilter, iterator)) return false;
     }
     return true;
+  }
+
+  @Nullable
+  private static GlobalSearchScope toGlobal(Project project, @Nullable SearchScope scope) {
+    if (scope instanceof GlobalSearchScope || scope == null) {
+      return (GlobalSearchScope)scope;
+    }
+    Set<VirtualFile> files = new HashSet<VirtualFile>();
+    for (PsiElement element : ((LocalSearchScope)scope).getScope()) {
+      PsiFile file = element.getContainingFile();
+      if (file != null) {
+        ContainerUtil.addIfNotNull(files, file.getVirtualFile());
+      }
+    }
+    return GlobalSearchScope.filesScope(project, files);
   }
 
   @NotNull

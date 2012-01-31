@@ -142,7 +142,7 @@ public class GrKindWeigher extends CompletionWeigher {
     final PsiClass psiClass = ((PsiClassType)type).resolve();
     if (psiClass == null) return false;
 
-    return PsiManager.getInstance(qualifier.getProject()).areElementsEquivalent(member.getContainingClass(), psiClass);
+    return qualifier.getManager().areElementsEquivalent(member.getContainingClass(), psiClass);
   }
 
   private static enum NotQualifiedKind {

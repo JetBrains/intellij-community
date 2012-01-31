@@ -25,14 +25,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.status.StatusBarUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitBranch;
 import git4idea.GitVcs;
+import git4idea.config.GitVcsSettings;
 import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryManager;
 import git4idea.validators.GitNewBranchNameValidator;
 import org.intellij.images.editor.ImageFileEditor;
 import org.jetbrains.annotations.NotNull;
@@ -134,17 +137,17 @@ public class GitBranchUiUtil {
    *   <li>
    *     Returns the root for the selected file. Selected file is determined by {@link #getSelectedFile(com.intellij.openapi.project.Project)}.
    *     If selected file is unknown (for example, no file is selected in the Project View or Changes View and no file is open in the editor),
-   *     continues guessing. Otherwise returns the Git root for the selected file. If the file is not under a known Git root,  
+   *     continues guessing. Otherwise returns the Git root for the selected file. If the file is not under a known Git root,
    *     <code>null</code> will be returned - the file is definitely determined, but it is not under Git.
    *   </li>
    *   <li>
    *     Takes all Git roots registered in the Project. If there is only one, it is returned.
    *   </li>
    *   <li>
-   *     If there are several Git roots, 
+   *     If there are several Git roots,
    *   </li>
    * </ol>
-   * 
+   *
    * <p>
    *   NB: This method has to be accessed from the <b>read action</b>, because it may query
    *   {@link com.intellij.openapi.fileEditor.FileEditorManager#getSelectedTextEditor()}.
@@ -155,7 +158,20 @@ public class GitBranchUiUtil {
    *         or if the current Git root couldn't be determined.
    */
   @Nullable
-  static VirtualFile guessGitRoot(@NotNull Project project) {
+  public static GitRepository getCurrentRepository(@Nullable Project project) {
+    if (project == null) {
+      return null;
+    }
+    GitRepositoryManager manager = GitRepositoryManager.getInstance(project);
+    VirtualFile file = getSelectedFile(project);
+    if (file != null) {
+      return manager.getRepositoryForFile(file);
+    }
+    return manager.getRepositoryForRoot(guessGitRoot(project));
+  } 
+  
+  @Nullable
+  private static VirtualFile guessGitRoot(@NotNull Project project) {
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
     AbstractVcs gitVcs = GitVcs.getInstance(project);
     if (gitVcs == null) {
@@ -166,19 +182,39 @@ public class GitBranchUiUtil {
       return null;
     }
 
-    VirtualFile selectedFile = getSelectedFile(project);
-    if (selectedFile != null) {
-      VirtualFile selectedFileRoot = vcsManager.getVcsRootFor(selectedFile);
-      return ArrayUtil.contains(selectedFileRoot, gitRoots) ? selectedFileRoot : null;  // OK if this root is a Git root
-    }
-
     // no selected files
     if (gitRoots.length == 1) {
       return gitRoots[0];
     }
+
+    // remember the last visited Git root
+    GitVcsSettings settings = GitVcsSettings.getInstance(project);
+    if (settings != null) {
+      String recentRootPath = settings.getRecentRootPath();
+      if (recentRootPath != null) {
+        VirtualFile recentRoot = VcsUtil.getVirtualFile(recentRootPath);
+        if (recentRoot != null) {
+          return recentRoot;
+        }
+      }
+    }
+
+    // otherwise return the root of the project dir or the root containing the project dir, if there is such
+    VirtualFile projectBaseDir = project.getBaseDir();
+    if (projectBaseDir == null) {
+      return null;
+    }
+    VirtualFile rootCandidate = null;
+    for (VirtualFile root : gitRoots) {
+      if (root.equals(projectBaseDir)) {
+        return root;
+      }
+      else if (VfsUtilCore.isAncestor(root, projectBaseDir, true)) {
+        rootCandidate = root;
+      }
+    }
     
-    // TODO: remember last git root we have worked with
-    return null;
+    return rootCandidate;
   }
-  
+
 }

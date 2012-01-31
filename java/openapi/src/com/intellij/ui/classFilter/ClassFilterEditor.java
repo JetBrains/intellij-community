@@ -131,11 +131,13 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
       }
     });
 
+    myAddPatternButton.setEnabled(!myProject.isDefault());
     myAddPatternButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         addPatternFilter();
       }
     });
+    myAddClassButton.setEnabled(!myProject.isDefault());
     myAddClassButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         addClassFilter();

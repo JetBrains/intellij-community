@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,15 @@
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.search.ProjectScope;
+import com.intellij.psi.util.*;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
@@ -347,18 +347,26 @@ public class ExceptionUtil {
 
   @NotNull
   public static List<PsiClassType> getUnhandledCloserExceptions(final PsiResourceVariable resource, @Nullable final PsiElement topElement) {
-    final PsiType resourceType = resource.getType();
-    if (resourceType instanceof PsiClassType) {
-      final PsiClass resourceClass = ((PsiClassType)resourceType).resolve();
-      if (resourceClass != null) {
-        final PsiMethod[] closers = resourceClass.findMethodsByName("close", false);
-        for (final PsiMethod method : closers) {
-          if (method.getParameterList().getParametersCount() == 0) {
-            return getUnhandledExceptions(method, resource, topElement, PsiSubstitutor.EMPTY);
+    final Project project = resource.getProject();
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
+    final PsiClass autoCloseable = facade.findClass(CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE, ProjectScope.getLibrariesScope(project));
+    if (autoCloseable != null) {
+      final PsiMethod[] methods = autoCloseable.findMethodsByName("close", false);
+      if (methods.length == 1) {
+        final MethodSignature signature = methods[0].getSignature(PsiSubstitutor.EMPTY);
+        final PsiType resourceType = resource.getType();
+        if (resourceType instanceof PsiClassType) {
+          final PsiClass resourceClass = ((PsiClassType)resourceType).resolve();
+          if (resourceClass != null) {
+            final PsiMethod method = MethodSignatureUtil.findMethodBySignature(resourceClass, signature, true);
+            if (method != null) {
+              return getUnhandledExceptions(method, resource, topElement, PsiSubstitutor.EMPTY);
+            }
           }
         }
       }
     }
+
     return Collections.emptyList();
   }
 

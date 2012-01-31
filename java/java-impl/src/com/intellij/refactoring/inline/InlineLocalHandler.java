@@ -308,7 +308,9 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
       }
 
       if (def instanceof PsiReferenceExpression && def.getParent() instanceof PsiAssignmentExpression) {
-        final PsiExpression rExpr = ((PsiAssignmentExpression)def.getParent()).getRExpression();
+        final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)def.getParent();
+        if (assignmentExpression.getOperationTokenType() != JavaTokenType.EQ) return null;
+        final PsiExpression rExpr = assignmentExpression.getRExpression();
         if (rExpr != null) return rExpr;
       }
     }

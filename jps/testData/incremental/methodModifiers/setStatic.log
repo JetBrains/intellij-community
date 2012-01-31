@@ -1,15 +1,3 @@
-Request to make modules:
-module SetStatic
-End of request
-digraph X {
-  SetStatic[label="SetStatic"];
-}
-digraph X {
-  SetStatic[label="SetStatic"];
-}
-Propagated modules:
-module SetStatic
-End of propagated
 Cleaning output files:
 out/production/SetStatic/A.class
 End of files

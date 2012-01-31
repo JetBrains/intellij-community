@@ -17,9 +17,11 @@
 package com.intellij.facet.impl;
 
 import com.intellij.facet.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.ReflectionUtil;
@@ -36,7 +38,21 @@ import java.util.Arrays;
  * @author nik
  */
 public class FacetUtil {
-  private FacetUtil() {
+
+  public static <F extends Facet> F addFacet(Module module, FacetType<F, ?> type) {
+    final ModifiableFacetModel model = FacetManager.getInstance(module).createModifiableModel();
+    final F facet = createFacet(module, type);
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        model.addFacet(facet);
+        model.commit();
+      }
+    });
+    return facet;
+  }
+
+  private static <F extends Facet, C extends FacetConfiguration> F createFacet(final Module module, final FacetType<F, C> type) {
+    return FacetManager.getInstance(module).createFacet(type, type.getPresentableName(), type.createDefaultConfiguration(), null);
   }
 
   public static void deleteFacet(final Facet facet) {

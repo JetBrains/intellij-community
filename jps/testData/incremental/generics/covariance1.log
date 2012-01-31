@@ -1,15 +1,3 @@
-Request to make modules:
-module Covariance1
-End of request
-digraph X {
-  Covariance1[label="Covariance1"];
-}
-digraph X {
-  Covariance1[label="Covariance1"];
-}
-Propagated modules:
-module Covariance1
-End of propagated
 Cleaning output files:
 out/production/Covariance1/Derived.class
 End of files

@@ -62,7 +62,7 @@ public class TransientMaplet<K, V> implements Maplet<K, V>{
     myMap.clear();
   }
 
-  public void flush() {
+  public void flush(boolean memoryCachesOnly) {
   }
 
   @Override

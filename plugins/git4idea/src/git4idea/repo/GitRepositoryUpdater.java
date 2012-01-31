@@ -17,14 +17,19 @@ package git4idea.repo;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.Consumer;
+import com.intellij.util.Processor;
 import com.intellij.util.concurrency.QueueProcessor;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.vcsUtil.VcsUtil;
 import git4idea.util.GitFileUtils;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -38,6 +43,8 @@ final class GitRepositoryUpdater implements Disposable, BulkFileListener {
   private final GitRepositoryFiles myRepositoryFiles;
   private final MessageBusConnection myMessageBusConnection;
   private final QueueProcessor<GitRepository.TrackedTopic> myUpdateQueue;
+  private final VirtualFile myRemotesDir;
+  private final VirtualFile myHeadsDir;
 
   GitRepositoryUpdater(GitRepository repository) {
     myRepository = repository;
@@ -48,18 +55,34 @@ final class GitRepositoryUpdater implements Disposable, BulkFileListener {
     LocalFileSystem.getInstance().addRootToWatch(gitDir.getPath(), true);
     
     myRepositoryFiles = GitRepositoryFiles.getInstance(root);
+    visitGitDirVfs(gitDir);
+    myHeadsDir = VcsUtil.getVirtualFile(myRepositoryFiles.getRefsHeadsPath());
+    myRemotesDir = VcsUtil.getVirtualFile(myRepositoryFiles.getRefsRemotesPath());
+
+    myUpdateQueue = new QueueProcessor<GitRepository.TrackedTopic>(new Updater(myRepository), myRepository.getProject().getDisposed());
+    myMessageBusConnection = repository.getProject().getMessageBus().connect();
+    myMessageBusConnection.subscribe(VirtualFileManager.VFS_CHANGES, this);
+  }
+
+  private static void visitGitDirVfs(@NotNull VirtualFile gitDir) {
     gitDir.getChildren();
     for (String subdir : GitRepositoryFiles.getSubDirRelativePaths()) {
       VirtualFile dir = gitDir.findFileByRelativePath(subdir);
-      if (dir != null) {
-        dir.getChildren();
+      // process recursively, because we need to visit all branches under refs/heads and refs/remotes
+      visitAllChildrenRecursively(dir);
+    }
+  }
+
+  private static void visitAllChildrenRecursively(@Nullable VirtualFile dir) {
+    if (dir == null) {
+      return;
+    }
+    VfsUtil.processFilesRecursively(dir, new Processor<VirtualFile>() {
+      @Override
+      public boolean process(VirtualFile virtualFile) {
+        return true;
       }
-    }    
-    
-    myUpdateQueue = new QueueProcessor<GitRepository.TrackedTopic>(new Updater(myRepository), myRepository.getProject().getDisposed());
-    
-    myMessageBusConnection = repository.getProject().getMessageBus().connect();
-    myMessageBusConnection.subscribe(VirtualFileManager.VFS_CHANGES, this);
+    });
   }
 
   @Override
@@ -91,8 +114,14 @@ final class GitRepositoryUpdater implements Disposable, BulkFileListener {
         configChanged = true;
       } else if (myRepositoryFiles.isHeadFile(filePath)) {
         headChanged = true;
-      } else if (myRepositoryFiles.isBranchFile(filePath) || myRepositoryFiles.isRemoteBranchFile(filePath)) {
+      } else if (myRepositoryFiles.isBranchFile(filePath)) {
+        // it is also possible, that a local branch with complex name ("myfolder/mybranch") was created => the folder also to be watched.
+        branchFileChanged = true;   
+        visitAllChildrenRecursively(myHeadsDir);
+      } else if (myRepositoryFiles.isRemoteBranchFile(filePath)) {
+        // it is possible, that a branch from a new remote was fetch => we need to add new remote folder to the VFS
         branchFileChanged = true;
+        visitAllChildrenRecursively(myRemotesDir);
       } else if (myRepositoryFiles.isPackedRefs(filePath)) {
         packedRefsChanged = true;
       } else if (myRepositoryFiles.isRebaseFile(filePath)) {

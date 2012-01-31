@@ -23,5 +23,7 @@ package org.jetbrains.ether.dependencyView;
  * To change this template use File | Settings | File Templates.
  */
 public interface Logger<T> {
-  void debug(T t);
+  void debug(String comment, T t);
+  void debug(String comment, String t);
+  void debug(String comment, boolean t);
 }

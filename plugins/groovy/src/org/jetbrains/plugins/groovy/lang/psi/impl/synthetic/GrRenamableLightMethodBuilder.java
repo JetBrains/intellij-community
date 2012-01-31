@@ -31,9 +31,14 @@ public class GrRenamableLightMethodBuilder extends GrLightMethodBuilder implemen
   @Override
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     myName = name;
+    onRename(name);
     return this;
   }
 
+  protected void onRename(@NotNull String newName) {
+    
+  }
+  
   @Override
   public boolean isWritable() {
     return true;

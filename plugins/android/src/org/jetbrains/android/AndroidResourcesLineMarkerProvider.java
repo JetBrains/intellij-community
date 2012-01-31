@@ -26,7 +26,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
@@ -148,32 +148,20 @@ public class AndroidResourcesLineMarkerProvider implements LineMarkerProvider {
       PsiField[] fields = AndroidResourceUtil.findResourceFieldsForFileResource((PsiFile)element, false);
       if (fields.length > 0) result.add(createLineMarkerInfo(element, fields));
     }
-    else
-      if (element instanceof PsiClass) {
-        PsiClass c = (PsiClass)element;
-        if (AndroidUtils.R_CLASS_NAME.equals(c.getName())) {
-          PsiFile containingFile = element.getContainingFile();
-            AndroidFacet facet = AndroidFacet.getInstance(containingFile);
-            if (facet != null && AndroidUtils.isRClassFile(facet, containingFile)) {
-              LocalResourceManager manager = facet.getLocalResourceManager();
-              annotateRClass((PsiClass)element, result, manager);
-          }
+    else if (element instanceof PsiClass) {
+      PsiClass c = (PsiClass)element;
+      if (AndroidUtils.R_CLASS_NAME.equals(c.getName())) {
+        PsiFile containingFile = element.getContainingFile();
+        AndroidFacet facet = AndroidFacet.getInstance(containingFile);
+        if (facet != null && AndroidUtils.isRClassFile(facet, containingFile)) {
+          LocalResourceManager manager = facet.getLocalResourceManager();
+          annotateRClass((PsiClass)element, result, manager);
         }
       }
-      else if (element instanceof XmlAttributeValue) {
-        annotateXmlAttributeValue((XmlAttributeValue)element, result);
-      }
-      /*else if (element instanceof PsiReferenceExpression) {
-        PsiElement targetElement = ((PsiReferenceExpression)element).resolve();
-        if (targetElement instanceof PsiField) {
-          PsiField targetField = (PsiField)targetElement;
-          PsiFile file = targetField.getContainingFile();
-          if (file != null && AndroidResourceUtil.isRJavaField(file, targetField)) {
-            annotateElementNavToResource(element, targetField, LocalResourceManager.getInstance(containingFile), result, null, true);
-          }
-        }
-      }*/
-
+    }
+    else if (element instanceof XmlAttributeValue) {
+      annotateXmlAttributeValue((XmlAttributeValue)element, result);
+    }
   }
 
   @NotNull
@@ -216,15 +204,13 @@ public class AndroidResourcesLineMarkerProvider implements LineMarkerProvider {
                 PsiFile resourcePsiFile = psiManager.findFile(resourceFile);
                 if (resourcePsiFile != null) {
                   String resName = ResourceManager.getResourceName(resType, resourceFile.getName());
-                  if (resName != null) {
-                    MyResourceEntry key = new MyResourceEntry(resName, resType);
-                    List<PsiElement> list = result.get(key);
-                    if (list == null) {
-                      list = new ArrayList<PsiElement>();
-                      result.put(key, list);
-                    }
-                    list.add(resourcePsiFile);
+                  MyResourceEntry key = new MyResourceEntry(resName, resType);
+                  List<PsiElement> list = result.get(key);
+                  if (list == null) {
+                    list = new ArrayList<PsiElement>();
+                    result.put(key, list);
                   }
+                  list.add(resourcePsiFile);
                 }
               }
             }
@@ -288,7 +274,7 @@ public class AndroidResourcesLineMarkerProvider implements LineMarkerProvider {
             else {
               targets = AndroidResourceUtil.findResourcesByField(manager, resField);
             }
-            return PsiUtilBase.toPsiElementArray(targets);
+            return PsiUtilCore.toPsiElementArray(targets);
           }
         };
         if (lazy) {

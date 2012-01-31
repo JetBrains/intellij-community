@@ -134,7 +134,7 @@ class GrChangeSignatureConflictSearcher {
       GrMethod prototype;
       final PsiMethod method = myChangeInfo.getMethod();
       if (!(method instanceof GrMethod)) return;
-      PsiManager manager = PsiManager.getInstance(method.getProject());
+      PsiManager manager = method.getManager();
       GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(manager.getProject());
       final CanonicalTypes.Type returnType = myChangeInfo.getNewReturnType();
       String newMethodName = myChangeInfo.getNewName();

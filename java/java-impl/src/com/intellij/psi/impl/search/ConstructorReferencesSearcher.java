@@ -21,7 +21,7 @@ public class ConstructorReferencesSearcher extends QueryExecutorBase<PsiReferenc
   public void processQuery(@NotNull ReferencesSearch.SearchParameters p, @NotNull Processor<PsiReference> consumer) {
     final PsiElement element = p.getElementToSearch();
     if (element instanceof PsiMethod && ((PsiMethod)element).isConstructor()) {
-      new ConstructorReferencesSearchHelper(PsiManager.getInstance(element.getProject()))
+      new ConstructorReferencesSearchHelper(element.getManager())
         .processConstructorReferences(consumer, (PsiMethod)p.getElementToSearch(), p.getScope(), p.isIgnoreAccessScope(), true, p.getOptimizer());
     }
   }

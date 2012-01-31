@@ -69,6 +69,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     public ConversionPolicy LINE_SEPARATORS_CONVERSION = ConversionPolicy.CONVERT;
     public boolean PUSH_AUTO_UPDATE = false;
     public GitBranchSyncSetting SYNC_SETTING = GitBranchSyncSetting.NOT_DECIDED;
+    public String RECENT_GIT_ROOT_PATH = null;
   }
 
   public GitVcsSettings(GitVcsApplicationSettings appSettings) {
@@ -162,5 +163,13 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     myState.SYNC_SETTING = syncSetting;
   }
 
+  @Nullable
+  public String getRecentRootPath() {
+    return myState.RECENT_GIT_ROOT_PATH;
+  }
+
+  public void setRecentRoot(@NotNull String recentGitRootPath) {
+    myState.RECENT_GIT_ROOT_PATH = recentGitRootPath;
+  }
 
 }

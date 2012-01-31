@@ -26,8 +26,8 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.io.PagePool;
-import com.intellij.util.io.RecordDataOutput;
+import com.intellij.util.io.*;
+import com.intellij.util.io.DataOutputStream;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.*;
@@ -228,7 +228,7 @@ public abstract class AbstractStorage implements Disposable, Forceable {
 
   public DataInputStream readStream(int record) throws IOException {
     final byte[] bytes = readBytes(record);
-    return new DataInputStream(new ByteArrayInputStream(bytes));
+    return new DataInputStream(new UnsyncByteArrayInputStream(bytes));
   }
 
   protected byte[] readBytes(int record) throws IOException {

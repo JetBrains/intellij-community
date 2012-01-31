@@ -244,7 +244,7 @@ public class RadGridBagLayoutManager extends RadAbstractGridLayoutManager {
   @Override
   public ComponentDropLocation getDropLocation(@NotNull RadContainer container, @Nullable final Point location) {
     if (getGridRowCount(container) == 0 && getGridColumnCount(container) == 0) {
-      return new FirstComponentInsertLocation(container, container.getBounds(), 0, 0);
+      return new FirstComponentInsertLocation(container, new Rectangle(0, 0, container.getWidth(), container.getHeight()), 0, 0);
     }
     return super.getDropLocation(container, location);
   }

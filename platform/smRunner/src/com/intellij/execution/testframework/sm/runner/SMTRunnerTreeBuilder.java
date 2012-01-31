@@ -16,13 +16,10 @@
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.testframework.ui.AbstractTestTreeBuilder;
+import com.intellij.ide.util.treeView.AbstractTreeStructure;
+import com.intellij.ide.util.treeView.AbstractTreeUpdater;
 import com.intellij.ide.util.treeView.IndexComparator;
 import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.ide.util.treeView.AbstractTreeUpdater;
-import com.intellij.ide.util.treeView.AbstractTreeStructure;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.util.StatusBarProgress;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -43,7 +40,7 @@ public class SMTRunnerTreeBuilder extends AbstractTestTreeBuilder {
   }
 
   public SMTRunnerTreeStructure getSMRunnerTreeStructure() {
-    return ((SMTRunnerTreeStructure)getTreeStructure()) ;
+    return ((SMTRunnerTreeStructure)getTreeStructure());
   }
 
   public void updateTestsSubtree(final SMTestProxy parentTestProxy) {
@@ -64,25 +61,9 @@ public class SMTRunnerTreeBuilder extends AbstractTestTreeBuilder {
     }
 
     if (((SMTestProxy)nodeElement).getParent() == rootElement
-        && ((SMTestProxy)rootElement).getChildren().size() == 1){
+        && ((SMTestProxy)rootElement).getChildren().size() == 1) {
       return true;
     }
-    return false;
-  }
-
-  protected boolean isAlwaysShowPlus(final NodeDescriptor descriptor) {
-    //TODO[romeo] move to base class
-    return false;
-  }
-
-  @NotNull
-  protected ProgressIndicator createProgressIndicator() {
-    //TODO[romeo] maybe move to base class
-    return new StatusBarProgress();
-  }
-
-  protected boolean isSmartExpand() {
-    //TODO[romeo] move to base class
     return false;
   }
 
@@ -91,5 +72,5 @@ public class SMTRunnerTreeBuilder extends AbstractTestTreeBuilder {
    */
   public void performUpdate() {
     getUpdater().performUpdate();
-  }  
+  }
 }

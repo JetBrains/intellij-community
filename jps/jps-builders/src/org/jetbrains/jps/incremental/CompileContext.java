@@ -87,6 +87,13 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
     }
   }
 
+  public void markDirty(final ModuleChunk chunk) throws Exception {
+    final Set<Module> modules = chunk.getModules();
+    for (Module module : modules) {
+      markDirtyFiles(module, myTsStorage, true, isCompilingTests()? DirtyMarkScope.TESTS : DirtyMarkScope.PRODUCTION, null);
+    }
+  }
+
   public void markDirtyRecursively(ModuleChunk chunk) throws Exception {
     final Set<Module> modules = chunk.getModules();
     final Set<Module> dirtyModules = new HashSet<Module>(modules);
@@ -163,7 +170,7 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
   }
 
   void onChunkBuildComplete(@NotNull ModuleChunk chunk) throws Exception {
-    myDataManager.getMappings().clearMemoryCaches();
+    myDataManager.flush(true);
 
     try {
       if (!myErrorsFound && !myCancelStatus.isCanceled()) {
@@ -201,6 +208,10 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
 
   public BuildDataManager getDataManager() {
     return myDataManager;
+  }
+
+  public TimestampStorage getTimestampStorage() {
+    return myTsStorage;
   }
 
   public void processMessage(BuildMessage msg) {

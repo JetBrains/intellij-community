@@ -17,7 +17,6 @@ package org.jetbrains.android.resourceManagers;
 
 import com.android.sdklib.SdkConstants;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
@@ -32,7 +31,6 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.GenericAttributeValue;
 import org.jetbrains.android.dom.attrs.AttributeDefinitions;
 import org.jetbrains.android.dom.resources.Item;
 import org.jetbrains.android.dom.resources.ResourceElement;
@@ -195,6 +193,37 @@ public abstract class ResourceManager {
     return findResourceFiles(resType, null, true);
   }
 
+  protected List<Resources> getResourceElements(@NotNull Set<VirtualFile> files) {
+    return getRootDomElements(Resources.class, files);
+  }
+
+  private <T extends DomElement> List<T> getRootDomElements(@NotNull Class<T> elementType,
+                                                            @NotNull Collection<VirtualFile> files) {
+    final List<T> result = new ArrayList<T>();
+    for (VirtualFile file : files) {
+      T element = AndroidUtils.loadDomElement(myModule, file, elementType);
+      if (element != null) result.add(element);
+    }
+    return result;
+  }
+
+  protected List<ResourceElement> getValueResources(final String resourceType, Set<VirtualFile> files) {
+    final List<ResourceElement> result = new ArrayList<ResourceElement>();
+    Collection<Resources> resourceFiles = getResourceElements(files);
+    for (final Resources resources : resourceFiles) {
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        @Override
+        public void run() {
+          if (!resources.isValid() || myModule.isDisposed() || myModule.getProject().isDisposed()) {
+            return;
+          }
+          result.addAll(getValueResources(resourceType, resources));
+        }
+      });
+    }
+    return result;
+  }
+
   @Nullable
   public String getValueResourceType(@NotNull XmlTag tag) {
     String fileResType = getFileResourceType(tag.getContainingFile());
@@ -238,36 +267,7 @@ public abstract class ResourceManager {
   }
 
   @NotNull
-  public <T extends DomElement> List<T> getRootDomElements(@NotNull String resType, Class<T> elementType) {
-    List<T> result = new ArrayList<T>();
-    for (VirtualFile valueResourceDir : getResourceSubdirs(resType)) {
-      for (VirtualFile valueResourceFile : valueResourceDir.getChildren()) {
-        if (!valueResourceFile.isDirectory() && valueResourceFile.getFileType().equals(StdFileTypes.XML)) {
-          T element = AndroidUtils.loadDomElement(myModule, valueResourceFile, elementType);
-          if (element != null) result.add(element);
-        }
-      }
-    }
-    return result;
-  }
-
-  @NotNull
-  public List<ResourceElement> getValueResources(@NotNull final String resourceType) {
-    final List<ResourceElement> result = new ArrayList<ResourceElement>();
-    Collection<Resources> resourceFiles = getResourceElements();
-    for (final Resources resources : resourceFiles) {
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        @Override
-        public void run() {
-          if (!resources.isValid() || myModule.isDisposed() || myModule.getProject().isDisposed()) {
-            return;
-          }
-          result.addAll(getValueResources(resourceType, resources));
-        }
-      });
-    }
-    return result;
-  }
+  public abstract Collection<String> getValueResourceNames(@NotNull final String resourceType);
 
   @NotNull
   public static List<ResourceElement> getValueResources(@NotNull String resourceType, Resources resources) {
@@ -307,10 +307,6 @@ public abstract class ResourceManager {
     return result;
   }
 
-  public List<Resources> getResourceElements() {
-    return getRootDomElements("values", Resources.class);
-  }
-
   @Nullable
   public abstract AttributeDefinitions getAttributeDefinitions();
 
@@ -326,18 +322,9 @@ public abstract class ResourceManager {
   }
 
   @NotNull
-  public List<ResourceElement> findValueResources(@NotNull String resourceType,
-                                                  @NotNull String resourceName,
-                                                  boolean distinguishDelimetersInName) {
-    List<ResourceElement> elements = new ArrayList<ResourceElement>();
-    for (ResourceElement element : getValueResources(resourceType)) {
-      GenericAttributeValue<String> name = element.getName();
-      if (name != null && equal(resourceName, name.getValue(), distinguishDelimetersInName)) {
-        elements.add(element);
-      }
-    }
-    return elements;
-  }
+  public abstract List<ResourceElement> findValueResources(@NotNull String resourceType,
+                                                           @NotNull String resourceName,
+                                                           boolean distinguishDelimetersInName);
 
   public static boolean isInResourceSubdirectory(@NotNull PsiFile file, @Nullable String resourceType) {
     file = file.getOriginalFile();

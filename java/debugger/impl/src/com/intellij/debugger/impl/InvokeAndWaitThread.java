@@ -28,12 +28,12 @@ public abstract class InvokeAndWaitThread<E extends DebuggerTask> extends Invoke
    * !!! Do not remove this code !!!
    * Otherwise it will be impossible to override schedule method
    */
-  public void schedule(E e) {
-    super.schedule(e);
+  public boolean schedule(E e) {
+    return super.schedule(e);
   }
 
-  public void pushBack(E e) {
-    super.pushBack(e);
+  public boolean pushBack(E e) {
+    return super.pushBack(e);
   }
 
   public void invokeAndWait(final E runnable) {

@@ -148,8 +148,7 @@ public class CherryPicker {
 
     final Collection<FilePath> paths = ChangesUtil.getPaths(changes);
     String message = ce.getDefaultMessageFor(paths.toArray(new FilePath[paths.size()]));
-    message = (message == null) ? new StringBuilder().append(commit.getDescription()).append("(cherry picked from commit ")
-      .append(commit.getShortHash()).append(")").toString() : message;
+    message = (message == null) ? commit.getDescription() + " (cherry picked from commit " + commit.getShortHash() + ")" : message;
 
     myMessagesInOrder.add(message);
     myFilesToMove.put(message, paths);

@@ -35,9 +35,7 @@ import com.intellij.util.containers.HashSet;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.android.AndroidIdIndex;
 import org.jetbrains.android.dom.manifest.Manifest;
-import org.jetbrains.android.dom.resources.Attr;
-import org.jetbrains.android.dom.resources.DeclareStyleable;
-import org.jetbrains.android.dom.resources.ResourceElement;
+import org.jetbrains.android.dom.resources.*;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.resourceManagers.LocalResourceManager;
 import org.jetbrains.android.resourceManagers.ResourceManager;
@@ -401,5 +399,40 @@ public class AndroidResourceUtil {
     LocalResourceManager manager = facet.getLocalResourceManager();
     List<PsiElement> targets = findResourcesByField(manager, resField);
     return PsiUtilBase.toPsiElementArray(targets);
+  }
+
+  @NotNull
+  public static ResourceElement addValueResource(@NotNull final String type, @NotNull final Resources resources) {
+    if (type.equals("string")) {
+      return resources.addString();
+    }
+    else if (type.equals("dimen")) {
+      return resources.addDimen();
+    }
+    else if (type.equals("color")) {
+      return resources.addColor();
+    }
+    else if (type.equals("drawable")) {
+      return resources.addDrawable();
+    }
+    else if (type.equals("style")) {
+      return resources.addStyle();
+    }
+    else if (type.equals("array")) {
+      // todo: choose among string-array, integer-array and array
+      return resources.addStringArray();
+    }
+    else if (type.equals("integer")) {
+      return resources.addInteger();
+    }
+    else if (type.equals("bool")) {
+      return resources.addBool();
+    }
+    else if (type.equals("id")) {
+      Item item = resources.addItem();
+      item.getType().setValue("id");
+      return item;
+    }
+    throw new IllegalArgumentException("Incorrect resource type");
   }
 }

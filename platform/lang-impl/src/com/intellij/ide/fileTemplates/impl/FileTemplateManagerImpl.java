@@ -48,6 +48,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.text.MessageFormat;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
@@ -319,10 +320,17 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
     @NonNls Properties props = new Properties();
 
     Calendar calendar = Calendar.getInstance();
+    Date date = new Date(calendar.getTimeInMillis());
+    SimpleDateFormat sdfMonthNameShort = new SimpleDateFormat("MMM");
+    SimpleDateFormat sdfMonthNameFull = new SimpleDateFormat("MMMM");
+    SimpleDateFormat sdfYearFull = new SimpleDateFormat("yyyy");
+
     props.setProperty("DATE", DateFormatUtil.formatDate(calendar.getTime()));
     props.setProperty("TIME", DateFormatUtil.formatTime(calendar.getTime()));
-    props.setProperty("YEAR", Integer.toString(calendar.get(Calendar.YEAR)));
+    props.setProperty("YEAR", sdfYearFull.format(date));
     props.setProperty("MONTH", getCalendarValue(calendar, Calendar.MONTH));
+    props.setProperty("MONTH_NAME_SHORT", sdfMonthNameShort.format(date));
+    props.setProperty("MONTH_NAME_FULL", sdfMonthNameFull.format(date));
     props.setProperty("DAY", getCalendarValue(calendar, Calendar.DAY_OF_MONTH));
     props.setProperty("HOUR", getCalendarValue(calendar, Calendar.HOUR_OF_DAY));
     props.setProperty("MINUTE", getCalendarValue(calendar, Calendar.MINUTE));

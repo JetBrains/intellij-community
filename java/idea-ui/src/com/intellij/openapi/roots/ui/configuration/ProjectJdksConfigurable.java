@@ -57,13 +57,16 @@ public class ProjectJdksConfigurable extends MasterDetailsComponent {
 
   private final ProjectSdksModel myProjectJdksModel;
   private final Project myProject;
-  @NonNls 
+  @NonNls
   private static final String SPLITTER_PROPORTION = "project.jdk.splitter";
 
   public ProjectJdksConfigurable(Project project) {
-    super();
+    this(project, ProjectStructureConfigurable.getInstance(project).getProjectJdksModel());
+  }
+
+  public ProjectJdksConfigurable(Project project, ProjectSdksModel sdksModel) {
     myProject = project;
-    myProjectJdksModel = ProjectStructureConfigurable.getInstance(project).getProjectJdksModel();
+    myProjectJdksModel = sdksModel;
     initTree();
   }
 

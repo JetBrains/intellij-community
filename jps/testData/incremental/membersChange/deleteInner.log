@@ -1,15 +1,3 @@
-Request to make modules:
-module DeleteInner
-End of request
-digraph X {
-  DeleteInner[label="DeleteInner"];
-}
-digraph X {
-  DeleteInner[label="DeleteInner"];
-}
-Propagated modules:
-module DeleteInner
-End of propagated
 Cleaning output files:
 out/production/DeleteInner/Outer$Inner.class
 out/production/DeleteInner/Outer.class

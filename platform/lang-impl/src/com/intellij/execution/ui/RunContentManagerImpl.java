@@ -23,6 +23,7 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.GenericProgramRunner;
+import com.intellij.execution.ui.layout.impl.DockableGridContainerFactory;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.ContentManagerWatcher;
 import com.intellij.openapi.Disposable;
@@ -47,6 +48,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.ui.content.*;
+import com.intellij.ui.docking.DockManager;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
@@ -65,13 +67,17 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
   private static final Key<RunContentDescriptor> DESCRIPTOR_KEY = new Key<RunContentDescriptor>("Descriptor");
 
   private final Project myProject;
+  private DockableGridContainerFactory myContentFactory;
   private final Map<String, ContentManager> myToolwindowIdToContentManagerMap = new HashMap<String, ContentManager>();
 
   private final Map<RunContentListener, Disposable> myListeners = new HashMap<RunContentListener, Disposable>();
   private final LinkedList<String> myToolwindowIdZbuffer = new LinkedList<String>();
 
-  public RunContentManagerImpl(Project project) {
+  public RunContentManagerImpl(Project project, DockManager dockManager) {
     myProject = project;
+    myContentFactory = new DockableGridContainerFactory();
+    dockManager.register(DockableGridContainerFactory.TYPE, myContentFactory);
+    Disposer.register(myProject, myContentFactory);
   }
 
   public void init() {

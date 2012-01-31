@@ -20,12 +20,18 @@ import com.intellij.execution.ui.layout.Tab;
 import com.intellij.execution.ui.layout.ViewContext;
 import com.intellij.execution.ui.actions.BaseViewAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.content.Content;
 
+import javax.swing.*;
+
 public class MinimizeViewAction extends BaseViewAction {
+  private static final Icon ICON = IconLoader.getIcon("/actions/move-to-button.png");
+  private static final Icon ICON_TOP = IconLoader.getIcon("/actions/move-to-button-top.png");
 
   protected void update(final AnActionEvent e, final ViewContext context, final Content[] content) {
     setEnabled(e, isEnabled(context, content, e.getPlace()));
+    e.getPresentation().setIcon(ViewContext.TAB_TOOLBAR_PLACE.equals(e.getPlace()) ? ICON_TOP : ICON);
   }
 
   protected void actionPerformed(final AnActionEvent e, final ViewContext context, final Content[] content) {
@@ -39,19 +45,15 @@ public class MinimizeViewAction extends BaseViewAction {
       return false;
     }
 
-    if (isDetached(context, content[0])) {
-      return false;
-    }
-
     if (ViewContext.TAB_TOOLBAR_PLACE.equals(place) || ViewContext.TAB_POPUP_PLACE.equals(place)) {
-      return false;
-    }
-    else {
       Tab tab = getTabFor(context, content);
       if (tab == null) {
         return false;
       }
-      return tab.isDefault();
+      return !tab.isDefault() && content.length == 1;
+    }
+    else {
+      return getTabFor(context, content) != null;
     }
   }
 }

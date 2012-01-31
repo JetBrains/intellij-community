@@ -246,4 +246,9 @@ public class MultiMap<K, V> implements Serializable {
   public int hashCode() {
     return myMap.hashCode();
   }
+
+  @Override
+  public String toString() {
+    return myMap.toString();
+  }
 }

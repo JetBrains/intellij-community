@@ -19,18 +19,30 @@ package com.intellij.execution.ui.layout.actions;
 import com.intellij.execution.ui.actions.BaseViewAction;
 import com.intellij.execution.ui.layout.ViewContext;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.content.Content;
 
+import javax.swing.*;
+
 public class CloseViewAction extends BaseViewAction {
+  private static final Icon ICON = IconLoader.getIcon("/actions/closeNew.png");
+  private static final Icon HOVERED_ICON = IconLoader.getIcon("/actions/closeNewHovered.png");
+
   protected void update(final AnActionEvent e, final ViewContext context, final Content[] content) {
-    setEnabled(e, isEnabled(context, content, e.getPlace()));
+    setEnabled(e, isEnabled(content));
+    e.getPresentation().setIcon(ICON);
+    e.getPresentation().setHoveredIcon(HOVERED_ICON);
   }
 
   protected void actionPerformed(final AnActionEvent e, final ViewContext context, final Content[] content) {
-    context.getContentManager().removeContent(content[0], context.isToDisposeRemovedContent());
+    perform(context, content[0]);
   }
 
-  public static boolean isEnabled(ViewContext context, Content[] content, String place) {
+  public static boolean perform(ViewContext context, Content content) {
+    return context.getContentManager().removeContent(content, context.isToDisposeRemovedContent());
+  }
+
+  public static boolean isEnabled(Content[] content) {
     return content.length == 1 && content[0].isCloseable();
   }
   

@@ -16,7 +16,10 @@
 
 package org.jetbrains.plugins.groovy.formatter;
 
-import com.intellij.formatting.*;
+import com.intellij.formatting.Block;
+import com.intellij.formatting.FormattingModel;
+import com.intellij.formatting.FormattingModelBuilder;
+import com.intellij.formatting.Indent;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -30,14 +33,12 @@ import com.intellij.psi.formatter.FormattingDocumentModelImpl;
 import com.intellij.psi.formatter.PsiBasedFormattingModel;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 
-import java.util.Map;
 
 /**
  * @author ilyas
@@ -54,14 +55,13 @@ public class GroovyFormattingModelBuilder implements FormattingModelBuilder {
     CommonCodeStyleSettings groovySettings = settings.getCommonSettings(GroovyFileType.GROOVY_LANGUAGE);
     GroovyCodeStyleSettings customSettings = settings.getCustomSettings(GroovyCodeStyleSettings.class);
 
-    final Map<PsiElement, Alignment> innerAlignments = CollectionFactory.hashMap();
+    final AlignmentProvider alignments = new AlignmentProvider();
     if (customSettings.USE_FLYING_GEESE_BRACES) {
       element.accept(new PsiRecursiveElementVisitor() {
         @Override
         public void visitElement(PsiElement element) {
           if (GeeseUtil.isClosureRBrace(element)) {
-            final Alignment alignment = GeeseUtil.calculateRBraceAlignment(element, innerAlignments);
-            innerAlignments.put(element, alignment);
+            GeeseUtil.calculateRBraceAlignment(element, alignments);
           }
           else {
             super.visitElement(element);
@@ -69,8 +69,7 @@ public class GroovyFormattingModelBuilder implements FormattingModelBuilder {
         }
       });
     }
-    final GroovyBlock block =
-      new GroovyBlock(astNode, null, Indent.getAbsoluteNoneIndent(), null, groovySettings, customSettings, innerAlignments);
+    final GroovyBlock block = new GroovyBlock(astNode, Indent.getAbsoluteNoneIndent(), null, groovySettings, customSettings, alignments);
     return new GroovyFormattingModel(containingFile, block, FormattingDocumentModelImpl.createOn(containingFile));
   }
 

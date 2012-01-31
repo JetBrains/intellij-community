@@ -1,15 +1,3 @@
-Request to make modules:
-module NonCompileTimeConstant
-End of request
-digraph X {
-  NonCompileTimeConstant[label="NonCompileTimeConstant"];
-}
-digraph X {
-  NonCompileTimeConstant[label="NonCompileTimeConstant"];
-}
-Propagated modules:
-module NonCompileTimeConstant
-End of propagated
 Cleaning output files:
 out/production/NonCompileTimeConstant/Test.class
 End of files

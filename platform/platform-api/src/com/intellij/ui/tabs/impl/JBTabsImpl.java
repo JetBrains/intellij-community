@@ -163,8 +163,9 @@ public class JBTabsImpl extends JComponent
 
   private boolean myOwnSwitchProvider = true;
   private SwitchProvider mySwitchDelegate;
-  private TabInfo myDropInfo;
+  protected TabInfo myDropInfo;
   private int myDropInfoIndex;
+  protected boolean myShowDropLocation = true;
 
   private TabInfo myOldSelection;
   private SelectionChangeHandler mySelectionChangeHandler;
@@ -629,7 +630,7 @@ public class JBTabsImpl extends JComponent
     }
 
     info.getChangeSupport().addPropertyChangeListener(this);
-    final TabLabel label = new TabLabel(this, info);
+    final TabLabel label = createTabLabel(info);
     myInfo2Label.put(info, label);
 
     if (!isDropTarget) {
@@ -674,6 +675,9 @@ public class JBTabsImpl extends JComponent
     return info;
   }
 
+  protected TabLabel createTabLabel(TabInfo info) {
+    return new TabLabel(this, info);
+  }
 
   @NotNull
   public TabInfo addTab(TabInfo info) {
@@ -828,6 +832,14 @@ public class JBTabsImpl extends JComponent
         if (eachListener != null) {
           eachListener.selectionChanged(oldInfo, newInfo);
         }
+      }
+    }
+  }
+
+  void fireTabsMoved() {
+    for (TabsListener eachListener : myTabListeners) {
+      if (eachListener != null) {
+        eachListener.tabsMoved();
       }
     }
   }
@@ -1339,7 +1351,7 @@ public class JBTabsImpl extends JComponent
       List<TabInfo> visible = new ArrayList<TabInfo>();
       visible.addAll(myVisibleInfos);
 
-      if (myDropInfo != null && !visible.contains(myDropInfo)) {
+      if (myDropInfo != null && !visible.contains(myDropInfo) && myShowDropLocation) {
         if (getDropInfoIndex() >= 0 && getDropInfoIndex() < visible.size()) {
           visible.add(getDropInfoIndex(), myDropInfo);
         } else {
@@ -1603,8 +1615,8 @@ public class JBTabsImpl extends JComponent
     if (paintFocused) {
       final Color bgColor = getActiveTabColor(getActiveTabFillIn());
       if (bgColor == null) {
-        shapeInfo.from = UIUtil.getFocusedFillColor();
-        shapeInfo.to = UIUtil.getFocusedFillColor();
+        shapeInfo.from = getFocusedTopFillColor();
+        shapeInfo.to = getFocusedBottomFillColor();
       }
       else {
         bgPreFill = bgColor;
@@ -1661,6 +1673,14 @@ public class JBTabsImpl extends JComponent
     }
 
     paintBorder(g2d, shapeInfo, borderColor);
+  }
+
+  protected Color getFocusedTopFillColor() {
+    return UIUtil.getFocusedFillColor();
+  }
+
+  protected Color getFocusedBottomFillColor() {
+    return UIUtil.getFocusedFillColor();
   }
 
   protected ShapeInfo computeSelectedLabelShape() {
@@ -1745,17 +1765,18 @@ public class JBTabsImpl extends JComponent
     return myInfo2Label.get(getSelectedInfo());
   }
 
-  static class ShapeInfo {
-    ShapeTransform path;
-    ShapeTransform fillPath;
-    ShapeTransform labelPath;
-    int labelBottomY;
-    int labelTopY;
-    int labelLeftX;
-    int labelRightX;
-    Insets insets;
-    Color from;
-    Color to;
+  protected static class ShapeInfo {
+    public ShapeInfo() {}
+    public ShapeTransform path;
+    public ShapeTransform fillPath;
+    public ShapeTransform labelPath;
+    public int labelBottomY;
+    public int labelTopY;
+    public int labelLeftX;
+    public int labelRightX;
+    public Insets insets;
+    public Color from;
+    public Color to;
   }
 
 
@@ -2977,7 +2998,7 @@ public class JBTabsImpl extends JComponent
     }
   }
 
-  public static Rectangle layout(JComponent c, Rectangle bounds) {
+  public Rectangle layout(JComponent c, Rectangle bounds) {
     final Rectangle now = c.getBounds();
     if (!bounds.equals(now)) {
       c.setBounds(bounds);
@@ -2987,7 +3008,7 @@ public class JBTabsImpl extends JComponent
     return bounds;
   }
 
-  public static Rectangle layout(JComponent c, int x, int y, int width, int height) {
+  public Rectangle layout(JComponent c, int x, int y, int width, int height) {
     return layout(c, new Rectangle(x, y, width, height));
   }
 
@@ -3167,6 +3188,7 @@ public class JBTabsImpl extends JComponent
     if (myDropInfo != null) {
       TabInfo dropInfo = myDropInfo;
       myDropInfo = null;
+      myShowDropLocation = true;
       setDropInfoIndex(-1);
       removeTab(dropInfo, null, false, true);
     }

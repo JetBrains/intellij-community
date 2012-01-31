@@ -16,14 +16,19 @@
 
 package com.intellij.execution.ui.layout.impl;
 
+import com.intellij.execution.ui.layout.GridCell;
 import com.intellij.execution.ui.layout.ViewContext;
 import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.util.ActionCallback;
 
 public interface ViewContextEx extends ViewContext {
   RunnerLayout getLayoutSettings();
 
   ActionGroup getCellPopupGroup(String place);
 
-  void doWhenInitialized(Runnable runnable);
+  boolean isOriginal();
+  
+  int getWindow();
 
+  ActionCallback detachTo(int window, GridCell cell);
 }

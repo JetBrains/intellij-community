@@ -52,6 +52,7 @@ import java.util.*;
 public class TypeMigrationLabeler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.typeMigration.TypeMigrationLabeler");
   private boolean myShowWarning = true;
+  private MigrateException myException;
 
   public TypeMigrationRules getRules() {
     return myRules;
@@ -478,22 +479,23 @@ public class TypeMigrationLabeler {
 
   boolean addRoot(final TypeMigrationUsageInfo usageInfo, final PsiType type, final PsiElement place, boolean alreadyProcessed) {
     if (myShowWarning && myMigrationRoots.size() > 10 && !ApplicationManager.getApplication().isUnitTestMode()) {
-      final MigrateException[] ex = new MigrateException[1];
+      myShowWarning = false;
       try {
-        SwingUtilities.invokeAndWait(new Runnable() {
+        final Runnable checkTimeToStopRunnable = new Runnable() {
           public void run() {
-            if (Messages.showYesNoCancelDialog("Found more than 10 roots to migrate. Do you want to preview?", "Type Migration", Messages.getWarningIcon()) == DialogWrapper.OK_EXIT_CODE) {
-              ex[0] = new MigrateException();
+            if (Messages.showYesNoCancelDialog("Found more than 10 roots to migrate. Do you want to preview?", "Type Migration",
+                                               Messages.getWarningIcon()) == DialogWrapper.OK_EXIT_CODE) {
+              myException = new MigrateException();
             }
           }
-        });
+        };
+        SwingUtilities.invokeLater(checkTimeToStopRunnable);
       }
       catch (Exception e) {
         //do nothing
       }
-      if (ex[0] != null) throw ex[0];
-      myShowWarning = false;
     }
+    if (myException != null) throw myException;
     rememberRootTrace(usageInfo, type, place, alreadyProcessed);
     if (!alreadyProcessed && !getTypeEvaluator().setType(usageInfo, type)) {
       alreadyProcessed = true;

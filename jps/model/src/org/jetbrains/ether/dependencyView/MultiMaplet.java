@@ -38,5 +38,5 @@ interface MultiMaplet<K, V> {
   Collection<K> keyCollection();
   Collection<Map.Entry<K, Collection<V>>> entrySet();
 
-  void flush();
+  void flush(boolean memoryCachesOnly);
 }

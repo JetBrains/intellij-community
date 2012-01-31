@@ -186,9 +186,11 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
       out:
       for(IntToIntBtree.BtreeIndexNodeView page:leafPages) {
         for(int key:page.exportKeys()) {
-          Integer record = btree.get(key);
+          boolean hasMapping = btree.get(key, myResultBuf);
           p.setCurrentKey(key);
-          assert record != null;
+          assert hasMapping;
+          int record = myResultBuf[0];
+
           if (record > 0) {
             if (!p.process(record)) return false;
           } else {
@@ -259,22 +261,23 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
     return super.getValue(keyId, processingKey);
   }
 
+  private final int[] myResultBuf = new int[1];
+  
   protected synchronized int enumerateImpl(final Data value, final boolean onlyCheckForExisting, boolean saveNewValue) throws IOException {
     synchronized (ourLock) {
       if (IntToIntBtree.doDump) System.out.println(value);
       final int valueHC = myDataDescriptor.getHashCode(value);
 
-      final Integer keyValue = btree.get(valueHC);
-      if (keyValue == null && onlyCheckForExisting) {
+      final boolean hasMapping = btree.get(valueHC, myResultBuf);
+      if (!hasMapping && onlyCheckForExisting) {
         return NULL_ID;
       }
 
-      int indexNodeValueAddress = keyValue != null ? keyValue:0;
+      int indexNodeValueAddress = hasMapping ? myResultBuf[0]:0;
       int collisionAddress = NULL_ID;
       Data existingData = null;
 
       if (!myInlineKeysNoMapping) {
-        indexNodeValueAddress = keyValue != null ? keyValue:0;
         collisionAddress = NULL_ID;
 
         if (indexNodeValueAddress > 0) {
@@ -309,7 +312,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
 
         if (onlyCheckForExisting) return NULL_ID;
       } else {
-        if (keyValue != null) {
+        if (hasMapping) {
           if(!saveNewValue) return indexNodeValueAddress;
           existingData = value;
         }

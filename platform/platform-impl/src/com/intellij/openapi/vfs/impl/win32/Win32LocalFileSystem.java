@@ -33,33 +33,34 @@ import java.util.Set;
 public class Win32LocalFileSystem extends LocalFileSystemBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.win32.Win32LocalFileSystem");
 
-  private static boolean ourIsAvailable;
+  private static final boolean ourIsAvailable;
 
   static {
+    boolean available = false;
     if (SystemInfo.isWindows) {
       String libName = SystemInfo.is64Bit ? "IdeaWin64" : "IdeaWin32";
       try {
         System.load(PathManager.getHomePath() + "/community/bin/win/" + libName + ".dll");
-        ourIsAvailable = true;
+        available = true;
       }
       catch (Throwable t0) {
         try {
           System.load(PathManager.getHomePath() + "/bin/win/" + libName + ".dll");
-          ourIsAvailable = true;
+          available = true;
         }
         catch (Throwable t1) {
           try {
             System.loadLibrary(libName);
-            ourIsAvailable = true;
+            available = true;
           }
           catch (Throwable t2) {
             LOG.warn("Failed to load native filesystem for Windows", t2);
-            ourIsAvailable = false;
           }
         }
       }
     }
-    if (ourIsAvailable) {
+    ourIsAvailable = available;
+    if (available) {
       LOG.info("Native filesystem for Windows is operational");
     }
   }
@@ -108,16 +109,11 @@ public class Win32LocalFileSystem extends LocalFileSystemBase {
   @Override
   public boolean exists(@NotNull VirtualFile fileOrDirectory) {
     if (fileOrDirectory.getParent() == null) return true;
-    try {
-      myKernel.exists(fileOrDirectory.getPath());
-      if (checkMe && !super.exists(fileOrDirectory)) {
-        LOG.error(fileOrDirectory.getPath());
-      }
-      return true;
+    boolean b = myKernel.exists(fileOrDirectory.getPath());
+    if (checkMe && b != super.exists(fileOrDirectory)) {
+      LOG.error(fileOrDirectory.getPath());
     }
-    catch (FileNotFoundException e) {
-      return super.exists(fileOrDirectory);
-    }
+    return b;
   }
 
   @Override
@@ -195,5 +191,10 @@ public class Win32LocalFileSystem extends LocalFileSystemBase {
   @Override
   public void removeWatchedRoot(@NotNull WatchRequest watchRequest) {
     throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public int getBooleanAttributes(@NotNull VirtualFile file, int flags) {
+    return myKernel.getBooleanAttributes(file.getPath(), flags);
   }
 }

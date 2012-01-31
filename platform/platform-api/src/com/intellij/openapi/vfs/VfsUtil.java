@@ -45,16 +45,6 @@ import java.util.*;
 public class VfsUtil extends VfsUtilCore {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.VfsUtil");
 
-  public static String loadText(@NotNull VirtualFile file) throws IOException{
-    InputStreamReader reader = new InputStreamReader(file.getInputStream(), file.getCharset());
-    try {
-      return new String(FileUtil.loadText(reader, (int)file.getLength()));
-    }
-    finally {
-      reader.close();
-    }
-  }
-
   public static void saveText(@NotNull VirtualFile file, @NotNull String text) throws IOException {
     Charset charset = file.getCharset();
     file.setBinaryContent(text.getBytes(charset.name()));

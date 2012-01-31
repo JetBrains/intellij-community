@@ -22,11 +22,13 @@ import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.UIUtil;
+import git4idea.DialogManager;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * The dialog that is shown when the error "The following files would be overwritten by checkout" happens.
@@ -37,23 +39,26 @@ import java.util.concurrent.atomic.AtomicBoolean;
 // TODO "don't ask again" option
 class GitWouldBeOverwrittenByCheckoutDialog extends DialogWrapper {
 
+  public static final int SMART_CHECKOUT = OK_EXIT_CODE;
+  public static final int FORCE_CHECKOUT_EXIT_CODE = NEXT_USER_EXIT_CODE;
+  
   private final Project myProject;
   private final List<Change> myChanges;
 
   /**
    * @return true if smart checkout has to be performed, false if user doesn't want to checkout.
    */
-  static boolean showAndGetAnswer(@NotNull final Project project, @NotNull final List<Change> changes) {
-    final AtomicBoolean ok = new AtomicBoolean();
+  static int showAndGetAnswer(@NotNull final Project project, @NotNull final List<Change> changes) {
+    final AtomicInteger exitCode = new AtomicInteger();
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
         GitWouldBeOverwrittenByCheckoutDialog dialog = new GitWouldBeOverwrittenByCheckoutDialog(project, changes);
-        dialog.show();
-        ok.set(dialog.isOK());
+        DialogManager.getInstance(project).showDialog(dialog);
+        exitCode.set(dialog.getExitCode());
       }
     });
-    return ok.get();
+    return exitCode.get();
   }
 
   private GitWouldBeOverwrittenByCheckoutDialog(@NotNull Project project, @NotNull List<Change> changes) {
@@ -67,8 +72,8 @@ class GitWouldBeOverwrittenByCheckoutDialog extends DialogWrapper {
   }
 
   @Override
-  protected Action getOKAction() {
-    return super.getOKAction();
+  protected Action[] createLeftSideActions() {
+    return new Action[] {new ForceCheckoutAction() };
   }
 
   @Override
@@ -90,6 +95,19 @@ class GitWouldBeOverwrittenByCheckoutDialog extends DialogWrapper {
   @Override
   protected String getDimensionServiceKey() {
     return GitWouldBeOverwrittenByCheckoutDialog.class.getName();
+  }
+
+
+  private class ForceCheckoutAction extends AbstractAction {
+    
+    ForceCheckoutAction() {
+      super("Force checkout");
+    }
+    
+    @Override
+    public void actionPerformed(ActionEvent e) {
+      close(FORCE_CHECKOUT_EXIT_CODE);
+    }
   }
 
 }

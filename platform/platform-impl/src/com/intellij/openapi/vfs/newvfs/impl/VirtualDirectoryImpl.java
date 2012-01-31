@@ -42,6 +42,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
@@ -312,14 +313,15 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     return VfsUtil.toVirtualFileArray(roots);
   }
 
-
   @Nullable
   private VirtualFileSystemEntry createAndFindChildWithEventFire(@NotNull String name) {
     final NewVirtualFileSystem delegate = getFileSystem();
     VirtualFile fake = new FakeVirtualFile(this, name);
-    if (delegate.exists(fake)) {
+    int attributes = delegate.getBooleanAttributes(fake, NewVirtualFileSystem.BA_EXISTS | NewVirtualFileSystem.BA_DIRECTORY);
+    if ((attributes & NewVirtualFileSystem.BA_EXISTS) != 0) {
       final String realName = delegate.getCanonicallyCasedName(fake);
-      VFileCreateEvent event = new VFileCreateEvent(null, this, realName, delegate.isDirectory(fake), true);
+      boolean isDir = (attributes & NewVirtualFileSystem.BA_DIRECTORY) != 0;
+      VFileCreateEvent event = new VFileCreateEvent(null, this, realName, isDir, true);
       RefreshQueue.getInstance().processSingleEvent(event);
       return findChild(realName);
     }
@@ -526,14 +528,16 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     final Map<String, VirtualFileSystemEntry> map = asMap();
     if (map == null) return Collections.emptyList();
 
-    List<String> names = new ArrayList<String>();
+    List<String> names = null;
+
     for (Map.Entry<String, VirtualFileSystemEntry> entry : map.entrySet()) {
       if (entry.getValue() == NULL_VIRTUAL_FILE) {
+        if (names == null) names = new SmartList<String>();
         names.add(entry.getKey());
       }
     }
 
-    return names;
+    return names == null ? Collections.<String>emptyList() : names;
   }
 
   @Override

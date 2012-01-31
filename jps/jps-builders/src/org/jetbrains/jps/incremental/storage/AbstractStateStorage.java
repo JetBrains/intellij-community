@@ -32,6 +32,14 @@ public abstract class AbstractStateStorage<Key, T> {
     }
   }
 
+  public void dropMemoryCache() {
+    synchronized (myDataLock) {
+      if (myMap.isDirty()) {
+        myMap.dropMemoryCaches();
+      }
+    }
+  }
+
   public void close() throws IOException {
     synchronized (myDataLock) {
       myMap.close();

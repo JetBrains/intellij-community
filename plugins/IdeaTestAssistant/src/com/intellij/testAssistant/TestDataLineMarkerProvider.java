@@ -39,6 +39,17 @@ import java.util.List;
  */
 public class TestDataLineMarkerProvider implements LineMarkerProvider {
   public LineMarkerInfo getLineMarkerInfo(PsiElement element) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return null;
+    }
+    if (element instanceof PsiMethod) {
+      final PsiMethod method = (PsiMethod)element;
+      if (isTestMethod(method)) {
+        return new LineMarkerInfo<PsiMethod>(
+          method, method.getModifierList().getTextRange(), PlatformIcons.TEST_SOURCE_FOLDER, Pass.UPDATE_ALL, null, new TestDataNavigationHandler(),
+          GutterIconRenderer.Alignment.LEFT);
+      }
+    }
     return null;
   }
 
@@ -65,21 +76,6 @@ public class TestDataLineMarkerProvider implements LineMarkerProvider {
   }
 
   public void collectSlowLineMarkers(List<PsiElement> elements, Collection<LineMarkerInfo> result) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return;
-    }
-    for (PsiElement element : elements) {
-      if (!(element instanceof PsiMethod)) {
-        continue;
-      }
-      final PsiMethod method = (PsiMethod)element;
-      if (isTestMethod(method)) {
-        result.add(new LineMarkerInfo<PsiMethod>(
-          method, method.getTextRange(), PlatformIcons.TEST_SOURCE_FOLDER, Pass.UPDATE_ALL, null, new TestDataNavigationHandler(),
-          GutterIconRenderer.Alignment.LEFT
-        ));
-      }
-    }
   }
 
   @Nullable

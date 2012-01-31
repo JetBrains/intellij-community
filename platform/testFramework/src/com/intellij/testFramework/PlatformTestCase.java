@@ -145,10 +145,10 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     if (resource == null) {
       resource = PlatformTestCase.class.getClassLoader().getResource("idea/IdeaApplicationInfo.xml");
       if (resource == null) {
-        System.setProperty("idea.platform.prefix", "PlatformLangXml");
+        setPlatformPrefix("PlatformLangXml");
       }
       else {
-        System.setProperty("idea.platform.prefix", "Idea");
+        setPlatformPrefix("Idea");
       }
     }
   }
@@ -731,7 +731,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     initPlatformPrefix(IDEA_MARKER_CLASS, "PlatformLangXml");
   }
 
-  protected static void initPlatformPrefix(String classToTest, String prefix) {
+  public static void initPlatformPrefix(String classToTest, String prefix) {
     if (!ourPlatformPrefixInitialized) {
       ourPlatformPrefixInitialized = true;
       boolean isUltimate = true;
@@ -742,9 +742,13 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
         isUltimate = false;
       }
       if (!isUltimate) {
-        System.setProperty("idea.platform.prefix", prefix);
+        setPlatformPrefix(prefix);
       }
     }
+  }
+
+  public static void setPlatformPrefix(String prefix) {
+    System.setProperty("idea.platform.prefix", prefix);
   }
 
   @Retention(RetentionPolicy.RUNTIME)

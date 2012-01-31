@@ -15,6 +15,7 @@
  */
 package git4idea.config;
 
+import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -74,9 +75,15 @@ public enum GitVersionSpecialty {
    */
   KNOWS_STATUS_PORCELAIN {
     @Override
-    public boolean existsIn(@NotNull GitVersion
-    version) {
+    public boolean existsIn(@NotNull GitVersion version) {
       return version.isLaterOrEqual(new GitVersion(1, 7, 0, 0));
+    }
+  },
+
+  DOESNT_DEFINE_HOME_ENV_VAR {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return SystemInfo.isWindows && version.isOlderOrEqual(new GitVersion(1, 7, 0, 2));
     }
   };
 

@@ -118,7 +118,7 @@ public class GrParameterImpl extends GrVariableBaseImpl<GrParameterStub> impleme
   public PsiType getType() {
     PsiType type = super.getType();
     if (isMainMethodFirstUntypedParameter()) {
-      return TypesUtil.createTypeByFQClassName("java.lang.String", this).createArrayType();
+      return TypesUtil.createTypeByFQClassName(CommonClassNames.JAVA_LANG_STRING, this).createArrayType();
     }
     if (getParent() instanceof GrForClause) { //inside for loop
       final PsiType typeGroovy = getTypeGroovy();
@@ -129,18 +129,14 @@ public class GrParameterImpl extends GrVariableBaseImpl<GrParameterStub> impleme
 
   private boolean isMainMethodFirstUntypedParameter() {
     if (getTypeElementGroovy() != null) return false;
+    if (!(getParent() instanceof GrParameterList)) return false;
+    if (getDefaultInitializer() != null) return false;
 
-    if (getParent() instanceof GrParameterList) {
-      GrParameterList parameterList = (GrParameterList)getParent();
-      GrParameter[] params = parameterList.getParameters();
-      if (params.length != 1 || this != params[0]) return false;
+    GrParameterList parameterList = (GrParameterList)getParent();
+    if (!(parameterList.getParent() instanceof GrMethod)) return false;
 
-      if (parameterList.getParent() instanceof GrMethod) {
-        GrMethod method = (GrMethod)parameterList.getParent();
-        return PsiImplUtil.isMainMethod(method);
-      }
-    }
-    return false;
+    GrMethod method = (GrMethod)parameterList.getParent();
+    return PsiImplUtil.isMainMethod(method);
   }
 
   public void setType(@Nullable PsiType type) {

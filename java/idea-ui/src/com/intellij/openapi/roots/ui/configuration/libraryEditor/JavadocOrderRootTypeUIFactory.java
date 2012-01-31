@@ -72,7 +72,6 @@ public class JavadocOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
       if(virtualFile != null){
         addElement(virtualFile);
         setModified(true);
-        updateButtons();
         requestDefaultFocus();
         setSelectedRoots(new Object[]{virtualFile});
       }

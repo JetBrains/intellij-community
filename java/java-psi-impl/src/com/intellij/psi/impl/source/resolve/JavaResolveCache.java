@@ -148,7 +148,7 @@ public class JavaResolveCache {
         if (physicalContext != null &&
             (physicalFile = physicalContext.getContainingFile()) != null &&
             physicalFile.getVirtualFile() != null &&
-            !((PsiManagerEx)PsiManager.getInstance(dummyHolder.getProject())).isAssertOnFileLoading(physicalFile.getVirtualFile())) {
+            !((PsiManagerEx)dummyHolder.getManager()).isAssertOnFileLoading(physicalFile.getVirtualFile())) {
           DebugUtil.trackInvalidation(physicalContext, "dummy holder was invalidated", new Processor<PsiElement>() {
             @Override
             public boolean process(PsiElement element) {

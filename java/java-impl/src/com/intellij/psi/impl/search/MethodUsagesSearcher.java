@@ -25,7 +25,7 @@ public class MethodUsagesSearcher extends QueryExecutorBase<PsiReference, Method
 
     final SearchScope searchScope = p.getScope();
 
-    final PsiManager psiManager = PsiManager.getInstance(method.getProject());
+    final PsiManager psiManager = method.getManager();
 
     final PsiClass aClass = method.getContainingClass();
     if (aClass == null) return;

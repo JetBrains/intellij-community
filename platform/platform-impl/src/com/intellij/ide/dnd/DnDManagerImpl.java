@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,7 +58,7 @@ public class DnDManagerImpl extends DnDManager implements Disposable {
   private String myLastMessage;
   private DnDEvent myLastProcessedEvent;
 
-  private final DragGestureListener myDragGestureListener = new MyDragGestureListnener();
+  private final DragGestureListener myDragGestureListener = new MyDragGestureListener();
   private final DropTargetListener myDropTargetListener = new MyDropTargetListener();
 
   private static final Image EMPTY_IMAGE = new BufferedImage(1, 1, Transparency.TRANSLUCENT);
@@ -537,7 +537,7 @@ public class DnDManagerImpl extends DnDManager implements Disposable {
     return null;
   }
 
-  private class MyDragGestureListnener implements DragGestureListener {
+  private class MyDragGestureListener implements DragGestureListener {
     public void dragGestureRecognized(DragGestureEvent dge) {
       try {
         final DnDSource source = getSource(dge.getComponent());

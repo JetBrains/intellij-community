@@ -16,8 +16,6 @@
 package com.intellij.openapi.compiler.generic;
 
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.io.EnumeratorStringDescriptor;
-import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 /**

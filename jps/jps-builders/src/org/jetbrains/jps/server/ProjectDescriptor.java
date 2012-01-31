@@ -22,7 +22,7 @@ public final class ProjectDescriptor {
 
   private int myUseCounter = 1;
 
-  ProjectDescriptor(String projectName, Project project, FSState fsState, ProjectTimestamps timestamps, BuildDataManager dataManager) {
+  public ProjectDescriptor(String projectName, Project project, FSState fsState, ProjectTimestamps timestamps, BuildDataManager dataManager) {
     this.projectName = projectName;
     this.project = project;
     this.fsState = fsState;

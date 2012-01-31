@@ -1,15 +1,3 @@
-Request to make modules:
-module DecConstructorAccess
-End of request
-digraph X {
-  DecConstructorAccess[label="DecConstructorAccess"];
-}
-digraph X {
-  DecConstructorAccess[label="DecConstructorAccess"];
-}
-Propagated modules:
-module DecConstructorAccess
-End of propagated
 Cleaning output files:
 out/production/DecConstructorAccess/impl/Server.class
 End of files

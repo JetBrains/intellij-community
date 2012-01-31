@@ -16,7 +16,8 @@
 package com.intellij.openapi.projectRoots.ui;
 
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -33,8 +34,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
-import com.intellij.ui.ListUtil;
-import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.HashSet;
@@ -43,12 +43,7 @@ import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -62,10 +57,7 @@ public class PathEditor {
   public static final Color INVALID_COLOR = new Color(210, 0, 0);
 
   protected JPanel myPanel;
-  private JButton myRemoveButton;
-  private JButton myAddButton;
-  private JButton mySpecifyUrlButton;
-  private JList myList;
+  private JBList myList;
   private DefaultListModel myModel;
   private final Set<VirtualFile> myAllFiles = new HashSet<VirtualFile>();
   private boolean myModified = false;
@@ -124,61 +116,68 @@ public class PathEditor {
       addElement(file);
     }
     setModified(false);
-    updateButtons();
   }
 
   public JComponent createComponent() {
-    myPanel = new JPanel(new GridBagLayout());
+    myList = new JBList(getListModel());
+    myList.setCellRenderer(createListCellRenderer(myList));
 
-    myList = createList(myPanel, getListModel());
-
-    createButtons(myPanel);
-
-    return myPanel;
-  }
-
-  protected void createButtons(@NotNull JPanel panel) {
-    Insets anInsets = new Insets(2, 2, 2, 2);
-    myRemoveButton = new JButton(ProjectBundle.message("button.remove"));
-    myAddButton = new JButton(ProjectBundle.message("button.add"));
-    mySpecifyUrlButton = new JButton(ProjectBundle.message("sdk.paths.specify.url.button"));
-
-    mySpecifyUrlButton.setVisible(isShowUrlButton());
-
-    myAddButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
+    ToolbarDecorator toolbarDecorator = ToolbarDecorator.createDecorator(myList).disableUpDownActions();
+    toolbarDecorator.setAddAction(new AnActionButtonRunnable() {
+      @Override
+      public void run(AnActionButton button) {
         final VirtualFile[] added = doAdd();
         if (added.length > 0) {
           setModified(true);
         }
-        updateButtons();
         requestDefaultFocus();
         setSelectedRoots(added);
       }
     });
-    UIUtil.addKeyboardShortcut(myList, myAddButton, CommonShortcuts.getInsertKeystroke());
-    myRemoveButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
+
+    toolbarDecorator.setRemoveAction(new AnActionButtonRunnable() {
+      @Override
+      public void run(AnActionButton button) {
         int[] idxs = myList.getSelectedIndices();
         doRemoveItems(idxs, myList);
       }
     });
-    UIUtil.addKeyboardShortcut(myList, myRemoveButton, KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0));
-    mySpecifyUrlButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        onSpecifyUrlButtonClicked();
+
+    if (isShowUrlButton()) {
+      AnActionButton specifyUrlButton = new AnActionButton(ProjectBundle.message("sdk.paths.specify.url.button"), PlatformIcons.TABLE_URL) {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          onSpecifyUrlButtonClicked();
+        }
+      };
+      specifyUrlButton.setShortcut(CustomShortcutSet.fromString("alt S"));
+      specifyUrlButton.addCustomUpdater(new AnActionButtonUpdater() {
+        @Override
+        public boolean isEnabled(AnActionEvent e) {
+          return myEnabled && !isUrlInserted();
+        }
+      });
+      toolbarDecorator.addExtraAction(specifyUrlButton);
+    }
+
+    myPanel = toolbarDecorator.createPanel();
+    myPanel.setBorder(null);
+
+    ToolbarDecorator.findAddButton(myPanel).addCustomUpdater(new AnActionButtonUpdater() {
+      @Override
+      public boolean isEnabled(AnActionEvent e) {
+        return myEnabled;
+      }
+    });
+    ToolbarDecorator.findRemoveButton(myPanel).addCustomUpdater(new AnActionButtonUpdater() {
+      @Override
+      public boolean isEnabled(AnActionEvent e) {
+        Object[] values = getSelectedRoots();
+        return values.length > 0 && myEnabled;
       }
     });
 
-
-    panel.add(myAddButton,
-              new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, anInsets, 0, 0));
-    panel.add(myRemoveButton,
-              new GridBagConstraints(1, 1, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, anInsets, 0, 0));
-    panel.add(mySpecifyUrlButton,
-              new GridBagConstraints(1, 4, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, anInsets, 0, 0));
-    panel.add(Box.createRigidArea(new Dimension(mySpecifyUrlButton.getPreferredSize().width, 4)),
-              new GridBagConstraints(1, 5, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE, anInsets, 0, 0));
+    return myPanel;
   }
 
   protected void doRemoveItems(int[] idxs, JList list) {
@@ -190,24 +189,6 @@ public class PathEditor {
     return new DefaultListModel();
   }
 
-  protected JBList createList(JPanel panel, DefaultListModel listModel) {
-    Insets anInsets = new Insets(2, 2, 2, 2);
-
-    JBList list = new JBList(listModel);
-    list.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-      public void valueChanged(ListSelectionEvent e) {
-        updateButtons();
-      }
-    });
-    list.setCellRenderer(createListCellRenderer(list));
-
-    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(list);
-    scrollPane.setPreferredSize(new Dimension(500, 500));
-    panel
-      .add(scrollPane, new GridBagConstraints(0, 0, 1, 8, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, anInsets, 0, 0));
-    return list;
-  }
-
   protected ListCellRenderer createListCellRenderer(JBList list) {
     return new MyCellRenderer();
   }
@@ -217,7 +198,6 @@ public class PathEditor {
     if (removedItems.size() > 0) {
       setModified(true);
     }
-    updateButtons();
     requestDefaultFocus();
   }
 
@@ -254,14 +234,6 @@ public class PathEditor {
     return files;
   }
 
-  public void updateButtons() {
-    Object[] values = getSelectedRoots();
-    myRemoveButton.setEnabled((values.length > 0) && myEnabled);
-    myAddButton.setEnabled(myEnabled);
-    mySpecifyUrlButton.setEnabled(myEnabled && !isUrlInserted());
-    mySpecifyUrlButton.setVisible(isShowUrlButton());
-  }
-
   private boolean isUrlInserted() {
     if (getRowCount() > 0) {
       return ((VirtualFile)getListModel().lastElement()).getFileSystem() instanceof HttpFileSystem;
@@ -285,7 +257,6 @@ public class PathEditor {
     }
     if (added) {
       setModified(true);
-      updateButtons();
     }
   }
 

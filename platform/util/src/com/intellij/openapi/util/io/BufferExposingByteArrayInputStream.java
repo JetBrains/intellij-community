@@ -15,17 +15,16 @@
  */
 package com.intellij.openapi.util.io;
 
+import com.intellij.util.io.UnsyncByteArrayInputStream;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.ByteArrayInputStream;
-
-public class BufferExposingByteArrayInputStream extends ByteArrayInputStream {
+public class BufferExposingByteArrayInputStream extends UnsyncByteArrayInputStream {
   public BufferExposingByteArrayInputStream(@NotNull byte[] bytes) {
     super(bytes);
   }
 
   @NotNull
   public byte[] getInternalBuffer() {
-    return buf;
+    return myBuffer;
   }
 }

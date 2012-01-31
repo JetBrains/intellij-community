@@ -15,7 +15,10 @@
  */
 package com.intellij.openapi.vfs.impl.win32;
 
+import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
@@ -27,7 +30,10 @@ import java.util.Map;
  */
 public class Win32Kernel {
   public static final int FILE_ATTRIBUTE_READONLY = 0x0001;
+  public static final int FILE_ATTRIBUTE_HIDDEN = 0x0002;
   public static final int FILE_ATTRIBUTE_DIRECTORY = 0x0010;
+  public static final int FILE_ATTRIBUTE_DEVICE = 0x0040;
+  public static final int FILE_ATTRIBUTE_REPARSE_POINT = 0x0400;
 
   private final IdeaWin32 myKernel = new IdeaWin32();
 
@@ -43,13 +49,12 @@ public class Win32Kernel {
       return ArrayUtil.EMPTY_STRING_ARRAY;
     }
     ArrayList<String> names = new ArrayList<String>(fileInfos.length);
-    for (int i = 0, fileInfosLength = fileInfos.length; i < fileInfosLength; i++) {
-      FileInfo info = fileInfos[i];
+    for (FileInfo info : fileInfos) {
       if (info.name.equals(".")) {
         myCache.put(absolutePath, info);
         continue;
       }
-      else if (info.name.equals("..")) {
+      if (info.name.equals("..")) {
         continue;
       }
       myCache.put(absolutePath + "/" + info.name, info);
@@ -59,8 +64,8 @@ public class Win32Kernel {
     return ArrayUtil.toStringArray(names);
   }
 
-  public void exists(String path) throws FileNotFoundException {
-    getInfo(path);
+  public boolean exists(String path) {
+    return doGetInfo(path) != null;
   }
 
   public boolean isDirectory(String path) throws FileNotFoundException {
@@ -84,14 +89,42 @@ public class Win32Kernel {
   }
 
   private FileInfo getInfo(String path) throws FileNotFoundException {
+    FileInfo info = doGetInfo(path);
+    if (info == null) {
+      throw new FileNotFoundException(path);
+    }
+    return info;
+  }
+
+  @Nullable
+  private FileInfo doGetInfo(String path) {
     FileInfo info = myCache.get(path);
     if (info == null) {
       info = myKernel.getInfo(path.replace('/', '\\'));
       if (info == null) {
-        throw new FileNotFoundException(path);
+        return null;
       }
       myCache.put(path, info);
     }
     return info;
+  }
+
+  @NewVirtualFileSystem.FileBooleanAttributes
+  public int getBooleanAttributes(@NotNull String path, @NewVirtualFileSystem.FileBooleanAttributes int flags) {
+    FileInfo info = doGetInfo(path);
+    int result = 0;
+    if ((flags & NewVirtualFileSystem.BA_EXISTS) != 0) {
+      result |= info == null ? 0 : NewVirtualFileSystem.BA_EXISTS;
+    }
+    if ((flags & NewVirtualFileSystem.BA_DIRECTORY) != 0) {
+      result |= info == null || (info.attributes & FILE_ATTRIBUTE_DIRECTORY) == 0 ? 0 : NewVirtualFileSystem.BA_DIRECTORY;
+    }
+    if ((flags & NewVirtualFileSystem.BA_REGULAR) != 0) {
+      result |= info == null || (info.attributes & (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_DEVICE | FILE_ATTRIBUTE_REPARSE_POINT)) != 0 ? 0 : NewVirtualFileSystem.BA_REGULAR;
+    }
+    if ((flags & NewVirtualFileSystem.BA_HIDDEN) != 0) {
+      result |= info == null || (info.attributes & FILE_ATTRIBUTE_HIDDEN) == 0 ? 0 : NewVirtualFileSystem.BA_HIDDEN;
+    }
+    return result;
   }
 }

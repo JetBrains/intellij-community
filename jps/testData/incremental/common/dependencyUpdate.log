@@ -1,15 +1,3 @@
-Request to make modules:
-module DependencyUpdate
-End of request
-digraph X {
-  DependencyUpdate[label="DependencyUpdate"];
-}
-digraph X {
-  DependencyUpdate[label="DependencyUpdate"];
-}
-Propagated modules:
-module DependencyUpdate
-End of propagated
 Cleaning output files:
 out/production/DependencyUpdate/A.class
 out/production/DependencyUpdate/E.class

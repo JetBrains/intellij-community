@@ -45,36 +45,42 @@ public class EventQueue<E> {
     }
   }
 
-  public void pushBack(@NotNull E event, int priority) {
+  public boolean pushBack(@NotNull E event, int priority) {
     if(LOG.isDebugEnabled()) {
       LOG.debug("pushBack event " + event);
     }
 
     myLock.lock();
     try {
-      assertOpen();
+      if (isClosed()) {
+        return false;
+      }
       getEventsList(priority).addFirst(event);
       myEventsAvailable.signalAll();
     }
     finally {
       myLock.unlock();
     }
+    return true;
   }
 
-  public void put(@NotNull E event, int priority) {
+  public boolean put(@NotNull E event, int priority) {
     if(LOG.isDebugEnabled()) {
       LOG.debug("put event " + event);
     }
 
     myLock.lock();
     try {
-      assertOpen();
+      if (isClosed()) {
+        return false;
+      }
       getEventsList(priority).offer(event);
       myEventsAvailable.signalAll();
     }
     finally {
       myLock.unlock();
     }
+    return true;
   }
 
   private LinkedList<E> getEventsList(final int priority) {
@@ -84,17 +90,12 @@ public class EventQueue<E> {
   public void close(){
     myLock.lock();
     try {
-      assertOpen();
       myIsClosed = true;
       myEventsAvailable.signalAll();
     }
     finally {
       myLock.unlock();
     }
-  }
-
-  private void assertOpen() {
-    if (myIsClosed) throw new AssertionError("Already closed");
   }
 
   private E getEvent() throws EventQueueClosedException {

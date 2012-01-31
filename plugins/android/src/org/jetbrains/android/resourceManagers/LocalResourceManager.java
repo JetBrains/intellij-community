@@ -20,6 +20,7 @@ import com.android.AndroidConstants;
 import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -32,11 +33,15 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.xml.GenericAttributeValue;
 import org.jetbrains.android.AndroidFileTemplateProvider;
 import org.jetbrains.android.AndroidIdIndex;
 import org.jetbrains.android.actions.CreateResourceFileAction;
 import org.jetbrains.android.dom.attrs.AttributeDefinitions;
-import org.jetbrains.android.dom.resources.*;
+import org.jetbrains.android.dom.resources.Attr;
+import org.jetbrains.android.dom.resources.DeclareStyleable;
+import org.jetbrains.android.dom.resources.ResourceElement;
+import org.jetbrains.android.dom.resources.Resources;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.util.AndroidBundle;
@@ -95,10 +100,48 @@ public class LocalResourceManager extends ResourceManager {
     return AndroidRootUtil.getResourceDir(getModule());
   }
 
+  public List<Resources> getResourceElements() {
+    return getResourceElements(getAllResourceFiles());
+  }
+
+  @NotNull
+  private Set<VirtualFile> getAllResourceFiles() {
+    final Set<VirtualFile> files = new HashSet<VirtualFile>();
+
+    for (VirtualFile valueResourceDir : getResourceSubdirs("values")) {
+      for (VirtualFile valueResourceFile : valueResourceDir.getChildren()) {
+        if (!valueResourceFile.isDirectory() && valueResourceFile.getFileType().equals(StdFileTypes.XML)) {
+          files.add(valueResourceFile);
+        }
+      }
+    }
+    return files;
+  }
+
   @NotNull
   @Override
   public VirtualFile[] getResourceOverlayDirs() {
     return AndroidRootUtil.getResourceOverlayDirs(getModule());
+  }
+
+  @NotNull
+  @Override
+  public Collection<String> getValueResourceNames(@NotNull String resourceType) {
+    final List<String> result = new ArrayList<String>();
+    
+    for (ResourceElement element : getValueResources(resourceType)) {
+      final String name = element.getName().getValue();
+      
+      if (name != null) {
+        result.add(name);
+      }
+    }
+    return result;
+  }
+
+  @NotNull
+  public List<ResourceElement> getValueResources(@NotNull final String resourceType) {
+    return getValueResources(resourceType, getAllResourceFiles());
   }
 
   private static void collectResourceDirs(Module module, Set<VirtualFile> result, Set<Module> visited) {
@@ -173,6 +216,21 @@ public class LocalResourceManager extends ResourceManager {
   }
 
   @NotNull
+  @Override
+  public List<ResourceElement> findValueResources(@NotNull String resourceType,
+                                                  @NotNull String resourceName,
+                                                  boolean distinguishDelimetersInName) {
+    List<ResourceElement> elements = new ArrayList<ResourceElement>();
+    for (ResourceElement element : getValueResources(resourceType)) {
+      GenericAttributeValue<String> name = element.getName();
+      if (name != null && equal(resourceName, name.getValue(), distinguishDelimetersInName)) {
+        elements.add(element);
+      }
+    }
+    return elements;
+  }
+
+  @NotNull
   public List<Attr> findAttrs(@NotNull String name) {
     List<Attr> list = new ArrayList<Attr>();
     for (Resources res : getResourceElements()) {
@@ -208,7 +266,8 @@ public class LocalResourceManager extends ResourceManager {
   private VirtualFile findOrCreateResourceFile(@NotNull final String fileName) {
     VirtualFile dir = getResourceDir();
     if (dir == null) {
-      Messages.showErrorDialog(myModule.getProject(), AndroidBundle.message("check.resource.dir.error"), CommonBundle.getErrorTitle());
+      Messages.showErrorDialog(myModule.getProject(), AndroidBundle.message("check.resource.dir.error", myModule.getName()),
+                               CommonBundle.getErrorTitle());
       return null;
     }
     final VirtualFile valuesDir = findOrCreateChildDir(dir, AndroidConstants.FD_RES_VALUES);
@@ -240,7 +299,8 @@ public class LocalResourceManager extends ResourceManager {
     VirtualFile resDir = getResourceDir();
     Project project = myModule.getProject();
     if (resDir == null) {
-      Messages.showErrorDialog(project, AndroidBundle.message("check.resource.dir.error"), CommonBundle.getErrorTitle());
+      Messages
+        .showErrorDialog(project, AndroidBundle.message("check.resource.dir.error", myModule.getName()), CommonBundle.getErrorTitle());
       return null;
     }
     PsiElement[] createdElements = CreateResourceFileAction.createResourceFile(project, resDir, resType, fileOrResourceName);
@@ -269,47 +329,12 @@ public class LocalResourceManager extends ResourceManager {
                                CommonBundle.getErrorTitle());
       return null;
     }
-    ResourceElement element = addValueResource(type, resources);
+    ResourceElement element = AndroidResourceUtil.addValueResource(type, resources);
     element.getName().setValue(name);
     if (value != null) {
       element.setStringValue(value);
     }
     return element;
-  }
-
-  @NotNull
-  private static ResourceElement addValueResource(@NotNull final String type, @NotNull final Resources resources) {
-    if (type.equals("string")) {
-      return resources.addString();
-    }
-    else if (type.equals("dimen")) {
-      return resources.addDimen();
-    }
-    else if (type.equals("color")) {
-      return resources.addColor();
-    }
-    else if (type.equals("drawable")) {
-      return resources.addDrawable();
-    }
-    else if (type.equals("style")) {
-      return resources.addStyle();
-    }
-    else if (type.equals("array")) {
-      // todo: choose among string-array, integer-array and array
-      return resources.addStringArray();
-    }
-    else if (type.equals("integer")) {
-      return resources.addInteger();
-    }
-    else if (type.equals("bool")) {
-      return resources.addBool();
-    }
-    else if (type.equals("id")) {
-      Item item = resources.addItem();
-      item.getType().setValue("id");
-      return item;
-    }
-    throw new IllegalArgumentException("Incorrect resource type");
   }
 
   @Nullable

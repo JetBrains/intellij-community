@@ -143,7 +143,9 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
         RangeMarker rangeMarker = documentWindow.getHostRanges()[0];
         PsiElement element = rangeMarker.isValid() ? hostPsiFile.findElementAt(rangeMarker.getStartOffset()) : null;
         if (element == null) {
-          injected.remove(documentWindow);
+          synchronized (PsiLock.LOCK) {
+            injected.remove(documentWindow);
+          }
           return true;
         }
         final DocumentWindow[] stillInjectedDocument = {null};
@@ -155,12 +157,14 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
             PsiDocumentManagerImpl.checkConsistency(injectedPsi, stillInjectedDocument[0]);
           }
         });
-        if (stillInjectedDocument[0] == null) {
-          injected.remove(documentWindow);
-        }
-        else if (stillInjectedDocument[0] != documentWindow) {
-          injected.remove(documentWindow);
-          injected.add(stillInjectedDocument[0]);
+        synchronized (PsiLock.LOCK) {
+          if (stillInjectedDocument[0] == null) {
+            injected.remove(documentWindow);
+          }
+          else if (stillInjectedDocument[0] != documentWindow) {
+            injected.remove(documentWindow);
+            injected.add(stillInjectedDocument[0]);
+          }
         }
 
         return true;

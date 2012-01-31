@@ -15,9 +15,13 @@
  */
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
+import com.intellij.ide.DataManager;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -32,14 +36,17 @@ import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.roots.libraries.ui.*;
 import com.intellij.openapi.roots.libraries.ui.impl.RootDetectionUtil;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryPresentationManager;
-import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.ui.ex.MultiLineLabel;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.AnActionButton;
+import com.intellij.ui.AnActionButtonRunnable;
+import com.intellij.ui.AnActionButtonUpdater;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -47,14 +54,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.*;
 import java.util.List;
 
@@ -66,11 +69,9 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
   static final UrlComparator ourUrlComparator = new UrlComparator();
 
   private JPanel myPanel;
-  private JButton myRemoveButton;
   private JPanel myTreePanel;
   private MultiLineLabel myPropertiesLabel;
   private JPanel myPropertiesPanel;
-  private JPanel myAttachButtonsPanel;
   private LibraryPropertiesEditor myPropertiesEditor;
   private Tree myTree;
   private LibraryTableTreeBuilder myTreeBuilder;
@@ -120,7 +121,8 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
   public void updatePropertiesLabel() {
     StringBuilder text = new StringBuilder();
     final LibraryType<?> type = getLibraryEditor().getType();
-    final Set<LibraryKind<?>> excluded = type != null ? Collections.<LibraryKind<?>>singleton(type.getKind()) : Collections.<LibraryKind<?>>emptySet();
+    final Set<LibraryKind<?>> excluded =
+      type != null ? Collections.<LibraryKind<?>>singleton(type.getKind()) : Collections.<LibraryKind<?>>emptySet();
     for (String description : LibraryPresentationManager.getInstance().getDescriptions(getLibraryEditor().getFiles(OrderRootType.CLASSES),
                                                                                        excluded)) {
       if (text.length() > 0) {
@@ -137,29 +139,69 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     myTree.setShowsRootHandles(true);
     new LibraryRootsTreeSpeedSearch(myTree);
     myTree.setCellRenderer(new LibraryTreeRenderer());
-    final MyTreeSelectionListener treeSelectionListener = new MyTreeSelectionListener();
-    myTree.getSelectionModel().addTreeSelectionListener(treeSelectionListener);
     myTreeBuilder = new LibraryTableTreeBuilder(myTree, (DefaultTreeModel)myTree.getModel(), treeStructure);
     myTreePanel.setLayout(new BorderLayout());
-    myTreePanel.add(ScrollPaneFactory.createScrollPane(myTree), BorderLayout.CENTER);
 
-    final JPanel buttonsPanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 5, true, false));
+    ToolbarDecorator toolbarDecorator = ToolbarDecorator.createDecorator(myTree).disableUpDownActions().disableAddAction()
+      .setRemoveActionName(ProjectBundle.message("library.detach.action"))
+      .setRemoveAction(new AnActionButtonRunnable() {
+        @Override
+        public void run(AnActionButton button) {
+          final Object[] selectedElements = getSelectedElements();
+          if (selectedElements.length == 0) {
+            return;
+          }
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            public void run() {
+              for (Object selectedElement : selectedElements) {
+                if (selectedElement instanceof ItemElement) {
+                  final ItemElement itemElement = (ItemElement)selectedElement;
+                  getLibraryEditor().removeRoot(itemElement.getUrl(), itemElement.getRootType());
+                }
+              }
+            }
+          });
+          librariesChanged(true);
+        }
+      });
+
     final List<? extends RootDetector> detectors = myDescriptor.getRootDetectors();
-    if (!detectors.isEmpty()) {
-      JButton button = new JButton(ProjectBundle.message("button.text.attach.files"));
-      button.addActionListener(new AttachFilesListener(detectors));
-      buttonsPanel.add(button);
-    }
-    for (AttachRootButtonDescriptor descriptor : myDescriptor.createAttachButtons()) {
-      JButton button = new JButton(descriptor.getButtonText());
-      button.addActionListener(new AttachItemAction(descriptor));
-      buttonsPanel.add(button);
-    }
-    myAttachButtonsPanel.add(buttonsPanel, BorderLayout.CENTER);
+    toolbarDecorator.setAddAction(new AnActionButtonRunnable() {
+      @Override
+      public void run(AnActionButton button) {
+        final AnAction[] children = getActions();
+        if (children.length == 0) return;
+        final DefaultActionGroup actions = new DefaultActionGroup(children);
+        JBPopupFactory.getInstance().createActionGroupPopup(null, actions,
+                                                            DataManager.getInstance().getDataContext(button.getContextComponent()),
+                                                            JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true)
+          .show(button.getPreferredPopupPoint());
+      }
 
-    myRemoveButton.addActionListener(new RemoveAction());
+      private AnAction[] getActions() {
+        List<AnAction> actions = new ArrayList<AnAction>();
+        if (!detectors.isEmpty()) {
+          actions.add(new AttachFilesAction(detectors, ProjectBundle.message("button.text.attach.files")));
+        }
+        for (AttachRootButtonDescriptor descriptor : myDescriptor.createAttachButtons()) {
+          actions.add(new AttachItemAction(descriptor, descriptor.getButtonText()));
+        }
+        return actions.toArray(new AnAction[actions.size()]);
+      }
+    });
 
-    treeSelectionListener.updateButtons();
+
+
+    myTreePanel.add(toolbarDecorator.createPanel(), BorderLayout.CENTER);
+    ToolbarDecorator.findRemoveButton(myTreePanel).addCustomUpdater(new AnActionButtonUpdater() {
+      @Override
+      public boolean isEnabled(AnActionEvent e) {
+        final Object[] selectedElements = getSelectedElements();
+        final Class<?> elementsClass = getElementsClass(selectedElements);
+        return elementsClass != null && !elementsClass.isAssignableFrom(OrderRootTypeElement.class);
+      }
+    });
+
     Disposer.register(this, myTreeBuilder);
   }
 
@@ -247,7 +289,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
       return null;
     }
     final Object userObject = lastPathComponent.getUserObject();
-    if (!(userObject instanceof NodeDescriptor))  {
+    if (!(userObject instanceof NodeDescriptor)) {
       return null;
     }
     final Object element = ((NodeDescriptor)userObject).getElement();
@@ -290,10 +332,11 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     }
   }
 
-  private class AttachFilesListener extends AttachItemActionBase {
+  private class AttachFilesAction extends AttachItemActionBase {
     private final List<? extends RootDetector> myDetectors;
 
-    public AttachFilesListener(List<? extends RootDetector> detectors) {
+    public AttachFilesAction(List<? extends RootDetector> detectors, String title) {
+      super(title);
       myDetectors = detectors;
     }
 
@@ -314,8 +357,12 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     }
   }
 
-  public abstract class AttachItemActionBase implements ActionListener {
+  public abstract class AttachItemActionBase extends AnAction {
     private VirtualFile myLastChosen = null;
+
+    protected AttachItemActionBase(String text) {
+      super(text);
+    }
 
     @Nullable
     protected VirtualFile getFileToSelect() {
@@ -330,7 +377,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
       return getBaseDirectory();
     }
 
-    public final void actionPerformed(ActionEvent e) {
+    public void actionPerformed(@Nullable AnActionEvent e) {
       VirtualFile toSelect = getFileToSelect();
       List<OrderRoot> roots = selectRoots(toSelect);
       if (roots.isEmpty()) return;
@@ -350,7 +397,8 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
   private class AttachItemAction extends AttachItemActionBase {
     private final AttachRootButtonDescriptor myDescriptor;
 
-    protected AttachItemAction(AttachRootButtonDescriptor descriptor) {
+    protected AttachItemAction(AttachRootButtonDescriptor descriptor, String title) {
+      super(title);
       myDescriptor = descriptor;
     }
 
@@ -392,26 +440,6 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     return result;
   }
 
-  private class RemoveAction implements ActionListener {
-    public void actionPerformed(ActionEvent e) {
-      final Object[] selectedElements = getSelectedElements();
-      if (selectedElements.length == 0) {
-        return;
-      }
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        public void run() {
-          for (Object selectedElement : selectedElements) {
-            if (selectedElement instanceof ItemElement) {
-              final ItemElement itemElement = (ItemElement)selectedElement;
-              getLibraryEditor().removeRoot(itemElement.getUrl(), itemElement.getRootType());
-            }
-          }
-        }
-      });
-      librariesChanged(true);
-    }
-  }
-
   private void librariesChanged(boolean putFocusIntoTree) {
     updatePropertiesLabel();
     myTreeBuilder.queueUpdate();
@@ -436,34 +464,22 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     myListeners.remove(listener);
   }
 
-  private class MyTreeSelectionListener implements TreeSelectionListener {
-    public void valueChanged(TreeSelectionEvent e) {
-      updateButtons();
+  @Nullable
+  private static Class<?> getElementsClass(Object[] elements) {
+    if (elements.length == 0) {
+      return null;
     }
-
-    public void updateButtons() {
-      final Object[] selectedElements = getSelectedElements();
-      final Class<?> elementsClass = getElementsClass(selectedElements);
-      myRemoveButton.setEnabled(elementsClass != null && !elementsClass.isAssignableFrom(OrderRootTypeElement.class));
-    }
-
-    @Nullable
-    private Class<?> getElementsClass(Object[] elements) {
-      if (elements.length == 0) {
-        return null;
+    Class<?> cls = null;
+    for (Object element : elements) {
+      if (cls == null) {
+        cls = element.getClass();
       }
-      Class<?> cls = null;
-      for (Object element : elements) {
-        if (cls == null) {
-          cls = element.getClass();
-        }
-        else {
-          if (!cls.equals(element.getClass())) {
-            return null;
-          }
+      else {
+        if (!cls.equals(element.getClass())) {
+          return null;
         }
       }
-      return cls;
     }
+    return cls;
   }
 }

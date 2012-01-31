@@ -236,6 +236,10 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
 
   @Nullable
   private PsiType getNominalType() {
+    if (PsiImplUtil.isMainMethod(this)) {
+      return PsiType.VOID;
+    }
+
     final GrTypeElement element = getReturnTypeElementGroovy();
     if (element != null) {
       return element.getType();

@@ -111,7 +111,17 @@ public class StartupUtil {
     }
 
     if (activateStatus != SocketLock.ActivateStatus.NO_INSTANCE) {
-      showError("Error", "Only one instance of " + ApplicationNamesInfo.getInstance().getFullProductName() + " can be run at a time.");
+      if (isHeadless()) { //team server inspections
+        System.out.println("Only one instance of " + ApplicationNamesInfo.getInstance().getFullProductName() + " can be run at a time.");
+        return false;
+      }
+      if (activateStatus == SocketLock.ActivateStatus.CANNOT_ACTIVATE) {
+        JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
+                                      "Only one instance of " + ApplicationNamesInfo.getInstance().getFullProductName() +
+                                      " can be run at a time.",
+                                      "Error",
+                                      JOptionPane.INFORMATION_MESSAGE);
+      }
       return false;
     }
 

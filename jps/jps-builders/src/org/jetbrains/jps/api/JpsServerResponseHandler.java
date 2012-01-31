@@ -7,7 +7,7 @@ import org.jetbrains.jps.client.ProtobufResponseHandler;
  * @author Eugene Zhuravlev
  *         Date: 8/15/11
  */
-public class JpsServerResponseHandler implements ProtobufResponseHandler {
+public abstract class JpsServerResponseHandler implements ProtobufResponseHandler {
 
   public final boolean handleMessage(MessageLite msg) throws Exception {
     final JpsRemoteProto.Message message = (JpsRemoteProto.Message)msg;
@@ -40,15 +40,11 @@ public class JpsServerResponseHandler implements ProtobufResponseHandler {
    * @param event
    * @return true if session should be terminated, false otherwise
    */
-  public boolean handleBuildEvent(JpsRemoteProto.Message.Response.BuildEvent event) {
-    return false;
-  }
+  public abstract boolean handleBuildEvent(JpsRemoteProto.Message.Response.BuildEvent event);
 
-  public void handleCompileMessage(JpsRemoteProto.Message.Response.CompileMessage compileResponse) {
-  }
+  public abstract void handleCompileMessage(JpsRemoteProto.Message.Response.CompileMessage compileResponse);
 
-  public void handleFailure(JpsRemoteProto.Message.Failure failure) {
-  }
+  public abstract void handleFailure(JpsRemoteProto.Message.Failure failure);
 
   public void sessionTerminated() {
   }

@@ -1,15 +1,3 @@
-Request to make modules:
-module ThrowsListDiffersInBaseAndDerived
-End of request
-digraph X {
-  ThrowsListDiffersInBaseAndDerived[label="ThrowsListDiffersInBaseAndDerived"];
-}
-digraph X {
-  ThrowsListDiffersInBaseAndDerived[label="ThrowsListDiffersInBaseAndDerived"];
-}
-Propagated modules:
-module ThrowsListDiffersInBaseAndDerived
-End of propagated
 Cleaning output files:
 out/production/ThrowsListDiffersInBaseAndDerived/BaseServer.class
 End of files

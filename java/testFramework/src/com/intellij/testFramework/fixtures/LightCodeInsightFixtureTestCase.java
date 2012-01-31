@@ -24,10 +24,7 @@ import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.testFramework.IdeaTestCase;
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -53,6 +50,11 @@ public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase{
   @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
   protected LightCodeInsightFixtureTestCase() {
     IdeaTestCase.initPlatformPrefix();
+  }
+
+  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
+  public LightCodeInsightFixtureTestCase(String classToTest, String prefix) {
+    PlatformTestCase.initPlatformPrefix(classToTest, prefix);
   }
 
   @Override

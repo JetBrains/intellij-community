@@ -122,7 +122,7 @@ public class GroovyHotSwapper extends JavaProgramPatcher {
       }
     }
 
-    if (containsGroovyClasses(project)) {
+    if (!project.isDefault() && containsGroovyClasses(project)) {
       final String agentPath = handleSpacesInPath(getAgentJarPath());
       if (agentPath != null) {
         javaParameters.getVMParametersList().add("-javaagent:" + agentPath);

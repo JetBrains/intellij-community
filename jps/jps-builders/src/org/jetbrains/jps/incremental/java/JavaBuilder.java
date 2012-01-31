@@ -3,6 +3,7 @@ package org.jetbrains.jps.incremental.java;
 import com.intellij.compiler.notNullVerification.NotNullVerifyingInstrumenter;
 import com.intellij.execution.process.BaseOSProcessHandler;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
@@ -49,11 +50,13 @@ import java.util.concurrent.ExecutorService;
  * @author Eugene Zhuravlev
  *         Date: 9/21/11
  */
-public class JavaBuilder extends Builder{
+public class JavaBuilder extends ModuleLevelBuilder {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.java.JavaBuilder");
+
   public static final String BUILDER_NAME = "java";
   private static final String JAVA_EXTENSION = ".java";
   private static final String FORM_EXTENSION = ".form";
-  private static final boolean USE_EMBEDDED_JAVAC = System.getProperty(GlobalOptions.USE_EXTERNAL_JAVAC_OPTION) == null;
+  public static final boolean USE_EMBEDDED_JAVAC = System.getProperty(GlobalOptions.USE_EXTERNAL_JAVAC_OPTION) == null;
 
   private static final FileFilter JAVA_SOURCES_FILTER = new FileFilter() {
     public boolean accept(File file) {
@@ -126,13 +129,13 @@ public class JavaBuilder extends Builder{
 
   public ExitCode build(final CompileContext context, final ModuleChunk chunk) throws ProjectBuildException {
     try {
-      final Map<File, Module> filesToCompile = new HashMap<File, Module>();
-      final List<File> formsToCompile = new ArrayList<File>();
+      final Set<File> filesToCompile = new HashSet<File>();
+      final Set<File> formsToCompile = new HashSet<File>();
 
       context.processFilesToRecompile(chunk, new FileProcessor() {
         public boolean apply(Module module, File file, String sourceRoot) throws Exception {
           if (JAVA_SOURCES_FILTER.accept(file)) {
-            filesToCompile.put(file, module);
+            filesToCompile.add(file);
           }
           else if (FORM_SOURCES_FILTER.accept(file)) {
             formsToCompile.add(file);
@@ -142,37 +145,53 @@ public class JavaBuilder extends Builder{
       });
 
       // force compilation of bound source file if the form is dirty
-      for (File form : formsToCompile) {
-        final RootDescriptor descriptor = context.getModuleAndRoot(form);
-        if (descriptor != null) {
-          for (RootDescriptor rd : context.getModuleRoots(descriptor.module)) {
-            final File boundSource = getBoundSource(rd.root, form);
-            if (boundSource != null) {
-              filesToCompile.put(boundSource, rd.module);
-              break;
+      if (!context.isProjectRebuild()) {
+        for (File form : formsToCompile) {
+          final RootDescriptor descriptor = context.getModuleAndRoot(form);
+          if (descriptor != null) {
+            for (RootDescriptor rd : context.getModuleRoots(descriptor.module)) {
+              final File boundSource = getBoundSource(rd.root, form);
+              if (boundSource != null) {
+                filesToCompile.add(boundSource);
+                break;
+              }
             }
           }
         }
-      }
 
-      // form should be considered dirty if the class it is bound to is dirty
-      final SourceToFormMapping sourceToFormMap = context.getDataManager().getSourceToFormMap();
-      for (File srcFile : filesToCompile.keySet()) {
-        final String srcPath = srcFile.getPath();
-        final String formPath = sourceToFormMap.getState(srcPath);
-        if (formPath != null) {
-          final File formFile = new File(formPath);
-          if (formFile.exists()) {
-            context.markDirty(formFile);
-            formsToCompile.add(formFile);
+        // form should be considered dirty if the class it is bound to is dirty
+        final SourceToFormMapping sourceToFormMap = context.getDataManager().getSourceToFormMap();
+        for (File srcFile : filesToCompile) {
+          final String srcPath = srcFile.getPath();
+          final String formPath = sourceToFormMap.getState(srcPath);
+          if (formPath != null) {
+            final File formFile = new File(formPath);
+            if (formFile.exists()) {
+              context.markDirty(formFile);
+              formsToCompile.add(formFile);
+            }
+            sourceToFormMap.remove(srcPath);
           }
-          sourceToFormMap.remove(srcPath);
         }
       }
 
-      deleteCorrespondingOutputFiles(context, filesToCompile);
+      if (LOG.isDebugEnabled()) {
+        if (filesToCompile.size() > 0 && context.isMake()) {
+          LOG.info("Compiling files:");
+          final String[] buffer = new String[filesToCompile.size()];
+          int i = 0;
+          for (final File f : filesToCompile) {
+            buffer[i++] = FileUtil.toSystemIndependentName(f.getCanonicalPath());
+          }
+          Arrays.sort(buffer);
+          for (final String s : buffer) {
+            LOG.info(s);
+          }
+          LOG.info("End of files");
+        }
+      }
 
-      return compile(context, chunk, filesToCompile.keySet(), formsToCompile);
+      return compile(context, chunk, filesToCompile, formsToCompile);
     }
     catch (ProjectBuildException e) {
       throw e;
@@ -199,7 +218,7 @@ public class JavaBuilder extends Builder{
     while (true) {
       final File candidate = new File(srcRoot, relPath);
       if (candidate.exists()) {
-        return candidate.isFile()? candidate : null;
+        return candidate.isFile() ? candidate : null;
       }
       final int index = relPath.lastIndexOf('/');
       if (index <= 0) {
@@ -209,7 +228,8 @@ public class JavaBuilder extends Builder{
     }
   }
 
-  private ExitCode compile(final CompileContext context, ModuleChunk chunk, Collection<File> files, Collection<File> forms) throws Exception {
+  private ExitCode compile(final CompileContext context, ModuleChunk chunk, Collection<File> files, Collection<File> forms)
+    throws Exception {
     ExitCode exitCode = ExitCode.OK;
 
     final boolean hasSourcesToCompile = !files.isEmpty() || !forms.isEmpty();
@@ -222,8 +242,10 @@ public class JavaBuilder extends Builder{
 
     final boolean addNotNullAssertions = context.getProject().getCompilerConfiguration().isAddNotNullAssertions();
 
-    final Collection<File> classpath = paths.getCompilationClasspath(chunk, context.isCompilingTests(), false/*context.isProjectRebuild()*/);
-    final Collection<File> platformCp = paths.getPlatformCompilationClasspath(chunk, context.isCompilingTests(), false/*context.isProjectRebuild()*/);
+    final Collection<File> classpath =
+      paths.getCompilationClasspath(chunk, context.isCompilingTests(), false/*context.isProjectRebuild()*/);
+    final Collection<File> platformCp =
+      paths.getPlatformCompilationClasspath(chunk, context.isCompilingTests(), false/*context.isProjectRebuild()*/);
     final Map<File, Set<File>> outs = buildOutputDirectoriesMap(context, chunk);
 
     // begin compilation round
@@ -233,11 +255,9 @@ public class JavaBuilder extends Builder{
     DELTA_MAPPINGS_CALLBACK_KEY.set(context, delta.getCallback());
     try {
       if (hasSourcesToCompile) {
-        final Set<File> sourcePath = TEMPORARY_SOURCE_ROOTS_KEY.get(context,Collections.<File>emptySet());
+        final Set<File> sourcePath = TEMPORARY_SOURCE_ROOTS_KEY.get(context, Collections.<File>emptySet());
 
-        final boolean compiledOk = compileJava(
-          files, classpath, platformCp, sourcePath, outs, context, diagnosticSink, outputSink
-        );
+        final boolean compiledOk = compileJava(files, classpath, platformCp, sourcePath, outs, context, diagnosticSink, outputSink);
 
         final Map<File, String> chunkSourcePath = ProjectPaths.getSourceRootsWithDependents(chunk, context.isCompilingTests());
         final ClassLoader compiledClassesLoader = createInstrumentationClassLoader(classpath, platformCp, chunkSourcePath, outputSink);
@@ -266,7 +286,8 @@ public class JavaBuilder extends Builder{
           throw new ProjectBuildException("Compilation failed: internal java compiler error");
         }
         if (diagnosticSink.getErrorCount() > 0) {
-          throw new ProjectBuildException("Compilation failed: errors: " + diagnosticSink.getErrorCount() + "; warnings: " + diagnosticSink.getWarningCount());
+          throw new ProjectBuildException(
+            "Compilation failed: errors: " + diagnosticSink.getErrorCount() + "; warnings: " + diagnosticSink.getWarningCount());
         }
       }
     }
@@ -284,26 +305,33 @@ public class JavaBuilder extends Builder{
     if (exitCode != ExitCode.ADDITIONAL_PASS_REQUIRED) {
       final Set<File> tempRoots = TEMPORARY_SOURCE_ROOTS_KEY.get(context);
       TEMPORARY_SOURCE_ROOTS_KEY.set(context, null);
-      if (tempRoots != null) {
-        for (File root : tempRoots) {
-          FileUtil.delete(root);
-        }
+      if (tempRoots != null && tempRoots.size() > 0) {
+        FileUtil.asyncDelete(tempRoots);
       }
     }
     return exitCode;
   }
 
-  private boolean compileJava(Collection<File> files, Collection<File> classpath, Collection<File> platformCp, Collection<File> sourcePath, Map<File, Set<File>> outs, CompileContext context, DiagnosticOutputConsumer diagnosticSink, final OutputFileConsumer outputSink) throws Exception {
+  private boolean compileJava(Collection<File> files,
+                              Collection<File> classpath,
+                              Collection<File> platformCp,
+                              Collection<File> sourcePath,
+                              Map<File, Set<File>> outs,
+                              CompileContext context,
+                              DiagnosticOutputConsumer diagnosticSink,
+                              final OutputFileConsumer outputSink) throws Exception {
     final List<String> options = getCompilationOptions(context);
     final ClassProcessingConsumer classesConsumer = new ClassProcessingConsumer(context, outputSink);
     try {
       final boolean rc;
       if (USE_EMBEDDED_JAVAC) {
-        rc = JavacMain.compile(options, files, classpath, platformCp, sourcePath, outs, diagnosticSink, classesConsumer, context.getCancelStatus());
+        rc = JavacMain
+          .compile(options, files, classpath, platformCp, sourcePath, outs, diagnosticSink, classesConsumer, context.getCancelStatus());
       }
       else {
         final JavacServerClient client = ensureJavacServerLaunched(context);
-        final RequestFuture<JavacServerResponseHandler> future = client.sendCompileRequest(options, files, classpath, platformCp, sourcePath, outs, diagnosticSink, classesConsumer);
+        final RequestFuture<JavacServerResponseHandler> future =
+          client.sendCompileRequest(options, files, classpath, platformCp, sourcePath, outs, diagnosticSink, classesConsumer);
         try {
           future.get();
         }
@@ -333,7 +361,8 @@ public class JavaBuilder extends Builder{
     final int port = findFreePort();
     final int heapSize = getJavacServerHeapSize(context);
 
-    final BaseOSProcessHandler processHandler = JavacServerBootstrap.launchJavacServer(vmExecPath, heapSize, port, Paths.getSystemRoot());
+    final BaseOSProcessHandler processHandler =
+      JavacServerBootstrap.launchJavacServer(vmExecPath, heapSize, port, Paths.getSystemRoot(), getCompilationVMOptions(context));
     final JavacServerClient client = new JavacServerClient();
     try {
       client.connect(hostString, port);
@@ -355,7 +384,7 @@ public class JavaBuilder extends Builder{
       finally {
         //workaround for linux : calling close() immediately after opening socket
         //may result that socket is not closed
-        synchronized(serverSocket) {
+        synchronized (serverSocket) {
           try {
             serverSocket.wait(1);
           }
@@ -386,8 +415,10 @@ public class JavaBuilder extends Builder{
     return heapSize;
   }
 
-  private static ClassLoader createInstrumentationClassLoader(Collection<File> classpath, Collection<File> platformCp, Map<File, String> chunkSourcePath, OutputFilesSink outputSink)
-    throws MalformedURLException {
+  private static ClassLoader createInstrumentationClassLoader(Collection<File> classpath,
+                                                              Collection<File> platformCp,
+                                                              Map<File, String> chunkSourcePath,
+                                                              OutputFilesSink outputSink) throws MalformedURLException {
     final List<URL> urls = new ArrayList<URL>();
     for (Collection<File> cp : Arrays.asList(platformCp, classpath)) {
       for (File file : cp) {
@@ -402,8 +433,31 @@ public class JavaBuilder extends Builder{
     return new CompiledClassesLoader(outputSink, urls.toArray(new URL[urls.size()]));
   }
 
+  private static final Key<List<String>> JAVAC_OPTIONS = Key.create("_javac_options_");
+  private static final Key<List<String>> JAVAC_VM_OPTIONS = Key.create("_javac_vm_options_");
+
+  private static List<String> getCompilationVMOptions(CompileContext context) {
+    List<String> cached = JAVAC_VM_OPTIONS.get(context);
+    if (cached == null) {
+      loadJavacOptions(context);
+      cached = JAVAC_VM_OPTIONS.get(context);
+    }
+    return cached;
+  }
+
   private static List<String> getCompilationOptions(CompileContext context) {
+    List<String> cached = JAVAC_OPTIONS.get(context);
+    if (cached == null) {
+      loadJavacOptions(context);
+      cached = JAVAC_OPTIONS.get(context);
+    }
+    return cached;
+  }
+
+  private static void loadJavacOptions(CompileContext context) {
     final List<String> options = new ArrayList<String>();
+    final List<String> vmOptions = new ArrayList<String>();
+
     options.add("-verbose");
 
     final Project project = context.getProject();
@@ -425,12 +479,17 @@ public class JavaBuilder extends Builder{
     boolean isEncodingSet = false;
     if (customArgs != null) {
       final StringTokenizer tokenizer = new StringTokenizer(customArgs, " \t\r\n");
-      while(tokenizer.hasMoreTokens()) {
+      while (tokenizer.hasMoreTokens()) {
         final String token = tokenizer.nextToken();
-        if ("-g".equals(token) || "-deprecation".equals(token) || "-nowarn".equals(token) || "-verbose".equals(token)){
+        if ("-g".equals(token) || "-deprecation".equals(token) || "-nowarn".equals(token) || "-verbose".equals(token)) {
           continue;
         }
-        options.add(token);
+        if (token.startsWith("-J-")) {
+          vmOptions.add(token.substring("-J".length()));
+        }
+        else {
+          options.add(token);
+        }
         if ("-encoding".equals(token)) {
           isEncodingSet = true;
         }
@@ -441,7 +500,9 @@ public class JavaBuilder extends Builder{
       options.add("-encoding");
       options.add(project.getProjectCharset());
     }
-    return options;
+
+    JAVAC_OPTIONS.set(context, options);
+    JAVAC_VM_OPTIONS.set(context, vmOptions);
   }
 
   private static Map<File, Set<File>> buildOutputDirectoriesMap(CompileContext context, ModuleChunk chunk) {
@@ -504,13 +565,12 @@ public class JavaBuilder extends Builder{
     }
   }
 
-  private static void instrumentForms(
-    CompileContext context,
-    ModuleChunk chunk,
-    final Map<File, String> chunkSourcePath,
-    final ClassLoader loader,
-    Collection<File> formsToInstrument,
-    OutputFilesSink outputSink) throws ProjectBuildException {
+  private static void instrumentForms(CompileContext context,
+                                      ModuleChunk chunk,
+                                      final Map<File, String> chunkSourcePath,
+                                      final ClassLoader loader,
+                                      Collection<File> formsToInstrument,
+                                      OutputFilesSink outputSink) throws ProjectBuildException {
 
     final Map<String, File> class2form = new HashMap<String, File>();
     final SourceToFormMapping sourceToFormMap = context.getDataManager().getSourceToFormMap();
@@ -520,9 +580,8 @@ public class JavaBuilder extends Builder{
       compiledClassNames.put(fileObject.getClassName(), fileObject);
     }
 
-    final MyNestedFormLoader nestedFormsLoader = new MyNestedFormLoader(
-      chunkSourcePath, ProjectPaths.getOutputPathsWithDependents(chunk, context.isCompilingTests())
-    );
+    final MyNestedFormLoader nestedFormsLoader =
+      new MyNestedFormLoader(chunkSourcePath, ProjectPaths.getOutputPathsWithDependents(chunk, context.isCompilingTests()));
 
     for (File formFile : formsToInstrument) {
       final LwRootContainer rootContainer;
@@ -544,17 +603,20 @@ public class JavaBuilder extends Builder{
 
       final OutputFileObject outputClassFile = findClassFile(compiledClassNames, classToBind);
       if (outputClassFile == null) {
-        context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.WARNING, "Class to bind does not exist: " + classToBind, formFile.getAbsolutePath()));
+        context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.WARNING, "Class to bind does not exist: " + classToBind,
+                                                   formFile.getAbsolutePath()));
         continue;
       }
 
       final File alreadyProcessedForm = class2form.get(classToBind);
       if (alreadyProcessedForm != null) {
-        context.processMessage(new CompilerMessage(
-          BUILDER_NAME, BuildMessage.Kind.WARNING,
-          formFile.getAbsolutePath() + ": The form is bound to the class " + classToBind + ".\nAnother form " + alreadyProcessedForm.getAbsolutePath() + " is also bound to this class",
-          formFile.getAbsolutePath())
-        );
+        context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.WARNING, formFile.getAbsolutePath() +
+                                                                                            ": The form is bound to the class " +
+                                                                                            classToBind +
+                                                                                            ".\nAnother form " +
+                                                                                            alreadyProcessedForm.getAbsolutePath() +
+                                                                                            " is also bound to this class",
+                                                   formFile.getAbsolutePath()));
         continue;
       }
 
@@ -563,7 +625,8 @@ public class JavaBuilder extends Builder{
       boolean success = true;
       try {
         final OutputFileObject.Content originalContent = outputClassFile.getContent();
-        final ClassReader classReader = new ClassReader(originalContent.getBuffer(), originalContent.getOffset(), originalContent.getLength());
+        final ClassReader classReader =
+          new ClassReader(originalContent.getBuffer(), originalContent.getOffset(), originalContent.getLength());
 
         final int version = getClassFileVersion(classReader);
         final InstrumenterClassWriter classWriter = new InstrumenterClassWriter(getAsmClassWriterFlags(version), loader);
@@ -575,7 +638,8 @@ public class JavaBuilder extends Builder{
 
         final FormErrorInfo[] warnings = codeGenerator.getWarnings();
         for (final FormErrorInfo warning : warnings) {
-          context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.WARNING, warning.getErrorMessage(), formFile.getAbsolutePath()));
+          context.processMessage(
+            new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.WARNING, warning.getErrorMessage(), formFile.getAbsolutePath()));
         }
 
         final FormErrorInfo[] errors = codeGenerator.getErrors();
@@ -599,7 +663,8 @@ public class JavaBuilder extends Builder{
       }
       catch (Exception e) {
         success = false;
-        context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "Forms instrumentation failed" + e.getMessage(), formFile.getAbsolutePath()));
+        context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "Forms instrumentation failed" + e.getMessage(),
+                                                   formFile.getAbsolutePath()));
       }
       finally {
         if (!success) {
@@ -683,13 +748,12 @@ public class JavaBuilder extends Builder{
           kind = BuildMessage.Kind.INFO;
       }
       final JavaFileObject source = diagnostic.getSource();
-      final File sourceFile = source != null? Paths.convertToFile(source.toUri()) : null;
-      final String srcPath = sourceFile != null? FileUtil.toSystemIndependentName(sourceFile.getPath()) : null;
-      myContext.processMessage(new CompilerMessage(
-        BUILDER_NAME, kind, diagnostic.getMessage(Locale.US), srcPath,
-        diagnostic.getStartPosition(), diagnostic.getEndPosition(), diagnostic.getPosition(),
-        diagnostic.getLineNumber(), diagnostic.getColumnNumber()
-      ));
+      final File sourceFile = source != null ? Paths.convertToFile(source.toUri()) : null;
+      final String srcPath = sourceFile != null ? FileUtil.toSystemIndependentName(sourceFile.getPath()) : null;
+      myContext.processMessage(
+        new CompilerMessage(BUILDER_NAME, kind, diagnostic.getMessage(Locale.US), srcPath, diagnostic.getStartPosition(),
+                            diagnostic.getEndPosition(), diagnostic.getPosition(), diagnostic.getLineNumber(),
+                            diagnostic.getColumnNumber()));
     }
 
     public int getErrorCount() {
@@ -732,7 +796,7 @@ public class JavaBuilder extends Builder{
     public OutputFileObject.Content lookupClassBytes(String className) {
       synchronized (myCompiledClasses) {
         final OutputFileObject object = myCompiledClasses.get(className);
-        return object != null? object.getContent() : null;
+        return object != null ? object.getContent() : null;
       }
     }
 
@@ -949,7 +1013,7 @@ public class JavaBuilder extends Builder{
 
     public ClassProcessingConsumer(CompileContext compileContext, OutputFileConsumer sink) {
       myCompileContext = compileContext;
-      myDelegateOutputFileSink = sink != null? sink : new OutputFileConsumer() {
+      myDelegateOutputFileSink = sink != null ? sink : new OutputFileConsumer() {
         public void save(@NotNull OutputFileObject fileObject) {
           throw new RuntimeException("Output sink for compiler was not specified");
         }

@@ -496,7 +496,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   @NotNull
   public List<IntentionAction> getAllQuickFixes(@NonNls final String... filePaths) {
-    configureByFilesInner(filePaths);
+    if (filePaths.length != 0) {
+      configureByFilesInner(filePaths);
+    }
     List<HighlightInfo> infos = doHighlighting();
     ArrayList<IntentionAction> actions = new ArrayList<IntentionAction>();
     for (HighlightInfo info : infos) {
@@ -1382,7 +1384,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     ensureIndexesUpToDate(project);
     DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project);
     TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(editor);
-    return codeAnalyzer.runPasses(file, editor.getDocument(), textEditor, toIgnore, canChangeDocument, null);
+    List<HighlightInfo> infos = codeAnalyzer.runPasses(file, editor.getDocument(), textEditor, toIgnore, canChangeDocument, null);
+    infos.addAll(DaemonCodeAnalyzerImpl.getFileLevelHighlights(project, file));
+    return infos;
   }
 
   public static void ensureIndexesUpToDate(Project project) {

@@ -30,7 +30,7 @@ public interface DockContainer extends Disposable, Activatable {
   RelativeRectangle getAcceptArea();
   boolean canAccept(DockableContent content, RelativePoint point);
 
-  JComponent getComponent();
+  JComponent getContainerComponent();
 
   void add(DockableContent content, RelativePoint dropTarget);
 
@@ -50,6 +50,8 @@ public interface DockContainer extends Disposable, Activatable {
 
 
   boolean isDisposeWhenEmpty();
+
+  interface Dialog extends DockContainer {}
 
   interface Persistent extends DockContainer {
 

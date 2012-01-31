@@ -29,10 +29,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.indexing.*;
-import com.intellij.util.io.DataExternalizer;
-import com.intellij.util.io.EnumDataDescriptor;
-import com.intellij.util.io.EnumeratorStringDescriptor;
-import com.intellij.util.io.KeyDescriptor;
+import com.intellij.util.io.*;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.xml.NanoXmlUtil;
 import org.intellij.lang.xpath.xslt.XsltSupport;
@@ -41,7 +38,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.ByteArrayInputStream;
 import java.util.*;
 
 /*
@@ -94,7 +90,7 @@ public class XsltSymbolIndex extends FileBasedIndexExtension<String, XsltSymbolI
                   return Collections.emptyMap();
                 }
                 final HashMap<String, Kind> map = new HashMap<String, Kind>();
-                NanoXmlUtil.parse(new ByteArrayInputStream(inputData.getContent()), new NanoXmlUtil.IXMLBuilderAdapter() {
+                NanoXmlUtil.parse(new UnsyncByteArrayInputStream(inputData.getContent()), new NanoXmlUtil.IXMLBuilderAdapter() {
                     NanoXmlUtil.IXMLBuilderAdapter attributeHandler;
                     int depth;
 

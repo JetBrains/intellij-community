@@ -1,15 +1,3 @@
-Request to make modules:
-module UnsetStaticFinal
-End of request
-digraph X {
-  UnsetStaticFinal[label="UnsetStaticFinal"];
-}
-digraph X {
-  UnsetStaticFinal[label="UnsetStaticFinal"];
-}
-Propagated modules:
-module UnsetStaticFinal
-End of propagated
 Cleaning output files:
 out/production/UnsetStaticFinal/Server.class
 End of files

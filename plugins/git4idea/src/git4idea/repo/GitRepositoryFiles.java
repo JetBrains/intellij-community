@@ -77,6 +77,16 @@ public class GitRepositoryFiles {
   static Collection<String> getSubDirRelativePaths() {
     return Arrays.asList(REFS_HEADS, REFS_REMOTES, INFO);
   }
+  
+  @NotNull
+  String getRefsHeadsPath() {
+    return myRefsHeadsDirPath;
+  }
+  
+  @NotNull
+  String getRefsRemotesPath() {
+    return myRefsRemotesDirPath;
+  }
 
   /**
    * {@code .git/config}

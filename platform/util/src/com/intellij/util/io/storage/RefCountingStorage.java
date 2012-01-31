@@ -25,8 +25,8 @@ import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.io.PagePool;
+import com.intellij.util.io.UnsyncByteArrayInputStream;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
@@ -58,7 +58,7 @@ public class RefCountingStorage extends AbstractStorage {
     synchronized (myLock) {
 
       byte[] result = super.readBytes(record);
-      InflaterInputStream in = new InflaterInputStream(new ByteArrayInputStream(result));
+      InflaterInputStream in = new InflaterInputStream(new UnsyncByteArrayInputStream(result));
       try {
         return StreamUtil.loadFromStream(in);
       }

@@ -57,7 +57,7 @@ public class FrameWrapper implements Disposable, DataProvider {
   private String myTitle = "";
   private Image myImage = ImageLoader.loadFromResource(ApplicationInfoImpl.getShadowInstance().getIconUrl());
   private boolean myCloseOnEsc = false;
-  private JFrame myFrame;
+  private Window myFrame;
   private final Map<String, Object> myDatas = new HashMap<String, Object>();
   private Project myProject;
   private final ProjectManagerListener myProjectListener = new MyProjectManagerListener();
@@ -69,14 +69,20 @@ public class FrameWrapper implements Disposable, DataProvider {
 
   protected StatusBar myStatusBar;
   private boolean myShown;
+  private boolean myIsDialog;
 
   public FrameWrapper(Project project) {
     this(project, null);
   }
 
   public FrameWrapper(Project project, @Nullable @NonNls String dimensionServiceKey) {
+    this(project, dimensionServiceKey, false);
+  }
+
+  public FrameWrapper(Project project, @Nullable @NonNls String dimensionServiceKey, boolean isDialog) {
     myProject = project;
     myDimensionKey = dimensionServiceKey;
+    myIsDialog = isDialog;
   }
 
   public void setDimensionKey(String dimensionKey) {
@@ -110,7 +116,7 @@ public class FrameWrapper implements Disposable, DataProvider {
       IdeFocusManager.getInstance(myProject).typeAheadUntil(myFocusedCallback);
     }
 
-    final JFrame frame = getFrame();
+    final Window frame = getFrame();
 
     if (myStatusBar != null) {
       myStatusBar.install((IdeFrame)frame);
@@ -118,7 +124,11 @@ public class FrameWrapper implements Disposable, DataProvider {
 
     myFocusTrackback = new FocusTrackback(this, IdeFocusManager.findInstance().getFocusOwner(), true);
 
-    frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+    if (frame instanceof JFrame) {
+      ((JFrame)frame).setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+    } else {
+      ((JDialog)frame).setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+    }
     WindowAdapter focusListener = new WindowAdapter() {
       public void windowOpened(WindowEvent e) {
         IdeFocusManager fm = IdeFocusManager.getInstance(myProject);
@@ -135,9 +145,13 @@ public class FrameWrapper implements Disposable, DataProvider {
       }
     };
     frame.addWindowListener(focusListener);
-    if (myCloseOnEsc) addCloseOnEsc(frame);
-    frame.getContentPane().add(myComponent, BorderLayout.CENTER);
-    frame.setTitle(myTitle);
+    if (myCloseOnEsc) addCloseOnEsc((RootPaneContainer)frame);
+    ((RootPaneContainer)frame).getContentPane().add(myComponent, BorderLayout.CENTER);
+    if (frame instanceof JFrame) {
+      ((JFrame)frame).setTitle(myTitle);
+    } else {
+      ((JDialog)frame).setTitle(myTitle);
+    }
     frame.setIconImage(myImage);
 
     if (restoreBounds) {
@@ -153,9 +167,9 @@ public class FrameWrapper implements Disposable, DataProvider {
     myShown = true;
     frame.setVisible(true);
 
-    if (UIUtil.isUnderAlloyLookAndFeel()) {
+    if (UIUtil.isUnderAlloyLookAndFeel() && frame instanceof JFrame) {
       //please ask [kb] before remove it
-      frame.setMaximizedBounds(null);
+      ((JFrame)frame).setMaximizedBounds(null);
     }
   }
 
@@ -166,11 +180,13 @@ public class FrameWrapper implements Disposable, DataProvider {
   public void dispose() {
     if (isDisposed()) return;
 
-    JFrame frame = getFrame();
+    Window frame = getFrame();
     frame.setVisible(false);
     frame.dispose();
 
-    FocusTrackback.release(frame);
+    if (frame instanceof JFrame) {
+      FocusTrackback.release((JFrame)frame);
+    }
 
     if (myStatusBar != null) {
       Disposer.dispose(myStatusBar);
@@ -184,7 +200,7 @@ public class FrameWrapper implements Disposable, DataProvider {
     return myDisposed;
   }
 
-  private void addCloseOnEsc(final JFrame frame) {
+  private void addCloseOnEsc(final RootPaneContainer frame) {
     frame.getRootPane().registerKeyboardAction(
       new ActionListener() {
         public void actionPerformed(ActionEvent e) {
@@ -203,11 +219,12 @@ public class FrameWrapper implements Disposable, DataProvider {
     );
   }
 
-  public JFrame getFrame() {
+  public Window getFrame() {
     assert !myDisposed : "Already disposed!";
 
     if (myFrame == null) {
-      myFrame = createJFrame(WindowManager.getInstance().getIdeFrame(myProject));
+      final IdeFrame parent = WindowManager.getInstance().getIdeFrame(myProject);
+      myFrame = myIsDialog ? createJDialog(parent) : createJFrame(parent);
     }
     return myFrame;
   }
@@ -219,6 +236,10 @@ public class FrameWrapper implements Disposable, DataProvider {
         return FrameWrapper.this.getNorthExtension(key);
       }
     };
+  }
+
+  protected JDialog createJDialog(IdeFrame parent) {
+    return new MyJDialog(parent);
   }
 
   protected IdeRootPaneNorthExtension getNorthExtension(String key) {
@@ -247,7 +268,7 @@ public class FrameWrapper implements Disposable, DataProvider {
   }
 
   protected void loadFrameState() {
-    final JFrame frame = getFrame();
+    final Window frame = getFrame();
     final Point location;
     final Dimension size;
     final int extendedState;
@@ -266,24 +287,26 @@ public class FrameWrapper implements Disposable, DataProvider {
     if (size != null && location != null) {
       frame.setLocation(location);
       frame.setSize(size);
-      frame.getRootPane().revalidate();
+      ((RootPaneContainer)frame).getRootPane().revalidate();
     }
     else {
       frame.pack();
       frame.setBounds(WindowManagerEx.getInstanceEx().getIdeFrame(myProject).suggestChildFrameBounds());
     }
 
-    if (extendedState == Frame.ICONIFIED || extendedState == Frame.MAXIMIZED_BOTH) {
-      frame.setExtendedState(extendedState);
+    if (extendedState == Frame.ICONIFIED || extendedState == Frame.MAXIMIZED_BOTH && frame instanceof JFrame) {
+      ((JFrame)frame).setExtendedState(extendedState);
     }
   }
 
-  private static void saveFrameState(String dimensionKey, JFrame frame) {
+  private static void saveFrameState(String dimensionKey, Component frame) {
     DimensionService dimensionService = DimensionService.getInstance();
     if (dimensionKey == null || dimensionService == null) return;
     dimensionService.setLocation(dimensionKey, frame.getLocation());
     dimensionService.setSize(dimensionKey, frame.getSize());
-    dimensionService.setExtendedState(dimensionKey, frame.getExtendedState());
+    if (frame instanceof JFrame) {
+      dimensionService.setExtendedState(dimensionKey, ((JFrame)frame).getExtendedState());
+    }
   }
 
   public void setTitle(String title) {
@@ -412,6 +435,105 @@ public class FrameWrapper implements Disposable, DataProvider {
       super.paint(g);
     }
   }
+
+  private class MyJDialog extends JDialog implements DataProvider, IdeFrame.Child {
+
+    private boolean myDisposing;
+    private final IdeFrame myParent;
+
+    private MyJDialog(IdeFrame parent) throws HeadlessException {
+      super((JFrame)parent);
+      myParent = parent;
+      setGlassPane(new IdeGlassPaneImpl(getRootPane()));
+      getRootPane().putClientProperty("Window.style", "small");
+
+      MouseGestureManager.getInstance().add(this);
+      setFocusTraversalPolicy(new LayoutFocusTraversalPolicyExt());
+    }
+
+    @Override
+    public JComponent getComponent() {
+      return getRootPane();
+    }
+
+    @Override
+    public StatusBar getStatusBar() {
+      return null;
+    }
+
+    @Override
+    public Rectangle suggestChildFrameBounds() {
+      return myParent.suggestChildFrameBounds();
+    }
+
+    @Override
+    public Project getProject() {
+      return myParent.getProject();
+    }
+
+    @Override
+    public void setFrameTitle(String title) {
+      setTitle(title);
+    }
+
+    @Override
+    public void setFileTitle(String fileTitle, File ioFile) {
+      setTitle(fileTitle);
+    }
+
+    @Override
+    public IdeRootPaneNorthExtension getNorthExtension(String key) {
+      return null;
+    }
+
+    @Override
+    public IdeFrame getParentFrame() {
+      return myParent;
+    }
+
+    public void dispose() {
+      if (myDisposing) return;
+      myDisposing = true;
+
+      MouseGestureManager.getInstance().remove(this);
+
+      if (myShown) {
+        saveFrameState(myDimensionKey, this);
+      }
+
+      Disposer.dispose(FrameWrapper.this);
+      myDatas.clear();
+      myProject = null;
+      myPreferedFocus = null;
+
+      if (myFocusTrackback != null) {
+        myFocusTrackback.restoreFocus();
+      }
+      if (myComponent != null && myFocusWatcher != null) {
+        myFocusWatcher.deinstall(myComponent);
+      }
+      myFocusWatcher = null;
+      myFocusedCallback = null;
+
+      super.dispose();
+    }
+
+    public Object getData(String dataId) {
+      if (IdeFrame.KEY.getName().equals(dataId)) {
+        return this;
+      }
+
+      Object data = FrameWrapper.this.getData(dataId);
+      return data != null ? data : myDatas.get(dataId);
+    }
+
+    @Override
+    public void paint(Graphics g) {
+      UIUtil.applyRenderingHints(g);
+      super.paint(g);
+    }
+  }
+
 
   public void setLocation(Point location) {
     getFrame().setLocation(location);

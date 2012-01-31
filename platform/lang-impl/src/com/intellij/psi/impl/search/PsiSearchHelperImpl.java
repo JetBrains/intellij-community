@@ -303,6 +303,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                   for (PsiElement psiRoot : psiRoots) {
                     if (progress != null) progress.checkCanceled();
                     if (!processed.add(psiRoot)) continue;
+                    assert psiRoot != null : "One of the roots of file "+file + " is null. All roots: "+Arrays.asList(psiRoots)+"; Viewprovider: "+file.getViewProvider()+"; Virtual file: "+file.getViewProvider().getVirtualFile();
                     if (!psiRootProcessor.process(psiRoot)) {
                       canceled.set(true);
                       return;

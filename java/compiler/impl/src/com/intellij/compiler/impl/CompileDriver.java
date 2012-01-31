@@ -30,7 +30,6 @@ import com.intellij.compiler.make.DependencyCache;
 import com.intellij.compiler.progress.CompilerTask;
 import com.intellij.diagnostic.IdeErrorsDialog;
 import com.intellij.diagnostic.PluginException;
-import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.Result;
@@ -103,7 +102,6 @@ import java.util.*;
 import java.util.concurrent.ExecutionException;
 
 public class CompileDriver {
-  private static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.logOnlyGroup("Compiler");
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.CompileDriver");
   // to be used in tests only for debug output
@@ -425,9 +423,10 @@ public class CompileDriver {
         moduleNames.add(module.getName());
       }
     }
-    final CompileServerManager jpsServerManager = CompileServerManager.getInstance();
+    final CompileServerManager csManager = CompileServerManager.getInstance();
     final MessageBus messageBus = myProject.getMessageBus();
-    return jpsServerManager.submitCompilationTask(myProject.getLocation(), compileContext.isRebuild(), compileContext.isMake(), moduleNames, paths, new JpsServerResponseHandler() {
+    csManager.cancelAutoMakeTasks(myProject);
+    return csManager.submitCompilationTask(myProject, compileContext.isRebuild(), compileContext.isMake(), moduleNames, paths, new JpsServerResponseHandler() {
 
       @Override
       public void handleCompileMessage(JpsRemoteProto.Message.Response.CompileMessage compilerMessage) {
@@ -468,7 +467,7 @@ public class CompileDriver {
         final JpsRemoteProto.Message.Response.BuildEvent.Type eventType = event.getEventType();
         switch (eventType) {
           case BUILD_STARTED:
-            compileContext.getProgressIndicator().setText("Compilation started");
+            //compileContext.getProgressIndicator().setText("Compilation started");
             break;
           case FILES_GENERATED:
             final List<JpsRemoteProto.Message.Response.BuildEvent.GeneratedFile> generated = event.getGeneratedFilesList();
@@ -807,7 +806,7 @@ public class CompileDriver {
           ToolWindowManager.getInstance(myProject).notifyByBalloon(ToolWindowId.MESSAGES_WINDOW, messageType, statusMessage);
         }
 
-        NOTIFICATION_GROUP.createNotification(_status == ExitStatus.UP_TO_DATE ? "Compilation: all files are up to date" : statusMessage, messageType).notify(myProject);
+        CompilerManager.NOTIFICATION_GROUP.createNotification(_status == ExitStatus.UP_TO_DATE ? "Compilation: all files are up to date" : statusMessage, messageType).notify(myProject);
 
         if (_status != ExitStatus.UP_TO_DATE && compileContext.getMessageCount(null) > 0) {
           compileContext.addMessage(CompilerMessageCategory.INFORMATION, statusMessage, null, -1, -1);
@@ -966,7 +965,8 @@ public class CompileDriver {
       boolean didSomething = false;
 
       final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
-      GenericCompilerRunner runner = new GenericCompilerRunner(context, myCompilerFilter, compilerManager, isRebuild, onlyCheckStatus);
+      GenericCompilerRunner runner = new GenericCompilerRunner(context, isRebuild, onlyCheckStatus,
+                                                               compilerManager.getCompilers(GenericCompiler.class, myCompilerFilter));
       try {
         didSomething |= generateSources(compilerManager, context, forceCompile, onlyCheckStatus);
 

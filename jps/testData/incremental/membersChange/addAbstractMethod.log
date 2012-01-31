@@ -1,15 +1,3 @@
-Request to make modules:
-module AddAbstractMethod
-End of request
-digraph X {
-  AddAbstractMethod[label="AddAbstractMethod"];
-}
-digraph X {
-  AddAbstractMethod[label="AddAbstractMethod"];
-}
-Propagated modules:
-module AddAbstractMethod
-End of propagated
 Cleaning output files:
 out/production/AddAbstractMethod/packageA/BaseServer.class
 End of files

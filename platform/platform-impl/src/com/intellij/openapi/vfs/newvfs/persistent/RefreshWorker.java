@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.util.containers.Queue;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -47,12 +48,15 @@ public class RefreshWorker {
   public void scan() {
     final NewVirtualFile root = (NewVirtualFile)myRefreshRoot;
     NewVirtualFileSystem delegate = root.getFileSystem();
-    if (root.isDirty() && !delegate.exists(root)) {
+    int attributes = delegate.getBooleanAttributes(root, NewVirtualFileSystem.BA_EXISTS | NewVirtualFileSystem.BA_DIRECTORY);
+
+    if (root.isDirty() && (attributes & NewVirtualFileSystem.BA_EXISTS) == 0) {
       scheduleDeletion(root);
       root.markClean();
     }
     else {
-      if (root.isDirectory()) {
+      boolean isDir = (attributes & NewVirtualFileSystem.BA_DIRECTORY) != 0;
+      if (isDir) {
         delegate = PersistentFS.replaceWithNativeFS(delegate);
       }
 
@@ -86,14 +90,16 @@ public class RefreshWorker {
 
             for (VirtualFile child : file.getChildren()) {
               if (!deletedNames.contains(child.getName())) {
-                scheduleChildRefresh(file, child, delegate);
+                int childAttributes = delegate.getBooleanAttributes(child, -1);
+                scheduleChildRefresh(file, child, delegate, childAttributes);
               }
             }
           }
           else {
             for (VirtualFile child : file.getCachedChildren()) {
-              if (delegate.exists(child)) {
-                scheduleChildRefresh(file, child, delegate);
+              int childAttributes = delegate.getBooleanAttributes(child, -1);
+              if ((childAttributes & NewVirtualFileSystem.BA_EXISTS) != 0) {
+                scheduleChildRefresh(file, child, delegate, childAttributes);
               }
               else {
                 scheduleDeletion(child);
@@ -102,11 +108,13 @@ public class RefreshWorker {
 
             final List<String> names = dir.getSuspiciousNames();
             for (String name : names) {
-              if (name.length() == 0) continue;
+              if (name.isEmpty()) continue;
 
               final VirtualFile fake = new FakeVirtualFile(file, name);
-              if (delegate.exists(fake)) {
-                scheduleCreation(file, name, delegate.isDirectory(fake));
+              int attrs = delegate.getBooleanAttributes(fake, NewVirtualFileSystem.BA_EXISTS | NewVirtualFileSystem.BA_DIRECTORY);
+              if ((attrs & NewVirtualFileSystem.BA_EXISTS) != 0) {
+                boolean isDira = (attrs & NewVirtualFileSystem.BA_DIRECTORY) != 0;
+                scheduleCreation(file, name, isDira);
               }
             }
           }
@@ -132,13 +140,16 @@ public class RefreshWorker {
     }
   }
 
-  private void scheduleChildRefresh(final VirtualFileSystemEntry file, final VirtualFile child, final NewVirtualFileSystem delegate) {
+  private void scheduleChildRefresh(@NotNull VirtualFileSystemEntry file,
+                                    @NotNull VirtualFile child,
+                                    @NotNull NewVirtualFileSystem delegate,
+                                    @NewVirtualFileSystem.FileBooleanAttributes int childAttributes) {
     final boolean currentIsDirectory = child.isDirectory();
     final boolean currentIsSymlink = child.isSymLink();
     final boolean currentIsSpecial = child.isSpecialFile();
-    final boolean upToDateIsDirectory = delegate.isDirectory(child);
+    final boolean upToDateIsDirectory = (childAttributes & NewVirtualFileSystem.BA_DIRECTORY) != 0;
     final boolean upToDateIsSymlink = delegate.isSymLink(child);
-    final boolean upToDateIsSpecial = delegate.isSpecialFile(child);
+    final boolean upToDateIsSpecial = (childAttributes & (NewVirtualFileSystem.BA_REGULAR | NewVirtualFileSystem.BA_DIRECTORY | NewVirtualFileSystem.BA_EXISTS)) == NewVirtualFileSystem.BA_EXISTS;
     if (currentIsDirectory != upToDateIsDirectory || currentIsSymlink != upToDateIsSymlink || currentIsSpecial != upToDateIsSpecial) {
       scheduleDeletion(child);
       scheduleReCreation(file, child.getName(), upToDateIsDirectory);

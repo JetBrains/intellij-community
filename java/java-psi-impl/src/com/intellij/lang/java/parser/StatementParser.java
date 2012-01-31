@@ -131,7 +131,7 @@ public class StatementParser {
 
     parseStatements(builder, parseUntilEof ? BraceMode.TILL_LAST : BraceMode.TILL_FIRST);
 
-    final boolean greedyBlock = !expectOrError(builder, JavaTokenType.RBRACE, JavaErrorMessages.message("expected.rbrace"));
+    final boolean greedyBlock = !expectOrError(builder, JavaTokenType.RBRACE, "expected.rbrace");
     builder.getTokenType(); // eat spaces
 
     done(codeBlock, JavaElementType.CODE_BLOCK);
@@ -543,7 +543,7 @@ public class StatementParser {
       }
     }
 
-    expectOrError(builder, JavaTokenType.COLON, JavaErrorMessages.message("expected.colon"));
+    expectOrError(builder, JavaTokenType.COLON, "expected.colon");
 
     done(statement, JavaElementType.SWITCH_LABEL_STATEMENT);
     return statement;

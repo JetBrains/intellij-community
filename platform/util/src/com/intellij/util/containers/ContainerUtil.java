@@ -677,6 +677,17 @@ public class ContainerUtil {
     return items == null || items.isEmpty() ? def : items.iterator().next();
   }
 
+  @Nullable
+  public static <T> T getLastItem(final Collection<T> items) {
+    Iterator<T> itr = items.iterator();
+    T res = null;
+    while (itr.hasNext()) {
+      res = itr.next();
+    }
+
+    return res;
+  }
+
   @NotNull
   public static <T> Collection<T> subtract(@NotNull Collection<T> from, @NotNull Collection<T> what) {
     final HashSet<T> set = new HashSet<T>(from);

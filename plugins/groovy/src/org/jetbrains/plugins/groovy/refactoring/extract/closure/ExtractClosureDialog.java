@@ -32,6 +32,7 @@ import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TObjectIntHashMap;
 import gnu.trove.TObjectIntProcedure;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
@@ -60,11 +61,9 @@ public class ExtractClosureDialog extends DialogWrapper {
   private final JBCheckBox myGenerateDelegateCB;
 
   TObjectIntHashMap<JBCheckBox> toRemoveCBs;
-  private final InitialInfo myInitialInfo;
 
   public ExtractClosureDialog(InitialInfo initialInfo, GrParametersOwner owner, PsiElement toSearchFor) {
     super(initialInfo.getProject());
-    myInitialInfo = initialInfo;
 
     myHelper = new ExtractClosureHelper(initialInfo, owner, toSearchFor, "", false);
 
@@ -99,7 +98,6 @@ public class ExtractClosureDialog extends DialogWrapper {
     for (Object p : parametersToRemove.keys()) {
       JBCheckBox cb = new JBCheckBox(GroovyRefactoringBundle.message("remove.parameter.0.no.longer.used", ((GrParameter)p).getName()));
       cb.setFocusable(false);
-      cb.setSelected(false);
       toRemoveCBs.put(cb, parametersToRemove.get((GrParameter)p));
     }
 
@@ -119,17 +117,26 @@ public class ExtractClosureDialog extends DialogWrapper {
       public boolean execute(JBCheckBox checkbox, int index) {
         if (!checkbox.isSelected()) return true;
 
-        final ParameterInfo param = myHelper.getParameterInfos()[index];
-        if (!param.passAsParameter()) return true;
 
-        final ParameterInfo initialParam = myInitialInfo.getParameterInfos()[index];
+        final GrParameter param = myHelper.getOwner().getParameters()[index];
+        final ParameterInfo pinfo = findParamByOldName(param.getName());
+        if (pinfo == null || !pinfo.passAsParameter()) return true;
+
         final String message = GroovyRefactoringBundle.message("you.cannot.pass.as.parameter.0.because.you.remove.1.from.base.method",
-                                                               param.getName(), initialParam.getName());
+                                                               pinfo.getName(), param.getName());
         info.set(new ValidationInfo(message));
         return false;
       }
     });
     return info.get();
+  }
+
+  @Nullable
+  private ParameterInfo findParamByOldName(String name) {
+    for (ParameterInfo info : myHelper.getParameterInfos()) {
+      if (name.equals(info.getOldName())) return info;
+    }
+    return null;
   }
 
   private void updateSignature() {
@@ -164,6 +171,21 @@ public class ExtractClosureDialog extends DialogWrapper {
                           CodeStyleSettingsManager.getSettings(myHelper.getProject()).GENERATE_FINAL_PARAMETERS :
                           settingsFinals.booleanValue());
     myGenerateDelegateCB.setSelected(false);
+
+    final GrParameter[] parameters = myHelper.getOwner().getParameters();
+    toRemoveCBs.forEachEntry(new TObjectIntProcedure<JBCheckBox>() {
+      @Override
+      public boolean execute(JBCheckBox checkbox, int index) {
+        checkbox.setSelected(true);
+
+        final GrParameter param = parameters[index];
+        final ParameterInfo pinfo = findParamByOldName(param.getName());
+        if (pinfo != null) {
+          pinfo.setPassAsParameter(false);
+        }
+        return true;
+      }
+    });
     updateSignature();
   }
 

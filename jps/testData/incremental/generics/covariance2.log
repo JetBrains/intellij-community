@@ -1,15 +1,3 @@
-Request to make modules:
-module Covariance2
-End of request
-digraph X {
-  Covariance2[label="Covariance2"];
-}
-digraph X {
-  Covariance2[label="Covariance2"];
-}
-Propagated modules:
-module Covariance2
-End of propagated
 Cleaning output files:
 out/production/Covariance2/IfaceImpl.class
 End of files

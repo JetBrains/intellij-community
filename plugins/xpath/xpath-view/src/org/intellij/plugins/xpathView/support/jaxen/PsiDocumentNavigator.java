@@ -176,7 +176,7 @@ public class PsiDocumentNavigator extends DefaultNavigator {
         final VirtualFile virtualFile = VfsUtil.findRelativeFile(url, file.getVirtualFile());
         if (virtualFile != null) {
             LOG.debug("document() -> VirtualFile = " + virtualFile.getPath());
-            final PsiFile file = PsiManager.getInstance(this.file.getProject()).findFile(virtualFile);
+            final PsiFile file = this.file.getManager().findFile(virtualFile);
             if (file instanceof XmlFile) {
                 return ((XmlFile)file).getDocument();
             }

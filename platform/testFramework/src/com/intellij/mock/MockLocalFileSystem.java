@@ -251,4 +251,9 @@ public class MockLocalFileSystem extends LocalFileSystem {
   public int getRank() {
     return 1;
   }
+
+  @Override
+  public int getBooleanAttributes(@NotNull VirtualFile file, int flags) {
+    return 0;
+  }
 }

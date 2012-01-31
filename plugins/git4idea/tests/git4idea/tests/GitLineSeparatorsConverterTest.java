@@ -23,11 +23,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CheckboxTreeBase;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.GuiUtils;
-import git4idea.DialogManager;
 import git4idea.config.GitVcsSettings;
+import git4idea.test.GitTestUtil;
 import git4idea.ui.GitConvertFilesDialog;
 import org.jetbrains.annotations.Nullable;
-import org.picocontainer.MutablePicoContainer;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -63,7 +62,7 @@ public class GitLineSeparatorsConverterTest extends GitTest {
     myChangeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
     mySettings = GitVcsSettings.getInstance(myProject);
     myCodeStyleSeparator = CodeStyleFacade.getInstance(myProject).getLineSeparator();
-    myDialogManager = registerDialogManager();
+    myDialogManager = GitTestUtil.registerDialogManager(myProject);
 
     unixFile = createFileInCommand("unix_file.txt", "Unix File\n");
     winFile = createFileInCommand("win_file.txt", "Windows File\r\n");
@@ -191,17 +190,6 @@ public class GitLineSeparatorsConverterTest extends GitTest {
       }
     }
     return null;
-  }
-
-  /**
-   * Registers {@link TestDialogManager} as the {@link DialogManager} implementation.
-   */
-  private TestDialogManager registerDialogManager() {
-    final String key = "git4idea.DialogManager";
-    final MutablePicoContainer picoContainer = (MutablePicoContainer) myProject.getPicoContainer();
-    picoContainer.unregisterComponent(key);
-    picoContainer.registerComponentImplementation(key, TestDialogManager.class);
-    return (TestDialogManager)DialogManager.getInstance(myProject);
   }
 
   /**

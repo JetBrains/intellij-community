@@ -39,7 +39,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
-import java.util.Collection;
+import java.util.List;
 
 /**
  * <p>
@@ -65,12 +65,9 @@ class GitBranchPopup  {
   }
 
   /**
-   *
-   * @param project
    * @param currentRepository Current repository, which means the repository of the currently open or selected file.
    *                          In the case of synchronized branch operations current repository matter much less, but sometimes is used,
    *                          for example, it is preselected in the repositories combobox in the compare branches dialog.
-   * @return
    */
   static GitBranchPopup getInstance(@NotNull Project project, @NotNull GitRepository currentRepository) {
     return new GitBranchPopup(project, currentRepository);
@@ -157,7 +154,7 @@ class GitBranchPopup  {
   }
 
   private void fillWithCommonRepositoryActions(DefaultActionGroup popupGroup, GitRepositoryManager repositoryManager) {
-    Collection<GitRepository> repositories = repositoryManager.getRepositories();
+    List<GitRepository> repositories = repositoryManager.getRepositories();
     String currentBranch = myMultiRootBranchConfig.getCurrentBranch();
     assert currentBranch != null : "Current branch can't be null if branches have not diverged";
     popupGroup.add(new GitBranchPopupActions.CurrentBranchAction(currentBranch, " in all roots"));

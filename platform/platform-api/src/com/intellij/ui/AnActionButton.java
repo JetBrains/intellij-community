@@ -18,10 +18,13 @@ package com.intellij.ui;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author Konstantin Bulenkov
@@ -32,6 +35,7 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
   private ShortcutSet myShortcut;
   private AnAction myAction = null;
   private JComponent myContextComponent;
+  private Set<AnActionButtonUpdater> myUpdaters;
 
   public AnActionButton(String text) {
     super(text);
@@ -92,18 +96,33 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
   public final void update(AnActionEvent e) {
     boolean myActionVisible = true;
     boolean myActionEnabled = true;
-    if (myAction != null) {
+    if (myAction != null) {      
       myAction.update(e);
-      myActionEnabled = myAction.getTemplatePresentation().isEnabled();
-      myActionVisible = myAction.getTemplatePresentation().isVisible();
+      myActionEnabled = e.getPresentation().isEnabled();
+      myActionVisible = e.getPresentation().isVisible();
     }
-    final boolean enabled = isEnabled() && isContextComponentOk() && myActionEnabled;
+    boolean enabled = isEnabled() && isContextComponentOk() && myActionEnabled;
+    if (enabled && myUpdaters != null) {
+      for (AnActionButtonUpdater updater : myUpdaters) {
+        if (!updater.isEnabled(e)) {
+          enabled = false;
+          break;
+        }
+      }
+    }
     e.getPresentation().setEnabled(enabled);
     e.getPresentation().setVisible(isVisible() && myActionVisible);
 
     if (enabled) {
       updateButton(e);
     }
+  }
+  
+  public final void addCustomUpdater(@NotNull AnActionButtonUpdater updater) {
+    if (myUpdaters == null) {
+      myUpdaters = new HashSet<AnActionButtonUpdater>();
+    }
+    myUpdaters.add(updater);
   }
 
   public void updateButton(AnActionEvent e) {

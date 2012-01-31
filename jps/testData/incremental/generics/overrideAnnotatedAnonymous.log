@@ -1,15 +1,3 @@
-Request to make modules:
-module OverrideAnnotatedAnonymous
-End of request
-digraph X {
-  OverrideAnnotatedAnonymous[label="OverrideAnnotatedAnonymous"];
-}
-digraph X {
-  OverrideAnnotatedAnonymous[label="OverrideAnnotatedAnonymous"];
-}
-Propagated modules:
-module OverrideAnnotatedAnonymous
-End of propagated
 Cleaning output files:
 out/production/OverrideAnnotatedAnonymous/packageA/Base.class
 End of files

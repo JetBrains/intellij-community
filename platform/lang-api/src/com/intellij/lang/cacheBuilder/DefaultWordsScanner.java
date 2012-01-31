@@ -51,29 +51,29 @@ public class DefaultWordsScanner implements WordsScanner {
 
   public void processWords(CharSequence fileText, Processor<WordOccurrence> processor) {
     myLexer.start(fileText);
-    WordOccurrence occurence = null; // shared occurence
+    WordOccurrence occurrence = null; // shared occurrence
 
     while (myLexer.getTokenType() != null) {
       final IElementType type = myLexer.getTokenType();
       if (myIdentifierTokenSet.contains(type)) {
-        if (occurence == null) {
-          occurence = new WordOccurrence(fileText, myLexer.getTokenStart(), myLexer.getTokenEnd(), WordOccurrence.Kind.CODE);
+        if (occurrence == null) {
+          occurrence = new WordOccurrence(fileText, myLexer.getTokenStart(), myLexer.getTokenEnd(), WordOccurrence.Kind.CODE);
         }
         else {
-          occurence.init(fileText, myLexer.getTokenStart(), myLexer.getTokenEnd(), WordOccurrence.Kind.CODE);
+          occurrence.init(fileText, myLexer.getTokenStart(), myLexer.getTokenEnd(), WordOccurrence.Kind.CODE);
         }
-        if (!processor.process(occurence)) return;
+        if (!processor.process(occurrence)) return;
       }
       else if (myCommentTokenSet.contains(type)) {
-        if (!stripWords(processor, fileText,myLexer.getTokenStart(),myLexer.getTokenEnd(), WordOccurrence.Kind.COMMENTS,occurence, false)) return;
+        if (!stripWords(processor, fileText,myLexer.getTokenStart(),myLexer.getTokenEnd(), WordOccurrence.Kind.COMMENTS,occurrence, false)) return;
       }
       else if (myLiteralTokenSet.contains(type)) {
-        if (!stripWords(processor, fileText, myLexer.getTokenStart(),myLexer.getTokenEnd(),WordOccurrence.Kind.LITERALS,occurence, myMayHaveFileRefsInLiterals)) return;
+        if (!stripWords(processor, fileText, myLexer.getTokenStart(),myLexer.getTokenEnd(),WordOccurrence.Kind.LITERALS,occurrence, myMayHaveFileRefsInLiterals)) return;
       }
       else {
         // process all word-like characters as words
         // Plugin writers may have (Maximka in JavaScript especially) some keyword token types omitted from the identifierTokenSet
-        if (!stripWords(processor, fileText, myLexer.getTokenStart(), myLexer.getTokenEnd(), WordOccurrence.Kind.CODE, occurence, false)) return;
+        if (!stripWords(processor, fileText, myLexer.getTokenStart(), myLexer.getTokenEnd(), WordOccurrence.Kind.CODE, occurrence, false)) return;
       }
       myLexer.advance();
     }

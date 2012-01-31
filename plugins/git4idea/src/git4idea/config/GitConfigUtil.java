@@ -35,6 +35,7 @@ import java.util.Map;
  */
 public class GitConfigUtil {
   public static final String USER_NAME = "user.name";
+  public static final String USER_EMAIL = "user.email";
 
   /**
    * A private constructor for utility class
@@ -240,11 +241,12 @@ public class GitConfigUtil {
    * @param value   the value to set
    * @throws VcsException if there is a problem with running git
    */
-  public static void setValue(Project project, VirtualFile root, String key, String value) throws VcsException {
+  public static void setValue(Project project, VirtualFile root, String key, String value, String... additionalParameters) throws VcsException {
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.CONFIG);
     h.setNoSSH(true);
     h.setSilent(true);
     h.ignoreErrorCode(1);
+    h.addParameters(additionalParameters);
     h.addParameters(key, value);
     h.run();
   }

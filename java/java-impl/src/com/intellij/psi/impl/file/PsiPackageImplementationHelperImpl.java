@@ -16,14 +16,15 @@
 package com.intellij.psi.impl.file;
 
 import com.intellij.ide.projectView.ProjectView;
-import com.intellij.ide.projectView.impl.PackageViewPane;
-import com.intellij.ide.projectView.impl.ProjectRootsUtil;
-import com.intellij.ide.projectView.impl.nodes.PackageElement;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.GlobalUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -31,9 +32,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.psi.NonClasspathClassFinder;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiPackage;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.PackagePrefixElementFinder;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -137,16 +136,34 @@ public class PsiPackageImplementationHelperImpl extends PsiPackageImplementation
       @Override
       public void run() {
         final ProjectView projectView = ProjectView.getInstance(project);
-        projectView.changeView(PackageViewPane.ID);
-        final PsiDirectory[] directories = psiPackage.getDirectories();
-        final VirtualFile firstDir = directories[0].getVirtualFile();
-        final boolean isLibraryRoot = ProjectRootsUtil.isLibraryRoot(firstDir, project);
-
-        final Module module = ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(firstDir);
-        final PackageElement packageElement = new PackageElement(module, psiPackage, isLibraryRoot);
-        projectView.getProjectViewPaneById(PackageViewPane.ID).select(packageElement, firstDir, requestFocus);
+        PsiDirectory[] directories = suggestMostAppropriateDirectories(psiPackage);
+        if (directories.length == 0) return;
+        projectView.select(directories[0], directories[0].getVirtualFile(), requestFocus);
       }
     });
+  }
+
+  private static PsiDirectory[] suggestMostAppropriateDirectories(PsiPackage psiPackage) {
+    final Project project = psiPackage.getProject();
+    PsiDirectory[] directories = null;
+    final Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
+    if (editor != null) {
+      final Document document = editor.getDocument();
+      final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
+      if (psiFile != null) {
+        final Module module = ModuleUtil.findModuleForPsiElement(psiFile);
+        if (module != null) {
+          directories = psiPackage.getDirectories(GlobalSearchScope.moduleWithDependenciesScope(module));
+        } else {
+          directories = psiPackage.getDirectories(GlobalSearchScope.notScope(GlobalSearchScope.projectScope(project)));
+        }
+      }
+    }
+
+    if (directories == null || directories.length == 0) {
+      directories = psiPackage.getDirectories();
+    }
+    return directories;
   }
 
   @Override

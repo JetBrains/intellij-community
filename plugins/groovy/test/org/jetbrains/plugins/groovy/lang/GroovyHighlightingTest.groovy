@@ -630,16 +630,29 @@ class Baz implements I {
     myFixture.configureByText('a.groovy', '''\
 class Foo {
 
-  boolean <warning descr="Getter 'getX' clashes with getter 'isX'">getX</warning>() { true }
-  boolean <warning descr="Getter 'isX' clashes with getter 'getX'">isX</warning>() { false }
+  boolean <warning descr="getter 'getX' clashes with getter 'isX'">getX</warning>() { true }
+  boolean <warning descr="getter 'isX' clashes with getter 'getX'">isX</warning>() { false }
 
   boolean getY() {true}
 
   boolean isZ() {false}
+
+  boolean <warning descr="method getFoo(int x) clashes with getter 'isFoo'">getFoo</warning>(int x = 5){}
+  boolean <warning descr="getter 'isFoo' clashes with method getFoo(int x)">isFoo</warning>(){}
 }
 
 def result = new Foo().x''')
     myFixture.enableInspections(new ClashingGettersInspection())
+    myFixture.testHighlighting(true, false, false)
+  }
+
+  void testPrimitiveTypeParams() {
+    myFixture.configureByText('a.groovy', '''
+List<<error descr="Primitive type parameters are not allowed">int</error>> list = new ArrayList<int><EOLError descr="'(' expected"></EOLError>
+List<? extends <error descr="Primitive bound types are not allowed">double</error>> l = new ArrayList<double>()
+List<?> list2
+
+''')
     myFixture.testHighlighting(true, false, false)
   }
 }

@@ -2,15 +2,15 @@ package org.jetbrains.plugins.gradle.sync;
 
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.containers.ConcurrentHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.diff.GradleProjectStructureChange;
-import org.jetbrains.plugins.gradle.diff.GradleProjectStructureChangesCalculator;
+import org.jetbrains.plugins.gradle.diff.GradleStructureChangesCalculator;
 import org.jetbrains.plugins.gradle.model.GradleProject;
 
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * // TODO den add doc
@@ -23,11 +23,14 @@ import java.util.concurrent.CopyOnWriteArraySet;
 public class GradleProjectStructureChangesModel extends AbstractProjectComponent {
 
   private final Set<GradleProjectStructureChangeListener> myListeners = new CopyOnWriteArraySet<GradleProjectStructureChangeListener>();
-  private final Set<GradleProjectStructureChange>         myChanges   = new ConcurrentHashSet<GradleProjectStructureChange>();
+  private final AtomicReference<Set<GradleProjectStructureChange>> myChanges
+    = new AtomicReference<Set<GradleProjectStructureChange>>(new HashSet<GradleProjectStructureChange>());
 
-  private final GradleProjectStructureChangesCalculator myChangesCalculator;
+  private final GradleStructureChangesCalculator<GradleProject, Project> myChangesCalculator;
 
-  public GradleProjectStructureChangesModel(@NotNull Project project, @NotNull GradleProjectStructureChangesCalculator changesCalculator) {
+  public GradleProjectStructureChangesModel(@NotNull Project project,
+                                            @NotNull GradleStructureChangesCalculator<GradleProject, Project> changesCalculator)
+  {
     super(project);
     myChangesCalculator = changesCalculator;
   }
@@ -44,15 +47,22 @@ public class GradleProjectStructureChangesModel extends AbstractProjectComponent
    *  </li>
    *  <li>{@link #addListener(GradleProjectStructureChangeListener) Registered listeners} are notified if any new change is detected;</li>
    * </ol>
+   * <p/>
+   * <b>Note:</b> it's very important that the listeners are notified <b>after</b> the actual state change, i.e. {@link #getChanges()}
+   * during the update returns up-to-date data.
    *
    * @param gradleProject  gradle project to sync with
    */
   public void update(@NotNull GradleProject gradleProject) {
-    Set<GradleProjectStructureChange> knownChanges = new HashSet<GradleProjectStructureChange>(myChanges);
-    final Set<GradleProjectStructureChange> newChanges = myChangesCalculator.calculate(gradleProject, myProject, knownChanges);
-    myChanges.addAll(newChanges);
+    Set<GradleProjectStructureChange> knownChanges = new HashSet<GradleProjectStructureChange>(myChanges.get());
+    Set<GradleProjectStructureChange> currentChanges = new HashSet<GradleProjectStructureChange>();
+    myChangesCalculator.calculate(gradleProject, myProject, knownChanges, currentChanges);
+    if (currentChanges.equals(knownChanges)) {
+      return;
+    }
+    myChanges.set(currentChanges);
     for (GradleProjectStructureChangeListener listener : myListeners) {
-      listener.onChanges(newChanges);
+      listener.onChanges(knownChanges, currentChanges);
     }
   }
 
@@ -72,6 +82,6 @@ public class GradleProjectStructureChangesModel extends AbstractProjectComponent
    */
   @NotNull
   public Set<GradleProjectStructureChange> getChanges() {
-    return myChanges;
+    return myChanges.get();
   }
 }

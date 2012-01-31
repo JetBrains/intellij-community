@@ -18,7 +18,9 @@ package com.intellij.debugger.ui;
 import com.intellij.CommonBundle;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.DebuggerManager;
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.impl.DebuggerManagerAdapter;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.HotSwapFile;
 import com.intellij.debugger.impl.HotSwapManager;
@@ -36,11 +38,13 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.PairFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,47 +63,31 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent{
   private final Project myProject;
   private boolean myPerformHotswapAfterThisCompilation = true;
 
-  public HotSwapUIImpl(final Project project, MessageBus bus) {
+  public HotSwapUIImpl(final Project project, final MessageBus bus, DebuggerManager debugManager) {
     myProject = project;
-    bus.connect().subscribe(CompilerTopics.COMPILATION_STATUS, new CompilationStatusListener() {
 
-      private final AtomicReference<Map<String, List<String>>> myGeneratedPaths = new AtomicReference<Map<String, List<String>>>(new HashMap<String, List<String>>());
+    ((DebuggerManagerEx)debugManager).addDebuggerManagerListener(new DebuggerManagerAdapter() {
+      private MessageBusConnection myConn = null;
+      private int mySessionCount = 0;
 
-      public void fileGenerated(String outputRoot, String relativePath) {
-        final Map<String, List<String>> map = myGeneratedPaths.get();
-        List<String> paths = map.get(outputRoot);
-        if (paths == null) {
-          paths = new ArrayList<String>();
-          map.put(outputRoot, paths);
+      @Override
+      public void sessionAttached(DebuggerSession session) {
+        if (mySessionCount++ == 0) {
+          myConn = bus.connect();
+          myConn.subscribe(CompilerTopics.COMPILATION_STATUS, new MyCompilationStatusListener());
         }
-        paths.add(relativePath);
       }
 
-      public void compilationFinished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
-        final Map<String, List<String>> generated = myGeneratedPaths.getAndSet(new HashMap<String, List<String>>());
-        if (myProject.isDisposed()) {
-          return;
-        }
-
-        if (errors == 0 && !aborted && myPerformHotswapAfterThisCompilation) {
-          for (HotSwapVetoableListener listener : myListeners) {
-            if (!listener.shouldHotSwap(compileContext)) {
-              return;
-            }
-          }
-
-          final List<DebuggerSession> sessions = new ArrayList<DebuggerSession>();
-          Collection<DebuggerSession> debuggerSessions = DebuggerManagerEx.getInstanceEx(myProject).getSessions();
-          for (final DebuggerSession debuggerSession : debuggerSessions) {
-            if (debuggerSession.isAttached() && debuggerSession.getProcess().canRedefineClasses()) {
-              sessions.add(debuggerSession);
-            }
-          }
-          if (!sessions.isEmpty()) {
-            hotSwapSessions(sessions, generated);
+      @Override
+      public void sessionDetached(DebuggerSession session) {
+        mySessionCount = Math.max(0, mySessionCount - 1);
+        if (mySessionCount == 0) {
+          final MessageBusConnection conn = myConn;
+          if (conn != null) {
+            Disposer.dispose(conn);
+            myConn = null;
           }
         }
-        myPerformHotswapAfterThisCompilation = true;
       }
     });
   }
@@ -253,9 +241,7 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent{
     }
     else {
       if(session.isAttached()) {
-        final List<DebuggerSession> sessions = new ArrayList<DebuggerSession>(1);
-        sessions.add(session);
-        hotSwapSessions(sessions, null);
+        hotSwapSessions(Collections.singletonList(session), null);
       }
     }
   }
@@ -266,5 +252,48 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent{
 
   public void dontAskHotswapAfterThisCompilation() {
     myAskBeforeHotswap = false;
+  }
+
+  private class MyCompilationStatusListener implements CompilationStatusListener {
+
+    private final AtomicReference<Map<String, List<String>>>
+      myGeneratedPaths = new AtomicReference<Map<String, List<String>>>(new HashMap<String, List<String>>());
+
+    public void fileGenerated(String outputRoot, String relativePath) {
+      final Map<String, List<String>> map = myGeneratedPaths.get();
+      List<String> paths = map.get(outputRoot);
+      if (paths == null) {
+        paths = new ArrayList<String>();
+        map.put(outputRoot, paths);
+      }
+      paths.add(relativePath);
+    }
+
+    public void compilationFinished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
+      final Map<String, List<String>> generated = myGeneratedPaths.getAndSet(new HashMap<String, List<String>>());
+      if (myProject.isDisposed()) {
+        return;
+      }
+
+      if (errors == 0 && !aborted && myPerformHotswapAfterThisCompilation) {
+        for (HotSwapVetoableListener listener : myListeners) {
+          if (!listener.shouldHotSwap(compileContext)) {
+            return;
+          }
+        }
+
+        final List<DebuggerSession> sessions = new ArrayList<DebuggerSession>();
+        Collection<DebuggerSession> debuggerSessions = DebuggerManagerEx.getInstanceEx(myProject).getSessions();
+        for (final DebuggerSession debuggerSession : debuggerSessions) {
+          if (debuggerSession.isAttached() && debuggerSession.getProcess().canRedefineClasses()) {
+            sessions.add(debuggerSession);
+          }
+        }
+        if (!sessions.isEmpty()) {
+          hotSwapSessions(sessions, generated);
+        }
+      }
+      myPerformHotswapAfterThisCompilation = true;
+    }
   }
 }

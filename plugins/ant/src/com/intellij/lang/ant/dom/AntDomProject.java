@@ -83,7 +83,7 @@ public abstract class AntDomProject extends AntDomNamedElement implements Proper
     if (parent == null) {
       return null;
     }
-    return PsiManager.getInstance(tag.getProject()).findDirectory(parent);
+    return tag.getManager().findDirectory(parent);
   }
 
   @Nullable

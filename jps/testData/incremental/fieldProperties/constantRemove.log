@@ -1,15 +1,3 @@
-Request to make modules:
-module ConstantRemove
-End of request
-digraph X {
-  ConstantRemove[label="ConstantRemove"];
-}
-digraph X {
-  ConstantRemove[label="ConstantRemove"];
-}
-Propagated modules:
-module ConstantRemove
-End of propagated
 Cleaning output files:
 out/production/ConstantRemove/Server.class
 End of files

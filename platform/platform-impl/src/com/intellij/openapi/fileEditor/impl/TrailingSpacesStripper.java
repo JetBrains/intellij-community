@@ -27,9 +27,11 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.DocumentImpl;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ShutDownTracker;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.THashSet;
@@ -56,6 +58,9 @@ public final class TrailingSpacesStripper extends FileDocumentManagerAdapter {
 
   private void strip(final Document document) {
     if (!document.isWritable()) return;
+    FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
+    VirtualFile file = fileDocumentManager.getFile(document);
+    if (file == null || !file.isValid()) return;
 
     final EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
     if (settings == null) return;
