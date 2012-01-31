@@ -35,7 +35,7 @@ class IntellijProjectBuilder extends AbstractProjectBuilder {
 
   @Override
   protected createLibrary(String name, Map paths) {
-    [ getName: { name } ] as Library
+    [ getName: { name }, getPresentableName: { name } ] as Library
   }
 
   @Override
