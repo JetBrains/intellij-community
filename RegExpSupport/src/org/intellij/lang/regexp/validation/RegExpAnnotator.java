@@ -27,6 +27,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.intellij.lang.regexp.RegExpLanguageHost;
+import org.intellij.lang.regexp.RegExpLanguageHosts;
 import org.intellij.lang.regexp.RegExpTT;
 import org.intellij.lang.regexp.psi.*;
 import org.intellij.lang.regexp.psi.impl.RegExpPropertyImpl;
@@ -124,6 +125,9 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
     if (host instanceof RegExpLanguageHost) {
       return (RegExpLanguageHost)host;
     }
+    if (host != null) {
+      return RegExpLanguageHosts.INSTANCE.forClass(host.getClass());
+    }
     return null;
   }
 
@@ -174,8 +178,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
     }
     if (group.isPythonNamedGroup() || group.isRubyNamedGroup()) {
       RegExpLanguageHost host = findRegExpHost(group);
-      if (host == null || (group.isPythonNamedGroup() && !host.supportsPythonNamedGroups()) ||
-                          (group.isRubyNamedGroup() && !host.supportsRubyNamedGroups())) {
+      if (host == null || !host.supportsNamedGroupSyntax(group)) {
         myHolder.createErrorAnnotation(group, "This named group syntax is not supported");
       }
     }
@@ -183,11 +186,13 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
 
   @Override
   public void visitRegExpPyNamedGroupRef(RegExpPyNamedGroupRef groupRef) {
+    /* the named group itself will be highlighted as unsupported; no need to highlight reference as well
     RegExpLanguageHost host = findRegExpHost(groupRef);
     if (host == null || !host.supportsPythonNamedGroups()) {
       myHolder.createErrorAnnotation(groupRef, "This named group reference syntax is not supported");
       return;
     }
+    */
     final RegExpGroup group = groupRef.resolve();
     if (group == null) {
       final Annotation a = myHolder.createErrorAnnotation(groupRef, "Unresolved backreference");

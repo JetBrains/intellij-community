@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,15 @@
  */
 package org.intellij.lang.regexp;
 
-import org.intellij.lang.regexp.psi.RegExpGroup;
+import com.intellij.openapi.util.ClassExtension;
 
 /**
  * @author yole
  */
-public interface RegExpLanguageHost {
-  boolean characterNeedsEscaping(char c);
-  boolean supportsPerl5EmbeddedComments();
-  boolean supportsPossessiveQuantifiers();
-  boolean supportsPythonConditionalRefs();
-  boolean supportsNamedGroupSyntax(RegExpGroup group);
+public class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost> {
+  public static RegExpLanguageHosts INSTANCE = new RegExpLanguageHosts();
+
+  private RegExpLanguageHosts() {
+    super("com.intellij.regExpLanguageHost");
+  }
 }
