@@ -1,4 +1,4 @@
-package org.jetbrains.android.compiler;
+package org.jetbrains.android.util;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -9,7 +9,7 @@ public class ResourceEntry {
   private final String myType;
   private final String myName;
 
-  ResourceEntry(@NotNull String type, @NotNull String name) {
+  public ResourceEntry(@NotNull String type, @NotNull String name) {
     myType = type;
     myName = name;
   }

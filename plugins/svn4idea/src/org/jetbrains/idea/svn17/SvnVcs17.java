@@ -66,6 +66,7 @@ import org.jetbrains.idea.svn17.actions.ShowPropertiesDiffWithLocalAction;
 import org.jetbrains.idea.svn17.actions.SvnMergeProvider;
 import org.jetbrains.idea.svn17.annotate.SvnAnnotationProvider;
 import org.jetbrains.idea.svn17.checkin.SvnCheckinEnvironment17;
+import org.jetbrains.idea.svn17.commandLine.SvnExecutableChecker;
 import org.jetbrains.idea.svn17.dialogs.SvnBranchPointsCalculator;
 import org.jetbrains.idea.svn17.dialogs.SvnFormatWorker;
 import org.jetbrains.idea.svn17.dialogs.WCInfo;
@@ -157,6 +158,11 @@ public class SvnVcs17 extends AbstractVcs<CommittedChangeList> {
   private final SvnLoadedBrachesStorage17 myLoadedBranchesStorage;
 
   public static final String SVNKIT_HTTP_SSL_PROTOCOLS = "svnkit.http.sslProtocols";
+  private final SvnExecutableChecker myChecker;
+
+  public void checkCommandLineVersion() {
+    myChecker.checkExecutableAndNotifyIfNeeded();
+  }
 
   static {
     SVNJNAUtil.setJNAEnabled(true);
@@ -238,6 +244,7 @@ public class SvnVcs17 extends AbstractVcs<CommittedChangeList> {
 
     // remove used some time before old notification group ids
     correctNotificationIds();
+    myChecker = new SvnExecutableChecker(myProject);
   }
 
   private void correctNotificationIds() {
@@ -410,8 +417,11 @@ public class SvnVcs17 extends AbstractVcs<CommittedChangeList> {
       }
     }
 
-    if (SvnConfiguration17.UseAcceleration.javaHL.equals(SvnConfiguration17.getInstance(myProject).myUseAcceleration)) {
+    final SvnConfiguration17.UseAcceleration accelerationType = SvnConfiguration17.getInstance(myProject).myUseAcceleration;
+    if (SvnConfiguration17.UseAcceleration.javaHL.equals(accelerationType)) {
       CheckJavaHL.runtimeCheck(myProject);
+    } else if (SvnConfiguration17.UseAcceleration.commandLine.equals(accelerationType) && ! ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      myChecker.checkExecutableAndNotifyIfNeeded();
     }
 
     // do one time after project loaded

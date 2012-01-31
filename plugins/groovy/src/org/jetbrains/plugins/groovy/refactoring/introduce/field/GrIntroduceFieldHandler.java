@@ -29,7 +29,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -102,7 +101,7 @@ public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceF
 
   @Override
   protected void checkOccurrences(PsiElement[] occurrences) {
-    //notning to do
+    //nothing to do
   }
 
   @Override
@@ -138,6 +137,8 @@ public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceF
     }
 
     GrReferenceAdjuster.shortenReferences(added);
+    
+    //var can be invalid if it was removed while initialization
     if (settings.removeLocalVar()) {
       deleteLocalVar(context);
     }
@@ -145,7 +146,7 @@ public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceF
     if (settings.replaceAllOccurrences()) {
       GroovyRefactoringUtil.sortOccurrences(context.occurrences);
       for (PsiElement occurrence : context.occurrences) {
-        replaceOccurence(field, occurrence);
+        replaceOccurrence(field, occurrence);
       }
     }
     else {
@@ -153,22 +154,22 @@ public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceF
         context.expression.delete();
       }
       else {
-        replaceOccurence(field, context.expression);
+        replaceOccurrence(field, context.expression);
       }
     }
     return field;
   }
 
   @Override
-  protected PsiElement[] findOccurences(GrExpression expression, PsiElement scope) {
-    final PsiElement[] occurences = super.findOccurences(expression, scope);
+  protected PsiElement[] findOccurrences(GrExpression expression, PsiElement scope) {
+    final PsiElement[] occurrences = super.findOccurrences(expression, scope);
     GrTypeDefinition clazz = (GrTypeDefinition)scope;
-    if (shouldBeStatic(expression, clazz)) return occurences;
+    if (shouldBeStatic(expression, clazz)) return occurrences;
 
     List<PsiElement> filtered = new ArrayList<PsiElement>();
-    for (PsiElement occurence : occurences) {
-      if (!shouldBeStatic(occurence, clazz)) {
-        filtered.add(occurence);
+    for (PsiElement occurrence : occurrences) {
+      if (!shouldBeStatic(occurrence, clazz)) {
+        filtered.add(occurrence);
       }
     }
     return ContainerUtil.toArray(filtered, new PsiElement[filtered.size()]);
@@ -180,18 +181,17 @@ public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceF
     final GrTypeDefinition scope = (GrTypeDefinition)context.scope;
     final GrMethod method = getContainingMethod(expression, scope);
     LOG.assertTrue(method != null);
-    final GrOpenBlock block = method.getBlock();
-    LOG.assertTrue(block != null);
+
     final GrStatement anchor;
     if (settings.removeLocalVar()) {
-      final GrVariable variable = resolveLocalVar(context);
+      GrVariable variable = resolveLocalVar(context);
       anchor = PsiTreeUtil.getParentOfType(variable, GrStatement.class);
     }
     else {
-      anchor = (GrStatement)findAnchor(context, settings, context.occurrences, block);
+      anchor = (GrStatement)findAnchor(context, settings, context.occurrences, method.getBlock());
     }
 
-    generateAssignment(context, settings, field, anchor, block);
+    generateAssignment(context, settings, field, anchor, method.getBlock());
   }
 
   private static void initializeInConstructor(GrIntroduceContext context, GrIntroduceFieldSettings settings, GrField field) {
@@ -233,8 +233,8 @@ public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceF
   private static void generateAssignment(GrIntroduceContext context,
                                          GrIntroduceFieldSettings settings,
                                          GrField field,
-                                         GrStatement anchor,
-                                         final GrOpenBlock block) {
+                                         @Nullable GrStatement anchor,
+                                         GrCodeBlock defaultContainer) {
     final GrExpression initializer;
     if (settings.removeLocalVar()) {
       initializer = extractVarInitializer(context);
@@ -242,10 +242,20 @@ public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceF
     else {
       initializer = context.expression;
     }
-    GrAssignmentExpression init = ((GrAssignmentExpression)GroovyPsiElementFactory.getInstance(context.project)
-      .createExpressionFromText(settings.getName() + " = " + initializer.getText()));
+    GrAssignmentExpression init = (GrAssignmentExpression)GroovyPsiElementFactory.getInstance(context.project)
+      .createExpressionFromText(settings.getName() + " = " + initializer.getText());
+
+    GrCodeBlock block;
+    if (anchor != null) {
+      anchor = GroovyRefactoringUtil.addBlockIntoParent(anchor);
+      LOG.assertTrue(anchor.getParent() instanceof GrCodeBlock);
+      block = (GrCodeBlock)anchor.getParent();
+    }
+    else {
+      block = defaultContainer;
+    }
     init = (GrAssignmentExpression)block.addStatementBefore(init, anchor);
-    replaceOccurence(field, init.getLValue());
+    replaceOccurrence(field, init.getLValue());
   }
 
   private static GrExpression extractVarInitializer(GrIntroduceContext context) {
@@ -268,13 +278,13 @@ public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceF
     return findAnchor(context, settings, ContainerUtil.toArray(elements, new PsiElement[elements.size()]), block);
   }
 
-  private static void replaceOccurence(GrField field, PsiElement occurence) {
-    final GrReferenceExpression newExpr = createRefExpression(field, occurence);
+  private static void replaceOccurrence(GrField field, PsiElement occurrence) {
+    final GrReferenceExpression newExpr = createRefExpression(field, occurrence);
     final PsiElement replaced;
-    if (occurence instanceof GrExpression) {
-      replaced = ((GrExpression)occurence).replaceWithExpression(newExpr, false);
+    if (occurrence instanceof GrExpression) {
+      replaced = ((GrExpression)occurrence).replaceWithExpression(newExpr, false);
     } else {
-      replaced = occurence.replace(newExpr);
+      replaced = occurrence.replace(newExpr);
     }
     if (replaced instanceof GrQualifiedReference) {
       GrReferenceAdjuster.shortenReference((GrQualifiedReference)replaced);

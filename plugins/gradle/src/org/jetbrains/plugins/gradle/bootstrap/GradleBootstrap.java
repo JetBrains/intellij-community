@@ -9,6 +9,7 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.ui.content.impl.ContentImpl;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.diff.GradleProjectStructureHelper;
 import org.jetbrains.plugins.gradle.sync.GradleProjectStructureChangesModel;
 import org.jetbrains.plugins.gradle.sync.GradleProjectStructureChangesPanel;
 import org.jetbrains.plugins.gradle.ui.GradleIcons;
@@ -25,10 +26,14 @@ public class GradleBootstrap extends AbstractProjectComponent {
   private static final String GRADLE_TOOL_WINDOW_ID = GradleBundle.message("gradle.name");
   
   private final GradleProjectStructureChangesModel myChangesModel;
+  private final GradleProjectStructureHelper myProjectStructureHelper;
   
-  public GradleBootstrap(@NotNull Project project, @NotNull GradleProjectStructureChangesModel changesModel) {
+  public GradleBootstrap(@NotNull Project project,
+                         @NotNull GradleProjectStructureChangesModel changesModel,
+                         @NotNull GradleProjectStructureHelper projectStructureHelper) {
     super(project);
     myChangesModel = changesModel;
+    myProjectStructureHelper = projectStructureHelper;
   }
 
   @Override
@@ -46,7 +51,8 @@ public class GradleBootstrap extends AbstractProjectComponent {
     ToolWindow toolWindow = manager.registerToolWindow(GRADLE_TOOL_WINDOW_ID, false, ToolWindowAnchor.RIGHT);
     toolWindow.setIcon(GradleIcons.GRADLE_ICON);
     String syncTitle = GradleBundle.message("gradle.sync.title.tab");
-    final GradleProjectStructureChangesPanel projectStructureChanges = new GradleProjectStructureChangesPanel(myProject, myChangesModel);
+    final GradleProjectStructureChangesPanel projectStructureChanges
+      = new GradleProjectStructureChangesPanel(myProject, myChangesModel, myProjectStructureHelper);
     toolWindow.getContentManager().addContent(new ContentImpl(projectStructureChanges, syncTitle, true)); 
   }
 }

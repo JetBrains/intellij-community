@@ -17,6 +17,7 @@ package org.jetbrains.idea.devkit.actions;
 
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.IndentsPass;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -30,12 +31,15 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -82,25 +86,31 @@ public class ToggleHighlightingMarkupAction extends AnAction {
     Matcher matcher = pattern.matcher(sequence);
     sb.append(sequence, 0, startOffset);
     if (matcher.find(startOffset)) {
+      List<TextRange> ranges = new ArrayList<TextRange>();
       boolean compactMode = false;
-      int pos = startOffset;
+      int pos;
       do {
         if (matcher.start(0) >= endOffset) break;
         if (matcher.start(2) < matcher.end(2)) {
           if (!compactMode) {
-            sb.setLength(pos = 0);
+            ranges.clear();
             compactMode = true;
           }
-          sb.append(sequence, pos, matcher.start(2));
-          sb.append(sequence, matcher.end(2), matcher.end(0));
+          ranges.add(new TextRange(matcher.start(2), matcher.end(2)));
         }
         else if (!compactMode) {
-          sb.append(sequence, pos, matcher.start(0));
-          sb.append(sequence, matcher.start(3), matcher.end(3));
+          ranges.add(new TextRange(matcher.start(0), matcher.start(3)));
+          ranges.add(new TextRange(matcher.end(3), matcher.end(0)));
         }
-        pos = matcher.end(0);
+        pos = Math.max(matcher.end(1), matcher.end(2));
       }
       while (matcher.find(pos));
+      Collections.sort(ranges, IndentsPass.RANGE_COMPARATOR);
+      pos = 0;
+      for (TextRange range : ranges) {
+        sb.append(sequence, pos, range.getStartOffset());
+        pos = range.getEndOffset();
+      }
       sb.append(sequence, pos, sequence.length());
     }
     else {
@@ -128,7 +138,7 @@ public class ToggleHighlightingMarkupAction extends AnAction {
                                 CharSequence sequence,
                                 int offset,
                                 ArrayList<HighlightInfo> infos, final boolean compact) {
-    if (info == null || !infos.isEmpty() && infos.get(infos.size() - 1).getEndOffset() < info.getStartOffset()) {
+    if (info == null || !infos.isEmpty() && getMaxEnd(infos) < info.getStartOffset()) {
       if (infos.size() == 1) {
         HighlightInfo cur = infos.remove(0);
         sb.append(sequence.subSequence(offset, cur.getStartOffset()));
@@ -162,6 +172,15 @@ public class ToggleHighlightingMarkupAction extends AnAction {
       if (!found) infos.add(info);
     }
     return offset;
+  }
+
+  private static int getMaxEnd(ArrayList<HighlightInfo> infos) {
+    int max = -1;
+    for (HighlightInfo info : infos) {
+      int endOffset = info.getEndOffset();
+      if (max < endOffset) max = endOffset;
+    }
+    return max;
   }
 
   private static int processStack(LinkedList<HighlightInfo> stack,

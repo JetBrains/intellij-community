@@ -1527,7 +1527,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     if (targetClass == null) return;
 
     addDynamicAnnotation(annotation, refExpr);
-    if (targetClass instanceof GrMemberOwner) {
+    if (targetClass instanceof GrMemberOwner && targetClass.isWritable()) {
       if (!(targetClass instanceof GroovyScriptClass)) {
         annotation.registerFix(new CreateFieldFromUsageFix(refExpr, (GrMemberOwner)targetClass));
       }

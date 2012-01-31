@@ -95,7 +95,9 @@ public class SvnSimpleCommand extends SvnTextCommand {
       }
     });
     start();
-    waitFor();
+    if (myProcess != null) {
+      waitFor();
+    }
     if (ex[0] != null) {
       throw ex[0];
     }

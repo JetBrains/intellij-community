@@ -29,6 +29,7 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
@@ -150,6 +151,9 @@ public abstract class AndroidTestCase extends JavaCodeInsightFixtureTestCase {
     String androidJarPath = sdkPath + "/../android.jar!/";
     VirtualFile androidJar = JarFileSystem.getInstance().findFileByPath(androidJarPath);
     sdkModificator.addRoot(androidJar, OrderRootType.CLASSES);
+
+    VirtualFile resFolder = LocalFileSystem.getInstance().findFileByPath(sdkPath + "/platforms/android-1.5/data/res");
+    sdkModificator.addRoot(resFolder, OrderRootType.CLASSES);
 
     AndroidSdkAdditionalData data = new AndroidSdkAdditionalData(sdk);
     AndroidSdk sdkObject = AndroidSdk.parse(sdkPath, new EmptySdkLog());
