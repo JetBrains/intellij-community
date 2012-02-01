@@ -606,7 +606,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   }
 
   public static boolean limitRelevance() {
-    return ApplicationManager.getApplication().isUnitTestMode() || Registry.is("limited.relevance.sorting.in.completion");
+    return Registry.is("limited.relevance.sorting.in.completion");
   }
 
   public boolean isFrozen(@NotNull LookupElement element) {
