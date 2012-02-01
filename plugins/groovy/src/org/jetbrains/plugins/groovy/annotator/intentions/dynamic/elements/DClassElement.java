@@ -19,7 +19,7 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManager;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.MyPair;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ParamInfo;
 
 import java.util.*;
 
@@ -31,16 +31,14 @@ public class DClassElement implements DNamedElement {
   public String myName;
   public Set<DPropertyElement> myProperties = new HashSet<DPropertyElement>();
   public Set<DMethodElement> myMethods = new HashSet<DMethodElement>();
-  private Project myProject;
 
+  @SuppressWarnings("UnusedDeclaration") //used for serialization
   public DClassElement() {
   }
-
+  
   public DClassElement(Project project, String name) {
-    myProject = project;
     myName = name;
-
-    DynamicManager.getInstance(myProject).getRootElement().mergeAddClass(this);
+    DynamicManager.getInstance(project).getRootElement().mergeAddClass(this);
   }
 
   public void addMethod(DMethodElement methodElement) {
@@ -61,6 +59,7 @@ public class DClassElement implements DNamedElement {
     }
   }
 
+  @Nullable
   public DPropertyElement getPropertyByName(String propertyName) {
     for (final DPropertyElement property : myProperties) {
       if (propertyName.equals(property.getName())) {
@@ -116,7 +115,7 @@ public class DClassElement implements DNamedElement {
   @Nullable
   public DMethodElement getMethod(String methodName, String[] parametersTypes) {
     for (DMethodElement method : myMethods) {
-      final List<MyPair> myPairList = method.getPairs();
+      final List<ParamInfo> myPairList = method.getPairs();
       if (method.getName().equals(methodName)
           && Arrays.equals(QuickfixUtil.getArgumentsTypes(myPairList), parametersTypes)) return method;
     }

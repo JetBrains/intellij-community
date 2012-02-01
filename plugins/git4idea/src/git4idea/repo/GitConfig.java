@@ -47,7 +47,7 @@ import java.util.regex.Pattern;
  *
  * @author Kirill Likhodedov
  */
-class GitConfig {
+public class GitConfig {
   
   private static final Logger LOG = Logger.getInstance(GitConfig.class);
 

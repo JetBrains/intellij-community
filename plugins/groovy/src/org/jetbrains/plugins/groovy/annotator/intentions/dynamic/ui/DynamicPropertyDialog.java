@@ -28,20 +28,17 @@ import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.SupertypeConstraint;
  * Date: 18.02.2008
  */
 public class DynamicPropertyDialog extends DynamicDialog {
-  private final GrReferenceExpression myReferenceExpression;
-  private final GrArgumentLabel myLabel;
 
   public DynamicPropertyDialog(GrReferenceExpression referenceExpression) {
-    super(referenceExpression, QuickfixUtil.createSettings(referenceExpression), GroovyExpectedTypesProvider.calculateTypeConstraints(referenceExpression));
-    myReferenceExpression = referenceExpression;
-    myLabel = null;
+    super(referenceExpression, QuickfixUtil.createSettings(referenceExpression),
+          GroovyExpectedTypesProvider.calculateTypeConstraints(referenceExpression), false);
     setTitle(GroovyBundle.message("add.dynamic.property", referenceExpression.getReferenceName()));
     setUpTypeLabel(GroovyBundle.message("dynamic.method.property.type"));
   }
 
   public DynamicPropertyDialog(GrArgumentLabel label, PsiClass targetClass) {
-    super(label, QuickfixUtil.createSettings(label, targetClass), new SupertypeConstraint[]{SupertypeConstraint.create(label.getNamedArgument().getExpression().getType())});
-    myLabel = label;
-    myReferenceExpression = null;
+    super(label, QuickfixUtil.createSettings(label, targetClass),
+          new SupertypeConstraint[]{SupertypeConstraint.create(label.getNamedArgument().getExpression().getType())}, false);
+    setUpTypeLabel(GroovyBundle.message("dynamic.method.property.type"));
   }
 }

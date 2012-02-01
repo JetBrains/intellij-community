@@ -28,6 +28,7 @@ import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class StringBufferReplaceableByStringInspection extends BaseInspection {
 
@@ -82,7 +83,9 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
           final PsiNewExpression newExpression = (PsiNewExpression)parent;
           final PsiExpression stringBuilderExpression = getCompleteExpression(newExpression);
           final StringBuilder stringExpression = buildStringExpression(stringBuilderExpression, new StringBuilder());
-          replaceExpression(stringBuilderExpression, stringExpression.toString());
+          if (stringExpression != null && stringBuilderExpression != null) {
+            replaceExpression(stringBuilderExpression, stringExpression.toString());
+          }
           return;
         }
         return;
@@ -107,10 +110,14 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
       originalTypeElement.replace(typeElement);
     }
 
+    @Nullable
     private static StringBuilder buildStringExpression(PsiExpression initializer, StringBuilder result) {
       if (initializer instanceof PsiNewExpression) {
         final PsiNewExpression newExpression = (PsiNewExpression)initializer;
         final PsiExpressionList argumentList = newExpression.getArgumentList();
+        if (argumentList ==  null) {
+          return null;
+        }
         final PsiExpression[] arguments = argumentList.getExpressions();
         if (arguments.length == 1) {
           final PsiExpression argument = arguments[0];
@@ -240,8 +247,18 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
       if (expression == null) {
         return false;
       }
-      else if (expression instanceof PsiNewExpression) {
-        return true;
+      else if (
+      expression instanceof PsiNewExpression) {
+        if (!(expression.getParent() instanceof PsiVariable)) {
+          return true;
+        }
+        final PsiNewExpression newExpression = (PsiNewExpression)expression;
+        final PsiExpressionList argumentList = newExpression.getArgumentList();
+        if (argumentList == null) {
+          return false;
+        }
+        final PsiExpression[] arguments = argumentList.getExpressions();
+        return arguments.length == 1;
       }
       else if (expression instanceof PsiMethodCallExpression) {
         final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
@@ -262,6 +279,7 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
     }
   }
 
+  @Nullable
   private static PsiExpression getCompleteExpression(PsiNewExpression expression) {
     PsiElement completeExpression = expression;
     boolean found = false;
@@ -271,16 +289,24 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
         break;
       }
       final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)parent;
+      final PsiElement grandParent = parent.getParent();
+      if (!(grandParent instanceof PsiMethodCallExpression)) {
+        break;
+      }
       final String name = referenceExpression.getReferenceName();
-      if (!"append".equals(name)) {
+      if ("append".equals(name)) {
+        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
+        final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
+        final PsiExpression[] arguments = argumentList.getExpressions();
+        if (arguments.length != 1) {
+          return null;
+        }
+      }
+      else {
         if (!"toString".equals(name)) {
           return null;
         }
         found = true;
-      }
-      final PsiElement grandParent = parent.getParent();
-      if (!(grandParent instanceof PsiMethodCallExpression)) {
-        break;
       }
       completeExpression = grandParent;
       if (found) {

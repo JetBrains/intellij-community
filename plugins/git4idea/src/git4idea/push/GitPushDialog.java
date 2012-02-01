@@ -35,8 +35,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -50,7 +48,6 @@ public class GitPushDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance(GitPushDialog.class);
   private static final String DEFAULT_REMOTE = "origin";
 
-  private JComponent myRootPanel;
   private Project myProject;
   private final GitPusher myPusher;
   private final GitPushLog myListPanel;
@@ -58,7 +55,6 @@ public class GitPushDialog extends DialogWrapper {
   private Map<GitRepository, GitPushSpec> myPushSpecs;
   private final Collection<GitRepository> myRepositories;
   private final JBLoadingPanel myLoadingPanel;
-  private final JCheckBox myPushAllCheckbox;
   private final Object COMMITS_LOADING_LOCK = new Object();
   private final GitManualPushToBranch myRefspecPanel;
   private final AtomicReference<String> myDestBranchInfoOnRefresh = new AtomicReference<String>();
@@ -73,17 +69,6 @@ public class GitPushDialog extends DialogWrapper {
     myRepositories = GitRepositoryManager.getInstance(myProject).getRepositories();
 
     myLoadingPanel = new JBLoadingPanel(new BorderLayout(), this.getDisposable());
-    myPushAllCheckbox = new JCheckBox("Push all branches", false);
-    myPushAllCheckbox.setMnemonic('p');
-    myPushAllCheckbox.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        loadCommitsInBackground();
-      }
-    });
-    /* hidden: it may confuse users, the target is not clear, hidden until really needed,
-       not removed completely because it is default behavior for 'git push' in command line. */
-    myPushAllCheckbox.setVisible(false);
 
     myListPanel = new GitPushLog(myProject, myRepositories, new RepositoryCheckboxListener());
     myRefspecPanel = new GitManualPushToBranch(myRepositories, new RefreshButtonListener());
@@ -100,19 +85,17 @@ public class GitPushDialog extends DialogWrapper {
     init();
     setOKButtonText("Push");
     setTitle("Git Push");
-
   }
 
   @Override
   protected JComponent createCenterPanel() {
     JPanel optionsPanel = new JPanel(new BorderLayout());
-    optionsPanel.add(myPushAllCheckbox, BorderLayout.NORTH);
     optionsPanel.add(myRefspecPanel);
 
-    myRootPanel = new JPanel(new BorderLayout(0, 15));
-    myRootPanel.add(createCommitListPanel(), BorderLayout.CENTER);
-    myRootPanel.add(optionsPanel, BorderLayout.SOUTH);
-    return myRootPanel;
+    JComponent rootPanel = new JPanel(new BorderLayout(0, 15));
+    rootPanel.add(createCommitListPanel(), BorderLayout.CENTER);
+    rootPanel.add(optionsPanel, BorderLayout.SOUTH);
+    return rootPanel;
   }
 
 
@@ -182,35 +165,17 @@ public class GitPushDialog extends DialogWrapper {
           LOG.info("Couldn't retrieve tracked branch for current branch " + currentBranch, e);
           remoteName = DEFAULT_REMOTE;
         }
-        String targetBranch = getNameWithoutRemote(myGitCommitsToPush.get(repository).get(currentBranch).getDestBranch(), remoteName);
+        String targetBranch = myGitCommitsToPush.get(repository).get(currentBranch).getDestBranch().getShortName();
         return Pair.create(remoteName, targetBranch);
       }
     }
     return Pair.create(DEFAULT_REMOTE, "");
   }
 
-  @NotNull
-  private static String getNameWithoutRemote(@NotNull GitBranch remoteBranch, @NotNull String remoteName) {
-    remoteName += "/";
-    String branchName = remoteBranch.getName();
-    if (branchName.startsWith(remoteName)) {
-      return branchName.substring(remoteName.length());
-    }
-    else {
-      // we are taking the current branch of the first repository
-      // it is possible (though unlikely), that this branch has other remote than the common remote selected in the refspec panel
-      // then we return the full branch name.
-      // the push won't work absolutely correct, if the remote doesn't have this branch, but it is not our problem in the case of 
-      // several repositories with different remotes sets and different branches.
-      return remoteBranch.getFullName();
-    }
-  }
-
   @Nullable
   private String collectInfoToPush() {
     try {
-      boolean pushAll = myPushAllCheckbox.isSelected();
-      myPushSpecs = pushAll ? pushSpecsForPushAll() : pushSpecsForCurrentOrEnteredBranches();
+      myPushSpecs = pushSpecsForCurrentOrEnteredBranches();
       myGitCommitsToPush = myPusher.collectCommitsToPush(myPushSpecs);
       return null;
     }
@@ -278,14 +243,6 @@ public class GitPushDialog extends DialogWrapper {
       }
     }
     return null;
-  }
-
-  private Map<GitRepository, GitPushSpec> pushSpecsForPushAll() {
-    Map<GitRepository, GitPushSpec> specs = new HashMap<GitRepository, GitPushSpec>();
-    for (GitRepository repository : myRepositories) {
-      specs.put(repository, GitPushSpec.pushAllSpec());
-    }
-    return specs;
   }
 
   @Override

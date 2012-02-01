@@ -1027,6 +1027,14 @@
       <add-to-group group-id="NewGroup" anchor="last"/>
     </action>
 
+    <group id="Groovy.Dynamic.Toolbar">
+      <action id="Groovy.Dynamic.Remove" class="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.RemoveDynamicAction"
+              icon="/general/remove.png" text="Remove" description="Remove dynamic element"/>
+      <separator/>
+      <action id="Groovy.Dynamic.ExpandAll" class="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ExpandAllAction" icon="/actions/expandall.png" text="Expand all" description="Collapse all"/>
+      <action id="Groovy.Dynamic.CollapseAll" class="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.CollapseAllAction" icon="/actions/collapseAll.png" text="Collapse all" description="Collapse all"/>
+    </group>
+
       
     <group id="Internal.Groovy" text="Groovy" popup="true" internal="true">
       <action id="GetPsiTypeAction" class="org.jetbrains.plugins.groovy.actions.GrGetPsiTypeAction"

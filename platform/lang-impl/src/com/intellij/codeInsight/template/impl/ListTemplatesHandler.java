@@ -71,6 +71,7 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
       return;
     }
 
+    Collections.sort(matchingTemplates, TemplateListPanel.TEMPLATE_COMPARATOR);
     showTemplatesLookup(project, editor, prefix, matchingTemplates);
   }
 
@@ -78,6 +79,30 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
                                          @NotNull String prefix, List<TemplateImpl> matchingTemplates) {
 
     final LookupImpl lookup = (LookupImpl)LookupManager.getInstance(project).createLookup(editor, LookupElement.EMPTY_ARRAY, prefix, LookupArranger.DEFAULT);
+    lookup.setArranger(new LookupArranger() {
+      /*
+      @Override
+      public Comparator<LookupElement> getItemComparator() {
+        return new Comparator<LookupElement>() {
+          @Override
+          public int compare(LookupElement o1, LookupElement o2) {
+            return o1.getLookupString().compareToIgnoreCase(o2.getLookupString());
+          }
+        };
+      }
+      */
+
+      @Override
+      public Classifier<LookupElement> createRelevanceClassifier() {
+        return new ComparingClassifier<LookupElement>(ClassifierFactory.<LookupElement>listClassifier(), "preferPrefix") {
+          @NotNull
+          @Override
+          public Comparable getWeight(LookupElement element) {
+            return !element.getLookupString().startsWith(lookup.itemPattern(element));
+          }
+        };
+      }
+    });
     for (TemplateImpl template : matchingTemplates) {
       lookup.addItem(createTemplateElement(template), new PlainPrefixMatcher(prefix));
     }
