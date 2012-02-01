@@ -291,8 +291,8 @@ public class PackageAnnotator {
     PackageCoverageInfo flattenPackageCoverageInfo = getOrCreateCoverageInfo(flattenPackageCoverageMap, packageVMName);
     for (Map.Entry<String, ClassCoverageInfo> entry : toplevelClassCoverage.entrySet()) {
       final ClassCoverageInfo coverageInfo = entry.getValue();
-      flattenPackageCoverageInfo.coveredClassCount += coverageInfo.coveredMethodCount > 0 ? 1 : 0;
-      flattenPackageCoverageInfo.totalClassCount++;
+      flattenPackageCoverageInfo.coveredClassCount += coverageInfo.coveredClassCount;
+      flattenPackageCoverageInfo.totalClassCount += coverageInfo.totalClassCount;
 
       flattenPackageCoverageInfo.coveredLineCount += coverageInfo.fullyCoveredLineCount + coverageInfo.partiallyCoveredLineCount;
       flattenPackageCoverageInfo.totalLineCount += coverageInfo.totalLineCount;
