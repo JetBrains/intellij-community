@@ -226,7 +226,7 @@ public class AndroidIdlCompiler implements SourceGeneratingCompiler {
         }
 
         try {
-          VirtualFile[] sourceRoots = AndroidPackagingCompiler.getSourceRootsForModuleAndDependencies(idlItem.myModule);
+          VirtualFile[] sourceRoots = AndroidPackagingCompiler.getSourceRootsForModuleAndDependencies(idlItem.myModule, false);
           final Map<CompilerMessageCategory, List<String>> messages = AndroidIdl
             .execute(idlItem.myAndroidTarget, idlItem.myFile.getPath(), idlItem.myGeneratedFile.getPath(), sourceRoots);
           ApplicationManager.getApplication().runReadAction(new Runnable() {
