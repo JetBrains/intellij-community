@@ -38,6 +38,10 @@ public class Paths {
   }
 
   public static URI toURI(String localPath) {
+    return toURI(localPath, true);
+  }
+
+  private static URI toURI(String localPath, boolean convertSpaces) {
     try {
       String p = FileUtil.toSystemIndependentName(localPath);
       if (!p.startsWith("/")) {
@@ -46,7 +50,7 @@ public class Paths {
       if (p.startsWith("//")) {
         p = "//" + p;
       }
-      return new URI("file", null, p.replaceAll(" ", "%20"), null);
+      return new URI("file", null, convertSpaces? p.replaceAll(" ", "%20") : p, null);
     }
     catch (URISyntaxException e) {
       throw new Error(e);
@@ -54,6 +58,6 @@ public class Paths {
   }
 
   public static File convertToFile(final URI uri) {
-    return new File(toURI(uri.getPath()));
+    return new File(toURI(uri.getPath(), false));
   }
 }
