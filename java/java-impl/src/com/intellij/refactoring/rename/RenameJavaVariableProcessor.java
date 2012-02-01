@@ -191,6 +191,7 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
         for (PsiMethod method : setter.findDeepestSuperMethods()) {
           if (method instanceof PsiCompiledElement) {
             setter = null;
+            shouldRenameSetterParameter = false;
             break;
           }
         }
