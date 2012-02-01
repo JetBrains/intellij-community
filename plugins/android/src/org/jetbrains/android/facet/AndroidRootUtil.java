@@ -256,14 +256,8 @@ public class AndroidRootUtil {
                   }
                 }
               }
-              else {
-                if (!outputDirs.contains(classDir) && classDir != null && classDir.exists()) {
-                  outputDirs.add(classDir);
-                }
-                VirtualFile classDirForTests = extension.getCompilerOutputPathForTests();
-                if (!outputDirs.contains(classDirForTests) && classDirForTests != null && classDirForTests.exists()) {
-                  outputDirs.add(classDirForTests);
-                }
+              else if (!outputDirs.contains(classDir) && classDir != null && classDir.exists()) {
+                outputDirs.add(classDir);
               }
             }
             fillExternalLibrariesAndModules(depModule, outputDirs, libraries, visited, !libraryProject || exportedLibrariesOnly);
