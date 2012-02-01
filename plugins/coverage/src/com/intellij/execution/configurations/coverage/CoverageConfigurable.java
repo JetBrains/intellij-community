@@ -25,6 +25,7 @@ import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.util.JreVersionDetector;
 import com.intellij.ide.ui.ListCellRendererWrapper;
+import com.intellij.ide.util.ClassFilter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.ConfigurationException;
@@ -33,6 +34,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.PackageChooser;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.peer.PeerFactory;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiPackage;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.classFilter.ClassFilterEditor;
@@ -74,7 +76,12 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
 
   private static class MyClassFilterEditor extends ClassFilterEditor {
     public MyClassFilterEditor(Project project) {
-      super(project);
+      super(project, new ClassFilter() {
+        public boolean isAccepted(PsiClass aClass) {
+          if (aClass.getContainingClass() != null) return false;
+          return true;
+        }
+      });
     }
 
     protected void addPatternFilter() {
