@@ -190,7 +190,7 @@ public class StorageUtil {
   public static boolean contentEquals(@NotNull final Document document, @NotNull final IFile file) {
     try {
       final Pair<String, String> pair = loadFile(file);
-      return pair.first == null ? false : pair.first.equals(printDocumentToString(document, pair.second));
+      return pair.first != null && pair.first.equals(printDocumentToString(document, pair.second));
     }
     catch (IOException e) {
       LOG.debug(e);
@@ -201,7 +201,7 @@ public class StorageUtil {
   public static boolean contentEquals(@NotNull final Element element, @NotNull final IFile file) {
     try {
       final Pair<String, String> pair = loadFile(file);
-      return pair.first == null ? false : pair.first.equals(printElement(element, pair.second));
+      return pair.first != null && pair.first.equals(printElement(element, pair.second));
     }
     catch (IOException e) {
       LOG.debug(e);
