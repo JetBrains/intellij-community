@@ -19,6 +19,7 @@ import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -89,7 +90,7 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
       context.setAddCompletionChar(false);
     }
 
-    DefaultInsertHandler.addImportForItem(context, item);
+    PsiTypeLookupItem.addImportForItem(context, psiClass);
 
     if (shouldInsertParentheses(psiClass, file.findElementAt(context.getTailOffset() - 1))) {
       if (ConstructorInsertHandler.insertParentheses(context, item, psiClass, false)) {
