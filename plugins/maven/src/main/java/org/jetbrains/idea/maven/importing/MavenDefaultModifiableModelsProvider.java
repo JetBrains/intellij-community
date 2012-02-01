@@ -77,6 +77,11 @@ public class MavenDefaultModifiableModelsProvider extends MavenBaseModifiableMod
     return FacetManager.getInstance(module).createModifiableModel();
   }
 
+  @Override
+  public LibraryTable.ModifiableModel getProjectLibrariesModel() {
+    return myLibrariesModel;
+  }
+
   public Library[] getAllLibraries() {
     return myLibrariesModel.getLibraries();
   }
