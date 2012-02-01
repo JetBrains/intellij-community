@@ -256,7 +256,8 @@ public class AndroidRootUtil {
                   }
                 }
               }
-              else {
+              // do not support android-app->android-app compile dependencies
+              else if (facet == null) {
                 if (!outputDirs.contains(classDir) && classDir != null && classDir.exists()) {
                   outputDirs.add(classDir);
                 }
