@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,48 +15,33 @@
  */
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
 
-import java.util.Arrays;
-
 /**
  * User: Dmitry.Krasilschikov
  * Date: 29.02.2008
  */
-public class MyPair  {
-  public String first = null;
-  public String second = null;
+public class ParamInfo {
+  public String name = null;
+  public String type = null;
 
-  public MyPair() {
-  }
+  public ParamInfo() {}
 
-  public MyPair(String first, String second) {
-    this.first = first;
-    this.second = second;
-  }
-
-  public void setFirst(String first) {
-    this.first = first;
-  }
-  
-  public void setSecond(String second) {
-    this.second = second;
+  public ParamInfo(String name, String type) {
+    this.name = name;
+    this.type = type;
   }
 
   public final int hashCode() {
     int hashCode = 0;
-    if (first != null) {
-      hashCode += hashCode(first);
+    if (name != null) {
+      hashCode += name.hashCode();
     }
-    if (second != null) {
-      hashCode += hashCode(second);
+    if (type != null) {
+      hashCode += type.hashCode();
     }
     return hashCode;
   }
 
-  private static int hashCode(final Object o) {
-    return (o instanceof Object[]) ? Arrays.hashCode((Object[]) o) : o.hashCode();
-  }
-
   public String toString() {
-    return "<" + first + "," + second + ">";
+    return "<" + name + "," + type + ">";
   }
 }

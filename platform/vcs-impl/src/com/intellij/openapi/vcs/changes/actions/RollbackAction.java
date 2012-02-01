@@ -100,17 +100,20 @@ public class RollbackAction extends AnAction implements DumbAware {
     FileDocumentManager.getInstance().saveAllDocuments();
 
     List<FilePath> missingFiles = e.getData(ChangesListView.MISSING_FILES_DATA_KEY);
+    boolean hasChanges = false;
     if (missingFiles != null && !missingFiles.isEmpty()) {
+      hasChanges = true;
       new RollbackDeletionAction().actionPerformed(e);
     }
 
     List<VirtualFile> modifiedWithoutEditing = getModifiedWithoutEditing(e);
     if (modifiedWithoutEditing != null && !modifiedWithoutEditing.isEmpty()) {
+      hasChanges = true;
       rollbackModifiedWithoutEditing(project, modifiedWithoutEditing);
     }
 
     Change[] changes = getChanges(project, e);
-    if (changes != null) {
+    if (changes != null && (changes.length > 0 || !hasChanges)) {
       RollbackChangesDialog.rollbackChanges(project, Arrays.asList(changes));
     }
   }

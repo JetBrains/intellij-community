@@ -9,6 +9,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.diff.GradleProjectStructureHelper;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.ui.RichTextControlBuilder;
 
@@ -41,11 +42,16 @@ public abstract class GradleToolWindowPanel extends SimpleToolWindowPanel {
   /** Top-level container, managed by the card layout. */
   private final JPanel     myContent = new JPanel(myLayout);
 
-  private final Project myProject;
+  private final Project                      myProject;
+  private final GradleProjectStructureHelper myProjectStructureHelper;
   
-  protected GradleToolWindowPanel(@NotNull Project project, @NotNull String place) {
+  protected GradleToolWindowPanel(@NotNull Project project,
+                                  @Nullable GradleProjectStructureHelper projectStructureHelper,
+                                  @NotNull String place)
+  {
     super(true);
     myProject = project;
+    myProjectStructureHelper = projectStructureHelper;
     final ActionManager actionManager = ActionManager.getInstance();
     final ActionGroup actionGroup = (ActionGroup)actionManager.getAction(TOOL_WINDOW_TOOLBAR_ID);
     ActionToolbar actionToolbar = actionManager.createActionToolbar(place, actionGroup, true);
@@ -89,6 +95,11 @@ public abstract class GradleToolWindowPanel extends SimpleToolWindowPanel {
   @NotNull
   public Project getProject() {
     return myProject;
+  }
+
+  @NotNull
+  public GradleProjectStructureHelper getProjectStructureHelper() {
+    return myProjectStructureHelper;
   }
 
   /**

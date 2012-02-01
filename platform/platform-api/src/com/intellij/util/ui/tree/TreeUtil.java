@@ -30,7 +30,6 @@ import com.intellij.util.Range;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.omg.PortableInterceptor.SYSTEM_EXCEPTION;
 
 import javax.swing.*;
 import javax.swing.plaf.basic.BasicTreeUI;
@@ -43,7 +42,7 @@ import java.util.List;
 
 public final class TreeUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.ui.tree.TreeUtil");
-  private static final String TREE_UTIL_SCROLL_TIME_STAMP = "TreeUtil.scrollTimeStamp";
+  @NotNull private static final String TREE_UTIL_SCROLL_TIME_STAMP = "TreeUtil.scrollTimeStamp";
 
   private TreeUtil() {}
 
@@ -59,6 +58,7 @@ public final class TreeUtil {
     collectExpandedPathsImpl(tree, paths, new TreePath(root));
   }
 
+  @NotNull
   public static List<TreePath> collectExpandedPaths(@NotNull final JTree tree){
     final ArrayList<TreePath> result = new ArrayList<TreePath>();
     final Object root = tree.getModel().getRoot();
@@ -68,7 +68,7 @@ public final class TreeUtil {
   }
 
   @NotNull
-  public static <T> List<T> collectSelectedObjectsOfType(JTree tree, Class<T> clazz) {
+  public static <T> List<T> collectSelectedObjectsOfType(@NotNull JTree tree, @NotNull Class<T> clazz) {
     final TreePath[] selections = tree.getSelectionPaths();
     if (selections != null) {
       final ArrayList<T> result = new ArrayList<T>();
@@ -86,7 +86,8 @@ public final class TreeUtil {
 
   }
 
-  public static List<TreePath> collectExpandedPaths(final JTree tree, TreePath path){
+  @NotNull
+  public static List<TreePath> collectExpandedPaths(@NotNull final JTree tree, @NotNull TreePath path){
     final ArrayList<TreePath> result = new ArrayList<TreePath>();
     if (!tree.isExpanded(path)) return result;
     final Object lastPathComponent = path.getLastPathComponent();
@@ -117,7 +118,7 @@ public final class TreeUtil {
     return result;
   }
 
-  private static boolean collectExpandedPathsImpl(final JTree tree, final Collection<TreePath> paths, final TreePath path){
+  private static boolean collectExpandedPathsImpl(@NotNull final JTree tree, @NotNull final Collection<TreePath> paths, @NotNull final TreePath path){
     final TreeModel model = tree.getModel();
     final Object lastPathComponent = path.getLastPathComponent();
     if(model.isLeaf(lastPathComponent)){
@@ -150,7 +151,8 @@ public final class TreeUtil {
     }
   }
 
-  public static TreePath getPath(final TreeNode aRootNode, final TreeNode aNode) {
+  @NotNull
+  public static TreePath getPath(final TreeNode aRootNode, @NotNull final TreeNode aNode) {
     final List<TreeNode> pathStack = new ArrayList<TreeNode>();
     addEach(aRootNode, aNode, pathStack);
 
@@ -172,20 +174,21 @@ public final class TreeUtil {
     return false;
   }
 
-  private static boolean isAncestor(final TreePath ancestor, final TreePath path) {
+  private static boolean isAncestor(@NotNull final TreePath ancestor, @NotNull final TreePath path) {
     if (path.getPathCount() < ancestor.getPathCount()) return false;
     for (int i = 0; i < ancestor.getPathCount(); i++)
       if (!path.getPathComponent(i).equals(ancestor.getPathComponent(i))) return false;
     return true;
   }
 
-  private static boolean isDescendants(final TreePath path, final TreePath[] paths) {
+  private static boolean isDescendants(@NotNull final TreePath path, @NotNull final TreePath[] paths) {
     for (final TreePath ancestor : paths) {
       if (isAncestor(ancestor, path)) return true;
     }
     return false;
   }
 
+  @NotNull
   public static TreePath getPathFromRoot(TreeNode node) {
     final ArrayList<TreeNode> path = new ArrayList<TreeNode>();
     do {
@@ -197,7 +200,7 @@ public final class TreeUtil {
   }
 
   @Nullable
-  public static TreeNode findNodeWithObject(final Object object, final TreeModel model, final Object parent) {
+  public static TreeNode findNodeWithObject(final Object object, @NotNull final TreeModel model, final Object parent) {
     for (int i = 0; i < model.getChildCount(parent); i++) {
       final DefaultMutableTreeNode childNode = (DefaultMutableTreeNode) model.getChild(parent, i);
       if (childNode.getUserObject().equals(object)) return childNode;
@@ -220,7 +223,7 @@ public final class TreeUtil {
   }
 
   @Nullable
-  public static DefaultMutableTreeNode findNodeWithObject(final DefaultMutableTreeNode aRoot, final Object aObject) {
+  public static DefaultMutableTreeNode findNodeWithObject(@NotNull final DefaultMutableTreeNode aRoot, final Object aObject) {
     if (Comparing.equal(aRoot.getUserObject(), aObject)) {
       return aRoot;
     } else {
@@ -234,7 +237,8 @@ public final class TreeUtil {
     }
   }
 
-  public static TreePath findCommonPath(final TreePath[] treePaths) {
+  @NotNull
+  public static TreePath findCommonPath(@NotNull final TreePath[] treePaths) {
     LOG.assertTrue(areComponentsEqual(treePaths, 0));
     TreePath result = new TreePath(treePaths[0].getPathComponent(0));
     int pathIndex = 1;
@@ -245,16 +249,24 @@ public final class TreeUtil {
     return result;
   }
 
-  public static ActionCallback selectFirstNode(final JTree tree) {
-    final TreeModel model = tree.getModel();
-    final Object root = model.getRoot();
-    TreePath selectionPath = new TreePath(root);
-    if (!tree.isRootVisible() && model.getChildCount(root) > 0)
-      selectionPath = selectionPath.pathByAddingChild(model.getChild(root, 0));
+  @NotNull
+  public static ActionCallback selectFirstNode(@NotNull JTree tree) {
+    TreePath selectionPath = getFirstNodePath(tree);
     return selectPath(tree, selectionPath);
   }
 
-  private static void addEach(final TreeNode aRootNode, final TreeNode aNode, final List<TreeNode> aPathStack) {
+  @NotNull
+  public static TreePath getFirstNodePath(@NotNull JTree tree) {
+    final TreeModel model = tree.getModel();
+    final Object root = model.getRoot();
+    TreePath selectionPath = new TreePath(root);
+    if (!tree.isRootVisible() && model.getChildCount(root) > 0) {
+      selectionPath = selectionPath.pathByAddingChild(model.getChild(root, 0));
+    }
+    return selectionPath;
+  }
+
+  private static void addEach(final TreeNode aRootNode, @NotNull final TreeNode aNode, @NotNull final List<TreeNode> aPathStack) {
     aPathStack.add(aNode);
 
     if (aNode != aRootNode) {
@@ -262,7 +274,8 @@ public final class TreeUtil {
     }
   }
 
-  private static IndexTreePathState removeLastPathComponent(final DefaultTreeModel model, final TreePath pathToBeRemoved) {
+  @NotNull
+  private static IndexTreePathState removeLastPathComponent(@NotNull final DefaultTreeModel model, @NotNull final TreePath pathToBeRemoved) {
     final IndexTreePathState selectionState = new IndexTreePathState(pathToBeRemoved);
     if (((MutableTreeNode) pathToBeRemoved.getLastPathComponent()).getParent() == null) return selectionState;
     model.removeNodeFromParent((MutableTreeNode) pathToBeRemoved.getLastPathComponent());
@@ -270,7 +283,7 @@ public final class TreeUtil {
   }
 
 
-  private static boolean areComponentsEqual(final TreePath[] paths, final int componentIndex) {
+  private static boolean areComponentsEqual(@NotNull final TreePath[] paths, final int componentIndex) {
     if (paths[0].getPathCount() <= componentIndex) return false;
     final Object pathComponent = paths[0].getPathComponent(componentIndex);
     for (final TreePath treePath : paths) {
@@ -280,7 +293,8 @@ public final class TreeUtil {
     return true;
   }
 
-  private static TreePath[] removeDuplicates(final TreePath[] paths) {
+  @NotNull
+  private static TreePath[] removeDuplicates(@NotNull final TreePath[] paths) {
     final ArrayList<TreePath> result = new ArrayList<TreePath>();
     for (final TreePath path : paths) {
       if (!result.contains(path)) result.add(path);
@@ -288,7 +302,8 @@ public final class TreeUtil {
     return result.toArray(new TreePath[result.size()]);
   }
 
-  public static TreePath[] selectMaximals(final TreePath[] paths) {
+  @NotNull
+  public static TreePath[] selectMaximals(@Nullable final TreePath[] paths) {
     if (paths == null) return new TreePath[0];
     final TreePath[] noDuplicates = removeDuplicates(paths);
     final ArrayList<TreePath> result = new ArrayList<TreePath>();
@@ -300,11 +315,11 @@ public final class TreeUtil {
     return result.toArray(new TreePath[result.size()]);
   }
 
-  public static void sort(final DefaultTreeModel model, final Comparator comparator) {
+  public static void sort(@NotNull final DefaultTreeModel model, final Comparator comparator) {
     sort((DefaultMutableTreeNode) model.getRoot(), comparator);
   }
 
-  public static void sort(final DefaultMutableTreeNode node, final Comparator comparator) {
+  public static void sort(@NotNull final DefaultMutableTreeNode node, final Comparator comparator) {
     final List<TreeNode> children = childrenToArray(node);
     Collections.sort(children, comparator);
     node.removeAllChildren();
@@ -314,14 +329,14 @@ public final class TreeUtil {
     }
   }
 
-  public static void addChildrenTo(final MutableTreeNode node, final List<TreeNode> children) {
+  public static void addChildrenTo(@NotNull final MutableTreeNode node, @NotNull final List<TreeNode> children) {
     for (final Object aChildren : children) {
       final MutableTreeNode child = (MutableTreeNode)aChildren;
       node.insert(child, node.getChildCount());
     }
   }
 
-  public static boolean traverse(final TreeNode node, final Traverse traverse) {
+  public static boolean traverse(@NotNull final TreeNode node, @NotNull final Traverse traverse) {
     final int childCount = node.getChildCount();
     for (int i = 0; i < childCount; i++){
       if (!traverse(node.getChildAt(i), traverse)) return false;
@@ -329,7 +344,7 @@ public final class TreeUtil {
     return traverse.accept(node);
   }
 
-  public static boolean traverseDepth(final TreeNode node, final Traverse traverse) {
+  public static boolean traverseDepth(@NotNull final TreeNode node, @NotNull final Traverse traverse) {
     if (!traverse.accept(node)) return false;
     final int childCount = node.getChildCount();
     for (int i = 0; i < childCount; i++)
@@ -337,11 +352,13 @@ public final class TreeUtil {
     return true;
   }
 
-  public static ActionCallback selectPath(final JTree tree, final TreePath path) {
+  @NotNull
+  public static ActionCallback selectPath(@NotNull final JTree tree, final TreePath path) {
     return selectPath(tree, path, true);
   }
 
-  public static ActionCallback selectPath(final JTree tree, final TreePath path, boolean center) {
+  @NotNull
+  public static ActionCallback selectPath(@NotNull final JTree tree, final TreePath path, boolean center) {
     tree.makeVisible(path);
     if (center) {
       return showRowCentred(tree, tree.getRowForPath(path));
@@ -351,7 +368,8 @@ public final class TreeUtil {
     }
   }
 
-  public static ActionCallback moveDown(final JTree tree) {
+  @NotNull
+  public static ActionCallback moveDown(@NotNull final JTree tree) {
     final int size = tree.getRowCount();
     int row = tree.getLeadSelectionRow();
     if (row < size - 1) {
@@ -362,7 +380,8 @@ public final class TreeUtil {
     }
   }
 
-  public static ActionCallback moveUp(final JTree tree) {
+  @NotNull
+  public static ActionCallback moveUp(@NotNull final JTree tree) {
     int row = tree.getLeadSelectionRow();
     if (row > 0) {
       row--;
@@ -372,7 +391,8 @@ public final class TreeUtil {
     }
   }
 
-  public static ActionCallback movePageUp(final JTree tree) {
+  @NotNull
+  public static ActionCallback movePageUp(@NotNull final JTree tree) {
     final int visible = getVisibleRowCount(tree);
     if (visible <= 0){
       return moveHome(tree);
@@ -384,7 +404,8 @@ public final class TreeUtil {
     return showAndSelect(tree, top, bottom, row, getSelectedRow(tree));
   }
 
-  public static ActionCallback movePageDown(final JTree tree) {
+  @NotNull
+  public static ActionCallback movePageDown(@NotNull final JTree tree) {
     final int visible = getVisibleRowCount(tree);
     if (visible <= 0){
       return moveEnd(tree);
@@ -397,23 +418,28 @@ public final class TreeUtil {
     return showAndSelect(tree, top, bottom, index, getSelectedRow(tree));
   }
 
-  private static ActionCallback moveHome(final JTree tree) {
+  @NotNull
+  private static ActionCallback moveHome(@NotNull final JTree tree) {
     return showRowCentred(tree, 0);
   }
 
-  private static ActionCallback moveEnd(final JTree tree) {
+  @NotNull
+  private static ActionCallback moveEnd(@NotNull final JTree tree) {
     return showRowCentred(tree, tree.getRowCount() - 1);
   }
 
-  private static ActionCallback showRowCentred(final JTree tree, final int row) {
+  @NotNull
+  private static ActionCallback showRowCentred(@NotNull final JTree tree, final int row) {
     return showRowCentered(tree, row, true);
   }
 
-  public static ActionCallback showRowCentered(final JTree tree, final int row, final boolean centerHorizontally) {
+  @NotNull
+  public static ActionCallback showRowCentered(@NotNull final JTree tree, final int row, final boolean centerHorizontally) {
     return showRowCentered(tree, row, centerHorizontally, true);
   }
 
-  public static ActionCallback showRowCentered(final JTree tree, final int row, final boolean centerHorizontally, boolean scroll) {
+  @NotNull
+  public static ActionCallback showRowCentered(@NotNull final JTree tree, final int row, final boolean centerHorizontally, boolean scroll) {
     final int visible = getVisibleRowCount(tree);
 
     final int top = visible > 0 ? row - (visible - 1)/ 2 : row;
@@ -421,19 +447,23 @@ public final class TreeUtil {
     return showAndSelect(tree, top, bottom, row, -1, false, scroll, false);
   }
 
-  public static ActionCallback showAndSelect(final JTree tree, int top, int bottom, final int row, final int previous) {
+  @NotNull
+  public static ActionCallback showAndSelect(@NotNull final JTree tree, int top, int bottom, final int row, final int previous) {
     return showAndSelect(tree, top, bottom, row, previous, false);
   }
 
-  public static ActionCallback showAndSelect(final JTree tree, int top, int bottom, final int row, final int previous, boolean addToSelection) {
+  @NotNull
+  public static ActionCallback showAndSelect(@NotNull final JTree tree, int top, int bottom, final int row, final int previous, boolean addToSelection) {
     return showAndSelect(tree, top, bottom, row, previous, addToSelection, true, false);
   }
 
-  public static ActionCallback showAndSelect(final JTree tree, int top, int bottom, final int row, final int previous, final boolean addToSelection, final boolean scroll) {
+  @NotNull
+  public static ActionCallback showAndSelect(@NotNull final JTree tree, int top, int bottom, final int row, final int previous, final boolean addToSelection, final boolean scroll) {
     return showAndSelect(tree, top, bottom, row, previous, addToSelection, scroll, false);
   }
 
-  public static ActionCallback showAndSelect(final JTree tree, int top, int bottom, final int row, final int previous, final boolean addToSelection, final boolean scroll, final boolean resetSelection) {
+  @NotNull
+  public static ActionCallback showAndSelect(@NotNull final JTree tree, int top, int bottom, final int row, final int previous, final boolean addToSelection, final boolean scroll, final boolean resetSelection) {
     final TreePath path = tree.getPathForRow(row);
 
     if (path == null) return new ActionCallback.Done();
@@ -588,11 +618,11 @@ public final class TreeUtil {
 
 
   // this method returns FIRST selected row but not LEAD
-  private static int getSelectedRow(final JTree tree) {
+  private static int getSelectedRow(@NotNull final JTree tree) {
     return tree.getRowForPath(tree.getSelectionPath());
   }
 
-  private static int getFirstVisibleRow(final JTree tree) {
+  private static int getFirstVisibleRow(@NotNull final JTree tree) {
     final Rectangle visible = tree.getVisibleRect();
     int row = -1;
     for (int i=0; i < tree.getRowCount(); i++) {
@@ -605,7 +635,7 @@ public final class TreeUtil {
     return row;
   }
 
-  private static int getVisibleRowCount(final JTree tree) {
+  private static int getVisibleRowCount(@NotNull final JTree tree) {
     final Rectangle visible = tree.getVisibleRect();
 
     if (visible == null) return 0;
@@ -622,7 +652,7 @@ public final class TreeUtil {
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  public static void installActions(final JTree tree) {
+  public static void installActions(@NotNull final JTree tree) {
     tree.getActionMap().put("scrollUpChangeSelection", new AbstractAction() {
       public void actionPerformed(final ActionEvent e) {
         movePageUp(tree);
@@ -655,14 +685,14 @@ public final class TreeUtil {
     UIUtil.maybeInstall(inputMap, "selectFirst", KeyStroke.getKeyStroke(KeyEvent.VK_HOME, 0));
   }
 
-  private static void copyAction(final JTree tree, String original, String copyTo) {
+  private static void copyAction(@NotNull final JTree tree, String original, String copyTo) {
     final Action action = tree.getActionMap().get(original);
     if (action != null) {
       tree.getActionMap().put(copyTo, action);
     }
   }
 
-  public static void collapseAll(final JTree tree, final int keepSelectionLevel) {
+  public static void collapseAll(@NotNull final JTree tree, final int keepSelectionLevel) {
     final TreePath leadSelectionPath = tree.getLeadSelectionPath();
     // Collapse all
     int row = tree.getRowCount() - 1;
@@ -681,11 +711,11 @@ public final class TreeUtil {
     }
   }
 
-  public static void selectNode(final JTree tree, final TreeNode node) {
+  public static void selectNode(@NotNull final JTree tree, final TreeNode node) {
     selectPath(tree, getPathFromRoot(node));
   }
 
-  public static void moveSelectedRow(final JTree tree, final int direction){
+  public static void moveSelectedRow(@NotNull final JTree tree, final int direction){
     final TreePath selectionPath = tree.getSelectionPath();
     final DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
     final DefaultMutableTreeNode parent = (DefaultMutableTreeNode)treeNode.getParent();
@@ -696,7 +726,8 @@ public final class TreeUtil {
     selectNode(tree, treeNode);
   }
 
-  public static ArrayList<TreeNode> childrenToArray(final TreeNode node) {
+  @NotNull
+  public static ArrayList<TreeNode> childrenToArray(@NotNull final TreeNode node) {
     final ArrayList<TreeNode> result = new ArrayList<TreeNode>();
     for(int i = 0; i < node.getChildCount(); i++){
       result.add(node.getChildAt(i));
@@ -704,7 +735,7 @@ public final class TreeUtil {
     return result;
   }
 
-  public static void expandRootChildIfOnlyOne(final JTree tree) {
+  public static void expandRootChildIfOnlyOne(@Nullable final JTree tree) {
     if (tree == null) return;
     final Runnable runnable = new Runnable() {
       public void run() {
@@ -719,7 +750,7 @@ public final class TreeUtil {
     UIUtil.invokeLaterIfNeeded(runnable);
   }
 
-  public static void expandAll(final JTree tree) {
+  public static void expandAll(@NotNull final JTree tree) {
     tree.expandPath(new TreePath(tree.getModel().getRoot()));
     int oldRowCount = 0;
     do {
@@ -738,11 +769,11 @@ public final class TreeUtil {
    * @param tree to expand nodes of
    * @param levels depths of the expantion
    */
-  public static void expand(JTree tree, int levels) {
+  public static void expand(@NotNull JTree tree, int levels) {
     expand(tree, new TreePath(tree.getModel().getRoot()), levels);
   }
 
-  private static void expand(JTree tree, TreePath path, int levels) {
+  private static void expand(@NotNull JTree tree, @NotNull TreePath path, int levels) {
     if (levels == 0) return;
     tree.expandPath(path);
     TreeNode node = (TreeNode)path.getLastPathComponent();
@@ -752,11 +783,13 @@ public final class TreeUtil {
     }
   }
 
-  public static ActionCallback selectInTree(DefaultMutableTreeNode node, boolean requestFocus, JTree tree) {
+  @NotNull
+  public static ActionCallback selectInTree(DefaultMutableTreeNode node, boolean requestFocus, @NotNull JTree tree) {
     return selectInTree(node, requestFocus, tree, true);
   }
 
-  public static ActionCallback selectInTree(DefaultMutableTreeNode node, boolean requestFocus, JTree tree, boolean center) {
+  @NotNull
+  public static ActionCallback selectInTree(@Nullable DefaultMutableTreeNode node, boolean requestFocus, @NotNull JTree tree, boolean center) {
     if (node == null) return new ActionCallback.Done();
 
     final TreePath treePath = new TreePath(node.getPath());
@@ -767,7 +800,8 @@ public final class TreeUtil {
     return selectPath(tree, treePath, center);
   }
 
-  public static ActionCallback selectInTree(Project project, DefaultMutableTreeNode node, boolean requestFocus, JTree tree, boolean center) {
+  @NotNull
+  public static ActionCallback selectInTree(Project project, @Nullable DefaultMutableTreeNode node, boolean requestFocus, @NotNull JTree tree, boolean center) {
     if (node == null) return new ActionCallback.Done();
 
     final TreePath treePath = new TreePath(node.getPath());
@@ -781,7 +815,8 @@ public final class TreeUtil {
     return selectPath(tree, treePath, center);
   }
 
-  public static List<TreePath> collectSelectedPaths(final JTree tree, final TreePath treePath) {
+  @NotNull
+  public static List<TreePath> collectSelectedPaths(@NotNull final JTree tree, @NotNull final TreePath treePath) {
     final ArrayList<TreePath> result = new ArrayList<TreePath>();
     final TreePath[] selections = tree.getSelectionPaths();
     if (selections != null) {
@@ -794,7 +829,7 @@ public final class TreeUtil {
     return result;
   }
 
-  public static void unselect(JTree tree, final DefaultMutableTreeNode node) {
+  public static void unselect(@NotNull JTree tree, @NotNull final DefaultMutableTreeNode node) {
     final TreePath rootPath = new TreePath(node.getPath());
     final TreePath[] selectionPaths = tree.getSelectionPaths();
     if (selectionPaths != null) {
@@ -807,7 +842,7 @@ public final class TreeUtil {
   }
 
   @Nullable
-  public static Range<Integer> getExpandControlRange(final JTree aTree, final TreePath path) {
+  public static Range<Integer> getExpandControlRange(@NotNull final JTree aTree, @Nullable final TreePath path) {
     TreeModel treeModel = aTree.getModel();
 
     final BasicTreeUI basicTreeUI = (BasicTreeUI)aTree.getUI();
@@ -843,7 +878,7 @@ public final class TreeUtil {
     return box;
   }
 
-  public static int getDepthOffset(JTree aTree) {
+  public static int getDepthOffset(@NotNull JTree aTree) {
     if (aTree.isRootVisible()) {
       if (aTree.getShowsRootHandles()) {
         return 1;
@@ -860,7 +895,8 @@ public final class TreeUtil {
     }
   }
 
-  public static RelativePoint getPointForSelection(JTree aTree) {
+  @NotNull
+  public static RelativePoint getPointForSelection(@NotNull JTree aTree) {
     final int[] rows = aTree.getSelectionRows();
     if (rows == null || rows.length == 0) {
       return RelativePoint.getCenterOf(aTree);
@@ -868,26 +904,29 @@ public final class TreeUtil {
     return getPointForRow(aTree, rows[rows.length - 1]);
   }
 
-  public static RelativePoint getPointForRow(JTree aTree, int aRow) {
+  @NotNull
+  public static RelativePoint getPointForRow(@NotNull JTree aTree, int aRow) {
     return getPointForPath(aTree, aTree.getPathForRow(aRow));
   }
 
-  public static RelativePoint getPointForPath(JTree aTree, TreePath path) {
+  @NotNull
+  public static RelativePoint getPointForPath(@NotNull JTree aTree, TreePath path) {
     final Rectangle rowBounds = aTree.getPathBounds(path);
     rowBounds.x += 20;
     return getPointForBounds(aTree, rowBounds);
   }
 
-  public static RelativePoint getPointForBounds(JComponent aComponent, final Rectangle aBounds) {
+  @NotNull
+  public static RelativePoint getPointForBounds(JComponent aComponent, @NotNull final Rectangle aBounds) {
     return new RelativePoint(aComponent, new Point(aBounds.x, (int)aBounds.getMaxY()));
   }
 
-  public static boolean isOverSelection(final JTree tree, final Point point) {
+  public static boolean isOverSelection(@NotNull final JTree tree, @NotNull final Point point) {
     TreePath path = tree.getPathForLocation(point.x, point.y);
     return path != null && tree.getSelectionModel().isPathSelected(path);
   }
 
-  public static void dropSelectionButUnderPoint(JTree tree, Point treePoint) {
+  public static void dropSelectionButUnderPoint(@NotNull JTree tree, @NotNull Point treePoint) {
     final TreePath toRetain = tree.getPathForLocation(treePoint.x, treePoint.y);
     if (toRetain == null) return;
 
@@ -903,7 +942,7 @@ public final class TreeUtil {
     boolean accept(Object node);
   }
 
-  public static void ensureSelection(JTree tree) {
+  public static void ensureSelection(@NotNull JTree tree) {
     final TreePath[] paths = tree.getSelectionPaths();
 
     if (paths != null) {

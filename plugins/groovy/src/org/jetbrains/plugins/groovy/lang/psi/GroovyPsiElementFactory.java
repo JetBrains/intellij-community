@@ -199,7 +199,7 @@ public abstract class GroovyPsiElementFactory implements JVMElementFactory {
 
   public abstract GroovyFile createGroovyFile(String text, boolean isPhysical, @Nullable PsiElement context);
 
-  public abstract GrMethod createMethodFromText(String modifier, String name, String type, String[] paramTypes, PsiElement context);
+  public abstract GrMethod createMethodFromText(String modifier, String name, String type, String[] paramTypes, @Nullable PsiElement context);
 
   public abstract GrMethod createConstructorFromText(@NotNull String constructorName,
                                                      String[] paramTypes,

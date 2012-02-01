@@ -128,12 +128,17 @@ public class CompileServerManager implements ApplicationComponent{
             @Override
             public void run() {
               if (!myAutoMakeInProgress.getAndSet(true)) {
-                try {
-                  runAutoMake();
-                }
-                finally {
-                  myAutoMakeInProgress.set(false);
-                }
+                ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+                  @Override
+                  public void run() {
+                    try {
+                      runAutoMake();
+                    }
+                    finally {
+                      myAutoMakeInProgress.set(false);
+                    }
+                  }
+                });
               }
               else {
                 scheduleMake(this);
@@ -668,6 +673,9 @@ public class CompileServerManager implements ApplicationComponent{
 
     @Override
     public boolean handleBuildEvent(JpsRemoteProto.Message.Response.BuildEvent event) {
+      if (myProject.isDisposed()) {
+        return true;
+      }
       switch (event.getEventType()) {
         case BUILD_COMPLETED:
           if (event.hasCompletionStatus()) {
@@ -691,6 +699,9 @@ public class CompileServerManager implements ApplicationComponent{
 
     @Override
     public void handleCompileMessage(JpsRemoteProto.Message.Response.CompileMessage compileResponse) {
+      if (myProject.isDisposed()) {
+        return;
+      }
       final JpsRemoteProto.Message.Response.CompileMessage.Kind kind = compileResponse.getKind();
       if (kind == JpsRemoteProto.Message.Response.CompileMessage.Kind.ERROR) {
         informWolf(myProject, compileResponse);

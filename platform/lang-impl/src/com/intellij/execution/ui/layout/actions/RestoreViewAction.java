@@ -43,4 +43,8 @@ public class RestoreViewAction extends AnAction {
   public void actionPerformed(final AnActionEvent e) {
     myRestoreAction.restoreInGrid();
   }
+
+  public Content getContent() {
+    return myContent;
+  }
 }

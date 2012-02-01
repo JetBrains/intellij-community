@@ -98,6 +98,16 @@ public class AndroidSdkUtils {
     if (sdkDir != null) {
       addJavaDocAndSources(result, sdkDir);
     }
+
+    final String resFolderPath = target.getPath(IAndroidTarget.RESOURCES);
+
+    if (resFolderPath != null) {
+      final VirtualFile resFolder = LocalFileSystem.getInstance().findFileByPath(resFolderPath);
+
+      if (resFolder != null) {
+        result.add(new OrderRoot(resFolder, OrderRootType.CLASSES));
+      }
+    }
     return result;
   }
 

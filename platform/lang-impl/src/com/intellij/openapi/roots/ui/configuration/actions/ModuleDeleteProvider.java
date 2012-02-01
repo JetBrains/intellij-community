@@ -34,6 +34,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.projectImport.ProjectAttachProcessor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
+import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,7 +52,7 @@ public class ModuleDeleteProvider  implements DeleteProvider, TitledHandler  {
 
   private static boolean isPrimaryModule(Module[] modules) {
     if (!ProjectAttachProcessor.canAttachToProject()) {
-      return false;
+      return !PlatformUtils.isIdea();
     }
     for (Module module : modules) {
       final File moduleFile = new File(module.getModuleFilePath());

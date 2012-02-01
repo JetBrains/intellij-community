@@ -254,7 +254,6 @@
               class = "com.intellij.refactoring.actions.RefactoringQuickListPopupAction"
               text = "Refactor This..." description="Context aware popup with list of refactoring actions"/>
       <action id="RenameElement" class="com.intellij.refactoring.actions.RenameElementAction"/>
-      <action id="RenameFile" class="com.intellij.refactoring.rename.RenameFileAction"/>
       <action id="ChangeSignature" class="com.intellij.refactoring.actions.ChangeSignatureAction"/>
       <separator/>
       <action id="Move" class="com.intellij.refactoring.actions.MoveAction"/>
@@ -572,9 +571,6 @@
       <separator/>
       <reference ref="AddToFavorites"/>
       <reference ref="AddAllToFavorites"/>
-      <separator/>
-      <reference ref="RenameFile"/>
-      <separator/>
       <reference ref="MoveToChangeList"/>
       <separator/>
       <reference ref="RunContextPopupGroup"/>
@@ -732,8 +728,7 @@
 
     <group id="RunnerLayoutActions">
       <group id="Runner.Layout" icon="/debugger/restoreLayout.png" popup="true">
-        <action id="Runner.RestoreLayout" class="com.intellij.execution.ui.layout.actions.RestoreLayoutAction"
-                icon="/debugger/restoreLayout.png"/>
+        <action id="Runner.RestoreLayout" class="com.intellij.execution.ui.layout.actions.RestoreLayoutAction"/>
         <action id="Runner.ToggleToolbarLayout" class="com.intellij.execution.ui.layout.actions.ToggleToolbarLayoutAction"/>
       </group>
 

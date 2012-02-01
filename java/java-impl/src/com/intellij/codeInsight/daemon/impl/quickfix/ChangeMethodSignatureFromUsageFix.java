@@ -155,6 +155,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction, HighP
     for (PsiExpression expression : myExpressions) {
       if (!expression.isValid()) return false;
     }
+    if (!mySubstitutor.isValid()) return false;
 
     myNewParametersInfo = getNewParametersInfo(myExpressions, myTargetMethod, mySubstitutor);
     if (myNewParametersInfo == null || formatTypesList(myNewParametersInfo, myContext) == null) return false;

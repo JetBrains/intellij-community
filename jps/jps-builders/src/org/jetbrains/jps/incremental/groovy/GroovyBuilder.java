@@ -2,6 +2,7 @@ package org.jetbrains.jps.incremental.groovy;
 
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
@@ -32,6 +33,7 @@ import java.util.*;
  */
 public class GroovyBuilder extends ModuleLevelBuilder {
   public static final String BUILDER_NAME = "groovy";
+  private static final Key<Boolean> CHUNK_REBUILD_ORDERED = Key.<Boolean>create("CHUNK_REBUILD_ORDERED");
   private final boolean myForStubs;
   private final String myBuilderName;
 
@@ -90,6 +92,16 @@ public class GroovyBuilder extends ModuleLevelBuilder {
             context.processMessage(new ProgressMessage(s));
           }
         });
+
+        if (myForStubs && handler.shouldRetry()) {
+          if (CHUNK_REBUILD_ORDERED.get(context) != null) {
+            CHUNK_REBUILD_ORDERED.set(context, null);
+          } else {
+            CHUNK_REBUILD_ORDERED.set(context, Boolean.TRUE);
+            exitCode = ExitCode.CHUNK_REBUILD_REQUIRED;
+            return exitCode;
+          }
+        }
 
         successfullyCompiled = handler.getSuccessfullyCompiled();
 

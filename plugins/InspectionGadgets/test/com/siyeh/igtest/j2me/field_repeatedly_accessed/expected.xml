@@ -5,6 +5,6 @@
     <file>FieldRepeatedlyAccessed.java</file>
     <line>7</line>
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Field repeatedly accessed in method</problem_class>
-    <description>Field 's' accessed repeatedly in method &lt;code&gt;foo(0&lt;/code&gt; #loc</description>
+    <description>Field 's' accessed repeatedly in method &lt;code&gt;foo()&lt;/code&gt; #loc</description>
   </problem>
 </problems>

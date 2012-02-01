@@ -4,6 +4,7 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.config.GradleTextAttributes;
 
 import javax.swing.*;
@@ -24,7 +25,7 @@ public class GradleProjectStructureNodeDescriptor<T> extends PresentableNodeDesc
   private final T myData;
 
   @SuppressWarnings("NullableProblems")
-  public GradleProjectStructureNodeDescriptor(@NotNull T data, @NotNull String text, @NotNull Icon icon) {
+  public GradleProjectStructureNodeDescriptor(@NotNull T data, @NotNull String text, @Nullable Icon icon) {
     super(null, null);
     myData = data;
     myOpenIcon = myClosedIcon = icon;

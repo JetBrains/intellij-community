@@ -382,6 +382,10 @@
     <copyPastePreProcessor implementation="org.jetbrains.plugins.groovy.lang.editor.GroovyLiteralCopyPasteProcessor"/>
     <copyPastePostProcessor implementation="org.jetbrains.plugins.groovy.lang.editor.GroovyReferenceCopyPasteProcessor"/>
 
+    <specialTool shortName="GroovyUnusedDeclaration" displayName="Unused declaration"
+                 groupName="Declaration Redundancy" enabledByDefault="true" level="WARNING"
+                 implementationClass="org.jetbrains.plugins.groovy.codeInspection.GroovyUnusedDeclarationInspection"/>
+
     <localInspection language="Groovy" groupPath="Groovy" shortName="SecondUnsafeCall" bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
                      key="second.unsafe.call" groupName="Probable bugs" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.secondUnsafeCall.SecondUnsafeCallInspection"/>
@@ -713,6 +717,8 @@
                      groupName="Annotations verifying" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.annotator.inspections.GroovySingletonAnnotationInspection"/>
 
+    <implicitUsageProvider implementation="org.jetbrains.plugins.groovy.gpp.GppImplicitUsageProvider"/>
+
     <!-- control flow -->
     <intentionAction>
       <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
@@ -1020,6 +1026,14 @@
             text="Gant Script" description="Create new Gant script">
       <add-to-group group-id="NewGroup" anchor="last"/>
     </action>
+
+    <group id="Groovy.Dynamic.Toolbar">
+      <action id="Groovy.Dynamic.Remove" class="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.RemoveDynamicAction"
+              icon="/general/remove.png" text="Remove" description="Remove dynamic element"/>
+      <separator/>
+      <action id="Groovy.Dynamic.ExpandAll" class="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ExpandAllAction" icon="/actions/expandall.png" text="Expand all" description="Collapse all"/>
+      <action id="Groovy.Dynamic.CollapseAll" class="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.CollapseAllAction" icon="/actions/collapseAll.png" text="Collapse all" description="Collapse all"/>
+    </group>
 
       
     <group id="Internal.Groovy" text="Groovy" popup="true" internal="true">

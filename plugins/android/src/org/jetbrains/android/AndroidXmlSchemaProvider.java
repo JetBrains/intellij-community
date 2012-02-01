@@ -36,6 +36,7 @@ import gnu.trove.THashMap;
 import org.jetbrains.android.dom.manifest.ManifestDomFileDescription;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.resourceManagers.ResourceManager;
+import org.jetbrains.android.util.AndroidResourceUtil;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -107,7 +108,7 @@ public class AndroidXmlSchemaProvider extends XmlSchemaProvider {
       return false;
     }
 
-    final String resType = ResourceManager.getResourceTypeByDirName(parent.getName());
+    final String resType = AndroidResourceUtil.getResourceTypeByDirName(parent.getName());
     if (resType == null) {
       return false;
     }

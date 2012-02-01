@@ -35,7 +35,7 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ReflectionCache;
@@ -131,10 +131,6 @@ public abstract class GroovyRefactoringUtil {
   }
 
   public static PsiElement[] getExpressionOccurrences(@NotNull PsiElement expr, @NotNull PsiElement scope) {
-    return getExpressionOccurrences(expr, scope, false);
-  }
-
-  public static PsiElement[] getExpressionOccurrences(@NotNull PsiElement expr, @NotNull PsiElement scope, boolean gotoInner) {
     ArrayList<PsiElement> occurrences = new ArrayList<PsiElement>();
     Comparator<PsiElement> comparator = new Comparator<PsiElement>() {
       public int compare(PsiElement element1, PsiElement element2) {
@@ -144,9 +140,7 @@ public abstract class GroovyRefactoringUtil {
             element2 instanceof GrParameter) {
           final String name1 = ((GrParameter) element1).getName();
           final String name2 = ((GrParameter) element2).getName();
-          if (name1 != null && name2 != null) {
-            return name1.compareTo(name2);
-          }
+          return name1.compareTo(name2);
         }
         return 1;
       }
@@ -162,7 +156,7 @@ public abstract class GroovyRefactoringUtil {
     } else {
       collectOccurrences(expr, scope, occurrences, comparator, scope instanceof GrTypeDefinition || scope instanceof GroovyFileBase);
     }
-    return PsiUtilBase.toPsiElementArray(occurrences);
+    return PsiUtilCore.toPsiElementArray(occurrences);
   }
 
 
@@ -192,8 +186,8 @@ public abstract class GroovyRefactoringUtil {
         tempContainer instanceof GrIfStatement;
   }
 
-  public static void sortOccurrences(PsiElement[] occurences) {
-    Arrays.sort(occurences, new Comparator<PsiElement>() {
+  public static void sortOccurrences(PsiElement[] occurrences) {
+    Arrays.sort(occurrences, new Comparator<PsiElement>() {
       public int compare(PsiElement elem1, PsiElement elem2) {
         final int offset1 = elem1.getTextRange().getStartOffset();
         final int offset2 = elem2.getTextRange().getStartOffset();
@@ -302,7 +296,7 @@ public abstract class GroovyRefactoringUtil {
       return new PsiElement[]{parent.getParent()};
     }
 
-    // calcualte children
+    // calculate children
     PsiElement[] children = PsiElement.EMPTY_ARRAY;
     PsiElement psiChild = parent.getFirstChild();
     if (psiChild != null) {
@@ -311,7 +305,7 @@ public abstract class GroovyRefactoringUtil {
         result.add(psiChild);
         psiChild = psiChild.getNextSibling();
       }
-      children = PsiUtilBase.toPsiElementArray(result);
+      children = PsiUtilCore.toPsiElementArray(result);
     }
 
 
@@ -338,7 +332,7 @@ public abstract class GroovyRefactoringUtil {
       }
     }
 
-    return PsiUtilBase.toPsiElementArray(possibleStatements);
+    return PsiUtilCore.toPsiElementArray(possibleStatements);
   }
 
   public static boolean isSuperOrThisCall(GrStatement statement, boolean testForSuper, boolean testForThis) {
@@ -365,7 +359,7 @@ public abstract class GroovyRefactoringUtil {
     }
   }
 
-  public static boolean haswrongContinueStatements(PsiElement element) {
+  public static boolean hasWrongContinueStatements(PsiElement element) {
     ArrayList<GrContinueStatement> vector = new ArrayList<GrContinueStatement>();
     addContinueStatements(element, vector);
     return !vector.isEmpty();
@@ -455,70 +449,6 @@ public abstract class GroovyRefactoringUtil {
     ((GrStatementOwner)anchorStatement.getParent()).addStatementBefore(decl, (GrStatement)anchorStatement);
 
     return id;
-  }
-
-  public static GrExpression convertJavaExpr2GroovyExpr(PsiElement expr) {
-    final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(expr.getProject());
-
-    final List<PsiLocalVariable> localVariables = new ArrayList<PsiLocalVariable>();
-    final List<PsiField> fields = new ArrayList<PsiField>();
-    final List<PsiParameter> parameters = new ArrayList<PsiParameter>();
-
-    expr.accept(new JavaRecursiveElementVisitor() {
-      @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
-        final PsiExpression qualifierExpression = expression.getQualifierExpression();
-        if (qualifierExpression != null && !(qualifierExpression instanceof PsiThisExpression)) return;
-
-        PsiElement el = expression.resolve();
-        if (el instanceof PsiField) {
-          fields.add((PsiField)el);
-        }
-        else if (el instanceof PsiParameter) {
-          parameters.add((PsiParameter)el);
-        }
-        else if (el instanceof PsiLocalVariable) {
-          localVariables.add((PsiLocalVariable)el);
-        }
-        super.visitReferenceExpression(expression);
-      }
-    });
-
-    PsiJavaFile file = (PsiJavaFile)expr.getContainingFile();
-
-    StringBuilder cf = new StringBuilder();
-
-    final PsiPackageStatement packageStatement = file.getPackageStatement();
-    if (packageStatement != null) cf.append(packageStatement.getText());
-
-    final PsiImportList importList = file.getImportList();
-    if (importList != null) cf.append(importList.getText());
-
-    cf.append("class A{");
-    for (PsiField field : fields) {
-      cf.append(field.getText());
-    }
-
-    cf.append("void foo(");
-    for (int i = 0, parametersSize = parameters.size() - 1; i < parametersSize; i++) {
-      PsiParameter parameter = parameters.get(i);
-      cf.append(parameter.getText()).append(',');
-    }
-    if (parameters.size() > 0) {
-      cf.append(parameters.get(parameters.size() - 1).getText());
-    }
-    cf.append("){");
-    for (PsiLocalVariable localVariable : localVariables) {
-      cf.append(localVariable.getText());
-    }
-    cf.append("Object _________________ooooooo_______________=");
-    cf.append(expr.getText());
-    cf.append(";}}");
-    final GroovyFile grFile = factory.createGroovyFile(cf.toString(), false, expr);
-
-    final GrMethod method = (GrMethod)grFile.getClasses()[0].getMethods()[0];
-    final GrVariableDeclaration variableDeclaration = (GrVariableDeclaration)method.getBlock().getStatements()[0];
-    return variableDeclaration.getVariables()[0].getInitializerGroovy();
   }
 
   public static int verifySafeCopyExpression(GrExpression expression) {
@@ -649,19 +579,20 @@ public abstract class GroovyRefactoringUtil {
   }
 
   /**
-   *  adds block statement in parent of expr if needed. For Example:
+   *  adds block statement in parent of statement if needed. For Example:
    *    while (true) a=foo()
    *  will be replaced with
    *    while(true) {a=foo()}
-   * @param expr
-   * @return corresponding expr inside block if it has been created or expr itself.
+   * @param statement
+   * @return corresponding statement inside block if it has been created or statement itself.
    * @throws com.intellij.util.IncorrectOperationException
    */
 
-  public static GrExpression addBlockIntoParent(GrExpression expr) throws IncorrectOperationException {
+  @NotNull
+  public static <Type extends PsiElement> Type addBlockIntoParent(@NotNull Type statement) throws IncorrectOperationException {
 
-    PsiElement parent = expr.getParent();
-    PsiElement child = expr;
+    PsiElement parent = statement.getParent();
+    PsiElement child = statement;
     while (!(parent instanceof GrLoopStatement) &&
            !(parent instanceof GrIfStatement) &&
            !(parent instanceof GrVariableDeclarationOwner) &&
@@ -675,11 +606,11 @@ public abstract class GroovyRefactoringUtil {
     }
     assert parent != null;
     if (parent instanceof GrVariableDeclarationOwner) {
-      return expr;
+      return statement;
     }
 
-    GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(expr.getProject());
-    PsiElement tempStmt = expr;
+    GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(statement.getProject());
+    PsiElement tempStmt = statement;
     while (parent != tempStmt.getParent()) {
       tempStmt = tempStmt.getParent();
     }
@@ -697,14 +628,17 @@ public abstract class GroovyRefactoringUtil {
         ifStatement.replaceElseBranch(blockStatement);
       }
     }
-    GrStatement statement = blockStatement.getBlock().addStatementBefore(toAdd, null);
-    if (statement instanceof GrReturnStatement) {
-      expr = ((GrReturnStatement)statement).getReturnValue();
+    GrStatement result = blockStatement.getBlock().addStatementBefore(toAdd, null);
+    if (result instanceof GrReturnStatement) {
+      //noinspection ConstantConditions,unchecked
+      statement = (Type)((GrReturnStatement)result).getReturnValue();
     }
     else {
-      expr = (GrExpression)statement;
+      //noinspection unchecked
+      statement = (Type)result;
     }
-    return expr;
+
+    return statement;
   }
 
   public static boolean isDiamondNewOperator(GrExpression expression) {

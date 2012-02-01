@@ -863,6 +863,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   private static boolean isClosureAmbiguous(GrClosableBlock closure) {
     PsiElement place = closure;
     while (true) {
+      if (place instanceof GrUnAmbiguousClosureContainer) return false;
       if (PsiUtil.isExpressionStatement(place)) return true;
 
       PsiElement parent = place.getParent();
@@ -1527,7 +1528,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     if (targetClass == null) return;
 
     addDynamicAnnotation(annotation, refExpr);
-    if (targetClass instanceof GrMemberOwner) {
+    if (targetClass instanceof GrMemberOwner && targetClass.isWritable()) {
       if (!(targetClass instanceof GroovyScriptClass)) {
         annotation.registerFix(new CreateFieldFromUsageFix(refExpr, (GrMemberOwner)targetClass));
       }

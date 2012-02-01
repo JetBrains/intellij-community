@@ -139,22 +139,25 @@ public class CanBeFinalInspection extends GlobalJavaInspectionTool {
       if (refElement.isFinal()) return null;
       if (!((RefElementImpl)refElement).checkFlag(CanBeFinalAnnotator.CAN_BE_FINAL_MASK)) return null;
 
+      final PsiMember psiMember = (PsiMember)refElement.getElement();
+      if (psiMember == null || !CanBeFinalHandler.allowToBeFinal(psiMember)) return null;
+
       PsiIdentifier psiIdentifier = null;
       if (refElement instanceof RefClass) {
         RefClass refClass = (RefClass)refElement;
         if (refClass.isInterface() || refClass.isAnonymous() || refClass.isAbstract()) return null;
         if (!isReportClasses()) return null;
-        psiIdentifier = refClass.getElement().getNameIdentifier();
+        psiIdentifier = ((PsiClass)psiMember).getNameIdentifier();
       }
       else if (refElement instanceof RefMethod) {
         RefMethod refMethod = (RefMethod)refElement;
         if (refMethod.getOwnerClass().isFinal()) return null;
         if (!isReportMethods()) return null;
-        psiIdentifier = ((PsiMethod)refMethod.getElement()).getNameIdentifier();
+        psiIdentifier = ((PsiMethod)psiMember).getNameIdentifier();
       }
       else if (refElement instanceof RefField) {
         if (!isReportFields()) return null;
-        psiIdentifier = ((RefField)refElement).getElement().getNameIdentifier();
+        psiIdentifier = ((PsiField)psiMember).getNameIdentifier();
       }
 
 

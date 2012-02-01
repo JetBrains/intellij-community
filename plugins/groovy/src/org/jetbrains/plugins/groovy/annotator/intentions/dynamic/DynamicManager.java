@@ -78,8 +78,10 @@ public abstract class DynamicManager implements ProjectComponent, PersistentStat
   @Nullable
   public abstract String getPropertyType(String className, String propertyName);
 
+  @Nullable
   public abstract String replaceDynamicPropertyName(String className, String oldPropertyName, String newPropertyName);
 
+  @Nullable
   public abstract String replaceDynamicPropertyType(String className, String propertyName, String oldPropertyType, String newPropertyType);
 
   @Nullable
@@ -87,7 +89,7 @@ public abstract class DynamicManager implements ProjectComponent, PersistentStat
 
   public abstract void removeItemElement(DItemElement element);
 
-  public abstract void replaceDynamicMethodType(String className, String name, List<MyPair> myPairList, String oldType, String newType);
+  public abstract void replaceDynamicMethodType(String className, String name, List<ParamInfo> myPairList, String oldType, String newType);
 
   @NotNull
   public abstract DClassElement getOrCreateClassElement(Project project, String className);

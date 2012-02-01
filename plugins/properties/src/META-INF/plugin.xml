@@ -45,7 +45,6 @@
     <elementDescriptionProvider implementation="com.intellij.lang.properties.PropertiesDescriptionProvider"/>
     <fileTypeFactory implementation="com.intellij.lang.properties.PropertiesFileTypeFactory"/>
     <fileTypeFactory implementation="com.intellij.lang.properties.editor.ResourceBundleEditorProvider" />
-    <referencesSearch implementation="com.intellij.psi.impl.search.PropertyReferenceViaLastWordSearcher"/>
     <favoriteNodeProvider implementation="com.intellij.ide.favoritesTreeView.ResourcesFavoriteNodeProvider"/>
 
     <localInspection language="Properties" shortName="UnusedProperty" bundle="messages.PropertiesBundle" key="unused.property.inspection.display.name"

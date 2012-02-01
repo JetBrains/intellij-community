@@ -18,6 +18,7 @@ package com.intellij.ide.hierarchy;
 
 import com.intellij.ide.actions.CloseTabToolbarAction;
 import com.intellij.ide.actions.ContextHelpAction;
+import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -217,7 +218,9 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
 
   private final class CloseAction extends CloseTabToolbarAction {
     public final void actionPerformed(final AnActionEvent e) {
-      final ProgressIndicator progress = getCurrentBuilder().getUi().getProgress();
+      final HierarchyTreeBuilder builder = getCurrentBuilder();
+      final AbstractTreeUi treeUi = builder != null ? builder.getUi() : null;
+      final ProgressIndicator progress = treeUi != null ? treeUi.getProgress() : null;
       if (progress != null) {
         progress.cancel();
       }

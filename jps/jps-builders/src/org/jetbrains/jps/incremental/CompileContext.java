@@ -88,6 +88,7 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
   }
 
   public void markDirty(final ModuleChunk chunk) throws Exception {
+    myFsState.clearContextRoundData();
     final Set<Module> modules = chunk.getModules();
     for (Module module : modules) {
       markDirtyFiles(module, myTsStorage, true, isCompilingTests()? DirtyMarkScope.TESTS : DirtyMarkScope.PRODUCTION, null);

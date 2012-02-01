@@ -54,6 +54,7 @@ public abstract class PsiCachedValue<T> extends CachedValueBase<T> {
   protected boolean isDependencyOutOfDate(Object dependency, long oldTimeStamp) {
     if (dependency instanceof PsiElement &&
         myLastPsiTimeStamp == myManager.getModificationTracker().getModificationCount() &&
+        ((PsiElement)dependency).isValid() &&
         ((PsiElement)dependency).isPhysical()) {
       return false;
     }

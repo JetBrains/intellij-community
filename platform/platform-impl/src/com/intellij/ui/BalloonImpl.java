@@ -571,9 +571,9 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
       Disposer.dispose(myAnimator);
     }
     myAnimator = new Animator("Balloon", 8, myAnimationEnabled ? myAnimationCycle : 0, false, forward) {
-      public void paintNow(final float frame, final float totalFrames, final float cycle) {
+      public void paintNow(final int frame, final int totalFrames, final int cycle) {
         if (myComp == null || myComp.getParent() == null) return;
-        myComp.setAlpha(frame / totalFrames);
+        myComp.setAlpha(((float)frame) / ((float)totalFrames));
       }
 
       @Override

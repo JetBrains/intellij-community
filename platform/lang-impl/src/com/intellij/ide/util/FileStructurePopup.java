@@ -107,6 +107,7 @@ public class FileStructurePopup implements Disposable {
   private int myPreferredWidth;
   private final FilteringTreeStructure myFilteringStructure;
   private PsiElement myInitialPsiElement;
+  private Map<Class, JCheckBox> myCheckBoxes = new HashMap<Class, JCheckBox>();
 
   public FileStructurePopup(StructureViewModel structureViewModel,
                             @Nullable Editor editor,
@@ -128,7 +129,7 @@ public class FileStructurePopup implements Disposable {
 
     myTreeStructure = new SmartTreeStructure(project, myTreeModel){
       public void rebuildTree() {
-        if (!myPopup.isDisposed()) {
+        if (ApplicationManager.getApplication().isUnitTestMode() || !myPopup.isDisposed()) {
           super.rebuildTree();
         }
       }
@@ -503,7 +504,7 @@ public class FileStructurePopup implements Disposable {
     return null;
   }
 
-  protected JComponent createCenterPanel() {
+  public JComponent createCenterPanel() {
     List<FileStructureFilter> fileStructureFilters = new ArrayList<FileStructureFilter>();
     List<FileStructureNodeProvider> fileStructureNodeProviders = new ArrayList<FileStructureNodeProvider>();
     if (myTreeActionsOwner != null) {
@@ -704,6 +705,7 @@ public class FileStructurePopup implements Disposable {
     }
     chkFilter.setText(text);
     panel.add(chkFilter);
+    myCheckBoxes.put(action.getClass(), chkFilter);
   }
 
   private static boolean getDefaultValue(TreeAction action) {
@@ -740,6 +742,16 @@ public class FileStructurePopup implements Disposable {
 
   public FilteringTreeBuilder getTreeBuilder() {
     return myAbstractTreeBuilder;
+  }
+
+  public void setTreeActionState(Class<? extends TreeAction> action, boolean state) {
+    final JCheckBox checkBox = myCheckBoxes.get(action);
+    if (checkBox != null) {
+      checkBox.setSelected(state);
+      for (ActionListener listener : checkBox.getActionListeners()) {
+        listener.actionPerformed(new ActionEvent(this, 1, ""));
+      }
+    }
   }
 
   private class FileStructurePopupFilter implements ElementFilter {

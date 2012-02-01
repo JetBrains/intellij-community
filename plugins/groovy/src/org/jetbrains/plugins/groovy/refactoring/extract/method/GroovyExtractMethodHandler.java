@@ -26,7 +26,9 @@ import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,13 +55,12 @@ import java.util.ArrayList;
  */
 public class GroovyExtractMethodHandler extends ExtractHandlerBase implements RefactoringActionHandler {
   protected static String REFACTORING_NAME = GroovyRefactoringBundle.message("extract.method.title");
-  private String myInvokeResult = "ok";
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     invoke(project, editor, file);
   }
 
-  void invoke(Project project, Editor editor, PsiFile file) {
+  void invoke(Project project, Editor editor, PsiFile file) throws CommonRefactoringUtil.RefactoringErrorHintException {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     // select editor text fragment
     final SelectionModel model = editor.getSelectionModel();
@@ -71,7 +72,7 @@ public class GroovyExtractMethodHandler extends ExtractHandlerBase implements Re
       invokeOnEditor(project, editor, file, model.getSelectionStart(), model.getSelectionEnd());
     }
     catch (ExtractException e) {
-      myInvokeResult = e.getMessage();
+      CommonRefactoringUtil.showErrorHint(project, editor, e.getMessage(), REFACTORING_NAME, HelpID.EXTRACT_METHOD);
     }
   }
 
@@ -138,10 +139,6 @@ public class GroovyExtractMethodHandler extends ExtractHandlerBase implements Re
 
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     // does nothing
-  }
-
-  public String getInvokeResult() {
-    return myInvokeResult;
   }
 
   @Nullable

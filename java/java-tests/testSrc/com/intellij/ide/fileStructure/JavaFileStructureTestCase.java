@@ -33,11 +33,19 @@ public abstract class JavaFileStructureTestCase extends FileStructureTestBase {
   public void setUp() throws Exception {
     super.setUp();
     myShowAnonymousByDefault = PropertiesComponent.getInstance().getBoolean(getAnonymousPropertyName(), false);
+    if (getTestName(false).contains("Anonymous")) {
+      setShowAnonymous(true);
+    }
   }
 
   @Override
   protected String getFileExtension() {
     return "java";
+  }
+
+  public void setShowAnonymous(boolean show) throws Exception {
+    myPopup.setTreeActionState(JavaAnonymousClassesNodeProvider.class, show);
+    update();
   }
 
   @Override

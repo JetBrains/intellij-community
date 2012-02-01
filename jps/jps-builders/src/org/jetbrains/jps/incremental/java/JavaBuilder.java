@@ -35,8 +35,7 @@ import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.EmptyVisitor;
 
-import javax.tools.Diagnostic;
-import javax.tools.JavaFileObject;
+import javax.tools.*;
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.ServerSocket;
@@ -257,7 +256,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       if (hasSourcesToCompile) {
         final Set<File> sourcePath = TEMPORARY_SOURCE_ROOTS_KEY.get(context, Collections.<File>emptySet());
 
-        final boolean compiledOk = compileJava(files, classpath, platformCp, sourcePath, outs, context, diagnosticSink, outputSink);
+        final boolean compiledOk = compileJava(chunk, files, classpath, platformCp, sourcePath, outs, context, diagnosticSink, outputSink);
 
         final Map<File, String> chunkSourcePath = ProjectPaths.getSourceRootsWithDependents(chunk, context.isCompilingTests());
         final ClassLoader compiledClassesLoader = createInstrumentationClassLoader(classpath, platformCp, chunkSourcePath, outputSink);
@@ -312,7 +311,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     return exitCode;
   }
 
-  private boolean compileJava(Collection<File> files,
+  private boolean compileJava(ModuleChunk chunk, Collection<File> files,
                               Collection<File> classpath,
                               Collection<File> platformCp,
                               Collection<File> sourcePath,
@@ -320,18 +319,20 @@ public class JavaBuilder extends ModuleLevelBuilder {
                               CompileContext context,
                               DiagnosticOutputConsumer diagnosticSink,
                               final OutputFileConsumer outputSink) throws Exception {
-    final List<String> options = getCompilationOptions(context);
+    final List<String> options = getCompilationOptions(context, chunk);
     final ClassProcessingConsumer classesConsumer = new ClassProcessingConsumer(context, outputSink);
     try {
       final boolean rc;
       if (USE_EMBEDDED_JAVAC) {
-        rc = JavacMain
-          .compile(options, files, classpath, platformCp, sourcePath, outs, diagnosticSink, classesConsumer, context.getCancelStatus());
+        rc = JavacMain.compile(
+          options, files, classpath, platformCp, sourcePath, outs, diagnosticSink, classesConsumer, context.getCancelStatus()
+        );
       }
       else {
         final JavacServerClient client = ensureJavacServerLaunched(context);
-        final RequestFuture<JavacServerResponseHandler> future =
-          client.sendCompileRequest(options, files, classpath, platformCp, sourcePath, outs, diagnosticSink, classesConsumer);
+        final RequestFuture<JavacServerResponseHandler> future = client.sendCompileRequest(
+          options, files, classpath, platformCp, sourcePath, outs, diagnosticSink, classesConsumer
+        );
         try {
           future.get();
         }
@@ -361,8 +362,9 @@ public class JavaBuilder extends ModuleLevelBuilder {
     final int port = findFreePort();
     final int heapSize = getJavacServerHeapSize(context);
 
-    final BaseOSProcessHandler processHandler =
-      JavacServerBootstrap.launchJavacServer(vmExecPath, heapSize, port, Paths.getSystemRoot(), getCompilationVMOptions(context));
+    final BaseOSProcessHandler processHandler = JavacServerBootstrap.launchJavacServer(
+      vmExecPath, heapSize, port, Paths.getSystemRoot(), getCompilationVMOptions(context)
+    );
     final JavacServerClient client = new JavacServerClient();
     try {
       client.connect(hostString, port);
@@ -445,13 +447,18 @@ public class JavaBuilder extends ModuleLevelBuilder {
     return cached;
   }
 
-  private static List<String> getCompilationOptions(CompileContext context) {
+  private static List<String> getCompilationOptions(CompileContext context, ModuleChunk chunk) {
     List<String> cached = JAVAC_OPTIONS.get(context);
     if (cached == null) {
       loadJavacOptions(context);
       cached = JAVAC_OPTIONS.get(context);
     }
     return cached;
+    //final List<String> options = new ArrayList<String>(cached);
+    //final Module module = chunk.getModules().iterator().next();
+    //final String langlevel = module.getLanguageLevel();
+    //final Sdk sdk = module.getSdk();
+    //return options;
   }
 
   private static void loadJavacOptions(CompileContext context) {

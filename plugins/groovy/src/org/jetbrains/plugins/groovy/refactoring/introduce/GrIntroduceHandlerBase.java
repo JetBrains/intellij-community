@@ -54,7 +54,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.NameValidator;
-import org.jetbrains.plugins.groovy.refactoring.introduce.field.GrIntroduceFieldHandler;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -203,7 +202,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     final PsiElement scope = findScope(expression, variable);
 
     if (variable == null) {
-      final PsiElement[] occurences = findOccurences(expression, scope);
+      final PsiElement[] occurences = findOccurrences(expression, scope);
       return new GrIntroduceContext(project, editor, expression, occurences, scope, variable);
 
     }
@@ -224,10 +223,10 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     }
   }
 
-  protected PsiElement[] findOccurences(GrExpression expression, PsiElement scope) {
+  protected PsiElement[] findOccurrences(GrExpression expression, PsiElement scope) {
     final PsiElement[] occurrences = GroovyRefactoringUtil.getExpressionOccurrences(PsiUtil.skipParentheses(expression, false), scope);
     if (occurrences == null || occurrences.length == 0) {
-      throw new GrIntroduceRefactoringError(GroovyRefactoringBundle.message("no.occurences.found"));
+      throw new GrIntroduceRefactoringError(GroovyRefactoringBundle.message("no.occurrences.found"));
     }
     return occurrences;
   }
@@ -399,7 +398,8 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
   }
 
   protected static void deleteLocalVar(GrIntroduceContext context) {
-    final GrVariable resolved = GrIntroduceFieldHandler.resolveLocalVar(context);
+    final GrVariable resolved = resolveLocalVar(context);
+
     final PsiElement parent = resolved.getParent();
     if (parent instanceof GrTupleDeclaration) {
       if (((GrTupleDeclaration)parent).getVariables().length == 1) {

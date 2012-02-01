@@ -357,7 +357,9 @@ public class FileBasedIndex implements ApplicationComponent {
   }
 
   /**
-   * @return true if registered index requires full rebuild for some reason, e.g. is just created or corrupted @param extension
+   * @return true if registered index requires full rebuild for some reason, e.g. is just created or corrupted
+   *
+   * @param extension
    * @param isCurrentVersionCorrupted
    */
   private <K, V> boolean registerIndexer(final FileBasedIndexExtension<K, V> extension, final boolean isCurrentVersionCorrupted) throws IOException {
@@ -424,7 +426,7 @@ public class FileBasedIndex implements ApplicationComponent {
     }
   }
 
-  private static Set<String> readRegistsredIndexNames() {
+  private static Set<String> readRegisteredIndexNames() {
     final Set<String> result = new HashSet<String>();
     try {
       final DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream(getRegisteredIndicesFile())));
@@ -519,7 +521,7 @@ public class FileBasedIndex implements ApplicationComponent {
     // Important! Update IdToDataKeysIndex depending on the sate of "buffering" flag from the MemoryStorage.
     // If buffering is on, all changes should be done in memory (similar to the way it is done in memory storage).
     // Otherwise data in IdToDataKeysIndex will not be in sync with the 'main' data in the index on disk and index updates will be based on the
-    // wrong sets of keys for the given file. This will lead to unpretictable results in main index because it will not be
+    // wrong sets of keys for the given file. This will lead to unpredictable results in main index because it will not be
     // cleared properly before updating (removed data will still be present on disk). See IDEA-52223 for illustration of possible effects.
 
     final PersistentHashMap<Integer, Collection<K>> map = new PersistentHashMap<Integer, Collection<K>>(
@@ -653,7 +655,7 @@ public class FileBasedIndex implements ApplicationComponent {
   }
 
   /**
-   * @param project it is guaranteeed to return data which is up-to-date withing the project
+   * @param project it is guaranteed to return data which is up-to-date withing the project
    * Keys obtained from the files which do not belong to the project specified may not be up-to-date or even exist
    */
   @NotNull
@@ -664,7 +666,7 @@ public class FileBasedIndex implements ApplicationComponent {
   }
 
   /**
-   * @param project it is guaranteeed to return data which is up-to-date withing the project
+   * @param project it is guaranteed to return data which is up-to-date withing the project
    * Keys obtained from the files which do not belong to the project specified may not be up-to-date or even exist
    */
   public <K> boolean processAllKeys(final ID<K, ?> indexId, Processor<K> processor, @Nullable Project project) {
@@ -1407,7 +1409,7 @@ public class FileBasedIndex implements ApplicationComponent {
   }
 
   private void dropUnregisteredIndices() {
-    final Set<String> indicesToDrop = readRegistsredIndexNames();
+    final Set<String> indicesToDrop = readRegisteredIndexNames();
     for (ID<?, ?> key : myIndices.keySet()) {
       indicesToDrop.remove(key.toString());
     }

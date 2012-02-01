@@ -16,6 +16,7 @@
 
 package org.jetbrains.plugins.groovy.lang.psi;
 
+import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
@@ -23,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author ven
  */
-public interface GrNamedElement extends PsiNamedElement, GroovyPsiElement {
+public interface GrNamedElement extends PsiNamedElement, GroovyPsiElement, PsiModifierListOwner {
   @NotNull
   PsiElement getNameIdentifierGroovy();
 }

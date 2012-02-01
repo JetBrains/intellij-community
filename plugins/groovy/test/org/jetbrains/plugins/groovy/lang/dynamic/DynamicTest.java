@@ -9,7 +9,7 @@ import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManager;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicMethodFix;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicPropertyFix;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.MyPair;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ParamInfo;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DClassElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DRootElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -34,7 +34,7 @@ public class DynamicTest extends JavaCodeInsightFixtureTestCase {
 
     final PsiType[] psiTypes = PsiUtil.getArgumentTypes(referenceExpression, false);
     final String[] methodArgumentsNames = QuickfixUtil.getMethodArgumentsNames(getProject(), psiTypes);
-    final List<MyPair> pairs = QuickfixUtil.swapArgumentsAndTypes(methodArgumentsNames, psiTypes);
+    final List<ParamInfo> pairs = QuickfixUtil.swapArgumentsAndTypes(methodArgumentsNames, psiTypes);
 
     assertNotNull(getDClassElement().getMethod(referenceExpression.getName(), QuickfixUtil.getArgumentsTypes(pairs)));
   }

@@ -329,6 +329,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     final Runnable computeRunnable = new Runnable() {
       @Override
       public void run() {
+        final AtomicReference<LookupElement[]> data1 = new AtomicReference<LookupElement[]>(null);
         ProgressManager.getInstance().runProcess(new Runnable() {
           @Override
           public void run() {
@@ -342,7 +343,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
                   indicator.duringCompletion(initContext);
                   ProgressManager.checkCanceled();
 
-                  data.set(CompletionService.getCompletionService().performCompletion(parameters, new Consumer<CompletionResult>() {
+                  data1.set(CompletionService.getCompletionService().performCompletion(parameters, new Consumer<CompletionResult>() {
                     @Override
                     public void consume(final CompletionResult result) {
                       indicator.addItem(result);
@@ -355,6 +356,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
             }
           }
         }, indicator);
+        data.set(data1.get());
       }
     };
 

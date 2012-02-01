@@ -29,6 +29,7 @@ public class DPropertyElement extends DItemElement {
   private GrDynamicImplicitProperty myPsi;
 
   //Do not use directly! Persistence component uses default constructor for deserializable
+  @SuppressWarnings("UnusedDeclaration")
   public DPropertyElement() {
     super(null, null, null);
   }

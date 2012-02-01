@@ -15,12 +15,12 @@
  */
 package com.intellij.refactoring.util;
 
-import com.intellij.psi.*;
-import com.intellij.usageView.UsageInfo;
-import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.*;
+import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.Nullable;
 
 public class MoveRenameUsageInfo extends UsageInfo{
@@ -53,7 +53,12 @@ public class MoveRenameUsageInfo extends UsageInfo{
     }
     if (reference == null) reference = element.getReference();
     PsiFile containingFile = element.getContainingFile();
-    if (reference == null) reference = containingFile.findReferenceAt(element.getTextRange().getStartOffset());
+    if (reference == null) {
+      final TextRange textRange = element.getTextRange();
+      if (textRange != null) {
+        reference = containingFile.findReferenceAt(textRange.getStartOffset());
+      }
+    }
     myReference = reference;
     if (reference != null) {
       Document document = PsiDocumentManager.getInstance(project).getDocument(containingFile);

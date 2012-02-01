@@ -31,10 +31,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Factory;
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -688,10 +685,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
   private void reset() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-
     myUsageNodes.clear();
-    myIsFirstVisibleUsageFound = false;
-
     myModel.reset();
     if (!myPresentation.isDetachedMode()) {
       SwingUtilities.invokeLater(new Runnable() {
@@ -718,8 +712,6 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     });
   }
 
-  private volatile boolean myIsFirstVisibleUsageFound = false;
-
   @Override
   public void appendUsage(@NotNull Usage usage) {
     doAppendUsage(usage);
@@ -734,10 +726,6 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     }
     UsageNode node = myBuilder.appendUsage(usage);
     myUsageNodes.put(usage, node == null ? NULL_NODE : node);
-    if (!myIsFirstVisibleUsageFound && node != null) { //first visible usage found;
-      myIsFirstVisibleUsageFound = true;
-      showNode(node);
-    }
     return node;
   }
 
@@ -874,9 +862,14 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
         public void run() {
           if (isDisposed) return;
           final UsageNode firstUsageNode = myModel.getFirstUsageNode();
-          if (firstUsageNode != null) {
-            showNode(firstUsageNode);
+          if (firstUsageNode == null) return;
+
+          Node node = getSelectedNode();
+          if (node != null && !Comparing.equal(new TreePath(node.getPath()), TreeUtil.getFirstNodePath(myTree))) {
+            // user has selected node already
+            return;
           }
+          showNode(firstUsageNode);
         }
       });
     }

@@ -171,7 +171,7 @@ public class AndroidResourcesLineMarkerProvider implements LineMarkerProvider {
     Collection<Resources> resourceFiles = resManager.getResourceElements();
     for (Resources res : resourceFiles) {
       for (String valueResourceType : ResourceManager.VALUE_RESOURCE_TYPES) {
-        for (ResourceElement valueResource : ResourceManager.getValueResources(valueResourceType, res)) {
+        for (ResourceElement valueResource : ResourceManager.getValueResourcesFromElement(valueResourceType, res)) {
           addResource(valueResourceType, valueResource, result);
         }
       }
@@ -197,7 +197,7 @@ public class AndroidResourcesLineMarkerProvider implements LineMarkerProvider {
       public void run() {
         List<VirtualFile> resourceSubdirs = resManager.getResourceSubdirs(null);
         for (VirtualFile dir : resourceSubdirs) {
-          String resType = ResourceManager.getResourceTypeByDirName(dir.getName());
+          String resType = AndroidResourceUtil.getResourceTypeByDirName(dir.getName());
           if (resType != null) {
             for (VirtualFile resourceFile : dir.getChildren()) {
               if (!resourceFile.isDirectory()) {
@@ -264,7 +264,7 @@ public class AndroidResourcesLineMarkerProvider implements LineMarkerProvider {
             if (resourceMap != null) {
               targets = new ArrayList<PsiElement>();
               if (resType.equals("id")) {
-                AndroidResourceUtil.collectIdDeclarations(fieldName, manager.getModule(), targets);
+                manager.collectIdDeclarations(fieldName, targets);
               }
               List<PsiElement> resources = resourceMap.get(new MyResourceEntry(fieldName, resType));
               if (resources != null) {

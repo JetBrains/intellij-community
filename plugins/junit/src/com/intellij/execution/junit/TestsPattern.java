@@ -122,12 +122,13 @@ public class TestsPattern extends TestObject {
     }
     final GlobalSearchScope searchScope = GlobalSearchScope.allScope(myConfiguration.getProject());
     for (String pattern : patterns) {
-      final PsiClass psiClass = JavaExecutionUtil.findMainClass(myConfiguration.getProject(), pattern, searchScope);
+      final String className = pattern.contains(",") ? StringUtil.getPackageName(pattern, ',') : pattern;
+      final PsiClass psiClass = JavaExecutionUtil.findMainClass(myConfiguration.getProject(), className, searchScope);
       if (psiClass == null) {
-        throw new RuntimeConfigurationWarning("Class " + pattern + " not found");
+        throw new RuntimeConfigurationWarning("Class " + className + " not found");
       }
       if (!JUnitUtil.isTestClass(psiClass)) {
-        throw new RuntimeConfigurationWarning("Class " + pattern + " not a test");
+        throw new RuntimeConfigurationWarning("Class " + className + " not a test");
       }
     }
   }

@@ -15,28 +15,37 @@
  */
 package org.jetbrains.android.resourceManagers;
 
+import com.android.resources.ResourceType;
 import com.android.sdklib.SdkConstants;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.HashSet;
+import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.xml.DomElement;
+import org.jetbrains.android.AndroidIdIndex;
+import org.jetbrains.android.AndroidValueResourcesIndex;
 import org.jetbrains.android.dom.attrs.AttributeDefinitions;
 import org.jetbrains.android.dom.resources.Item;
 import org.jetbrains.android.dom.resources.ResourceElement;
 import org.jetbrains.android.dom.resources.Resources;
 import org.jetbrains.android.facet.AndroidFacet;
+import org.jetbrains.android.util.AndroidResourceUtil;
 import org.jetbrains.android.util.AndroidUtils;
+import org.jetbrains.android.util.ResourceEntry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,6 +57,8 @@ import static java.util.Collections.addAll;
  * @author coyote
  */
 public abstract class ResourceManager {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.resourceManagers.LocalResourceManager");
+
   public static final Set<String> REFERABLE_RESOURCE_TYPES = new HashSet<String>();
   public static final String[] FILE_RESOURCE_TYPES = new String[]{"drawable", "anim", "layout", "values", "menu", "xml", "raw", "color"};
   public static final String[] VALUE_RESOURCE_TYPES =
@@ -93,33 +104,9 @@ public abstract class ResourceManager {
     return VirtualFile.EMPTY_ARRAY;
   }
 
-  @Nullable
-  public static String getResourceTypeByDirName(@NotNull String name) {
-    int index = name.indexOf('-');
-    String type = index >= 0 ? name.substring(0, index) : name;
-    return ArrayUtil.find(FILE_RESOURCE_TYPES, type) >= 0 ? type : null;
-  }
-
   @NotNull
   public List<VirtualFile> getResourceSubdirs(@Nullable String resourceType) {
-    List<VirtualFile> dirs = new ArrayList<VirtualFile>();
-    if (ArrayUtil.find(FILE_RESOURCE_TYPES, resourceType) < 0 && resourceType != null) {
-      return dirs;
-    }
-    VirtualFile[] resourcesDirs = getAllResourceDirs();
-    for (VirtualFile resourcesDir : resourcesDirs) {
-      if (resourcesDir == null) return dirs;
-      if (resourceType == null) {
-        ContainerUtil.addAll(dirs, resourcesDir.getChildren());
-      }
-      else {
-        for (VirtualFile child : resourcesDir.getChildren()) {
-          String type = getResourceTypeByDirName(child.getName());
-          if (resourceType.equals(type)) dirs.add(child);
-        }
-      }
-    }
-    return dirs;
+    return AndroidResourceUtil.getResourceSubdirs(resourceType, getAllResourceDirs());
   }
 
   @NotNull
@@ -193,21 +180,37 @@ public abstract class ResourceManager {
     return findResourceFiles(resType, null, true);
   }
 
-  protected List<Resources> getResourceElements(@NotNull Set<VirtualFile> files) {
+  protected List<Resources> getResourceElements(@Nullable Set<VirtualFile> files) {
     return getRootDomElements(Resources.class, files);
   }
 
   private <T extends DomElement> List<T> getRootDomElements(@NotNull Class<T> elementType,
-                                                            @NotNull Collection<VirtualFile> files) {
+                                                            @Nullable Set<VirtualFile> files) {
     final List<T> result = new ArrayList<T>();
-    for (VirtualFile file : files) {
-      T element = AndroidUtils.loadDomElement(myModule, file, elementType);
-      if (element != null) result.add(element);
+    for (VirtualFile file : getAllValueResourceFiles()) {
+      if ((files == null || files.contains(file)) && file.isValid()) {
+        T element = AndroidUtils.loadDomElement(myModule, file, elementType);
+        if (element != null) result.add(element);
+      }
     }
     return result;
   }
 
-  protected List<ResourceElement> getValueResources(final String resourceType, Set<VirtualFile> files) {
+  @NotNull
+  protected Set<VirtualFile> getAllValueResourceFiles() {
+    final Set<VirtualFile> files = new HashSet<VirtualFile>();
+
+    for (VirtualFile valueResourceDir : getResourceSubdirs("values")) {
+      for (VirtualFile valueResourceFile : valueResourceDir.getChildren()) {
+        if (!valueResourceFile.isDirectory() && valueResourceFile.getFileType().equals(StdFileTypes.XML)) {
+          files.add(valueResourceFile);
+        }
+      }
+    }
+    return files;
+  }
+
+  protected List<ResourceElement> getValueResources(@NotNull final String resourceType, @Nullable Set<VirtualFile> files) {
     final List<ResourceElement> result = new ArrayList<ResourceElement>();
     Collection<Resources> resourceFiles = getResourceElements(files);
     for (final Resources resources : resourceFiles) {
@@ -217,7 +220,7 @@ public abstract class ResourceManager {
           if (!resources.isValid() || myModule.isDisposed() || myModule.getProject().isDisposed()) {
             return;
           }
-          result.addAll(getValueResources(resourceType, resources));
+          result.addAll(getValueResourcesFromElement(resourceType, resources));
         }
       });
     }
@@ -245,7 +248,7 @@ public abstract class ResourceManager {
         if (possibleResDir == null || !isResourceDir(possibleResDir.getVirtualFile())) {
           return null;
         }
-        String type = getResourceTypeByDirName(dir.getName());
+        String type = AndroidResourceUtil.getResourceTypeByDirName(dir.getName());
         if (type == null) return null;
         return isCorrectFileName(type, file.getName()) ? type : null;
       }
@@ -267,10 +270,51 @@ public abstract class ResourceManager {
   }
 
   @NotNull
-  public abstract Collection<String> getValueResourceNames(@NotNull final String resourceType);
+  public Collection<String> getValueResourceNames(@NotNull final String resourceType) {
+    final ResourceType type = ResourceType.getEnum(resourceType);
+
+    if (type == null) {
+      LOG.error("Unknown resource type " + resourceType);
+      return Collections.emptyList();
+    }
+
+    final FileBasedIndex index = FileBasedIndex.getInstance();
+    final ResourceEntry typeMarkerEntry = AndroidValueResourcesIndex.createTypeMarkerEntry(resourceType);
+    final GlobalSearchScope scope = GlobalSearchScope.allScope(myModule.getProject());
+
+    final Map<VirtualFile, Set<ResourceEntry>> file2resourceSet = new HashMap<VirtualFile, Set<ResourceEntry>>();
+
+    for (Set<ResourceEntry> entrySet : index.getValues(AndroidValueResourcesIndex.INDEX_ID, typeMarkerEntry, scope)) {
+      for (ResourceEntry entry : entrySet) {
+        final Collection<VirtualFile> files = index.getContainingFiles(AndroidValueResourcesIndex.INDEX_ID, entry, scope);
+
+        for (VirtualFile file : files) {
+          Set<ResourceEntry> resourcesInFile = file2resourceSet.get(file);
+
+          if (resourcesInFile == null) {
+            resourcesInFile = new HashSet<ResourceEntry>();
+            file2resourceSet.put(file, resourcesInFile);
+          }
+          resourcesInFile.add(entry);
+        }
+      }
+    }
+    final Set<String> result = new HashSet<String>();
+
+    for (VirtualFile file : getAllValueResourceFiles()) {
+      final Set<ResourceEntry> entries = file2resourceSet.get(file);
+
+      if (entries != null) {
+        for (ResourceEntry entry : entries) {
+          result.add(entry.getName());
+        }
+      }
+    }
+    return result;
+  }
 
   @NotNull
-  public static List<ResourceElement> getValueResources(@NotNull String resourceType, Resources resources) {
+  public static List<ResourceElement> getValueResourcesFromElement(@NotNull String resourceType, Resources resources) {
     List<ResourceElement> result = new ArrayList<ResourceElement>();
     if (resourceType.equals("string")) {
       result.addAll(resources.getStrings());
@@ -312,19 +356,91 @@ public abstract class ResourceManager {
 
   // searches only declarations such as "@+id/..."
   @Nullable
-  public abstract List<PsiElement> findIdDeclarations(@NotNull String id);
+  public List<PsiElement> findIdDeclarations(@NotNull String id) {
+    List<PsiElement> declarations = new ArrayList<PsiElement>();
+    collectIdDeclarations(id, declarations);
+    return declarations;
+  }
 
   @NotNull
-  public abstract Collection<String> getIds();
+  public Collection<String> getIds() {
+    final Project project = myModule.getProject();
+    final GlobalSearchScope scope = GlobalSearchScope.allScope(myModule.getProject());
+
+    final FileBasedIndex index = FileBasedIndex.getInstance();
+    final Map<VirtualFile, Set<String>> file2ids = new HashMap<VirtualFile, Set<String>>();
+
+    for (String key : index.getAllKeys(AndroidIdIndex.INDEX_ID, project)) {
+      if (!AndroidIdIndex.MARKER.equals(key)) {
+        if (index.getValues(AndroidIdIndex.INDEX_ID, key, scope).size() > 0) {
+
+          for (VirtualFile file : index.getContainingFiles(AndroidIdIndex.INDEX_ID, key, scope)) {
+            Set<String> ids = file2ids.get(file);
+
+            if (ids == null) {
+              ids = new HashSet<String>();
+              file2ids.put(file, ids);
+            }
+            ids.add(key);
+          }
+        }
+      }
+    }
+    final Set<String> result = new HashSet<String>();
+
+    for (VirtualFile resSubdir : getResourceSubdirsToSearchIds()) {
+      for (VirtualFile resFile : resSubdir.getChildren()) {
+        final Set<String> ids = file2ids.get(resFile);
+        
+        if (ids != null) {
+          result.addAll(ids);
+        }
+      }
+    }
+    return result;
+  }
+
+  @NotNull
+  protected List<VirtualFile> getResourceSubdirsToSearchIds() {
+    final List<VirtualFile> resSubdirs = new ArrayList<VirtualFile>();
+    resSubdirs.addAll(getResourceSubdirs(ResourceType.LAYOUT.getName()));
+    resSubdirs.addAll(getResourceSubdirs(ResourceType.MENU.getName()));
+    return resSubdirs;
+  }
 
   public List<ResourceElement> findValueResources(@NotNull String resType, @NotNull String resName) {
     return findValueResources(resType, resName, true);
   }
 
   @NotNull
-  public abstract List<ResourceElement> findValueResources(@NotNull String resourceType,
-                                                           @NotNull String resourceName,
-                                                           boolean distinguishDelimetersInName);
+  public List<ResourceElement> findValueResources(@NotNull String resourceType,
+                                                  @NotNull String resourceName,
+                                                  boolean distinguishDelimetersInName) {
+    final ResourceType type = ResourceType.getEnum(resourceType);
+    if (type == null) {
+      LOG.error("Unknown resource type " + resourceType);
+      return Collections.emptyList();
+    }
+
+    final Collection<VirtualFile> files = FileBasedIndex.getInstance()
+      .getContainingFiles(AndroidValueResourcesIndex.INDEX_ID, new ResourceEntry(resourceType, resourceName),
+                          GlobalSearchScope.allScope(myModule.getProject()));
+
+    if (files.size() == 0) {
+      return Collections.emptyList();
+    }
+    final Set<VirtualFile> fileSet = new HashSet<VirtualFile>(files);
+    final List<ResourceElement> result = new ArrayList<ResourceElement>();
+
+    for (ResourceElement element : getValueResources(resourceType, fileSet)) {
+      final String name = element.getName().getValue();
+
+      if (equal(resourceName, name, distinguishDelimetersInName)) {
+        result.add(element);
+      }
+    }
+    return result;
+  }
 
   public static boolean isInResourceSubdirectory(@NotNull PsiFile file, @Nullable String resourceType) {
     file = file.getOriginalFile();
@@ -381,5 +497,35 @@ public abstract class ResourceManager {
 
   private static boolean containsAndroidJar(@NotNull PsiDirectory psiDirectory) {
     return psiDirectory.findFile(SdkConstants.FN_FRAMEWORK_LIBRARY) != null;
+  }
+
+  public void collectIdDeclarations(@NotNull final String id, final List<PsiElement> targets) {
+    final Collection<VirtualFile> files =
+      FileBasedIndex.getInstance().getContainingFiles(AndroidIdIndex.INDEX_ID, id, GlobalSearchScope.allScope(myModule.getProject()));
+    final Set<VirtualFile> fileSet = new HashSet<VirtualFile>(files);
+    final PsiManager psiManager = PsiManager.getInstance(myModule.getProject());
+
+    for (VirtualFile subdir : getResourceSubdirsToSearchIds()) {
+      for (VirtualFile file : subdir.getChildren()) {
+        if (fileSet.contains(file)) {
+          final PsiFile psiFile = psiManager.findFile(file);
+
+          if (psiFile instanceof XmlFile) {
+            psiFile.accept(new XmlRecursiveElementVisitor() {
+              @Override
+              public void visitXmlAttributeValue(XmlAttributeValue attributeValue) {
+                if (AndroidResourceUtil.isIdDeclaration(attributeValue)) {
+                  final String idInAttr = AndroidResourceUtil.getResourceNameByReferenceText(attributeValue.getValue());
+
+                  if (id.equals(idInAttr)) {
+                    targets.add(attributeValue);
+                  }
+                }
+              }
+            });
+          }
+        }
+      }
+    }
   }
 }

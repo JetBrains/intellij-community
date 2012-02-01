@@ -64,11 +64,11 @@ public class CreateMethodFromUsageFix implements IntentionAction {
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myTargetClass.isValid() && myRefExpression.isValid();
+    return myTargetClass.isValid() && myRefExpression.isValid() && myTargetClass.isWritable();
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    StringBuffer methodBuffer = new StringBuffer();
+    StringBuilder methodBuffer = new StringBuilder();
     if (PsiUtil.isInStaticContext(myRefExpression, myTargetClass)) methodBuffer.append("static ");
     methodBuffer.append("Object ").append(myRefExpression.getReferenceName()).append(" (");
     PsiType[] argTypes = PsiUtil.getArgumentTypes(myRefExpression, false);
@@ -79,23 +79,28 @@ public class CreateMethodFromUsageFix implements IntentionAction {
       if (argType == null) argType = TypesUtil.getJavaLangObject(myRefExpression);
       if (i > 0) methodBuffer.append(", ");
       methodBuffer.append("Object o").append(i);
-      paramTypesExpressions[i] = new ChooseTypeExpression(new TypeConstraint[]{SupertypeConstraint.create(argType)}, myRefExpression.getManager());
+      paramTypesExpressions[i] =
+        new ChooseTypeExpression(new TypeConstraint[]{SupertypeConstraint.create(argType)}, myRefExpression.getManager());
     }
     methodBuffer.append(") {\n}");
     GrMethod method = GroovyPsiElementFactory.getInstance(project).createMethodFromText(methodBuffer.toString());
     GrMemberOwner owner = myTargetClass;
-    TypeConstraint[] constraints = GroovyExpectedTypesProvider.calculateTypeConstraints((GrExpression) myRefExpression.getParent());
-    PsiElement parent = myTargetClass instanceof GrTypeDefinition ? ((GrTypeDefinition)myTargetClass).getBody() : ((GroovyScriptClass) myTargetClass).getContainingFile();
+    TypeConstraint[] constraints = GroovyExpectedTypesProvider.calculateTypeConstraints((GrExpression)myRefExpression.getParent());
+    PsiElement parent = myTargetClass instanceof GrTypeDefinition
+                        ? ((GrTypeDefinition)myTargetClass).getBody()
+                        : ((GroovyScriptClass)myTargetClass).getContainingFile();
     if (PsiTreeUtil.isAncestor(parent, myRefExpression, false)) {
       PsiElement prevParent = PsiTreeUtil.findPrevParent(parent, myRefExpression);
       PsiElement sibling = PsiUtil.skipWhitespaces(prevParent.getNextSibling(), true);
       if (sibling != null && GroovyTokenTypes.mSEMI.equals(sibling.getNode().getElementType())) {
         sibling = sibling.getNextSibling();
-      } else {
+      }
+      else {
         sibling = prevParent.getNextSibling();
       }
       method = owner.addMemberDeclaration(method, sibling);
-    } else {
+    }
+    else {
       method = owner.addMemberDeclaration(method, null);
     }
 

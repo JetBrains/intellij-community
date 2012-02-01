@@ -156,8 +156,13 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
       myHighlightedText.getEnding().addText(IdeBundle.message("node.call.hierarchy.N.usages", myUsageCount), HierarchyNodeDescriptor.getUsageCountPrefixAttributes());
     }
     if (!(JspPsiUtil.isInJspFile(enclosingElement) && enclosingElement instanceof PsiFile)) {
-      final String packageName = JavaHierarchyUtil.getPackageName(enclosingElement instanceof PsiMethod ? ((PsiMethod)enclosingElement).getContainingClass() : (PsiClass)enclosingElement);
-      myHighlightedText.getEnding().addText("  (" + packageName + ")", HierarchyNodeDescriptor.getPackageNameAttributes());
+      final PsiClass containingClass = enclosingElement instanceof PsiMethod
+                                       ? ((PsiMethod)enclosingElement).getContainingClass()
+                                       : (PsiClass)enclosingElement;
+      if (containingClass != null) {
+        final String packageName = JavaHierarchyUtil.getPackageName(containingClass);
+        myHighlightedText.getEnding().addText("  (" + packageName + ")", HierarchyNodeDescriptor.getPackageNameAttributes());
+      }
     }
     myName = myHighlightedText.getText();
 
