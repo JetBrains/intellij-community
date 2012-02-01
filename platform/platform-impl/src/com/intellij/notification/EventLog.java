@@ -131,11 +131,6 @@ public class EventLog implements Notifications {
     removeJavaNewLines(document, lineSeparators, hasHtml);
     insertNewLineSubstitutors(document, showMore, lineSeparators);
 
-    String title = notification.getTitle();
-    if (StringUtil.isNotEmpty(title)) {
-      document.insertString(0, document.getTextLength() > 0 ? title + ": " : title);
-    }
-
     String status = document.getText();
 
     ArrayList<Pair<TextRange, HyperlinkInfo>> list = new ArrayList<Pair<TextRange, HyperlinkInfo>>();
@@ -162,6 +157,11 @@ public class EventLog implements Notifications {
                                           AtomicBoolean showMore,
                                           Map<RangeMarker, HyperlinkInfo> links, List<RangeMarker> lineSeparators) {
     String content = notification.getContent();
+    String title = notification.getTitle();
+    if (StringUtil.isNotEmpty(title)) {
+      content = title + (StringUtil.isNotEmpty(content) ? ": " + content : "");
+    }
+
     content = StringUtil.replace(StringUtil.convertLineSeparators(content), "&nbsp;", " ");
     boolean hasHtml = false;
     while (true) {
