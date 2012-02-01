@@ -63,18 +63,7 @@ class ServerMessageHandler extends SimpleChannelHandler {
         case CANCEL_BUILD_COMMAND:
           final JpsRemoteProto.Message.Request.CancelBuildCommand cancelCommand = request.getCancelBuildCommand();
           final UUID targetSessionId = ProtoUtil.fromProtoUUID(cancelCommand.getTargetSessionId());
-          synchronized (myBuildsInProgress) {
-            for (Iterator<Pair<RunnableFuture, CompilationTask>> it = myBuildsInProgress.iterator(); it.hasNext(); ) {
-              final Pair<RunnableFuture, CompilationTask> pair = it.next();
-              final CompilationTask task = pair.second;
-              if (task.getSessionId().equals(targetSessionId)) {
-                it.remove();
-                task.cancel();
-                pair.first.cancel(true);
-                break;
-              }
-            }
-          }
+          cancelSession(targetSessionId);
           reply = ProtoUtil.toMessage(sessionId, ProtoUtil.createCommandCompletedEvent(null));
           break;
         case SETUP_COMMAND:
@@ -158,6 +147,30 @@ class ServerMessageHandler extends SimpleChannelHandler {
     }
   }
 
+  private void cancelSession(UUID targetSessionId) {
+    synchronized (myBuildsInProgress) {
+      for (Iterator<Pair<RunnableFuture, CompilationTask>> it = myBuildsInProgress.iterator(); it.hasNext(); ) {
+        final Pair<RunnableFuture, CompilationTask> pair = it.next();
+        final CompilationTask task = pair.second;
+        if (task.getSessionId().equals(targetSessionId)) {
+          it.remove();
+          task.cancel();
+          pair.first.cancel(true);
+          break;
+        }
+      }
+    }
+  }
+
+  @Override
+  public void channelDisconnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
+    final Object attachment = ctx.getAttachment();
+    if (attachment instanceof UUID) {
+      cancelSession((UUID)attachment);
+    }
+    super.channelDisconnected(ctx, e);
+  }
+
   @Nullable
   private JpsRemoteProto.Message startBuild(UUID sessionId, final ChannelHandlerContext channelContext, JpsRemoteProto.Message.Request.CompilationRequest compileRequest) {
     if (!compileRequest.hasProjectId()) {
@@ -172,6 +185,7 @@ class ServerMessageHandler extends SimpleChannelHandler {
       case MAKE:
       case FORCED_COMPILATION:
       case REBUILD: {
+        channelContext.setAttachment(sessionId);
         final BuildType buildType = convertCompileType(compileType);
         final CompilationTask task = new CompilationTask(
           sessionId, channelContext, projectId, buildType, compileRequest.getModuleNameList(), compileRequest.getFilePathList()
