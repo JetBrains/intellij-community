@@ -193,7 +193,14 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
         packages.add(defaultPackage);
       }
     } else {
-      for (String filter : filters) {
+      final List<String> nonInherited = new ArrayList<String>();
+      for (final String filter : filters) {
+        if (!isSubPackage(filters, filter)) {
+          nonInherited.add(filter);
+        }
+      }
+      
+      for (String filter : nonInherited) {
         final PsiPackage psiPackage = JavaPsiFacade.getInstance(psiManager.getProject()).findPackage(filter);
         if (psiPackage != null) {
           packages.add(psiPackage);
@@ -202,6 +209,15 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
     }
 
     return packages;
+  }
+
+  private static boolean isSubPackage(String[] filters, String filter) {
+    for (String supPackageFilter : filters) {
+      if (filter.startsWith(supPackageFilter + ".")) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public @NotNull List<PsiClass> getCurrentSuiteClasses(final Project project) {
