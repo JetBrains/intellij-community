@@ -215,6 +215,10 @@ public class ParametersList implements Cloneable {
   public void replaceOrPrepend(final @NonNls String parameter, final @NonNls String replacement) {
     replaceOrAdd(parameter, replacement, 0);
   }
+  
+  public void set(int ind, final @NonNls String value) {
+    myParameters.set(ind, value);
+  }
 
   public void add(@NonNls final String name, @NonNls final String value) {
     add(name);
