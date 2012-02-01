@@ -183,22 +183,22 @@ public class EventLog implements Notifications {
           links.put(document.createRangeMarker(new TextRange(document.getTextLength() - linkText.length(), document.getTextLength())),
                     new NotificationHyperlinkInfo(notification, href));
           content = content.substring(linkEnd + A_CLOSING.length());
+          continue;
         }
       }
-      else {
-        hasHtml = true;
-        if ("<br>".equals(tagStart) ||
-            "</br>".equals(tagStart) ||
-            "</p>".equals(tagStart) ||
-            "<p>".equals(tagStart) ||
-            "<p/>".equals(tagStart)) {
-          lineSeparators.add(document.createRangeMarker(TextRange.from(document.getTextLength(), 0)));
-        }
-        else if (!"<html>".equals(tagStart) && !"</html>".equals(tagStart) && !"<body>".equals(tagStart) && !"</body>".equals(tagStart)) {
-          showMore.set(true);
-        }
-        content = content.substring(tagMatcher.end());
+
+      hasHtml = true;
+      if ("<br>".equals(tagStart) ||
+          "</br>".equals(tagStart) ||
+          "</p>".equals(tagStart) ||
+          "<p>".equals(tagStart) ||
+          "<p/>".equals(tagStart)) {
+        lineSeparators.add(document.createRangeMarker(TextRange.from(document.getTextLength(), 0)));
       }
+      else if (!"<html>".equals(tagStart) && !"</html>".equals(tagStart) && !"<body>".equals(tagStart) && !"</body>".equals(tagStart)) {
+        showMore.set(true);
+      }
+      content = content.substring(tagMatcher.end());
     }
     return hasHtml;
   }

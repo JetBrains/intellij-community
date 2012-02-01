@@ -63,4 +63,9 @@ class EventLogTest extends LightPlatformTestCase {
     assert entry.links.collect { it.first } == [new TextRange(0, 4)]
   }
 
+  public void testMalformedLink() throws Exception {
+    def entry = EventLog.formatForLog(new Notification("xxx", '<a href="a">link<a/>', "content", NotificationType.ERROR))
+    assert entry.message ==  'link: content (show balloon)'
+  }
+
 }
