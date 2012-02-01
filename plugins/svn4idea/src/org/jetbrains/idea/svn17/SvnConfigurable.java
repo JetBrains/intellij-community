@@ -18,6 +18,7 @@
 package org.jetbrains.idea.svn17;
 
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -154,6 +155,10 @@ public class SvnConfigurable implements Configurable {
     bg.add(myNoAcceleration);
     bg.add(myJavaHLAcceleration);
     bg.add(myWithCommandLineClient);
+    final boolean internal = ApplicationManager.getApplication().isInternal();
+    myJavaHLAcceleration.setEnabled(internal);
+    myJavaHLAcceleration.setVisible(internal);
+    myJavaHLInfo.setVisible(internal);
   }
 
   private static FileChooserDescriptor createFileDescriptor() {
