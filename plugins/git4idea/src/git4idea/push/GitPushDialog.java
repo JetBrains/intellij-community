@@ -165,28 +165,11 @@ public class GitPushDialog extends DialogWrapper {
           LOG.info("Couldn't retrieve tracked branch for current branch " + currentBranch, e);
           remoteName = DEFAULT_REMOTE;
         }
-        String targetBranch = getNameWithoutRemote(myGitCommitsToPush.get(repository).get(currentBranch).getDestBranch(), remoteName);
+        String targetBranch = myGitCommitsToPush.get(repository).get(currentBranch).getDestBranch().getShortName();
         return Pair.create(remoteName, targetBranch);
       }
     }
     return Pair.create(DEFAULT_REMOTE, "");
-  }
-
-  @NotNull
-  private static String getNameWithoutRemote(@NotNull GitBranch remoteBranch, @NotNull String remoteName) {
-    remoteName += "/";
-    String branchName = remoteBranch.getName();
-    if (branchName.startsWith(remoteName)) {
-      return branchName.substring(remoteName.length());
-    }
-    else {
-      // we are taking the current branch of the first repository
-      // it is possible (though unlikely), that this branch has other remote than the common remote selected in the refspec panel
-      // then we return the full branch name.
-      // the push won't work absolutely correct, if the remote doesn't have this branch, but it is not our problem in the case of 
-      // several repositories with different remotes sets and different branches.
-      return remoteBranch.getFullName();
-    }
   }
 
   @Nullable
