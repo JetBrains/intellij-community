@@ -1,6 +1,7 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -117,6 +118,9 @@ public class PyNumericLiteralExpressionImpl extends PyElementImpl
       radix = 16;
     } else {
       throw new IllegalStateException("No radix found: " + text);
+    }
+    if (StringUtil.endsWithIgnoreCase(text, "L")) {
+      text = text.substring(0, text.length()-1);
     }
     return new BigInteger(text, radix);
   }

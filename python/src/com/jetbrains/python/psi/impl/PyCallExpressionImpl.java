@@ -35,9 +35,9 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
   @Nullable
   public PyExpression getCallee() {
     // peel off any parens, because we may have smth like (lambda x: x+1)(2)
-    PyExpression seeker = (PyExpression)getFirstChild();
+    PsiElement seeker = getFirstChild();
     while (seeker instanceof PyParenthesizedExpression) seeker = ((PyParenthesizedExpression)seeker).getContainedExpression();
-    return seeker;
+    return seeker instanceof PyExpression ? (PyExpression) seeker : null;
   }
 
   public PyArgumentList getArgumentList() {
