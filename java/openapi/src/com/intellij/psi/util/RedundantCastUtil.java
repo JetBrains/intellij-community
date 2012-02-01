@@ -27,7 +27,10 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author max
@@ -63,6 +66,31 @@ public class RedundantCastUtil {
   private static PsiExpression deparenthesizeExpression(PsiExpression arg) {
     while (arg instanceof PsiParenthesizedExpression) arg = ((PsiParenthesizedExpression) arg).getExpression();
     return arg;
+  }
+
+  public static void removeCast(PsiTypeCastExpression castExpression) {
+    if (castExpression == null) return;
+    PsiExpression operand = castExpression.getOperand();
+    if (operand instanceof PsiParenthesizedExpression) {
+      final PsiParenthesizedExpression parExpr = (PsiParenthesizedExpression)operand;
+      operand = parExpr.getExpression();
+    }
+    if (operand == null) return;
+
+    PsiElement toBeReplaced = castExpression;
+
+    PsiElement parent = castExpression.getParent();
+    while (parent instanceof PsiParenthesizedExpression) {
+      toBeReplaced = parent;
+      parent = parent.getParent();
+    }
+
+    try {
+      toBeReplaced.replace(operand);
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
+    }
   }
 
   private static class MyCollectingVisitor extends MyIsRedundantVisitor {
