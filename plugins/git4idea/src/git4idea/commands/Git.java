@@ -243,14 +243,11 @@ public class Git {
     for (GitLineHandlerListener listener : listeners) {
       h.addLineListener(listener);
     }
-    if (!pushSpec.isPushAll()) {
-      GitRemote remote = pushSpec.getRemote();
-      LOG.assertTrue(remote != null, "Remote can't be null: " + pushSpec);
-      h.addParameters(remote.getName());
-      GitBranch remoteBranch = pushSpec.getDest();
-      String destination = remoteBranch.getName().replaceFirst(remote.getName() + "/", "");
-      h.addParameters(pushSpec.getSource().getName() + ":" + destination);
-    }
+    GitRemote remote = pushSpec.getRemote();
+    h.addParameters(remote.getName());
+    GitBranch remoteBranch = pushSpec.getDest();
+    String destination = remoteBranch.getName().replaceFirst(remote.getName() + "/", "");
+    h.addParameters(pushSpec.getSource().getName() + ":" + destination);
     return run(h, true);
   }
 
