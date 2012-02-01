@@ -67,16 +67,30 @@ public class PyPackageManager {
     install(Lists.newArrayList(requirement), options);
   }
 
-  public void install(@NotNull List<PyRequirement> requirements, @Nullable List<String> options) throws PyExternalProcessException {
+  public void install(@NotNull PyRequirement requirement, @Nullable String url,
+                      @Nullable List<String> options) throws PyExternalProcessException {
+    install(Lists.newArrayList(requirement), url, options);
+  }
+
+  public void install(@NotNull List<PyRequirement> requirements, @Nullable String url,
+                      @Nullable List<String> options) throws PyExternalProcessException {
     myPackagesCache = null;
     final List<String> args = new ArrayList<String>();
     args.add("install");
+    if (url != null) {
+      args.add("--extra-index-url");
+      args.add(url);
+    }
     for (PyRequirement req : requirements) {
       args.add(req.toString());
     }
     if (options != null)
       args.addAll(options);
     runPythonHelper(PACKAGING_TOOL, args);
+  }
+
+  public void install(@NotNull List<PyRequirement> requirements, @Nullable List<String> options) throws PyExternalProcessException {
+    install(requirements, null, options);
   }
 
   @Deprecated
