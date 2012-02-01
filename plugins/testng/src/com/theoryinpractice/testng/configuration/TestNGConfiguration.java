@@ -39,6 +39,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.listeners.RefactoringElementAdapter;
@@ -330,12 +331,13 @@ public class TestNGConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
       }
       final GlobalSearchScope searchScope = GlobalSearchScope.allScope(getProject());
       for (String pattern : patterns) {
-        final PsiClass psiClass = JavaExecutionUtil.findMainClass(getProject(), pattern, searchScope);
+        final String className = pattern.contains(",") ? StringUtil.getPackageName(pattern, ',') : pattern;
+        final PsiClass psiClass = JavaExecutionUtil.findMainClass(getProject(), className, searchScope);
         if (psiClass == null) {
-          throw new RuntimeConfigurationWarning("Class " + pattern + " not found");
+          throw new RuntimeConfigurationWarning("Class " + className + " not found");
         }
         if (!TestNGUtil.hasTest(psiClass)) {
-          throw new RuntimeConfigurationWarning("Class " + pattern + " not a test");
+          throw new RuntimeConfigurationWarning("Class " + className + " not a test");
         }
       }
     }
