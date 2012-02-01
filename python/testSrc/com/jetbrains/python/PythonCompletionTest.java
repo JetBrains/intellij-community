@@ -487,23 +487,23 @@ public class PythonCompletionTest extends PyTestCase {
   public void testImportKeyword() {
     doTest();
   }
-  
+
   public void testAssignedNearby() {
     doTest();
   }
-  
+
   public void testDunderAll() {
     doMultiFileTest();
   }
-  
+
   public void testAsName() {
     doMultiFileTest();
   }
-  
+
   public void testKeywordArgumentsForImplicitCall() {
     doTest();
   }
-  
+
   public void testTypeMembers() {  // PY-5311
     myFixture.configureByText(PythonFileType.INSTANCE, "a = 'string'\n" +
                                                        "a.<caret>");
@@ -512,8 +512,12 @@ public class PythonCompletionTest extends PyTestCase {
     final List<String> strings = myFixture.getLookupElementStrings();
     assertFalse(strings.contains("mro"));
   }
-  
+
   public void testDunderAllReference() {  // PY-5502
+    doTest();
+  }
+
+  public void testOldStyleClassAttributes() {
     doTest();
   }
 }
