@@ -24,9 +24,12 @@ import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.AbstractProjectComponent;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.actions.ScrollToTheEndToolbarAction;
 import com.intellij.openapi.editor.actions.ToggleUseSoftWrapsToolbarAction;
+import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAware;
@@ -43,6 +46,8 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
+import com.intellij.util.containers.hash.LinkedHashMap;
+import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,8 +57,9 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.TreeSet;
+import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -116,67 +122,134 @@ public class EventLog implements Notifications {
   }
 
   public static LogEntry formatForLog(@NotNull final Notification notification) {
+    DocumentImpl document = new DocumentImpl(true);
+    AtomicBoolean showMore = new AtomicBoolean(false);
+    Map<RangeMarker, HyperlinkInfo> links = new LinkedHashMap<RangeMarker, HyperlinkInfo>();
+    List<RangeMarker> lineSeparators = new ArrayList<RangeMarker>();
+
+    boolean hasHtml = parseHtmlContent(notification, document, showMore, links, lineSeparators);
+    removeJavaNewLines(document, lineSeparators, hasHtml);
+    insertNewLineSubstitutors(document, showMore, lineSeparators);
+
+    String status = document.getText();
+
+    ArrayList<Pair<TextRange, HyperlinkInfo>> list = new ArrayList<Pair<TextRange, HyperlinkInfo>>();
+    for (RangeMarker marker : links.keySet()) {
+      if (!marker.isValid()) {
+        showMore.set(true);
+        continue;
+      }
+      list.add(Pair.create(new TextRange(marker.getStartOffset(), marker.getEndOffset()), links.get(marker)));
+    }
+
+    if (showMore.get()) {
+      String sb = "show balloon";
+      appendText(document, " (" + sb + ")");
+      list.add(new Pair<TextRange, HyperlinkInfo>(TextRange.from(document.getTextLength() - 1 - sb.length(), sb.length()),
+                                                  new ShowBalloon(notification)));
+    }
+
+    return new LogEntry(document.getText(), status, list);
+  }
+
+  private static boolean parseHtmlContent(Notification notification,
+                                          Document document,
+                                          AtomicBoolean showMore,
+                                          Map<RangeMarker, HyperlinkInfo> links, List<RangeMarker> lineSeparators) {
     String content = notification.getContent();
-    String mainText = notification.getTitle();
-    boolean showMore = false;
-    if (StringUtil.isNotEmpty(content)) {
-      if (content.startsWith("<p>")) {
-        content = content.substring("<p>".length());
-      }
-
-      if (content.startsWith("<") && !content.startsWith("<a ")) {
-        showMore = true;
-      }
-      if (StringUtil.isNotEmpty(mainText)) {
-        mainText += ": ";
-      }
-      mainText += content;
+    String title = notification.getTitle();
+    if (StringUtil.isNotEmpty(title)) {
+      content = title + (StringUtil.isNotEmpty(content) ? ": " + content : "");
     }
 
-    mainText = StringUtil.replace(mainText, "&nbsp;", " ");
-    int nlIndex = eolIndex(mainText);
-    if (nlIndex >= 0) {
-      mainText = mainText.substring(0, nlIndex);
-      showMore = true;
-    }
-
-    List<Pair<TextRange, HyperlinkInfo>> links = new ArrayList<Pair<TextRange, HyperlinkInfo>>();
-
-    String message = "";
+    content = StringUtil.replace(StringUtil.convertLineSeparators(content), "&nbsp;", " ");
+    boolean hasHtml = false;
     while (true) {
-      Matcher tagMatcher = TAG_PATTERN.matcher(mainText);
+      Matcher tagMatcher = TAG_PATTERN.matcher(content);
       if (!tagMatcher.find()) {
-        message += mainText;
+        appendText(document, content);
         break;
       }
-      message += mainText.substring(0, tagMatcher.start());
-      Matcher aMatcher = A_PATTERN.matcher(tagMatcher.group());
+      
+      String tagStart = tagMatcher.group();
+      appendText(document, content.substring(0, tagMatcher.start()));
+      Matcher aMatcher = A_PATTERN.matcher(tagStart);
       if (aMatcher.matches()) {
         final String href = aMatcher.group(2);
-        int linkEnd = mainText.indexOf(A_CLOSING, tagMatcher.end());
+        int linkEnd = content.indexOf(A_CLOSING, tagMatcher.end());
         if (linkEnd > 0) {
-          String linkText = mainText.substring(tagMatcher.end(), linkEnd).replaceAll(TAG_PATTERN.pattern(), "");
+          String linkText = content.substring(tagMatcher.end(), linkEnd).replaceAll(TAG_PATTERN.pattern(), "");
+          appendText(document, linkText);
+          links.put(document.createRangeMarker(new TextRange(document.getTextLength() - linkText.length(), document.getTextLength())),
+                    new NotificationHyperlinkInfo(notification, href));
+          content = content.substring(linkEnd + A_CLOSING.length());
+        }
+      }
+      else {
+        hasHtml = true;
+        if ("<br>".equals(tagStart) ||
+            "</br>".equals(tagStart) ||
+            "</p>".equals(tagStart) ||
+            "<p>".equals(tagStart) ||
+            "<p/>".equals(tagStart)) {
+          lineSeparators.add(document.createRangeMarker(TextRange.from(document.getTextLength(), 0)));
+        }
+        else if (!"<html>".equals(tagStart) && !"</html>".equals(tagStart) && !"<body>".equals(tagStart) && !"</body>".equals(tagStart)) {
+          showMore.set(true);
+        }
+        content = content.substring(tagMatcher.end());
+      }
+    }
+    return hasHtml;
+  }
 
-          links.add(new Pair<TextRange, HyperlinkInfo>(TextRange.from(message.length(), linkText.length()), new NotificationHyperlinkInfo(notification, href)));
-
-          message += linkText;
-          mainText = mainText.substring(linkEnd + A_CLOSING.length());
+  private static void insertNewLineSubstitutors(Document document, AtomicBoolean showMore, List<RangeMarker> lineSeparators) {
+    for (int j = lineSeparators.size() - 1; j >= 0; j--) {
+      RangeMarker marker = lineSeparators.get(j);
+      if (!marker.isValid()) {
+        showMore.set(true);
+        continue;
+      }
+      
+      int offset = marker.getStartOffset();
+      if (offset == 0 || offset == document.getTextLength()) {
+        continue;
+      }
+      boolean spaceBefore = offset > 0 && Character.isWhitespace(document.getCharsSequence().charAt(offset - 1));
+      if (offset < document.getTextLength()) {
+        boolean spaceAfter = Character.isWhitespace(document.getCharsSequence().charAt(offset));
+        int next = CharArrayUtil.shiftForward(document.getCharsSequence(), offset, " \t");
+        if (next < document.getTextLength() && Character.isUpperCase(document.getCharsSequence().charAt(next))) {
+          document.insertString(offset, (spaceBefore ? "" : " ") + "//" + (spaceAfter ? "" : " "));
+          continue;
+        }
+        if (spaceAfter) {
           continue;
         }
       }
-      mainText = mainText.substring(tagMatcher.end());
+      if (spaceBefore) {
+        continue;
+      }
+
+      document.insertString(offset, " ");
     }
+  }
 
-    message = StringUtil.unescapeXml(StringUtil.convertLineSeparators(message));
-
-    String status = message;
-
-    if (showMore) {
-      message += " more ";
-      links.add(new Pair<TextRange, HyperlinkInfo>(TextRange.from(message.length() - 5, 4), new ShowBalloon(notification)));
+  private static void removeJavaNewLines(Document document, List<RangeMarker> lineSeparators, boolean hasHtml) {
+    String text = document.getText();
+    int i = -1;
+    while (true) {
+      i = text.indexOf('\n', i + 1);
+      if (i < 0) break;
+      document.deleteString(i, i + 1);
+      if (!hasHtml) {
+        lineSeparators.add(document.createRangeMarker(TextRange.from(i, 0)));
+      }
     }
+  }
 
-    return new LogEntry(message, status, links);
+  private static void appendText(Document document, String text) {
+    document.insertString(document.getTextLength(), StringUtil.unescapeXml(text));
   }
 
   public static class LogEntry {
@@ -189,22 +262,6 @@ public class EventLog implements Notifications {
       this.status = status;
       this.links = links;
     }
-  }
-
-  private static int eolIndex(String mainText) {
-    TreeSet<Integer> indices = new TreeSet<Integer>();
-    indices.add(mainText.indexOf("<br>", 1));
-    indices.add(mainText.indexOf("<br/>", 1));
-    indices.add(mainText.indexOf("<p/>", 1));
-    indices.add(mainText.indexOf("<p>", 1));
-    indices.add(mainText.indexOf("\n"));
-    indices.remove(-1);
-    return indices.isEmpty() ? -1 : indices.iterator().next();
-  }
-
-  public static boolean isEventLogVisible(Project project) {
-    final ToolWindow window = getEventLog(project);
-    return window != null && window.isVisible();
   }
 
   @Nullable
