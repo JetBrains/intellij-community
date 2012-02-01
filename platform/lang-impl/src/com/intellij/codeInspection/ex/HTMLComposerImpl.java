@@ -134,9 +134,11 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
     refElement.accept(new RefVisitor() {
       @Override public void visitFile(RefFile file) {
         final PsiFile psiFile = file.getElement();
-        buf.append(B_OPENING);
-        buf.append(psiFile.getName());
-        buf.append(B_CLOSING);
+        if (psiFile != null) {
+          buf.append(B_OPENING);
+          buf.append(psiFile.getName());
+          buf.append(B_CLOSING);
+        }
       }
     });
   }
