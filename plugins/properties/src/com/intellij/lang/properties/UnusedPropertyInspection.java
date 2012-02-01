@@ -19,22 +19,22 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.properties.findUsages.PropertySearcher;
 import com.intellij.lang.properties.psi.Property;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FilteringIterator;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
 
 /**
  * @author cdr
@@ -50,7 +50,6 @@ public class UnusedPropertyInspection extends PropertySuppressableInspectionBase
     return "UnusedProperty";
   }
 
-
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder,
@@ -59,6 +58,9 @@ public class UnusedPropertyInspection extends PropertySuppressableInspectionBase
     final PsiFile file = session.getFile();
     Module module = ModuleUtil.findModuleForPsiElement(file);
     if (module == null) return super.buildVisitor(holder, isOnTheFly, session);
+    Object[] extensions = Extensions.getExtensions("com.intellij.referencesSearch");
+    final PropertySearcher searcher =
+      (PropertySearcher)ContainerUtil.find(extensions, new FilteringIterator.InstanceOf<PropertySearcher>(PropertySearcher.class));
     final GlobalSearchScope searchScope = GlobalSearchScope.moduleWithDependentsScope(module);
     final PsiSearchHelper searchHelper = PsiSearchHelper.SERVICE.getInstance(file.getProject());
     return new PsiElementVisitor() {
@@ -75,22 +77,19 @@ public class UnusedPropertyInspection extends PropertySuppressableInspectionBase
 
         String name = property.getName();
         if (name == null) return;
-        
-        final List<String> words = StringUtil.getWordsIn(name);
-        if (words.isEmpty()) {
+        if (searcher != null) {
+          name = searcher.getKeyToSearch(name);
+          if (name == null) return;
+        }
+
+        PsiSearchHelper.SearchCostResult cheapEnough = searchHelper.isCheapEnoughToSearch(name, searchScope, file, original);
+        if (cheapEnough == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) return;
+
+        if (cheapEnough != PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES &&
+            ReferencesSearch.search(property, searchScope, false).findFirst() != null) {
           return;
         }
 
-        final String lastWord = words.get(words.size() - 1);
-        PsiSearchHelper.SearchCostResult cheapEnough = searchHelper.isCheapEnoughToSearch(lastWord, searchScope, file, original);
-        if (cheapEnough == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) return;
-        
-        cheapEnough = searchHelper.isCheapEnoughToSearch(name, searchScope, file, original);
-        if (cheapEnough == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) return;
-
-        final PsiReference usage = cheapEnough == PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES ? null :
-                                   ReferencesSearch.search(property, searchScope, false).findFirst();
-        if (usage != null) return;
         final ASTNode propertyNode = property.getNode();
         assert propertyNode != null;
 
