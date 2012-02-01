@@ -25,17 +25,20 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
-import git4idea.GitUtil;
-import git4idea.commands.Git;
 import git4idea.GitBranch;
+import git4idea.GitUtil;
 import git4idea.GitVcs;
+import git4idea.NotificationManager;
 import git4idea.branch.GitBranchPair;
+import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
+import git4idea.config.GitConfigUtil;
 import git4idea.config.GitVcsSettings;
 import git4idea.config.UpdateMethod;
 import git4idea.history.GitHistoryUtils;
 import git4idea.history.browser.GitCommit;
 import git4idea.jgit.GitHttpAdapter;
+import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -70,6 +73,7 @@ public final class GitPusher {
   private final Collection<GitRepository> myRepositories;
   private final GitVcsSettings mySettings;
   private final GitPushSettings myPushSettings;
+  private final GitVcs myVcs;
 
   public static void showPushDialogAndPerformPush(@NotNull final Project project) {
     final GitPushDialog dialog = new GitPushDialog(project);
@@ -119,6 +123,7 @@ public final class GitPusher {
     myRepositories = GitRepositoryManager.getInstance(project).getRepositories();
     mySettings = GitVcsSettings.getInstance(myProject);
     myPushSettings = GitPushSettings.getInstance(myProject);
+    myVcs = GitVcs.getInstance(project);
   }
 
   /**
@@ -294,7 +299,8 @@ public final class GitPusher {
   }
 
   @NotNull
-  private static GitSimplePushResult pushAndGetSimpleResult(GitRepository repository, GitPushSpec pushSpec, GitCommitsByBranch commitsByBranch) {
+  private static GitSimplePushResult pushAndGetSimpleResult(@NotNull GitRepository repository,
+                                                            @NotNull GitPushSpec pushSpec, @NotNull GitCommitsByBranch commitsByBranch) {
     if (pushSpec.getDest() == NO_TARGET_BRANCH) {
       return GitSimplePushResult.notPushed();
     }
@@ -307,12 +313,56 @@ public final class GitPusher {
         break;            // TODO support http and ssh urls in one origin
       }
     }
-    if (httpUrl != null) {
-      return GitHttpAdapter.push(repository, remote, httpUrl, formPushSpec(pushSpec, remote));
+
+    GitSimplePushResult pushResult;
+    boolean pushOverHttp = httpUrl != null;
+    if (pushOverHttp) {
+      pushResult = GitHttpAdapter.push(repository, remote, httpUrl, formPushSpec(pushSpec, remote));
     }
     else {
-      return pushNatively(repository, pushSpec);
+      pushResult = pushNatively(repository, pushSpec);
     }
+    
+    if (pushResult.getType() == GitSimplePushResult.Type.SUCCESS) {
+      setUpstream(repository, pushSpec.getSource(), pushSpec.getRemote(),  pushSpec.getDest());
+    }
+    
+    return pushResult;
+  }
+
+  private static void setUpstream(@NotNull GitRepository repository,
+                                  @NotNull GitBranch source, @NotNull GitRemote remote, @NotNull GitBranch dest) {
+    if (!branchTrackingInfoIsSet(repository, source)) {
+      Project project = repository.getProject();
+      VirtualFile root = repository.getRoot();
+      String branchName = source.getName();
+      try {
+        boolean rebase = getMergeOrRebaseConfig(project, root);
+        String mergeOrRebase = rebase ? ".rebase" : ".merge";
+        GitConfigUtil.setValue(project, root, "branch." + branchName + ".remote", remote.getName());
+        GitConfigUtil.setValue(project, root, "branch." + branchName + mergeOrRebase, dest.getShortName());
+      }
+      catch (VcsException e) {
+        LOG.error(String.format("Couldn't set up tracking for source branch %s, target branch %s, remote %s in root %s",
+                                source, dest, remote, repository), e);
+        NotificationManager.getInstance(project).notify(GitVcs.NOTIFICATION_GROUP_ID, "", "Couldn't set up branch tracking",
+                                                        NotificationType.ERROR);
+      }
+    }
+  }
+
+  private static boolean getMergeOrRebaseConfig(Project project, VirtualFile root) throws VcsException {
+    String autoSetupRebase = GitConfigUtil.getValue(project, root, GitConfigUtil.BRANCH_AUTOSETUP_REBASE);
+    return autoSetupRebase != null && (autoSetupRebase.equals("remote") || autoSetupRebase.equals("always"));
+  }
+
+  private static boolean branchTrackingInfoIsSet(@NotNull GitRepository repository, @NotNull GitBranch source) {
+    for (GitBranchTrackInfo trackInfo : repository.getConfig().getBranchTrackInfos()) {
+      if (trackInfo.getBranch().equals(source.getName())) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @NotNull
