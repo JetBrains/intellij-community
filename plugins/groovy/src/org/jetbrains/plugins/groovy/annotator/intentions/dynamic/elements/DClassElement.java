@@ -32,7 +32,11 @@ public class DClassElement implements DNamedElement {
   public Set<DPropertyElement> myProperties = new HashSet<DPropertyElement>();
   public Set<DMethodElement> myMethods = new HashSet<DMethodElement>();
 
-  public DClassElement(Project project, String name) {
+  @SuppressWarnings("UnusedDeclaration") //used for serialization
+  public DClassElement() {
+  }
+  
+  public DClassElement(@Nullable Project project, @Nullable String name) {
     myName = name;
     DynamicManager.getInstance(project).getRootElement().mergeAddClass(this);
   }
