@@ -155,6 +155,14 @@ public class PythonRemoteSdkAdditionalData extends PythonSdkAdditionalData imple
     myStorePassphrase = storePassphrase;
   }
 
+  public boolean isStorePassword() {
+    return myStorePassword;
+  }
+
+  public boolean isStorePassphrase() {
+    return myStorePassphrase;
+  }
+
   public boolean isAnonymous() {
     return myAnonymous;
   }
@@ -283,6 +291,9 @@ public class PythonRemoteSdkAdditionalData extends PythonSdkAdditionalData imple
       copy.setUseKeyPair(isUseKeyPair());
 
       copy.setInterpreterPath(getInterpreterPath());
+      copy.setStorePassword(isStorePassword());
+      copy.setStorePassphrase(isStorePassphrase());
+
       return copy;
     }
     catch (CloneNotSupportedException e) {
