@@ -22,6 +22,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectLibrariesConfigurable;
@@ -65,6 +66,11 @@ public class MavenUIModifiableModelsProvider extends MavenBaseModifiableModelsPr
   @Override
   protected ModifiableFacetModel doGetFacetModel(Module module) {
     return (ModifiableFacetModel)myModulesConfigurator.getFacetModel(module);
+  }
+
+  @Override
+  public LibraryTable.ModifiableModel getProjectLibrariesModel() {
+    return myLibrariesModel;
   }
 
   public Library[] getAllLibraries() {

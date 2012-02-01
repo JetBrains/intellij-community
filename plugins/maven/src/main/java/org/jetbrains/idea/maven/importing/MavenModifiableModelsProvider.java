@@ -21,6 +21,7 @@ import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import org.jetbrains.idea.maven.project.MavenModelsProvider;
@@ -37,6 +38,8 @@ public interface MavenModifiableModelsProvider extends MavenModelsProvider {
   PackagingElementResolvingContext getPackagingElementResolvingContext();
 
   ArtifactExternalDependenciesImporter getArtifactExternalDependenciesImporter();
+
+  LibraryTable.ModifiableModel getProjectLibrariesModel();
 
   Library[] getAllLibraries();
 
