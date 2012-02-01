@@ -157,7 +157,7 @@ public abstract class Animator implements Disposable {
     }
   }
 
-  public abstract void paintNow(float frame, final float totalFrames, final float cycle);
+  public abstract void paintNow(int frame, int totalFrames, int cycle);
 
   public void dispose() {
     myDisposed = true;

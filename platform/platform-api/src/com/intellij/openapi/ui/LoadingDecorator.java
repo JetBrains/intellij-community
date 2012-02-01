@@ -51,8 +51,8 @@ public class LoadingDecorator {
 
 
     myFadeOutAnimator = new Animator("Loading", 10, 500, false) {
-      public void paintNow(final float frame, final float totalFrames, final float cycle) {
-        myLoadingLayer.setAlpha(1f - frame / totalFrames);
+      public void paintNow(final int frame, final int totalFrames, final int cycle) {
+        myLoadingLayer.setAlpha(1f - ((float)frame) / ((float)totalFrames));
       }
 
       @Override

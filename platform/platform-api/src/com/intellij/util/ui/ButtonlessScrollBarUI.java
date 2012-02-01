@@ -56,7 +56,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     final int framesCount = 10 + delayFrames;
     myAnimator = new Animator("Adjustment fadeout", framesCount, framesCount * 50, false) {
       @Override
-      public void paintNow(float frame, float totalFrames, float cycle) {
+      public void paintNow(int frame, int totalFrames, int cycle) {
         myAnimationColorShift = 40;
         if (frame > delayFrames) {
           myAnimationColorShift *= 1 - (frame - delayFrames) / (totalFrames - delayFrames);
