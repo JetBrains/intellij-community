@@ -19,6 +19,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.StructureViewTreeElement;
+import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.ide.structureView.newStructureView.TreeModelWrapper;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -54,6 +55,7 @@ import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -98,7 +100,7 @@ public class FileStructurePopup implements Disposable {
   private JBPopup myPopup;
 
   @NonNls private static final String narrowDownPropertyKey = "FileStructurePopup.narrowDown";
-  private boolean myShouldNarrowDown = false;
+  private boolean myShouldNarrowDown = true;
   private Tree myTree;
   private FilteringTreeBuilder myAbstractTreeBuilder;
   private String myTitle;
@@ -108,6 +110,7 @@ public class FileStructurePopup implements Disposable {
   private final FilteringTreeStructure myFilteringStructure;
   private PsiElement myInitialPsiElement;
   private Map<Class, JCheckBox> myCheckBoxes = new HashMap<Class, JCheckBox>();
+  private String myTestSearchFilter;
 
   public FileStructurePopup(StructureViewModel structureViewModel,
                             @Nullable Editor editor,
@@ -176,7 +179,17 @@ public class FileStructurePopup implements Disposable {
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
 
-    mySpeedSearch = new TreeSpeedSearch(myTree, TreeSpeedSearch.NODE_DESCRIPTOR_TOSTRING, true) {      
+    mySpeedSearch = new TreeSpeedSearch(myTree, new Convertor<TreePath, String>() {
+      @Nullable
+      public String convert(TreePath path) {
+        final DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
+        final Object userObject = node.getUserObject();
+        if (userObject instanceof FilteringTreeStructure.FilteringNode) {
+          return getText(((FilteringTreeStructure.FilteringNode)userObject).getDelegate());
+        }
+        return "";
+      }
+    }, true) {
       @Override
       protected Point getComponentLocationOnScreen() {
         return myPopup.getContent().getLocationOnScreen();
@@ -617,10 +630,12 @@ public class FileStructurePopup implements Disposable {
           if (selectedNode.canNavigateToSource()) {
             selectedNode.navigate(true);
             succeeded.set(true);
-          } else {
+          }
+          else {
             succeeded.set(false);
           }
-        } else {
+        }
+        else {
           succeeded.set(false);
         }
 
@@ -744,6 +759,10 @@ public class FileStructurePopup implements Disposable {
     return myAbstractTreeBuilder;
   }
 
+  public void setSearchFilterForTests(String filter) {
+    myTestSearchFilter = filter;
+  }
+
   public void setTreeActionState(Class<? extends TreeAction> action, boolean state) {
     final JCheckBox checkBox = myCheckBoxes.get(action);
     if (checkBox != null) {
@@ -754,15 +773,46 @@ public class FileStructurePopup implements Disposable {
     }
   }
 
+  @Nullable
+  private static String getText(Object node) {
+    String text = String.valueOf(node);
+    if (text != null) {
+      if (node instanceof StructureViewComponent.StructureViewTreeElementWrapper) {
+        final TreeElement value = ((StructureViewComponent.StructureViewTreeElementWrapper)node).getValue();
+        if (value instanceof PsiTreeElementBase && ((PsiTreeElementBase)value).isSearchInLocationString()) {
+          final String string = ((PsiTreeElementBase)value).getLocationString();
+          if (!StringUtil.isEmpty(string)) {
+            return text + " (" + string + ")";
+          }
+        }
+      }
+      return text;
+    }
+
+    if (node instanceof StructureViewComponent.StructureViewTreeElementWrapper) {
+      final AccessToken token = ApplicationManager.getApplication().acquireReadActionLock();
+      try {
+        final ItemPresentation presentation = ((StructureViewComponent.StructureViewTreeElementWrapper)node).getValue().getPresentation();
+        return presentation.getPresentableText();
+      }
+      finally {
+        token.finish();
+      }
+    }
+
+    return null;
+  }
+
   private class FileStructurePopupFilter implements ElementFilter {
     private String myLastFilter = null;
     private HashSet<Object> myVisibleParents = new HashSet<Object>();
+    private final boolean isUnitTest = ApplicationManager.getApplication().isUnitTestMode();
+
     @Override
     public boolean shouldBeShowing(Object value) {
       if (!myShouldNarrowDown) return true;
 
-      String filter = mySpeedSearch != null && !StringUtil.isEmpty(mySpeedSearch.getEnteredPrefix()) 
-                      ? mySpeedSearch.getEnteredPrefix() : null;
+      String filter = getSearchPrefix();
       if (!StringUtil.equals(myLastFilter, filter)) {
         myVisibleParents.clear();
         myLastFilter = filter;
@@ -774,9 +824,8 @@ public class FileStructurePopup implements Disposable {
 
         final String text = getText(value);
         if (text == null) return false;
-        boolean matches = mySpeedSearch.matchingFragments(text) != null;
 
-        if (matches) {
+        if (matches(text)) {
           Object o = value;
           while (o instanceof FilteringTreeStructure.FilteringNode && (o = ((FilteringTreeStructure.FilteringNode)o).getParent()) != null) {
             myVisibleParents.add(o);
@@ -790,25 +839,21 @@ public class FileStructurePopup implements Disposable {
       return true;
     }
 
-    @Nullable
-    private String getText(Object node) {
-      final String text = String.valueOf(node);
-      if (text != null) {
-        return text;
+    private boolean matches(@NotNull String text) {
+      if (isUnitTest) {
+        final SpeedSearchComparator comparator = mySpeedSearch.getComparator();
+        return StringUtil.isNotEmpty(myTestSearchFilter) && comparator.matchingFragments(myTestSearchFilter, text) != null;
       }
-
-      if (node instanceof StructureViewComponent.StructureViewTreeElementWrapper) {
-        final AccessToken token = ApplicationManager.getApplication().acquireReadActionLock();
-        try {
-          final ItemPresentation presentation = ((StructureViewComponent.StructureViewTreeElementWrapper)node).getValue().getPresentation();
-          return presentation.getPresentableText();
-        }
-        finally {
-          token.finish();
-        }
-      }
-
-      return null;
+      return mySpeedSearch.matchingFragments(text) != null;
     }
+
+  }
+
+  @Nullable
+  private String getSearchPrefix() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return myTestSearchFilter;
+
+    return mySpeedSearch != null && !StringUtil.isEmpty(mySpeedSearch.getEnteredPrefix())
+                    ? mySpeedSearch.getEnteredPrefix() : null;
   }
 }
