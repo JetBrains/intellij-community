@@ -52,4 +52,8 @@ public class PsiTypeVisitor<A> {
   public A visitDisjunctionType(PsiDisjunctionType disjunctionType) {
     return visitType(disjunctionType);
   }
+  
+  public A visitDiamondType(PsiDiamondType diamondType) {
+    return visitType(diamondType);
+  }
 }

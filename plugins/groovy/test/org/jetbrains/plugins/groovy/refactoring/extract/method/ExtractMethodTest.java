@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.refactoring.extract.method;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.LightGroovyTestCase;
 import org.jetbrains.plugins.groovy.util.TestUtils;
@@ -35,8 +36,13 @@ public class ExtractMethodTest extends LightGroovyTestCase {
 
   private void doAntiTest(String errorMessage) throws Exception {
     GroovyExtractMethodHandler handler = configureFromText(readInput().get(0));
-    handler.invoke(getProject(), myFixture.getEditor(), myFixture.getFile());
-    assertEquals(errorMessage, handler.getInvokeResult());
+    try {
+      handler.invoke(getProject(), myFixture.getEditor(), myFixture.getFile());
+      assertTrue(false);
+    }
+    catch (CommonRefactoringUtil.RefactoringErrorHintException e) {
+      assertEquals(errorMessage, e.getLocalizedMessage());
+    }
   }
 
   private List<String> readInput() {

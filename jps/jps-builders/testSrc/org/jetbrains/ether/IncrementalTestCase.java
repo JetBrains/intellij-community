@@ -53,73 +53,73 @@ public abstract class IncrementalTestCase extends TestCase {
       this.root = root;
     }
 
-    String strip(final String s){
+    String strip(final String s) {
       if (s.startsWith(root)) {
         return s.substring(root.length());
       }
-      
+
       return s;
     }
-  } 
+  }
 
   static {
     Logger.setFactory(new Logger.Factory() {
+      @Override
+      public Logger getLoggerInstance(String category) {
+        final org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(category);
+
+        final boolean affectedLogger = category.equals("#org.jetbrains.jps.incremental.java.JavaBuilder") ||
+                                       category.equals("#org.jetbrains.jps.incremental.IncProjectBuilder");
+
+        return new Logger() {
           @Override
-          public Logger getLoggerInstance(String category) {
-            final org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(category);
-
-            final boolean affectedLogger = category.equals("#org.jetbrains.jps.incremental.java.JavaBuilder") ||
-                                           category.equals("#org.jetbrains.jps.incremental.IncProjectBuilder");
-
-            return new Logger() {
-              @Override
-              public boolean isDebugEnabled() {
-                return affectedLogger;
-              }
-
-              @Override
-              public void debug(@NonNls String message) {
-              }
-
-              @Override
-              public void debug(@Nullable Throwable t) {
-              }
-
-              @Override
-              public void debug(@NonNls String message, @Nullable Throwable t) {
-              }
-
-              @Override
-              public void error(@NonNls String message, @Nullable Throwable t, @NonNls String... details) {
-              }
-
-              @Override
-              public void info(@NonNls String message) {
-                if (affectedLogger) {
-                  logger.info(stripper.strip(message));
-                }
-              }
-
-              @Override
-              public void info(@NonNls String message, @Nullable Throwable t) {
-              }
-
-              @Override
-              public void warn(@NonNls String message, @Nullable Throwable t) {
-              }
-
-              @Override
-              public void setLevel(Level level) {
-              }
-            };
+          public boolean isDebugEnabled() {
+            return affectedLogger;
           }
-        });
+
+          @Override
+          public void debug(@NonNls String message) {
+          }
+
+          @Override
+          public void debug(@Nullable Throwable t) {
+          }
+
+          @Override
+          public void debug(@NonNls String message, @Nullable Throwable t) {
+          }
+
+          @Override
+          public void error(@NonNls String message, @Nullable Throwable t, @NonNls String... details) {
+          }
+
+          @Override
+          public void info(@NonNls String message) {
+            if (affectedLogger) {
+              logger.info(stripper.strip(message));
+            }
+          }
+
+          @Override
+          public void info(@NonNls String message, @Nullable Throwable t) {
+          }
+
+          @Override
+          public void warn(@NonNls String message, @Nullable Throwable t) {
+          }
+
+          @Override
+          public void setLevel(Level level) {
+          }
+        };
+      }
+    });
   }
 
   private static RootStripper stripper = new RootStripper();
-  
+
   private final String groupName;
-  private final String tempDir = System.getProperty("java.io.tmpdir");
+  private final String tempDir = FileUtil.toSystemDependentName(new File(System.getProperty("java.io.tmpdir")).getCanonicalPath());
 
   private String baseDir;
   private String workDir;
@@ -149,17 +149,19 @@ public abstract class IncrementalTestCase extends TestCase {
   @Override
   protected void tearDown() throws Exception {
     super.tearDown();
-    delete(new File(workDir));
+    //delete(new File(workDir));
   }
 
-  private String getDir(final String prefix) {
+  private String getProjectName() {
     final String name = getName();
 
     assert (name.startsWith("test"));
 
-    final String result = Character.toLowerCase(name.charAt("test".length())) + name.substring("test".length() + 1);
+    return Character.toLowerCase(name.charAt("test".length())) + name.substring("test".length() + 1);
+  }
 
-    return prefix + groupName + File.separator + result;
+  private String getDir(final String prefix) {
+    return prefix + groupName + File.separator + getProjectName();
   }
 
   private String getBaseDir() {
@@ -183,6 +185,7 @@ public abstract class IncrementalTestCase extends TestCase {
 
     if (!file.delete()) throw new IOException("could not delete file or directory " + file.getPath());
   }
+
   private static void copy(final File input, final File output) throws Exception {
     if (input.isDirectory()) {
       if (output.mkdirs()) {
@@ -256,18 +259,19 @@ public abstract class IncrementalTestCase extends TestCase {
   }
 
   public void doTest() throws Exception {
-    stripper.setRoot(getWorkDir() + File.separator);
-    
+    stripper.setRoot(FileUtil.toSystemIndependentName(getWorkDir() + File.separator));
+
     initLoggers();
 
     final String projectPath = getWorkDir() + File.separator + ".idea";
+    final String projectName = getProjectName();
     final Project project = new Project();
 
     IdeaProjectLoader.loadFromPath(project, projectPath, "");
 
     final ProjectDescriptor projectDescriptor =
-      new ProjectDescriptor(projectPath, project, new FSState(true), new ProjectTimestamps(projectPath),
-                            new BuildDataManager(projectPath, true));
+      new ProjectDescriptor(projectPath, project, new FSState(true), new ProjectTimestamps(projectName),
+                            new BuildDataManager(projectName, true));
     final IncProjectBuilder builder = new IncProjectBuilder(projectDescriptor, BuilderRegistry.getInstance(), CanceledStatus.NULL);
 
     builder.build(new AllProjectScope(project, true), false, true);

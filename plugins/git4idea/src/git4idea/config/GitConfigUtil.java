@@ -36,6 +36,7 @@ import java.util.Map;
 public class GitConfigUtil {
   public static final String USER_NAME = "user.name";
   public static final String USER_EMAIL = "user.email";
+  public static final String BRANCH_AUTOSETUP_REBASE = "branch.autosetuprebase";
 
   /**
    * A private constructor for utility class

@@ -863,6 +863,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   private static boolean isClosureAmbiguous(GrClosableBlock closure) {
     PsiElement place = closure;
     while (true) {
+      if (place instanceof GrUnAmbiguousClosureContainer) return false;
       if (PsiUtil.isExpressionStatement(place)) return true;
 
       PsiElement parent = place.getParent();

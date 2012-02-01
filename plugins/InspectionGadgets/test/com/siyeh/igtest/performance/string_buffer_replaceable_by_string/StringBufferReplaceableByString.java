@@ -11,7 +11,7 @@ public class StringBufferReplaceableByString {
 
   public void foo1()
   {
-    final StringBuffer buffer = new StringBuffer();
+    final StringBuffer buffer = new StringBuffer().append('a');
     System.out.println(buffer.toString());
   }
 
@@ -23,5 +23,10 @@ public class StringBufferReplaceableByString {
 
   public void bar(int i) {
     System.out.println(new StringBuilder("asdf").append(i).toString());
+  }
+
+  public void exceptions(String pcdata, int i) {
+    StringBuilder b = new StringBuilder();
+    String s = new StringBuilder().append(pcdata, 0, i).toString();
   }
 }
