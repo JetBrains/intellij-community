@@ -15,6 +15,7 @@
  */
 package com.intellij.lang.properties.findUsages;
 
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -24,5 +25,5 @@ import org.jetbrains.annotations.Nullable;
 public interface PropertySearcher {
   
   @Nullable
-  String getKeyToSearch(String propertyName);
+  String getKeyToSearch(String propertyName, Project project);
 }

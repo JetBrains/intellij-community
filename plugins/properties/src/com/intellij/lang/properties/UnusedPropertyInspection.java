@@ -78,7 +78,7 @@ public class UnusedPropertyInspection extends PropertySuppressableInspectionBase
         String name = property.getName();
         if (name == null) return;
         if (searcher != null) {
-          name = searcher.getKeyToSearch(name);
+          name = searcher.getKeyToSearch(name, element.getProject());
           if (name == null) return;
         }
 
