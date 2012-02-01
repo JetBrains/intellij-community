@@ -17,40 +17,39 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 
 import javax.swing.*;
 import java.awt.*;
 
-public abstract class AnimatedIcon extends JComponent implements Disposable {
+/**
+ * @author Kirill Kalishev
+ * @author Konstantin Bulenkov
+ */
+public class AnimatedIcon extends JComponent implements Disposable {
+  private final Icon[] myIcons;
+  private final Dimension myPrefSize = new Dimension();
 
-  private Icon[] myIcons;
-  private Dimension myPrefSize = new Dimension();
-
+  //no need to make it volatile, all r/w operations are from EDT
   private int myCurrentIconIndex;
 
-  private Icon myPassiveIcon;
+  private final Icon myPassiveIcon;
+  private final Icon myEmptyPassiveIcon;
 
-  private Icon myEmptyPassiveIcon;
   private boolean myPaintPassive = true;
-
   private boolean myRunning = true;
 
-  protected Animator myAnimator;
+  protected final Animator myAnimator;
 
   private final String myName;
 
-  private boolean myLastPaintWasRunning;
-  private boolean myPaintingBgNow;
+  //private boolean myPaintingBgNow;
 
-  protected AnimatedIcon(final String name) {
+  public AnimatedIcon(final String name, Icon[] icons, Icon passiveIcon, int cycleLength) {
     myName = name;
-  }
-
-  protected final void init(Icon[] icons, Icon passiveIcon, int cycleLength) {
-    myIcons = icons;
+    myIcons = icons.length == 0 ? new Icon[]{passiveIcon} : icons;
     myPassiveIcon = passiveIcon;
 
-    myPrefSize = new Dimension();
     for (Icon each : icons) {
       myPrefSize.width = Math.max(each.getIconWidth(), myPrefSize.width);
       myPrefSize.height = Math.max(each.getIconHeight(), myPrefSize.height);
@@ -62,8 +61,9 @@ public abstract class AnimatedIcon extends JComponent implements Disposable {
     UIUtil.removeQuaquaVisualMarginsIn(this);
 
     myAnimator = new Animator(myName, icons.length, cycleLength, true) {
-      public void paintNow(final float frame, final float totalFrames, final float cycle) {
-        myCurrentIconIndex = (int)frame;
+      public void paintNow(final int frame, final int totalFrames, final int cycle) {
+        final int len = myIcons.length;
+        myCurrentIconIndex = frame < 0 ? 0 : frame >= len ? len - 1 : frame;
         paintImmediately(0, 0, getWidth(), getHeight());
       }
     };
@@ -118,7 +118,7 @@ public abstract class AnimatedIcon extends JComponent implements Disposable {
   }
 
   public void dispose() {
-    myAnimator.dispose();
+    Disposer.dispose(myAnimator);
   }
 
   public Dimension getPreferredSize() {
@@ -135,7 +135,7 @@ public abstract class AnimatedIcon extends JComponent implements Disposable {
   }
 
   protected void paintComponent(Graphics g) {
-    if (myPaintingBgNow) return;
+    //if (myPaintingBgNow) return;
 
     if (isOpaque()) {
       final Container parent = getParent();
@@ -146,7 +146,7 @@ public abstract class AnimatedIcon extends JComponent implements Disposable {
       Color bg = opaque != null ? opaque.getBackground() : UIUtil.getPanelBackground();
       g.setColor(bg);
       g.fillRect(0, 0, getWidth(), getHeight());
-    } 
+    }
 
     Icon icon;
 
@@ -162,7 +162,7 @@ public abstract class AnimatedIcon extends JComponent implements Disposable {
 
     paintIcon(g, icon, x, y);
 
-    myLastPaintWasRunning = myAnimator.isRunning();
+    //boolean lastPaintWasRunning = myAnimator.isRunning();
   }
 
   protected void paintIcon(Graphics g, Icon icon, int x, int y) {

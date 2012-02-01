@@ -36,8 +36,10 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.CustomStatusBarWidget;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.Consumer;
@@ -50,9 +52,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.border.LineBorder;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.util.*;
 import java.util.List;
@@ -176,16 +179,13 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
 
   private class Widget implements CustomStatusBarWidget, Consumer<MouseEvent> {
 
-    private AnimatedIcon myIcon = new AnimatedIcon("Macro recording") {
-      {
-        init(new Icon[] {
-          IconLoader.getIcon("/ide/macro/recording_1.png"),
-          IconLoader.getIcon("/ide/macro/recording_2.png"),
-          IconLoader.getIcon("/ide/macro/recording_3.png"),
-          IconLoader.getIcon("/ide/macro/recording_4.png")},
-             IconLoader.getIcon("/ide/macro/recording_1.png"), 1000);
-      }
-    };
+    private AnimatedIcon myIcon = new AnimatedIcon("Macro recording",
+                                                   new Icon[]{
+                                                     IconLoader.getIcon("/ide/macro/recording_1.png"),
+                                                     IconLoader.getIcon("/ide/macro/recording_2.png"),
+                                                     IconLoader.getIcon("/ide/macro/recording_3.png"),
+                                                     IconLoader.getIcon("/ide/macro/recording_4.png")},
+                                                   IconLoader.getIcon("/ide/macro/recording_1.png"), 1000);
     private StatusBar myStatusBar;
     private final WidgetPresentation myPresentation;
 

@@ -36,10 +36,7 @@ public class AsyncProcessIcon extends AnimatedIcon {
   }
 
   private AsyncProcessIcon(@NonNls String name, Icon[] icons, Icon passive) {
-    super(name);
-
-    init(icons, passive, CYCLE_LENGTH);
-
+    super(name, icons, passive, CYCLE_LENGTH);
     setUseMask(false);
   }
 

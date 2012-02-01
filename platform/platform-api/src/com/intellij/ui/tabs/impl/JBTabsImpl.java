@@ -230,7 +230,7 @@ public class JBTabsImpl extends JComponent
     });
 
     myAnimator = new Animator("JBTabs Attractions", 2, 500, true) {
-      public void paintNow(final float frame, final float totalFrames, final float cycle) {
+      public void paintNow(final int frame, final int totalFrames, final int cycle) {
         repaintAttractions();
       }
     };

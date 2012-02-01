@@ -448,7 +448,7 @@ public class ScrollingModelImpl implements ScrollingModelEx {
 
       myAnimator = new Animator("Animated scroller", myStepCount, SCROLL_DURATION, false, true) {
         @Override
-        public void paintNow(float frame, float totalFrames, float cycle) {
+        public void paintNow(int frame, int totalFrames, int cycle) {
           double time = (frame + 1) / (double)totalFrames;
           double fraction = timeToFraction(time);
 
