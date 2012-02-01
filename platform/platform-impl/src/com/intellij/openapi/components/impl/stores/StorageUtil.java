@@ -184,7 +184,7 @@ public class StorageUtil {
     final int ndx = fileText.indexOf('\n');
     return Pair.create(fileText, ndx == -1
                                  ? SystemProperties.getLineSeparator()
-                                 : (ndx - 1 >=0 ? (fileText.charAt(ndx - 1) == '\r' ? "\r\n" : "\n") : "\n"));
+                                 : ndx - 1 >=0 ? fileText.charAt(ndx - 1) == '\r' ? "\r\n" : "\n" : "\n");
   }
 
   public static boolean contentEquals(@NotNull final Document document, @NotNull final IFile file) {
@@ -264,7 +264,7 @@ public class StorageUtil {
   @Nullable
   public static Document loadDocument(final byte[] bytes) {
     try {
-      return (bytes == null || bytes.length == 0) ? null : JDOMUtil.loadDocument(new ByteArrayInputStream(bytes));
+      return bytes == null || bytes.length == 0 ? null : JDOMUtil.loadDocument(new ByteArrayInputStream(bytes));
     }
     catch (JDOMException e) {
       return null;
@@ -313,7 +313,6 @@ public class StorageUtil {
   }
 
   public static void logStateDiffInfo(Set<Pair<VirtualFile, StateStorage>> changedFiles, Set<String> componentNames) throws IOException {
-
     if (!ApplicationManagerEx.getApplicationEx().isInternal() && !ourDumpChangedComponentStates) return;
 
     try {
@@ -324,7 +323,7 @@ public class StorageUtil {
       for (String componentName : componentNames) {
         for (Pair<VirtualFile, StateStorage> pair : changedFiles) {
           StateStorage storage = pair.second;
-          if ((storage instanceof XmlElementStorage)) {
+          if (storage instanceof XmlElementStorage) {
             Element state = ((XmlElementStorage)storage).getState(componentName);
             if (state != null) {
               File logFile = new File(logDirectory, "prev_" + componentName + ".xml");
@@ -332,13 +331,14 @@ public class StorageUtil {
             }
           }
         }
-
       }
 
       for (Pair<VirtualFile, StateStorage> changedFile : changedFiles) {
-        File logFile = new File(logDirectory, "new_" + changedFile.first.getName());
-
-        FileUtil.copy(new File(changedFile.first.getPath()), logFile);
+        File in = new File(changedFile.first.getPath());
+        if (in.exists()) {
+          File logFile = new File(logDirectory, "new_" + changedFile.first.getName());
+          FileUtil.copy(in, logFile);
+        }
       }
     }
     catch (Throwable e) {
