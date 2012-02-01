@@ -62,6 +62,9 @@ public class PackageAnnotator {
     public int partiallyCoveredLineCount;
     public int totalMethodCount;
     public int coveredMethodCount;
+
+    public int totalClassCount = 1;
+    public int coveredClassCount;
   }
 
   public static class PackageCoverageInfo {
@@ -172,9 +175,6 @@ public class PackageAnnotator {
         .isInTestSourceContent(psiClass.getContainingFile().getVirtualFile());
       final CompilerModuleExtension moduleExtension = CompilerModuleExtension.getInstance(module);
       final VirtualFile outputPath = isInTests ? moduleExtension.getCompilerOutputPathForTests() : moduleExtension.getCompilerOutputPath();
-      
-      Map<String, PackageCoverageInfo> packageCoverageMap = new HashMap<String, PackageCoverageInfo>();
-      Map<String, PackageCoverageInfo> flattenPackageCoverageMap = new HashMap<String, PackageCoverageInfo>();
       
       if (outputPath != null) {
         final String qualifiedName = psiClass.getQualifiedName();
@@ -383,6 +383,9 @@ public class PackageAnnotator {
 
     classCoverageInfo.totalMethodCount += toplevelClassCoverageInfo.totalMethodCount;
     classCoverageInfo.coveredMethodCount += toplevelClassCoverageInfo.coveredMethodCount;
+    if (toplevelClassCoverageInfo.coveredMethodCount > 0) {
+      classCoverageInfo.coveredClassCount++;
+    }
   }
 
   private static ClassCoverageInfo getOrCreateClassCoverageInfo(final Map<String, ClassCoverageInfo> toplevelClassCoverage,
@@ -391,6 +394,8 @@ public class PackageAnnotator {
     if (toplevelClassCoverageInfo == null) {
       toplevelClassCoverageInfo = new ClassCoverageInfo();
       toplevelClassCoverage.put(sourceToplevelFQName, toplevelClassCoverageInfo);
+    } else {
+      toplevelClassCoverageInfo.totalClassCount++;
     }
     return toplevelClassCoverageInfo;
   }

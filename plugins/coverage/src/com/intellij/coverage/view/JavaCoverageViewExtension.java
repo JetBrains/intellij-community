@@ -93,7 +93,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
 
       final String qualifiedName = ((PsiClass)value).getQualifiedName();
       if (columnIndex == 1) {
-        return myAnnotator.isClassCovered(qualifiedName) ? "100% (1/1)" : "0% (0/1)";
+        return myAnnotator.getClassCoveredPercentage(qualifiedName);
       } else if (columnIndex == 2){
         return myAnnotator.getClassMethodPercentage(qualifiedName);
       }

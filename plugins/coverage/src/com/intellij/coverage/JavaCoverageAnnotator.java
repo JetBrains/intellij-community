@@ -208,39 +208,44 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
   public String getPackageClassPercentage(final PsiPackage psiPackage, boolean flatten) {
     final PackageAnnotator.PackageCoverageInfo packageCoverageInfo = getPackageCoverageInfo(psiPackage, flatten);
     if (packageCoverageInfo == null) return null;
-    return (int)((double)packageCoverageInfo.coveredClassCount/packageCoverageInfo.totalClassCount * 100) +"% (" + packageCoverageInfo.coveredClassCount + "/" + packageCoverageInfo.totalClassCount + ")"; 
+    return getPercentage(packageCoverageInfo.coveredClassCount, packageCoverageInfo.totalClassCount);
   }
   
   public String getPackageMethodPercentage(PsiPackage psiPackage, boolean flatten) {
     final PackageAnnotator.PackageCoverageInfo packageCoverageInfo = getPackageCoverageInfo(psiPackage, flatten);
     if (packageCoverageInfo == null) return null;
-    return (int)((double)packageCoverageInfo.coveredMethodCount/packageCoverageInfo.totalMethodCount * 100) +"% (" + packageCoverageInfo.coveredMethodCount + "/" + packageCoverageInfo.totalMethodCount + ")";
+    return getPercentage(packageCoverageInfo.coveredMethodCount, packageCoverageInfo.totalMethodCount);
   }
 
   public String getPackageLinePercentage(final PsiPackage psiPackage, boolean flatten) {
     final PackageAnnotator.PackageCoverageInfo packageCoverageInfo = getPackageCoverageInfo(psiPackage, flatten);
     if (packageCoverageInfo == null) return null;
-    return (int)((double)packageCoverageInfo.coveredLineCount/packageCoverageInfo.totalLineCount * 100) +"% (" + packageCoverageInfo.coveredLineCount + "/" + packageCoverageInfo.totalLineCount + ")"; 
+    return getPercentage(packageCoverageInfo.coveredLineCount, packageCoverageInfo.totalLineCount);
   }
 
   public String getClassLinePercentage(String classFQName) {
     final PackageAnnotator.ClassCoverageInfo info = myClassCoverageInfos.get(classFQName);
     if (info == null) return null;
     final int coveredLines = info.fullyCoveredLineCount + info.partiallyCoveredLineCount;
-    return (int)((double)coveredLines /info.totalLineCount * 100) +"% (" + coveredLines + "/" + info.totalLineCount + ")";
+    return getPercentage(coveredLines, info.totalLineCount);
   }
   
   public String getClassMethodPercentage(String classFQName) {
     final PackageAnnotator.ClassCoverageInfo info = myClassCoverageInfos.get(classFQName);
     if (info == null) return null;
-    return (int)((double)info.coveredMethodCount /info.totalMethodCount * 100) +"% (" + info.coveredMethodCount + "/" + info.totalMethodCount + ")";
+    return getPercentage(info.coveredMethodCount, info.totalMethodCount);
   }
 
-  public boolean isClassCovered(String classFQName) {
+  public String getClassCoveredPercentage(String classFQName) {
     final PackageAnnotator.ClassCoverageInfo info = myClassCoverageInfos.get(classFQName);
-    return info != null && info.coveredMethodCount > 0;
+    if (info == null) return null;
+    return getPercentage(info.coveredClassCount, info.totalClassCount);
   }
-  
+
+  private static String getPercentage(int covered, int total) {
+    return (int)((double)covered /total * 100) +"% (" + covered + "/" + total + ")";
+  }
+
   public static PackageAnnotator.PackageCoverageInfo merge(final PackageAnnotator.PackageCoverageInfo info,
                                                            final PackageAnnotator.PackageCoverageInfo testInfo) {
     if (info == null) return testInfo;
