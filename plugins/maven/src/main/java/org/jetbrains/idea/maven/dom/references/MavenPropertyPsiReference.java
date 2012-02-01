@@ -31,6 +31,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
@@ -51,13 +52,12 @@ import org.jetbrains.idea.maven.vfs.MavenPropertiesVirtualFileSystem;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
 public class MavenPropertyPsiReference extends MavenPsiReference {
   private static final Set<String> BASEDIR_PROPS =
-    new THashSet<String>(Arrays.asList("basedir", "project.basedir", "pom.basedir", "baseUri", "project.baseUri", "pom.baseUri"));
+    CollectionFactory.newTroveSet("basedir", "project.basedir", "pom.basedir", "baseUri", "project.baseUri", "pom.baseUri");
 
   private static final String TIMESTAMP_PROP = "maven.build.timestamp";
 
