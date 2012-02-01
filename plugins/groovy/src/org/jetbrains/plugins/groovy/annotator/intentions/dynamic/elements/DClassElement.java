@@ -36,7 +36,7 @@ public class DClassElement implements DNamedElement {
   public DClassElement() {
   }
   
-  public DClassElement(@Nullable Project project, @Nullable String name) {
+  public DClassElement(Project project, String name) {
     myName = name;
     DynamicManager.getInstance(project).getRootElement().mergeAddClass(this);
   }

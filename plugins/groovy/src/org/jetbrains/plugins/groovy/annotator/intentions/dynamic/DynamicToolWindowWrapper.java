@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -82,8 +83,20 @@ import java.util.Set;
  * Date: 09.01.2008
  */
 public class DynamicToolWindowWrapper {
+  private static final Logger LOG = Logger.getInstance(DynamicToolWindowWrapper.class);
+
+  private static final int CLASS_OR_ELEMENT_NAME_COLUMN = 0;
+  private static final int TYPE_COLUMN = 1;
+
+  private static final String[] myColumnNames = {"Dynamic Element", "Type"};
+
   private final Project myProject;
   private ToolWindow myToolWindow = null;
+
+  private JPanel myTreeTablePanel;
+  private SimpleToolWindowPanel myBigPanel;
+  private ListTreeTableModelOnColumns myTreeTableModel;
+  private MyTreeTable myTreeTable;
 
   public DynamicToolWindowWrapper(Project project) {
     myProject = project;
@@ -93,20 +106,6 @@ public class DynamicToolWindowWrapper {
     return ServiceManager.getService(project, DynamicToolWindowWrapper.class);
   }
 
-  public static final String DYNAMIC_TOOLWINDOW_ID = GroovyBundle.message("dynamic.tool.window.id");
-  private JPanel myTreeTablePanel;
-  private JPanel myBigPanel;
-  private ListTreeTableModelOnColumns myTreeTableModel;
-
-  private static final int CLASS_OR_ELEMENT_NAME_COLUMN = 0;
-  private static final int TYPE_COLUMN = 1;
-
-  private static final String[] myColumnNames = {"Dynamic Element", "Type"};
-
-  private MyTreeTable myTreeTable;
-
-  private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicToolWindowWrapper");
-
   public TreeTable getTreeTable() {
     getToolWindow();
 
@@ -115,7 +114,7 @@ public class DynamicToolWindowWrapper {
 
   public ToolWindow getToolWindow() {
     if (myToolWindow == null) {
-      myToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow(DYNAMIC_TOOLWINDOW_ID, true, ToolWindowAnchor.RIGHT);
+      myToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow(GroovyBundle.message("dynamic.tool.window.id"), true, ToolWindowAnchor.RIGHT);
       myToolWindow.setIcon(GroovyIcons.DYNAMIC_PROPERTY_TOOL_WINDOW_ICON);
       myToolWindow.setTitle(GroovyBundle.message("dynamic.window"));
       myToolWindow.setToHideOnEmptyContent(true);
@@ -131,19 +130,26 @@ public class DynamicToolWindowWrapper {
   }
 
   private JPanel buildBigPanel() {
-    myBigPanel = new JPanel(new BorderLayout());
+    myBigPanel = new SimpleToolWindowPanel(true);
+
+    final ActionManager actionManager = ActionManager.getInstance();
+    final ActionGroup actionGroup = (ActionGroup)actionManager.getAction("Groovy.Dynamic.Toolbar");
+    ActionToolbar actionToolbar = actionManager.createActionToolbar("Groovy.Dynamic.Toolbar", actionGroup, true);
+    myBigPanel.setToolbar(actionToolbar.getComponent());
+
     myBigPanel.setBackground(UIUtil.getFieldForegroundColor());
 
     final DynamicFilterComponent filter = new DynamicFilterComponent(GroovyBundle.message("dynamic.toolwindow.property.filter"), 10);
     filter.setBackground(UIUtil.getLabelBackground());
 
-    myBigPanel.add(new JLabel(GroovyBundle.message("dynamic.toolwindow.search.elements")), BorderLayout.NORTH);
-    myBigPanel.add(filter, BorderLayout.NORTH);
+    final JPanel panel = new JPanel(new BorderLayout());
+    myBigPanel.add(panel, BorderLayout.CENTER);
+    panel.add(filter, BorderLayout.NORTH);
 
     myTreeTablePanel = new JPanel(new BorderLayout());
     rebuildTreePanel();
 
-    myBigPanel.add(myTreeTablePanel);
+    panel.add(myTreeTablePanel);
     myBigPanel.setPreferredSize(new Dimension(200, myBigPanel.getHeight()));
 
     myBigPanel.revalidate();
@@ -218,7 +224,7 @@ public class DynamicToolWindowWrapper {
     myTreeTable = new MyTreeTable(myTreeTableModel);
 
     DefaultActionGroup group = new DefaultActionGroup();
-    group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_DELETE));
+    group.add(ActionManager.getInstance().getAction(RemoveDynamicAction.GROOVY_DYNAMIC_REMOVE));
     PopupHandler.installUnknownPopupHandler(myTreeTable, group, ActionManager.getInstance());
 
     final MyColoredTreeCellRenderer treeCellRenderer = new MyColoredTreeCellRenderer();
@@ -380,18 +386,19 @@ public class DynamicToolWindowWrapper {
     return scrollPane;
   }
 
-  private void deleteRow() {
-    final int[] rows = myTreeTable.getSelectedRows();
+  void deleteRow() {
 
     boolean isShowDialog = true;
-    final int rowsCount = rows.length;
+    final int rowsCount = myTreeTable.getSelectedRows().length;
     int i = 0;
 
-    final TreeTableTree tree = myTreeTable.getTree();
+    final TreePath[] paths = myTreeTable.getTree().getSelectionPaths();
+    if (paths == null) return;
 
-    for (TreePath selectionPath : tree.getSelectionPaths()) {
+    for (TreePath selectionPath : paths) {
       if (rowsCount > 1) isShowDialog = false;
-      if (i++ == 0) isShowDialog = true;
+      if (i == 0) isShowDialog = true;
+      i++;
 
       //class
       final TreePath parent = selectionPath.getParentPath();
@@ -488,14 +495,18 @@ public class DynamicToolWindowWrapper {
     IdeFocusManager.getInstance(myProject).requestFocus(myTreeTable, true);
   }
 
-
   public void removeFromParent(DefaultMutableTreeNode parent, DefaultMutableTreeNode child) {
     int idx = myTreeTableModel.getIndexOfChild(parent, child);
     child.removeFromParent();
     myTreeTableModel.nodesWereRemoved(parent, new int[]{idx}, new TreeNode[]{child});
   }
 
-  static class PropertyTypeColumnInfo extends ColumnInfo<DefaultMutableTreeNode, String> {
+  @Nullable
+  private TreeTableTree getTree() {
+    return myTreeTable != null ? myTreeTable.getTree() : null;
+  }
+
+  private static class PropertyTypeColumnInfo extends ColumnInfo<DefaultMutableTreeNode, String> {
     public PropertyTypeColumnInfo(String name) {
       super(name);
     }
@@ -515,7 +526,7 @@ public class DynamicToolWindowWrapper {
     }
   }
 
-  static class ClassColumnInfo extends ColumnInfo<DefaultMutableTreeNode, DNamedElement> {
+  private static class ClassColumnInfo extends ColumnInfo<DefaultMutableTreeNode, DNamedElement> {
     public ClassColumnInfo(String name) {
       super(name);
     }
@@ -727,12 +738,7 @@ public class DynamicToolWindowWrapper {
     }
   }
 
-  @Nullable
-  private TreeTableTree getTree() {
-    return myTreeTable != null ? myTreeTable.getTree() : null;
-  }
-
-  public class MyTreeTable extends TreeTable implements DataProvider {
+  private class MyTreeTable extends TreeTable implements DataProvider {
     public MyTreeTable(TreeTableModel treeTableModel) {
       super(treeTableModel);
     }
@@ -741,13 +747,14 @@ public class DynamicToolWindowWrapper {
     public Object getData(@NonNls String dataId) {
       if (LangDataKeys.PSI_ELEMENT.is(dataId)) {
         return getSelectedElement();
-
-      } else if (LangDataKeys.PSI_FILE.is(dataId)) {
+      }
+      else if (LangDataKeys.PSI_FILE.is(dataId)) {
         final PsiElement element = getSelectedElement();
 
         if (element == null) return null;
         return element.getContainingFile();
-      } else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
+      }
+      else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
         return new DeleteProvider() {
           @Override
           public void deleteElement(DataContext dataContext) {
