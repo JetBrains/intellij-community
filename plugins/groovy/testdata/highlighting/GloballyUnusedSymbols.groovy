@@ -7,6 +7,7 @@ class Bar<T, <warning descr="Class Unused is unused">Unused</warning>> {
   int usedProperty3 = 39
   def <warning descr="Method unusedMethod is unused">unusedMethod</warning>() {}
   Bar usedMethod() { this }
+  Object getAt(int key) {}
 
   Bar getUsedPropertyGetter() {}
 
@@ -20,3 +21,4 @@ println new Bar().usedMethod().usedProperty
 new Bar().setUsedProperty2 42
 println new Bar().getUsedProperty3()
 println new Bar().usedPropertyGetter
+println new Bar()['2']
