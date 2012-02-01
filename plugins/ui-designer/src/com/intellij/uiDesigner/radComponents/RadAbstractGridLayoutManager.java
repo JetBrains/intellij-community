@@ -190,6 +190,10 @@ public abstract class RadAbstractGridLayoutManager extends RadLayoutManager {
     return 0;
   }
 
+  public boolean canSpanningAllowed() {
+    return true;
+  }
+
   public boolean canResizeCells() {
     return true;
   }
@@ -301,6 +305,8 @@ public abstract class RadAbstractGridLayoutManager extends RadLayoutManager {
       mode = GridInsertMode.ColumnAfter;
     }
 
+    boolean spanInsertMode = canSpanningAllowed() && mode == null;
+    boolean normalize = true;
     final int cellWidth = vertGridLines[col + 1] - vertGridLines[col];
     final int cellHeight = horzGridLines[row + 1] - horzGridLines[row];
     if (mode == null) {
@@ -324,11 +330,15 @@ public abstract class RadAbstractGridLayoutManager extends RadLayoutManager {
         else if (dx > right && dx < cellWidth) {
           mode = GridInsertMode.ColumnAfter;
         }
+
+        normalize = false;
       }
     }
 
     if (mode != null) {
-      return new GridInsertLocation(container, row, col, mode).normalize();
+      GridInsertLocation dropLocation = new GridInsertLocation(container, row, col, mode);
+      dropLocation.setSpanInsertMode(spanInsertMode);
+      return normalize ? dropLocation.normalize() : dropLocation;
     }
     if (getComponentAtGrid(container, row, col) instanceof RadVSpacer ||
         getComponentAtGrid(container, row, col) instanceof RadHSpacer) {
