@@ -29,7 +29,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import org.jetbrains.annotations.NotNull;
 
 public class DefaultInsertHandler extends TemplateInsertHandler implements Cloneable {
@@ -181,10 +181,9 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
     JavaCompletionUtil.initOffsets(file, file.getProject(), offsetMap);
   }
 
-  public static void addImportForItem(InsertionContext context, LookupElement item) throws IncorrectOperationException {
+  public static void addImportForItem(InsertionContext context, LookupElement item) {
     PsiDocumentManager.getInstance(context.getProject()).commitAllDocuments();
 
-    int startOffset = context.getStartOffset();
     PsiFile file = context.getFile();
     Object o = item.getObject();
     if (o instanceof PsiClass){
@@ -194,8 +193,8 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
       int length = lookupString.length();
       final int i = lookupString.indexOf('<');
       if (i >= 0) length = i;
-      final int newOffset = addImportForClass(file, startOffset, startOffset + length, aClass);
-      JavaCompletionUtil.shortenReference(file, newOffset);
+      addImportForClass(aClass, context, length);
+      JavaCompletionUtil.shortenReference(file, context.getStartOffset());
     }
     else if (o instanceof PsiType){
       PsiType type = ((PsiType)o).getDeepComponentType();
@@ -203,7 +202,7 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
         PsiClass refClass = ((PsiClassType) type).resolve();
         if (refClass != null){
           int length = refClass.getName().length();
-          addImportForClass(file, startOffset, startOffset + length, refClass);
+          addImportForClass(refClass, context, length);
         }
       }
     }
@@ -213,14 +212,16 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
         PsiClass aClass = method.getContainingClass();
         if (aClass != null){
           int length = method.getName().length();
-          addImportForClass(file, startOffset, startOffset + length, aClass);
+          addImportForClass(aClass, context, length);
         }
       }
     }
   }
 
-  private static int addImportForClass(PsiFile file, int startOffset, int endOffset, PsiClass aClass) throws IncorrectOperationException {
-    return JavaCompletionUtil.insertClassReference(aClass, file, startOffset, endOffset);
+  private static void addImportForClass(PsiClass aClass, InsertionContext context, int nameLength) {
+    context.setTailOffset(JavaCompletionUtil.insertClassReference(aClass, context.getFile(), context.getStartOffset(),
+                                                                  context.getStartOffset() + nameLength));
+    PostprocessReformattingAspect.getInstance(context.getProject()).doPostponedFormatting();
   }
 
 

@@ -21,7 +21,6 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.util.ClassConditionKey;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NonNls;
@@ -73,14 +72,11 @@ public class PsiTypeLookupItem extends LookupItem {
   public void handleInsert(InsertionContext context) {
     PsiElement position = context.getFile().findElementAt(context.getStartOffset());
     assert position != null;
-    context.getDocument().insertString(context.getTailOffset(), calcGenerics(position));
     DefaultInsertHandler.addImportForItem(context, this);
-    PostprocessReformattingAspect.getInstance(context.getProject()).doPostponedFormatting();
+    context.getDocument().insertString(context.getTailOffset(), calcGenerics(position));
+    JavaCompletionUtil.shortenReference(context.getFile(), context.getStartOffset());
 
     int tail = context.getTailOffset();
-    if (tail <= 0) {
-      return;
-    }
     String braces = StringUtil.repeat("[]", getBracketsCount());
     Editor editor = context.getEditor();
     if (!braces.isEmpty()) {
