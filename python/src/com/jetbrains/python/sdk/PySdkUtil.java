@@ -29,10 +29,10 @@ import java.util.regex.Pattern;
  *         Date: Apr 24, 2008
  *         Time: 1:19:47 PM
  */
-public class SdkUtil {
+public class PySdkUtil {
   protected static final Logger LOG = Logger.getInstance("#com.jetbrains.python.sdk.SdkVersionUtil");
 
-  private SdkUtil() {
+  private PySdkUtil() {
     // explicitly none
   }
 

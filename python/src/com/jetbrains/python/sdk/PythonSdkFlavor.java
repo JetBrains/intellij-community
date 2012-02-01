@@ -122,7 +122,7 @@ public abstract class PythonSdkFlavor {
   @Nullable
   protected static String getVersionFromOutput(String sdkHome, String version_opt, String version_regexp) {
     String run_dir = new File(sdkHome).getParent();
-    final ProcessOutput process_output = SdkUtil.getProcessOutput(run_dir, new String[]{sdkHome, version_opt});
+    final ProcessOutput process_output = PySdkUtil.getProcessOutput(run_dir, new String[]{sdkHome, version_opt});
 
     return getVersionFromOutput(version_regexp, process_output);
   }
@@ -139,11 +139,11 @@ public abstract class PythonSdkFlavor {
       return null;
     }
     Pattern pattern = Pattern.compile(version_regexp);
-    final String result = SdkUtil.getFirstMatch(process_output.getStderrLines(), pattern);
+    final String result = PySdkUtil.getFirstMatch(process_output.getStderrLines(), pattern);
     if (result != null) {
       return result;
     }
-    return SdkUtil.getFirstMatch(process_output.getStdoutLines(), pattern);
+    return PySdkUtil.getFirstMatch(process_output.getStdoutLines(), pattern);
   }
 
   public Collection<String> getExtraDebugOptions() {

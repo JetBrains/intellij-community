@@ -136,9 +136,11 @@ public abstract class PythonCommandLineState extends CommandLineState {
       .patchCommandLine(myConfig, runnerSettings, commandLine, getConfigurationSettings().getRunnerId());
 
     if (sdk != null && sdk.getSdkAdditionalData() instanceof PythonRemoteSdkAdditionalData) {
-      if (PythonRemoteInterpreterManager.EP_NAME.getExtensions().length > 0) {
-        ProcessHandler processHandler = PythonRemoteInterpreterManager.EP_NAME.getExtensions()[0]
-          .doCreateProcess(myConfig.getProject(), (PythonRemoteSdkAdditionalData)sdk.getSdkAdditionalData(), commandLine);
+
+      PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
+      if (manager != null) {
+        ProcessHandler processHandler =
+          manager.doCreateProcess(myConfig.getProject(), (PythonRemoteSdkAdditionalData)sdk.getSdkAdditionalData(), commandLine);
         ProcessTerminatedListener.attach(processHandler);
         return processHandler;
       }

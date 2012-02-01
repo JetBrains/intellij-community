@@ -598,7 +598,7 @@ public class PythonSdkType extends SdkType {
     // to handle the situation when PYTHONPATH contains ., we need to run the syspath script in the
     // directory of the script itself - otherwise the dir in which we run the script (e.g. /usr/bin) will be added to SDK path
     String[] add_environment = getVirtualEnvAdditionalEnv(bin_path);
-    final ProcessOutput run_result = SdkUtil.getProcessOutput(
+    final ProcessOutput run_result = PySdkUtil.getProcessOutput(
       new File(scriptFile).getParent(),
       new String[]{bin_path, scriptFile},
       add_environment, MINUTE
