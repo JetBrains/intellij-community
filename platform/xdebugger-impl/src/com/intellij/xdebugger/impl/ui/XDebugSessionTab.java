@@ -29,7 +29,6 @@ import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.execution.ui.layout.PlaceInGrid;
-import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -110,13 +109,6 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
                                                XDebuggerBundle.message("debugger.session.tab.frames.title"), XDebuggerUIConstants.FRAMES_TAB_ICON, null);
     framesContent.setCloseable(false);
 
-    final DefaultActionGroup framesGroup = new DefaultActionGroup();
-
-    CommonActionsManager actionsManager = CommonActionsManager.getInstance();
-    framesGroup.add(actionsManager.createPrevOccurenceAction(framesView.getFramesList()));
-    framesGroup.add(actionsManager.createNextOccurenceAction(framesView.getFramesList()));
-
-    framesContent.setActions(framesGroup, ActionPlaces.DEBUGGER_TOOLBAR, framesView.getFramesList());
     return framesContent;
   }
 

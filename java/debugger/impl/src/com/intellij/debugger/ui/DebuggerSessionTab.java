@@ -45,7 +45,6 @@ import com.intellij.execution.ui.ExecutionConsoleEx;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.execution.ui.layout.PlaceInGrid;
-import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
@@ -76,7 +75,6 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.DebuggerSessionTab");
 
   private static final Icon WATCH_RETURN_VALUES_ICON = IconLoader.getIcon("/debugger/watchLastReturnValue.png");
-  private static final Icon FILTER_STACK_FRAMES_ICON = IconLoader.getIcon("/debugger/class_filter.png");
   private static final Icon AUTO_VARS_ICONS = IconLoader.getIcon("/debugger/autoVariablesMode.png");
 
   private final VariablesPanel myVariablesPanel;
@@ -166,14 +164,6 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
     framesContent.setCloseable(false);
     framesContent.setAlertIcon(breakpointAlert);
 
-    final DefaultActionGroup framesGroup = new DefaultActionGroup();
-
-    CommonActionsManager actionsManager = CommonActionsManager.getInstance();
-    framesGroup.add(actionsManager.createPrevOccurenceAction(myFramesPanel.getOccurenceNavigator()));
-    framesGroup.add(actionsManager.createNextOccurenceAction(myFramesPanel.getOccurenceNavigator()));
-    framesGroup.add(new ShowLibraryFramesAction());
-
-    framesContent.setActions(framesGroup, ActionPlaces.DEBUGGER_TOOLBAR, myFramesPanel.getFramesList());
     myUi.addContent(framesContent, 0, PlaceInGrid.left, false);
 
     // variables
@@ -568,34 +558,6 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
       myAutoModeEnabled = enabled;
       DebuggerSettings.getInstance().AUTO_VARIABLES_MODE = enabled;
       myVariablesPanel.getFrameTree().setAutoVariablesMode(enabled);
-    }
-  }
-
-  private class ShowLibraryFramesAction extends ToggleAction {
-    private volatile boolean myShouldShow;
-    private static final String ourTextWhenShowIsOn = "Hide Frames from Libraries";
-    private static final String ourTextWhenShowIsOff = "Show All Frames";
-
-    public ShowLibraryFramesAction() {
-      super("", "", FILTER_STACK_FRAMES_ICON);
-      myShouldShow = DebuggerSettings.getInstance().SHOW_LIBRARY_STACKFRAMES;
-    }
-
-    public void update(final AnActionEvent e) {
-      super.update(e);
-      final Presentation presentation = e.getPresentation();
-      final boolean shouldShow = !(Boolean)presentation.getClientProperty(SELECTED_PROPERTY);
-      presentation.setText(shouldShow ? ourTextWhenShowIsOn : ourTextWhenShowIsOff);
-    }
-
-    public boolean isSelected(AnActionEvent e) {
-      return !myShouldShow;
-    }
-
-    public void setSelected(AnActionEvent e, boolean enabled) {
-      myShouldShow = !enabled;
-      DebuggerSettings.getInstance().SHOW_LIBRARY_STACKFRAMES = myShouldShow;
-      myFramesPanel.setShowLibraryFrames(myShouldShow);
     }
   }
 
