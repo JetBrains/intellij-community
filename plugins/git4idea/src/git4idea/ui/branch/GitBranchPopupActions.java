@@ -185,7 +185,18 @@ class GitBranchPopupActions {
       myRepositories = repositories;
       myBranchName = branchName;
       mySelectedRepository = selectedRepository;
-      getTemplatePresentation().setText(myBranchName, false); // no mnemonics
+      getTemplatePresentation().setText(calcBranchText(), false); // no mnemonics
+    }
+
+    @NotNull
+    private String calcBranchText() {
+      String trackedBranch = new GitMultiRootBranchConfig(myRepositories).getTrackedBranch(myBranchName);
+      if (trackedBranch != null) {
+        return myBranchName + " -> " + trackedBranch;
+      }
+      else {
+        return myBranchName;
+      }
     }
 
     @NotNull
