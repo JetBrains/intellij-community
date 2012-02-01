@@ -65,7 +65,7 @@ import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.*;
-import com.intellij.util.containers.ConcurrentWeakHashMap;
+import com.intellij.util.containers.ConcurrentWeakValueHashMap;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.OptionsMessageDialog;
 import org.jetbrains.annotations.NonNls;
@@ -84,7 +84,7 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
   public static final Icon ICON = IconLoader.getIcon("/modules/annotation.png");
   private static final Logger LOG = Logger.getInstance("#" + ExternalAnnotationsManagerImpl.class.getName());
 
-  private final Map<String, List<XmlFile>> myExternalAnnotations = new ConcurrentWeakHashMap<String, List<XmlFile>>();
+  private final Map<String, List<XmlFile>> myExternalAnnotations = new ConcurrentWeakValueHashMap<String, List<XmlFile>>();
   private final AtomicReference<ThreeState> myHasAnyAnnotationsRoots = new AtomicReference<ThreeState>(ThreeState.UNSURE);
   private static final List<XmlFile> NULL = new ArrayList<XmlFile>();
   private final PsiManager myPsiManager;
