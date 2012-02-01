@@ -15,7 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ui;
 
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.MyPair;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ParamInfo;
 
 import java.util.List;
 
@@ -28,7 +28,7 @@ public class DynamicElementSettings {
   private String myContainingClassName;
   private String myType;
   private boolean isMethod;
-  private List<MyPair> myPairs;
+  private List<ParamInfo> myParams;
   private boolean isStatic;
 
   public void setContainingClassName(String newName) {
@@ -55,12 +55,12 @@ public class DynamicElementSettings {
     isMethod = method;
   }
 
-  public List<MyPair> getPairs() {
-    return myPairs;
+  public List<ParamInfo> getParams() {
+    return myParams;
   }
 
-  public void setPairs(List<MyPair> pairs) {
-    myPairs = pairs;
+  public void setParams(List<ParamInfo> pairs) {
+    myParams = pairs;
   }
 
   public String getName() {

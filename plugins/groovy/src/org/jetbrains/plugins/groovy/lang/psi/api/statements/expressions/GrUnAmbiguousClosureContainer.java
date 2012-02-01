@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements;
+package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 
 /**
- * User: Dmitry.Krasilschikov
- * Date: 04.03.2008
+ * Marker interface. Hack for GSP injected expressions with closures
+ * @see org.jetbrains.plugins.groovy.annotator.GroovyAnnotator#isClosureAmbiguous(org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock)
+ * @author Max Medvedev
  */
-public interface DTypedElement {
-  String getType();
-
-  void setType(String type);
-}
+public interface GrUnAmbiguousClosureContainer {}

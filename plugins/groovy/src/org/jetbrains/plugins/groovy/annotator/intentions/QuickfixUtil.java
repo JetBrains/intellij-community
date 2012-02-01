@@ -32,7 +32,7 @@ import com.intellij.util.ArrayUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.MyPair;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ParamInfo;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ui.DynamicElementSettings;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -132,8 +132,8 @@ public class QuickfixUtil {
     return result;
   }
 
-  public static List<MyPair> swapArgumentsAndTypes(String[] names, PsiType[] types) {
-    List<MyPair> result = new ArrayList<MyPair>();
+  public static List<ParamInfo> swapArgumentsAndTypes(String[] names, PsiType[] types) {
+    List<ParamInfo> result = new ArrayList<ParamInfo>();
 
     if (names.length != types.length) return Collections.emptyList();
 
@@ -141,7 +141,7 @@ public class QuickfixUtil {
       String name = names[i];
       final PsiType type = types[i];
 
-      result.add(new MyPair(name, type.getCanonicalText()));
+      result.add(new ParamInfo(name, type.getCanonicalText()));
     }
 
     return result;
@@ -151,22 +151,22 @@ public class QuickfixUtil {
     return referenceExpression.getParent() instanceof GrCall;
   }
 
-  public static String[] getArgumentsTypes(List<MyPair> listOfPairs) {
+  public static String[] getArgumentsTypes(List<ParamInfo> listOfPairs) {
     final List<String> result = new ArrayList<String>();
 
     if (listOfPairs == null) return ArrayUtil.EMPTY_STRING_ARRAY;
-    for (MyPair listOfPair : listOfPairs) {
-      String type = PsiTypesUtil.unboxIfPossible(listOfPair.second);
+    for (ParamInfo listOfPair : listOfPairs) {
+      String type = PsiTypesUtil.unboxIfPossible(listOfPair.type);
       result.add(type);
     }
 
     return ArrayUtil.toStringArray(result);
   }
 
-  public static String[] getArgumentsNames(List<MyPair> listOfPairs) {
+  public static String[] getArgumentsNames(List<ParamInfo> listOfPairs) {
     final ArrayList<String> result = new ArrayList<String>();
-    for (MyPair listOfPair : listOfPairs) {
-      String name = listOfPair.first;
+    for (ParamInfo listOfPair : listOfPairs) {
+      String name = listOfPair.name;
       result.add(name);
     }
 
@@ -204,10 +204,10 @@ public class QuickfixUtil {
       }
       final PsiType[] types = unboxedTypes.toArray(new PsiType[unboxedTypes.size()]);
       final String[] names = getMethodArgumentsNames(referenceExpression.getProject(), types);
-      final List<MyPair> pairs = swapArgumentsAndTypes(names, types);
+      final List<ParamInfo> infos = swapArgumentsAndTypes(names, types);
 
       settings.setMethod(true);
-      settings.setPairs(pairs);
+      settings.setParams(infos);
     } else {
       settings.setMethod(false);
     }

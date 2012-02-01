@@ -20,7 +20,7 @@ package org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements;
  * Date: 04.03.2008
  */
 public interface DNamedElement {
-  public String getName();
+  String getName();
 
-  public void setName(String name);
+  void setName(String name);
 }
