@@ -51,6 +51,7 @@ import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidFacetConfiguration;
 import org.jetbrains.android.logcat.AndroidLogFilterModel;
 import org.jetbrains.android.logcat.AndroidLogcatFiltersPreferences;
+import org.jetbrains.android.run.testing.AndroidTestRunConfiguration;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.sdk.AndroidSdk;
 import org.jetbrains.android.sdk.AndroidSdkImpl;
@@ -158,7 +159,10 @@ public abstract class AndroidRunConfigurationBase extends ModuleBasedConfigurati
     TARGET_SELECTION_MODE = mode.name();
   }
 
-  private static boolean fillRuntimeAndTestDependencies(@NotNull Module module, @NotNull Map<AndroidFacet, String> module2PackageName) {
+  private boolean fillRuntimeAndTestDependencies(@NotNull Module module,
+                                                 @NotNull Map<AndroidFacet, String> module2PackageName) {
+    final boolean forTests = this instanceof AndroidTestRunConfiguration;
+
     for (OrderEntry entry : ModuleRootManager.getInstance(module).getOrderEntries()) {
       if (entry instanceof ModuleOrderEntry) {
         ModuleOrderEntry moduleOrderEntry = (ModuleOrderEntry)entry;
@@ -168,7 +172,7 @@ public abstract class AndroidRunConfigurationBase extends ModuleBasedConfigurati
           if (depFacet != null &&
               !module2PackageName.containsKey(depFacet) &&
               !depFacet.getConfiguration().LIBRARY_PROJECT &&
-              moduleOrderEntry.getScope() != DependencyScope.COMPILE) {
+              (forTests || moduleOrderEntry.getScope() != DependencyScope.COMPILE)) {
             String packageName = getPackageName(depFacet);
             if (packageName == null) {
               return false;
