@@ -311,6 +311,7 @@ public class RenameUtil {
 
     for (Document document : docsToOffsetsMap.keySet()) {
       List<UsageOffset> list = docsToOffsetsMap.get(document);
+      LOG.assertTrue(list != null, document);
       UsageOffset[] offsets = list.toArray(new UsageOffset[list.size()]);
       Arrays.sort(offsets);
 
