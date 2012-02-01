@@ -149,12 +149,6 @@ public class LookupCellRenderer implements ListCellRenderer {
   }
 
   private Color getItemBackground(JList list, int index, boolean isSelected) {
-    final int preferredCount = myLookup.getPreferredItemsCount();
-    final boolean isPreferred = index <= preferredCount - 1 && preferredCount < list.getModel().getSize() - 1 && LookupImpl.limitRelevance();
-
-    if (isPreferred) {
-      return isSelected ? SELECTED_BACKGROUND_COLOR : PREFERRED_BACKGROUND_COLOR;
-    }
     return isSelected ? SELECTED_BACKGROUND_COLOR : BACKGROUND_COLOR;
   }
 
