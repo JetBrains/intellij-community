@@ -6,17 +6,19 @@ import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.project.Project
+import com.intellij.testFramework.SkipInHeadlessEnvironment
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.plugins.gradle.testutil.ChangeBuilder
 import org.jetbrains.plugins.gradle.testutil.GradleProjectBuilder
 import org.jetbrains.plugins.gradle.testutil.IntellijProjectBuilder
 import org.jetbrains.plugins.gradle.testutil.ProjectStructureChecker
+import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.picocontainer.defaults.DefaultPicoContainer
 import org.jetbrains.plugins.gradle.diff.*
 import static org.junit.Assert.assertEquals
-import com.intellij.testFramework.SkipInHeadlessEnvironment
+import com.intellij.openapi.util.Disposer
 
 /**
  * @author Denis Zhdanov
@@ -32,6 +34,7 @@ public class GradleProjectStructureChangesModelTest {
   def changes
   def treeChecker
   def container
+  Disposable disposable = [dispose: { }] as Disposable
   
   @Before
   public void setUp() {
@@ -50,7 +53,12 @@ public class GradleProjectStructureChangesModelTest {
     
     changesModel = container.getComponentInstance(GradleProjectStructureChangesModel) as GradleProjectStructureChangesModel
     def applicationInfo = [getSmallIconUrl: {"/nodes/ideaProject.png"}] as ApplicationInfoEx
-    ApplicationManager.setApplication([getComponent: { applicationInfo } ] as Application, [dispose: { }] as Disposable)
+    ApplicationManager.setApplication([getComponent: { applicationInfo } ] as Application, disposable)
+  }
+
+  @After
+  public void tearDown() {
+    Disposer.dispose(disposable)
   }
   
   @Test
