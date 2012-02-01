@@ -31,7 +31,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
@@ -158,7 +157,8 @@ public abstract class AndroidRunConfigurationBase extends ModuleBasedConfigurati
     TARGET_SELECTION_MODE = mode.name();
   }
 
-  private static boolean fillRuntimeAndTestDependencies(@NotNull Module module, @NotNull Map<AndroidFacet, String> module2PackageName) {
+  private static boolean fillRuntimeAndTestDependencies(@NotNull Module module,
+                                                        @NotNull Map<AndroidFacet, String> module2PackageName) {
     for (OrderEntry entry : ModuleRootManager.getInstance(module).getOrderEntries()) {
       if (entry instanceof ModuleOrderEntry) {
         ModuleOrderEntry moduleOrderEntry = (ModuleOrderEntry)entry;
@@ -167,8 +167,7 @@ public abstract class AndroidRunConfigurationBase extends ModuleBasedConfigurati
           AndroidFacet depFacet = AndroidFacet.getInstance(depModule);
           if (depFacet != null &&
               !module2PackageName.containsKey(depFacet) &&
-              !depFacet.getConfiguration().LIBRARY_PROJECT &&
-              moduleOrderEntry.getScope() != DependencyScope.COMPILE) {
+              !depFacet.getConfiguration().LIBRARY_PROJECT) {
             String packageName = getPackageName(depFacet);
             if (packageName == null) {
               return false;
