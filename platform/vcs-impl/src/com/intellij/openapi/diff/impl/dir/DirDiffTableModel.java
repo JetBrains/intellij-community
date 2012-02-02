@@ -109,6 +109,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
         case EQUAL:
           if (!mySettings.showEqual) i.remove();
           break;
+        case ERROR:
       }
     }
 

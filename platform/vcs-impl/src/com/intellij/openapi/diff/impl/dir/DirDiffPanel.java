@@ -68,6 +68,7 @@ public class DirDiffPanel implements Disposable {
   private JPanel myRootPanel;
   private JPanel myFilterPanel;
   private JBLabel myFilterLabel;
+  private JPanel myFilesPanel;
   private FilterComponent myFilter;
   private final DirDiffTableModel myModel;
   public JLabel myErrorLabel;
@@ -95,7 +96,7 @@ public class DirDiffPanel implements Disposable {
 
     final DirDiffTableCellRenderer renderer = new DirDiffTableCellRenderer(myTable);
     myTable.setDefaultRenderer(Object.class, renderer);
-    myTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    myTable.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
     final Project project = myModel.getProject();
     myTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       @Override
@@ -106,10 +107,12 @@ public class DirDiffPanel implements Disposable {
         final DirDiffElement first = myModel.getElementAt(firstIndex);
         if (last == null || first == null) return;
         if (last.isSeparator()) {
-          myTable.getSelectionModel().setLeadSelectionIndex(lastIndex + ((lastIndex < firstIndex) ? 1 : -1));
+          final int ind = lastIndex + ((lastIndex < firstIndex) ? 1 : -1);
+          myTable.getSelectionModel().addSelectionInterval(ind, ind);
         }
         else if (first.isSeparator()) {
-          myTable.getSelectionModel().setLeadSelectionIndex(firstIndex + ((firstIndex < lastIndex) ? 1 : -1));
+          final int ind = firstIndex + ((firstIndex < lastIndex) ? 1 : -1);
+          myTable.getSelectionModel().addSelectionInterval(ind, ind);
         }
         else {
           update(false);
@@ -121,7 +124,7 @@ public class DirDiffPanel implements Disposable {
       new AnAction("Change diff operation") {
         @Override
         public void actionPerformed(AnActionEvent e) {
-          changeOperationForSelectedRow();
+          changeOperationForSelection();
         }
       }.registerCustomShortcutSet(CustomShortcutSet.fromString("SPACE"), myTable);
       myTable.addMouseListener(new MouseAdapter() {
@@ -132,7 +135,7 @@ public class DirDiffPanel implements Disposable {
             final int col = myTable.columnAtPoint(e.getPoint());
 
             if (row != -1 && col == ((myTable.getColumnCount() - 1) / 2)) {
-              changeOperationForSelectedRow();
+              changeOperationForSelection();
             }
           }
         }        
@@ -142,9 +145,11 @@ public class DirDiffPanel implements Disposable {
       @Override
       public void keyPressed(KeyEvent e) {
         final int keyCode = e.getKeyCode();
-        final int rows = myTable.getRowCount();
-        int row = myTable.getSelectedRow();
-        if (keyCode == KeyEvent.VK_DOWN && row != rows - 1) {
+        final int rowCount = myTable.getRowCount();
+        int row = myTable.getSelectionModel().getLeadSelectionIndex();
+        final int[] rows = myTable.getSelectedRows();
+        if (rows.length == 0) return;
+        if (keyCode == KeyEvent.VK_DOWN && row < rowCount - 1) {
           row++;
           final DirDiffElement element = myModel.getElementAt(row);
           if (element == null) return;
@@ -152,7 +157,7 @@ public class DirDiffPanel implements Disposable {
             row++;
           }
         }
-        else if (keyCode == KeyEvent.VK_UP && row != 0) {
+        else if (keyCode == KeyEvent.VK_UP && row > 0) {
           row--;
           final DirDiffElement element = myModel.getElementAt(row);
           if (element == null) return;
@@ -167,7 +172,7 @@ public class DirDiffPanel implements Disposable {
         if (element == null) return;
         if (!element.isSeparator()) {
           e.consume();
-          myTable.changeSelection(row, (myModel.getColumnCount() - 1) / 2, false, false);
+          myTable.changeSelection(row, (myModel.getColumnCount() - 1) / 2, false, e.isShiftDown());
         }
       }
     });
@@ -190,9 +195,14 @@ public class DirDiffPanel implements Disposable {
     final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("DirDiff", actions, true);
     registerCustomShortcuts(actions, myTable);
     myToolBarPanel.add(toolbar.getComponent(), BorderLayout.CENTER);
+    final JBLabel label = new JBLabel("Use Space button or mouse click to change operation for the selected elements. Enter to perform.", SwingConstants.CENTER);
+    label.setForeground(UIUtil.getInactiveTextColor());
+    UIUtil.applyStyle(UIUtil.ComponentStyle.MINI, label);
+    myFilesPanel.add(label, BorderLayout.SOUTH);
     final JBLoadingPanel loadingPanel = new JBLoadingPanel(new BorderLayout(), wnd.getDisposable());
     loadingPanel.addListener(new JBLoadingPanelListener.Adapter() {
       boolean showHelp = true;
+
       @Override
       public void onLoadingFinish() {
         if (showHelp && myModel.isOperationsEnabled() && myModel.getRowCount() > 0) {
@@ -200,7 +210,7 @@ public class DirDiffPanel implements Disposable {
           if (count < 3) {
             JBPopupFactory.getInstance().createBalloonBuilder(new JLabel(" Use Space button to change operation"))
               .setFadeoutTime(5000)
-              .setContentInsets(new Insets(15,15,15,15))
+              .setContentInsets(new Insets(15, 15, 15, 15))
               .createBalloon().show(new RelativePoint(myTable, new Point(myTable.getWidth() / 2, 0)), Balloon.Position.above);
             PropertiesComponent.getInstance().setValue("dir.diff.space.button.info", String.valueOf(count + 1));
           }
@@ -308,13 +318,14 @@ public class DirDiffPanel implements Disposable {
     }
   }
 
-  private void changeOperationForSelectedRow() {
-    final int row = myTable.getSelectedRow();
-    if (row != -1) {
-      final DirDiffElement element = myModel.getElementAt(row);
-      if (element != null) {
-        element.setNextOperation();
-        myModel.fireTableRowsUpdated(row, row);
+  private void changeOperationForSelection() {
+    for (int row : myTable.getSelectedRows()) {
+      if (row != -1) {
+        final DirDiffElement element = myModel.getElementAt(row);
+        if (element != null) {
+          element.setNextOperation();
+          myModel.fireTableRowsUpdated(row, row);
+        }
       }
     }
   }
