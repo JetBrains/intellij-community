@@ -15,9 +15,6 @@
  */
 package com.intellij.internal.statistic.beans;
 
-
-import com.intellij.util.containers.hash.HashMap;
-
 import java.util.*;
 
 /**
