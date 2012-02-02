@@ -47,6 +47,7 @@ import com.intellij.psi.search.FileTypeIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.ui.update.Update;
 import org.jetbrains.android.AndroidProjectComponent;
 import org.jetbrains.android.dom.resources.Attr;
 import org.jetbrains.android.dom.resources.DeclareStyleable;
@@ -352,13 +353,26 @@ public class AndroidCompileUtil {
   }
 
   public static void generate(final Module module, final GeneratingCompiler compiler) {
+    final AndroidFacet facet = AndroidFacet.getInstance(module);
+
+    if (facet != null) {
+      facet.scheduleGeneratingActivity(new Update(Pair.create(module, compiler.getClass())) {
+        @Override
+        public void run() {
+          doGenerate(module, compiler);
+        }
+      });
+    }
+  }
+
+  private static void doGenerate(final Module module, final GeneratingCompiler compiler) {
     final Project project = module.getProject();
     final AndroidProjectComponent component = ApplicationManager.getApplication().runReadAction(new Computable<AndroidProjectComponent>() {
       @Nullable
       @Override
       public AndroidProjectComponent compute() {
         return !project.isDisposed() ? project.getComponent(AndroidProjectComponent.class) : null;
-      }
+        }
     });
     if (component == null) {
       return;
@@ -693,33 +707,33 @@ public class AndroidCompileUtil {
     }
 
     for (final Resources resources : manager.getResourceElements()) {
-      waitForSmartMode(project);
+        waitForSmartMode(project);
 
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        @Override
-        public void run() {
-          if (!resources.isValid() || facet.getModule().isDisposed() || project.isDisposed()) {
-            return;
-          }
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          @Override
+          public void run() {
+            if (!resources.isValid() || facet.getModule().isDisposed() || project.isDisposed()) {
+              return;
+            }
 
-          for (final Attr attr : resources.getAttrs()) {
-            final String name = attr.getName().getValue();
+            for (final Attr attr : resources.getAttrs()) {
+              final String name = attr.getName().getValue();
 
-            if (name != null) {
-              resourceSet.add(new ResourceEntry(ResourceType.ATTR.getName(), name));
+              if (name != null) {
+                resourceSet.add(new ResourceEntry(ResourceType.ATTR.getName(), name));
+              }
+            }
+
+            for (final DeclareStyleable styleable : resources.getDeclareStyleables()) {
+              final String name = styleable.getName().getValue();
+
+              if (name != null) {
+                resourceSet.add(new ResourceEntry(ResourceType.DECLARE_STYLEABLE.getName(), name));
+              }
             }
           }
-
-          for (final DeclareStyleable styleable : resources.getDeclareStyleables()) {
-            final String name = styleable.getName().getValue();
-
-            if (name != null) {
-              resourceSet.add(new ResourceEntry(ResourceType.DECLARE_STYLEABLE.getName(), name));
-            }
-          }
-        }
-      });
-    }
+        });
+      }
 
     waitForSmartMode(project);
 

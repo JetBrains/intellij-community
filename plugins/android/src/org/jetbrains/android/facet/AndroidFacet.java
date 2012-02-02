@@ -69,6 +69,8 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.util.ui.update.Update;
 import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.DomElement;
 import org.jetbrains.android.compiler.*;
@@ -107,10 +109,14 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
   private final Map<String, Map<String, PsiClass>> myClassMaps = new HashMap<String, Map<String, PsiClass>>();
 
   private final Object myClassMapLock = new Object();
+  
+  private final MergingUpdateQueue mySourcesAutogeneratingQueue;
 
   public AndroidFacet(@NotNull Module module, String name, @NotNull AndroidFacetConfiguration configuration) {
     super(getFacetType(), module, name, configuration, null);
     configuration.setFacet(this);
+
+    mySourcesAutogeneratingQueue = new MergingUpdateQueue("AndroidSourcesAutogeneratingQueue", 300, true, null, this, null, false);
   }
 
   @Nullable
@@ -709,5 +715,10 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
     }
     String moduleDirPath = getModuleDirPath();
     return moduleDirPath != null ? FileUtil.toSystemDependentName(moduleDirPath + path) : null;
+  }
+
+  public void scheduleGeneratingActivity(@NotNull Update update) {
+    mySourcesAutogeneratingQueue.flush();
+    mySourcesAutogeneratingQueue.queue(update);
   }
 }
