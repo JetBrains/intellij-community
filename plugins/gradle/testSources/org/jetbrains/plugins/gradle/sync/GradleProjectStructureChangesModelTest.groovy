@@ -1,16 +1,13 @@
 package org.jetbrains.plugins.gradle.sync;
 
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.SkipInHeadlessEnvironment
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.plugins.gradle.testutil.ChangeBuilder
 import org.jetbrains.plugins.gradle.testutil.GradleProjectBuilder
 import org.jetbrains.plugins.gradle.testutil.IntellijProjectBuilder
 import org.jetbrains.plugins.gradle.testutil.ProjectStructureChecker
-import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.picocontainer.defaults.DefaultPicoContainer
@@ -31,7 +28,6 @@ public class GradleProjectStructureChangesModelTest {
   def changes
   def treeChecker
   def container
-  Disposable disposable = [dispose: { }] as Disposable
   
   @Before
   public void setUp() {
@@ -51,13 +47,8 @@ public class GradleProjectStructureChangesModelTest {
     changesModel = container.getComponentInstance(GradleProjectStructureChangesModel) as GradleProjectStructureChangesModel
   }
 
-  @After
-  public void tearDown() {
-    Disposer.dispose(disposable)
-  }
-  
   @Test
-  public void mergeGradleLocalToIntellij() {
+  public void processObsoleteGradleLocalChange() {
     // Configure initial projects state.
     init(
       gradle {
