@@ -43,7 +43,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel {
-  private final Project myProject;
+  @Nullable private final Project myProject;
   private final Component myContextComponent;
 
   private final ActionManager myActionManager = ActionManager.getInstance();
@@ -58,7 +58,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel {
   private Map<AnAction, String> myActionsMap = new HashMap<AnAction, String>();
 
 
-  public GotoActionModel(Project project, final Component component) {
+  public GotoActionModel(@Nullable Project project, final Component component) {
     myProject = project;
     myContextComponent = component;
     final ActionGroup mainMenu = (ActionGroup)myActionManager.getActionOrStub(IdeActions.GROUP_MAIN_MENU);
@@ -86,13 +86,17 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel {
   }
 
   public boolean loadInitialCheckBoxState() {
-    PropertiesComponent propertiesComponent = PropertiesComponent.getInstance(myProject);
+    PropertiesComponent propertiesComponent = getPropertiesStorage();
     return Boolean.TRUE.toString().equals(propertiesComponent.getValue("GoToAction.toSaveAllIncluded")) &&
            propertiesComponent.isTrueValue("GoToAction.allIncluded");
   }
 
+  private PropertiesComponent getPropertiesStorage() {
+    return myProject != null ? PropertiesComponent.getInstance(myProject) : PropertiesComponent.getInstance();
+  }
+
   public void saveInitialCheckBoxState(boolean state) {
-    PropertiesComponent propertiesComponent = PropertiesComponent.getInstance(myProject);
+    PropertiesComponent propertiesComponent = getPropertiesStorage();
     if (Boolean.TRUE.toString().equals(propertiesComponent.getValue("GoToAction.toSaveAllIncluded"))) {
       propertiesComponent.setValue("GoToAction.allIncluded", Boolean.toString(state));
     }
