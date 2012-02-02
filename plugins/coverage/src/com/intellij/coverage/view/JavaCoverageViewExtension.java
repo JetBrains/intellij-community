@@ -13,10 +13,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * User: anna
@@ -152,20 +149,24 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
   @Override
   public List<AbstractTreeNode> createTopLevelNodes() {
     final List<AbstractTreeNode> topLevelNodes = new ArrayList<AbstractTreeNode>();
+    final LinkedHashSet<PsiPackage> packages = new LinkedHashSet<PsiPackage>();
+    final LinkedHashSet<PsiClass> classes = new LinkedHashSet<PsiClass>();
     for (CoverageSuite suite : mySuitesBundle.getSuites()) {
-      final List<PsiPackage> packages = ((JavaCoverageSuite)suite).getCurrentSuitePackages(myProject);
-      for (PsiPackage aPackage : packages) {
-        final GlobalSearchScope searchScope = getSearchScope(mySuitesBundle, myProject);
-        if (aPackage.getDirectories(searchScope).length == 0) continue;
-        if (aPackage.getClasses(searchScope).length == 0) continue;
-        final CoverageListNode node = new CoverageListNode(aPackage, mySuitesBundle, myStateBean);
-        topLevelNodes.add(node);
-        collectSubPackages(topLevelNodes, aPackage, mySuitesBundle, myStateBean);
-      }
-      final List<PsiClass> classes = ((JavaCoverageSuite)suite).getCurrentSuiteClasses(myProject);
-      for (PsiClass aClass : classes) {
-        topLevelNodes.add(new CoverageListNode(aClass, mySuitesBundle, myStateBean));
-      }
+      packages.addAll(((JavaCoverageSuite)suite).getCurrentSuitePackages(myProject));
+      classes.addAll(((JavaCoverageSuite)suite).getCurrentSuiteClasses(myProject));
+    }
+
+    for (PsiPackage aPackage : packages) {
+      final GlobalSearchScope searchScope = getSearchScope(mySuitesBundle, myProject);
+      if (aPackage.getDirectories(searchScope).length == 0) continue;
+      if (aPackage.getClasses(searchScope).length == 0) continue;
+      final CoverageListNode node = new CoverageListNode(aPackage, mySuitesBundle, myStateBean);
+      topLevelNodes.add(node);
+      collectSubPackages(topLevelNodes, aPackage, mySuitesBundle, myStateBean);
+    }
+
+    for (PsiClass aClass : classes) {
+      topLevelNodes.add(new CoverageListNode(aClass, mySuitesBundle, myStateBean));
     }
     return topLevelNodes;
   }
