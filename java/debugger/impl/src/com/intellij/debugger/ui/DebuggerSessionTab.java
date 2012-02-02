@@ -137,6 +137,8 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
     stepping.add(actionManager.getAction(DebuggerActions.POP_FRAME));
     stepping.addSeparator();
     stepping.add(actionManager.getAction(DebuggerActions.RUN_TO_CURSOR));
+    stepping.addSeparator();
+    stepping.add(actionManager.getAction(DebuggerActions.EVALUATE_EXPRESSION));
     myUi.getOptions().setTopToolbar(stepping, ActionPlaces.DEBUGGER_TOOLBAR);
 
 
@@ -168,11 +170,6 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
                                       XDebuggerUIConstants.VARIABLES_TAB_ICON, null);
     vars.setCloseable(false);
     vars.setAlertIcon(breakpointAlert);
-    final DefaultActionGroup varsGroup = new DefaultActionGroup();
-    addAction(varsGroup, DebuggerActions.EVALUATE_EXPRESSION);
-    varsGroup.add(new WatchLastMethodReturnValueAction());
-    varsGroup.add(new AutoVarsSwitchAction());
-    vars.setActions(varsGroup, ActionPlaces.DEBUGGER_TOOLBAR, myVariablesPanel.getTree());
     myUi.addContent(vars, 0, PlaceInGrid.center, false);
 
     // threads
@@ -301,14 +298,16 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
     addAction(group, DebuggerActions.DUMP_THREADS);
     group.addSeparator();
 
-    final AnAction[] layout = myUi.getOptions().getLayoutActionsList();
-    final AnAction layoutGroup = myUi.getOptions().getLayoutActions();
+    group.add(myUi.getOptions().getLayoutActions());
+
+    final AnAction[] commonSettings = myUi.getOptions().getSettingsActionsList();
+    final AnAction commonSettingsList = myUi.getOptions().getSettingsActions();
 
     final DefaultActionGroup settings = new DefaultActionGroup("DebuggerSettings", true) {
       @Override
       public void update(AnActionEvent e) {
         e.getPresentation().setText(ActionsBundle.message("group.XDebugger.settings.text"));
-        e.getPresentation().setIcon(layoutGroup.getTemplatePresentation().getIcon());
+        e.getPresentation().setIcon(commonSettingsList.getTemplatePresentation().getIcon());
       }
 
       @Override
@@ -316,12 +315,15 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
         return true;
       }
     };
-    for (AnAction each : layout) {
+    for (AnAction each : commonSettings) {
       settings.add(each);
     }
-    if (layout.length > 0) {
+    if (commonSettings.length > 0) {
       settings.addSeparator();
     }
+    settings.add(new WatchLastMethodReturnValueAction());
+    settings.add(new AutoVarsSwitchAction());
+    settings.addSeparator();
     addActionToGroup(settings, XDebuggerActions.AUTO_TOOLTIP);
 
     group.add(settings);
@@ -563,7 +565,7 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
     private final String myMyTextDisable;
 
     public WatchLastMethodReturnValueAction() {
-      super("", DebuggerBundle.message("action.watch.method.return.value.description"), WATCH_RETURN_VALUES_ICON);
+      super("", DebuggerBundle.message("action.watch.method.return.value.description"), null);
       myWatchesReturnValues = DebuggerSettings.getInstance().WATCH_RETURN_VALUES;
       myTextEnable = DebuggerBundle.message("action.watches.method.return.value.enable");
       myMyTextDisable = DebuggerBundle.message("action.watches.method.return.value.disable");
