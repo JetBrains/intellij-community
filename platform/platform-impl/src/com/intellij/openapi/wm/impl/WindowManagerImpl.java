@@ -444,7 +444,8 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     myWindowWatcher.dispatchComponentEvent(e);
   }
 
-  public final Window suggestParentWindow(final Project project) {
+  @Nullable
+  public final Window suggestParentWindow(@Nullable final Project project) {
     return myWindowWatcher.suggestParentWindow(project);
   }
 
@@ -632,7 +633,8 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     return myWindowWatcher.getFocusedComponent(window);
   }
 
-  public final Component getFocusedComponent(final Project project) {
+  @Nullable
+  public final Component getFocusedComponent(@Nullable final Project project) {
     return myWindowWatcher.getFocusedComponent(project);
   }
 

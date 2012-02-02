@@ -66,11 +66,15 @@ public abstract class GotoActionBase extends AnAction {
     final Presentation presentation = event.getPresentation();
     final DataContext dataContext = event.getDataContext();
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-    presentation.setEnabled(!getClass().equals (myInAction) && project != null && hasContributors(dataContext));
+    presentation.setEnabled(!getClass().equals (myInAction) && (!requiresProject() || project != null) && hasContributors(dataContext));
     presentation.setVisible(hasContributors(dataContext));
   }
 
   protected boolean hasContributors(final DataContext dataContext) {
+    return true;
+  }
+
+  protected boolean requiresProject() {
     return true;
   }
 
