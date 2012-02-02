@@ -45,7 +45,8 @@ public class CoreJarHandler extends JarHandlerBase {
   private CoreJarVirtualFile getOrCreateFile(EntryInfo info, Map<EntryInfo, CoreJarVirtualFile> entries) {
     CoreJarVirtualFile answer = entries.get(info);
     if (answer == null) {
-      answer = new CoreJarVirtualFile(this, info, getOrCreateFile(info.parent, entries));
+      EntryInfo parentEntry = info.parent;
+      answer = new CoreJarVirtualFile(this, info, parentEntry != null ? getOrCreateFile(parentEntry, entries) : null);
       entries.put(info, answer);
     }
 
