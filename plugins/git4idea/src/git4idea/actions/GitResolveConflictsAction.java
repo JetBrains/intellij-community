@@ -15,6 +15,7 @@
  */
 package git4idea.actions;
 
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
@@ -91,4 +92,11 @@ public class GitResolveConflictsAction extends GitAction {
     return false;
   }
 
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    super.update(e);
+    if (ActionPlaces.isPopupPlace(e.getPlace())) {
+      e.getPresentation().setVisible(e.getPresentation().isEnabled());
+    }
+  }
 }
