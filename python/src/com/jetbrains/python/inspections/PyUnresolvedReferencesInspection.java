@@ -40,8 +40,9 @@ import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.documentation.DocStringParameterReference;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.impl.references.PyImportReference;
 import com.jetbrains.python.psi.impl.PyImportStatementNavigator;
+import com.jetbrains.python.psi.impl.PyImportedModule;
+import com.jetbrains.python.psi.impl.references.PyImportReference;
 import com.jetbrains.python.psi.impl.references.PyOperatorReference;
 import com.jetbrains.python.psi.resolve.ImportedResolveResult;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -452,10 +453,15 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
 
     private static boolean ignoreUnresolvedMemberForType(PyType qtype, PsiReference reference, String refText) {
       if (qtype instanceof PyNoneType || qtype instanceof PyTypeReference ||
-          (qtype instanceof PyUnionType && ((PyUnionType)qtype).isWeak()) ||
-          (qtype instanceof PyImportedModuleType)) {
+          (qtype instanceof PyUnionType && ((PyUnionType)qtype).isWeak())) {
         // this almost always means that we don't know the type, so don't show an error in this case
         return true;
+      }
+      if (qtype instanceof PyImportedModuleType) {
+        PyImportedModule module = ((PyImportedModuleType)qtype).getImportedModule();
+        if (module.resolve() == null) {
+          return true;
+        }
       }
       if (qtype instanceof PyClassType) {
         PyClass cls = ((PyClassType)qtype).getPyClass();

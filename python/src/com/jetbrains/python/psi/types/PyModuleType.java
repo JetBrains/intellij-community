@@ -5,13 +5,17 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyDynamicMember;
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.impl.ResolveResultList;
@@ -42,6 +46,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
   }
 
   @Nullable
+  @Override
   public List<? extends RatedResolveResult> resolveMember(final String name,
                                                           @Nullable PyExpression location,
                                                           AccessDirection direction,
@@ -57,36 +62,70 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
       return ResolveResultList.to(attribute);
     }
     if (location != null && isPackage(myModule)) {
-      final PsiFile file = location.getContainingFile();
-      if (file instanceof PyFile) {
-        final PyQualifiedName packageQName = ResolveImportUtil.findCanonicalImportPath(myModule, location);
-        if (packageQName != null) {
-          final List<PyImportElement> imports = ((PyFile)file).getImportTargets();
-          for (PyImportElement importElement : imports) {
-            final PyStatement stmt = importElement.getContainingImportStatement();
-            PyQualifiedName importedQName = null;
-            if (stmt instanceof PyFromImportStatement) {
-              importedQName = ((PyFromImportStatement)stmt).getImportSourceQName();
-            }
-            else if (stmt instanceof PyImportStatement) {
-              importedQName = importElement.getImportedQName();
-            }
-            final PyQualifiedName submoduleQName = packageQName.append(name);
-            if (importedQName != null && importedQName.matchesPrefix(submoduleQName)) {
-              final PsiElement submodule = ResolveImportUtil.resolveChild(myModule, name, myModule, null, null, false, true);
-              if (submodule != null) {
-                final ResolveResultList results = new ResolveResultList();
-                results.poke(submodule, RatedResolveResult.RATE_NORMAL);
-                results.add(new ImportedResolveResult(submodule, RatedResolveResult.RATE_LOW,
-                                                      Collections.<PsiElement>singletonList(importElement)));
-                return results;
-              }
-            }
+      return resolveImplicitPackageMember(name, location);
+    }
+    return null;
+  }
+
+  @Nullable
+  private List<? extends RatedResolveResult> resolveImplicitPackageMember(@NotNull String name, @NotNull PyExpression location) {
+    final ScopeOwner owner = ScopeUtil.getScopeOwner(location);
+    final PyQualifiedName packageQName = ResolveImportUtil.findCanonicalImportPath(myModule, location);
+    if (owner != null && packageQName != null) {
+      for (PyImportElement importElement : getVisibleImports(owner)) {
+        final PyStatement stmt = importElement.getContainingImportStatement();
+        PyQualifiedName importedQName = null;
+        PyQualifiedName implicitSubmoduleQName = null;
+        if (stmt instanceof PyFromImportStatement) {
+          final PyFromImportStatement fromImportStatement = (PyFromImportStatement)stmt;
+          importedQName = fromImportStatement.getImportSourceQName();
+          final String visibleName = importElement.getVisibleName();
+          if (importedQName != null) {
+            implicitSubmoduleQName = importedQName.append(visibleName);
+          }
+        }
+        else if (stmt instanceof PyImportStatement) {
+          importedQName = importElement.getImportedQName();
+        }
+        final PyQualifiedName resolvedQName = packageQName.append(name);
+        if ((importedQName != null && importedQName.matchesPrefix(resolvedQName)) ||
+            (implicitSubmoduleQName != null && implicitSubmoduleQName.equals(resolvedQName))) {
+          final PsiElement submodule = ResolveImportUtil.resolveChild(myModule, name, myModule, null, null, false, true);
+          if (submodule != null) {
+            final ResolveResultList results = new ResolveResultList();
+            results.add(new ImportedResolveResult(submodule, RatedResolveResult.RATE_NORMAL,
+                                                  Collections.<PsiElement>singletonList(importElement)));
+            return results;
           }
         }
       }
     }
-    return Collections.emptyList();
+    return null;
+  }
+
+  @NotNull
+  private static List<PyImportElement> getVisibleImports(@NotNull ScopeOwner owner) {
+    final List<PyImportElement> visibleImports = new ArrayList<PyImportElement>();
+    PyResolveUtil.scopeCrawlUp(new PsiScopeProcessor() {
+      @Override
+      public boolean execute(PsiElement element, ResolveState state) {
+        if (element instanceof PyImportElement) {
+          visibleImports.add((PyImportElement)element);
+        }
+        return true;
+      }
+
+      @Nullable
+      @Override
+      public <T> T getHint(Key<T> hintKey) {
+        return null;
+      }
+
+      @Override
+      public void handleEvent(Event event, @Nullable Object associated) {
+      }
+    }, owner, null);
+    return visibleImports;
   }
 
   private static boolean isPackage(@NotNull PyFile file) {
