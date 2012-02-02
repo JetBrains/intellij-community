@@ -38,6 +38,7 @@ public class DirDiffSettings {
   public boolean showNewOnTarget = true;
   public boolean showCompareModes = true;
   public CompareMode compareMode = CompareMode.CONTENT;
+  public double compareTimestampAccuracy = 0;
 
   public boolean showInFrame = true; // in dialog otherwise
 
