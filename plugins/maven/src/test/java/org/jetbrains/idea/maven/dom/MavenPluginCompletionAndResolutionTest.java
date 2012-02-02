@@ -71,7 +71,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  </plugins>" +
                      "</build>");
 
-    assertCompletionVariants(myProjectPom, "maven-compiler-plugin", "maven-war-plugin", "maven-surefire-plugin", "maven-eclipse-plugin", "maven-resources-plugin");
+    assertCompletionVariants(myProjectPom, "maven-compiler-plugin", "maven-war-plugin", "maven-surefire-plugin", "maven-eclipse-plugin");
   }
 
   public void testArtifactWithoutGroupCompletion() throws Exception {
@@ -92,7 +92,6 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                              "maven-war-plugin",
                              "build-helper-maven-plugin",
                              "maven-surefire-plugin",
-                             "maven-resources-plugin",
                              "maven-eclipse-plugin");
   }
 
@@ -903,59 +902,4 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
 
     assertCompletionVariants(myProjectPom);
   }
-
-  public void testRequiringParameter() throws Throwable {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<build>" +
-                     "  <plugins>" +
-                     "    <plugin>\n" +
-                     "      <artifactId>maven-resources-plugin</artifactId>\n" +
-                     "      <configuration>\n" +
-                     "        <<error descr=\"Value must not be empty\">outputDirectory</error>/>\n" +
-                     "      </configuration>\n" +
-                     "    </plugin>\n" +
-
-                     "    <plugin>\n" +
-                     "      <artifactId>maven-resources-plugin</artifactId>\n" +
-                     "" +
-                     "      <configuration>\n" +
-                     "        <outputDirectory>aaa</outputDirectory>\n" +
-                     "      </configuration>\n" +
-                     "    </plugin>\n" +
-
-                     "    <plugin>\n" +
-                     "      <artifactId>maven-resources-plugin</artifactId>\n" +
-                     "" +
-                     "      <configuration>\n" +
-                     "      </configuration>\n" +
-                     "    </plugin>\n" +
-
-                     "    <plugin>\n" +
-                     "      <artifactId>maven-resources-plugin</artifactId>\n" +
-                     "      <executions>" +
-                     "        <execution>" +
-                     "          <goals>  " +
-                     "            <goal>copy-resources</goal>" +
-                     "            <goal>resources</goal>" +
-                     "          </goals>  " +
-                     "          <<error descr=\"'outputDirectory' child tag should be defined\">configuration</error>>\n" +
-                     "          </configuration>\n" +
-                     "          " +
-                     "        </execution>" +
-                     "      </executions>" +
-                     "" +
-                     "      <configuration>\n" +
-                     "      </configuration>\n" +
-                     "    </plugin>\n" +
-
-
-                     "  </plugins>" +
-                     "</build>");
-
-    checkHighlighting();
-  }
-
 }
