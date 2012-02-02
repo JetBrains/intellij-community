@@ -156,7 +156,7 @@ abstract class GitBranchOperation {
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
-        String description = "<html>" + message + ".<br/>" + getRollbackProposal() + "</html>";
+        String description = "<html>" + message + "<br/>" + getRollbackProposal() + "</html>";
         ok.set(Messages.OK ==
                MessageManager.showYesNoDialog(myProject, description, title, "Rollback", "Don't rollback", Messages.getErrorIcon()));
       }
