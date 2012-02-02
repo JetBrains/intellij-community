@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.Extensions;
@@ -283,14 +284,15 @@ public class MavenIndicesManager {
 
   private static MavenGeneralSettings getMavenSettings(@NotNull final Project project, @NotNull MavenProgressIndicator indicator)
     throws MavenProcessCanceledException {
+    MavenGeneralSettings settings;
 
-    MavenGeneralSettings settings = ApplicationManager.getApplication().runReadAction(new Computable<MavenGeneralSettings>() {
-      @Override
-      public MavenGeneralSettings compute() {
-        if (project.isDisposed()) return null;
-        return MavenProjectsManager.getInstance(project).getGeneralSettings();
-      }
-    });
+    AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
+    try {
+      settings = project.isDisposed() ? null : MavenProjectsManager.getInstance(project).getGeneralSettings();
+    }
+    finally {
+      accessToken.finish();
+    }
 
     if (settings == null) {
       // project was closed
