@@ -15,47 +15,41 @@
  */
 package org.jetbrains.idea.maven.server;
 
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
+import com.intellij.openapi.util.SystemInfo;
+
+import java.util.*;
 
 public class MavenServerUtil {
-  private static volatile Properties mySystemPropertiesCache;
+  private static final Properties mySystemPropertiesCache;
+
+  static {
+    Properties res = new Properties();
+    res.putAll(System.getProperties());
+    
+    for (Iterator<Object> itr = res.keySet().iterator(); itr.hasNext(); ) {
+      String propertyName = itr.next().toString();
+      if (propertyName.startsWith("idea.")) {
+        itr.remove();
+      }
+    }
+
+    for (Map.Entry<String, String> entry : System.getenv().entrySet()) {
+      String key = entry.getKey();
+
+      if (isMagicalProperty(key)) continue;
+
+      if (SystemInfo.isWindows) {
+        key = key.toUpperCase();
+      }
+
+      res.setProperty("env." + key, entry.getValue());
+    }
+
+    mySystemPropertiesCache = res;
+  }
 
   public static Properties collectSystemProperties() {
-    if (mySystemPropertiesCache == null) {
-      Properties result = new Properties();
-      result.putAll(getSystemProperties());
-
-      Properties envVars = getEnvProperties();
-      for (Map.Entry<Object, Object> each : envVars.entrySet()) {
-        result.setProperty("env." + each.getKey().toString(), each.getValue().toString());
-      }
-      mySystemPropertiesCache = result;
-    }
-
     return mySystemPropertiesCache;
-  }
-
-  @SuppressWarnings({"unchecked"})
-  private static Properties getSystemProperties() {
-    Properties result = (Properties)System.getProperties().clone();
-    for (String each : new HashSet<String>((Set)result.keySet())) {
-      if (each.startsWith("idea.")) {
-        result.remove(each);
-      }
-    }
-    return result;
-  }
-
-  private static Properties getEnvProperties() {
-    Properties result = new Properties();
-    for (Map.Entry<String, String> each : System.getenv().entrySet()) {
-      if (isMagicalProperty(each.getKey())) continue;
-      result.put(each.getKey(), each.getValue());
-    }
-    return result;
   }
 
   private static boolean isMagicalProperty(String key) {
