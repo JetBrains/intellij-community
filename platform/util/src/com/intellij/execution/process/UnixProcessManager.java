@@ -178,6 +178,9 @@ public class UnixProcessManager {
     else if (SystemInfo.isMac) {
       return new String[]{"ps", "-ax", "-E", "-o", commandLineOnly ? "command" : "ppid,pid,command"};
     }
+    else if (SystemInfo.isFreeBSD) {
+      return new String[]{"ps", "-ax", "-e", "-o", commandLineOnly ? "command" : "ppid,pid,command"};
+    }
     else {
       throw new IllegalStateException(System.getProperty("os.name") + " is not supported.");
     }
