@@ -133,6 +133,10 @@ class Test {
     assertTrue closureStartFold.expanded
     assertTrue closureEndFold.expanded
   }
+
+  public void testCustomFolding() {
+    myFixture.testFolding("$PathManagerEx.testDataPath/codeInsight/folding/${getTestName(false)}.java");
+  }
   
   private def configure(String text) {
     myFixture.configureByText("a.java", text)
