@@ -97,8 +97,6 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
                                          XDebuggerBundle.message("debugger.session.tab.watches.title"), XDebuggerUIConstants.WATCHES_TAB_ICON, null);
     watchesContent.setCloseable(false);
 
-    ActionGroup group = getActionGroup(XDebuggerActions.WATCHES_TREE_TOOLBAR_GROUP);
-    watchesContent.setActions(group, ActionPlaces.DEBUGGER_TOOLBAR, myWatchesView.getTree());
     return watchesContent;
   }
 
