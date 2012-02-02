@@ -181,10 +181,6 @@ public class UnixProcessManager {
   }
 
   public static String[] getPSCmd(boolean commandLineOnly) {
-    return getPSCmd(commandLineOnly, false);
-  }
-
-  public static String[] getPSCmd(boolean commandLineOnly, boolean isShortenCommand) {
     String psCommand = "/bin/ps";
     if (!new File(psCommand).isFile()) {
       psCommand = "ps";
@@ -192,9 +188,13 @@ public class UnixProcessManager {
     if (SystemInfo.isLinux) {
       return new String[]{psCommand, "-e", "--format", commandLineOnly ? "%a" : "%P%p%a"};
     }
+<<<<<<< HEAD
     else if (SystemInfo.isMac || SystemInfo.isFreeBSD) {
-      final String command = isShortenCommand ? "comm" : "command";
-      return new String[]{psCommand, "-ax", "-o", commandLineOnly ? command : "ppid,pid," + command};
+      return new String[]{psCommand, "-ax", "-o", commandLineOnly ? "command" : "ppid,pid,command"};
+=======
+    else if (SystemInfo.isMac) {
+      return new String[]{"ps", "-ax", "-E", "-o", commandLineOnly ? "command" : "ppid,pid,comm"};
+>>>>>>> OC-2904  Debugger: Attach to already running local process action
     }
     else {
       throw new IllegalStateException(System.getProperty("os.name") + " is not supported.");
