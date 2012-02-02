@@ -212,7 +212,6 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
           }
         })
         .setCancelOnOtherWindowOpen(myCancelOnOtherWindowOpen)
-        .setForceHeavyweight(!myForceLightweightPopup && myForceShowAsPopup)
         .createPopup();
 
       beforeShow();

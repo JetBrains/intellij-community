@@ -147,12 +147,12 @@ public class DocumentationManager {
     PopupUpdateProcessor updateProcessor = new PopupUpdateProcessor(element.getProject()) {
       public void updatePopup(Object lookupItemObject) {
         if (lookupItemObject instanceof PsiElement) {
-          doShowJavaDocInfo((PsiElement)lookupItemObject, true, false, this, original, false);
+          doShowJavaDocInfo((PsiElement)lookupItemObject, false, this, original, false);
         }
       }
     };
 
-    doShowJavaDocInfo(element, true, false, updateProcessor, original, false);
+    doShowJavaDocInfo(element, false, updateProcessor, original, false);
   }
 
   public void showJavaDocInfo(final Editor editor, @Nullable final PsiFile file, boolean requestFocus) {
@@ -205,7 +205,7 @@ public class DocumentationManager {
     final PopupUpdateProcessor updateProcessor = new PopupUpdateProcessor(project) {
       public void updatePopup(Object lookupIteObject) {
         if (lookupIteObject instanceof PsiElement) {
-          doShowJavaDocInfo((PsiElement)lookupIteObject, false, false, this, originalElement, autoupdate);
+          doShowJavaDocInfo((PsiElement)lookupIteObject, false, this, originalElement, autoupdate);
           return;
         }
 
@@ -228,15 +228,16 @@ public class DocumentationManager {
           }
         }
         else {
-          doShowJavaDocInfo(element, false, false, this, originalElement, autoupdate);
+          doShowJavaDocInfo(element, false, this, originalElement, autoupdate);
         }
       }
     };
 
-    doShowJavaDocInfo(element, false, requestFocus, updateProcessor, originalElement, autoupdate);
+    doShowJavaDocInfo(element, requestFocus, updateProcessor, originalElement, autoupdate);
   }
 
-  private void doShowJavaDocInfo(final PsiElement element, boolean heavyWeight, boolean requestFocus, PopupUpdateProcessor updateProcessor, final PsiElement originalElement, final boolean autoupdate) {
+  private void doShowJavaDocInfo(final PsiElement element, boolean requestFocus, PopupUpdateProcessor updateProcessor,
+                                 final PsiElement originalElement, final boolean autoupdate) {
     Project project = getProject(element);
 
     if (myToolWindow == null && PropertiesComponent.getInstance().isTrueValue(SHOW_DOCUMENTATION_IN_TOOL_WINDOW)) {
@@ -304,7 +305,6 @@ public class DocumentationManager {
           .addListener(updateProcessor)
           .addUserData(updateProcessor)
           .setKeyboardActions(actions)
-          .setForceHeavyweight(heavyWeight)
           .setDimensionServiceKey(myProject, JAVADOC_LOCATION_AND_SIZE, false)
           .setResizable(true)
           .setMovable(true)
