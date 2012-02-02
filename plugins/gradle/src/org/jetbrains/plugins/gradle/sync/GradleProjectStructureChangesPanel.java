@@ -11,6 +11,8 @@ import org.jetbrains.plugins.gradle.diff.PlatformFacade;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import javax.swing.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.Collection;
 
@@ -50,6 +52,7 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
     myContent = new JPanel(new GridBagLayout());
     myTreeModel = new GradleProjectStructureTreeModel(getProject(), getProjectStructureHelper());
     Tree tree = new Tree(myTreeModel);
+    applyInitialAppearance(tree, (DefaultMutableTreeNode)myTreeModel.getRoot());
 
     GridBagConstraints constraints = new GridBagConstraints();
     constraints.fill = GridBagConstraints.BOTH;
@@ -71,4 +74,14 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
     int i = 1;
   }
 
+  private static void applyInitialAppearance(@NotNull Tree tree, @NotNull DefaultMutableTreeNode node) {
+    if (node.getUserObject() == GradleProjectStructureTreeModel.DEPENDENCIES_NODE_DESCRIPTOR) {
+      tree.expandPath(new TreePath(node.getPath()));
+      return;
+    }
+
+    for (int i = 0; i < node.getChildCount(); i++) {
+      applyInitialAppearance(tree, (DefaultMutableTreeNode)node.getChildAt(i));
+    }
+  }
 }

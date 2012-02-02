@@ -36,7 +36,12 @@ import java.util.Map;
  * @since 1/30/12 4:20 PM
  */
 public class GradleProjectStructureTreeModel extends DefaultTreeModel {
-
+  
+  public static final GradleProjectStructureNodeDescriptor<Object> DEPENDENCIES_NODE_DESCRIPTOR = buildDescriptor(
+    GradleBundle.message("gradle.project.structure.tree.node.dependencies"),
+    null
+  );
+  
   /**
    * <pre>
    *     ...
@@ -136,12 +141,10 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
       myModules.put(moduleName, moduleNode);
     }
 
-    DefaultMutableTreeNode result = new DefaultMutableTreeNode(buildDescriptor(
-      GradleBundle.message("gradle.project.structure.tree.node.dependencies"),
-      null
-    ));
+    DefaultMutableTreeNode result = new DefaultMutableTreeNode(DEPENDENCIES_NODE_DESCRIPTOR);
     moduleNode.add(result);
     myModuleDependencies.put(moduleName, result);
+    
     return result;
   }
 
