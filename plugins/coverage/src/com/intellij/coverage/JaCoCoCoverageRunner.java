@@ -128,6 +128,7 @@ public class JaCoCoCoverageRunner extends JavaCoverageRunner {
     argument.append(parentPath).append(File.separator).append(new File(agentPath).getName());
     argument.append("=");
     argument.append("destfile=").append(sessionDataFilePath);
+    argument.append(",append=false");
     javaParameters.getVMParametersList().add(argument.toString());
   }
 
