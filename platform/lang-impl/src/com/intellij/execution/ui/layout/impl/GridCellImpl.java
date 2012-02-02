@@ -449,9 +449,8 @@ public class GridCellImpl implements GridCell {
     }
   }
 
-  private ActionCallback restore(Content content) {
+  ActionCallback restore(Content content) {
     myMinimizedContents.remove(content);
-    myContext.getContentManager().addContent(content);
     return new ActionCallback.Done();
   }
 }
