@@ -32,7 +32,6 @@ import java.util.Vector;
 public class JUnitStarter {
   public static final int VERSION = 5;
   public static final String IDE_VERSION = "-ideVersion";
-  public static final String JUNIT4_PARAMETER = "-junit4";
   private static final String SOCKET = "-socket";
   private static String ourForkMode;
   private static String ourCommandFileName;
@@ -65,16 +64,11 @@ public class JUnitStarter {
   }
 
   private static boolean processParameters(Vector args, final List listeners) {
-    boolean isJunit4 = false;
-    String tempFilePath = null;
     Vector result = new Vector(args.size());
     for (int i = 0; i < args.size(); i++) {
       String arg = (String)args.get(i);
       if (arg.startsWith(IDE_VERSION)) {
         //ignore
-      }
-      else if (arg.equals(JUNIT4_PARAMETER)){
-        isJunit4 = true;
       }
       else {
         if (arg.startsWith("@@@")) {
@@ -96,8 +90,6 @@ public class JUnitStarter {
             }
           }
           continue;
-        } else if (arg.startsWith("@")) {
-          tempFilePath = arg.substring(1);
         } else if (arg.startsWith(SOCKET)) {
           final int port = Integer.parseInt(arg.substring(SOCKET.length()));
           try {
@@ -114,37 +106,25 @@ public class JUnitStarter {
             e.printStackTrace();
           }
 
-          isJunit4 = isJUnit4(isJunit4, tempFilePath);
           continue;
         }
         result.addElement(arg);
       }
-    }
-    if (tempFilePath != null && !args.contains(SOCKET)) {
-      isJunit4 = isJUnit4(isJunit4, tempFilePath);
     }
     args.removeAllElements();
     for (int i = 0; i < result.size(); i++) {
       String arg = (String)result.get(i);
       args.addElement(arg);
     }
-    return isJunit4;
-  }
-
-  private static boolean isJUnit4(boolean junit4, String tempFilePath) {
+    final String forceJUnit3 = System.getProperty("idea.force.junit3");
+    if (forceJUnit3 != null && Boolean.valueOf(forceJUnit3).booleanValue()) return false;
     try {
-      BufferedReader reader = new BufferedReader(new FileReader(tempFilePath));
-      try {
-        junit4 |= JUNIT4_PARAMETER.equals(reader.readLine());
-      }
-      finally {
-        reader.close();
-      }
+      Class.forName("org.junit.Test");
+      return true;
     }
-    catch (IOException e) {
-      e.printStackTrace();
+    catch (ClassNotFoundException e) {
+      return false;
     }
-    return junit4;
   }
 
   public static boolean checkVersion(String[] args, SegmentedOutputStream notifications) {
