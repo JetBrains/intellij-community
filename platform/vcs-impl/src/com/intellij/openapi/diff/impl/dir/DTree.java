@@ -162,7 +162,7 @@ public class DTree {
               dtype = isEqual(src, trg) ? DType.EQUAL : DType.CHANGED;
               break;
             case TIMESTAMP:
-              dtype = src.getTimeStamp() == trg.getTimeStamp() ? DType.EQUAL : DType.CHANGED;
+              dtype = Math.abs(src.getTimeStamp() - trg.getTimeStamp()) <= settings.compareTimestampAccuracy ? DType.EQUAL : DType.CHANGED;
               break;
           }
         }
