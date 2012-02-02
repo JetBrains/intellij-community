@@ -1,11 +1,9 @@
 package com.jetbrains.python.remote;
 
-import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import org.jetbrains.annotations.Nullable;
@@ -18,12 +16,13 @@ public abstract class PythonRemoteInterpreterManager {
     ExtensionPointName.create("Pythonid.remoteInterpreterManager");
 
   public abstract ProcessHandler doCreateProcess(Project project, PythonRemoteSdkAdditionalData data, GeneralCommandLine commandLine)
-    throws ExecutionException;
+    throws PyRemoteInterpreterException;
 
   @Nullable
   public abstract Sdk addRemoteSdk(Project project);
 
-  public abstract ProcessOutput runRemoteProcess(@Nullable Project project, PythonRemoteSdkAdditionalData data, String[] command);
+  public abstract ProcessOutput runRemoteProcess(@Nullable Project project, PythonRemoteSdkAdditionalData data, String[] command)
+    throws PyRemoteInterpreterException;
 
   @Nullable
   public static PythonRemoteInterpreterManager getInstance() {

@@ -33,6 +33,7 @@ import com.jetbrains.python.console.PyDebugConsoleBuilder;
 import com.jetbrains.python.debugger.PyDebugRunner;
 import com.jetbrains.python.facet.LibraryContributingFacet;
 import com.jetbrains.python.facet.PythonPathContributingFacet;
+import com.jetbrains.python.remote.PyRemoteInterpreterException;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.remote.PythonRemoteSdkAdditionalData;
 import com.jetbrains.python.sdk.PythonEnvUtil;
@@ -139,8 +140,16 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
       PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
       if (manager != null) {
+
         ProcessHandler processHandler =
-          manager.doCreateProcess(myConfig.getProject(), (PythonRemoteSdkAdditionalData)sdk.getSdkAdditionalData(), commandLine);
+          null;
+        try {
+          processHandler =
+            manager.doCreateProcess(myConfig.getProject(), (PythonRemoteSdkAdditionalData)sdk.getSdkAdditionalData(), commandLine);
+        }
+        catch (PyRemoteInterpreterException e) {
+          // TODO: show dialog and rerun or cancel
+        }
         ProcessTerminatedListener.attach(processHandler);
         return processHandler;
       }

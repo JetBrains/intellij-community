@@ -1,16 +1,14 @@
 package com.jetbrains.python.packaging;
 
 import com.google.common.collect.Lists;
-import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PythonHelpersLocator;
-import com.jetbrains.python.debugger.PyDebugRunner;
+import com.jetbrains.python.remote.PyRemoteInterpreterException;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.remote.PythonRemoteSdkAdditionalData;
 import com.jetbrains.python.sdk.PySdkUtil;
@@ -178,10 +176,16 @@ public class PyPackageManager {
                              helper).getPath());
         cmdline.addAll(args);
 
-        return manager.runRemoteProcess(null, data, ArrayUtil.toStringArray(cmdline));
+        try {
+          return manager.runRemoteProcess(null, data, ArrayUtil.toStringArray(cmdline));
+        }
+        catch (PyRemoteInterpreterException e) {
+          throw new PyExternalProcessException(ERROR_INVALID_SDK, "Error running sdk.");
+        }
       }
       else {
-        throw new PyExternalProcessException(ERROR_INVALID_SDK, "Remote interpreter can't be executed. Please enable WebDeployment plugin.");
+        throw new PyExternalProcessException(ERROR_INVALID_SDK,
+                                             "Remote interpreter can't be executed. Please enable WebDeployment plugin.");
       }
     }
     else {
