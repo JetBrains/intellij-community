@@ -39,11 +39,10 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.Map;
 
 public class ChangeUtil {
@@ -119,7 +118,7 @@ public class ChangeUtil {
     return element;
   }
 
-  public static TreeElement copyElement(TreeElement original, CharTable table) {
+  public static TreeElement copyElement(@NotNull TreeElement original, CharTable table) {
     CompositeElement treeParent = original.getTreeParent();
     return copyElement(original, treeParent == null ? null : treeParent.getPsi(), table);
   }

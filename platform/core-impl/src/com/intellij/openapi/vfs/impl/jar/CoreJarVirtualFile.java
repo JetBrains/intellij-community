@@ -23,44 +23,40 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author yole
  */
 public class CoreJarVirtualFile extends VirtualFile {
-  private final CoreJarFileSystem myFileSystem;
   private final CoreJarHandler myHandler;
-  private final String myPathInJar;
   private final VirtualFile myParent;
-  private VirtualFile[] myChildren;
+  private final ArrayList<VirtualFile> myChildren = new ArrayList<VirtualFile>();
+  private final JarHandlerBase.EntryInfo myEntry;
 
-  public CoreJarVirtualFile(CoreJarFileSystem fileSystem, CoreJarHandler handler, String pathInJar) {
-    myFileSystem = fileSystem;
+  public CoreJarVirtualFile(CoreJarHandler handler, JarHandlerBase.EntryInfo entry, CoreJarVirtualFile parent) {
     myHandler = handler;
-    myPathInJar = pathInJar;
-    myParent = calcParent();
+    myParent = parent;
+    myEntry = entry;
+
+    parent.myChildren.add(this);
   }
 
   @NotNull
   @Override
   public String getName() {
-    final int lastSlash = myPathInJar.lastIndexOf('/');
-    if (lastSlash < 0) {
-      return myPathInJar;
-    }
-    return myPathInJar.substring(lastSlash+1);
+    return myEntry.shortName;
   }
 
   @NotNull
   @Override
   public VirtualFileSystem getFileSystem() {
-    return myFileSystem;
+    return myHandler.getFileSystem();
   }
 
   @Override
   public String getPath() {
-    return myHandler.myBasePath + "!/" + myPathInJar;
+    if (myParent == null) return myHandler.myBasePath + "!/";
+    return myParent.getPath() + "/" + myEntry.shortName;
   }
 
   @Override
@@ -70,7 +66,7 @@ public class CoreJarVirtualFile extends VirtualFile {
 
   @Override
   public boolean isDirectory() {
-    return myHandler.isDirectory(this);
+    return myEntry.isDirectory;
   }
 
   @Override
@@ -83,35 +79,9 @@ public class CoreJarVirtualFile extends VirtualFile {
     return myParent;
   }
 
-  private VirtualFile calcParent() {
-    if (myPathInJar.length() == 0) {
-      return null;
-    }
-    int lastSlash = myPathInJar.lastIndexOf('/');
-    if (lastSlash < 0) {
-      return myHandler.findFileByPath("");
-    }
-    return myHandler.findFileByPath(myPathInJar.substring(0, lastSlash));
-  }
-
   @Override
   public VirtualFile[] getChildren() {
-    VirtualFile[] answer = myChildren;
-    if (answer == null) {
-      answer = calcChildren();
-      myChildren = answer;
-    }
-    return answer;
-  }
-
-  private VirtualFile[] calcChildren() {
-    List<VirtualFile> result = new ArrayList<VirtualFile>();
-    final String[] children = myHandler.list(this);
-    for (String child : children) {
-      final VirtualFile childFile = myPathInJar.isEmpty() ? myHandler.findFileByPath(child) : myHandler.findFileByPath(myPathInJar + "/" + child);
-      result.add(childFile);
-    }
-    return result.toArray(new VirtualFile[result.size()]);
+    return myChildren.toArray(new VirtualFile[myChildren.size()]);
   }
 
   @NotNull

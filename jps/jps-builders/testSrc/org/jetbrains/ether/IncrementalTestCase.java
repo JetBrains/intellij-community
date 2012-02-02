@@ -15,7 +15,6 @@
  */
 package org.jetbrains.ether;
 
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
@@ -31,7 +30,6 @@ import org.jetbrains.jps.Sdk;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.idea.IdeaProjectLoader;
 import org.jetbrains.jps.incremental.*;
-import org.jetbrains.jps.incremental.java.JavaBuilder;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.ProjectTimestamps;
 import org.jetbrains.jps.server.ClasspathBootstrap;
@@ -154,8 +152,12 @@ public abstract class IncrementalTestCase extends TestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    super.tearDown();
-    delete(new File(workDir));
+    try {
+      super.tearDown();
+    }
+    finally {
+      delete(new File(workDir));
+    }
   }
 
   private String getProjectName() {
@@ -199,7 +201,7 @@ public abstract class IncrementalTestCase extends TestCase {
 
         if (files != null) {
           for (File f : files) {
-            copy(f, new File(output.getPath() + File.separator + f.getName()));
+            copy(f, new File(output.getPath(), f.getName()));
           }
         }
       }
@@ -208,16 +210,26 @@ public abstract class IncrementalTestCase extends TestCase {
       }
     }
     else if (input.isFile()) {
-      final FileReader in = new FileReader(input);
-      final FileWriter out = new FileWriter(output);
+      FileReader in = null;
+      FileWriter out = null;
 
       try {
+        in = new FileReader(input);
+        out = new FileWriter(output);
         int c;
         while ((c = in.read()) != -1) out.write(c);
       }
       finally {
-        in.close();
-        out.close();
+        try {
+          if (in != null) {
+            in.close();
+          }
+        }
+        finally {
+          if (out != null) {
+            out.close();
+          }
+        }
       }
     }
   }
@@ -241,7 +253,7 @@ public abstract class IncrementalTestCase extends TestCase {
       final String basename = pathSep == -1 ? postfix : postfix.substring(pathSep + 1);
       final String path =
         getWorkDir() + File.separator + (pathSep == -1 ? "src" : postfix.substring(0, pathSep).replace('-', File.separatorChar));
-      final File output = new File(path + File.separator + basename);
+      final File output = new File(path, basename);
 
       if (copy) {
         copy(input, output);
@@ -275,7 +287,7 @@ public abstract class IncrementalTestCase extends TestCase {
 
     final Sdk jdk = project.createSdk("JavaSDK", "IDEA jdk",  System.getProperty("java.home"), null);
     final List<String> paths = new LinkedList<String>();
-      
+
     paths.add(FileUtil.toSystemIndependentName(ClasspathBootstrap.getResourcePath(Object.class).getCanonicalPath()));
 
     jdk.setClasspath(paths);
@@ -285,20 +297,32 @@ public abstract class IncrementalTestCase extends TestCase {
     final ProjectDescriptor projectDescriptor =
       new ProjectDescriptor(projectPath, project, new FSState(true), new ProjectTimestamps(projectName),
                             new BuildDataManager(projectName, true));
-    final IncProjectBuilder builder = new IncProjectBuilder(projectDescriptor, BuilderRegistry.getInstance(), CanceledStatus.NULL);
+    try {
 
-    builder.build(new AllProjectScope(project, true), false, true);
+      new IncProjectBuilder(
+        projectDescriptor, BuilderRegistry.getInstance(), CanceledStatus.NULL
+      ).build(
+        new AllProjectScope(project, true), false, true
+      );
 
-    modify();
+      modify();
 
-    if (SystemInfo.isUnix) {
-      Thread.sleep(1000);
+      if (SystemInfo.isUnix) {
+        Thread.sleep(1000L);
+      }
+
+      new IncProjectBuilder(
+        projectDescriptor, BuilderRegistry.getInstance(), CanceledStatus.NULL
+      ).build(
+        new AllProjectScope(project, false), true, false
+      );
+
+      FileAssert.assertEquals(new File(getBaseDir() + ".log"), new File(getWorkDir() + ".log"));
+    }
+    finally {
+      projectDescriptor.release();
     }
 
-    builder.build(new AllProjectScope(project, false), true, false);
 
-    projectDescriptor.release();
-
-    FileAssert.assertEquals(new File(getBaseDir() + ".log"), new File(getWorkDir() + ".log"));
   }
 }

@@ -88,7 +88,7 @@ class GitDeleteBranchOperation extends GitBranchOperation {
           }
         }
         else {
-          fatalError(getErrorTitle(), "This branch is not fully merged to " + myCurrentBranch);
+          fatalError(getErrorTitle(), "This branch is not fully merged to " + myCurrentBranch + ".");
           fatalErrorHappened = true;
         }
       }

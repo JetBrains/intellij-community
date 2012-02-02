@@ -9,7 +9,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.util.ArrayUtil;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -116,9 +115,7 @@ public class AndroidLayoutDomTest extends AndroidDomTest {
 
   public void testResourceCompletion() throws Throwable {
     doTestCompletionVariants("av3.xml", "@color/", "@android:", "@drawable/");
-    List<String> list = getAllResources();
-    list.add("@android:");
-    doTestCompletionVariants("av8.xml", ArrayUtil.toStringArray(list));
+    doTestCompletionVariants("av8.xml", "@android:", "@anim/", "@color/", "@dimen/", "@drawable/", "@id/", "@layout/", "@string/", "@style/");
   }
 
   public void testLocalResourceCompletion1() throws Throwable {

@@ -293,6 +293,16 @@ public class RunnerLayoutUiImpl implements Disposable, RunnerLayoutUi, LayoutSta
     return this;
   }
 
+  @Override
+  public AnAction getSettingsActions() {
+    return myContentUI.getSettingsActions();
+  }
+
+  public AnAction[] getSettingsActionsList() {
+    final ActionGroup group = (ActionGroup)getSettingsActions();
+    return group.getChildren(null);
+  }
+
   public Content[] getContents() {
     Content[] contents = new Content[getContentManager().getContentCount()];
     for (int i = 0; i < contents.length; i++) {

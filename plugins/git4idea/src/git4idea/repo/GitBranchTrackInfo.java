@@ -15,6 +15,7 @@
  */
 package git4idea.repo;
 
+import git4idea.GitBranch;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -30,7 +31,12 @@ public class GitBranchTrackInfo {
   GitBranchTrackInfo(@NotNull String branch, @NotNull GitRemote remote, @NotNull String remoteBranch, boolean merge) {
     myBranch = branch;
     myMerge = merge;
-    myRemoteBranch = remoteBranch;
+    if (remoteBranch.startsWith(GitBranch.REFS_HEADS_PREFIX)) {
+      myRemoteBranch = remoteBranch.substring(GitBranch.REFS_HEADS_PREFIX.length());
+    }
+    else {
+      myRemoteBranch = remoteBranch;
+    }
     myRemote = remote;
   }
 

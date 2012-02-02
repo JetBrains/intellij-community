@@ -89,12 +89,13 @@ public class MavenPluginConfigurationDomExtender extends DomExtender<MavenDomCon
           String name = eachParameter.getName().getStringValue();
           if (name == null) continue;
 
-          if (namesWithParameters.containsKey(name)) continue;
-
           ParameterData data = new ParameterData(eachParameter);
           fillParameterData(name, data, eachMojo);
 
-          namesWithParameters.put(name, data);
+          ParameterData oldParameter = namesWithParameters.get(name);
+          if (oldParameter == null || hasMorePriority(data, oldParameter, executionElement != null)) {
+            namesWithParameters.put(name, data);
+          }
         }
       }
     }
@@ -102,6 +103,16 @@ public class MavenPluginConfigurationDomExtender extends DomExtender<MavenDomCon
     return namesWithParameters.values();
   }
 
+  private static boolean hasMorePriority(ParameterData d1, ParameterData d2, boolean isForExecutionSection) {
+    if (!isForExecutionSection) {
+      if (StringUtil.isEmptyOrSpaces(d1.getMojo().getPhase().getStringValue())) return false;
+
+      if (StringUtil.isEmptyOrSpaces(d2.getMojo().getPhase().getStringValue())) return true;
+    }
+
+    return d1.getRequiringLevel() > d2.getRequiringLevel();
+  }
+  
   private static void fillParameterData(String name, ParameterData data, MavenDomMojo mojo) {
     XmlTag config = mojo.getConfiguration().getXmlTag();
     if (config == null) return;
@@ -153,15 +164,27 @@ public class MavenPluginConfigurationDomExtender extends DomExtender<MavenDomCon
     }
   }
 
-  private static void addRequiredAnnotation(DomExtension e, ParameterData data) {
-    if (!StringUtil.isEmptyOrSpaces(data.defaultValue)
-        || !StringUtil.isEmptyOrSpaces(data.expression)) {
-      return;
-    }
+  private static void addRequiredAnnotation(DomExtension e, final ParameterData data) {
+    if (Boolean.parseBoolean(data.parameter.getRequired().getStringValue())) {
+      e.addCustomAnnotation(new Required(){
+        @Override
+        public boolean value() {
+          return StringUtil.isEmptyOrSpaces(data.defaultValue) && StringUtil.isEmptyOrSpaces(data.expression);
+        }
 
-    final String required = data.parameter.getRequired().getStringValue();
-    if (!StringUtil.isEmptyOrSpaces(required)) {
-      e.addCustomAnnotation(new MyRequired(required));
+        @Override
+        public boolean nonEmpty() {
+          return true;
+        }
+
+        @Override
+        public boolean identifier() {
+          return false;
+        }
+        public Class<? extends Annotation> annotationType() {
+              return Required.class;
+        }
+      });
     }
   }
 
@@ -181,43 +204,32 @@ public class MavenPluginConfigurationDomExtender extends DomExtender<MavenDomCon
     String type = parameter.getType().getStringValue();
     if (type.endsWith("[]")) return true;
 
-    List<String> collectionClasses = Arrays.asList("java.util.List",
-                                                   "java.util.Set",
-                                                   "java.util.Collection");
-    return collectionClasses.contains(type);
+    return type.equals("java.util.List") || type.equals("java.util.Set") || type.equals("java.util.Collection");
   }
 
   public static class ParameterData {
-    public MavenDomParameter parameter;
+    public final MavenDomParameter parameter;
     public @Nullable String defaultValue;
     public @Nullable String expression;
 
     private ParameterData(MavenDomParameter parameter) {
       this.parameter = parameter;
     }
-  }
-
-  private static class MyRequired implements Required {
-    private final String myRequired;
-
-    public MyRequired(String required) {
-      myRequired = required;
+    
+    @NotNull
+    public MavenDomMojo getMojo() {
+      return (MavenDomMojo)parameter.getParent().getParent();
     }
 
-    public boolean value() {
-      return Boolean.valueOf(myRequired);
-    }
+    public int getRequiringLevel() {
+      if (!Boolean.parseBoolean(parameter.getRequired().getStringValue())) return 0;
 
-    public boolean nonEmpty() {
-      return false;
-    }
+      if (!StringUtil.isEmptyOrSpaces(defaultValue) || !StringUtil.isEmptyOrSpaces(expression)) {
+        return 1;
+      }
 
-    public boolean identifier() {
-      return false;
-    }
-
-    public Class<? extends Annotation> annotationType() {
-      return Required.class;
+      return 2;
     }
   }
+
 }
