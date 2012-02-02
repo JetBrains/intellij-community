@@ -246,6 +246,7 @@
   <projectService serviceInterface="com.intellij.openapi.wm.impl.ProjectFrameBounds"
                   serviceImplementation="com.intellij.openapi.wm.impl.ProjectFrameBounds"/>
   <exceptionFilter implementation="com.intellij.execution.filters.ExceptionBaseFilterFactory"/>
+  <exceptionFilter implementation="com.intellij.execution.filters.ExceptionExFilterFactory"/>
   <exceptionFilter implementation="com.intellij.openapi.vcs.contentAnnotation.VcsContentAnnotationExceptionFilterFactory"/>
 
   <applicationService serviceInterface="com.intellij.ide.TypePresentationService"
