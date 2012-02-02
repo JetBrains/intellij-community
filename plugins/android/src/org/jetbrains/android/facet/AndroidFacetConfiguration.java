@@ -81,6 +81,8 @@ public class AndroidFacetConfiguration implements FacetConfiguration {
 
   public String CUSTOM_DEBUG_KEYSTORE_PATH = "";
 
+  public boolean PACK_TEST_CODE = false;
+
   private AndroidFacet myFacet = null;
 
   public void init(@NotNull Module module, @NotNull VirtualFile contentRoot) {

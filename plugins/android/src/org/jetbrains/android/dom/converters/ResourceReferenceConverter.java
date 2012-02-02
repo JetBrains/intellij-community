@@ -21,6 +21,8 @@ import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
@@ -30,8 +32,8 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PsiNavigateUtil;
 import com.intellij.util.xml.*;
-import org.jetbrains.android.dom.ResourceType;
 import org.jetbrains.android.dom.AdditionalConverter;
+import org.jetbrains.android.dom.ResourceType;
 import org.jetbrains.android.dom.resources.Item;
 import org.jetbrains.android.dom.resources.ResourceElement;
 import org.jetbrains.android.dom.resources.ResourceValue;
@@ -110,7 +112,8 @@ public class ResourceReferenceConverter extends ResolvingConverter<ResourceValue
     if (module == null) return result;
     AndroidFacet facet = AndroidFacet.getInstance(module);
     if (facet == null) return result;
-    Set<String> recommendedTypes = getResourceTypes(context);
+    
+    final Set<String> recommendedTypes = getResourceTypes(context);
 
     // hack to check if it is a real id attribute
     if (recommendedTypes.contains("id") && recommendedTypes.size() == 1) {
@@ -122,7 +125,7 @@ public class ResourceReferenceConverter extends ResolvingConverter<ResourceValue
     String value = getValue(element);
     assert value != null;
 
-    if (!myQuiet || value.startsWith("@")) {
+    if (!myQuiet || StringUtil.startsWithChar(value, '@')) {
       String resourcePackage = null;
       String systemPrefix = getPackagePrefix(SYSTEM_RESOURCE_PACKAGE);
       if (value.startsWith(systemPrefix)) {
@@ -137,12 +140,17 @@ public class ResourceReferenceConverter extends ResolvingConverter<ResourceValue
         addResourceReferenceValues(facet, type, resourcePackage, result, explicitResourceType);
       }
       else {
+        final Set<String> filteringSet = SYSTEM_RESOURCE_PACKAGE.equals(resourcePackage)
+                                         ? null
+                                         : getResourceTypesInCurrentModule(facet);
+
         for (String type : ResourceManager.REFERABLE_RESOURCE_TYPES) {
           String typePrefix = getTypePrefix(resourcePackage, type);
           if (value.startsWith(typePrefix)) {
             addResourceReferenceValues(facet, type, resourcePackage, result, true);
           }
-          else if (recommendedTypes.contains(type)) {
+          else if (recommendedTypes.contains(type) &&
+                   (filteringSet == null || filteringSet.contains(type))) {
             result.add(ResourceValue.literal(typePrefix));
           }
         }
@@ -155,6 +163,23 @@ public class ResourceReferenceConverter extends ResolvingConverter<ResourceValue
         result.add(ResourceValue.literal(variant));
       }
     }
+    return result;
+  }
+  
+  @NotNull
+  private static Set<String> getResourceTypesInCurrentModule(@NotNull AndroidFacet facet) {
+    final Set<String> result = new HashSet<String>();
+    final LocalResourceManager manager = facet.getLocalResourceManager();
+    
+    for (VirtualFile resSubdir : manager.getResourceSubdirs(null)) {
+      final String resType = AndroidResourceUtil.getResourceTypeByDirName(resSubdir.getName());
+      
+      if (resType != null && com.android.resources.ResourceType.getEnum(resType) != null) {
+        result.add(resType);
+      }
+    }
+
+    result.addAll(manager.getValueResourceTypes());
     return result;
   }
 

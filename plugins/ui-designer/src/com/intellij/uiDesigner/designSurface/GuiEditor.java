@@ -129,6 +129,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
   private final Document myDocument;
 
   final MainProcessor myProcessor;
+  @NotNull private final JScrollPane myScrollPane;
   /**
    * This layered pane contains all layers to lay components out and to
    * show all necessary decoration items
@@ -302,11 +303,12 @@ public final class GuiEditor extends JPanel implements DataProvider {
     gbc.gridy = 1;
     gbc.weightx = 1.0;
     gbc.weighty = 1.0;
-    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myLayeredPane);
-    scrollPane.setBackground(Color.WHITE);
-    panel.add(scrollPane, gbc);
-    myHorzCaptionPanel.attachToScrollPane(scrollPane);
-    myVertCaptionPanel.attachToScrollPane(scrollPane);
+
+    myScrollPane = ScrollPaneFactory.createScrollPane(myLayeredPane);
+    myScrollPane.setBackground(Color.WHITE);
+    panel.add(myScrollPane, gbc);
+    myHorzCaptionPanel.attachToScrollPane(myScrollPane);
+    myVertCaptionPanel.attachToScrollPane(myScrollPane);
 
     myValidCard.add(panel, BorderLayout.CENTER);
 
@@ -319,7 +321,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
     myPsiTreeChangeListener = new MyPsiTreeChangeListener();
     PsiManager.getInstance(module.getProject()).addPsiTreeChangeListener(myPsiTreeChangeListener);
 
-    myQuickFixManager = new QuickFixManagerImpl(this, myGlassLayer, scrollPane.getViewport());
+    myQuickFixManager = new QuickFixManagerImpl(this, myGlassLayer, myScrollPane.getViewport());
 
     myDropTargetListener = new DesignDropTargetListener(this);
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
@@ -987,7 +989,9 @@ public final class GuiEditor extends JPanel implements DataProvider {
       width += 50;
       height += 40;
 
-      return new Dimension(width, height);
+      Rectangle bounds = myScrollPane.getViewport().getBounds();
+
+      return new Dimension(Math.max(width, bounds.width), Math.max(height, bounds.height));
     }
 
     public Dimension getPreferredScrollableViewportSize() {

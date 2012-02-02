@@ -93,6 +93,7 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
   private JLabel myRGenPathLabel;
   private TextFieldWithBrowseButton myCustomDebugKeystoreField;
   private JBLabel myCustomKeystoreLabel;
+  private JCheckBox myIncludeTestCodeAndCheckBox;
 
   public AndroidFacetEditorTab(FacetEditorContext context, AndroidFacetConfiguration androidFacetConfiguration) {
     final Project project = context.getProject();
@@ -282,6 +283,9 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     if (!myConfiguration.CUSTOM_DEBUG_KEYSTORE_PATH.equals(getSelectedCustomKeystorePath())) {
       return true;
     }
+    if (myConfiguration.PACK_TEST_CODE != myIncludeTestCodeAndCheckBox.isSelected()) {
+      return true;
+    }
     return false;
   }
 
@@ -390,6 +394,8 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     myConfiguration.RUN_PROCESS_RESOURCES_MAVEN_TASK = myRunProcessResourcesRadio.isSelected();
 
     myConfiguration.GENERATE_UNSIGNED_APK = myGenerateUnsignedApk.isSelected();
+    
+    myConfiguration.PACK_TEST_CODE = myIncludeTestCodeAndCheckBox.isSelected();
 
     boolean useCustomAptSrc = myUseCustomSourceDirectoryRadio.isSelected();
 
@@ -513,6 +519,7 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     myCompileResourcesByIdeRadio.setSelected(!myConfiguration.RUN_PROCESS_RESOURCES_MAVEN_TASK);
 
     myGenerateUnsignedApk.setSelected(myConfiguration.GENERATE_UNSIGNED_APK);
+    myIncludeTestCodeAndCheckBox.setSelected(myConfiguration.PACK_TEST_CODE);
 
     updateAptPanel();
 

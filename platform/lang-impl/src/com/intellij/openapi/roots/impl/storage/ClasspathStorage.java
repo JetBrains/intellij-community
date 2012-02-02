@@ -328,6 +328,10 @@ public class ClasspathStorage implements StateStorage {
     getProvider(getStorageType(module)).moduleRenamed(module, newName);
   }
 
+  public static void modulePathChanged(Module module, String path) {
+    getProvider(getStorageType(module)).modulePathChanged(module, path);
+  }
+
   private static class DefaultStorageProvider implements ClasspathStorageProvider {
     @NonNls
     public String getID() {
@@ -355,6 +359,10 @@ public class ClasspathStorage implements StateStorage {
 
     public String getContentRoot(ModifiableRootModel model) {
       return null;
+    }
+
+    @Override
+    public void modulePathChanged(Module module, String path) {
     }
   }
 
@@ -405,6 +413,11 @@ public class ClasspathStorage implements StateStorage {
 
     public String getContentRoot(ModifiableRootModel model) {
       return null;
+    }
+
+    @Override
+    public void modulePathChanged(Module module, String path) {
+      throw new UnsupportedOperationException(getDescription());
     }
   }
 }

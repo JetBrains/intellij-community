@@ -29,6 +29,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.AreaInstance;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleComponent;
 import com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope;
@@ -36,6 +37,7 @@ import com.intellij.openapi.module.impl.scopes.ModuleWithDependentsScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -329,11 +331,48 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
       final Object requestor = event.getRequestor();
       if (MODULE_RENAMING_REQUESTOR.equals(requestor)) return;
       if (!VirtualFile.PROP_NAME.equals(event.getPropertyName())) return;
+
+      final VirtualFile parent = event.getParent();
+      if (parent != null) {
+        final String parentPath = parent.getPath();
+        final String ancestorPath = parentPath + "/" + event.getOldValue();
+        final String moduleFilePath = getModuleFilePath();
+        if (VfsUtil.isAncestor(new File(ancestorPath), new File(moduleFilePath), true)) {
+          final String newValue = (String)event.getNewValue();
+          final String relativePath = FileUtil.getRelativePath(ancestorPath, moduleFilePath, '/');
+          final String newFilePath = parentPath + "/" + newValue + "/" + relativePath;
+          setModuleFilePath(moduleFilePath, newFilePath);
+        }
+      }
+
       final VirtualFile moduleFile = getModuleFile();
       if (moduleFile == null) return;
       if (moduleFile.equals(event.getFile())) {
         myName = moduleNameByFileName(moduleFile.getName());
         ModuleManagerImpl.getInstanceImpl(getProject()).fireModuleRenamedByVfsEvent(ModuleImpl.this);
+      }
+    }
+
+    private void setModuleFilePath(String moduleFilePath, String newFilePath) {
+      ClasspathStorage.modulePathChanged(ModuleImpl.this, newFilePath);
+
+      final ModifiableModuleModel modifiableModel = ModuleManagerImpl.getInstanceImpl(getProject()).getModifiableModel();
+      modifiableModel.setModuleFilePath(ModuleImpl.this, moduleFilePath, newFilePath);
+      modifiableModel.commit();
+
+      getStateStore().setModuleFilePath(newFilePath);
+    }
+
+    @Override
+    public void fileMoved(VirtualFileMoveEvent event) {
+      final VirtualFile oldParent = event.getOldParent();
+      final VirtualFile newParent = event.getNewParent();
+      final String dirName = event.getFileName();
+      final String ancestorPath = oldParent.getPath() + "/" + dirName;
+      final String moduleFilePath = getModuleFilePath();
+      if (VfsUtil.isAncestor(new File(ancestorPath), new File(moduleFilePath), true)) {
+        final String relativePath = FileUtil.getRelativePath(ancestorPath, moduleFilePath, '/');
+        setModuleFilePath(moduleFilePath, newParent.getPath() + "/" + dirName + "/" + relativePath);
       }
     }
   }
