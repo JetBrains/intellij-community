@@ -137,6 +137,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   private boolean myStartCompletionWhenNothingMatches;
   private boolean myResizePending;
   private int myMaximumHeight = Integer.MAX_VALUE;
+  private boolean myFinishing;
 
   public LookupImpl(Project project, Editor editor, @NotNull LookupArranger arranger){
     super(new JPanel(new BorderLayout()));
@@ -714,6 +715,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   }
 
   public void finishLookup(char completionChar, @Nullable final LookupElement item) {
+    //noinspection deprecation,unchecked
     if (item == null ||
         item instanceof EmptyLookupItem ||
         item.getObject() instanceof DeferredUserLookupValue &&
@@ -724,10 +726,18 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       return;
     }
 
+    if (myDisposed) { // DeferredUserLookupValue could close us in any way
+      return;
+    }
+
     final PsiFile file = getPsiFile();
     if (file != null && !WriteCommandAction.ensureFilesWritable(myProject, Arrays.asList(file))) {
       doHide(false, true);
       fireItemSelected(null, completionChar);
+      return;
+    }
+
+    if (myDisposed) { // ensureFilesWritable could close us by showing a dialog
       return;
     }
 
@@ -742,17 +752,16 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_CAMEL_HUMPS);
     }
 
-    if (!performGuardedChange(new Runnable() {
-      public void run() {
-        AccessToken token = WriteAction.start();
-        try {
-          insertLookupString(item, prefix);
-        }
-        finally {
-          token.finish();
-        }
-      }
-    })) {
+    myFinishing = true;
+    AccessToken token = WriteAction.start();
+    try {
+      insertLookupString(item, prefix);
+    }
+    finally {
+      token.finish();
+    }
+
+    if (myDisposed) { // any document listeners could close us
       return;
     }
 
@@ -929,7 +938,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   private void addListeners() {
     myEditor.getDocument().addDocumentListener(new DocumentAdapter() {
       public void documentChanged(DocumentEvent e) {
-        if (!myChangeGuard) {
+        if (!myChangeGuard && !myFinishing) {
           hide();
         }
       }
@@ -937,14 +946,14 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
     final CaretListener caretListener = new CaretListener() {
       public void caretPositionChanged(CaretEvent e) {
-        if (!myChangeGuard) {
+        if (!myChangeGuard && !myFinishing) {
           hide();
         }
       }
     };
     final SelectionListener selectionListener = new SelectionListener() {
       public void selectionChanged(final SelectionEvent e) {
-        if (!myChangeGuard) {
+        if (!myChangeGuard && !myFinishing) {
           hide();
         }
       }
