@@ -37,6 +37,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.ScrollUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -136,6 +137,16 @@ public class DiffSideView {
   public void beSlave() {
     myIsMaster = false;
     myLineMarker.hide();
+  }
+
+  @Nullable
+  public OpenFileDescriptor getCurrentOpenFileDescriptor() {
+    final EditorEx editor = myEditorSource.getEditor();
+    final DiffContent content = myEditorSource.getContent();
+    if (content == null || editor == null) {
+      return null;
+    }
+    return content.getOpenFileDescriptor(editor.getCaretModel().getOffset());
   }
 
   private static class MouseLineNumberListener {
