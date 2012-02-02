@@ -33,6 +33,7 @@ import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
+import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PropertyUtil;
@@ -739,6 +740,12 @@ public class JavaFoldingBuilder extends CustomFoldingBuilder implements DumbAwar
   @Override
   protected boolean isCustomFoldingCandidate(ASTNode node) {
     return node.getElementType() == JavaTokenType.END_OF_LINE_COMMENT;
+  }
+
+  @Override
+  protected boolean mayContainCustomFoldings(ASTNode node) {
+    IElementType nodeType = node.getElementType();
+    return nodeType == JavaElementType.CLASS || nodeType == JavaElementType.CODE_BLOCK;
   }
 }
 
