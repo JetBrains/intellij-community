@@ -30,7 +30,10 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
@@ -125,7 +128,7 @@ public class EditorsSplitters extends JPanel {
 
   
   private boolean showEmptyText() {
-    return (myCurrentWindow == null || myCurrentWindow.getFiles().length == 0) && !isProjectViewVisible();  
+    return (myCurrentWindow == null || myCurrentWindow.getFiles().length == 0);
   }
   
   private boolean isProjectViewVisible() {
@@ -158,9 +161,14 @@ public class EditorsSplitters extends JPanel {
       g.setFont(UIUtil.getLabelFont().deriveFont(18f));
 
       final UIUtil.TextPainter painter = new UIUtil.TextPainter(1.4f);
-      painter.appendLine("No files are open").underlined(darkerColors ? Gray._150 : Color.DARK_GRAY)
-        .appendLine("Open Project View with " + KeymapUtil.getShortcutText(new KeyboardShortcut(
-          KeyStroke.getKeyStroke((SystemInfo.isMac ? "meta" : "alt") + " 1"), null))).smaller().withBullet()
+      painter.appendLine("No files are open").underlined(darkerColors ? Gray._150 : Color.DARK_GRAY);
+
+      if (!isProjectViewVisible()) {
+        painter.appendLine("Open Project View with " + KeymapUtil.getShortcutText(new KeyboardShortcut(
+            KeyStroke.getKeyStroke((SystemInfo.isMac ? "meta" : "alt") + " 1"), null))).smaller().withBullet();
+      }
+
+      painter.appendLine("Open a file by name with " + getActionShortcutText("GotoFile")).smaller().withBullet()
         .appendLine("Open Recent files with " + getActionShortcutText("RecentFiles")).smaller().withBullet()
         .appendLine("Open Navigation Bar with " + getActionShortcutText("ShowNavBar")).smaller().withBullet()
         .appendLine("Drag'n'Drop file(s) here from " + SystemInfo.nativeFileManagerName).smaller().withBullet()
