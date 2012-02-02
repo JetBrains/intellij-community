@@ -206,6 +206,7 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
             GradleProjectStructureNodeDescriptor<?> d = (GradleProjectStructureNodeDescriptor<?>)child.getUserObject();
             if (missingEntity.equals(d.getElement())) {
               d.setAttributes(descriptor.getAttributes());
+              nodeStructureChanged(child);
               return;
             }
           }
