@@ -376,7 +376,12 @@ public class XmlUtil {
   public static char getCharFromEntityRef(@NonNls String text) {
     //LOG.assertTrue(text.startsWith("&#") && text.endsWith(";"));
     if (text.charAt(1) != '#') {
-      text = text.substring(1, text.length() - 1);
+      try {
+        text = text.substring(1, text.length() - 1);
+      }
+      catch (StringIndexOutOfBoundsException e) {
+        LOG.error("Cannot parse ref: '" + text + "'", e);
+      }
       return XmlTagUtil.getCharacterByEntityName(text);
     }
     text = text.substring(2, text.length() - 1);
