@@ -220,6 +220,6 @@ public class ProjectJdksConfigurable extends MasterDetailsComponent {
   protected
   @Nullable
   String getEmptySelectionString() {
-    return "Select a JDK to view or edit its details here";
+    return "Select an SDK to view or edit its details here";
   }
 }
