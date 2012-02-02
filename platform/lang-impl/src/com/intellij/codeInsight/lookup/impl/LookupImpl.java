@@ -978,6 +978,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
         if (oldItem != item) {
           mySelectionInvariant = item == null ? null : myPresentableModel.getItemPresentationInvariant(item);
           fireCurrentItemChanged(item);
+          if (myDisposed) { //a listener may have decided to close us, what can we do?
+            return;
+          }
         }
         if (item != null) {
           updateHint(item);
