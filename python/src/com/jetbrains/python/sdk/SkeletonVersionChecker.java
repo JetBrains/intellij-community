@@ -160,7 +160,7 @@ class SkeletonVersionChecker {
   public static String toVersionString(final int input) {
     int major = input >> 8;
     int minor = input - (major << 8);
-    return new StringBuilder().append(major).append(".").append(minor).toString();
+    return String.valueOf(major) + "." + minor;
   }
 
   public static class LoadException extends RuntimeException {
