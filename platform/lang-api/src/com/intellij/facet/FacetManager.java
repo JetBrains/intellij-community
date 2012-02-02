@@ -40,7 +40,7 @@ public abstract class FacetManager implements FacetModel {
 
   @NotNull
   public abstract <F extends Facet, C extends FacetConfiguration> F createFacet(@NotNull FacetType<F, C> type, @NotNull String name,
-                                                                                   @NotNull C cofiguration, @Nullable Facet underlying);
+                                                                                   @NotNull C configuration, @Nullable Facet underlying);
 
 
   @NotNull
