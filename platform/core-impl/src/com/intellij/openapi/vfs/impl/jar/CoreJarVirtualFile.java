@@ -61,6 +61,7 @@ public class CoreJarVirtualFile extends VirtualFile {
 
     String parentPath = myParent.getPath();
     StringBuilder answer = new StringBuilder(parentPath.length() + 1 + myEntry.shortName.length());
+    answer.append(parentPath);
     if (answer.charAt(answer.length() - 1) != '/') {
       answer.append('/');
     }
