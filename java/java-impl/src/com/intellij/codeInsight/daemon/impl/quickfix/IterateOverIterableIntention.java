@@ -51,6 +51,14 @@ public class IterateOverIterableIntention implements IntentionAction {
         final int selEnd = editor.getSelectionModel().getSelectionEnd();
         startOffset = (offset == selStart) ? selEnd : selStart;
       }
+      PsiElement element = file.findElementAt(startOffset);
+      while (element instanceof PsiWhiteSpace) {
+        element = element.getPrevSibling();
+      }
+      PsiStatement psiStatement = PsiTreeUtil.getParentOfType(element, PsiStatement.class, false);
+      if (psiStatement != null) {
+        startOffset = psiStatement.getTextRange().getStartOffset();
+      }
       if (!template.isDeactivated() &&
           (TemplateManagerImpl.isApplicable(file, offset, template) ||
            (TemplateManagerImpl.isApplicable(file, startOffset, template)))) {
@@ -97,6 +105,12 @@ public class IterateOverIterableIntention implements IntentionAction {
     }
 
     PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
+    while (element instanceof PsiWhiteSpace) {
+      element = element.getPrevSibling();
+    }
+    if (element instanceof PsiExpressionStatement) {
+      element = ((PsiExpressionStatement)element).getExpression().getLastChild();
+    }
     while ((element = PsiTreeUtil.getParentOfType(element, PsiExpression.class, true)) != null) {
       if (element.getParent() instanceof PsiMethodCallExpression) continue;
       final PsiType type = ((PsiExpression)element).getType();
