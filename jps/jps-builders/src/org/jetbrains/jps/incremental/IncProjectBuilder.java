@@ -30,7 +30,7 @@ import java.util.concurrent.ExecutionException;
 public class IncProjectBuilder {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.IncProjectBuilder");
 
-  public static final String JPS_SERVER_NAME = "JPS BUILD";
+  public static final String COMPILE_SERVER_NAME = "COMPILE SERVER";
   private static final String CANCELED_MESSAGE = "The build has been canceled";
 
   private final ProjectDescriptor myProjectDescriptor;
@@ -75,7 +75,7 @@ public class IncProjectBuilder {
       catch (ProjectBuildException e) {
         if (e.getCause() instanceof PersistentEnumerator.CorruptedException) {
           // force rebuild
-          myMessageDispatcher.processMessage(new CompilerMessage(JPS_SERVER_NAME, BuildMessage.Kind.INFO,
+          myMessageDispatcher.processMessage(new CompilerMessage(COMPILE_SERVER_NAME, BuildMessage.Kind.INFO,
                                                                  "Internal caches are corrupted or have outdated format, forcing project rebuild: " +
                                                                  e.getMessage()));
           flushContext(context);
@@ -90,10 +90,11 @@ public class IncProjectBuilder {
     catch (ProjectBuildException e) {
       final Throwable cause = e.getCause();
       if (cause == null) {
-        myMessageDispatcher.processMessage(new ProgressMessage(e.getMessage()));
+        final BuildMessage msg = e.isError()? new CompilerMessage("", BuildMessage.Kind.ERROR, e.getMessage()) : new ProgressMessage(e.getMessage());
+        myMessageDispatcher.processMessage(msg);
       }
       else {
-        myMessageDispatcher.processMessage(new CompilerMessage(JPS_SERVER_NAME, cause));
+        myMessageDispatcher.processMessage(new CompilerMessage(COMPILE_SERVER_NAME, cause));
       }
     }
     finally {
@@ -241,7 +242,7 @@ public class IncProjectBuilder {
         }
       }
       else {
-        context.processMessage(new CompilerMessage(JPS_SERVER_NAME, BuildMessage.Kind.WARNING, "Output path " +
+        context.processMessage(new CompilerMessage(COMPILE_SERVER_NAME, BuildMessage.Kind.WARNING, "Output path " +
                                                                                                outputRoot.getPath() +
                                                                                                " intersects with a source root. The output cannot be cleaned."));
       }
