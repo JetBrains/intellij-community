@@ -86,7 +86,7 @@ public class CompletionLookupArranger extends LookupArranger {
     CompletionLocation myLocation = new CompletionLocation(indicator.getParameters());
     final StatisticsInfo main = StatisticsManager.serialize(CompletionService.STATISTICS_KEY, item, myLocation);
     final List<LookupElement> items = lookupImpl.getItems();
-    final int count = Math.min(lookupImpl.getPreferredItemsCount(), lookupImpl.getList().getSelectedIndex());
+    final int count = Math.min(3, lookupImpl.getList().getSelectedIndex());
 
     final List<StatisticsInfo> ignored = new ArrayList<StatisticsInfo>();
     for (int i = 0; i < count; i++) {

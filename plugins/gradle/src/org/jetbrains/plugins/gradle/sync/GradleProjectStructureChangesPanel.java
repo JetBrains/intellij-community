@@ -7,7 +7,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.config.GradleToolWindowPanel;
 import org.jetbrains.plugins.gradle.diff.GradleProjectStructureChange;
-import org.jetbrains.plugins.gradle.diff.GradleProjectStructureHelper;
+import org.jetbrains.plugins.gradle.diff.PlatformFacade;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import javax.swing.*;
@@ -27,7 +27,7 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
 
   public GradleProjectStructureChangesPanel(@NotNull Project project,
                                             @NotNull GradleProjectStructureChangesModel model,
-                                            @NotNull GradleProjectStructureHelper projectStructureHelper)
+                                            @NotNull PlatformFacade projectStructureHelper)
   {
     super(project, projectStructureHelper, GradleConstants.TOOL_WINDOW_TOOLBAR_PLACE);
     model.addListener(new GradleProjectStructureChangeListener() {

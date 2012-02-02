@@ -69,6 +69,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
                                         QuickActionProvider, DockContainer.Dialog {
 
   @NonNls public static final String LAYOUT = "Runner.Layout";
+  @NonNls public static final String SETTINGS = "XDebugger.Settings";
   @NonNls public static final String VIEW_POPUP = "Runner.View.Popup";
   @NonNls public static final String VIEW_TOOLBAR = "Runner.View.Toolbar";
 
@@ -688,6 +689,10 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     for (RunnerContentUi child : myChildren) {
       moveFollowingTabs(index, child.myTabs);
     }
+  }
+
+  public ActionGroup getSettingsActions() {
+    return (ActionGroup)myActionManager.getAction(SETTINGS);
   }
 
   private static void moveFollowingTabs(int index, final JBRunnerTabs tabs) {

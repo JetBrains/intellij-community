@@ -1,5 +1,7 @@
 package org.jetbrains.plugins.gradle.importing.wizard.adjust;
 
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.*;
@@ -35,7 +37,9 @@ public class GradleProjectStructureFactory {
     entity.invite(new GradleEntityVisitor() {
       @Override
       public void visit(@NotNull GradleProject project) {
-        result.set(new GradleProjectStructureNodeDescriptor<GradleEntity>(project, project.getName(), GradleIcons.PROJECT_ICON));
+        result.set(new GradleProjectStructureNodeDescriptor<GradleEntity>(
+          project, project.getName(), IconLoader.getIcon(ApplicationInfoEx.getInstanceEx().getSmallIconUrl())
+        ));
       }
 
       @Override

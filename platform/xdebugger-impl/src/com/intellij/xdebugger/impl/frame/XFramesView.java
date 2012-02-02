@@ -16,9 +16,16 @@
 package com.intellij.xdebugger.impl.frame;
 
 import com.google.common.collect.Sets;
+import com.intellij.ide.CommonActionsManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.containers.HashMap;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.frame.XExecutionStack;
@@ -27,6 +34,7 @@ import com.intellij.xdebugger.frame.XSuspendContext;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
@@ -54,11 +62,6 @@ public class XFramesView extends XDebugViewBase {
 
     myMainPanel = new JPanel(new BorderLayout());
 
-    myThreadComboBox = new JComboBox();
-    myThreadComboBox.setRenderer(new ThreadComboBoxRenderer(myThreadComboBox));
-    myThreadComboBox.addItemListener(new MyItemListener());
-    myMainPanel.add(myThreadComboBox, BorderLayout.NORTH);
-
     myFramesList = new XDebuggerFramesList(session.getProject());
     myFramesList.addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(final ListSelectionEvent e) {
@@ -76,7 +79,31 @@ public class XFramesView extends XDebugViewBase {
       }
     });
     myMainPanel.add(ScrollPaneFactory.createScrollPane(myFramesList), BorderLayout.CENTER);
+
+    myThreadComboBox = new JComboBox();
+    myThreadComboBox.setRenderer(new ThreadComboBoxRenderer(myThreadComboBox));
+    myThreadComboBox.addItemListener(new MyItemListener());
+    final ActionToolbar toolbar = createToolbar();
+    Wrapper threadsPanel = new Wrapper();
+    threadsPanel.add(toolbar.getComponent(), BorderLayout.EAST);
+    threadsPanel.add(myThreadComboBox, BorderLayout.CENTER);
+    myMainPanel.add(threadsPanel, BorderLayout.NORTH);
+
     rebuildView(SessionEvent.RESUMED);
+  }
+
+  private ActionToolbar createToolbar() {
+    final DefaultActionGroup framesGroup = new DefaultActionGroup();
+
+    CommonActionsManager actionsManager = CommonActionsManager.getInstance();
+    framesGroup.add(actionsManager.createPrevOccurenceAction(getFramesList()));
+    framesGroup.add(actionsManager.createNextOccurenceAction(getFramesList()));
+
+    final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.DEBUGGER_TOOLBAR, framesGroup, true);
+    toolbar.setReservePlaceAutoPopupIcon(false);
+    ((ActionToolbarImpl)toolbar).setAddSeparatorFirst(true);
+    toolbar.getComponent().setBorder(new EmptyBorder(1, 0, 0, 0));
+    return toolbar;
   }
 
   private StackFramesListBuilder getOrCreateBuilder(XExecutionStack executionStack) {
@@ -121,7 +148,6 @@ public class XFramesView extends XDebugViewBase {
     }
     XExecutionStack activeExecutionStack = suspendContext.getActiveExecutionStack();
     myThreadComboBox.setSelectedItem(activeExecutionStack);
-    myThreadComboBox.setVisible(executionStacks.length != 1);
     updateFrames(activeExecutionStack);
     myListenersEnabled = true;
   }

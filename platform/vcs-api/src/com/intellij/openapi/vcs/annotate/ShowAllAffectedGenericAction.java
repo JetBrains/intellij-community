@@ -96,8 +96,7 @@ public class ShowAllAffectedGenericAction extends AnAction {
   }
 
   private static String failedText(VirtualFile virtualFile, VcsRevisionNumber revision) {
-    return new StringBuilder().append("Show all affected files for ").append(virtualFile.getPath()).append(" at ")
-      .append(revision.asString()).append(" failed").toString();
+    return "Show all affected files for " + virtualFile.getPath() + " at " + revision.asString() + " failed";
   }
 
   @Override

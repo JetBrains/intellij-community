@@ -2,11 +2,12 @@ package org.jetbrains.plugins.gradle.testutil
 
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.roots.RootPolicy
+
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.LibraryOrderEntry
-import groovy.mock.interceptor.StubFor
+
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.IconLoader
 
 /** 
  * @author Denis Zhdanov
@@ -16,15 +17,16 @@ class IntellijProjectBuilder extends AbstractProjectBuilder {
   
   def projectStub = [:]
   def project = projectStub as Project
-  def projectStructureHelper = [
+  def platformFacade = [
     getModules: { modules },
-    getOrderEntries: { dependencies[it] }
+    getOrderEntries: { dependencies[it] },
+    getProjectIcon: { IconLoader.getIcon("/nodes/ideaProject.png") }
   ]
 
   @Override
   protected createProject(String name, LanguageLevel languageLevel) {
     projectStub.getName = { name }
-    projectStructureHelper.getLanguageLevel = { languageLevel }
+    platformFacade.getLanguageLevel = { languageLevel }
     project
   }
 

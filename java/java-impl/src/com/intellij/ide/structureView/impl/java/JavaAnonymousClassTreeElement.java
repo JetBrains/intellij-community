@@ -30,6 +30,7 @@ public class JavaAnonymousClassTreeElement extends JavaClassTreeElement {
   public final static JavaAnonymousClassTreeElement[] EMPTY_ARRAY = {};
 
   private String myName;
+  private String myBaseName;
   
   public JavaAnonymousClassTreeElement(PsiAnonymousClass aClass, Set<PsiClass> parents) {
     super(aClass, false, parents);
@@ -55,8 +56,24 @@ public class JavaAnonymousClassTreeElement extends JavaClassTreeElement {
 
 
   @Override
+  public boolean isSearchInLocationString() {
+    return true;
+  }
+
+  @Override
   public String getLocationString() {
-    return ((PsiAnonymousClass)getElement()).getBaseClassType().getClassName();
+    if (myBaseName == null) {
+      PsiAnonymousClass anonymousClass = (PsiAnonymousClass)getElement();
+      if (anonymousClass != null) {
+        myBaseName = anonymousClass.getBaseClassType().getClassName();
+      }
+    }
+    return myBaseName;
+  }
+
+  @Override
+  public String toString() {
+    return super.toString() + (myBaseName == null ? "" : " (" + getLocationString() + ")");
   }
 
   @Override

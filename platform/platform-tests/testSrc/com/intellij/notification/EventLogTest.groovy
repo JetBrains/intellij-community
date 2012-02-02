@@ -15,16 +15,57 @@
  */
 package com.intellij.notification;
 
-import com.intellij.testFramework.UsefulTestCase;
+
+import com.intellij.openapi.util.TextRange
+import com.intellij.testFramework.LightPlatformTestCase
+import com.intellij.testFramework.PlatformTestCase
 
 /**
  * @author peter
  */
-class EventLogTest extends UsefulTestCase {
+class EventLogTest extends LightPlatformTestCase {
+
+  EventLogTest() {
+    PlatformTestCase.initPlatformLangPrefix()
+  }
 
   public void testNbsp() {
     def entry = EventLog.formatForLog(new Notification("xxx", "Title", "Hello&nbsp;world", NotificationType.ERROR))
     assert entry.message == 'Title: Hello world'
+  }
+
+  public void testParseMultilineText() {
+    def entry = EventLog.formatForLog(new Notification("xxx", "Title", "<html><body> " +
+                                                                       "<font size=\"3\">first line<br>" +
+                                                                       "second line<br>" +
+                                                                       "third<br>" +
+                                                                       "<a href=\"create\">Action</a><br>" +
+                                                                       "</body></html>", NotificationType.ERROR))
+    assert entry.message == 'Title:  first line second line third // Action (show balloon)'
+    //                       0                                       40      48          60
+    assert entry.links.collect { it.first } == [new TextRange(40, 46), new TextRange(48, 60)]
+
+  }
+
+  public void testInParagraph() {
+    def entry = EventLog.formatForLog(new Notification("xxx", "Title", "<p>message</p>", NotificationType.ERROR))
+    assert entry.message == 'Title: message'
+  }
+
+  public void testJavaSeparators() {
+    def entry = EventLog.formatForLog(new Notification("xxx", "Title", "fst\nsnd", NotificationType.ERROR))
+    assert entry.message == 'Title: fst snd'
+  }
+
+  public void testLinkInTitle() {
+    def entry = EventLog.formatForLog(new Notification("xxx", '<a href="a">link</a>', "content", NotificationType.ERROR))
+    assert entry.message == 'link: content'
+    assert entry.links.collect { it.first } == [new TextRange(0, 4)]
+  }
+
+  public void testMalformedLink() throws Exception {
+    def entry = EventLog.formatForLog(new Notification("xxx", '<a href="a">link<a/>', "content", NotificationType.ERROR))
+    assert entry.message ==  'link: content (show balloon)'
   }
 
 }

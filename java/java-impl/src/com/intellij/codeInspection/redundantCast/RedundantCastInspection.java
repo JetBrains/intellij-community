@@ -28,7 +28,6 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.RedundantCastUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.IntArrayList;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -139,7 +138,7 @@ public class RedundantCastInspection extends GenericsInspectionToolBase {
       PsiElement castTypeElement = descriptor.getPsiElement();
       PsiTypeCastExpression cast = castTypeElement == null ? null : (PsiTypeCastExpression)castTypeElement.getParent();
       if (cast != null) {
-        removeCast(cast);
+        RedundantCastUtil.removeCast(cast);
       }
     }
 
@@ -162,30 +161,5 @@ public class RedundantCastInspection extends GenericsInspectionToolBase {
   @NotNull
   public String getShortName() {
     return SHORT_NAME;
-  }
-
-  private static void removeCast(PsiTypeCastExpression castExpression) {
-    if (castExpression == null) return;
-    PsiExpression operand = castExpression.getOperand();
-    if (operand instanceof PsiParenthesizedExpression) {
-      final PsiParenthesizedExpression parExpr = (PsiParenthesizedExpression)operand;
-      operand = parExpr.getExpression();
-    }
-    if (operand == null) return;
-
-    PsiElement toBeReplaced = castExpression;
-
-    PsiElement parent = castExpression.getParent();
-    while (parent instanceof PsiParenthesizedExpression) {
-      toBeReplaced = parent;
-      parent = parent.getParent();
-    }
-
-    try {
-      toBeReplaced.replace(operand);
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-    }
   }
 }

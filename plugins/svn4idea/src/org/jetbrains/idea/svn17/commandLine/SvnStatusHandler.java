@@ -95,11 +95,12 @@ public class SvnStatusHandler extends DefaultHandler {
   }
 
   private void newPending(final Convertor<File, SVNInfo> infoGetter) {
-    myPending = new PortableStatus();
-    myPending.setInfoGetter(new Getter<SVNInfo>() {
+    final PortableStatus status = new PortableStatus();
+    myPending = status;
+    status.setInfoGetter(new Getter<SVNInfo>() {
       @Override
       public SVNInfo get() {
-        return infoGetter.convert(myPending.getFile());
+        return infoGetter.convert(status.getFile());
       }
     });
   }

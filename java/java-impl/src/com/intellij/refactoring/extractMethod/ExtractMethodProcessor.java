@@ -758,6 +758,23 @@ public class ExtractMethodProcessor implements MatchProvider {
 
     adjustFinalParameters(newMethod);
 
+    for (int i = 0, length = myVariableDatum.length; i < length; i++) {
+      ParameterTablePanel.VariableData data = myVariableDatum[i];
+      final PsiVariable variable = data.variable;
+      final PsiParameter psiParameter = newMethod.getParameterList().getParameters()[i];
+      if (!TypeConversionUtil.isAssignable(variable.getType(), psiParameter.getType())) {
+        for (PsiReference reference : ReferencesSearch.search(psiParameter, new LocalSearchScope(body))){
+          final PsiElement element = reference.getElement();
+          if (element != null) {
+            final PsiElement parent = element.getParent();
+            if (parent instanceof PsiTypeCastExpression) {
+              RedundantCastUtil.removeCast((PsiTypeCastExpression)parent);
+            }
+          }
+        }
+      }
+    }
+
     myExtractedMethod = (PsiMethod)myTargetClass.addAfter(newMethod, myAnchor);
     if (isNeedToChangeCallContext() && myNeedChangeContext) {
       ChangeContextUtil.decodeContextInfo(myExtractedMethod, myTargetClass, RefactoringUtil.createThisExpression(myManager, null));

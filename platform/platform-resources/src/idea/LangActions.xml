@@ -671,7 +671,7 @@
       <reference ref="StepOut"/>
       <reference ref="RunToCursor"/>
       <separator/>
-      <reference ref="XDebugger.ToggleSortValues"/>
+      <reference ref="EvaluateExpression" />
     </group>
 
     <group id="XDebugger.ToolWindow.LeftToolbar">
@@ -726,12 +726,15 @@
       <reference ref="XDebugger.AddToWatches"/>
     </group>
 
-    <group id="RunnerLayoutActions">
-      <group id="Runner.Layout" icon="/debugger/restoreLayout.png" popup="true">
-        <action id="Runner.RestoreLayout" class="com.intellij.execution.ui.layout.actions.RestoreLayoutAction"/>
-        <action id="Runner.ToggleToolbarLayout" class="com.intellij.execution.ui.layout.actions.ToggleToolbarLayoutAction"/>
-      </group>
+    <group id="XDebugger.Settings" icon="/general/secondaryGroup.png" popup="true">
 
+    </group>
+
+    <group id="RunnerLayoutActions">
+      <group id="Runner.Layout">
+        <action id="Runner.RestoreLayout" class="com.intellij.execution.ui.layout.actions.RestoreLayoutAction"
+                icon="/debugger/restoreLayout.png"/>
+      </group>
 
       <group id="Runner.View.Popup">
         <action id="Runner.MinimizeView" class="com.intellij.execution.ui.layout.actions.MinimizeViewAction" icon="/actions/minimize.png"/>

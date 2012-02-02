@@ -81,16 +81,14 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
             final FileElement fileElement = file.loadTreeElement();
             node = myNode;
             if (node == null) {
-              String message = new StringBuilder().
-                append("Failed to bind stub to AST for element ").
-                append(getClass()).
-                append(" in ").
-                append(file.getVirtualFile() == null ? "<unknown file>" : file.getVirtualFile().getPath()).
-                append("\nFile stub tree:\n").
-                append(stubTree != null ? StringUtil.trimLog(((PsiFileStubImpl)stubTree.getRoot()).printTree(), 1024) : " is null").
-                append("\nLoaded file AST:\n").
-                append(StringUtil.trimLog(DebugUtil.treeToString(fileElement, true), 1024)).
-                toString();
+              String message = "Failed to bind stub to AST for element " +
+                               getClass() +
+                               " in " +
+                               (file.getVirtualFile() == null ? "<unknown file>" : file.getVirtualFile().getPath()) +
+                               "\nFile stub tree:\n" +
+                               (stubTree != null ? StringUtil.trimLog(((PsiFileStubImpl)stubTree.getRoot()).printTree(), 1024) : " is null") +
+                               "\nLoaded file AST:\n" +
+                               StringUtil.trimLog(DebugUtil.treeToString(fileElement, true), 1024);
               throw new IllegalArgumentException(message);
             }
           }
