@@ -43,15 +43,7 @@ public class MavenSmartCompletionContributor extends CompletionContributor {
   public void fillCompletionVariants(final CompletionParameters parameters, CompletionResultSet result) {
     if (parameters.getCompletionType() != CompletionType.SMART) return;
 
-    Collection<?> variants;
-
-    AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
-    try {
-      variants = getVariants(parameters);
-    }
-    finally {
-      accessToken.finish();
-    }
+    Collection<?> variants = getVariants(parameters);
 
     MavenPropertyCompletionContributor.addVariants(variants, result);
   }
