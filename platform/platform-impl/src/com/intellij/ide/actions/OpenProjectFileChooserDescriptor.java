@@ -38,28 +38,32 @@ public class OpenProjectFileChooserDescriptor extends FileChooserDescriptor {
     return isProjectDirectory(file) || isProjectFile(file);
   }
 
-  public Icon getOpenIcon(final VirtualFile virtualFile) {
-    if (isProjectDirectory(virtualFile)) return ourProjectIcon;
-    final Icon icon = getImporterIcon(virtualFile, true);
-    if(icon!=null){
-      return icon;
+  public Icon getOpenIcon(final VirtualFile file) {
+    if (isProjectDirectory(file)) {
+      return dressIcon(file, ourProjectIcon);
     }
-    return super.getOpenIcon(virtualFile);
+    final Icon icon = getImporterIcon(file);
+    if (icon != null) {
+      return dressIcon(file, icon);
+    }
+    return super.getOpenIcon(file);
   }
 
-  public Icon getClosedIcon(final VirtualFile virtualFile) {
-    if (isProjectDirectory(virtualFile)) return ourProjectIcon;
-    final Icon icon = getImporterIcon(virtualFile, false);
-    if(icon!=null){
-      return icon;
+  public Icon getClosedIcon(final VirtualFile file) {
+    if (isProjectDirectory(file)) {
+      return dressIcon(file, ourProjectIcon);
     }
-    return super.getClosedIcon(virtualFile);
+    final Icon icon = getImporterIcon(file);
+    if (icon != null) {
+      return dressIcon(file, icon);
+    }
+    return super.getClosedIcon(file);
   }
 
   @Nullable
-  public static Icon getImporterIcon(final VirtualFile virtualFile, final boolean open) {
+  private static Icon getImporterIcon(final VirtualFile virtualFile) {
     final ProjectOpenProcessor provider = ProjectOpenProcessor.getImportProvider(virtualFile);
-    if(provider!=null) {
+    if (provider != null) {
       return virtualFile.isDirectory() && provider.lookForProjectsInDirectory() ? ourProjectIcon : provider.getIcon(virtualFile);
     }
     return null;
