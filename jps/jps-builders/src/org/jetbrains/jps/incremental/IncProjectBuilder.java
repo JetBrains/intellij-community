@@ -166,6 +166,8 @@ public class IncProjectBuilder {
 
     context.processMessage(new ProgressMessage("Running 'after' tasks"));
     runTasks(context, myBuilderRegistry.getAfterTasks());
+
+    context.processMessage(new ProgressMessage("Finished, saving caches..."));
   }
 
   private CompileContext createContext(CompileScope scope, boolean isMake, final boolean isProjectRebuild) throws ProjectBuildException {

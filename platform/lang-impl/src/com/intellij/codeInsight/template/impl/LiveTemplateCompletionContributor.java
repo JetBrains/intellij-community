@@ -47,7 +47,7 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
         final PsiFile file = parameters.getPosition().getContainingFile();
         final int offset = parameters.getOffset();
         final List<TemplateImpl> templates = listApplicableTemplates(file, offset);
-        if (Registry.is("show.live.templates.in.completion")) {
+        if (showAllTemplates()) {
           final Ref<Boolean> templatesShown = Ref.create(false);
           
           result.runRemainingContributors(parameters, new Consumer<CompletionResult>() {
@@ -76,6 +76,11 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
 
       }
     });
+  }
+
+  @SuppressWarnings("MethodMayBeStatic") //for Kotlin
+  protected boolean showAllTemplates() {
+    return Registry.is("show.live.templates.in.completion");
   }
 
   private static void ensureTemplatesShown(Ref<Boolean> templatesShown, List<TemplateImpl> templates, CompletionResultSet result) {

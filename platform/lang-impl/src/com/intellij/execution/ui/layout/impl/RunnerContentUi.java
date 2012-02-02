@@ -1326,6 +1326,9 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
         final GridImpl grid = getGridFor(content, false);
         if (grid == null) {
           getStateFor(content).assignTab(myLayoutSettings.getOrCreateTab(-1));
+        } else {
+          //noinspection ConstantConditions
+          ((GridCellImpl)findCellFor(content)).restore(content);
         }
         getStateFor(content).setMinimizedInGrid(false);
         myManager.addContent(content);

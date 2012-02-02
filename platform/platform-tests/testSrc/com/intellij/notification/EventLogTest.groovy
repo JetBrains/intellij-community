@@ -68,4 +68,10 @@ class EventLogTest extends LightPlatformTestCase {
     assert entry.message ==  'link: content (show balloon)'
   }
 
+  public void testVariousNewlines() throws Exception {
+    assert EventLog.formatForLog(new Notification("xxx", 'title', "foo<br/>bar", NotificationType.ERROR)).message ==  'title: foo bar'
+    assert EventLog.formatForLog(new Notification("xxx", 'title', "foo<br/>/bar", NotificationType.ERROR)).message ==  'title: foo // /bar'
+    assert EventLog.formatForLog(new Notification("xxx", 'title', "foo<br/>Bar", NotificationType.ERROR)).message ==  'title: foo // Bar'
+  }
+
 }

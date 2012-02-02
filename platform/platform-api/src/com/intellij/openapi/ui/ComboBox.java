@@ -197,22 +197,10 @@ public class ComboBox extends ComboBoxWithWidePopup implements AWTEventListener 
     myMinimumAndPreferredWidth = minimumAndPreferredWidth;
   }
 
-  @Nullable
-  private static DialogWrapperDialog getParentDialog(Component c) {
-    do {
-      if (c == null || c instanceof DialogWrapperDialog) {
-        return (DialogWrapperDialog)c;
-      }
-      c = c.getParent();
-    }
-    while (true);
-  }
-
   private void registerCancelOnEscape() {
     registerKeyboardAction(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
-        final DialogWrapperDialog dialogWrapperDialog = getParentDialog(ComboBox.this);
-        final DialogWrapper dialogWrapper = dialogWrapperDialog == null ? null : dialogWrapperDialog.getDialogWrapper();
+        final DialogWrapper dialogWrapper = DialogWrapper.findInstance(ComboBox.this);
 
         if (isPopupVisible()) {
           setPopupVisible(false);

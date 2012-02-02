@@ -727,7 +727,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
             myContext.processMessage(new ProgressMessage("Parsing sources..."));
           }
           else {
-            if (!message.startsWith("total")) {
+            if (!message.startsWith("total ") && !message.startsWith("loading ") && !message.startsWith("wrote ")) {
               myContext.processMessage(new ProgressMessage(FileUtil.toSystemDependentName(message)));
             }
           }

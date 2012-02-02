@@ -399,7 +399,6 @@ public abstract class TestObject implements JavaCommandLine {
 
       final PrintWriter writer = new PrintWriter(myTempFile, "UTF-8");
       try {
-        writer.println(junit4 ? JUnitStarter.JUNIT4_PARAMETER : "-junit3");
         writer.println(packageName);
         final List<String> testNames = new ArrayList<String>();
         for (final T element : elements) {

@@ -46,6 +46,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
@@ -58,6 +59,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
@@ -74,6 +76,7 @@ public class EventLog implements Notifications {
   private static final String A_CLOSING = "</a>";
   private static final Pattern TAG_PATTERN = Pattern.compile("<[^>]*>");
   private static final Pattern A_PATTERN = Pattern.compile("<a ([^>]* )?href=[\"\']([^>]*)[\"\'][^>]*>");
+  private static final Set<String> NEW_LINES = CollectionFactory.newSet("<br>", "</br>", "<br/>", "<p>", "</p>", "<p/>");
 
   public EventLog() {
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(Notifications.TOPIC, this);
@@ -188,11 +191,7 @@ public class EventLog implements Notifications {
       }
 
       hasHtml = true;
-      if ("<br>".equals(tagStart) ||
-          "</br>".equals(tagStart) ||
-          "</p>".equals(tagStart) ||
-          "<p>".equals(tagStart) ||
-          "<p/>".equals(tagStart)) {
+      if (NEW_LINES.contains(tagStart)) {
         lineSeparators.add(document.createRangeMarker(TextRange.from(document.getTextLength(), 0)));
       }
       else if (!"<html>".equals(tagStart) && !"</html>".equals(tagStart) && !"<body>".equals(tagStart) && !"</body>".equals(tagStart)) {
@@ -219,7 +218,7 @@ public class EventLog implements Notifications {
       if (offset < document.getTextLength()) {
         boolean spaceAfter = Character.isWhitespace(document.getCharsSequence().charAt(offset));
         int next = CharArrayUtil.shiftForward(document.getCharsSequence(), offset, " \t");
-        if (next < document.getTextLength() && Character.isUpperCase(document.getCharsSequence().charAt(next))) {
+        if (next < document.getTextLength() && !Character.isLowerCase(document.getCharsSequence().charAt(next))) {
           document.insertString(offset, (spaceBefore ? "" : " ") + "//" + (spaceAfter ? "" : " "));
           continue;
         }

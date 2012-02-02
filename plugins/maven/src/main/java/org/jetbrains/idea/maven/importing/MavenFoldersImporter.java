@@ -15,7 +15,8 @@
  */
 package org.jetbrains.idea.maven.importing;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -29,7 +30,6 @@ import org.jetbrains.idea.maven.project.MavenImportingSettings;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.Path;
-import org.jetbrains.idea.maven.utils.Url;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -45,31 +45,33 @@ public class MavenFoldersImporter {
     final MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
     final MavenImportingSettings settings = manager.getImportingSettings();
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        List<ModifiableRootModel> rootModels = new ArrayList<ModifiableRootModel>();
-        for (Module each : ModuleManager.getInstance(project).getModules()) {
-          MavenProject mavenProject = manager.findProject(each);
-          if (mavenProject == null) continue;
+    AccessToken accessToken = WriteAction.start();
+    try {
+      List<ModifiableRootModel> rootModels = new ArrayList<ModifiableRootModel>();
+      for (Module each : ModuleManager.getInstance(project).getModules()) {
+        MavenProject mavenProject = manager.findProject(each);
+        if (mavenProject == null) continue;
 
-          MavenRootModelAdapter a = new MavenRootModelAdapter(mavenProject, each, new MavenDefaultModifiableModelsProvider(project));
-          new MavenFoldersImporter(mavenProject, settings, a).config(updateTargetFoldersOnly);
+        MavenRootModelAdapter a = new MavenRootModelAdapter(mavenProject, each, new MavenDefaultModifiableModelsProvider(project));
+        new MavenFoldersImporter(mavenProject, settings, a).config(updateTargetFoldersOnly);
 
-          ModifiableRootModel model = a.getRootModel();
-          if (model.isChanged()) {
-            rootModels.add(model);
-          }
-          else {
-            model.dispose();
-          }
+        ModifiableRootModel model = a.getRootModel();
+        if (model.isChanged()) {
+          rootModels.add(model);
         }
-
-        if (!rootModels.isEmpty()) {
-          ModifiableRootModel[] modelsArray = rootModels.toArray(new ModifiableRootModel[rootModels.size()]);
-          ProjectRootManager.getInstance(project).multiCommit(modelsArray);
+        else {
+          model.dispose();
         }
       }
-    });
+
+      if (!rootModels.isEmpty()) {
+        ModifiableRootModel[] modelsArray = rootModels.toArray(new ModifiableRootModel[rootModels.size()]);
+        ProjectRootManager.getInstance(project).multiCommit(modelsArray);
+      }
+    }
+    finally {
+      accessToken.finish();
+    }
   }
 
   public MavenFoldersImporter(MavenProject mavenProject, MavenImportingSettings settings, MavenRootModelAdapter model) {
