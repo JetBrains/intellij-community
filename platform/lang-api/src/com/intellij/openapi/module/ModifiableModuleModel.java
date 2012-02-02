@@ -137,4 +137,6 @@ public interface ModifiableModuleModel {
   boolean hasModuleGroups();
 
   void setModuleGroupPath(Module module, String[] groupPath);
+
+  void setModuleFilePath(Module module, String oldPath, String newFilePath);
 }

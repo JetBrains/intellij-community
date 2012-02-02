@@ -44,7 +44,10 @@ public class SymLinkHandlingTest extends LightPlatformLangTestCase {
   }
 
   public void testBadLinksAreIgnored() throws Exception {
-    if (!SystemInfo.areSymLinksSupported) return;
+    if (!SystemInfo.areSymLinksSupported) {
+      System.out.println("Test not passed");
+      return;
+    }
 
     final File missingFile = new File(FileUtil.getTempDirectory(), "missing_file");
     assertTrue(missingFile.getAbsolutePath(), !missingFile.exists() || missingFile.delete());
