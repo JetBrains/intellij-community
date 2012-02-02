@@ -25,6 +25,7 @@ public class SourceLineCounterUtil {
       classCoverageInfo.totalLineCount += counter.getNSourceLines();
       classCoverageInfo.totalMethodCount += counter.getNMethodsWithCode();
       packageCoverageInfo.totalLineCount += counter.getNSourceLines();
+      packageCoverageInfo.totalMethodCount += counter.getNMethodsWithCode();
       if (!counter.isInterface()) {
         packageCoverageInfo.totalClassCount++;
       }
