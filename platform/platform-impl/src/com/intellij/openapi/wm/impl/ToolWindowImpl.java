@@ -434,6 +434,9 @@ public final class ToolWindowImpl implements ToolWindowEx {
 
   public void setContentFactory(ToolWindowFactory contentFactory) {
     myContentFactory = contentFactory;
+    if (contentFactory instanceof ToolWindowFactoryEx) {
+      ((ToolWindowFactoryEx)contentFactory).init(this);
+    }
   }
 
   public void ensureContentInitialized() {

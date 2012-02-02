@@ -472,7 +472,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       (ToolWindowImpl)registerToolWindow(bean.id, label, toolWindowAnchor, myProject, DumbService.isDumbAware(factory),
                                          bean.canCloseContents);
     toolWindow.setContentFactory(factory);
-    if (bean.icon != null) {
+    if (bean.icon != null && toolWindow.getIcon() == null) {
       Icon icon = IconLoader.findIcon(bean.icon, factory.getClass());
       if (icon == null) {
         try {
