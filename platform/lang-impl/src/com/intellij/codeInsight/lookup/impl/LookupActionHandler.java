@@ -187,12 +187,14 @@ public abstract class LookupActionHandler extends EditorActionHandler {
         return;
       }
 
-      lookup.performGuardedChange(new Runnable() {
+      if (!lookup.performGuardedChange(new Runnable() {
         @Override
         public void run() {
           lookup.getEditor().getSelectionModel().removeSelection();
         }
-      });
+      })) {
+        return;
+      }
 
       BackspaceHandler.truncatePrefix(context, lookup, myOriginalHandler, lookup.getLookupStart() - 1);
     }
@@ -220,13 +222,15 @@ public abstract class LookupActionHandler extends EditorActionHandler {
         return;
       }
 
-      lookup.performGuardedChange(new Runnable() {
+      if (!lookup.performGuardedChange(new Runnable() {
         @Override
         public void run() {
           editor.getSelectionModel().removeSelection();
           editor.getCaretModel().moveToOffset(offset + 1);
         }
-      });
+      })) {
+        return;
+      }
 
       lookup.appendPrefix(c);
       final CompletionProgressIndicator completion = CompletionServiceImpl.getCompletionService().getCurrentCompletion();

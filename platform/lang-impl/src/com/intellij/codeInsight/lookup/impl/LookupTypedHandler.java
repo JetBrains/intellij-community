@@ -53,6 +53,7 @@ import java.util.LinkedList;
 public class LookupTypedHandler extends TypedHandlerDelegate {
   private static boolean inside = false;
 
+  @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
   @Override
   public Result beforeCharTyped(final char charTyped,
                                 Project project,
@@ -72,20 +73,24 @@ public class LookupTypedHandler extends TypedHandlerDelegate {
       }
 
       final CharFilter.Result result = getLookupAction(charTyped, lookup);
-      lookup.performGuardedChange(new Runnable() {
+      if (!lookup.performGuardedChange(new Runnable() {
         public void run() {
           EditorModificationUtil.deleteSelectedText(editor);
         }
-      });
+      })) {
+        return Result.STOP;
+      }
       if (result == CharFilter.Result.ADD_TO_PREFIX) {
         Document document = editor.getDocument();
         long modificationStamp = document.getModificationStamp();
 
-        lookup.performGuardedChange(new Runnable() {
+        if (!lookup.performGuardedChange(new Runnable() {
           public void run() {
             EditorModificationUtil.typeInStringAtCaretHonorBlockSelection(editor, String.valueOf(charTyped), true);
           }
-        });
+        })) {
+          return Result.STOP;
+        }
         lookup.appendPrefix(charTyped);
         if (lookup.isStartCompletionWhenNothingMatches() && lookup.getItems().isEmpty()) {
           final CompletionProgressIndicator completion = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
@@ -132,7 +137,7 @@ public class LookupTypedHandler extends TypedHandlerDelegate {
     }
   }
 
-  private boolean completeTillTypedCharOccurrence(char charTyped, LookupImpl lookup, LookupElement item) {
+  private static boolean completeTillTypedCharOccurrence(char charTyped, LookupImpl lookup, LookupElement item) {
     PrefixMatcher matcher = lookup.itemMatcher(item);
     final String oldPrefix = matcher.getPrefix() + lookup.getAdditionalPrefix();
     PrefixMatcher expanded = matcher.cloneWithPrefix(oldPrefix + charTyped);
@@ -165,12 +170,15 @@ public class LookupTypedHandler extends TypedHandlerDelegate {
     scrollingModel.accumulateViewportChanges();
     try {
       final LinkedList<EditorChangeAction> events = smartUndo ? justTypeChar(charTyped, lookup, editor) : null;
+      if (lookup.isLookupDisposed()) { // if justTypeChar corrupted the start offset
+        return;
+      }
 
       CommandProcessor.getInstance().executeCommand(editor.getProject(), new Runnable() {
         @Override
         public void run() {
-          if (smartUndo) {
-            undoEvents(lookup, events);
+          if (smartUndo && !undoEvents(lookup, events)) {
+            return;
           }
           lookup.finishLookup(charTyped);
         }
@@ -181,10 +189,10 @@ public class LookupTypedHandler extends TypedHandlerDelegate {
     }
   }
 
-  private static void undoEvents(LookupImpl lookup, @NotNull final LinkedList<EditorChangeAction> events) {
+  private static boolean undoEvents(LookupImpl lookup, @NotNull final LinkedList<EditorChangeAction> events) {
     AccessToken token = WriteAction.start();
     try {
-      lookup.performGuardedChange(new Runnable() {
+      return lookup.performGuardedChange(new Runnable() {
         @Override
         public void run() {
           for (EditorChangeAction event : events) {

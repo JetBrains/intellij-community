@@ -741,8 +741,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     if (!plainMatch) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_CAMEL_HUMPS);
     }
-    
-    performGuardedChange(new Runnable() {
+
+    if (!performGuardedChange(new Runnable() {
       public void run() {
         AccessToken token = WriteAction.start();
         try {
@@ -752,7 +752,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
           token.finish();
         }
       }
-    });
+    })) {
+      return;
+    }
 
     doHide(false, true);
 
@@ -828,11 +830,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     return myLookupStartMarker.getStartOffset();
   }
 
-  public void performGuardedChange(Runnable change) {
-    performGuardedChange(change, null);
+  public boolean performGuardedChange(Runnable change) {
+    return performGuardedChange(change, null);
   }
 
-  public void performGuardedChange(Runnable change, @Nullable final String debug) {
+  public boolean performGuardedChange(Runnable change, @Nullable final String debug) {
     checkValid();
     assert myLookupStartMarker.isValid();
     assert !myChangeGuard;
@@ -855,12 +857,17 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       document.removeDocumentListener(spy);
       myChangeGuard = false;
     }
+    if (!myLookupStartMarker.isValid()) {
+      hide();
+      return false;
+    }
     checkValid();
     LOG.assertTrue(myLookupStartMarker.isValid(), "invalid lookup start");
     if (isVisible()) {
       updateLookupLocation();
     }
     checkValid();
+    return true;
   }
 
   @Override
@@ -1185,7 +1192,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   }
 
   public void replacePrefix(final String presentPrefix, final String newPrefix) {
-    performGuardedChange(new Runnable() {
+    if (!performGuardedChange(new Runnable() {
       public void run() {
         EditorModificationUtil.deleteSelectedText(myEditor);
         int offset = myEditor.getCaretModel().getOffset();
@@ -1200,7 +1207,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
         myEditor.getCaretModel().moveToOffset(start + newPrefix.length());
       }
-    });
+    })) {
+      return;
+    }
     refreshUi(true);
   }
 
