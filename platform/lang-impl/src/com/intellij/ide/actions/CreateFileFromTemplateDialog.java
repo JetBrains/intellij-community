@@ -18,14 +18,17 @@ package com.intellij.ide.actions;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.InputValidator;
+import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
 import java.util.Map;
 
 /**
@@ -39,6 +42,7 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
   private JLabel myKindLabel;
 
   private ElementCreator myCreator;
+  private InputValidator myInputValidator;
 
   protected CreateFileFromTemplateDialog(@NotNull Project project) {
     super(project, true);
@@ -46,9 +50,25 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
     myKindLabel.setLabelFor(myKindCombo);
     myKindCombo.registerUpDownHint(myNameField);
     myUpDownHint.setIcon(PlatformIcons.UP_DOWN_ARROWS);
+    myNameField.getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
+      protected void textChanged(DocumentEvent e) {
+        validateName();
+      }
+    });
     init();
   }
 
+  private void validateName() {
+    if (myInputValidator != null) {
+      final String text = myNameField.getText();
+      setOKActionEnabled(myInputValidator.canClose(text));
+      if (myInputValidator instanceof InputValidatorEx) {
+        setErrorText(((InputValidatorEx)myInputValidator).getErrorText(text));
+      }
+    }
+  }
+  
   protected JTextField getNameField() {
     return myNameField;
   }
@@ -91,6 +111,7 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
 
     private final CreateFileFromTemplateDialog myDialog;
     private final Project myProject;
+    private InputValidator myInputValidator;
 
     public BuilderImpl(CreateFileFromTemplateDialog dialog, Project project) {
       myDialog = dialog;
@@ -105,6 +126,12 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
 
     public Builder addKind(@NotNull String name, @Nullable Icon icon, @NotNull String templateName) {
       myDialog.getKindCombo().addItem(name, icon, templateName);
+      return this;
+    }
+
+    @Override
+    public Builder setValidator(InputValidator validator) {
+      myDialog.myInputValidator = validator;
       return this;
     }
 
@@ -129,6 +156,7 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
           return creator.getActionName(newName, myDialog.getKindCombo().getSelectedName());
         }
       };
+      myDialog.validateName();
       myDialog.show();
       if (myDialog.getExitCode() == OK_EXIT_CODE) {
         return created.get();
@@ -145,6 +173,7 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
 
   public interface Builder {
     Builder setTitle(String title);
+    Builder setValidator(InputValidator validator);
     Builder addKind(@NotNull String kind, @Nullable Icon icon, @NotNull String templateName);
     @Nullable
     <T extends PsiElement> T show(@NotNull String errorTitle, @Nullable String selectedItem, @NotNull FileCreator<T> creator);
