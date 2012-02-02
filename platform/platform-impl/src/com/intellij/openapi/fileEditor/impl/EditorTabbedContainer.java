@@ -567,7 +567,13 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
 
     @Override
     public void dragOutFinished(MouseEvent event, TabInfo source) {
-      FileEditorManagerEx.getInstanceEx(myProject).closeFile(myFile, myWindow);
+      boolean copy = event.isMetaDown() || (!SystemInfo.isMac && event.isControlDown());
+      if (!copy) {
+        FileEditorManagerEx.getInstanceEx(myProject).closeFile(myFile, myWindow);
+      }
+      else {
+        source.setHidden(false);
+      }
 
       mySession.process(event);
 

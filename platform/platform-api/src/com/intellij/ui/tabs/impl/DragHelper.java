@@ -73,7 +73,7 @@ class DragHelper extends MouseDragHelper {
   protected void processDragOutFinish(MouseEvent event) {
     super.processDragOutFinish(event);
 
-    myDragOutSource.getDragOutDelegate().dragOutFinished(event, myDragSource);
+    myDragOutSource.getDragOutDelegate().dragOutFinished(event, myDragOutSource);
   }
 
   protected void processDrag(MouseEvent event, Point targetScreenPoint, Point startPointScreen) {
