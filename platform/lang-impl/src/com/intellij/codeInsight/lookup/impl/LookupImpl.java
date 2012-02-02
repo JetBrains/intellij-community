@@ -853,7 +853,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     RangeMarkerSpy spy = new RangeMarkerSpy(myLookupStartMarker) {
       @Override
       protected void invalidated(DocumentEvent e) {
-        LOG.error("Lookup start marker invalidated, say thanks to the " + e +
+        LOG.info("Lookup start marker invalidated, say thanks to the " + e +
                   ", doc=" + document +
                   ", debug=" + debug);
       }
