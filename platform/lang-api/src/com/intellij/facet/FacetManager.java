@@ -32,7 +32,7 @@ public abstract class FacetManager implements FacetModel {
   }
 
   /**
-   * Creates the interface for modifiyng set of facets in the module. Call {@link ModifiableFacetModel#commit()} when modification is finished 
+   * Creates the interface for modifying set of facets in the module. Call {@link ModifiableFacetModel#commit()} when modification is finished
    * @return the modifiable facet model
    */
   @NotNull
