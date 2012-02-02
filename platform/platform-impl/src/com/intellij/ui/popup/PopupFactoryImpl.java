@@ -739,11 +739,41 @@ public class PopupFactoryImpl extends JBPopupFactory {
           icon = actionId != null && actionId.startsWith("QuickList.") ? QUICK_LIST_ICON : myEmptyIcon;
 
         }
+        else {
+          icon = new IconWrapper(icon);
+        }
         boolean prependSeparator = !myListModel.isEmpty() && myPrependWithSeparator;
         assert text != null : action + " has no presentation";
         myListModel.add(new ActionItem(action, text, presentation.isEnabled(), icon, prependSeparator, mySeparatorText));
         myPrependWithSeparator = false;
         mySeparatorText = null;
+      }
+    }
+
+    /**
+     * Adjusts icon size to maximum, so that icons with different sizes were aligned correctly.
+     */
+    private class IconWrapper implements Icon {
+
+      private Icon myIcon;
+
+      IconWrapper(Icon icon) {
+        myIcon = icon;
+      }
+
+      @Override
+      public void paintIcon(Component c, Graphics g, int x, int y) {
+        myIcon.paintIcon(c, g, x, y);
+      }
+
+      @Override
+      public int getIconWidth() {
+        return myMaxIconWidth;
+      }
+
+      @Override
+      public int getIconHeight() {
+        return myMaxIconHeight;
       }
     }
 

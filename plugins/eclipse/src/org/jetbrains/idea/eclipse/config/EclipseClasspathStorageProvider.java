@@ -103,6 +103,14 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
     return model.getContentRoots()[0].getPath();
   }
 
+  @Override
+  public void modulePathChanged(Module module, String path) {
+    final EclipseModuleManager moduleManager = EclipseModuleManager.getInstance(module);
+    if (moduleManager != null) {
+      moduleManager.setDocumentSet(null);
+    }
+  }
+
   public static void registerFiles(final CachedXmlDocumentSet fileCache, final Module module, final String moduleRoot, final String storageRoot) {
     fileCache.register(EclipseXml.CLASSPATH_FILE, storageRoot);
     fileCache.register(EclipseXml.PROJECT_FILE, storageRoot);

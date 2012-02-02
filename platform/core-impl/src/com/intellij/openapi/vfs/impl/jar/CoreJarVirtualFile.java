@@ -38,7 +38,9 @@ public class CoreJarVirtualFile extends VirtualFile {
     myParent = parent;
     myEntry = entry;
 
-    parent.myChildren.add(this);
+    if (parent != null) {
+      parent.myChildren.add(this);
+    }
   }
 
   @NotNull
@@ -56,7 +58,16 @@ public class CoreJarVirtualFile extends VirtualFile {
   @Override
   public String getPath() {
     if (myParent == null) return myHandler.myBasePath + "!/";
-    return myParent.getPath() + "/" + myEntry.shortName;
+
+    String parentPath = myParent.getPath();
+    StringBuilder answer = new StringBuilder(parentPath.length() + 1 + myEntry.shortName.length());
+    answer.append(parentPath);
+    if (answer.charAt(answer.length() - 1) != '/') {
+      answer.append('/');
+    }
+    answer.append(myEntry.shortName);
+    
+    return answer.toString();
   }
 
   @Override

@@ -137,6 +137,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   private boolean myStartCompletionWhenNothingMatches;
   private boolean myResizePending;
   private int myMaximumHeight = Integer.MAX_VALUE;
+  private boolean myFinishing;
 
   public LookupImpl(Project project, Editor editor, @NotNull LookupArranger arranger){
     super(new JPanel(new BorderLayout()));
@@ -714,6 +715,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   }
 
   public void finishLookup(char completionChar, @Nullable final LookupElement item) {
+    //noinspection deprecation,unchecked
     if (item == null ||
         item instanceof EmptyLookupItem ||
         item.getObject() instanceof DeferredUserLookupValue &&
@@ -724,10 +726,18 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       return;
     }
 
+    if (myDisposed) { // DeferredUserLookupValue could close us in any way
+      return;
+    }
+
     final PsiFile file = getPsiFile();
     if (file != null && !WriteCommandAction.ensureFilesWritable(myProject, Arrays.asList(file))) {
       doHide(false, true);
       fireItemSelected(null, completionChar);
+      return;
+    }
+
+    if (myDisposed) { // ensureFilesWritable could close us by showing a dialog
       return;
     }
 
@@ -741,18 +751,19 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     if (!plainMatch) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_CAMEL_HUMPS);
     }
-    
-    performGuardedChange(new Runnable() {
-      public void run() {
-        AccessToken token = WriteAction.start();
-        try {
-          insertLookupString(item, prefix);
-        }
-        finally {
-          token.finish();
-        }
-      }
-    });
+
+    myFinishing = true;
+    AccessToken token = WriteAction.start();
+    try {
+      insertLookupString(item, prefix);
+    }
+    finally {
+      token.finish();
+    }
+
+    if (myDisposed) { // any document listeners could close us
+      return;
+    }
 
     doHide(false, true);
 
@@ -828,11 +839,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     return myLookupStartMarker.getStartOffset();
   }
 
-  public void performGuardedChange(Runnable change) {
-    performGuardedChange(change, null);
+  public boolean performGuardedChange(Runnable change) {
+    return performGuardedChange(change, null);
   }
 
-  public void performGuardedChange(Runnable change, @Nullable final String debug) {
+  public boolean performGuardedChange(Runnable change, @Nullable final String debug) {
     checkValid();
     assert myLookupStartMarker.isValid();
     assert !myChangeGuard;
@@ -855,12 +866,15 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       document.removeDocumentListener(spy);
       myChangeGuard = false;
     }
-    checkValid();
-    LOG.assertTrue(myLookupStartMarker.isValid(), "invalid lookup start");
+    if (!myLookupStartMarker.isValid() || myDisposed) {
+      hide();
+      return false;
+    }
     if (isVisible()) {
       updateLookupLocation();
     }
     checkValid();
+    return true;
   }
 
   @Override
@@ -924,7 +938,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   private void addListeners() {
     myEditor.getDocument().addDocumentListener(new DocumentAdapter() {
       public void documentChanged(DocumentEvent e) {
-        if (!myChangeGuard) {
+        if (!myChangeGuard && !myFinishing) {
           hide();
         }
       }
@@ -932,14 +946,14 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
     final CaretListener caretListener = new CaretListener() {
       public void caretPositionChanged(CaretEvent e) {
-        if (!myChangeGuard) {
+        if (!myChangeGuard && !myFinishing) {
           hide();
         }
       }
     };
     final SelectionListener selectionListener = new SelectionListener() {
       public void selectionChanged(final SelectionEvent e) {
-        if (!myChangeGuard) {
+        if (!myChangeGuard && !myFinishing) {
           hide();
         }
       }
@@ -973,6 +987,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
         if (oldItem != item) {
           mySelectionInvariant = item == null ? null : myPresentableModel.getItemPresentationInvariant(item);
           fireCurrentItemChanged(item);
+          if (myDisposed) { //a listener may have decided to close us, what can we do?
+            return;
+          }
         }
         if (item != null) {
           updateHint(item);
@@ -1185,7 +1202,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   }
 
   public void replacePrefix(final String presentPrefix, final String newPrefix) {
-    performGuardedChange(new Runnable() {
+    if (!performGuardedChange(new Runnable() {
       public void run() {
         EditorModificationUtil.deleteSelectedText(myEditor);
         int offset = myEditor.getCaretModel().getOffset();
@@ -1200,7 +1217,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
         myEditor.getCaretModel().moveToOffset(start + newPrefix.length());
       }
-    });
+    })) {
+      return;
+    }
     refreshUi(true);
   }
 

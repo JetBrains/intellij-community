@@ -47,6 +47,8 @@ public enum DirDiffOperation {
         return FileStatus.COLOR_ADDED;
       case MERGE:
         return FileStatus.COLOR_MODIFIED;
+      case DELETE:
+        return FileStatus.DELETED.getColor();
       case EQUAL:
       case NONE:
     }

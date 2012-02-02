@@ -53,6 +53,8 @@ public interface ClasspathStorageProvider {
 
   String getContentRoot(ModifiableRootModel model);
 
+  void modulePathChanged(Module module, String path);
+
   interface ClasspathConverter {
 
     FileSet getFileSet();

@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.FileNotFoundException;
@@ -91,6 +92,10 @@ public class Win32LocalFileSystem extends LocalFileSystemBase {
   @NotNull
   @Override
   public String[] list(@NotNull VirtualFile file) {
+    if (isInvalidSymLink(file)) {
+      return ArrayUtil.EMPTY_STRING_ARRAY;
+    }
+
     try {
       String[] strings = myKernel.list(file.getPath());
       if (checkMe && !Arrays.asList(strings).equals(Arrays.asList(super.list(file)))) {

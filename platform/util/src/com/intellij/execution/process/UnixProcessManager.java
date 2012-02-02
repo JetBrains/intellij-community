@@ -152,7 +152,7 @@ public class UnixProcessManager {
           result = false;
         }
 
-        StringBuffer errorStr = new StringBuffer();
+        StringBuilder errorStr = new StringBuilder();
         while ((s = stdError.readLine()) != null) {
           errorStr.append(s).append("\n");
         }
@@ -172,22 +172,19 @@ public class UnixProcessManager {
   }
 
   public static String[] getPSCmd(boolean commandLineOnly) {
+    String psCommand = "/bin/ps";
+    if (!new File(psCommand).isFile()) {
+      psCommand = "ps";
+    }
     if (SystemInfo.isLinux) {
-      return new String[]{"ps", "-e", "e", "--format", commandLineOnly ? "%a" : "%P%p%a"};
+      return new String[]{psCommand, "-e", "--format", commandLineOnly ? "%a" : "%P%p%a"};
     }
-    else if (SystemInfo.isMac) {
-      return new String[]{"ps", "-ax", "-E", "-o", commandLineOnly ? "command" : "ppid,pid,command"};
-    }
-    else if (SystemInfo.isFreeBSD) {
-      return new String[]{"ps", "-ax", "-e", "-o", commandLineOnly ? "command" : "ppid,pid,command"};
+    else if (SystemInfo.isMac || SystemInfo.isFreeBSD) {
+      return new String[]{psCommand, "-ax", "-o", commandLineOnly ? "command" : "ppid,pid,command"};
     }
     else {
       throw new IllegalStateException(System.getProperty("os.name") + " is not supported.");
     }
-  }
-
-  public static boolean containsMarker(@NotNull String environ, @NotNull String uid) {
-    return environ.contains(uid);
   }
 
   @NotNull

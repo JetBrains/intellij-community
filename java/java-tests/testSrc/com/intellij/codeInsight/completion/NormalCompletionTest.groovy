@@ -1264,4 +1264,6 @@ public class ListUtils {
 
   public void testPackageInMemberType() { doTest() }
 
+  public void testClassNameDot() { doTest('.') }
+
 }

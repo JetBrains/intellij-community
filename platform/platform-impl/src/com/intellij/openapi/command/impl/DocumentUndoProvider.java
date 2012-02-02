@@ -27,7 +27,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -108,11 +107,7 @@ public class DocumentUndoProvider implements Disposable {
     }
 
     private void registerUndoableAction(DocumentEvent e) {
-      getUndoManager().undoableActionPerformed(new EditorChangeAction((DocumentEx)e.getDocument(),
-                                                                      e.getOffset(),
-                                                                      e.getOldFragment(),
-                                                                      e.getNewFragment(),
-                                                                      e.getOldTimeStamp()));
+      getUndoManager().undoableActionPerformed(new EditorChangeAction(e));
     }
 
     private void registerNonUndoableAction(final Document document) {

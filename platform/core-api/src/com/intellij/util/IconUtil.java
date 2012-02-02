@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,44 +89,43 @@ public class IconUtil {
     return new ImageIcon(img);
   }
   
-  public static Icon getIcon(final VirtualFile file, @Iconable.IconFlags final int flags, final Project project) {
+  public static Icon getIcon(final VirtualFile file, @Iconable.IconFlags final int flags, @Nullable final Project project) {
     Icon lastIcon = Iconable.LastComputedIcon.get(file, flags);
 
     final Icon base = lastIcon != null ? lastIcon : VirtualFilePresentation.getIcon(file);
-    return IconDeferrer.getInstance()
-      .defer(base, new FileIconKey(file, project, flags), new Function<FileIconKey, Icon>() {
-        @Override
-        public Icon fun(final FileIconKey key) {
-          VirtualFile file = key.getFile();
-          int flags = key.getFlags();
-          Project project = key.getProject();
+    return IconDeferrer.getInstance().defer(base, new FileIconKey(file, project, flags), new NullableFunction<FileIconKey, Icon>() {
+      @Override
+      public Icon fun(final FileIconKey key) {
+        final VirtualFile file = key.getFile();
+        final int flags = key.getFlags();
+        final Project project = key.getProject();
 
-          if (!file.isValid() || project != null && (project.isDisposed() || !wasEverInitialized(project))) return null;
+        if (!file.isValid() || project != null && (project.isDisposed() || !wasEverInitialized(project))) return null;
 
-          Icon providersIcon = getProvidersIcon(file, flags, project);
-          Icon icon = providersIcon == null ? VirtualFilePresentation.getIcon(file) : providersIcon;
+        final Icon providersIcon = getProvidersIcon(file, flags, project);
+        Icon icon = providersIcon == null ? VirtualFilePresentation.getIcon(file) : providersIcon;
 
-          final boolean dumb = project != null && DumbService.getInstance(project).isDumb();
-          for (FileIconPatcher patcher : getPatchers()) {
-            if (dumb && !DumbService.isDumbAware(patcher)) {
-              continue;
-            }
-
-            icon = patcher.patchIcon(icon, file, flags, project);
+        final boolean dumb = project != null && DumbService.getInstance(project).isDumb();
+        for (FileIconPatcher patcher : getPatchers()) {
+          if (dumb && !DumbService.isDumbAware(patcher)) {
+            continue;
           }
 
-          if ((flags & Iconable.ICON_FLAG_READ_STATUS) != 0 && !file.isWritable()) {
-            icon = new LayeredIcon(icon, PlatformIcons.LOCKED_ICON);
-          }
-          if (file.isSymLink()) {
-            icon = new LayeredIcon(icon, PlatformIcons.SYMLINK_ICON);
-          }
-
-          Iconable.LastComputedIcon.put(file, icon, flags);
-
-          return icon;
+          icon = patcher.patchIcon(icon, file, flags, project);
         }
-      });
+
+        if ((flags & Iconable.ICON_FLAG_READ_STATUS) != 0 && !file.isWritable()) {
+          icon = new LayeredIcon(icon, PlatformIcons.LOCKED_ICON);
+        }
+        if (file.isSymLink()) {
+          icon = new LayeredIcon(icon, PlatformIcons.SYMLINK_ICON);
+        }
+
+        Iconable.LastComputedIcon.put(file, icon, flags);
+
+        return icon;
+      }
+    });
   }
 
   @Nullable

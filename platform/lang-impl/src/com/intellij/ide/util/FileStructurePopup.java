@@ -481,13 +481,16 @@ public class FileStructurePopup implements Disposable {
 
   @Nullable
   private AbstractTreeNode getSelectedNode() {
-    Object component = myTree.getSelectionPath().getLastPathComponent();
-    if (component instanceof DefaultMutableTreeNode) {
-      component = ((DefaultMutableTreeNode)component).getUserObject();
-      if (component instanceof FilteringTreeStructure.FilteringNode) {
-        component = ((FilteringTreeStructure.FilteringNode)component).getDelegate();
-        if (component instanceof AbstractTreeNode) {
-          return (AbstractTreeNode)component;
+    final TreePath path = myTree.getSelectionPath();
+    if (path != null) {
+      Object component = path.getLastPathComponent();
+      if (component instanceof DefaultMutableTreeNode) {
+        component = ((DefaultMutableTreeNode)component).getUserObject();
+        if (component instanceof FilteringTreeStructure.FilteringNode) {
+          component = ((FilteringTreeStructure.FilteringNode)component).getDelegate();
+          if (component instanceof AbstractTreeNode) {
+            return (AbstractTreeNode)component;
+          }
         }
       }
     }

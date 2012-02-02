@@ -23,30 +23,44 @@ public final class Util {
   public static final int DEFAULT_INDENT = 10;
 
   public static Dimension getMinimumSize(final Component component, final GridConstraints constraints, final boolean addIndent){
-    final Dimension size = getSize(constraints.myMinimumSize, component.getMinimumSize());
-    if (addIndent) {
-      size.width += DEFAULT_INDENT * constraints.getIndent();
+    try {
+      final Dimension size = getSize(constraints.myMinimumSize, component.getMinimumSize());
+      if (addIndent) {
+        size.width += DEFAULT_INDENT * constraints.getIndent();
+      }
+      return size;
+    } catch (NullPointerException npe) { //IDEA-80722
+      return new Dimension(0,0);
     }
-    return size;
   }
 
   public static Dimension getMaximumSize(final Component component, final GridConstraints constraints, final boolean addIndent){
-    //[anton] we use only our property for maximum size.
-    // JButton reports that its max size = pref size, so it is impossible to make a column of same sized buttons.
-    // Probably there are other bad cases...
-    final Dimension size = getSize(constraints.myMaximumSize, MAX_SIZE);
-    if (addIndent && size.width < MAX_SIZE.width) {
-      size.width += DEFAULT_INDENT * constraints.getIndent();
+    try {
+      //[anton] we use only our property for maximum size.
+      // JButton reports that its max size = pref size, so it is impossible to make a column of same sized buttons.
+      // Probably there are other bad cases...
+      final Dimension size = getSize(constraints.myMaximumSize, MAX_SIZE);
+      if (addIndent && size.width < MAX_SIZE.width) {
+        size.width += DEFAULT_INDENT * constraints.getIndent();
+      }
+      return size;
     }
-    return size;
+    catch (NullPointerException e) {//IDEA-80722
+      return new Dimension(0,0);
+    }
   }
 
   public static Dimension getPreferredSize(final Component component, final GridConstraints constraints, final boolean addIndent) {
-    final Dimension size = getSize(constraints.myPreferredSize, component.getPreferredSize());
-    if (addIndent) {
-      size.width += DEFAULT_INDENT * constraints.getIndent();
+    try {
+      final Dimension size = getSize(constraints.myPreferredSize, component.getPreferredSize());
+      if (addIndent) {
+        size.width += DEFAULT_INDENT * constraints.getIndent();
+      }
+      return size;
     }
-    return size;
+    catch (NullPointerException e) {//IDEA-80722
+      return new Dimension(0,0);
+    }
   }
 
   private static Dimension getSize(final Dimension overridenSize, final Dimension ownSize){

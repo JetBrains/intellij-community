@@ -1573,6 +1573,17 @@ public abstract class DialogWrapper {
     }, 300, null);
   }
 
+  @Nullable
+  public static DialogWrapper findInstance(Component c) {
+    while (c != null){
+      if (c instanceof DialogWrapperDialog) {
+        return ((DialogWrapperDialog)c).getDialogWrapper();
+      }
+      c = c.getParent();
+    }
+    return null;
+  }
+
   private void updateHeightForErrorText() {
     if (getRootPane() == null) return;
 
