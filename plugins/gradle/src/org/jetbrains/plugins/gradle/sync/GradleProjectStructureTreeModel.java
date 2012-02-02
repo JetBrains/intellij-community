@@ -53,13 +53,13 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
   private final TreeNode[] myNodeHolder  = new TreeNode[1];
   private final int[]      myIndexHolder = new int[1];
 
-  private final Project                      myProject;
-  private final GradleProjectStructureHelper myProjectStructureHelper;
+  private final Project        myProject;
+  private final PlatformFacade myPlatformFacade;
 
-  public GradleProjectStructureTreeModel(@NotNull Project project, @NotNull GradleProjectStructureHelper projectStructureHelper) {
+  public GradleProjectStructureTreeModel(@NotNull Project project, @NotNull PlatformFacade platformFacade) {
     super(null);
     myProject = project;
-    myProjectStructureHelper = projectStructureHelper;
+    myPlatformFacade = platformFacade;
     rebuild();
   }
 
@@ -68,7 +68,7 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
     myModules.clear();
     
     DefaultMutableTreeNode root = new DefaultMutableTreeNode(buildDescriptor(getProject()));
-    final Collection<Module> modules = myProjectStructureHelper.getModules(getProject());
+    final Collection<Module> modules = myPlatformFacade.getModules(getProject());
     RootPolicy<LibraryOrderEntry> policy = new RootPolicy<LibraryOrderEntry>() {
       @Override
       public LibraryOrderEntry visitLibraryOrderEntry(LibraryOrderEntry libraryOrderEntry, LibraryOrderEntry value) {
@@ -79,7 +79,7 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
       final DefaultMutableTreeNode moduleNode = new DefaultMutableTreeNode(buildDescriptor(module));
       myModules.put(module.getName(), moduleNode); // Assuming that module names are unique.
       List<LibraryOrderEntry> libraryDependencies = new ArrayList<LibraryOrderEntry>();
-      for (OrderEntry orderEntry : myProjectStructureHelper.getOrderEntries(module)) {
+      for (OrderEntry orderEntry : myPlatformFacade.getOrderEntries(module)) {
         final LibraryOrderEntry libraryDependency = orderEntry.accept(policy, null);
         if (libraryDependency != null && !StringUtil.isEmpty(libraryDependency.getLibraryName())) {
           libraryDependencies.add(libraryDependency);
@@ -111,8 +111,8 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
     return new GradleProjectStructureNodeDescriptor<Named>(entity, entity.getName(), icon);
   }
 
-  private static GradleProjectStructureNodeDescriptor<Project> buildDescriptor(@NotNull Project project) {
-    return new GradleProjectStructureNodeDescriptor<Project>(project, project.getName(), GradleIcons.PROJECT_ICON);
+  private GradleProjectStructureNodeDescriptor<Project> buildDescriptor(@NotNull Project project) {
+    return new GradleProjectStructureNodeDescriptor<Project>(project, project.getName(), myPlatformFacade.getProjectIcon());
   }
 
   private static GradleProjectStructureNodeDescriptor<Module> buildDescriptor(@NotNull Module module) {

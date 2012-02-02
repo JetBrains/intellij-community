@@ -2,10 +2,8 @@ package org.jetbrains.plugins.gradle.sync;
 
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.Application
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.SkipInHeadlessEnvironment
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.plugins.gradle.testutil.ChangeBuilder
@@ -18,7 +16,6 @@ import org.junit.Test
 import org.picocontainer.defaults.DefaultPicoContainer
 import org.jetbrains.plugins.gradle.diff.*
 import static org.junit.Assert.assertEquals
-import com.intellij.openapi.util.Disposer
 
 /**
  * @author Denis Zhdanov
@@ -44,7 +41,7 @@ public class GradleProjectStructureChangesModelTest {
     treeChecker = new ProjectStructureChecker()
     container = new DefaultPicoContainer()
     container.registerComponentInstance(Project, intellij.project)
-    container.registerComponentInstance(GradleProjectStructureHelper, intellij.projectStructureHelper as GradleProjectStructureHelper)
+    container.registerComponentInstance(PlatformFacade, intellij.platformFacade as PlatformFacade)
     container.registerComponentImplementation(GradleProjectStructureChangesModel)
     container.registerComponentImplementation(GradleStructureChangesCalculator, GradleProjectStructureChangesCalculator)
     container.registerComponentImplementation(GradleModuleStructureChangesCalculator)
@@ -52,8 +49,6 @@ public class GradleProjectStructureChangesModelTest {
     container.registerComponentImplementation(GradleProjectStructureTreeModel)
     
     changesModel = container.getComponentInstance(GradleProjectStructureChangesModel) as GradleProjectStructureChangesModel
-    def applicationInfo = [getSmallIconUrl: {"/nodes/ideaProject.png"}] as ApplicationInfoEx
-    ApplicationManager.setApplication([getComponent: { applicationInfo } ] as Application, disposable)
   }
 
   @After
@@ -110,6 +105,7 @@ public class GradleProjectStructureChangesModelTest {
     } } } }
   }
 
+  @SuppressWarnings("GroovyAssignabilityCheck")
   private def init(gradleProjectInit, intellijProjectInit) {
     treeModel = container.getComponentInstance(GradleProjectStructureTreeModel) as GradleProjectStructureTreeModel
     changesModel.addListener({ old, current ->

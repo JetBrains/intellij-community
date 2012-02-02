@@ -7,8 +7,10 @@ import com.intellij.application.options.colors.PreviewPanel;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.ui.components.JBScrollPane;
@@ -59,7 +61,11 @@ public class GradleColorAndFontPreviewPanel implements PreviewPanel {
   private Pair<Tree, DefaultTreeModel> init() {
     myContent.removeAll();
     String projectName = GradleBundle.message("gradle.settings.color.text.sample.conflict.node.name");
-    DefaultMutableTreeNode root = createNode(projectName, GradleIcons.PROJECT_ICON, GradleTextAttributes.GRADLE_CHANGE_CONFLICT);
+    DefaultMutableTreeNode root = createNode(
+      projectName,
+      IconLoader.getIcon(ApplicationInfoEx.getInstanceEx().getSmallIconUrl()),
+      GradleTextAttributes.GRADLE_CHANGE_CONFLICT
+    );
 
     String moduleName = GradleBundle.message("gradle.settings.color.text.sample.node.confirmed.name");
     DefaultMutableTreeNode module = createNode(moduleName, GradleIcons.MODULE_ICON, GradleTextAttributes.GRADLE_CONFIRMED_CONFLICT);
