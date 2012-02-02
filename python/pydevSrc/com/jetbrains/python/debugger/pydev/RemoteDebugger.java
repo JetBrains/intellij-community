@@ -242,7 +242,7 @@ public class RemoteDebugger implements ProcessDebugger {
   }
 
   private static String generateTempName() {
-    return new StringBuilder(32).append(TEMP_VAR_PREFIX).append(ourRandom.nextInt(Integer.MAX_VALUE)).toString();
+    return TEMP_VAR_PREFIX + ourRandom.nextInt(Integer.MAX_VALUE);
   }
 
   @Override
