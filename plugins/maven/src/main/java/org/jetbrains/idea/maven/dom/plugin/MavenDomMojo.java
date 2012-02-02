@@ -24,6 +24,9 @@ public interface MavenDomMojo extends MavenDomElement {
   GenericDomValue<String> getGoal();
 
   @NotNull
+  GenericDomValue<String> getPhase();
+
+  @NotNull
   MavenDomParameters getParameters();
 
   @NotNull
