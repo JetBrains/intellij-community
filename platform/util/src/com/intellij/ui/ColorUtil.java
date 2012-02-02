@@ -53,11 +53,7 @@ public class ColorUtil {
     final String R = Integer.toHexString(c.getRed());
     final String G = Integer.toHexString(c.getGreen());
     final String B = Integer.toHexString(c.getBlue());
-    return new StringBuffer()
-      .append(R.length() < 2 ? "0" : "").append(R)
-      .append(G.length() < 2 ? "0" : "").append(G)
-      .append(B.length() < 2 ? "0" : "").append(B)
-      .toString();
+    return (R.length() < 2 ? "0" : "") + R + (G.length() < 2 ? "0" : "") + G + (B.length() < 2 ? "0" : "") + B;
   }
 
   /**

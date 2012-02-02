@@ -224,7 +224,7 @@ public class UsersFilterAction extends BasePopupAction {
   }
   
   private String getMeText(final String name) {
-    return new StringBuilder().append("me ( ").append(name).append(" )").toString();
+    return "me ( " + name + " )";
   }
 
   @Override

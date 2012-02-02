@@ -303,9 +303,7 @@ public class VcsChangeDetailsManager {
   }
 
   private static String changeDescription(Change o) {
-    return new StringBuilder().append(ChangesUtil.getFilePath(o).getName()).append(" (").append(
-      o.getBeforeRevision() == null
-      ? "New" : beforeRevisionText(o)).append(")").toString();
+    return ChangesUtil.getFilePath(o).getName() + " (" + (o.getBeforeRevision() == null ? "New" : beforeRevisionText(o)) + ")";
   }
 
   private static String beforeRevisionText(Change o) {
