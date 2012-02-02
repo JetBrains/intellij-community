@@ -177,21 +177,14 @@ public class UnixProcessManager {
       psCommand = "ps";
     }
     if (SystemInfo.isLinux) {
-      return new String[]{psCommand, "-e", "e", "--format", commandLineOnly ? "%a" : "%P%p%a"};
+      return new String[]{psCommand, "-e", "--format", commandLineOnly ? "%a" : "%P%p%a"};
     }
-    else if (SystemInfo.isMac) {
-      return new String[]{psCommand, "-ax", "-E", "-o", commandLineOnly ? "command" : "ppid,pid,command"};
-    }
-    else if (SystemInfo.isFreeBSD) {
-      return new String[]{psCommand, "-ax", "-e", "-o", commandLineOnly ? "command" : "ppid,pid,command"};
+    else if (SystemInfo.isMac || SystemInfo.isFreeBSD) {
+      return new String[]{psCommand, "-ax", "-o", commandLineOnly ? "command" : "ppid,pid,command"};
     }
     else {
       throw new IllegalStateException(System.getProperty("os.name") + " is not supported.");
     }
-  }
-
-  public static boolean containsMarker(@NotNull String environ, @NotNull String uid) {
-    return environ.contains(uid);
   }
 
   @NotNull
