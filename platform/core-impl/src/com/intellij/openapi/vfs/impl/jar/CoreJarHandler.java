@@ -25,30 +25,39 @@ import java.util.Map;
  * @author yole
  */
 public class CoreJarHandler extends JarHandlerBase {
-  private final Map<String, VirtualFile> myFileMap = new HashMap<String, VirtualFile>();
+
   private final CoreJarFileSystem myFileSystem;
+  private final VirtualFile myRoot;
 
   public CoreJarHandler(CoreJarFileSystem fileSystem, String path) {
     super(path);
     myFileSystem = fileSystem;
+
+    Map<EntryInfo, CoreJarVirtualFile> entries = new HashMap<EntryInfo, CoreJarVirtualFile>();
+
+    for (EntryInfo info : getEntriesMap().values()) {
+      getOrCreateFile(info, entries);
+    }
+
+    myRoot = getOrCreateFile(getEntryInfo(""), entries);
+  }
+
+  private CoreJarVirtualFile getOrCreateFile(EntryInfo info, Map<EntryInfo, CoreJarVirtualFile> entries) {
+    CoreJarVirtualFile answer = entries.get(info);
+    if (answer == null) {
+      answer = new CoreJarVirtualFile(this, info, getOrCreateFile(info.parent, entries));
+      entries.put(info, answer);
+    }
+
+    return answer;
   }
 
   @Nullable
   public VirtualFile findFileByPath(String pathInJar) {
-    if (getZip() == null) {
-      return null;
-    }
-    VirtualFile file = myFileMap.get(pathInJar);
-    if (file == null) {
-      if (pathInJar.length() > 0) {
-        EntryInfo entryInfo = getEntryInfo(pathInJar);
-        if (entryInfo == null) {
-          return null;
-        }
-      }
-      file = new CoreJarVirtualFile(myFileSystem, this, pathInJar);
-      myFileMap.put(pathInJar, file);
-    }
-    return file;
+    return myRoot != null ? myRoot.findFileByRelativePath(pathInJar) : null;
+  }
+
+  public CoreJarFileSystem getFileSystem() {
+    return myFileSystem;
   }
 }
