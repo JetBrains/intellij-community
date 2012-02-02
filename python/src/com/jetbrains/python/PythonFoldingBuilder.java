@@ -3,7 +3,6 @@ package com.jetbrains.python;
 import com.intellij.codeInsight.folding.CodeFoldingSettings;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.folding.CustomFoldingBuilder;
-import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbAware;
@@ -19,7 +18,6 @@ import com.jetbrains.python.psi.PyStringLiteralExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -167,7 +165,7 @@ public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAw
   }
 
   @Override
-  protected boolean mayContainCustomFoldings(ASTNode node) {
+  protected boolean isCustomFoldingRoot(ASTNode node) {
     return node.getPsi() instanceof PyFile || node.getElementType() == PyElementTypes.STATEMENT_LIST;
   }
 }
