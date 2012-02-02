@@ -743,7 +743,7 @@ public class JavaFoldingBuilder extends CustomFoldingBuilder implements DumbAwar
   }
 
   @Override
-  protected boolean mayContainCustomFoldings(ASTNode node) {
+  protected boolean isCustomFoldingRoot(ASTNode node) {
     IElementType nodeType = node.getElementType();
     return nodeType == JavaElementType.CLASS || nodeType == JavaElementType.CODE_BLOCK;
   }
