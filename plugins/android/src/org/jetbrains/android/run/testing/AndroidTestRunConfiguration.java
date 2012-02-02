@@ -28,6 +28,7 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
 import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
 import com.intellij.execution.ui.ConsoleView;
@@ -35,6 +36,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -43,6 +46,7 @@ import com.intellij.psi.PsiPackage;
 import org.jetbrains.android.dom.manifest.Instrumentation;
 import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.android.facet.AndroidFacet;
+import org.jetbrains.android.facet.AndroidFacetConfiguration;
 import org.jetbrains.android.run.AndroidApplicationLauncher;
 import org.jetbrains.android.run.AndroidRunConfigurationBase;
 import org.jetbrains.android.run.AndroidRunConfigurationEditor;
@@ -108,6 +112,44 @@ public class AndroidTestRunConfiguration extends AndroidRunConfigurationBase {
     }
   }
 
+  @Override
+  public AndroidRunningState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) throws ExecutionException {
+    final AndroidRunningState state = super.getState(executor, env);
+
+    if (state == null) {
+      return null;
+    }
+
+    final AndroidFacet facet = state.getFacet();
+    final AndroidFacetConfiguration configuration = facet.getConfiguration();
+    
+    if (!configuration.PACK_TEST_CODE) {
+      final Module module = facet.getModule();
+      final int count = getTestSourceRootCount(module);
+      
+      if (count > 0) {
+        final String message = "Code and resources under test source " + (count > 1 ? "roots" : "root") +
+                               " aren't included into debug APK.\nWould you like to include them and recompile " +
+                               module.getName() + " module?" + "\n(You may change this option in Android facet settings later)";
+        final int result =
+          Messages.showYesNoCancelDialog(getProject(), message, "Test code not included into APK", Messages.getQuestionIcon());
+        
+        if (result == Messages.YES) {
+          configuration.PACK_TEST_CODE = true;
+        }
+        else if (result == Messages.CANCEL) {
+          return null;
+        }
+      }
+    }
+    return state;
+  }
+  
+  private static int getTestSourceRootCount(@NotNull Module module) {
+    final ModuleRootManager manager = ModuleRootManager.getInstance(module);
+    return manager.getSourceRoots(true).length - manager.getSourceRoots(false).length;
+  }
+
   private void checkTestMethod() throws RuntimeConfigurationException {
     JavaRunConfigurationModule configurationModule = getConfigurationModule();
     final PsiClass testClass =
@@ -166,7 +208,7 @@ public class AndroidTestRunConfiguration extends AndroidRunConfigurationBase {
     BaseTestsOutputConsoleView consoleView = SMTestRunnerConnectionUtil
       .createAndAttachConsole("Android", state.getProcessHandler(), properties, state.getRunnerSettings(), state.getConfigurationSettings()
       );
-    Disposer.register(state.getAndroidFacet().getModule().getProject(), consoleView);
+    Disposer.register(state.getFacet().getModule().getProject(), consoleView);
     return consoleView;
   }
 

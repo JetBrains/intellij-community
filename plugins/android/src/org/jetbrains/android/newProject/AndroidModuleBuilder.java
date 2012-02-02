@@ -128,6 +128,7 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
 
       if (myProjectType == ProjectType.TEST) {
         assert myTestedModule != null;
+        facet.getConfiguration().PACK_TEST_CODE = true;
         ModuleOrderEntry entry = rootModel.addModuleOrderEntry(myTestedModule);
         entry.setScope(DependencyScope.PROVIDED);
       }

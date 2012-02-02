@@ -257,14 +257,8 @@ public class AndroidRootUtil {
                 }
               }
               // do not support android-app->android-app compile dependencies
-              else if (facet == null) {
-                if (!outputDirs.contains(classDir) && classDir != null && classDir.exists()) {
-                  outputDirs.add(classDir);
-                }
-                VirtualFile classDirForTests = extension.getCompilerOutputPathForTests();
-                if (!outputDirs.contains(classDirForTests) && classDirForTests != null && classDirForTests.exists()) {
-                  outputDirs.add(classDirForTests);
-                }
+              else if (facet == null && !outputDirs.contains(classDir) && classDir != null && classDir.exists()) {
+                outputDirs.add(classDir);
               }
             }
             fillExternalLibrariesAndModules(depModule, outputDirs, libraries, visited, !libraryProject || exportedLibrariesOnly);

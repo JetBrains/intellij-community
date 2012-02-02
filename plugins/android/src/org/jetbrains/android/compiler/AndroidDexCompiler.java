@@ -164,10 +164,12 @@ public class AndroidDexCompiler implements ClassPostProcessingCompiler {
               }
             }
 
+            if (facet.getConfiguration().PACK_TEST_CODE) {
               VirtualFile outputDirForTests = extension.getCompilerOutputPathForTests();
 
               if (outputDirForTests != null) {
                 addModuleOutputDir(files, outputDirForTests);
+              }
             }
           }
 
