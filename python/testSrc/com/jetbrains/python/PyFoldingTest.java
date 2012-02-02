@@ -17,4 +17,8 @@ public class PyFoldingTest extends PyTestCase {
   public void testDocString() {
     doTest();
   }
+
+  public void testCustomFolding() {
+    doTest();
+  }
 }
