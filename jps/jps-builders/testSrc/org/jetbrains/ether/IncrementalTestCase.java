@@ -21,7 +21,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import junit.framework.TestCase;
 import junitx.framework.FileAssert;
-import org.apache.log4j.FileAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.PropertyConfigurator;
 import org.jetbrains.annotations.NonNls;
