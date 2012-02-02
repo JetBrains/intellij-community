@@ -1433,11 +1433,12 @@ public class Mappings {
 
           debug("Dependent file: ", depFile);
           final Collection<UsageRepr.Cluster> depClusters = mySourceFileToUsages.get(depFile);
-
-          for (UsageRepr.Cluster depCluster : depClusters) {
-            final Set<UsageRepr.Usage> depUsages = depCluster.getUsages();
-
-            if (depUsages != null) {
+          if (depClusters != null) {
+            for (UsageRepr.Cluster depCluster : depClusters) {
+              final Set<UsageRepr.Usage> depUsages = depCluster.getUsages();
+              if (depUsages == null) {
+                continue;
+              }
               final Set<UsageRepr.Usage> usages = new HashSet<UsageRepr.Usage>(depUsages);
 
               usages.retainAll(affectedUsages);
@@ -1512,15 +1513,17 @@ public class Mappings {
                 myClassToSubclasses.removeFrom(superSomething, cr.name);
               }
 
-              for (UsageRepr.Cluster cluster : clusters) {
-                final Set<UsageRepr.Usage> usages = cluster.getUsages();
-                if (usages != null) {
-                  for (UsageRepr.Usage u : usages) {
-                    if (u instanceof UsageRepr.ClassUsage) {
-                      final Set<DependencyContext.S> residents = cluster.getResidence(u);
+              if (clusters != null) {
+                for (UsageRepr.Cluster cluster : clusters) {
+                  final Set<UsageRepr.Usage> usages = cluster.getUsages();
+                  if (usages != null) {
+                    for (UsageRepr.Usage u : usages) {
+                      if (u instanceof UsageRepr.ClassUsage) {
+                        final Set<DependencyContext.S> residents = cluster.getResidence(u);
 
-                      if (residents != null && residents.contains(cr.name)) {
-                        myClassToClassDependency.removeFrom(((UsageRepr.ClassUsage)u).className, cr.name);
+                        if (residents != null && residents.contains(cr.name)) {
+                          myClassToClassDependency.removeFrom(((UsageRepr.ClassUsage)u).className, cr.name);
+                        }
                       }
                     }
                   }

@@ -695,6 +695,27 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     return (ActionGroup)myActionManager.getAction(SETTINGS);
   }
 
+  public ContentManager getContentManager(Content content) {
+    if (hasContent(myManager, content)) {
+      return myManager;
+    }
+    for (RunnerContentUi child : myChildren) {
+      if (hasContent(child.myManager, content)) {
+        return child.myManager;
+      }
+    }
+    return myManager;
+  }
+
+  private static boolean hasContent(ContentManager manager, Content content) {
+    for (Content c : manager.getContents()) {
+      if (c == content) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   private static void moveFollowingTabs(int index, final JBRunnerTabs tabs) {
     for (TabInfo info : tabs.getTabs()) {
       final TabImpl tab = getTabFor(info);
