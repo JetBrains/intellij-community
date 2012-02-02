@@ -15,8 +15,10 @@
  */
 package com.intellij.openapi.diff.impl;
 
+import com.intellij.ide.actions.EditSourceAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.Application;
@@ -55,6 +57,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.pom.Navigatable;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.PopupHandler;
 import com.intellij.util.containers.CacheOneStepIterator;
@@ -154,6 +157,9 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
         }
       }
     };
+
+    // EditSourceAction is not enabled in modal context, so we need to register it here explicitly
+    new EditSourceAction().registerCustomShortcutSet(CommonShortcuts.getEditSource(), myPanel, this);
   }
 
   protected DiffPanelState createDiffPanelState(@NotNull Disposable parentDisposable) {
@@ -728,6 +734,12 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
       if (FocusDiffSide.DATA_KEY.is(dataId)) {
         return myDiffPanel.myCurrentSide == null ? null : myFocusDiffSide;
       }
+      if (PlatformDataKeys.NAVIGATABLE.is(dataId)) {
+        final DiffSideView currentSide = myDiffPanel.myCurrentSide;
+        if (currentSide != null) {
+          return new DiffNavigatable(currentSide);
+        }
+      }
 
       return super.getData(dataId);
     }
@@ -742,6 +754,32 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
   public static class DiffIsApproximate extends EditorNotificationPanel {
     public DiffIsApproximate() {
       myLabel.setText("<html>Coulnd't find context for patch. Some fragments were applied at the best possible place. <b>Please check carefully.</b></html>");
+    }
+  }
+
+  private class DiffNavigatable implements Navigatable {
+    private final DiffSideView mySide;
+
+    public DiffNavigatable(DiffSideView side) {
+      mySide = side;
+    }
+
+    @Override
+    public boolean canNavigateToSource() {
+      return false;
+    }
+
+    @Override
+    public boolean canNavigate() {
+      return true;
+    }
+
+    @Override
+    public void navigate(boolean requestFocus) {
+      final OpenFileDescriptor descriptor = mySide.getCurrentOpenFileDescriptor();
+      if (descriptor != null) {
+        showSource(descriptor);
+      }
     }
   }
 }
