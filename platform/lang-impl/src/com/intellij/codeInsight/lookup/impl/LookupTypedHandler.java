@@ -32,6 +32,7 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.CommandProcessorEx;
+import com.intellij.openapi.command.impl.EditorChangeAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
@@ -42,15 +43,12 @@ import com.intellij.openapi.editor.ex.ScrollingModelEx;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.DebugUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
+import java.util.LinkedList;
 
 public class LookupTypedHandler extends TypedHandlerDelegate {
   private static boolean inside = false;
@@ -117,11 +115,7 @@ public class LookupTypedHandler extends TypedHandlerDelegate {
           inside = false;
           ((CommandProcessorEx)CommandProcessor.getInstance()).enterModal();
           try {
-            finishLookup(charTyped, lookup, new Runnable() {
-              public void run() {
-                EditorModificationUtil.typeInStringAtCaretHonorBlockSelection(editor, String.valueOf(charTyped), true);
-              }
-            });
+            finishLookup(charTyped, lookup);
           }
           finally {
             ((CommandProcessorEx)CommandProcessor.getInstance()).leaveModal();
@@ -161,45 +155,22 @@ public class LookupTypedHandler extends TypedHandlerDelegate {
     return false;
   }
 
-  public static void finishLookup(final char charTyped, @NotNull final LookupImpl lookup, final Runnable baseChange) {
-    Editor editor = lookup.getEditor();
+  private static void finishLookup(final char charTyped, @NotNull final LookupImpl lookup) {
+    final Editor editor = lookup.getEditor();
     FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_FINISH_BY_DOT_ETC);
     CompletionProcess process = CompletionService.getCompletionService().getCurrentCompletion();
     SelectionModel sm = editor.getSelectionModel();
     final boolean smartUndo = !sm.hasSelection() && !sm.hasBlockSelection() && process != null && process.isAutopopupCompletion();
-    final Runnable restore = CodeCompletionHandlerBase.rememberDocumentState(editor);
     final ScrollingModelEx scrollingModel = (ScrollingModelEx)editor.getScrollingModel();
     scrollingModel.accumulateViewportChanges();
     try {
-      final List<Pair<DocumentEvent, String>> events = new ArrayList<Pair<DocumentEvent, String>>();
-      final DocumentAdapter listener = new DocumentAdapter() {
-        @Override
-        public void documentChanged(DocumentEvent e) {
-          events.add(Pair.create(e, DebugUtil.currentStackTrace()));
-        }
-      };
-      editor.getDocument().addDocumentListener(listener);
-      if (smartUndo) {
-        CommandProcessor.getInstance().executeCommand(editor.getProject(), new Runnable() {
-          @Override
-          public void run() {
-            lookup.performGuardedChange(baseChange);
-          }
-        }, null, "Just insert the completion char");
-      }
-      editor.getDocument().removeDocumentListener(listener);
+      final LinkedList<EditorChangeAction> events = smartUndo ? justTypeChar(charTyped, lookup, editor) : null;
 
       CommandProcessor.getInstance().executeCommand(editor.getProject(), new Runnable() {
         @Override
         public void run() {
           if (smartUndo) {
-            AccessToken token = WriteAction.start();
-            try {
-              lookup.performGuardedChange(restore, events.toString());
-            }
-            finally {
-              token.finish();
-            }
+            undoEvents(lookup, events);
           }
           lookup.finishLookup(charTyped);
         }
@@ -208,6 +179,46 @@ public class LookupTypedHandler extends TypedHandlerDelegate {
     finally {
       scrollingModel.flushViewportChanges();
     }
+  }
+
+  private static void undoEvents(LookupImpl lookup, @NotNull final LinkedList<EditorChangeAction> events) {
+    AccessToken token = WriteAction.start();
+    try {
+      lookup.performGuardedChange(new Runnable() {
+        @Override
+        public void run() {
+          for (EditorChangeAction event : events) {
+            event.performUndo();
+          }
+        }
+      }, events.toString());
+    }
+    finally {
+      token.finish();
+    }
+  }
+
+  private static LinkedList<EditorChangeAction> justTypeChar(final char charTyped, final LookupImpl lookup, final Editor editor) {
+    final LinkedList<EditorChangeAction> events = new LinkedList<EditorChangeAction>();
+    final DocumentAdapter listener = new DocumentAdapter() {
+      @Override
+      public void documentChanged(DocumentEvent e) {
+        events.addFirst(new EditorChangeAction(e));
+      }
+    };
+    editor.getDocument().addDocumentListener(listener);
+    CommandProcessor.getInstance().executeCommand(editor.getProject(), new Runnable() {
+      @Override
+      public void run() {
+        lookup.performGuardedChange(new Runnable() {
+          public void run() {
+            EditorModificationUtil.typeInStringAtCaretHonorBlockSelection(editor, String.valueOf(charTyped), true);
+          }
+        });
+      }
+    }, null, "Just insert the completion char");
+    editor.getDocument().removeDocumentListener(listener);
+    return events;
   }
 
   static CharFilter.Result getLookupAction(final char charTyped, final LookupImpl lookup) {

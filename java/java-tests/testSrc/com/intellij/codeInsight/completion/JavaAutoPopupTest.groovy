@@ -1203,4 +1203,17 @@ class Foo {{
     assert myFixture.file.text.contains('FIS:')
   }
 
+  public void testSoutvTemplate() {
+    ((TemplateManagerImpl)TemplateManager.getInstance(getProject())).setTemplateTesting(true);
+    try {
+      myFixture.configureByText 'a.java', 'class Foo {{ <caret> }}'
+      type 'soutv\tgetcl.'
+      myFixture.checkResult '''class Foo {{
+    System.out.println("getClass(). = " + getClass().<caret>); }}'''
+    }
+    finally {
+      ((TemplateManagerImpl)TemplateManager.getInstance(getProject())).setTemplateTesting(false);
+    }
+  }
+
 }
