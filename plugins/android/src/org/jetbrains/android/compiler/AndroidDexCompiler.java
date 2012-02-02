@@ -105,11 +105,6 @@ public class AndroidDexCompiler implements ClassPostProcessingCompiler {
       }
     }
   }
-  
-  private static boolean shouldRunProguard(@NotNull AndroidFacet facet, @NotNull CompileContext context) {
-    return AndroidCompileUtil.isReleaseBuild(context) && 
-           AndroidCompileUtil.getProguardConfigFile(facet) != null;
-  }
 
   private static final class PrepareAction implements Computable<ProcessingItem[]> {
     private final CompileContext myContext;
@@ -129,7 +124,10 @@ public class AndroidDexCompiler implements ClassPostProcessingCompiler {
           
           Collection<VirtualFile> files;
             
-          if (shouldRunProguard(facet, myContext)) {
+          final boolean shouldRunProguard = myContext.getCompileScope().
+            getUserData(AndroidProguardCompiler.PROGUARD_CFG_PATH_KEY) != null;
+
+          if (shouldRunProguard) {
             final VirtualFile obfuscatedSourcesJar = dexOutputDir.findChild(AndroidProguardCompiler.PROGUARD_OUTPUT_JAR_NAME);
             if (obfuscatedSourcesJar == null) {
               myContext.addMessage(CompilerMessageCategory.INFORMATION, "Dex won't be launched for module " +
@@ -166,10 +164,12 @@ public class AndroidDexCompiler implements ClassPostProcessingCompiler {
               }
             }
 
-            VirtualFile outputDirForTests = extension.getCompilerOutputPathForTests();
+            if (facet.getConfiguration().PACK_TEST_CODE) {
+              VirtualFile outputDirForTests = extension.getCompilerOutputPathForTests();
 
-            if (outputDirForTests != null) {
-              addModuleOutputDir(files, outputDirForTests);
+              if (outputDirForTests != null) {
+                addModuleOutputDir(files, outputDirForTests);
+              }
             }
           }
 

@@ -18,8 +18,10 @@ package org.jetbrains.idea.maven.utils.library;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -85,17 +87,19 @@ public class RepositoryAttachHandler {
       public boolean process(final List<MavenArtifact> artifacts) {
         final boolean nothingRetrieved = artifacts.isEmpty();
         if (!nothingRetrieved) {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            public void run() {
-              final List<OrderRoot> roots = createRoots(artifacts, copyTo);
-              result.set(new NewLibraryConfiguration(coord, RepositoryLibraryType.getInstance(), new RepositoryLibraryProperties(coord)) {
-                @Override
-                public void addRoots(@NotNull LibraryEditor editor) {
-                  editor.addRoots(roots);
-                }
-              });
-            }
-          });
+          AccessToken accessToken = WriteAction.start();
+          try {
+            final List<OrderRoot> roots = createRoots(artifacts, copyTo);
+            result.set(new NewLibraryConfiguration(coord, RepositoryLibraryType.getInstance(), new RepositoryLibraryProperties(coord)) {
+              @Override
+              public void addRoots(@NotNull LibraryEditor editor) {
+                editor.addRoots(roots);
+              }
+            });
+          }
+          finally {
+            accessToken.finish();
+          }
         }
         final StringBuilder sb = new StringBuilder();
         final String title;

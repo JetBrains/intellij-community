@@ -264,11 +264,7 @@ class GitPushResult {
       notificationType = NotificationType.WARNING;
     } else {
       notificationType = NotificationType.INFORMATION;
-      if (pushedCommitsNumber == 0) {  // happens on new branch creation
-        title = "Pushed successfully";
-      } else {
-        title = "Pushed " + pushedCommitsNumber + " " + StringUtil.pluralize("commit", pushedCommitsNumber);
-      }
+      title = "Push successful";
     }
     
     String errorReport = reportForGroup(groupedResult.myErrorResults, GroupedResult.Type.ERROR);

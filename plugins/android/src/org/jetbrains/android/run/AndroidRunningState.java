@@ -218,10 +218,6 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
     return myLock;
   }
 
-  public AndroidFacet getAndroidFacet() {
-    return myFacet;
-  }
-
   public String getPackageName() {
     return myPackageName;
   }
@@ -230,6 +226,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
     return myFacet.getModule();
   }
 
+  @NotNull
   public AndroidFacet getFacet() {
     return myFacet;
   }

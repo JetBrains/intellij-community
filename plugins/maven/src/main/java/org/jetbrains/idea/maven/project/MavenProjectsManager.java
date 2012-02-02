@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.ide.startup.StartupManagerEx;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.SettingsSavingComponent;
@@ -403,11 +404,13 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   public boolean isMavenizedModule(final Module m) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-      public Boolean compute() {
-        return "true".equals(m.getOptionValue(getMavenizedModuleOptionName()));
-      }
-    });
+    AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
+    try {
+      return "true".equals(m.getOptionValue(getMavenizedModuleOptionName()));
+    }
+    finally {
+      accessToken.finish();
+    }
   }
 
   public void setMavenizedModules(Collection<Module> modules, boolean mavenized) {

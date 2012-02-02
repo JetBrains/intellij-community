@@ -20,12 +20,9 @@ import com.intellij.codeInsight.completion.CompletionContributor;
 import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.completion.CompletionType;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.xml.TagNameReference;
 import com.intellij.psi.xml.XmlText;
@@ -46,12 +43,8 @@ public class MavenSmartCompletionContributor extends CompletionContributor {
   public void fillCompletionVariants(final CompletionParameters parameters, CompletionResultSet result) {
     if (parameters.getCompletionType() != CompletionType.SMART) return;
 
-    Collection<?> variants = ApplicationManager.getApplication().runReadAction(new Computable<Collection<?>>() {
-      @Override
-      public Collection<?> compute() {
-        return getVariants(parameters);
-      }
-    });
+    Collection<?> variants = getVariants(parameters);
+
     MavenPropertyCompletionContributor.addVariants(variants, result);
   }
 

@@ -740,7 +740,7 @@ public class JavaCompletionUtil {
           newElement = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(newElement);
           if (newElement != null) {
             newEndOffset = newElement.getTextRange().getEndOffset();
-            if (newElement instanceof PsiJavaCodeReferenceElement) {
+            if (newElement instanceof PsiJavaCodeReferenceElement && !(newElement instanceof PsiReferenceExpression)) {
               PsiReferenceParameterList parameterList = ((PsiJavaCodeReferenceElement)newElement).getParameterList();
               if (parameterList != null) {
                 newEndOffset = parameterList.getTextRange().getStartOffset();

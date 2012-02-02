@@ -76,10 +76,17 @@ class AndroidSdkConfigurableForm {
         final IAndroidTarget target = (IAndroidTarget)e.getItem();
 
         List<OrderRoot> roots = AndroidSdkUtils.getLibraryRootsForTarget(target, mySdkLocation);
-        Map<OrderRootType, VirtualFile[]> configuredRoots = new HashMap<OrderRootType, VirtualFile[]>();
+        Map<OrderRootType, String[]> configuredRoots = new HashMap<OrderRootType, String[]>();
 
         for (OrderRootType type : OrderRootType.getAllTypes()) {
-          configuredRoots.put(type, sdkModificator.getRoots(type));
+          final VirtualFile[] oldRoots = sdkModificator.getRoots(type);
+          final String[] oldRootPaths = new String[oldRoots.length];
+          
+          for (int i = 0; i < oldRootPaths.length; i++) {
+            oldRootPaths[i] = oldRoots[i].getPath();
+          }
+          
+          configuredRoots.put(type, oldRootPaths);
         }
 
         for (OrderRoot root : roots) {
@@ -87,8 +94,8 @@ class AndroidSdkConfigurableForm {
             sdkModificator.removeRoot(root.getFile(), root.getType());
           }
           else {
-            VirtualFile[] configuredRootsForType = configuredRoots.get(root.getType());
-            if (ArrayUtil.find(configuredRootsForType, root.getFile()) == -1) {
+            String[] configuredRootsForType = configuredRoots.get(root.getType());
+            if (ArrayUtil.find(configuredRootsForType, root.getFile().getPath()) == -1) {
               sdkModificator.addRoot(root.getFile(), root.getType());
             }
           }

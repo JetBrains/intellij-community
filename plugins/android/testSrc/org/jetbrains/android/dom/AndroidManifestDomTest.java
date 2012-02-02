@@ -1,10 +1,7 @@
 package org.jetbrains.android.dom;
 
 import com.android.sdklib.SdkConstants;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.android.inspections.AndroidUnknownAttributeInspection;
-
-import java.util.List;
 
 /**
  * @author coyote
@@ -73,9 +70,7 @@ public class AndroidManifestDomTest extends AndroidDomTest {
   }
 
   public void testResourceCompletion3() throws Throwable {
-    List<String> list = getAllResources();
-    list.add("@android:");
-    doTestCompletionVariants("av4.xml", ArrayUtil.toStringArray(list));
+    doTestCompletionVariants("av4.xml", "@android:", "@anim/", "@color/", "@dimen/", "@drawable/", "@id/", "@string/", "@style/");
   }
 
   public void testTagNameCompletion1() throws Throwable {
