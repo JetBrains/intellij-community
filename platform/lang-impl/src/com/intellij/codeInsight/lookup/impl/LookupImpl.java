@@ -857,12 +857,10 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       document.removeDocumentListener(spy);
       myChangeGuard = false;
     }
-    if (!myLookupStartMarker.isValid()) {
+    if (!myLookupStartMarker.isValid() || myDisposed) {
       hide();
       return false;
     }
-    checkValid();
-    LOG.assertTrue(myLookupStartMarker.isValid(), "invalid lookup start");
     if (isVisible()) {
       updateLookupLocation();
     }
