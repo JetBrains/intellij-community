@@ -21,14 +21,15 @@ package com.intellij.util.containers;
 
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.hash.LinkedHashMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.Set;
 
 public class SLRUMap<K,V> {
-  protected final Map<K,V> myProtectedQueue;
-  protected final Map<K,V> myProbationalQueue;
+  protected final LinkedHashMap<K,V> myProtectedQueue;
+  protected final LinkedHashMap<K,V> myProbationalQueue;
 
   private final int myProtectedQueueSize;
   private final int myProbationalQueueSize;
@@ -83,7 +84,7 @@ public class SLRUMap<K,V> {
     return null;
   }
 
-  public void put(K key, V value) {
+  public void put(K key, @NotNull V value) {
     V oldValue = myProtectedQueue.remove(key);
     if (oldValue != null) {
       onDropFromCache(key, oldValue);
