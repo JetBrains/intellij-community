@@ -1506,7 +1506,7 @@ public class XmlUtil {
     return contextTag.getNamespaceByPrefix(prefix);
   }
 
-  public static String findPrefixByQualifiedName(String name) {
+  public static String findPrefixByQualifiedName(@NotNull String name) {
     final int prefixEnd = name.indexOf(':');
     if (prefixEnd > 0) {
       return name.substring(0, prefixEnd);
