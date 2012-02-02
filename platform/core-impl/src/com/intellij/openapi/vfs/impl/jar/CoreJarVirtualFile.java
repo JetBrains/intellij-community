@@ -38,7 +38,9 @@ public class CoreJarVirtualFile extends VirtualFile {
     myParent = parent;
     myEntry = entry;
 
-    parent.myChildren.add(this);
+    if (parent != null) {
+      parent.myChildren.add(this);
+    }
   }
 
   @NotNull
