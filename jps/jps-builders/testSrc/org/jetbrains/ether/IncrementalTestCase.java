@@ -21,6 +21,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import junit.framework.TestCase;
 import junitx.framework.FileAssert;
+import org.apache.log4j.FileAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.PropertyConfigurator;
 import org.jetbrains.annotations.NonNls;
@@ -64,6 +65,23 @@ public abstract class IncrementalTestCase extends TestCase {
     }
   }
 
+  static VolatileFileAppender myAppender = null;
+  
+  static void setAppender (final VolatileFileAppender app) {
+    myAppender = app;
+  } 
+  
+  static void closeAppender () {
+    if (myAppender != null) {
+      try {
+        myAppender.closeStream();
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
+  }
+  
   static {
     Logger.setFactory(new Logger.Factory() {
       @Override
@@ -156,6 +174,7 @@ public abstract class IncrementalTestCase extends TestCase {
       super.tearDown();
     }
     finally {
+      closeAppender();
       delete(new File(workDir));
     }
   }
@@ -268,7 +287,7 @@ public abstract class IncrementalTestCase extends TestCase {
     final Properties properties = new Properties();
 
     properties.setProperty("log4j.rootCategory", "INFO, A1");
-    properties.setProperty("log4j.appender.A1", "org.apache.log4j.FileAppender");
+    properties.setProperty("log4j.appender.A1", "org.jetbrains.ether.VolatileFileAppender");
     properties.setProperty("log4j.appender.A1.file", getWorkDir() + ".log");
     properties.setProperty("log4j.appender.A1.layout", "org.apache.log4j.PatternLayout");
     properties.setProperty("log4j.appender.A1.layout.ConversionPattern", "%m%n");
