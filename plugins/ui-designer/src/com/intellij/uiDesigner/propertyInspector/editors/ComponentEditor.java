@@ -59,7 +59,7 @@ public class ComponentEditor extends ComboBoxPropertyEditor<String> {
     return myCbx;
   }
 
-  private RadComponent[] collectFilteredComponents(final RadComponent component) {
+  protected RadComponent[] collectFilteredComponents(final RadComponent component) {
     final ArrayList<RadComponent> result = new ArrayList<RadComponent>();
     result.add(null);
 

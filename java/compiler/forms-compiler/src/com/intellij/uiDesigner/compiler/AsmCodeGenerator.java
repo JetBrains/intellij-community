@@ -75,7 +75,7 @@ public class AsmCodeGenerator {
     myContainerLayoutCodeGenerators.put(UIFormXmlConstants.LAYOUT_INTELLIJ, new GridLayoutCodeGenerator());
     myContainerLayoutCodeGenerators.put(UIFormXmlConstants.LAYOUT_GRIDBAG, new GridBagLayoutCodeGenerator());
     myContainerLayoutCodeGenerators.put(UIFormXmlConstants.LAYOUT_BORDER, new SimpleLayoutCodeGenerator(Type.getType(BorderLayout.class)));
-    myContainerLayoutCodeGenerators.put(UIFormXmlConstants.LAYOUT_CARD, new SimpleLayoutCodeGenerator(Type.getType(CardLayout.class)));
+    myContainerLayoutCodeGenerators.put(UIFormXmlConstants.LAYOUT_CARD, new CardLayoutCodeGenerator());
     myContainerLayoutCodeGenerators.put(UIFormXmlConstants.LAYOUT_FLOW, new FlowLayoutCodeGenerator());
 
     myComponentLayoutCodeGenerators.put(LwSplitPane.class, new SplitPaneLayoutCodeGenerator());
