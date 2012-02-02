@@ -152,7 +152,7 @@ public class UnixProcessManager {
           result = false;
         }
 
-        StringBuffer errorStr = new StringBuffer();
+        StringBuilder errorStr = new StringBuilder();
         while ((s = stdError.readLine()) != null) {
           errorStr.append(s).append("\n");
         }
