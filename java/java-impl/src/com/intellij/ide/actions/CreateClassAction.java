@@ -22,17 +22,12 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.JavaCreateFromTemplateHandler;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.lang.LanguageNamesValidation;
-import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.JavaDirectoryService;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
+import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
@@ -70,8 +65,8 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
     builder.setValidator(new InputValidatorEx() {
       @Override
       public String getErrorText(String inputString) {
-        if (inputString.length() > 0 && !LanguageNamesValidation.INSTANCE.forLanguage(JavaLanguage.INSTANCE).isIdentifier(inputString, project)) {
-          return "This is not a valid Java identifier";          
+        if (inputString.length() > 0 && !JavaPsiFacade.getInstance(project).getNameHelper().isQualifiedName(inputString)) {
+          return "This is not a valid Java qualified name";
         }
         return null;
       }
