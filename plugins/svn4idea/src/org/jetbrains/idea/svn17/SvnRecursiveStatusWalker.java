@@ -136,7 +136,7 @@ public class SvnRecursiveStatusWalker {
       if (CheckJavaHL.isPresent() && SvnConfiguration17.UseAcceleration.javaHL.equals(myConfiguration17.myUseAcceleration) &&
           Svn17Detector.is17(myProject, file)) {
         return new JavaHLSvnStatusClient(myProject);
-      } else if (SvnConfiguration17.UseAcceleration.commandLine.equals(myConfiguration17.myUseAcceleration)) {
+      } else if (SvnConfiguration17.UseAcceleration.commandLine.equals(myConfiguration17.myUseAcceleration) && Svn17Detector.is17(myProject, file)) {
         return new SvnCommandLineStatusClient(myProject);
       }
       return mySvnClient;
