@@ -1626,6 +1626,16 @@ public class Mappings {
           mySourceFileToAnnotationUsages.put(sourceFileNameS, localAnnotationUsages);
         }
       }
+
+      @Override
+      public void markOverride(final String className, final String methodName, final String methodSignature) {
+        //To change body of implemented methods use File | Settings | File Templates.
+      }
+
+      @Override
+      public void registerConstantUsage(final String className, final String fieldName, final String fieldOwner) {
+        //To change body of implemented methods use File | Settings | File Templates.
+      }
     };
   }
 
