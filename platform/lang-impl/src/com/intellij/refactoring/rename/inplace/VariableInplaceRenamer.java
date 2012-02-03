@@ -35,6 +35,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.AutomaticRenamingDialog;
@@ -237,7 +238,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
     }
     finally {
       try {
-        ((EditorImpl)myEditor).stopDumb();
+        ((EditorImpl)InjectedLanguageUtil.getTopLevelEditor(myEditor)).stopDumb();
       }
       finally {
         FinishMarkAction.finish(myProject, myEditor, markAction);
