@@ -296,15 +296,21 @@ public class FileStructurePopup implements Disposable {
 
           if (!filter.equals(prefix)) {
             filter = prefix;
-            myAbstractTreeBuilder.refilter(null, false, false).doWhenProcessed(new Runnable() {
-              @Override
-              public void run() {
-                myTree.repaint();
-                //if (mySpeedSearch.isPopupActive()) {
-                //  mySpeedSearch.refreshSelection();
-                //}
-              }
-            });
+            final AccessToken token = ApplicationManager.getApplication().acquireReadActionLock();
+            try {
+              myAbstractTreeBuilder.refilter(null, false, false).doWhenProcessed(new Runnable() {
+                @Override
+                public void run() {
+                  myTree.repaint();
+                  //if (mySpeedSearch.isPopupActive()) {
+                  //  mySpeedSearch.refreshSelection();
+                  //}
+                }
+              });
+            }
+            finally {
+              token.finish();
+            }
           }
           alarm.addRequest(this, 300);
         }
@@ -575,14 +581,20 @@ public class FileStructurePopup implements Disposable {
         myFilteringStructure.rebuild();
         
         final Object sel = selection;
-        myAbstractTreeBuilder.refilter(sel, true, false).doWhenProcessed(new Runnable() {
-          @Override
-          public void run() {
-            if (mySpeedSearch.isPopupActive()) {
-              mySpeedSearch.refreshSelection();
+        final AccessToken token = ApplicationManager.getApplication().acquireReadActionLock();
+        try {
+          myAbstractTreeBuilder.refilter(sel, true, false).doWhenProcessed(new Runnable() {
+            @Override
+            public void run() {
+              if (mySpeedSearch.isPopupActive()) {
+                mySpeedSearch.refreshSelection();
+              }
             }
-          }
-        });
+          });
+        }
+        finally {
+          token.finish();
+        }
       }
     });
     chkFilter.setFocusable(false);
