@@ -141,16 +141,6 @@ public class AndroidSdk {
   }
 
   @Nullable
-  public IAndroidTarget findTargetByLocation(@NotNull String location) {
-    for (IAndroidTarget target : getTargets()) {
-      String targetPath = FileUtil.toSystemIndependentName(target.getLocation());
-      if (FileUtil.pathsEqual(location + '/', targetPath) || FileUtil.pathsEqual(location, targetPath)) {
-        return target;
-      }
-    }
-    return null;
-  }
-
   public IAndroidTarget findTargetByHashString(@NotNull String hashString) {
     final IAndroidTarget target = mySdkManager.getTargetFromHashString(hashString);
     return target != null ? new MyTargetWrapper(target) : null;
@@ -216,6 +206,7 @@ public class AndroidSdk {
 
         boolean finished = task.isFinished();
 
+        //noinspection AssignmentToStaticFieldFromInstanceMethod
         myAdbCrashed = !finished;
 
         if (task.isCanceled()) {
@@ -268,6 +259,7 @@ public class AndroidSdk {
     synchronized (myDdmsLock) {
       String adbPath = getAdbPath();
       if (!myDdmLibInitialized) {
+        //noinspection AssignmentToStaticFieldFromInstanceMethod
         myDdmLibInitialized = true;
         DdmPreferences.setTimeOut(AndroidUtils.TIMEOUT);
         AndroidDebugBridge.init(AndroidEnableDdmsAction.isDdmsEnabled());

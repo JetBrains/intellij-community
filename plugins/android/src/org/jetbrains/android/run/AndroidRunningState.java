@@ -733,7 +733,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
   private boolean uploadApp(IDevice device, String remotePath, String localPath) throws IOException {
     if (myStopped) return false;
     message("Uploading file\n\tlocal path: " + localPath + "\n\tremote path: " + remotePath, STDOUT);
-    String exceptionMessage = null;
+    String exceptionMessage;
     String errorMessage;
     try {
       SyncService service = device.getSyncService();
