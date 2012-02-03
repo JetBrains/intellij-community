@@ -16,6 +16,8 @@
 package com.intellij.notification.impl;
 
 import com.intellij.ide.DataManager;
+import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.notification.EventLog;
 import com.intellij.notification.LogModel;
 import com.intellij.notification.Notification;
@@ -24,9 +26,11 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.wm.CustomStatusBarWidget;
+import com.intellij.openapi.wm.IconLikeCustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.ui.RowIcon;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
@@ -35,29 +39,34 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author spleaner
  */
-public class IdeNotificationArea implements StatusBarWidget, StatusBarWidget.IconPresentation {
+public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget, IconLikeCustomStatusBarWidget {
   private static final Icon EMPTY_ICON = IconLoader.getIcon("/ide/notifications.png");
   private static final Icon ERROR_ICON = IconLoader.getIcon("/ide/error_notifications.png");
   private static final Icon WARNING_ICON = IconLoader.getIcon("/ide/warning_notifications.png");
   private static final Icon INFO_ICON = IconLoader.getIcon("/ide/info_notifications.png");
   public static final String WIDGET_ID = "Notifications";
 
-  private Icon myCurrentIcon = EMPTY_ICON;
   private StatusBar myStatusBar;
   private final Alarm myLogAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
   public IdeNotificationArea() {
     Disposer.register(this, myLogAlarm);
-
+    UISettings.getInstance().addUISettingsListener(new UISettingsListener() {
+      @Override
+      public void uiSettingsChanged(UISettings source) {
+        updateStatus();
+      }
+    }, this);
   }
 
   public WidgetPresentation getPresentation(@NotNull PlatformType type) {
-    return this;
+    return null;
   }
 
   public void dispose() {
@@ -69,13 +78,7 @@ public class IdeNotificationArea implements StatusBarWidget, StatusBarWidget.Ico
     new Runnable() {
       @Override
       public void run() {
-        final Project project = getProject();
-        LogModel logModel = EventLog.getLogModel(project);
-        ToolWindow eventLog = EventLog.getEventLog(project);
-        if (eventLog != null && eventLog.isVisible()) {
-          logModel.logShown();
-        }
-        updateStatus(logModel);
+        updateStatus();
         myLogAlarm.addRequest(this, 100);
       }
     }.run();
@@ -96,27 +99,39 @@ public class IdeNotificationArea implements StatusBarWidget, StatusBarWidget.Ico
   }
 
   @NotNull
-  public Icon getIcon() {
-    return myCurrentIcon;
-  }
-
-  public String getTooltipText() {
-    int count = EventLog.getLogModel(getProject()).getNotifications().size();
-    if (count > 0) {
-      return String.format("%s notification%s pending", count, count == 1 ? "" : "s");
-    }
-
-    return "No new notifications";
-  }
-
-  @NotNull
   public String ID() {
     return WIDGET_ID;
   }
 
-  private void updateStatus(final LogModel model) {
-    myCurrentIcon = getPendingNotificationsIcon(EMPTY_ICON, getMaximumType(model.getNotifications()));
+  private void updateStatus() {
+    final Project project = getProject();
+    LogModel logModel = EventLog.getLogModel(project);
+    ToolWindow eventLog = EventLog.getEventLog(project);
+    if (eventLog != null && eventLog.isVisible()) {
+      logModel.logShown();
+    }
+    boolean stripesVisible = !UISettings.getInstance().HIDE_TOOL_STRIPES;
+    ArrayList<Notification> notifications = logModel.getNotifications();
+    RowIcon icon = new RowIcon(2);
+    icon.setIcon(getPendingNotificationsIcon(EMPTY_ICON, getMaximumType(notifications)), 0);
+    final int count = notifications.size();
+    if (count > 0) {
+      icon.setIcon(new TextIcon(this, String.valueOf(count)), 1);
+    }
+    if (stripesVisible && eventLog != null) {
+      eventLog.setIcon(icon);
+      setIcon(null);
+    } else {
+      setIcon(icon);
+    }
+    setToolTipText(count > 0 ? String.format("%s notification%s pending", count, count == 1 ? "" : "s") : "No new notifications");
+
     myStatusBar.updateWidget(ID());
+  }
+
+  @Override
+  public JComponent getComponent() {
+    return this;
   }
 
   private static Icon getPendingNotificationsIcon(Icon defIcon, final NotificationType maximumType) {
@@ -147,5 +162,45 @@ public class IdeNotificationArea implements StatusBarWidget, StatusBarWidget.Ico
     }
 
     return result;
+  }
+
+  private static class TextIcon implements Icon {
+    private final String myStr;
+    private final JComponent myComponent;
+    private final int myWidth;
+
+    public TextIcon(IdeNotificationArea component, String str) {
+      myStr = str;
+      myComponent = component;
+      myWidth = myComponent.getFontMetrics(calcFont()).stringWidth(myStr) + 2;
+    }
+
+    @Override
+    public void paintIcon(Component c, Graphics g, int x, int y) {
+      Font originalFont = g.getFont();
+      Color originalColor = g.getColor();
+      g.setFont(calcFont());
+      y += getIconHeight() - g.getFontMetrics().getDescent();
+
+      g.setColor(Color.BLACK);
+      g.drawString(myStr, x + 1, y);
+
+      g.setFont(originalFont);
+      g.setColor(originalColor);
+    }
+
+    private Font calcFont() {
+      return myComponent.getFont().deriveFont(Font.BOLD).deriveFont((float) getIconHeight() * 2 / 3);
+    }
+
+    @Override
+    public int getIconWidth() {
+      return myWidth;
+    }
+
+    @Override
+    public int getIconHeight() {
+      return EMPTY_ICON.getIconHeight();
+    }
   }
 }
