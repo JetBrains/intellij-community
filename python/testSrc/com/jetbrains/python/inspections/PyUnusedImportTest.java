@@ -24,4 +24,11 @@ public class PyUnusedImportTest extends PyTestCase {
     myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
     myFixture.testHighlighting(true, false, false, "test1.py");
   }
+
+  // PY-5621
+  public void testUnusedSubmodule() {
+    myFixture.copyDirectoryToProject("inspections/unusedImport/unusedSubmodule", "");
+    myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
+    myFixture.testHighlighting(true, false, false, "test1.py");
+  }
 }

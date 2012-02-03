@@ -2,18 +2,17 @@ package com.jetbrains.python.psi.types;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.psi.PsiElement;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyImportElement;
-import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.impl.PyImportedModule;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
-import com.jetbrains.python.psi.impl.ResolveResultList;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,19 +21,23 @@ import java.util.List;
  * @author yole
  */
 public class PyImportedModuleType implements PyType {
-  private PyImportedModule myImportedModule;
+  @NotNull private PyImportedModule myImportedModule;
 
-  public PyImportedModuleType(PyImportedModule importedModule) {
+  public PyImportedModuleType(@NotNull PyImportedModule importedModule) {
     myImportedModule = importedModule;
   }
 
-  @NotNull
+  @Nullable
+  @Override
   public List<? extends RatedResolveResult> resolveMember(String name,
                                                           PyExpression location,
                                                           AccessDirection direction,
                                                           PyResolveContext resolveContext) {
-    final PsiElement element = myImportedModule.getElementNamed(name);
-    return ResolveResultList.to(element);
+    final PyFile file = myImportedModule.resolve();
+    if (file != null) {
+      return new PyModuleType(file).resolveMember(name, location, direction, resolveContext);
+    }
+    return null;
   }
 
   public Object[] getCompletionVariants(String completionPrefix, PyExpression location, ProcessingContext context) {
@@ -63,6 +66,7 @@ public class PyImportedModuleType implements PyType {
     return false;  // no module can be imported from builtins
   }
 
+  @NotNull
   public PyImportedModule getImportedModule() {
     return myImportedModule;
   }
