@@ -700,7 +700,7 @@ public abstract class InplaceRefactoring {
       finally {
         if (!bind) {
           try {
-            ((EditorImpl)myEditor).stopDumb();
+            ((EditorImpl)InjectedLanguageUtil.getTopLevelEditor(myEditor)).stopDumb();
           }
           finally {
             FinishMarkAction.finish(myProject, myEditor, myMarkAction);

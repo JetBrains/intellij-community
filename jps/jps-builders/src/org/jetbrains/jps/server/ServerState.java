@@ -13,6 +13,7 @@ import org.jetbrains.jps.api.BuildType;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.api.GlobalLibrary;
 import org.jetbrains.jps.api.SdkLibrary;
+import org.jetbrains.jps.artifacts.Artifact;
 import org.jetbrains.jps.idea.IdeaProjectLoader;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
@@ -119,7 +120,8 @@ class ServerState {
     }
   }
 
-  public void startBuild(String projectPath, BuildType buildType, Set<String> modules, Collection<String> paths, final MessageHandler msgHandler, CanceledStatus cs) throws Throwable{
+  public void startBuild(String projectPath, BuildType buildType, Set<String> modules, Collection<String> artifacts,
+                         Collection<String> paths, final MessageHandler msgHandler, CanceledStatus cs) throws Throwable{
 
     final String projectName = getProjectName(projectPath);
 
@@ -161,7 +163,7 @@ class ServerState {
     final Project project = pd.project;
 
     try {
-      final CompileScope compileScope = createCompilationScope(buildType, pd, modules, paths);
+      final CompileScope compileScope = createCompilationScope(buildType, pd, modules, artifacts, paths);
       final IncProjectBuilder builder = new IncProjectBuilder(pd, BuilderRegistry.getInstance(), cs);
       if (msgHandler != null) {
         builder.addMessageHandler(msgHandler);
@@ -191,17 +193,32 @@ class ServerState {
     }
   }
 
-  private static CompileScope createCompilationScope(BuildType buildType, ProjectDescriptor pd, Set<String> modules, Collection<String> paths) throws Exception {
+  private static CompileScope createCompilationScope(BuildType buildType, ProjectDescriptor pd, Set<String> modules,
+                                                     Collection<String> artifactNames, Collection<String> paths) throws Exception {
+    Set<Artifact> artifacts = new HashSet<Artifact>();
+    if (artifactNames.isEmpty() && buildType == BuildType.PROJECT_REBUILD) {
+      artifacts.addAll(pd.project.getArtifacts().values());
+    }
+    else {
+      final Map<String, Artifact> artifactMap = pd.project.getArtifacts();
+      for (String name : artifactNames) {
+        final Artifact artifact = artifactMap.get(name);
+        if (!StringUtil.isEmpty(artifact.getOutputPath())) {
+          artifacts.add(artifact);
+        }
+      }
+    }
+
     final CompileScope compileScope;
     if (buildType == BuildType.PROJECT_REBUILD || (modules.isEmpty() && paths.isEmpty())) {
-      compileScope = new AllProjectScope(pd.project, buildType != BuildType.MAKE);
+      compileScope = new AllProjectScope(pd.project, artifacts, buildType != BuildType.MAKE);
     }
     else {
       final Set<Module> forcedModules;
       if (!modules.isEmpty()) {
         forcedModules = new HashSet<Module>();
         for (Module m : pd.project.getModules().values()) {
-          if (modules.contains(m.getName())){
+          if (modules.contains(m.getName())) {
             forcedModules.add(m);
           }
         }
@@ -236,10 +253,10 @@ class ServerState {
       }
 
       if (filesToCompile.isEmpty()) {
-        compileScope = new ModulesScope(pd.project, forcedModules, buildType != BuildType.MAKE);
+        compileScope = new ModulesScope(pd.project, forcedModules, artifacts, buildType != BuildType.MAKE);
       }
       else {
-        compileScope = new ModulesAndFilesScope(pd.project, forcedModules, filesToCompile, buildType != BuildType.MAKE);
+        compileScope = new ModulesAndFilesScope(pd.project, forcedModules, filesToCompile, artifacts, buildType != BuildType.MAKE);
       }
     }
     return compileScope;

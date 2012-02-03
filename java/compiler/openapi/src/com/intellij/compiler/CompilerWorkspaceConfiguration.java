@@ -24,6 +24,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 
 @State(
@@ -56,6 +57,6 @@ public class CompilerWorkspaceConfiguration implements PersistentStateComponent<
   }
 
   public boolean useCompileServer() {
-    return USE_COMPILE_SERVER;
+    return USE_COMPILE_SERVER && Registry.is("compiler.server.enabled");
   }
 }

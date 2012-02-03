@@ -20,5 +20,12 @@ package com.intellij.codeInsight.daemon;
  * Implement this in your {@link com.intellij.psi.PsiReference} to provide custom error message.
  */
 public interface EmptyResolveMessageProvider {
+
+  /**
+   * Returns custom unresolved message pattern. First, returned value is used as pattern in <code>MessageFormat.format()</code> call.
+   * If the call fails, returned value is used as is.
+   * @return pattern or message
+   * @see XmlHighlightVisitor#getErrorDescription()
+   */
   String getUnresolvedMessagePattern();
 }

@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.SearchScope;
@@ -209,7 +210,7 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
     }
     finally {
       try {
-        ((EditorImpl)myEditor).stopDumb();
+        ((EditorImpl)InjectedLanguageUtil.getTopLevelEditor(myEditor)).stopDumb();
       }
       finally {
         FinishMarkAction.finish(myProject, myEditor, markAction);
@@ -229,7 +230,7 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
   public void finish(boolean success) {
     super.finish(success);
     if (success) {
-      ((EditorImpl)myEditor).startDumb();
+      ((EditorImpl)InjectedLanguageUtil.getTopLevelEditor(myEditor)).startDumb();
       revertState();
     }
   }

@@ -2341,15 +2341,15 @@ public class JBTabsImpl extends JComponent
     return removeTab(info, null);
   }
 
-  public ActionCallback removeTab(final TabInfo info, @Nullable TabInfo forcedSelectionTranfer) {
-    return removeTab(info, forcedSelectionTranfer, true);
+  public ActionCallback removeTab(final TabInfo info, @Nullable TabInfo forcedSelectionTransfer) {
+    return removeTab(info, forcedSelectionTransfer, true);
   }
 
-  public ActionCallback removeTab(final TabInfo info, @Nullable TabInfo forcedSelectionTranfer, boolean transferFocus) {
-    return removeTab(info, forcedSelectionTranfer, transferFocus, false);
+  public ActionCallback removeTab(final TabInfo info, @Nullable TabInfo forcedSelectionTransfer, boolean transferFocus) {
+    return removeTab(info, forcedSelectionTransfer, transferFocus, false);
   }
 
-  private ActionCallback removeTab(TabInfo info, TabInfo forcedSelectionTranfer, boolean transferFocus, boolean isDropTarget) {
+  private ActionCallback removeTab(TabInfo info, @Nullable TabInfo forcedSelectionTransfer, boolean transferFocus, boolean isDropTarget) {
     if (!isDropTarget) {
       if (info == null || !getTabs().contains(info)) return new ActionCallback.Done();
     }
@@ -2361,12 +2361,12 @@ public class JBTabsImpl extends JComponent
     final ActionCallback result = new ActionCallback();
 
     TabInfo toSelect;
-    if (forcedSelectionTranfer == null) {
+    if (forcedSelectionTransfer == null) {
       toSelect = getToSelectOnRemoveOf(info);
     }
     else {
-      assert myVisibleInfos.contains(forcedSelectionTranfer) : "Cannot find tab for selection transfer, tab=" + forcedSelectionTranfer;
-      toSelect = forcedSelectionTranfer;
+      assert myVisibleInfos.contains(forcedSelectionTransfer) : "Cannot find tab for selection transfer, tab=" + forcedSelectionTransfer;
+      toSelect = forcedSelectionTransfer;
     }
 
 
@@ -2457,6 +2457,7 @@ public class JBTabsImpl extends JComponent
     return _findInfo(point, true);
   }
 
+  @Nullable
   private TabInfo _findInfo(final Point point, boolean labelsOnly) {
     Component component = findComponentAt(point);
     if (component == null) return null;
@@ -3215,7 +3216,9 @@ public class JBTabsImpl extends JComponent
       myDropInfo = null;
       myShowDropLocation = true;
       setDropInfoIndex(-1);
-      removeTab(dropInfo, null, false, true);
+      if (getTabs().contains(dropInfo)) {
+        removeTab(dropInfo, null, false, true);
+      }
     }
   }
 

@@ -44,7 +44,6 @@ import java.awt.*;
 public class ExceptionWorker {
   @NonNls private static final String AT = "at";
   private static final String AT_PREFIX = AT + " ";
-  private static final String STANDALONE_AT = " " + AT + " ";
 
   private static final TextAttributes HYPERLINK_ATTRIBUTES = EditorColorsManager
     .getInstance().getGlobalScheme().getAttributes(CodeInsightColors.HYPERLINK_ATTRIBUTES);
@@ -147,17 +146,8 @@ public class ExceptionWorker {
 
   @Nullable
   static Trinity<TextRange, TextRange, TextRange> parseExceptionLine(final String line) {
-    int atIndex;
-    if (line.startsWith(AT_PREFIX)){
-      atIndex = 0;
-    }
-    else{
-      atIndex = line.indexOf(STANDALONE_AT);
-      if (atIndex < 0) {
-        atIndex = line.indexOf(AT_PREFIX);
-      }
-      if (atIndex < 0) return null;
-    }
+    int atIndex = line.indexOf(AT_PREFIX);
+    if (atIndex < 0) return null;
 
     final int lparenthIndex = line.indexOf('(', atIndex);
     if (lparenthIndex < 0) return null;
@@ -168,7 +158,7 @@ public class ExceptionWorker {
     if (rparenthIndex < 0) return null;
 
     // class, method, link
-    return Trinity.create(adjustedRange(line, atIndex + AT.length() + 1, lastDotIndex),
+    return Trinity.create(adjustedRange(line, atIndex + AT_PREFIX.length(), lastDotIndex),
                           adjustedRange(line, lastDotIndex + 1, lparenthIndex), new TextRange(lparenthIndex, rparenthIndex));
   }
 
@@ -177,15 +167,6 @@ public class ExceptionWorker {
     return new TextRange(start, end - spacesEnd(sub));
   }
 
-  private static int spacesStart(final String s) {
-    int cnt = 0;
-    for (int i = 0; i < s.length(); i++) {
-      final char c = s.charAt(i);
-      if (! Character.isSpaceChar(c)) return cnt;
-      ++ cnt;
-    }
-    return 0;
-  }
   private static int spacesEnd(final String s) {
     int cnt = 0;
     for (int i = s.length() - 1; i >= 0; i--) {
