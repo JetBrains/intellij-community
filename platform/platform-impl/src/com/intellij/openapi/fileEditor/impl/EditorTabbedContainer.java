@@ -587,6 +587,7 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
       private Presentation myPresentation;
       private EditorWindow myEditorWindow;
       private Dimension myPreferredSize;
+      private boolean myPinned;
 
 
       public DockableEditor(Image img, VirtualFile file, Presentation presentation, EditorWindow window) {
@@ -596,6 +597,7 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
         myContainer = new DockableEditorTabbedContainer(myProject);
         myEditorWindow = window;
         myPreferredSize = myEditorWindow.getSize();
+        myPinned = window.isFilePinned(file);
       }
 
       @Override
@@ -630,6 +632,10 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
 
       public VirtualFile getFile() {
         return myFile;
+      }
+
+      public boolean isPinned() {
+        return myPinned;
       }
     }
   }
