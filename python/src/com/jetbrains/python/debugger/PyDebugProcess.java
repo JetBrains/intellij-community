@@ -31,6 +31,8 @@ import com.jetbrains.django.util.DjangoUtil;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.django.DjangoExceptionBreakpointHandler;
 import com.jetbrains.python.debugger.pydev.*;
+import com.jetbrains.python.debugger.remote.vfs.PyRemotePositionConverter;
+import com.jetbrains.python.remote.PyRemoteProcessHandlerBase;
 import com.jetbrains.python.run.PythonProcessHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -90,7 +92,12 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     if (myProcessHandler != null) {
       myProcessHandler.addProcessListener(this);
     }
-    myPositionConverter = new PyLocalPositionConverter();
+    if (processHandler instanceof PyRemoteProcessHandlerBase) {
+      myPositionConverter = new PyRemotePositionConverter(this, ((PyRemoteProcessHandlerBase)processHandler).getRemoteDebugConfiguration().getPathMapping());
+    }
+    else {
+      myPositionConverter = new PyLocalPositionConverter();
+    }
     myDebugger.addCloseListener(new RemoteDebuggerCloseListener() {
       @Override
       public void closed() {
@@ -539,7 +546,8 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
   private void setKillingStrategy() {
     if (getSession().isSuspended() && myProcessHandler instanceof PythonProcessHandler) {
-      ((PythonProcessHandler)myProcessHandler).setShouldTryToKillSoftly(false);    //while process is suspended it can't terminate softly, so its better to kill all the tree hard
+      ((PythonProcessHandler)myProcessHandler)
+        .setShouldTryToKillSoftly(false);    //while process is suspended it can't terminate softly, so its better to kill all the tree hard
     }
   }
 
@@ -561,6 +569,13 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     }
     else {
       return "Waiting for connection...";
+    }
+  }
+
+  public void addProcessListener(ProcessListener listener) {
+    ProcessHandler handler = doGetProcessHandler();
+    if (handler != null) {
+      handler.addProcessListener(listener);
     }
   }
 }

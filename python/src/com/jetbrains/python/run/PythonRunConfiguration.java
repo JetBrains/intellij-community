@@ -36,6 +36,7 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
   private String myScriptName;
   private String myScriptParameters;
   private boolean myMultiprocessMode;
+  private String myRemoteDebugConfiguration;
 
   protected PythonRunConfiguration(RunConfigurationModule module, ConfigurationFactory configurationFactory, String name) {
     super(name, module, configurationFactory);
@@ -127,6 +128,15 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
     target.setScriptName(source.getScriptName());
     target.setScriptParameters(source.getScriptParameters());
     target.setMultiprocessMode(source.isMultiprocessMode());
+    target.setRemoteDebugConfiguration(source.getRemoteDebugConfiguration());
+  }
+
+  public String getRemoteDebugConfiguration() {
+    return myRemoteDebugConfiguration;
+  }
+
+  public void setRemoteDebugConfiguration(String remoteDebugConfiguration) {
+    myRemoteDebugConfiguration = remoteDebugConfiguration;
   }
 
   @Override

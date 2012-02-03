@@ -6,6 +6,7 @@ import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.jetbrains.python.debugger.remote.PyRemoteDebugConfiguration;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -15,7 +16,11 @@ public abstract class PythonRemoteInterpreterManager {
   public final static ExtensionPointName<PythonRemoteInterpreterManager> EP_NAME =
     ExtensionPointName.create("Pythonid.remoteInterpreterManager");
 
-  public abstract ProcessHandler doCreateProcess(Project project, PythonRemoteSdkAdditionalData data, GeneralCommandLine commandLine)
+  public abstract ProcessHandler doCreateProcess(Project project,
+                                                 PythonRemoteSdkAdditionalData data,
+                                                 GeneralCommandLine commandLine,
+                                                 @Nullable
+                                                 PyRemoteDebugConfiguration configuration)
     throws PyRemoteInterpreterException;
 
   @Nullable
@@ -28,7 +33,8 @@ public abstract class PythonRemoteInterpreterManager {
   public static PythonRemoteInterpreterManager getInstance() {
     if (EP_NAME.getExtensions().length > 0) {
       return EP_NAME.getExtensions()[0];
-    } else {
+    }
+    else {
       return null;
     }
   }

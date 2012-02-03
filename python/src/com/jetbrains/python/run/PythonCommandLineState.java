@@ -31,6 +31,7 @@ import com.intellij.util.containers.HashMap;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.PyDebugConsoleBuilder;
 import com.jetbrains.python.debugger.PyDebugRunner;
+import com.jetbrains.python.debugger.remote.PyRemoteDebugConfiguration;
 import com.jetbrains.python.facet.LibraryContributingFacet;
 import com.jetbrains.python.facet.PythonPathContributingFacet;
 import com.jetbrains.python.remote.PyRemoteInterpreterException;
@@ -145,7 +146,8 @@ public abstract class PythonCommandLineState extends CommandLineState {
           null;
         try {
           processHandler =
-            manager.doCreateProcess(myConfig.getProject(), (PythonRemoteSdkAdditionalData)sdk.getSdkAdditionalData(), commandLine);
+            manager.doCreateProcess(myConfig.getProject(), (PythonRemoteSdkAdditionalData)sdk.getSdkAdditionalData(), commandLine, PyRemoteDebugConfiguration.findByName(myConfig.getProject(),
+              ((PythonRunConfiguration)myConfig).getRemoteDebugConfiguration()));
         }
         catch (PyRemoteInterpreterException e) {
           // TODO: show dialog and rerun or cancel
