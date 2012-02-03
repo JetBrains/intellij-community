@@ -32,12 +32,12 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.Alarm;
-import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
@@ -63,6 +63,12 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
         updateStatus();
       }
     }, this);
+    addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseClicked(MouseEvent e) {
+        EventLog.toggleLog(getProject());
+      }
+    });
   }
 
   public WidgetPresentation getPresentation(@NotNull PlatformType type) {
@@ -88,14 +94,6 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
   @Nullable
   private Project getProject() {
     return PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext((Component) myStatusBar));
-  }
-
-  public Consumer<MouseEvent> getClickConsumer() {
-    return new Consumer<MouseEvent>() {
-      public void consume(MouseEvent mouseEvent) {
-        EventLog.toggleLog(getProject());
-      }
-    };
   }
 
   @NotNull
@@ -146,7 +144,7 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
   }
 
   @Nullable
-  public static NotificationType getMaximumType(List<Notification> notifications) {
+  private static NotificationType getMaximumType(List<Notification> notifications) {
     NotificationType result = null;
     for (Notification notification : notifications) {
       if (NotificationType.ERROR == notification.getType()) {
