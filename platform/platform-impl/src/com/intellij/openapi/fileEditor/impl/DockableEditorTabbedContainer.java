@@ -133,7 +133,8 @@ public class DockableEditorTabbedContainer implements DockContainer.Persistent {
       }
     }
 
-    VirtualFile file = ((EditorTabbedContainer.MyDragOutDelegate.DockableEditor)content).getFile();
+    final EditorTabbedContainer.MyDragOutDelegate.DockableEditor dockableEditor = (EditorTabbedContainer.MyDragOutDelegate.DockableEditor)content;
+    VirtualFile file = dockableEditor.getFile();
 
 
     if (window == null || window.isDisposed()) {
@@ -147,6 +148,7 @@ public class DockableEditorTabbedContainer implements DockContainer.Persistent {
     }
 
     ((FileEditorManagerImpl)FileEditorManagerEx.getInstanceEx(myProject)).openFileImpl2(window, file, true);
+    window.setFilePinned(file, dockableEditor.isPinned());
   }
 
   @Override
