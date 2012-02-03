@@ -24,7 +24,6 @@ import com.intellij.openapi.vcs.CheckoutProvider;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
-import java.util.Comparator;
 
 public class CheckoutActionGroup extends ActionGroup implements DumbAware {
 
@@ -41,12 +40,7 @@ public class CheckoutActionGroup extends ActionGroup implements DumbAware {
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
     if (myChildren == null) {
       final CheckoutProvider[] providers = Extensions.getExtensions(CheckoutProvider.EXTENSION_POINT_NAME);
-      Arrays.sort(providers, new Comparator<CheckoutProvider>() {
-        public int compare(final CheckoutProvider o1, final CheckoutProvider o2) {
-          // not strict but will do
-          return o1.getVcsName().compareTo(o2.getVcsName());
-        }
-      });
+      Arrays.sort(providers, new CheckoutProvider.CheckoutProviderComparator());
       myChildren = new AnAction[providers.length];
       for (int i = 0; i < providers.length; i++) {
         CheckoutProvider provider = providers[i];

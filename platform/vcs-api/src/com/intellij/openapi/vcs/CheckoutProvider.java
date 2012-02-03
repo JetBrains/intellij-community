@@ -22,6 +22,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.Comparator;
+
+import static com.intellij.ui.GuiUtils.getTextWithoutMnemonicEscaping;
 
 /**
  * Implement this interface and register it as extension to checkoutProvider extension point in order to provide checkout
@@ -36,5 +39,11 @@ public interface CheckoutProvider {
   interface Listener {
     void directoryCheckedOut(File directory, VcsKey vcs);
     void checkoutCompleted();
+  }
+
+  class CheckoutProviderComparator implements Comparator<CheckoutProvider> {
+    public int compare(final CheckoutProvider o1, final CheckoutProvider o2) {
+      return getTextWithoutMnemonicEscaping(o1.getVcsName()).compareTo(getTextWithoutMnemonicEscaping(o2.getVcsName()));
+    }
   }
 }
