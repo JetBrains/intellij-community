@@ -94,6 +94,11 @@
       <categoryKey>intention.category.boolean</categoryKey>
     </intentionAction>
 
+    <intentionAction>
+      <className>com.siyeh.ipp.trivialif.ConvertToNestedIfIntention</className>
+      <categoryKey>intention.category.boolean</categoryKey>
+    </intentionAction>
+
     <!-- Conditional Operator -->
     <intentionAction>
       <className>com.siyeh.ipp.conditional.FlipConditionalIntention</className>
