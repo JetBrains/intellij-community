@@ -63,6 +63,47 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
                                                    "value2=1");
   }
 
+  public void testCustomDelimiter() throws Exception {
+    createProjectSubFile("resources/file.properties", "value1=${project.version}\n" +
+                                                      "value2=@project.version@\n" +
+                                                      "valueX=|\n" +
+                                                      "value3=|project.version|\n" +
+                                                      "value4=(project.version]");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <resources>" +
+                  "    <resource>" +
+                  "      <directory>resources</directory>" +
+                  "      <filtering>true</filtering>" +
+                  "    </resource>" +
+                  "  </resources>" +
+                  "  <plugins>" +
+                  "    <plugin>" +
+                  "      <groupId>org.apache.maven.plugins</groupId>" +
+                  "      <artifactId>maven-resources-plugin</artifactId>" +
+                  "      <configuration>" +
+                  "        <delimiters>" +
+                  "          <delimiter>|</delimiter>" +
+                  "          <delimiter>(*]</delimiter>" +
+                  "        </delimiters>" +
+                  "      </configuration>" +
+                  "    </plugin>" +
+                  "  </plugins>" +
+                  "</build>");
+
+    compileModules("project");
+
+    assertResult("target/classes/file.properties", "value1=1\n" +
+                                                   "value2=1\n" +
+                                                   "valueX=|\n" +
+                                                   "value3=1\n" +
+                                                   "value4=1");
+  }
+
   public void testPomArtifactId() throws Exception {
     createProjectSubFile("resources/file.properties", "value=${pom.artifactId}");
 

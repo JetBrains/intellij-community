@@ -30,6 +30,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -54,6 +55,8 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.dom.references.MavenPsiElementWrapper;
@@ -108,6 +111,11 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
   protected PsiReference getReferenceAtCaret(VirtualFile f) throws IOException {
     configTest(f);
     return findPsiFile(f).findReferenceAt(getEditorOffset(f));
+  }
+
+  protected PsiReference getReferenceAt(VirtualFile f, int offset) throws IOException {
+    configTest(f);
+    return findPsiFile(f).findReferenceAt(offset);
   }
 
   protected PsiElement getElementAtCaret(VirtualFile f) throws IOException {
@@ -177,11 +185,35 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
     assertEquals(expectedText, ref.getCanonicalText());
   }
 
-  protected void assertResolved(VirtualFile file, PsiElement expected) throws IOException {
+  protected void assertResolved(VirtualFile file, @NotNull PsiElement expected) throws IOException {
     doAssertResolved(file, expected);
   }
 
-  protected void assertResolved(VirtualFile file, PsiElement expected, String expectedText) throws IOException {
+  @Nullable
+  protected PsiReference getReference(VirtualFile file, @NotNull String referenceText) throws IOException {
+    String text = VfsUtilCore.loadText(file);
+    int index = text.indexOf(referenceText);
+    assert index >= 0;
+    
+    assert text.indexOf(referenceText, index + referenceText.length()) == -1 : "Reference text '" + referenceText + "' occurs more than one times";
+    
+    return getReferenceAt(file, index);
+  }
+  
+  @Nullable
+  protected PsiElement resolveReference(VirtualFile file, @NotNull String referenceText) throws IOException {
+    PsiReference ref = getReference(file, referenceText);
+    assertNotNull(ref);
+
+    PsiElement resolved = ref.resolve();
+    if (resolved instanceof MavenPsiElementWrapper) {
+      resolved = ((MavenPsiElementWrapper)resolved).getWrappee();
+    }
+
+    return resolved;
+  }
+
+  protected void assertResolved(VirtualFile file, @NotNull PsiElement expected, String expectedText) throws IOException {
     PsiReference ref = doAssertResolved(file, expected);
     assertEquals(expectedText, ref.getCanonicalText());
   }
