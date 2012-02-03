@@ -43,11 +43,8 @@ import java.util.List;
 import java.util.Properties;
 
 /**
- * Created by IntelliJ IDEA.
- * User: db
- * Date: 26.07.11
- * Time: 0:34
- * To change this template use File | Settings | File Templates.
+ * @author db
+ * @since 26.07.11
  */
 public abstract class IncrementalTestCase extends TestCase {
   private static class RootStripper {
@@ -135,10 +132,6 @@ public abstract class IncrementalTestCase extends TestCase {
     }
   }
 
-  static {
-    Logger.setFactory(new MyFactory());
-  }
-
   private static RootStripper stripper = new RootStripper();
 
   private final String groupName;
@@ -148,6 +141,7 @@ public abstract class IncrementalTestCase extends TestCase {
   private String baseDir;
   private String workDir;
 
+  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
   protected IncrementalTestCase(final String name) throws Exception {
     super(name);
     groupName = name;
