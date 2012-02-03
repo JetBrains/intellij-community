@@ -324,8 +324,8 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
       AndroidPlatform platform = getConfiguration().getAndroidPlatform();
       AndroidSdk sdk = platform != null ? platform.getSdk() : null;
       Project project = getModule().getProject();
-      if (sdk instanceof AndroidSdkImpl) {
-        SdkManager sdkManager = ((AndroidSdkImpl)sdk).getSdkManager();
+      if (sdk != null) {
+        SdkManager sdkManager = sdk.getSdkManager();
         myAvdManager = new AvdManager(sdkManager, AndroidUtils.getSdkLog(project));
       }
       else {
