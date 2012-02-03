@@ -22,6 +22,7 @@ import com.intellij.openapi.command.impl.FinishMarkAction;
 import com.intellij.openapi.command.impl.StartMarkAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -207,9 +208,14 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
       }
     }
     finally {
-      FinishMarkAction.finish(myProject, myEditor, markAction);
-      if (myBeforeRevert != null) {
-        myEditor.getCaretModel().moveToOffset(myBeforeRevert.getEndOffset());
+      try {
+        ((EditorImpl)myEditor).stopDumb();
+      }
+      finally {
+        FinishMarkAction.finish(myProject, myEditor, markAction);
+        if (myBeforeRevert != null) {
+          myEditor.getCaretModel().moveToOffset(myBeforeRevert.getEndOffset());
+        }
       }
     }
   }
@@ -223,6 +229,7 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
   public void finish(boolean success) {
     super.finish(success);
     if (success) {
+      ((EditorImpl)myEditor).startDumb();
       revertState();
     }
   }

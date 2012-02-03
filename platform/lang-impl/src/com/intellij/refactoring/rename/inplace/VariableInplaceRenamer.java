@@ -27,6 +27,7 @@ import com.intellij.openapi.command.impl.FinishMarkAction;
 import com.intellij.openapi.command.impl.StartMarkAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -184,7 +185,12 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
       performAutomaticRename(newName);
     }
     finally {
-      FinishMarkAction.finish(myProject, myEditor, markAction);
+      try {
+        ((EditorImpl)myEditor).stopDumb();
+      }
+      finally {
+        FinishMarkAction.finish(myProject, myEditor, markAction);
+      }
     }
   }
 
@@ -235,6 +241,10 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
   @Override
   protected String getCommandName() {
     PsiNamedElement variable = getVariable();
+    if (variable == null) {
+      LOG.error(myElementToRename);
+      return "Rename";
+    }
     return RefactoringBundle.message("renaming.0.1.to.2", UsageViewUtil.getType(variable), UsageViewUtil.getDescriptiveName(variable),
                                      variable.getName());
   }
