@@ -61,6 +61,7 @@ extends
    *
    * @return the deprecation message or null if the function is not deprecated.
    */
+  @Nullable
   String getDeprecationMessage();
 
   /**

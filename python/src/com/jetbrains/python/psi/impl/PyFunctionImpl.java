@@ -77,7 +77,10 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
 
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     final ASTNode nameElement = PyElementGenerator.getInstance(getProject()).createNameIdentifier(name);
-    getNode().replaceChild(getNameNode(), nameElement);
+    final ASTNode nameNode = getNameNode();
+    if (nameNode != null) {
+      getNode().replaceChild(nameNode, nameElement);
+    }
     return this;
   }
 
@@ -281,6 +284,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
     return PyTypeParser.getTypeByName(this, typeName);
   }
 
+  @Nullable
   @Override
   public String getDeprecationMessage() {
     PyFunctionStub stub = getStub();
@@ -290,6 +294,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
     return extractDeprecationMessage();
   }
 
+  @Nullable
   public String extractDeprecationMessage() {
     PyStatementList statementList = getStatementList();
     if (statementList == null) {
@@ -298,6 +303,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
     return extractDeprecationMessage(Arrays.asList(statementList.getStatements()));
   }
 
+  @Nullable
   public static String extractDeprecationMessage(List<PyStatement> statements) {
     for (PyStatement statement : statements) {
       if (statement instanceof PyExpressionStatement) {
