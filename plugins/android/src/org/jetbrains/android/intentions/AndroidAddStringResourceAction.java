@@ -39,8 +39,10 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
@@ -218,7 +220,7 @@ public class AndroidAddStringResourceAction extends AbstractIntentionAction impl
     }
 
     if (file instanceof PsiJavaFile) {
-      createJavaResourceReference(project, editor, file, element, aPackage, resName, ResourceType.STRING.getName());
+      createJavaResourceReference(facet.getModule(), editor, file, element, aPackage, resName, ResourceType.STRING.getName());
     }
     else {
       final XmlAttribute attribute = PsiTreeUtil.getParentOfType(element, XmlAttribute.class);
@@ -237,19 +239,28 @@ public class AndroidAddStringResourceAction extends AbstractIntentionAction impl
     });
   }
 
-  private static void createJavaResourceReference(final Project project,
+  private static void createJavaResourceReference(final Module module,
                                                   final Editor editor,
                                                   final PsiFile file,
                                                   final PsiElement element,
-                                                  String aPackage,
-                                                  String resName,
-                                                  String resType) {
+                                                  final String aPackage,
+                                                  final String resName,
+                                                  final String resType) {
     final boolean extendsContext = getContainingInheritorOf(element, CONTEXT) != null;
-    final String field = aPackage + ".R." + resType + '.' + AndroidResourceUtil.getRJavaFieldName(resName);
+    final String rJavaFieldName = AndroidResourceUtil.getRJavaFieldName(resName);
+    final String field = aPackage + ".R." + resType + '.' + rJavaFieldName;
     final String methodName = getGetterNameForResourceType(resType);
     assert methodName != null;
     final TemplateImpl template;
     final boolean inStaticContext = RefactoringUtil.isInStaticContext(element, null);
+    final Project project = module.getProject();
+
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        createStubResourceField(module, aPackage, resType, rJavaFieldName);
+      }
+    });
 
     if (extendsContext && !inStaticContext) {
       if (ResourceType.STRING.getName().equals(resType)) {
@@ -291,6 +302,37 @@ public class AndroidAddStringResourceAction extends AbstractIntentionAction impl
       @Override
       public void beforeTemplateFinished(TemplateState state, Template template) {
         JavaCodeStyleManager.getInstance(project).shortenClassReferences(file, marker.getStartOffset(), marker.getEndOffset());
+      }
+    });
+  }
+
+  private static void createStubResourceField(final Module module,
+                                              final String aPackage,
+                                              final String resType,
+                                              final String fieldName) {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        final Project project = module.getProject();
+        final PsiClass[] classes =
+          JavaPsiFacade.getInstance(project).findClasses(aPackage + ".R", GlobalSearchScope.moduleScope(module));
+        if (classes.length == 1) {
+          final PsiClass aClass = classes[0];
+          final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+
+          PsiClass resTypeClass = aClass.findInnerClassByName(resType, false);
+
+          if (resTypeClass == null) {
+            resTypeClass = (PsiClass)aClass.add(factory.createClass(resType));
+          }
+          else if (resTypeClass.findFieldByName(fieldName, false) != null) {
+            return;
+          }
+          final PsiField psiField = (PsiField)resTypeClass.add(factory.createField(fieldName, PsiType.INT));
+          PsiUtil.setModifierProperty(psiField, PsiModifier.PUBLIC, true);
+          PsiUtil.setModifierProperty(psiField, PsiModifier.STATIC, true);
+          PsiUtil.setModifierProperty(psiField, PsiModifier.FINAL, true);
+        }
       }
     });
   }

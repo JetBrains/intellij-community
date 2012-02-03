@@ -132,7 +132,7 @@ public class GitFetcher {
                                         @NotNull GitFetchResult result,
                                         @Nullable String errorNotificationTitle, @NotNull Collection<? extends Exception> errors) {
     if (result.isSuccess()) {
-      GitVcs.NOTIFICATION_GROUP_ID.createNotification("Fetched successfully", NotificationType.WARNING).notify(project);
+      GitVcs.NOTIFICATION_GROUP_ID.createNotification("Fetched successfully", NotificationType.INFORMATION).notify(project);
     } else if (result.isCancelled()) {
       GitVcs.NOTIFICATION_GROUP_ID.createNotification("Fetch cancelled by user", NotificationType.WARNING).notify(project);
     } else if (result.isNotAuthorized()) {

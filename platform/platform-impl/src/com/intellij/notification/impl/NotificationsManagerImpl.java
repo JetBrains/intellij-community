@@ -34,7 +34,6 @@ import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.BalloonImpl;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.PairFunction;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,15 +45,12 @@ import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 
 /**
  * @author spleaner
  */
 public class NotificationsManagerImpl extends NotificationsManager implements Notifications, ApplicationComponent {
-
-  private final NotificationModel myModel = new NotificationModel();
 
   @NotNull
   public String getComponentName() {
@@ -70,7 +66,7 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
   }
 
   public void notify(@NotNull Notification notification) {
-    doNotify(notification, NotificationDisplayType.BALLOON);
+    doNotify(notification, NotificationDisplayType.BALLOON, null);
   }
 
   @Override
@@ -86,50 +82,27 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
   @Override
   public void expire(@NotNull Notification notification) {
     EventLog.expire(notification);
-    remove(notification);
   }
 
   @Override
   public <T extends Notification> T[] getNotificationsOfType(Class<T> klass, @Nullable final Project project) {
-    final List<Notification> notifications = myModel.getFilteredNotifications(createFilter(project, false));
     final List<T> result = new ArrayList<T>();
-    for (final Notification notification : notifications) {
+    for (Notification notification : EventLog.getLogModel(project).getNotifications()) {
       if (klass.isInstance(notification)) {
         //noinspection unchecked
         result.add((T) notification);
       }
     }
-    
+
     return ArrayUtil.toObjectArray(result, klass);
   }
 
-  private static final PairFunction<Notification, Project, Boolean> ALL = new PairFunction<Notification, Project, Boolean>() {
-    @NotNull
-    public Boolean fun(final Notification notification, final Project project) {
-      return true;
-    }
-  };
-
-  private static final PairFunction<Notification, Project, Boolean> APPLICATION = new PairFunction<Notification, Project, Boolean>() {
-    @NotNull
-    public Boolean fun(final Notification notification, final Project project) {
-      return project == null;
-    }
-  };
-
-  public void clear(@Nullable Project project) {
-    myModel.clear(createFilter(project, true));
-  }
-
   public void disposeComponent() {
-    myModel.clear(ALL);
   }
 
-  protected void doNotify(@NotNull Notification notification, @Nullable final NotificationDisplayType displayType) {
-    doNotify(notification, displayType, null);
-  }
-
-  public void doNotify(@NotNull final Notification notification, @Nullable NotificationDisplayType displayType, @Nullable final Project project) {
+  public static void doNotify(@NotNull final Notification notification,
+                              @Nullable NotificationDisplayType displayType,
+                              @Nullable final Project project) {
     final NotificationsConfigurationImpl configuration = NotificationsConfigurationImpl.getNotificationsConfigurationImpl();
     if (!configuration.isRegistered(notification.getGroupId())) {
       configuration.register(notification.getGroupId(), displayType == null ? NotificationDisplayType.BALLOON : displayType);
@@ -138,9 +111,6 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
     final NotificationSettings settings = NotificationsConfigurationImpl.getSettings(notification.getGroupId());
     boolean shouldLog = settings.isShouldLog();
     boolean displayable = settings.getDisplayType() != NotificationDisplayType.NONE;
-    if (shouldLog && displayable) {
-      myModel.add(notification, project);
-    }
 
     boolean willBeShown = displayable && NotificationsConfigurationImpl.getNotificationsConfigurationImpl().SHOW_BALLOONS;
     if (!shouldLog && !willBeShown) {
@@ -318,31 +288,4 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
     return balloon;
   }
 
-  private static PairFunction<Notification, Project, Boolean> createFilter(@Nullable final Project project, final boolean strict) {
-    return project == null ? APPLICATION : new ProjectFilter(project, strict);
-  }
-
-  @Nullable
-  public Notification remove(Notification notification) {
-    return myModel.remove(notification);
-  }
-
-  public Collection<Notification> getAllNotifications(@Nullable final Project project) {
-    return myModel.getFilteredNotifications(createFilter(project, false));
-  }
-
-  private static class ProjectFilter implements PairFunction<Notification, Project, Boolean> {
-    private final Project myProject;
-    private final boolean myStrict;
-
-    private ProjectFilter(@NotNull final Project project, final boolean strict) {
-      myProject = project;
-      myStrict = strict;
-    }
-
-    @NotNull
-    public Boolean fun(final Notification notification, final Project project) {
-      return myStrict ? project == myProject : project == null || project == myProject;
-    }
-  }
 }

@@ -52,6 +52,7 @@ public class RareLogger extends Logger {
         if (fairSynch) {
           synchronized (lock) {
             super.put(key, value);
+            return;
           }
         }
         super.put(key, value);

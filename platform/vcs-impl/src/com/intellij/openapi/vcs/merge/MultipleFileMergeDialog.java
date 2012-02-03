@@ -17,7 +17,6 @@
 package com.intellij.openapi.vcs.merge;
 
 import com.intellij.CommonBundle;
-import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.presentation.VirtualFilePresentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.ActionButtonPresentation;
@@ -26,7 +25,6 @@ import com.intellij.openapi.diff.DiffRequestFactory;
 import com.intellij.openapi.diff.MergeRequest;
 import com.intellij.openapi.diff.impl.mergeTool.MergeVersion;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -37,10 +35,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.projectImport.ProjectOpenProcessor;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBLabel;
@@ -49,6 +46,7 @@ import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -112,7 +110,8 @@ public class MultipleFileMergeDialog extends DialogWrapper {
       }
     };
 
-  public MultipleFileMergeDialog(Project project, final List<VirtualFile> files, final MergeProvider provider, MergeDialogCustomizer mergeDialogCustomizer) {
+  public MultipleFileMergeDialog(@NotNull Project project, @NotNull final List<VirtualFile> files, @NotNull final MergeProvider provider,
+                                 @NotNull MergeDialogCustomizer mergeDialogCustomizer) {
     super(project, false);
     myProject = project;
     myProjectManager = ProjectManagerEx.getInstanceEx();

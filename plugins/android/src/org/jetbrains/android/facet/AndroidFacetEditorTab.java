@@ -18,7 +18,6 @@ package org.jetbrains.android.facet;
 import com.android.sdklib.SdkConstants;
 import com.intellij.facet.ui.FacetEditorContext;
 import com.intellij.facet.ui.FacetEditorTab;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -432,22 +431,17 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
 
     runApt = runApt && myConfiguration.REGENERATE_R_JAVA && AndroidAptCompiler.isToCompileModule(myContext.getModule(), myConfiguration);
     runIdl = runIdl && myConfiguration.REGENERATE_JAVA_BY_AIDL;
+
     if (runApt || runIdl) {
-      final boolean finalRunApt = runApt;
-      final boolean finalRunIdl = runIdl;
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        @Override
-        public void run() {
-          Module module = myContext.getModule();
-          Project project = module.getProject();
-          if (finalRunApt) {
-            AndroidCompileUtil.generate(module, new AndroidAptCompiler(), true);
-          }
-          if (finalRunIdl) {
-            AndroidCompileUtil.generate(module, new AndroidIdlCompiler(project));
-          }
-        }
-      });
+      final Module module = myContext.getModule();
+      final Project project = module.getProject();
+
+      if (runApt) {
+        AndroidCompileUtil.generate(module, new AndroidAptCompiler(), true);
+      }
+      if (runIdl) {
+        AndroidCompileUtil.generate(module, new AndroidIdlCompiler(project));
+      }
     }
   }
 

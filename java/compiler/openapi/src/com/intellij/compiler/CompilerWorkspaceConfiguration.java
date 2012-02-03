@@ -19,6 +19,7 @@
  */
 package com.intellij.compiler;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
@@ -57,6 +58,6 @@ public class CompilerWorkspaceConfiguration implements PersistentStateComponent<
   }
 
   public boolean useCompileServer() {
-    return USE_COMPILE_SERVER && Registry.is("compiler.server.enabled");
+    return USE_COMPILE_SERVER && (Registry.is("compiler.server.enabled") || ApplicationManager.getApplication().isInternal());
   }
 }

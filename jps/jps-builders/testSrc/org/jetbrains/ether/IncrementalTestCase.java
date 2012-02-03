@@ -43,11 +43,8 @@ import java.util.List;
 import java.util.Properties;
 
 /**
- * Created by IntelliJ IDEA.
- * User: db
- * Date: 26.07.11
- * Time: 0:34
- * To change this template use File | Settings | File Templates.
+ * @author db
+ * @since 26.07.11
  */
 public abstract class IncrementalTestCase extends TestCase {
   private static class RootStripper {
@@ -82,59 +79,57 @@ public abstract class IncrementalTestCase extends TestCase {
       }
     }
   }
-  
-  static {
-    Logger.setFactory(new Logger.Factory() {
-      @Override
-      public Logger getLoggerInstance(String category) {
-        final org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(category);
 
-        final boolean affectedLogger = category.equals("#org.jetbrains.jps.incremental.java.JavaBuilder") ||
-                                       category.equals("#org.jetbrains.jps.incremental.IncProjectBuilder");
+  private static class MyFactory implements Logger.Factory {
+    @Override
+    public Logger getLoggerInstance(String category) {
+      final org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(category);
 
-        return new Logger() {
-          @Override
-          public boolean isDebugEnabled() {
-            return affectedLogger;
+      final boolean affectedLogger = category.equals("#org.jetbrains.jps.incremental.java.JavaBuilder") ||
+                                     category.equals("#org.jetbrains.jps.incremental.IncProjectBuilder");
+
+      return new Logger() {
+        @Override
+        public boolean isDebugEnabled() {
+          return affectedLogger;
+        }
+
+        @Override
+        public void debug(@NonNls String message) {
+        }
+
+        @Override
+        public void debug(@Nullable Throwable t) {
+        }
+
+        @Override
+        public void debug(@NonNls String message, @Nullable Throwable t) {
+        }
+
+        @Override
+        public void error(@NonNls String message, @Nullable Throwable t, @NonNls String... details) {
+        }
+
+        @Override
+        public void info(@NonNls String message) {
+          if (affectedLogger) {
+            logger.info(stripper.strip(message));
           }
+        }
 
-          @Override
-          public void debug(@NonNls String message) {
-          }
+        @Override
+        public void info(@NonNls String message, @Nullable Throwable t) {
+        }
 
-          @Override
-          public void debug(@Nullable Throwable t) {
-          }
+        @Override
+        public void warn(@NonNls String message, @Nullable Throwable t) {
+        }
 
-          @Override
-          public void debug(@NonNls String message, @Nullable Throwable t) {
-          }
-
-          @Override
-          public void error(@NonNls String message, @Nullable Throwable t, @NonNls String... details) {
-          }
-
-          @Override
-          public void info(@NonNls String message) {
-            if (affectedLogger) {
-              logger.info(stripper.strip(message));
-            }
-          }
-
-          @Override
-          public void info(@NonNls String message, @Nullable Throwable t) {
-          }
-
-          @Override
-          public void warn(@NonNls String message, @Nullable Throwable t) {
-          }
-
-          @Override
-          public void setLevel(Level level) {
-          }
-        };
-      }
-    });
+        @Override
+        public void setLevel(Level level) {
+        }
+      };
+    }
   }
 
   private static RootStripper stripper = new RootStripper();
@@ -142,9 +137,11 @@ public abstract class IncrementalTestCase extends TestCase {
   private final String groupName;
   private final String tempDir = FileUtil.toSystemDependentName(new File(System.getProperty("java.io.tmpdir")).getCanonicalPath());
 
+  private Logger.Factory oldFactory;
   private String baseDir;
   private String workDir;
 
+  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
   protected IncrementalTestCase(final String name) throws Exception {
     super(name);
     groupName = name;
@@ -152,6 +149,9 @@ public abstract class IncrementalTestCase extends TestCase {
 
   @Override
   protected void setUp() throws Exception {
+    oldFactory = Logger.ourFactory;
+    Logger.setFactory(new MyFactory());
+
     super.setUp();
 
     baseDir = PathManagerEx.getTestDataPath() + File.separator + "compileServer" + File.separator + "incremental" + File.separator;
@@ -175,8 +175,13 @@ public abstract class IncrementalTestCase extends TestCase {
       super.tearDown();
     }
     finally {
-      closeAppender();
-      delete(new File(workDir));
+      try {
+        closeAppender();
+        delete(new File(workDir));
+      }
+      finally {
+        Logger.setFactory(oldFactory);
+      }
     }
   }
 
@@ -342,7 +347,5 @@ public abstract class IncrementalTestCase extends TestCase {
     finally {
       projectDescriptor.release();
     }
-
-
   }
 }

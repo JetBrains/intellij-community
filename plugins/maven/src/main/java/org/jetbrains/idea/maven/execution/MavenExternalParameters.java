@@ -55,7 +55,7 @@ public class MavenExternalParameters {
 
     params.setWorkingDirectory(parameters.getWorkingDirFile());
 
-    params.setJdk(getJdk(runnerSettings.getJreName()));
+    params.setJdk(getJdk(runnerSettings, project != null && MavenRunner.getInstance(project).getState() == runnerSettings));
 
     final String mavenHome = resolveMavenHome(coreSettings);
 
@@ -83,7 +83,8 @@ public class MavenExternalParameters {
   }
 
   @NotNull
-  private static Sdk getJdk(final String name) throws ExecutionException {
+  private static Sdk getJdk(MavenRunnerSettings runnerSettings, boolean isGlobalRunnerSettings) throws ExecutionException {
+    String name = runnerSettings.getJreName();
     if (name.equals(MavenRunnerSettings.USE_INTERNAL_JAVA)) {
       return JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
     }
@@ -106,7 +107,12 @@ public class MavenExternalParameters {
       }
     }
 
-    throw new ExecutionException(RunnerBundle.message("maven.java.not.found", name));
+    if (isGlobalRunnerSettings) {
+      throw new ExecutionException(RunnerBundle.message("maven.java.not.found.default.config", name));
+    }
+    else {
+      throw new ExecutionException(RunnerBundle.message("maven.java.not.found", name));
+    }
   }
 
   public static List<String> createVMParameters(final List<String> list, final String mavenHome, final MavenRunnerSettings runnerSettings) {
