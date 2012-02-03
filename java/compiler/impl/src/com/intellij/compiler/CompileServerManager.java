@@ -268,7 +268,7 @@ public class CompileServerManager implements ApplicationComponent{
           continue;
         }
         final CompilerWorkspaceConfiguration config = CompilerWorkspaceConfiguration.getInstance(project);
-        if (!config.USE_COMPILE_SERVER || !config.MAKE_PROJECT_ON_SAVE) {
+        if (!config.useCompileServer() || !config.MAKE_PROJECT_ON_SAVE) {
           continue;
         }
         final RequestFuture future = submitCompilationTask(
