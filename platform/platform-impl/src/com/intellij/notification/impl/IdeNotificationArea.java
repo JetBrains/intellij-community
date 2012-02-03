@@ -18,6 +18,7 @@ package com.intellij.notification.impl;
 import com.intellij.ide.DataManager;
 import com.intellij.notification.EventLog;
 import com.intellij.notification.LogModel;
+import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
@@ -34,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.util.List;
 
 /**
  * @author spleaner
@@ -113,7 +115,7 @@ public class IdeNotificationArea implements StatusBarWidget, StatusBarWidget.Ico
   }
 
   private void updateStatus(final LogModel model) {
-    myCurrentIcon = getPendingNotificationsIcon(EMPTY_ICON, NotificationModel.getMaximumType(model.getNotifications()));
+    myCurrentIcon = getPendingNotificationsIcon(EMPTY_ICON, getMaximumType(model.getNotifications()));
     myStatusBar.updateWidget(ID());
   }
 
@@ -128,4 +130,22 @@ public class IdeNotificationArea implements StatusBarWidget, StatusBarWidget.Ico
     return defIcon;
   }
 
+  @Nullable
+  public static NotificationType getMaximumType(List<Notification> notifications) {
+    NotificationType result = null;
+    for (Notification notification : notifications) {
+      if (NotificationType.ERROR == notification.getType()) {
+        return NotificationType.ERROR;
+      }
+
+      if (NotificationType.WARNING == notification.getType()) {
+        result = NotificationType.WARNING;
+      }
+      else if (result == null && NotificationType.INFORMATION == notification.getType()) {
+        result = NotificationType.INFORMATION;
+      }
+    }
+
+    return result;
+  }
 }
