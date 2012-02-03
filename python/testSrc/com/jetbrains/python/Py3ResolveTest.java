@@ -40,4 +40,9 @@ public class Py3ResolveTest extends PyResolveTestCase {
   public void testObjectMethods() {  // PY-1494
     assertResolvesTo(PyFunction.class, "__repr__");
   }
+
+  // PY-5499
+  public void testTrueDiv() {
+    assertResolvesTo(PyFunction.class, "__truediv__");
+  }
 }

@@ -82,6 +82,8 @@ public class PyNames {
   public static final String DELITEM = "__delitem__";
   public static final String POS = "__pos__";
   public static final String NEG = "__neg__";
+  public static final String DIV = "__div__";
+  public static final String TRUEDIV = "__truediv__";
 
   public static final String NAME = "__name__";
   public static final String ENTER = "__enter__";
@@ -91,7 +93,7 @@ public class PyNames {
   public static final String COLLECTIONS_PY = "collections.py";
 
   public static final String SET = "set";
-  
+
   public static final String KEYS = "keys";
 
   public static final String PASS = "pass";
@@ -267,7 +269,7 @@ public class PyNames {
   // canonical names, not forced by interpreter
   public static final String CANONICAL_SELF = "self";
   public static final String BASESTRING = "basestring";
-  
+
   /**
    * Contains keywords as of CPython 2.5.
    */
@@ -324,7 +326,7 @@ public class PyNames {
    * @return true iff name is not reserved and is a well-formed identifier.
    */
   public static boolean isIdentifier(@NotNull @NonNls String name) {
-    return ! isReserved(name) && IDENTIFIER_PATTERN.matcher(name).matches(); 
+    return ! isReserved(name) && IDENTIFIER_PATTERN.matcher(name).matches();
   }
 
   public static boolean isRightOperatorName(@Nullable String name) {
