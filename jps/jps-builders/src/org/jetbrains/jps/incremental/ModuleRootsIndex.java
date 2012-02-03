@@ -4,6 +4,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.Module;
+import org.jetbrains.jps.PathUtil;
 import org.jetbrains.jps.Project;
 
 import java.io.File;
@@ -17,6 +18,7 @@ public class ModuleRootsIndex {
   private final Map<File, RootDescriptor> myRootToModuleMap = new HashMap<File, RootDescriptor>();
   private final Map<Module, List<RootDescriptor>> myModuleToRootsMap = new HashMap<Module, List<RootDescriptor>>();
   private final int myTotalModuleCount;
+  private final Set<File> myExcludedRoots = new HashSet<File>();
 
   public ModuleRootsIndex(Project project) {
     final Collection<Module> allModules = project.getModules().values();
@@ -38,6 +40,10 @@ public class ModuleRootsIndex {
         final RootDescriptor descriptor = new RootDescriptor(module, root, true);
         myRootToModuleMap.put(root, descriptor);
         moduleRoots.add(descriptor);
+      }
+      for (String r : module.getExcludes()) {
+        final File root = new File(FileUtil.toCanonicalPath(r));
+        myExcludedRoots.add(root);
       }
     }
   }
@@ -68,5 +74,9 @@ public class ModuleRootsIndex {
       current = FileUtil.getParentFile(current);
     }
     return null;
+  }
+
+  public boolean isExcluded(File file) {
+    return PathUtil.isUnder(myExcludedRoots, file);
   }
 }

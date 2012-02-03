@@ -5,6 +5,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ether.dependencyView.Mappings;
 import org.jetbrains.jps.incremental.Paths;
+import org.jetbrains.jps.incremental.artifacts.ArtifactsBuildData;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,12 +28,15 @@ public class BuildDataManager {
   private final Map<String, SourceToOutputMapping> myTestSourceToOutputs = new HashMap<String, SourceToOutputMapping>();
 
   private final SourceToFormMapping mySrcToFormMap;
+  private final ArtifactsBuildData myArtifactsBuildData;
   private final Mappings myMappings;
 
   public BuildDataManager(String projectName, final boolean useMemoryTempCaches) throws Exception {
     myProjectName = projectName;
     mySrcToFormMap = new SourceToFormMapping(new File(getSourceToFormsRoot(), "data"));
     myMappings = new Mappings(getMappingsRoot(), useMemoryTempCaches);
+    final File artifactsDataDir = new File(Paths.getDataStorageRoot(projectName), "artifacts");
+    myArtifactsBuildData = new ArtifactsBuildData(artifactsDataDir);
   }
 
   public SourceToOutputMapping getSourceToOutputMap(String moduleName, boolean testSources) throws Exception {
@@ -48,6 +52,10 @@ public class BuildDataManager {
     return mapping;
   }
 
+  public ArtifactsBuildData getArtifactsBuildData() {
+    return myArtifactsBuildData;
+  }
+
   public SourceToFormMapping getSourceToFormMap() {
     return mySrcToFormMap;
   }
@@ -58,60 +66,51 @@ public class BuildDataManager {
 
   public void clean() throws IOException {
     try {
-      synchronized (mySourceToOutputLock) {
-        try {
-          closeOutputToSourceStorages();
-        }
-        finally {
-          FileUtil.delete(getSourceToOutputsRoot());
-        }
-      }
+      myArtifactsBuildData.clean();
     }
     finally {
       try {
-        wipeStorage(getSourceToFormsRoot(), mySrcToFormMap);
-      }
-      finally {
-        final Mappings mappings = myMappings;
-        if (mappings != null) {
-          synchronized (mappings) {
-            mappings.clean();
+        synchronized (mySourceToOutputLock) {
+          try {
+            closeOutputToSourceStorages();
+          }
+          finally {
+            FileUtil.delete(getSourceToOutputsRoot());
           }
         }
-        else {
-          FileUtil.delete(getMappingsRoot());
+      }
+      finally {
+        try {
+          wipeStorage(getSourceToFormsRoot(), mySrcToFormMap);
+        }
+        finally {
+          final Mappings mappings = myMappings;
+          if (mappings != null) {
+            synchronized (mappings) {
+              mappings.clean();
+            }
+          }
+          else {
+            FileUtil.delete(getMappingsRoot());
+          }
         }
       }
     }
   }
 
   public void flush(boolean memoryCachesOnly) {
+    myArtifactsBuildData.flush(memoryCachesOnly);
     synchronized (mySourceToOutputLock) {
       for (Map.Entry<String, SourceToOutputMapping> entry : myProductionSourceToOutputs.entrySet()) {
         final SourceToOutputMapping mapping = entry.getValue();
-        if (memoryCachesOnly) {
-          mapping.dropMemoryCache();
-        }
-        else {
-          mapping.force();
-        }
+        mapping.flush(memoryCachesOnly);
       }
       for (Map.Entry<String, SourceToOutputMapping> entry : myTestSourceToOutputs.entrySet()) {
         final SourceToOutputMapping mapping = entry.getValue();
-        if (memoryCachesOnly) {
-          mapping.dropMemoryCache();
-        }
-        else {
-          mapping.force();
-        }
+        mapping.flush(memoryCachesOnly);
       }
     }
-    if (memoryCachesOnly) {
-      mySrcToFormMap.dropMemoryCache();
-    }
-    else {
-      mySrcToFormMap.force();
-    }
+    mySrcToFormMap.flush(memoryCachesOnly);
     final Mappings mappings = myMappings;
     if (mappings != null) {
       synchronized (mappings) {
@@ -122,27 +121,32 @@ public class BuildDataManager {
 
   public void close() throws IOException {
     try {
-      synchronized (mySourceToOutputLock) {
-        closeOutputToSourceStorages();
-      }
+      myArtifactsBuildData.close();
     }
     finally {
       try {
-        closeStorage(mySrcToFormMap);
+        synchronized (mySourceToOutputLock) {
+          closeOutputToSourceStorages();
+        }
       }
       finally {
-        final Mappings mappings = myMappings;
-        if (mappings != null) {
-          synchronized (mappings) {
-            try {
-              mappings.close();
-            }
-            catch (RuntimeException e) {
-              final Throwable cause = e.getCause();
-              if (cause instanceof IOException) {
-                throw ((IOException)cause);
+        try {
+          closeStorage(mySrcToFormMap);
+        }
+        finally {
+          final Mappings mappings = myMappings;
+          if (mappings != null) {
+            synchronized (mappings) {
+              try {
+                mappings.close();
               }
-              throw e;
+              catch (RuntimeException e) {
+                final Throwable cause = e.getCause();
+                if (cause instanceof IOException) {
+                  throw ((IOException)cause);
+                }
+                throw e;
+              }
             }
           }
         }
@@ -158,7 +162,7 @@ public class BuildDataManager {
           closeStorage(entry.getValue());
         }
         catch (IOException e) {
-          if (ex != null) {
+          if (e != null) {
             ex = e;
           }
         }
@@ -168,7 +172,7 @@ public class BuildDataManager {
           closeStorage(entry.getValue());
         }
         catch (IOException e) {
-          if (ex != null) {
+          if (e != null) {
             ex = e;
           }
         }

@@ -3,8 +3,10 @@ package org.jetbrains.jps.incremental;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.Module;
 import org.jetbrains.jps.Project;
+import org.jetbrains.jps.artifacts.Artifact;
 
 import java.io.File;
+import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
@@ -14,8 +16,8 @@ public class AllProjectScope extends CompileScope {
 
   private final boolean myIsForcedCompilation;
 
-  public AllProjectScope(Project project, boolean forcedCompilation) {
-    super(project);
+  public AllProjectScope(Project project, Set<Artifact> artifacts, boolean forcedCompilation) {
+    super(project, artifacts);
     myIsForcedCompilation = forcedCompilation;
   }
 

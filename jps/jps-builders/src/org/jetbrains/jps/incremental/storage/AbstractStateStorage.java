@@ -5,6 +5,7 @@ import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PersistentHashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.DataOutput;
 import java.io.File;
@@ -64,7 +65,7 @@ public abstract class AbstractStateStorage<Key, T> {
     }
   }
 
-  public void update(Key key, T state) throws Exception {
+  public void update(Key key, @Nullable T state) throws Exception {
     if (state != null) {
       synchronized (myDataLock) {
         myMap.put(key, state);
@@ -115,4 +116,12 @@ public abstract class AbstractStateStorage<Key, T> {
     return new PersistentHashMap<Key,T>(file, myKeyDescriptor, myStateExternalizer);
   }
 
+  public void flush(boolean memoryCachesOnly) {
+    if (memoryCachesOnly) {
+      dropMemoryCache();
+    }
+    else {
+      force();
+    }
+  }
 }

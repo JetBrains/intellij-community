@@ -3,6 +3,7 @@ package org.jetbrains.jps.incremental;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.Module;
 import org.jetbrains.jps.Project;
+import org.jetbrains.jps.artifacts.Artifact;
 
 import java.io.File;
 import java.util.Set;
@@ -16,8 +17,8 @@ public class ModulesScope extends CompileScope {
   private final Set<Module> myModules;
   private final boolean myForcedCompilation;
 
-  public ModulesScope(Project project, Set<Module> modules, boolean isForcedCompilation) {
-    super(project);
+  public ModulesScope(Project project, Set<Module> modules, Set<Artifact> artifacts, boolean isForcedCompilation) {
+    super(project, artifacts);
     myModules = modules;
     myForcedCompilation = isForcedCompilation;
   }
