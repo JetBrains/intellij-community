@@ -362,7 +362,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
     }
 
     StructuredDocString epydocString = StructuredDocString.parse(docString);
-    return epydocString.getReturnType();
+    return epydocString != null ? epydocString.getReturnType() : null;
   }
 
   private static class ReturnVisitor extends PyRecursiveElementVisitor {
