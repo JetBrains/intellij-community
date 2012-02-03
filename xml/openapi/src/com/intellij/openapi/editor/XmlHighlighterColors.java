@@ -41,5 +41,5 @@ public class XmlHighlighterColors {
   public static final TextAttributesKey HTML_ENTITY_REFERENCE = TextAttributesKey.createTextAttributesKey("HTML_ENTITY_REFERENCE");
 
   public static final TextAttributesKey HTML_CODE =
-    TextAttributesKey.createTextAttributesKey("HTML_CODE", HighlighterColors.TEXT.getDefaultAttributes().clone());
+    TextAttributesKey.createTextAttributesKey("HTML_CODE", HighlighterColors.TEXT.getDefaultAttributes());
 }
