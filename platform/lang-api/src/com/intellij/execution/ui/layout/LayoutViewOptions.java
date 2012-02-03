@@ -50,4 +50,6 @@ public interface LayoutViewOptions {
 
   LayoutViewOptions setAdditionalFocusActions(ActionGroup group);
 
+  AnAction getSettingsActions();
+  AnAction[] getSettingsActionsList();
 }

@@ -22,7 +22,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.config.GitVersionSpecialty;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,7 +53,7 @@ public abstract class GitTextHandler extends GitHandler {
       if (myIsDestroyed) {
         return null;
       }
-      final ProcessHandler processHandler = new MyRunnerMediator().createProcess(myCommandLine);
+      final ProcessHandler processHandler = createProcess(myCommandLine);
       myHandler = (OSProcessHandler)processHandler;
       return myHandler.getProcess();
     }
@@ -118,32 +117,9 @@ public abstract class GitTextHandler extends GitHandler {
     }
   }
 
-  /**
-   * RunnerMediator that attaches our MyProcessHandler to the process instead of the standard CustomDestroyProcessHandler.
-   */
-  private class MyRunnerMediator extends RunnerMediator {
-    private boolean canUseRunnerMediator;
-
-    MyRunnerMediator() {
-      canUseRunnerMediator = !GitVersionSpecialty.DOESNT_GET_PARAMETERS_FROM_RUNNERW.existsIn(myVcs.getVersion());
-    }
-
-    @Override
-    public ProcessHandler createProcess(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
-      if (!canUseRunnerMediator) {
-        // not injecting runnerw in case of cygwin, because runnerw doesn't pass parameters to cygwin git.
-        // the reason of this is under investigation, until then we're running cygwin git directly.
-        Process process = commandLine.createProcess();
-        return createProcessHandler(process, commandLine);
-      } else {
-        return super.createProcess(commandLine);
-      }
-    }
-
-    @Override
-    protected ProcessHandler createProcessHandler(@NotNull Process process, @NotNull GeneralCommandLine commandLine) {
-      return new MyOSProcessHandler(process, commandLine, getCharset());
-    }
+  public ProcessHandler createProcess(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
+    Process process = commandLine.createProcess();
+    return new MyOSProcessHandler(process, commandLine, getCharset());
   }
 
   private static class MyOSProcessHandler extends OSProcessHandler {
@@ -158,13 +134,6 @@ public abstract class GitTextHandler extends GitHandler {
     public Charset getCharset() {
       Charset charset = myCharset;
       return charset == null ? super.getCharset() : charset;
-    }
-
-    @Override
-    protected void destroyProcessImpl() {
-      if (!RunnerMediator.destroyProcess(getProcess())) {
-        super.destroyProcessImpl();
-      }
     }
   }
 

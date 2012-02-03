@@ -45,6 +45,7 @@ public class UIFormXmlConstants {
   public static final String ATTRIBUTE_SAME_SIZE_HORIZONTALLY = "same-size-horizontally";
   public static final String ATTRIBUTE_SAME_SIZE_VERTICALLY = "same-size-vertically";
   public static final String ATTRIBUTE_USE_PARENT_LAYOUT = "use-parent-layout";
+  public static final String ATTRIBUTE_SHOW = "show";
   public static final String ATTRIBUTE_HGAP = "hgap";
   public static final String ATTRIBUTE_VGAP = "vgap";
   public static final String ATTRIBUTE_BORDER_CONSTRAINT = "border-constraint";

@@ -27,6 +27,7 @@ import com.intellij.openapi.command.impl.FinishMarkAction;
 import com.intellij.openapi.command.impl.StartMarkAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -34,6 +35,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.AutomaticRenamingDialog;
@@ -83,7 +85,6 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
                                 final String initialName,
                                 final String oldName) {
     super(editor, elementToRename, project, initialName, oldName);
-    
   }
 
   public boolean performInplaceRename() {
@@ -114,7 +115,8 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
                                           final PsiFile containingFile) {
     if (appendAdditionalElement(stringUsages)) {
       return super.buildTemplateAndStart(refs, stringUsages, scope, containingFile);
-    } else {
+    }
+    else {
       final RenameChooser renameChooser = new RenameChooser(myEditor) {
         @Override
         protected void runRenameTemplate(Collection<Pair<PsiElement, TextRange>> stringUsages) {
@@ -178,9 +180,19 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
     }
   }
 
+  protected void renameSynthetic(String newName) {
+  }
+
   protected void performRefactoringRename(final String newName,
                                           final StartMarkAction markAction) {
     try {
+      new WriteCommandAction(myProject, getCommandName()) {
+        @Override
+        protected void run(Result result) throws Throwable {
+          renameSynthetic(newName);
+        }
+      }.execute();
+
       PsiNamedElement elementToRename = getVariable();
       for (AutomaticRenamerFactory renamerFactory : Extensions.getExtensions(AutomaticRenamerFactory.EP_NAME)) {
         if (renamerFactory.isApplicable(elementToRename)) {
@@ -207,7 +219,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
 
             if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, PsiUtilCore.toPsiElementArray(renamer.getElements()))) return;
             final UsageInfo[] usageInfos = usages.toArray(new UsageInfo[usages.size()]);
-            final MultiMap<PsiElement,UsageInfo> classified = RenameProcessor.classifyUsages(renamer.getElements(), usageInfos);
+            final MultiMap<PsiElement, UsageInfo> classified = RenameProcessor.classifyUsages(renamer.getElements(), usageInfos);
             for (final PsiNamedElement element : renamer.getElements()) {
               new WriteCommandAction(myProject, getCommandName()) {
                 @Override
@@ -225,13 +237,22 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
       }
     }
     finally {
-      FinishMarkAction.finish(myProject, myEditor, markAction);
+      try {
+        ((EditorImpl)InjectedLanguageUtil.getTopLevelEditor(myEditor)).stopDumb();
+      }
+      finally {
+        FinishMarkAction.finish(myProject, myEditor, markAction);
+      }
     }
   }
 
   @Override
   protected String getCommandName() {
     PsiNamedElement variable = getVariable();
+    if (variable == null) {
+      LOG.error(myElementToRename);
+      return "Rename";
+    }
     return RefactoringBundle.message("renaming.0.1.to.2", UsageViewUtil.getType(variable), UsageViewUtil.getDescriptiveName(variable),
                                      variable.getName());
   }
@@ -274,7 +295,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
   }
 
   private boolean isIdentifier(final String newName) {
-    
+
     final NamesValidator namesValidator = LanguageNamesValidation.INSTANCE.forLanguage(myLanguage);
     return namesValidator == null || namesValidator.isIdentifier(newName, myProject);
   }

@@ -135,7 +135,7 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
   }
 
   private File findOutputDir(File src) {
-    File file = src.getParentFile();
+    File file = FileUtil.getParentFile(src);
     while (file != null) {
       for (Map.Entry<File, Set<File>> entry : myOutputsMap.entrySet()) {
         if (entry.getValue().contains(file)) {

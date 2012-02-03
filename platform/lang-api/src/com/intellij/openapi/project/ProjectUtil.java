@@ -83,12 +83,12 @@ public class ProjectUtil {
           final OrderEntry libraryEntry = LibraryUtil.findLibraryEntry(file, project);
           if (libraryEntry != null) {
             if (libraryEntry instanceof JdkOrderEntry) {
-              url = new StringBuilder(url).append(" - [").append(((JdkOrderEntry)libraryEntry).getJdkName()).append("]").toString();
+              url = url + " - [" + ((JdkOrderEntry)libraryEntry).getJdkName() + "]";
             } else {
-              url = new StringBuilder(url).append(" - [").append(libraryEntry.getPresentableName()).append("]").toString();
+              url = url + " - [" + libraryEntry.getPresentableName() + "]";
             }
           } else {
-            url = new StringBuilder(url).append(" - [").append(fileForJar.getName()).append("]").toString();
+            url = url + " - [" + fileForJar.getName() + "]";
           }
         }
       }
@@ -96,8 +96,8 @@ public class ProjectUtil {
       final Module module = ModuleUtil.findModuleForFile(file, project);
       if (module == null) return url;
       return !keepModuleAlwaysOnTheLeft && SystemInfo.isMac ?
-             new StringBuffer().append(url).append(" - [").append(module.getName()).append("]").toString() :
-             new StringBuffer().append("[").append(module.getName()).append("] - ").append(url).toString();
+             url + " - [" + module.getName() + "]" :
+             "[" + module.getName() + "] - " + url;
     }
   }
 

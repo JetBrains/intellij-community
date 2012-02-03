@@ -45,7 +45,6 @@ import com.intellij.execution.ui.ExecutionConsoleEx;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.execution.ui.layout.PlaceInGrid;
-import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
@@ -76,7 +75,6 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.DebuggerSessionTab");
 
   private static final Icon WATCH_RETURN_VALUES_ICON = IconLoader.getIcon("/debugger/watchLastReturnValue.png");
-  private static final Icon FILTER_STACK_FRAMES_ICON = IconLoader.getIcon("/debugger/class_filter.png");
   private static final Icon AUTO_VARS_ICONS = IconLoader.getIcon("/debugger/autoVariablesMode.png");
 
   private final VariablesPanel myVariablesPanel;
@@ -139,6 +137,8 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
     stepping.add(actionManager.getAction(DebuggerActions.POP_FRAME));
     stepping.addSeparator();
     stepping.add(actionManager.getAction(DebuggerActions.RUN_TO_CURSOR));
+    stepping.addSeparator();
+    stepping.add(actionManager.getAction(DebuggerActions.EVALUATE_EXPRESSION));
     myUi.getOptions().setTopToolbar(stepping, ActionPlaces.DEBUGGER_TOOLBAR);
 
 
@@ -153,11 +153,6 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
                                          XDebuggerUIConstants.WATCHES_TAB_ICON, null);
     watches.setCloseable(false);
     watches.setAlertIcon(breakpointAlert);
-    final DefaultActionGroup watchesGroup = new DefaultActionGroup();
-    addAction(watchesGroup, DebuggerActions.NEW_WATCH);
-    addAction(watchesGroup, XDebuggerActions.ADD_TO_WATCH);
-    addAction(watchesGroup, DebuggerActions.REMOVE_WATCH);
-    watches.setActions(watchesGroup, ActionPlaces.DEBUGGER_TOOLBAR, myWatchPanel.getTree());
     myUi.addContent(watches, 0, PlaceInGrid.right, false);
 
     // frames
@@ -166,14 +161,6 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
     framesContent.setCloseable(false);
     framesContent.setAlertIcon(breakpointAlert);
 
-    final DefaultActionGroup framesGroup = new DefaultActionGroup();
-
-    CommonActionsManager actionsManager = CommonActionsManager.getInstance();
-    framesGroup.add(actionsManager.createPrevOccurenceAction(myFramesPanel.getOccurenceNavigator()));
-    framesGroup.add(actionsManager.createNextOccurenceAction(myFramesPanel.getOccurenceNavigator()));
-    framesGroup.add(new ShowLibraryFramesAction());
-
-    framesContent.setActions(framesGroup, ActionPlaces.DEBUGGER_TOOLBAR, myFramesPanel.getFramesList());
     myUi.addContent(framesContent, 0, PlaceInGrid.left, false);
 
     // variables
@@ -183,11 +170,6 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
                                       XDebuggerUIConstants.VARIABLES_TAB_ICON, null);
     vars.setCloseable(false);
     vars.setAlertIcon(breakpointAlert);
-    final DefaultActionGroup varsGroup = new DefaultActionGroup();
-    addAction(varsGroup, DebuggerActions.EVALUATE_EXPRESSION);
-    varsGroup.add(new WatchLastMethodReturnValueAction());
-    varsGroup.add(new AutoVarsSwitchAction());
-    vars.setActions(varsGroup, ActionPlaces.DEBUGGER_TOOLBAR, myVariablesPanel.getTree());
     myUi.addContent(vars, 0, PlaceInGrid.center, false);
 
     // threads
@@ -316,14 +298,16 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
     addAction(group, DebuggerActions.DUMP_THREADS);
     group.addSeparator();
 
-    final AnAction[] layout = myUi.getOptions().getLayoutActionsList();
-    final AnAction layoutGroup = myUi.getOptions().getLayoutActions();
+    group.add(myUi.getOptions().getLayoutActions());
+
+    final AnAction[] commonSettings = myUi.getOptions().getSettingsActionsList();
+    final AnAction commonSettingsList = myUi.getOptions().getSettingsActions();
 
     final DefaultActionGroup settings = new DefaultActionGroup("DebuggerSettings", true) {
       @Override
       public void update(AnActionEvent e) {
         e.getPresentation().setText(ActionsBundle.message("group.XDebugger.settings.text"));
-        e.getPresentation().setIcon(layoutGroup.getTemplatePresentation().getIcon());
+        e.getPresentation().setIcon(commonSettingsList.getTemplatePresentation().getIcon());
       }
 
       @Override
@@ -331,12 +315,15 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
         return true;
       }
     };
-    for (AnAction each : layout) {
+    for (AnAction each : commonSettings) {
       settings.add(each);
     }
-    if (layout.length > 0) {
+    if (commonSettings.length > 0) {
       settings.addSeparator();
     }
+    settings.add(new WatchLastMethodReturnValueAction());
+    settings.add(new AutoVarsSwitchAction());
+    settings.addSeparator();
     addActionToGroup(settings, XDebuggerActions.AUTO_TOOLTIP);
 
     group.add(settings);
@@ -571,34 +558,6 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
     }
   }
 
-  private class ShowLibraryFramesAction extends ToggleAction {
-    private volatile boolean myShouldShow;
-    private static final String ourTextWhenShowIsOn = "Hide Frames from Libraries";
-    private static final String ourTextWhenShowIsOff = "Show All Frames";
-
-    public ShowLibraryFramesAction() {
-      super("", "", FILTER_STACK_FRAMES_ICON);
-      myShouldShow = DebuggerSettings.getInstance().SHOW_LIBRARY_STACKFRAMES;
-    }
-
-    public void update(final AnActionEvent e) {
-      super.update(e);
-      final Presentation presentation = e.getPresentation();
-      final boolean shouldShow = !(Boolean)presentation.getClientProperty(SELECTED_PROPERTY);
-      presentation.setText(shouldShow ? ourTextWhenShowIsOn : ourTextWhenShowIsOff);
-    }
-
-    public boolean isSelected(AnActionEvent e) {
-      return !myShouldShow;
-    }
-
-    public void setSelected(AnActionEvent e, boolean enabled) {
-      myShouldShow = !enabled;
-      DebuggerSettings.getInstance().SHOW_LIBRARY_STACKFRAMES = myShouldShow;
-      myFramesPanel.setShowLibraryFrames(myShouldShow);
-    }
-  }
-
   private class WatchLastMethodReturnValueAction extends ToggleAction {
     private volatile boolean myWatchesReturnValues;
     private final String myTextEnable;
@@ -606,7 +565,7 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
     private final String myMyTextDisable;
 
     public WatchLastMethodReturnValueAction() {
-      super("", DebuggerBundle.message("action.watch.method.return.value.description"), WATCH_RETURN_VALUES_ICON);
+      super("", DebuggerBundle.message("action.watch.method.return.value.description"), null);
       myWatchesReturnValues = DebuggerSettings.getInstance().WATCH_RETURN_VALUES;
       myTextEnable = DebuggerBundle.message("action.watches.method.return.value.enable");
       myMyTextDisable = DebuggerBundle.message("action.watches.method.return.value.disable");

@@ -477,7 +477,11 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
         final ActionManager mgr = ActionManager.getInstance();
         mgr.tryToExecute(mgr.getAction("HideAllWindows"), e, null, ActionPlaces.UNKNOWN, true);
       }
-      else if (UIUtil.isActionClick(e) && (e.isMetaDown() || (!SystemInfo.isMac && e.isControlDown()))) {
+    }
+
+    @Override
+    public void mouseClicked(MouseEvent e) {
+      if (UIUtil.isActionClick(e, MouseEvent.MOUSE_CLICKED) && (e.isMetaDown() || (!SystemInfo.isMac && e.isControlDown()))) {
         final TabInfo info = myTabs.findInfo(e);
         if (info != null && info.getObject() != null) {
           final VirtualFile vFile = (VirtualFile)info.getObject();
@@ -563,7 +567,13 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
 
     @Override
     public void dragOutFinished(MouseEvent event, TabInfo source) {
-      FileEditorManagerEx.getInstanceEx(myProject).closeFile(myFile, myWindow);
+      boolean copy = event.isMetaDown() || (!SystemInfo.isMac && event.isControlDown());
+      if (!copy) {
+        FileEditorManagerEx.getInstanceEx(myProject).closeFile(myFile, myWindow);
+      }
+      else {
+        source.setHidden(false);
+      }
 
       mySession.process(event);
 

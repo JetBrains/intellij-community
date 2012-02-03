@@ -22,8 +22,12 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.JavaCreateFromTemplateHandler;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.lang.LanguageNamesValidation;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.openapi.ui.InputValidatorEx;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiClass;
@@ -46,7 +50,7 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
   }
 
   @Override
-  protected void buildDialog(Project project, PsiDirectory directory, CreateFileFromTemplateDialog.Builder builder) {
+  protected void buildDialog(final Project project, PsiDirectory directory, CreateFileFromTemplateDialog.Builder builder) {
     builder
       .setTitle(IdeBundle.message("action.create.new.class"))
       .addKind("Class", PlatformIcons.CLASS_ICON, JavaTemplateUtil.INTERNAL_CLASS_TEMPLATE_NAME)
@@ -55,13 +59,33 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
       builder.addKind("Enum", PlatformIcons.ENUM_ICON, JavaTemplateUtil.INTERNAL_ENUM_TEMPLATE_NAME);
       builder.addKind("Annotation", PlatformIcons.ANNOTATION_TYPE_ICON, JavaTemplateUtil.INTERNAL_ANNOTATION_TYPE_TEMPLATE_NAME);
     }
-
+    
     for (FileTemplate template : FileTemplateManager.getInstance().getAllTemplates()) {
       final JavaCreateFromTemplateHandler handler = new JavaCreateFromTemplateHandler();
       if (handler.handlesTemplate(template) && JavaCreateFromTemplateHandler.canCreate(directory)) {
         builder.addKind(template.getName(), JavaFileType.INSTANCE.getIcon(), template.getName());
       }
     }
+    
+    builder.setValidator(new InputValidatorEx() {
+      @Override
+      public String getErrorText(String inputString) {
+        if (inputString.length() > 0 && !LanguageNamesValidation.INSTANCE.forLanguage(JavaLanguage.INSTANCE).isIdentifier(inputString, project)) {
+          return "This is not a valid Java identifier";          
+        }
+        return null;
+      }
+
+      @Override
+      public boolean checkInput(String inputString) {
+        return true;
+      }
+
+      @Override
+      public boolean canClose(String inputString) {
+        return !StringUtil.isEmptyOrSpaces(inputString) && getErrorText(inputString) == null;
+      }
+    });
   }
 
   @Override

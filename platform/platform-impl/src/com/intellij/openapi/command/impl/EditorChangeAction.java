@@ -16,6 +16,7 @@
 package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.command.undo.BasicUndoableAction;
+import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -25,12 +26,16 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NonNls;
 
-class EditorChangeAction extends BasicUndoableAction {
+public class EditorChangeAction extends BasicUndoableAction {
   private final int myOffset;
   private final CharSequence myOldString;
   private final CharSequence myNewString;
   private final long myOldTimeStamp;
   private final long myNewTimeStamp;
+
+  public EditorChangeAction(DocumentEvent e) {
+    this((DocumentEx)e.getDocument(), e.getOffset(), e.getOldFragment(), e.getNewFragment(), e.getOldTimeStamp());
+  }
 
   public EditorChangeAction(DocumentEx document,
                             int offset,
@@ -49,7 +54,7 @@ class EditorChangeAction extends BasicUndoableAction {
   public void undo() {
     DocumentUndoProvider.startDocumentUndo(getDocument());
     try {
-      exchangeStrings(myNewString, myOldString);
+      performUndo();
     }
     finally {
       DocumentUndoProvider.finishDocumentUndo(getDocument());
@@ -57,6 +62,10 @@ class EditorChangeAction extends BasicUndoableAction {
 
     getDocument().setModificationStamp(myOldTimeStamp);
     refreshFileStatus();
+  }
+
+  public void performUndo() {
+    exchangeStrings(myNewString, myOldString);
   }
 
   public void redo() {

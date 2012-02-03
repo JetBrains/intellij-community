@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
@@ -169,27 +170,31 @@ public class FileChooserDescriptor implements Cloneable{
     return true;
   }
 
-  public Icon getOpenIcon(VirtualFile virtualFile) {
-    if (virtualFile.isDirectory()) {
-      return PlatformIcons.DIRECTORY_OPEN_ICON;
+  public Icon getOpenIcon(final VirtualFile file) {
+    if (file.isDirectory()) {
+      return dressIcon(file, PlatformIcons.DIRECTORY_OPEN_ICON);
     }
     // deliberately pass project null: isJavaSourceFile() and excluded from compile information is unavailable for template project
-    return IconUtil.getIcon(virtualFile, Iconable.ICON_FLAG_READ_STATUS, null);
+    return IconUtil.getIcon(file, Iconable.ICON_FLAG_READ_STATUS, null);
   }
-  public Icon getClosedIcon(VirtualFile virtualFile) {
-    if (virtualFile.isDirectory()) {
-      return PlatformIcons.DIRECTORY_CLOSED_ICON;
+
+  public Icon getClosedIcon(final VirtualFile file) {
+    if (file.isDirectory()) {
+      return dressIcon(file, PlatformIcons.DIRECTORY_CLOSED_ICON);
     }
-    return IconUtil.getIcon(virtualFile, Iconable.ICON_FLAG_READ_STATUS, null);
+    return IconUtil.getIcon(file, Iconable.ICON_FLAG_READ_STATUS, null);
   }
 
-  public String getName(VirtualFile virtualFile) {
-    return virtualFile.getPath();
+  protected static Icon dressIcon(final VirtualFile file, final Icon baseIcon) {
+    return file.isSymLink() ? new LayeredIcon(baseIcon, PlatformIcons.SYMLINK_ICON) : baseIcon;
   }
 
+  public String getName(final VirtualFile file) {
+    return file.getPath();
+  }
 
   @Nullable
-  public String getComment(VirtualFile virtualFile) {
+  public String getComment(final VirtualFile file) {
     return null;
   }
 

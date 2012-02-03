@@ -22,7 +22,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
-import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
@@ -30,6 +29,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import junit.framework.Assert;
 import org.junit.Before;
 
+import javax.swing.tree.TreePath;
 import java.io.File;
 
 /**
@@ -68,6 +68,14 @@ public abstract class FileStructureTestBase extends CodeInsightFixtureTestCase {
     return getFileName("tree");
   }
 
+  protected void checkTree(String filter) throws Exception {
+    myPopup.setSearchFilterForTests(filter);
+    getBuilder().refilter(null, false, true);
+    getBuilder().queueUpdate();
+    TreeUtil.selectPath(getTree(), (TreePath)getSpeedSearch().findElement(filter));
+    checkTree();
+  }
+
   protected void checkTree() throws Exception {
     final String expected = FileUtil.loadFile(new File(getTestDataPath() + "/" + getTreeFileName()), true);
     Assert.assertEquals(expected.trim(), PlatformTestUtil.print(getTree(), true).trim());
@@ -97,8 +105,8 @@ public abstract class FileStructureTestBase extends CodeInsightFixtureTestCase {
     return myPopup.getTreeBuilder();
   }
 
-  protected TreeSpeedSearch getSpeedSearch() {
-    return myPopup.getSpeedSearch();
+  protected FileStructurePopup.MyTreeSpeedSearch getSpeedSearch() {
+    return (FileStructurePopup.MyTreeSpeedSearch)myPopup.getSpeedSearch();
   }
 
 

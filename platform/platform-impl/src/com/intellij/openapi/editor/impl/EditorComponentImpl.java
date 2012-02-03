@@ -19,15 +19,15 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.editor.VisualPosition;
-import com.intellij.ui.components.Magnificator;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
+import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.TypingTarget;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.ui.components.Magnificator;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -147,7 +147,7 @@ public class EditorComponentImpl extends JComponent implements Scrollable, DataP
       ((Graphics2D)g).setComposite(AlphaComposite.Src);
 
       UISettings.setupAntialiasing(g);
-      myEditor.paint(g);
+      myEditor.paint((Graphics2D)g);
     }
     finally {
       ((ApplicationImpl)ApplicationManager.getApplication()).editorPaintFinish();

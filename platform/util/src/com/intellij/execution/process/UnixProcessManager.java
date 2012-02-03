@@ -15,7 +15,9 @@
  */
 package com.intellij.execution.process;
 
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.Processor;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
 import com.sun.jna.Platform;
@@ -97,62 +99,70 @@ public class UnixProcessManager {
   public static boolean sendSignalToProcessTree(Process process, int signal) {
     checkCLib();
 
-    int our_pid = C_LIB.getpid();
-    int process_pid = getProcessPid(process);
+    final int our_pid = C_LIB.getpid();
+    final int process_pid = getProcessPid(process);
+    final Ref<Integer> foundPid = new Ref<Integer>();
+    final ProcessInfo processInfo = new ProcessInfo();
+    final List<Integer> childrenPids = new ArrayList<Integer>();
 
+    processPSOutput(new Processor<String>() {
+      @Override
+      public boolean process(String s) {
+        StringTokenizer st = new StringTokenizer(s, " ");
+
+        int parent_pid = Integer.parseInt(st.nextToken());
+        int pid = Integer.parseInt(st.nextToken());
+
+        processInfo.register(pid, parent_pid);
+
+        if (parent_pid == process_pid) {
+          childrenPids.add(pid);
+        }
+
+        if (pid == process_pid) {
+          if (parent_pid == our_pid) {
+            foundPid.set(pid);
+          }
+          else {
+            throw new IllegalStateException("process is not our child");
+          }
+        }
+        return false;
+      }
+    }, getPSCmd(false));
+
+    boolean result;
+    if (!foundPid.isNull()) {
+      processInfo.killProcTree(foundPid.get(), signal);
+      result = true;
+    }
+    else {
+      for (Integer pid : childrenPids) {
+        processInfo.killProcTree(pid, signal);
+      }
+      result = false;
+    }
+    return result;
+  }
+
+  public static void processPSOutput(Processor<String> processor, String[] cmd) {
     try {
-      String[] psCmd = getPSCmd(false);
-      Process p = Runtime.getRuntime().exec(psCmd);
-
-      ProcessInfo processInfo = new ProcessInfo();
+      Process p = Runtime.getRuntime().exec(cmd);
 
       @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
-      BufferedReader stdInput = new BufferedReader(new
-                                                   InputStreamReader(p.getInputStream()));
+      BufferedReader stdOutput = new BufferedReader(new
+                                                    InputStreamReader(p.getInputStream()));
       BufferedReader stdError = new BufferedReader(new
                                                    InputStreamReader(p.getErrorStream()));
 
-      List<Integer> childrenPids = new ArrayList<Integer>();
-
-      boolean result;
       try {
         String s;
-        stdInput.readLine(); //ps output header
-        int foundPid = 0;
-        while ((s = stdInput.readLine()) != null) {
-          StringTokenizer st = new StringTokenizer(s, " ");
-
-          int parent_pid = Integer.parseInt(st.nextToken());
-          int pid = Integer.parseInt(st.nextToken());
-
-          processInfo.register(pid, parent_pid);
-
-          if (parent_pid == process_pid) {
-            childrenPids.add(pid);
-          }
-
-          if (pid == process_pid) {
-            if (parent_pid == our_pid) {
-              foundPid = pid;
-            }
-            else {
-              throw new IllegalStateException("process is not our child");
-            }
-          }
+        stdOutput.readLine(); //ps output header
+        while ((s = stdOutput.readLine()) != null) {
+          processor.process(s);
         }
 
-        if (foundPid != 0) {
-          processInfo.killProcTree(foundPid, signal);
-          result = true;
-        }
-        else {
-          for (Integer pid : childrenPids) {
-            processInfo.killProcTree(pid, signal);
-          }
-          result = false;
-        }
-
-        StringBuffer errorStr = new StringBuffer();
+        StringBuilder errorStr = new StringBuilder();
         while ((s = stdError.readLine()) != null) {
           errorStr.append(s).append("\n");
         }
@@ -161,10 +171,9 @@ public class UnixProcessManager {
         }
       }
       finally {
-        stdInput.close();
+        stdOutput.close();
         stdError.close();
       }
-      return result;
     }
     catch (IOException e) {
       throw new IllegalStateException(e);
@@ -172,19 +181,24 @@ public class UnixProcessManager {
   }
 
   public static String[] getPSCmd(boolean commandLineOnly) {
-    if (SystemInfo.isLinux) {
-      return new String[]{"ps", "-e", "e", "--format", commandLineOnly ? "%a" : "%P%p%a"};
+    return getPSCmd(commandLineOnly, false);
+  }
+
+  public static String[] getPSCmd(boolean commandLineOnly, boolean isShortenCommand) {
+    String psCommand = "/bin/ps";
+    if (!new File(psCommand).isFile()) {
+      psCommand = "ps";
     }
-    else if (SystemInfo.isMac) {
-      return new String[]{"ps", "-ax", "-E", "-o", commandLineOnly ? "command" : "ppid,pid,command"};
+    if (SystemInfo.isLinux) {
+      return new String[]{psCommand, "-e", "--format", commandLineOnly ? "%a" : "%P%p%a"};
+    }
+    else if (SystemInfo.isMac || SystemInfo.isFreeBSD) {
+      final String command = isShortenCommand ? "comm" : "command";
+      return new String[]{psCommand, "-ax", "-o", commandLineOnly ? command : "ppid,pid," + command};
     }
     else {
       throw new IllegalStateException(System.getProperty("os.name") + " is not supported.");
     }
-  }
-
-  public static boolean containsMarker(@NotNull String environ, @NotNull String uid) {
-    return environ.contains(uid);
   }
 
   @NotNull

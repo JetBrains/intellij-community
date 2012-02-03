@@ -17,8 +17,6 @@ package com.intellij.junit4;
 
 import org.junit.Ignore;
 import org.junit.internal.AssumptionViolatedException;
-import org.junit.internal.builders.AllDefaultPossibilitiesBuilder;
-import org.junit.internal.builders.AnnotatedBuilder;
 import org.junit.internal.requests.ClassRequest;
 import org.junit.internal.runners.model.EachTestNotifier;
 import org.junit.runner.Description;
@@ -29,14 +27,11 @@ import org.junit.runner.manipulation.Filter;
 import org.junit.runner.notification.RunNotifier;
 import org.junit.runners.BlockJUnit4ClassRunner;
 import org.junit.runners.Parameterized;
-import org.junit.runners.ParentRunner;
 import org.junit.runners.model.FrameworkMethod;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.text.MessageFormat;
 import java.util.*;
@@ -60,7 +55,6 @@ public class JUnit4TestRunnerUtil {
           final Map classMethods = new HashMap();
           BufferedReader reader = new BufferedReader(new FileReader(suiteClassName.substring(1)));
           try {
-            reader.readLine(); //skip junit4/junit3 parameter
             final String packageName = reader.readLine();
             String line;
 

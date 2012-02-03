@@ -22,6 +22,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -41,7 +42,7 @@ import org.intellij.images.editor.ImageFileEditor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
+import java.util.*;
 
 /**
  * UI Utilities specific for Git branch features.
@@ -165,10 +166,56 @@ public class GitBranchUiUtil {
     GitRepositoryManager manager = GitRepositoryManager.getInstance(project);
     VirtualFile file = getSelectedFile(project);
     if (file != null) {
-      return manager.getRepositoryForFile(file);
+      return manager.getRepositoryForRoot(getVcsRootFor(project, file));
     }
     return manager.getRepositoryForRoot(guessGitRoot(project));
   } 
+  
+  @Nullable
+  public static VirtualFile getVcsRootFor(@NotNull Project project, @NotNull VirtualFile file) {
+    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    if (fileIndex.isInLibrarySource(file) || fileIndex.isInLibraryClasses(file)) {
+      return getVcsRootForLibraryFile(project, file);
+    }
+    return ProjectLevelVcsManager.getInstance(project).getVcsRootFor(file);
+  }
+
+  @Nullable
+  private static VirtualFile getVcsRootForLibraryFile(@NotNull Project project, @NotNull VirtualFile file) {
+    ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
+    // for a file inside .jar/.zip consider the .jar/.zip file itself
+    VirtualFile root = vcsManager.getVcsRootFor(VfsUtilCore.getVirtualFileForJar(file));
+    if (root != null) {
+      return root;
+    }
+    
+    // for other libs which don't have jars inside the project dir (such as JDK) take the owner module of the lib
+    List<OrderEntry> entries = ProjectRootManager.getInstance(project).getFileIndex().getOrderEntriesForFile(file);
+    Set<VirtualFile> libraryRoots = new HashSet<VirtualFile>();
+    for (OrderEntry entry : entries) {
+      if (entry instanceof LibraryOrderEntry || entry instanceof JdkOrderEntry) {
+        libraryRoots.add(vcsManager.getVcsRootFor(entry.getOwnerModule().getModuleFile()));
+      }
+    }
+
+    if (libraryRoots.size() == 0) {
+      return null;
+    }
+
+    // if the lib is used in several modules, take the top module
+    // (for modules of the same level we can't guess anything => take the first one)
+    Iterator<VirtualFile> libIterator = libraryRoots.iterator();
+    VirtualFile topLibraryRoot = libIterator.next();
+    while (libIterator.hasNext()) {
+      VirtualFile libRoot = libIterator.next();
+      if (VfsUtilCore.isAncestor(libRoot, topLibraryRoot, true)) {
+        topLibraryRoot = libRoot;
+      }
+    }
+    return topLibraryRoot;
+  }
+
+  
   
   @Nullable
   private static VirtualFile guessGitRoot(@NotNull Project project) {

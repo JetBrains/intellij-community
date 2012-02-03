@@ -49,6 +49,7 @@ import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
+import com.intellij.internal.DumpLookupElementWeights;
 import com.intellij.lang.LanguageStructureViewBuilder;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -1747,25 +1748,12 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     final LookupImpl lookup = getLookup();
     assertNotNull(lookup);
 
-    final LinkedHashMap<LookupElement,StringBuilder> relevanceStrings = lookup.getRelevanceStrings();
-
     final JList list = lookup.getList();
-    final List<LookupElement> model = lookup.getItems();
-    final List<String> actual = new ArrayList<String>();
-    final int count = lookup.getPreferredItemsCount();
-    for (int i = 0; i < count; i++) {
-      actual.add(model.get(i).getLookupString());
-    }
+    List<String> strings = getLookupElementStrings();
+    assert strings != null;
+    final List<String> actual = strings.subList(0, Math.min(expected.length, strings.size()));
     if (!actual.equals(Arrays.asList(expected))) {
-      final List<String> strings = new ArrayList<String>();
-      for (int i = 0; i < model.size(); i++) {
-        final LookupElement item = model.get(i);
-        strings.add(item.getLookupString() + " " + relevanceStrings.get(item));
-        if (i == count - 1) {
-          strings.add("---");
-        }
-      }
-      assertOrderedEquals(strings, expected);
+      assertOrderedEquals(DumpLookupElementWeights.getLookupElementWeights(lookup), expected);
     }
     assertEquals(selected, list.getSelectedIndex());
   }

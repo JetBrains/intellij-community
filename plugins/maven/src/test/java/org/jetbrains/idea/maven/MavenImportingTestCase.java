@@ -20,6 +20,7 @@ import com.intellij.compiler.CompilerManagerImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.impl.ModuleCompileScope;
 import com.intellij.compiler.impl.TranslatingCompilerFilesMonitor;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.module.Module;
@@ -291,13 +292,15 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   protected Module getModule(final String name) {
-    Module m = ApplicationManager.getApplication().runReadAction(new Computable<Module>() {
-            public Module compute() {
-              return ModuleManager.getInstance(myProject).findModuleByName(name);
-            }
-          });
-    assertNotNull("Module " + name + " not found", m);
-    return m;
+    AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
+    try {
+      Module m = ModuleManager.getInstance(myProject).findModuleByName(name);
+      assertNotNull("Module " + name + " not found", m);
+      return m;
+    }
+    finally {
+      accessToken.finish();
+    }
   }
 
   private ContentEntry getContentRoot(String moduleName) {

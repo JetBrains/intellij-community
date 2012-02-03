@@ -22,6 +22,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.DialogWrapperDialog;
+import com.intellij.openapi.util.Disposer;
 
 import java.awt.*;
 
@@ -59,7 +60,7 @@ public class DiffPanelOptions {
     myShowSourcePolicy.showSource(descriptor, myDiffPanel);
   }
 
-  public static interface ShowSourcePolicy {
+  public interface ShowSourcePolicy {
     void showSource(OpenFileDescriptor descriptor, DiffPanelImpl diffPanel);
 
     ShowSourcePolicy DONT_SHOW = new ShowSourcePolicy() {
@@ -76,7 +77,7 @@ public class DiffPanelOptions {
       public void showSource(OpenFileDescriptor descriptor, DiffPanelImpl diffPanel) {
         OPEN_EDITOR.showSource(descriptor, diffPanel);
         if (diffPanel.getOwnerWindow() == null) return;
-        diffPanel.dispose();
+        Disposer.dispose(diffPanel);
 
         if (!dialogWrapperClose(diffPanel.getOwnerWindow())) {
           diffPanel.getOwnerWindow().setVisible(false);
@@ -84,10 +85,13 @@ public class DiffPanelOptions {
         }
       }
 
-      private boolean dialogWrapperClose(Window window) {
+      private boolean dialogWrapperClose(Container window) {
         if (!(window instanceof DialogWrapperDialog)) return false;
-        DialogWrapperDialog dlg = (DialogWrapperDialog)window;
-        dlg.getDialogWrapper().close(DialogWrapper.OK_EXIT_CODE);
+        while (window instanceof DialogWrapperDialog) {
+          DialogWrapperDialog dlg = (DialogWrapperDialog)window;
+          window = window.getParent();
+          dlg.getDialogWrapper().close(DialogWrapper.OK_EXIT_CODE);
+        }
         return true;
       }
     };

@@ -17,6 +17,7 @@
 package com.intellij.ide;
 
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -26,7 +27,7 @@ import javax.swing.*;
 public class DefaultTreeExpander implements TreeExpander {
   private final JTree myTree;
 
-  public DefaultTreeExpander(final JTree tree) {
+  public DefaultTreeExpander(@NotNull final JTree tree) {
     myTree = tree;
   }
 

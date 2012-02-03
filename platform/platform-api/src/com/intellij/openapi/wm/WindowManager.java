@@ -71,6 +71,7 @@ public abstract class WindowManager {
    * @return <code>null</code> if there is no currently active window or there are any window
    * that can be parent.
    */
+  @Nullable
   public abstract Window suggestParentWindow(Project project);
 
   /**

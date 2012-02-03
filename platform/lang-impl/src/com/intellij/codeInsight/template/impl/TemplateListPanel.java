@@ -63,6 +63,11 @@ public class TemplateListPanel extends JPanel implements Disposable {
   private static final String TEMPLATE_SETTINGS = "TemplateSettings";
   private static final TemplateImpl MOCK_TEMPLATE = new TemplateImpl("mockTemplate-xxx", "mockTemplateGroup-yyy");
   public static final String ABBREVIATION = "<abbreviation>";
+  public static final Comparator<TemplateImpl> TEMPLATE_COMPARATOR = new Comparator<TemplateImpl>() {
+    public int compare(final TemplateImpl o1, final TemplateImpl o2) {
+      return o1.getKey().compareToIgnoreCase(o2.getKey());
+    }
+  };
 
   static {
     MOCK_TEMPLATE.setString("");
@@ -485,7 +490,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
 
     TreePath[] paths = myTree.getSelectionPaths();
     if (paths == null) return;
-    
+
     for (TreePath path : paths) {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
       Object o = node.getUserObject();
@@ -652,7 +657,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
         }
       })
       .install();
-    
+
     if (myTemplateGroups.size() > 0) {
       myTree.setSelectionInterval(0, 0);
     }
@@ -770,10 +775,10 @@ public class TemplateListPanel extends JPanel implements Disposable {
 
         if (enabled) {
           Set<String> oldGroups = getAllGroups(templates);
-          
+
           removeAll();
           SchemesManager<TemplateGroup, TemplateGroup> schemesManager = TemplateSettings.getInstance().getSchemesManager();
-          
+
           for (TemplateGroup group : getTemplateGroups()) {
             final String newGroupName = group.getName();
             if (!oldGroups.contains(newGroupName) && !schemesManager.isShared(group)) {
@@ -976,11 +981,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
 
   private void addTemplateNodes(TemplateGroup group, CheckedTreeNode groupNode) {
     List<TemplateImpl> templates = new ArrayList<TemplateImpl>(group.getElements());
-    Collections.sort(templates, new Comparator<TemplateImpl>() {
-      public int compare(final TemplateImpl o1, final TemplateImpl o2) {
-        return o1.getKey().compareToIgnoreCase(o2.getKey());
-      }
-    });
+    Collections.sort(templates, TEMPLATE_COMPARATOR);
     for (final TemplateImpl template : templates) {
       myTemplateOptions.put(getKey(template), template.createOptions());
       myTemplateContext.put(getKey(template), template.createContext());

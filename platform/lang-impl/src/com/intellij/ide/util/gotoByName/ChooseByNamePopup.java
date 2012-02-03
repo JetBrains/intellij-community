@@ -47,7 +47,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   private boolean myShowListForEmptyPattern = false;
   private boolean myMayRequestCurrentWindow;
 
-  protected ChooseByNamePopup(final Project project, final ChooseByNameModel model, ChooseByNameItemProvider provider, final ChooseByNamePopup oldPopup,
+  protected ChooseByNamePopup(@Nullable final Project project, final ChooseByNameModel model, ChooseByNameItemProvider provider, final ChooseByNamePopup oldPopup,
                             @Nullable final String predefinedText, boolean mayRequestOpenInCurrentWindow, int initialIndex) {
     super(project, model, provider, oldPopup != null ? oldPopup.getEnteredText() : predefinedText, initialIndex);
     if (oldPopup == null && predefinedText != null) {
@@ -128,7 +128,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     if (myDropdownPopup == null) {
       ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(myListScrollPane, myListScrollPane);
       builder.setFocusable(false).setRequestFocus(false).setCancelKeyEnabled(false).setFocusOwners(new JComponent[] {myTextField}).setBelongsToGlobalPopupStack(false)
-        .setForceHeavyweight(true).setModalContext(false).setAdText(adText).setMayBeParent(true);
+        .setModalContext(false).setAdText(adText).setMayBeParent(true);
       builder.setCancelCallback(new Computable<Boolean>() {
         @Override
         public Boolean compute() {
@@ -207,7 +207,9 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
 
     setDisposed(true);
     myAlarm.cancelAllRequests();
-    myProject.putUserData(CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY, null);
+    if (myProject != null) {
+      myProject.putUserData(CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY, null);
+    }
 
     //LaterInvocator.leaveModal(myTextFieldPanel);
 
@@ -267,14 +269,16 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   public static ChooseByNamePopup createPopup(final Project project, final ChooseByNameModel model, final ChooseByNameItemProvider provider,
                                               @Nullable final String predefinedText,
                                               boolean mayRequestOpenInCurrentWindow, final int initialIndex) {
-    final ChooseByNamePopup oldPopup = project.getUserData(CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY);
+    final ChooseByNamePopup oldPopup = project != null ? project.getUserData(CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY) : null;
     if (oldPopup != null) {
       oldPopup.close(false);
     }
     ChooseByNamePopup newPopup = new ChooseByNamePopup(project, model, provider, oldPopup, predefinedText, mayRequestOpenInCurrentWindow,
                                                        initialIndex);
 
-    project.putUserData(CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY, newPopup);
+    if (project != null) {
+      project.putUserData(CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY, newPopup);
+    }
     return newPopup;
   }
 

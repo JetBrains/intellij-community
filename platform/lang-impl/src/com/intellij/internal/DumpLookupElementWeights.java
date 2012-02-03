@@ -26,7 +26,9 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.util.text.StringUtil;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 
@@ -50,23 +52,19 @@ public class DumpLookupElementWeights extends AnAction implements DumbAware {
   }
 
   public static void dumpLookupElementWeights(final LookupImpl lookup) {
-    final LinkedHashMap<LookupElement,StringBuilder> strings = lookup.getRelevanceStrings();
-
-    final List<LookupElement> items = lookup.getItems();
-    final int count = lookup.getPreferredItemsCount();
-
-    for (int i = 0; i < items.size(); i++) {
-      LookupElement item = items.get(i);
-      String weight = strings.get(item).toString();
-      final String s = item.getLookupString() + (lookup.isFrozen(item) ? "\t_first_\t" : "\t") + weight;
-      System.out.println(s);
-      LOG.info(s);
-      if (i == count - 1) {
-        final String separator = "------------";
-        System.out.println(separator);
-        LOG.info(separator);
-      }
-    }
+    String sb = StringUtil.join(getLookupElementWeights(lookup), "\n");
+    System.out.println(sb);
+    LOG.info(sb);
   }
 
+  public static List<String> getLookupElementWeights(LookupImpl lookup) {
+    final LinkedHashMap<LookupElement,StringBuilder> strings = lookup.getRelevanceStrings();
+    List<String> sb = new ArrayList<String>();
+    for (LookupElement item : lookup.getItems()) {
+      String weight = strings.get(item).toString();
+      final String s = item.getLookupString() + (lookup.isFrozen(item) ? "\t_first_\t" : "\t") + weight;
+      sb.add(s);
+    }
+    return sb;
+  }
 }

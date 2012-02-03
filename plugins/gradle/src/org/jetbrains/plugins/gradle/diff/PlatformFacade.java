@@ -6,6 +6,7 @@ import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.util.Collection;
 
 /**
@@ -17,14 +18,14 @@ import java.util.Collection;
  * That means that it's not possible to test target classes in isolation if corresponding infrastructure is not set up.
  * However, we don't want to set it up if we execute a simple standalone test.
  * <p/>
- * This interface is intended to encapsulate access to the underlying project infrastructure.
+ * This interface is intended to encapsulate access to the underlying IntelliJ functionality.
  * <p/>
  * Implementations of this interface are expected to be thread-safe.
  * 
  * @author Denis Zhdanov
  * @since 1/26/12 11:32 AM
  */
-public interface GradleProjectStructureHelper {
+public interface PlatformFacade {
 
   @NotNull
   LanguageLevel getLanguageLevel(@NotNull Project project);
@@ -34,4 +35,10 @@ public interface GradleProjectStructureHelper {
 
   @NotNull
   Collection<OrderEntry> getOrderEntries(@NotNull Module module);
+
+  /**
+   * @return    icon that should be used for representation project root node at the tree UI controls used by the gradle integration
+   */
+  @NotNull
+  Icon getProjectIcon();
 }

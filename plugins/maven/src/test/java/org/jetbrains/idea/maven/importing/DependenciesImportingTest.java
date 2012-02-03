@@ -15,7 +15,9 @@
  */
 package org.jetbrains.idea.maven.importing;
 
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
@@ -2047,11 +2049,13 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
   }
 
   private Library createProjectLibrary(final String libraryName) {
-    return ApplicationManager.getApplication().runWriteAction(new Computable<Library>() {
-      public Library compute() {
-        return ProjectLibraryTable.getInstance(myProject).createLibrary(libraryName);
-      }
-    });
+    AccessToken accessToken = WriteAction.start();
+    try {
+      return ProjectLibraryTable.getInstance(myProject).createLibrary(libraryName);
+    }
+    finally {
+      accessToken.finish();
+    }
   }
 
   private void createAndAddProjectLibrary(final String moduleName, final String libraryName) {

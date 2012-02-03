@@ -376,7 +376,12 @@ public class XmlUtil {
   public static char getCharFromEntityRef(@NonNls String text) {
     //LOG.assertTrue(text.startsWith("&#") && text.endsWith(";"));
     if (text.charAt(1) != '#') {
-      text = text.substring(1, text.length() - 1);
+      try {
+        text = text.substring(1, text.length() - 1);
+      }
+      catch (StringIndexOutOfBoundsException e) {
+        LOG.error("Cannot parse ref: '" + text + "'", e);
+      }
       return XmlTagUtil.getCharacterByEntityName(text);
     }
     text = text.substring(2, text.length() - 1);
@@ -1506,7 +1511,7 @@ public class XmlUtil {
     return contextTag.getNamespaceByPrefix(prefix);
   }
 
-  public static String findPrefixByQualifiedName(String name) {
+  public static String findPrefixByQualifiedName(@NotNull String name) {
     final int prefixEnd = name.indexOf(':');
     if (prefixEnd > 0) {
       return name.substring(0, prefixEnd);

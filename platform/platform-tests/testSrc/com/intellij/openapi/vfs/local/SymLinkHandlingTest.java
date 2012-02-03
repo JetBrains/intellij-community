@@ -44,7 +44,10 @@ public class SymLinkHandlingTest extends LightPlatformLangTestCase {
   }
 
   public void testBadLinksAreIgnored() throws Exception {
-    if (!SystemInfo.areSymLinksSupported) return;
+    if (!SystemInfo.areSymLinksSupported) {
+      System.out.println("Test not passed");
+      return;
+    }
 
     final File missingFile = new File(FileUtil.getTempDirectory(), "missing_file");
     assertTrue(missingFile.getAbsolutePath(), !missingFile.exists() || missingFile.delete());
@@ -55,6 +58,24 @@ public class SymLinkHandlingTest extends LightPlatformLangTestCase {
     final File selfLinkFile = createTempLink("self_link", "self_link");
     final VirtualFile selfLinkVFile = refreshAndFind(selfLinkFile);
     assertNull(selfLinkVFile);
+
+    final File pointLinkFile = createTempLink(".", "point_link");
+    final VirtualFile pointLinkVFile = refreshAndFind(pointLinkFile);
+    assertNotNull(pointLinkVFile);
+    assertEquals(0, pointLinkVFile.getChildren().length);
+
+    final File circularDir1 = FileUtil.createTempDirectory("dir1.", null);
+    final File circularDir2 = FileUtil.createTempDirectory("dir2.", null);
+    final File circularLink1 = createTempLink(circularDir2.getAbsolutePath(), circularDir1 + File.separator + "link");
+    final File circularLink2 = createTempLink(circularDir1.getAbsolutePath(), circularDir2 + File.separator + "link");
+    final VirtualFile circularLink1VFile = refreshAndFind(circularLink1);
+    final VirtualFile circularLink2VFile = refreshAndFind(circularLink2);
+    assertNotNull(circularLink1VFile);
+    assertNotNull(circularLink2VFile);
+    assertEquals(1, circularLink1VFile.getChildren().length);
+    assertEquals(1, circularLink2VFile.getChildren().length);
+    assertEquals(0, circularLink1VFile.getChildren()[0].getChildren().length);
+    assertEquals(0, circularLink2VFile.getChildren()[0].getChildren().length);
   }
 
   public void testTargetIsWritable() throws Exception {
@@ -171,7 +192,9 @@ public class SymLinkHandlingTest extends LightPlatformLangTestCase {
 
   // todo[r.sh] use NIO2 API after migration to JDK 7
   private static File createTempLink(final String target, final String link) throws InterruptedException, ExecutionException {
-    final File linkFile = new File(FileUtil.getTempDirectory(), link);
+    final boolean isAbsolute = SystemInfo.isUnix && link.startsWith("/") ||
+                               SystemInfo.isWindows && link.matches("^[c-zC-Z]:.*$");
+    final File linkFile = isAbsolute ? new File(link) : new File(FileUtil.getTempDirectory(), link);
     assertTrue(link, !linkFile.exists() || linkFile.delete());
     final File parentDir = linkFile.getParentFile();
     assertTrue("link=" + link + ", parent=" + parentDir, parentDir != null && (parentDir.isDirectory() || parentDir.mkdirs()));
@@ -185,9 +208,9 @@ public class SymLinkHandlingTest extends LightPlatformLangTestCase {
     else {
       commandLine = new GeneralCommandLine("ln", "-s", target, linkFile.getAbsolutePath());
     }
-    final Process process = commandLine.createProcess();
-    final int res = process.waitFor();
-    assertTrue(commandLine.getCommandLineString() + ": " + res, res == 0);
+    final int res = commandLine.createProcess().waitFor();
+    assertEquals(commandLine.getCommandLineString(), 0, res);
+
     final File targetFile = new File(target);
     assertEquals("target=" + target + ", link=" + linkFile, targetFile.exists(), linkFile.exists());
     return linkFile;

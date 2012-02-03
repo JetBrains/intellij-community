@@ -35,6 +35,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
@@ -351,14 +352,24 @@ public class AndroidCompileUtil {
   }
 
   public static void generate(final Module module, final GeneratingCompiler compiler) {
-    module.getProject().getComponent(AndroidProjectComponent.class).runIfNotInCompilation(new Runnable() {
+    final Project project = module.getProject();
+    final AndroidProjectComponent component = ApplicationManager.getApplication().runReadAction(new Computable<AndroidProjectComponent>() {
+      @Nullable
+      @Override
+      public AndroidProjectComponent compute() {
+        return !project.isDisposed() ? project.getComponent(AndroidProjectComponent.class) : null;
+      }
+    });
+    if (component == null) {
+      return;
+    }
+    component.runIfNotInCompilation(new Runnable() {
       @Override
       public void run() {
         assert !ApplicationManager.getApplication().isDispatchThread();
         final CompileContext[] contextWrapper = new CompileContext[1];
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {
-            Project project = module.getProject();
             if (project.isDisposed()) return;
             CompilerTask task = new CompilerTask(project, true, "Android auto-generation", true);
             CompileScope scope = new ModuleCompileScope(module, false);

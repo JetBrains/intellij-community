@@ -722,4 +722,16 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     assertNotNull("Package " + name + " not found", aPackage);
     return aPackage;
   }
+
+  protected void delete(@NotNull final Editor editor) {
+    CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
+      @Override
+      public void run() {
+        EditorActionManager actionManager = EditorActionManager.getInstance();
+        EditorActionHandler actionHandler = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_DELETE);
+
+        actionHandler.execute(editor, DataManager.getInstance().getDataContext());
+      }
+    }, "delete", editor.getDocument());
+  }
 }

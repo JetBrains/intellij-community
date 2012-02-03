@@ -25,12 +25,11 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.*;
-import com.intellij.codeInsight.template.Result;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.actionSystem.Shortcut;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.FinishMarkAction;
@@ -41,6 +40,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
@@ -599,7 +599,7 @@ public abstract class InplaceRefactoring {
       if (contains(stringUsage.second.shiftRight(element.getTextRange().getStartOffset()), offset)) return element;
     }
 
-    LOG.assertTrue(false);
+    LOG.error(nameIdentifier);
     return null;
   }
 
@@ -699,9 +699,14 @@ public abstract class InplaceRefactoring {
       }
       finally {
         if (!bind) {
-          FinishMarkAction.finish(myProject, myEditor, myMarkAction);
-          if (myBeforeRevert != null) {
-            myBeforeRevert.dispose();
+          try {
+            ((EditorImpl)InjectedLanguageUtil.getTopLevelEditor(myEditor)).stopDumb();
+          }
+          finally {
+            FinishMarkAction.finish(myProject, myEditor, myMarkAction);
+            if (myBeforeRevert != null) {
+              myBeforeRevert.dispose();
+            }
           }
         }
       }

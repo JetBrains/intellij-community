@@ -80,20 +80,21 @@ class AnchorReference implements PsiReference, EmptyResolveMessageProvider {
     Map<String,XmlTag> map = getIdMap();
     final XmlTag tag = map != null ? map.get(myAnchor):null;
     if (tag != null) {
-      XmlAttribute attribute = tag.getAttribute("id", null);
-      if (attribute==null) attribute = tag.getAttribute("name",null);
+      XmlAttribute attribute = tag.getAttribute("id");
+      if (attribute==null) attribute = tag.getAttribute("name");
 
       if (attribute == null && MAP_ELEMENT_NAME.equalsIgnoreCase(tag.getName())) {
-        attribute = tag.getAttribute("usemap", null);
+        attribute = tag.getAttribute("usemap");
       }
 
+      assert attribute != null;
       return attribute.getValueElement();
     }
 
     return null;
   }
 
-  private static boolean processXmlElements(XmlTag element, PsiElementProcessor processor) {
+  private static boolean processXmlElements(XmlTag element, PsiElementProcessor<XmlTag> processor) {
     if (!_processXmlElements(element,processor)) return false;
 
     for(PsiElement next = element.getNextSibling(); next != null; next = next.getNextSibling()) {
@@ -105,17 +106,18 @@ class AnchorReference implements PsiReference, EmptyResolveMessageProvider {
     return true;
   }
 
-  static boolean _processXmlElements(XmlTag element, PsiElementProcessor processor) {
+  static boolean _processXmlElements(XmlTag element, PsiElementProcessor<XmlTag> processor) {
     if (!processor.execute(element)) return false;
     final XmlTag[] subTags = element.getSubTags();
 
-    for (int i = 0; i < subTags.length; i++) {
-      if(!_processXmlElements(subTags[i],processor)) return false;
+    for (XmlTag subTag : subTags) {
+      if (!_processXmlElements(subTag, processor)) return false;
     }
 
     return true;
   }
 
+  @Nullable
   private Map<String,XmlTag> getIdMap() {
     final XmlFile file = getFile();
 
@@ -131,6 +133,7 @@ class AnchorReference implements PsiReference, EmptyResolveMessageProvider {
     return null;
   }
 
+  @Nullable
   private static String getAnchorValue(final XmlTag xmlTag) {
     final String attributeValue = xmlTag.getAttributeValue("id");
 
@@ -168,6 +171,7 @@ class AnchorReference implements PsiReference, EmptyResolveMessageProvider {
     );
   }
 
+  @Nullable
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     return null;
   }
@@ -233,12 +237,12 @@ class AnchorReference implements PsiReference, EmptyResolveMessageProvider {
 
       if (rootTag != null) {
         processXmlElements(rootTag,
-          new PsiElementProcessor() {
-            public boolean execute(@NotNull final PsiElement element) {
-              final String anchorValue = element instanceof XmlTag ? getAnchorValue((XmlTag)element):null;
+          new PsiElementProcessor<XmlTag>() {
+            public boolean execute(@NotNull final XmlTag element) {
+              final String anchorValue = getAnchorValue(element);
 
               if (anchorValue!=null) {
-                resultMap.put(anchorValue, (XmlTag)element);
+                resultMap.put(anchorValue, element);
               }
               return true;
             }

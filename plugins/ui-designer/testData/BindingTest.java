@@ -21,6 +21,8 @@ public class BindingTest {
   public final JComponent myFinalField = null;
   public int myIntField;
   public String myStringField;
+  public JButton button;
+  public JTextField textField;
 
   public BindingTest() { 
   }

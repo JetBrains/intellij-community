@@ -20,12 +20,17 @@ import com.intellij.ide.structureView.impl.java.JavaAnonymousClassesNodeProvider
 import com.intellij.ide.util.FileStructurePopup;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.testFramework.FileStructureTestBase;
+import com.intellij.testFramework.IdeaTestCase;
 
 /**
  * @author Konstantin Bulenkov
  */
 public abstract class JavaFileStructureTestCase extends FileStructureTestBase {
   private boolean myShowAnonymousByDefault;
+
+  protected JavaFileStructureTestCase() {
+    IdeaTestCase.initPlatformPrefix();
+  }
 
   protected abstract String getTestDataFolderName();
 

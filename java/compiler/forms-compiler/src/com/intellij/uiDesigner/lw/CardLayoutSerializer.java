@@ -34,6 +34,9 @@ public class CardLayoutSerializer extends LayoutSerializer {
     final int hGap = LwXmlReader.getOptionalInt(element, UIFormXmlConstants.ATTRIBUTE_HGAP, 0);
     final int vGap = LwXmlReader.getOptionalInt(element, UIFormXmlConstants.ATTRIBUTE_VGAP, 0);
     container.setLayout(new CardLayout(hGap, vGap));
+
+    String defaultCard = LwXmlReader.getOptionalString(element, UIFormXmlConstants.ATTRIBUTE_SHOW, null);
+    container.putClientProperty(UIFormXmlConstants.LAYOUT_CARD, defaultCard);
   }
 
   void readChildConstraints(final Element constraintsElement, final LwComponent component) {

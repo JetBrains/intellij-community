@@ -9,6 +9,7 @@ import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 /**
@@ -219,24 +220,24 @@ public class ChangeSignatureForJavaTest extends LightCodeInsightFixtureTestCase 
   }
   */
 
-  private void doTest(String newReturnType, ParameterInfoImpl[] parameterInfos, final boolean generateDelegate) throws Exception {
+  private void doTest(@Nullable String newReturnType, ParameterInfoImpl[] parameterInfos, final boolean generateDelegate) throws Exception {
     doTest(null, null, newReturnType, parameterInfos, new ThrownExceptionInfo[0], generateDelegate);
   }
 
-  private void doTest(@PsiModifier.ModifierConstant String newVisibility,
-                      String newName,
-                      String newReturnType,
+  private void doTest(@Nullable @PsiModifier.ModifierConstant String newVisibility,
+                      @Nullable String newName,
+                      @Nullable String newReturnType,
                       ParameterInfoImpl[] parameterInfo,
                       ThrownExceptionInfo[] exceptionInfo,
                       final boolean generateDelegate) throws Exception {
     doTest(newVisibility, newName, newReturnType, new SimpleParameterGen(parameterInfo), new SimpleExceptionsGen(exceptionInfo), generateDelegate);
   }
 
-  private void doTest(@PsiModifier.ModifierConstant String newVisibility, String newName, @NonNls String newReturnType, GenParams gen, final boolean generateDelegate) throws Exception {
+  private void doTest(@Nullable @PsiModifier.ModifierConstant String newVisibility, @Nullable String newName, @Nullable @NonNls String newReturnType, GenParams gen, final boolean generateDelegate) throws Exception {
     doTest(newVisibility, newName, newReturnType, gen, new SimpleExceptionsGen(), generateDelegate);
   }
 
-  private void doTest(@PsiModifier.ModifierConstant String newVisibility, String newName, String newReturnType, GenParams genParams, GenExceptions genExceptions, final boolean generateDelegate) throws Exception {
+  private void doTest(@Nullable @PsiModifier.ModifierConstant String newVisibility, @Nullable String newName, @Nullable String newReturnType, GenParams genParams, GenExceptions genExceptions, final boolean generateDelegate) throws Exception {
     myFixture.configureByFile(getTestName(false) +".groovy");
     myFixture.configureByFile(getTestName(false) + ".java");
     final PsiElement targetElement = TargetElementUtilBase.findTargetElement(myFixture.getEditor(), TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);

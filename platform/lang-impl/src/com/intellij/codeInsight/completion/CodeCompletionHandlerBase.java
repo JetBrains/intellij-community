@@ -257,7 +257,6 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     if (editor.isOneLineMode()) {
       lookup.setCancelOnClickOutside(true);
       lookup.setCancelOnOtherWindowOpen(true);
-      lookup.setForceLightweightPopup(false);
     }
     lookup.setFocused(!autopopup);
     return lookup;
@@ -813,7 +812,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     }
   }
 
-  public static Runnable rememberDocumentState(final Editor _editor) {
+  private static Runnable rememberDocumentState(final Editor _editor) {
     final Editor editor = InjectedLanguageUtil.getTopLevelEditor(_editor);
     final String documentText = editor.getDocument().getText();
     final int caret = editor.getCaretModel().getOffset();

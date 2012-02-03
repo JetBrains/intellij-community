@@ -67,12 +67,6 @@ public class StubPath {
   }
 
   public String toString() {
-    return new StringBuilder().
-        append(myParentPath != null ? myParentPath.toString() : "").
-        append("::(").
-        append(myType.toString()).
-        append(":").
-        append(myId).
-        append(")").toString();
+    return (myParentPath != null ? myParentPath.toString() : "") + "::(" + myType.toString() + ":" + myId + ")";
   }
 }

@@ -9,7 +9,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.diff.GradleProjectStructureHelper;
+import org.jetbrains.plugins.gradle.diff.PlatformFacade;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.ui.RichTextControlBuilder;
 
@@ -43,10 +43,10 @@ public abstract class GradleToolWindowPanel extends SimpleToolWindowPanel {
   private final JPanel     myContent = new JPanel(myLayout);
 
   private final Project                      myProject;
-  private final GradleProjectStructureHelper myProjectStructureHelper;
+  private final PlatformFacade myProjectStructureHelper;
   
   protected GradleToolWindowPanel(@NotNull Project project,
-                                  @Nullable GradleProjectStructureHelper projectStructureHelper,
+                                  @Nullable PlatformFacade projectStructureHelper,
                                   @NotNull String place)
   {
     super(true);
@@ -98,7 +98,7 @@ public abstract class GradleToolWindowPanel extends SimpleToolWindowPanel {
   }
 
   @NotNull
-  public GradleProjectStructureHelper getProjectStructureHelper() {
+  public PlatformFacade getProjectStructureHelper() {
     return myProjectStructureHelper;
   }
 

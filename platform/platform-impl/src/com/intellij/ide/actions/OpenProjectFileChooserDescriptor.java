@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.highlighter.ProjectFileType;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileElement;
 import com.intellij.openapi.project.Project;
@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class OpenProjectFileChooserDescriptor extends FileChooserDescriptor {
-  private static final Icon ourProjectIcon = IconLoader.getIcon(ApplicationInfoImpl.getInstanceEx().getSmallIconUrl());
+  private static final Icon ourProjectIcon = IconLoader.getIcon(ApplicationInfoEx.getInstanceEx().getSmallIconUrl());
 
   public OpenProjectFileChooserDescriptor(final boolean chooseFiles) {
     super(chooseFiles, true, chooseFiles, chooseFiles, false, false);
@@ -38,28 +38,32 @@ public class OpenProjectFileChooserDescriptor extends FileChooserDescriptor {
     return isProjectDirectory(file) || isProjectFile(file);
   }
 
-  public Icon getOpenIcon(final VirtualFile virtualFile) {
-    if (isProjectDirectory(virtualFile)) return ourProjectIcon;
-    final Icon icon = getImporterIcon(virtualFile, true);
-    if(icon!=null){
-      return icon;
+  public Icon getOpenIcon(final VirtualFile file) {
+    if (isProjectDirectory(file)) {
+      return dressIcon(file, ourProjectIcon);
     }
-    return super.getOpenIcon(virtualFile);
+    final Icon icon = getImporterIcon(file);
+    if (icon != null) {
+      return dressIcon(file, icon);
+    }
+    return super.getOpenIcon(file);
   }
 
-  public Icon getClosedIcon(final VirtualFile virtualFile) {
-    if (isProjectDirectory(virtualFile)) return ourProjectIcon;
-    final Icon icon = getImporterIcon(virtualFile, false);
-    if(icon!=null){
-      return icon;
+  public Icon getClosedIcon(final VirtualFile file) {
+    if (isProjectDirectory(file)) {
+      return dressIcon(file, ourProjectIcon);
     }
-    return super.getClosedIcon(virtualFile);
+    final Icon icon = getImporterIcon(file);
+    if (icon != null) {
+      return dressIcon(file, icon);
+    }
+    return super.getClosedIcon(file);
   }
 
   @Nullable
-  public static Icon getImporterIcon(final VirtualFile virtualFile, final boolean open) {
+  private static Icon getImporterIcon(final VirtualFile virtualFile) {
     final ProjectOpenProcessor provider = ProjectOpenProcessor.getImportProvider(virtualFile);
-    if(provider!=null) {
+    if (provider != null) {
       return virtualFile.isDirectory() && provider.lookForProjectsInDirectory() ? ourProjectIcon : provider.getIcon(virtualFile);
     }
     return null;

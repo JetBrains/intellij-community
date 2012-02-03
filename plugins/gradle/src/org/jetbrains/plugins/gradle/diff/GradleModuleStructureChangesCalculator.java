@@ -35,10 +35,10 @@ import java.util.Set;
 public class GradleModuleStructureChangesCalculator implements GradleStructureChangesCalculator<GradleModule, Module> {
   
   private final GradleLibraryDependencyStructureChangesCalculator myLibraryDependencyCalculator;
-  private final GradleProjectStructureHelper myStructureHelper;
+  private final PlatformFacade myStructureHelper;
 
   public GradleModuleStructureChangesCalculator(@NotNull GradleLibraryDependencyStructureChangesCalculator libraryDependencyCalculator,
-                                                @NotNull GradleProjectStructureHelper structureHelper)
+                                                @NotNull PlatformFacade structureHelper)
   {
     myLibraryDependencyCalculator = libraryDependencyCalculator;
     myStructureHelper = structureHelper;

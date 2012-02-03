@@ -1433,11 +1433,12 @@ public class Mappings {
 
           debug("Dependent file: ", depFile);
           final Collection<UsageRepr.Cluster> depClusters = mySourceFileToUsages.get(depFile);
-
-          for (UsageRepr.Cluster depCluster : depClusters) {
-            final Set<UsageRepr.Usage> depUsages = depCluster.getUsages();
-
-            if (depUsages != null) {
+          if (depClusters != null) {
+            for (UsageRepr.Cluster depCluster : depClusters) {
+              final Set<UsageRepr.Usage> depUsages = depCluster.getUsages();
+              if (depUsages == null) {
+                continue;
+              }
               final Set<UsageRepr.Usage> usages = new HashSet<UsageRepr.Usage>(depUsages);
 
               usages.retainAll(affectedUsages);
@@ -1512,15 +1513,17 @@ public class Mappings {
                 myClassToSubclasses.removeFrom(superSomething, cr.name);
               }
 
-              for (UsageRepr.Cluster cluster : clusters) {
-                final Set<UsageRepr.Usage> usages = cluster.getUsages();
-                if (usages != null) {
-                  for (UsageRepr.Usage u : usages) {
-                    if (u instanceof UsageRepr.ClassUsage) {
-                      final Set<DependencyContext.S> residents = cluster.getResidence(u);
+              if (clusters != null) {
+                for (UsageRepr.Cluster cluster : clusters) {
+                  final Set<UsageRepr.Usage> usages = cluster.getUsages();
+                  if (usages != null) {
+                    for (UsageRepr.Usage u : usages) {
+                      if (u instanceof UsageRepr.ClassUsage) {
+                        final Set<DependencyContext.S> residents = cluster.getResidence(u);
 
-                      if (residents != null && residents.contains(cr.name)) {
-                        myClassToClassDependency.removeFrom(((UsageRepr.ClassUsage)u).className, cr.name);
+                        if (residents != null && residents.contains(cr.name)) {
+                          myClassToClassDependency.removeFrom(((UsageRepr.ClassUsage)u).className, cr.name);
+                        }
                       }
                     }
                   }
@@ -1541,6 +1544,12 @@ public class Mappings {
       mySourceFileToAnnotationUsages.putAll(delta.mySourceFileToAnnotationUsages);
       myClassToSourceFile.putAll(delta.myClassToSourceFile);
 
+      final Collection<DependencyContext.S> compiledSet = new HashSet<DependencyContext.S>(compiled.size());
+
+      for (File c : compiled) {
+        compiledSet.add(myContext.get(FileUtil.toSystemIndependentName(c.getAbsolutePath())));
+      }
+
       for (DependencyContext.S file : delta.myClassToClassDependency.keyCollection()) {
         final Collection<DependencyContext.S> now = delta.myClassToClassDependency.get(file);
         final Collection<DependencyContext.S> past = myClassToClassDependency.get(file);
@@ -1549,19 +1558,13 @@ public class Mappings {
           myClassToClassDependency.put(file, now);
         }
         else {
-          final Collection<DependencyContext.S> removeSet = new HashSet<DependencyContext.S>();
+          boolean changed = past.removeAll(compiledSet);
+          changed |= past.addAll(now);
 
-          for (File c : compiled) {
-            removeSet.add(myContext.get(FileUtil.toSystemIndependentName(c.getAbsolutePath())));
+          if (changed) {
+            myClassToClassDependency.remove(file);
+            myClassToClassDependency.put(file, past);
           }
-
-          removeSet.removeAll(now);
-
-          past.addAll(now);
-          past.removeAll(removeSet);
-
-          myClassToClassDependency.remove(file);
-          myClassToClassDependency.put(file, past);
         }
       }
     }

@@ -282,11 +282,12 @@ public class JavaBuilder extends ModuleLevelBuilder {
         }
 
         if (!compiledOk && diagnosticSink.getErrorCount() == 0) {
-          throw new ProjectBuildException("Compilation failed: internal java compiler error");
+          throw new ProjectBuildException("Compilation failed: internal java compiler error", true);
         }
         if (diagnosticSink.getErrorCount() > 0) {
           throw new ProjectBuildException(
-            "Compilation failed: errors: " + diagnosticSink.getErrorCount() + "; warnings: " + diagnosticSink.getWarningCount());
+            "Compilation failed: errors: " + diagnosticSink.getErrorCount() + "; warnings: " + diagnosticSink.getWarningCount()
+          );
         }
       }
     }
@@ -719,7 +720,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
 
     public void outputLineAvailable(String line) {
-      if (line != null) {
+      if (!StringUtil.isEmpty(line)) {
         //System.err.println(line);
         if (line.startsWith("[") && line.endsWith("]")) {
           final String message = line.substring(1, line.length() - 1);
@@ -727,13 +728,16 @@ public class JavaBuilder extends ModuleLevelBuilder {
             myContext.processMessage(new ProgressMessage("Parsing sources..."));
           }
           else {
-            if (!message.startsWith("total")) {
+            if (!message.startsWith("total ") && !message.startsWith("loading ") && !message.startsWith("wrote ")) {
               myContext.processMessage(new ProgressMessage(FileUtil.toSystemDependentName(message)));
             }
           }
         }
         else if (line.contains("java.lang.OutOfMemoryError")) {
           myContext.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "OutOfMemoryError: insufficient memory"));
+        }
+        else {
+          myContext.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.INFO, line));
         }
       }
     }

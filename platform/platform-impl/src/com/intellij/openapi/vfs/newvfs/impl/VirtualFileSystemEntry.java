@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -204,7 +204,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     return myParent == null ? length : myParent.getPathLength() + length + 1;
   }
 
-  int appendPathOnFileSystem(@NotNull char[] chars, int pos) {
+  protected int appendPathOnFileSystem(@NotNull char[] chars, int pos) {
     if (myParent != null) {
       pos = myParent.appendPathOnFileSystem(chars, pos);
     }
@@ -225,8 +225,8 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
       return copyString(chars, pos, suffix);
     }
     byte[] bytes = (byte[]) o;
-    int len = bytes.length;
-    for (int i = 0; i < len; i++) {
+    //noinspection ForLoopReplaceableByForEach
+    for (int i = 0, len = bytes.length; i < len; i++) {
       chars[pos++] = (char)bytes[i];
     }
     return copyString(chars, pos, suffix);

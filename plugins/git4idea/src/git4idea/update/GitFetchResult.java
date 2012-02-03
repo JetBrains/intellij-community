@@ -46,6 +46,11 @@ public final class GitFetchResult {
   }
 
   @NotNull
+  public static GitFetchResult cancel() {
+    return new GitFetchResult(Type.CANCELLED);
+  }
+
+  @NotNull
   public static GitFetchResult error(Collection<Exception> errors) {
     GitFetchResult result = new GitFetchResult(Type.ERROR);
     result.myErrors = errors;

@@ -21,10 +21,10 @@ import java.util.Set;
 public class GradleProjectStructureChangesCalculator implements GradleStructureChangesCalculator<GradleProject, Project> {
 
   private final GradleModuleStructureChangesCalculator myModuleChangesCalculator;
-  private final GradleProjectStructureHelper           myStructureHelper;
+  private final PlatformFacade myStructureHelper;
 
   public GradleProjectStructureChangesCalculator(@NotNull GradleModuleStructureChangesCalculator moduleCalculator,
-                                                 @NotNull GradleProjectStructureHelper structureHelper) {
+                                                 @NotNull PlatformFacade structureHelper) {
     myModuleChangesCalculator = moduleCalculator;
     myStructureHelper = structureHelper;
   }

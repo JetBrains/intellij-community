@@ -106,6 +106,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
 
   private JComponent myTargetComponent;
   private boolean myReservePlaceAutoPopupIcon = true;
+  private boolean myAddSeparatorFirst;
 
   private WeakTimerListener myWeakTimerListener;
   @SuppressWarnings({"FieldCanBeLocal"}) private ActionToolbarImpl.MyTimerListener myTimerListener;
@@ -215,6 +216,9 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   }
 
   private void fillToolBar(final List<AnAction> actions, boolean layoutSecondaries) {
+    if (myAddSeparatorFirst) {
+      add(new MySeparator());
+    }
     for (int i = 0; i < actions.size(); i++) {
       final AnAction action = actions.get(i);
       if (action instanceof Separator && isNavBar()) {
@@ -1194,6 +1198,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
       setLayoutPolicy(AUTO_LAYOUT_POLICY);
     }
 
+    updateActions(false, false, true);
+  }
+
+  public void setAddSeparatorFirst(boolean addSeparatorFirst) {
+    myAddSeparatorFirst = addSeparatorFirst;
     updateActions(false, false, true);
   }
 }

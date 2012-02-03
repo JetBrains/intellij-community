@@ -77,16 +77,29 @@ public class ExceptionUtil {
     final PrintWriter writer = new PrintWriter(stringWriter) {
       boolean skipping = false;
       public void println(final String x) {
+        boolean curSkipping = skipping;
         if (x != null) {
-          if (!skipping && x.startsWith(skipPattern)) skipping = true;
-          else if (skipping && !x.startsWith(prefix)) skipping = false;
+          if (!skipping && x.startsWith(skipPattern)) curSkipping = true;
+          else if (skipping && !x.startsWith(prefix)) curSkipping = false;
+          if (curSkipping && !skipping) {
+            super.println("\tin "+ stripPackage(x, skipPattern.length()));
+          }
+          skipping = curSkipping;
+          if (skipping) return;
+          super.println(x);
         }
-        if (skipping) return;
-        super.println(x);
       }
     };
     aThrowable.printStackTrace(writer);
     return stringWriter.getBuffer().toString();
+  }
+
+  private static String stripPackage(String x, int offset) {
+    int idx = offset;
+    while (idx > 0 && idx < x.length() && !Character.isUpperCase(x.charAt(idx))) {
+      idx = x.indexOf('.', idx) + 1;
+    }
+    return x.substring(Math.max(idx, offset));
   }
 
   @NotNull

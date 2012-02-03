@@ -27,7 +27,7 @@ import com.intellij.refactoring.rename.PsiElementRenameHandler;
  * @author ven
  */
 public class RenameFileAction extends AnAction implements DumbAware {
-  public static final String RENAME_FILE = "Rename File";
+  public static final String RENAME_FILE = "Rename File...";
 
   public void actionPerformed(final AnActionEvent e) {
     final PsiFile file = e.getData(LangDataKeys.PSI_FILE);
@@ -47,7 +47,7 @@ public class RenameFileAction extends AnAction implements DumbAware {
     presentation.setVisible(enabled);
     if (enabled) {
       presentation.setText(RENAME_FILE);
-      presentation.setDescription(RENAME_FILE);
+      presentation.setDescription("Rename selected file");
     }
   }
 }

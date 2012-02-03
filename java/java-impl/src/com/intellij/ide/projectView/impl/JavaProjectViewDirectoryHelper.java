@@ -73,6 +73,10 @@ public class JavaProjectViewDirectoryHelper extends ProjectViewDirectoryHelper {
 
       parentPackage = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)parentValue));
     }
+    else if (ProjectRootsUtil.isSourceRoot(directory) && aPackage != null) {   //package prefix
+      aPackage = null;
+      parentPackage = null;
+    }
     else {
       parentPackage = null;
     }

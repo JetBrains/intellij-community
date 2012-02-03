@@ -85,7 +85,7 @@ public class GroovyCompletionData {
 
       addTypeDefinitionKeywords(result, position);
       for (String keyword : addExtendsImplements(position)) {
-        result.addElement(keyword(keyword, TailType.HUMBLE_SPACE));
+        result.addElement(keyword(keyword, TailType.HUMBLE_SPACE_BEFORE_WORD));
       }
 
       registerControlCompletion(position, result);
@@ -93,7 +93,7 @@ public class GroovyCompletionData {
       if (parent instanceof GrExpression) {
         addKeywords(result, false, PsiKeyword.TRUE, PsiKeyword.FALSE, PsiKeyword.NULL, PsiKeyword.SUPER, PsiKeyword.THIS);
         result.addElement(keyword(PsiKeyword.NEW, TailType.INSERT_SPACE));
-        result.addElement(keyword("as", TailType.HUMBLE_SPACE));
+        result.addElement(keyword("as", TailType.HUMBLE_SPACE_BEFORE_WORD));
       }
 
       if (isInfixOperatorPosition(position)) {
@@ -146,7 +146,7 @@ public class GroovyCompletionData {
       addKeywords(result, true, PsiKeyword.CLASS, PsiKeyword.INTERFACE, PsiKeyword.ENUM);
     }
     if (afterAtInType(position)) {
-      result.addElement(keyword(PsiKeyword.INTERFACE, TailType.HUMBLE_SPACE));
+      result.addElement(keyword(PsiKeyword.INTERFACE, TailType.HUMBLE_SPACE_BEFORE_WORD));
     }
   }
 
@@ -187,7 +187,7 @@ public class GroovyCompletionData {
 
   public static void addKeywords(CompletionResultSet result, boolean space, String... keywords) {
     for (String s : keywords) {
-      result.addElement(keyword(s, space ? TailType.HUMBLE_SPACE : TailType.NONE));
+      result.addElement(keyword(s, space ? TailType.HUMBLE_SPACE_BEFORE_WORD : TailType.NONE));
     }
   }
 

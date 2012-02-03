@@ -19,6 +19,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.StructureViewTreeElement;
+import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.ide.structureView.newStructureView.TreeModelWrapper;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -54,6 +55,7 @@ import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -98,7 +100,7 @@ public class FileStructurePopup implements Disposable {
   private JBPopup myPopup;
 
   @NonNls private static final String narrowDownPropertyKey = "FileStructurePopup.narrowDown";
-  private boolean myShouldNarrowDown = false;
+  private boolean myShouldNarrowDown = true;
   private Tree myTree;
   private FilteringTreeBuilder myAbstractTreeBuilder;
   private String myTitle;
@@ -108,6 +110,7 @@ public class FileStructurePopup implements Disposable {
   private final FilteringTreeStructure myFilteringStructure;
   private PsiElement myInitialPsiElement;
   private Map<Class, JCheckBox> myCheckBoxes = new HashMap<Class, JCheckBox>();
+  private String myTestSearchFilter;
 
   public FileStructurePopup(StructureViewModel structureViewModel,
                             @Nullable Editor editor,
@@ -176,122 +179,7 @@ public class FileStructurePopup implements Disposable {
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
 
-    mySpeedSearch = new TreeSpeedSearch(myTree, TreeSpeedSearch.NODE_DESCRIPTOR_TOSTRING, true) {      
-      @Override
-      protected Point getComponentLocationOnScreen() {
-        return myPopup.getContent().getLocationOnScreen();
-      }
-
-      @Override
-      protected Rectangle getComponentVisibleRect() {
-        return myPopup.getContent().getVisibleRect();
-      }
-
-      @Override
-      protected Object findElement(String s) {
-        List<ObjectWithWeight> elements = new ArrayList<ObjectWithWeight>();
-        s = s.trim();
-        final ListIterator<Object> it = getElementIterator(0);
-        while (it.hasNext()) {
-          final ObjectWithWeight o = new ObjectWithWeight(it.next(), s, getComparator());
-          if (!o.weights.isEmpty()) {
-            elements.add(o);
-          }
-        }
-        ObjectWithWeight cur = null;
-        ArrayList<ObjectWithWeight> current = new ArrayList<ObjectWithWeight>();
-        for (ObjectWithWeight element : elements) {
-          if (cur == null) {
-            cur = element;
-            current.add(cur);
-            continue;
-          }
-
-          final int i = element.compareWith(cur);
-          if (i == 0) {
-            current.add(element);
-          } else if (i < 0) {
-            cur = element;
-            current.clear();
-            current.add(cur);
-          }
-        }
-
-        return current.isEmpty() ? null : findClosestTo(myInitialPsiElement, current);
-      }
-
-      @Nullable
-      private Object findClosestTo(PsiElement path, ArrayList<ObjectWithWeight> paths) {
-        if (path == null || myInitialPsiElement == null) {
-          return paths.get(0).node;
-        }
-        final Set<PsiElement> parents = getAllParents(myInitialPsiElement);
-        ArrayList<TreePath> cur = new ArrayList<TreePath>();
-        int max = -1;
-        for (ObjectWithWeight p : paths) {
-          final Object last = ((TreePath)p.node).getLastPathComponent();
-          final List<PsiElement> elements = new ArrayList<PsiElement>();
-          final Object object = ((DefaultMutableTreeNode)last).getUserObject();
-          if (object instanceof FilteringTreeStructure.FilteringNode) {
-            FilteringTreeStructure.FilteringNode node = (FilteringTreeStructure.FilteringNode)object;
-            while (node != null) {
-              elements.add(getPsi(node));
-              node = node.getParentNode();
-            }
-            final int size = ContainerUtil.intersection(parents, elements).size();
-            if (size > max) {
-              max = size;
-              cur.clear();
-              cur.add((TreePath)p.node);
-            } else if (size == max) {
-              cur.add((TreePath)p.node);
-            }
-          }
-        }
-
-        Collections.sort(cur, new Comparator<TreePath>() {
-          @Override
-          public int compare(TreePath o1, TreePath o2) {
-            return o2.getPathCount() - o1.getPathCount();
-          }
-        });
-        return cur.isEmpty() ? null : cur.get(0);
-      }
-
-      class ObjectWithWeight {
-        final Object node;
-        final List<TextRange> weights = new ArrayList<TextRange>();
-
-        ObjectWithWeight(Object element, String pattern, SpeedSearchComparator comparator) {
-          this.node = element;
-          final String text = getElementText(element);
-          if (text != null) {
-            final Iterable<TextRange> ranges = comparator.matchingFragments(pattern, text);
-            if (ranges != null) {
-              for (TextRange range : ranges) {
-                weights.add(range);
-              }
-            }
-          }
-          Collections.sort(weights, TEXT_RANGE_COMPARATOR);
-        }
-        
-        int compareWith(ObjectWithWeight obj) {
-          final List<TextRange> w = obj.weights;
-          for (int i = 0; i < weights.size(); i++) {
-            if (i >= w.size()) return 1;
-            final int result = TEXT_RANGE_COMPARATOR.compare(weights.get(i), w.get(i));
-            if (result != 0) {
-              return result;
-            }
-          }
-          
-          return 0;
-        }
-        
-      }
-      
-    };
+    mySpeedSearch = new MyTreeSpeedSearch();
     mySpeedSearch.setComparator(new SpeedSearchComparator(false, true));
 
     final FileStructurePopupFilter filter = new FileStructurePopupFilter();
@@ -314,8 +202,8 @@ public class FileStructurePopup implements Disposable {
       }
     };
 
-    myAbstractTreeBuilder.getUi().getUpdater().setDelay(1);
-
+    myAbstractTreeBuilder.getUi().getUpdater().setPassThroughMode(true);
+    myInitialPsiElement = getCurrentElement(getPsiFile(myProject));
     //myAbstractTreeBuilder.setCanYieldUpdate(true);
     Disposer.register(this, myAbstractTreeBuilder);
   }
@@ -386,7 +274,6 @@ public class FileStructurePopup implements Disposable {
         myAbstractTreeBuilder.queueUpdate().doWhenDone(new Runnable() {
           @Override
           public void run() {
-            myInitialPsiElement = getCurrentElement(getPsiFile(myProject));
             selectPsiElement(myInitialPsiElement);
             treeHasBuilt.setDone();
             //long t = System.currentTimeMillis() - time;
@@ -594,13 +481,16 @@ public class FileStructurePopup implements Disposable {
 
   @Nullable
   private AbstractTreeNode getSelectedNode() {
-    Object component = myTree.getSelectionPath().getLastPathComponent();
-    if (component instanceof DefaultMutableTreeNode) {
-      component = ((DefaultMutableTreeNode)component).getUserObject();
-      if (component instanceof FilteringTreeStructure.FilteringNode) {
-        component = ((FilteringTreeStructure.FilteringNode)component).getDelegate();
-        if (component instanceof AbstractTreeNode) {
-          return (AbstractTreeNode)component;
+    final TreePath path = myTree.getSelectionPath();
+    if (path != null) {
+      Object component = path.getLastPathComponent();
+      if (component instanceof DefaultMutableTreeNode) {
+        component = ((DefaultMutableTreeNode)component).getUserObject();
+        if (component instanceof FilteringTreeStructure.FilteringNode) {
+          component = ((FilteringTreeStructure.FilteringNode)component).getDelegate();
+          if (component instanceof AbstractTreeNode) {
+            return (AbstractTreeNode)component;
+          }
         }
       }
     }
@@ -617,10 +507,12 @@ public class FileStructurePopup implements Disposable {
           if (selectedNode.canNavigateToSource()) {
             selectedNode.navigate(true);
             succeeded.set(true);
-          } else {
+          }
+          else {
             succeeded.set(false);
           }
-        } else {
+        }
+        else {
           succeeded.set(false);
         }
 
@@ -744,6 +636,10 @@ public class FileStructurePopup implements Disposable {
     return myAbstractTreeBuilder;
   }
 
+  public void setSearchFilterForTests(String filter) {
+    myTestSearchFilter = filter;
+  }
+
   public void setTreeActionState(Class<? extends TreeAction> action, boolean state) {
     final JCheckBox checkBox = myCheckBoxes.get(action);
     if (checkBox != null) {
@@ -754,15 +650,46 @@ public class FileStructurePopup implements Disposable {
     }
   }
 
+  @Nullable
+  private static String getText(Object node) {
+    String text = String.valueOf(node);
+    if (text != null) {
+      if (node instanceof StructureViewComponent.StructureViewTreeElementWrapper) {
+        final TreeElement value = ((StructureViewComponent.StructureViewTreeElementWrapper)node).getValue();
+        if (value instanceof PsiTreeElementBase && ((PsiTreeElementBase)value).isSearchInLocationString()) {
+          final String string = ((PsiTreeElementBase)value).getLocationString();
+          if (!StringUtil.isEmpty(string)) {
+            return text + " (" + string + ")";
+          }
+        }
+      }
+      return text;
+    }
+
+    if (node instanceof StructureViewComponent.StructureViewTreeElementWrapper) {
+      final AccessToken token = ApplicationManager.getApplication().acquireReadActionLock();
+      try {
+        final ItemPresentation presentation = ((StructureViewComponent.StructureViewTreeElementWrapper)node).getValue().getPresentation();
+        return presentation.getPresentableText();
+      }
+      finally {
+        token.finish();
+      }
+    }
+
+    return null;
+  }
+
   private class FileStructurePopupFilter implements ElementFilter {
     private String myLastFilter = null;
     private HashSet<Object> myVisibleParents = new HashSet<Object>();
+    private final boolean isUnitTest = ApplicationManager.getApplication().isUnitTestMode();
+
     @Override
     public boolean shouldBeShowing(Object value) {
       if (!myShouldNarrowDown) return true;
 
-      String filter = mySpeedSearch != null && !StringUtil.isEmpty(mySpeedSearch.getEnteredPrefix()) 
-                      ? mySpeedSearch.getEnteredPrefix() : null;
+      String filter = getSearchPrefix();
       if (!StringUtil.equals(myLastFilter, filter)) {
         myVisibleParents.clear();
         myLastFilter = filter;
@@ -774,9 +701,8 @@ public class FileStructurePopup implements Disposable {
 
         final String text = getText(value);
         if (text == null) return false;
-        boolean matches = mySpeedSearch.matchingFragments(text) != null;
 
-        if (matches) {
+        if (matches(text)) {
           Object o = value;
           while (o instanceof FilteringTreeStructure.FilteringNode && (o = ((FilteringTreeStructure.FilteringNode)o).getParent()) != null) {
             myVisibleParents.add(o);
@@ -790,25 +716,153 @@ public class FileStructurePopup implements Disposable {
       return true;
     }
 
+    private boolean matches(@NotNull String text) {
+      if (isUnitTest) {
+        final SpeedSearchComparator comparator = mySpeedSearch.getComparator();
+        return StringUtil.isNotEmpty(myTestSearchFilter) && comparator.matchingFragments(myTestSearchFilter, text) != null;
+      }
+      return mySpeedSearch.matchingFragments(text) != null;
+    }
+
+  }
+
+  @Nullable
+  private String getSearchPrefix() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return myTestSearchFilter;
+
+    return mySpeedSearch != null && !StringUtil.isEmpty(mySpeedSearch.getEnteredPrefix())
+                    ? mySpeedSearch.getEnteredPrefix() : null;
+  }
+
+  public class MyTreeSpeedSearch extends TreeSpeedSearch {
+    public MyTreeSpeedSearch() {
+      super(FileStructurePopup.this.myTree, new Convertor<TreePath, String>() {
+        @Nullable
+        public String convert(TreePath path) {
+          final DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
+          final Object userObject = node.getUserObject();
+          if (userObject instanceof FilteringTreeStructure.FilteringNode) {
+            return FileStructurePopup.getText(((FilteringTreeStructure.FilteringNode)userObject).getDelegate());
+          }
+          return "";
+        }
+      }, true);
+    }
+
+    @Override
+    protected Point getComponentLocationOnScreen() {
+      return myPopup.getContent().getLocationOnScreen();
+    }
+
+    @Override
+    protected Rectangle getComponentVisibleRect() {
+      return myPopup.getContent().getVisibleRect();
+    }
+
+    @Override
+    public Object findElement(String s) {
+      List<ObjectWithWeight> elements = new ArrayList<ObjectWithWeight>();
+      s = s.trim();
+      final ListIterator<Object> it = getElementIterator(0);
+      while (it.hasNext()) {
+        final ObjectWithWeight o = new ObjectWithWeight(it.next(), s, getComparator());
+        if (!o.weights.isEmpty()) {
+          elements.add(o);
+        }
+      }
+      ObjectWithWeight cur = null;
+      ArrayList<ObjectWithWeight> current = new ArrayList<ObjectWithWeight>();
+      for (ObjectWithWeight element : elements) {
+        if (cur == null) {
+          cur = element;
+          current.add(cur);
+          continue;
+        }
+
+        final int i = element.compareWith(cur);
+        if (i == 0) {
+          current.add(element);
+        } else if (i < 0) {
+          cur = element;
+          current.clear();
+          current.add(cur);
+        }
+      }
+
+      return current.isEmpty() ? null : findClosestTo(myInitialPsiElement, current);
+    }
+
     @Nullable
-    private String getText(Object node) {
-      final String text = String.valueOf(node);
-      if (text != null) {
-        return text;
+    private Object findClosestTo(PsiElement path, ArrayList<ObjectWithWeight> paths) {
+      if (path == null || myInitialPsiElement == null) {
+        return paths.get(0).node;
+      }
+      final Set<PsiElement> parents = getAllParents(myInitialPsiElement);
+      ArrayList<ObjectWithWeight> cur = new ArrayList<ObjectWithWeight>();
+      int max = -1;
+      for (ObjectWithWeight p : paths) {
+        final Object last = ((TreePath)p.node).getLastPathComponent();
+        final List<PsiElement> elements = new ArrayList<PsiElement>();
+        final Object object = ((DefaultMutableTreeNode)last).getUserObject();
+        if (object instanceof FilteringTreeStructure.FilteringNode) {
+          FilteringTreeStructure.FilteringNode node = (FilteringTreeStructure.FilteringNode)object;
+          while (node != null) {
+            elements.add(getPsi(node));
+            node = node.getParentNode();
+          }
+          final int size = ContainerUtil.intersection(parents, elements).size();
+          if (size > max) {
+            max = size;
+            cur.clear();
+            cur.add(p);
+          } else if (size == max) {
+            cur.add(p);
+          }
+        }
       }
 
-      if (node instanceof StructureViewComponent.StructureViewTreeElementWrapper) {
-        final AccessToken token = ApplicationManager.getApplication().acquireReadActionLock();
-        try {
-          final ItemPresentation presentation = ((StructureViewComponent.StructureViewTreeElementWrapper)node).getValue().getPresentation();
-          return presentation.getPresentableText();
+      Collections.sort(cur, new Comparator<ObjectWithWeight>() {
+        @Override
+        public int compare(ObjectWithWeight o1, ObjectWithWeight o2) {
+          final int i = o1.compareWith(o2);
+          return i != 0 ? i 
+                        : ((TreePath)o2.node).getPathCount() - ((TreePath)o1.node).getPathCount();
         }
-        finally {
-          token.finish();
+      });
+      return cur.isEmpty() ? null : cur.get(0).node;
+    }
+
+    class ObjectWithWeight {
+      final Object node;
+      final List<TextRange> weights = new ArrayList<TextRange>();
+
+      ObjectWithWeight(Object element, String pattern, SpeedSearchComparator comparator) {
+        this.node = element;
+        final String text = getElementText(element);
+        if (text != null) {
+          final Iterable<TextRange> ranges = comparator.matchingFragments(pattern, text);
+          if (ranges != null) {
+            for (TextRange range : ranges) {
+              weights.add(range);
+            }
+          }
         }
+        Collections.sort(weights, TEXT_RANGE_COMPARATOR);
       }
 
-      return null;
+      int compareWith(ObjectWithWeight obj) {
+        final List<TextRange> w = obj.weights;
+        for (int i = 0; i < weights.size(); i++) {
+          if (i >= w.size()) return 1;
+          final int result = TEXT_RANGE_COMPARATOR.compare(weights.get(i), w.get(i));
+          if (result != 0) {
+            return result;
+          }
+        }
+
+        return 0;
+      }
+
     }
   }
 }

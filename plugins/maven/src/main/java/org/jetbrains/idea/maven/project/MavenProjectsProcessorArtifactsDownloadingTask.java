@@ -15,7 +15,8 @@
  */
 package org.jetbrains.idea.maven.project;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.AsyncResult;
@@ -58,11 +59,13 @@ public class MavenProjectsProcessorArtifactsDownloadingTask implements MavenProj
     // todo: hack to update all file pointers.
     MavenUtil.invokeLater(project, new Runnable() {
       public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            ProjectRootManagerEx.getInstanceEx(project).makeRootsChange(EmptyRunnable.getInstance(), false, true);
-          }
-        });
+        AccessToken accessToken = WriteAction.start();
+        try {
+          ProjectRootManagerEx.getInstanceEx(project).makeRootsChange(EmptyRunnable.getInstance(), false, true);
+        }
+        finally {
+          accessToken.finish();
+        }
       }
     });
   }

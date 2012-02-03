@@ -919,6 +919,12 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
         myModuleGroupPath.put(module, groupPath);
       }
     }
+
+    @Override
+    public void setModuleFilePath(Module module, String oldPath, String newFilePath) {
+      myPathToModule.remove(oldPath);
+      myPathToModule.put(newFilePath, module);
+    }
   }
 
   private void commitModel(final ModuleModelImpl moduleModel, final Runnable runnable) {

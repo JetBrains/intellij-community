@@ -23,6 +23,7 @@ import com.intellij.uiDesigner.inspections.FormInspectionUtil;
 import com.intellij.uiDesigner.lw.IProperty;
 import com.intellij.uiDesigner.designSurface.ComponentDropLocation;
 import com.intellij.uiDesigner.designSurface.NoDropLocation;
+import com.intellij.uiDesigner.lw.LwContainer;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import com.intellij.util.IncorrectOperationException;
@@ -50,6 +51,9 @@ public abstract class RadLayoutManager {
   @Nullable
   public LayoutManager createLayout() {
     return null;
+  }
+
+  public void readLayout(LwContainer lwContainer, RadContainer radContainer) throws Exception {
   }
 
   public void changeContainerLayout(RadContainer container) throws IncorrectOperationException {

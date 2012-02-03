@@ -17,7 +17,7 @@ package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.codeInsight.folding.JavaCodeFoldingSettings;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.folding.FoldingBuilderEx;
+import com.intellij.lang.folding.CustomFoldingBuilder;
 import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -33,6 +33,7 @@ import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
+import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PropertyUtil;
@@ -47,25 +48,27 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class JavaFoldingBuilder extends FoldingBuilderEx implements DumbAware {
+public class JavaFoldingBuilder extends CustomFoldingBuilder implements DumbAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.folding.impl.JavaFoldingBuilder");
   private static final String SMILEY = "<~>";
 
-  @NotNull
-  public FoldingDescriptor[] buildFoldRegions(@NotNull PsiElement element, @NotNull Document document, boolean quick) {
-    if (!(element instanceof PsiJavaFile)) {
-      return FoldingDescriptor.EMPTY;
+  @Override
+  protected void buildLanguageFoldRegions(@NotNull List<FoldingDescriptor> descriptors,
+                                          @NotNull PsiElement root,
+                                          @NotNull Document document,
+                                          boolean quick) {
+    if (!(root instanceof PsiJavaFile)) {
+      return;
     }
-    PsiJavaFile file = (PsiJavaFile) element;
+    PsiJavaFile file = (PsiJavaFile) root;
 
-    List<FoldingDescriptor> result = new ArrayList<FoldingDescriptor>();
     PsiImportList importList = file.getImportList();
     if (importList != null) {
       PsiImportStatementBase[] statements = importList.getAllImportStatements();
       if (statements.length > 1) {
         final TextRange rangeToFold = getRangeToFold(importList);
         if (rangeToFold != null && rangeToFold.getLength() > 1) {
-          result.add(new FoldingDescriptor(importList, rangeToFold));
+          descriptors.add(new FoldingDescriptor(importList, rangeToFold));
         }
       }
     }
@@ -73,7 +76,7 @@ public class JavaFoldingBuilder extends FoldingBuilderEx implements DumbAware {
     PsiClass[] classes = file.getClasses();
     for (PsiClass aClass : classes) {
       ProgressManager.checkCanceled();
-      addElementsToFold(result, aClass, document, true, quick);
+      addElementsToFold(descriptors, aClass, document, true, quick);
     }
 
     TextRange range = getFileHeader(file);
@@ -94,10 +97,8 @@ public class JavaFoldingBuilder extends FoldingBuilderEx implements DumbAware {
           anchorElementToUse = candidate;
         }
       }
-      result.add(new FoldingDescriptor(anchorElementToUse, range));
+      descriptors.add(new FoldingDescriptor(anchorElementToUse, range));
     }
-
-    return result.toArray(new FoldingDescriptor[result.size()]);
   }
 
   private void addElementsToFold(List<FoldingDescriptor> list, PsiClass aClass, Document document, boolean foldJavaDocs, boolean quick) {
@@ -160,14 +161,14 @@ public class JavaFoldingBuilder extends FoldingBuilderEx implements DumbAware {
       else if (child instanceof PsiClass) {
         addElementsToFold(list, (PsiClass)child, document, true, quick);
       }
-      else if (child instanceof PsiComment) {
+      else if (child instanceof PsiComment && !isCustomRegionStart(child.getNode()) && !isCustomRegionEnd(child.getNode())) {
         addCommentFolds((PsiComment)child, processedComments, list);
       }
     }
   }
 
-  @NotNull
-  public String getPlaceholderText(@NotNull final ASTNode node) {
+  @Override
+  protected String getLanguagePlaceholderText(@NotNull ASTNode node, @NotNull TextRange range) {
     return getPlaceholderText(SourceTreeToPsiMap.treeElementToPsi(node));
   }
 
@@ -196,7 +197,8 @@ public class JavaFoldingBuilder extends FoldingBuilderEx implements DumbAware {
     return "...";
   }
 
-  public boolean isCollapsedByDefault(@NotNull final ASTNode node) {
+  @Override
+  protected boolean isRegionCollapsedByDefault(@NotNull ASTNode node) {
     final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(node);
     JavaCodeFoldingSettings settings = JavaCodeFoldingSettings.getInstance();
     if (element instanceof PsiNewExpression || element instanceof PsiJavaToken) {
@@ -733,6 +735,17 @@ public class JavaFoldingBuilder extends FoldingBuilderEx implements DumbAware {
       }
       return false;
     }
+  }
+
+  @Override
+  protected boolean isCustomFoldingCandidate(ASTNode node) {
+    return node.getElementType() == JavaTokenType.END_OF_LINE_COMMENT;
+  }
+
+  @Override
+  protected boolean isCustomFoldingRoot(ASTNode node) {
+    IElementType nodeType = node.getElementType();
+    return nodeType == JavaElementType.CLASS || nodeType == JavaElementType.CODE_BLOCK;
   }
 }
 

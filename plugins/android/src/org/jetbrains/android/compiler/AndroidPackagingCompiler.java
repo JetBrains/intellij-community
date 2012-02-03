@@ -65,11 +65,14 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
     return VirtualFile.EMPTY_ARRAY;
   }
 
-  private static void fillSourceRoots(@NotNull Module module, @NotNull Set<Module> visited, @NotNull Set<VirtualFile> result) {
+  private static void fillSourceRoots(@NotNull Module module,
+                                      @NotNull Set<Module> visited,
+                                      @NotNull Set<VirtualFile> result,
+                                      boolean includingTests) {
     visited.add(module);
     VirtualFile resDir = AndroidRootUtil.getResourceDir(module);
     ModuleRootManager manager = ModuleRootManager.getInstance(module);
-    for (VirtualFile sourceRoot : manager.getSourceRoots()) {
+    for (VirtualFile sourceRoot : manager.getSourceRoots(includingTests)) {
       if (resDir != sourceRoot) {
         result.add(sourceRoot);
       }
@@ -78,10 +81,10 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
       if (entry instanceof ModuleOrderEntry) {
         ModuleOrderEntry moduleOrderEntry = (ModuleOrderEntry)entry;
         DependencyScope scope = moduleOrderEntry.getScope();
-        if (scope == DependencyScope.COMPILE || scope == DependencyScope.TEST) {
+        if (scope == DependencyScope.COMPILE) {
           Module depModule = moduleOrderEntry.getModule();
           if (depModule != null && !visited.contains(depModule)) {
-            fillSourceRoots(depModule, visited, result);
+            fillSourceRoots(depModule, visited, result, false);
           }
         }
       }
@@ -89,9 +92,9 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
   }
 
   @NotNull
-  public static VirtualFile[] getSourceRootsForModuleAndDependencies(@NotNull Module module) {
+  public static VirtualFile[] getSourceRootsForModuleAndDependencies(@NotNull Module module, boolean includingTests) {
     Set<VirtualFile> result = new HashSet<VirtualFile>();
-    fillSourceRoots(module, new HashSet<Module>(), result);
+    fillSourceRoots(module, new HashSet<Module>(), result, includingTests);
     return VfsUtil.toVirtualFileArray(result);
   }
 
@@ -102,7 +105,7 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
       AndroidFacet facet = AndroidFacet.getInstance(module);
       if (facet != null && !facet.getConfiguration().LIBRARY_PROJECT) {
         VirtualFile manifestFile = AndroidRootUtil.getManifestFileForCompiler(facet);
-        VirtualFile[] sourceRoots = getSourceRootsForModuleAndDependencies(module);
+        VirtualFile[] sourceRoots = getSourceRootsForModuleAndDependencies(module, facet.getConfiguration().PACK_TEST_CODE);
         if (manifestFile != null) {
           AndroidFacetConfiguration configuration = facet.getConfiguration();
           VirtualFile outputDir = AndroidDexCompiler.getOutputDirectoryForDex(module);

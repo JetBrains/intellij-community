@@ -45,7 +45,7 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
   protected ProgressableTextEditorHighlightingPass(@NotNull Project project,
                                                    @Nullable final Document document,
                                                    @NotNull String presentableName,
-                                                   @NotNull PsiFile file,
+                                                   @Nullable PsiFile file,
                                                    boolean runIntentionPassAfter) {
     super(project, document, runIntentionPassAfter);
     myPresentableName = presentableName;
@@ -66,7 +66,7 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
     myFinished = true;
     applyInformationWithProgress();
     DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
-    ((DaemonCodeAnalyzerImpl)daemonCodeAnalyzer).getFileStatusMap().markFileUpToDate(myFile.getProject(),myDocument, getId());
+    ((DaemonCodeAnalyzerImpl)daemonCodeAnalyzer).getFileStatusMap().markFileUpToDate(myDocument, getId());
     repaintTrafficIcon();
   }
 
@@ -115,7 +115,7 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
         @Override
         public void run() {
           if (myProject.isDisposed()) return;
-          Editor editor = PsiUtilBase.findEditor(myFile);
+          Editor editor = myFile == null ? null : PsiUtilBase.findEditor(myFile);
           if (editor == null || editor.isDisposed()) return;
           EditorMarkupModelImpl markup = (EditorMarkupModelImpl)editor.getMarkupModel();
           markup.repaintTrafficLightIcon();
@@ -136,7 +136,7 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
     @Override
     public void doApplyInformationToEditor() {
       FileStatusMap statusMap = ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject)).getFileStatusMap();
-      statusMap.markFileUpToDate(myProject, getDocument(), getId());
+      statusMap.markFileUpToDate(getDocument(), getId());
     }
   }
 }

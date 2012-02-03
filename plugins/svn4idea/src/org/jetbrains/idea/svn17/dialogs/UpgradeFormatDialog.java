@@ -81,8 +81,7 @@ public class UpgradeFormatDialog extends DialogWrapper  {
   }
 
   protected String getTopMessage(final String label) {
-    return SvnBundle.message(new StringBuilder().append("label.configure.").append(label).append(".label").toString(),
-                             ApplicationNamesInfo.getInstance().getFullProductName());
+    return SvnBundle.message("label.configure." + label + ".label", ApplicationNamesInfo.getInstance().getFullProductName());
   }
 
   @Nullable
@@ -113,11 +112,11 @@ public class UpgradeFormatDialog extends DialogWrapper  {
     panel.add(topLabel, gb);
     gb.gridy += 1;
 
-    myUpgradeNoneButton = new JRadioButton(SvnBundle.message(new StringBuilder().append("radio.configure.").append(label).append(".none").toString()));
-    myUpgradeAutoButton = new JRadioButton(SvnBundle.message(new StringBuilder().append("radio.configure.").append(label).append(".auto").toString()));
-    myUpgradeAuto15Button = new JRadioButton(SvnBundle.message(new StringBuilder().append("radio.configure.").append(label).append(".auto.15format").toString()));
-    myUpgradeAuto16Button = new JRadioButton(SvnBundle.message(new StringBuilder().append("radio.configure.").append(label).append(".auto.16format").toString()));
-    myUpgradeAuto17Button = new JRadioButton(SvnBundle.message(new StringBuilder().append("radio.configure.").append(label).append(".auto.17format").toString()));
+    myUpgradeNoneButton = new JRadioButton(SvnBundle.message("radio.configure." + label + ".none"));
+    myUpgradeAutoButton = new JRadioButton(SvnBundle.message("radio.configure." + label + ".auto"));
+    myUpgradeAuto15Button = new JRadioButton(SvnBundle.message("radio.configure." + label + ".auto.15format"));
+    myUpgradeAuto16Button = new JRadioButton(SvnBundle.message("radio.configure." + label + ".auto.16format"));
+    myUpgradeAuto17Button = new JRadioButton(SvnBundle.message("radio.configure." + label + ".auto.17format"));
 
     ButtonGroup group = new ButtonGroup();
     group.add(myUpgradeNoneButton);

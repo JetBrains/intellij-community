@@ -20,7 +20,6 @@ import com.intellij.ide.structureView.StructureViewFactoryEx;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.util.treeView.NodeDescriptorProvidingKey;
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
@@ -79,6 +78,10 @@ public abstract class PsiTreeElementBase <T extends PsiElement> implements Struc
 
   public String getLocationString() {
     return null;
+  }
+
+  public boolean isSearchInLocationString() {
+    return false;
   }
 
   public String toString() {

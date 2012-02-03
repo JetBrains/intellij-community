@@ -18,12 +18,13 @@ package com.intellij.openapi.roots.ui;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
-public class LightFilePointer  {
+public class LightFilePointer implements VirtualFilePointer {
   private final String myUrl;
   private VirtualFile myFile;
 

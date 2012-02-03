@@ -33,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author Kirill Likhodedov
@@ -75,9 +75,11 @@ public class GitFetcher {
           result = res;
           break;
         }
-      } else {
-        if (!fetchNatively(root, remote)) {
-          result = GitFetchResult.error(myErrors);
+      } 
+      else {
+        GitFetchResult fetchResult = fetchNatively(root, remote);
+        if (!fetchResult.isSuccess()) {
+          result = fetchResult;
           break;
         }
       }
@@ -87,22 +89,24 @@ public class GitFetcher {
     return result;
   }
 
-  private boolean fetchNatively(@NotNull VirtualFile root, @NotNull GitRemote remote) {
+  private GitFetchResult fetchNatively(@NotNull VirtualFile root, @NotNull GitRemote remote) {
     final GitLineHandlerPasswordRequestAware h = new GitLineHandlerPasswordRequestAware(myProject, root, GitCommand.FETCH);
     h.addParameters(remote.getName());
     final GitTask fetchTask = new GitTask(myProject, h, "Fetching...");
     fetchTask.setProgressIndicator(myProgressIndicator);
     fetchTask.setProgressAnalyzer(new GitStandardProgressAnalyzer());
-    final AtomicBoolean success = new AtomicBoolean();
+
+    final AtomicReference<GitFetchResult> result = new AtomicReference<GitFetchResult>();
     fetchTask.execute(true, false, new GitTaskResultHandlerAdapter() {
       @Override
       protected void onSuccess() {
-        success.set(true);
+        result.set(GitFetchResult.success());
       }
 
       @Override
       protected void onCancel() {
         LOG.info("Cancelled fetch.");
+        result.set(GitFetchResult.cancel());
       }
       
       @Override
@@ -113,9 +117,10 @@ public class GitFetcher {
         } else {
           myErrors.add(new VcsException("Authentication failed"));
         }
+        result.set(GitFetchResult.error(myErrors));
       }
     });
-    return success.get();
+    return result.get();
   }
 
   @NotNull

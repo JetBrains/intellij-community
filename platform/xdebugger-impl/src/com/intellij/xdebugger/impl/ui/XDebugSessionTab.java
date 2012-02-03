@@ -29,12 +29,9 @@ import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.execution.ui.layout.PlaceInGrid;
-import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.actions.ContextHelpAction;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.content.Content;
@@ -47,6 +44,7 @@ import com.intellij.xdebugger.impl.frame.XDebugViewBase;
 import com.intellij.xdebugger.impl.frame.XFramesView;
 import com.intellij.xdebugger.impl.frame.XVariablesView;
 import com.intellij.xdebugger.impl.frame.XWatchesView;
+import com.intellij.xdebugger.impl.ui.tree.actions.SortValuesToggleAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -98,8 +96,6 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
                                          XDebuggerBundle.message("debugger.session.tab.watches.title"), XDebuggerUIConstants.WATCHES_TAB_ICON, null);
     watchesContent.setCloseable(false);
 
-    ActionGroup group = getActionGroup(XDebuggerActions.WATCHES_TREE_TOOLBAR_GROUP);
-    watchesContent.setActions(group, ActionPlaces.DEBUGGER_TOOLBAR, myWatchesView.getTree());
     return watchesContent;
   }
 
@@ -110,13 +106,6 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
                                                XDebuggerBundle.message("debugger.session.tab.frames.title"), XDebuggerUIConstants.FRAMES_TAB_ICON, null);
     framesContent.setCloseable(false);
 
-    final DefaultActionGroup framesGroup = new DefaultActionGroup();
-
-    CommonActionsManager actionsManager = CommonActionsManager.getInstance();
-    framesGroup.add(actionsManager.createPrevOccurenceAction(framesView.getFramesList()));
-    framesGroup.add(actionsManager.createNextOccurenceAction(framesView.getFramesList()));
-
-    framesContent.setActions(framesGroup, ActionPlaces.DEBUGGER_TOOLBAR, framesView.getFramesList());
     return framesContent;
   }
 
@@ -172,6 +161,31 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     leftToolbar.addSeparator();
 
     leftToolbar.add(myUi.getOptions().getLayoutActions());
+    final AnAction[] commonSettings = myUi.getOptions().getSettingsActionsList();
+    final AnAction commonSettingsList = myUi.getOptions().getSettingsActions();
+
+    final DefaultActionGroup settings = new DefaultActionGroup("DebuggerSettings", commonSettings.length > 0) {
+      @Override
+      public void update(AnActionEvent e) {
+        e.getPresentation().setText(ActionsBundle.message("group.XDebugger.settings.text"));
+        e.getPresentation().setIcon(commonSettingsList.getTemplatePresentation().getIcon());
+      }
+
+      @Override
+      public boolean isDumbAware() {
+        return true;
+      }
+    };
+    for (AnAction each : commonSettings) {
+      settings.add(each);
+    }
+    if (commonSettings.length > 0) {
+      settings.addSeparator();
+    }
+    settings.add(new ToggleSortValuesAction(commonSettings.length == 0));
+
+    leftToolbar.add(settings);
+
 
     leftToolbar.addSeparator();
 
@@ -201,5 +215,22 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   @Nullable
   public RunContentDescriptor getRunContentDescriptor() {
     return myRunContentDescriptor;
+  }
+
+  private static class ToggleSortValuesAction extends SortValuesToggleAction {
+    private final boolean myShowIcon;
+
+    private ToggleSortValuesAction(boolean showIcon) {
+      copyFrom(ActionManager.getInstance().getAction(XDebuggerActions.TOGGLE_SORT_VALUES));
+      myShowIcon = showIcon;
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      super.update(e);
+      if (!myShowIcon) {
+        e.getPresentation().setIcon(null);
+      }
+    }
   }
 }

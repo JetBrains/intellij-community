@@ -69,6 +69,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
                                         QuickActionProvider, DockContainer.Dialog {
 
   @NonNls public static final String LAYOUT = "Runner.Layout";
+  @NonNls public static final String SETTINGS = "XDebugger.Settings";
   @NonNls public static final String VIEW_POPUP = "Runner.View.Popup";
   @NonNls public static final String VIEW_TOOLBAR = "Runner.View.Toolbar";
 
@@ -690,6 +691,31 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     }
   }
 
+  public ActionGroup getSettingsActions() {
+    return (ActionGroup)myActionManager.getAction(SETTINGS);
+  }
+
+  public ContentManager getContentManager(Content content) {
+    if (hasContent(myManager, content)) {
+      return myManager;
+    }
+    for (RunnerContentUi child : myChildren) {
+      if (hasContent(child.myManager, content)) {
+        return child.myManager;
+      }
+    }
+    return myManager;
+  }
+
+  private static boolean hasContent(ContentManager manager, Content content) {
+    for (Content c : manager.getContents()) {
+      if (c == content) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   private static void moveFollowingTabs(int index, final JBRunnerTabs tabs) {
     for (TabInfo info : tabs.getTabs()) {
       final TabImpl tab = getTabFor(info);
@@ -1300,6 +1326,9 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
         final GridImpl grid = getGridFor(content, false);
         if (grid == null) {
           getStateFor(content).assignTab(myLayoutSettings.getOrCreateTab(-1));
+        } else {
+          //noinspection ConstantConditions
+          ((GridCellImpl)findCellFor(content)).restore(content);
         }
         getStateFor(content).setMinimizedInGrid(false);
         myManager.addContent(content);

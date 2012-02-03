@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -373,16 +373,16 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
   private static void createEclipseLibrary(final Project project, final Collection<String> libraries, final String libraryName) {
     if (libraries.contains(libraryName)) {
       final FileChooserDescriptor fileChooserDescriptor = new FileChooserDescriptor(false, true, false, false, false, false) {
-        public Icon getOpenIcon(final VirtualFile virtualFile) {
-          return looksLikeEclipse(virtualFile) ? eclipseIcon : super.getOpenIcon(virtualFile);
+        public Icon getOpenIcon(final VirtualFile file) {
+          return looksLikeEclipse(file) ? dressIcon(file, eclipseIcon) : super.getOpenIcon(file);
         }
 
-        public Icon getClosedIcon(final VirtualFile virtualFile) {
-          return looksLikeEclipse(virtualFile) ? eclipseIcon : super.getClosedIcon(virtualFile);
+        public Icon getClosedIcon(final VirtualFile file) {
+          return looksLikeEclipse(file) ? dressIcon(file, eclipseIcon) : super.getClosedIcon(file);
         }
 
-        private boolean looksLikeEclipse(final VirtualFile virtualFile) {
-          return virtualFile.findChild(".eclipseproduct") != null;
+        private boolean looksLikeEclipse(final VirtualFile file) {
+          return file.findChild(".eclipseproduct") != null;
         }
       };
       fileChooserDescriptor.setTitle(EclipseBundle.message("eclipse.create.library.title"));

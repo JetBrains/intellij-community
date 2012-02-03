@@ -153,7 +153,7 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
     passesRefusedToCreate.forEach(new TIntProcedure() {
       @Override
       public boolean execute(int passId) {
-        statusMap.markFileUpToDate(psiFile.getProject(),document, passId);
+        statusMap.markFileUpToDate(document, passId);
         return true;
       }
     });

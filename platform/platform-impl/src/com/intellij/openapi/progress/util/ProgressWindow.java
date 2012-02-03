@@ -164,7 +164,6 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
                 final DialogWrapper popup = myDialog.myPopup;
                 if (popup != null) {
                   myFocusTrackback.registerFocusComponent(new FocusTrackback.ComponentQuery() {
-                    @SuppressWarnings({"ConstantConditions"})
                     public Component getComponent() {
                       return popup.getPreferredFocusedComponent();
                     }
@@ -250,7 +249,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
     if (isDialogShowing()) {
       if (myFocusTrackback != null) {
         myFocusTrackback.setWillBeSheduledForRestore();
-      }      
+      }
     }
 
     UIUtil.invokeLaterIfNeeded(new Runnable() {
@@ -260,11 +259,12 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
         if (myDialog != null) {
           myDialog.hide();
         }
-        
+
         if (myFocusTrackback != null) {
           if (wasShowing) {
             myFocusTrackback.restoreFocus();
-          } else {
+          }
+          else {
             myFocusTrackback.consume();
           }
         }

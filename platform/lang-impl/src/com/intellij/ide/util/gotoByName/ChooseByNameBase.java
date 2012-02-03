@@ -85,7 +85,7 @@ import java.util.List;
 public abstract class ChooseByNameBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.gotoByName.ChooseByNameBase");
 
-  protected final Project myProject;
+  @Nullable protected final Project myProject;
   protected final ChooseByNameModel myModel;
   protected ChooseByNameItemProvider myProvider;
   protected final String myInitialText;
@@ -744,7 +744,7 @@ public abstract class ChooseByNameBase {
         close(false);
         return Boolean.TRUE;
       }
-    }).setFocusable(true).setRequestFocus(true).setForceHeavyweight(true).setModalContext(false).setCancelOnClickOutside(false);
+    }).setFocusable(true).setRequestFocus(true).setModalContext(false).setCancelOnClickOutside(false);
 
     Point point = new Point(x, y);
     SwingUtilities.convertPointToScreen(point, layeredPane);
@@ -755,7 +755,7 @@ public abstract class ChooseByNameBase {
 
     new MnemonicHelper().register(myTextFieldPanel);
     final boolean previousUpdate;
-    final DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
+    final DaemonCodeAnalyzer daemonCodeAnalyzer = myProject != null ? DaemonCodeAnalyzer.getInstance(myProject) : null;
     if (daemonCodeAnalyzer != null) {
       previousUpdate = ((DaemonCodeAnalyzerImpl)daemonCodeAnalyzer).isUpdateByTimerEnabled();
       daemonCodeAnalyzer.setUpdateByTimerEnabled(false);
@@ -1535,7 +1535,7 @@ public abstract class ChooseByNameBase {
 
     @Override
     public void update(AnActionEvent e) {
-      if (myFindUsagesTitle == null) {
+      if (myFindUsagesTitle == null || myProject == null) {
         e.getPresentation().setVisible(false);
         return;
       }

@@ -429,7 +429,7 @@ public class JavaCompletionUtil {
 
     PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
     boolean checkInitialized = parameters.getInvocationCount() <= 1 && call != null && PsiKeyword.SUPER.equals(call.getMethodExpression().getText());
-    
+
     final JavaCompletionProcessor processor = new JavaCompletionProcessor(element, elementFilter, checkAccess, checkInitialized, filterStaticAfterInstance, nameCondition);
     javaReference.processVariants(processor);
     final Collection<CompletionElement> plainResults = processor.getResults();
@@ -690,8 +690,8 @@ public class JavaCompletionUtil {
     return null;
   }
 
-  public static int insertClassReference(@NotNull PsiClass psiClass, @NotNull PsiFile file, int offset) {
-    return insertClassReference(psiClass, file, offset, offset);
+  public static void insertClassReference(@NotNull PsiClass psiClass, @NotNull PsiFile file, int offset) {
+    insertClassReference(psiClass, file, offset, offset);
   }
 
   public static int insertClassReference(PsiClass psiClass, PsiFile file, int startOffset, int endOffset) {
@@ -707,14 +707,14 @@ public class JavaCompletionUtil {
       final PsiElement resolved = reference.resolve();
       if (resolved instanceof PsiClass) {
         if (((PsiClass)resolved).getQualifiedName() == null || manager.areElementsEquivalent(psiClass, resolved)) {
-          return startOffset;
+          return endOffset;
         }
       }
     }
 
     String name = psiClass.getName();
     if (name == null) {
-      return startOffset;
+      return endOffset;
     }
 
     assert document != null;
@@ -724,7 +724,7 @@ public class JavaCompletionUtil {
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-    int newStartOffset = startOffset;
+    int newEndOffset = endOffset;
     PsiElement element = file.findElementAt(startOffset);
     if (element instanceof PsiIdentifier) {
       PsiElement parent = element.getParent();
@@ -739,7 +739,13 @@ public class JavaCompletionUtil {
 
           newElement = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(newElement);
           if (newElement != null) {
-            newStartOffset = newElement.getTextRange().getStartOffset();
+            newEndOffset = newElement.getTextRange().getEndOffset();
+            if (newElement instanceof PsiJavaCodeReferenceElement && !(newElement instanceof PsiReferenceExpression)) {
+              PsiReferenceParameterList parameterList = ((PsiJavaCodeReferenceElement)newElement).getParameterList();
+              if (parameterList != null) {
+                newEndOffset = parameterList.getTextRange().getStartOffset();
+              }
+            }
           }
 
           if (!staticImport &&
@@ -747,7 +753,7 @@ public class JavaCompletionUtil {
               !psiClass.getManager().areElementsEquivalent(psiClass, resolveReference((PsiReference)newElement))) {
             final String qName = psiClass.getQualifiedName();
             if (qName != null) {
-              document.replaceString(newStartOffset, newElement.getTextRange().getEndOffset(), qName);
+              document.replaceString(newElement.getTextRange().getStartOffset(), newEndOffset, qName);
             }
           }
         }
@@ -758,7 +764,7 @@ public class JavaCompletionUtil {
       document.deleteString(toDelete.getStartOffset(), toDelete.getEndOffset());
     }
 
-    return newStartOffset;
+    return newEndOffset;
   }
 
   @Nullable
@@ -856,9 +862,7 @@ public class JavaCompletionUtil {
   //need to shorten references in type argument list
   public static void shortenReference(final PsiFile file, final int offset) throws IncorrectOperationException {
     final PsiDocumentManager manager = PsiDocumentManager.getInstance(file.getProject());
-    final Document document = manager.getDocument(file);
-    assert document != null;
-    manager.commitDocument(document);
+    manager.commitDocument(manager.getDocument(file));
     final PsiReference ref = file.findReferenceAt(offset);
     if (ref instanceof PsiJavaCodeReferenceElement) {
       JavaCodeStyleManager.getInstance(file.getProject()).shortenClassReferences((PsiJavaCodeReferenceElement)ref);

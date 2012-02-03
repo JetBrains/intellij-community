@@ -256,6 +256,8 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     JavaParameterInfo[] newParameters = changeInfo.getNewParameters();
     final GrParameterList parameterList = method.getParameterList();
     GrParameter[] oldParameters = parameterList.getParameters();
+    final PsiParameter[] oldBaseParams = baseMethod != null ? baseMethod.getParameterList().getParameters() : null;
+
 
     Set<GrParameter> toRemove = new HashSet<GrParameter>(oldParameters.length);
     ContainerUtil.addAll(toRemove, oldParameters);
@@ -265,6 +267,8 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     final GrDocComment docComment = method.getDocComment();
     final GrDocTag[] tags = docComment == null ? null : docComment.getTags();
 
+
+    
     for (JavaParameterInfo newParameter : newParameters) {
       PsiType type;
       if (newParameter instanceof GrParameterInfo && ((GrParameterInfo)newParameter).hasNoType()) {
@@ -274,24 +278,42 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
         type = substitutor.substitute(newParameter.createType(context, method.getManager()));
       }
 
+
+      //if old parameter name differs from base method parameter name we don't change it
+      final String newName;
+      final int oldIndex = newParameter.getOldIndex();
+      if (oldIndex >= 0 && oldBaseParams != null) {
+        final String oldName = oldParameters[oldIndex].getName();
+        if (oldName.equals(oldBaseParams[oldIndex].getName())) {
+          newName = newParameter.getName();
+        }
+        else {
+          newName = oldName;
+        }
+      }
+      else {
+        newName = newParameter.getName();
+      }
+
       if (docComment != null) {
-        if (newParameter.getOldIndex() >= 0) {
-          final GrParameter oldParameter = oldParameters[newParameter.getOldIndex()];
+        if (oldIndex >= 0) {
+          final GrParameter oldParameter = oldParameters[oldIndex];
           final String oldName = oldParameter.getName();
           for (GrDocTag tag : tags) {
             if ("@param".equals(tag.getName())) {
               final GrDocParameterReference parameterReference = tag.getDocParameterReference();
               if (parameterReference != null && oldName.equals(parameterReference.getText())) {
-                parameterReference.handleElementRename(newParameter.getName());
+                parameterReference.handleElementRename(newName);
               }
             }
           }
         }
       }
 
-      GrParameter grParameter = factory
-        .createParameter(newParameter.getName(), type == null ? null : type.getCanonicalText(), getInitializer(newParameter),
-                         parameterList);
+      GrParameter grParameter = factory.createParameter(newName, type == null ? null : type.getCanonicalText(),
+                                                        getInitializer(newParameter), parameterList);
+      
+      
       anchor = (GrParameter)parameterList.addAfter(grParameter, anchor);
     }
 

@@ -102,7 +102,7 @@ public class GitShowAllSubmittedFilesAction extends AnAction implements DumbAwar
         indicator.setIndeterminate(true);
         try {
           VirtualFile vcsRoot = GitUtil.getGitRoot(file);
-          final CommittedChangeList changeList = GitChangeUtils.getRevisionChanges(project, vcsRoot, revision, false);
+          final CommittedChangeList changeList = GitChangeUtils.getRevisionChanges(project, vcsRoot, revision, true);
           if (changeList != null) {
             UIUtil.invokeLaterIfNeeded(new Runnable() {
               public void run() {

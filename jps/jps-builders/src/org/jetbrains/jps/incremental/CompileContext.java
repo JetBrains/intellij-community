@@ -283,6 +283,10 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
     return myRootsIndex.getModuleRoots(module);
   }
 
+  public ModuleRootsIndex getRootsIndex() {
+    return myRootsIndex;
+  }
+
   public void setDone(float done) {
     myDone = done;
     //processMessage(new ProgressMessage("", done));

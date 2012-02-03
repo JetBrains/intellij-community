@@ -129,7 +129,7 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Single
 
   @NotNull
   @Override
-  public final MultiplePsiFilesPerDocumentFileViewProvider createCopy(final VirtualFile fileCopy) {
+  public final MultiplePsiFilesPerDocumentFileViewProvider createCopy(@NotNull final VirtualFile fileCopy) {
     final MultiplePsiFilesPerDocumentFileViewProvider copy = cloneInner(fileCopy);
     copy.myOriginal = myOriginal == null ? this : myOriginal;
     return copy;
@@ -139,7 +139,7 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Single
 
   @Override
   @Nullable
-  public PsiElement findElementAt(int offset, Class<? extends Language> lang) {
+  public PsiElement findElementAt(int offset, @NotNull Class<? extends Language> lang) {
     final PsiFile mainRoot = getPsi(getBaseLanguage());
     PsiElement ret = null;
     for (final Language language : getLanguages()) {
