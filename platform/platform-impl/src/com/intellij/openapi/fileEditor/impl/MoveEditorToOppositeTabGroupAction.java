@@ -36,10 +36,11 @@ public class MoveEditorToOppositeTabGroupAction extends AnAction implements Dumb
     }
     final EditorWindow window = EditorWindow.DATA_KEY.getData(dataContext);
     if (window != null) {
-      final EditorWindow[] siblings = window.findSiblings ();
+      final EditorWindow[] siblings = window.findSiblings();
       if (siblings != null && siblings.length == 1) {
-
-        ((FileEditorManagerImpl)FileEditorManagerEx.getInstanceEx(project)).openFileImpl3 (siblings [0], vFile, true, null, true);
+        final EditorWithProviderComposite editorComposite = window.getSelectedEditor();
+        final HistoryEntry entry = editorComposite.currentStateAsHistoryEntry();
+        ((FileEditorManagerImpl)FileEditorManagerEx.getInstanceEx(project)).openFileImpl3(siblings[0], vFile, true, entry, true);
         window.closeFile(vFile);
       }
     }
