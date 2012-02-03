@@ -165,6 +165,9 @@
     <renamePsiElementProcessor implementation="org.jetbrains.plugins.groovy.refactoring.rename.RenameAliasImportedFieldProcessor" order="first"/>
     <rename.inplace.resolveSnapshotProvider language="Groovy"
                                             implementationClass="org.jetbrains.plugins.groovy.refactoring.rename.inplace.GroovyResolveSnapshotProvider"/>
+
+    <renameHandler implementation="org.jetbrains.plugins.groovy.refactoring.rename.inplace.GrVariableInplaceRenameHandler"/>
+
     <nameSuggestionProvider implementation="org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionProvider"/>
 
     <statementUpDownMover implementation="org.jetbrains.plugins.groovy.lang.editor.actions.GroovyStatementMover"/>
@@ -1032,7 +1035,7 @@
               icon="/general/remove.png" text="Remove" description="Remove dynamic element"/>
       <separator/>
       <action id="Groovy.Dynamic.ExpandAll" class="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ExpandAllAction" icon="/actions/expandall.png" text="Expand all" description="Collapse all"/>
-      <action id="Groovy.Dynamic.CollapseAll" class="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.CollapseAllAction" icon="/actions/collapseAll.png" text="Collapse all" description="Collapse all"/>
+      <action id="Groovy.Dynamic.CollapseAll" class="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.CollapseAllAction" icon="/actions/collapseall.png" text="Collapse all" description="Collapse all"/>
     </group>
 
       
