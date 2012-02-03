@@ -45,10 +45,9 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.CompilerModuleExtension;
-import com.intellij.openapi.roots.ModuleRootEvent;
-import com.intellij.openapi.roots.ModuleRootListener;
-import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.projectRoots.SdkAdditionalData;
+import com.intellij.openapi.projectRoots.SdkModificator;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
@@ -368,6 +367,9 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
         if (ApplicationManager.getApplication().isUnitTestMode()) {
           return;
         }
+
+        addResourceFolderToSdkRootsIfNecessary();
+        
         ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
           public void run() {
             Module module = getModule();
@@ -440,6 +442,42 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
         });
       }
     });
+  }
+  
+  private void addResourceFolderToSdkRootsIfNecessary() {
+    final Sdk sdk = ModuleRootManager.getInstance(getModule()).getSdk();
+    if (sdk == null || !(sdk.getSdkType() instanceof AndroidSdkType)) {
+      return;
+    }
+
+    final SdkAdditionalData data = sdk.getSdkAdditionalData();
+    if (!(data instanceof AndroidSdkAdditionalData)) {
+      return;
+    }
+
+    final AndroidPlatform platform = ((AndroidSdkAdditionalData)data).getAndroidPlatform();
+    if (platform == null) {
+      return;
+    }
+
+    final String resFolderPath = platform.getTarget().getPath(IAndroidTarget.RESOURCES);
+    if (resFolderPath == null) {
+      return;
+    }
+
+    final VirtualFile resFolder = LocalFileSystem.getInstance().findFileByPath(resFolderPath);
+    if (resFolder == null) {
+      return;
+    }
+
+    for (VirtualFile root : sdk.getRootProvider().getFiles(OrderRootType.CLASSES)) {
+      if (root == resFolder) {
+        return;
+      }
+    }
+    final SdkModificator modificator = sdk.getSdkModificator();
+    modificator.addRoot(resFolder, OrderRootType.CLASSES);
+    modificator.commitChanges();
   }
 
   private static void updateDependenciesInPropertyFile(@NotNull final PropertiesFile projectProperties,
