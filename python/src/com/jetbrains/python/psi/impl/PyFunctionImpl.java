@@ -314,7 +314,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
             PyReferenceExpression warningClass = callExpression.getArgument(1, PyReferenceExpression.class);
             if (warningClass != null && (PyNames.DEPRECATION_WARNING.equals(warningClass.getReferencedName()) ||
                                          PyNames.PENDING_DEPRECATION_WARNING.equals(warningClass.getReferencedName()))) {
-              return PyUtil.strValue(callExpression.getArguments() [0]);
+              return PyUtil.strValue(callExpression.getArguments()[0]);
             }
           }
         }
@@ -538,10 +538,10 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
         if (targetExpressionStub.getInitializerType() == PyTargetExpressionStub.InitializerType.CallExpression) {
           final PyQualifiedName qualifiedName = targetExpressionStub.getInitializer();
           if (PyQualifiedName.fromComponents(PyNames.CLASSMETHOD).equals(qualifiedName)) {
-            return Modifier.CLASSMETHOD;
+            return CLASSMETHOD;
           }
           if (PyQualifiedName.fromComponents(PyNames.STATICMETHOD).equals(qualifiedName)) {
-            return Modifier.STATICMETHOD;
+            return STATICMETHOD;
           }
         }
       }

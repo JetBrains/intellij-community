@@ -52,7 +52,7 @@ extends
 
   @Nullable
   PyType getReturnTypeFromDocString();
-  
+
   @Nullable
   String getDocStringValue();
 
