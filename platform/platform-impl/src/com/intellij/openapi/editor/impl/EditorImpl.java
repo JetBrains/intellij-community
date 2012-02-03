@@ -109,6 +109,7 @@ import java.awt.dnd.DropTargetDropEvent;
 import java.awt.event.*;
 import java.awt.font.TextHitInfo;
 import java.awt.im.InputMethodRequests;
+import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.lang.reflect.Field;
@@ -129,6 +130,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   public static final Key<Pair<String, String>> EDITABLE_AREA_MARKER = Key.create("editable.area.marker");
   private static final boolean HONOR_CAMEL_HUMPS_ON_TRIPLE_CLICK 
     = Boolean.parseBoolean(System.getProperty("idea.honor.camel.humps.on.triple.click"));
+  public static final Key<BufferedImage> BUFFER = Key.create("buffer");
   private final DocumentImpl myDocument;
 
   private final JPanel myPanel;
@@ -1649,7 +1651,40 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return isReleased;
   }
 
-  void paint(Graphics g) {
+  public void stopDumb() {
+    putUserData(BUFFER, null);
+  }
+
+  /**
+   * {@link #stopDumb()} must be performed in finally
+   */
+  public void startDumb() {
+    final EditorComponentImpl component = getContentComponent();
+    final Dimension dimension = component.getSize();
+    BufferedImage image = new BufferedImage(dimension.width, dimension.height, BufferedImage.TYPE_INT_RGB);
+    final Graphics2D graphics = image.createGraphics();
+    graphics.setClip(0, 0, dimension.width, dimension.height);
+    paint(graphics);
+    putUserData(BUFFER, image);
+  }
+  
+  void paint(Graphics2D g) {
+    Rectangle clip = g.getClipBounds();
+
+    if (clip == null) {
+      return;
+    }
+
+    if (Registry.is("editor.dumb.mode.available")) {
+      final BufferedImage buffer = getUserData(BUFFER);
+      if (buffer != null) {
+        final Point point = new Point(clip.x, clip.y);
+        SwingUtilities.convertPointFromScreen(point, getContentComponent());
+        g.drawImage(buffer, null, 0, 0);
+        return;
+      }
+    }
+
     startOptimizedScrolling();
 
     if (myUpdateCursor) {
@@ -1657,11 +1692,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myUpdateCursor = false;
     }
 
-    Rectangle clip = g.getClipBounds();
-
-    if (clip == null) {
-      return;
-    }
 
     Rectangle visibleArea = getScrollingModel().getVisibleArea();
     if (visibleArea == null) {

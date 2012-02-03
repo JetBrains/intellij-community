@@ -15,10 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.rename.inplace;
 
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.command.impl.FinishMarkAction;
-import com.intellij.openapi.command.impl.StartMarkAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.PsiNamedElement;
@@ -39,27 +35,15 @@ public class GrVariableInplaceRenamer extends VariableInplaceRenamer {
     super(elementToRename, editor);
   }
 
-  @Override
-  protected void performRefactoringRename(final String newName, StartMarkAction markAction) {
-    try {
-      new WriteCommandAction(myProject, getCommandName()) {
-        @Override
-        protected void run(Result result) throws Throwable {
-          PsiNamedElement elementToRename = getVariable();
-          if (elementToRename instanceof ClosureSyntheticParameter && !"it".equals(newName)) {
-            final GrClosableBlock closure = ((ClosureSyntheticParameter)elementToRename).getClosure();
-            final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(myProject);
-            final PsiType type = ((ClosureSyntheticParameter)elementToRename).getTypeGroovy();
-            final GrParameter newParam = factory.createParameter(newName, TypesUtil.unboxPrimitiveTypeWrapper(type));
-            final GrParameter added = closure.addParameter(newParam);
-            GrReferenceAdjuster.shortenReferences(added);
-          }
-        }
-      }.execute();
-      performAutomaticRename(newName);
-    }
-    finally {
-      FinishMarkAction.finish(myProject, myEditor, markAction);
+  protected void renameSynthetic(String newName) {
+    PsiNamedElement elementToRename = getVariable();
+    if (elementToRename instanceof ClosureSyntheticParameter && !"it".equals(newName)) {
+      final GrClosableBlock closure = ((ClosureSyntheticParameter)elementToRename).getClosure();
+      final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(myProject);
+      final PsiType type = ((ClosureSyntheticParameter)elementToRename).getTypeGroovy();
+      final GrParameter newParam = factory.createParameter(newName, TypesUtil.unboxPrimitiveTypeWrapper(type));
+      final GrParameter added = closure.addParameter(newParam);
+      GrReferenceAdjuster.shortenReferences(added);
     }
   }
 }

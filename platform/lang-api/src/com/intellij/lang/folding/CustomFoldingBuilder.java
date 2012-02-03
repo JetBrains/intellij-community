@@ -29,7 +29,7 @@ public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements D
     List<FoldingDescriptor> descriptors = new ArrayList<FoldingDescriptor>();
     if (CustomFoldingProvider.getAllProviders().length > 0) {
       myDefaultProvider = null;
-      addCustomFoldingRegionsRecursively(root.getNode(), descriptors);
+      addCustomFoldingRegionsRecursively(null, root.getNode(), descriptors);
     }
     buildLanguageFoldRegions(descriptors, root, document, quick);
     return descriptors.toArray(new FoldingDescriptor[descriptors.size()]);
@@ -54,30 +54,32 @@ public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements D
                                                    @NotNull PsiElement root,
                                                    @NotNull Document document,
                                                    boolean quick);
-  
-  private void addCustomFoldingRegionsRecursively(@NotNull ASTNode node, List<FoldingDescriptor> descriptors) {
-    Stack<ASTNode> customFoldingNodesStack = new Stack<ASTNode>(1);
+
+  private void addCustomFoldingRegionsRecursively(@Nullable FoldingStack foldingStack,
+                                                  @NotNull ASTNode node,
+                                                  List<FoldingDescriptor> descriptors) {
+    FoldingStack localFoldingStack = isCustomFoldingRoot(node) || foldingStack == null ? new FoldingStack(node) : foldingStack;
     for (ASTNode child = node.getFirstChildNode(); child != null; child = child.getTreeNext()) {
       if (isCustomRegionStart(child)) {
-        customFoldingNodesStack.push(child);
+        localFoldingStack.push(child);
       }
       else if (isCustomRegionEnd(child)) {
-        if (!customFoldingNodesStack.isEmpty()) {
-          ASTNode startNode = customFoldingNodesStack.pop();
+        if (!localFoldingStack.isEmpty()) {
+          ASTNode startNode = localFoldingStack.pop();
           int startOffset = startNode.getTextRange().getStartOffset();
           TextRange range = new TextRange(startOffset, child.getTextRange().getEndOffset());
-          descriptors.add(new FoldingDescriptor(node, range));
+          descriptors.add(new FoldingDescriptor(localFoldingStack.getOwner(), range));
         }
       }
       else {
-        addCustomFoldingRegionsRecursively(child, descriptors);
+        addCustomFoldingRegionsRecursively(localFoldingStack, child, descriptors);
       }
     }
   }
 
   @Override
   public final String getPlaceholderText(@NotNull ASTNode node, @NotNull TextRange range) {
-    if (mayContainCustomFoldings(node)) {
+    if (isCustomFoldingRoot(node)) {
       PsiFile file = node.getPsi().getContainingFile();
       PsiElement contextElement = file.findElementAt(range.getStartOffset());
       if (contextElement != null && isCustomFoldingCandidate(contextElement.getNode())) {
@@ -103,7 +105,7 @@ public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements D
   @Override
   public final boolean isCollapsedByDefault(@NotNull ASTNode node) {
     // TODO<rv>: Modify Folding API and pass here folding range.
-    if (mayContainCustomFoldings(node)) {
+    if (isCustomFoldingRoot(node)) {
       for (ASTNode child = node.getFirstChildNode(); child != null; child = child.getTreeNext()) {
         if (isCustomRegionStart(child)) {
           String childText = child.getText();
@@ -178,14 +180,28 @@ public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements D
   }
 
   /**
-   * Returns true if the node may contain custom foldings in its immediate child nodes. By default any node will be checked for custom
-   * foldings but for performance reasons it makes sense to override this method to check only the nodes which actually may contain
-   * custom folding nodes (for example, group statements).
+   * Checks if the node is used as custom folding root. Any custom folding elements inside the root are considered to be at the same level
+   * even if they are located at different levels of PSI tree. Collected folding descriptors always contain only root elements with
+   * appropriate ranges. The method returns true if the node has any child elements.
    *
    * @param node  The node to check.
-   * @return      True if the node may contain custom folding nodes (true by default).
+   * @return      True if the node is a root for custom foldings.
    */
-  protected boolean mayContainCustomFoldings(ASTNode node) {
-    return true;
+  protected boolean isCustomFoldingRoot(ASTNode node) {
+    return node.getFirstChildNode() != null;
+  }
+
+  private static class FoldingStack extends Stack<ASTNode> {
+    private ASTNode owner;
+
+    public FoldingStack(@NotNull ASTNode owner) {
+      super(1);
+      this.owner = owner;
+    }
+
+    @NotNull
+    public ASTNode getOwner() {
+      return this.owner;
+    }
   }
 }
