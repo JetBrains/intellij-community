@@ -115,7 +115,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   private final Alarm mySpareTimeAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, this);
   @Nullable
   private final Alarm myHeavyAlarm;
-  @Nullable
   private int myHeavyUpdateTicket;
 
   private final CopyOnWriteArraySet<ChangeListener> myListeners = new CopyOnWriteArraySet<ChangeListener>();
@@ -838,7 +837,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   private void runHeavyFilters(int line1, int endLine) {
     final int startLine = Math.max(0, line1);
 
-    final Document document = getEditor().getDocument();
+    final Document document = myEditor.getDocument();
     final Document documentCopy = new DocumentImpl(true);
     final int startOffset = document.getLineStartOffset(startLine);
     documentCopy.setText(new String(document.getText(new TextRange(startOffset, document.getLineEndOffset(endLine)))));
@@ -846,6 +845,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
     myJLayeredPane.startUpdating();
     final int currentValue = myHeavyUpdateTicket;
+    assert myHeavyAlarm != null;
     myHeavyAlarm.addRequest(new Runnable() {
       @Override
       public void run() {

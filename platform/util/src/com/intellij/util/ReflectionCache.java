@@ -86,7 +86,7 @@ public class ReflectionCache {
     return ourMethods.get(aClass);
   }
 
-  public static boolean isAssignable(Class ancestor, Class descendant) {
+  public static boolean isAssignable(@NotNull Class ancestor, Class descendant) {
     return ancestor == descendant || ancestor.isAssignableFrom(descendant);
   }
 

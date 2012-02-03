@@ -18,15 +18,15 @@ package com.intellij.codeInsight.completion.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.DumbAware;
-import com.intellij.psi.PsiFile;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 public class HippieCompletionAction extends BaseCodeInsightAction implements DumbAware {
   public HippieCompletionAction() {
+    super(false);
     setEnabledInModalContext(true);
   }
 

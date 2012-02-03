@@ -22,11 +22,13 @@ import com.intellij.openapi.command.impl.FinishMarkAction;
 import com.intellij.openapi.command.impl.StartMarkAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.SearchScope;
@@ -207,9 +209,14 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
       }
     }
     finally {
-      FinishMarkAction.finish(myProject, myEditor, markAction);
-      if (myBeforeRevert != null) {
-        myEditor.getCaretModel().moveToOffset(myBeforeRevert.getEndOffset());
+      try {
+        ((EditorImpl)InjectedLanguageUtil.getTopLevelEditor(myEditor)).stopDumb();
+      }
+      finally {
+        FinishMarkAction.finish(myProject, myEditor, markAction);
+        if (myBeforeRevert != null) {
+          myEditor.getCaretModel().moveToOffset(myBeforeRevert.getEndOffset());
+        }
       }
     }
   }
@@ -223,6 +230,7 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
   public void finish(boolean success) {
     super.finish(success);
     if (success) {
+      ((EditorImpl)InjectedLanguageUtil.getTopLevelEditor(myEditor)).startDumb();
       revertState();
     }
   }

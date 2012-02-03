@@ -3,6 +3,7 @@ package org.jetbrains.jps.incremental;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.Module;
 import org.jetbrains.jps.Project;
+import org.jetbrains.jps.artifacts.Artifact;
 
 import java.io.File;
 import java.util.Collection;
@@ -20,8 +21,9 @@ public class ModulesAndFilesScope extends CompileScope {
   private final Map<Module, Set<File>> myFiles;
   private final boolean myForcedCompilation;
 
-  public ModulesAndFilesScope(Project project, Collection<Module> modules, Map<Module, Set<File>> files, boolean isForcedCompilation) {
-    super(project);
+  public ModulesAndFilesScope(Project project, Collection<Module> modules, Map<Module, Set<File>> files, Set<Artifact> artifacts,
+                              boolean isForcedCompilation) {
+    super(project, artifacts);
     myFiles = files;
     myForcedCompilation = isForcedCompilation;
     myModules = new HashSet<Module>(modules);

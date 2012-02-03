@@ -1544,6 +1544,12 @@ public class Mappings {
       mySourceFileToAnnotationUsages.putAll(delta.mySourceFileToAnnotationUsages);
       myClassToSourceFile.putAll(delta.myClassToSourceFile);
 
+      final Collection<DependencyContext.S> compiledSet = new HashSet<DependencyContext.S>(compiled.size());
+
+      for (File c : compiled) {
+        compiledSet.add(myContext.get(FileUtil.toSystemIndependentName(c.getAbsolutePath())));
+      }
+
       for (DependencyContext.S file : delta.myClassToClassDependency.keyCollection()) {
         final Collection<DependencyContext.S> now = delta.myClassToClassDependency.get(file);
         final Collection<DependencyContext.S> past = myClassToClassDependency.get(file);
@@ -1552,19 +1558,13 @@ public class Mappings {
           myClassToClassDependency.put(file, now);
         }
         else {
-          final Collection<DependencyContext.S> removeSet = new HashSet<DependencyContext.S>();
+          boolean changed = past.removeAll(compiledSet);
+          changed |= past.addAll(now);
 
-          for (File c : compiled) {
-            removeSet.add(myContext.get(FileUtil.toSystemIndependentName(c.getAbsolutePath())));
+          if (changed) {
+            myClassToClassDependency.remove(file);
+            myClassToClassDependency.put(file, past);
           }
-
-          removeSet.removeAll(now);
-
-          past.addAll(now);
-          past.removeAll(removeSet);
-
-          myClassToClassDependency.remove(file);
-          myClassToClassDependency.put(file, past);
         }
       }
     }

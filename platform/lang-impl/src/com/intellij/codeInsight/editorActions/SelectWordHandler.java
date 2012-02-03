@@ -47,7 +47,7 @@ public class SelectWordHandler extends EditorActionHandler {
     myOriginalHandler = originalHandler;
   }
 
-  public void execute(Editor editor, DataContext dataContext) {
+  public void execute(@NotNull Editor editor, DataContext dataContext) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: execute(editor='" + editor + "')");
     }
@@ -78,10 +78,10 @@ public class SelectWordHandler extends EditorActionHandler {
     doAction(editor, file);
   }
 
-  private static void doAction(Editor editor, PsiFile file) {
-
+  private static void doAction(@NotNull Editor editor, @NotNull PsiFile file) {
     if (file instanceof PsiCompiledElement) {
       file = (PsiFile)((PsiCompiledElement)file).getMirror();
+      if (file == null) return;
     }
 
     FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.select.word");
@@ -140,7 +140,7 @@ public class SelectWordHandler extends EditorActionHandler {
 
     SelectWordUtil.processRanges(element, editor.getDocument().getCharsSequence(), caretOffset, editor, new Processor<TextRange>() {
       @Override
-      public boolean process(TextRange range) {
+      public boolean process(@NotNull TextRange range) {
         if (range.contains(selectionRange) && !range.equals(selectionRange)) {
           if (minimumRange.get().contains(range)) {
             minimumRange.set(range);
@@ -155,7 +155,7 @@ public class SelectWordHandler extends EditorActionHandler {
     editor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
   }
 
-  private static int adjustCaretOffset(Editor editor) {
+  private static int adjustCaretOffset(@NotNull Editor editor) {
     int caretOffset = editor.getCaretModel().getOffset();
     if (caretOffset == 0) {
       return caretOffset;
@@ -174,7 +174,7 @@ public class SelectWordHandler extends EditorActionHandler {
   }
 
   @Nullable
-  private static PsiElement findElementAt(final PsiFile file, final int caretOffset) {
+  private static PsiElement findElementAt(@NotNull final PsiFile file, final int caretOffset) {
     PsiElement elementAt = file.findElementAt(caretOffset);
     if (elementAt != null && isLanguageExtension(file, elementAt)) {
       return file.getViewProvider().findElementAt(caretOffset, file.getLanguage());

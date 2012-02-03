@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.Project;
 import org.jetbrains.jps.Sdk;
 import org.jetbrains.jps.api.CanceledStatus;
+import org.jetbrains.jps.artifacts.Artifact;
 import org.jetbrains.jps.idea.IdeaProjectLoader;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
@@ -36,6 +37,7 @@ import org.jetbrains.jps.server.ClasspathBootstrap;
 import org.jetbrains.jps.server.ProjectDescriptor;
 
 import java.io.*;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
@@ -320,7 +322,7 @@ public abstract class IncrementalTestCase extends TestCase {
       new IncProjectBuilder(
         projectDescriptor, BuilderRegistry.getInstance(), CanceledStatus.NULL
       ).build(
-        new AllProjectScope(project, true), false, true
+        new AllProjectScope(project, Collections.<Artifact>emptySet(), true), false, true
       );
 
       modify();
@@ -332,7 +334,7 @@ public abstract class IncrementalTestCase extends TestCase {
       new IncProjectBuilder(
         projectDescriptor, BuilderRegistry.getInstance(), CanceledStatus.NULL
       ).build(
-        new AllProjectScope(project, false), true, false
+        new AllProjectScope(project, Collections.<Artifact>emptySet(), false), true, false
       );
 
       FileAssert.assertEquals(new File(getBaseDir() + ".log"), new File(getWorkDir() + ".log"));

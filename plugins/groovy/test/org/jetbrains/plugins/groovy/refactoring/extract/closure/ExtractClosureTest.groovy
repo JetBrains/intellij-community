@@ -77,9 +77,7 @@ def foo(String s, Closure closure) {
     <selection>closure(s)</selection>
 }
 
-foo('a') {String s ->
-    print s
-}
+foo('a') {String s -> print s}
 ''')
   }
 
@@ -99,9 +97,7 @@ class X {
     }
 }
 
-new X().foo {->
-    print 'a'
-}
+new X().foo {print 'a'}
 ''', [0], [0])
 
   }
@@ -119,7 +115,7 @@ def foo(Closure closure) {
     closure()
 }
 
-foo {->
+foo {
     String s = 'a'
     s += 2
     print s
@@ -146,9 +142,7 @@ class X {
 }
 
 final X x = new X()
-x.foo {->
-    x.bar()
-}
+x.foo {x.bar()}
 ''', [0], [])
 
   }
@@ -167,9 +161,7 @@ def foo(Closure closure) {
     <selection>closure(a)</selection>
 }
 
-foo {int a ->
-    print 45 + 3 + a
-}
+foo {int a -> print 45 + 3 + a}
 ''', [0, 1], [0])
   }
 
@@ -187,7 +179,7 @@ def adventure() {
     }
 }
 ''', '''
-adventure {->
+adventure {
     killMonsters()
     collectLoot()
 }
@@ -219,9 +211,7 @@ def killMonsters(){2}
 def collectLoot(){3}
 def becomeTownGuard(){}
 ''', '''
-adventure {->
-    return killMonsters() + collectLoot()
-}
+adventure {return killMonsters() + collectLoot()}
 
 def adventure(Closure<Integer> closure) {
     try {

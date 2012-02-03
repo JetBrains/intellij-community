@@ -55,6 +55,7 @@ import javax.swing.plaf.basic.BasicSliderUI;
 import java.awt.*;
 import java.lang.ref.WeakReference;
 import java.util.*;
+import java.util.List;
 
 /**
  * User: anna
@@ -83,7 +84,13 @@ public class HectorComponent extends JPanel {
     final boolean notInLibrary =
       !fileIndex.isInLibrarySource(virtualFile) && !fileIndex.isInLibraryClasses(virtualFile) || fileIndex.isInContent(virtualFile);
     final FileViewProvider viewProvider = myFile.getViewProvider();
-    final Set<Language> languages = viewProvider.getLanguages();
+    List<Language> languages = new ArrayList<Language>(viewProvider.getLanguages());
+    Collections.sort(languages, new Comparator<Language>() {
+      @Override
+      public int compare(Language o1, Language o2) {
+        return o1.getID().compareTo(o2.getID());
+      }
+    });
     for (Language language : languages) {
       @SuppressWarnings("UseOfObsoleteCollectionType")
       final Hashtable<Integer, JLabel> sliderLabels = new Hashtable<Integer, JLabel>();
