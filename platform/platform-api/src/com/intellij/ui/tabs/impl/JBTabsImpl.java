@@ -3216,7 +3216,7 @@ public class JBTabsImpl extends JComponent
       myDropInfo = null;
       myShowDropLocation = true;
       setDropInfoIndex(-1);
-      if (getTabs().contains(dropInfo)) {
+      if (!isDisposed()) {
         removeTab(dropInfo, null, false, true);
       }
     }
