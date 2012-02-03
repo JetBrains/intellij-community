@@ -197,6 +197,9 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
 
   @Nullable
   private static String getQualifiedName(@NotNull PyFunction f, @Nullable PsiElement callSite) {
+    if (!f.isValid()) {
+      return null;
+    }
     String result = f.getName();
     final PyClass c = f.getContainingClass();
     final VirtualFile vfile = f.getContainingFile().getVirtualFile();
