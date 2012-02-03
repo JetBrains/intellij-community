@@ -22,6 +22,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -46,6 +47,10 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
 
   public CompilerUIConfigurable(final Project project) {
     myProject = project;
+    final boolean isEnabled = Registry.is("compiler.server.enabled");
+    myCbUseCompileServer.setVisible(isEnabled);
+    myCbMakeProjectOnSave.setVisible(isEnabled);
+
     myPatternLegendLabel.setText("<html>" +
                                  "Use <b>;</b> to separate patterns and <b>!</b> to negate a pattern. " +
                                  "Accepted wildcards: <b>?</b> &mdash; exactly one symbol; <b>*</b> &mdash; zero or more symbols; " +

@@ -2,6 +2,7 @@ package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.PersistentEnumerator;
 import org.jetbrains.jps.*;
 import org.jetbrains.jps.api.CanceledStatus;
@@ -91,8 +92,10 @@ public class IncProjectBuilder {
     catch (ProjectBuildException e) {
       final Throwable cause = e.getCause();
       if (cause == null) {
-        final BuildMessage msg = e.isError()? new CompilerMessage("", BuildMessage.Kind.ERROR, e.getMessage()) : new ProgressMessage(e.getMessage());
-        myMessageDispatcher.processMessage(msg);
+        final String msg = e.getMessage();
+        if (!StringUtil.isEmpty(msg)) {
+          myMessageDispatcher.processMessage(new ProgressMessage(msg));
+        }
       }
       else {
         myMessageDispatcher.processMessage(new CompilerMessage(COMPILE_SERVER_NAME, cause));

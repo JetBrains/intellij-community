@@ -74,6 +74,9 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   private ActionGroup myActions;
   private final boolean myBuildInActions;
   private LogFilterModel myModel;
+  
+  private File myFile;
+  private long myOldLength = 0;
 
   private final List<LogConsoleListener> myListeners = new ArrayList<LogConsoleListener>();
 
@@ -93,8 +96,13 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   private JPanel myTextFilterWrapper;
 
   public LogConsoleBase(Project project, @Nullable Reader reader, String title, final boolean buildInActions, LogFilterModel model) {
+    this(project, null, reader, title, buildInActions, model);
+  }
+
+  public LogConsoleBase(Project project, File file, @Nullable Reader reader, String title, final boolean buildInActions, LogFilterModel model) {
     super(new BorderLayout());
     myProject = project;
+    myFile = file;
     myTitle = title;
     myModel = model;
     myReaderThread = new ReaderThread(reader);
@@ -107,7 +115,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
 
   @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
   public LogConsoleBase(Project project, File file, long skippedContents, String title, boolean buildInActions, LogFilterModel model) {
-    this(project, getReader(file, skippedContents), title, buildInActions, model);
+    this(project, file, getReader(file, skippedContents), title, buildInActions, model);
   }
 
   public LogConsoleBase(Project project, Reader reader, long skippedContents, String title, boolean buildInActions, LogFilterModel model) {
@@ -579,6 +587,16 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
         public void run() {
           if (myRunning) {
             try {
+
+              if (myFile != null) {
+                long length = myFile.length();
+                if (length < myOldLength) {
+                  myReader.close();
+                  myReader = new BufferedReader(new FileReader(myFile));
+                }
+                myOldLength = length;
+              }
+
               int i = 0;
               while (i++ < 1000) {
                 if (myRunning && myReader != null && myReader.ready()) {
