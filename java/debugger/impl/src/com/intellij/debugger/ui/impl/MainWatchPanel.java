@@ -43,10 +43,9 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.ui.AnActionButton;
-import com.intellij.ui.AnActionButtonRunnable;
-import com.intellij.ui.ListenerUtil;
-import com.intellij.ui.ToolbarDecorator;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ui.*;
+import com.intellij.ui.border.CustomLineBorder;
 
 import javax.swing.*;
 import java.awt.*;
@@ -225,6 +224,10 @@ public class MainWatchPanel extends WatchPanel implements DataProvider {
         executeAction(DebuggerActions.REMOVE_WATCH, tree);
       }
     });
+    CustomLineBorder border = new CustomLineBorder(CaptionPanel.CNT_ACTIVE_COLOR,
+                                                   SystemInfo.isMac ? 1 : 0, 0,
+                                                   SystemInfo.isMac ? 0 : 1, 0);
+    decorator.setToolbarBorder(border);
     final JPanel panel = decorator.createPanel();
     panel.setBorder(null);
     return panel;
