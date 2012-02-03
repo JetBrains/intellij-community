@@ -186,14 +186,15 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
   protected void performRefactoringRename(final String newName,
                                           final StartMarkAction markAction) {
     try {
-      new WriteCommandAction(myProject, getCommandName()) {
-        @Override
-        protected void run(Result result) throws Throwable {
-          renameSynthetic(newName);
-        }
-      }.execute();
-
       PsiNamedElement elementToRename = getVariable();
+      if (elementToRename != null) {
+        new WriteCommandAction(myProject, getCommandName()) {
+          @Override
+          protected void run(Result result) throws Throwable {
+            renameSynthetic(newName);
+          }
+        }.execute();
+      }
       for (AutomaticRenamerFactory renamerFactory : Extensions.getExtensions(AutomaticRenamerFactory.EP_NAME)) {
         if (renamerFactory.isApplicable(elementToRename)) {
           final List<UsageInfo> usages = new ArrayList<UsageInfo>();
