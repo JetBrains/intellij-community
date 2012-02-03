@@ -18,14 +18,9 @@ package org.jetbrains.plugins.groovy.refactoring;
 
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.changeSignature.ChangeSignatureHandler;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.refactoring.changeSignature.GrChangeSignatureHandler;
 import org.jetbrains.plugins.groovy.refactoring.extract.method.GroovyExtractMethodHandler;
@@ -65,15 +60,7 @@ public class GroovyRefactoringSupportProvider extends RefactoringSupportProvider
 
   @Override
   public boolean isInplaceRenameAvailable(PsiElement element, PsiElement context) {
-    if (!(element instanceof GrVariable)) return false;
-    if (element instanceof GrField) return false;
-
-    final SearchScope scope = element.getUseScope();
-    if (!(scope instanceof LocalSearchScope)) return false;
-
-    final PsiElement[] scopeElements = ((LocalSearchScope)scope).getScope();
-    return scopeElements.length == 1 ||
-           scopeElements.length == 2 && (scopeElements[0] instanceof GrDocComment ^ scopeElements[1] instanceof GrDocComment);
+    return false;
   }
 
   @Override

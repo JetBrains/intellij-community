@@ -7,13 +7,13 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.BaseRefactoringProcessor.ConflictsInTestsException
 import com.intellij.refactoring.rename.RenameProcessor
 import com.intellij.refactoring.rename.RenameUtil
-import com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil
 import org.jetbrains.plugins.groovy.GroovyFileType
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
+import org.jetbrains.plugins.groovy.refactoring.rename.inplace.GrVariableInplaceRenameHandler
 import org.jetbrains.plugins.groovy.util.TestUtils
 import com.intellij.psi.*
 
@@ -404,6 +404,10 @@ foo = 4"""
    doInplaceRenameTest();
   }
 
+  void testInplaceRenameOfClosureImplicitParameter(){
+    doInplaceRenameTest()
+  }
+
   public void testRenameClassWithLiteralUsages() throws Exception {
     def file = myFixture.addFileToProject("aaa.groovy", """
       class Foo {
@@ -501,7 +505,7 @@ class Test {
   private def doInplaceRenameTest() {
     String prefix = "/${getTestName(false)}"
     myFixture.configureByFile prefix + ".groovy";
-    CodeInsightTestUtil.doInlineRename(new VariableInplaceRenameHandler(), "foo", myFixture);
+    CodeInsightTestUtil.doInlineRename(new GrVariableInplaceRenameHandler(), "foo", myFixture);
     myFixture.checkResultByFile prefix + "_after.groovy"
   }
 

@@ -2,7 +2,6 @@ def c = {
   <caret>it
 }
 -----
-def c = {
-    def newName ->
+def c = {def newName ->
     newName
 }
