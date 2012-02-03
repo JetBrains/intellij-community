@@ -22,10 +22,7 @@ import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
-import com.intellij.psi.PsiCodeBlock;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiTryStatement;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
@@ -81,8 +78,8 @@ public class ExceptionExFilterFactory implements ExceptionFilterFactory {
           PsiFile psiFile = worker.getFile();
           if (offset <= 0 || psiFile == null) continue;
           PsiElement element = psiFile.findElementAt(offset);
-          PsiTryStatement tryStatement = PsiTreeUtil.getParentOfType(element, PsiTryStatement.class);
-          PsiCodeBlock tryBlock = tryStatement == null ? null : tryStatement.getTryBlock();
+          PsiElement parent = PsiTreeUtil.getParentOfType(element, PsiTryStatement.class, PsiAnonymousClass.class);
+          PsiCodeBlock tryBlock = parent instanceof PsiTryStatement ? ((PsiTryStatement)parent).getTryBlock() : null;
           if (tryBlock == null || !tryBlock.getTextRange().contains(offset)) continue;
         }
         finally {
