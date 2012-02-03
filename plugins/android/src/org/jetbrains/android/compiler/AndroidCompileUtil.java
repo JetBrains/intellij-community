@@ -47,7 +47,6 @@ import com.intellij.psi.search.FileTypeIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
-import com.intellij.util.ui.update.Update;
 import org.jetbrains.android.AndroidProjectComponent;
 import org.jetbrains.android.dom.resources.Attr;
 import org.jetbrains.android.dom.resources.DeclareStyleable;
@@ -356,16 +355,11 @@ public class AndroidCompileUtil {
     final AndroidFacet facet = AndroidFacet.getInstance(module);
 
     if (facet != null) {
-      facet.scheduleGeneratingActivity(new Update(Pair.create(module, compiler.getClass())) {
-        @Override
-        public void run() {
-          doGenerate(module, compiler);
-        }
-      });
+      facet.scheduleSourceRegenerating(compiler);
     }
   }
 
-  private static void doGenerate(final Module module, final GeneratingCompiler compiler) {
+  public static void doGenerate(final Module module, final GeneratingCompiler compiler) {
     final Project project = module.getProject();
     final AndroidProjectComponent component = ApplicationManager.getApplication().runReadAction(new Computable<AndroidProjectComponent>() {
       @Nullable
