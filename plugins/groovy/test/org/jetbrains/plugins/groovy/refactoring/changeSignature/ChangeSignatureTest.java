@@ -224,6 +224,10 @@ public class ChangeSignatureTest extends ChangeSignatureTestCase {
   public void testChangeType() {
     doTest(PsiModifier.PUBLIC, "foo", "List<String>", new SimpleInfo[0], new ThrownExceptionInfo[0], false);
   }
+  
+  public void testDifferentParamNameInOverriden() {
+    doTest(new SimpleInfo("newName", 0));
+  }
 
   private PsiType createType(String typeText) {
     return JavaPsiFacade.getElementFactory(getProject()).createTypeByFQClassName(typeText, GlobalSearchScope.allScope(getProject()));
