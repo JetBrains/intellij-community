@@ -495,7 +495,7 @@ public class PythonSdkType extends SdkType {
     }
     // Add folders from sys.path
     final List<String> paths = getSysPath(bin_path);
-    if ((paths != null) && paths.size() > 0) {
+    if (paths.size() > 0) {
       // add every path as root.
       for (String path : paths) {
         if (!path.contains(sep)) continue; // TODO: interpret possible 'special' paths reasonably
@@ -575,14 +575,12 @@ public class PythonSdkType extends SdkType {
     return PathManager.getSystemPath() + File.separator + SKELETON_DIR_NAME;
   }
 
-  @Nullable
+  @NotNull
   public static List<String> getSysPath(String bin_path) {
     String working_dir = new File(bin_path).getParent();
     Application application = ApplicationManager.getApplication();
     if (application != null && !application.isUnitTestMode()) {
-      final List<String> paths = getSysPathsFromScript(bin_path);
-      if (paths == null) throw new InvalidSdkException("Failed to determine Python's sys.path value");
-      return paths;
+      return getSysPathsFromScript(bin_path);
     }
     else { // mock sdk
       List<String> ret = new ArrayList<String>(1);
@@ -591,8 +589,7 @@ public class PythonSdkType extends SdkType {
     }
   }
 
-
-  @Nullable
+  @NotNull
   protected static List<String> getSysPathsFromScript(String bin_path) {
     String scriptFile = PythonHelpersLocator.getHelperPath("syspath.py");
     // to handle the situation when PYTHONPATH contains ., we need to run the syspath script in the
@@ -603,7 +600,12 @@ public class PythonSdkType extends SdkType {
       new String[]{bin_path, scriptFile},
       add_environment, MINUTE
     );
-    return run_result.checkSuccess(LOG) ? run_result.getStdoutLines() : null;
+    if (!run_result.checkSuccess(LOG)) {
+      throw new InvalidSdkException(String.format("Failed to determine Python's sys.path value:\nSTDOUT: %s\nSTDERR: %s",
+                                                  run_result.getStdout(),
+                                                  run_result.getStderr()));
+    }
+    return run_result.getStdoutLines();
   }
 
   // Returns a piece of env good as additional env for getProcessOutput.

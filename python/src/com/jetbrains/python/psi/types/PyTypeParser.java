@@ -204,7 +204,8 @@ public class PyTypeParser {
       }
       // Workaround for stdlib modules _abcoll, _functools, etc.
       for (PyClass aClass : classes) {
-        if (aClass.getQualifiedName().startsWith("_")) {
+        final String name = aClass.getQualifiedName();
+        if (name != null && name.startsWith("_")) {
           final PyType t = new PyClassType(aClass, false);
           types.put(classRange.shiftRight(offset), t);
           fullRanges.put(t, whole);

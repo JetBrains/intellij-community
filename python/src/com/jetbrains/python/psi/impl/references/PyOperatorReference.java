@@ -2,6 +2,7 @@ package com.jetbrains.python.psi.impl.references;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -35,23 +36,10 @@ public class PyOperatorReference extends PyReferenceImpl {
         res = resolveMember(expr.getRightExpression(), name);
       }
       else {
-        final TypeEvalContext typeEvalContext = myContext.getTypeEvalContext();
-        typeEvalContext.trace("Trying to resolve left operator");
-        typeEvalContext.traceIndent();
-        try {
-          res.addAll(resolveMember(expr.getLeftExpression(), name));
+        if (PyNames.DIV.equals(name) && isTrueDivEnabled(myElement)) {
+          resolveLeftAndRightOperators(res, expr, PyNames.TRUEDIV);
         }
-        finally {
-          typeEvalContext.traceUnindent();
-        }
-        typeEvalContext.trace("Trying to resolve right operator");
-        typeEvalContext.traceIndent();
-        try {
-          res.addAll(resolveMember(expr.getRightExpression(), leftToRightOperatorName(name)));
-        }
-        finally {
-           typeEvalContext.traceUnindent();
-        }
+        resolveLeftAndRightOperators(res, expr, name);
       }
     }
     else if (myElement instanceof PySubscriptionExpression) {
@@ -90,6 +78,35 @@ public class PyOperatorReference extends PyReferenceImpl {
 
   private static String leftToRightOperatorName(String name) {
     return name.replaceFirst("__([a-z]+)__", "__r$1__");
+  }
+
+  private static boolean isTrueDivEnabled(@NotNull PyElement anchor) {
+    final PsiFile file = anchor.getContainingFile();
+    if (file instanceof PyFile) {
+      final PyFile pyFile = (PyFile)file;
+      return FutureFeature.DIVISION.requiredAt(pyFile.getLanguageLevel()) || pyFile.hasImportFromFuture(FutureFeature.DIVISION);
+    }
+    return false;
+  }
+
+  private void resolveLeftAndRightOperators(List<RatedResolveResult> res, PyBinaryExpression expr, String name) {
+    final TypeEvalContext typeEvalContext = myContext.getTypeEvalContext();
+    typeEvalContext.trace("Trying to resolve left operator");
+    typeEvalContext.traceIndent();
+    try {
+      res.addAll(resolveMember(expr.getLeftExpression(), name));
+    }
+    finally {
+      typeEvalContext.traceUnindent();
+    }
+    typeEvalContext.trace("Trying to resolve right operator");
+    typeEvalContext.traceIndent();
+    try {
+      res.addAll(resolveMember(expr.getRightExpression(), leftToRightOperatorName(name)));
+    }
+    finally {
+      typeEvalContext.traceUnindent();
+    }
   }
 
   @NotNull

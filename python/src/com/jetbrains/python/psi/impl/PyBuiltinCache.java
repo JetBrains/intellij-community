@@ -18,6 +18,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiManager;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
@@ -287,7 +288,7 @@ public class PyBuiltinCache {
 
   @Nullable
   public PyClassType getOldstyleClassobjType() {
-    return getObjectType("___Classobj");
+    return getObjectType(PyNames.FAKE_OLD_BASE);
   }
 
   @Nullable
