@@ -78,8 +78,8 @@ public class ExceptionExFilterFactory implements ExceptionFilterFactory {
           PsiFile psiFile = worker.getFile();
           if (offset <= 0 || psiFile == null) continue;
           PsiElement element = psiFile.findElementAt(offset);
-          PsiElement parent = PsiTreeUtil.getParentOfType(element, PsiTryStatement.class, PsiAnonymousClass.class);
-          PsiCodeBlock tryBlock = parent instanceof PsiTryStatement ? ((PsiTryStatement)parent).getTryBlock() : null;
+          PsiTryStatement parent = PsiTreeUtil.getParentOfType(element, PsiTryStatement.class, true, PsiClass.class);
+          PsiCodeBlock tryBlock = parent != null? parent.getTryBlock() : null;
           if (tryBlock == null || !tryBlock.getTextRange().contains(offset)) continue;
         }
         finally {
