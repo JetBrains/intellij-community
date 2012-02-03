@@ -1606,6 +1606,12 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
       mySession.process(event);
       mySession = null;
     }
+
+    @Override
+    public void dragOutCancelled(TabInfo source) {
+      mySession.cancel();
+      mySession = null;
+    }
   }
 
   class DockableGrid implements DockableContent<List<Content>> {

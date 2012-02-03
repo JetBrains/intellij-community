@@ -168,7 +168,7 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
       if (each.isEmpty() && each.isDisposeWhenEmpty()) {
         DockWindow window = myWindows.getValue(each);
         if (window != null) {
-          window.setTransparrent(true);
+          window.setTransparent(true);
         }
       }
     }
@@ -178,9 +178,9 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
   }
 
 
-  private void stopCurrentDragSession() {
+  public void stopCurrentDragSession() {
     if (myCurrentDragSession != null) {
-      myCurrentDragSession.cancel();
+      myCurrentDragSession.cancelSession();
       myCurrentDragSession = null;
       myBusyObject.onReady();
 
@@ -188,7 +188,7 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
         if (!each.isEmpty()) {
           DockWindow window = myWindows.getValue(each);
           if (window != null) {
-            window.setTransparrent(false);
+            window.setTransparent(false);
           }
         }
       }
@@ -325,7 +325,12 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
       }
     }
 
+    @Override
     public void cancel() {
+      stopCurrentDragSession();
+    }
+
+    private void cancelSession() {
       myWindow.dispose();
 
       if (myCurrentOverContainer != null) {
@@ -512,8 +517,8 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
       myNorthPanel.repaint();
     }
 
-    public void setTransparrent(boolean transparrent) {
-      if (transparrent) {
+    public void setTransparent(boolean transparent) {
+      if (transparent) {
         WindowManagerEx.getInstanceEx().setAlphaModeEnabled(getFrame(), true);
         WindowManagerEx.getInstanceEx().setAlphaModeRatio(getFrame(), 0.5f);
       } else {

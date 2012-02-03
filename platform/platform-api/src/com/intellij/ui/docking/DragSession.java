@@ -20,5 +20,6 @@ import java.awt.event.MouseEvent;
 public interface DragSession {
 
   void process(MouseEvent e);
+  void cancel();
 
 }
