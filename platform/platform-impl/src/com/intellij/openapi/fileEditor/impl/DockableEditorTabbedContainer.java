@@ -136,7 +136,7 @@ public class DockableEditorTabbedContainer implements DockContainer.Persistent {
     VirtualFile file = ((EditorTabbedContainer.MyDragOutDelegate.DockableEditor)content).getFile();
 
 
-    if (window == null) {
+    if (window == null || window.isDisposed()) {
       window = mySplitters.getOrCreateCurrentWindow(file);
     }
 
