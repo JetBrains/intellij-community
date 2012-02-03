@@ -125,9 +125,11 @@ class StatusPanel extends JPanel {
     final Alarm alarm = getAlarm();
     myLogMode = logAllowed && StringUtil.isEmpty(nonLogText) && statusMessage != null && alarm != null;
 
-    if (myLogMode) {
+    if (alarm != null) {
       alarm.cancelAllRequests();
+    }
 
+    if (myLogMode) {
       myTextPanel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
       new Runnable() {
         @Override
