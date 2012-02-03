@@ -156,6 +156,18 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
       classes.addAll(((JavaCoverageSuite)suite).getCurrentSuiteClasses(myProject));
     }
 
+    final Set<PsiPackage> packs = new HashSet<PsiPackage>();
+    for (PsiPackage aPackage : packages) {
+      final String qualifiedName = aPackage.getQualifiedName();
+      for (PsiPackage psiPackage : packages) {
+        if (psiPackage.getQualifiedName().startsWith(qualifiedName + ".")) {
+          packs.add(psiPackage);
+          break;
+        }
+      }
+    }
+    packages.removeAll(packs);
+
     for (PsiPackage aPackage : packages) {
       final GlobalSearchScope searchScope = getSearchScope(mySuitesBundle, myProject);
       if (aPackage.getDirectories(searchScope).length == 0) continue;
