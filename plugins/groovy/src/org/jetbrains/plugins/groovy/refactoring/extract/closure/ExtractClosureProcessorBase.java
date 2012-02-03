@@ -62,10 +62,17 @@ public abstract class ExtractClosureProcessorBase extends BaseRefactoringProcess
     StringBuilder buffer = new StringBuilder();
 
     buffer.append('{');
-    for (String p : ExtractUtil.getParameterString(myHelper, true)) {
-      buffer.append(p);
+
+    final String[] params = ExtractUtil.getParameterString(myHelper, true);
+    if (params.length > 0) {
+      for (String p : params) {
+        buffer.append(p);
+      }
+      buffer.append("->");
     }
-    buffer.append("->\n");
+    if (myHelper.getStatements().length > 1) {
+      buffer.append('\n');
+    }
 
     ExtractUtil.generateBody(myHelper, false, buffer);
     buffer.append('}');
