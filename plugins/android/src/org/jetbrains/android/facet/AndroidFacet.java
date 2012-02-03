@@ -743,7 +743,7 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
       LOG.error("Autogenerating is not supported for compiler " + compiler.getClass().getCanonicalName());
     }
     else {
-      queue.queue(new Update(Pair.create(compiler.getClass(), getModule())) {
+      queue.queue(new Update(this) {
         @Override
         public void run() {
           AndroidCompileUtil.doGenerate(getModule(), compiler);
