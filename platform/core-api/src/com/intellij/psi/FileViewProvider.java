@@ -37,18 +37,26 @@ import java.util.Set;
  * @see PsiManager#findViewProvider(com.intellij.openapi.vfs.VirtualFile)
  */
 public interface FileViewProvider extends Cloneable, UserDataHolder {
-  @NotNull PsiManager getManager();
+  @NotNull
+  PsiManager getManager();
 
-  @Nullable Document getDocument();
-  @NotNull CharSequence getContents();
-  @NotNull VirtualFile getVirtualFile();
+  @Nullable
+  Document getDocument();
 
-  @NotNull Language getBaseLanguage();
+  @NotNull
+  CharSequence getContents();
+
+  @NotNull
+  VirtualFile getVirtualFile();
+
+  @NotNull
+  Language getBaseLanguage();
 
   /**
    * @return all languages this file supports. See {@link #getPsi(com.intellij.lang.Language)}
    */
-  @NotNull Set<Language> getLanguages();
+  @NotNull
+  Set<Language> getLanguages();
 
   /**
    * @param target target language
@@ -56,33 +64,40 @@ public interface FileViewProvider extends Cloneable, UserDataHolder {
    */
   PsiFile getPsi(@NotNull Language target);
 
-  @NotNull List<PsiFile> getAllFiles();
+  @NotNull
+  List<PsiFile> getAllFiles();
 
   boolean isEventSystemEnabled();
+
   boolean isPhysical();
 
   long getModificationStamp();
 
-  boolean supportsIncrementalReparse(Language rootLanguage);
+  boolean supportsIncrementalReparse(@NotNull Language rootLanguage);
 
-  void rootChanged(PsiFile psiFile);
+  void rootChanged(@NotNull PsiFile psiFile);
+
   void beforeContentsSynchronized();
+
   void contentsSynchronized();
+
   FileViewProvider clone();
 
   @Nullable
-  PsiElement findElementAt(final int offset);
-  @Nullable
-  PsiReference findReferenceAt(final int offset);
+  PsiElement findElementAt(int offset);
 
   @Nullable
-  PsiElement findElementAt(final int offset, final Language language);
+  PsiReference findReferenceAt(int offset);
 
   @Nullable
-  PsiElement findElementAt(int offset, Class<? extends Language> lang);
+  PsiElement findElementAt(int offset, @NotNull Language language);
+
   @Nullable
-  PsiReference findReferenceAt(final int offsetInElement, @NotNull Language language);
+  PsiElement findElementAt(int offset, @NotNull Class<? extends Language> lang);
+
+  @Nullable
+  PsiReference findReferenceAt(int offsetInElement, @NotNull Language language);
 
   @NotNull
-  FileViewProvider createCopy(VirtualFile copy);
+  FileViewProvider createCopy(@NotNull VirtualFile copy);
 }
