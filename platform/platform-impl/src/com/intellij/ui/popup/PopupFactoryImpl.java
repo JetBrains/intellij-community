@@ -604,14 +604,10 @@ public class PopupFactoryImpl extends JBPopupFactory {
     private Icon myEmptyIcon;
     private int myMaxIconWidth = -1;
     private int myMaxIconHeight = -1;
-    @NotNull
-    private String myActionPlace;
+    @NotNull private String myActionPlace;
 
-    private ActionStepBuilder(@NotNull DataContext dataContext,
-                             final boolean showNumbers,
-                             final boolean useAlphaAsNumbers,
-                             final boolean showDisabled,
-                             final boolean honorActionMnemonics) {
+    private ActionStepBuilder(@NotNull DataContext dataContext, final boolean showNumbers, final boolean useAlphaAsNumbers,
+                              final boolean showDisabled, final boolean honorActionMnemonics) {
       myUseAlphaAsNumbers = useAlphaAsNumbers;
       myListModel = new ArrayList<ActionItem>();
       myDataContext = dataContext;
@@ -645,11 +641,8 @@ public class PopupFactoryImpl extends JBPopupFactory {
     }
 
     private void calcMaxIconSize(final ActionGroup actionGroup) {
-      AnAction[] actions = actionGroup.getChildren(new AnActionEvent(null, myDataContext,
-                                                                     myActionPlace,
-                                                                     getPresentation(actionGroup),
-                                                                     ActionManager.getInstance(),
-                                                                     0));
+      AnAction[] actions = actionGroup.getChildren(new AnActionEvent(null, myDataContext, myActionPlace,
+                                                                     getPresentation(actionGroup), ActionManager.getInstance(), 0));
       for (AnAction action : actions) {
         if (action == null) continue;
         if (action instanceof ActionGroup) {
@@ -675,11 +668,8 @@ public class PopupFactoryImpl extends JBPopupFactory {
     }
 
     private void appendActionsFromGroup(final ActionGroup actionGroup) {
-      AnAction[] actions = actionGroup.getChildren(new AnActionEvent(null, myDataContext,
-                                                                     myActionPlace,
-                                                                     getPresentation(actionGroup),
-                                                                     ActionManager.getInstance(),
-                                                                     0));
+      AnAction[] actions = actionGroup.getChildren(new AnActionEvent(null, myDataContext, myActionPlace,
+                                                                     getPresentation(actionGroup), ActionManager.getInstance(), 0));
       for (AnAction action : actions) {
         if (action == null) {
           LOG.error("null action in group " + actionGroup);
@@ -708,11 +698,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
     private void appendAction(@NotNull AnAction action) {
       Presentation presentation = getPresentation(action);
-      AnActionEvent event = new AnActionEvent(null, myDataContext,
-                                              myActionPlace,
-                                              presentation,
-                                              ActionManager.getInstance(),
-                                              0);
+      AnActionEvent event = new AnActionEvent(null, myDataContext, myActionPlace, presentation, ActionManager.getInstance(), 0);
 
       ActionUtil.performDumbAwareUpdate(action, event, true);
       if ((myShowDisabled || presentation.isEnabled()) && presentation.isVisible()) {
@@ -737,7 +723,6 @@ public class PopupFactoryImpl extends JBPopupFactory {
         if (icon == null) {
           @NonNls final String actionId = ActionManager.getInstance().getId(action);
           icon = actionId != null && actionId.startsWith("QuickList.") ? QUICK_LIST_ICON : myEmptyIcon;
-
         }
         else {
           icon = new IconWrapper(icon);
