@@ -45,6 +45,8 @@ import com.intellij.util.containers.StripedLockIntObjectConcurrentHashMap;
 import com.intellij.util.io.DupOutputStream;
 import com.intellij.util.io.ReplicatorInputStream;
 import com.intellij.util.messages.MessageBus;
+import gnu.trove.THashMap;
+import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -68,7 +70,8 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
 
   private final MessageBus myEventsBus;
 
-  private final Map<String, VirtualFileSystemEntry> myRoots = new HashMap<String, VirtualFileSystemEntry>();
+  private final Map<String, VirtualFileSystemEntry> myRoots = new THashMap<String, VirtualFileSystemEntry>();
+  private final TIntObjectHashMap<VirtualFileSystemEntry> myRootsById = new TIntObjectHashMap<VirtualFileSystemEntry>();
   private VirtualFileSystemEntry myFakeRoot;
   private final Object INPUT_LOCK = new Object();
 
@@ -759,6 +762,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
 
         if (basePath.length() > 0) {
           myRoots.put(rootUrl, root);
+          myRootsById.put(root.getId(), root);
         }
         else {
           myFakeRoot = root;
@@ -849,10 +853,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     final int parentId = getParent(id);
     if (parentId == 0) {
       synchronized (LOCK) {
-        for (NewVirtualFile root : myRoots.values()) {
-          if (root.getId() == id) return root;
-        }
-        return null;
+        return myRootsById.get(id);
       }
     }
     else {
@@ -980,6 +981,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
       else {
         synchronized (LOCK) {
           myRoots.remove(file.getUrl());
+          myRootsById.remove(id);
           try {
             FSRecords.deleteRootRecord(id);
           }
