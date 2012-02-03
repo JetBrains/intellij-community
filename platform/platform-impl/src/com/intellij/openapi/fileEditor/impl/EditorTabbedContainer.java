@@ -581,6 +581,17 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
       mySession = null;
     }
 
+    @Override
+    public void dragOutCancelled(TabInfo source) {
+      source.setHidden(false);
+      if (mySession != null) {
+        mySession.cancel();
+      }
+
+      myFile = null;
+      mySession = null;
+    }
+
     class DockableEditor implements DockableContent<VirtualFile> {
       final Image myImg;
       private DockableEditorTabbedContainer myContainer;
