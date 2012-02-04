@@ -87,13 +87,14 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
   @Override
   public <T extends Notification> T[] getNotificationsOfType(Class<T> klass, @Nullable final Project project) {
     final List<T> result = new ArrayList<T>();
-    for (Notification notification : EventLog.getLogModel(project).getNotifications()) {
-      if (klass.isInstance(notification)) {
-        //noinspection unchecked
-        result.add((T) notification);
+    if (project == null || !project.isDefault()) {
+      for (Notification notification : EventLog.getLogModel(project).getNotifications()) {
+        if (klass.isInstance(notification)) {
+          //noinspection unchecked
+          result.add((T) notification);
+        }
       }
     }
-
     return ArrayUtil.toObjectArray(result, klass);
   }
 
