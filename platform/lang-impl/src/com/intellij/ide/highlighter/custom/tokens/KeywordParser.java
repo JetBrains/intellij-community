@@ -19,8 +19,11 @@ package com.intellij.ide.highlighter.custom.tokens;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.CustomHighlighterTokenType;
 import com.intellij.psi.tree.IElementType;
+import gnu.trove.THashSet;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -59,10 +62,10 @@ public class KeywordParser extends TokenParser {
 
   private Set<String> getKeywordSet(Set<String> keywordSet) {
     if (!myIgnoreCase) {
-      return new HashSet<String>(keywordSet);
+      return new THashSet<String>(keywordSet);
     }
 
-    final Set<String> result = new HashSet<String>();
+    final Set<String> result = new THashSet<String>();
     for (String s : keywordSet) {
       result.add(s.toUpperCase());
     }
@@ -81,9 +84,8 @@ public class KeywordParser extends TokenParser {
 
     String keyword = matcher.group(1);
     String testKeyword = myIgnoreCase ? keyword.toUpperCase() : keyword;
-    for (int i = 0, size = myKeywordSets.size(); i < size; i++) {
-      Set<String> keywordSet = myKeywordSets.get(i);
-      if (keywordSet.contains(testKeyword)) {
+    for (int i = 0; i < CustomHighlighterTokenType.KEYWORD_TYPE_COUNT; i++) {
+      if (myKeywordSets.get(i).contains(testKeyword)) {
         myTokenInfo.updateData(position, position + keyword.length(), getToken(i));
         return true;
       }
