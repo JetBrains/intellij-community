@@ -81,7 +81,7 @@ public class KeywordParser extends TokenParser {
 
     String keyword = matcher.group(1);
     String testKeyword = myIgnoreCase ? keyword.toUpperCase() : keyword;
-    for (int i = 0; i < myKeywordSets.size(); i++) {
+    for (int i = 0, size = myKeywordSets.size(); i < size; i++) {
       Set<String> keywordSet = myKeywordSets.get(i);
       if (keywordSet.contains(testKeyword)) {
         myTokenInfo.updateData(position, position + keyword.length(), getToken(i));
