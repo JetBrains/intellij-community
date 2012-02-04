@@ -256,6 +256,9 @@ public class JavaBuilder extends ModuleLevelBuilder {
       if (hasSourcesToCompile) {
         final Set<File> sourcePath = TEMPORARY_SOURCE_ROOTS_KEY.get(context, Collections.<File>emptySet());
 
+        final String chunkName = chunk.getName();
+        context.processMessage(new ProgressMessage("Compiling java [" + chunkName + "]"));
+
         final boolean compiledOk = compileJava(chunk, files, classpath, platformCp, sourcePath, outs, context, diagnosticSink, outputSink);
 
         final Map<File, String> chunkSourcePath = ProjectPaths.getSourceRootsWithDependents(chunk, context.isCompilingTests());
@@ -263,21 +266,21 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
         if (!forms.isEmpty()) {
           try {
-            context.processMessage(new ProgressMessage("Instrumenting forms [" + chunk.getName() + "]"));
+            context.processMessage(new ProgressMessage("Instrumenting forms [" + chunkName + "]"));
             instrumentForms(context, chunk, chunkSourcePath, compiledClassesLoader, forms, outputSink);
           }
           finally {
-            context.processMessage(new ProgressMessage("Finished instrumenting forms [" + chunk.getName() + "]"));
+            context.processMessage(new ProgressMessage("Finished instrumenting forms [" + chunkName + "]"));
           }
         }
 
         if (addNotNullAssertions) {
           try {
-            context.processMessage(new ProgressMessage("Adding NotNull assertions [" + chunk.getName() + "]"));
+            context.processMessage(new ProgressMessage("Adding NotNull assertions [" + chunkName + "]"));
             instrumentNotNull(context, outputSink, compiledClassesLoader);
           }
           finally {
-            context.processMessage(new ProgressMessage("Finished adding NotNull assertions [" + chunk.getName() + "]"));
+            context.processMessage(new ProgressMessage("Finished adding NotNull assertions [" + chunkName + "]"));
           }
         }
 
