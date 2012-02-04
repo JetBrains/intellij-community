@@ -466,8 +466,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     final List<String> options = new ArrayList<String>();
     final List<String> vmOptions = new ArrayList<String>();
 
-    options.add("-verbose");
-
+    //options.add("-verbose");
     final Project project = context.getProject();
     final Map<String, String> javacOpts = project.getCompilerConfiguration().getJavacOptions();
     final boolean debugInfo = !"false".equals(javacOpts.get("DEBUGGING_INFO"));
@@ -721,19 +720,19 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
     public void outputLineAvailable(String line) {
       if (!StringUtil.isEmpty(line)) {
-        //System.err.println(line);
-        if (line.startsWith("[") && line.endsWith("]")) {
-          final String message = line.substring(1, line.length() - 1);
-          if (message.startsWith("parsing")) {
-            myContext.processMessage(new ProgressMessage("Parsing sources..."));
-          }
-          else {
-            if (!message.startsWith("total ") && !message.startsWith("loading ") && !message.startsWith("wrote ")) {
-              myContext.processMessage(new ProgressMessage(FileUtil.toSystemDependentName(message)));
-            }
-          }
-        }
-        else if (line.contains("java.lang.OutOfMemoryError")) {
+        //if (line.startsWith("[") && line.endsWith("]")) {
+        //  final String message = line.substring(1, line.length() - 1);
+        //  if (message.startsWith("parsing")) {
+        //    myContext.processMessage(new ProgressMessage("Parsing sources..."));
+        //  }
+        //  else {
+        //    if (!message.startsWith("total ") && !message.startsWith("loading ") && !message.startsWith("wrote ")) {
+        //      myContext.processMessage(new ProgressMessage(FileUtil.toSystemDependentName(message)));
+        //    }
+        //  }
+        //}
+        //else
+        if (line.contains("java.lang.OutOfMemoryError")) {
           myContext.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "OutOfMemoryError: insufficient memory"));
         }
         else {

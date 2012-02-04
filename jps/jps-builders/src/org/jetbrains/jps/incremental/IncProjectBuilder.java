@@ -3,6 +3,7 @@ package org.jetbrains.jps.incremental;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.io.MappingFailedException;
 import com.intellij.util.io.PersistentEnumerator;
 import org.jetbrains.jps.*;
 import org.jetbrains.jps.api.CanceledStatus;
@@ -75,7 +76,8 @@ public class IncProjectBuilder {
         runBuild(context);
       }
       catch (ProjectBuildException e) {
-        if (e.getCause() instanceof PersistentEnumerator.CorruptedException) {
+        final Throwable cause = e.getCause();
+        if (cause instanceof PersistentEnumerator.CorruptedException || cause instanceof MappingFailedException) {
           // force rebuild
           myMessageDispatcher.processMessage(new CompilerMessage(COMPILE_SERVER_NAME, BuildMessage.Kind.INFO,
                                                                  "Internal caches are corrupted or have outdated format, forcing project rebuild: " +

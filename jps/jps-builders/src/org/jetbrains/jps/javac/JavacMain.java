@@ -16,7 +16,7 @@ import java.util.*;
  */
 public class JavacMain {
   private static final Set<String> FILTERED_OPTIONS = new HashSet<String>(Arrays.<String>asList(
-    "-d", "-classpath", "-cp", "-bootclasspath"
+    "-verbose", "-d", "-classpath", "-cp", "-bootclasspath"/*, "-proc:none"*/
   ));
 
   public static boolean compile(Collection<String> options,
