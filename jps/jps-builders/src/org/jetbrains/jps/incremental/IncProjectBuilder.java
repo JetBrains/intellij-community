@@ -412,7 +412,7 @@ public class IncProjectBuilder {
           nextPassRequired = true;
         }
         else if (buildResult == ModuleLevelBuilder.ExitCode.CHUNK_REBUILD_REQUIRED) {
-          if (!rebuildFromScratchRequested) {
+          if (!rebuildFromScratchRequested && !context.isProjectRebuild()) {
             // allow rebuild from scratch only once per chunk
             rebuildFromScratchRequested = true;
             try {
