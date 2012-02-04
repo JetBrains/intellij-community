@@ -22,6 +22,10 @@ public class ExecutionException extends Exception {
     super(s);
   }
 
+  public ExecutionException(final Throwable cause) {
+    super(cause == null ? null : cause.getMessage(), cause);
+  }
+
   public ExecutionException(final String s, Throwable cause) {
     super(s, cause);
   }
