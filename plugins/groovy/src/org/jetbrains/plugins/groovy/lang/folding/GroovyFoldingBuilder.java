@@ -209,25 +209,6 @@ public class GroovyFoldingBuilder implements FoldingBuilder, GroovyElementTypes,
     return  element.getText().endsWith("*/");
   }
 
-  private static boolean isWellEndedString(PsiElement element) {
-    final String text = element.getText();
-
-    if (!text.endsWith("'''") && !text.endsWith("\"\"\"") && !text.endsWith("/") && !text.endsWith("/$")) return false;
-
-
-    final IElementType type = element.getNode().getElementType();
-    if (TokenSets.STRING_LITERAL_SET.contains(type)) return true;
-
-    final PsiElement lastChild = element.getLastChild();
-    if (lastChild == null) return false;
-
-    final IElementType lastType = lastChild.getNode().getElementType();
-    if (type == GSTRING) return lastType == mGSTRING_END;
-    if (type == REGEX) return lastType == mREGEX_END || lastType == mDOLLAR_SLASH_REGEX_END;
-
-    return false;
-  }
-
   private static boolean isMultiline(PsiElement element) {
     String text = element.getText();
     return text.contains("\n") || text.contains("\r") || text.contains("\r\n");
@@ -297,6 +278,6 @@ public class GroovyFoldingBuilder implements FoldingBuilder, GroovyElementTypes,
             node.getElementType().equals(GSTRING) ||
             node.getElementType().equals(REGEX)) &&
            isMultiline(node.getPsi()) &&
-           isWellEndedString(node.getPsi());
+           GrStringUtil.isWellEndedString(node.getPsi());
   }
 }

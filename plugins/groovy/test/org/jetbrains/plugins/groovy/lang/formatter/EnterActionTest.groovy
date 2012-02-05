@@ -69,6 +69,9 @@ public class EnterActionTest extends GroovyFormatterTestCase {
   public void testGstring11() throws Throwable { doTest(); }
   public void testGstring12() throws Throwable { doTest(); }
   public void testGstring13() throws Throwable { doTest(); }
+  public void testGstring14() throws Throwable { doTest(); }
+  public void testGstring15() throws Throwable { doTest(); }
+  public void testGstring16() throws Throwable { doTest(); }
   public void testGstring2() throws Throwable { doTest(); }
   public void testGstring3() throws Throwable { doTest(); }
   public void testGstring4() throws Throwable { doTest(); }
@@ -85,6 +88,10 @@ public class EnterActionTest extends GroovyFormatterTestCase {
   public void testString4() throws Throwable { doTest(); }
   public void testString5() throws Throwable { doTest(); }
   public void testString6() throws Throwable { doTest(); }
+  public void testString7() throws Throwable { doTest(); }
+  public void testString8() throws Throwable { doTest(); }
+  public void testString9() throws Throwable { doTest(); }
+  public void testString10() throws Throwable { doTest(); }
 
   def doTest(String before, String after) {
     myFixture.configureByText("a.groovy", before)
@@ -287,7 +294,6 @@ foo {
     <caret>
 } }
 '''
-
   }
 
 }
