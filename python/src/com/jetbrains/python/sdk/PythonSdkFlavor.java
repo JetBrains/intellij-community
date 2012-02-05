@@ -56,6 +56,15 @@ public abstract class PythonSdkFlavor {
     else if (SystemInfo.isUnix) {
       result.add(UnixPythonSdkFlavor.INSTANCE);
     }
+
+    result.addAll(getPlatformIndependentFlavors());
+
+    return result;
+  }
+
+
+  public static List<PythonSdkFlavor> getPlatformIndependentFlavors() {
+    List<PythonSdkFlavor> result = Lists.newArrayList();
     result.add(JythonSdkFlavor.INSTANCE);
     result.add(IronPythonSdkFlavor.INSTANCE);
     result.add(PyPySdkFlavor.INSTANCE);
@@ -113,7 +122,7 @@ public abstract class PythonSdkFlavor {
   public String getVersionOption() {
     return "-V";
   }
-  
+
   @Nullable
   public String getVersionFromOutput(ProcessOutput processOutput) {
     return getVersionFromOutput(getVersionRegexp(), processOutput);

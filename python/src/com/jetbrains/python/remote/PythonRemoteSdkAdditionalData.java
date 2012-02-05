@@ -3,13 +3,17 @@ package com.jetbrains.python.remote;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.PasswordUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
 import com.jetbrains.python.sdk.PythonSdkFlavor;
+import com.jetbrains.python.sdk.UnixPythonSdkFlavor;
+import com.jetbrains.python.sdk.WinPythonSdkFlavor;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author traff
@@ -237,7 +241,7 @@ public class PythonRemoteSdkAdditionalData extends PythonSdkAdditionalData imple
 
   @NotNull
   public static PythonRemoteSdkAdditionalData loadRemote(Sdk sdk, @Nullable Element element) {
-    final PythonRemoteSdkAdditionalData data = new PythonRemoteSdkAdditionalData(PythonSdkFlavor.getFlavor(sdk.getHomePath()));
+    final PythonRemoteSdkAdditionalData data = new PythonRemoteSdkAdditionalData(computeFlavor(sdk.getHomePath()));
     load(element, data);
 
     if (element != null) {
@@ -256,6 +260,33 @@ public class PythonRemoteSdkAdditionalData extends PythonSdkAdditionalData imple
     }
 
     return data;
+  }
+
+
+  @Nullable
+  private static PythonSdkFlavor computeFlavor(@Nullable String sdkPath) {
+    if (sdkPath == null) {
+      return null;
+    }
+    for (PythonSdkFlavor flavor : getApplicableFlavors(sdkPath.contains("\\"))) {
+      if (flavor.isValidSdkHome(sdkPath)) {
+        return flavor;
+      }
+    }
+    return null;
+  }
+
+  private static List<PythonSdkFlavor> getApplicableFlavors(boolean isWindows) {
+    List<PythonSdkFlavor> result = new ArrayList<PythonSdkFlavor>();
+    if (isWindows) {
+      result.add(WinPythonSdkFlavor.INSTANCE);
+    }
+    else {
+      result.add(UnixPythonSdkFlavor.INSTANCE);
+    }
+    result.addAll(PythonSdkFlavor.getPlatformIndependentFlavors());
+
+    return result;
   }
 
   @Override
