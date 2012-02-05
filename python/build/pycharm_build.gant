@@ -39,7 +39,8 @@ setProperty("pluginFilter", [
             "jdbc-console", "django-db-config",
             "database-impl", "DatabaseSupport",
             "sql",
-            "coffeescript"
+            "coffeescript",
+            "python-remote-interpreter"
             ])
 
 private List platformImplementationModules() {
