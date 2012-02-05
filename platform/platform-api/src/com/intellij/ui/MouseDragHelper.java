@@ -255,7 +255,7 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
 
   @Override
   public boolean dispatchKeyEvent(KeyEvent e) {
-    if (e.getKeyCode() == KeyEvent.VK_ESCAPE && e.getID() == KeyEvent.KEY_PRESSED) {
+    if (e.getKeyCode() == KeyEvent.VK_ESCAPE && e.getID() == KeyEvent.KEY_PRESSED && myDraggingNow) {
       myCancelled = true;
       if (myDetachingMode) {
         processDragOutCancel();
