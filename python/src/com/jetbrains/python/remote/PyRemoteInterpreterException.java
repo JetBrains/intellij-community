@@ -15,6 +15,12 @@ public class PyRemoteInterpreterException extends Exception {
     myAuthFailed = false;
   }
 
+  public PyRemoteInterpreterException(String s) {
+    super(s);
+    myAuthFailed = false;
+    myNoRouteToHost = false;
+  }
+
   public boolean isNoRouteToHost() {
     return myNoRouteToHost;
   }

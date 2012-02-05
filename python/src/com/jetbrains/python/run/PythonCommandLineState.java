@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -144,14 +145,22 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
         ProcessHandler processHandler =
           null;
-        try {
-          processHandler =
-            manager.doCreateProcess(myConfig.getProject(), (PythonRemoteSdkAdditionalData)sdk.getSdkAdditionalData(), commandLine, PyRemoteDebugConfiguration
-              .findByName(myConfig.getProject(),
-                          ((PythonRunConfiguration)myConfig).getRemoteDebugConfiguration()));
-        }
-        catch (PyRemoteInterpreterException e) {
-          // TODO: show dialog and rerun or cancel
+
+        while (true) {
+          try {
+            processHandler =
+              manager.doCreateProcess(myConfig.getProject(), (PythonRemoteSdkAdditionalData)sdk.getSdkAdditionalData(), commandLine,
+                                      PyRemoteDebugConfiguration
+                                        .findByName(myConfig.getProject(),
+                                                    ((PythonRunConfiguration)myConfig).getRemoteDebugConfiguration()));
+            break;
+          }
+          catch (PyRemoteInterpreterException e) {
+            if (Messages.showYesNoDialog(e.getMessage() + "\nTry again?", "Can't Run Remote Interpreter", Messages.getErrorIcon()) ==
+                Messages.NO) {
+              throw new ExecutionException("Can't run remote python interpreter: " + e.getMessage());
+            }
+          }
         }
         ProcessTerminatedListener.attach(processHandler);
         return processHandler;

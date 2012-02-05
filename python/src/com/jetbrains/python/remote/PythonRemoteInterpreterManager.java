@@ -29,6 +29,9 @@ public abstract class PythonRemoteInterpreterManager {
   public abstract ProcessOutput runRemoteProcess(@Nullable Project project, PythonRemoteSdkAdditionalData data, String[] command)
     throws PyRemoteInterpreterException;
 
+  public abstract boolean testConnection(final Project project, final PythonRemoteSdkAdditionalData data,
+                                         final String title) throws PyRemoteInterpreterException;
+
   @Nullable
   public static PythonRemoteInterpreterManager getInstance() {
     if (EP_NAME.getExtensions().length > 0) {
