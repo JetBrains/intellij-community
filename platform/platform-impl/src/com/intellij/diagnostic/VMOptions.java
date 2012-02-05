@@ -226,7 +226,7 @@ public class VMOptions {
     }
 
     final String productName = ApplicationNamesInfo.getInstance().getProductName().toLowerCase();
-    final String platformSuffix = SystemInfo.is64Bit ? "64" : "";
+    final String platformSuffix = (SystemInfo.is64Bit && !SystemInfo.isLinux) ? "64" : "";
     final String osSuffix = SystemInfo.isWindows ? ".exe" : "";
     return PathManager.getBinPath() + File.separatorChar + productName + platformSuffix + osSuffix + ".vmoptions";
   }
