@@ -18,9 +18,12 @@ package com.intellij.openapi.fileEditor.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
+import com.intellij.openapi.fileEditor.FileEditorState;
+import com.intellij.openapi.fileEditor.FileEditorStateLevel;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -71,5 +74,18 @@ public class EditorWithProviderComposite extends EditorComposite {
       LOG.assertTrue(index<myEditors.length, index);
       return Pair.create (myEditors[index], myProviders [index]);
     }
+  }
+
+  public HistoryEntry currentStateAsHistoryEntry() {
+    final FileEditor[] editors = getEditors();
+    final FileEditorState[] states = new FileEditorState[editors.length];
+    for (int j = 0; j < states.length; j++) {
+      states[j] = editors[j].getState(FileEditorStateLevel.FULL);
+      LOG.assertTrue(states[j] != null);
+    }
+    final int selectedProviderIndex = ArrayUtil.find(editors, getSelectedEditor());
+    LOG.assertTrue(selectedProviderIndex != -1);
+    final FileEditorProvider[] providers = getProviders();
+    return new HistoryEntry(getFile(), providers, states, providers[selectedProviderIndex]);
   }
 }

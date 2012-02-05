@@ -235,10 +235,10 @@ public class EventLog implements Notifications {
   }
 
   private static void removeJavaNewLines(Document document, List<RangeMarker> lineSeparators, boolean hasHtml) {
-    String text = document.getText();
-    int i = -1;
+    CharSequence text = document.getCharsSequence();
+    int i = 0;
     while (true) {
-      i = text.indexOf('\n', i + 1);
+      i = StringUtil.indexOf(text, '\n', i);
       if (i < 0) break;
       document.deleteString(i, i + 1);
       if (!hasHtml) {

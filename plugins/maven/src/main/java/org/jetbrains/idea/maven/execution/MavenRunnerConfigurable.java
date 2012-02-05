@@ -187,20 +187,21 @@ public abstract class MavenRunnerConfigurable implements SearchableConfigurable,
 
   }
 
-  private void fillComboboxJdk(MavenRunnerSettings data) {
-    myJdkComboModel.removeAllElements();
-    for (Pair<String, String> jdk : data.collectJdkNamesAndDescriptions()) {
-      ComboBoxUtil.addToModel(myJdkComboModel, jdk.getFirst(), jdk.getSecond());
-    }
-    myJdkCombo.setModel(myJdkComboModel);
-  }
-
   void getData(MavenRunnerSettings data) {
     myRunInBackgroundCheckbox.setSelected(data.isRunMavenInBackground());
     myVMParametersEditor.setText(data.getVmOptions());
     mySkipTestsCheckBox.setSelected(data.isSkipTests());
 
-    fillComboboxJdk(data);
+    Map<String, String> jdkMap = data.collectJdkNamesAndDescriptions();
+    if (!jdkMap.containsKey(data.getJreName())) {
+      jdkMap.put(data.getJreName(), data.getJreName());
+    }
+
+    myJdkComboModel.removeAllElements();
+    for (Map.Entry<String, String> entry : jdkMap.entrySet()) {
+      ComboBoxUtil.addToModel(myJdkComboModel, entry.getKey(), entry.getValue());
+    }
+    myJdkCombo.setModel(myJdkComboModel);
     ComboBoxUtil.select(myJdkComboModel, data.getJreName());
 
     myPropertiesPanel.setDataFromMap(data.getMavenProperties());

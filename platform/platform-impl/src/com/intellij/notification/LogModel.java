@@ -16,7 +16,6 @@
 package com.intellij.notification;
 
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
-import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -105,7 +104,6 @@ public class LogModel implements Disposable {
   }
 
   void removeNotification(Notification notification) {
-    NotificationsManagerImpl.getNotificationsManagerImpl().remove(notification);
     synchronized (myNotifications) {
       myNotifications.remove(notification);
     }

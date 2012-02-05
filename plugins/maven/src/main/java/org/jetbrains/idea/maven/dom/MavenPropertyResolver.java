@@ -16,39 +16,144 @@
 package org.jetbrains.idea.maven.dom;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.xml.XmlTag;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.model.MavenDomProfile;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.dom.model.MavenDomProperties;
+import org.jetbrains.idea.maven.dom.references.MavenFilteredPropertyPsiReferenceProvider;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.server.MavenServerUtil;
 
-import java.util.Collection;
-import java.util.Properties;
-import java.util.Stack;
+import java.io.IOException;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class MavenPropertyResolver {
-  public static final Pattern PATTERN = Pattern.compile("\\$\\{([^\\}]+?)\\}|@([^@]+?)@");
+  public static final Pattern PATTERN = Pattern.compile("\\$\\{(.+?)\\}|@(.+?)@");
 
-  public static String resolve(Module module,
-                               String text,
-                               Properties additionalProperties,
-                               String propertyEscapeString,
-                               String escapedCharacters) {
+  public static void doFilterText(Module module,
+                                  String text,
+                                  Properties additionalProperties,
+                                  String propertyEscapeString,
+                                  String escapedCharacters,
+                                  Appendable out) throws IOException {
     MavenProjectsManager manager = MavenProjectsManager.getInstance(module.getProject());
     MavenProject mavenProject = manager.findProject(module);
-    if (mavenProject == null) return text;
-    return doResolve(text, mavenProject, additionalProperties, propertyEscapeString, escapedCharacters, new Stack<String>());
+    if (mavenProject == null) {
+      out.append(text);
+      return;
+    }
+    
+    doFilterText(MavenFilteredPropertyPsiReferenceProvider.getDelimitersPattern(mavenProject),
+                 mavenProject,
+                 text,
+                 additionalProperties,
+                 propertyEscapeString,
+                 escapedCharacters,
+                 null,
+                 out);
+  }
+  
+  private static void doFilterText(Pattern pattern,
+                                   MavenProject mavenProject,
+                                   String text,
+                                   Properties additionalProperties,
+                                   @Nullable String escapeString,
+                                   @Nullable String escapedCharacters,
+                                   @Nullable Map<String, String> resolvedPropertiesParam,
+                                   Appendable out) throws IOException {
+    Map<String, String> resolvedProperties = resolvedPropertiesParam;
+    
+    Matcher matcher = pattern.matcher(text);
+    int groupCount = matcher.groupCount();
+    
+    int last = 0;
+    while (matcher.find()) {
+      if (escapeString != null) {
+        int escapeStringStartIndex = matcher.start() - escapeString.length();
+        if (escapeStringStartIndex >= last) {
+          if (text.startsWith(escapeString, escapeStringStartIndex)) {
+            out.append(text, last, escapeStringStartIndex);
+            out.append(matcher.group());
+            last = matcher.end();
+            continue;
+          }
+        }
+      }
+
+      out.append(text, last, matcher.start());
+      last = matcher.end();
+
+      String propertyName = null;
+
+      for (int i = 0; i < groupCount; i++) {
+        propertyName = matcher.group(i + 1);
+        if (propertyName != null) {
+          break;
+        }
+      }
+
+      assert propertyName != null;
+
+      if (resolvedProperties == null) {
+        resolvedProperties = new HashMap<String, String>();
+      }
+      
+      String propertyValue = resolvedProperties.get(propertyName);
+      if (propertyValue == null) {
+        if (resolvedProperties.containsKey(propertyName)) { // if cyclic property dependencies
+          out.append(matcher.group());
+          continue;
+        }
+
+        String resolved = doResolveProperty(propertyName, mavenProject, additionalProperties);
+        if (resolved == null) {
+          out.append(matcher.group());
+          continue;
+        }
+
+        resolvedProperties.put(propertyName, null);
+
+        StringBuilder sb = new StringBuilder();
+        doFilterText(pattern, mavenProject, resolved, additionalProperties, null, null, resolvedProperties, sb);
+        propertyValue = sb.toString();
+
+        resolvedProperties.put(propertyName, propertyValue);
+      }
+
+      if (escapedCharacters == null) {
+        out.append(propertyValue);
+      }
+      else {
+        for (int i = 0; i < propertyValue.length(); i++) {
+          char ch = propertyValue.charAt(i);
+          if (escapedCharacters.indexOf(ch) != -1) {
+            out.append('\\');
+          }
+          out.append(ch);
+        }
+      }
+    }
+    
+    out.append(text, last, text.length());
   }
 
   public static String resolve(String text, MavenDomProjectModel projectDom) {
     MavenProject mavenProject = MavenDomUtil.findProject(projectDom);
     if (mavenProject == null) return text;
-    return doResolve(text, mavenProject, collectPropertiesFromDOM(mavenProject, projectDom), null, null, new Stack<String>());
+    
+    StringBuilder res = new StringBuilder();
+    try {
+      doFilterText(PATTERN, mavenProject, text, collectPropertiesFromDOM(mavenProject, projectDom), null, null, null, res);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e); // never thrown
+    }
+
+    return res.toString();
   }
 
   private static Properties collectPropertiesFromDOM(MavenProject project, MavenDomProjectModel projectDom) {
@@ -75,78 +180,18 @@ public class MavenPropertyResolver {
     }
   }
 
-  private static String doResolve(String text,
-                                  MavenProject project,
-                                  Properties additionalProperties,
-                                  String escapeString,
-                                  String escapedCharacters,
-                                  Stack<String> resolutionStack) {
-    Matcher matcher = PATTERN.matcher(text);
-
-    StringBuffer buff = new StringBuffer();
-    StringBuffer dummy = new StringBuffer();
-    int last = 0;
-    while (matcher.find()) {
-      String propText = matcher.group();
-      String propName = matcher.group(1);
-      if (propName == null) {
-        propName = matcher.group(2);
-      }
-
-      int tempLast = last;
-      last = matcher.start() + propText.length();
-
-      if (escapeString != null) {
-        int pos = matcher.start();
-        if (pos > escapeString.length() && text.substring(pos - escapeString.length(), pos).equals(escapeString)) {
-          buff.append(text.substring(tempLast, pos - escapeString.length()));
-          buff.append(propText);
-          matcher.appendReplacement(dummy, "");
-          continue;
-        }
-      }
-
-      String resolved = doResolveProperty(propName, project, additionalProperties);
-      if (resolved == null) resolved = propText;
-      if (!resolved.equals(propText) && !resolutionStack.contains(propName)) {
-        resolutionStack.push(propName);
-        resolved = doResolve(resolved, project, additionalProperties, escapeString, escapedCharacters, resolutionStack);
-        resolutionStack.pop();
-      }
-      matcher.appendReplacement(buff, Matcher.quoteReplacement(escapeCharacters(resolved, escapedCharacters)));
-    }
-    matcher.appendTail(buff);
-
-    return buff.toString();
-  }
-
-  private static String escapeCharacters(String text, String escapedCharacters) {
-    if (StringUtil.isEmpty(escapedCharacters)) return text;
-
-    StringBuilder builder = new StringBuilder();
-    for (int i = 0; i < text.length(); i++) {
-      char ch = text.charAt(i);
-      if (escapedCharacters.indexOf(ch) != -1) {
-        builder.append('\\');
-      }
-      builder.append(ch);
-    }
-    return builder.toString();
-  }
-
+  @Nullable
   private static String doResolveProperty(String propName, MavenProject project, Properties additionalProperties) {
     String result;
 
     result = MavenServerUtil.collectSystemProperties().getProperty(propName);
     if (result != null) return result;
 
-    if (propName.startsWith("project.") || propName.startsWith("pom.")) {
-      if (propName.startsWith("pom.")) {
-        propName = propName.substring("pom.".length());
-      }
-      else {
-        propName = propName.substring("project.".length());
-      }
+    if (propName.startsWith("pom.")) {
+      propName = propName.substring("pom.".length());
+    }
+    else if (propName.startsWith("project.")) {
+      propName = propName.substring("project.".length());
     }
 
     if (propName.equals("basedir")) return project.getDirectory();

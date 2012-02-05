@@ -463,6 +463,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     settings.setLineMarkerAreaShown(false);
     settings.setIndentGuidesShown(false);
     settings.setVirtualSpace(false);
+    settings.setWheelFontChangeEnabled(false);
     editor.setHorizontalScrollbarVisible(false);
     editor.setVerticalScrollbarVisible(false);
     editor.setCaretEnabled(!myIsViewer);

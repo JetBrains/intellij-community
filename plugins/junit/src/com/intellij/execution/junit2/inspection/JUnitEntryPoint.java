@@ -30,6 +30,10 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.util.PsiClassUtil;
+import com.intellij.util.CommonProcessors;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -50,7 +54,16 @@ public class JUnitEntryPoint extends EntryPoint {
     if (ADD_JUNIT_TO_ENTRIES) {
       if (psiElement instanceof PsiClass) {
         final PsiClass aClass = (PsiClass)psiElement;
-        if (JUnitUtil.isTestClass(aClass)) {
+        if (JUnitUtil.isTestClass(aClass, false, true)) {
+          if (!PsiClassUtil.isRunnableClass(aClass, true, true)) {
+            final CommonProcessors.FindProcessor<PsiClass> findProcessor = new CommonProcessors.FindProcessor<PsiClass>() {
+              @Override
+              protected boolean accept(PsiClass psiClass) {
+                return !psiClass.hasModifierProperty(PsiModifier.ABSTRACT);
+              }
+            };
+            return !ClassInheritorsSearch.search(aClass).forEach(findProcessor) && findProcessor.isFound();
+          }
           return true;
         }
       }

@@ -4,17 +4,9 @@ package org.jetbrains.jps.incremental;
  * @author nik
  */
 public abstract class ProjectLevelBuilder extends Builder {
-  private final ProjectLevelBuilderCategory myCategory;
-
-  protected ProjectLevelBuilder(ProjectLevelBuilderCategory category) {
-    myCategory = category;
+  protected ProjectLevelBuilder() {
   }
 
-  public abstract void build(CompileContext context);
+  public abstract void build(CompileContext context) throws ProjectBuildException;
 
-  public ProjectLevelBuilderCategory getCategory() {
-    return myCategory;
-  }
-
-  public static enum ProjectLevelBuilderCategory { TRANSLATOR, PACKAGER }
 }

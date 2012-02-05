@@ -509,6 +509,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   public PsiFile[] getPsiRoots() {
     final FileViewProvider viewProvider = getViewProvider();
     final Set<Language> languages = viewProvider.getLanguages();
+
     final PsiFile[] roots = new PsiFile[languages.size()];
     int i = 0;
     for (Language language : languages) {
@@ -518,8 +519,18 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       }
       roots[i++] = psi;
     }
+    // getPsiRoots() returns languages in the same order
+    //if (roots.length > 1) {
+    //  Arrays.sort(roots, FILE_BY_LANGUAGE_ID);
+    //}
     return roots;
   }
+  //private static final Comparator<PsiFile> FILE_BY_LANGUAGE_ID = new Comparator<PsiFile>() {
+  //  @Override
+  //  public int compare(PsiFile o1, PsiFile o2) {
+  //    return o1.getLanguage().getID().compareTo(o2.getLanguage().getID());
+  //  }
+  //};
 
   @Override
   public boolean isPhysical() {

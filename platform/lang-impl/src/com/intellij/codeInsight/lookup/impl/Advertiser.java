@@ -36,6 +36,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class Advertiser {
   private final List<String> myTexts = new CopyOnWriteArrayList<String>();
   private final JPanel myComponent = new JPanel(new GridBagLayout()) {
+    private JLabel mySample = createLabel();
+
     @Override
     public Dimension getPreferredSize() {
       if (myTexts.isEmpty()) {
@@ -44,7 +46,8 @@ public class Advertiser {
 
       int maxSize = 0;
       for (String label : myTexts) {
-        maxSize = Math.max(maxSize, createLabel(label).getPreferredSize().width);
+        mySample.setText(prepareText(label));
+        maxSize = Math.max(maxSize, mySample.getPreferredSize().width);
       }
 
       Dimension sup = super.getPreferredSize();
@@ -52,12 +55,10 @@ public class Advertiser {
     }
   };
   private volatile int myCurrentItem = 0;
-  private JPanel myTextPanel;
+  private JLabel myTextPanel = createLabel();
   private JLabel myNextLabel;
 
   public Advertiser() {
-    myTextPanel = new JPanel(new BorderLayout());
-
     myNextLabel = new JLabel(">>");
     myNextLabel.setFont(adFont().deriveFont(ImmutableMap.<TextAttribute, Object>builder().put(TextAttribute.UNDERLINE, TextAttribute.UNDERLINE_ON).build()));
     myNextLabel.setForeground(Color.blue);
@@ -78,19 +79,24 @@ public class Advertiser {
 
   private void updateAdvertisements() {
     myNextLabel.setVisible(myTexts.size() > 1);
-    myTextPanel.removeAll();
     if (!myTexts.isEmpty()) {
       String text = myTexts.get(myCurrentItem % myTexts.size());
-      myTextPanel.add(createLabel(text));
+      myTextPanel.setText(prepareText(text));
+    } else {
+      myTextPanel.setText("");
     }
     myComponent.revalidate();
     myComponent.repaint();
   }
 
-  private static JLabel createLabel(String text) {
-    JLabel label = new JLabel(text + "  ");
+  private static JLabel createLabel() {
+    JLabel label = new JLabel();
     label.setFont(adFont());
     return label;
+  }
+
+  private static String prepareText(String text) {
+    return text + "  ";
   }
 
   public void showRandomText() {

@@ -86,7 +86,7 @@ public class CreateFormAction extends AbstractCreateFormAction {
       final String packageName = aPackage.getQualifiedName();
       String fqClassName = null;
       if (myLastClassName != null) {
-        fqClassName = packageName.length() == 0 ? newName : packageName + "." + myLastClassName;
+        fqClassName = packageName.length() == 0 ? myLastClassName : packageName + "." + myLastClassName;
       }
 
       final String formBody = createFormBody(fqClassName, "/com/intellij/uiDesigner/NewForm.xml",

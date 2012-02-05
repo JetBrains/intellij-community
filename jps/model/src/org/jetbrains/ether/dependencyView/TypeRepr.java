@@ -1,5 +1,6 @@
 package org.jetbrains.ether.dependencyView;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.DataExternalizer;
 import org.jetbrains.ether.RW;
 import org.objectweb.asm.Type;
@@ -238,7 +239,7 @@ class TypeRepr {
 
     switch (t.getSort()) {
       case Type.OBJECT:
-        return context.getType(new ClassType(context.get(t.getClassName().replaceAll("\\.", "/"))));
+        return context.getType(new ClassType(context.get(StringUtil.replaceChar(t.getClassName(), '.', '/'))));
 
       case Type.ARRAY:
         return context.getType(new ArrayType(getType(context, t.getElementType())));

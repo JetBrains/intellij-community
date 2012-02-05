@@ -28,7 +28,6 @@ import java.util.List;
  */
 public class AnnotateActionGroup extends ActionGroup {
   private AnAction[] myActions;
-  private boolean isAvailable = true;
 
   public AnnotateActionGroup(List<AnnotationFieldGutter> gutters, EditorGutterComponentEx gutterComponent) {
     super("View", true);
@@ -51,10 +50,9 @@ public class AnnotateActionGroup extends ActionGroup {
   }
 
   public void setAvailable(boolean available) {
-    isAvailable = available;
     for (AnAction action : myActions) {
       if (action instanceof ShowHideAspectAction) {
-        ((ShowHideAspectAction)action).setAvailable(isAvailable);
+        ((ShowHideAspectAction)action).setAvailable(available);
       }
     }
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.tree.ASTStructure;
 import com.intellij.psi.tree.*;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.util.ThreeState;
 import com.intellij.util.diff.DiffTree;
 import com.intellij.util.diff.DiffTreeChangeBuilder;
@@ -34,13 +35,11 @@ import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import com.intellij.util.diff.ShallowNodeComparator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Test;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.List;
-
 
 public class PsiBuilderQuickTest extends LightPlatformTestCase {
   private static final IFileElementType ROOT = new IFileElementType("ROOT", Language.ANY);
@@ -58,7 +57,11 @@ public class PsiBuilderQuickTest extends LightPlatformTestCase {
   private static final TokenSet WHITESPACE_SET = TokenSet.create(TokenType.WHITE_SPACE);
   private static final TokenSet COMMENT_SET = TokenSet.create(COMMENT);
 
-  @Test
+  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
+  public PsiBuilderQuickTest() {
+    PlatformTestCase.initPlatformLangPrefix();
+  }
+
   public void testPlain() {
     doTest("a<<b",
            new Parser() {
@@ -77,7 +80,6 @@ public class PsiBuilderQuickTest extends LightPlatformTestCase {
     );
   }
 
-  @Test
   public void testComposites() {
     doTest("1(a(b)c)2(d)3",
            new Parser() {
@@ -122,7 +124,6 @@ public class PsiBuilderQuickTest extends LightPlatformTestCase {
     );
   }
 
-  @Test
   public void testCollapse() {
     doTest("a<<>>b",
            new Parser() {
@@ -146,7 +147,6 @@ public class PsiBuilderQuickTest extends LightPlatformTestCase {
     );
   }
 
-  @Test
   public void testDoneAndError() {
     doTest("a2b",
            new Parser() {
@@ -169,7 +169,6 @@ public class PsiBuilderQuickTest extends LightPlatformTestCase {
            "    PsiElement(LETTER)('b')\n");
   }
 
-  @Test
   public void testPrecedeAndDoneBefore() {
     doTest("ab",
            new Parser() {
@@ -195,7 +194,6 @@ public class PsiBuilderQuickTest extends LightPlatformTestCase {
            "    PsiElement(LETTER)('b')\n");
   }
 
-  @Test
   public void testErrorBefore() {
     doTest("a1",
            new Parser() {
@@ -219,7 +217,6 @@ public class PsiBuilderQuickTest extends LightPlatformTestCase {
            "    PsiElement(DIGIT)('1')\n");
   }
 
-  @Test
   public void testValidityChecksOnDone() {
     doFailTest("a",
                new Parser() {
@@ -234,7 +231,6 @@ public class PsiBuilderQuickTest extends LightPlatformTestCase {
                "Another not done marker added after this one. Must be done before this.");
   }
 
-  @Test
   public void testValidityChecksOnDoneBefore1() {
     doFailTest("a",
                new Parser() {
@@ -250,7 +246,6 @@ public class PsiBuilderQuickTest extends LightPlatformTestCase {
                "Another not done marker added after this one. Must be done before this.");
   }
 
-  @Test
   public void testValidityChecksOnDoneBefore2() {
     doFailTest("a",
                new Parser() {
@@ -265,7 +260,6 @@ public class PsiBuilderQuickTest extends LightPlatformTestCase {
                "'Before' marker precedes this one.");
   }
 
-  @Test
   public void testValidityChecksOnTreeBuild1() {
     doFailTest("aa",
                new Parser() {
@@ -277,7 +271,6 @@ public class PsiBuilderQuickTest extends LightPlatformTestCase {
                "Assertion failed: Parser produced no markers. Text:\naa");
   }
 
-  @Test
   public void testValidityChecksOnTreeBuild2() {
     doFailTest("aa",
                new Parser() {
@@ -291,7 +284,6 @@ public class PsiBuilderQuickTest extends LightPlatformTestCase {
                "Tokens [LETTER] were not inserted into the tree. Text:\naa");
   }
 
-  @Test
   public void testValidityChecksOnTreeBuild3() {
     doFailTest("a ",
                new Parser() {
@@ -306,7 +298,6 @@ public class PsiBuilderQuickTest extends LightPlatformTestCase {
                "Tokens [WHITE_SPACE] are outside of root element \"LETTER\". Text:\na ");
   }
 
-  @Test
   public void testWhitespaceTrimming() {
     doTest(" a b ",
            new Parser() {
@@ -331,7 +322,6 @@ public class PsiBuilderQuickTest extends LightPlatformTestCase {
            "  PsiWhiteSpace(' ')\n");
   }
 
-  @Test
   public void testWhitespaceBalancingByErrors() {
     doTest("a b c",
            new Parser() {
@@ -365,7 +355,6 @@ public class PsiBuilderQuickTest extends LightPlatformTestCase {
            "    PsiElement(LETTER)('c')\n");
   }
 
-  @Test
   public void testWhitespaceBalancingByEmptyComposites() {
     doTest("a b c",
            new Parser() {
@@ -396,7 +385,6 @@ public class PsiBuilderQuickTest extends LightPlatformTestCase {
            "  PsiElement(LETTER)('c')\n");
   }
 
-  @Test
   public void testCustomEdgeProcessors() {
     final WhitespacesAndCommentsBinder leftEdgeProcessor = new WhitespacesAndCommentsBinder() {
       @Override
@@ -446,7 +434,6 @@ public class PsiBuilderQuickTest extends LightPlatformTestCase {
     }
   }
 
-  @Test
   public void testLightChameleon() {
     final IElementType CHAMELEON_2 = new MyLazyElementType("CHAMELEON_2") {
       @Override
@@ -554,6 +541,7 @@ public class PsiBuilderQuickTest extends LightPlatformTestCase {
            "    PsiElement(OTHER)('}')\n");
   }
 
+  @SuppressWarnings("ConstantConditions")
   private static PsiBuilderImpl createBuilder(CharSequence text) {
     ParserDefinition parserDefinition = new ParserDefinition() {
       @NotNull

@@ -57,14 +57,14 @@ import java.util.concurrent.atomic.AtomicReference;
 public class SingleRootFileViewProvider extends UserDataHolderBase implements FileViewProvider {
   private static final Key<Boolean> OUR_NO_SIZE_LIMIT_KEY = Key.create("no.size.limit");
   private static final Logger LOG = Logger.getInstance("#" + SingleRootFileViewProvider.class.getCanonicalName());
-  private final PsiManager myManager;
-  private final VirtualFile myVirtualFile;
+  @NotNull private final PsiManager myManager;
+  @NotNull private final VirtualFile myVirtualFile;
   private final boolean myEventSystemEnabled;
   private final boolean myPhysical;
-  private final AtomicReference<PsiFile> myPsiFile = new AtomicReference<PsiFile>();
+  @NotNull private final AtomicReference<PsiFile> myPsiFile = new AtomicReference<PsiFile>();
   private volatile Content myContent;
   private volatile SoftReference<Document> myDocument;
-  private final Language myBaseLanguage;
+  @NotNull private final Language myBaseLanguage;
   private final ProjectFileExclusionManager myExclusionManager;
 
   public SingleRootFileViewProvider(@NotNull PsiManager manager, @NotNull VirtualFile file) {
@@ -183,7 +183,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   }
 
   @Override
-  public void rootChanged(PsiFile psiFile) {
+  public void rootChanged(@NotNull PsiFile psiFile) {
     if (((PsiFileEx)psiFile).isContentsLoaded()) {
       setContent(new PsiFileContent((PsiFileImpl)psiFile, LocalTimeCounter.currentTime()));
     }
@@ -205,7 +205,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   }
 
   @Override
-  public boolean supportsIncrementalReparse(final Language rootLanguage) {
+  public boolean supportsIncrementalReparse(@NotNull final Language rootLanguage) {
     return true;
   }
 
@@ -296,7 +296,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   }
 
   @Nullable
-  protected PsiFile createFile(Language lang) {
+  protected PsiFile createFile(@NotNull Language lang) {
     if (lang != getBaseLanguage()) return null;
     final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
     if (parserDefinition != null) {
@@ -355,7 +355,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
 
   @NotNull
   @Override
-  public SingleRootFileViewProvider createCopy(final VirtualFile copy) {
+  public SingleRootFileViewProvider createCopy(@NotNull final VirtualFile copy) {
     return new SingleRootFileViewProvider(getManager(), copy, false, myBaseLanguage);
   }
 
@@ -366,7 +366,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   }
 
   @Override
-  public PsiElement findElementAt(final int offset, final Language language) {
+  public PsiElement findElementAt(final int offset, @NotNull final Language language) {
     final PsiFile psiFile = getPsi(language);
     return psiFile != null ? findElementAt(psiFile, offset) : null;
   }
@@ -379,7 +379,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   }
 
   @Nullable
-  private static PsiReference findReferenceAt(final PsiFile psiFile, final int offset) {
+  private static PsiReference findReferenceAt(@Nullable final PsiFile psiFile, final int offset) {
     if (psiFile == null) return null;
     int offsetInElement = offset;
     PsiElement child = psiFile.getFirstChild();
@@ -402,13 +402,13 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
 
 
   @Override
-  public PsiElement findElementAt(int offset, Class<? extends Language> lang) {
+  public PsiElement findElementAt(int offset, @NotNull Class<? extends Language> lang) {
     if (!ReflectionCache.isAssignable(lang, getBaseLanguage().getClass())) return null;
     return findElementAt(offset);
   }
 
   @Nullable
-  protected static PsiElement findElementAt(final PsiElement psiFile, final int offset) {
+  protected static PsiElement findElementAt(@Nullable final PsiElement psiFile, final int offset) {
     if (psiFile == null) return null;
     int offsetInElement = offset;
     PsiElement child = psiFile.getFirstChild();
@@ -476,6 +476,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   }
 
   private class DocumentContent implements Content {
+    @NotNull
     @Override
     public CharSequence getText() {
       final Document document = getDocument();
@@ -509,6 +510,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
       }
       if (myContent != null) return myContent;
       return myContent = ApplicationManager.getApplication().runReadAction(new Computable<CharSequence>() {
+        @NotNull
         public CharSequence compute() {
           return myFile.calcTreeElement().getText();
         }

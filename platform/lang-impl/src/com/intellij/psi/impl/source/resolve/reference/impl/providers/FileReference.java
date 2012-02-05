@@ -558,7 +558,7 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
   public String getUnresolvedMessagePattern() {
     return LangBundle.message("error.cannot.resolve")
            + " " + (isLast() ? LangBundle.message("terms.file") : LangBundle.message("terms.directory"))
-           + " ''" + StringUtil.escapePattern(decode(getCanonicalText())) + "''";
+           + " ''" + StringUtil.escapePattern(StringUtil.notNullize(decode(getCanonicalText()))) + "''";
   }
 
   public final boolean isLast() {

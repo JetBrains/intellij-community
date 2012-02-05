@@ -61,8 +61,8 @@ public class PathMacroManagerTest {
 
   @Before
   public final void setupApplication() throws Exception {
-    myApplication = mock(ApplicationEx.class, "application");
-    myAppPico = mock(PicoContainer.class);
+    myApplication = context.mock(ApplicationEx.class, "application");
+    myAppPico = context.mock(PicoContainer.class);
 
     context.checking(new Expectations() {
       {
@@ -110,22 +110,13 @@ public class PathMacroManagerTest {
     FileSystem.FILE_SYSTEM = myOldFileSystem;
   }
 
-  protected <T> T mock(Class<T> typeToMock) {
-    return context.mock(typeToMock);
-  }
-
-  protected <T> T mock(Class<T> typeToMock, String name) {
-    return context.mock(typeToMock, name);
-  }
-
-
   private void setUpMocks(final String projectPath) {
     myModule = context.mock(Module.class);
     myPathMacros = context.mock(PathMacrosImpl.class);
 
     myProject = context.mock(ProjectEx.class);
     final VirtualFile file = context.mock(VirtualFile.class);
-    final VirtualFile parentFile = context.mock(VirtualFile.class);
+    final VirtualFile parentFile = context.mock(VirtualFile.class, "parentFile");
 
     context.checking(new Expectations() {{
       allowing(myModule).isDisposed(); will(returnValue(false));

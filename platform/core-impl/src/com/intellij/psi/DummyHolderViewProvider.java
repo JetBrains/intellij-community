@@ -115,12 +115,12 @@ public class DummyHolderViewProvider extends UserDataHolderBase implements FileV
   }
 
   @Override
-  public boolean supportsIncrementalReparse(final Language rootLanguage) {
+  public boolean supportsIncrementalReparse(@NotNull final Language rootLanguage) {
     return true;
   }
 
   @Override
-  public void rootChanged(PsiFile psiFile) {
+  public void rootChanged(@NotNull PsiFile psiFile) {
   }
 
   public void setDummyHolder(@NotNull DummyHolder dummyHolder) {
@@ -140,13 +140,13 @@ public class DummyHolderViewProvider extends UserDataHolderBase implements FileV
 
   @Override
   @Nullable
-  public PsiElement findElementAt(final int offset, final Language language) {
+  public PsiElement findElementAt(final int offset, @NotNull final Language language) {
     return language == getBaseLanguage() ? findElementAt(offset) : null;
   }
 
 
   @Override
-  public PsiElement findElementAt(int offset, Class<? extends Language> lang) {
+  public PsiElement findElementAt(int offset, @NotNull Class<? extends Language> lang) {
     if (!lang.isAssignableFrom(getBaseLanguage().getClass())) return null;
     return findElementAt(offset);
   }
@@ -158,7 +158,7 @@ public class DummyHolderViewProvider extends UserDataHolderBase implements FileV
 
   @NotNull
   @Override
-  public FileViewProvider createCopy(final VirtualFile copy) {
+  public FileViewProvider createCopy(@NotNull final VirtualFile copy) {
     throw new RuntimeException("Clone is not supported for DummyHolderProviders. Use DummyHolder clone directly.");
   }
 

@@ -253,7 +253,7 @@ public class UpdateHighlightersUtil {
           RangeHighlighter highlighter = info.highlighter;
           int hiStart = highlighter.getStartOffset();
           int hiEnd = highlighter.getEndOffset();
-          if (!info.fromInjection && (hiEnd <= startOffset || hiStart>=endOffset)) return true; // injections are oblivious to restricting range
+          if (!info.fromInjection && hiEnd < document.getTextLength() && (hiEnd <= startOffset || hiStart>=endOffset)) return true; // injections are oblivious to restricting range
           boolean toRemove = !(hiEnd == document.getTextLength() && range.getEndOffset() == document.getTextLength()) &&
                              !range.containsRange(hiStart, hiEnd)
                              ;
@@ -277,7 +277,7 @@ public class UpdateHighlightersUtil {
       @Override
       public boolean process(int offset, HighlightInfo info, boolean atStart, Collection<HighlightInfo> overlappingIntervals) {
         if (!atStart) return true;
-        if (!info.fromInjection && (info.getEndOffset() <= startOffset || info.getStartOffset()>=endOffset)) return true; // injections are oblivious to restricting range
+        if (!info.fromInjection && info.getEndOffset() < document.getTextLength() && (info.getEndOffset() <= startOffset || info.getStartOffset()>=endOffset)) return true; // injections are oblivious to restricting range
 
         if (info.isFileLevelAnnotation && psiFile != null && psiFile.getViewProvider().isPhysical()) {
           addFileLevelHighlight(project, group, info, psiFile);

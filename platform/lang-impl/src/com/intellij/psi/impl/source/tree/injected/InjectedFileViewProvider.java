@@ -59,7 +59,7 @@ public class InjectedFileViewProvider extends SingleRootFileViewProvider impleme
   }
 
   @Override
-  public void rootChanged(PsiFile psiFile) {
+  public void rootChanged(@NotNull PsiFile psiFile) {
     super.rootChanged(psiFile);
     if (!isPhysical()) return; // injected PSI change happened inside reparse; ignore
     if (myPatchingLeaves) return;

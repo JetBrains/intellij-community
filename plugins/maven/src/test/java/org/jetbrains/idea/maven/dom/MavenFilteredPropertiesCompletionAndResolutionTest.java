@@ -457,4 +457,79 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
     assertEquals("foo=abc${bar}abc", findPsiFile(f).getText());
     assertEquals("bar=1", findPsiFile(filter).getText());
   }
+
+  public void testCustomDelimiters() throws Exception {
+    createProjectSubDir("res");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+                  "<build>" +
+                  "  <resources>" +
+                  "    <resource>" +
+                  "      <directory>res</directory>" +
+                  "      <filtering>true</filtering>" +
+                  "    </resource>" +
+                  "  </resources>" +
+                  "  <plugins>" +
+                  "    <plugin>" +
+                  "      <groupId>org.apache.maven.plugins</groupId>" +
+                  "      <artifactId>maven-resources-plugin</artifactId>" +
+                  "      <version>2.5</version>" +
+                  "      <configuration>" +
+                  "        <delimiters>" +
+                  "          <delimiter>|</delimiter>" +
+                  "          <delimiter>(*]</delimiter>" +
+                  "        </delimiters>" +
+                  "      </configuration>" +
+                  "    </plugin>" +
+                  "  </plugins>" +
+                  "</build>");
+
+    VirtualFile f = createProjectSubFile("res/foo1.properties",
+                                         "foo1=${basedir}\n" +
+                                         "foo2=|baseUri|\n" +
+                                         "foo3=a(ve|rsion]");
+
+    assertNotNull(resolveReference(f, "basedir"));
+    assertNotNull(resolveReference(f, "baseUri"));
+    assertNotNull(getReference(f, "ve|rsion"));
+  }
+
+  public void testDontUseDefaultDelimiter1() throws Exception {
+    createProjectSubDir("res");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+                  "<build>" +
+                  "  <resources>" +
+                  "    <resource>" +
+                  "      <directory>res</directory>" +
+                  "      <filtering>true</filtering>" +
+                  "    </resource>" +
+                  "  </resources>" +
+                  "  <plugins>" +
+                  "    <plugin>" +
+                  "      <groupId>org.apache.maven.plugins</groupId>" +
+                  "      <artifactId>maven-resources-plugin</artifactId>" +
+                  "      <version>2.5</version>" +
+                  "      <configuration>" +
+                  "        <delimiters>" +
+                  "          <delimiter>|</delimiter>" +
+                  "        </delimiters>" +
+                  "        <useDefaultDelimiters>false</useDefaultDelimiters>" +
+                  "      </configuration>" +
+                  "    </plugin>" +
+                  "  </plugins>" +
+                  "</build>");
+
+    VirtualFile f = createProjectSubFile("res/foo1.properties",
+                                         "foo1=${basedir}\n" +
+                                         "foo2=|baseUri|");
+
+    assert !(getReference(f, "basedir") instanceof MavenPropertyPsiReference);
+    assertNotNull(resolveReference(f, "baseUri"));
+  }
+
 }

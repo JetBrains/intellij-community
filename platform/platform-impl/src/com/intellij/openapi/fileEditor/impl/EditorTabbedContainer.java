@@ -581,12 +581,24 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
       mySession = null;
     }
 
+    @Override
+    public void dragOutCancelled(TabInfo source) {
+      source.setHidden(false);
+      if (mySession != null) {
+        mySession.cancel();
+      }
+
+      myFile = null;
+      mySession = null;
+    }
+
     class DockableEditor implements DockableContent<VirtualFile> {
       final Image myImg;
       private DockableEditorTabbedContainer myContainer;
       private Presentation myPresentation;
       private EditorWindow myEditorWindow;
       private Dimension myPreferredSize;
+      private boolean myPinned;
 
 
       public DockableEditor(Image img, VirtualFile file, Presentation presentation, EditorWindow window) {
@@ -596,6 +608,7 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
         myContainer = new DockableEditorTabbedContainer(myProject);
         myEditorWindow = window;
         myPreferredSize = myEditorWindow.getSize();
+        myPinned = window.isFilePinned(file);
       }
 
       @Override
@@ -630,6 +643,10 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
 
       public VirtualFile getFile() {
         return myFile;
+      }
+
+      public boolean isPinned() {
+        return myPinned;
       }
     }
   }

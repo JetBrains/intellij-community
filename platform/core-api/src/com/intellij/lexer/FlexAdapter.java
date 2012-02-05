@@ -48,31 +48,31 @@ public class FlexAdapter extends LexerBase {
 
   @Override
   public int getState() {
-    locateToken();
+    if (myTokenType == null) locateToken();
     return myState;
   }
 
   @Override
   public IElementType getTokenType() {
-    locateToken();
+    if (myTokenType == null) locateToken();
     return myTokenType;
   }
 
   @Override
   public int getTokenStart() {
-    locateToken();
+    if (myTokenType == null) locateToken();
     return myFlex.getTokenStart();
   }
 
   @Override
   public int getTokenEnd() {
-    locateToken();
+    if (myTokenType == null) locateToken();
     return myFlex.getTokenEnd();
   }
 
   @Override
   public void advance() {
-    locateToken();
+    if (myTokenType == null) locateToken();
     myTokenType = null;
   }
 

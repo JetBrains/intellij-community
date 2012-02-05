@@ -38,6 +38,7 @@ import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.speedSearch.SpeedSearch;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.Processor;
@@ -1493,6 +1494,15 @@ public class AbstractPopup implements JBPopup {
     }
 
     if (doRevalidate) myContent.revalidate();
+  }
+  
+  public void setWarning(@NotNull String text) {
+    JBLabel label = new JBLabel(text, UIUtil.getBalloonWarningIcon(), SwingConstants.CENTER);
+    Color color = HintUtil.INFORMATION_COLOR;
+    label.setOpaque(true);
+    label.setBackground(color);
+    label.setBorder(BorderFactory.createLineBorder(color, 3));
+    myHeaderPanel.add(label, BorderLayout.SOUTH);
   }
 
   public void addListener(final JBPopupListener listener) {

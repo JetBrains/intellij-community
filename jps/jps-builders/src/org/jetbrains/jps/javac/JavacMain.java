@@ -16,7 +16,7 @@ import java.util.*;
  */
 public class JavacMain {
   private static final Set<String> FILTERED_OPTIONS = new HashSet<String>(Arrays.<String>asList(
-    "-d", "-classpath", "-cp", "-bootclasspath"
+    "-verbose", "-d", "-classpath", "-cp", "-bootclasspath"/*, "-proc:none"*/
   ));
 
   public static boolean compile(Collection<String> options,
@@ -65,6 +65,8 @@ public class JavacMain {
       final JavaCompiler.CompilationTask task = compiler.getTask(
         out, fileManager, outConsumer, filterOptionList(options), null, fileManager.toJavaFileObjects(sources)
       );
+      //final JavacASTAnalyser analyzer = new JavacASTAnalyser();
+      //task.setProcessors(Collections.singleton(analyzer));
       return task.call();
     }
     finally {

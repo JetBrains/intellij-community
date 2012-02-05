@@ -18,14 +18,35 @@ package org.jetbrains.idea.maven.dom;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Properties;
 
 public class MavenPropertyResolverTest extends MavenImportingTestCase {
+  
+  private static String resolve(Module module,
+                                String text,
+                                Properties additionalProperties,
+                                String propertyEscapeString,
+                                String escapedCharacters) {
+    StringBuilder sb = new StringBuilder();
+
+    try {
+      MavenPropertyResolver.doFilterText(module, text, additionalProperties, propertyEscapeString, escapedCharacters, sb);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+
+    return sb.toString();
+  }
+  
+  
   public void testResolvingProjectAttributes() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -145,8 +166,8 @@ public class MavenPropertyResolverTest extends MavenImportingTestCase {
 
     importProject();
     assertEquals("${prop1}", resolve("${prop1}", myProjectPom));
-    assertEquals("${prop3}", resolve("${prop2}", myProjectPom));
-    assertEquals("${prop5}", resolve("${prop4}", myProjectPom));
+    assertEquals("${prop3}", resolve("${prop3}", myProjectPom));
+    assertEquals("${prop5}", resolve("${prop5}", myProjectPom));
   }
 
   public void testSophisticatedPropertyNameDoesNotBreakResolver() throws Exception {
@@ -262,13 +283,13 @@ public class MavenPropertyResolverTest extends MavenImportingTestCase {
                   "<version>1</version>");
 
     assertEquals("foo ^project bar",
-                 MavenPropertyResolver.resolve(getModule("project"), "foo ^${project.artifactId} bar", new Properties(), "/", null));
+                 resolve(getModule("project"), "foo ^${project.artifactId} bar", new Properties(), "/", null));
     assertEquals("foo ${project.artifactId} bar",
-                 MavenPropertyResolver.resolve(getModule("project"), "foo ^^${project.artifactId} bar", new Properties(), "^^", null));
+                 resolve(getModule("project"), "foo ^^${project.artifactId} bar", new Properties(), "^^", null));
     assertEquals("project ${project.artifactId} project ${project.artifactId}",
-                 MavenPropertyResolver.resolve(getModule("project"),
-                                          "${project.artifactId} ^${project.artifactId} ${project.artifactId} ^${project.artifactId}",
-                                          new Properties(), "^", null));
+                 resolve(getModule("project"),
+                         "${project.artifactId} ^${project.artifactId} ${project.artifactId} ^${project.artifactId}",
+                         new Properties(), "^", null));
   }
 
   public void testEscapingCharacters() throws Exception {
@@ -280,7 +301,7 @@ public class MavenPropertyResolverTest extends MavenImportingTestCase {
                   "  <foo>abc:def\\ghi</foo>" +
                   "</properties>");
 
-    assertEquals("abc\\:def\\\\ghi", MavenPropertyResolver.resolve(getModule("project"), "${foo}", new Properties(), null, ":\\"));
+    assertEquals("abc\\:def\\\\ghi", resolve(getModule("project"), "${foo}", new Properties(), null, ":\\"));
   }
 
   private String resolve(String text, VirtualFile f) {

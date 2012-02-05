@@ -38,6 +38,7 @@ public class FileTypeAssocTable<T> {
   private final Map<String, T> myExtensionMappings;
   private final Map<String, T> myExactFileNameMappings;
   private final Map<String, T> myExactFileNameAnyCaseMappings;
+  private boolean myHasAnyCaseExactMappings;
   private final List<Pair<FileNameMatcher, T>> myMatchingMappings;
 
   private FileTypeAssocTable(Map<String, T> extensionMappings, Map<String, T> exactFileNameMappings, Map<String, T> exactFileNameAnyCaseMappings, List<Pair<FileNameMatcher, T>> matchingMappings) {
@@ -53,7 +54,21 @@ public class FileTypeAssocTable<T> {
       public boolean equals(String o1, String o2) {
         return o1.equalsIgnoreCase(o2);
       }
-    });
+    }) {
+      @Override
+      public T remove(Object key) {
+        T removed = super.remove(key);
+        myHasAnyCaseExactMappings = size() > 0;
+        return removed;
+      }
+
+      @Override
+      public T put(String key, T value) {
+        T result = super.put(key, value);
+        myHasAnyCaseExactMappings = true;
+        return result;
+      }
+    };
     myMatchingMappings = new ArrayList<Pair<FileNameMatcher, T>>(matchingMappings);
   }
 
@@ -162,7 +177,7 @@ public class FileTypeAssocTable<T> {
     T t = myExactFileNameMappings.get(fileName);
     if (t != null) return t;
 
-    if (myExactFileNameAnyCaseMappings.size() != 0) {   // even hash lookup with case insensitive hasher is costly for isIgnored checks during compile
+    if (myHasAnyCaseExactMappings) {   // even hash lookup with case insensitive hasher is costly for isIgnored checks during compile
       t = myExactFileNameAnyCaseMappings.get(fileName);
       if (t != null) return t;
     }
