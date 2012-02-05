@@ -851,12 +851,26 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
 
     private void writeToDisk(@NotNull OutputFileObject fileObject) throws IOException {
+      final File file = fileObject.getFile();
       final OutputFileObject.Content content = fileObject.getContent();
-      if (content != null) {
-        FileUtil.writeToFile(fileObject.getFile(), content.getBuffer(), content.getOffset(), content.getLength());
+      if (content == null) {
+        throw new IOException("Missing content for file " + file);
       }
-      else {
-        throw new IOException("Missing content for file " + fileObject.getFile());
+
+      try {
+        _writeToFile(file, content);
+      }
+      catch (IOException e) {
+        // assuming the reason is non-existing parent
+        final File parentFile = file.getParentFile();
+        if (parentFile == null) {
+          throw e;
+        }
+        if (!parentFile.mkdirs()) {
+          throw e;
+        }
+        // second attempt
+        _writeToFile(file, content);
       }
 
       final File source = fileObject.getSourceFile();
@@ -867,7 +881,16 @@ public class JavaBuilder extends ModuleLevelBuilder {
           myContext.processMessage(new ProgressMessage("Compiled " + className));
         }
       }
+    }
 
+    private static void _writeToFile(final File file, OutputFileObject.Content content) throws IOException {
+      final OutputStream stream = new BufferedOutputStream(new FileOutputStream(file));
+      try {
+        stream.write(content.getBuffer(), content.getOffset(), content.getLength());
+      }
+      finally {
+        stream.close();
+      }
     }
 
     public void markError(OutputFileObject outputClassFile) {
