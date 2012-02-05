@@ -1,5 +1,6 @@
 package com.jetbrains.python.run;
 
+import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -79,12 +80,28 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
   }
 
   private void updateRemoteInterpreterMode() {
-    Sdk sdk = PythonSdkType.findSdkByPath(myCommonOptionsForm.getSdkHome());
-    setRemoteInterpreterMode(sdk != null && sdk.getSdkAdditionalData() instanceof PythonRemoteSdkAdditionalData);
+    setRemoteInterpreterMode(isRemoteSdkSelected(myCommonOptionsForm.getSdkHome()));
+    Object selection = myRemoteConfigurationCombo.getSelectedItem();
     myRemoteConfigurationCombo
-      .setModel(new CollectionComboBoxModel(PyRemoteDebugConfiguration.listAllRemoteDebugConfigurations(myProject), null));
+      .setModel(new CollectionComboBoxModel(PyRemoteDebugConfiguration.listAllRemoteDebugConfigurations(myProject), selection));
+    myRemoteConfigurationCombo.setRenderer(new ListCellRendererWrapper<PyRemoteDebugConfiguration>(myRemoteConfigurationCombo.getRenderer()) {
+      @Override
+      public void customize(JList list, PyRemoteDebugConfiguration value, int index, boolean selected, boolean hasFocus) {
+        if (value != null) {
+        setText(value.getName());
+        setIcon(value.getIcon());
+        } else {
+          setText("<Select Python Remote Debug Configuration>");
+          setIcon(null);
+        }
+      }
+    });
   }
 
+  public static boolean isRemoteSdkSelected(String sdkHome) {
+    Sdk sdk = PythonSdkType.findSdkByPath(sdkHome);
+    return sdk != null && sdk.getSdkAdditionalData() instanceof PythonRemoteSdkAdditionalData;
+  }
 
   private void setRemoteInterpreterMode(boolean remoteInterpreterMode) {
     myRemoteInterpreterMode = remoteInterpreterMode;
@@ -140,7 +157,8 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
 
   @Override
   public void setRemoteDebugConfiguration(String name) {
-
+    PyRemoteDebugConfiguration conf = PyRemoteDebugConfiguration.findByName(myProject, name);
+    myRemoteConfigurationCombo.setSelectedItem(conf);
   }
 
   @Override

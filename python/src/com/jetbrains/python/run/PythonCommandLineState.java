@@ -146,8 +146,9 @@ public abstract class PythonCommandLineState extends CommandLineState {
           null;
         try {
           processHandler =
-            manager.doCreateProcess(myConfig.getProject(), (PythonRemoteSdkAdditionalData)sdk.getSdkAdditionalData(), commandLine, PyRemoteDebugConfiguration.findByName(myConfig.getProject(),
-              ((PythonRunConfiguration)myConfig).getRemoteDebugConfiguration()));
+            manager.doCreateProcess(myConfig.getProject(), (PythonRemoteSdkAdditionalData)sdk.getSdkAdditionalData(), commandLine, PyRemoteDebugConfiguration
+              .findByName(myConfig.getProject(),
+                          ((PythonRunConfiguration)myConfig).getRemoteDebugConfiguration()));
         }
         catch (PyRemoteInterpreterException e) {
           // TODO: show dialog and rerun or cancel
