@@ -16,7 +16,10 @@ import java.util.*;
  */
 public class JavacMain {
   private static final Set<String> FILTERED_OPTIONS = new HashSet<String>(Arrays.<String>asList(
-    "-verbose", "-d", "-classpath", "-cp", "-bootclasspath"/*, "-proc:none"*/
+    "-d", "-classpath", "-cp", "-bootclasspath"
+  ));
+  private static final Set<String> FILTERED_SINGLE_OPTIONS = new HashSet<String>(Arrays.<String>asList(
+    "-verbose", "-proc:none"
   ));
 
   public static boolean compile(Collection<String> options,
@@ -86,7 +89,9 @@ public class JavacMain {
         continue;
       }
       if (!skip) {
-        result.add(option);
+        if (!FILTERED_SINGLE_OPTIONS.contains(option)) {
+          result.add(option);
+        }
       }
       skip = false;
     }
