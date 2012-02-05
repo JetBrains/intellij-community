@@ -56,7 +56,7 @@ import java.util.List;
  */
 public class GroovyBlock implements Block, GroovyElementTypes, ASTBlock {
   final protected ASTNode myNode;
-  protected Alignment myAlignment;
+  protected Alignment myAlignment = null;
   final protected Indent myIndent;
   final protected Wrap myWrap;
   final protected CommonCodeStyleSettings mySettings;
@@ -78,8 +78,6 @@ public class GroovyBlock implements Block, GroovyElementTypes, ASTBlock {
     mySettings = settings;
     myGroovySettings = groovySettings;
     myAlignmentProvider = alignmentProvider;
-
-    myAlignment = myAlignmentProvider.getAlignment(node.getPsi());
   }
 
   @NotNull
@@ -126,6 +124,10 @@ public class GroovyBlock implements Block, GroovyElementTypes, ASTBlock {
 
   @Nullable
   public Alignment getAlignment() {
+    if (myAlignment == null) {
+      myAlignment = myAlignmentProvider.getAlignment(myNode.getPsi());
+    }
+
     return myAlignment;
   }
 
