@@ -160,7 +160,7 @@ public class NavBarPopup extends LightweightHint implements Disposable{
     final JComponent component = ListWithFilter.wrap(list, new NavBarListWrapper(list), new Function<Object, String>() {
       @Override
       public String fun(Object o) {
-        return NavBarPresentation.getPresentableText(o, panel.getWindow());
+        return NavBarPresentation.getPresentableText(o);
       }
     });
     component.putClientProperty(JBLIST_KEY, list);

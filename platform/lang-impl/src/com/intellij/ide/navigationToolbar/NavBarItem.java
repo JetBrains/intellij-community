@@ -59,7 +59,7 @@ public class NavBarItem extends SimpleColoredComponent implements Disposable {
         openIcon = closedIcon = EmptyIcon.create(5);
       }
       final NavBarPresentation presentation = myPanel.getPresentation();
-      myText = NavBarPresentation.getPresentableText(object, myPanel.getWindow());
+      myText = NavBarPresentation.getPresentableText(object);
       myIcon = wrapIcon(openIcon, closedIcon, idx);
       myAttributes = presentation.getTextAttributes(object, false);
     } else {
