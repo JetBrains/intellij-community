@@ -27,7 +27,7 @@ public class GrIntroduceParameterContext extends GrIntroduceContext {
   public final GrParametersOwner toReplaceIn;
 
   public GrIntroduceParameterContext(GrIntroduceContext context, GrParametersOwner toReplaceIn, PsiElement toSearchFor) {
-    super(context.project, context.editor, context.expression, context.occurrences, context.scope, context.var);
+    super(context.project, context.editor, context.expression, context.var, context.occurrences, context.scope);
     this.toReplaceIn = toReplaceIn;
     this.toSearchFor = toSearchFor;
   }

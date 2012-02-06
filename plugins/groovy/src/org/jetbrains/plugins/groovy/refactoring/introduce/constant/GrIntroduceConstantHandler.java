@@ -20,7 +20,10 @@ import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
-import org.jetbrains.plugins.groovy.lang.psi.*;
+import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
@@ -31,12 +34,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumTypeDe
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstantList;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.refactoring.GrRefactoringError;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceDialog;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
-import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceRefactoringError;
 
 /**
  * @author Maxim.Medvedev
@@ -67,10 +70,10 @@ public class GrIntroduceConstantHandler extends GrIntroduceHandlerBase<GrIntrodu
   }
 
   @Override
-  protected void checkVariable(GrVariable variable) throws GrIntroduceRefactoringError {
+  protected void checkVariable(GrVariable variable) throws GrRefactoringError {
     final GrExpression initializer = variable.getInitializerGroovy();
     if (initializer == null) {
-      throw new GrIntroduceRefactoringError(RefactoringBundle.message("variable.does.not.have.an.initializer", variable.getName()));
+      throw new GrRefactoringError(RefactoringBundle.message("variable.does.not.have.an.initializer", variable.getName()));
     }
     checkExpression(initializer);
   }
@@ -78,7 +81,7 @@ public class GrIntroduceConstantHandler extends GrIntroduceHandlerBase<GrIntrodu
   @Override
   protected void checkOccurrences(PsiElement[] occurrences) {
     if (hasLhs(occurrences)) {
-      throw new GrIntroduceRefactoringError(GroovyRefactoringBundle.message("selected.variable.is.used.for.write"));
+      throw new GrRefactoringError(GroovyRefactoringBundle.message("selected.variable.is.used.for.write"));
     }
   }
 
@@ -200,11 +203,11 @@ public class GrIntroduceConstantHandler extends GrIntroduceHandlerBase<GrIntrodu
         if (!isStaticFinalField((PsiVariable)resolved)) {
           if (expr instanceof GrClosableBlock) {
             if (!PsiTreeUtil.isContextAncestor(scope, resolved, true)) {
-              throw new GrIntroduceRefactoringError(GroovyRefactoringBundle.message("closure.uses.external.variables"));
+              throw new GrRefactoringError(GroovyRefactoringBundle.message("closure.uses.external.variables"));
             }
           }
           else {
-            throw new GrIntroduceRefactoringError(RefactoringBundle.message("selected.expression.cannot.be.a.constant.initializer"));
+            throw new GrRefactoringError(RefactoringBundle.message("selected.expression.cannot.be.a.constant.initializer"));
           }
         }
       }
@@ -213,7 +216,7 @@ public class GrIntroduceConstantHandler extends GrIntroduceHandlerBase<GrIntrodu
         if (qualifier == null ||
             (qualifier instanceof GrReferenceExpression && ((GrReferenceExpression)qualifier).resolve() instanceof PsiClass)) {
           if (!((PsiMethod)resolved).hasModifierProperty(PsiModifier.STATIC)) {
-            throw new GrIntroduceRefactoringError(RefactoringBundle.message("selected.expression.cannot.be.a.constant.initializer"));
+            throw new GrRefactoringError(RefactoringBundle.message("selected.expression.cannot.be.a.constant.initializer"));
           }
         }
       }

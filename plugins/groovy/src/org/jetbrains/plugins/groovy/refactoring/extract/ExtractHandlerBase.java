@@ -47,6 +47,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.FragmentVariableInfos;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.ReachingDefinitionsCollector;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.VariableInfo;
+import org.jetbrains.plugins.groovy.refactoring.GrRefactoringError;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.inline.GroovyInlineMethodUtil;
@@ -62,13 +63,13 @@ import java.util.Set;
 public abstract class ExtractHandlerBase implements RefactoringActionHandler {
   private static final Logger LOG = Logger.getInstance(ExtractHandlerBase.class);
 
-  public void invokeOnEditor(Project project, Editor editor, PsiFile file, int start, int end) throws ExtractException {
+  public void invokeOnEditor(Project project, Editor editor, PsiFile file, int start, int end) throws GrRefactoringError {
     /*// trim it if it's necessary
     GroovyRefactoringUtil.trimSpacesAndComments(editor, file, false);*/
 
     if (!(file instanceof GroovyFileBase)) {
       String message = RefactoringBundle.getCannotRefactorMessage(GroovyRefactoringBundle.message("only.in.groovy.files"));
-      throw new ExtractException(message);
+      throw new GrRefactoringError(message);
     }
 
     SelectionModel selectionModel = editor.getSelectionModel();
@@ -84,14 +85,14 @@ public abstract class ExtractHandlerBase implements RefactoringActionHandler {
     if (statements.length == 0) {
       String message =
         RefactoringBundle.getCannotRefactorMessage(GroovyRefactoringBundle.message("selected.block.should.represent.a.statement.set"));
-      throw new ExtractException(message);
+      throw new GrRefactoringError(message);
     }
 
     for (GrStatement statement : statements) {
       if (GroovyRefactoringUtil.isSuperOrThisCall(statement, true, true)) {
         String message = RefactoringBundle
           .getCannotRefactorMessage(GroovyRefactoringBundle.message("selected.block.contains.invocation.of.another.class.constructor"));
-        throw new ExtractException(message);
+        throw new GrRefactoringError(message);
       }
     }
 
@@ -101,14 +102,14 @@ public abstract class ExtractHandlerBase implements RefactoringActionHandler {
     if (owner == null || declarationOwner == null && !ExtractUtil.isSingleExpression(statements)) {
       String message =
         RefactoringBundle.getCannotRefactorMessage(GroovyRefactoringBundle.message("refactoring.is.not.supported.in.the.current.context"));
-      throw new ExtractException(message);
+      throw new GrRefactoringError(message);
     }
     if (declarationOwner == null &&
         ExtractUtil.isSingleExpression(statements) &&
         statement0 instanceof GrExpression &&
         PsiType.VOID.equals(((GrExpression)statement0).getType())) {
       String message = RefactoringBundle.getCannotRefactorMessage(GroovyRefactoringBundle.message("selected.expression.has.void.type"));
-      throw new ExtractException(message);
+      throw new GrRefactoringError(message);
     }
 
 
@@ -136,7 +137,7 @@ public abstract class ExtractHandlerBase implements RefactoringActionHandler {
     VariableInfo[] outputInfos = fragmentVariableInfos.getOutputVariableNames();
     if (outputInfos.length == 1 && returnStatements.size() > 0) {
       String message = GroovyRefactoringBundle.message("multiple.output.values");
-      throw new ExtractException(message);
+      throw new GrRefactoringError(message);
     }
 
     boolean hasInterruptingStatements = false;
@@ -155,7 +156,7 @@ public abstract class ExtractHandlerBase implements RefactoringActionHandler {
     boolean isLastStatementOfMethod = isLastStatementOfMethodOrClosure(statements);
     if (hasReturns && !isLastStatementOfMethod && !isReturnStatement || hasInterruptingStatements) {
       String message = GroovyRefactoringBundle.message("refactoring.is.not.supported.when.return.statement.interrupts.the.execution.flow");
-      throw new ExtractException(message);
+      throw new GrRefactoringError(message);
     }
 
     InitialInfo info = new InitialInfo(inputInfos, outputInfos, elements, statements, owner, returnStatements);

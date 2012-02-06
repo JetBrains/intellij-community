@@ -121,7 +121,7 @@ public class IntroduceVariableTest extends LightCodeInsightFixtureTestCase {
       varType = null;
     }
 
-    final GrIntroduceContext context = new GrIntroduceContext(getProject(), myEditor, selectedExpr, occurences, tempContainer, null);
+    final GrIntroduceContext context = new GrIntroduceContext(getProject(), myEditor, selectedExpr, null, occurences, tempContainer);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {

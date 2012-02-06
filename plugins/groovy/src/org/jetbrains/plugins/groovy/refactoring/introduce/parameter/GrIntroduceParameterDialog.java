@@ -37,12 +37,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.refactoring.GrRefactoringError;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.HelpID;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceDialog;
-import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceRefactoringError;
 import org.jetbrains.plugins.groovy.refactoring.introduce.field.GroovyFieldValidator;
 import org.jetbrains.plugins.groovy.refactoring.ui.GrTypeComboBox;
 
@@ -199,7 +199,7 @@ public class GrIntroduceParameterDialog extends RefactoringDialog implements GrI
     if (myDoNotReplaceRadioButton.isSelected()) return REPLACE_FIELDS_WITH_GETTERS_NONE;
     if (myReplaceFieldsInaccessibleInRadioButton.isSelected()) return REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE;
     if (myReplaceAllFieldsRadioButton.isSelected()) return REPLACE_FIELDS_WITH_GETTERS_ALL;
-    throw new GrIntroduceRefactoringError("no check box selected");
+    throw new GrRefactoringError("no check box selected");
   }
 
   @Override
@@ -231,7 +231,7 @@ public class GrIntroduceParameterDialog extends RefactoringDialog implements GrI
     }
 
     String[] possibleNames;
-    final GrIntroduceContext introduceContext = new GrIntroduceContext(myProject, null, myContext.expression, PsiElement.EMPTY_ARRAY, myContext.toReplaceIn, myContext.var);
+    final GrIntroduceContext introduceContext = new GrIntroduceContext(myProject, null, myContext.expression, myContext.var, PsiElement.EMPTY_ARRAY, myContext.toReplaceIn);
     final GroovyFieldValidator validator = new GroovyFieldValidator(introduceContext);
     if (myContext.expression != null) {
       possibleNames = GroovyNameSuggestionUtil.suggestVariableNames(myContext.expression, validator, true);

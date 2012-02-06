@@ -47,12 +47,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.refactoring.GrRefactoringError;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceDialog;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
-import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceRefactoringError;
 import org.jetbrains.plugins.groovy.refactoring.ui.MethodOrClosureScopeChooser;
 
 import java.util.ArrayList;
@@ -113,21 +113,21 @@ public class GrIntroduceParameterHandler implements RefactoringActionHandler, Me
     try {
       PsiDocumentManager.getInstance(project).commitAllDocuments();
       if (!(file instanceof GroovyFileBase)) {
-        throw new GrIntroduceRefactoringError(GroovyRefactoringBundle.message("only.in.groovy.files"));
+        throw new GrRefactoringError(GroovyRefactoringBundle.message("only.in.groovy.files"));
       }
       if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) {
-        throw new GrIntroduceRefactoringError(RefactoringBundle.message("readonly.occurences.found"));
+        throw new GrRefactoringError(RefactoringBundle.message("readonly.occurences.found"));
       }
 
       GrExpression selectedExpr = GrIntroduceHandlerBase.findExpression(file, startOffset, endOffset);
       final GrVariable variable = GrIntroduceHandlerBase.findVariable(file, startOffset, endOffset);
       if (variable == null && selectedExpr == null) {
-        throw new GrIntroduceRefactoringError(null);
+        throw new GrRefactoringError(null);
       }
 
       findScope(selectedExpr, variable, editor, project);
     }
-    catch (GrIntroduceRefactoringError e) {
+    catch (GrRefactoringError e) {
       CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.getCannotRefactorMessage(e.getMessage()), RefactoringBundle.message("introduce.parameter.title"),
                                           GROOVY_INTRODUCE_PARAMETER);
     }
@@ -147,7 +147,7 @@ public class GrIntroduceParameterHandler implements RefactoringActionHandler, Me
     }
 
     if (scopes.size() == 0) {
-      throw new GrIntroduceRefactoringError(GroovyRefactoringBundle.message("there.is.no.method.or.closure"));
+      throw new GrRefactoringError(GroovyRefactoringBundle.message("there.is.no.method.or.closure"));
     }
     else if (scopes.size() == 1) {
       final GrParametersOwner owner = scopes.get(0);
@@ -189,7 +189,7 @@ public class GrIntroduceParameterHandler implements RefactoringActionHandler, Me
     GrIntroduceContext context;
     if (variable == null) {
       final PsiElement[] occurrences = findOccurrences(expression, toReplaceIn);
-      context = new GrIntroduceContext(project, editor, expression, occurrences, toReplaceIn, variable);
+      context = new GrIntroduceContext(project, editor, expression, variable, occurrences, toReplaceIn);
     }
     else {
       final List<PsiElement> list = Collections.synchronizedList(new ArrayList<PsiElement>());
@@ -203,7 +203,7 @@ public class GrIntroduceParameterHandler implements RefactoringActionHandler, Me
           return true;
         }
       });
-      context = new GrIntroduceContext(project, editor, variable.getInitializerGroovy(), list.toArray(new PsiElement[list.size()]), toReplaceIn, variable);
+      context = new GrIntroduceContext(project, editor, variable.getInitializerGroovy(), variable, list.toArray(new PsiElement[list.size()]), toReplaceIn);
     }
 
     showDialog(new GrIntroduceParameterContext(context, toReplaceIn, toSearchFor));
@@ -223,7 +223,7 @@ public class GrIntroduceParameterHandler implements RefactoringActionHandler, Me
 
     final PsiElement[] occurrences = GroovyRefactoringUtil.getExpressionOccurrences(expr, scope);
     if (occurrences == null || occurrences.length == 0) {
-      throw new GrIntroduceRefactoringError(GroovyRefactoringBundle.message("no.occurrences.found"));
+      throw new GrRefactoringError(GroovyRefactoringBundle.message("no.occurrences.found"));
     }
     return occurrences;
   }

@@ -51,6 +51,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.refactoring.GrRefactoringError;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.NameValidator;
@@ -70,9 +71,9 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
   @NotNull
   protected abstract PsiElement findScope(GrExpression expression, GrVariable variable);
 
-  protected abstract void checkExpression(GrExpression selectedExpr) throws GrIntroduceRefactoringError;
+  protected abstract void checkExpression(GrExpression selectedExpr) throws GrRefactoringError;
 
-  protected abstract void checkVariable(GrVariable variable) throws GrIntroduceRefactoringError;
+  protected abstract void checkVariable(GrVariable variable) throws GrRefactoringError;
 
   protected abstract void checkOccurrences(PsiElement[] occurrences);
 
@@ -203,7 +204,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
 
     if (variable == null) {
       final PsiElement[] occurences = findOccurrences(expression, scope);
-      return new GrIntroduceContext(project, editor, expression, occurences, scope, variable);
+      return new GrIntroduceContext(project, editor, expression, variable, occurences, scope);
 
     }
     else {
@@ -218,15 +219,15 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
           return true;
         }
       });
-      return new GrIntroduceContext(project, editor, variable.getInitializerGroovy(), list.toArray(new PsiElement[list.size()]), scope,
-                                    variable);
+      return new GrIntroduceContext(project, editor, variable.getInitializerGroovy(), variable, list.toArray(new PsiElement[list.size()]), scope
+      );
     }
   }
 
   protected PsiElement[] findOccurrences(GrExpression expression, PsiElement scope) {
     final PsiElement[] occurrences = GroovyRefactoringUtil.getExpressionOccurrences(PsiUtil.skipParentheses(expression, false), scope);
     if (occurrences == null || occurrences.length == 0) {
-      throw new GrIntroduceRefactoringError(GroovyRefactoringBundle.message("no.occurrences.found"));
+      throw new GrRefactoringError(GroovyRefactoringBundle.message("no.occurrences.found"));
     }
     return occurrences;
   }
@@ -235,10 +236,10 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     try {
       PsiDocumentManager.getInstance(project).commitAllDocuments();
       if (!(file instanceof GroovyFileBase)) {
-        throw new GrIntroduceRefactoringError(GroovyRefactoringBundle.message("only.in.groovy.files"));
+        throw new GrRefactoringError(GroovyRefactoringBundle.message("only.in.groovy.files"));
       }
       if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) {
-        throw new GrIntroduceRefactoringError(RefactoringBundle.message("readonly.occurences.found"));
+        throw new GrRefactoringError(RefactoringBundle.message("readonly.occurences.found"));
       }
 
       GrExpression selectedExpr = findExpression(file, startOffset, endOffset);
@@ -250,7 +251,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
         checkExpression(selectedExpr);
       }
       else {
-        throw new GrIntroduceRefactoringError(null);
+        throw new GrRefactoringError(null);
       }
 
       final GrIntroduceContext context = getContext(project, editor, selectedExpr, variable);
@@ -272,7 +273,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
 
       return true;
     }
-    catch (GrIntroduceRefactoringError e) {
+    catch (GrRefactoringError e) {
       CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.getCannotRefactorMessage(e.getMessage()), getRefactoringName(), getHelpID());
       return false;
     }
@@ -305,11 +306,11 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     if (type != null) type = TypeConversionUtil.erasure(type);
 
     if (PsiType.VOID.equals(type)) {
-      throw new GrIntroduceRefactoringError(GroovyRefactoringBundle.message("selected.expression.has.void.type"));
+      throw new GrRefactoringError(GroovyRefactoringBundle.message("selected.expression.has.void.type"));
     }
 
     if (expressionIsNotCorrect(selectedExpr)) {
-      throw new GrIntroduceRefactoringError(GroovyRefactoringBundle.message("selected.block.should.represent.an.expression"));
+      throw new GrRefactoringError(GroovyRefactoringBundle.message("selected.block.should.represent.an.expression"));
     }
 
     return selectedExpr;

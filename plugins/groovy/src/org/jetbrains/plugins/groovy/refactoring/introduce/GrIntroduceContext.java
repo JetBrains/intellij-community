@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.introduce;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -27,6 +28,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
  * @author Maxim.Medvedev
  */
 public class GrIntroduceContext {
+  private static final Logger LOG = Logger.getInstance(GrIntroduceContext.class);
+
   public final Project project;
   public final Editor editor;
   @Nullable public final GrExpression expression;
@@ -38,9 +41,11 @@ public class GrIntroduceContext {
   public GrIntroduceContext(Project project,
                             Editor editor,
                             @Nullable GrExpression expression,
+                            @Nullable GrVariable var,
                             PsiElement[] occurrences,
-                            PsiElement scope,
-                            @Nullable GrVariable var) {
+                            PsiElement scope) {
+    LOG.assertTrue(expression != null || var != null);
+
     this.project = project;
     this.editor = editor;
     this.expression = expression;

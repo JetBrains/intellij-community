@@ -37,12 +37,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.refactoring.GrRefactoringError;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
-import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceRefactoringError;
 
 import java.util.ArrayList;
 
@@ -63,11 +63,11 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
     // Get container element
     final PsiElement scope = GroovyRefactoringUtil.getEnclosingContainer(selectedExpr);
     if (scope == null || !(scope instanceof GroovyPsiElement)) {
-      throw new GrIntroduceRefactoringError(
+      throw new GrRefactoringError(
         GroovyRefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", REFACTORING_NAME));
     }
     if (!GroovyRefactoringUtil.isAppropriateContainerForIntroduceVariable(scope)) {
-      throw new GrIntroduceRefactoringError(
+      throw new GrRefactoringError(
         GroovyRefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", REFACTORING_NAME));
     }
     return scope;
@@ -82,17 +82,17 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
     }
 
     if (checkInFieldInitializer(selectedExpr)) {
-      throw new GrIntroduceRefactoringError(GroovyRefactoringBundle.message("refactoring.is.not.supported.in.the.current.context"));
+      throw new GrRefactoringError(GroovyRefactoringBundle.message("refactoring.is.not.supported.in.the.current.context"));
     }
 
     if (parent instanceof GrParameter) {
-      throw new GrIntroduceRefactoringError(GroovyRefactoringBundle.message("refactoring.is.not.supported.in.method.parameters"));
+      throw new GrRefactoringError(GroovyRefactoringBundle.message("refactoring.is.not.supported.in.method.parameters"));
     }
   }
 
   @Override
-  protected void checkVariable(GrVariable variable) throws GrIntroduceRefactoringError {
-    throw new GrIntroduceRefactoringError(null);
+  protected void checkVariable(GrVariable variable) throws GrRefactoringError {
+    throw new GrRefactoringError(null);
   }
 
   @Override

@@ -40,9 +40,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
+import org.jetbrains.plugins.groovy.refactoring.GrRefactoringError;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.HelpID;
-import org.jetbrains.plugins.groovy.refactoring.extract.ExtractException;
 import org.jetbrains.plugins.groovy.refactoring.extract.ExtractHandlerBase;
 import org.jetbrains.plugins.groovy.refactoring.extract.InitialInfo;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
@@ -93,7 +93,7 @@ public class ExtractClosureHandler extends ExtractHandlerBase implements Refacto
     try {
       invokeOnEditor(project, editor, file, start, end);
     }
-    catch (ExtractException e) {
+    catch (GrRefactoringError e) {
       CommonRefactoringUtil.showErrorHint(project, editor, e.getMessage(), EXTRACT_CLOSURE, HelpID.GROOVY_EXTRACT_CLOSURE);
     }
   }
@@ -120,7 +120,7 @@ public class ExtractClosureHandler extends ExtractHandlerBase implements Refacto
     }
 
     if (scopes.size() == 0) {
-      throw new ExtractException(GroovyRefactoringBundle.message("there.is.no.method.or.closure"));
+      throw new GrRefactoringError(GroovyRefactoringBundle.message("there.is.no.method.or.closure"));
     }
     else if (scopes.size() == 1) {
       final GrParametersOwner owner = scopes.get(0);

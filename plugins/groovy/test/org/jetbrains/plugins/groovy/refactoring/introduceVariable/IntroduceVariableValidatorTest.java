@@ -88,7 +88,7 @@ public class IntroduceVariableValidatorTest extends LightCodeInsightFixtureTestC
     PsiElement[] occurences = GroovyRefactoringUtil.getExpressionOccurrences(PsiUtil.skipParentheses(selectedExpr, false), tempContainer);
     String varName = "preved";
     GroovyVariableValidator validator =
-      new GroovyVariableValidator(new GrIntroduceContext(getProject(), myEditor, selectedExpr, occurences, tempContainer, null));
+      new GroovyVariableValidator(new GrIntroduceContext(getProject(), myEditor, selectedExpr, null, occurences, tempContainer));
     result = validator.isOKTest(varName, replaceAllOccurences);
     return result;
   }

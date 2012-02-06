@@ -45,8 +45,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwne
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
+import org.jetbrains.plugins.groovy.refactoring.GrRefactoringError;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
-import org.jetbrains.plugins.groovy.refactoring.extract.*;
+import org.jetbrains.plugins.groovy.refactoring.extract.ExtractHandlerBase;
+import org.jetbrains.plugins.groovy.refactoring.extract.ExtractUtil;
+import org.jetbrains.plugins.groovy.refactoring.extract.InitialInfo;
+import org.jetbrains.plugins.groovy.refactoring.extract.ParameterInfo;
 
 import java.util.ArrayList;
 
@@ -71,7 +75,7 @@ public class GroovyExtractMethodHandler extends ExtractHandlerBase implements Re
     try {
       invokeOnEditor(project, editor, file, model.getSelectionStart(), model.getSelectionEnd());
     }
-    catch (ExtractException e) {
+    catch (GrRefactoringError e) {
       CommonRefactoringUtil.showErrorHint(project, editor, e.getMessage(), REFACTORING_NAME, HelpID.EXTRACT_METHOD);
     }
   }

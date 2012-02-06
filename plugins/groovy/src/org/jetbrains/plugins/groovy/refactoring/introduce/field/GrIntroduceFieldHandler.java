@@ -40,12 +40,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.refactoring.GrRefactoringError;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceDialog;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
-import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceRefactoringError;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -85,17 +85,17 @@ public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceF
 
   private static void checkContainingClass(PsiElement place) {
     final GrTypeDefinition containingClass = PsiTreeUtil.getParentOfType(place, GrTypeDefinition.class);
-    if (containingClass == null) throw new GrIntroduceRefactoringError(GroovyRefactoringBundle.message("cannot.introduce.field.in.script"));
+    if (containingClass == null) throw new GrRefactoringError(GroovyRefactoringBundle.message("cannot.introduce.field.in.script"));
     if (containingClass.isInterface()) {
-      throw new GrIntroduceRefactoringError(GroovyRefactoringBundle.message("cannot.introduce.field.in.interface"));
+      throw new GrRefactoringError(GroovyRefactoringBundle.message("cannot.introduce.field.in.interface"));
     }
     if (PsiUtil.skipParentheses(place, false) == null) {
-      throw new GrIntroduceRefactoringError(GroovyRefactoringBundle.message("expression.contains.errors"));
+      throw new GrRefactoringError(GroovyRefactoringBundle.message("expression.contains.errors"));
     }
   }
 
   @Override
-  protected void checkVariable(GrVariable variable) throws GrIntroduceRefactoringError {
+  protected void checkVariable(GrVariable variable) throws GrRefactoringError {
     checkContainingClass(variable);
   }
 
