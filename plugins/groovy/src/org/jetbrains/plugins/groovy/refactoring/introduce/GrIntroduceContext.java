@@ -30,13 +30,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 public class GrIntroduceContext {
   private static final Logger LOG = Logger.getInstance(GrIntroduceContext.class);
 
-  public final Project project;
-  public final Editor editor;
-  @Nullable public final GrExpression expression;
-  public final PsiElement[] occurrences;
-  public final PsiElement scope;
-  @Nullable public final GrVariable var;
-  @NotNull public final PsiElement place;
+  private final Project project;
+  private final Editor editor;
+  @Nullable private final GrExpression expression;
+  private final PsiElement[] occurrences;
+  private final PsiElement scope;
+  @Nullable private final GrVariable var;
+  @NotNull private final PsiElement place;
 
   public GrIntroduceContext(Project project,
                             Editor editor,
@@ -53,5 +53,36 @@ public class GrIntroduceContext {
     this.scope = scope;
     this.var = var;
     this.place = expression == null ? var : expression;
+  }
+
+  public Project getProject() {
+    return project;
+  }
+
+  public Editor getEditor() {
+    return editor;
+  }
+
+  @Nullable
+  public GrExpression getExpression() {
+    return expression;
+  }
+
+  public PsiElement[] getOccurrences() {
+    return occurrences;
+  }
+
+  public PsiElement getScope() {
+    return scope;
+  }
+
+  @Nullable
+  public GrVariable getVar() {
+    return var;
+  }
+
+  @NotNull
+  public PsiElement getPlace() {
+    return place;
   }
 }

@@ -78,10 +78,10 @@ public class GroovyIntroduceParameterUtil {
 
   public static TObjectIntHashMap<GrParameter> findParametersToRemove(GrIntroduceParameterContext context) {
     TObjectIntHashMap<GrParameter> toRemove = new TObjectIntHashMap<GrParameter>();
-    if (context.var == null) {
-      final GrParametersOwner parametersOwner = context.toReplaceIn;
+    if (context.getVar() == null) {
+      final GrParametersOwner parametersOwner = context.getToReplaceIn();
       final GrParameter[] parameters = parametersOwner.getParameters();
-      final GrExpression expr = context.expression;
+      final GrExpression expr = context.getExpression();
       for (int i = 0; i < parameters.length; i++) {
         GrParameter parameter = parameters[i];
         final boolean shouldRemove = ReferencesSearch.search(parameter).forEach(new Processor<PsiReference>() {

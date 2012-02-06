@@ -118,7 +118,7 @@ public class GrIntroduceParameterTest extends LightCodeInsightFixtureTestCase {
                   final GrIntroduceParameterSettings hackedSettings =
                     getSettings(context, removeUnusedParameters, replaceFieldsWithGetters, declareFinal, generateDelegate);
                   BaseRefactoringProcessor processor;
-                  if (context.toReplaceIn instanceof GrMethod) {
+                  if (context.getToReplaceIn() instanceof GrMethod) {
                     processor = new GrIntroduceParameterProcessor(hackedSettings, context);
                   }
                   else {
@@ -194,7 +194,7 @@ public class GrIntroduceParameterTest extends LightCodeInsightFixtureTestCase {
 
       @Override
       public PsiType getSelectedType() {
-        PsiType type = context.var == null ? context.expression.getType() : context.var.getDeclaredType();
+        PsiType type = context.getVar() == null ? context.getExpression().getType() : context.getVar().getDeclaredType();
         return TypesUtil.unboxPrimitiveTypeWrapper(type);
       }
     };

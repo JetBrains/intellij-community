@@ -111,7 +111,7 @@ public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceF
 
   @Override
   public GrField runRefactoring(GrIntroduceContext context, GrIntroduceFieldSettings settings) {
-    final PsiClass targetClass = (PsiClass)context.scope;
+    final PsiClass targetClass = (PsiClass)context.getScope();
 
     if (targetClass == null) return null;
 
@@ -144,17 +144,18 @@ public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceF
     }
 
     if (settings.replaceAllOccurrences()) {
-      GroovyRefactoringUtil.sortOccurrences(context.occurrences);
-      for (PsiElement occurrence : context.occurrences) {
+      GroovyRefactoringUtil.sortOccurrences(context.getOccurrences());
+      for (PsiElement occurrence : context.getOccurrences()) {
         replaceOccurrence(field, occurrence);
       }
     }
     else {
-      if (PsiUtil.isExpressionStatement(context.expression)) {
-        context.expression.delete();
+      final GrExpression expression = context.getExpression();
+      if (PsiUtil.isExpressionStatement(expression)) {
+        expression.delete();
       }
       else {
-        replaceOccurrence(field, context.expression);
+        replaceOccurrence(field, expression);
       }
     }
     return field;
@@ -176,9 +177,9 @@ public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceF
   }
 
   private static void initializeInMethod(GrIntroduceContext context, GrIntroduceFieldSettings settings, GrField field) {
-    if (context.expression == null) return;
-    final GrExpression expression = context.expression;
-    final GrTypeDefinition scope = (GrTypeDefinition)context.scope;
+    if (context.getExpression() == null) return;
+    final GrExpression expression = context.getExpression();
+    final GrTypeDefinition scope = (GrTypeDefinition)context.getScope();
     final GrMethod method = getContainingMethod(expression, scope);
     LOG.assertTrue(method != null);
 
@@ -188,15 +189,15 @@ public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceF
       anchor = PsiTreeUtil.getParentOfType(variable, GrStatement.class);
     }
     else {
-      anchor = (GrStatement)findAnchor(context, settings, context.occurrences, method.getBlock());
+      anchor = (GrStatement)findAnchor(context, settings, context.getOccurrences(), method.getBlock());
     }
 
     generateAssignment(context, settings, field, anchor, method.getBlock());
   }
 
   private static void initializeInConstructor(GrIntroduceContext context, GrIntroduceFieldSettings settings, GrField field) {
-    final GrTypeDefinition scope = (GrTypeDefinition)context.scope;
-    final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(context.project);
+    final GrTypeDefinition scope = (GrTypeDefinition)context.getScope();
+    final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(context.getProject());
 
     if (scope instanceof GrAnonymousClassDefinition) {
       final GrClassInitializer[] initializers = scope.getInitializers();
@@ -240,9 +241,9 @@ public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceF
       initializer = extractVarInitializer(context);
     }
     else {
-      initializer = context.expression;
+      initializer = context.getExpression();
     }
-    GrAssignmentExpression init = (GrAssignmentExpression)GroovyPsiElementFactory.getInstance(context.project)
+    GrAssignmentExpression init = (GrAssignmentExpression)GroovyPsiElementFactory.getInstance(context.getProject())
       .createExpressionFromText(settings.getName() + " = " + initializer.getText());
 
     GrCodeBlock block;
@@ -268,7 +269,7 @@ public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceF
 
   @Nullable
   private static PsiElement findAnchor(GrIntroduceContext context, GrIntroduceFieldSettings settings, final GrCodeBlock block) {
-    final List<PsiElement> elements = ContainerUtil.findAll(context.occurrences, new Condition<PsiElement>() {
+    final List<PsiElement> elements = ContainerUtil.findAll(context.getOccurrences(), new Condition<PsiElement>() {
       @Override
       public boolean value(PsiElement element) {
         return PsiTreeUtil.isAncestor(block, element, true);
@@ -317,14 +318,14 @@ public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceF
         initializer = extractVarInitializer(context);
       }
       else {
-        initializer = context.expression;
+        initializer = context.getExpression();
       }
     }
     else {
       initializer = null;
     }
 
-    final GrVariableDeclaration fieldDeclaration = GroovyPsiElementFactory.getInstance(context.project).createFieldDeclaration(EMPTY_STRING_ARRAY, name, initializer, type);
+    final GrVariableDeclaration fieldDeclaration = GroovyPsiElementFactory.getInstance(context.getProject()).createFieldDeclaration(EMPTY_STRING_ARRAY, name, initializer, type);
 
     fieldDeclaration.getModifierList().setModifierProperty(modifier, true);
     if (settings.isStatic()) {

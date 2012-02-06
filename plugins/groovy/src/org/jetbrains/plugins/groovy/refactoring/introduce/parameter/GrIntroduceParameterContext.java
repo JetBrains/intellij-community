@@ -23,12 +23,21 @@ import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
  * @author Maxim.Medvedev
  */
 public class GrIntroduceParameterContext extends GrIntroduceContext {
-  public final PsiElement toSearchFor;
-  public final GrParametersOwner toReplaceIn;
+  private final PsiElement toSearchFor;
+  private final GrParametersOwner toReplaceIn;
 
   public GrIntroduceParameterContext(GrIntroduceContext context, GrParametersOwner toReplaceIn, PsiElement toSearchFor) {
-    super(context.project, context.editor, context.expression, context.var, context.occurrences, context.scope);
+    super(context.getProject(), context.getEditor(), context.getExpression(), context.getVar(), context.getOccurrences(),
+          context.getScope());
     this.toReplaceIn = toReplaceIn;
     this.toSearchFor = toSearchFor;
+  }
+
+  public PsiElement getToSearchFor() {
+    return toSearchFor;
+  }
+
+  public GrParametersOwner getToReplaceIn() {
+    return toReplaceIn;
   }
 }

@@ -87,14 +87,13 @@ public class GrIntroduceConstantHandler extends GrIntroduceHandlerBase<GrIntrodu
 
   @Nullable
   public static GrTypeDefinition findContainingClass(GrIntroduceContext context) {
-    PsiElement place = context.place;
-    while (place != null) {
+    PsiElement place = context.getPlace();
+    while (true) {
       final GrTypeDefinition typeDefinition = PsiTreeUtil.getParentOfType(place, GrTypeDefinition.class, true, GroovyFileBase.class);
       if (typeDefinition == null) return null;
       if (typeDefinition.hasModifierProperty(PsiModifier.STATIC) || typeDefinition.getContainingClass() == null) return typeDefinition;
       place = typeDefinition;
     }
-    return null;
   }
 
 
@@ -123,18 +122,18 @@ public class GrIntroduceConstantHandler extends GrIntroduceHandlerBase<GrIntrodu
       added = ((GrVariableDeclaration)targetClass.add(declaration));
     }
     GrReferenceAdjuster.shortenReferences(added);
-    if (context.var != null) {
+    if (context.getVar() != null) {
       deleteLocalVar(context);
     }
     final GrField field = (GrField)added.getVariables()[0];
     if (settings.replaceAllOccurrences()) {
-      GroovyRefactoringUtil.sortOccurrences(context.occurrences);
-      for (PsiElement occurrence : context.occurrences) {
+      GroovyRefactoringUtil.sortOccurrences(context.getOccurrences());
+      for (PsiElement occurrence : context.getOccurrences()) {
         replaceOccurrence(field, occurrence, isEscalateVisibility(settings.getVisibilityModifier()));
       }
     }
     else {
-      replaceOccurrence(field, context.expression, isEscalateVisibility(settings.getVisibilityModifier()));
+      replaceOccurrence(field, context.getExpression(), isEscalateVisibility(settings.getVisibilityModifier()));
     }
     return (GrField)added.getVariables()[0];
   }
@@ -175,7 +174,7 @@ public class GrIntroduceConstantHandler extends GrIntroduceHandlerBase<GrIntrodu
     String[] modifiers = modifier == null || PsiModifier.PACKAGE_LOCAL.equals(modifier)
                          ? new String[]{PsiModifier.STATIC, PsiModifier.FINAL}
                          : new String[]{modifier, PsiModifier.STATIC, PsiModifier.FINAL};
-    return GroovyPsiElementFactory.getInstance(context.project).createFieldDeclaration(modifiers, name, context.expression, type);
+    return GroovyPsiElementFactory.getInstance(context.getProject()).createFieldDeclaration(modifiers, name, context.getExpression(), type);
   }
 
   private static boolean isEscalateVisibility(String modifier) {

@@ -255,11 +255,11 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
       }
 
       final GrIntroduceContext context = getContext(project, editor, selectedExpr, variable);
-      checkOccurrences(context.occurrences);
+      checkOccurrences(context.getOccurrences());
       final Settings settings = showDialog(context);
       if (settings == null) return false;
 
-      CommandProcessor.getInstance().executeCommand(context.project, new Runnable() {
+      CommandProcessor.getInstance().executeCommand(context.getProject(), new Runnable() {
       public void run() {
         AccessToken accessToken = WriteAction.start();
         try {
@@ -322,12 +322,12 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     // Add occurences highlighting
     ArrayList<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
     HighlightManager highlightManager = null;
-    if (context.editor != null) {
-      highlightManager = HighlightManager.getInstance(context.project);
+    if (context.getEditor() != null) {
+      highlightManager = HighlightManager.getInstance(context.getProject());
       EditorColorsManager colorsManager = EditorColorsManager.getInstance();
       TextAttributes attributes = colorsManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
-      if (context.occurrences.length > 1) {
-        highlightManager.addOccurrenceHighlights(context.editor, context.occurrences, attributes, true, highlighters);
+      if (context.getOccurrences().length > 1) {
+        highlightManager.addOccurrenceHighlights(context.getEditor(), context.getOccurrences(), attributes, true, highlighters);
       }
     }
 
@@ -335,16 +335,16 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
 
     dialog.show();
     if (dialog.isOK()) {
-      if (context.editor != null) {
+      if (context.getEditor() != null) {
         for (RangeHighlighter highlighter : highlighters) {
-          highlightManager.removeSegmentHighlighter(context.editor, highlighter);
+          highlightManager.removeSegmentHighlighter(context.getEditor(), highlighter);
         }
       }
       return dialog.getSettings();
     }
     else {
-      if (context.occurrences.length > 1) {
-        WindowManager.getInstance().getStatusBar(context.project)
+      if (context.getOccurrences().length > 1) {
+        WindowManager.getInstance().getStatusBar(context.getProject())
           .setInfo(GroovyRefactoringBundle.message("press.escape.to.remove.the.highlighting"));
       }
     }
@@ -359,7 +359,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     if (occurrences.length == 0) return null;
     PsiElement candidate;
     if (occurrences.length == 1 || !settings.replaceAllOccurrences()) {
-      candidate = context.expression;
+      candidate = context.getExpression();
       candidate = findContainingStatement(candidate);
     }
     else {
@@ -423,8 +423,8 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
   }
 
   protected static GrVariable resolveLocalVar(GrIntroduceContext context) {
-    if (context.var != null) return context.var;
-    return (GrVariable)((GrReferenceExpression)context.expression).resolve();
+    if (context.getVar() != null) return context.getVar();
+    return (GrVariable)((GrReferenceExpression)context.getExpression()).resolve();
   }
 
   public static boolean hasLhs(final PsiElement[] occurrences) {

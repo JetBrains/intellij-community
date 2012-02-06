@@ -89,13 +89,13 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
   private GroovyPsiElementFactory myFactory = GroovyPsiElementFactory.getInstance(myProject);
 
   public GrIntroduceClosureParameterProcessor(GrIntroduceParameterSettings settings, GrIntroduceParameterContext context) {
-    super(context.project, null);
+    super(context.getProject(), null);
     mySettings = settings;
     myContext = context;
 
-    toReplaceIn = (GrClosableBlock)myContext.toReplaceIn;
-    toSearchFor = myContext.toSearchFor;
-    myParameterInitializer = new GrExpressionWrapper(this.myContext.expression);
+    toReplaceIn = (GrClosableBlock)myContext.getToReplaceIn();
+    toSearchFor = myContext.getToSearchFor();
+    myParameterInitializer = new GrExpressionWrapper(this.myContext.getExpression());
   }
 
   @NotNull
@@ -123,15 +123,15 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
       detectAccessibilityConflicts(usagesIn, conflicts);
     }
 
-    if (myContext.expression != null && toSearchFor instanceof PsiMember) {
+    if (myContext.getExpression() != null && toSearchFor instanceof PsiMember) {
       final AnySupers anySupers = new AnySupers();
-      myContext.expression.accept(anySupers);
+      myContext.getExpression().accept(anySupers);
       if (anySupers.isResult()) {
         final PsiElement containingClass = PsiUtil.getFileOrClassContext(toReplaceIn);
         for (UsageInfo usageInfo : usagesIn) {
           if (!(usageInfo.getElement() instanceof PsiMethod) && !(usageInfo instanceof InternalUsageInfo)) {
             if (!PsiTreeUtil.isAncestor(containingClass, usageInfo.getElement(), false)) {
-              conflicts.putValue(myContext.expression, RefactoringBundle
+              conflicts.putValue(myContext.getExpression(), RefactoringBundle
                 .message("parameter.initializer.contains.0.but.not.all.calls.to.method.are.in.its.class", CommonRefactoringUtil.htmlEmphasize(PsiKeyword.SUPER)));
               break;
             }
@@ -152,10 +152,10 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
 
   private void detectAccessibilityConflicts(final UsageInfo[] usageArray, MultiMap<PsiElement, String> conflicts) {
     //todo whole method
-    if (myContext.expression == null) return;
+    if (myContext.getExpression() == null) return;
 
     final ReferencedElementsCollector collector = new ReferencedElementsCollector();
-    myContext.expression.accept(collector);
+    myContext.getExpression().accept(collector);
     final List<PsiElement> result = collector.getResult();
     if (result.isEmpty()) return;
 
@@ -223,14 +223,14 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
     }
 
     if (mySettings.replaceAllOccurrences()) {
-      PsiElement[] exprs = myContext.occurrences;
+      PsiElement[] exprs = myContext.getOccurrences();
       for (PsiElement expr : exprs) {
         result.add(new InternalUsageInfo(expr));
       }
     }
     else {
-      if (myContext.expression != null) {
-        result.add(new InternalUsageInfo(myContext.expression));
+      if (myContext.getExpression() != null) {
+        result.add(new InternalUsageInfo(myContext.getExpression()));
       }
     }
 
@@ -314,8 +314,8 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
       processClosure(usages);
     }
 
-    if (myContext.var != null && mySettings.removeLocalVariable()) {
-      myContext.var.delete();
+    if (myContext.getVar() != null && mySettings.removeLocalVariable()) {
+      myContext.getVar().delete();
     }
   }
 
@@ -611,7 +611,7 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
 
   @Override
   protected String getCommandName() {
-    return RefactoringBundle.message("introduce.parameter.command", UsageViewUtil.getDescriptiveName(myContext.toReplaceIn));
+    return RefactoringBundle.message("introduce.parameter.command", UsageViewUtil.getDescriptiveName(myContext.getToReplaceIn()));
   }
 
 
