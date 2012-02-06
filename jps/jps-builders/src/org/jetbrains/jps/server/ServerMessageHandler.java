@@ -187,8 +187,8 @@ class ServerMessageHandler extends SimpleChannelHandler {
       case REBUILD: {
         channelContext.setAttachment(sessionId);
         final BuildType buildType = convertCompileType(compileType);
-        final CompilationTask task = new CompilationTask(
-          sessionId, channelContext, projectId, buildType, compileRequest.getModuleNameList(), Collections.<String>emptySet(), compileRequest.getFilePathList());
+        final CompilationTask task = new CompilationTask(sessionId, channelContext, projectId, buildType, compileRequest.getModuleNameList(),
+                                                         compileRequest.getArtifactNameList(), compileRequest.getFilePathList());
         final RunnableFuture future = getCompileTaskExecutor(projectId).submit(task);
         myBuildsInProgress.add(new Pair<RunnableFuture, CompilationTask>(future, task));
         return null;
