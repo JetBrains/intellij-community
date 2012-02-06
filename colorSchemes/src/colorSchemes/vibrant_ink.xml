@@ -1195,6 +1195,12 @@
     <option name="RUBY_COMMA">
       <value />
     </option>
+    <option name="RUBY_DOT">
+      <value />
+    </option>
+    <option name="RUBY_COLON">
+      <value />
+    </option>
     <option name="RUBY_COMMENT">
       <value>
         <option name="FOREGROUND" value="9933CC" />

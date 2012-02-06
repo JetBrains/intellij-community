@@ -1286,6 +1286,16 @@
         <option name="FOREGROUND" value="E1EFFF" />
       </value>
     </option>
+    <option name="RUBY_DOT">
+      <value>
+        <option name="FOREGROUND" value="E1EFFF" />
+      </value>
+    </option>
+    <option name="RUBY_COLON">
+      <value>
+        <option name="FOREGROUND" value="E1EFFF" />
+      </value>
+    </option>
     <option name="RUBY_COMMENT">
       <value>
         <option name="FOREGROUND" value="0088FF" />
