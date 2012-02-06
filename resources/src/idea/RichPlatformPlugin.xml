@@ -86,6 +86,9 @@
 
     <extensionPoint name="java.highlighting.filter"
                     interface="com.intellij.codeInsight.daemon.JavaHighlightingFilter"/>
+
+    <extensionPoint name="projectStructureValidator"
+                    interface="com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureValidator"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
