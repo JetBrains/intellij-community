@@ -59,7 +59,7 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
         if (LOG.isDebugEnabled()) {
           LOG.debug("checking " + element);
         }
-        element.check(problemsHolder);
+        ProjectStructureValidator.check(element, problemsHolder);
       }
     }.execute();
     invokeLater(new Runnable() {

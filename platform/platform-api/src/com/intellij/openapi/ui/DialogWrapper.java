@@ -108,9 +108,9 @@ public abstract class DialogWrapper {
   private boolean myCrossClosesWindow = true;
   private Insets myButtonMargins = new Insets(2, 16, 2, 16);
 
-  private Action myOKAction;
-  private Action myCancelAction;
-  private Action myHelpAction;
+  protected Action myOKAction;
+  protected Action myCancelAction;
+  protected Action myHelpAction;
   private JButton[] myButtons;
 
   private boolean myClosed = false;
@@ -1468,8 +1468,8 @@ public abstract class DialogWrapper {
     protected abstract void doAction(ActionEvent e);
   }
 
-  private class OkAction extends DialogWrapperAction {
-    private OkAction() {
+  protected class OkAction extends DialogWrapperAction {
+    protected OkAction() {
       super(CommonBundle.getOkButtonText());
       putValue(DEFAULT_ACTION, Boolean.TRUE);
     }
@@ -1484,7 +1484,7 @@ public abstract class DialogWrapper {
     }
   }
 
-  private class CancelAction extends DialogWrapperAction {
+  protected class CancelAction extends DialogWrapperAction {
     private CancelAction() {
       super(CommonBundle.getCancelButtonText());
     }
