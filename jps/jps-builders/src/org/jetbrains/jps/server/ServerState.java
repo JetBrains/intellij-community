@@ -3,6 +3,8 @@ package org.jetbrains.jps.server;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import groovy.util.Node;
+import groovy.util.XmlParser;
 import org.codehaus.groovy.runtime.MethodClosure;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.Library;
@@ -295,7 +297,17 @@ class ServerState {
     for (GlobalLibrary library : myGlobalLibraries) {
       if (library instanceof SdkLibrary) {
         final SdkLibrary sdk = (SdkLibrary)library;
-        final Sdk jdk = project.createSdk("JavaSDK", sdk.getName(), sdk.getHomePath(), null);
+        Node additionalData = null;
+        final String additionalXml = sdk.getAdditionalDataXml();
+        if (additionalXml != null) {
+          try {
+            additionalData = new XmlParser(false, false).parseText(additionalXml);
+          }
+          catch (Exception e) {
+            LOG.info(e);
+          }
+        }
+        final Sdk jdk = project.createSdk(/*"JavaSDK"*/sdk.getTypeName(), sdk.getName(), sdk.getHomePath(), additionalData);
         jdk.setClasspath(sdk.getPaths());
       }
       else {

@@ -35,9 +35,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
-import com.intellij.openapi.projectRoots.JavaSdkType;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
-import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
@@ -45,6 +43,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ShutDownTracker;
@@ -61,6 +60,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.NetUtils;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.*;
@@ -489,8 +489,19 @@ public class CompileServerManager implements ApplicationComponent{
       if (homePath == null) {
         continue;
       }
+      final SdkAdditionalData data = sdk.getSdkAdditionalData();
+      final String additionalDataXml;
+      final SdkType sdkType = sdk.getSdkType();
+      if (data == null) {
+        additionalDataXml = null;
+      }
+      else {
+        final Element element = new Element("additional");
+        sdkType.saveAdditionalData(data, element);
+        additionalDataXml = JDOMUtil.writeElement(element, "\n");
+      }
       final List<String> paths = convertToLocalPaths(sdk.getRootProvider().getFiles(OrderRootType.CLASSES));
-      globals.add(new SdkLibrary(name, homePath, paths));
+      globals.add(new SdkLibrary(name, sdkType.getName(), homePath, paths, additionalDataXml));
     }
   }
 
