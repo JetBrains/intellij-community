@@ -21,42 +21,57 @@ import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.ui.GridBag;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.Iterator;
 
 /**
  * @author Yura Cangea, dsl
  */
 public class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
-  private final JTextField myFileTypeName = new JTextField(26);
-  private final JTextField myFileTypeDescr = new JTextField(26);
+  private final JTextField myFileTypeName = new JTextField();
+  private final JTextField myFileTypeDescr = new JTextField();
   private final JCheckBox myIgnoreCase = new JCheckBox(IdeBundle.message("checkbox.customfiletype.ignore.case"));
   private final JCheckBox mySupportBraces = new JCheckBox(IdeBundle.message("checkbox.customfiletype.support.paired.braces"));
   private final JCheckBox mySupportBrackets = new JCheckBox(IdeBundle.message("checkbox.customfiletype.support.paired.brackets"));
   private final JCheckBox mySupportParens = new JCheckBox(IdeBundle.message("checkbox.customfiletype.support.paired.parens"));
   private final JCheckBox mySupportEscapes = new JCheckBox(IdeBundle.message("checkbox.customfiletype.support.string.escapes"));
 
-  private final JTextField myLineComment = new JTextField(20);
-  private final JTextField myBlockCommentStart = new JTextField(20);
-  private final JTextField myBlockCommentEnd = new JTextField(20);
-  private final JTextField myHexPrefix = new JTextField(20);
-  private final JTextField myNumPostfixes = new JTextField(20);
+  private final JTextField myLineComment = new JTextField(5);
+  private final JCheckBox myCommentAtLineStart = new JCheckBox(UIUtil.replaceMnemonicAmpersand("&Only at line start"));
+  private final JTextField myBlockCommentStart = new JTextField(5);
+  private final JTextField myBlockCommentEnd = new JTextField(5);
+  private final JTextField myHexPrefix = new JTextField(5);
 
-  private final JList[] myKeywordsLists = new JList[]{new JBList(), new JBList(), new JBList(), new JBList()};
+  private final JTextField myNumPostfixes = new JTextField(5);
+  private final JBList[] myKeywordsLists = new JBList[]{new JBList(), new JBList(), new JBList(), new JBList()};
   private final DefaultListModel[] myKeywordModels = new DefaultListModel[]{new DefaultListModel(), new DefaultListModel(), new DefaultListModel(), new DefaultListModel()};
   private final JButton[] myAddKeywordButtons = new JButton[4];
   private final JButton[] myRemoveKeywordButtons = new JButton[4];
 
   public CustomFileTypeEditor() {
+    myLineComment.getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
+      protected void textChanged(DocumentEvent e) {
+        boolean enabled = StringUtil.isNotEmpty(myLineComment.getText());
+        myCommentAtLineStart.setEnabled(enabled);
+        if (!enabled) {
+          myCommentAtLineStart.setSelected(false);
+        }
+      }
+    });
+    myCommentAtLineStart.setEnabled(false);
   }
 
   public void resetEditorFrom(AbstractFileType fileType) {
@@ -72,23 +87,24 @@ public class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
       myHexPrefix.setText(table.getHexPrefix());
       myNumPostfixes.setText(table.getNumPostfixChars());
       myIgnoreCase.setSelected(table.isIgnoreCase());
+      myCommentAtLineStart.setSelected(table.lineCommentOnlyAtStart);
 
       mySupportBraces.setSelected(table.isHasBraces());
       mySupportBrackets.setSelected(table.isHasBrackets());
       mySupportParens.setSelected(table.isHasParens());
       mySupportEscapes.setSelected(table.isHasStringEscapes());
 
-      for (Iterator i = table.getKeywords1().iterator(); i.hasNext();) {
-        myKeywordModels[0].addElement(i.next());
+      for (String s : table.getKeywords1()) {
+        myKeywordModels[0].addElement(s);
       }
-      for (Iterator i = table.getKeywords2().iterator(); i.hasNext();) {
-        myKeywordModels[1].addElement(i.next());
+      for (String s : table.getKeywords2()) {
+        myKeywordModels[1].addElement(s);
       }
-      for (Iterator i = table.getKeywords3().iterator(); i.hasNext();) {
-        myKeywordModels[2].addElement(i.next());
+      for (String s : table.getKeywords3()) {
+        myKeywordModels[2].addElement(s);
       }
-      for (Iterator i = table.getKeywords4().iterator(); i.hasNext();) {
-        myKeywordModels[3].addElement(i.next());
+      for (String s : table.getKeywords4()) {
+        myKeywordModels[3].addElement(s);
       }
     }
   }
@@ -122,83 +138,56 @@ public class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
     JPanel panel = new JPanel(new BorderLayout());
 
     JPanel fileTypePanel = new JPanel(new BorderLayout());
-    JPanel _panel0 = new JPanel(new BorderLayout());
     JPanel info = new JPanel(new GridBagLayout());
     GridBagConstraints gc = new GridBagConstraints();
     gc.gridx = 0;
     gc.gridy = 0;
     gc.anchor = GridBagConstraints.WEST;
-    gc.fill = GridBagConstraints.HORIZONTAL;
+    gc.fill = GridBagConstraints.BOTH;
     info.add(new JLabel(IdeBundle.message("editbox.customfiletype.name")), gc);
     gc.gridx = 1;
     gc.gridy = 0;
-    info.add(myFileTypeName);
+    gc.weightx = 1;
+    info.add(myFileTypeName, gc);
+
+    gc.weightx = 0;
     gc.gridx = 0;
-    gc.gridy = 2;
+    gc.gridy = 1;
     info.add(new JLabel(IdeBundle.message("editbox.customfiletype.description")), gc);
     gc.gridx = 1;
-    gc.gridy = 2;
     info.add(myFileTypeDescr, gc);
-    gc.gridx = 0;
-    gc.gridy = 3;
-    _panel0.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 5));
-    _panel0.add(info, BorderLayout.WEST);
-    fileTypePanel.add(_panel0, BorderLayout.NORTH);
+    info.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 5));
+    fileTypePanel.add(info, BorderLayout.NORTH);
 
-    JPanel panel1 = new JPanel();
-    panel1.setBorder(IdeBorderFactory.createTitledBorder(IdeBundle.message("group.customfiletype.syntax.highlighting"), false, false, true));
-    JPanel highlighterPanel = panel1;
+    JPanel highlighterPanel = new JPanel();
+    highlighterPanel.setBorder(IdeBorderFactory.createTitledBorder(IdeBundle.message("group.customfiletype.syntax.highlighting"), false, false, true));
     highlighterPanel.setLayout(new BorderLayout());
-    JPanel panel2 = new JPanel();
-    panel2.setBorder(IdeBorderFactory.createTitledBorder(IdeBundle.message("group.customfiletype.options"), false, true, true));
-    JPanel commentsAndNumbersPanel = panel2;
+    JPanel commentsAndNumbersPanel = new JPanel();
     commentsAndNumbersPanel.setLayout(new GridBagLayout());
 
     JPanel _panel1 = new JPanel(new BorderLayout());
-    gc = new GridBagConstraints();
-    gc.fill = GridBagConstraints.HORIZONTAL;
-    gc.anchor = GridBagConstraints.WEST;
-    gc.gridx = 0;
-    gc.gridy = 0;
-    commentsAndNumbersPanel.add(new JLabel(IdeBundle.message("editbox.customfiletype.line.comment")), gc);
-    gc.gridx = 1;
-    commentsAndNumbersPanel.add(myLineComment, gc);
-    gc.gridx = 0;
-    gc.gridy++;
-    commentsAndNumbersPanel.add(new JLabel(IdeBundle.message("editbox.customfiletype.block.comment.start")), gc);
-    gc.gridx = 1;
-    commentsAndNumbersPanel.add(myBlockCommentStart, gc);
-    gc.gridx = 0;
-    gc.gridy++;
-    commentsAndNumbersPanel.add(new JLabel(IdeBundle.message("editbox.customfiletype.block.comment.end")), gc);
-    gc.gridx = 1;
-    commentsAndNumbersPanel.add(myBlockCommentEnd, gc);
-    gc.gridx = 0;
-    gc.gridy++;
-    commentsAndNumbersPanel.add(new JLabel(IdeBundle.message("editbox.customfiletype.hex.prefix")), gc);
-    gc.gridx = 1;
-    commentsAndNumbersPanel.add(myHexPrefix, gc);
-    gc.gridx = 0;
-    gc.gridy++;
-    commentsAndNumbersPanel.add(new JLabel(IdeBundle.message("editbox.customfiletype.number.postfixes")), gc);
-    gc.gridx = 1;
-    commentsAndNumbersPanel.add(myNumPostfixes, gc);
+    GridBag gb = new GridBag().setDefaultFill(GridBagConstraints.HORIZONTAL).setDefaultAnchor(GridBagConstraints.WEST).setDefaultInsets(1,
+                                                                                                                                        5,
+                                                                                                                                        1,
+                                                                                                                                        5);
+    commentsAndNumbersPanel.add(new JLabel(IdeBundle.message("editbox.customfiletype.line.comment")), gb.nextLine().next());
+    commentsAndNumbersPanel.add(myLineComment, gb.next());
+    commentsAndNumbersPanel.add(myCommentAtLineStart, gb.next().coverLine(2));
 
-    gc.gridx = 0;
-    gc.gridy++;
-    commentsAndNumbersPanel.add(mySupportBraces, gc);
+    commentsAndNumbersPanel.add(new JLabel(IdeBundle.message("editbox.customfiletype.block.comment.start")), gb.nextLine().next());
+    commentsAndNumbersPanel.add(myBlockCommentStart, gb.next());
+    commentsAndNumbersPanel.add(new JLabel(IdeBundle.message("editbox.customfiletype.block.comment.end")), gb.next());
+    commentsAndNumbersPanel.add(myBlockCommentEnd, gb.next());
 
-    gc.gridx = 0;
-    gc.gridy++;
-    commentsAndNumbersPanel.add(mySupportBrackets, gc);
+    commentsAndNumbersPanel.add(new JLabel(IdeBundle.message("editbox.customfiletype.hex.prefix")), gb.nextLine().next());
+    commentsAndNumbersPanel.add(myHexPrefix, gb.next());
+    commentsAndNumbersPanel.add(new JLabel(IdeBundle.message("editbox.customfiletype.number.postfixes")), gb.next());
+    commentsAndNumbersPanel.add(myNumPostfixes, gb.next());
 
-    gc.gridx = 0;
-    gc.gridy++;
-    commentsAndNumbersPanel.add(mySupportParens, gc);
-
-    gc.gridx = 0;
-    gc.gridy++;
-    commentsAndNumbersPanel.add(mySupportEscapes, gc);
+    commentsAndNumbersPanel.add(mySupportBraces, gb.nextLine().next().coverLine(2));
+    commentsAndNumbersPanel.add(mySupportBrackets, gb.next().next().coverLine(2));
+    commentsAndNumbersPanel.add(mySupportParens, gb.nextLine().next().coverLine(2));
+    commentsAndNumbersPanel.add(mySupportEscapes, gb.next().next().coverLine(2));
 
     _panel1.add(commentsAndNumbersPanel, BorderLayout.WEST);
 
@@ -206,10 +195,11 @@ public class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
     highlighterPanel.add(_panel1, BorderLayout.NORTH);
 
     TabbedPaneWrapper tabbedPaneWrapper = new TabbedPaneWrapper(this);
-    tabbedPaneWrapper.addTab("1", createKeywordsPanel(0));
-    tabbedPaneWrapper.addTab("2", createKeywordsPanel(1));
-    tabbedPaneWrapper.addTab("3", createKeywordsPanel(2));
-    tabbedPaneWrapper.addTab("4", createKeywordsPanel(3));
+    tabbedPaneWrapper.getComponent().setBorder(IdeBorderFactory.createTitledBorder(IdeBundle.message("listbox.customfiletype.keywords"), false, false, true));
+    tabbedPaneWrapper.addTab(" 1 ", createKeywordsPanel(0));
+    tabbedPaneWrapper.addTab(" 2 ", createKeywordsPanel(1));
+    tabbedPaneWrapper.addTab(" 3 ", createKeywordsPanel(2));
+    tabbedPaneWrapper.addTab(" 4 ", createKeywordsPanel(3));
 
     highlighterPanel.add(tabbedPaneWrapper.getComponent(), BorderLayout.CENTER);
     highlighterPanel.add(myIgnoreCase, BorderLayout.SOUTH);
@@ -232,9 +222,7 @@ public class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
   }
 
   private JPanel createKeywordsPanel(final int index) {
-    JPanel panel = new JPanel();
-    panel.setBorder(IdeBorderFactory.createTitledBorder(IdeBundle.message("listbox.customfiletype.keywords"), false, false, true));
-    JPanel keywordsPanel = panel;
+    JPanel keywordsPanel = new JPanel();
     keywordsPanel.setLayout(new BorderLayout());
 
     keywordsPanel.add(ScrollPaneFactory.createScrollPane(myKeywordsLists[index]), BorderLayout.CENTER);
@@ -284,6 +272,7 @@ public class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
     syntaxTable.setEndComment(myBlockCommentEnd.getText());
     syntaxTable.setHexPrefix(myHexPrefix.getText());
     syntaxTable.setNumPostfixChars(myNumPostfixes.getText());
+    syntaxTable.lineCommentOnlyAtStart = myCommentAtLineStart.isSelected();
 
     boolean ignoreCase = myIgnoreCase.isSelected();
     syntaxTable.setIgnoreCase(ignoreCase);

@@ -29,6 +29,7 @@ public class SyntaxTable implements Cloneable {
   private Set<String> myKeywords4;
 
   private String myLineComment;
+  public boolean lineCommentOnlyAtStart;
   private String myStartComment;
   private String myEndComment;
 
@@ -175,6 +176,7 @@ public class SyntaxTable implements Cloneable {
     if (myHasBrackets != syntaxTable.myHasBrackets) return false;
     if (myHasParens != syntaxTable.myHasParens) return false;
     if (myHasStringEscapes != syntaxTable.myHasStringEscapes) return false;
+    if (lineCommentOnlyAtStart != syntaxTable.lineCommentOnlyAtStart) return false;
 
     return true;
   }
