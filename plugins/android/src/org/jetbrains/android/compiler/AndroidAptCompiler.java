@@ -29,6 +29,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.android.compiler.tools.AndroidApt;
@@ -58,6 +59,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.compiler.AndroidAptCompiler");
   private static final GenerationItem[] EMPTY_GENERATION_ITEM_ARRAY = {};
 
+  @Nullable
   @Override
   public VirtualFile getPresentableFile(CompileContext context, Module module, VirtualFile outputRoot, VirtualFile generatedFile) {
     return null;
@@ -265,11 +267,6 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
     public boolean isTestSource() {
       return false;
     }
-
-    @NotNull
-    public String getPackageFolderPath() {
-      return FileUtil.toSystemDependentName(mySourceRootPath + '/' + myPackage.replace('.', '/'));
-    }
   }
 
   @Nullable
@@ -364,7 +361,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
         }
       }
 
-      return result.toArray(new String[result.size()]);
+      return ArrayUtil.toStringArray(result);
     }
   }
 
