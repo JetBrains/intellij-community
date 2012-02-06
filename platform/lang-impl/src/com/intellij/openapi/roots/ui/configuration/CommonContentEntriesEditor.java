@@ -43,6 +43,7 @@ import com.intellij.openapi.vfs.ex.VirtualFileManagerAdapter;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.roots.ToolbarPanel;
+import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -385,11 +386,15 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
     }
 
     public void actionPerformed(AnActionEvent e) {
-      VirtualFile[] files = FileChooser.chooseFiles(myProject, myDescriptor, myLastSelectedDir);
-      if (files.length > 0) {
-        myLastSelectedDir = files[0];
-        addContentEntries(files);
-      }
+      FileChooser.chooseFilesWithSlideEffect(myDescriptor, myProject, myLastSelectedDir, new Consumer<VirtualFile[]>() {
+        @Override
+        public void consume(VirtualFile[] files) {
+          if (files.length > 0) {
+            myLastSelectedDir = files[0];
+            addContentEntries(files);
+          }
+        }
+      });
     }
 
     @Nullable
