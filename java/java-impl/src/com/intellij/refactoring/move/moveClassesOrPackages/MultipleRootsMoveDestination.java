@@ -45,7 +45,7 @@ public class MultipleRootsMoveDestination extends AutocreatingMoveDestination {
 
 
   public PsiDirectory getTargetDirectory(PsiDirectory source) throws IncorrectOperationException {
-    if (JavaDirectoryService.getInstance().isSourceRoot(source)) return null;
+    //if (JavaDirectoryService.getInstance().isSourceRoot(source)) return null;
     return getOrCreateDirectoryForSource(source.getVirtualFile());
   }
 
