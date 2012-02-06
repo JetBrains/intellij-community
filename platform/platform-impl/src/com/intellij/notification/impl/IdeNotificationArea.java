@@ -170,7 +170,7 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
     public TextIcon(IdeNotificationArea component, String str) {
       myStr = str;
       myComponent = component;
-      myWidth = myComponent.getFontMetrics(calcFont()).stringWidth(myStr) + 2;
+      myWidth = myComponent.getFontMetrics(calcFont()).stringWidth(myStr) + 5;
     }
 
     @Override
@@ -181,7 +181,7 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
       y += getIconHeight() - g.getFontMetrics().getDescent();
 
       g.setColor(Color.BLACK);
-      g.drawString(myStr, x + 1, y);
+      g.drawString(myStr, x, y);
 
       g.setFont(originalFont);
       g.setColor(originalColor);
