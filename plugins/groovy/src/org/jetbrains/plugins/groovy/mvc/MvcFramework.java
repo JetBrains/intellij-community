@@ -102,6 +102,10 @@ public abstract class MvcFramework {
     return module.getName().endsWith(getCommonPluginSuffix());
   }
 
+  public List<Module> reorderModulesForMvcView(List<Module> modules) {
+    return modules;
+  }
+  
   public abstract String getApplicationDirectoryName();
 
   public void syncSdkAndLibrariesInPluginsModule(@NotNull Module module) {
