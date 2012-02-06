@@ -15,7 +15,10 @@
  */
 package org.jetbrains.idea.svn17.history;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.RepositoryLocation;
@@ -53,21 +56,35 @@ public class SvnRevisionsNavigationMediator implements CommittedChangesNavigatio
 
     myChunks = new LinkedList<List<Fragment>>();
 
-    SVNRepository repository = null;
-    final SVNURL repositoryRoot;
-    final long youngRevision;
-    try {
-      repository = vcs.createRepository(location.getURL());
-      youngRevision = repository.getLatestRevision();
-      repositoryRoot = repository.getRepositoryRoot(false);
-    }
-    catch (SVNException e) {
-      throw new VcsException(e);
-    }
-    finally {
-      if (repository != null) {
-        repository.closeSession();
+    final SVNURL[] repositoryRoot = new SVNURL[1];
+    final long[] youngRevision = new long[1];
+    final SVNException[] exception = new SVNException[1];
+
+    final boolean succeeded = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+      @Override
+      public void run() {
+        SVNRepository repository = null;
+        try {
+          repository = vcs.createRepository(location.getURL());
+          youngRevision[0] = repository.getLatestRevision();
+          repositoryRoot[0] = repository.getRepositoryRoot(false);
+        }
+        catch (SVNException e) {
+          exception[0] = e;
+        }
+        finally {
+          if (repository != null) {
+            repository.closeSession();
+          }
+        }
       }
+    }, "Getting latest repository revision", true, myProject);
+
+    if (exception[0] != null) {
+      throw new VcsException(exception[0]);
+    }
+    if (! succeeded) {
+      throw new ProcessCanceledException();
     }
 
     final Iterator<ChangesBunch> visualIterator = project.isDefault() ? null :
@@ -78,7 +95,7 @@ public class SvnRevisionsNavigationMediator implements CommittedChangesNavigatio
     myVisuallyCached = (visualIterator == null) ? null : new VisuallyCachedProvider(visualIterator, myProject, location);
 
     myChunkFactory = new BunchFactory(myInternallyCached, myVisuallyCached,
-                                      new LiveProvider(vcs, location, youngRevision, new SvnLogUtil(myProject, vcs, location, repositoryRoot)));
+                                      new LiveProvider(vcs, location, youngRevision[0], new SvnLogUtil(myProject, vcs, location, repositoryRoot[0])));
 
     myCurrentIdx = -1;
     // init first screen
