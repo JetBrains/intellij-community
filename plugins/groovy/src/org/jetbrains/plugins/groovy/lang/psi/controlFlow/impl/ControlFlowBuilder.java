@@ -161,7 +161,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
   private void buildFlowForClosure(final GrClosableBlock closure) {
-    for (GrParameter parameter : closure.getParameters()) {
+    for (GrParameter parameter : closure.getAllParameters()) {
       addNode(new ReadWriteVariableInstruction(parameter.getName(), parameter, myInstructionNumber++, true));
     }
 

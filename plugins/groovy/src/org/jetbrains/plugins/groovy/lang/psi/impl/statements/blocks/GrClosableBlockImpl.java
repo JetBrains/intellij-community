@@ -161,15 +161,17 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     return childByClass;
   }
 
-  public void addParameter(GrParameter parameter) {
+  public GrParameter addParameter(GrParameter parameter) {
     GrParameterList parameterList = getParameterList();
     if (getArrow() == null) {
-      ASTNode next = parameterList.getNode().getTreeNext();
+      final GrParameterList newParamList = (GrParameterList)addAfter(parameterList, getLBrace());
+      parameterList.delete();
+      ASTNode next = newParamList.getNode().getTreeNext();
       getNode().addLeaf(GroovyTokenTypes.mCLOSABLE_BLOCK_OP, "->", next);
-      getNode().addLeaf(GroovyTokenTypes.mNLS, "\n", next);
+      return newParamList.addParameterToEnd(parameter);
     }
 
-    parameterList.addParameterToEnd(parameter);
+    return parameterList.addParameterToEnd(parameter);
   }
 
   public boolean hasParametersSection() {

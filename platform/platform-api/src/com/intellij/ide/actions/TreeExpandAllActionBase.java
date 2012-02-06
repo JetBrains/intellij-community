@@ -21,11 +21,13 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAware;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author max
  */
 public abstract class TreeExpandAllActionBase extends AnAction implements DumbAware {
+  @Nullable
   protected abstract TreeExpander getExpander(DataContext dataContext);
 
   public final void actionPerformed(AnActionEvent e) {

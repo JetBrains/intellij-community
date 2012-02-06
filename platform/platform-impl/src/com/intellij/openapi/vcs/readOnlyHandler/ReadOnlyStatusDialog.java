@@ -56,6 +56,7 @@ public class ReadOnlyStatusDialog extends OptionsDialog {
     else {
       myUsingFileSystemRadioButton.setSelected(true);
     }
+    myChangelist.setEnabled(myUsingVcsRadioButton.isSelected());
     myFileList.setCellRenderer(new FileListRenderer());
     setTitle(VcsBundle.message("dialog.title.clear.read.only.file.status"));
 

@@ -28,8 +28,12 @@ public abstract class IPPTestCase extends LightCodeInsightFixtureTestCase {
   protected abstract String getRelativePath();
 
   protected void doTest() {
+    doTest(getIntentionName());
+  }
+
+  protected void doTest(String intentionName) {
     final String testName = getTestName(false);
-    CodeInsightTestUtil.doIntentionTest(myFixture, getIntentionName(), testName + ".java", testName + "_after.java");
+    CodeInsightTestUtil.doIntentionTest(myFixture, intentionName, testName + ".java", testName + "_after.java");
   }
 
   protected void assertIntentionNotAvailable() {

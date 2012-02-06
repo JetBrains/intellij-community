@@ -18,6 +18,7 @@ package com.intellij.ui.treeStructure.filtered;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.speedSearch.ElementFilter;
@@ -120,7 +121,7 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
       myRefilterQueue.cancelAllUpdates();
     }
     final ActionCallback callback = new ActionCallback();
-    getUi().cancelUpdate().doWhenProcessed(new Runnable() {
+    final Runnable afterCancelUpdate = new Runnable() {
       @Override
       public void run() {
         if (myRefilterQueue == null || now) {
@@ -145,7 +146,12 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
           });
         }
       }
-    });
+    };
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      getUi().cancelUpdate().doWhenProcessed(afterCancelUpdate);
+    } else {
+      afterCancelUpdate.run();
+    }
 
     return callback;
   }
@@ -155,7 +161,7 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
     final ActionCallback selectionDone = new ActionCallback();
 
     getFilteredStructure().refilter();
-    queueUpdate().doWhenProcessed(new Runnable() {
+    final Runnable selectionRunnable = new Runnable() {
       public void run() {
         revalidateTree();
 
@@ -173,25 +179,36 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
                 selectionDone.setDone();
               }
             });
-          } else {
+          }
+          else {
             TreeUtil.ensureSelection(myTree);
             selectionDone.setDone();
           }
-        } else {
+        }
+        else {
           selectionDone.setDone();
         }
       }
-    });
+    };
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      queueUpdate().doWhenProcessed(selectionRunnable);
+    } else {
+      selectionRunnable.run();
+    }
 
     final ActionCallback result = new ActionCallback();
 
     selectionDone.doWhenDone(new Runnable() {
       public void run() {
-        scrollSelectionToVisible(new Runnable() {
-          public void run() {
-            getReady(this).notify(result);
-          }
-        }, false);
+        if (!ApplicationManager.getApplication().isUnitTestMode()) {
+          scrollSelectionToVisible(new Runnable() {
+            public void run() {
+              getReady(this).notify(result);
+            }
+          }, false);
+        } else {
+          result.setDone();
+        }
       }
     }).doWhenRejected(new Runnable() {
       @Override

@@ -49,20 +49,20 @@ public class DirDiffElement {
     myTargetLength = target == null || target.isContainer() ? -1 : target.getSize();
     myName = name;
     if (type == DType.ERROR) {
-      myDefaultOperation = DirDiffOperation.NONE;
+      myDefaultOperation = NONE;
     }
     else if (isSource()) {
       myDefaultOperation = COPY_TO;
     }
     else if (isTarget()) {
-      myDefaultOperation = DirDiffOperation.COPY_FROM;
+      myDefaultOperation = COPY_FROM;
     }
     else if (type == DType.EQUAL) {
-      myDefaultOperation = DirDiffOperation.EQUAL;
+      myDefaultOperation = EQUAL;
     }
     else if (type == DType.CHANGED) {
       assert source != null;
-      myDefaultOperation = DirDiffOperation.MERGE;
+      myDefaultOperation = MERGE;
     }
   }
 
@@ -180,7 +180,7 @@ public class DirDiffElement {
     } else if (myType == DType.TARGET) {
       myOperation = op == COPY_FROM ? DELETE : op == DELETE ? NONE : COPY_FROM;
     } else if (myType == DType.CHANGED) {
-      myOperation = op == MERGE ? COPY_FROM : op == COPY_FROM ? COPY_TO : op == COPY_TO ? NONE : MERGE;
+      myOperation = op == MERGE ? COPY_FROM : op == COPY_FROM ? COPY_TO : MERGE;
     }
   }
 

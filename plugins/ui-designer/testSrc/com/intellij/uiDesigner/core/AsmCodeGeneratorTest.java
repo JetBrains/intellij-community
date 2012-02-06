@@ -174,6 +174,22 @@ public class AsmCodeGeneratorTest extends TestCase {
     assertEquals(1, gridLayout.getColumnCount());
   }
 
+  public void testCardLayout() throws Exception {
+    JComponent rootComponent = getInstrumentedRootComponent("TestCardLayout.form", "BindingTest");
+    assertTrue(rootComponent.getLayout() instanceof CardLayout);
+    CardLayout cardLayout = (CardLayout) rootComponent.getLayout();
+    assertEquals(10, cardLayout.getHgap());
+    assertEquals(20, cardLayout.getVgap());
+  }
+
+  public void testCardLayoutShow() throws Exception {
+    JComponent rootComponent = getInstrumentedRootComponent("TestCardLayoutShow.form", "BindingTest");
+    assertTrue(rootComponent.getLayout() instanceof CardLayout);
+    assertEquals(rootComponent.getComponentCount(), 2);
+    assertFalse(rootComponent.getComponent(0).isVisible());
+    assertTrue(rootComponent.getComponent(1).isVisible());
+  }
+
   public void testGridConstraints() throws Exception {
     JComponent rootComponent = getInstrumentedRootComponent("TestGridConstraints.form", "BindingTest");
     assertEquals(1, rootComponent.getComponentCount());

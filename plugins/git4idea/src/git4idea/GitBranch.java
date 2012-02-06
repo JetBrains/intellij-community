@@ -79,6 +79,26 @@ public class GitBranch extends GitReference {
   }
 
   /**
+   * <p>
+   *   Returns the "local" name of a remote branch.
+   *   For example, for "origin/master" returns "master".
+   * </p>
+   * <p>
+   *   Note that slashes are not permitted in remote names, so if we know that a branch is a remote branch,
+   *   we know that local branch name is tha part after the slash.
+   * </p>
+   * @return "local" name of a remote branch, or just {@link #getName()} for local branches.
+   */
+  @NotNull
+  public String getShortName() {
+    String name = getName();
+    if (myRemote) {
+      return name.substring(name.indexOf('/') + 1);
+    }
+    return name;
+  }
+
+  /**
    * Get tracked remote for the branch
    *
    * @param project the context project

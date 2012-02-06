@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.wizards;
 
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
@@ -25,7 +26,6 @@ import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
@@ -236,24 +236,26 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
   }
 
   private MavenWorkspaceSettings getDirectProjectsSettings() {
-    return ApplicationManager.getApplication().runReadAction(new Computable<MavenWorkspaceSettings>() {
-      @Override
-      public MavenWorkspaceSettings compute() {
-        return MavenWorkspaceSettingsComponent.getInstance(getProject()).getState();
-      }
-    });
+    AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
+    try {
+      return MavenWorkspaceSettingsComponent.getInstance(getProject()).getState();
+    }
+    finally {
+      accessToken.finish();
+    }
   }
 
   @NotNull
   private Project getProject() {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Project>() {
-      @Override
-      public Project compute() {
-        Project result = isUpdate() ? getProjectToUpdate() : null;
-        if (result == null || result.isDisposed()) result = ProjectManager.getInstance().getDefaultProject();
-        return result;
-      }
-    });
+    AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
+    try {
+      Project result = isUpdate() ? getProjectToUpdate() : null;
+      if (result == null || result.isDisposed()) result = ProjectManager.getInstance().getDefaultProject();
+      return result;
+    }
+    finally {
+      accessToken.finish();
+    }
   }
 
   public void setFiles(List<VirtualFile> files) {

@@ -65,6 +65,8 @@
     <extensionPoint name="unusedDeclarationFixProvider"
                     interface="com.intellij.codeInspection.reference.UnusedDeclarationFixProvider"/>
 
+    <extensionPoint name="canBeFinal"
+                    interface="com.intellij.codeInspection.canBeFinal.CanBeFinalHandler"/>
     <!-- PsiMember -->
     <extensionPoint name="javaDocNotNecessary"
                     interface="com.intellij.openapi.util.Condition"/>
@@ -1209,6 +1211,9 @@
     <wizardMode implementation="com.intellij.ide.util.newProjectWizard.modes.CreateProjectFromSourcesMode" id="CreateProjectFromSourcesMode" order="after CreateFromScratchMode"/>
     <wizardMode implementation="com.intellij.ide.util.newProjectWizard.modes.CreateModuleFromSourcesMode" id="CreateModuleFromSourcesMode" order="after CreateProjectFromSourcesMode"/>
     <projectStructureDetector implementation="com.intellij.ide.util.projectWizard.importSources.impl.JavaProjectStructureDetector" order="first"/>
+
+    <regExpLanguageHost forClass="com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl"
+                        implementationClass="com.intellij.psi.impl.JavaRegExpHost"/>
   </extensions>
 
   <actions>

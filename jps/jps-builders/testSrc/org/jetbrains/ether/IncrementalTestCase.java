@@ -15,7 +15,10 @@
  */
 package org.jetbrains.ether;
 
+import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import junit.framework.TestCase;
 import junitx.framework.FileAssert;
 import org.apache.log4j.Level;
@@ -23,25 +26,25 @@ import org.apache.log4j.PropertyConfigurator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.Project;
+import org.jetbrains.jps.Sdk;
 import org.jetbrains.jps.api.CanceledStatus;
+import org.jetbrains.jps.artifacts.Artifact;
 import org.jetbrains.jps.idea.IdeaProjectLoader;
-import org.jetbrains.jps.incremental.AllProjectScope;
-import org.jetbrains.jps.incremental.BuilderRegistry;
-import org.jetbrains.jps.incremental.FSState;
-import org.jetbrains.jps.incremental.IncProjectBuilder;
+import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.ProjectTimestamps;
+import org.jetbrains.jps.server.ClasspathBootstrap;
 import org.jetbrains.jps.server.ProjectDescriptor;
 
 import java.io.*;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Properties;
 
 /**
- * Created by IntelliJ IDEA.
- * User: db
- * Date: 26.07.11
- * Time: 0:34
- * To change this template use File | Settings | File Templates.
+ * @author db
+ * @since 26.07.11
  */
 public abstract class IncrementalTestCase extends TestCase {
   private static class RootStripper {
@@ -51,23 +54,94 @@ public abstract class IncrementalTestCase extends TestCase {
       this.root = root;
     }
 
-    String strip(final String s){
+    String strip(final String s) {
       if (s.startsWith(root)) {
         return s.substring(root.length());
       }
-      
+
       return s;
     }
+  }
+
+  static VolatileFileAppender myAppender = null;
+  
+  static void setAppender (final VolatileFileAppender app) {
+    myAppender = app;
   } 
   
-  private static RootStripper stripper = new RootStripper();
-  
-  private final String groupName;
-  private final String tempDir = System.getProperty("java.io.tmpdir");
+  static void closeAppender () {
+    if (myAppender != null) {
+      try {
+        myAppender.closeStream();
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
+  }
 
+  private static class MyFactory implements Logger.Factory {
+    @Override
+    public Logger getLoggerInstance(String category) {
+      final org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(category);
+
+      final boolean affectedLogger = category.equals("#org.jetbrains.jps.incremental.java.JavaBuilder") ||
+                                     category.equals("#org.jetbrains.jps.incremental.IncProjectBuilder");
+
+      return new Logger() {
+        @Override
+        public boolean isDebugEnabled() {
+          return affectedLogger;
+        }
+
+        @Override
+        public void debug(@NonNls String message) {
+        }
+
+        @Override
+        public void debug(@Nullable Throwable t) {
+        }
+
+        @Override
+        public void debug(@NonNls String message, @Nullable Throwable t) {
+        }
+
+        @Override
+        public void error(@NonNls String message, @Nullable Throwable t, @NonNls String... details) {
+        }
+
+        @Override
+        public void info(@NonNls String message) {
+          if (affectedLogger) {
+            logger.info(stripper.strip(message));
+          }
+        }
+
+        @Override
+        public void info(@NonNls String message, @Nullable Throwable t) {
+        }
+
+        @Override
+        public void warn(@NonNls String message, @Nullable Throwable t) {
+        }
+
+        @Override
+        public void setLevel(Level level) {
+        }
+      };
+    }
+  }
+
+  private static RootStripper stripper = new RootStripper();
+
+  private final String groupName;
+  private final String tempDir = FileUtil.toSystemDependentName(new File(System.getProperty("java.io.tmpdir")).getCanonicalPath());
+
+  private Logger.Factory oldFactory;
   private String baseDir;
   private String workDir;
 
+  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
   protected IncrementalTestCase(final String name) throws Exception {
     super(name);
     groupName = name;
@@ -75,9 +149,12 @@ public abstract class IncrementalTestCase extends TestCase {
 
   @Override
   protected void setUp() throws Exception {
+    oldFactory = Logger.ourFactory;
+    Logger.setFactory(new MyFactory());
+
     super.setUp();
 
-    baseDir = "jps/testData" + File.separator + "incremental" + File.separator;
+    baseDir = PathManagerEx.getTestDataPath() + File.separator + "compileServer" + File.separator + "incremental" + File.separator;
 
     for (int i = 0; ; i++) {
       final File tmp = new File(tempDir + File.separator + "__temp__" + i);
@@ -87,23 +164,37 @@ public abstract class IncrementalTestCase extends TestCase {
       }
     }
 
-    copy(new File(getBaseDir()), new File(getWorkDir()));
+    FileUtil.copyDir(new File(getBaseDir()), new File(getWorkDir()));
+    
+    Paths.getInstance().setSystemRoot(new File(workDir));
   }
 
   @Override
   protected void tearDown() throws Exception {
-    super.tearDown();
-//        delete(new File(workDir));
+    try {
+      super.tearDown();
+    }
+    finally {
+      try {
+        closeAppender();
+        delete(new File(workDir));
+      }
+      finally {
+        Logger.setFactory(oldFactory);
+      }
+    }
   }
 
-  private String getDir(final String prefix) {
+  private String getProjectName() {
     final String name = getName();
 
     assert (name.startsWith("test"));
 
-    final String result = Character.toLowerCase(name.charAt("test".length())) + name.substring("test".length() + 1);
+    return Character.toLowerCase(name.charAt("test".length())) + name.substring("test".length() + 1);
+  }
 
-    return prefix + groupName + File.separator + result;
+  private String getDir(final String prefix) {
+    return prefix + groupName + File.separator + getProjectName();
   }
 
   private String getBaseDir() {
@@ -114,7 +205,7 @@ public abstract class IncrementalTestCase extends TestCase {
     return getDir(workDir);
   }
 
-  private void delete(final File file) throws Exception {
+  private static void delete(final File file) throws Exception {
     if (file.isDirectory()) {
       final File[] files = file.listFiles();
 
@@ -135,7 +226,7 @@ public abstract class IncrementalTestCase extends TestCase {
 
         if (files != null) {
           for (File f : files) {
-            copy(f, new File(output.getPath() + File.separator + f.getName()));
+            copy(f, new File(output.getPath(), f.getName()));
           }
         }
       }
@@ -144,16 +235,26 @@ public abstract class IncrementalTestCase extends TestCase {
       }
     }
     else if (input.isFile()) {
-      final FileReader in = new FileReader(input);
-      final FileWriter out = new FileWriter(output);
+      FileReader in = null;
+      FileWriter out = null;
 
       try {
+        in = new FileReader(input);
+        out = new FileWriter(output);
         int c;
         while ((c = in.read()) != -1) out.write(c);
       }
       finally {
-        in.close();
-        out.close();
+        try {
+          if (in != null) {
+            in.close();
+          }
+        }
+        finally {
+          if (out != null) {
+            out.close();
+          }
+        }
       }
     }
   }
@@ -177,7 +278,7 @@ public abstract class IncrementalTestCase extends TestCase {
       final String basename = pathSep == -1 ? postfix : postfix.substring(pathSep + 1);
       final String path =
         getWorkDir() + File.separator + (pathSep == -1 ? "src" : postfix.substring(0, pathSep).replace('-', File.separatorChar));
-      final File output = new File(path + File.separator + basename);
+      final File output = new File(path, basename);
 
       if (copy) {
         copy(input, output);
@@ -192,94 +293,59 @@ public abstract class IncrementalTestCase extends TestCase {
     final Properties properties = new Properties();
 
     properties.setProperty("log4j.rootCategory", "INFO, A1");
-    properties.setProperty("log4j.appender.A1", "org.apache.log4j.FileAppender");
+    properties.setProperty("log4j.appender.A1", "org.jetbrains.ether.VolatileFileAppender");
     properties.setProperty("log4j.appender.A1.file", getWorkDir() + ".log");
     properties.setProperty("log4j.appender.A1.layout", "org.apache.log4j.PatternLayout");
     properties.setProperty("log4j.appender.A1.layout.ConversionPattern", "%m%n");
 
     PropertyConfigurator.configure(properties);
-
-    Logger.setFactory(new Logger.Factory() {
-      @Override
-      public Logger getLoggerInstance(String category) {
-        final org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(category);
-
-        final boolean affectedLogger = category.equals("#org.jetbrains.jps.incremental.java.JavaBuilder") ||
-                                       category.equals("#org.jetbrains.jps.incremental.IncProjectBuilder");
-        
-        final String root = getWorkDir() + File.separator;
-        final int pos = root.length();
-
-        return new Logger() {
-          @Override
-          public boolean isDebugEnabled() {
-            return affectedLogger;
-          }
-
-          @Override
-          public void debug(@NonNls String message) {
-          }
-
-          @Override
-          public void debug(@Nullable Throwable t) {
-          }
-
-          @Override
-          public void debug(@NonNls String message, @Nullable Throwable t) {
-          }
-
-          @Override
-          public void error(@NonNls String message, @Nullable Throwable t, @NonNls String... details) {
-          }
-
-          @Override
-          public void info(@NonNls String message) {
-            if (affectedLogger) {
-              logger.info(stripper.strip(message));
-            }
-          }
-
-          @Override
-          public void info(@NonNls String message, @Nullable Throwable t) {
-          }
-
-          @Override
-          public void warn(@NonNls String message, @Nullable Throwable t) {
-          }
-
-          @Override
-          public void setLevel(Level level) {
-          }
-        };
-      }
-    });
   }
 
   public void doTest() throws Exception {
-    stripper.setRoot(getWorkDir() + File.separator);
-    
+    stripper.setRoot(FileUtil.toSystemIndependentName(getWorkDir() + File.separator));
+
     initLoggers();
 
     final String projectPath = getWorkDir() + File.separator + ".idea";
+    final String projectName = getProjectName();
     final Project project = new Project();
+
+    final Sdk jdk = project.createSdk("JavaSDK", "IDEA jdk",  System.getProperty("java.home"), null);
+    final List<String> paths = new LinkedList<String>();
+
+    paths.add(FileUtil.toSystemIndependentName(ClasspathBootstrap.getResourcePath(Object.class).getCanonicalPath()));
+
+    jdk.setClasspath(paths);
 
     IdeaProjectLoader.loadFromPath(project, projectPath, "");
 
     final ProjectDescriptor projectDescriptor =
-      new ProjectDescriptor(projectPath, project, new FSState(true), new ProjectTimestamps(projectPath),
-                            new BuildDataManager(projectPath, true));
-    final IncProjectBuilder builder = new IncProjectBuilder(projectDescriptor, BuilderRegistry.getInstance(), CanceledStatus.NULL);
+      new ProjectDescriptor(projectPath, project, new FSState(true), new ProjectTimestamps(projectName),
+                            new BuildDataManager(projectName, true));
+    try {
 
-    builder.build(new AllProjectScope(project, true), false, true);
+      new IncProjectBuilder(
+        projectDescriptor, BuilderRegistry.getInstance(), CanceledStatus.NULL
+      ).build(
+        new AllProjectScope(project, Collections.<Artifact>emptySet(), true), false, true
+      );
 
-    Thread.sleep(1000);
+      modify();
 
-    modify();
+      if (SystemInfo.isUnix) {
+        Thread.sleep(1000L);
+      }
 
-    builder.build(new AllProjectScope(project, false), true, false);
+      new IncProjectBuilder(
+        projectDescriptor, BuilderRegistry.getInstance(), CanceledStatus.NULL
+      ).build(
+        new AllProjectScope(project, Collections.<Artifact>emptySet(), false), true, false
+      );
 
-    projectDescriptor.release();
-
-    FileAssert.assertEquals(new File(getBaseDir() + ".log"), new File(getWorkDir() + ".log"));
+      FileAssert.assertEquals(new File(getBaseDir() + ".log"), new File(getWorkDir() + ".log"));
+    }
+    finally {
+      projectDescriptor.release();
+    }
   }
 }

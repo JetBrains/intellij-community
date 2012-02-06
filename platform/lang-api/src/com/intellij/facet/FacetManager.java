@@ -32,7 +32,7 @@ public abstract class FacetManager implements FacetModel {
   }
 
   /**
-   * Creates the interface for modifiyng set of facets in the module. Call {@link ModifiableFacetModel#commit()} when modification is finished 
+   * Creates the interface for modifying set of facets in the module. Call {@link ModifiableFacetModel#commit()} when modification is finished
    * @return the modifiable facet model
    */
   @NotNull
@@ -40,7 +40,7 @@ public abstract class FacetManager implements FacetModel {
 
   @NotNull
   public abstract <F extends Facet, C extends FacetConfiguration> F createFacet(@NotNull FacetType<F, C> type, @NotNull String name,
-                                                                                   @NotNull C cofiguration, @Nullable Facet underlying);
+                                                                                   @NotNull C configuration, @Nullable Facet underlying);
 
 
   @NotNull

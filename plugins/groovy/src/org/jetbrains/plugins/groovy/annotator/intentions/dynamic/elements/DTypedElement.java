@@ -20,7 +20,7 @@ package org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements;
  * Date: 04.03.2008
  */
 public interface DTypedElement {
-  public String getType();
+  String getType();
 
-  public void setType(String type);
+  void setType(String type);
 }

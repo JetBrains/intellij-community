@@ -84,6 +84,11 @@ public class KeymapUtil {
       MouseShortcut mouseShortcut = (MouseShortcut)shortcut;
       s = getMouseShortcutText(mouseShortcut.getButton(), mouseShortcut.getModifiers(), mouseShortcut.getClickCount());
     }
+    else if (shortcut instanceof KeyboardModifierGestureShortcut) {
+      final KeyboardModifierGestureShortcut gestureShortcut = (KeyboardModifierGestureShortcut)shortcut;
+      s = gestureShortcut.getType() == KeyboardGestureAction.ModifierType.dblClick ? "Press, release and hold " : "Hold ";
+      s += getKeystrokeText(gestureShortcut.getStroke());
+    }
     else {
       throw new IllegalArgumentException("unknown shortcut class: " + shortcut.getClass().getCanonicalName());
     }

@@ -380,7 +380,7 @@ public class AbstractTreeUi {
         UIUtil.invokeLaterIfNeeded(actual);
       }
     }
-    
+
     return result;
   }
 
@@ -836,14 +836,14 @@ public class AbstractTreeUi {
         if (edt) {
           final Ref<Boolean> changes = new Ref<Boolean>(false);
           queueToBackground(new Runnable() {
-            public void run() {
-              changes.set(_update(nodeDescriptor));
-            }
-          }, new Runnable() {
-            public void run() {
-              result.setDone(changes.get());
-            }
-          }, nodeDescriptor);
+                              public void run() {
+                                changes.set(_update(nodeDescriptor));
+                              }
+                            }, new Runnable() {
+                              public void run() {
+                                result.setDone(changes.get());
+                              }
+                            }, nodeDescriptor);
         }
         else {
           result.setDone(_update(nodeDescriptor));
@@ -1061,18 +1061,18 @@ public class AbstractTreeUi {
           if (descriptor != null) {
             DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
             maybeYeild(new ActiveRunnable() {
-                @Override
-                public ActionCallback run() {
-                  ActionCallback result = new ActionCallback();
-                  update(descriptor, false).doWhenDone(new Runnable() {
-                    @Override
-                    public void run() {
-                      updateRow(row + 1, pass);
-                    }
-                  }).notify(result);
-                  return result;
-                }
-              }, pass, node);
+              @Override
+              public ActionCallback run() {
+                ActionCallback result = new ActionCallback();
+                update(descriptor, false).doWhenDone(new Runnable() {
+                  @Override
+                  public void run() {
+                    updateRow(row + 1, pass);
+                  }
+                }).notify(result);
+                return result;
+              }
+            }, pass, node);
           }
         }
       }
@@ -1755,7 +1755,7 @@ public class AbstractTreeUi {
       if (!isReleased()) {
         setCancelRequested(true);
         resetToReady();
-      } 
+      }
       throw e;
     }
   }
@@ -2121,8 +2121,8 @@ public class AbstractTreeUi {
 
 
     List<Object> children = preloadedChildren != null
-                    ? preloadedChildren.getElements()
-                    : Arrays.asList(getChildrenFor(element));
+                            ? preloadedChildren.getElements()
+                            : Arrays.asList(getChildrenFor(element));
     int index = 0;
     for (Object child : children) {
       if (!isValid(child)) continue;
@@ -3613,7 +3613,7 @@ public class AbstractTreeUi {
   }
 
   public boolean addSubtreeToUpdate(final DefaultMutableTreeNode root, final Runnable runAfterUpdate, final boolean updateStructure) {
-  Object element = getElementFor(root);
+    Object element = getElementFor(root);
     if (element != null && getTreeStructure().isAlwaysLeaf(element)) {
       removeFromUnbuilt(root);
       removeLoading(root, true);

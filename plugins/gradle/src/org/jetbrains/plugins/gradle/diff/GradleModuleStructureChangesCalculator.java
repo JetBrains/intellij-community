@@ -34,24 +34,30 @@ import java.util.Set;
  */
 public class GradleModuleStructureChangesCalculator implements GradleStructureChangesCalculator<GradleModule, Module> {
   
-  private final GradleLibraryDependencyStructureChangesCalculator myLibraryDependencyCalculator
-    = new GradleLibraryDependencyStructureChangesCalculator();
-  
-  @NotNull
+  private final GradleLibraryDependencyStructureChangesCalculator myLibraryDependencyCalculator;
+  private final PlatformFacade myStructureHelper;
+
+  public GradleModuleStructureChangesCalculator(@NotNull GradleLibraryDependencyStructureChangesCalculator libraryDependencyCalculator,
+                                                @NotNull PlatformFacade structureHelper)
+  {
+    myLibraryDependencyCalculator = libraryDependencyCalculator;
+    myStructureHelper = structureHelper;
+  }
+
   @Override
-  public Set<GradleProjectStructureChange> calculate(@NotNull GradleModule gradleEntity,
-                                                     @NotNull Module intellijEntity,
-                                                     @NotNull Set<GradleProjectStructureChange> knownChanges)
+  public void calculate(@NotNull GradleModule gradleEntity,
+                        @NotNull Module intellijEntity,
+                        @NotNull Set<GradleProjectStructureChange> knownChanges,
+                        @NotNull Set<GradleProjectStructureChange> currentChanges)
   {
     //TODO den process module-local settings
-    //TODO den process content roots 
-    return checkDependencies(gradleEntity, intellijEntity, knownChanges);
+    //TODO den process content roots
+    checkDependencies(gradleEntity, intellijEntity, knownChanges, currentChanges); 
   }
 
   @NotNull
   @Override
-  public Object getIntellijKey(@NotNull Module entity, @NotNull Set<GradleProjectStructureChange> knownChanges) {
-    // TODO den consider the known changes
+  public Object getIntellijKey(@NotNull Module entity) {
     return entity.getName();
   }
 
@@ -62,9 +68,10 @@ public class GradleModuleStructureChangesCalculator implements GradleStructureCh
     return entity.getName();
   }
 
-  private Set<GradleProjectStructureChange> checkDependencies(@NotNull GradleModule gradleModule,
-                                                              @NotNull Module intellijModule,
-                                                              @NotNull Set<GradleProjectStructureChange> knownChanges)
+  private void checkDependencies(@NotNull GradleModule gradleModule,
+                                 @NotNull Module intellijModule,
+                                 @NotNull Set<GradleProjectStructureChange> knownChanges,
+                                 @NotNull Set<GradleProjectStructureChange> currentChanges)
   {
     // Prepare intellij part.
     final List<ModuleOrderEntry> intellijModuleDependencies = new ArrayList<ModuleOrderEntry>();
@@ -82,11 +89,10 @@ public class GradleModuleStructureChangesCalculator implements GradleStructureCh
         return libraryOrderEntry;
       }
     };
-    final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(intellijModule);
-    for (OrderEntry orderEntry : moduleRootManager.getOrderEntries()) {
+    for (OrderEntry orderEntry : myStructureHelper.getOrderEntries(intellijModule)) {
       orderEntry.accept(policy, null);
     }
-    
+
     // Prepare gradle part.
     final List<GradleModuleDependency> gradleModuleDependencies = new ArrayList<GradleModuleDependency>();
     final List<GradleLibraryDependency> gradleLibraryDependencies = new ArrayList<GradleLibraryDependency>();
@@ -104,12 +110,10 @@ public class GradleModuleStructureChangesCalculator implements GradleStructureCh
     for (GradleDependency dependency : gradleModule.getDependencies()) {
       dependency.invite(visitor);
     }
-    
+
     // Calculate changes.
     // TODO den process module dependencies here as well.
-    final Set<GradleProjectStructureChange> libraryChanges
-      = GradleDiffUtil.calculate(myLibraryDependencyCalculator, gradleLibraryDependencies, intellijLibraryDependencies, knownChanges);
-    return libraryChanges;
-    
+    GradleDiffUtil.calculate(myLibraryDependencyCalculator, gradleLibraryDependencies, intellijLibraryDependencies,
+                             knownChanges, currentChanges);
   }
 }

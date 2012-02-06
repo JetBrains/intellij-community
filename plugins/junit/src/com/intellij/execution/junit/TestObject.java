@@ -36,13 +36,13 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.util.JavaParametersUtil;
+import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
@@ -179,14 +179,8 @@ public abstract class TestObject implements JavaCommandLine {
   };
 
   public void checkConfiguration() throws RuntimeConfigurationException{
-    if (myConfiguration.isAlternativeJrePathEnabled()){
-      if (myConfiguration.getAlternativeJrePath() == null ||
-          myConfiguration.getAlternativeJrePath().length() == 0 ||
-          !JavaSdk.checkForJre(myConfiguration.getAlternativeJrePath())){
-        throw new RuntimeConfigurationWarning(
-          ExecutionBundle.message("jre.path.is.not.valid.jre.home.error.mesage", myConfiguration.getAlternativeJrePath()));
-      }
-    }
+    JavaParametersUtil.checkAlternativeJRE(myConfiguration);
+    ProgramParametersUtil.checkWorkingDirectoryExist(myConfiguration, myConfiguration.getProject(), myConfiguration.getConfigurationModule().getModule());
   }
 
   public SourceScope getSourceScope() {
@@ -405,7 +399,6 @@ public abstract class TestObject implements JavaCommandLine {
 
       final PrintWriter writer = new PrintWriter(myTempFile, "UTF-8");
       try {
-        writer.println(junit4 ? JUnitStarter.JUNIT4_PARAMETER : "-junit3");
         writer.println(packageName);
         final List<String> testNames = new ArrayList<String>();
         for (final T element : elements) {

@@ -26,8 +26,8 @@ import com.intellij.util.ui.ColumnInfo;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.TreeSet;
 
 /**
  * Created by IntelliJ IDEA.
@@ -40,7 +40,7 @@ public class AvailablePluginsTableModel extends PluginTableModel {
 
   public static final String ALL = "All";
   private String myCategory = ALL;
-  private LinkedHashSet<String> myAvailableCategories = new LinkedHashSet<String>();
+  private TreeSet<String> myAvailableCategories = new TreeSet<String>();
 
   protected static final String STATUS = "Status";
 
@@ -89,7 +89,7 @@ public class AvailablePluginsTableModel extends PluginTableModel {
     return true;
   }
 
-  public LinkedHashSet<String> getAvailableCategories() {
+  public TreeSet<String> getAvailableCategories() {
     return myAvailableCategories;
   }
 
@@ -119,7 +119,12 @@ public class AvailablePluginsTableModel extends PluginTableModel {
     for (IdeaPluginDescriptor descr : list) {
       updateStatus(descr);
       view.add(descr);
-      myAvailableCategories.add(descr.getCategory());
+      final String category = descr.getCategory();
+      if (category != null) {
+        myAvailableCategories.add(category);
+      } else {
+        myAvailableCategories.add(AvailablePluginsManagerMain.N_A);
+      }
     }
 
     fireTableDataChanged();

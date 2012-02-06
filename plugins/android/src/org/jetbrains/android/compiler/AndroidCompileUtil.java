@@ -35,6 +35,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
@@ -58,6 +59,7 @@ import org.jetbrains.android.fileTypes.AndroidRenderscriptFileType;
 import org.jetbrains.android.resourceManagers.LocalResourceManager;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.util.AndroidUtils;
+import org.jetbrains.android.util.ResourceEntry;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -350,14 +352,32 @@ public class AndroidCompileUtil {
   }
 
   public static void generate(final Module module, final GeneratingCompiler compiler) {
-    module.getProject().getComponent(AndroidProjectComponent.class).runIfNotInCompilation(new Runnable() {
+    final AndroidFacet facet = AndroidFacet.getInstance(module);
+
+    if (facet != null) {
+      facet.scheduleSourceRegenerating(compiler);
+    }
+  }
+
+  public static void doGenerate(final Module module, final GeneratingCompiler compiler) {
+    final Project project = module.getProject();
+    final AndroidProjectComponent component = ApplicationManager.getApplication().runReadAction(new Computable<AndroidProjectComponent>() {
+      @Nullable
+      @Override
+      public AndroidProjectComponent compute() {
+        return !project.isDisposed() ? project.getComponent(AndroidProjectComponent.class) : null;
+        }
+    });
+    if (component == null) {
+      return;
+    }
+    component.runIfNotInCompilation(new Runnable() {
       @Override
       public void run() {
         assert !ApplicationManager.getApplication().isDispatchThread();
         final CompileContext[] contextWrapper = new CompileContext[1];
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {
-            Project project = module.getProject();
             if (project.isDisposed()) return;
             CompilerTask task = new CompilerTask(project, true, "Android auto-generation", true);
             CompileScope scope = new ModuleCompileScope(module, false);
@@ -681,33 +701,33 @@ public class AndroidCompileUtil {
     }
 
     for (final Resources resources : manager.getResourceElements()) {
-      waitForSmartMode(project);
+        waitForSmartMode(project);
 
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        @Override
-        public void run() {
-          if (!resources.isValid() || facet.getModule().isDisposed() || project.isDisposed()) {
-            return;
-          }
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          @Override
+          public void run() {
+            if (!resources.isValid() || facet.getModule().isDisposed() || project.isDisposed()) {
+              return;
+            }
 
-          for (final Attr attr : resources.getAttrs()) {
-            final String name = attr.getName().getValue();
+            for (final Attr attr : resources.getAttrs()) {
+              final String name = attr.getName().getValue();
 
-            if (name != null) {
-              resourceSet.add(new ResourceEntry(ResourceType.ATTR.getName(), name));
+              if (name != null) {
+                resourceSet.add(new ResourceEntry(ResourceType.ATTR.getName(), name));
+              }
+            }
+
+            for (final DeclareStyleable styleable : resources.getDeclareStyleables()) {
+              final String name = styleable.getName().getValue();
+
+              if (name != null) {
+                resourceSet.add(new ResourceEntry(ResourceType.DECLARE_STYLEABLE.getName(), name));
+              }
             }
           }
-
-          for (final DeclareStyleable styleable : resources.getDeclareStyleables()) {
-            final String name = styleable.getName().getValue();
-
-            if (name != null) {
-              resourceSet.add(new ResourceEntry(ResourceType.DECLARE_STYLEABLE.getName(), name));
-            }
-          }
-        }
-      });
-    }
+        });
+      }
 
     waitForSmartMode(project);
 

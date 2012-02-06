@@ -41,6 +41,8 @@ public class GridInsertLocation extends GridDropLocation {
 
   private GridInsertMode myMode;
 
+  private boolean mySpanInsertMode;
+
   public GridInsertLocation(@NotNull final RadContainer container,
                             final int row,
                             final int column,
@@ -82,6 +84,10 @@ public class GridInsertLocation extends GridDropLocation {
     return myMode;
   }
 
+  public void setSpanInsertMode(boolean spanInsertMode) {
+    mySpanInsertMode = spanInsertMode;
+  }
+
   private boolean isColumnInsert() {
     return myMode == GridInsertMode.ColumnAfter || myMode == GridInsertMode.ColumnBefore;
   }
@@ -107,7 +113,7 @@ public class GridInsertLocation extends GridDropLocation {
   }
 
   @Override public boolean canDrop(ComponentDragObject dragObject) {
-    Rectangle rc = getDragObjectDimensions(dragObject);
+    Rectangle rc = getDragObjectDimensions(dragObject, true);
     int size = isRowInsert() ? rc.width : rc.height;
     if (isInsertInsideComponent(size)) {
       LOG.debug("GridInsertLocation.canDrop()=false because insert inside component");
@@ -165,12 +171,12 @@ public class GridInsertLocation extends GridDropLocation {
     final int insertCol = getColumn();
     final int insertRow = getRow();
 
-    Rectangle feedbackRect = getGridFeedbackRect(dragObject, isColumnInsert(), isRowInsert());
+    Rectangle feedbackRect = getGridFeedbackRect(dragObject, isColumnInsert(), isRowInsert(), false);
     if (feedbackRect == null) {
       feedbackLayer.removeFeedback();
       return;
     }
-    Rectangle cellRect = getGridFeedbackCellRect(dragObject, isColumnInsert(), isRowInsert());
+    Rectangle cellRect = getGridFeedbackCellRect(dragObject, isColumnInsert(), isRowInsert(), false);
     assert cellRect != null;
 
     final RadAbstractGridLayoutManager layoutManager = getContainer().getGridLayoutManager();
@@ -185,15 +191,25 @@ public class GridInsertLocation extends GridDropLocation {
 
     Rectangle rcFeedback = null;
     if (dragObject.getComponentCount() == 1) {
-      int cellWidth = vGridLines [insertCol+1] - vGridLines [insertCol];
-      int cellHeight = hGridLines [insertRow+1] - hGridLines [insertRow];
+      int lastColIndex = insertCol + dragObject.getColSpan(0);
+      if (lastColIndex > vGridLines.length - 1) {
+        lastColIndex = insertCol + 1;
+      }
+      
+      int lastRowIndex = insertRow + dragObject.getRowSpan(0);
+      if (lastRowIndex > hGridLines.length - 1) {
+        lastRowIndex = insertRow + 1;
+      }
+      
+      int cellWidth = vGridLines [lastColIndex] - vGridLines [insertCol];
+      int cellHeight = hGridLines [lastRowIndex] - hGridLines [insertRow];
       RadComponent component = layoutManager.getComponentAtGrid(getContainer(), insertRow, insertCol);
-      if (component != null) {
+      if (component != null && mySpanInsertMode) {
         Rectangle bounds = component.getBounds();
         bounds.translate(-vGridLines [insertCol], -hGridLines [insertRow]);
 
-        int spaceToRight = vGridLines [insertCol+1] - vGridLines [insertCol] - (bounds.x + bounds.width);
-        int spaceBelow = hGridLines [insertRow+1] - hGridLines [insertRow] - (bounds.y + bounds.height);
+        int spaceToRight = vGridLines [lastColIndex] - vGridLines [insertCol] - (bounds.x + bounds.width);
+        int spaceBelow = hGridLines [lastRowIndex] - hGridLines [insertRow] - (bounds.y + bounds.height);
         if (myMode == GridInsertMode.RowBefore && bounds.y > INSERT_RECT_MIN_SIZE) {
           rcFeedback = new Rectangle(0, 0, cellWidth, bounds.y);
         }
@@ -205,6 +221,32 @@ public class GridInsertLocation extends GridDropLocation {
         }
         else if (myMode == GridInsertMode.ColumnAfter && spaceToRight > INSERT_RECT_MIN_SIZE) {
           rcFeedback = new Rectangle(bounds.x + bounds.width, 0, spaceToRight, cellHeight);
+        }
+
+        if (rcFeedback != null) {
+          boolean spanInsertMode = false;
+          
+          if (isRowInsert()) {
+            int columns = layoutManager.getGridColumnCount(getContainer());
+            for (int i = 0; i < columns; i++) {
+              if (i != insertCol && RadAbstractGridLayoutManager.getComponentAtGrid(getContainer(), insertRow, i) != null) {
+                spanInsertMode = true;
+                break;
+              }
+            }
+          } else {
+            int rows = layoutManager.getGridRowCount(getContainer());
+            for (int i = 0; i < rows; i++) {
+              if (i != insertRow && RadAbstractGridLayoutManager.getComponentAtGrid(getContainer(), i, insertCol) != null) {
+                spanInsertMode = true;
+                break;
+              }
+            }
+          }
+
+          if (!spanInsertMode) {
+            rcFeedback = null;
+          }
         }
 
         if (rcFeedback != null) {
@@ -325,12 +367,17 @@ public class GridInsertLocation extends GridDropLocation {
 
     int cellsToInsert = 1;
     if (components.length > 0) {
-      Rectangle rc = getDragObjectDimensions(dragObject);
-      int size = isRowInsert() ? rc.height : rc.width;
-      if (size > 0) {
-        cellsToInsert = size;
+      int cellSize = container.getGridCellCount(isRowInsert());
+        Rectangle rc = getDragObjectDimensions(dragObject, cell < cellSize - 1);
+        int size = isRowInsert() ? rc.height : rc.width;
+        if (size > 0) {
+          cellsToInsert = size;
       }
     }
+
+    GridSpanInsertProcessor spanInsertProcessor =
+      mySpanInsertMode && dragObject.getComponentCount() == 1 ? new GridSpanInsertProcessor(container, getRow(), getColumn(), myMode,
+                                                                                            dragObject) : null;
 
     int newCell = insertGridCells(container, cell, cellsToInsert, canGrow, isRowInsert(), !isInsertAfter(), constraintsToAdjust);
     if (isRowInsert()) {
@@ -341,7 +388,15 @@ public class GridInsertLocation extends GridDropLocation {
     }
 
     if (components.length > 0) {
+      if (spanInsertProcessor != null) {
+        spanInsertProcessor.doBefore(newCell);
+      }
+
       dropIntoGrid(container, components, row, col, dragObject);
+
+      if (spanInsertProcessor != null) {
+        spanInsertProcessor.doAfter(newCell);
+      }
     }
   }
 

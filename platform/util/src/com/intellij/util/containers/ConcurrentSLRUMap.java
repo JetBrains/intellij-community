@@ -19,36 +19,38 @@
  */
 package com.intellij.util.containers;
 
-import com.google.common.collect.MapEvictionListener;
-import com.google.common.collect.MapMaker;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.RemovalListener;
+import com.google.common.cache.RemovalNotification;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ConcurrentSLRUMap<K,V> {
-  protected final Map<K,V> myProtectedQueue;
-  protected final Map<K,V> myProbationalQueue;
+  protected final ConcurrentMap<K,V> myProtectedQueue;
+  protected final ConcurrentMap<K,V> myProbationalQueue;
 
   private final AtomicInteger probationalHits = new AtomicInteger();
   private final AtomicInteger protectedHits = new AtomicInteger();
   private final AtomicInteger misses = new AtomicInteger();
 
   public ConcurrentSLRUMap(final int protectedQueueSize, final int probationalQueueSize) {
-    myProtectedQueue = new MapMaker().concurrencyLevel(4).evictionListener(new MapEvictionListener<K, V>() {
+    myProtectedQueue = CacheBuilder.newBuilder().concurrencyLevel(4).removalListener(new RemovalListener<K, V>() {
       @Override
-      public void onEviction(K key, V value) {
-        myProbationalQueue.put(key, value); // no size check since it is costly
+      public void onRemoval(RemovalNotification<K, V> notification) {
+        myProbationalQueue.put(notification.getKey(), notification.getValue());
       }
-    }).initialCapacity(10).maximumSize(protectedQueueSize).makeMap();
+    }).initialCapacity(10).maximumSize(protectedQueueSize).<K, V>build().asMap();
 
-    myProbationalQueue = new MapMaker().concurrencyLevel(4).evictionListener(new MapEvictionListener<K, V>() {
+    myProbationalQueue = CacheBuilder.newBuilder().concurrencyLevel(4).removalListener(new RemovalListener<K, V>() {
       @Override
-      public void onEviction(K key, V value) {
-        onDropFromCache(key, value);  // no size check since it is costly
+      public void onRemoval(RemovalNotification<K, V> notification) {
+        onDropFromCache(notification.getKey(), notification.getValue());
       }
-    }).initialCapacity(10).maximumSize(probationalQueueSize).makeMap();
+    }).initialCapacity(10).maximumSize(probationalQueueSize).<K, V>build().asMap();
   }
 
   @Nullable

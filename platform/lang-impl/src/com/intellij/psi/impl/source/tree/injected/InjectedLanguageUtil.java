@@ -132,6 +132,8 @@ public class InjectedLanguageUtil {
       if (file == null || !file.isPhysical() && file.getOriginalFile() == file) return;
     }
 
+    if (containingFile.getViewProvider() instanceof InjectedFileViewProvider) return; // no injection inside injection
+
     PsiElement inTree = loadTree(host, containingFile);
     if (inTree != host) {
       host = inTree;

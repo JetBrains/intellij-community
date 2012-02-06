@@ -37,7 +37,7 @@ public interface GrClosableBlock extends GrExpression, GrCodeBlock, GrParameters
   @NotNull
   GrParameterList getParameterList();
 
-  void addParameter(GrParameter parameter);
+  GrParameter addParameter(GrParameter parameter);
 
   boolean hasParametersSection();
 

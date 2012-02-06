@@ -35,6 +35,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.ScrollPaneFactory;
 import org.jetbrains.annotations.NonNls;
 
+import javax.swing.*;
 import java.awt.*;
 import java.util.Enumeration;
 
@@ -43,9 +44,13 @@ public abstract class WatchPanel extends DebuggerTreePanel {
 
   public WatchPanel(Project project, DebuggerStateManager stateManager) {
     super(project, stateManager);
-    add(ScrollPaneFactory.createScrollPane(getWatchTree()), BorderLayout.CENTER);
+    add(createTreePanel(getWatchTree()), BorderLayout.CENTER);
     registerDisposable(DebuggerAction.installEditAction(getWatchTree(), DebuggerActions.EDIT_NODE_SOURCE));
     overrideShortcut(getWatchTree(), DebuggerActions.COPY_VALUE, CommonShortcuts.getCopy());
+  }
+
+  protected JComponent createTreePanel(final WatchDebuggerTree tree) {
+    return ScrollPaneFactory.createScrollPane(tree);
   }
 
   protected DebuggerTree createTreeView() {

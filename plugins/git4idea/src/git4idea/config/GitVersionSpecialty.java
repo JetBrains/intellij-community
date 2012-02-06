@@ -48,13 +48,6 @@ public enum GitVersionSpecialty {
     }
   },
 
-  DOESNT_GET_PARAMETERS_FROM_RUNNERW {
-    @Override
-    public boolean existsIn(@NotNull GitVersion version) {
-      return version.getType().equals(GitVersion.Type.CYGWIN);
-    }
-  },
-
   NEEDS_QUOTES_IN_STASH_NAME {
     @Override
     public boolean existsIn(@NotNull GitVersion version) {

@@ -61,4 +61,8 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
     }, null, false);
   }
 
+  @Override
+  protected boolean requiresProject() {
+    return false;
+  }
 }

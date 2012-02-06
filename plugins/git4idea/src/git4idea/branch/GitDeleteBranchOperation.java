@@ -88,7 +88,7 @@ class GitDeleteBranchOperation extends GitBranchOperation {
           }
         }
         else {
-          fatalError(getErrorTitle(), "This branch is not fully merged to " + myCurrentBranch);
+          fatalError(getErrorTitle(), "This branch is not fully merged to " + myCurrentBranch + ".");
           fatalErrorHappened = true;
         }
       }
@@ -137,7 +137,7 @@ class GitDeleteBranchOperation extends GitBranchOperation {
   @NotNull
   @Override
   protected String getRollbackProposal() {
-    return "However branch deletion has succeeded for the following repositories.:<br/>" +
+    return "However branch deletion has succeeded for the following " + repositories() + ":<br/>" +
            successfulRepositoriesJoined() +
            "<br/>You may rollback (recreate " + myBranchName + " in these roots) not to let branches diverge.";
   }

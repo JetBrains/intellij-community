@@ -237,18 +237,12 @@ public class Mappings {
       this.myDelta = delta;
     }
 
-    void appendDependents(final Set<ClassRepr> classes, final Set<DependencyContext.S> result) {
-      if (classes == null) {
-        return;
-      }
+    void appendDependents(final ClassRepr c, final Set<DependencyContext.S> result) {
+      final Collection<DependencyContext.S> depClasses = myDelta.myClassToClassDependency.get(c.name);
 
-      for (ClassRepr c : classes) {
-        final Collection<DependencyContext.S> depClasses = myDelta.myClassToClassDependency.get(c.name);
-
-        if (depClasses != null) {
-          for (DependencyContext.S className : depClasses) {
-            result.add(className);
-          }
+      if (depClasses != null) {
+        for (DependencyContext.S className : depClasses) {
+          result.add(className);
         }
       }
     }
@@ -813,8 +807,6 @@ public class Mappings {
       final Set<ClassRepr> pastClasses = (Set<ClassRepr>)mySourceFileToClasses.get(fileName);
       final Set<DependencyContext.S> dependants = new HashSet<DependencyContext.S>();
 
-      self.appendDependents(pastClasses, dependants);
-
       final Set<UsageRepr.Usage> affectedUsages = new HashSet<UsageRepr.Usage>();
       final Set<UsageRepr.AnnotationUsage> annotationQuery = new HashSet<UsageRepr.AnnotationUsage>();
       final Map<UsageRepr.Usage, Util.UsageConstraint> usageConstraints = new HashMap<UsageRepr.Usage, Util.UsageConstraint>();
@@ -825,6 +817,8 @@ public class Mappings {
       for (Pair<ClassRepr, Difference> changed : classDiff.changed()) {
         final ClassRepr it = changed.first;
         final ClassRepr.Diff diff = (ClassRepr.Diff)changed.second;
+
+        self.appendDependents(it, dependants);
 
         debug("Changed: ", it.name);
 
@@ -1388,6 +1382,7 @@ public class Mappings {
 
       debug("Processing removed classes:");
       for (ClassRepr c : classDiff.removed()) {
+        self.appendDependents(c, dependants);
         debug("Adding usages of class ", c.name);
         affectedUsages.add(c.createUsage());
       }
@@ -1412,69 +1407,68 @@ public class Mappings {
       debug("End of added classes processing.");
 
       debug("Checking dependent files:");
-      if (dependants != null) {
-        final Set<DependencyContext.S> dependentFiles = new HashSet<DependencyContext.S>();
+      final Set<DependencyContext.S> dependentFiles = new HashSet<DependencyContext.S>();
 
-        for (DependencyContext.S depClass : dependants) {
-          final DependencyContext.S file = myClassToSourceFile.get(depClass);
+      for (DependencyContext.S depClass : dependants) {
+        final DependencyContext.S file = myClassToSourceFile.get(depClass);
 
-          if (file != null) {
-            dependentFiles.add(file);
-          }
+        if (file != null) {
+          dependentFiles.add(file);
+        }
+      }
+
+      filewise:
+      for (DependencyContext.S depFile : dependentFiles) {
+        final File theFile = new File(myContext.getValue(depFile));
+
+        if (affectedFiles.contains(theFile) || compiledFiles.contains(theFile)) {
+          continue filewise;
         }
 
-        filewise:
-        for (DependencyContext.S depFile : dependentFiles) {
-          final File theFile = new File(myContext.getValue(depFile));
-
-          if (affectedFiles.contains(theFile) || compiledFiles.contains(theFile)) {
-            continue filewise;
-          }
-
-          debug("Dependent file: ", depFile);
-          final Collection<UsageRepr.Cluster> depClusters = mySourceFileToUsages.get(depFile);
-
+        debug("Dependent file: ", depFile);
+        final Collection<UsageRepr.Cluster> depClusters = mySourceFileToUsages.get(depFile);
+        if (depClusters != null) {
           for (UsageRepr.Cluster depCluster : depClusters) {
             final Set<UsageRepr.Usage> depUsages = depCluster.getUsages();
+            if (depUsages == null) {
+              continue;
+            }
+            final Set<UsageRepr.Usage> usages = new HashSet<UsageRepr.Usage>(depUsages);
 
-            if (depUsages != null) {
-              final Set<UsageRepr.Usage> usages = new HashSet<UsageRepr.Usage>(depUsages);
+            usages.retainAll(affectedUsages);
 
-              usages.retainAll(affectedUsages);
+            if (!usages.isEmpty()) {
+              for (UsageRepr.Usage usage : usages) {
+                final Util.UsageConstraint constraint = usageConstraints.get(usage);
 
-              if (!usages.isEmpty()) {
-                for (UsageRepr.Usage usage : usages) {
-                  final Util.UsageConstraint constraint = usageConstraints.get(usage);
-
-                  if (constraint == null) {
-                    debug("Added file with no constraints");
-                    affectedFiles.add(theFile);
-                    continue filewise;
-                  }
-                  else {
-                    final Set<DependencyContext.S> residenceClasses = depCluster.getResidence(usage);
-                    for (DependencyContext.S residentName : residenceClasses) {
-                      if (constraint.checkResidence(residentName)) {
-                        debug("Added file with satisfied constraint");
-                        affectedFiles.add(theFile);
-                        continue filewise;
-                      }
-                    }
-
-                  }
+                if (constraint == null) {
+                  debug("Added file with no constraints");
+                  affectedFiles.add(theFile);
+                  continue filewise;
                 }
-              }
-
-              if (annotationQuery.size() > 0) {
-                final Collection<UsageRepr.Usage> annotationUsages = mySourceFileToAnnotationUsages.get(depFile);
-
-                for (UsageRepr.Usage usage : annotationUsages) {
-                  for (UsageRepr.AnnotationUsage query : annotationQuery) {
-                    if (query.satisfies(usage)) {
-                      debug("Added file due to annotation query");
+                else {
+                  final Set<DependencyContext.S> residenceClasses = depCluster.getResidence(usage);
+                  for (DependencyContext.S residentName : residenceClasses) {
+                    if (constraint.checkResidence(residentName)) {
+                      debug("Added file with satisfied constraint");
                       affectedFiles.add(theFile);
                       continue filewise;
                     }
+                  }
+
+                }
+              }
+            }
+
+            if (annotationQuery.size() > 0) {
+              final Collection<UsageRepr.Usage> annotationUsages = mySourceFileToAnnotationUsages.get(depFile);
+
+              for (UsageRepr.Usage usage : annotationUsages) {
+                for (UsageRepr.AnnotationUsage query : annotationQuery) {
+                  if (query.satisfies(usage)) {
+                    debug("Added file due to annotation query");
+                    affectedFiles.add(theFile);
+                    continue filewise;
                   }
                 }
               }
@@ -1512,15 +1506,17 @@ public class Mappings {
                 myClassToSubclasses.removeFrom(superSomething, cr.name);
               }
 
-              for (UsageRepr.Cluster cluster : clusters) {
-                final Set<UsageRepr.Usage> usages = cluster.getUsages();
-                if (usages != null) {
-                  for (UsageRepr.Usage u : usages) {
-                    if (u instanceof UsageRepr.ClassUsage) {
-                      final Set<DependencyContext.S> residents = cluster.getResidence(u);
+              if (clusters != null) {
+                for (UsageRepr.Cluster cluster : clusters) {
+                  final Set<UsageRepr.Usage> usages = cluster.getUsages();
+                  if (usages != null) {
+                    for (UsageRepr.Usage u : usages) {
+                      if (u instanceof UsageRepr.ClassUsage) {
+                        final Set<DependencyContext.S> residents = cluster.getResidence(u);
 
-                      if (residents != null && residents.contains(cr.name)) {
-                        myClassToClassDependency.removeFrom(((UsageRepr.ClassUsage)u).className, cr.name);
+                        if (residents != null && residents.contains(cr.name)) {
+                          myClassToClassDependency.removeFrom(((UsageRepr.ClassUsage)u).className, cr.name);
+                        }
                       }
                     }
                   }
@@ -1541,6 +1537,12 @@ public class Mappings {
       mySourceFileToAnnotationUsages.putAll(delta.mySourceFileToAnnotationUsages);
       myClassToSourceFile.putAll(delta.myClassToSourceFile);
 
+      final Collection<DependencyContext.S> compiledSet = new HashSet<DependencyContext.S>(compiled.size());
+
+      for (File c : compiled) {
+        compiledSet.add(myContext.get(FileUtil.toSystemIndependentName(c.getAbsolutePath())));
+      }
+
       for (DependencyContext.S file : delta.myClassToClassDependency.keyCollection()) {
         final Collection<DependencyContext.S> now = delta.myClassToClassDependency.get(file);
         final Collection<DependencyContext.S> past = myClassToClassDependency.get(file);
@@ -1549,19 +1551,13 @@ public class Mappings {
           myClassToClassDependency.put(file, now);
         }
         else {
-          final Collection<DependencyContext.S> removeSet = new HashSet<DependencyContext.S>();
+          boolean changed = past.removeAll(compiledSet);
+          changed |= past.addAll(now);
 
-          for (File c : compiled) {
-            removeSet.add(myContext.get(FileUtil.toSystemIndependentName(c.getAbsolutePath())));
+          if (changed) {
+            myClassToClassDependency.remove(file);
+            myClassToClassDependency.put(file, past);
           }
-
-          removeSet.removeAll(now);
-
-          past.addAll(now);
-          past.removeAll(removeSet);
-
-          myClassToClassDependency.remove(file);
-          myClassToClassDependency.put(file, past);
         }
       }
     }
@@ -1629,6 +1625,16 @@ public class Mappings {
         if (!localAnnotationUsages.isEmpty()) {
           mySourceFileToAnnotationUsages.put(sourceFileNameS, localAnnotationUsages);
         }
+      }
+
+      @Override
+      public void markOverride(final String className, final String methodName, final String methodSignature) {
+        //To change body of implemented methods use File | Settings | File Templates.
+      }
+
+      @Override
+      public void registerConstantUsage(final String className, final String fieldName, final String fieldOwner) {
+        //To change body of implemented methods use File | Settings | File Templates.
       }
     };
   }

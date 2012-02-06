@@ -29,7 +29,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  * User: anna
@@ -73,7 +75,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
 
   @Override
   public <A> A accept(PsiTypeVisitor<A> visitor) {
-    return visitor.visitType(this);
+    return visitor.visitDiamondType(this);
   }
 
   @Override

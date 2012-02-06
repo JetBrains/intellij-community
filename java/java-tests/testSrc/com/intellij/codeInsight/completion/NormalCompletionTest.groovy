@@ -1258,4 +1258,12 @@ public class ListUtils {
     }
   }
 
+  public void testNoGenericsWhenChoosingWithParen() { doTest('Ma(') }
+
+  public void testNoClosingWhenChoosingWithParenBeforeIdentifier() { doTest '(' }
+
+  public void testPackageInMemberType() { doTest() }
+
+  public void testClassNameDot() { doTest('.') }
+
 }

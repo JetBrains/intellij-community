@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl;
+import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
@@ -59,21 +59,21 @@ public class OpenProjectAction extends AnAction implements DumbAware {
     descriptor.setDescription(IdeBundle.message("filter.project.files", StringUtil.join(extensions, ", ")));
 
     VirtualFile userHomeDir = null;
-    if (SystemInfo.isMac || SystemInfo.isLinux) {
+    if (SystemInfo.isUnix) {
       final String home = SystemProperties.getUserHome();
       if (home != null) {
         userHomeDir = LocalFileSystem.getInstance().findFileByIoFile(new File(home));
       }
     }
 
-    descriptor.putUserData(FileChooserDialogImpl.PREFER_LAST_OVER_TO_SELECT, Boolean.TRUE);
+    descriptor.putUserData(FileChooserDialog.PREFER_LAST_OVER_TO_SELECT, Boolean.TRUE);
 
-    FileChooser.chooseFilesWithSlideEffect(descriptor, project, userHomeDir,new Consumer<VirtualFile[]>() {
+    FileChooser.chooseFilesWithSlideEffect(descriptor, project, userHomeDir, new Consumer<VirtualFile[]>() {
       @Override
       public void consume(final VirtualFile[] files) {
-        if (files.length == 0 || files[0] == null) return;
-
-        ProjectUtil.openOrImport(files[0].getPath(), project, false);
+        if (files.length == 1 && files[0] != null) {
+          ProjectUtil.openOrImport(files[0].getPath(), project, false);
+        }
       }
     });
   }

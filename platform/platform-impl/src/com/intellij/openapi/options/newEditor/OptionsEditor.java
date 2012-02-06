@@ -1016,7 +1016,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
   public void eventDispatched(final AWTEvent event) {
     if (event.getID() == MouseEvent.MOUSE_PRESSED || event.getID() == MouseEvent.MOUSE_RELEASED || event.getID() == MouseEvent.MOUSE_DRAGGED) {
       final MouseEvent me = (MouseEvent)event;
-      if (SwingUtilities.isDescendingFrom(me.getComponent(), myContentWrapper) || isPopupOverEditor(me.getComponent())) {
+      if (SwingUtilities.isDescendingFrom(me.getComponent(), SwingUtilities.getWindowAncestor(myContentWrapper)) || isPopupOverEditor(me.getComponent())) {
         queueModificationCheck();
         myFilter.clearTemporary();
       }

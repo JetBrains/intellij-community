@@ -80,7 +80,6 @@ public class FramelessNotificationPopup {
 
     myFadeInTimer = UIUtil.createNamedTimer("Frameless fade in",10, myFadeTracker);
     myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(myContent, null)
-      .setForceHeavyweight(true)
       .setRequestFocus(false)
       .setResizable(false)
       .setMovable(true)

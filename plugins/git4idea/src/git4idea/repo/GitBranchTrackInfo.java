@@ -15,6 +15,7 @@
  */
 package git4idea.repo;
 
+import git4idea.GitBranch;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -22,16 +23,40 @@ import org.jetbrains.annotations.NotNull;
  */
 public class GitBranchTrackInfo {
 
-  private final String myBranch;
-  private final GitRemote myRemote;
-  private final String myRemoteBranch;
+  @NotNull private final String myBranch;
+  @NotNull private final GitRemote myRemote;
+  @NotNull private final String myRemoteBranch;
   private final boolean myMerge;
 
   GitBranchTrackInfo(@NotNull String branch, @NotNull GitRemote remote, @NotNull String remoteBranch, boolean merge) {
     myBranch = branch;
     myMerge = merge;
-    myRemoteBranch = remoteBranch;
+    if (remoteBranch.startsWith(GitBranch.REFS_HEADS_PREFIX)) {
+      myRemoteBranch = remoteBranch.substring(GitBranch.REFS_HEADS_PREFIX.length());
+    }
+    else {
+      myRemoteBranch = remoteBranch;
+    }
     myRemote = remote;
+  }
+
+  @NotNull
+  public String getBranch() {
+    return myBranch;
+  }
+
+  @NotNull
+  public GitRemote getRemote() {
+    return myRemote;
+  }
+
+  @NotNull
+  public String getRemoteBranch() {
+    return myRemoteBranch;
+  }
+
+  public boolean isMerge() {
+    return myMerge;
   }
 
   @Override

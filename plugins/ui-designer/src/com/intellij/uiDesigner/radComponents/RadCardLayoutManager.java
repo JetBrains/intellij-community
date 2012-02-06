@@ -17,6 +17,7 @@
 package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
@@ -25,12 +26,15 @@ import com.intellij.uiDesigner.designSurface.ComponentDragObject;
 import com.intellij.uiDesigner.designSurface.ComponentDropLocation;
 import com.intellij.uiDesigner.designSurface.FeedbackLayer;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
+import com.intellij.uiDesigner.lw.LwContainer;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
 import com.intellij.uiDesigner.propertyInspector.editors.AbstractTextFieldEditor;
+import com.intellij.uiDesigner.propertyInspector.editors.ComponentEditor;
 import com.intellij.uiDesigner.propertyInspector.properties.HGapProperty;
 import com.intellij.uiDesigner.propertyInspector.properties.VGapProperty;
+import com.intellij.uiDesigner.propertyInspector.renderers.ComponentRenderer;
 import com.intellij.uiDesigner.propertyInspector.renderers.LabelPropertyRenderer;
 import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import com.intellij.util.IncorrectOperationException;
@@ -61,6 +65,12 @@ public class RadCardLayoutManager extends RadLayoutManager {
     return new CardLayout();
   }
 
+  @Override
+  public void readLayout(LwContainer lwContainer, RadContainer radContainer) throws Exception {
+    String defaultCard = (String)lwContainer.getClientProperty(UIFormXmlConstants.LAYOUT_CARD);
+    DefaultCardProperty.INSTANCE.setValue(radContainer, defaultCard);
+  }
+
   public void writeChildConstraints(final XmlWriter writer, final RadComponent child) {
     writer.startElement(UIFormXmlConstants.ELEMENT_CARD);
     try {
@@ -74,12 +84,26 @@ public class RadCardLayoutManager extends RadLayoutManager {
   @Override
   public void writeLayout(final XmlWriter writer, final RadContainer radContainer) {
     CardLayout layout = (CardLayout) radContainer.getLayout();
+    
     writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_HGAP, layout.getHgap());
     writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_VGAP, layout.getVgap());
+
+    String defaultCard = DefaultCardProperty.INSTANCE.getValue(radContainer);
+    if (!StringUtil.isEmpty(defaultCard)) {
+      writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_SHOW, defaultCard);
+    }
   }
 
   public void addComponentToContainer(final RadContainer container, final RadComponent component, final int index) {
     container.getDelegee().add(component.getDelegee(), component.getCustomLayoutConstraints());
+  }
+
+  @Override
+  public void removeComponentFromContainer(RadContainer container, RadComponent component) {
+    if (component.getId().equals(DefaultCardProperty.INSTANCE.getValue(container))) {
+      DefaultCardProperty.INSTANCE.setValueEx(container, null);
+    }
+    super.removeComponentFromContainer(container, component);
   }
 
   @Override public void changeContainerLayout(RadContainer container) throws IncorrectOperationException {
@@ -96,9 +120,10 @@ public class RadCardLayoutManager extends RadLayoutManager {
 
   @Override
   public Property[] getContainerProperties(final Project project) {
-    return new Property[] {
+    return new Property[]{
       HGapProperty.getInstance(project),
-      VGapProperty.getInstance(project) };
+      VGapProperty.getInstance(project),
+      DefaultCardProperty.INSTANCE };
   }
 
   @Override
@@ -252,6 +277,58 @@ public class RadCardLayoutManager extends RadLayoutManager {
 
     @Override
     public boolean appliesToSelection(final List<RadComponent> selection) {
+      return selection.size() == 1;
+    }
+  }
+
+  private static class DefaultCardProperty extends Property<RadContainer, String> {
+    @NonNls private static final String NAME = "Default Card";
+
+    private final ComponentRenderer myRenderer = new ComponentRenderer();
+    private ComponentEditor myEditor;
+
+    static DefaultCardProperty INSTANCE = new DefaultCardProperty();
+
+    public DefaultCardProperty() {
+      super(null, NAME);
+    }
+
+    @NotNull
+    @Override
+    public PropertyRenderer<String> getRenderer() {
+      return myRenderer;
+    }
+
+    @Override
+    public PropertyEditor<String> getEditor() {
+      if (myEditor == null) {
+        myEditor = new ComponentEditor(null, null) {
+          @Override
+          protected RadComponent[] collectFilteredComponents(RadComponent component) {
+            RadContainer container = (RadContainer)component;
+            RadComponent[] result = new RadComponent[container.getComponentCount() + 1];
+            for (int i = 1; i < result.length; i++) {
+              result[i] = container.getComponent(i - 1);
+            }
+            return result;
+          }
+        };
+      }
+      return myEditor;
+    }
+
+    @Override
+    public String getValue(RadContainer component) {
+      return (String)component.getDelegee().getClientProperty(NAME);
+    }
+
+    @Override
+    protected void setValueImpl(RadContainer component, String value) throws Exception {
+      component.getDelegee().putClientProperty(NAME, StringUtil.isEmpty(value) ? null : value);
+    }
+
+    @Override
+    public boolean appliesToSelection(List<RadComponent> selection) {
       return selection.size() == 1;
     }
   }

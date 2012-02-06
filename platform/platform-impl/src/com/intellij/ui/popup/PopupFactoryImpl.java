@@ -159,55 +159,81 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                                   final Runnable disposeCallback,
                                                   final int maxRowCount,
                                                   final Condition<AnAction> preselectActionCondition, @Nullable final String actionPlace) {
-    final Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
-
-    final ActionStepBuilder builder = new ActionStepBuilder(dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics);
-    if (actionPlace != null) {
-      builder.setActionPlace(actionPlace);
-    }
-    builder.buildGroup(actionGroup);
-    final List<ActionItem> items = builder.getItems();
-
-    int defaultOptionIndex = 0;
-    if (preselectActionCondition != null) {
-      for (int i = 0; i < items.size(); i++) {
-        final AnAction action = items.get(i).getAction();
-        if (preselectActionCondition.value(action)) {
-          defaultOptionIndex = i;
-          break;
-        }
-      }
-    }
-
-    ListPopupStep step = new ActionPopupStep(items, title, component, showNumbers || honorActionMnemonics && itemsHaveMnemonics(items),
-                                             defaultOptionIndex,
-                                             false, showDisabledActions);
-
-    final ListPopupImpl popup = new ListPopupImpl(step, maxRowCount) {
-      public void dispose() {
-        if (disposeCallback != null) {
-          disposeCallback.run();
-        }
-        ActionMenu.showDescriptionInStatusBar(true, component, null);
-        super.dispose();
-      }
-    };
-    popup.addListSelectionListener(new ListSelectionListener(){
-      public void valueChanged(ListSelectionEvent e) {
-        final JList list = (JList)e.getSource();
-        final ActionItem actionItem = (ActionItem)list.getSelectedValue();
-        if (actionItem == null) return;
-        AnAction action = actionItem.getAction();
-        Presentation presentation = new Presentation();
-        presentation.setDescription(action.getTemplatePresentation().getDescription());
-        final String actualActionPlace = actionPlace == null ? ActionPlaces.UNKNOWN : actionPlace;
-        action.update(new AnActionEvent(null, DataManager.getInstance().getDataContext(component), actualActionPlace, presentation,
-                                        ActionManager.getInstance(), 0));
-        ActionMenu.showDescriptionInStatusBar(true, component, presentation.getDescription());
-      }
-    });
-    return popup;
+    return new ActionGroupPopup(title, actionGroup, dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics,
+                                disposeCallback, maxRowCount, preselectActionCondition, actionPlace);
   }
+
+  public static class ActionGroupPopup extends ListPopupImpl {
+
+    private final Runnable myDisposeCallback;
+    private final Component myComponent;
+
+    public ActionGroupPopup(final String title, final ActionGroup actionGroup, @NotNull DataContext dataContext,
+                            boolean showNumbers, boolean useAlphaAsNumbers, boolean showDisabledActions, boolean honorActionMnemonics,
+                            final Runnable disposeCallback, final int maxRowCount, final Condition<AnAction> preselectActionCondition,
+                            @Nullable final String actionPlace) {
+      super(createStep(title, actionGroup, dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics,
+                       preselectActionCondition, actionPlace),
+            maxRowCount);
+      myDisposeCallback = disposeCallback;
+      myComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
+
+      addListSelectionListener(new ListSelectionListener() {
+        public void valueChanged(ListSelectionEvent e) {
+          final JList list = (JList)e.getSource();
+          final ActionItem actionItem = (ActionItem)list.getSelectedValue();
+          if (actionItem == null) return;
+          AnAction action = actionItem.getAction();
+          Presentation presentation = new Presentation();
+          presentation.setDescription(action.getTemplatePresentation().getDescription());
+          final String actualActionPlace = actionPlace == null ? ActionPlaces.UNKNOWN : actionPlace;
+          action.update(new AnActionEvent(null, DataManager.getInstance().getDataContext(myComponent), actualActionPlace, presentation,
+                                          ActionManager.getInstance(), 0));
+          ActionMenu.showDescriptionInStatusBar(true, myComponent, presentation.getDescription());
+        }
+      });
+    }
+
+    private static ListPopupStep createStep(String title, ActionGroup actionGroup, @NotNull DataContext dataContext,
+                                            boolean showNumbers, boolean useAlphaAsNumbers, boolean showDisabledActions,
+                                            boolean honorActionMnemonics,
+                                            Condition<AnAction> preselectActionCondition, @Nullable String actionPlace) {
+      final Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
+
+      final ActionStepBuilder builder =
+        new ActionStepBuilder(dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics);
+      if (actionPlace != null) {
+        builder.setActionPlace(actionPlace);
+      }
+      builder.buildGroup(actionGroup);
+      final List<ActionItem> items = builder.getItems();
+
+      int defaultOptionIndex = 0;
+      if (preselectActionCondition != null) {
+        for (int i = 0; i < items.size(); i++) {
+          final AnAction action = items.get(i).getAction();
+          if (preselectActionCondition.value(action)) {
+            defaultOptionIndex = i;
+            break;
+          }
+        }
+      }
+
+      return new ActionPopupStep(items, title, component, showNumbers || honorActionMnemonics && itemsHaveMnemonics(items),
+                                 defaultOptionIndex,
+                                 false, showDisabledActions);
+    }
+
+    @Override
+    public void dispose() {
+      if (myDisposeCallback != null) {
+        myDisposeCallback.run();
+      }
+      ActionMenu.showDescriptionInStatusBar(true, myComponent, null);
+      super.dispose();
+    }
+  }
+
   public ListPopup createActionGroupPopup(final String title,
                                           final ActionGroup actionGroup,
                                           @NotNull DataContext dataContext,
@@ -410,7 +436,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
     return AbstractPopup.getCenterOf(container, content);
   }
 
-  private static class ActionItem {
+  public static class ActionItem {
     private final AnAction myAction;
     private final String myText;
     private final boolean myIsEnabled;
@@ -604,14 +630,10 @@ public class PopupFactoryImpl extends JBPopupFactory {
     private Icon myEmptyIcon;
     private int myMaxIconWidth = -1;
     private int myMaxIconHeight = -1;
-    @NotNull
-    private String myActionPlace;
+    @NotNull private String myActionPlace;
 
-    private ActionStepBuilder(@NotNull DataContext dataContext,
-                             final boolean showNumbers,
-                             final boolean useAlphaAsNumbers,
-                             final boolean showDisabled,
-                             final boolean honorActionMnemonics) {
+    private ActionStepBuilder(@NotNull DataContext dataContext, final boolean showNumbers, final boolean useAlphaAsNumbers,
+                              final boolean showDisabled, final boolean honorActionMnemonics) {
       myUseAlphaAsNumbers = useAlphaAsNumbers;
       myListModel = new ArrayList<ActionItem>();
       myDataContext = dataContext;
@@ -645,11 +667,8 @@ public class PopupFactoryImpl extends JBPopupFactory {
     }
 
     private void calcMaxIconSize(final ActionGroup actionGroup) {
-      AnAction[] actions = actionGroup.getChildren(new AnActionEvent(null, myDataContext,
-                                                                     myActionPlace,
-                                                                     getPresentation(actionGroup),
-                                                                     ActionManager.getInstance(),
-                                                                     0));
+      AnAction[] actions = actionGroup.getChildren(new AnActionEvent(null, myDataContext, myActionPlace,
+                                                                     getPresentation(actionGroup), ActionManager.getInstance(), 0));
       for (AnAction action : actions) {
         if (action == null) continue;
         if (action instanceof ActionGroup) {
@@ -675,11 +694,8 @@ public class PopupFactoryImpl extends JBPopupFactory {
     }
 
     private void appendActionsFromGroup(final ActionGroup actionGroup) {
-      AnAction[] actions = actionGroup.getChildren(new AnActionEvent(null, myDataContext,
-                                                                     myActionPlace,
-                                                                     getPresentation(actionGroup),
-                                                                     ActionManager.getInstance(),
-                                                                     0));
+      AnAction[] actions = actionGroup.getChildren(new AnActionEvent(null, myDataContext, myActionPlace,
+                                                                     getPresentation(actionGroup), ActionManager.getInstance(), 0));
       for (AnAction action : actions) {
         if (action == null) {
           LOG.error("null action in group " + actionGroup);
@@ -708,11 +724,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
     private void appendAction(@NotNull AnAction action) {
       Presentation presentation = getPresentation(action);
-      AnActionEvent event = new AnActionEvent(null, myDataContext,
-                                              myActionPlace,
-                                              presentation,
-                                              ActionManager.getInstance(),
-                                              0);
+      AnActionEvent event = new AnActionEvent(null, myDataContext, myActionPlace, presentation, ActionManager.getInstance(), 0);
 
       ActionUtil.performDumbAwareUpdate(action, event, true);
       if ((myShowDisabled || presentation.isEnabled()) && presentation.isVisible()) {
@@ -737,13 +749,42 @@ public class PopupFactoryImpl extends JBPopupFactory {
         if (icon == null) {
           @NonNls final String actionId = ActionManager.getInstance().getId(action);
           icon = actionId != null && actionId.startsWith("QuickList.") ? QUICK_LIST_ICON : myEmptyIcon;
-
+        }
+        else {
+          icon = new IconWrapper(icon);
         }
         boolean prependSeparator = !myListModel.isEmpty() && myPrependWithSeparator;
         assert text != null : action + " has no presentation";
         myListModel.add(new ActionItem(action, text, presentation.isEnabled(), icon, prependSeparator, mySeparatorText));
         myPrependWithSeparator = false;
         mySeparatorText = null;
+      }
+    }
+
+    /**
+     * Adjusts icon size to maximum, so that icons with different sizes were aligned correctly.
+     */
+    private class IconWrapper implements Icon {
+
+      private Icon myIcon;
+
+      IconWrapper(Icon icon) {
+        myIcon = icon;
+      }
+
+      @Override
+      public void paintIcon(Component c, Graphics g, int x, int y) {
+        myIcon.paintIcon(c, g, x, y);
+      }
+
+      @Override
+      public int getIconWidth() {
+        return myMaxIconWidth;
+      }
+
+      @Override
+      public int getIconHeight() {
+        return myMaxIconHeight;
       }
     }
 

@@ -38,21 +38,12 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.*;
 
+import static org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil.isImportToJavaOrJavax;
+
 /**
  * @author ven
  */
 public class GroovyImportOptimizer implements ImportOptimizer {
-  private static final Comparator<GrImportStatement> IMPORT_STATEMENT_COMPARATOR = new Comparator<GrImportStatement>() {
-    public int compare(GrImportStatement statement1, GrImportStatement statement2) {
-      final GrCodeReferenceElement ref1 = statement1.getImportReference();
-      final GrCodeReferenceElement ref2 = statement2.getImportReference();
-      String name1 = ref1 != null ? PsiUtil.getQualifiedReferenceText(ref1) : null;
-      String name2 = ref2 != null ? PsiUtil.getQualifiedReferenceText(ref2) : null;
-      if (name1 == null) return name2 == null ? 0 : -1;
-      if (name2 == null) return 1;
-      return name1.compareTo(name2);
-    }
-  };
 
   @NotNull
   public Runnable processFile(PsiFile file) {
@@ -322,8 +313,30 @@ public class GroovyImportOptimizer implements ImportOptimizer {
         result.add(factory.createImportStatementFromText(importedMember, true, false, null));
       }
 
-      Collections.sort(result, IMPORT_STATEMENT_COMPARATOR);
-      Collections.sort(explicated, IMPORT_STATEMENT_COMPARATOR);
+      final Comparator<GrImportStatement> comparator = new Comparator<GrImportStatement>() {
+        public int compare(GrImportStatement statement1, GrImportStatement statement2) {
+          if (settings.LAYOUT_STATIC_IMPORTS_SEPARATELY) {
+            if (statement1.isStatic() && !statement2.isStatic()) return 1;
+            if (statement2.isStatic() && !statement1.isStatic()) return -1;
+          }
+
+          if (!statement1.isStatic() && !statement2.isStatic()) {
+            if (isImportToJavaOrJavax(statement1) && !isImportToJavaOrJavax(statement2)) return 1;
+            if (!isImportToJavaOrJavax(statement1) && isImportToJavaOrJavax(statement2)) return -1;
+          }
+
+
+          final GrCodeReferenceElement ref1 = statement1.getImportReference();
+          final GrCodeReferenceElement ref2 = statement2.getImportReference();
+          String name1 = ref1 != null ? PsiUtil.getQualifiedReferenceText(ref1) : null;
+          String name2 = ref2 != null ? PsiUtil.getQualifiedReferenceText(ref2) : null;
+          if (name1 == null) return name2 == null ? 0 : -1;
+          if (name2 == null) return 1;
+          return name1.compareTo(name2);
+        }
+      };
+      Collections.sort(result, comparator);
+      Collections.sort(explicated, comparator);
 
       explicated.addAll(result);
       return explicated.toArray(new GrImportStatement[explicated.size()]);

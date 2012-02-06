@@ -1,20 +1,14 @@
 package org.jetbrains.plugins.gradle.diff;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.GradleModule;
 import org.jetbrains.plugins.gradle.model.GradleProject;
 
-import java.util.Collections;
-import java.util.List;
+import java.util.Collection;
 import java.util.Set;
-
-import static java.util.Arrays.asList;
-import static org.jetbrains.plugins.gradle.diff.GradleDiffUtil.concatenate;
 
 /**
  * Encapsulates functionality of calculating changes between Gradle and IntelliJ IDEA project hierarchies.
@@ -26,25 +20,31 @@ import static org.jetbrains.plugins.gradle.diff.GradleDiffUtil.concatenate;
  */
 public class GradleProjectStructureChangesCalculator implements GradleStructureChangesCalculator<GradleProject, Project> {
 
-  private final GradleModuleStructureChangesCalculator myModuleChangesCalculator = new GradleModuleStructureChangesCalculator();
+  private final GradleModuleStructureChangesCalculator myModuleChangesCalculator;
+  private final PlatformFacade myStructureHelper;
 
-  @NotNull
+  public GradleProjectStructureChangesCalculator(@NotNull GradleModuleStructureChangesCalculator moduleCalculator,
+                                                 @NotNull PlatformFacade structureHelper) {
+    myModuleChangesCalculator = moduleCalculator;
+    myStructureHelper = structureHelper;
+  }
+
   @Override
-  public Set<GradleProjectStructureChange> calculate(@NotNull GradleProject gradleEntity,
-                                                     @NotNull Project intellijEntity,
-                                                     @NotNull Set<GradleProjectStructureChange> knownChanges)
+  public void calculate(@NotNull GradleProject gradleEntity,
+                        @NotNull Project intellijEntity,
+                        @NotNull Set<GradleProjectStructureChange> knownChanges,
+                        @NotNull Set<GradleProjectStructureChange> currentChanges)
   {
-    final Set<GradleProjectStructureChange> result = calculateProjectChanges(gradleEntity, intellijEntity, knownChanges);
+    calculateProjectChanges(gradleEntity, intellijEntity, currentChanges);
 
     final Set<? extends GradleModule> gradleSubEntities = gradleEntity.getModules();
-    final List<Module> intellijSubEntities = asList(ModuleManager.getInstance(intellijEntity).getModules());
-    return concatenate(result, GradleDiffUtil.calculate(myModuleChangesCalculator, gradleSubEntities, intellijSubEntities, knownChanges));
+    final Collection<Module> intellijSubEntities = myStructureHelper.getModules(intellijEntity);
+    GradleDiffUtil.calculate(myModuleChangesCalculator, gradleSubEntities, intellijSubEntities, knownChanges, currentChanges);
   }
 
   @NotNull
   @Override
-  public Object getIntellijKey(@NotNull Project entity, @NotNull Set<GradleProjectStructureChange> knownChanges) {
-    // TODO den consider the known changes
+  public Object getIntellijKey(@NotNull Project entity) {
     return entity.getName();
   }
 
@@ -55,43 +55,33 @@ public class GradleProjectStructureChangesCalculator implements GradleStructureC
     return entity.getName();
   }
 
-  @NotNull
-  private static Set<GradleProjectStructureChange> calculateProjectChanges(@NotNull GradleProject gradleProject,
-                                                                           @NotNull Project intellijProject,
-                                                                           @NotNull Set<GradleProjectStructureChange> knownChanges)
+  private void calculateProjectChanges(@NotNull GradleProject gradleProject,
+                                       @NotNull Project intellijProject,
+                                       @NotNull Set<GradleProjectStructureChange> currentChanges)
   {
-    final Set<GradleProjectStructureChange> nameChanges = checkName(gradleProject, intellijProject, knownChanges);
-    final Set<GradleProjectStructureChange> levelChanges = checkLanguageLevel(gradleProject, intellijProject, knownChanges);
-    return concatenate(nameChanges, levelChanges);
+    checkName(gradleProject, intellijProject, currentChanges);
+    checkLanguageLevel(gradleProject, intellijProject, currentChanges);
   }
 
-  @NotNull
-  private static Set<GradleProjectStructureChange> checkName(@NotNull GradleProject gradleProject,
-                                                             @NotNull Project intellijProject,
-                                                             @NotNull Set<GradleProjectStructureChange> knownChanges)
+  private static void checkName(@NotNull GradleProject gradleProject,
+                                @NotNull Project intellijProject,
+                                @NotNull Set<GradleProjectStructureChange> currentChanges)
   {
     String gradleName = gradleProject.getName();
     String intellijName = intellijProject.getName();
-    if (gradleName.equals(intellijName)) {
-      return Collections.emptySet();
+    if (!gradleName.equals(intellijName)) {
+      currentChanges.add(new GradleRenameChange(GradleRenameChange.Entity.PROJECT, gradleName, intellijName));
     }
-    final GradleRenameChange change = new GradleRenameChange(GradleRenameChange.Entity.PROJECT, gradleName, intellijName);
-    return knownChanges.contains(change) ? Collections.<GradleProjectStructureChange>emptySet()
-                                         : Collections.<GradleProjectStructureChange>singleton(change);
   }
 
-  @NotNull
-  private static Set<GradleProjectStructureChange> checkLanguageLevel(@NotNull GradleProject gradleProject,
-                                                                      @NotNull Project intellijProject,
-                                                                      @NotNull Set<GradleProjectStructureChange> knownChanges)
+  private void checkLanguageLevel(@NotNull GradleProject gradleProject,
+                                                               @NotNull Project intellijProject,
+                                                               @NotNull Set<GradleProjectStructureChange> currentChanges)
   {
     LanguageLevel gradleLevel = gradleProject.getLanguageLevel();
-    LanguageLevel intellijLevel = LanguageLevelProjectExtension.getInstance(intellijProject).getLanguageLevel();
-    if (gradleLevel == intellijLevel) {
-      return Collections.emptySet();
+    LanguageLevel intellijLevel = myStructureHelper.getLanguageLevel(intellijProject);
+    if (gradleLevel != intellijLevel) {
+      currentChanges.add(new GradleLanguageLevelChange(gradleLevel, intellijLevel));
     }
-    final GradleLanguageLevelChange change = new GradleLanguageLevelChange(gradleLevel, intellijLevel);
-    return knownChanges.contains(change) ? Collections.<GradleProjectStructureChange>emptySet()
-                                         : Collections.<GradleProjectStructureChange>singleton(change);
   }
 }

@@ -37,7 +37,7 @@ public class OptimizeImportsTest extends LightCodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {
-    return TestUtils.getTestDataPath() + "optimizeImports/";
+    return "${TestUtils.testDataPath}optimizeImports/";
   }
 
   @Override protected void setUp() {
@@ -201,12 +201,12 @@ class Fooxx <caret>{
 
   private void doOptimizeImports() {
     GroovyImportOptimizer optimizer = new GroovyImportOptimizer();
-    final Runnable runnable = optimizer.processFile(myFixture.getFile());
+    final Runnable runnable = optimizer.processFile(myFixture.file);
 
-    CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
+    CommandProcessor.instance.executeCommand(project, new Runnable() {
       @Override
       public void run() {
-        ApplicationManager.getApplication().runWriteAction(runnable);
+        ApplicationManager.application.runWriteAction(runnable);
       }
     }, "Optimize imports", null);
   }
@@ -241,6 +241,67 @@ class Fooxx <caret>{
     myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
   }
 
+  public void testSorting() {
+    myFixture.addClass("package foo; public class Foo{}");
+    myFixture.addClass("package foo; public class Bar{public static void foo0(){}}");
+    myFixture.addClass("package java.test; public class Test{public static void foo(){}}");
+    myFixture.addClass("package java.test2; public class Test2{public static void foo2(){}}");
+    myFixture.addClass("package test; public class Alias{public static void test(){}}")
+    myFixture.addClass("package test; public class Alias2{public static void test2(){}}")
 
+    myFixture.configureByText('__a.groovy', '''
+package pack
+
+
+import foo.Foo
+import foo.Bar
+import java.test.Test 
+import java.test2.Test2
+import static foo.Bar.foo0
+import static java.test.Test.foo
+import static java.test2.Test2.*
+import static test.Alias.test as aliased
+import static test.Alias2.test2 as aliased2
+
+new Foo()
+new Bar()
+new Test()
+new Test2()
+foo()
+foo0()
+foo1()
+aliased()
+aliased2()
+''')
+
+    doOptimizeImports()
+
+    myFixture.checkResult('''
+package pack
+
+import static test.Alias.test as aliased
+import static test.Alias2.test2 as aliased2
+
+import foo.Bar
+import foo.Foo
+
+import java.test.Test
+import java.test2.Test2
+
+import static foo.Bar.foo0
+import static java.test.Test.foo
+
+new Foo()
+new Bar()
+new Test()
+new Test2()
+foo()
+foo0()
+foo1()
+aliased()
+aliased2()
+''')
+
+  }
 
 }

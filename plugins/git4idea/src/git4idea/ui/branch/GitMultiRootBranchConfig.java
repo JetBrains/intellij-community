@@ -15,24 +15,27 @@
  */
 package git4idea.ui.branch;
 
+import com.intellij.openapi.util.Pair;
 import git4idea.GitBranch;
 import git4idea.GitUtil;
 import git4idea.branch.GitBranchesCollection;
+import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Kirill Likhodedov
  */
 public class GitMultiRootBranchConfig {
   
-  private final Collection<GitRepository> myRepositories;
+  private final List<GitRepository> myRepositories;
 
-  public GitMultiRootBranchConfig(@NotNull Collection<GitRepository> repositories) {
+  public GitMultiRootBranchConfig(@NotNull List<GitRepository> repositories) {
     myRepositories = repositories;
   }
 
@@ -80,7 +83,42 @@ public class GitMultiRootBranchConfig {
   @NotNull
   Collection<String> getRemoteBranches() {
     return getCommonBranches(false);
-  }  
+  }
+
+  /**
+   * If there is a common remote branch which is commonly tracked by the given branch in all repositories,
+   * returns the name of this remote branch. Otherwise returns null. <br/>
+   * For one repository just returns the tracked branch or null if there is no tracked branch.
+   */
+  @Nullable
+  public String getTrackedBranch(@NotNull String branch) {
+    String trackedBranch = null;
+    String trackedRemote = null;
+    for (GitRepository repository : myRepositories) {
+      Pair<String, String> tracked = getTrackedBranchAndRemote(repository, branch);
+      if (tracked == null) {
+        return null;
+      }
+      if (trackedBranch == null) {
+        trackedBranch = tracked.getFirst();
+        trackedRemote = tracked.getSecond();
+      }
+      else if (!tracked.getFirst().equals(trackedBranch) || !tracked.getSecond().equals(trackedRemote)) {
+        return null;
+      }
+    }
+    return trackedRemote + "/" + trackedBranch;
+  }
+
+  @Nullable
+  private static Pair<String, String> getTrackedBranchAndRemote(@NotNull GitRepository repository, @NotNull String branch) {
+    for (GitBranchTrackInfo trackInfo : repository.getConfig().getBranchTrackInfos()) {
+      if (trackInfo.getBranch().equals(branch)) {
+        return Pair.create(trackInfo.getRemoteBranch(), trackInfo.getRemote().getName());
+      }
+    }
+    return null;
+  }
 
   @NotNull
   private Collection<String> getCommonBranches(boolean local) {
@@ -105,4 +143,5 @@ public class GitMultiRootBranchConfig {
     }
     return sb.toString();
   }
+
 }

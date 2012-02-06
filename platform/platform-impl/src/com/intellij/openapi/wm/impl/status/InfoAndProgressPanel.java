@@ -425,10 +425,6 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
     };
   }
 
-  public void setLogMessage(String text) {
-    myInfoPanel.setLogMessage(text);
-  }
-
   private static class InlineLayout extends AbstractLayoutManager {
 
     public Dimension preferredLayoutSize(final Container parent) {

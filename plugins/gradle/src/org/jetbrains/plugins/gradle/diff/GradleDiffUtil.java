@@ -25,11 +25,10 @@ public class GradleDiffUtil {
    * Example: particular module has been added at the gradle side. We want to mark that module, its content root(s), dependencies etc
    * as gradle-local changes.
    * 
-   * @param entity  target gradle-local entity
-   * @return        collection of gradle-local changes for the given entity and its interested sub-entities
+   * @param entity          target gradle-local entity
+   * @param currentChanges  holder for the changes built during the current call
    */
-  public static Set<GradleProjectStructureChange> buildLocalChanges(@NotNull GradleEntity entity) {
-    final Set<GradleProjectStructureChange> result = new HashSet<GradleProjectStructureChange>();
+  public static void buildLocalChanges(@NotNull GradleEntity entity, @NotNull final Set<GradleProjectStructureChange> currentChanges) {
     entity.invite(new GradleEntityVisitor() {
       @Override
       public void visit(@NotNull GradleProject project) {
@@ -38,7 +37,7 @@ public class GradleDiffUtil {
 
       @Override
       public void visit(@NotNull GradleModule module) {
-        result.add(new GradleModulePresenceChange(module, null));
+        currentChanges.add(new GradleModulePresenceChange(module, null));
         for (GradleDependency dependency : module.getDependencies()) {
           dependency.invite(this);
         }
@@ -61,79 +60,52 @@ public class GradleDiffUtil {
 
       @Override
       public void visit(@NotNull GradleLibraryDependency dependency) {
-        result.add(new GradleLibraryDependencyPresenceChange(dependency, null));
+        currentChanges.add(new GradleLibraryDependencyPresenceChange(dependency, null));
       }
     });
-    return result;
   }
 
   /**
    * Analogues to {@link #buildLocalChanges} but targets intellij entity.
    *
-   * @param module  target intellij-local module that doesn't present at the gradle side
-   * @return        collection of intellij-local changes for the given entity and its interested sub-entities
+   * @param module          target intellij-local module that doesn't present at the gradle side
+   * @param currentChanges  holder for the changes built during the current call
    */
-  public static Set<? extends GradleProjectStructureChange> buildLocalChanges(@NotNull Module module) {
-    Set<GradleProjectStructureChange> result = new HashSet<GradleProjectStructureChange>();
-    result.add(new GradleModulePresenceChange(null, module));
+  public static void buildLocalChanges(@NotNull Module module, @NotNull Set<GradleProjectStructureChange> currentChanges) {
+    currentChanges.add(new GradleModulePresenceChange(null, module));
     // TODO den process module sub-entities here (content roots and dependencies).
-    return result;
   }
 
   /**
    * Analogues to {@link #buildLocalChanges} but targets intellij entity.
    * 
    * @param libraryDependency  target intellij-local library dependency that doesn't present at the gradle side
-   * @return                   collection of intellij-local changes for the given entity and its interested sub-entities
+   * @param currentChanges     holder for the changes built during the current call
    */
-  public static Set<? extends GradleProjectStructureChange> buildLocalChanges(@NotNull LibraryOrderEntry libraryDependency) {
-    return Collections.singleton(new GradleLibraryDependencyPresenceChange(null, libraryDependency));
+  public static void buildLocalChanges(@NotNull LibraryOrderEntry libraryDependency,
+                                       @NotNull Set<GradleProjectStructureChange> currentChanges)
+  {
+    currentChanges.add(new GradleLibraryDependencyPresenceChange(null, libraryDependency));
   }
 
   /**
    * Performs argument type-based dispatch and delegates to one of strongly typed <code>'buildLocalChanges()'</code> methods.
    *
-   * @param entity  target intellij-local entity that doesn't present at the gradle side
-   * @return        collection of intellij-local changes for the given entity and its interested sub-entities
+   * @param entity          target intellij-local entity that doesn't present at the gradle side
+   * @param currentChanges  holder for the changes built during the current call
    */
-  @NotNull
-  public static Set<? extends GradleProjectStructureChange> buildLocalChanges(@NotNull Object entity) {
+  public static void buildLocalChanges(@NotNull Object entity,
+                                       @NotNull Set<GradleProjectStructureChange> currentChanges)
+  {
     if (entity instanceof GradleEntity) {
-      return buildLocalChanges((GradleEntity)entity);
+      buildLocalChanges((GradleEntity)entity, currentChanges);
     }
     else if (entity instanceof Module) {
-      return buildLocalChanges((Module)entity);
+      buildLocalChanges((Module)entity, currentChanges);
     }
     else if (entity instanceof LibraryOrderEntry) {
-      return buildLocalChanges((LibraryOrderEntry)entity);
+      buildLocalChanges((LibraryOrderEntry)entity, currentChanges);
     }
-    else {
-      return Collections.emptySet();
-    }
-  }
-
-  /**
-   * Concatenates given entities into the single collection and returns it.
-   * <p/>
-   * The main idea behind this method is that most of the time we don't expect changes at all, hence, corresponding changes calculators
-   * can use {@link Collections#emptySet()}. However, if some sub-nodes do have changes, attempt
-   * to {@link Collection#addAll(Collection) merge} them within the empty set mentioned above would cause an exception.
-   * <p/>
-   * That's why we provide dedicated method for creating new collection as a merge result.
-   * 
-   * @param collections  collections to merge
-   * @return             merge result
-   */
-  @NotNull
-  public static Set<GradleProjectStructureChange> concatenate(Collection<? extends GradleProjectStructureChange>... collections) {
-    Set<GradleProjectStructureChange> result = null;
-    for (Collection<? extends GradleProjectStructureChange> collection : collections) {
-      if (result == null) {
-        result = new HashSet<GradleProjectStructureChange>();
-      }
-      result.addAll(collection);
-    }
-    return result == null ? Collections.<GradleProjectStructureChange>emptySet() : result;
   }
 
   /**
@@ -146,39 +118,34 @@ public class GradleDiffUtil {
    * @param gradleEntities    entities available at the gradle side
    * @param intellijEntities  entities available at the intellij side
    * @param knownChanges      collection that contains known changes about the entities
+   * @param currentChanges    holder for the changes discovered during the current call
    * @param <I>               target intellij entity type
    * @param <G>               target gradle entity type
-   * @return                  set of changes between the given entity collections
    */
-  @NotNull
-  public static <I, G extends GradleEntity> Set<GradleProjectStructureChange> calculate(
+  public static <I, G extends GradleEntity> void calculate(
     @NotNull GradleStructureChangesCalculator<G, I> calculator,
     @NotNull Iterable<? extends G> gradleEntities,
     @NotNull Iterable<? extends I> intellijEntities,
-    @NotNull Set<GradleProjectStructureChange> knownChanges)
+    @NotNull Set<GradleProjectStructureChange> knownChanges,
+    @NotNull Set<GradleProjectStructureChange> currentChanges)
   {
-    Set<GradleProjectStructureChange> result = Collections.emptySet();
     Map<Object, I> intellijEntitiesByKeys = new HashMap<Object, I>();
     for (I entity : intellijEntities) {
-      final I previous = intellijEntitiesByKeys.put(calculator.getIntellijKey(entity, knownChanges), entity);
+      final I previous = intellijEntitiesByKeys.put(calculator.getIntellijKey(entity), entity);
       assert previous == null;
     }
     for (G gradleEntity: gradleEntities) {
       I intellijEntity = intellijEntitiesByKeys.remove(calculator.getGradleKey(gradleEntity, knownChanges));
-      Set<GradleProjectStructureChange> changesToMerge;
       if (intellijEntity == null) {
-        changesToMerge = buildLocalChanges(gradleEntity);
+        buildLocalChanges(gradleEntity, currentChanges);
       }
       else {
-        changesToMerge = calculator.calculate(gradleEntity, intellijEntity, knownChanges);
+        calculator.calculate(gradleEntity, intellijEntity, knownChanges, currentChanges);
       }
-      result = concatenate(result, changesToMerge);
     }
 
     for (I entity : intellijEntitiesByKeys.values()) {
-      result = concatenate(result, buildLocalChanges(entity));
+      buildLocalChanges(entity, currentChanges);
     }
-    
-    return result;
   }
 }

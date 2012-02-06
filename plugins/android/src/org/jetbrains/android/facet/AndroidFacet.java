@@ -37,6 +37,7 @@ import com.intellij.facet.FacetTypeRegistry;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.compiler.GeneratingCompiler;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
@@ -44,10 +45,9 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.CompilerModuleExtension;
-import com.intellij.openapi.roots.ModuleRootEvent;
-import com.intellij.openapi.roots.ModuleRootListener;
-import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.projectRoots.SdkAdditionalData;
+import com.intellij.openapi.projectRoots.SdkModificator;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
@@ -69,9 +69,14 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.util.ui.update.Update;
 import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.DomElement;
-import org.jetbrains.android.compiler.*;
+import org.jetbrains.android.compiler.AndroidAptCompiler;
+import org.jetbrains.android.compiler.AndroidCompileUtil;
+import org.jetbrains.android.compiler.AndroidIdlCompiler;
+import org.jetbrains.android.compiler.AndroidRenderscriptCompiler;
 import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.android.importDependencies.ImportDependenciesUtil;
 import org.jetbrains.android.resourceManagers.LocalResourceManager;
@@ -80,6 +85,7 @@ import org.jetbrains.android.resourceManagers.SystemResourceManager;
 import org.jetbrains.android.sdk.*;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidUtils;
+import org.jetbrains.android.util.ResourceEntry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -106,10 +112,27 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
   private final Map<String, Map<String, PsiClass>> myClassMaps = new HashMap<String, Map<String, PsiClass>>();
 
   private final Object myClassMapLock = new Object();
+  
+  private final Map<Class<?>, MergingUpdateQueue> mySourcesAutogeneratingQueueMap = new HashMap<Class<?>, MergingUpdateQueue>();
 
   public AndroidFacet(@NotNull Module module, String name, @NotNull AndroidFacetConfiguration configuration) {
     super(getFacetType(), module, name, configuration, null);
     configuration.setFacet(this);
+
+    mySourcesAutogeneratingQueueMap.put(AndroidAptCompiler.class, createSourceGeneratingQueue("AndroidAptAutogeneratingQueue"));
+    mySourcesAutogeneratingQueueMap.put(AndroidIdlCompiler.class, createSourceGeneratingQueue("AndroidIdlAutogeneratingQueue"));
+    mySourcesAutogeneratingQueueMap
+      .put(AndroidRenderscriptCompiler.class, createSourceGeneratingQueue("AndroidRenderscriptAutogeneratingQueue"));
+  }
+
+  private MergingUpdateQueue createSourceGeneratingQueue(@NotNull String name) {
+    return new MergingUpdateQueue(name, 1000, false, null, this, null, false);
+  }
+
+  private void activateSourceAutogenerating() {
+    for (MergingUpdateQueue queue : mySourcesAutogeneratingQueueMap.values()) {
+      queue.activate();
+    }
   }
 
   @Nullable
@@ -301,8 +324,8 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
       AndroidPlatform platform = getConfiguration().getAndroidPlatform();
       AndroidSdk sdk = platform != null ? platform.getSdk() : null;
       Project project = getModule().getProject();
-      if (sdk instanceof AndroidSdkImpl) {
-        SdkManager sdkManager = ((AndroidSdkImpl)sdk).getSdkManager();
+      if (sdk != null) {
+        SdkManager sdkManager = sdk.getSdkManager();
         myAvdManager = new AvdManager(sdkManager, AndroidUtils.getSdkLog(project));
       }
       else {
@@ -344,6 +367,9 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
         if (ApplicationManager.getApplication().isUnitTestMode()) {
           return;
         }
+
+        addResourceFolderToSdkRootsIfNecessary();
+        
         ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
           public void run() {
             Module module = getModule();
@@ -365,6 +391,8 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
               AndroidCompileUtil.generate(module, new AndroidIdlCompiler(project));
             }
             AndroidCompileUtil.generate(module, new AndroidRenderscriptCompiler());
+
+            activateSourceAutogenerating();
           }
         });
       }
@@ -414,6 +442,42 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
         });
       }
     });
+  }
+  
+  private void addResourceFolderToSdkRootsIfNecessary() {
+    final Sdk sdk = ModuleRootManager.getInstance(getModule()).getSdk();
+    if (sdk == null || !(sdk.getSdkType() instanceof AndroidSdkType)) {
+      return;
+    }
+
+    final SdkAdditionalData data = sdk.getSdkAdditionalData();
+    if (!(data instanceof AndroidSdkAdditionalData)) {
+      return;
+    }
+
+    final AndroidPlatform platform = ((AndroidSdkAdditionalData)data).getAndroidPlatform();
+    if (platform == null) {
+      return;
+    }
+
+    final String resFolderPath = platform.getTarget().getPath(IAndroidTarget.RESOURCES);
+    if (resFolderPath == null) {
+      return;
+    }
+
+    final VirtualFile resFolder = LocalFileSystem.getInstance().findFileByPath(resFolderPath);
+    if (resFolder == null) {
+      return;
+    }
+
+    for (VirtualFile root : sdk.getRootProvider().getFiles(OrderRootType.CLASSES)) {
+      if (root == resFolder) {
+        return;
+      }
+    }
+    final SdkModificator modificator = sdk.getSdkModificator();
+    modificator.addRoot(resFolder, OrderRootType.CLASSES);
+    modificator.commitChanges();
   }
 
   private static void updateDependenciesInPropertyFile(@NotNull final PropertiesFile projectProperties,
@@ -708,5 +772,21 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
     }
     String moduleDirPath = getModuleDirPath();
     return moduleDirPath != null ? FileUtil.toSystemDependentName(moduleDirPath + path) : null;
+  }
+
+  public void scheduleSourceRegenerating(@NotNull final GeneratingCompiler compiler) {
+    final MergingUpdateQueue queue = mySourcesAutogeneratingQueueMap.get(compiler.getClass());
+
+    if (queue == null) {
+      LOG.error("Autogenerating is not supported for compiler " + compiler.getClass().getCanonicalName());
+    }
+    else {
+      queue.queue(new Update(this) {
+        @Override
+        public void run() {
+          AndroidCompileUtil.doGenerate(getModule(), compiler);
+        }
+      });
+    }
   }
 }

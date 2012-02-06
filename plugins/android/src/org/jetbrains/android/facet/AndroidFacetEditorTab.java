@@ -18,7 +18,6 @@ package org.jetbrains.android.facet;
 import com.android.sdklib.SdkConstants;
 import com.intellij.facet.ui.FacetEditorContext;
 import com.intellij.facet.ui.FacetEditorTab;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -93,6 +92,7 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
   private JLabel myRGenPathLabel;
   private TextFieldWithBrowseButton myCustomDebugKeystoreField;
   private JBLabel myCustomKeystoreLabel;
+  private JCheckBox myIncludeTestCodeAndCheckBox;
 
   public AndroidFacetEditorTab(FacetEditorContext context, AndroidFacetConfiguration androidFacetConfiguration) {
     final Project project = context.getProject();
@@ -282,6 +282,9 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     if (!myConfiguration.CUSTOM_DEBUG_KEYSTORE_PATH.equals(getSelectedCustomKeystorePath())) {
       return true;
     }
+    if (myConfiguration.PACK_TEST_CODE != myIncludeTestCodeAndCheckBox.isSelected()) {
+      return true;
+    }
     return false;
   }
 
@@ -390,6 +393,8 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     myConfiguration.RUN_PROCESS_RESOURCES_MAVEN_TASK = myRunProcessResourcesRadio.isSelected();
 
     myConfiguration.GENERATE_UNSIGNED_APK = myGenerateUnsignedApk.isSelected();
+    
+    myConfiguration.PACK_TEST_CODE = myIncludeTestCodeAndCheckBox.isSelected();
 
     boolean useCustomAptSrc = myUseCustomSourceDirectoryRadio.isSelected();
 
@@ -426,22 +431,17 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
 
     runApt = runApt && myConfiguration.REGENERATE_R_JAVA && AndroidAptCompiler.isToCompileModule(myContext.getModule(), myConfiguration);
     runIdl = runIdl && myConfiguration.REGENERATE_JAVA_BY_AIDL;
+
     if (runApt || runIdl) {
-      final boolean finalRunApt = runApt;
-      final boolean finalRunIdl = runIdl;
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        @Override
-        public void run() {
-          Module module = myContext.getModule();
-          Project project = module.getProject();
-          if (finalRunApt) {
-            AndroidCompileUtil.generate(module, new AndroidAptCompiler(), true);
-          }
-          if (finalRunIdl) {
-            AndroidCompileUtil.generate(module, new AndroidIdlCompiler(project));
-          }
-        }
-      });
+      final Module module = myContext.getModule();
+      final Project project = module.getProject();
+
+      if (runApt) {
+        AndroidCompileUtil.generate(module, new AndroidAptCompiler(), true);
+      }
+      if (runIdl) {
+        AndroidCompileUtil.generate(module, new AndroidIdlCompiler(project));
+      }
     }
   }
 
@@ -513,6 +513,7 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     myCompileResourcesByIdeRadio.setSelected(!myConfiguration.RUN_PROCESS_RESOURCES_MAVEN_TASK);
 
     myGenerateUnsignedApk.setSelected(myConfiguration.GENERATE_UNSIGNED_APK);
+    myIncludeTestCodeAndCheckBox.setSelected(myConfiguration.PACK_TEST_CODE);
 
     updateAptPanel();
 

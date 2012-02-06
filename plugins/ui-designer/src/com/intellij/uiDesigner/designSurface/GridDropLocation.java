@@ -63,11 +63,12 @@ public class GridDropLocation implements ComponentDropLocation {
       return false;
     }
 
+    int colSpan = 1; // allow drop any (NxM) component to cell (1x1)
+    int rowSpan = 1;
+
     for(int i=0; i<dragObject.getComponentCount(); i++) {
       int relativeCol = dragObject.getRelativeCol(i);
       int relativeRow = dragObject.getRelativeRow(i);
-      int colSpan = dragObject.getColSpan(i);
-      int rowSpan = dragObject.getRowSpan(i);
 
       LOG.debug("checking component: relativeRow" + relativeRow + ", relativeCol" + relativeCol + ", colSpan=" + colSpan + ", rowSpan=" + rowSpan);
 
@@ -99,7 +100,7 @@ public class GridDropLocation implements ComponentDropLocation {
   public void placeFeedback(FeedbackLayer feedbackLayer, ComponentDragObject dragObject) {
     Rectangle feedbackRect = null;
     if (getContainer().getLayoutManager().isGrid()) {
-      feedbackRect = getGridFeedbackRect(dragObject, false, false);
+      feedbackRect = getGridFeedbackRect(dragObject, false, false, true);
     }
     if (feedbackRect != null) {
       final JComponent component = getContainer().getDelegee();
@@ -115,44 +116,62 @@ public class GridDropLocation implements ComponentDropLocation {
   }
 
   @Nullable
-  protected Rectangle getGridFeedbackCellRect(ComponentDragObject dragObject, final boolean ignoreWidth, final boolean ignoreHeight) {
+  protected Rectangle getGridFeedbackCellRect(ComponentDragObject dragObject,
+                                              boolean ignoreWidth,
+                                              boolean ignoreHeight,
+                                              boolean overlapping) {
     if (dragObject.getComponentCount() == 0) {
-      LOG.debug("no feedback rect because component count=0");
       return null;
     }
 
-    Rectangle rc = getDragObjectDimensions(dragObject);
+    Rectangle rc = calculateGridFeedbackCellRect(dragObject, ignoreWidth, ignoreHeight, true);
+
+    if (rc == null) {
+      return calculateGridFeedbackCellRect(dragObject, ignoreWidth, ignoreHeight, false);
+    }
+
+    if (overlapping && findOverlappingComponent(rc.y, rc.x, rc.height + 1, rc.width + 1) != null) {
+     return calculateGridFeedbackCellRect(dragObject, ignoreWidth, ignoreHeight, false);
+    }
+
+    return rc;
+  }
+
+  @Nullable
+  private Rectangle calculateGridFeedbackCellRect(ComponentDragObject dragObject,
+                                             boolean ignoreWidth,
+                                             boolean ignoreHeight,
+                                             boolean spans) {
+    Rectangle rc = getDragObjectDimensions(dragObject, spans);
     int w = ignoreWidth ? 1 : rc.width;
     int h = ignoreHeight ? 1 : rc.height;
 
-    if (rc.x < 0 || rc.y < 0 ||
-        rc.y + h > getContainer().getGridRowCount() || rc.x + w > getContainer().getGridColumnCount()) {
-      LOG.debug("no feedback rect because insert range is outside grid: firstRow=" + rc.y +
-                ", firstCol=" + rc.x + ", lastRow=" + (rc.y+h-1) + ", lastCol=" + (rc.x+w-1));
+    if (rc.x < 0 || rc.y < 0 || rc.y + h > getContainer().getGridRowCount() || rc.x + w > getContainer().getGridColumnCount()) {
       return null;
     }
-    return new Rectangle(rc.x, rc.y, w-1, h-1);
+    
+    return new Rectangle(rc.x, rc.y, w - 1, h - 1);
   }
 
-  protected Rectangle getDragObjectDimensions(final ComponentDragObject dragObject) {
+  protected Rectangle getDragObjectDimensions(ComponentDragObject dragObject, boolean spans) {
     int firstRow = getRow();
     int lastRow = getRow();
     int firstCol = getColumn();
     int lastCol = getColumn();
-    for(int i=0; i<dragObject.getComponentCount(); i++) {
-      final int relRow = dragObject.getRelativeRow(i);
-      final int relCol = dragObject.getRelativeCol(i);
+    for (int i = 0; i < dragObject.getComponentCount(); i++) {
+      int relRow = dragObject.getRelativeRow(i);
+      int relCol = dragObject.getRelativeCol(i);
       firstRow = Math.min(firstRow, getRow() + relRow);
       firstCol = Math.min(firstCol, getColumn() + relCol);
-      lastRow = Math.max(lastRow, getRow() + relRow + dragObject.getRowSpan(i) - 1);
-      lastCol = Math.max(lastCol, getColumn() + relCol + dragObject.getColSpan(i) - 1);
+      lastRow = Math.max(lastRow, getRow() + relRow + (spans ? dragObject.getRowSpan(i) : 1) - 1);
+      lastCol = Math.max(lastCol, getColumn() + relCol + (spans ? dragObject.getColSpan(i) : 1) - 1);
     }
-    return new Rectangle(firstCol, firstRow, lastCol-firstCol+1, lastRow-firstRow+1);
+    return new Rectangle(firstCol, firstRow, lastCol - firstCol + 1, lastRow - firstRow + 1);
   }
 
   @Nullable
-  protected Rectangle getGridFeedbackRect(ComponentDragObject dragObject, final boolean ignoreWidth, final boolean ignoreHeight) {
-    Rectangle cellRect = getGridFeedbackCellRect(dragObject, ignoreWidth, ignoreHeight);
+  protected Rectangle getGridFeedbackRect(ComponentDragObject dragObject, boolean ignoreWidth, boolean ignoreHeight, boolean overlapping) {
+    Rectangle cellRect = getGridFeedbackCellRect(dragObject, ignoreWidth, ignoreHeight, overlapping);
     if (cellRect == null) return null;
     int h = ignoreHeight ? 0 : cellRect.height;
     int w = ignoreWidth ? 0 : cellRect.width;
@@ -202,6 +221,16 @@ public class GridDropLocation implements ComponentDropLocation {
 
       assert row + relativeRow >= 0;
       assert column + relativeCol >= 0;
+
+      if (rowSpan > 1 || colSpan > 1) {
+        if ((row + relativeRow + rowSpan > container.getGridRowCount() && rowSpan > 1) ||
+            (column + relativeCol + colSpan > container.getGridColumnCount() && colSpan > 1) ||
+            container.findComponentInRect(row + relativeRow, column + relativeCol, rowSpan, colSpan) != null) {
+          rowSpan = 1;
+          colSpan = 1;
+        }
+      }
+
       if (!container.getGridLayoutManager().isGridDefinedByComponents()) {
         assert relativeRow + rowSpan <= container.getGridRowCount();
         assert relativeCol + colSpan <= container.getGridColumnCount();

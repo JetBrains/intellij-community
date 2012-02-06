@@ -42,12 +42,14 @@ public class BackspaceHandler extends EditorActionHandler {
 
   static void truncatePrefix(final DataContext dataContext, LookupImpl lookup, final EditorActionHandler handler, final int hideOffset) {
     final Editor editor = lookup.getEditor();
-    lookup.performGuardedChange(new Runnable() {
+    if (!lookup.performGuardedChange(new Runnable() {
       @Override
       public void run() {
         handler.execute(editor, dataContext);
       }
-    });
+    })) {
+      return;
+    }
 
     final CompletionProgressIndicator process = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
     if (lookup.truncatePrefix(process == null || !process.isAutopopupCompletion())) {

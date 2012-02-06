@@ -23,6 +23,7 @@ import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -41,22 +42,43 @@ class AlignmentProvider {
     final Set<PsiElement> set1 = myTree.get(e1);
     final Set<PsiElement> set2 = myTree.get(e2);
 
-    LOG.assertTrue(!(set1 != null && set2 != null));
+    LOG.assertTrue(set1 == null || set2 == null || !myAlignments.containsKey(set1) || !myAlignments.containsKey(set2));
 
-    if (set1 != null) {
-      set1.add(e2);
-      myTree.put(e2, set1);
+    if (set1 != null && set2 != null) {
+      if (myAlignments.containsKey(set2)) {
+        for (Iterator<PsiElement> iterator = set1.iterator(); iterator.hasNext(); ) {
+          PsiElement element = iterator.next();
+          iterator.remove();
+
+          addInternal(set2, element);
+        }
+      }
+      else {
+        set1.addAll(set2);
+        for (Iterator<PsiElement> iterator = set2.iterator(); iterator.hasNext(); ) {
+          PsiElement element = iterator.next();
+          iterator.remove();
+
+          addInternal(set1, element);
+        }
+      }
+    }
+    else if (set1 != null) {
+      addInternal(set1, e2);
     }
     else if (set2 != null) {
-      set2.add(e1);
-      myTree.put(e1, set2);
+      addInternal(set2, e1);
     }
     else {
       final HashSet<PsiElement> set = createHashSet();
-
-      myTree.put(e1, set);
-      myTree.put(e2, set);
+      addInternal(set, e1);
+      addInternal(set, e2);
     }
+  }
+
+  private void addInternal(Set<PsiElement> set, PsiElement element) {
+    myTree.put(element, set);
+    set.add(element);
   }
 
   private static HashSet<PsiElement> createHashSet() {
@@ -97,11 +119,6 @@ class AlignmentProvider {
     return alignment;
   }
 
-  @Nullable
-  public Alignment getAlignment(ASTNode node) {
-    return getAlignment(node.getPsi());
-  }
-  
   public Aligner createAligner(PsiElement expression) {
     return new Aligner(expression);
   }
@@ -119,7 +136,8 @@ class AlignmentProvider {
   class Aligner {
     private PsiElement myRef = null;
 
-    private Aligner(){}
+    private Aligner() {
+    }
 
     private Aligner(PsiElement initial) {
       myRef = initial;

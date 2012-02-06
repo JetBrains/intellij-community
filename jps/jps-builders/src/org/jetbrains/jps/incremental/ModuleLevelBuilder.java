@@ -24,7 +24,7 @@ public abstract class ModuleLevelBuilder extends Builder {
   private static final Key<Set<File>> ALL_COMPILED_FILES_KEY = Key.create("_all_compiled_files_");
 
   public static enum ExitCode {
-    OK, ABORT, ADDITIONAL_PASS_REQUIRED
+    OK, ABORT, ADDITIONAL_PASS_REQUIRED, CHUNK_REBUILD_REQUIRED
   }
 
   public abstract ExitCode build(CompileContext context, ModuleChunk chunk) throws ProjectBuildException;
@@ -67,7 +67,7 @@ public abstract class ModuleLevelBuilder extends Builder {
           final HashSet<File> affectedBeforeDif = new HashSet<File>(allAffectedFiles);
 
           final boolean incremental = globalMappings.differentiate(
-            delta, removedPaths, successfullyCompiled, allCompiledFiles, allAffectedFiles
+            delta, removedPaths, filesToCompile, allCompiledFiles, allAffectedFiles
           );
 
           if (LOG.isDebugEnabled()) {

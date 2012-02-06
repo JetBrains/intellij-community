@@ -29,6 +29,8 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.junit.RefactoringListeners;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.SourceScope;
+import com.intellij.execution.util.JavaParametersUtil;
+import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
@@ -37,6 +39,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.listeners.RefactoringElementAdapter;
@@ -259,13 +262,13 @@ public class TestNGConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
   
   
   public void bePatternConfiguration(List<PsiClass> classes, PsiMethod method) {
+    data.TEST_OBJECT = TestType.PATTERN.getType();
+    data.METHOD_NAME = method.getName();
     Set<String> patterns = new HashSet<String>();
     for (PsiClass pattern : classes) {
-      patterns.add(JavaExecutionUtil.getRuntimeQualifiedName(pattern));
+      patterns.add(JavaExecutionUtil.getRuntimeQualifiedName(pattern) + "," + data.METHOD_NAME);
     }
     data.setPatterns(patterns);
-    data.METHOD_NAME = method.getName();
-    data.TEST_OBJECT = TestType.PATTERN.getType();
     setGeneratedName();
   }
 
@@ -328,16 +331,19 @@ public class TestNGConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
       }
       final GlobalSearchScope searchScope = GlobalSearchScope.allScope(getProject());
       for (String pattern : patterns) {
-        final PsiClass psiClass = JavaExecutionUtil.findMainClass(getProject(), pattern, searchScope);
+        final String className = pattern.contains(",") ? StringUtil.getPackageName(pattern, ',') : pattern;
+        final PsiClass psiClass = JavaExecutionUtil.findMainClass(getProject(), className, searchScope);
         if (psiClass == null) {
-          throw new RuntimeConfigurationWarning("Class " + pattern + " not found");
+          throw new RuntimeConfigurationWarning("Class " + className + " not found");
         }
         if (!TestNGUtil.hasTest(psiClass)) {
-          throw new RuntimeConfigurationWarning("Class " + pattern + " not a test");
+          throw new RuntimeConfigurationWarning("Class " + className + " not a test");
         }
       }
     }
     JavaRunConfigurationExtensionManager.checkConfigurationIsValid(this);
+    ProgramParametersUtil.checkWorkingDirectoryExist(this, getProject(), getConfigurationModule().getModule());
+    JavaParametersUtil.checkAlternativeJRE(this);
     //TODO add various checks here
   }
 

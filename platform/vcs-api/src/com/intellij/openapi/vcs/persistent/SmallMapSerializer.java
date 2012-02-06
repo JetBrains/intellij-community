@@ -20,7 +20,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.KeyDescriptor;
+import com.intellij.util.io.UnsyncByteArrayInputStream;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -51,7 +53,7 @@ public class SmallMapSerializer<K,V> implements Forceable {
   private void init() {
     try {
       final byte[] bytes = FileUtil.loadFileBytes(myFile);
-      final DataInputStream dis = new DataInputStream(new ByteArrayInputStream(bytes));
+      final DataInputStream dis = new DataInputStream(new UnsyncByteArrayInputStream(bytes));
       final int size = dis.readInt();
       for (int i = 0; i < size; i++) {
         final KeyWrapper<K> keyWrapper = new KeyWrapper<K>(myKeyDescriptor, myKeyDescriptor.read(dis));

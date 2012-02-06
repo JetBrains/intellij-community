@@ -36,13 +36,14 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
+import java.util.TreeSet;
 
 /**
  * User: anna
  */
 public class AvailablePluginsManagerMain extends PluginManagerMain {
   public static final String MANAGE_REPOSITORIES = "Manage repositories...";
+  public static final String N_A = "N/A";
 
   private PluginManagerMain installed;
 
@@ -140,7 +141,7 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
       super.update(e);
       String category = ((AvailablePluginsTableModel)pluginsModel).getCategory();
       if (category == null) {
-        category = "N/A";
+        category = N_A;
       }
       e.getPresentation().setText("Category: " + category);
     }
@@ -148,17 +149,21 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
     @NotNull
     @Override
     protected DefaultActionGroup createPopupActionGroup(JComponent button) {
-      final LinkedHashSet<String> availableCategories = ((AvailablePluginsTableModel)pluginsModel).getAvailableCategories();
+      final TreeSet<String> availableCategories = ((AvailablePluginsTableModel)pluginsModel).getAvailableCategories();
       final DefaultActionGroup gr = new DefaultActionGroup();
       gr.add(createFilterByCategoryAction(AvailablePluginsTableModel.ALL));
+      final boolean noCategory = availableCategories.remove(N_A);
       for (final String availableCategory : availableCategories) {
         gr.add(createFilterByCategoryAction(availableCategory));
+      }
+      if (noCategory) {
+        gr.add(createFilterByCategoryAction(N_A));
       }
       return gr;
     }
 
     private AnAction createFilterByCategoryAction(final String availableCategory) {
-      return new AnAction(availableCategory != null ? availableCategory : "<N/A>") {
+      return new AnAction(availableCategory) {
         @Override
         public void actionPerformed(AnActionEvent e) {
           final String filter = myFilter.getFilter().toLowerCase();

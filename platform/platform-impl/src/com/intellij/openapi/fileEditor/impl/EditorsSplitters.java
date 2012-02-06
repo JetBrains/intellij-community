@@ -22,15 +22,15 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorProvider;
-import com.intellij.openapi.fileEditor.FileEditorState;
-import com.intellij.openapi.fileEditor.FileEditorStateLevel;
 import com.intellij.openapi.fileEditor.impl.text.FileDropHandler;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
@@ -43,7 +43,6 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.util.Alarm;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.PairFunction;
 import com.intellij.util.containers.ArrayListSet;
 import com.intellij.util.containers.ContainerUtil;
@@ -125,7 +124,7 @@ public class EditorsSplitters extends JPanel {
 
   
   private boolean showEmptyText() {
-    return (myCurrentWindow == null || myCurrentWindow.getFiles().length == 0) && !isProjectViewVisible();  
+    return (myCurrentWindow == null || myCurrentWindow.getFiles().length == 0);
   }
   
   private boolean isProjectViewVisible() {
@@ -158,9 +157,14 @@ public class EditorsSplitters extends JPanel {
       g.setFont(UIUtil.getLabelFont().deriveFont(18f));
 
       final UIUtil.TextPainter painter = new UIUtil.TextPainter(1.4f);
-      painter.appendLine("No files are open").underlined(darkerColors ? Gray._150 : Color.DARK_GRAY)
-        .appendLine("Open Project View with " + KeymapUtil.getShortcutText(new KeyboardShortcut(
-          KeyStroke.getKeyStroke((SystemInfo.isMac ? "meta" : "alt") + " 1"), null))).smaller().withBullet()
+      painter.appendLine("No files are open").underlined(darkerColors ? Gray._150 : Color.DARK_GRAY);
+
+      if (!isProjectViewVisible()) {
+        painter.appendLine("Open Project View with " + KeymapUtil.getShortcutText(new KeyboardShortcut(
+            KeyStroke.getKeyStroke((SystemInfo.isMac ? "meta" : "alt") + " 1"), null))).smaller().withBullet();
+      }
+
+      painter.appendLine("Open a file by name with " + getActionShortcutText("GotoFile")).smaller().withBullet()
         .appendLine("Open Recent files with " + getActionShortcutText("RecentFiles")).smaller().withBullet()
         .appendLine("Open Navigation Bar with " + getActionShortcutText("ShowNavBar")).smaller().withBullet()
         .appendLine("Drag'n'Drop file(s) here from " + SystemInfo.nativeFileManagerName).smaller().withBullet()
@@ -250,18 +254,9 @@ public class EditorsSplitters extends JPanel {
   private void writeComposite(final Element res, final VirtualFile file, final EditorWithProviderComposite composite,
                               final boolean pinned,
                               final EditorWithProviderComposite selectedEditor) {
-    final FileEditor[] editors = composite.getEditors();
     final Element fileElement = new Element("file");
     fileElement.setAttribute("leaf-file-name", file.getName()); // TODO: all files
-    final FileEditorState[] states = new FileEditorState[editors.length];
-    for (int j = 0; j < states.length; j++) {
-      states[j] = editors[j].getState(FileEditorStateLevel.FULL);
-      LOG.assertTrue(states[j] != null);
-    }
-    final int selectedProviderIndex = ArrayUtil.find(editors, composite.getSelectedEditor());
-    LOG.assertTrue(selectedProviderIndex != -1);
-    final FileEditorProvider[] providers = composite.getProviders();
-    final HistoryEntry entry = new HistoryEntry(file, providers, states, providers[selectedProviderIndex]); // TODO
+    final HistoryEntry entry = composite.currentStateAsHistoryEntry();
     entry.writeExternal(fileElement, getManager().getProject());
     fileElement.setAttribute("pinned",         Boolean.toString(pinned));
     fileElement.setAttribute("current",        Boolean.toString(composite.equals (getManager ().getLastSelected ())));

@@ -19,4 +19,8 @@ package com.intellij.debugger.impl;
  * @author lex
  */
 public class EventQueueClosedException extends Exception {
+  @Override
+  public Throwable fillInStackTrace() {
+    return this;
+  }
 }

@@ -73,7 +73,12 @@ class DragHelper extends MouseDragHelper {
   protected void processDragOutFinish(MouseEvent event) {
     super.processDragOutFinish(event);
 
-    myDragOutSource.getDragOutDelegate().dragOutFinished(event, myDragSource);
+    myDragOutSource.getDragOutDelegate().dragOutFinished(event, myDragOutSource);
+  }
+
+  @Override
+  protected void processDragOutCancel() {
+    myDragOutSource.getDragOutDelegate().dragOutCancelled(myDragOutSource);
   }
 
   protected void processDrag(MouseEvent event, Point targetScreenPoint, Point startPointScreen) {
@@ -245,6 +250,10 @@ class DragHelper extends MouseDragHelper {
   protected void processDragFinish(MouseEvent event, boolean willDragOutStart) {
     super.processDragFinish(event, willDragOutStart);
 
+    endDrag(willDragOutStart);
+  }
+
+  private void endDrag(boolean willDragOutStart) {
     if (willDragOutStart) {
       myDragOutSource = myDragSource;
     }
@@ -259,6 +268,11 @@ class DragHelper extends MouseDragHelper {
     myTabs.relayout(true, false);
 
     myTabs.revalidate();
+  }
+
+  @Override
+  protected void processDragCancel() {
+    endDrag(false);
   }
 
   public TabInfo getDragSource() {

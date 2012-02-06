@@ -5,7 +5,6 @@ package org.jetbrains.jps.incremental;
  *         Date: 9/20/11
  */
 public class ProjectBuildException extends Exception{
-
   public ProjectBuildException() {
   }
 

@@ -15,13 +15,15 @@
  */
 package com.intellij.xdebugger.impl.frame;
 
+import com.intellij.ide.DataManager;
 import com.intellij.ide.dnd.DnDEvent;
 import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.dnd.DnDNativeTarget;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.CommonShortcuts;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.ui.AnActionButton;
+import com.intellij.ui.AnActionButtonRunnable;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xdebugger.XDebugSession;
@@ -56,6 +58,7 @@ public class XWatchesView extends XDebugViewBase implements DnDNativeTarget {
   private XDebuggerTreeRestorer myTreeRestorer;
   private final WatchesRootNode myRootNode;
   private final XDebugSessionData mySessionData;
+  private final JPanel myDecoratedPanel;
 
   public XWatchesView(final XDebugSession session, final Disposable parentDisposable, final XDebugSessionData sessionData) {
     super(session, parentDisposable);
@@ -76,8 +79,34 @@ public class XWatchesView extends XDebugViewBase implements DnDNativeTarget {
     myRootNode = new WatchesRootNode(tree, sessionData.getWatchExpressions());
     tree.setRoot(myRootNode, false);
 
+    final ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myTreePanel.getTree()).disableUpDownActions();
+    decorator.setAddAction(new AnActionButtonRunnable() {
+      @Override
+      public void run(AnActionButton button) {
+        executeAction(XDebuggerActions.XNEW_WATCH);
+      }
+    });
+    decorator.setRemoveAction(new AnActionButtonRunnable() {
+      @Override
+      public void run(AnActionButton button) {
+        executeAction(XDebuggerActions.XREMOVE_WATCH);
+      }
+    });
+    myDecoratedPanel = decorator.createPanel();
+    myDecoratedPanel.setBorder(null);
+
     myTreePanel.getTree().getEmptyText().setText(XDebuggerBundle.message("debugger.no.watches"));
 
+  }
+
+  private void executeAction(final String watch) {
+    AnAction action = ActionManager.getInstance().getAction(watch);
+    Presentation presentation = action.getTemplatePresentation().clone();
+    DataContext context = DataManager.getInstance().getDataContext(myTreePanel.getTree());
+
+    AnActionEvent actionEvent =
+      new AnActionEvent(null, context, ActionPlaces.DEBUGGER_TOOLBAR, presentation, ActionManager.getInstance(), 0);
+    action.actionPerformed(actionEvent);
   }
 
   public void addWatchExpression(@NotNull String expression, int index, final boolean navigateToWatchNode) {
@@ -128,7 +157,7 @@ public class XWatchesView extends XDebugViewBase implements DnDNativeTarget {
   }
 
   public JPanel getMainPanel() {
-    return myTreePanel.getMainPanel();
+    return myDecoratedPanel;
   }
 
   public void removeWatches(final List<? extends XDebuggerTreeNode> nodes) {

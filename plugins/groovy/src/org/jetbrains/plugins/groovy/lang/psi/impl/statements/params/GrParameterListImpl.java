@@ -75,14 +75,14 @@ public class GrParameterListImpl extends GrStubElementBase<EmptyStub> implements
     return getParameters().length;
   }
 
-  public void addParameterToEnd(GrParameter parameter) {
+  public GrParameter addParameterToEnd(GrParameter parameter) {
     GrParameter[] params = getParameters();
     if (params.length == 0) {
-      add(parameter);
+      return (GrParameter)add(parameter);
     }
     else {
       GrParameter last = params[params.length - 1];
-      addAfter(parameter, last);
+      return (GrParameter)addAfter(parameter, last);
     }
   }
 

@@ -35,8 +35,7 @@ import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.EmptyVisitor;
 
-import javax.tools.Diagnostic;
-import javax.tools.JavaFileObject;
+import javax.tools.*;
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.ServerSocket;
@@ -257,37 +256,41 @@ public class JavaBuilder extends ModuleLevelBuilder {
       if (hasSourcesToCompile) {
         final Set<File> sourcePath = TEMPORARY_SOURCE_ROOTS_KEY.get(context, Collections.<File>emptySet());
 
-        final boolean compiledOk = compileJava(files, classpath, platformCp, sourcePath, outs, context, diagnosticSink, outputSink);
+        final String chunkName = chunk.getName();
+        context.processMessage(new ProgressMessage("Compiling java [" + chunkName + "]"));
+
+        final boolean compiledOk = compileJava(chunk, files, classpath, platformCp, sourcePath, outs, context, diagnosticSink, outputSink);
 
         final Map<File, String> chunkSourcePath = ProjectPaths.getSourceRootsWithDependents(chunk, context.isCompilingTests());
         final ClassLoader compiledClassesLoader = createInstrumentationClassLoader(classpath, platformCp, chunkSourcePath, outputSink);
 
         if (!forms.isEmpty()) {
           try {
-            context.processMessage(new ProgressMessage("Instrumenting forms [" + chunk.getName() + "]"));
+            context.processMessage(new ProgressMessage("Instrumenting forms [" + chunkName + "]"));
             instrumentForms(context, chunk, chunkSourcePath, compiledClassesLoader, forms, outputSink);
           }
           finally {
-            context.processMessage(new ProgressMessage("Finished instrumenting forms [" + chunk.getName() + "]"));
+            context.processMessage(new ProgressMessage("Finished instrumenting forms [" + chunkName + "]"));
           }
         }
 
         if (addNotNullAssertions) {
           try {
-            context.processMessage(new ProgressMessage("Adding NotNull assertions [" + chunk.getName() + "]"));
+            context.processMessage(new ProgressMessage("Adding NotNull assertions [" + chunkName + "]"));
             instrumentNotNull(context, outputSink, compiledClassesLoader);
           }
           finally {
-            context.processMessage(new ProgressMessage("Finished adding NotNull assertions [" + chunk.getName() + "]"));
+            context.processMessage(new ProgressMessage("Finished adding NotNull assertions [" + chunkName + "]"));
           }
         }
 
         if (!compiledOk && diagnosticSink.getErrorCount() == 0) {
-          throw new ProjectBuildException("Compilation failed: internal java compiler error");
+          diagnosticSink.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, "Compilation failed: internal java compiler error"));
         }
         if (diagnosticSink.getErrorCount() > 0) {
           throw new ProjectBuildException(
-            "Compilation failed: errors: " + diagnosticSink.getErrorCount() + "; warnings: " + diagnosticSink.getWarningCount());
+            "Compilation failed: errors: " + diagnosticSink.getErrorCount() + "; warnings: " + diagnosticSink.getWarningCount()
+          );
         }
       }
     }
@@ -312,7 +315,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     return exitCode;
   }
 
-  private boolean compileJava(Collection<File> files,
+  private boolean compileJava(ModuleChunk chunk, Collection<File> files,
                               Collection<File> classpath,
                               Collection<File> platformCp,
                               Collection<File> sourcePath,
@@ -320,18 +323,20 @@ public class JavaBuilder extends ModuleLevelBuilder {
                               CompileContext context,
                               DiagnosticOutputConsumer diagnosticSink,
                               final OutputFileConsumer outputSink) throws Exception {
-    final List<String> options = getCompilationOptions(context);
+    final List<String> options = getCompilationOptions(context, chunk);
     final ClassProcessingConsumer classesConsumer = new ClassProcessingConsumer(context, outputSink);
     try {
       final boolean rc;
       if (USE_EMBEDDED_JAVAC) {
-        rc = JavacMain
-          .compile(options, files, classpath, platformCp, sourcePath, outs, diagnosticSink, classesConsumer, context.getCancelStatus());
+        rc = JavacMain.compile(
+          options, files, classpath, platformCp, sourcePath, outs, diagnosticSink, classesConsumer, context.getCancelStatus()
+        );
       }
       else {
         final JavacServerClient client = ensureJavacServerLaunched(context);
-        final RequestFuture<JavacServerResponseHandler> future =
-          client.sendCompileRequest(options, files, classpath, platformCp, sourcePath, outs, diagnosticSink, classesConsumer);
+        final RequestFuture<JavacServerResponseHandler> future = client.sendCompileRequest(
+          options, files, classpath, platformCp, sourcePath, outs, diagnosticSink, classesConsumer
+        );
         try {
           future.get();
         }
@@ -361,8 +366,9 @@ public class JavaBuilder extends ModuleLevelBuilder {
     final int port = findFreePort();
     final int heapSize = getJavacServerHeapSize(context);
 
-    final BaseOSProcessHandler processHandler =
-      JavacServerBootstrap.launchJavacServer(vmExecPath, heapSize, port, Paths.getSystemRoot(), getCompilationVMOptions(context));
+    final BaseOSProcessHandler processHandler = JavacServerBootstrap.launchJavacServer(
+      vmExecPath, heapSize, port, Paths.getSystemRoot(), getCompilationVMOptions(context)
+    );
     final JavacServerClient client = new JavacServerClient();
     try {
       client.connect(hostString, port);
@@ -445,21 +451,25 @@ public class JavaBuilder extends ModuleLevelBuilder {
     return cached;
   }
 
-  private static List<String> getCompilationOptions(CompileContext context) {
+  private static List<String> getCompilationOptions(CompileContext context, ModuleChunk chunk) {
     List<String> cached = JAVAC_OPTIONS.get(context);
     if (cached == null) {
       loadJavacOptions(context);
       cached = JAVAC_OPTIONS.get(context);
     }
     return cached;
+    //final List<String> options = new ArrayList<String>(cached);
+    //final Module module = chunk.getModules().iterator().next();
+    //final String langlevel = module.getLanguageLevel();
+    //final Sdk sdk = module.getSdk();
+    //return options;
   }
 
   private static void loadJavacOptions(CompileContext context) {
     final List<String> options = new ArrayList<String>();
     final List<String> vmOptions = new ArrayList<String>();
 
-    options.add("-verbose");
-
+    //options.add("-verbose");
     final Project project = context.getProject();
     final Map<String, String> javacOpts = project.getCompilerConfiguration().getJavacOptions();
     final boolean debugInfo = !"false".equals(javacOpts.get("DEBUGGING_INFO"));
@@ -712,21 +722,24 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
 
     public void outputLineAvailable(String line) {
-      if (line != null) {
-        //System.err.println(line);
-        if (line.startsWith("[") && line.endsWith("]")) {
-          final String message = line.substring(1, line.length() - 1);
-          if (message.startsWith("parsing")) {
-            myContext.processMessage(new ProgressMessage("Parsing sources..."));
-          }
-          else {
-            if (!message.startsWith("total")) {
-              myContext.processMessage(new ProgressMessage(FileUtil.toSystemDependentName(message)));
-            }
-          }
-        }
-        else if (line.contains("java.lang.OutOfMemoryError")) {
+      if (!StringUtil.isEmpty(line)) {
+        //if (line.startsWith("[") && line.endsWith("]")) {
+        //  final String message = line.substring(1, line.length() - 1);
+        //  if (message.startsWith("parsing")) {
+        //    myContext.processMessage(new ProgressMessage("Parsing sources..."));
+        //  }
+        //  else {
+        //    if (!message.startsWith("total ") && !message.startsWith("loading ") && !message.startsWith("wrote ")) {
+        //      myContext.processMessage(new ProgressMessage(FileUtil.toSystemDependentName(message)));
+        //    }
+        //  }
+        //}
+        //else
+        if (line.contains("java.lang.OutOfMemoryError")) {
           myContext.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "OutOfMemoryError: insufficient memory"));
+        }
+        else {
+          myContext.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.INFO, line));
         }
       }
     }
@@ -838,12 +851,26 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
 
     private void writeToDisk(@NotNull OutputFileObject fileObject) throws IOException {
+      final File file = fileObject.getFile();
       final OutputFileObject.Content content = fileObject.getContent();
-      if (content != null) {
-        FileUtil.writeToFile(fileObject.getFile(), content.getBuffer(), content.getOffset(), content.getLength());
+      if (content == null) {
+        throw new IOException("Missing content for file " + file);
       }
-      else {
-        throw new IOException("Missing content for file " + fileObject.getFile());
+
+      try {
+        _writeToFile(file, content);
+      }
+      catch (IOException e) {
+        // assuming the reason is non-existing parent
+        final File parentFile = file.getParentFile();
+        if (parentFile == null) {
+          throw e;
+        }
+        if (!parentFile.mkdirs()) {
+          throw e;
+        }
+        // second attempt
+        _writeToFile(file, content);
       }
 
       final File source = fileObject.getSourceFile();
@@ -854,7 +881,16 @@ public class JavaBuilder extends ModuleLevelBuilder {
           myContext.processMessage(new ProgressMessage("Compiled " + className));
         }
       }
+    }
 
+    private static void _writeToFile(final File file, OutputFileObject.Content content) throws IOException {
+      final OutputStream stream = new BufferedOutputStream(new FileOutputStream(file));
+      try {
+        stream.write(content.getBuffer(), content.getOffset(), content.getLength());
+      }
+      finally {
+        stream.close();
+      }
     }
 
     public void markError(OutputFileObject outputClassFile) {

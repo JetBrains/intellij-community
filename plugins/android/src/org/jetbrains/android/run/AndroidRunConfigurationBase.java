@@ -31,7 +31,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
@@ -52,8 +51,6 @@ import org.jetbrains.android.facet.AndroidFacetConfiguration;
 import org.jetbrains.android.logcat.AndroidLogFilterModel;
 import org.jetbrains.android.logcat.AndroidLogcatFiltersPreferences;
 import org.jetbrains.android.sdk.AndroidPlatform;
-import org.jetbrains.android.sdk.AndroidSdk;
-import org.jetbrains.android.sdk.AndroidSdkImpl;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
@@ -109,22 +106,17 @@ public abstract class AndroidRunConfigurationBase extends ModuleBasedConfigurati
     if (PREFERRED_AVD.length() > 0) {
       AvdManager avdManager = facet.getAvdManagerSilently();
       if (avdManager == null) {
-        AndroidSdk sdk = facet.getConfiguration().getAndroidSdk();
-        if (sdk instanceof AndroidSdkImpl) {
-          throw new RuntimeConfigurationError(AndroidBundle.message("avd.cannot.be.loaded.error"));
-        }
+        throw new RuntimeConfigurationError(AndroidBundle.message("avd.cannot.be.loaded.error"));
       }
-      if (avdManager != null) {
-        AvdInfo avdInfo = avdManager.getAvd(PREFERRED_AVD, false);
-        if (avdInfo == null) {
-          throw new RuntimeConfigurationError(AndroidBundle.message("avd.not.found.error", PREFERRED_AVD));
-        }
-        if (!facet.isCompatibleAvd(avdInfo)) {
-          throw new RuntimeConfigurationError(AndroidBundle.message("avd.not.compatible.error", PREFERRED_AVD));
-        }
-        if (avdInfo.getStatus() != AvdInfo.AvdStatus.OK) {
-          throw new RuntimeConfigurationError(AndroidBundle.message("avd.not.valid.error", PREFERRED_AVD));
-        }
+      AvdInfo avdInfo = avdManager.getAvd(PREFERRED_AVD, false);
+      if (avdInfo == null) {
+        throw new RuntimeConfigurationError(AndroidBundle.message("avd.not.found.error", PREFERRED_AVD));
+      }
+      if (!facet.isCompatibleAvd(avdInfo)) {
+        throw new RuntimeConfigurationError(AndroidBundle.message("avd.not.compatible.error", PREFERRED_AVD));
+      }
+      if (avdInfo.getStatus() != AvdInfo.AvdStatus.OK) {
+        throw new RuntimeConfigurationError(AndroidBundle.message("avd.not.valid.error", PREFERRED_AVD));
       }
     }
     checkConfiguration(facet);
@@ -158,7 +150,8 @@ public abstract class AndroidRunConfigurationBase extends ModuleBasedConfigurati
     TARGET_SELECTION_MODE = mode.name();
   }
 
-  private static boolean fillRuntimeAndTestDependencies(@NotNull Module module, @NotNull Map<AndroidFacet, String> module2PackageName) {
+  private static boolean fillRuntimeAndTestDependencies(@NotNull Module module,
+                                                        @NotNull Map<AndroidFacet, String> module2PackageName) {
     for (OrderEntry entry : ModuleRootManager.getInstance(module).getOrderEntries()) {
       if (entry instanceof ModuleOrderEntry) {
         ModuleOrderEntry moduleOrderEntry = (ModuleOrderEntry)entry;
@@ -167,8 +160,7 @@ public abstract class AndroidRunConfigurationBase extends ModuleBasedConfigurati
           AndroidFacet depFacet = AndroidFacet.getInstance(depModule);
           if (depFacet != null &&
               !module2PackageName.containsKey(depFacet) &&
-              !depFacet.getConfiguration().LIBRARY_PROJECT &&
-              moduleOrderEntry.getScope() != DependencyScope.COMPILE) {
+              !depFacet.getConfiguration().LIBRARY_PROJECT) {
             String packageName = getPackageName(depFacet);
             if (packageName == null) {
               return false;
@@ -184,7 +176,7 @@ public abstract class AndroidRunConfigurationBase extends ModuleBasedConfigurati
     return true;
   }
 
-  public RunProfileState getState(@NotNull final Executor executor, @NotNull ExecutionEnvironment env) throws ExecutionException {
+  public AndroidRunningState getState(@NotNull final Executor executor, @NotNull ExecutionEnvironment env) throws ExecutionException {
     final Module module = getConfigurationModule().getModule();
     if (module == null) {
       throw new ExecutionException("Module is not found");

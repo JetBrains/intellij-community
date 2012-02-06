@@ -3,7 +3,7 @@
   <grid id="27dc6" binding="myComponent" layout-manager="GridLayoutManager" row-count="23" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="20" y="20" width="959" height="771"/>
+      <xy x="20" y="20" width="959" height="793"/>
     </constraints>
     <properties/>
     <border type="none"/>
@@ -272,7 +272,7 @@
         </constraints>
         <properties/>
       </component>
-      <grid id="dcfcc" layout-manager="GridLayoutManager" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+      <grid id="dcfcc" layout-manager="GridLayoutManager" row-count="3" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
           <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
@@ -311,6 +311,20 @@
               <enabled value="false"/>
               <text value="You need to have JavaHL 1.7.2"/>
             </properties>
+          </component>
+          <component id="9c218" class="javax.swing.JRadioButton" binding="myWithCommandLineClient" default-binding="true">
+            <constraints>
+              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text value="with command line client"/>
+            </properties>
+          </component>
+          <component id="44a8" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myCommandLineClient">
+            <constraints>
+              <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties/>
           </component>
         </children>
       </grid>

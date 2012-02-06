@@ -8,6 +8,8 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
@@ -544,6 +546,17 @@ public class GrStringUtil {
     return "";
   }
 
+  public static String getEndQuote(String text) {
+    if (text.startsWith(TRIPLE_QUOTES)) return TRIPLE_QUOTES;
+    if (text.startsWith(QUOTE)) return QUOTE;
+    if (text.startsWith(TRIPLE_DOUBLE_QUOTES)) return TRIPLE_DOUBLE_QUOTES;
+    if (text.startsWith(DOUBLE_QUOTES)) return DOUBLE_QUOTES;
+    if (text.startsWith(SLASH)) return SLASH;
+    if (text.startsWith(SLASH_DOLLAR)) return SLASH_DOLLAR;
+    return "";
+  }
+
+
   public static boolean parseRegexCharacters(@NotNull String chars,
                                              @NotNull StringBuilder outChars,
                                              @Nullable int[] sourceOffsets,
@@ -789,5 +802,24 @@ public class GrStringUtil {
 
     final IElementType elementType = literal.getFirstChild().getNode().getElementType();
     return elementType == mREGEX_LITERAL || elementType == mDOLLAR_SLASH_REGEX_LITERAL;
+  }
+
+  public static boolean isWellEndedString(PsiElement element) {
+    final String text = element.getText();
+
+    if (!text.endsWith("'''") && !text.endsWith("\"\"\"") && !text.endsWith("/") && !text.endsWith("/$")) return false;
+
+
+    final IElementType type = element.getNode().getElementType();
+    if (TokenSets.STRING_LITERAL_SET.contains(type)) return true;
+
+    final PsiElement lastChild = element.getLastChild();
+    if (lastChild == null) return false;
+
+    final IElementType lastType = lastChild.getNode().getElementType();
+    if (type == GroovyElementTypes.GSTRING) return lastType == mGSTRING_END;
+    if (type == GroovyElementTypes.REGEX) return lastType == mREGEX_END || lastType == mDOLLAR_SLASH_REGEX_END;
+
+    return false;
   }
 }

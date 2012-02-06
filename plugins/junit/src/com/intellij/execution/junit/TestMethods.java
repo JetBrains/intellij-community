@@ -33,7 +33,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.rt.execution.junit.JUnitStarter;
 import com.intellij.util.Function;
 
 import java.util.Collection;
@@ -58,7 +57,6 @@ public class TestMethods extends TestMethod {
     final JUnitConfiguration.Data data = myConfiguration.getPersistentData();
     RunConfigurationModule module = myConfiguration.getConfigurationModule();
     final Project project = module.getProject();
-    addJUnit4Parameter(data, project);
     final ExecutionException[] exception = new ExecutionException[1];
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
@@ -91,21 +89,6 @@ public class TestMethods extends TestMethod {
       }
     }, data.getPackageName(), true, false);
 
-  }
-  protected void addJUnit4Parameter(final JUnitConfiguration.Data data, Project project) {
-    for (AbstractTestProxy failedTest : myFailedTests) {
-      Location location = failedTest.getLocation(project);
-      if (!(location instanceof MethodLocation)) continue;
-      if (JUnitUtil.isJUnit4TestClass(((MethodLocation)location).getContainingClass())) {
-        myJavaParameters.getProgramParametersList().add(JUnitStarter.JUNIT4_PARAMETER);
-        return;
-      }
-      PsiMethod method = ((MethodLocation)location).getPsiElement();
-      if (JUnitUtil.isTestAnnotated(method)) {
-        myJavaParameters.getProgramParametersList().add(JUnitStarter.JUNIT4_PARAMETER);
-        return;
-      }
-    }
   }
 
   public String suggestActionName() {

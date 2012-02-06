@@ -37,6 +37,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static com.intellij.openapi.util.text.StringUtil.pluralize;
+
 /**
  * Common class for Git operations with branches aware of multi-root configuration,
  * which means showing combined error information, proposing to rollback, etc.
@@ -154,7 +156,7 @@ abstract class GitBranchOperation {
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
-        String description = message + getRollbackProposal();
+        String description = "<html>" + message + "<br/>" + getRollbackProposal() + "</html>";
         ok.set(Messages.OK ==
                MessageManager.showYesNoDialog(myProject, description, title, "Rollback", "Don't rollback", Messages.getErrorIcon()));
       }
@@ -190,11 +192,16 @@ abstract class GitBranchOperation {
     }
   }
 
+  @NotNull
+  protected String repositories() {
+    return pluralize("repository", getSuccessfulRepositories().size());
+  }
+
   private void showUnmergedFilesDialogWithRollback() {
     final AtomicBoolean ok = new AtomicBoolean();
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override public void run() {
-        String description = "You have to resolve all merge conflicts before checkout.<br/>" + getRollbackProposal();
+        String description = "<html>You have to resolve all merge conflicts before checkout.<br/>" + getRollbackProposal() + "</html>";
         // suppressing: this message looks ugly if capitalized by words
         //noinspection DialogTitleCapitalization
         ok.set(Messages.OK == MessageManager.showYesNoDialog(myProject, description, UNMERGED_FILES_ERROR_TITLE, "Rollback", "Don't rollback", Messages.getErrorIcon()));

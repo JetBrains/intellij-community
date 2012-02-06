@@ -43,6 +43,7 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="module" module-name="testFramework" scope="TEST" />
   </component>
 </module>
 

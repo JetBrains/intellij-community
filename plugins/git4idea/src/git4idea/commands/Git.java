@@ -138,12 +138,17 @@ public class Git {
   public static GitCommandResult checkout(@NotNull GitRepository repository,
                                           @NotNull String reference,
                                           @Nullable String newBranch,
+                                          boolean force,
                                           @NotNull GitLineHandlerListener... listeners) {
     final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.CHECKOUT);
     h.setSilent(false);
+    if (force) {
+      h.addParameters("--force");
+    }
     if (newBranch == null) { // simply checkout
       h.addParameters(reference);
-    } else { // checkout reference as new branch
+    } 
+    else { // checkout reference as new branch
       h.addParameters("-b", newBranch, reference);
     }
     for (GitLineHandlerListener listener : listeners) {
@@ -238,14 +243,11 @@ public class Git {
     for (GitLineHandlerListener listener : listeners) {
       h.addLineListener(listener);
     }
-    if (!pushSpec.isPushAll()) {
-      GitRemote remote = pushSpec.getRemote();
-      LOG.assertTrue(remote != null, "Remote can't be null: " + pushSpec);
-      h.addParameters(remote.getName());
-      GitBranch remoteBranch = pushSpec.getDest();
-      String destination = remoteBranch.getName().replaceFirst(remote.getName() + "/", "");
-      h.addParameters(pushSpec.getSource().getName() + ":" + destination);
-    }
+    GitRemote remote = pushSpec.getRemote();
+    h.addParameters(remote.getName());
+    GitBranch remoteBranch = pushSpec.getDest();
+    String destination = remoteBranch.getName().replaceFirst(remote.getName() + "/", "");
+    h.addParameters(pushSpec.getSource().getName() + ":" + destination);
     return run(h, true);
   }
 

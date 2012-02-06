@@ -264,11 +264,7 @@ class GitPushResult {
       notificationType = NotificationType.WARNING;
     } else {
       notificationType = NotificationType.INFORMATION;
-      if (pushedCommitsNumber == 0) {  // happens on new branch creation
-        title = "Pushed successfully";
-      } else {
-        title = "Pushed " + pushedCommitsNumber + " " + StringUtil.pluralize("commit", pushedCommitsNumber);
-      }
+      title = "Push successful";
     }
     
     String errorReport = reportForGroup(groupedResult.myErrorResults, GroupedResult.Type.ERROR);
@@ -284,30 +280,10 @@ class GitPushResult {
       sb.append("<a href='UpdatedFiles'>View files updated during the push<a/>");
     }
 
-    NotificationListener viewUpdateFilesListener = new NotificationListener() {
-      @Override
-      public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-        if (event.getEventType().equals(HyperlinkEvent.EventType.ACTIVATED)) {
-          if (event.getDescription().equals("UpdatedFiles")) {
-            ProjectLevelVcsManagerEx vcsManager = ProjectLevelVcsManagerEx.getInstanceEx(myProject);
-            UpdateInfoTree tree = vcsManager.showUpdateProjectInfo(updatedFiles, "Update", ActionInfo.UPDATE, false);
-            tree.setBefore(myBeforeUpdateLabel);
-            tree.setAfter(LocalHistory.getInstance().putSystemLabel(myProject, "After push"));
-          }
-          else {
-            BrowserUtil.launchBrowser(event.getDescription());
-          }
-        }         
-      }
-    };
+    NotificationListener viewUpdateFilesListener = new ViewUpdatedFilesNotificationListener(updatedFiles);
 
     if (onlySuccess) {
-      // display tool window balloon
-      return new Notification(GitVcs.NOTIFICATION_GROUP_ID.getDisplayId(), title, sb.toString(), notificationType, viewUpdateFilesListener) {
-        @Override public boolean isImportant() {
-          return false;          // don't highlight event log if push was totally successful
-        }
-      };
+      return new MySuccessfulNotification(title, sb.toString(), notificationType, viewUpdateFilesListener);
     }
 
     return new Notification(GitVcs.IMPORTANT_ERROR_NOTIFICATION.getDisplayId(), title, sb.toString(), notificationType, viewUpdateFilesListener);
@@ -384,4 +360,37 @@ class GitPushResult {
     return commitNum + " " + StringUtil.pluralize("commit", commitNum);
   }
 
+  private static class MySuccessfulNotification extends Notification {
+    public MySuccessfulNotification(@NotNull String title, @NotNull String message, @NotNull NotificationType notificationType,
+                                    @NotNull NotificationListener listener) {
+      super(GitVcs.NOTIFICATION_GROUP_ID.getDisplayId(), title, message, notificationType, listener);
+    }
+
+    @Override public boolean isImportant() {
+      return false;          // don't highlight event log if push was totally successful
+    }
+  }
+
+  private class ViewUpdatedFilesNotificationListener implements NotificationListener {
+    private final UpdatedFiles myUpdatedFiles;
+
+    public ViewUpdatedFilesNotificationListener(UpdatedFiles updatedFiles) {
+      myUpdatedFiles = updatedFiles;
+    }
+
+    @Override
+    public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+      if (event.getEventType().equals(HyperlinkEvent.EventType.ACTIVATED)) {
+        if (event.getDescription().equals("UpdatedFiles")) {
+          ProjectLevelVcsManagerEx vcsManager = ProjectLevelVcsManagerEx.getInstanceEx(myProject);
+          UpdateInfoTree tree = vcsManager.showUpdateProjectInfo(myUpdatedFiles, "Update", ActionInfo.UPDATE, false);
+          tree.setBefore(myBeforeUpdateLabel);
+          tree.setAfter(LocalHistory.getInstance().putSystemLabel(myProject, "After push"));
+        }
+        else {
+          BrowserUtil.launchBrowser(event.getDescription());
+        }
+      }
+    }
+  }
 }

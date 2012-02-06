@@ -103,6 +103,9 @@ class StatusPanel extends JPanel {
     return null;
   }
 
+  // Returns the alarm used for displaying status messages in the status bar, or null if the status bar is attached to a floating
+  // editor window.
+  @Nullable
   private Alarm getAlarm() {
     if (myLogAlarm == null || myLogAlarm.isDisposed()) {
       myLogAlarm = null; //Welcome screen
@@ -114,45 +117,39 @@ class StatusPanel extends JPanel {
     return myLogAlarm;
   }
 
-  public void setLogMessage(String text) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-
-    myDirty = false;
-
-    updateText(StringUtil.isNotEmpty(text), "");
-  }
-
   public boolean updateText(boolean logAllowed, @Nullable String nonLogText) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     final Project project = getActiveProject();
     final Pair<Notification, Long> statusMessage = EventLog.getStatusMessage(project);
-    myLogMode = logAllowed && StringUtil.isEmpty(nonLogText) && statusMessage != null;
     final Alarm alarm = getAlarm();
+    myLogMode = logAllowed && StringUtil.isEmpty(nonLogText) && statusMessage != null && alarm != null;
 
     if (alarm != null) {
       alarm.cancelAllRequests();
-
-      if (myLogMode) {
-        myTextPanel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        new Runnable() {
-          @Override
-          public void run() {
-            assert statusMessage != null;
-            String text = EventLog.formatForLog(statusMessage.first).status;
-            if (myDirty || System.currentTimeMillis() - statusMessage.second >= DateFormatUtil.MINUTE) {
-              text += " (" + StringUtil.decapitalize(DateFormatUtil.formatPrettyDateTime(statusMessage.second)) + ")";
-            }
-            setStatusText(text);
-            alarm.addRequest(this, 30000);
-          }
-        }.run();
-      } else {
-        myTextPanel.setCursor(Cursor.getDefaultCursor());
-        myDirty = true;
-        setStatusText(nonLogText);
-      }
     }
+
+    if (myLogMode) {
+      myTextPanel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+      new Runnable() {
+        @Override
+        public void run() {
+          assert statusMessage != null;
+          String text = EventLog.formatForLog(statusMessage.first).status;
+          if (myDirty || System.currentTimeMillis() - statusMessage.second >= DateFormatUtil.MINUTE) {
+            text += " (" + StringUtil.decapitalize(DateFormatUtil.formatPrettyDateTime(statusMessage.second)) + ")";
+          }
+          setStatusText(text);
+          alarm.addRequest(this, 30000);
+        }
+      }.run();
+    }
+    else {
+      myTextPanel.setCursor(Cursor.getDefaultCursor());
+      myDirty = true;
+      setStatusText(nonLogText);
+    }
+
     return myLogMode;
   }
 

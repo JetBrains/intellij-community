@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,7 @@ import java.util.*;
  * @author max
  */
 public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
-  private static final boolean ALT_SYMLINK_HANDLING = "true".equals(System.getProperty("idea.io.alt.symlink"));
+  private static final boolean ALT_SYMLINK_HANDLING = "true".equalsIgnoreCase(System.getProperty("idea.io.alt.symlink"));
 
   private static final VirtualFileSystemEntry NULL_VIRTUAL_FILE = new VirtualFileImpl("*?;%NULL", null, -42) {
     public String toString() {

@@ -29,6 +29,8 @@ import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
+import javax.swing.*;
+
 /**
  * @author yole
  */
@@ -41,7 +43,9 @@ import org.jetbrains.annotations.NonNls;
 )
 public class PluginManagerUISettings implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.plugins.PluginManagerUISettings");
-  
+
+  public int AVAILABLE_SORT_COLUMN_ORDER = SortOrder.ASCENDING.ordinal();
+
   public int AVAILABLE_SORT_MODE = 0;
   public boolean AVAILABLE_SORT_BY_STATUS = false;
   public boolean INSTALLED_SORT_BY_STATUS = false;

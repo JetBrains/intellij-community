@@ -212,6 +212,11 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
       });
       return disjunctionType.newDisjunctionType(substituted);
     }
+
+    @Override
+    public PsiType visitDiamondType(PsiDiamondType diamondType) {
+      return diamondType;
+    }
   }
 
   private final SubstitutionVisitor myAddingBoundsSubstitutionVisitor = new SubstitutionVisitor(SubstituteKind.ADD_BOUNDS);

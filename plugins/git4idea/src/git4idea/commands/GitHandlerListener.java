@@ -15,24 +15,10 @@
  */
 package git4idea.commands;
 
-import java.util.EventListener;
+import com.intellij.openapi.vcs.ProcessEventListener;
 
 /**
  * Listener for event common for all handlers
  */
-public interface GitHandlerListener extends EventListener {
-  /**
-   * This method is invoked when git process is terminated
-   *
-   * @param exitCode a exit code
-   */
-  void processTerminated(int exitCode);
-
-  /**
-   * This method is invoked if starting git process failed with exception
-   *
-   * @param exception an exception
-   */
-  void startFailed(Throwable exception);
-
+public interface GitHandlerListener extends ProcessEventListener {
 }

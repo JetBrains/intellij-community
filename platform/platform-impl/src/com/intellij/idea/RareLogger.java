@@ -48,10 +48,11 @@ public class RareLogger extends Logger {
       }
 
       @Override
-      public void put(Object key, Long value) {
+      public void put(Object key, @NotNull Long value) {
         if (fairSynch) {
           synchronized (lock) {
             super.put(key, value);
+            return;
           }
         }
         super.put(key, value);

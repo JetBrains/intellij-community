@@ -477,7 +477,11 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
         final ActionManager mgr = ActionManager.getInstance();
         mgr.tryToExecute(mgr.getAction("HideAllWindows"), e, null, ActionPlaces.UNKNOWN, true);
       }
-      else if (UIUtil.isActionClick(e) && (e.isMetaDown() || (!SystemInfo.isMac && e.isControlDown()))) {
+    }
+
+    @Override
+    public void mouseClicked(MouseEvent e) {
+      if (UIUtil.isActionClick(e, MouseEvent.MOUSE_CLICKED) && (e.isMetaDown() || (!SystemInfo.isMac && e.isControlDown()))) {
         final TabInfo info = myTabs.findInfo(e);
         if (info != null && info.getObject() != null) {
           final VirtualFile vFile = (VirtualFile)info.getObject();
@@ -563,9 +567,26 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
 
     @Override
     public void dragOutFinished(MouseEvent event, TabInfo source) {
-      FileEditorManagerEx.getInstanceEx(myProject).closeFile(myFile, myWindow);
+      boolean copy = event.isMetaDown() || (!SystemInfo.isMac && event.isControlDown());
+      if (!copy) {
+        FileEditorManagerEx.getInstanceEx(myProject).closeFile(myFile, myWindow);
+      }
+      else {
+        source.setHidden(false);
+      }
 
       mySession.process(event);
+
+      myFile = null;
+      mySession = null;
+    }
+
+    @Override
+    public void dragOutCancelled(TabInfo source) {
+      source.setHidden(false);
+      if (mySession != null) {
+        mySession.cancel();
+      }
 
       myFile = null;
       mySession = null;
@@ -577,6 +598,7 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
       private Presentation myPresentation;
       private EditorWindow myEditorWindow;
       private Dimension myPreferredSize;
+      private boolean myPinned;
 
 
       public DockableEditor(Image img, VirtualFile file, Presentation presentation, EditorWindow window) {
@@ -586,6 +608,7 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
         myContainer = new DockableEditorTabbedContainer(myProject);
         myEditorWindow = window;
         myPreferredSize = myEditorWindow.getSize();
+        myPinned = window.isFilePinned(file);
       }
 
       @Override
@@ -620,6 +643,10 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
 
       public VirtualFile getFile() {
         return myFile;
+      }
+
+      public boolean isPinned() {
+        return myPinned;
       }
     }
   }

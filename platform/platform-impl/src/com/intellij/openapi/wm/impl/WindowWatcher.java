@@ -177,7 +177,8 @@ public final class WindowWatcher implements PropertyChangeListener{
     }
   }
 
-  public final Component getFocusedComponent(final Project project){
+  @Nullable
+  public final Component getFocusedComponent(@Nullable final Project project) {
     synchronized(myLock){
       final Window window=getFocusedWindowForProject(project);
       if(window==null){
@@ -224,7 +225,8 @@ public final class WindowWatcher implements PropertyChangeListener{
   /**
    * @param project may be null (for example, if no projects are opened)
    */
-  public final Window suggestParentWindow(final Project project){
+  @Nullable
+  public final Window suggestParentWindow(@Nullable final Project project){
     synchronized(myLock){
       Window window=getFocusedWindowForProject(project);
       if(window==null){
@@ -284,7 +286,8 @@ public final class WindowWatcher implements PropertyChangeListener{
    * @return active window for specified <code>project</code>. There is only one window
    * for project can be at any point of time.
    */
-  private Window getFocusedWindowForProject(final Project project){
+  @Nullable
+  private Window getFocusedWindowForProject(@Nullable final Project project) {
     //todo[anton,vova]: it is possible that returned wnd is not contained in myFocusedWindows; investigate
     outer: for(Iterator i=myFocusedWindows.iterator();i.hasNext();){
       Window window=(Window)i.next();

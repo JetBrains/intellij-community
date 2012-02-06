@@ -164,7 +164,7 @@ public abstract class AndroidLintInspectionBase extends GlobalInspectionTool {
         final PsiElement endElement = psiFile.findElementAt(range.getEndOffset() - 1);
 
         if (startElement != null && endElement != null) {
-          result.add(manager.createProblemDescriptor(startElement, endElement, message + "#loc",
+          result.add(manager.createProblemDescriptor(startElement, endElement, message,
                                                      ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false,
                                                      getLocalQuickFixes(startElement, endElement, message)));
         }

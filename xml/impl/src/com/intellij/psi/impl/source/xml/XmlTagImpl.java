@@ -500,7 +500,9 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
         final CharTable charTableByTree = SharedImplUtil.findCharTableByTree(tag);
         ASTNode child = XmlChildRole.START_TAG_NAME_FINDER.findChild(tag);
         LOG.assertTrue(child != null, "It seems '" + name + "' is not a valid tag name");
-        tag.replaceChild(child, ChangeUtil.copyElement((TreeElement)XmlChildRole.START_TAG_NAME_FINDER.findChild(dummyTag), charTableByTree));
+        TreeElement tagElement = (TreeElement)XmlChildRole.START_TAG_NAME_FINDER.findChild(dummyTag);
+        LOG.assertTrue(tagElement != null, "What's wrong with it? '" + name + "'");
+        tag.replaceChild(child, ChangeUtil.copyElement(tagElement, charTableByTree));
         final ASTNode childByRole = XmlChildRole.CLOSING_TAG_NAME_FINDER.findChild(tag);
         if (childByRole != null) {
           final TreeElement treeElement = (TreeElement)XmlChildRole.CLOSING_TAG_NAME_FINDER.findChild(dummyTag);
@@ -673,17 +675,15 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
   @Nullable
   public XmlAttribute getAttribute(String qname) {
     if (qname == null) return null;
-    final CharTable charTableByTree = SharedImplUtil.findCharTableByTree(this);
     final XmlAttribute[] attributes = getAttributes();
 
-    final CharSequence charTableIndex = charTableByTree.intern(qname);
     final boolean caseSensitive = isCaseSensitive();
 
     for (final XmlAttribute attribute : attributes) {
       final LeafElement attrNameElement = (LeafElement)XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(attribute.getNode());
       if (attrNameElement != null &&
-          (caseSensitive && attrNameElement.getChars().equals(charTableIndex) ||
-           !caseSensitive && Comparing.equal(attrNameElement.getChars(), charTableIndex, false))) {
+          (caseSensitive && Comparing.equal(attrNameElement.getChars(), qname) ||
+           !caseSensitive && Comparing.equal(attrNameElement.getChars(), qname, false))) {
         return attribute;
       }
     }

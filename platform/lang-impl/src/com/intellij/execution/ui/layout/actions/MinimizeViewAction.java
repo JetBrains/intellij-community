@@ -50,7 +50,7 @@ public class MinimizeViewAction extends BaseViewAction {
       if (tab == null) {
         return false;
       }
-      return !tab.isDefault();
+      return !tab.isDefault() && content.length == 1;
     }
     else {
       return getTabFor(context, content) != null;

@@ -678,7 +678,7 @@ public class ContainerUtil {
   }
 
   @Nullable
-  public static <T> T getLastItem(final Collection<T> items) {
+  public static <T> T iterateAndGetLastItem(@NotNull Iterable<T> items) {
     Iterator<T> itr = items.iterator();
     T res = null;
     while (itr.hasNext()) {

@@ -24,6 +24,7 @@ import git4idea.history.browser.GitCommit;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.Collections;
 import java.util.List;
 
@@ -35,24 +36,24 @@ import java.util.List;
  */
 public class GitCommitListWithDiffPanel extends JPanel {
 
-  private final Project myProject;
   private final ChangesBrowser myChangesBrowser;
   private final GitCommitListPanel myCommitListPanel;
 
-  public GitCommitListWithDiffPanel(Project project, List<GitCommit> commits) {
-    myProject = project;
+  public GitCommitListWithDiffPanel(@NotNull Project project, @NotNull List<GitCommit> commits) {
+    super(new BorderLayout());
 
-    myCommitListPanel = new GitCommitListPanel(myProject, commits);
+    myCommitListPanel = new GitCommitListPanel(project, commits);
     myCommitListPanel.addListSelectionListener(new Consumer<GitCommit>() {
       @Override public void consume(GitCommit commit) {
         myChangesBrowser.setChangesToDisplay(commit.getChanges());
       }
     });
 
-    myChangesBrowser = new ChangesBrowser(myProject, null, Collections.<Change>emptyList(), null, false, true, null, ChangesBrowser.MyUseCase.LOCAL_CHANGES, null);
+    myChangesBrowser = new ChangesBrowser(project, null, Collections.<Change>emptyList(), null, false, true, null, ChangesBrowser.MyUseCase.LOCAL_CHANGES, null);
     myCommitListPanel.registerDiffAction(myChangesBrowser.getDiffAction());
 
     Splitter splitter = new Splitter(false, 0.7f);
+    splitter.setHonorComponentsMinimumSize(false);
     splitter.setFirstComponent(myCommitListPanel);
     splitter.setSecondComponent(myChangesBrowser);
     add(splitter);

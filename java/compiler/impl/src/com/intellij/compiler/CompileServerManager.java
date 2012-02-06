@@ -27,7 +27,9 @@ import com.intellij.notification.Notification;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.compiler.CompilationStatusListener;
 import com.intellij.openapi.compiler.CompilerManager;
+import com.intellij.openapi.compiler.CompilerTopics;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -126,12 +128,17 @@ public class CompileServerManager implements ApplicationComponent{
             @Override
             public void run() {
               if (!myAutoMakeInProgress.getAndSet(true)) {
-                try {
-                  runAutoMake();
-                }
-                finally {
-                  myAutoMakeInProgress.set(false);
-                }
+                ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+                  @Override
+                  public void run() {
+                    try {
+                      runAutoMake();
+                    }
+                    finally {
+                      myAutoMakeInProgress.set(false);
+                    }
+                  }
+                });
               }
               else {
                 scheduleMake(this);
@@ -261,12 +268,11 @@ public class CompileServerManager implements ApplicationComponent{
           continue;
         }
         final CompilerWorkspaceConfiguration config = CompilerWorkspaceConfiguration.getInstance(project);
-        if (!config.USE_COMPILE_SERVER || !config.MAKE_PROJECT_ON_SAVE) {
+        if (!config.useCompileServer() || !config.MAKE_PROJECT_ON_SAVE) {
           continue;
         }
-        final RequestFuture future = submitCompilationTask(
-          project, false, true, Collections.<String>emptyList(), Collections.<String>emptyList(), new AutoMakeResponseHandler(project)
-        );
+        final RequestFuture future = submitCompilationTask(project, false, true, Collections.<String>emptyList(), Collections.<String>emptyList(),
+                                                           Collections.<String>emptyList(), new AutoMakeResponseHandler(project));
         if (future != null) {
           futures.add(future);
           synchronized (myAutomakeFutures) {
@@ -304,7 +310,9 @@ public class CompileServerManager implements ApplicationComponent{
   }
 
   @Nullable
-  public RequestFuture submitCompilationTask(final Project project, final boolean isRebuild, final boolean isMake, final Collection<String> modules, final Collection<String> paths, final JpsServerResponseHandler handler) {
+  public RequestFuture submitCompilationTask(final Project project, final boolean isRebuild, final boolean isMake, 
+                                             final Collection<String> modules, final Collection<String> artifacts, 
+                                             final Collection<String> paths, final JpsServerResponseHandler handler) {
     final String projectId = project.getLocation();
     final Ref<RequestFuture> futureRef = new Ref<RequestFuture>(null);
     final RunnableFuture future = myTaskExecutor.submit(new Runnable() {
@@ -314,7 +322,7 @@ public class CompileServerManager implements ApplicationComponent{
           if (client != null) {
             final RequestFuture requestFuture = isRebuild ?
               client.sendRebuildRequest(projectId, handler) :
-              client.sendCompileRequest(isMake, projectId, modules, paths, handler);
+              client.sendCompileRequest(isMake, projectId, modules, artifacts, paths, handler);
             futureRef.set(requestFuture);
           }
           else {
@@ -666,22 +674,35 @@ public class CompileServerManager implements ApplicationComponent{
 
     @Override
     public boolean handleBuildEvent(JpsRemoteProto.Message.Response.BuildEvent event) {
-      final JpsRemoteProto.Message.Response.BuildEvent.Type type = event.getEventType();
-      if (type == JpsRemoteProto.Message.Response.BuildEvent.Type.FILES_GENERATED) {
-        for (JpsRemoteProto.Message.Response.BuildEvent.GeneratedFile gf : event.getGeneratedFilesList()) {
-        }
-      }
-      if (type == JpsRemoteProto.Message.Response.BuildEvent.Type.BUILD_COMPLETED) {
-        if (event.hasCompletionStatus()) {
-          myBuildStatus = event.getCompletionStatus();
-        }
+      if (myProject.isDisposed()) {
         return true;
       }
-      return false;
+      switch (event.getEventType()) {
+        case BUILD_COMPLETED:
+          if (event.hasCompletionStatus()) {
+            myBuildStatus = event.getCompletionStatus();
+          }
+          return true;
+
+        case FILES_GENERATED:
+          final CompilationStatusListener publisher = myProject.getMessageBus().syncPublisher(CompilerTopics.COMPILATION_STATUS);
+          for (JpsRemoteProto.Message.Response.BuildEvent.GeneratedFile generatedFile : event.getGeneratedFilesList()) {
+            final String root = FileUtil.toSystemIndependentName(generatedFile.getOutputRoot());
+            final String relativePath = FileUtil.toSystemIndependentName(generatedFile.getRelativePath());
+            publisher.fileGenerated(root, relativePath);
+          }
+          return false;
+
+        default:
+          return false;
+      }
     }
 
     @Override
     public void handleCompileMessage(JpsRemoteProto.Message.Response.CompileMessage compileResponse) {
+      if (myProject.isDisposed()) {
+        return;
+      }
       final JpsRemoteProto.Message.Response.CompileMessage.Kind kind = compileResponse.getKind();
       if (kind == JpsRemoteProto.Message.Response.CompileMessage.Kind.ERROR) {
         informWolf(myProject, compileResponse);
@@ -695,13 +716,13 @@ public class CompileServerManager implements ApplicationComponent{
 
     @Override
     public void sessionTerminated() {
-      String statusMessage = "Auto make completed";
+      String statusMessage = null/*"Auto make completed"*/;
       switch (myBuildStatus) {
         case SUCCESS:
-          statusMessage = "Auto make completed successfully";
+          //statusMessage = "Auto make completed successfully";
           break;
         case UP_TO_DATE:
-          statusMessage = "All files are up-to-date";
+          //statusMessage = "All files are up-to-date";
           break;
         case ERRORS:
           statusMessage = "Auto make completed with errors";
@@ -710,9 +731,11 @@ public class CompileServerManager implements ApplicationComponent{
           statusMessage = "Auto make has been canceled";
           break;
       }
-      final Notification notification = CompilerManager.NOTIFICATION_GROUP.createNotification(statusMessage, MessageType.INFO);
-      if (!myProject.isDisposed()) {
-        notification.notify(myProject);
+      if (statusMessage != null) {
+        final Notification notification = CompilerManager.NOTIFICATION_GROUP.createNotification(statusMessage, MessageType.INFO);
+        if (!myProject.isDisposed()) {
+          notification.notify(myProject);
+        }
       }
     }
 

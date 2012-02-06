@@ -1,0 +1,16 @@
+Cleaning output files:
+out/production/PackageInfoRecompileOnConstantChange/bug/Namespace.class
+End of files
+Compiling files:
+src/bug/Namespace.java
+End of files
+Cleaning output files:
+out/production/PackageInfoRecompileOnConstantChange/bug/Ann.class
+out/production/PackageInfoRecompileOnConstantChange/bug/Namespace.class
+out/production/PackageInfoRecompileOnConstantChange/bug/package-info.class
+End of files
+Compiling files:
+src/bug/Ann.java
+src/bug/Namespace.java
+src/bug/package-info.java
+End of files

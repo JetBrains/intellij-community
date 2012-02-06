@@ -63,18 +63,7 @@ class ServerMessageHandler extends SimpleChannelHandler {
         case CANCEL_BUILD_COMMAND:
           final JpsRemoteProto.Message.Request.CancelBuildCommand cancelCommand = request.getCancelBuildCommand();
           final UUID targetSessionId = ProtoUtil.fromProtoUUID(cancelCommand.getTargetSessionId());
-          synchronized (myBuildsInProgress) {
-            for (Iterator<Pair<RunnableFuture, CompilationTask>> it = myBuildsInProgress.iterator(); it.hasNext(); ) {
-              final Pair<RunnableFuture, CompilationTask> pair = it.next();
-              final CompilationTask task = pair.second;
-              if (task.getSessionId().equals(targetSessionId)) {
-                it.remove();
-                task.cancel();
-                pair.first.cancel(true);
-                break;
-              }
-            }
-          }
+          cancelSession(targetSessionId);
           reply = ProtoUtil.toMessage(sessionId, ProtoUtil.createCommandCompletedEvent(null));
           break;
         case SETUP_COMMAND:
@@ -158,6 +147,30 @@ class ServerMessageHandler extends SimpleChannelHandler {
     }
   }
 
+  private void cancelSession(UUID targetSessionId) {
+    synchronized (myBuildsInProgress) {
+      for (Iterator<Pair<RunnableFuture, CompilationTask>> it = myBuildsInProgress.iterator(); it.hasNext(); ) {
+        final Pair<RunnableFuture, CompilationTask> pair = it.next();
+        final CompilationTask task = pair.second;
+        if (task.getSessionId().equals(targetSessionId)) {
+          it.remove();
+          task.cancel();
+          pair.first.cancel(true);
+          break;
+        }
+      }
+    }
+  }
+
+  @Override
+  public void channelDisconnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
+    final Object attachment = ctx.getAttachment();
+    if (attachment instanceof UUID) {
+      cancelSession((UUID)attachment);
+    }
+    super.channelDisconnected(ctx, e);
+  }
+
   @Nullable
   private JpsRemoteProto.Message startBuild(UUID sessionId, final ChannelHandlerContext channelContext, JpsRemoteProto.Message.Request.CompilationRequest compileRequest) {
     if (!compileRequest.hasProjectId()) {
@@ -172,10 +185,10 @@ class ServerMessageHandler extends SimpleChannelHandler {
       case MAKE:
       case FORCED_COMPILATION:
       case REBUILD: {
+        channelContext.setAttachment(sessionId);
         final BuildType buildType = convertCompileType(compileType);
-        final CompilationTask task = new CompilationTask(
-          sessionId, channelContext, projectId, buildType, compileRequest.getModuleNameList(), compileRequest.getFilePathList()
-        );
+        final CompilationTask task = new CompilationTask(sessionId, channelContext, projectId, buildType, compileRequest.getModuleNameList(),
+                                                         compileRequest.getArtifactNameList(), compileRequest.getFilePathList());
         final RunnableFuture future = getCompileTaskExecutor(projectId).submit(task);
         myBuildsInProgress.add(new Pair<RunnableFuture, CompilationTask>(future, task));
         return null;
@@ -216,6 +229,7 @@ class ServerMessageHandler extends SimpleChannelHandler {
     private final ChannelHandlerContext myChannelContext;
     private final String myProjectPath;
     private final BuildType myBuildType;
+    private final Collection<String> myArtifacts;
     private final Collection<String> myPaths;
     private final Set<String> myModules;
     private volatile boolean myCanceled = false;
@@ -225,11 +239,13 @@ class ServerMessageHandler extends SimpleChannelHandler {
                            String projectId,
                            BuildType buildType,
                            Collection<String> modules,
+                           Collection<String> artifacts,
                            Collection<String> paths) {
       mySessionId = sessionId;
       myChannelContext = channelContext;
       myProjectPath = projectId;
       myBuildType = buildType;
+      myArtifacts = artifacts;
       myPaths = paths;
       myModules = new HashSet<String>(modules);
     }
@@ -248,7 +264,7 @@ class ServerMessageHandler extends SimpleChannelHandler {
       final Ref<Boolean> hasErrors = new Ref<Boolean>(false);
       final Ref<Boolean> markedFilesUptodate = new Ref<Boolean>(false);
       try {
-        ServerState.getInstance().startBuild(myProjectPath, myBuildType, myModules, myPaths, new MessageHandler() {
+        ServerState.getInstance().startBuild(myProjectPath, myBuildType, myModules, myArtifacts, myPaths, new MessageHandler() {
           public void processMessage(BuildMessage buildMessage) {
             final JpsRemoteProto.Message.Response response;
             if (buildMessage instanceof FileGeneratedEvent) {

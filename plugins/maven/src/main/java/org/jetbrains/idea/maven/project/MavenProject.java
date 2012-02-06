@@ -20,6 +20,7 @@ import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
@@ -42,6 +43,7 @@ import org.jetbrains.idea.maven.utils.*;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class MavenProject {
   @NotNull private final VirtualFile myFile;
@@ -822,6 +824,23 @@ public class MavenProject {
     return Pair.create(type.getDefaultClassifier(), type.getDefaultExtension());
   }
 
+  @Nullable
+  public <V> V getCachedValue(Key<V> key) {
+    //noinspection unchecked
+    return (V)myState.myCache.get(key);
+  }
+
+  @NotNull
+  public <V> V putCachedValue(Key<V> key, @NotNull V value) {
+    ConcurrentHashMap<Key, Object> map = myState.myCache;
+    Object oldValue = map.putIfAbsent(key, value);
+    if (oldValue != null) {
+      return (V)oldValue;
+    }
+
+    return value;
+  }
+
   @Override
   public String toString() {
     return getMavenId().toString();
@@ -872,10 +891,13 @@ public class MavenProject {
     volatile List<MavenPlugin> myUnresolvedPluginsCache;
     volatile List<MavenArtifact> myUnresolvedExtensionsCache;
 
+    ConcurrentHashMap<Key, Object> myCache = new ConcurrentHashMap<Key, Object>();
+
     @Override
     public State clone() {
       try {
         State result = (State)super.clone();
+        myCache = new ConcurrentHashMap<Key, Object>();
         result.resetCache();
         return result;
       }
@@ -889,6 +911,8 @@ public class MavenProject {
       myUnresolvedDependenciesCache = null;
       myUnresolvedPluginsCache = null;
       myUnresolvedExtensionsCache = null;
+
+      myCache.clear();
     }
 
     public MavenProjectChanges getChanges(State other) {
@@ -896,25 +920,23 @@ public class MavenProject {
 
       MavenProjectChanges result = new MavenProjectChanges();
 
-      result.packaging |= !Comparing.equal(myPackaging, other.myPackaging);
+      result.packaging = !Comparing.equal(myPackaging, other.myPackaging);
 
-      result.output |= !Comparing.equal(myFinalName, other.myFinalName);
-      result.output |= !Comparing.equal(myBuildDirectory, other.myBuildDirectory);
-      result.output |= !Comparing.equal(myOutputDirectory, other.myOutputDirectory);
-      result.output |= !Comparing.equal(myTestOutputDirectory, other.myTestOutputDirectory);
+      result.output = !Comparing.equal(myFinalName, other.myFinalName)
+                        || !Comparing.equal(myBuildDirectory, other.myBuildDirectory)
+                        || !Comparing.equal(myOutputDirectory, other.myOutputDirectory)
+                        || !Comparing.equal(myTestOutputDirectory, other.myTestOutputDirectory);
 
-      result.sources |= !Comparing.equal(mySources, other.mySources);
-      result.sources |= !Comparing.equal(myTestSources, other.myTestSources);
-      result.sources |= !Comparing.equal(myResources, other.myResources);
-      result.sources |= !Comparing.equal(myTestResources, other.myTestResources);
+      result.sources = !Comparing.equal(mySources, other.mySources)
+                        || !Comparing.equal(myTestSources, other.myTestSources)
+                        || !Comparing.equal(myResources, other.myResources)
+                        || !Comparing.equal(myTestResources, other.myTestResources);
 
       boolean repositoryChanged = !Comparing.equal(myLocalRepository, other.myLocalRepository);
 
-      result.dependencies |= repositoryChanged;
-      result.dependencies |= !Comparing.equal(myDependencies, other.myDependencies);
+      result.dependencies = repositoryChanged || !Comparing.equal(myDependencies, other.myDependencies);
 
-      result.plugins |= repositoryChanged;
-      result.plugins |= !Comparing.equal(myPlugins, other.myPlugins);
+      result.plugins = repositoryChanged || !Comparing.equal(myPlugins, other.myPlugins);
 
       return result;
     }

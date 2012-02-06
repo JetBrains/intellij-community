@@ -26,11 +26,12 @@ import com.intellij.util.ui.update.UiNotifyConnector;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 
-public abstract class MouseDragHelper implements MouseListener, MouseMotionListener {
+public abstract class MouseDragHelper implements MouseListener, MouseMotionListener, KeyEventDispatcher {
 
   public static final int DRAG_START_DEADZONE = 7;
 
@@ -47,6 +48,7 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
 
   private boolean myDetachPostponed;
   private boolean myDetachingMode;
+  private boolean myCancelled;
 
   public MouseDragHelper(Disposable parent, final JComponent dragComponent) {
     myDragComponent = dragComponent;
@@ -82,6 +84,13 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
     myGlassPane = IdeGlassPaneUtil.find(myDragComponent);
     myGlassPane.addMousePreprocessor(this, myParentDisposable);
     myGlassPane.addMouseMotionPreprocessor(this, myParentDisposable);
+    KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(this);
+    Disposer.register(myParentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(MouseDragHelper.this);
+      }
+    });
   }
 
   public void stop() {
@@ -96,6 +105,7 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
     if (myGlassPane != null) {
       myGlassPane.removeMousePreprocessor(this);
       myGlassPane.removeMouseMotionPreprocessor(this);
+      KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(this);
       myGlassPane = null;
     }
   }
@@ -115,6 +125,10 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
   }
 
   public void mouseReleased(final MouseEvent e) {
+    if (myCancelled) {
+      myCancelled = false;
+      return;
+    }
     boolean wasDragging = myDraggingNow;
     myPressPointScreen = null;
     myDraggingNow = false;
@@ -129,10 +143,7 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
         }
       }
       finally {
-        myDraggingNow = false;
-        myPressPointComponent = null;
-        myPressPointScreen = null;
-        myDetachingMode = false;
+        resetDragState();
         e.consume();
         if (myDetachPostponed) {
           myDetachPostponed = false;
@@ -142,8 +153,16 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
     }
   }
 
+  private void resetDragState() {
+    myDraggingNow = false;
+    myDragJustStarted = false;
+    myPressPointComponent = null;
+    myPressPointScreen = null;
+    myDetachingMode = false;
+  }
+
   public void mouseDragged(final MouseEvent e) {
-    if (myPressPointScreen == null) return;
+    if (myPressPointScreen == null || myCancelled) return;
 
     final boolean deadZone = isWithinDeadZone(e);
     if (!myDraggingNow && !deadZone) {
@@ -190,11 +209,16 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
     return true;
   }
 
+  protected void processDragCancel() {
+  }
 
   protected void processDragFinish(final MouseEvent event, boolean willDragOutStart) {
   }
 
   protected void processDragOutFinish(final MouseEvent event) {
+  }
+
+  protected void processDragOutCancel() {
   }
 
   public final boolean isDragJustStarted() {
@@ -229,4 +253,19 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
   public void mouseMoved(final MouseEvent e) {
   }
 
+  @Override
+  public boolean dispatchKeyEvent(KeyEvent e) {
+    if (e.getKeyCode() == KeyEvent.VK_ESCAPE && e.getID() == KeyEvent.KEY_PRESSED && myDraggingNow) {
+      myCancelled = true;
+      if (myDetachingMode) {
+        processDragOutCancel();
+      }
+      else {
+        processDragCancel();
+      }
+      resetDragState();
+      return true;
+    }
+    return false;
+  }
 }

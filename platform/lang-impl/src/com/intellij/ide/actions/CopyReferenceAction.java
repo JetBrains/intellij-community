@@ -133,14 +133,16 @@ public class CopyReferenceAction extends AnAction {
     return doCopy(element, project, null);
   }
 
-  public static boolean doCopy(final PsiElement element, final Project project, @Nullable Editor editor) {
+  public static boolean doCopy(final PsiElement element, @Nullable final Project project, @Nullable Editor editor) {
     String fqn = elementToFqn(element, editor);
     if (fqn == null) return false;
 
     CopyPasteManager.getInstance().setContents(new MyTransferable(fqn));
 
-    final StatusBarEx statusBar = (StatusBarEx)WindowManager.getInstance().getStatusBar(project);
-    statusBar.setInfo(IdeBundle.message("message.reference.to.fqn.has.been.copied", fqn));
+    if (project != null) {
+      final StatusBarEx statusBar = (StatusBarEx)WindowManager.getInstance().getStatusBar(project);
+      statusBar.setInfo(IdeBundle.message("message.reference.to.fqn.has.been.copied", fqn));
+    }
     return true;
   }
 

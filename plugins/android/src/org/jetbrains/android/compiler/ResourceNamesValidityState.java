@@ -8,6 +8,7 @@ import com.intellij.util.containers.HashSet;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.sdk.AndroidPlatform;
+import org.jetbrains.android.util.ResourceEntry;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;

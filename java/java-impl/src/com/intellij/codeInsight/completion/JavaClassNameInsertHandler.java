@@ -19,8 +19,7 @@ import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.diagnostic.LogMessageEx;
-import com.intellij.diagnostic.errordialog.Attachment;
+import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -90,8 +89,10 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
     if (fillTypeArgs) {
       context.setAddCompletionChar(false);
     }
-    
-    if (shouldInsertParentheses(psiClass, position)) {
+
+    PsiTypeLookupItem.addImportForItem(context, psiClass);
+
+    if (shouldInsertParentheses(psiClass, file.findElementAt(context.getTailOffset() - 1))) {
       if (ConstructorInsertHandler.insertParentheses(context, item, psiClass, false)) {
         fillTypeArgs |= psiClass.hasTypeParameters() && PsiUtil.getLanguageLevel(file).isAtLeast(LanguageLevel.JDK_1_5);
       }
@@ -100,15 +101,6 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
       JavaCompletionUtil.insertParentheses(context, item, false, true);
       AutoPopupController.getInstance(project).autoPopupParameterInfo(editor, null);
     }
-
-    LOG.assertTrue(context.getTailOffset() >= 0);
-    String docText = context.getDocument().getText();
-    DefaultInsertHandler.addImportForItem(context, item);
-    if (context.getTailOffset() < 0) {
-      LOG.error(LogMessageEx.createEvent("Tail offset degraded after insertion", "start=" + context.getStartOffset(),
-                                         new Attachment(context.getFile().getViewProvider().getVirtualFile().getPath(), docText)));
-    }
-
 
     if (annotation) {
       // Check if someone inserts annotation class that require @
@@ -125,8 +117,8 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
       }
     }
 
-    if (fillTypeArgs) {
-      ConstructorInsertHandler.promptTypeArgs(context, context.getOffset(refEnd));
+    if (fillTypeArgs && context.getCompletionChar() != '(') {
+      JavaCompletionUtil.promptTypeArgs(context, context.getOffset(refEnd));
     }
   }
 

@@ -96,14 +96,15 @@ public abstract class TailType {
    */
   public static final TailType INSERT_SPACE = new CharTailType(' ', false);
   /**
-   * insert a space unless there's one at the caret position already
+   * insert a space unless there's one at the caret position already, followed by a sowrd
    */
-  public static final TailType HUMBLE_SPACE = new CharTailType(' ', false) {
+  public static final TailType HUMBLE_SPACE_BEFORE_WORD = new CharTailType(' ', false) {
 
     @Override
     public boolean isApplicable(@NotNull InsertionContext context) {
       CharSequence text = context.getDocument().getCharsSequence();
-      if (text.length() > context.getTailOffset() && text.charAt(context.getTailOffset()) == ' ') {
+      int tail = context.getTailOffset();
+      if (text.length() > tail + 1 && text.charAt(tail) == ' ' && Character.isLetter(text.charAt(tail + 1))) {
         return false;
       }
       return super.isApplicable(context);
@@ -111,7 +112,7 @@ public abstract class TailType {
 
     @Override
     public String toString() {
-      return "HUMBLE_SPACE";
+      return "HUMBLE_SPACE_BEFORE_WORD";
     }
   };
   public static final TailType DOT = new CharTailType('.');

@@ -249,9 +249,7 @@ public class TypeMigrationLabeler {
   public void migrateExpressionType(final PsiExpression expr, final PsiType migrationType, final PsiElement place, boolean alreadyProcessed, final boolean isCovariant) {
     PsiType originalType = expr.getType();
 
-    LOG.assertTrue(originalType != null);
-
-    if (originalType.equals(migrationType)) return;
+    if (originalType == null || originalType.equals(migrationType)) return;
 
     if (originalType.equals(PsiType.NULL)) {
       if (migrationType instanceof PsiPrimitiveType) {

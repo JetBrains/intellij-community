@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiNamedElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -34,20 +35,20 @@ public abstract class DItemElement implements DNamedElement, DTypedElement, Comp
   public String myName = null;
 
 //  @NotNull
-  public String myHightlightedText = null;
+  public String myHighlightedText = null;
 
-  public DItemElement(Boolean isStatic, String name, String type) {
+  public DItemElement(@Nullable Boolean isStatic, @Nullable String name, @Nullable String type) {
     myStatic = isStatic;
     myName = name;
     myType = type;
   }
 
-  public String getHightlightedText() {
-    return myHightlightedText;
+  public String getHighlightedText() {
+    return myHighlightedText;
   }
 
-  public void setHightlightedText(String hightlightedText) {
-    myHightlightedText = hightlightedText;
+  public void setHighlightedText(String highlightedText) {
+    myHighlightedText = highlightedText;
   }
 
   public boolean equals(Object o) {

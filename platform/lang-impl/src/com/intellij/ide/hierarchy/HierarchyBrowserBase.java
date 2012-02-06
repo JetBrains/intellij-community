@@ -16,8 +16,10 @@
 
 package com.intellij.ide.hierarchy;
 
+import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.actions.CloseTabToolbarAction;
 import com.intellij.ide.actions.ContextHelpAction;
+import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -26,7 +28,7 @@ import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.content.Content;
@@ -91,6 +93,7 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
 
   protected void appendActions(@NotNull DefaultActionGroup actionGroup, @Nullable String helpID) {
     actionGroup.add(myAutoScrollToSourceHandler.createToggleAction());
+    actionGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EXPAND_ALL));
     actionGroup.add(PinToolwindowTabAction.getPinAction());
     actionGroup.add(new CloseAction());
     if (helpID != null) {
@@ -161,7 +164,7 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
       PsiElement element = getElementFromDescriptor(descriptor);
       if (element != null) elements.add(element);
     }
-    return PsiUtilBase.toPsiElementArray(elements);
+    return PsiUtilCore.toPsiElementArray(elements);
   }
 
 
@@ -192,7 +195,7 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
 
   @Nullable
   public Object getData(@NonNls final String dataId) {
-      if (LangDataKeys.PSI_ELEMENT.is(dataId)) {
+    if (LangDataKeys.PSI_ELEMENT.is(dataId)) {
       final PsiElement anElement = getSelectedElement();
       return anElement != null && anElement.isValid() ? anElement : super.getData(dataId);
     }
@@ -212,12 +215,20 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
     if (PlatformDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
       return getNavigatables();
     }
+    if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) {
+      final JTree tree = getCurrentTree();
+      if (tree != null) {
+        return new DefaultTreeExpander(tree);
+      }
+    }
     return super.getData(dataId);
   }
 
   private final class CloseAction extends CloseTabToolbarAction {
     public final void actionPerformed(final AnActionEvent e) {
-      final ProgressIndicator progress = getCurrentBuilder().getUi().getProgress();
+      final HierarchyTreeBuilder builder = getCurrentBuilder();
+      final AbstractTreeUi treeUi = builder != null ? builder.getUi() : null;
+      final ProgressIndicator progress = treeUi != null ? treeUi.getProgress() : null;
       if (progress != null) {
         progress.cancel();
       }

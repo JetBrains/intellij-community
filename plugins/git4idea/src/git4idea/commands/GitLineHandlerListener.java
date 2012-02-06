@@ -16,11 +16,12 @@
 package git4idea.commands;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.vcs.LineProcessEventListener;
 
 /**
  * Listener for line events
  */
-public interface GitLineHandlerListener extends GitHandlerListener {
+public interface GitLineHandlerListener extends LineProcessEventListener {
   /**
    * This method is invoked when line (as separated by \n or \r) becomes available.
    *

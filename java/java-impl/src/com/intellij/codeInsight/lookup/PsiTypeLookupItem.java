@@ -73,14 +73,13 @@ public class PsiTypeLookupItem extends LookupItem {
   public void handleInsert(InsertionContext context) {
     PsiElement position = context.getFile().findElementAt(context.getStartOffset());
     assert position != null;
+    if (getObject() instanceof PsiClass) {
+      addImportForItem(context, (PsiClass)getObject());
+    }
     context.getDocument().insertString(context.getTailOffset(), calcGenerics(position));
-    DefaultInsertHandler.addImportForItem(context, this);
-    PostprocessReformattingAspect.getInstance(context.getProject()).doPostponedFormatting();
+    JavaCompletionUtil.shortenReference(context.getFile(), context.getStartOffset());
 
     int tail = context.getTailOffset();
-    if (tail <= 0) {
-      return;
-    }
     String braces = StringUtil.repeat("[]", getBracketsCount());
     Editor editor = context.getEditor();
     if (!braces.isEmpty()) {
@@ -226,5 +225,14 @@ public class PsiTypeLookupItem extends LookupItem {
         presentation.setTailText(tailText, getAttribute(LookupItem.TAIL_TEXT_SMALL_ATTR) != null);
       }
     }
+  }
+
+  public static void addImportForItem(InsertionContext context, PsiClass aClass) {
+    if (aClass.getQualifiedName() == null) return;
+    PsiFile file = context.getFile();
+    int newTail = JavaCompletionUtil.insertClassReference(aClass, file, context.getStartOffset(), context.getTailOffset());
+    context.setTailOffset(newTail);
+    PostprocessReformattingAspect.getInstance(context.getProject()).doPostponedFormatting();
+    JavaCompletionUtil.shortenReference(file, context.getStartOffset());
   }
 }

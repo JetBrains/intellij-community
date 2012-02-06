@@ -44,7 +44,7 @@ public class HotSwapManager extends AbstractProjectComponent {
 
   public HotSwapManager(Project project, DebuggerManagerEx manager) {
     super(project);
-    manager.addDebuggerManagerListener(new DebuggerManagerListener() {
+    manager.addDebuggerManagerListener(new DebuggerManagerAdapter() {
       public void sessionCreated(DebuggerSession session) {
         myTimeStamps.put(session, Long.valueOf(System.currentTimeMillis()));
       }

@@ -15,6 +15,8 @@
  */
 package org.intellij.lang.regexp;
 
+import org.intellij.lang.regexp.psi.RegExpGroup;
+
 /**
  * @author yole
  */
@@ -22,7 +24,6 @@ public interface RegExpLanguageHost {
   boolean characterNeedsEscaping(char c);
   boolean supportsPerl5EmbeddedComments();
   boolean supportsPossessiveQuantifiers();
-  boolean supportsPythonNamedGroups();
   boolean supportsPythonConditionalRefs();
-  boolean supportsRubyNamedGroups();
+  boolean supportsNamedGroupSyntax(RegExpGroup group);
 }

@@ -26,7 +26,6 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.localVcs.UpToDateLineNumberProvider;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -94,7 +93,6 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
   }
 
   private static boolean hasTextEditor(VirtualFile selectedFile) {
-    FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     FileType fileType = selectedFile.getFileType();
     return !fileType.isBinary() && fileType != StdFileTypes.GUI_DESIGNER_FORM;
   }

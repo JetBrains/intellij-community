@@ -41,22 +41,25 @@ import com.intellij.debugger.ui.impl.watch.MethodsTracker;
 import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.ThreadDescriptorImpl;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
+import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.OccurenceNavigator;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPopupMenu;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBoxWithWidePopup;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.Alarm;
 import com.sun.jdi.ObjectCollectedException;
 import com.sun.jdi.VMDisconnectedException;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
@@ -71,6 +74,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class FramesPanel extends UpdatableDebuggerView {
+  private static final Icon FILTER_STACK_FRAMES_ICON = IconLoader.getIcon("/debugger/class_filter.png");
+
   private final JComboBox myThreadsCombo;
   private final FramesList myFramesList;
   private final ThreadsListener myThreadsListener;
@@ -106,8 +111,29 @@ public class FramesPanel extends UpdatableDebuggerView {
     registerThreadsPopupMenu(myFramesList);
 
     setBorder(null);
-    add(myThreadsCombo, BorderLayout.NORTH);
+
+    final ActionToolbar toolbar = createToolbar();
+    Wrapper threads = new Wrapper();
+    threads.add(toolbar.getComponent(), BorderLayout.EAST);
+    threads.add(myThreadsCombo, BorderLayout.CENTER);
+    add(threads, BorderLayout.NORTH);
     add(ScrollPaneFactory.createScrollPane(myFramesList), BorderLayout.CENTER);
+  }
+
+  private ActionToolbar createToolbar() {
+    final DefaultActionGroup framesGroup = new DefaultActionGroup();
+    framesGroup.addSeparator();
+
+    CommonActionsManager actionsManager = CommonActionsManager.getInstance();
+    framesGroup.add(actionsManager.createPrevOccurenceAction(getOccurenceNavigator()));
+    framesGroup.add(actionsManager.createNextOccurenceAction(getOccurenceNavigator()));
+    framesGroup.add(new ShowLibraryFramesAction());
+
+    final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.DEBUGGER_TOOLBAR, framesGroup, true);
+    toolbar.setReservePlaceAutoPopupIcon(false);
+    ((ActionToolbarImpl)toolbar).setAddSeparatorFirst(true);
+    toolbar.getComponent().setBorder(new EmptyBorder(1, 0, 0, 0));
+    return toolbar;
   }
 
   public DebuggerStateManager getContextManager() {
@@ -629,5 +655,33 @@ public class FramesPanel extends UpdatableDebuggerView {
 
   public FramesList getFramesList() {
     return myFramesList;
+  }
+
+  private class ShowLibraryFramesAction extends ToggleAction {
+    private volatile boolean myShouldShow;
+    private static final String ourTextWhenShowIsOn = "Hide Frames from Libraries";
+    private static final String ourTextWhenShowIsOff = "Show All Frames";
+
+    public ShowLibraryFramesAction() {
+      super("", "", FILTER_STACK_FRAMES_ICON);
+      myShouldShow = DebuggerSettings.getInstance().SHOW_LIBRARY_STACKFRAMES;
+    }
+
+    public void update(final AnActionEvent e) {
+      super.update(e);
+      final Presentation presentation = e.getPresentation();
+      final boolean shouldShow = !(Boolean)presentation.getClientProperty(SELECTED_PROPERTY);
+      presentation.setText(shouldShow ? ourTextWhenShowIsOn : ourTextWhenShowIsOff);
+    }
+
+    public boolean isSelected(AnActionEvent e) {
+      return !myShouldShow;
+    }
+
+    public void setSelected(AnActionEvent e, boolean enabled) {
+      myShouldShow = !enabled;
+      DebuggerSettings.getInstance().SHOW_LIBRARY_STACKFRAMES = myShouldShow;
+      setShowLibraryFrames(myShouldShow);
+    }
   }
 }

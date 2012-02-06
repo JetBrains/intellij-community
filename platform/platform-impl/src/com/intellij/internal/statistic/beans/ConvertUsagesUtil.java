@@ -15,11 +15,12 @@
  */
 package com.intellij.internal.statistic.beans;
 
-
-import com.intellij.util.containers.hash.HashMap;
-import org.jetbrains.annotations.NotNull;
-
 import java.util.*;
+
+/**
+ * ATTENTION! DO NOT IMPORT @NotNull AND @Nullable ANNOTATIONS
+ * This class is also used on jetbrains web site
+ */
 
 public class ConvertUsagesUtil {
   private static final char GROUP_SEPARATOR = ':';
@@ -173,8 +174,8 @@ public class ConvertUsagesUtil {
     assert !key.contains("\"") : key + " contains invalid chars";
   }
 
-  @NotNull
-  public static String ensureProperKey(@NotNull String input) {
+  //@NotNull
+  public static String ensureProperKey(/*@NotNull*/ String input) {
     final StringBuilder escaped = new StringBuilder();
     for (int i = 0; i < input.length(); i++) {
       final char ch = input.charAt(i);

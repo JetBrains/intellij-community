@@ -23,7 +23,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManager;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.MyPair;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ParamInfo;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrDynamicImplicitMethod;
@@ -36,20 +36,21 @@ import java.util.List;
  * Date: 12.02.2008
  */
 public class DMethodElement extends DItemElement {
-  public List<MyPair> myPairs = new ArrayList<MyPair>();
+  public List<ParamInfo> myPairs = new ArrayList<ParamInfo>();
   private PsiMethod myImplicitMethod;
 
+  @SuppressWarnings("UnusedDeclaration") //for serialization
   public DMethodElement() {
     super(null, null, null);
   }
 
-  public DMethodElement(Boolean isStatic, String name, String returnType, List<MyPair> pairs) {
+  public DMethodElement(Boolean isStatic, String name, String returnType, List<ParamInfo> pairs) {
     super(isStatic, name, returnType);
 
     myPairs = pairs;
   }
 
-  public List<MyPair> getPairs() {
+  public List<ParamInfo> getPairs() {
     return myPairs;
   }
 
@@ -71,8 +72,8 @@ public class DMethodElement extends DItemElement {
     }
 
     final String[] argumentsTypes = QuickfixUtil.getArgumentsTypes(myPairs);
-    final GrMethod method = GroovyPsiElementFactory.getInstance(manager.getProject())
-        .createMethodFromText(staticModifier, getName(), type, argumentsTypes, null);
+    final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(manager.getProject());
+    final GrMethod method = factory.createMethodFromText(staticModifier, getName(), type, argumentsTypes, null);
 
     myImplicitMethod = new GrDynamicImplicitMethod(manager, method, containingClassName) {
       @Override

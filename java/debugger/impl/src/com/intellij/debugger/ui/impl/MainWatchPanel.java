@@ -20,20 +20,20 @@
  */
 package com.intellij.debugger.ui.impl;
 
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.actions.AddToWatchActionHandler;
 import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
+import com.intellij.debugger.engine.evaluation.DefaultCodeFragmentFactory;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
-import com.intellij.debugger.engine.evaluation.DefaultCodeFragmentFactory;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerStateManager;
 import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.debugger.ui.DebuggerExpressionComboBox;
-import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeInplaceEditor;
+import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor;
-import com.intellij.debugger.DebuggerBundle;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.dnd.DnDEvent;
 import com.intellij.ide.dnd.DnDManager;
@@ -43,7 +43,10 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.AnActionButton;
+import com.intellij.ui.AnActionButtonRunnable;
 import com.intellij.ui.ListenerUtil;
+import com.intellij.ui.ToolbarDecorator;
 
 import javax.swing.*;
 import java.awt.*;
@@ -204,5 +207,36 @@ public class MainWatchPanel extends WatchPanel implements DataProvider {
       }
     };
     editor.show();
+  }
+
+  @Override
+  protected JComponent createTreePanel(final WatchDebuggerTree tree) {
+    final ToolbarDecorator decorator = ToolbarDecorator.createDecorator(tree);
+    decorator.setAddAction(new AnActionButtonRunnable() {
+      @Override
+      public void run(AnActionButton button) {
+        executeAction(DebuggerActions.NEW_WATCH, tree);
+      }
+    });
+    // TODO[den]: add "Add to watches action"
+    decorator.setRemoveAction(new AnActionButtonRunnable() {
+      @Override
+      public void run(AnActionButton button) {
+        executeAction(DebuggerActions.REMOVE_WATCH, tree);
+      }
+    });
+    final JPanel panel = decorator.createPanel();
+    panel.setBorder(null);
+    return panel;
+  }
+
+  private static void executeAction(final String watch, final WatchDebuggerTree tree) {
+    AnAction action = ActionManager.getInstance().getAction(watch);
+    Presentation presentation = action.getTemplatePresentation().clone();
+    DataContext context = DataManager.getInstance().getDataContext(tree);
+
+    AnActionEvent actionEvent =
+      new AnActionEvent(null, context, ActionPlaces.DEBUGGER_TOOLBAR, presentation, ActionManager.getInstance(), 0);
+    action.actionPerformed(actionEvent);
   }
 }

@@ -73,22 +73,20 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
     }
   }
 
-  public void pushBack(DebuggerCommandImpl managerCommand) {
-    if(myEvents.isClosed()) {
+  public boolean pushBack(DebuggerCommandImpl managerCommand) {
+    final boolean pushed = super.pushBack(managerCommand);
+    if (!pushed) {
       managerCommand.notifyCancelled();
     }
-    else {
-      super.pushBack(managerCommand);
-    }
+    return pushed;
   }
 
-  public void schedule(DebuggerCommandImpl managerCommand) {
-    if(myEvents.isClosed()) {
+  public boolean schedule(DebuggerCommandImpl managerCommand) {
+    final boolean scheduled = super.schedule(managerCommand);
+    if (!scheduled) {
       managerCommand.notifyCancelled();
     }
-    else {
-      super.schedule(managerCommand);
-    }
+    return scheduled;
   }
 
   /**

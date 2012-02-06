@@ -116,7 +116,7 @@ public class GridCellImpl implements GridCell {
       }
     }).setSideComponentVertical(!context.getLayoutSettings().isToolbarHorizontal())
       .setStealthTabMode(true).setFocusCycle(false).setPaintFocus(true)
-      .setProvideSwitchTargets(false).setTabDraggingEnabled(true);
+      .setProvideSwitchTargets(false).setTabDraggingEnabled(true).setSideComponentOnTabs(false);
 
     myTabs.addTabMouseListener(new MouseAdapter() {
       public void mousePressed(final MouseEvent e) {
@@ -449,10 +449,8 @@ public class GridCellImpl implements GridCell {
     }
   }
 
-  private ActionCallback restore(Content content) {
+  ActionCallback restore(Content content) {
     myMinimizedContents.remove(content);
-    add(content);
-    updateSelection(myTabs.getComponent().getRootPane() != null);
     return new ActionCallback.Done();
   }
 }

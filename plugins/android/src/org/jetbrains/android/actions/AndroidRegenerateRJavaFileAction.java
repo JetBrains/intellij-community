@@ -95,6 +95,7 @@ public class AndroidRegenerateRJavaFileAction extends AnAction {
     CompilerManager.getInstance(project).executeTask(new CompileTask() {
       @Override
       public boolean execute(CompileContext context) {
+        // todo: compatibility with background autogenerating
         AndroidCompileUtil.generate(new AndroidAptCompiler(), context);
         return true;
       }

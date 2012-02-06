@@ -97,6 +97,8 @@ public class JBTabsImpl extends JComponent
 
   private boolean myStealthTabMode = false;
 
+  private boolean mySideComponentOnTabs = true;
+
   private DataProvider myDataProvider;
 
   private final WeakHashMap<Component, Component> myDeferredToRemove = new WeakHashMap<Component, Component>();
@@ -231,7 +233,7 @@ public class JBTabsImpl extends JComponent
     });
 
     myAnimator = new Animator("JBTabs Attractions", 2, 500, true) {
-      public void paintNow(final float frame, final float totalFrames, final float cycle) {
+      public void paintNow(final int frame, final int totalFrames, final int cycle) {
         repaintAttractions();
       }
     };
@@ -1583,6 +1585,13 @@ public class JBTabsImpl extends JComponent
         g2d.setColor(CaptionPanel.CNT_ACTIVE_COLOR);
         g2d.drawLine((int)toolBounds.getMaxX(), toolBounds.y, (int)toolBounds.getMaxX(), (int)toolBounds.getMaxY() - 1);
       }
+    } else if (!isSideComponentOnTabs()) {
+      Toolbar toolbarComp = myInfo2Toolbar.get(mySelectedInfo);
+      if (toolbarComp != null && !toolbarComp.isEmpty()) {
+        Rectangle toolBounds = toolbarComp.getBounds();
+        g2d.setColor(CaptionPanel.CNT_ACTIVE_COLOR);
+        g2d.drawLine(toolBounds.x, (int)toolBounds.getMaxY(), (int)toolBounds.getMaxX() - 1, (int)toolBounds.getMaxY());
+      }
     }
 
     config.restore();
@@ -2156,7 +2165,9 @@ public class JBTabsImpl extends JComponent
   }
 
   public boolean isStealthModeEffective() {
-    return myStealthTabMode && getTabCount() == 1 && isSideComponentVertical() && getTabsPosition() == JBTabsPosition.top;
+    return myStealthTabMode && getTabCount() == 1 &&
+           (isSideComponentVertical() || !isSideComponentOnTabs()) &&
+           getTabsPosition() == JBTabsPosition.top;
   }
 
 
@@ -2330,15 +2341,15 @@ public class JBTabsImpl extends JComponent
     return removeTab(info, null);
   }
 
-  public ActionCallback removeTab(final TabInfo info, @Nullable TabInfo forcedSelectionTranfer) {
-    return removeTab(info, forcedSelectionTranfer, true);
+  public ActionCallback removeTab(final TabInfo info, @Nullable TabInfo forcedSelectionTransfer) {
+    return removeTab(info, forcedSelectionTransfer, true);
   }
 
-  public ActionCallback removeTab(final TabInfo info, @Nullable TabInfo forcedSelectionTranfer, boolean transferFocus) {
-    return removeTab(info, forcedSelectionTranfer, transferFocus, false);
+  public ActionCallback removeTab(final TabInfo info, @Nullable TabInfo forcedSelectionTransfer, boolean transferFocus) {
+    return removeTab(info, forcedSelectionTransfer, transferFocus, false);
   }
 
-  private ActionCallback removeTab(TabInfo info, TabInfo forcedSelectionTranfer, boolean transferFocus, boolean isDropTarget) {
+  private ActionCallback removeTab(TabInfo info, @Nullable TabInfo forcedSelectionTransfer, boolean transferFocus, boolean isDropTarget) {
     if (!isDropTarget) {
       if (info == null || !getTabs().contains(info)) return new ActionCallback.Done();
     }
@@ -2350,12 +2361,12 @@ public class JBTabsImpl extends JComponent
     final ActionCallback result = new ActionCallback();
 
     TabInfo toSelect;
-    if (forcedSelectionTranfer == null) {
+    if (forcedSelectionTransfer == null) {
       toSelect = getToSelectOnRemoveOf(info);
     }
     else {
-      assert myVisibleInfos.contains(forcedSelectionTranfer) : "Cannot find tab for selection transfer, tab=" + forcedSelectionTranfer;
-      toSelect = forcedSelectionTranfer;
+      assert myVisibleInfos.contains(forcedSelectionTransfer) : "Cannot find tab for selection transfer, tab=" + forcedSelectionTransfer;
+      toSelect = forcedSelectionTransfer;
     }
 
 
@@ -2446,6 +2457,7 @@ public class JBTabsImpl extends JComponent
     return _findInfo(point, true);
   }
 
+  @Nullable
   private TabInfo _findInfo(final Point point, boolean labelsOnly) {
     Component component = findComponentAt(point);
     if (component == null) return null;
@@ -2842,6 +2854,15 @@ public class JBTabsImpl extends JComponent
     return this;
   }
 
+  @Override
+  public JBTabsPresentation setSideComponentOnTabs(boolean onTabs) {
+    mySideComponentOnTabs = onTabs;
+
+    relayout(true, false);
+
+    return this;
+  }
+
   public JBTabsPresentation setSingleRow(boolean singleRow) {
     myLayout = singleRow ? mySingleRowLayout : myTableLayout;
 
@@ -2868,6 +2889,11 @@ public class JBTabsImpl extends JComponent
 
   public boolean isSideComponentVertical() {
     return !myHorizontalSide;
+  }
+
+  @Override
+  public boolean isSideComponentOnTabs() {
+    return mySideComponentOnTabs;
   }
 
   public TabLayout getEffectiveLayout() {
@@ -3190,7 +3216,9 @@ public class JBTabsImpl extends JComponent
       myDropInfo = null;
       myShowDropLocation = true;
       setDropInfoIndex(-1);
-      removeTab(dropInfo, null, false, true);
+      if (!isDisposed()) {
+        removeTab(dropInfo, null, false, true);
+      }
     }
   }
 

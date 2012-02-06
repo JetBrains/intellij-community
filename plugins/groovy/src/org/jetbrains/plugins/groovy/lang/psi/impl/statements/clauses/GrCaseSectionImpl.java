@@ -74,6 +74,7 @@ public class GrCaseSectionImpl extends GroovyPsiElementImpl implements GrCaseSec
     return findChildrenByClass(GrStatement.class);
   }
 
+  @NotNull
   public GrStatement addStatementBefore(@NotNull GrStatement element, @Nullable GrStatement anchor) throws IncorrectOperationException {
     ASTNode elemNode = element.copy().getNode();
     assert elemNode != null;

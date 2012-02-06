@@ -17,8 +17,10 @@
 package org.jetbrains.idea.maven.utils;
 
 import com.intellij.ide.highlighter.XmlFileType;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathMacros;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import org.jetbrains.annotations.NotNull;
@@ -42,12 +44,14 @@ public class MavenEnvironmentRegistrar implements ApplicationComponent {
   private void registerFileTypes() {
     // we should not change file types in unit test mode
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        FileTypeManager.getInstance().associateExtension(XmlFileType.INSTANCE, MavenConstants.POM_EXTENSION);
-      }
-    });
+
+    AccessToken accessToken = WriteAction.start();
+    try {
+      FileTypeManager.getInstance().associateExtension(XmlFileType.INSTANCE, MavenConstants.POM_EXTENSION);
+    }
+    finally {
+      accessToken.finish();
+    }
   }
 
   private void registerPathVariable() {

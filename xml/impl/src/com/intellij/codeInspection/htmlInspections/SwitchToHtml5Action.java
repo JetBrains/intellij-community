@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.htmlInspections;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -72,5 +73,6 @@ public class SwitchToHtml5Action implements LocalQuickFix, IntentionAction {
 
   private static void applyFix(Project project) {
     ExternalResourceManagerEx.getInstanceEx().setDefaultHtmlDoctype(Html5SchemaProvider.HTML5_SCHEMA_LOCATION, project);
+    DaemonCodeAnalyzer.getInstance(project).restart();
   }
 }

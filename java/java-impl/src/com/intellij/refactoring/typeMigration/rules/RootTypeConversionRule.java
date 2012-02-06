@@ -85,7 +85,7 @@ public class RootTypeConversionRule extends TypeConversionRule {
               }
 
               if (!originalType.equals(type)) {
-                labeler.migrateExpressionType(actualParams[i], methodTypeParamsSubstitutor.substitute(type), context, originalType.equals(type), true);
+                labeler.migrateExpressionType(actualParams[i], methodTypeParamsSubstitutor.substitute(type), context, false, true);
               }
             }
           }

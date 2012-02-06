@@ -93,9 +93,9 @@ public class GitCheckoutNewBranchOperation extends GitBranchOperation {
   @NotNull
   @Override
   protected String getRollbackProposal() {
-    return "However checkout has succeeded for the following repositories:<br/>" +
+    return "However checkout has succeeded for the following " + repositories() + ":<br/>" +
            successfulRepositoriesJoined() +
-           "<br/>You may rollback (checkout back to " + myPreviousBranch + ") not to let branches diverge.";
+           "<br/>You may rollback (checkout back to " + myPreviousBranch + " and delete " + myNewBranchName + ") not to let branches diverge.";
   }
 
   @Override
@@ -104,7 +104,7 @@ public class GitCheckoutNewBranchOperation extends GitBranchOperation {
     GitCompoundResult deleteResult = new GitCompoundResult(myProject);
     Collection<GitRepository> repositories = getSuccessfulRepositories();
     for (GitRepository repository : repositories) {
-      GitCommandResult result = Git.checkout(repository, myPreviousBranch, null);
+      GitCommandResult result = Git.checkout(repository, myPreviousBranch, null, true);
       checkoutResult.append(repository, result);
       if (result.success()) {
         deleteResult.append(repository, Git.branchDelete(repository, myNewBranchName, false));

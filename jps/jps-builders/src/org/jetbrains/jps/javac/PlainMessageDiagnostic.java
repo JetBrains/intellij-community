@@ -1,19 +1,18 @@
 package org.jetbrains.jps.javac;
 
-import javax.tools.Diagnostic;
-import javax.tools.JavaFileObject;
+import javax.tools.*;
 import java.util.Locale;
 
 /**
  * @author Eugene Zhuravlev
  *         Date: 9/24/11
  */
-final class PlainMessageDiagnostic implements Diagnostic<JavaFileObject>{
+public final class PlainMessageDiagnostic implements Diagnostic<JavaFileObject>{
 
   private final Kind myKind;
   private final String myMessage;
 
-  PlainMessageDiagnostic(Kind kind, String message) {
+  public PlainMessageDiagnostic(Kind kind, String message) {
     myKind = kind;
     myMessage = message;
   }

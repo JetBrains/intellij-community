@@ -922,7 +922,12 @@ public class OldXmlParsing implements XmlElementType {
 
   public void parseAttrValue(CompositeElement element, Lexer lexer) {
     while(lexer.getTokenType() != null) {
-      addToken(element, lexer);
+      if (lexer.getTokenType() == XML_ENTITY_REF_TOKEN) {
+        final TreeElement children = parseEntityRef(lexer);
+        element.rawAddChildren(children);
+      } else {
+        addToken(element, lexer);
+      }
     }
   }
 

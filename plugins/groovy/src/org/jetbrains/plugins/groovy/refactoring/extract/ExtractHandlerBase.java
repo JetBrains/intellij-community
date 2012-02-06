@@ -143,7 +143,7 @@ public abstract class ExtractHandlerBase implements RefactoringActionHandler {
 
     for (GrStatement statement : statements) {
       hasInterruptingStatements =
-        GroovyRefactoringUtil.hasWrongBreakStatements(statement) || GroovyRefactoringUtil.haswrongContinueStatements(statement);
+        GroovyRefactoringUtil.hasWrongBreakStatements(statement) || GroovyRefactoringUtil.hasWrongContinueStatements(statement);
       if (hasInterruptingStatements) break;
     }
 

@@ -36,7 +36,12 @@
 
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.remote.GradleApiFacadeManager"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.util.GradleLibraryManager"/>
-    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.diff.GradleProjectStructureChangesCalculator"/>
+    <applicationService serviceInterface="org.jetbrains.plugins.gradle.diff.GradleStructureChangesCalculator"
+                        serviceImplementation="org.jetbrains.plugins.gradle.diff.GradleProjectStructureChangesCalculator"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.diff.GradleModuleStructureChangesCalculator"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.diff.GradleLibraryDependencyStructureChangesCalculator"/>
+    <applicationService serviceInterface="org.jetbrains.plugins.gradle.diff.PlatformFacade"
+                        serviceImplementation="org.jetbrains.plugins.gradle.diff.GradleProjectStructureHelperImpl"/>
     <applicationService serviceInterface="org.jetbrains.plugins.gradle.notification.GradleProgressNotificationManager"
                         serviceImplementation="org.jetbrains.plugins.gradle.notification.GradleProgressNotificationManagerImpl"/>
 
@@ -62,9 +67,10 @@
   <actions>
     <action id="Gradle.LinkToProject" class="org.jetbrains.plugins.gradle.action.GradleLinkToProjectAction" icon="/general/add.png"/>
     <action id="Gradle.RefreshProject" class="org.jetbrains.plugins.gradle.action.GradleRefreshProjectAction" icon="/actions/sync.png"/>
+    <action id="Gradle.OpenScript" class="org.jetbrains.plugins.gradle.action.GradleOpenScriptAction" icon="/icons/gradle.png"/>
     <group id="Gradle.ChangeActionsToolbar">
-      <reference id="Gradle.LinkToProject"/>
       <reference id="Gradle.RefreshProject"/>
+      <reference id="Gradle.OpenScript"/>
     </group>
   </actions>
   

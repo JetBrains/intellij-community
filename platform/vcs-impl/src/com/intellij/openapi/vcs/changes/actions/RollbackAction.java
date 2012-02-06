@@ -44,12 +44,10 @@ import com.intellij.openapi.vcs.changes.ui.RollbackProgressModifier;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 public class RollbackAction extends AnAction implements DumbAware {
   public void update(AnActionEvent e) {
@@ -100,18 +98,31 @@ public class RollbackAction extends AnAction implements DumbAware {
     FileDocumentManager.getInstance().saveAllDocuments();
 
     List<FilePath> missingFiles = e.getData(ChangesListView.MISSING_FILES_DATA_KEY);
+    boolean hasChanges = false;
     if (missingFiles != null && !missingFiles.isEmpty()) {
+      hasChanges = true;
       new RollbackDeletionAction().actionPerformed(e);
     }
 
-    List<VirtualFile> modifiedWithoutEditing = getModifiedWithoutEditing(e);
+    LinkedHashSet<VirtualFile> modifiedWithoutEditing = getModifiedWithoutEditing(e, project);
     if (modifiedWithoutEditing != null && !modifiedWithoutEditing.isEmpty()) {
+      hasChanges = true;
       rollbackModifiedWithoutEditing(project, modifiedWithoutEditing);
     }
 
-    Change[] changes = getChanges(project, e);
+    List<Change> changes = getChanges(project, e);
     if (changes != null) {
-      RollbackChangesDialog.rollbackChanges(project, Arrays.asList(changes));
+      if (modifiedWithoutEditing != null) {
+        for (Iterator<Change> iterator = changes.iterator(); iterator.hasNext(); ) {
+          Change next = iterator.next();
+          if (modifiedWithoutEditing.contains(next.getVirtualFile())) {
+            iterator.remove();
+          }
+        }
+      }
+      if (!changes.isEmpty() || !hasChanges) {
+        RollbackChangesDialog.rollbackChanges(project, changes);
+      }
     }
   }
 
@@ -152,9 +163,9 @@ public class RollbackAction extends AnAction implements DumbAware {
   }
 
   @Nullable
-  private static Change[] getChanges(final Project project, final AnActionEvent e) {
+  private static List<Change> getChanges(final Project project, final AnActionEvent e) {
     final ChangesCheckHelper helper = new ChangesCheckHelper(project, e);
-    if (helper.isChangesSet()) return helper.getChanges();
+    if (helper.isChangesSet()) return CollectionFactory.arrayList(helper.getChanges());
 
     final VirtualFile[] virtualFiles = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
     if (virtualFiles != null && virtualFiles.length > 0) {
@@ -162,23 +173,31 @@ public class RollbackAction extends AnAction implements DumbAware {
       for(VirtualFile file: virtualFiles) {
         result.addAll(ChangeListManager.getInstance(project).getChangesIn(file));
       }
-      return result.toArray(new Change[result.size()]);
+      return result;
     }
     return null;
   }
 
   @Nullable
-  private static List<VirtualFile> getModifiedWithoutEditing(final AnActionEvent e) {
+  private static LinkedHashSet<VirtualFile> getModifiedWithoutEditing(final AnActionEvent e, Project project) {
     final List<VirtualFile> modifiedWithoutEditing = e.getData(VcsDataKeys.MODIFIED_WITHOUT_EDITING_DATA_KEY);
     if (modifiedWithoutEditing != null && modifiedWithoutEditing.size() > 0) {
-      return modifiedWithoutEditing;
+      return new LinkedHashSet<VirtualFile>(modifiedWithoutEditing);
     }
+
+    final VirtualFile[] virtualFiles = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+    if (virtualFiles != null && virtualFiles.length > 0) {
+      LinkedHashSet<VirtualFile> result = new LinkedHashSet<VirtualFile>(Arrays.asList(virtualFiles));
+      result.retainAll(ChangeListManager.getInstance(project).getModifiedWithoutEditing());
+      return result;
+    }
+
     return null;
   }
 
-  private static void rollbackModifiedWithoutEditing(final Project project, final List<VirtualFile> modifiedWithoutEditing) {
+  private static void rollbackModifiedWithoutEditing(final Project project, final LinkedHashSet<VirtualFile> modifiedWithoutEditing) {
     String message = (modifiedWithoutEditing.size() == 1)
-      ? VcsBundle.message("rollback.modified.without.editing.confirm.single", modifiedWithoutEditing.get(0).getPresentableUrl())
+      ? VcsBundle.message("rollback.modified.without.editing.confirm.single", modifiedWithoutEditing.iterator().next().getPresentableUrl())
       : VcsBundle.message("rollback.modified.without.editing.confirm.multiple", modifiedWithoutEditing.size());
     int rc = Messages.showYesNoDialog(project, message, VcsBundle.message("changes.action.rollback.title"), Messages.getQuestionIcon());
     if (rc != 0) {

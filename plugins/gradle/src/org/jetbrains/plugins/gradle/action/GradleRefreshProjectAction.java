@@ -1,8 +1,6 @@
 package org.jetbrains.plugins.gradle.action;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -13,7 +11,6 @@ import org.jetbrains.plugins.gradle.config.GradleSettings;
 import org.jetbrains.plugins.gradle.task.GradleResolveProjectTask;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 
-import java.io.File;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -24,7 +21,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author Denis Zhdanov
  * @since 1/23/12 3:48 PM
  */
-public class GradleRefreshProjectAction extends AnAction implements DumbAware {
+public class GradleRefreshProjectAction extends AbstractGradleLinkedProjectAction implements DumbAware {
 
   private final AtomicBoolean myInProgress = new AtomicBoolean();
   
@@ -34,39 +31,24 @@ public class GradleRefreshProjectAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public void update(AnActionEvent e) {
-    final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
-    if (project == null) {
-      e.getPresentation().setVisible(false);
-      return;
-    }
-    final String path = GradleSettings.getInstance(project).LINKED_PROJECT_FILE_PATH;
-    final boolean visible = path != null && new File(path).isFile();
-    e.getPresentation().setVisible(visible);
-    e.getPresentation().setEnabled(!myInProgress.get());
+  protected void doUpdate(@NotNull Presentation presentation, @NotNull String linkedProjectPath) {
+    presentation.setEnabled(!myInProgress.get()); 
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
-    final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
-    if (project == null) {
-      e.getPresentation().setVisible(false);
-      return;
-    }
-    // Assuming that the linked project is available if this action is called (update() is successful)
-    final String projectPath = GradleSettings.getInstance(project).LINKED_PROJECT_FILE_PATH;
+  protected void doActionPerformed(@NotNull final Project project, @NotNull final String linkedProjectPath) {
     myInProgress.set(true);
     ProgressManager.getInstance().run(new Task.Backgroundable(project, GradleBundle.message("gradle.sync.progress.text")) {
       @Override
       public void run(@NotNull final ProgressIndicator indicator) {
         try {
-          GradleResolveProjectTask task = new GradleResolveProjectTask(project, projectPath, true);
+          GradleResolveProjectTask task = new GradleResolveProjectTask(project, linkedProjectPath, true);
           task.execute(indicator);
         }
         finally {
           myInProgress.set(false);
         }
       }
-    });
+    }); 
   }
 }

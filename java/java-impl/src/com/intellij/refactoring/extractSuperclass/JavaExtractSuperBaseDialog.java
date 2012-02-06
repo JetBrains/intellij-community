@@ -123,7 +123,12 @@ public abstract class JavaExtractSuperBaseDialog extends ExtractSuperBaseDialog<
 
   @Override
   protected void preparePackage() throws OperationFailedException {
-    final PsiPackage aPackage = JavaPsiFacade.getInstance(myProject).findPackage(getTargetPackageName());
+    final String targetPackageName = getTargetPackageName();
+    final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(myProject);
+    if (!psiFacade.getNameHelper().isQualifiedName(targetPackageName)) {
+      throw new OperationFailedException("Invalid package name: " + targetPackageName);
+    }
+    final PsiPackage aPackage = psiFacade.findPackage(targetPackageName);
     if (aPackage != null) {
       final PsiDirectory[] directories = aPackage.getDirectories(mySourceClass.getResolveScope());
       if (directories.length >= 1) {
@@ -132,7 +137,7 @@ public abstract class JavaExtractSuperBaseDialog extends ExtractSuperBaseDialog<
     }
     
     final MoveDestination moveDestination =
-      myDestinationFolderComboBox.selectDirectory(new PackageWrapper(PsiManager.getInstance(myProject), getTargetPackageName()), false);
+      myDestinationFolderComboBox.selectDirectory(new PackageWrapper(PsiManager.getInstance(myProject), targetPackageName), false);
     if (moveDestination == null) return;
 
     myTargetDirectory = myTargetDirectory != null ? ApplicationManager.getApplication().runWriteAction(new Computable<PsiDirectory>() {

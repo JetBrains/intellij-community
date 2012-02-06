@@ -481,7 +481,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       g2d.fillRect(insets.left, insets.top, bounds.width - insets.left - insets.right, bounds.height - insets.top - insets.bottom);
       g2d.setColor(getForeground());
 
-      final String sizeString = new StringBuilder().append(myWidth).append(" x ").append(myHeight).toString();
+      final String sizeString = String.valueOf(myWidth) + " x " + myHeight;
 
       FontMetrics fm = g2d.getFontMetrics();
       int sizeWidth = fm.stringWidth(sizeString);
@@ -595,46 +595,42 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
 
   private static class PointRenderer extends JLabel implements Renderer<Point> {
     public JComponent setValue(@NotNull final Point value) {
-      setText(new StringBuilder().append(value.x).append(':').append(value.y).toString());
+      setText(String.valueOf(value.x) + ':' + value.y);
       return this;
     }
   }
 
   private static class DimensionRenderer extends JLabel implements Renderer<Dimension> {
     public JComponent setValue(@NotNull final Dimension value) {
-      setText(new StringBuilder().append(value.width).append(" x ").append(value.height).toString());
+      setText(String.valueOf(value.width) + " x " + value.height);
       return this;
     }
   }
 
   private static class InsetsRenderer extends JLabel implements Renderer<Insets> {
     public JComponent setValue(@NotNull final Insets value) {
-      setText(new StringBuilder("top: ").append(value.top).append(" left:").append(value.left).append(" bottom:").append(value.bottom)
-        .append(" right:").append(value.right).toString());
+      setText("top: " + value.top + " left:" + value.left + " bottom:" + value.bottom + " right:" + value.right);
       return this;
     }
   }
 
   private static class RectangleRenderer extends JLabel implements Renderer<Rectangle> {
     public JComponent setValue(@NotNull final Rectangle value) {
-      setText(new StringBuilder().append(value.x).append(":").append(value.y).append(", ").append(value.width)
-        .append(" x ").append(value.height).toString());
+      setText(String.valueOf(value.x) + ":" + value.y + ", " + value.width + " x " + value.height);
       return this;
     }
   }
 
   private static class ColorRenderer extends JLabel implements Renderer<Color> {
     public JComponent setValue(@NotNull final Color value) {
-      setText(new StringBuilder("r:").append(value.getRed()).append(", g:").append(value.getGreen()).append(", b:").append(value.getBlue())
-        .toString());
+      setText("r:" + value.getRed() + ", g:" + value.getGreen() + ", b:" + value.getBlue());
       return this;
     }
   }
 
   private static class FontRenderer extends JLabel implements Renderer<Font> {
     public JComponent setValue(@NotNull final Font value) {
-      setText(new StringBuilder(value.getFontName()).append(" (").append(value.getFamily()).append("), ").append(value.getSize()).
-        append("px").toString());
+      setText(value.getFontName() + " (" + value.getFamily() + "), " + value.getSize() + "px");
       return this;
     }
   }
