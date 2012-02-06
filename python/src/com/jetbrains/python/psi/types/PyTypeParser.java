@@ -188,7 +188,7 @@ public class PyTypeParser {
         final TextRange first = ranges.get(0);
         for (TextRange range : ranges) {
           final PyQualifiedName moduleName = PyQualifiedName.fromDottedString(first.union(range).substring(type));
-          final PyType t = new PyImportedModuleType(new PyImportedModule(anchor.getContainingFile(), moduleName));
+          final PyType t = new PyImportedModuleType(new PyImportedModule(null, anchor.getContainingFile(), moduleName));
           types.put(range.shiftRight(offset), t);
         }
       }
@@ -204,7 +204,8 @@ public class PyTypeParser {
       }
       // Workaround for stdlib modules _abcoll, _functools, etc.
       for (PyClass aClass : classes) {
-        if (aClass.getQualifiedName().startsWith("_")) {
+        final String name = aClass.getQualifiedName();
+        if (name != null && name.startsWith("_")) {
           final PyType t = new PyClassType(aClass, false);
           types.put(classRange.shiftRight(offset), t);
           fullRanges.put(t, whole);

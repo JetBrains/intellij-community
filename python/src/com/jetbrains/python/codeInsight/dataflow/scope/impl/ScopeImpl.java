@@ -123,6 +123,15 @@ public class ScopeImpl implements Scope {
     return myNamedElements.get(name);
   }
 
+  @NotNull
+  @Override
+  public Collection<PsiNamedElement> getNamedElements() {
+    if (myNamedElements == null) {
+      collectDeclarations();
+    }
+    return myNamedElements.values();
+  }
+
   private void collectDeclarations() {
     final Map<String, PsiNamedElement> namedElements = new HashMap<String, PsiNamedElement>();
     final List<NameDefiner> nameDefiners = new ArrayList<NameDefiner>();
@@ -161,7 +170,6 @@ public class ScopeImpl implements Scope {
         }
         // TODO: NameDefiners should be used only for defining lazily evaluated names
         if (node instanceof NameDefiner && !(node instanceof PsiNamedElement ||
-                                             node instanceof PyAssignmentStatement ||
                                              node instanceof PyParameterList)) {
           nameDefiners.add((NameDefiner)node);
         }

@@ -16,6 +16,8 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.impl.PyReferenceExpressionImpl;
@@ -202,7 +204,11 @@ public class PyImportReference extends PyReferenceImpl {
             // collect what's within module file
             final CompletionVariantsProcessor processor = new CompletionVariantsProcessor(myElement, node_filter, null);
             processor.setPlainNamesOnly(true); // we don't want parens after functions, etc
-            PyResolveUtil.treeCrawlUp(processor, true, mod_candidate);
+            final ScopeOwner owner = mod_candidate instanceof ScopeOwner ? (ScopeOwner)mod_candidate :
+                                                                           ScopeUtil.getScopeOwner(mod_candidate);
+            if (owner != null) {
+              PyResolveUtil.scopeCrawlUp(processor, owner, null);
+            }
             final List<LookupElement> names_from_module = processor.getResultList();
             myObjects.addAll(names_from_module);
             for (LookupElement le : names_from_module) myNamesAlready.add(le.getLookupString()); // file's definitions shadow submodules

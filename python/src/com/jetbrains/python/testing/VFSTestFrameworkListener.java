@@ -18,8 +18,8 @@ import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.jetbrains.python.PythonHelpersLocator;
+import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.sdk.SdkUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -121,13 +121,13 @@ public class VFSTestFrameworkListener implements ApplicationComponent, Persisten
     }
     final String formatter = new File(PythonHelpersLocator.getHelpersRoot(), searcher).getAbsolutePath();
     ProcessOutput
-      output = SdkUtil.getProcessOutput(new File(sdkHome).getParent(),
-                                        new String[]{
-                                          sdkHome,
-                                          formatter
-                                        },
-                                        null,
-                                        2000);
+      output = PySdkUtil.getProcessOutput(new File(sdkHome).getParent(),
+                                          new String[]{
+                                            sdkHome,
+                                            formatter
+                                          },
+                                          null,
+                                          2000);
     if (output.getExitCode() != 0 || !output.getStderr().isEmpty()) {
       LOG.info("Cannot find test runner in " + sdkHome + ". Use searcher " + formatter + ".\nGot exit code: " + output.getExitCode() +
       ".\nError output: " + output.getStderr());

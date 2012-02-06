@@ -17,6 +17,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.intellij.lang.regexp.RegExpLanguageHost;
+import org.intellij.lang.regexp.psi.RegExpGroup;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -384,15 +385,11 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
     return false;
   }
 
-  public boolean supportsPythonNamedGroups() {
-    return true;
-  }
-
   public boolean supportsPythonConditionalRefs() {
     return true;
   }
 
-  public boolean supportsRubyNamedGroups() {
-    return false;
+  public boolean supportsNamedGroupSyntax(RegExpGroup group) {
+    return group.isPythonNamedGroup();
   }
 }

@@ -1,5 +1,7 @@
 package com.jetbrains.python.run;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
  * @author Leonid Shalupov
  */
@@ -17,4 +19,10 @@ public interface PythonRunConfigurationParams {
   boolean isMultiprocessMode();
 
   void setMultiprocessMode(boolean multiprocess);
+
+  @Nullable
+  String getRemoteDebugConfiguration();
+
+  void setRemoteDebugConfiguration(String name);
 }
+

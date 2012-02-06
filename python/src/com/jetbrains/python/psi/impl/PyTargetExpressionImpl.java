@@ -335,12 +335,14 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
 
   @Nullable
   public PyExpression findAssignedValue() {
-    PyAssignmentStatement assignment = PsiTreeUtil.getParentOfType(this, PyAssignmentStatement.class);
-    if (assignment != null) {
-      List<Pair<PyExpression, PyExpression>> mapping = assignment.getTargetsToValuesMapping();
-      for (Pair<PyExpression, PyExpression> pair : mapping) {
-        PyExpression assigned_to = pair.getFirst();
-        if (assigned_to == this) return pair.getSecond();
+    if (isValid()) {
+      PyAssignmentStatement assignment = PsiTreeUtil.getParentOfType(this, PyAssignmentStatement.class);
+      if (assignment != null) {
+        List<Pair<PyExpression, PyExpression>> mapping = assignment.getTargetsToValuesMapping();
+        for (Pair<PyExpression, PyExpression> pair : mapping) {
+          PyExpression assigned_to = pair.getFirst();
+          if (assigned_to == this) return pair.getSecond();
+        }
       }
     }
     return null;

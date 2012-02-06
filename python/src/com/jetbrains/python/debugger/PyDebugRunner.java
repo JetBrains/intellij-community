@@ -40,6 +40,8 @@ import java.net.ServerSocket;
 public class PyDebugRunner extends GenericProgramRunner {
   public static final String PY_DEBUG_RUNNER = "PyDebugRunner";
 
+  public static final String DEBUGGER_MAIN = "pydev/pydevd.py";
+
   @NotNull
   public String getRunnerId() {
     return PY_DEBUG_RUNNER;
@@ -156,7 +158,7 @@ public class PyDebugRunner extends GenericProgramRunner {
   }
 
   private static void fillDebugParameters(ParamsGroup debugParams, int serverLocalPort, PythonCommandLineState pyState) {
-    debugParams.addParameter(PythonHelpersLocator.getHelperPath("pydev/pydevd.py"));
+    debugParams.addParameter(PythonHelpersLocator.getHelperPath(DEBUGGER_MAIN));
     if (pyState.isMultiprocessDebug()) {
       debugParams.addParameter("--multiproc");
     }

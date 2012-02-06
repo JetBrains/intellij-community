@@ -39,7 +39,8 @@ setProperty("pluginFilter", [
             "jdbc-console", "django-db-config",
             "database-impl", "DatabaseSupport",
             "sql",
-            "coffeescript"
+            "coffeescript",
+            "python-remote-interpreter"
             ])
 
 private List platformImplementationModules() {
@@ -338,6 +339,20 @@ private layoutFull(Map args, String target, Set usedJars) {
         dir("lib") {
           jar("django-db-config.jar") {
             module("django-db-config")
+          }
+        }
+      }
+      dir("python-javascript-debugger") {
+        dir("lib") {
+          jar("python-javascript-debugger.jar") {
+            module("python-javascript-debugger")
+          }
+        }
+      }
+      dir("python-remote-interpreter") {
+        dir("lib") {
+          jar("python-remote-interpreter.jar") {
+            module("python-remote-interpreter")
           }
         }
       }

@@ -57,6 +57,15 @@ public abstract class PythonSdkFlavor {
     else if (SystemInfo.isUnix) {
       result.add(UnixPythonSdkFlavor.INSTANCE);
     }
+
+    result.addAll(getPlatformIndependentFlavors());
+
+    return result;
+  }
+
+
+  public static List<PythonSdkFlavor> getPlatformIndependentFlavors() {
+    List<PythonSdkFlavor> result = Lists.newArrayList();
     result.add(JythonSdkFlavor.INSTANCE);
     result.add(IronPythonSdkFlavor.INSTANCE);
     result.add(PyPySdkFlavor.INSTANCE);
@@ -77,6 +86,8 @@ public abstract class PythonSdkFlavor {
 
   @Nullable
   public static PythonSdkFlavor getFlavor(String sdkPath) {
+    if (sdkPath == null) return null;
+
     for (PythonSdkFlavor flavor : getApplicableFlavors()) {
       if (flavor.isValidSdkHome(sdkPath)) {
         return flavor;
@@ -112,7 +123,7 @@ public abstract class PythonSdkFlavor {
   public String getVersionOption() {
     return "-V";
   }
-  
+
   @Nullable
   public String getVersionFromOutput(ProcessOutput processOutput) {
     return getVersionFromOutput(getVersionRegexp(), processOutput);
@@ -121,7 +132,7 @@ public abstract class PythonSdkFlavor {
   @Nullable
   protected static String getVersionFromOutput(String sdkHome, String version_opt, String version_regexp) {
     String run_dir = new File(sdkHome).getParent();
-    final ProcessOutput process_output = SdkUtil.getProcessOutput(run_dir, new String[]{sdkHome, version_opt});
+    final ProcessOutput process_output = PySdkUtil.getProcessOutput(run_dir, new String[]{sdkHome, version_opt});
 
     return getVersionFromOutput(version_regexp, process_output);
   }
@@ -138,11 +149,11 @@ public abstract class PythonSdkFlavor {
       return null;
     }
     Pattern pattern = Pattern.compile(version_regexp);
-    final String result = SdkUtil.getFirstMatch(process_output.getStderrLines(), pattern);
+    final String result = PySdkUtil.getFirstMatch(process_output.getStderrLines(), pattern);
     if (result != null) {
       return result;
     }
-    return SdkUtil.getFirstMatch(process_output.getStdoutLines(), pattern);
+    return PySdkUtil.getFirstMatch(process_output.getStdoutLines(), pattern);
   }
 
   public Collection<String> getExtraDebugOptions() {

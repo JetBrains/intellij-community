@@ -638,6 +638,9 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
 
   @Nullable
   private Property scanProperties(@Nullable String name, @Nullable Processor<Property> filter, boolean inherited) {
+    if (!isValid()) {
+      return null;
+    }
     LanguageLevel level = LanguageLevel.getDefault();
     // EA-32381: A tree-based instance may not have a parent element somehow, so getContainingFile() may be not appropriate
     final PsiFile file = getParentByStub() != null ? getContainingFile() : null;
@@ -886,7 +889,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
       }
     }
     else if (anchor != null) {
-      PyResolveUtil.treeCrawlUp(new PsiScopeProcessor() {
+      PyResolveUtil.scopeCrawlUp(new PsiScopeProcessor() {
         @Override
         public boolean execute(PsiElement element, ResolveState state) {
           if (element instanceof PyAssignmentStatement) {
@@ -904,7 +907,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
         @Override
         public void handleEvent(Event event, @Nullable Object associated) {
         }
-      }, false, anchor, method);
+      }, anchor, null, method);
     }
     else {
       final PyStatementList statementList = method.getStatementList();
@@ -922,7 +925,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   private static void collectNewTargets(Map<String, PyTargetExpression> collected, PyAssignmentStatement node) {
     final PyExpression[] targets = node.getTargets();
     for (PyExpression target : targets) {
-      if (target instanceof PyTargetExpression && PyUtil.isInstanceAttribute(target) && !collected.containsKey(target.getName())) {
+      if (target instanceof PyTargetExpression && PyUtil.isInstanceAttribute(target)) {
         collected.put(target.getName(), (PyTargetExpression)target);
       }
     }
@@ -988,8 +991,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
       }
     }
     else {
-      final PsiElement the_psi = getNode().getPsi();
-      PyResolveUtil.treeCrawlUp(processor, true, the_psi, the_psi);
+      PyResolveUtil.scopeCrawlUp(processor, this, this);
     }
     return true;
   }

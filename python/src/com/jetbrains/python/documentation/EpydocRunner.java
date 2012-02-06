@@ -6,8 +6,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.jetbrains.python.PythonHelpersLocator;
+import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.sdk.SdkUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -35,14 +35,14 @@ public class EpydocRunner {
     final ByteBuffer encoded = charset.encode(text);
     final byte[] data = new byte[encoded.limit()];
     encoded.get(data);
-    ProcessOutput output = SdkUtil.getProcessOutput(new File(sdkHome).getParent(),
-                                                    new String[] {
-                                                      sdkHome,
-                                                      formatter
-                                                    },
-                                                    null,
-                                                    2000,
-                                                    data);
+    ProcessOutput output = PySdkUtil.getProcessOutput(new File(sdkHome).getParent(),
+                                                      new String[]{
+                                                        sdkHome,
+                                                        formatter
+                                                      },
+                                                      null,
+                                                      2000,
+                                                      data);
     if (output.isTimeout()) {
       LOG.info("timeout when calculating docstring");
       return null;

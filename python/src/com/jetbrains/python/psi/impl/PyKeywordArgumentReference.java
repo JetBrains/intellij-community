@@ -22,9 +22,11 @@ public class PyKeywordArgumentReference extends PsiReferenceBase.Poly<PyKeywordA
   @NotNull
   @Override
   public ResolveResult[] multiResolve(boolean incompleteCode) {
-    PyCallExpression call = PsiTreeUtil.getParentOfType(myElement, PyCallExpression.class);
-    assert call != null;
-    final PyExpression callee = call.getCallee();
+    PsiElement call = PsiTreeUtil.getParentOfType(myElement, PyCallExpression.class, PyClass.class);
+    if (!(call instanceof PyCallExpression)) {
+      return new ResolveResult[0];
+    }
+    final PyExpression callee = ((PyCallExpression)call).getCallee();
     if (callee == null) return ResolveResult.EMPTY_ARRAY;
     final PsiPolyVariantReference calleeReference = (PsiPolyVariantReference) callee.getReference();
     if (calleeReference == null) return ResolveResult.EMPTY_ARRAY;

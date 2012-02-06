@@ -3,13 +3,17 @@ package com.jetbrains.python.remote;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.PasswordUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
 import com.jetbrains.python.sdk.PythonSdkFlavor;
+import com.jetbrains.python.sdk.UnixPythonSdkFlavor;
+import com.jetbrains.python.sdk.WinPythonSdkFlavor;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author traff
@@ -31,6 +35,7 @@ public class PythonRemoteSdkAdditionalData extends PythonSdkAdditionalData imple
 
 
   private static final String INTERPRETER_PATH = "INTERPRETER_PATH";
+  private static final String PYCHARM_HELPERS_PATH = "PYCHARM_HELPERS_PATH";
 
 
   private String myHost;
@@ -46,6 +51,7 @@ public class PythonRemoteSdkAdditionalData extends PythonSdkAdditionalData imple
   private boolean myStorePassphrase;
 
   private String myInterpreterPath;
+  private String myPyCharmTempFilesPath;
 
   public PythonRemoteSdkAdditionalData(@Nullable PythonSdkFlavor flavor) {
     super(flavor);
@@ -64,43 +70,16 @@ public class PythonRemoteSdkAdditionalData extends PythonSdkAdditionalData imple
     return SSH_PREFIX + myUserName + "@" + myHost + ":" + myInterpreterPath;
   }
 
-  @Override
-  public void save(@NotNull final Element rootElement) {
-    super.save(rootElement);
-
-    rootElement.setAttribute(HOST, getHost());
-    rootElement.setAttribute(PORT, Integer.toString(getPort()));
-    rootElement.setAttribute(ANONYMOUS, Boolean.toString(isAnonymous()));
-    rootElement.setAttribute(USERNAME, getSerializedUserName());
-    rootElement.setAttribute(PASSWORD, getSerializedPassword());
-    rootElement.setAttribute(PRIVATE_KEY_FILE, StringUtil.notNullize(getPrivateKeyFile()));
-    rootElement.setAttribute(KNOWN_HOSTS_FILE, StringUtil.notNullize(getKnownHostsFile()));
-    rootElement.setAttribute(PASSPHRASE, getSerializedPassphrase());
-    rootElement.setAttribute(USE_KEY_PAIR, Boolean.toString(isUseKeyPair()));
-
-    rootElement.setAttribute(INTERPRETER_PATH, StringUtil.notNullize(getInterpreterPath()));
+  public String getPyCharmTempFilesPath() {
+    return myPyCharmTempFilesPath;
   }
 
+  public void setPyCharmTempFilesPath(String pyCharmTempFilesPath) {
+    myPyCharmTempFilesPath = pyCharmTempFilesPath;
+  }
 
-  public Object clone() throws CloneNotSupportedException {
-    try {
-      final PythonRemoteSdkAdditionalData copy = (PythonRemoteSdkAdditionalData)super.clone();
-      copy.setHost(getHost());
-      copy.setPort(getPort());
-      copy.setAnonymous(isAnonymous());
-      copy.setUserName(getUserName());
-      copy.setPassword(getPassword());
-      copy.setPrivateKeyFile(getPrivateKeyFile());
-      copy.setKnownHostsFile(getKnownHostsFile());
-      copy.setPassphrase(getPassphrase());
-      copy.setUseKeyPair(isUseKeyPair());
-
-      copy.setInterpreterPath(getInterpreterPath());
-      return copy;
-    }
-    catch (CloneNotSupportedException e) {
-      return null;
-    }
+  public String getFullPyCharmTempFilesPath() {
+    return myHost + ":" + myPyCharmTempFilesPath;
   }
 
   public String getHost() {
@@ -180,6 +159,14 @@ public class PythonRemoteSdkAdditionalData extends PythonSdkAdditionalData imple
     myStorePassphrase = storePassphrase;
   }
 
+  public boolean isStorePassword() {
+    return myStorePassword;
+  }
+
+  public boolean isStorePassphrase() {
+    return myStorePassphrase;
+  }
+
   public boolean isAnonymous() {
     return myAnonymous;
   }
@@ -187,7 +174,7 @@ public class PythonRemoteSdkAdditionalData extends PythonSdkAdditionalData imple
   public void setAnonymous(boolean anonymous) {
     myAnonymous = anonymous;
   }
-  
+
   public String getPrivateKeyFile() {
     return myPrivateKeyFile;
   }
@@ -195,7 +182,7 @@ public class PythonRemoteSdkAdditionalData extends PythonSdkAdditionalData imple
   public void setPrivateKeyFile(String privateKeyFile) {
     myPrivateKeyFile = privateKeyFile;
   }
-  
+
 
   public String getKnownHostsFile() {
     return myKnownHostsFile;
@@ -254,7 +241,7 @@ public class PythonRemoteSdkAdditionalData extends PythonSdkAdditionalData imple
 
   @NotNull
   public static PythonRemoteSdkAdditionalData loadRemote(Sdk sdk, @Nullable Element element) {
-    final PythonRemoteSdkAdditionalData data = new PythonRemoteSdkAdditionalData(PythonSdkFlavor.getFlavor(sdk.getHomePath()));
+    final PythonRemoteSdkAdditionalData data = new PythonRemoteSdkAdditionalData(computeFlavor(sdk.getHomePath()));
     load(element, data);
 
     if (element != null) {
@@ -269,9 +256,80 @@ public class PythonRemoteSdkAdditionalData extends PythonSdkAdditionalData imple
       data.setUseKeyPair(Boolean.parseBoolean(element.getAttributeValue(USE_KEY_PAIR)));
 
       data.setInterpreterPath(StringUtil.nullize(element.getAttributeValue(INTERPRETER_PATH)));
+      data.setPyCharmTempFilesPath(StringUtil.nullize(element.getAttributeValue(PYCHARM_HELPERS_PATH)));
     }
 
     return data;
+  }
+
+
+  @Nullable
+  private static PythonSdkFlavor computeFlavor(@Nullable String sdkPath) {
+    if (sdkPath == null) {
+      return null;
+    }
+    for (PythonSdkFlavor flavor : getApplicableFlavors(sdkPath.contains("\\"))) {
+      if (flavor.isValidSdkHome(sdkPath)) {
+        return flavor;
+      }
+    }
+    return null;
+  }
+
+  private static List<PythonSdkFlavor> getApplicableFlavors(boolean isWindows) {
+    List<PythonSdkFlavor> result = new ArrayList<PythonSdkFlavor>();
+    if (isWindows) {
+      result.add(WinPythonSdkFlavor.INSTANCE);
+    }
+    else {
+      result.add(UnixPythonSdkFlavor.INSTANCE);
+    }
+    result.addAll(PythonSdkFlavor.getPlatformIndependentFlavors());
+
+    return result;
+  }
+
+  @Override
+  public void save(@NotNull final Element rootElement) {
+    super.save(rootElement);
+
+    rootElement.setAttribute(HOST, getHost());
+    rootElement.setAttribute(PORT, Integer.toString(getPort()));
+    rootElement.setAttribute(ANONYMOUS, Boolean.toString(isAnonymous()));
+    rootElement.setAttribute(USERNAME, getSerializedUserName());
+    rootElement.setAttribute(PASSWORD, getSerializedPassword());
+    rootElement.setAttribute(PRIVATE_KEY_FILE, StringUtil.notNullize(getPrivateKeyFile()));
+    rootElement.setAttribute(KNOWN_HOSTS_FILE, StringUtil.notNullize(getKnownHostsFile()));
+    rootElement.setAttribute(PASSPHRASE, getSerializedPassphrase());
+    rootElement.setAttribute(USE_KEY_PAIR, Boolean.toString(isUseKeyPair()));
+
+    rootElement.setAttribute(INTERPRETER_PATH, StringUtil.notNullize(getInterpreterPath()));
+    rootElement.setAttribute(PYCHARM_HELPERS_PATH, StringUtil.notNullize(getPyCharmTempFilesPath()));
+  }
+
+
+  public Object clone() throws CloneNotSupportedException {
+    try {
+      final PythonRemoteSdkAdditionalData copy = (PythonRemoteSdkAdditionalData)super.clone();
+      copy.setHost(getHost());
+      copy.setPort(getPort());
+      copy.setAnonymous(isAnonymous());
+      copy.setUserName(getUserName());
+      copy.setPassword(getPassword());
+      copy.setPrivateKeyFile(getPrivateKeyFile());
+      copy.setKnownHostsFile(getKnownHostsFile());
+      copy.setPassphrase(getPassphrase());
+      copy.setUseKeyPair(isUseKeyPair());
+
+      copy.setInterpreterPath(getInterpreterPath());
+      copy.setStorePassword(isStorePassword());
+      copy.setStorePassphrase(isStorePassphrase());
+
+      return copy;
+    }
+    catch (CloneNotSupportedException e) {
+      return null;
+    }
   }
 }
 

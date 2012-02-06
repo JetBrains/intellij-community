@@ -5,8 +5,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.jetbrains.python.PythonHelpersLocator;
+import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.sdk.SdkUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -28,14 +28,14 @@ public class ReSTRunner {
     }
     String sdkHome = sdk.getHomePath();
     final String formatter = PythonHelpersLocator.getHelperPath("rest_formatter.py");
-    ProcessOutput output = SdkUtil.getProcessOutput(new File(sdkHome).getParent(),
-                                                    new String[] {
-                                                      sdkHome,
-                                                      formatter,
-                                                      text
-                                                    },
-                                                    null,
-                                                    5000);
+    ProcessOutput output = PySdkUtil.getProcessOutput(new File(sdkHome).getParent(),
+                                                      new String[]{
+                                                        sdkHome,
+                                                        formatter,
+                                                        text
+                                                      },
+                                                      null,
+                                                      5000);
     if (output.isTimeout()) {
       LOG.info("timeout when calculating docstring");
       return null;

@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -31,8 +32,10 @@ import com.intellij.util.containers.HashMap;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.PyDebugConsoleBuilder;
 import com.jetbrains.python.debugger.PyDebugRunner;
+import com.jetbrains.python.debugger.remote.PyRemoteDebugConfiguration;
 import com.jetbrains.python.facet.LibraryContributingFacet;
 import com.jetbrains.python.facet.PythonPathContributingFacet;
+import com.jetbrains.python.remote.PyRemoteInterpreterException;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.remote.PythonRemoteSdkAdditionalData;
 import com.jetbrains.python.sdk.PythonEnvUtil;
@@ -136,9 +139,29 @@ public abstract class PythonCommandLineState extends CommandLineState {
       .patchCommandLine(myConfig, runnerSettings, commandLine, getConfigurationSettings().getRunnerId());
 
     if (sdk != null && sdk.getSdkAdditionalData() instanceof PythonRemoteSdkAdditionalData) {
-      if (PythonRemoteInterpreterManager.EP_NAME.getExtensions().length > 0) {
-        ProcessHandler processHandler = PythonRemoteInterpreterManager.EP_NAME.getExtensions()[0]
-          .doCreateProcess(myConfig.getProject(), (PythonRemoteSdkAdditionalData)sdk.getSdkAdditionalData(), commandLine);
+
+      PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
+      if (manager != null) {
+
+        ProcessHandler processHandler =
+          null;
+
+        while (true) {
+          try {
+            processHandler =
+              manager.doCreateProcess(myConfig.getProject(), (PythonRemoteSdkAdditionalData)sdk.getSdkAdditionalData(), commandLine,
+                                      PyRemoteDebugConfiguration
+                                        .findByName(myConfig.getProject(),
+                                                    ((PythonRunConfiguration)myConfig).getRemoteDebugConfiguration()));
+            break;
+          }
+          catch (PyRemoteInterpreterException e) {
+            if (Messages.showYesNoDialog(e.getMessage() + "\nTry again?", "Can't Run Remote Interpreter", Messages.getErrorIcon()) ==
+                Messages.NO) {
+              throw new ExecutionException("Can't run remote python interpreter: " + e.getMessage());
+            }
+          }
+        }
         ProcessTerminatedListener.attach(processHandler);
         return processHandler;
       }

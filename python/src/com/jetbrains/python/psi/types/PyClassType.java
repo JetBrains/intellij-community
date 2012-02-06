@@ -256,6 +256,14 @@ public class PyClassType extends UserDataHolderBase implements PyCallableType {
 
     addInheritedMembers(prefix, location, context, ret);
 
+    if (!myClass.isNewStyleClass()) {
+      final PyBuiltinCache cache = PyBuiltinCache.getInstance(myClass);
+      final PyClassType classobjType = cache.getOldstyleClassobjType();
+      if (classobjType != null) {
+        ret.addAll(Arrays.asList(classobjType.getCompletionVariants(prefix, location, context)));
+      }
+    }
+
     if (isDefinition() && myClass.isNewStyleClass()) {
       PyClassType typeType = PyBuiltinCache.getInstance(myClass).getObjectType("type");
       if (typeType != null) {
@@ -385,7 +393,7 @@ public class PyClassType extends UserDataHolderBase implements PyCallableType {
   public String toString() {
     return (isValid() ? "" : "[INVALID] ") + "PyClassType: " + getClassQName();
   }
-  
+
   public boolean isValid() {
     return myClass == null || myClass.isValid();
   }

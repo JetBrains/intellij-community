@@ -6,9 +6,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PythonHelpersLocator;
+import com.jetbrains.python.remote.PyRemoteInterpreterException;
+import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
+import com.jetbrains.python.remote.PythonRemoteSdkAdditionalData;
+import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.sdk.SdkUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -84,8 +88,9 @@ public class PyPackageManager {
     for (PyRequirement req : requirements) {
       args.add(req.toString());
     }
-    if (options != null)
+    if (options != null) {
       args.addAll(options);
+    }
     runPythonHelper(PACKAGING_TOOL, args);
   }
 
@@ -145,23 +150,11 @@ public class PyPackageManager {
     return Arrays.asList(xs);
   }
 
+
   @NotNull
-  private String runPythonHelper(@NotNull String helper,
-                                 @NotNull List<String> args) throws PyExternalProcessException {
-    final String homePath = mySdk.getHomePath();
-    if (homePath == null) {
-      throw new PyExternalProcessException(ERROR_INVALID_SDK, "Cannot find interpreter for SDK");
-    }
-    final String helperPath = PythonHelpersLocator.getHelperPath(helper);
-    if (helperPath == null) {
-      throw new PyExternalProcessException(ERROR_HELPER_NOT_FOUND, String.format("Cannot find helper tool: '%s'", helper));
-    }
-    final String parentDir = new File(homePath).getParent();
-    final List<String> cmdline = new ArrayList<String>();
-    cmdline.add(homePath);
-    cmdline.add(helperPath);
-    cmdline.addAll(args);
-    ProcessOutput output = SdkUtil.getProcessOutput(parentDir, cmdline.toArray(new String[cmdline.size()]), TIMEOUT);
+  private String runPythonHelper(@NotNull final String helper,
+                                 @NotNull final List<String> args) throws PyExternalProcessException {
+    ProcessOutput output = getProcessOutput(helper, args);
     final int retcode = output.getExitCode();
     if (output.isTimeout()) {
       throw new PyExternalProcessException(ERROR_TIMEOUT, "Timed out");
@@ -174,12 +167,57 @@ public class PyPackageManager {
         message = stdout;
       }
       LOG.debug(String.format("Error when running '%s'\nSTDOUT: %s\nSTDERR: %s\n\n",
-                              StringUtil.join(cmdline, " "),
+                              StringUtil.join(helper, " "),
                               stdout,
                               stderr));
       throw new PyExternalProcessException(retcode, message);
     }
     return output.getStdout();
+  }
+
+
+  private ProcessOutput getProcessOutput(String helper, List<String> args) throws PyExternalProcessException {
+    if (mySdk.getSdkAdditionalData() instanceof PythonRemoteSdkAdditionalData) {
+      PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
+
+      if (manager != null) {
+        PythonRemoteSdkAdditionalData data = (PythonRemoteSdkAdditionalData)mySdk.getSdkAdditionalData();
+
+        final List<String> cmdline = new ArrayList<String>();
+        cmdline.add(mySdk.getHomePath());
+        //noinspection ConstantConditions
+        cmdline.add(new File(data.getPyCharmTempFilesPath(),
+                             helper).getPath());
+        cmdline.addAll(args);
+
+        try {
+          return manager.runRemoteProcess(null, data, ArrayUtil.toStringArray(cmdline));
+        }
+        catch (PyRemoteInterpreterException e) {
+          throw new PyExternalProcessException(ERROR_INVALID_SDK, "Error running sdk.");
+        }
+      }
+      else {
+        throw new PyExternalProcessException(ERROR_INVALID_SDK,
+                                             "Remote interpreter can't be executed. Please enable WebDeployment plugin.");
+      }
+    }
+    else {
+      final String homePath = mySdk.getHomePath();
+      if (homePath == null) {
+        throw new PyExternalProcessException(ERROR_INVALID_SDK, "Cannot find interpreter for SDK");
+      }
+      final String helperPath = PythonHelpersLocator.getHelperPath(helper);
+      if (helperPath == null) {
+        throw new PyExternalProcessException(ERROR_HELPER_NOT_FOUND, String.format("Cannot find helper tool: '%s'", helper));
+      }
+      final String parentDir = new File(homePath).getParent();
+      final List<String> cmdline = new ArrayList<String>();
+      cmdline.add(homePath);
+      cmdline.add(helperPath);
+      cmdline.addAll(args);
+      return PySdkUtil.getProcessOutput(parentDir, ArrayUtil.toStringArray(cmdline), TIMEOUT);
+    }
   }
 
   @NotNull
@@ -194,8 +232,9 @@ public class PyPackageManager {
       final String name = fields.get(0);
       final String version = fields.get(1);
       final String location = fields.get(2);
-      if (!"Python".equals(name) && !"wsgiref".equals(name))
+      if (!"Python".equals(name) && !"wsgiref".equals(name)) {
         packages.add(new PyPackage(name, version, location, new ArrayList<PyRequirement>()));
+      }
     }
     return packages;
   }

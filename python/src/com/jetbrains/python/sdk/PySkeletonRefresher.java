@@ -273,10 +273,10 @@ public class PySkeletonRefresher {
     final String parentDir = new File(homePath).getParent();
     final long startTime = System.currentTimeMillis();
     final String[] cmd = new String[] {homePath, PythonHelpersLocator.getHelperPath(GENERATOR3), "-v", "-L", "-s", extraSysPath};
-    final ProcessOutput process = SdkUtil.getProcessOutput(parentDir,
-                                                           cmd,
-                                                           PythonSdkType.getVirtualEnvAdditionalEnv(homePath),
-                                                           MINUTE * 4); // see PY-3898
+    final ProcessOutput process = PySdkUtil.getProcessOutput(parentDir,
+                                                             cmd,
+                                                             PythonSdkType.getVirtualEnvAdditionalEnv(homePath),
+                                                             MINUTE * 4); // see PY-3898
     LOG.info("Retrieving binary module list took " + (System.currentTimeMillis() - startTime) + " ms");
     if (process.getExitCode() != 0) {
       final StringBuilder sb = new StringBuilder("failed to run ").append(GENERATOR3).append(" for ").append(homePath);
@@ -425,7 +425,7 @@ public class PySkeletonRefresher {
 
 
     long startTime = System.currentTimeMillis();
-    final ProcessOutput run_result = SdkUtil.getProcessOutput(
+    final ProcessOutput run_result = PySdkUtil.getProcessOutput(
       new File(binaryPath).getParent(),
       new String[]{
         binaryPath,
@@ -433,7 +433,7 @@ public class PySkeletonRefresher {
         "-d", mySkeletonsPath, // output dir
         "-b", // for builtins
       },
-      PythonSdkType.getVirtualEnvAdditionalEnv(binaryPath), MINUTE *5
+      PythonSdkType.getVirtualEnvAdditionalEnv(binaryPath), MINUTE * 5
     );
     run_result.checkSuccess(LOG);
     LOG.info("Rebuilding builtin skeletons took " + (System.currentTimeMillis() - startTime) + " ms");
@@ -722,7 +722,7 @@ public class PySkeletonRefresher {
     commandLine.add(modname);
     if (modfilename != null) commandLine.add(modfilename);
 
-    final ProcessOutput gen_result = SdkUtil.getProcessOutput(
+    final ProcessOutput gen_result = PySdkUtil.getProcessOutput(
       parent_dir,
       ArrayUtil.toStringArray(commandLine),
       PythonSdkType.getVirtualEnvAdditionalEnv(binaryPath),

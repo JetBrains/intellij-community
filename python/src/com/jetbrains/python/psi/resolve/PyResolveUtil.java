@@ -87,28 +87,45 @@ public class PyResolveUtil {
   /**
    * Crawls up scopes of the PSI tree, checking named elements and name definers.
    */
-  public static void scopeCrawlUp(@NotNull PsiScopeProcessor processor, @NotNull PsiElement element, @NotNull String name,
+  public static void scopeCrawlUp(@NotNull PsiScopeProcessor processor, @NotNull PsiElement element, @Nullable String name,
                                   @Nullable PsiElement roof) {
     // Use real context here to enable correct completion and resolve in case of PyExpressionCodeFragment!!!
     final PsiElement realContext = PyPsiUtils.getRealContext(element);
     final ScopeOwner originalOwner = ScopeUtil.getResolveScopeOwner(realContext);
-
-    ScopeOwner owner = originalOwner;
     final PsiElement parent = element.getParent();
     final boolean isGlobalOrNonlocal = parent instanceof PyGlobalStatement || parent instanceof PyNonlocalStatement;
+    ScopeOwner owner = originalOwner;
     if (isGlobalOrNonlocal) {
       final ScopeOwner outerScopeOwner = ScopeUtil.getScopeOwner(owner);
       if (outerScopeOwner != null) {
         owner = outerScopeOwner;
       }
     }
-    while (owner != null) {
-      if (!(owner instanceof PyClass) || owner == originalOwner) {
-        final Scope scope = ControlFlowCache.getScope(owner);
-        PsiElement resolved = scope.getNamedElement(name);
-        if (resolved != null) {
-          if (!processor.execute(resolved, ResolveState.initial())) {
-            return;
+    scopeCrawlUp(processor, owner, originalOwner, name, roof);
+  }
+
+  public static void scopeCrawlUp(@NotNull PsiScopeProcessor processor, @NotNull ScopeOwner scopeOwner, @Nullable PsiElement roof) {
+    scopeCrawlUp(processor, scopeOwner, scopeOwner, null, roof);
+  }
+
+  private static void scopeCrawlUp(@NotNull PsiScopeProcessor processor, @Nullable ScopeOwner scopeOwner,
+                                  @Nullable ScopeOwner originalScopeOwner, @Nullable String name, @Nullable PsiElement roof) {
+    while (scopeOwner != null) {
+      if (!(scopeOwner instanceof PyClass) || scopeOwner == originalScopeOwner) {
+        final Scope scope = ControlFlowCache.getScope(scopeOwner);
+        if (name != null) {
+          final PsiElement resolved = scope.getNamedElement(name);
+          if (resolved != null) {
+            if (!processor.execute(resolved, ResolveState.initial())) {
+              return;
+            }
+          }
+        }
+        else {
+          for (PsiNamedElement element : scope.getNamedElements()) {
+            if (!processor.execute(element, ResolveState.initial())) {
+              return;
+            }
           }
         }
         for (NameDefiner definer : scope.getNameDefiners()) {
@@ -117,10 +134,10 @@ public class PyResolveUtil {
           }
         }
       }
-      if (owner == roof) {
+      if (scopeOwner == roof) {
         return;
       }
-      owner = ScopeUtil.getScopeOwner(owner);
+      scopeOwner = ScopeUtil.getScopeOwner(scopeOwner);
     }
   }
 

@@ -3,6 +3,7 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyDecoratorList;
+import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.stubs.PyDecoratorListStub;
 import com.jetbrains.python.psi.PyDecorator;
 import com.jetbrains.python.psi.PyElementVisitor;
@@ -37,7 +38,8 @@ public class PyDecoratorListImpl extends PyBaseElementImpl<PyDecoratorListStub> 
   public PyDecorator findDecorator(String name) {
     final PyDecorator[] decorators = getDecorators();
     for (PyDecorator decorator : decorators) {
-      if (name.equals(decorator.getCallee().getText())) {
+      final PyExpression callee = decorator.getCallee();
+      if (callee != null && name.equals(callee.getText())) {
         return decorator;
       }
     }

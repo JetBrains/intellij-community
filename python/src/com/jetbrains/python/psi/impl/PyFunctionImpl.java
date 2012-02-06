@@ -77,24 +77,29 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
 
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     final ASTNode nameElement = PyElementGenerator.getInstance(getProject()).createNameIdentifier(name);
-    getNode().replaceChild(getNameNode(), nameElement);
+    final ASTNode nameNode = getNameNode();
+    if (nameNode != null) {
+      getNode().replaceChild(nameNode, nameElement);
+    }
     return this;
   }
 
   @Override
   public Icon getIcon(int flags) {
-    final Property property = getProperty();
-    if (property != null) {
-      if (property.getGetter().valueOrNull() == this) {
-        return PROPERTY_GETTER;
+    if (isValid()) {
+      final Property property = getProperty();
+      if (property != null) {
+        if (property.getGetter().valueOrNull() == this) {
+          return PROPERTY_GETTER;
+        }
+        if (property.getSetter().valueOrNull() == this) {
+          return PROPERTY_SETTER;
+        }
+        if (property.getDeleter().valueOrNull() == this) {
+          return PROPERTY_DELETER;
+        }
+        return PlatformIcons.PROPERTY_ICON;
       }
-      if (property.getSetter().valueOrNull() == this) {
-        return PROPERTY_SETTER;
-      }
-      if (property.getDeleter().valueOrNull() == this) {
-        return PROPERTY_DELETER;
-      }
-      return PlatformIcons.PROPERTY_ICON;
     }
     return PlatformIcons.METHOD_ICON;
   }
@@ -279,6 +284,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
     return PyTypeParser.getTypeByName(this, typeName);
   }
 
+  @Nullable
   @Override
   public String getDeprecationMessage() {
     PyFunctionStub stub = getStub();
@@ -288,6 +294,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
     return extractDeprecationMessage();
   }
 
+  @Nullable
   public String extractDeprecationMessage() {
     PyStatementList statementList = getStatementList();
     if (statementList == null) {
@@ -296,6 +303,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
     return extractDeprecationMessage(Arrays.asList(statementList.getStatements()));
   }
 
+  @Nullable
   public static String extractDeprecationMessage(List<PyStatement> statements) {
     for (PyStatement statement : statements) {
       if (statement instanceof PyExpressionStatement) {
@@ -306,7 +314,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
             PyReferenceExpression warningClass = callExpression.getArgument(1, PyReferenceExpression.class);
             if (warningClass != null && (PyNames.DEPRECATION_WARNING.equals(warningClass.getReferencedName()) ||
                                          PyNames.PENDING_DEPRECATION_WARNING.equals(warningClass.getReferencedName()))) {
-              return PyUtil.strValue(callExpression.getArguments() [0]);
+              return PyUtil.strValue(callExpression.getArguments()[0]);
             }
           }
         }
@@ -354,7 +362,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
     }
 
     StructuredDocString epydocString = StructuredDocString.parse(docString);
-    return epydocString.getReturnType();
+    return epydocString != null ? epydocString.getReturnType() : null;
   }
 
   private static class ReturnVisitor extends PyRecursiveElementVisitor {
@@ -530,10 +538,10 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
         if (targetExpressionStub.getInitializerType() == PyTargetExpressionStub.InitializerType.CallExpression) {
           final PyQualifiedName qualifiedName = targetExpressionStub.getInitializer();
           if (PyQualifiedName.fromComponents(PyNames.CLASSMETHOD).equals(qualifiedName)) {
-            return Modifier.CLASSMETHOD;
+            return CLASSMETHOD;
           }
           if (PyQualifiedName.fromComponents(PyNames.STATICMETHOD).equals(qualifiedName)) {
-            return Modifier.STATICMETHOD;
+            return STATICMETHOD;
           }
         }
       }

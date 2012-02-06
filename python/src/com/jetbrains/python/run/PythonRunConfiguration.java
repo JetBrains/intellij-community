@@ -33,9 +33,11 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
   public static final String SCRIPT_NAME = "SCRIPT_NAME";
   public static final String PARAMETERS = "PARAMETERS";
   public static final String MULTIPROCESS = "MULTIPROCESS";
+  private static final String REMOTE_DEBUG_RUN_CONFIGURATION = "REMOTE_DEBUG_RUN_CONFIGURATION";
   private String myScriptName;
   private String myScriptParameters;
   private boolean myMultiprocessMode;
+  private String myRemoteDebugConfiguration;
 
   protected PythonRunConfiguration(RunConfigurationModule module, ConfigurationFactory configurationFactory, String name) {
     super(name, module, configurationFactory);
@@ -63,6 +65,10 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
 
     if (StringUtil.isEmptyOrSpaces(myScriptName)) {
       throw new RuntimeConfigurationException(PyBundle.message("runcfg.unittest.no_script_name"));
+    }
+
+    if (PythonRunConfigurationForm.isRemoteSdkSelected(getSdkHome()) && myRemoteDebugConfiguration == null) {
+      throw new RuntimeConfigurationException("Please specify Python Remote Debug configuration with configured host, port and path mappings.");
     }
   }
 
@@ -109,6 +115,7 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
     myScriptName = JDOMExternalizerUtil.readField(element, SCRIPT_NAME);
     myScriptParameters = JDOMExternalizerUtil.readField(element, PARAMETERS);
     myMultiprocessMode = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, MULTIPROCESS));
+    myRemoteDebugConfiguration = JDOMExternalizerUtil.readField(element, REMOTE_DEBUG_RUN_CONFIGURATION);
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
@@ -116,6 +123,7 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
     JDOMExternalizerUtil.writeField(element, SCRIPT_NAME, myScriptName);
     JDOMExternalizerUtil.writeField(element, PARAMETERS, myScriptParameters);
     JDOMExternalizerUtil.writeField(element, MULTIPROCESS, Boolean.toString(myMultiprocessMode));
+    JDOMExternalizerUtil.writeField(element, REMOTE_DEBUG_RUN_CONFIGURATION, myRemoteDebugConfiguration);
   }
 
   public AbstractPythonRunConfigurationParams getBaseParams() {
@@ -127,6 +135,15 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
     target.setScriptName(source.getScriptName());
     target.setScriptParameters(source.getScriptParameters());
     target.setMultiprocessMode(source.isMultiprocessMode());
+    target.setRemoteDebugConfiguration(source.getRemoteDebugConfiguration());
+  }
+
+  public String getRemoteDebugConfiguration() {
+    return myRemoteDebugConfiguration;
+  }
+
+  public void setRemoteDebugConfiguration(String remoteDebugConfiguration) {
+    myRemoteDebugConfiguration = remoteDebugConfiguration;
   }
 
   @Override
