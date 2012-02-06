@@ -32,10 +32,12 @@ public class CoreLocalVirtualFile extends VirtualFile {
   private final CoreLocalFileSystem myFileSystem;
   private final File myIoFile;
   private VirtualFile[] myChildren;
+  private final boolean isDirectory;
 
   public CoreLocalVirtualFile(CoreLocalFileSystem fileSystem, File ioFile) {
     myFileSystem = fileSystem;
     myIoFile = ioFile;
+    isDirectory = ioFile.isDirectory();
   }
 
   @NotNull
@@ -57,17 +59,17 @@ public class CoreLocalVirtualFile extends VirtualFile {
 
   @Override
   public boolean isWritable() {
-    return myIoFile.canWrite();
+    return false; // Core VFS isn't writable.
   }
 
   @Override
   public boolean isDirectory() {
-    return myIoFile.isDirectory();
+    return isDirectory;
   }
 
   @Override
   public boolean isValid() {
-    return myIoFile.exists();
+    return true; // Core VFS cannot change, doesn't refresh so once found, any file is writable
   }
 
   @Override
