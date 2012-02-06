@@ -25,8 +25,8 @@ import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.fileTypes.AndroidRenderscriptFileType;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.util.AndroidBundle;
+import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.AndroidUtils;
-import org.jetbrains.android.util.ExecutionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -260,8 +260,8 @@ public class AndroidRenderscriptCompiler implements SourceGeneratingCompiler {
     command.add("-MD");
     command.add(sourceFilePath);
 
-    LOG.info(AndroidUtils.command2string(command));
-    return ExecutionUtil.execute(ArrayUtil.toStringArray(command));
+    LOG.info(AndroidCommonUtils.command2string(command));
+    return AndroidCompileUtil.execute(ArrayUtil.toStringArray(command));
   }
 
   @Nullable

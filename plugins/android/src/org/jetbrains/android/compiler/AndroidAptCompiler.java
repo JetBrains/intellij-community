@@ -40,6 +40,7 @@ import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.maven.AndroidMavenUtil;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.util.AndroidBundle;
+import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -120,10 +121,11 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
         }
 
         try {
-          Map<CompilerMessageCategory, List<String>> messages = AndroidApt.compile(aptItem.myAndroidTarget, aptItem.myPlatformToolsRevision,
-                                                                                   aptItem.myManifestFile.getPath(), aptItem.myPackage,
-                                                                                   aptItem.mySourceRootPath, aptItem.myResourcesPaths,
-                                                                                   aptItem.myLibraryPackages, aptItem.myIsLibrary);
+          Map<CompilerMessageCategory, List<String>> messages = AndroidCompileUtil.toCompilerMessageCategoryKeys(
+            AndroidApt.compile(aptItem.myAndroidTarget, aptItem.myPlatformToolsRevision,
+                               aptItem.myManifestFile.getPath(), aptItem.myPackage,
+                               aptItem.mySourceRootPath, aptItem.myResourcesPaths,
+                               aptItem.myLibraryPackages, aptItem.myIsLibrary));
           
           AndroidCompileUtil.addMessages(context, messages);
           if (messages.get(CompilerMessageCategory.ERROR).isEmpty()) {
@@ -218,13 +220,14 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
       
       myGeneratedFile2Package = new HashMap<File, String>();
 
-      myGeneratedFile2Package.put(
-        new File(sourceRootPath, aPackage.replace('.', File.separatorChar) + File.separator + AndroidUtils.R_JAVA_FILENAME), aPackage);
+      myGeneratedFile2Package
+        .put(new File(sourceRootPath, aPackage.replace('.', File.separatorChar) + File.separator + AndroidCommonUtils.R_JAVA_FILENAME),
+             aPackage);
 
       for (String libPackage : myLibraryPackages) {
-        myGeneratedFile2Package
-          .put(new File(sourceRootPath, libPackage.replace('.', File.separatorChar) + File.separator + AndroidUtils.R_JAVA_FILENAME),
-               libPackage);
+        myGeneratedFile2Package.put(
+          new File(sourceRootPath, libPackage.replace('.', File.separatorChar) + File.separator + AndroidCommonUtils.R_JAVA_FILENAME),
+          libPackage);
       }
       
       myNonExistingFiles = new HashSet<String>();
@@ -237,13 +240,13 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
       }
 
       myGeneratedFile2Package.put(
-        new File(sourceRootPath, aPackage.replace('.', File.separatorChar) + File.separator + AndroidUtils.MANIFEST_JAVA_FILE_NAME),
+        new File(sourceRootPath, aPackage.replace('.', File.separatorChar) + File.separator + AndroidCommonUtils.MANIFEST_JAVA_FILE_NAME),
         aPackage);
 
       for (String libraryPackage : myLibraryPackages) {
-        myGeneratedFile2Package.put(
-          new File(sourceRootPath, libraryPackage.replace('.', File.separatorChar) + File.separator + AndroidUtils.MANIFEST_JAVA_FILE_NAME),
-          libraryPackage);
+        myGeneratedFile2Package.put(new File(sourceRootPath, libraryPackage.replace('.', File.separatorChar) +
+                                                             File.separator +
+                                                             AndroidCommonUtils.MANIFEST_JAVA_FILE_NAME), libraryPackage);
       }
     }
 
@@ -253,7 +256,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
     }
 
     public String getPath() {
-      return myPackage.replace('.', '/') + '/' + AndroidUtils.R_JAVA_FILENAME;
+      return myPackage.replace('.', '/') + '/' + AndroidCommonUtils.R_JAVA_FILENAME;
     }
 
     public ValidityState getValidityState() {
@@ -335,7 +338,8 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
           String sourceRootPath = facet.getAptGenSourceRootPath();
           if (sourceRootPath == null) {
             myContext.addMessage(CompilerMessageCategory.ERROR,
-                                 AndroidBundle.message("android.compilation.error.apt.gen.not.specified", module.getName()), null, -1, -1);
+                                 AndroidBundle.message("android.compilation.error.apt.gen.not.specified", module.getName()),
+                                 null, -1, -1);
             continue;
           }
 

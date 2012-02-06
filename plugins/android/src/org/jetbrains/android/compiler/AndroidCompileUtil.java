@@ -46,6 +46,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.FileTypeIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.android.AndroidProjectComponent;
 import org.jetbrains.android.dom.resources.Attr;
@@ -58,7 +59,9 @@ import org.jetbrains.android.fileTypes.AndroidIdlFileType;
 import org.jetbrains.android.fileTypes.AndroidRenderscriptFileType;
 import org.jetbrains.android.resourceManagers.LocalResourceManager;
 import org.jetbrains.android.sdk.AndroidPlatform;
+import org.jetbrains.android.util.AndroidCompilerMessageKind;
 import org.jetbrains.android.util.AndroidUtils;
+import org.jetbrains.android.util.ExecutionUtil;
 import org.jetbrains.android.util.ResourceEntry;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -77,21 +80,44 @@ import java.util.regex.Pattern;
 public class AndroidCompileUtil {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.compiler.AndroidCompileUtil");
   private static Pattern R_PATTERN = Pattern.compile("R(\\$.*)?\\.class");
-  
+
   private static final Pattern ourMessagePattern = Pattern.compile("(.+):(\\d+):.+");
 
   private static final Key<Boolean> RELEASE_BUILD_KEY = new Key<Boolean>("RELEASE_BUILD_KEY");
   @NonNls private static final String RESOURCES_CACHE_DIR_NAME = "res-cache";
   @NonNls private static final String GEN_MODULE_PREFIX = "~generated_";
-  
+
   @NonNls private static final String PROGUARD_CFG_FILE_NAME = "proguard.cfg";
   @NonNls public static final String CLASSES_JAR_FILE_NAME = "classes.jar";
-  
+
   @NonNls
   private static final String[] SCALA_TEST_CONFIGURATIONS =
     {"ScalaTestRunConfiguration", "SpecsRunConfiguration", "Specs2RunConfiguration"};
 
   private AndroidCompileUtil() {
+  }
+
+  @NotNull
+  public static <T> Map<CompilerMessageCategory, T> toCompilerMessageCategoryKeys(@NotNull Map<AndroidCompilerMessageKind, T> map) {
+    final Map<CompilerMessageCategory, T> result = new HashMap<CompilerMessageCategory, T>();
+
+    for (Map.Entry<AndroidCompilerMessageKind, T> entry : map.entrySet()) {
+      final AndroidCompilerMessageKind key = entry.getKey();
+      final T value = entry.getValue();
+
+      switch (key) {
+        case ERROR:
+          result.put(CompilerMessageCategory.ERROR, value);
+          break;
+        case INFORMATION:
+          result.put(CompilerMessageCategory.INFORMATION, value);
+          break;
+        case WARNING:
+          result.put(CompilerMessageCategory.WARNING, value);
+          break;
+      }
+    }
+    return result;
   }
 
   @Nullable
@@ -166,7 +192,7 @@ public class AndroidCompileUtil {
     if (root == anchor) {
       return;
     }
-    
+
     VirtualFile parent = anchor.getParent();
     if (parent == null) {
       return;
@@ -191,7 +217,7 @@ public class AndroidCompileUtil {
       return;
     }
     Set<VirtualFile> rootsToExclude = new HashSet<VirtualFile>();
-    collectChildrenRecursively(excludedRoot, root, rootsToExclude);    
+    collectChildrenRecursively(excludedRoot, root, rootsToExclude);
     final ModifiableRootModel model = manager.getModifiableModel();
     ContentEntry contentEntry = findContentEntryForRoot(model, excludedRoot);
     if (contentEntry != null) {
@@ -218,7 +244,7 @@ public class AndroidCompileUtil {
       }
     });
   }
-  
+
   @NotNull
   private static String getGenModuleName(@NotNull Module module) {
     return GEN_MODULE_PREFIX + module.getName();
@@ -295,7 +321,7 @@ public class AndroidCompileUtil {
     }
     final VirtualFile moduleFile = genModule.getModuleFile();
     moduleManager.disposeModule(genModule);
-    
+
     if (moduleFile != null) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
@@ -397,10 +423,10 @@ public class AndroidCompileUtil {
     if (context == null) {
       return;
     }
-    
+
     final Set<Module> affectedModules = new HashSet<Module>();
     Collections.addAll(affectedModules, context.getCompileScope().getAffectedModules());
-    
+
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
       @Override
       public void run() {
@@ -416,7 +442,7 @@ public class AndroidCompileUtil {
         }
       }
     }, ModalityState.defaultModalityState());
-    
+
     List<GeneratingCompiler.GenerationItem> itemsToGenerate = new ArrayList<GeneratingCompiler.GenerationItem>();
     for (GeneratingCompiler.GenerationItem item : compiler.getGenerationItems(context)) {
       if (affectedModules.contains(item.getModule())) {
@@ -530,15 +556,15 @@ public class AndroidCompileUtil {
     final Project project = facet.getModule().getProject();
     final IntermediateOutputCompiler pngFilesCachingCompiler =
       collectResCacheDirs ? Extensions.findExtension(Compiler.EP_NAME, project, AndroidPngFilesCachingCompiler.class) : null;
-    
+
     if (collectResCacheDirs) {
       assert pngFilesCachingCompiler != null;
     }
-    
+
     final List<String> result = new ArrayList<String>();
 
     doCollectResourceDirs(facet, collectResCacheDirs, result, context);
-    
+
     for (AndroidFacet depFacet : AndroidUtils.getAllAndroidDependencies(facet.getModule(), true)) {
       doCollectResourceDirs(depFacet, collectResCacheDirs, result, context);
     }
@@ -623,11 +649,11 @@ public class AndroidCompileUtil {
 
   public static boolean isFullBuild(@NotNull CompileContext context) {
     final RunConfiguration runConfiguration = CompileStepBeforeRun.getRunConfiguration(context);
-    
+
     if (runConfiguration == null) {
       return true;
     }
-    
+
     if (runConfiguration instanceof JUnitConfiguration) {
       return false;
     }
@@ -802,7 +828,7 @@ public class AndroidCompileUtil {
                                    boolean packRClasses,
                                    @NotNull List<Pair<File, String>> files)
     throws IOException {
-    
+
     if (file.isDirectory()) {
       final File[] children = file.listFiles();
 
@@ -816,13 +842,13 @@ public class AndroidCompileUtil {
       if (!FileUtil.getExtension(file.getName()).equals("class")) {
         return;
       }
-      
+
       if (!packRClasses && R_PATTERN.matcher(file.getName()).matches()) {
         return;
       }
 
       final String rootPath = rootDirectory.getAbsolutePath();
-      
+
       String path = file.getAbsolutePath();
       path = FileUtil.toSystemIndependentName(path.substring(rootPath.length()));
       if (path.charAt(0) == '/') {
@@ -860,5 +886,13 @@ public class AndroidCompileUtil {
       classFilesDirOsPaths[i] = FileUtil.toSystemDependentName(classFilesDirs[i].getPath());
     }
     return classFilesDirOsPaths;
+  }
+
+  // can't be invoked from dispatch thread
+  @NotNull
+  public static Map<CompilerMessageCategory, List<String>> execute(String... argv) throws IOException {
+    assert !ApplicationManager.getApplication().isDispatchThread();
+    final Map<AndroidCompilerMessageKind, List<String>> messages = ExecutionUtil.doExecute(argv);
+    return toCompilerMessageCategoryKeys(messages);
   }
 }
