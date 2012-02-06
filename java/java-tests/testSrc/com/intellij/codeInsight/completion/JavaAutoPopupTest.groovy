@@ -750,7 +750,6 @@ class Foo {
     joinCommit()
     myFixture.type 'a.'
     myFixture.checkResult(" class Foo { { int iteraaa; iteraaa.<caret> } } ")
-    assert !lookup
   }
 
   public void testRestartWithInvisibleLookup() {
