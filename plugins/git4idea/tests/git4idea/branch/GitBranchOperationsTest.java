@@ -141,14 +141,14 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
   public void create_new_branch_with_unmerged_files_in_first_repo_should_show_notification() throws Exception {
     GitTestScenarioGenerator.prepareUnmergedFiles(myUltimate);
     doCheckoutNewBranch();
-    assertNotify(NotificationType.ERROR, GitBranchOperation.UNMERGED_FILES_ERROR_NOTIFICATION_DESCRIPTION);
+    assertNotify(NotificationType.ERROR, unmergedFilesErrorNotificationDescription("checkout"));
   }
-  
+
   @Test
   public void create_new_branch_with_unmerged_files_in_second_repo_should_propose_to_rollback() throws Exception {
     GitTestScenarioGenerator.prepareUnmergedFiles(myCommunity, myContrib);
     doCheckoutNewBranch();
-    assertMessage(GitBranchOperation.UNMERGED_FILES_ERROR_TITLE);
+    assertMessage(unmergedFilesErrorTitle("checkout"));
   }
 
   @Test
@@ -156,7 +156,7 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
     GitTestScenarioGenerator.prepareUnmergedFiles(myCommunity, myContrib);
     myMessageManager.nextAnswer(Messages.OK);
     doCheckoutNewBranch();
-    assertMessage(GitBranchOperation.UNMERGED_FILES_ERROR_TITLE);
+    assertMessage(unmergedFilesErrorTitle("checkout"));
     assertBranch("master");
     assertTrue(!branch(myUltimate).contains(NEW_BRANCH));
   }
@@ -166,7 +166,7 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
     GitTestScenarioGenerator.prepareUnmergedFiles(myCommunity, myContrib);
     myMessageManager.nextAnswer(Messages.CANCEL);
     doCheckoutNewBranch();
-    assertMessage(GitBranchOperation.UNMERGED_FILES_ERROR_TITLE);
+    assertMessage(unmergedFilesErrorTitle("checkout"));
 
     assertBranch(myUltimate, NEW_BRANCH);
     assertBranch(myCommunity, MASTER);
@@ -185,7 +185,7 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
     prepareBranchForSimpleCheckout();
     GitTestScenarioGenerator.prepareUnmergedFiles(myUltimate);
     doCheckout("feature", null);
-    assertNotify(NotificationType.ERROR, GitBranchOperation.UNMERGED_FILES_ERROR_NOTIFICATION_DESCRIPTION);
+    assertNotify(NotificationType.ERROR, unmergedFilesErrorNotificationDescription("checkout"));
   }
   
   @Test
@@ -193,7 +193,7 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
     prepareBranchForSimpleCheckout();
     GitTestScenarioGenerator.prepareUnmergedFiles(myCommunity);
     doCheckout("feature", null);
-    assertMessage(GitBranchOperation.UNMERGED_FILES_ERROR_TITLE);
+    assertMessage(unmergedFilesErrorTitle("checkout"));
   }
 
   @Test
@@ -202,7 +202,7 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
     GitTestScenarioGenerator.prepareUnmergedFiles(myCommunity);
     myMessageManager.nextAnswer(Messages.OK);
     doCheckout("feature", null);
-    assertMessage(GitBranchOperation.UNMERGED_FILES_ERROR_TITLE);
+    assertMessage(unmergedFilesErrorTitle("checkout"));
     assertBranch("master");
   }
 
@@ -212,7 +212,7 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
     GitTestScenarioGenerator.prepareUnmergedFiles(myCommunity);
     myMessageManager.nextAnswer(Messages.CANCEL);
     doCheckout("feature", null);
-    assertMessage(GitBranchOperation.UNMERGED_FILES_ERROR_TITLE);
+    assertMessage(unmergedFilesErrorTitle("checkout"));
     assertBranch(myUltimate, "feature");
     assertBranch(myCommunity, "master");
     assertBranch(myContrib, "master");
@@ -234,7 +234,7 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
     branch(myUltimate, "feature");
     branch(myContrib, "feature");
 
-    Class gitCheckoutOperationClass = Class.forName("git4idea.branch.GitCheckoutOperation");
+    Class gitCheckoutOperationClass = Class.forName("git4idea.branch.GitBranchOperation");
     Class[] classes = gitCheckoutOperationClass.getDeclaredClasses();
     Class untrackedFilesDialogClass = null;
     for (Class aClass : classes) {
@@ -335,7 +335,7 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
     doCheckout("feature", null);
     assertMessage("Couldn't checkout feature", 
                   "Local changes would be overwritten by checkout.<br/>Stash or commit them before checking out a branch.<br/>" + 
-                  "However checkout has succeeded for the following repositories:<br/>" +
+                  "However checkout has succeeded for the following repository:<br/>" +
                    myUltimate.getPresentableUrl() +
                    "<br/>You may rollback (checkout back to master) not to let branches diverge.",
                   "Rollback", "Don't rollback");
@@ -347,7 +347,7 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
     GitTestScenarioGenerator.prepareUnmergedFiles(myCommunity);
     myMessageManager.nextAnswer(Messages.OK);
     doCheckout("feature", "newBranch");
-    assertMessage(GitBranchOperation.UNMERGED_FILES_ERROR_TITLE);
+    assertMessage(unmergedFilesErrorTitle("checkout"));
     assertBranch("master");
     for (GitRepository repository : myRepositories) {
       assertFalse(branch(repository).contains("newBranch"), "Branch newBranch wasn't deleted from repository " + getShortRepositoryName(
@@ -423,7 +423,7 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
 
     registerNotFullyMergedDialog(DialogWrapper.CANCEL_EXIT_CODE);
     doDeleteBranch("unmerged_branch");
-    assertNotify(NotificationType.ERROR, "Branch unmerged_branch wasn't deleted", "This branch is not fully merged to master");
+    assertNotify(NotificationType.ERROR, "Branch unmerged_branch wasn't deleted", "This branch is not fully merged to master.");
   }
   
   @Test
@@ -488,6 +488,20 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
     callPrivateBranchOperationsProcessorMethod("doCheckoutNewBranch", NEW_BRANCH);
   }
 
+  private static String unmergedFilesErrorNotificationDescription(String operation)
+    throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    Method method = GitBranchOperation.class.getDeclaredMethod("unmergedFilesErrorNotificationDescription", String.class);
+    method.setAccessible(true);
+    return (String) method.invoke(null, operation);
+  }
+
+  private static String unmergedFilesErrorTitle(String operation)
+    throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    Method method = GitBranchOperation.class.getDeclaredMethod("unmergedFilesErrorTitle", String.class);
+    method.setAccessible(true);
+    return (String) method.invoke(null, operation);
+  }
+
   private void callPrivateBranchOperationsProcessorMethod(String methodName, String branchName) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
     // call private doCheckoutNewBranch instead of public checkoutNewBranch to avoid dealing with background process creation
     // same for other branch operations
@@ -547,10 +561,10 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
     TestMessageManager.Message message = myMessageManager.getLastMessage();
     assertNotNull(message);
     if (title != null) {
-      assertEquals(message.getTitle(), title);
+      assertEquals(stripHtmlAndBreaks(message.getTitle()), stripHtmlAndBreaks(title));
     }
     if (description != null) {
-      assertEquals(message.getDescription(), description);
+      assertEquals(stripHtmlAndBreaks(message.getDescription()), stripHtmlAndBreaks(description));
     }
     if (yesButton != null) {
       assertEquals(message.getYesText(), yesButton);

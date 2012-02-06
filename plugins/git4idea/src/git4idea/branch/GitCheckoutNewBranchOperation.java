@@ -98,6 +98,12 @@ class GitCheckoutNewBranchOperation extends GitBranchOperation {
            "<br/>You may rollback (checkout back to " + myPreviousBranch + " and delete " + myNewBranchName + ") not to let branches diverge.";
   }
 
+  @NotNull
+  @Override
+  protected String getOperationName() {
+    return "checkout";
+  }
+
   @Override
   protected void rollback() {
     GitCompoundResult checkoutResult = new GitCompoundResult(myProject);

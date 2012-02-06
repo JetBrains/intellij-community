@@ -52,11 +52,6 @@ import static com.intellij.openapi.util.text.StringUtil.stripHtml;
  */
 abstract class GitBranchOperation {
 
-  static final String UNMERGED_FILES_ERROR_TITLE = "Can't checkout because of unmerged files";
-  static final String UNMERGED_FILES_ERROR_NOTIFICATION_DESCRIPTION =
-    "You have to <a href='resolve'>resolve</a> all merge conflicts before checkout.<br/>" +
-    "After resolving conflicts you also probably would want to commit your files to the current branch.";
-
   @NotNull protected final Project myProject;
   @NotNull private final Collection<GitRepository> myRepositories;
   @NotNull private final ProgressIndicator myIndicator;
@@ -82,6 +77,14 @@ abstract class GitBranchOperation {
 
   @NotNull
   protected abstract String getRollbackProposal();
+
+  /**
+   * Returns a short downcased name of the operation.
+   * It is used by some dialogs or notifications which are common to several operations.
+   * Some operations (like checkout new branch) can be not mentioned in these dialogs, so their operation names would be not used.
+   */
+  @NotNull
+  protected abstract String getOperationName();
 
   /**
    * @return next repository that wasn't handled (e.g. checked out) yet.
@@ -171,6 +174,27 @@ abstract class GitBranchOperation {
     }
   }
 
+  @NotNull
+  private String unmergedFilesErrorTitle() {
+    return unmergedFilesErrorTitle(getOperationName());
+  }
+
+  @NotNull
+  private static String unmergedFilesErrorTitle(String operationName) {
+    return "Can't " + operationName + " because of unmerged files";
+  }
+
+  @NotNull
+  private String unmergedFilesErrorNotificationDescription() {
+    return unmergedFilesErrorNotificationDescription(getOperationName());
+  }
+
+  @NotNull
+  private static String unmergedFilesErrorNotificationDescription(String operationName) {
+    return "You have to <a href='resolve'>resolve</a> all merge conflicts before " + operationName + ".<br/>" +
+    "After resolving conflicts you also probably would want to commit your files to the current branch.";
+  }
+
   protected void showFatalNotification(@NotNull String title, @NotNull String message) {
     notifyError(title, message);
   }
@@ -206,10 +230,12 @@ abstract class GitBranchOperation {
     final AtomicBoolean ok = new AtomicBoolean();
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override public void run() {
-        String description = "<html>You have to resolve all merge conflicts before checkout.<br/>" + getRollbackProposal() + "</html>";
+        String description = "<html>You have to resolve all merge conflicts before " + getOperationName() + ".<br/>" +
+                             getRollbackProposal() + "</html>";
         // suppressing: this message looks ugly if capitalized by words
         //noinspection DialogTitleCapitalization
-        ok.set(Messages.OK == MessageManager.showYesNoDialog(myProject, description, UNMERGED_FILES_ERROR_TITLE, "Rollback", "Don't rollback", Messages.getErrorIcon()));
+        ok.set(Messages.OK == MessageManager.showYesNoDialog(myProject, description, unmergedFilesErrorTitle(),
+                                                             "Rollback", "Don't rollback", Messages.getErrorIcon()));
       }
     });
     if (ok.get()) {
@@ -218,13 +244,15 @@ abstract class GitBranchOperation {
   }
 
   private void showUnmergedFilesNotification() {
-    String title = UNMERGED_FILES_ERROR_TITLE;
-    String description = UNMERGED_FILES_ERROR_NOTIFICATION_DESCRIPTION;
-    NotificationManager.getInstance(myProject).notify(GitVcs.IMPORTANT_ERROR_NOTIFICATION, title, description, NotificationType.ERROR, new NotificationListener() {
+    String title = unmergedFilesErrorTitle();
+    String description = unmergedFilesErrorNotificationDescription();
+    NotificationManager.getInstance(myProject).notify(GitVcs.IMPORTANT_ERROR_NOTIFICATION, title, description, NotificationType.ERROR,
+                                                      new NotificationListener() {
       @Override public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
         if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED && event.getDescription().equals("resolve")) {
           GitConflictResolver.Params params = new GitConflictResolver.Params().
-                setMergeDescription("The following files have unresolved conflicts. You need to resolve them before checking out.").
+                setMergeDescription("The following files have unresolved conflicts. You need to resolve them before " +
+                                    getOperationName() + ".").
                 setErrorNotificationTitle("Unresolved files remain.");
           new GitConflictResolver(myProject, GitUtil.getRoots(getRepositories()), params).merge();
         }
@@ -255,12 +283,12 @@ abstract class GitBranchOperation {
   }
 
   private void showUntrackedFilesNotification(@NotNull Collection<VirtualFile> untrackedFiles) {
-    UntrackedFilesNotifier.notifyUntrackedFilesOverwrittenBy(myProject, untrackedFiles, "checkout");
+    UntrackedFilesNotifier.notifyUntrackedFilesOverwrittenBy(myProject, untrackedFiles, getOperationName());
   }
 
   private void showUntrackedFilesDialogWithRollback(@NotNull Collection<VirtualFile> untrackedFiles) {
-    String title = "Couldn't checkout";
-    String description = UntrackedFilesNotifier.createUntrackedFilesOverwrittenDescription("checkout", true);
+    String title = "Couldn't " + getOperationName();
+    String description = UntrackedFilesNotifier.createUntrackedFilesOverwrittenDescription(getOperationName(), true);
 
     final SelectFilesDialog dialog = new UntrackedFilesDialog(myProject, new ArrayList<VirtualFile>(untrackedFiles),
                                                               stripHtml(description, true));

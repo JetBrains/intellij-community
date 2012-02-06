@@ -143,6 +143,12 @@ class GitDeleteBranchOperation extends GitBranchOperation {
   }
 
   @NotNull
+  @Override
+  protected String getOperationName() {
+    return "branch deletion";
+  }
+
+  @NotNull
   private GitCompoundResult forceDelete(@NotNull String branchName, @NotNull Collection<GitRepository> possibleFailedRepositories) {
     GitCompoundResult compoundResult = new GitCompoundResult(myProject);
     for (GitRepository repository : possibleFailedRepositories) {
