@@ -31,6 +31,7 @@ import java.util.List;
 public class CoreLocalVirtualFile extends VirtualFile {
   private final CoreLocalFileSystem myFileSystem;
   private final File myIoFile;
+  private VirtualFile[] myChildren;
 
   public CoreLocalVirtualFile(CoreLocalFileSystem fileSystem, File ioFile) {
     myFileSystem = fileSystem;
@@ -77,12 +78,18 @@ public class CoreLocalVirtualFile extends VirtualFile {
 
   @Override
   public VirtualFile[] getChildren() {
-    List<VirtualFile> result = new ArrayList<VirtualFile>();
-    final File[] files = myIoFile.listFiles();
-    for (File file : files) {
-      result.add(new CoreLocalVirtualFile(myFileSystem, file));
+    VirtualFile[] answer = myChildren;
+    if (answer == null) {
+      List<VirtualFile> result = new ArrayList<VirtualFile>();
+      final File[] files = myIoFile.listFiles();
+      for (File file : files) {
+        result.add(new CoreLocalVirtualFile(myFileSystem, file));
+      }
+      answer = result.toArray(new VirtualFile[result.size()]);
+
+      myChildren = answer;
     }
-    return result.toArray(new VirtualFile[result.size()]);
+    return answer;
   }
 
   @NotNull

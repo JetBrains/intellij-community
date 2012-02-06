@@ -27,14 +27,12 @@ import com.intellij.psi.impl.file.impl.JavaFileManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.CollectionQuery;
 import com.intellij.util.Query;
+import com.intellij.util.containers.ConcurrentFactoryMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author yole
@@ -45,6 +43,19 @@ public class CoreJavaFileManager extends PackageIndex implements JavaFileManager
   private final CoreLocalFileSystem myLocalFileSystem;
   private final CoreJarFileSystem myJarFileSystem;
   private final List<File> myClasspath = new ArrayList<File>();
+
+  private final Map<File, VirtualFile> myClasspathRoots = new ConcurrentFactoryMap<File, VirtualFile>() {
+    @Override
+    protected VirtualFile create(File key) {
+      if (key.isFile()) {
+         return myJarFileSystem.findFileByPath(key.getPath() + "!/");
+      }
+      else {
+        return myLocalFileSystem.findFileByPath(key.getPath());
+      }
+    }
+  };
+
   private final PsiManager myPsiManager;
 
   public CoreJavaFileManager(PsiManager psiManager, CoreLocalFileSystem localFileSystem, CoreJarFileSystem jarFileSystem) {
@@ -94,12 +105,7 @@ public class CoreJavaFileManager extends PackageIndex implements JavaFileManager
 
   @Nullable
   private VirtualFile findRootInClassPathEntry(File classpathEntry) {
-    if (classpathEntry.isFile()) {
-       return myJarFileSystem.findFileByPath(classpathEntry.getPath() + "!/");
-    }
-    else {
-      return myLocalFileSystem.findFileByPath(classpathEntry.getPath());
-    }
+    return myClasspathRoots.get(classpathEntry);
   }
 
   @Override
