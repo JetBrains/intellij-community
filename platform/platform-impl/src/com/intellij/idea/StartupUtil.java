@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -129,16 +129,17 @@ public class StartupUtil {
   }
 
   private static boolean checkTmpIsAccessible() {
-    if (!SystemInfo.isUnix) return true;
+    if (!SystemInfo.isUnix || SystemInfo.isMac) return true;
 
     final File tmp;
     try {
-      tmp = File.createTempFile("idea_check_", ".tmp");
+      tmp = FileUtil.createTempFile("idea_check_", ".tmp");
       FileUtil.writeToFile(tmp, "#!/bin/sh\n" +
                                 "exit 0");
     }
     catch (IOException e) {
-      showError("Inaccessible Temp Directory", e.getMessage() + ".\nTemp directory is not accessible.\n" +
+      showError("Inaccessible Temp Directory", e.getMessage() + " (" + FileUtil.getTempDirectory() + ").\n" +
+                                               "Temp directory is not accessible.\n" +
                                                "Please set 'java.io.tmpdir' system property to point to a writable directory.");
       return false;
     }
