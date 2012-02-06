@@ -17,14 +17,12 @@ package com.intellij.openapi.components.impl;
 
 import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.application.options.ReplacePathToMacroMap;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.PathMacroMap;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.FactoryMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -74,22 +72,18 @@ public class BasePathMacroManager extends PathMacroManager {
 
   public ExpandMacroToPathMap getExpandMacroMap() {
     ExpandMacroToPathMap result = new ExpandMacroToPathMap();
-    result.addMacroExpand(PathMacrosImpl.APPLICATION_HOME_MACRO_NAME, PathManager.getHomePath());
-    result.addMacroExpand(PathMacrosImpl.USER_HOME_MACRO_NAME, getUserHome());
+    for (Map.Entry<String, String> entry : PathMacrosImpl.getGlobalSystemMacros().entrySet()) {
+      result.addMacroExpand(entry.getKey(), entry.getValue());
+    }
     getPathMacros().addMacroExpands(result);
     return result;
   }
 
-  protected static String getUserHome() {
-    return StringUtil.trimEnd(SystemProperties.getUserHome(), "/");
-  }
-
-
   public ReplacePathToMacroMap getReplacePathMap() {
     ReplacePathToMacroMap result = new ReplacePathToMacroMap();
-
-    result.addMacroReplacement(PathManager.getHomePath(), PathMacrosImpl.APPLICATION_HOME_MACRO_NAME);
-    result.addMacroReplacement(getUserHome(), PathMacrosImpl.USER_HOME_MACRO_NAME);
+    for (Map.Entry<String, String> entry : PathMacrosImpl.getGlobalSystemMacros().entrySet()) {
+      result.addMacroReplacement(entry.getValue(), entry.getKey());
+    }
     getPathMacros().addMacroReplacements(result);
     return result;
   }

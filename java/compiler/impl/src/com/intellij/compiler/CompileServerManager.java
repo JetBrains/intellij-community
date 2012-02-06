@@ -462,8 +462,9 @@ public class CompileServerManager implements ApplicationComponent{
   private static RequestFuture sendSetupRequest(final @NotNull CompileServerClient client) throws Exception {
     final Map<String, String> data = new HashMap<String, String>();
 
-    // need this for tests and when this macro is missing from PathMacros registry
-    data.put(PathMacrosImpl.APPLICATION_HOME_MACRO_NAME, FileUtil.toSystemIndependentName(PathManager.getHomePath()));
+    for (Map.Entry<String, String> entry : PathMacrosImpl.getGlobalSystemMacros().entrySet()) {
+      data.put(entry.getKey(), FileUtil.toSystemIndependentName(entry.getValue()));
+    }
 
     final PathMacros pathVars = PathMacros.getInstance();
     for (String name : pathVars.getAllMacroNames()) {
