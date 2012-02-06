@@ -72,7 +72,7 @@ class ActionButton extends IconButton implements ActionListener {
   }
 
   public boolean update() {
-    AnActionEvent event = createAnEvent(null);
+    AnActionEvent event = createAnEvent(null, 0);
 
     if (event == null) return false;
 
@@ -107,17 +107,17 @@ class ActionButton extends IconButton implements ActionListener {
   }
 
   public void actionPerformed(final ActionEvent e) {
-    AnActionEvent event = createAnEvent(null);
+    AnActionEvent event = createAnEvent(null, e.getModifiers());
     if (event != null && ActionUtil.lastUpdateAndCheckDumb(myAction, event, true)) {
       myAction.actionPerformed(event);
     }
   }
 
   @Nullable
-  private AnActionEvent createAnEvent(InputEvent e) {
-    Presentation presentation = (Presentation)myAction.getTemplatePresentation().clone();
+  private AnActionEvent createAnEvent(InputEvent e, final int modifiers) {
+    Presentation presentation = myAction.getTemplatePresentation().clone();
     DataContext context = DataManager.getInstance().getDataContext(myTabInfo.getComponent());
-    return new AnActionEvent(e, context, myPlace != null ? myPlace : ActionPlaces.UNKNOWN, presentation, myTabs.myActionManager, 0);
+    return new AnActionEvent(e, context, myPlace != null ? myPlace : ActionPlaces.UNKNOWN, presentation, myTabs.myActionManager, modifiers);
   }
 
   public void setAutoHide(final boolean autoHide) {
