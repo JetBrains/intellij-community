@@ -30,7 +30,7 @@ import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.IconLikeCustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.ui.RowIcon;
+import com.intellij.ui.LayeredIcon;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -110,11 +110,12 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
     }
     boolean stripesVisible = !UISettings.getInstance().HIDE_TOOL_STRIPES;
     ArrayList<Notification> notifications = logModel.getNotifications();
-    RowIcon icon = new RowIcon(2);
-    icon.setIcon(getPendingNotificationsIcon(EMPTY_ICON, getMaximumType(notifications)), 0);
+    LayeredIcon icon = new LayeredIcon(2);
+    Icon statusIcon = getPendingNotificationsIcon(EMPTY_ICON, getMaximumType(notifications));
+    icon.setIcon(statusIcon, 0);
     final int count = notifications.size();
     if (count > 0) {
-      icon.setIcon(new TextIcon(this, String.valueOf(count)), 1);
+      icon.setIcon(new TextIcon(this, String.valueOf(count)), 1, statusIcon.getIconWidth() - 2, 0);
     }
     if (stripesVisible && eventLog != null) {
       eventLog.setIcon(icon);
@@ -170,7 +171,7 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
     public TextIcon(IdeNotificationArea component, String str) {
       myStr = str;
       myComponent = component;
-      myWidth = myComponent.getFontMetrics(calcFont()).stringWidth(myStr) + 5;
+      myWidth = myComponent.getFontMetrics(calcFont()).stringWidth(myStr) + 1;
     }
 
     @Override
@@ -188,7 +189,7 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
     }
 
     private Font calcFont() {
-      return myComponent.getFont().deriveFont(Font.BOLD).deriveFont((float) getIconHeight() * 2 / 3);
+      return myComponent.getFont().deriveFont(Font.BOLD).deriveFont((float) getIconHeight() * 3 / 5);
     }
 
     @Override
