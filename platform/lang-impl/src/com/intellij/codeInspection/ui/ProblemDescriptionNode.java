@@ -95,11 +95,11 @@ public class ProblemDescriptionNode extends InspectionTreeNode {
 
 
   public boolean isResolved() {
-    return myElement instanceof RefElement && myTool.isElementIgnored(myElement);
+    return myElement instanceof RefElement && myTool.isProblemResolved(myElement, getDescriptor());
   }
 
   public void ignoreElement() {
-    myTool.ignoreCurrentElement(getElement());
+    myTool.ignoreCurrentElementProblem(getElement(), getDescriptor());
   }
 
   public void amnesty() {
