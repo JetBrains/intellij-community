@@ -132,7 +132,7 @@ public class PythonSdkType extends SdkType {
 
   @Override
   public Collection<String> suggestHomePaths() {
-    TreeSet<String> candidates = createVersionSet();
+    List<String> candidates = new ArrayList<String>();
     for (PythonSdkFlavor flavor : PythonSdkFlavor.getApplicableFlavors()) {
       candidates.addAll(flavor.suggestHomePaths());
     }

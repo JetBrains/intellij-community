@@ -47,6 +47,7 @@ public abstract class PythonSdkFlavor {
 
   public static List<PythonSdkFlavor> getApplicableFlavors() {
     List<PythonSdkFlavor> result = new ArrayList<PythonSdkFlavor>();
+    result.add(VirtualEnvSdkFlavor.INSTANCE);
     if (SystemInfo.isWindows) {
       result.add(WinPythonSdkFlavor.INSTANCE);
     }
