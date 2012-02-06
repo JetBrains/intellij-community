@@ -68,7 +68,7 @@ import static git4idea.util.GitUIUtil.code;
  *
  *  @author Kirill Likhodedov
  */
-public class GitCheckoutOperation extends GitBranchOperation {
+class GitCheckoutOperation extends GitBranchOperation {
 
   private static final Logger LOG = Logger.getInstance(GitCheckoutOperation.class);
 
@@ -76,7 +76,7 @@ public class GitCheckoutOperation extends GitBranchOperation {
   @Nullable private final String myNewBranch;
   @NotNull private final String myPreviousBranch;
 
-  public GitCheckoutOperation(@NotNull Project project, @NotNull Collection<GitRepository> repositories,
+  GitCheckoutOperation(@NotNull Project project, @NotNull Collection<GitRepository> repositories,
                               @NotNull String startPointReference, @Nullable String newBranch, @NotNull String previousBranch, 
                               @NotNull ProgressIndicator indicator) {
     super(project, repositories, indicator);

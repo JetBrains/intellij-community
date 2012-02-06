@@ -37,13 +37,13 @@ import static git4idea.util.GitUIUtil.code;
  *
  * @author Kirill Likhodedov
  */
-public class GitCheckoutNewBranchOperation extends GitBranchOperation {
+class GitCheckoutNewBranchOperation extends GitBranchOperation {
 
   @NotNull private final Project myProject;
   @NotNull private final String myNewBranchName;
   @NotNull private final String myPreviousBranch;
 
-  public GitCheckoutNewBranchOperation(@NotNull Project project, @NotNull Collection<GitRepository> repositories,
+  GitCheckoutNewBranchOperation(@NotNull Project project, @NotNull Collection<GitRepository> repositories,
                                        @NotNull String newBranchName, @NotNull String previousBranch,
                                        @NotNull ProgressIndicator indicator) {
     super(project, repositories, indicator);
