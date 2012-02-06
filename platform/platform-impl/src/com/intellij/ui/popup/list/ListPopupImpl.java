@@ -25,6 +25,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.ui.ListScrollingUtil;
+import com.intellij.ui.SeparatorWithText;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.ClosableByLeftArrow;
 import com.intellij.ui.popup.PopupIcons;
@@ -337,7 +338,15 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
       }
       final JComponent container = getContent();
       assert container != null : "container == null";
-      myChild.show(container, point.x + container.getWidth() - STEP_X_PADDING, point.y, true);
+      
+      int y = point.y;
+      if (getListModel().isSeparatorAboveOf(parentValue)) {
+        SeparatorWithText swt = new SeparatorWithText();
+        swt.setCaption(getListModel().getCaptionAboveOf(parentValue));
+        y += swt.getPreferredSize().height - 1;
+      }
+
+      myChild.show(container, point.x + container.getWidth() - STEP_X_PADDING, y, true);
       setIndexForShowingChild(myList.getSelectedIndex());
       return false;
     }

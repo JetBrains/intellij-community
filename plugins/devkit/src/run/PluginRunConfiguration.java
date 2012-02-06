@@ -142,6 +142,12 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
           vm.defineProperty("apple.laf.useScreenMenuBar", "true");
         }
 
+        if (SystemInfo.isLinux) {
+          if (VM_PARAMETERS == null || !VM_PARAMETERS.contains("-Dsun.awt.disablegrab")) {
+            vm.defineProperty("sun.awt.disablegrab", "true"); // See http://devnet.jetbrains.net/docs/DOC-1142
+          }
+        }
+
         String buildNumber = IdeaJdk.getBuildNumber(usedIdeaJdk.getHomePath());
         if (buildNumber != null) {
           if (buildNumber.startsWith("IC")) {
@@ -205,11 +211,12 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
     this.ALTERNATIVE_JRE_PATH_ENABLED = ALTERNATIVE_JRE_PATH_ENABLED;
   }
 
-  private static void fillParameterList(ParametersList list, String value) {
-    final String[] parameters = value != null ? value.split(" ") : null;
-    for (int i = 0; parameters != null && i < parameters.length; i++) {
-      if (parameters[i] != null && parameters[i].length() > 0){
-        list.add(parameters[i]);
+  private static void fillParameterList(ParametersList list, @Nullable String value) {
+    if (value == null) return;
+
+    for (String parameter : value.split(" ")) {
+      if (parameter != null && parameter.length() > 0) {
+        list.add(parameter);
       }
     }
   }

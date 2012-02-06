@@ -104,7 +104,7 @@ public class JUnitUtil {
     return isTestClass(psiClass, true, true);
   }
 
-  private static boolean isTestClass(@NotNull PsiClass psiClass, boolean checkAbstract, boolean checkForTestCaseInheritance) {
+  public static boolean isTestClass(@NotNull PsiClass psiClass, boolean checkAbstract, boolean checkForTestCaseInheritance) {
     if (!PsiClassUtil.isRunnableClass(psiClass, true, checkAbstract)) return false;
     if (checkForTestCaseInheritance && isTestCaseInheritor(psiClass)) return true;
     final PsiModifierList modifierList = psiClass.getModifierList();

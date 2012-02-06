@@ -36,7 +36,7 @@ public class ProgramParametersUtil {
     Project project = configuration.getProject();
     Module module = getModule(configuration);
 
-    parameters.getProgramParametersList().addParametersString(configuration.getProgramParameters());
+    parameters.getProgramParametersList().addParametersString(expandPath(configuration.getProgramParameters(), module, project));
 
     parameters.setWorkingDirectory(getWorkingDir(configuration, project, module));
 

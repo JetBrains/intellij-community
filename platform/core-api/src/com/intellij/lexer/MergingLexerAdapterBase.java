@@ -36,25 +36,25 @@ public class MergingLexerAdapterBase extends DelegateLexer {
 
   @Override
   public int getState(){
-    locateToken();
+    if (myTokenType == null) locateToken();
     return myState;
   }
 
   @Override
   public IElementType getTokenType(){
-    locateToken();
+    if (myTokenType == null) locateToken();
     return myTokenType;
   }
 
   @Override
   public int getTokenStart(){
-    locateToken();
+    if (myTokenType == null) locateToken();
     return myTokenStart;
   }
 
   @Override
   public int getTokenEnd(){
-    locateToken();
+    if (myTokenType == null) locateToken();
     return super.getTokenStart();
   }
 
@@ -62,7 +62,6 @@ public class MergingLexerAdapterBase extends DelegateLexer {
   public void advance(){
     myTokenType = null;
   }
-
 
   private void locateToken(){
     if (myTokenType == null){

@@ -336,6 +336,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   }
 
   boolean isRebuildUiNeeded() {
+    myModel.revalidate();
     if (myList.size() == myModel.size()) {
       int index = 0;
       for (NavBarItem eachLabel : myList) {
@@ -344,7 +345,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
           return true;
         }
 
-        if (!StringUtil.equals(eachLabel.getText(), NavBarPresentation.getPresentableText(eachElement, null))) {
+        if (!StringUtil.equals(eachLabel.getText(), NavBarPresentation.getPresentableText(eachElement))) {
           return true;
         }
 

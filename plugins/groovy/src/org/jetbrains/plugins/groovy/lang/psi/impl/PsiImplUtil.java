@@ -65,6 +65,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.GrAdditiveExpressionImpl;
@@ -666,4 +668,12 @@ public class PsiImplUtil {
 
     return type;
   }
+  
+  public static boolean isImportToJavaOrJavax(GrImportStatement statement) {
+    final GrCodeReferenceElement ref = statement.getImportReference();
+    if (ref==null) return false;
+    final String text = ref.getText();
+    return text.startsWith("java.") || text.startsWith("javax.");
+  } 
+  
 }

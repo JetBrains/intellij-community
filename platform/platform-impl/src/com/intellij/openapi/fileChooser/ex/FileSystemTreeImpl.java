@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,13 @@ package com.intellij.openapi.fileChooser.ex;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileElement;
 import com.intellij.openapi.fileChooser.FileSystemTree;
@@ -37,6 +37,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
@@ -44,7 +45,6 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.UIBundle;
-import com.intellij.ui.treeStructure.SimpleNodeRenderer;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.containers.ConvertingIterator;
 import com.intellij.util.containers.Convertor;
@@ -62,8 +62,6 @@ import java.io.IOException;
 import java.util.*;
 
 public class FileSystemTreeImpl implements FileSystemTree {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.chooser.FileSystemTreeImpl");
-
   private final Tree myTree;
   private final FileTreeStructure myTreeStructure;
   private final AbstractTreeBuilder myTreeBuilder;
@@ -76,15 +74,18 @@ public class FileSystemTreeImpl implements FileSystemTree {
 
   private Map<VirtualFile, VirtualFile> myEverExpanded = new WeakHashMap<VirtualFile, VirtualFile>();
 
-  public FileSystemTreeImpl(@Nullable Project project, FileChooserDescriptor descriptor) {
+  public FileSystemTreeImpl(@Nullable final Project project, final FileChooserDescriptor descriptor) {
     this(project, descriptor, new Tree(), null, null, null);
     myTree.setRootVisible(descriptor.isTreeRootVisible());
     myTree.setShowsRootHandles(true);
   }
 
-  public FileSystemTreeImpl(@Nullable Project project, FileChooserDescriptor descriptor, Tree tree, TreeCellRenderer renderer,
-                            final Runnable onInitialized,
-                            Convertor<TreePath, String> speedSearchConvertor) {
+  public FileSystemTreeImpl(@Nullable final Project project,
+                            final FileChooserDescriptor descriptor,
+                            final Tree tree,
+                            @Nullable TreeCellRenderer renderer,
+                            @Nullable final Runnable onInitialized,
+                            @Nullable final Convertor<TreePath, String> speedSearchConverter) {
     myProject = project;
     myTreeStructure = new FileTreeStructure(project, descriptor);
     myDescriptor = descriptor;
@@ -119,8 +120,8 @@ public class FileSystemTreeImpl implements FileSystemTree {
       }
     });
 
-    if (speedSearchConvertor != null) {
-      new TreeSpeedSearch(myTree, speedSearchConvertor);
+    if (speedSearchConverter != null) {
+      new TreeSpeedSearch(myTree, speedSearchConverter);
     } else {
       new TreeSpeedSearch(myTree);
     }
@@ -135,8 +136,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
     registerTreeActions();
 
     if (renderer == null) {
-      renderer = new SimpleNodeRenderer() {
-
+      renderer = new NodeRenderer() {
         public void customizeCellRenderer(JTree tree,
                                           Object value,
                                           boolean selected,
@@ -214,13 +214,13 @@ public class FileSystemTreeImpl implements FileSystemTree {
     return myTreeStructure.areHiddensShown();
   }
 
-  public void showHiddens(boolean showHiddens) {
-    myTreeStructure.showHiddens(showHiddens);
+  public void showHiddens(boolean showHidden) {
+    myTreeStructure.showHiddens(showHidden);
     updateTree();
   }
 
   public void updateTree() {
-    myTreeBuilder.updateFromRoot();
+    myTreeBuilder.queueUpdate();
   }
 
   public void dispose() {
@@ -235,20 +235,8 @@ public class FileSystemTreeImpl implements FileSystemTree {
     return myTreeBuilder;
   }
 
-  /**
-   * @deprecated since tree updating is an asynchronous operation
-   */
-  public boolean select(final VirtualFile file) {
-    DefaultMutableTreeNode node = getNodeForFile(file);
-    if (node == null) return false;
-    else {
-      TreeUtil.selectPath(myTree, new TreePath(node.getPath()));
-      return true;
-    }
-  }
-
   public void select(VirtualFile file, @Nullable final Runnable onDone) {
-    select(new VirtualFile[] {file}, onDone);
+    select(new VirtualFile[]{file}, onDone);
   }
 
   public void select(VirtualFile[] file, @Nullable final Runnable onDone) {
@@ -280,23 +268,6 @@ public class FileSystemTreeImpl implements FileSystemTree {
     }
 
     return new FileElement(selectFile, selectFile.getName());
-  }
-
-  public boolean expand(VirtualFile directory) {
-    if (!directory.isDirectory()) return false;
-    DefaultMutableTreeNode node = getNodeForFile(directory);
-    if (node == null) return false;
-    myTree.expandPath(new TreePath(node.getPath()));
-    return true;
-  }
-
-  @Nullable
-  private DefaultMutableTreeNode getNodeForFile(VirtualFile file) {
-    FileElement descriptor = getFileElementFor(file);
-    if (descriptor == null) return null;
-
-    myTreeBuilder.buildNodeForElement(descriptor);
-    return myTreeBuilder.getNodeForElement(descriptor);
   }
 
   public Exception createNewFolder(final VirtualFile parentDirectory, final String newFolderName) {
@@ -370,19 +341,15 @@ public class FileSystemTreeImpl implements FileSystemTree {
   public VirtualFile getNewFileParent() {
     if (getSelectedFile() != null) return getSelectedFile();
 
-    List<VirtualFile> roots = myDescriptor.getRoots();
-    for (VirtualFile each : roots) {
-      return each;
-    }
-
-    return null;
+    final List<VirtualFile> roots = myDescriptor.getRoots();
+    return roots.size() > 0 ? roots.get(0) : null;
   }
 
   public VirtualFile[] getSelectedFiles() {
     return collectSelectedFiles(new ConvertingIterator.IdConvertor<VirtualFile>());
   }
 
-  public VirtualFile[] getChoosenFiles() {
+  public VirtualFile[] getChosenFiles() {
     return collectSelectedFiles(new Convertor<VirtualFile, VirtualFile>() {
       @Nullable
       public VirtualFile convert(VirtualFile file) {
@@ -392,7 +359,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
     });
   }
 
-  private VirtualFile[] collectSelectedFiles(Convertor<VirtualFile, VirtualFile> fileConvertor) {
+  private VirtualFile[] collectSelectedFiles(Convertor<VirtualFile, VirtualFile> fileConverter) {
     TreePath[] paths = myTree.getSelectionPaths();
     if (paths == null) return VirtualFile.EMPTY_ARRAY;
     ArrayList<VirtualFile> files = new ArrayList<VirtualFile>(paths.length);
@@ -401,7 +368,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
       if (!(node.getUserObject() instanceof FileNodeDescriptor)) return VirtualFile.EMPTY_ARRAY;
       FileNodeDescriptor descriptor = (FileNodeDescriptor)node.getUserObject();
-      VirtualFile file = fileConvertor.convert(descriptor.getElement().getFile());
+      VirtualFile file = fileConverter.convert(descriptor.getElement().getFile());
       if (file != null && file.isValid()) files.add(file);
     }
     return VfsUtil.toVirtualFileArray(files);
@@ -419,7 +386,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
     }
     for (VirtualFile root : roots) {
       if (root == null) continue;
-      if (VfsUtil.isAncestor(root, file, false)) {
+      if (VfsUtilCore.isAncestor(root, file, false)) {
         return true;
       }
     }

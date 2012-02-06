@@ -12,6 +12,8 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
+import org.jetbrains.annotations.Nullable;
+
 public enum HgFileStatusEnum {
 
   ADDED('A'),
@@ -29,7 +31,8 @@ public enum HgFileStatusEnum {
     this.id = id;
   }
 
-  public static HgFileStatusEnum valueOf(char c) {
+  @Nullable
+  public static HgFileStatusEnum parse(char c) {
     for (HgFileStatusEnum status : HgFileStatusEnum.values()) {
       if (status.id == c) {
         return status;

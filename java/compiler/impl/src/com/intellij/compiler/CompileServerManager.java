@@ -268,12 +268,11 @@ public class CompileServerManager implements ApplicationComponent{
           continue;
         }
         final CompilerWorkspaceConfiguration config = CompilerWorkspaceConfiguration.getInstance(project);
-        if (!config.USE_COMPILE_SERVER || !config.MAKE_PROJECT_ON_SAVE) {
+        if (!config.useCompileServer() || !config.MAKE_PROJECT_ON_SAVE) {
           continue;
         }
-        final RequestFuture future = submitCompilationTask(
-          project, false, true, Collections.<String>emptyList(), Collections.<String>emptyList(), new AutoMakeResponseHandler(project)
-        );
+        final RequestFuture future = submitCompilationTask(project, false, true, Collections.<String>emptyList(), Collections.<String>emptyList(),
+                                                           Collections.<String>emptyList(), new AutoMakeResponseHandler(project));
         if (future != null) {
           futures.add(future);
           synchronized (myAutomakeFutures) {
@@ -311,7 +310,9 @@ public class CompileServerManager implements ApplicationComponent{
   }
 
   @Nullable
-  public RequestFuture submitCompilationTask(final Project project, final boolean isRebuild, final boolean isMake, final Collection<String> modules, final Collection<String> paths, final JpsServerResponseHandler handler) {
+  public RequestFuture submitCompilationTask(final Project project, final boolean isRebuild, final boolean isMake, 
+                                             final Collection<String> modules, final Collection<String> artifacts, 
+                                             final Collection<String> paths, final JpsServerResponseHandler handler) {
     final String projectId = project.getLocation();
     final Ref<RequestFuture> futureRef = new Ref<RequestFuture>(null);
     final RunnableFuture future = myTaskExecutor.submit(new Runnable() {
@@ -321,7 +322,7 @@ public class CompileServerManager implements ApplicationComponent{
           if (client != null) {
             final RequestFuture requestFuture = isRebuild ?
               client.sendRebuildRequest(projectId, handler) :
-              client.sendCompileRequest(isMake, projectId, modules, paths, handler);
+              client.sendCompileRequest(isMake, projectId, modules, artifacts, paths, handler);
             futureRef.set(requestFuture);
           }
           else {

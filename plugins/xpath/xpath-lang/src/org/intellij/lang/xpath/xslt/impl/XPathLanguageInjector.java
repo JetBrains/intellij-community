@@ -15,6 +15,7 @@
  */
 package org.intellij.lang.xpath.xslt.impl;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
@@ -28,6 +29,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.xml.XmlAttributeValueImpl;
 import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlElementType;
 import com.intellij.util.SmartList;
 import org.intellij.lang.xpath.XPathFileType;
 import org.intellij.lang.xpath.XPathTokenTypes;
@@ -144,6 +146,8 @@ public class XPathLanguageInjector implements MultiHostInjector {
 
     XmlAttributeValueImpl value = (XmlAttributeValueImpl)attribute.getValueElement();
     if (value == null) return;
+    ASTNode type = value.findChildByType(XmlElementType.XML_ENTITY_REF);
+    if (type != null) return; // workaround for inability to inject into text with entity refs (e.g. IDEA-72972) TODO: fix it
     final TextRange[] ranges = getInjectionRanges(attribute);
     for (TextRange range : ranges) {
       // workaround for http://www.jetbrains.net/jira/browse/IDEA-10096

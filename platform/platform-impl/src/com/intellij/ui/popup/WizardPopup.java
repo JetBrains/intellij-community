@@ -362,7 +362,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     return new Rectangle(getContent().getLocationOnScreen(), getContent().getSize());
   }
 
-  protected static WizardPopup createPopup(WizardPopup parent, PopupStep step, Object parentValue) {
+  protected WizardPopup createPopup(WizardPopup parent, PopupStep step, Object parentValue) {
     if (step instanceof ListPopupStep) {
       return new ListPopupImpl(parent, (ListPopupStep)step, parentValue);
     }

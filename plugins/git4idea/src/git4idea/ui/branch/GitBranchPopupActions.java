@@ -27,7 +27,6 @@ import com.intellij.openapi.util.IconLoader;
 import git4idea.GitBranch;
 import git4idea.branch.GitBranchOperationsProcessor;
 import git4idea.repo.GitRepository;
-import git4idea.util.GitUIUtil;
 import git4idea.validators.GitNewBranchNameValidator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,7 +53,7 @@ class GitBranchPopupActions {
   ActionGroup createActions(@Nullable DefaultActionGroup toInsert) {
     DefaultActionGroup popupGroup = new DefaultActionGroup(null, false);
 
-    popupGroup.addAction(new CurrentBranchAction(GitBranchUiUtil.getDisplayableBranchText(myRepository), "in root " + GitUIUtil.getShortRepositoryName(myRepository)));
+    //popupGroup.addAction(new CurrentBranchAction(GitBranchUiUtil.getDisplayableBranchText(myRepository), "in root " + GitUIUtil.getShortRepositoryName(myRepository)));
     popupGroup.addAction(new NewBranchAction(myProject, Collections.singletonList(myRepository), myRepository));
     popupGroup.addAction(new CheckoutRevisionActions(myProject, myRepository));
 
@@ -81,22 +80,22 @@ class GitBranchPopupActions {
     return popupGroup;
   }
   
-  /**
-   * "Current branch:" item which is disabled and is just a label to display the current branch.
-   */
-  static class CurrentBranchAction extends DumbAwareAction {
-    CurrentBranchAction(@NotNull String currentBranchName, @Nullable String rootName) {
-      super("", String.format("Current branch is %s %s", currentBranchName, rootName), null);
-      getTemplatePresentation().setText("Current Branch: " + currentBranchName, false); // no mnemonics
-    }
-
-    @Override public void actionPerformed(AnActionEvent e) {
-    }
-
-    @Override public void update(AnActionEvent e) {
-      e.getPresentation().setEnabled(false);         // this action works as a label
-    }
-  }
+  ///**
+  // * "Current branch:" item which is disabled and is just a label to display the current branch.
+  // */
+  //static class CurrentBranchAction extends DumbAwareAction {
+  //  CurrentBranchAction(@NotNull String currentBranchName, @Nullable String rootName) {
+  //    super("", String.format("Current branch is %s %s", currentBranchName, rootName), null);
+  //    getTemplatePresentation().setText("Current Branch: " + currentBranchName, false); // no mnemonics
+  //  }
+  //
+  //  @Override public void actionPerformed(AnActionEvent e) {
+  //  }
+  //
+  //  @Override public void update(AnActionEvent e) {
+  //    e.getPresentation().setEnabled(false);         // this action works as a label
+  //  }
+  //}
 
   static class NewBranchAction extends DumbAwareAction {
     private final Project myProject;

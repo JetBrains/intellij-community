@@ -82,6 +82,7 @@ public class InheritorChooser {
         runForClass(classes.get(0), psiMethod, context, performRunnable);
         return true;
       }
+      if (classes.isEmpty()) return false;
       //suggest to run all inherited tests 
       classes.add(0, null);
       final JBList list = new JBList(classes);

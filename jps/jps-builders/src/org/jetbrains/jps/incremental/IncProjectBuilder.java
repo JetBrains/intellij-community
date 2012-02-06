@@ -2,10 +2,13 @@ package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.io.MappingFailedException;
 import com.intellij.util.io.PersistentEnumerator;
 import org.jetbrains.jps.*;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.api.RequestFuture;
+import org.jetbrains.jps.artifacts.Artifact;
 import org.jetbrains.jps.incremental.java.ExternalJavacDescriptor;
 import org.jetbrains.jps.incremental.java.JavaBuilder;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
@@ -49,7 +52,7 @@ public class IncProjectBuilder {
 
   private float myModulesProcessed = 0.0f;
   private final float myTotalModulesWork;
-  private final int myTotalBuilderCount;
+  private final int myTotalModuleLevelBuilderCount;
 
   public IncProjectBuilder(ProjectDescriptor pd, BuilderRegistry builderRegistry, CanceledStatus cs) {
     myProjectDescriptor = pd;
@@ -58,7 +61,7 @@ public class IncProjectBuilder {
     myProductionChunks = new ProjectChunks(pd.project, ClasspathKind.PRODUCTION_COMPILE);
     myTestChunks = new ProjectChunks(pd.project, ClasspathKind.TEST_COMPILE);
     myTotalModulesWork = (float)pd.rootsIndex.getTotalModuleCount() * 2;  /* multiply by 2 to reflect production and test sources */
-    myTotalBuilderCount = builderRegistry.getTotalBuilderCount();
+    myTotalModuleLevelBuilderCount = builderRegistry.getModuleLevelBuilderCount();
   }
 
   public void addMessageHandler(MessageHandler handler) {
@@ -73,13 +76,14 @@ public class IncProjectBuilder {
         runBuild(context);
       }
       catch (ProjectBuildException e) {
-        if (e.getCause() instanceof PersistentEnumerator.CorruptedException) {
+        final Throwable cause = e.getCause();
+        if (cause instanceof PersistentEnumerator.CorruptedException || cause instanceof MappingFailedException) {
           // force rebuild
           myMessageDispatcher.processMessage(new CompilerMessage(COMPILE_SERVER_NAME, BuildMessage.Kind.INFO,
                                                                  "Internal caches are corrupted or have outdated format, forcing project rebuild: " +
                                                                  e.getMessage()));
           flushContext(context);
-          context = createContext(new AllProjectScope(scope.getProject(), true), false, true);
+          context = createContext(new AllProjectScope(scope.getProject(), Collections.<Artifact>emptySet(), true), false, true);
           runBuild(context);
         }
         else {
@@ -90,8 +94,10 @@ public class IncProjectBuilder {
     catch (ProjectBuildException e) {
       final Throwable cause = e.getCause();
       if (cause == null) {
-        final BuildMessage msg = e.isError()? new CompilerMessage("", BuildMessage.Kind.ERROR, e.getMessage()) : new ProgressMessage(e.getMessage());
-        myMessageDispatcher.processMessage(msg);
+        final String msg = e.getMessage();
+        if (!StringUtil.isEmpty(msg)) {
+          myMessageDispatcher.processMessage(new ProgressMessage(msg));
+        }
       }
       else {
         myMessageDispatcher.processMessage(new CompilerMessage(COMPILE_SERVER_NAME, cause));
@@ -164,6 +170,9 @@ public class IncProjectBuilder {
     context.setCompilingTests(true);
     context.processMessage(new ProgressMessage("Building test sources"));
     buildChunks(context, myTestChunks);
+
+    context.processMessage(new ProgressMessage("Building project"));
+    runProjectLevelBuilders(context);
 
     context.processMessage(new ProgressMessage("Running 'after' tasks"));
     runTasks(context, myBuilderRegistry.getAfterTasks());
@@ -333,7 +342,7 @@ public class IncProjectBuilder {
       context.onChunkBuildStart(chunk);
 
       for (BuilderCategory category : BuilderCategory.values()) {
-        runBuilders(context, chunk, category);
+        runModuleLevelBuilders(context, chunk, category);
       }
     }
     catch (ProjectBuildException e) {
@@ -364,14 +373,14 @@ public class IncProjectBuilder {
     }
   }
 
-  private void runBuilders(final CompileContext context, ModuleChunk chunk, BuilderCategory category) throws ProjectBuildException {
+  private void runModuleLevelBuilders(final CompileContext context, ModuleChunk chunk, BuilderCategory category) throws ProjectBuildException {
     final List<ModuleLevelBuilder> builders = myBuilderRegistry.getBuilders(category);
     if (builders.isEmpty()) {
       return;
     }
 
     boolean rebuildFromScratchRequested = false;
-    float stageCount = myTotalBuilderCount;
+    float stageCount = myTotalModuleLevelBuilderCount;
     int stagesPassed = 0;
     final int modulesInChunk = chunk.getModules().size();
 
@@ -397,13 +406,13 @@ public class IncProjectBuilder {
           if (!nextPassRequired) {
             // recalculate basis
             myModulesProcessed -= (stagesPassed * modulesInChunk) / stageCount;
-            stageCount += myTotalBuilderCount;
+            stageCount += myTotalModuleLevelBuilderCount;
             myModulesProcessed += (stagesPassed * modulesInChunk) / stageCount;
           }
           nextPassRequired = true;
         }
         else if (buildResult == ModuleLevelBuilder.ExitCode.CHUNK_REBUILD_REQUIRED) {
-          if (!rebuildFromScratchRequested) {
+          if (!rebuildFromScratchRequested && !context.isProjectRebuild()) {
             // allow rebuild from scratch only once per chunk
             rebuildFromScratchRequested = true;
             try {
@@ -430,6 +439,15 @@ public class IncProjectBuilder {
       }
     }
     while (nextPassRequired);
+  }
+
+  private void runProjectLevelBuilders(CompileContext context) throws ProjectBuildException {
+    for (ProjectLevelBuilder builder : myBuilderRegistry.getProjectLevelBuilders()) {
+      builder.build(context);
+      if (myCancelStatus.isCanceled()) {
+        throw new ProjectBuildException(CANCELED_MESSAGE);
+      }
+    }
   }
 
   private static void syncOutputFiles(final CompileContext context, ModuleChunk chunk) throws ProjectBuildException {

@@ -47,7 +47,7 @@ public class NavBarListCellRenderer extends ColoredListCellRenderer {
 
   protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
     setFocusBorderAroundIcon(false);
-    final String name = NavBarPresentation.getPresentableText(value, myPanel.getWindow());
+    final String name = NavBarPresentation.getPresentableText(value);
 
     Color color = list.getForeground();
     boolean isProblemFile = false;

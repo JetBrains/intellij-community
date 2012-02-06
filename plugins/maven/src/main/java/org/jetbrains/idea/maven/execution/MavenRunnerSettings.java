@@ -98,16 +98,16 @@ public class MavenRunnerSettings implements Cloneable {
     this.mavenProperties = mavenProperties;
   }
 
-  public List<Pair<String, String>> collectJdkNamesAndDescriptions() {
-    List<Pair<String, String>> result = new ArrayList<Pair<String, String>>();
+  public Map<String, String> collectJdkNamesAndDescriptions() {
+    Map<String, String> result = new LinkedHashMap<String, String>();
 
     for (Sdk projectJdk : ProjectJdkTable.getInstance().getSdksOfType(getSdkType())) {
       String name = projectJdk.getName();
-      result.add(new Pair<String, String>(name, name));
+      result.put(name, name);
     }
 
-    result.add(new Pair<String, String>(USE_INTERNAL_JAVA, RunnerBundle.message("maven.java.internal")));
-    result.add(new Pair<String, String>(USE_JAVA_HOME, RunnerBundle.message("maven.java.home.env")));
+    result.put(USE_INTERNAL_JAVA, RunnerBundle.message("maven.java.internal"));
+    result.put(USE_JAVA_HOME, RunnerBundle.message("maven.java.home.env"));
 
     return result;
   }

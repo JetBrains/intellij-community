@@ -376,6 +376,7 @@ public final class TabInfo implements Queryable, PlaceProvider<String> {
     void dragOutStarted(MouseEvent mouseEvent, TabInfo info);
     void processDragOut(MouseEvent event, TabInfo source);
     void dragOutFinished(MouseEvent event, TabInfo source);
+    void dragOutCancelled(TabInfo source);
   }
 
 }

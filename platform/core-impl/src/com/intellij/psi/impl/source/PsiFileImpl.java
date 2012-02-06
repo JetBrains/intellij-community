@@ -519,17 +519,18 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       }
       roots[i++] = psi;
     }
-    if (roots.length > 1) {
-      Arrays.sort(roots, FILE_BY_LANGUAGE_ID);
-    }
+    // getPsiRoots() returns languages in the same order
+    //if (roots.length > 1) {
+    //  Arrays.sort(roots, FILE_BY_LANGUAGE_ID);
+    //}
     return roots;
   }
-  private static final Comparator<PsiFile> FILE_BY_LANGUAGE_ID = new Comparator<PsiFile>() {
-    @Override
-    public int compare(PsiFile o1, PsiFile o2) {
-      return o1.getLanguage().getID().compareTo(o2.getLanguage().getID());
-    }
-  };
+  //private static final Comparator<PsiFile> FILE_BY_LANGUAGE_ID = new Comparator<PsiFile>() {
+  //  @Override
+  //  public int compare(PsiFile o1, PsiFile o2) {
+  //    return o1.getLanguage().getID().compareTo(o2.getLanguage().getID());
+  //  }
+  //};
 
   @Override
   public boolean isPhysical() {

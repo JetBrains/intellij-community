@@ -187,9 +187,8 @@ class ServerMessageHandler extends SimpleChannelHandler {
       case REBUILD: {
         channelContext.setAttachment(sessionId);
         final BuildType buildType = convertCompileType(compileType);
-        final CompilationTask task = new CompilationTask(
-          sessionId, channelContext, projectId, buildType, compileRequest.getModuleNameList(), compileRequest.getFilePathList()
-        );
+        final CompilationTask task = new CompilationTask(sessionId, channelContext, projectId, buildType, compileRequest.getModuleNameList(),
+                                                         compileRequest.getArtifactNameList(), compileRequest.getFilePathList());
         final RunnableFuture future = getCompileTaskExecutor(projectId).submit(task);
         myBuildsInProgress.add(new Pair<RunnableFuture, CompilationTask>(future, task));
         return null;
@@ -230,6 +229,7 @@ class ServerMessageHandler extends SimpleChannelHandler {
     private final ChannelHandlerContext myChannelContext;
     private final String myProjectPath;
     private final BuildType myBuildType;
+    private final Collection<String> myArtifacts;
     private final Collection<String> myPaths;
     private final Set<String> myModules;
     private volatile boolean myCanceled = false;
@@ -239,11 +239,13 @@ class ServerMessageHandler extends SimpleChannelHandler {
                            String projectId,
                            BuildType buildType,
                            Collection<String> modules,
+                           Collection<String> artifacts,
                            Collection<String> paths) {
       mySessionId = sessionId;
       myChannelContext = channelContext;
       myProjectPath = projectId;
       myBuildType = buildType;
+      myArtifacts = artifacts;
       myPaths = paths;
       myModules = new HashSet<String>(modules);
     }
@@ -262,7 +264,7 @@ class ServerMessageHandler extends SimpleChannelHandler {
       final Ref<Boolean> hasErrors = new Ref<Boolean>(false);
       final Ref<Boolean> markedFilesUptodate = new Ref<Boolean>(false);
       try {
-        ServerState.getInstance().startBuild(myProjectPath, myBuildType, myModules, myPaths, new MessageHandler() {
+        ServerState.getInstance().startBuild(myProjectPath, myBuildType, myModules, myArtifacts, myPaths, new MessageHandler() {
           public void processMessage(BuildMessage buildMessage) {
             final JpsRemoteProto.Message.Response response;
             if (buildMessage instanceof FileGeneratedEvent) {

@@ -160,7 +160,12 @@ public class HgStatusCommand {
         LOG.warn("Unexpected line in status '" + line + '\'');
         continue;
       }
-      HgFileStatusEnum status = HgFileStatusEnum.valueOf(line.charAt(STATUS_INDEX));
+      char statusChar = line.charAt(STATUS_INDEX);
+      HgFileStatusEnum status = HgFileStatusEnum.parse(statusChar);
+      if (status == null) {
+        LOG.error("Unknown status [" + statusChar + "] in line [" + line + "]");
+        continue;
+      }
       File ioFile = new File(repo.getPath(), line.substring(2));
       if (HgFileStatusEnum.COPY == status && previous != null
         && previous.getStatus() == HgFileStatusEnum.ADDED) {

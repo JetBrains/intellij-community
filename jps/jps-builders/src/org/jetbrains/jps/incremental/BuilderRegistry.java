@@ -1,5 +1,6 @@
 package org.jetbrains.jps.incremental;
 
+import org.jetbrains.jps.idea.OwnServiceLoader;
 import org.jetbrains.jps.incremental.groovy.GroovyBuilder;
 import org.jetbrains.jps.incremental.java.JavaBuilder;
 import org.jetbrains.jps.incremental.resources.ResourcesBuilder;
@@ -16,7 +17,8 @@ public class BuilderRegistry {
   private static class Holder {
     static final BuilderRegistry ourInstance = new BuilderRegistry();
   }
-  private final Map<BuilderCategory, List<ModuleLevelBuilder>> myBuilders = new HashMap<BuilderCategory, List<ModuleLevelBuilder>>();
+  private final Map<BuilderCategory, List<ModuleLevelBuilder>> myModuleLevelBuilders = new HashMap<BuilderCategory, List<ModuleLevelBuilder>>();
+  private final List<ProjectLevelBuilder> myProjectLevelBuilders = new ArrayList<ProjectLevelBuilder>();
   private ExecutorService myTasksExecutor;
 
   public static BuilderRegistry getInstance() {
@@ -25,7 +27,7 @@ public class BuilderRegistry {
 
   private BuilderRegistry() {
     for (BuilderCategory category : BuilderCategory.values()) {
-      myBuilders.put(category, new ArrayList<ModuleLevelBuilder>());
+      myModuleLevelBuilders.put(category, new ArrayList<ModuleLevelBuilder>());
     }
     final Runtime runtime = Runtime.getRuntime();
     myTasksExecutor = Executors.newFixedThreadPool(runtime.availableProcessors());
@@ -35,16 +37,21 @@ public class BuilderRegistry {
       }
     });
 
+    final OwnServiceLoader<ProjectLevelBuilderService> loader = OwnServiceLoader.load(ProjectLevelBuilderService.class);
+
+    for (ProjectLevelBuilderService service : loader) {
+      myProjectLevelBuilders.add(service.createBuilder());
+    }
     // todo: some builder registration mechanism for plugins needed
 
-    myBuilders.get(BuilderCategory.TRANSLATOR).add(new GroovyBuilder(true));
-    myBuilders.get(BuilderCategory.TRANSLATOR).add(new JavaBuilder(myTasksExecutor));
-    myBuilders.get(BuilderCategory.TRANSLATOR).add(new ResourcesBuilder());
-    myBuilders.get(BuilderCategory.TRANSLATOR).add(new GroovyBuilder(false));
+    myModuleLevelBuilders.get(BuilderCategory.TRANSLATOR).add(new GroovyBuilder(true));
+    myModuleLevelBuilders.get(BuilderCategory.TRANSLATOR).add(new JavaBuilder(myTasksExecutor));
+    myModuleLevelBuilders.get(BuilderCategory.TRANSLATOR).add(new ResourcesBuilder());
+    myModuleLevelBuilders.get(BuilderCategory.TRANSLATOR).add(new GroovyBuilder(false));
 
   }
 
-  public int getTotalBuilderCount() {
+  public int getModuleLevelBuilderCount() {
     int count = 0;
     for (BuilderCategory category : BuilderCategory.values()) {
       count += getBuilders(category).size();
@@ -61,7 +68,11 @@ public class BuilderRegistry {
   }
 
   public List<ModuleLevelBuilder> getBuilders(BuilderCategory category){
-    return Collections.unmodifiableList(myBuilders.get(category)); // todo
+    return Collections.unmodifiableList(myModuleLevelBuilders.get(category)); // todo
+  }
+
+  public List<ProjectLevelBuilder> getProjectLevelBuilders() {
+    return myProjectLevelBuilders;
   }
 
   public void shutdown() {

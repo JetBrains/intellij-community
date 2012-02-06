@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,20 +36,9 @@ public interface FileSystemTree extends Disposable {
   @Nullable
   VirtualFile getNewFileParent();
 
-  /**
-   * @deprecated since tree updating is an asynchronous operation
-   */
-  boolean select(VirtualFile file);
-
   void select(VirtualFile file, @Nullable Runnable onDone);
 
   void select(VirtualFile[] files, @Nullable Runnable onDone);
-
-
-  /**
-   * @deprecated since tree updating is an asynchronous operation
-   */
-  boolean expand(VirtualFile file);
 
   void expand(VirtualFile file, @Nullable Runnable onDone);
 
@@ -63,7 +52,7 @@ public interface FileSystemTree extends Disposable {
 
   boolean areHiddensShown();
 
-  void showHiddens(boolean showHiddens);
+  void showHiddens(boolean showHidden);
 
   interface Listener {
     void selectionChanged(List<VirtualFile> selection);

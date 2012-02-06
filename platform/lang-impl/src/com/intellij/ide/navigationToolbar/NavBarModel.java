@@ -159,6 +159,22 @@ public class NavBarModel {
     setModel(updatedModel);
   }
 
+  void revalidate() {
+    final List<Object> objects = new ArrayList<Object>();
+    boolean update = false;
+    for (Object o : myModel) {
+      if (isValid(o)) {
+        objects.add(o);
+      } else {
+        update = true;
+        break;
+      }
+    }
+    if (update) {
+      setModel(objects);
+    }
+  }
+
   private void setModel(List<Object> model) {
     if (!model.equals(myModel)) {
       myModel = model;

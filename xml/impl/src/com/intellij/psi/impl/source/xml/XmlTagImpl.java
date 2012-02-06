@@ -675,17 +675,15 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
   @Nullable
   public XmlAttribute getAttribute(String qname) {
     if (qname == null) return null;
-    final CharTable charTableByTree = SharedImplUtil.findCharTableByTree(this);
     final XmlAttribute[] attributes = getAttributes();
 
-    final CharSequence charTableIndex = charTableByTree.intern(qname);
     final boolean caseSensitive = isCaseSensitive();
 
     for (final XmlAttribute attribute : attributes) {
       final LeafElement attrNameElement = (LeafElement)XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(attribute.getNode());
       if (attrNameElement != null &&
-          (caseSensitive && attrNameElement.getChars().equals(charTableIndex) ||
-           !caseSensitive && Comparing.equal(attrNameElement.getChars(), charTableIndex, false))) {
+          (caseSensitive && Comparing.equal(attrNameElement.getChars(), qname) ||
+           !caseSensitive && Comparing.equal(attrNameElement.getChars(), qname, false))) {
         return attribute;
       }
     }

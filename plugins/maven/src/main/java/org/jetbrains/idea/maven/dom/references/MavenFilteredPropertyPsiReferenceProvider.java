@@ -15,23 +15,90 @@
  */
 package org.jetbrains.idea.maven.dom.references;
 
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.util.ProcessingContext;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.MavenPropertyResolver;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class MavenFilteredPropertyPsiReferenceProvider extends PsiReferenceProvider {
 
+  private static final Key<Pattern> KEY = Key.create("MavenFilteredPropertyPsiReferenceProvider:delimitersKey");
+  
+  public static final Pattern DEFAULT_DELIMITERS = MavenPropertyResolver.PATTERN;
+
+  @NotNull
+  public static Pattern getDelimitersPattern(MavenProject mavenProject) {
+    Pattern res = mavenProject.getCachedValue(KEY);
+    if (res == null) {
+      Element cfg = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-resources-plugin");
+      if (cfg == null) {
+        res = DEFAULT_DELIMITERS;
+      }
+      else {
+        List<String> delimiters = MavenJDOMUtil.findChildrenValuesByPath(cfg, "delimiters", "delimiter");
+        if (delimiters.isEmpty() || delimiters.size() > 10) {
+          res = DEFAULT_DELIMITERS;
+        }
+        else {
+          StringBuilder patternBuilder = new StringBuilder();
+          
+          for (String delimiter : delimiters) {
+            delimiter = delimiter.trim();
+            if (delimiter.isEmpty()) continue;
+
+            int ind = delimiter.indexOf('*');
+            if (ind >= 0) {
+              appendDelimiter(patternBuilder, delimiter.substring(0, ind), delimiter.substring(ind + 1));
+            }
+            else {
+              appendDelimiter(patternBuilder, delimiter, delimiter);
+            }
+          }
+
+          // <useDefaultDelimiters> is not used if custom delimiters are not present.
+          boolean useDefaultDelimiters = true;
+
+          String useDefaultDelimitersText = cfg.getChildText("useDefaultDelimiters");
+          if (StringUtil.isNotEmpty(useDefaultDelimitersText)) {
+            useDefaultDelimiters = Boolean.parseBoolean(useDefaultDelimitersText);
+          }
+
+          if (useDefaultDelimiters) {
+            appendDelimiter(patternBuilder, "${", "}");
+            appendDelimiter(patternBuilder, "@", "@");
+          }
+
+          res = Pattern.compile(patternBuilder.toString());
+        }
+      }
+  
+      res = mavenProject.putCachedValue(KEY, res);
+    }
+
+    return res;
+  }
+  
+  private static void appendDelimiter(StringBuilder pattern, String prefix, String suffix) {
+    if (pattern.length() > 0) {
+      pattern.append('|');
+    }
+    pattern.append(Pattern.quote(prefix)).append("(.+?)").append(Pattern.quote(suffix));
+  }
+  
   @NotNull
   @Override
   public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
@@ -43,25 +110,38 @@ public class MavenFilteredPropertyPsiReferenceProvider extends PsiReferenceProvi
     MavenProject mavenProject = MavenDomUtil.findContainingProject(element);
     if (mavenProject == null) return PsiReference.EMPTY_ARRAY;
 
-    List<PsiReference> result = new ArrayList<PsiReference>();
+    List<PsiReference> res = null;
+    
+    Pattern pattern = getDelimitersPattern(mavenProject);
 
-    Matcher matcher = MavenPropertyResolver.PATTERN.matcher(text);
+    Matcher matcher = pattern.matcher(text);
+    
+    int groupCount = matcher.groupCount();
+    
     while (matcher.find()) {
-      String propertyName = matcher.group(1);
-      int from;
-      if (propertyName == null) {
-        propertyName = matcher.group(2);
-        from = matcher.start(2);
+      String propertyName = null;
+      int from = 0;
+      
+      for (int i = 0; i < groupCount; i++) {
+        propertyName = matcher.group(i + 1);
+        if (propertyName != null) {
+          from = matcher.start(i + 1);
+          break;
+        }
       }
-      else {
-        from = matcher.start(1);
+
+      assert propertyName != null;
+
+      if (res == null) {
+        res = new ArrayList<PsiReference>();
       }
 
       TextRange range = TextRange.from(from, propertyName.length());
 
-      result.add(new MavenFilteredPropertyPsiReference(mavenProject, element, propertyName, range, MavenPropertyPsiReferenceProvider.SOFT_DEFAULT));
+      res.add(
+        new MavenFilteredPropertyPsiReference(mavenProject, element, propertyName, range, MavenPropertyPsiReferenceProvider.SOFT_DEFAULT));
     }
 
-    return result.toArray(new PsiReference[result.size()]);
+    return res == null ? PsiReference.EMPTY_ARRAY : res.toArray(new PsiReference[res.size()]);
   }
 }

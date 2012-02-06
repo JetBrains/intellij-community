@@ -28,20 +28,23 @@ public class ProtoUtil {
     return builder.build();
   }
 
-  public static JpsRemoteProto.Message.Request createMakeRequest(String project, Collection<String> modules) {
-    return createCompileRequest(JpsRemoteProto.Message.Request.CompilationRequest.Type.MAKE, project, modules, Collections.<String>emptyList());
+  public static JpsRemoteProto.Message.Request createMakeRequest(String project, Collection<String> modules, Collection<String> artifacts) {
+    return createCompileRequest(JpsRemoteProto.Message.Request.CompilationRequest.Type.MAKE, project, modules, artifacts, Collections.<String>emptyList());
   }
 
-  public static JpsRemoteProto.Message.Request createForceCompileRequest(String project, Collection<String> modules, Collection<String> paths) {
-    return createCompileRequest(JpsRemoteProto.Message.Request.CompilationRequest.Type.FORCED_COMPILATION, project, modules, paths);
+  public static JpsRemoteProto.Message.Request createForceCompileRequest(String project,
+                                                                         Collection<String> modules,
+                                                                         Collection<String> artifacts, Collection<String> paths) {
+    return createCompileRequest(JpsRemoteProto.Message.Request.CompilationRequest.Type.FORCED_COMPILATION, project, modules, artifacts, paths);
   }
 
   public static JpsRemoteProto.Message.Request createRebuildRequest(String project) {
-    return createCompileRequest(JpsRemoteProto.Message.Request.CompilationRequest.Type.REBUILD, project, Collections.<String>emptyList(), Collections.<String>emptyList());
+    return createCompileRequest(JpsRemoteProto.Message.Request.CompilationRequest.Type.REBUILD, project, Collections.<String>emptyList(),
+                                Collections.<String>emptyList(), Collections.<String>emptyList());
   }
 
-  public static JpsRemoteProto.Message.Request createCleanRequest(String project, Collection<String> modules) {
-    return createCompileRequest(JpsRemoteProto.Message.Request.CompilationRequest.Type.CLEAN, project, modules, Collections.<String>emptyList());
+  public static JpsRemoteProto.Message.Request createCleanRequest(String project, Collection<String> modules, Collection<String> artifacts) {
+    return createCompileRequest(JpsRemoteProto.Message.Request.CompilationRequest.Type.CLEAN, project, modules, artifacts, Collections.<String>emptyList());
   }
 
   public static JpsRemoteProto.Message.Request createCancelRequest(UUID compileSessionId) {
@@ -50,12 +53,16 @@ public class ProtoUtil {
     return JpsRemoteProto.Message.Request.newBuilder().setRequestType(JpsRemoteProto.Message.Request.Type.CANCEL_BUILD_COMMAND).setCancelBuildCommand(builder.build()).build();
   }
 
-  public static JpsRemoteProto.Message.Request createCompileRequest(final JpsRemoteProto.Message.Request.CompilationRequest.Type command, String project, Collection<String> modules, Collection<String> paths) {
+  public static JpsRemoteProto.Message.Request createCompileRequest(final JpsRemoteProto.Message.Request.CompilationRequest.Type command, String project, Collection<String> modules,
+                                                                    Collection<String> artifacts, Collection<String> paths) {
     final JpsRemoteProto.Message.Request.CompilationRequest.Builder builder = JpsRemoteProto.Message.Request.CompilationRequest.newBuilder().setCommandType(
       command);
     builder.setProjectId(project);
     if (modules.size() > 0) {
       builder.addAllModuleName(modules);
+    }
+    if (artifacts.size() > 0) {
+      builder.addAllArtifactName(artifacts);
     }
     if (paths.size() > 0) {
       builder.addAllFilePath(paths);
