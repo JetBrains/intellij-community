@@ -172,11 +172,7 @@ public final class GitBranchOperationsProcessor {
   }
 
   private void doDelete(final String branchName, ProgressIndicator indicator) {
-    GitDeleteBranchOperation operation = new GitDeleteBranchOperation(myProject, myRepositories, branchName, getCurrentBranch(), indicator);
-    operation.execute();
-    for (GitRepository repository : myRepositories) {
-      repository.update(GitRepository.TrackedTopic.BRANCHES, GitRepository.TrackedTopic.CONFIG);
-    }
+    new GitDeleteBranchOperation(myProject, myRepositories, branchName, getCurrentBranch(), indicator).execute();
   }
 
   /**
