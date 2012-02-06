@@ -414,19 +414,25 @@ public class CompileDriver {
   }
 
   @Nullable
-  private RequestFuture compileOnServer(final CompileContextImpl compileContext, Collection<Module> modules, final Collection<String> paths, @Nullable final CompileStatusNotification callback)
+  private RequestFuture compileOnServer(final @NotNull CompileContextImpl compileContext, @NotNull Collection<Module> modules, @NotNull Collection<Artifact> artifacts,
+                                        final @NotNull Collection<String> paths, @Nullable final CompileStatusNotification callback)
     throws Exception {
     Collection<String> moduleNames = Collections.emptyList();
-    if (modules != null && modules.size() > 0) {
+    if (modules.size() > 0) {
       moduleNames = new ArrayList<String>(modules.size());
       for (Module module : modules) {
         moduleNames.add(module.getName());
       }
     }
+    List<String> artifactNames = new ArrayList<String>();
+    for (Artifact artifact : artifacts) {
+      artifactNames.add(artifact.getName());
+    }
+
     final CompileServerManager csManager = CompileServerManager.getInstance();
     final MessageBus messageBus = myProject.getMessageBus();
     csManager.cancelAutoMakeTasks(myProject);
-    return csManager.submitCompilationTask(myProject, compileContext.isRebuild(), compileContext.isMake(), moduleNames, paths, new JpsServerResponseHandler() {
+    return csManager.submitCompilationTask(myProject, compileContext.isRebuild(), compileContext.isMake(), moduleNames, artifactNames, paths, new JpsServerResponseHandler() {
 
       @Override
       public void handleCompileMessage(JpsRemoteProto.Message.Response.CompileMessage compilerMessage) {
@@ -584,7 +590,8 @@ public class CompileDriver {
             }
             final Collection<String> paths = fetchFiles(compileContext);
             final List<Module> modules = paths.isEmpty()? Arrays.asList(compileContext.getCompileScope().getAffectedModules()) : Collections.<Module>emptyList();
-            final RequestFuture future = compileOnServer(compileContext, modules, paths, callback);
+            final Set<Artifact> artifacts = ArtifactCompileScope.getArtifactsToBuild(myProject, compileContext.getCompileScope(), true);
+            final RequestFuture future = compileOnServer(compileContext, modules, artifacts, paths, callback);
             if (future != null) {
               try {
                 startCancelWatcher(indicator, future);

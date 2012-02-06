@@ -43,6 +43,7 @@ message Message {
       optional string project_id = 2;
       repeated string module_name = 3;
       repeated string file_path = 4;
+      repeated string artifact_name = 5;
     }
 
     message ShutdownCommand {

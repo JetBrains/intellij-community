@@ -857,6 +857,18 @@ public final class JpsRemoteProto {
           return filePath_.get(index);
         }
         
+        // repeated string artifact_name = 5;
+        public static final int ARTIFACT_NAME_FIELD_NUMBER = 5;
+        private java.util.List<java.lang.String> artifactName_ =
+          java.util.Collections.emptyList();
+        public java.util.List<java.lang.String> getArtifactNameList() {
+          return artifactName_;
+        }
+        public int getArtifactNameCount() { return artifactName_.size(); }
+        public java.lang.String getArtifactName(int index) {
+          return artifactName_.get(index);
+        }
+        
         private void initFields() {
           commandType_ = org.jetbrains.jps.api.JpsRemoteProto.Message.Request.CompilationRequest.Type.REBUILD;
         }
@@ -879,6 +891,9 @@ public final class JpsRemoteProto {
           }
           for (java.lang.String element : getFilePathList()) {
             output.writeString(4, element);
+          }
+          for (java.lang.String element : getArtifactNameList()) {
+            output.writeString(5, element);
           }
         }
         
@@ -913,6 +928,15 @@ public final class JpsRemoteProto {
             }
             size += dataSize;
             size += 1 * getFilePathList().size();
+          }
+          {
+            int dataSize = 0;
+            for (java.lang.String element : getArtifactNameList()) {
+              dataSize += com.google.protobuf.CodedOutputStream
+                .computeStringSizeNoTag(element);
+            }
+            size += dataSize;
+            size += 1 * getArtifactNameList().size();
           }
           memoizedSerializedSize = size;
           return size;
@@ -1059,6 +1083,10 @@ public final class JpsRemoteProto {
               result.filePath_ =
                 java.util.Collections.unmodifiableList(result.filePath_);
             }
+            if (result.artifactName_ != java.util.Collections.EMPTY_LIST) {
+              result.artifactName_ =
+                java.util.Collections.unmodifiableList(result.artifactName_);
+            }
             org.jetbrains.jps.api.JpsRemoteProto.Message.Request.CompilationRequest returnMe = result;
             result = null;
             return returnMe;
@@ -1083,6 +1111,12 @@ public final class JpsRemoteProto {
                 result.filePath_ = new java.util.ArrayList<java.lang.String>();
               }
               result.filePath_.addAll(other.filePath_);
+            }
+            if (!other.artifactName_.isEmpty()) {
+              if (result.artifactName_.isEmpty()) {
+                result.artifactName_ = new java.util.ArrayList<java.lang.String>();
+              }
+              result.artifactName_.addAll(other.artifactName_);
             }
             return this;
           }
@@ -1120,6 +1154,10 @@ public final class JpsRemoteProto {
                 }
                 case 34: {
                   addFilePath(input.readString());
+                  break;
+                }
+                case 42: {
+                  addArtifactName(input.readString());
                   break;
                 }
               }
@@ -1246,6 +1284,46 @@ public final class JpsRemoteProto {
           }
           public Builder clearFilePath() {
             result.filePath_ = java.util.Collections.emptyList();
+            return this;
+          }
+          
+          // repeated string artifact_name = 5;
+          public java.util.List<java.lang.String> getArtifactNameList() {
+            return java.util.Collections.unmodifiableList(result.artifactName_);
+          }
+          public int getArtifactNameCount() {
+            return result.getArtifactNameCount();
+          }
+          public java.lang.String getArtifactName(int index) {
+            return result.getArtifactName(index);
+          }
+          public Builder setArtifactName(int index, java.lang.String value) {
+            if (value == null) {
+    throw new NullPointerException();
+  }
+  result.artifactName_.set(index, value);
+            return this;
+          }
+          public Builder addArtifactName(java.lang.String value) {
+            if (value == null) {
+    throw new NullPointerException();
+  }
+  if (result.artifactName_.isEmpty()) {
+              result.artifactName_ = new java.util.ArrayList<java.lang.String>();
+            }
+            result.artifactName_.add(value);
+            return this;
+          }
+          public Builder addAllArtifactName(
+              java.lang.Iterable<? extends java.lang.String> values) {
+            if (result.artifactName_.isEmpty()) {
+              result.artifactName_ = new java.util.ArrayList<java.lang.String>();
+            }
+            super.addAll(values, result.artifactName_);
+            return this;
+          }
+          public Builder clearArtifactName() {
+            result.artifactName_ = java.util.Collections.emptyList();
             return this;
           }
           
