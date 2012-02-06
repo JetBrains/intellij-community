@@ -41,6 +41,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.*;
 
 public class CopyClassesHandler extends CopyHandlerDelegateBase {
@@ -310,13 +311,14 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
         }
       }
     }
-    final PsiFile[] createdFiles = new PsiFile[fileToClasses.size()];
+    final List<PsiFile> createdFiles = new ArrayList<PsiFile>(fileToClasses.size());
     int foIdx = 0;
+    List<PsiFile> files = new ArrayList<PsiFile>();
     for (final Map.Entry<PsiFile, PsiClass[]> entry : fileToClasses.entrySet()) {
-      final PsiFile createdFile = copy(entry.getKey(), targetDirectory, copyClassName, map == null ? null : map.get(entry.getKey()));
-      final PsiClass[] sources = entry.getValue();
-
-      if (createdFile instanceof PsiClassOwner) {
+      final PsiFile psiFile = entry.getKey();
+      if (psiFile instanceof PsiClassOwner) {
+        final PsiFile createdFile = copy(psiFile, targetDirectory, copyClassName, map == null ? null : map.get(psiFile));
+        final PsiClass[] sources = entry.getValue();
         for (final PsiClass destination : ((PsiClassOwner)createdFile).getClasses()) {
           if (destination instanceof SyntheticElement) {
             continue;
@@ -331,9 +333,24 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
             destination.delete();
           }
         }
+        createdFiles.add(createdFile);
+      } else {
+        files.add(psiFile);
       }
+    }
 
-      createdFiles[foIdx++] = createdFile;
+    int[] choice = files.size() > 1 ? new int[]{-1} : null;
+    for (PsiFile file : files) {
+      try {
+        final PsiFile fileCopy =
+          CopyFilesOrDirectoriesHandler.copyToDirectory(file, getNewFileName(file, copyClassName), targetDirectory, choice);
+        if (fileCopy != null) {
+          createdFiles.add(fileCopy);
+        }
+      }
+      catch (IOException e) {
+        throw new IncorrectOperationException(e.getMessage());
+      }
     }
 
     final Set<PsiElement> rebindExpressions = new HashSet<PsiElement>();
@@ -354,8 +371,8 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
     for (PsiElement expression : rebindExpressions) {
       codeStyleManager.shortenClassReferences(expression);
     }
-    new OptimizeImportsProcessor(project, createdFiles, null).run();
-    return newElement != null ? newElement : createdFiles.length > 0 ? createdFiles[0] : null;
+    new OptimizeImportsProcessor(project, createdFiles.toArray(new PsiFile[createdFiles.size()]), null).run();
+    return newElement != null ? newElement : createdFiles.size() > 0 ? createdFiles.get(0) : null;
   }
 
   private static PsiFile copy(@NotNull PsiFile file, PsiDirectory directory, String name, String relativePath) {
