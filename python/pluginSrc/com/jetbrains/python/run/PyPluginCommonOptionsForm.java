@@ -10,7 +10,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.Nullable;
 
@@ -75,12 +74,12 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
 
   @Override
   public void addInterpreterComboBoxActionListener(ActionListener listener) {
-    throw new IncorrectOperationException();  // TODO
+    myInterpreterComboBox.addActionListener(listener);
   }
 
   @Override
   public void removeInterpreterComboBoxActionListener(ActionListener listener) {
-    throw new IncorrectOperationException(); //TODO:
+    myInterpreterComboBox.removeActionListener(listener);
   }
 
   public String getInterpreterOptions() {
