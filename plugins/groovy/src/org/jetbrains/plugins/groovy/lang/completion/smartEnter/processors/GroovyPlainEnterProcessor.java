@@ -15,14 +15,16 @@
  */
 package org.jetbrains.plugins.groovy.lang.completion.smartEnter.processors;
 
-import com.intellij.psi.PsiElement;
 import com.intellij.codeInsight.editorActions.smartEnter.EnterProcessor;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.actionSystem.IdeActions;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
+import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -45,19 +47,30 @@ public class GroovyPlainEnterProcessor implements EnterProcessor {
     return true;
   }
 
+  @Nullable
   private static GrCodeBlock getControlStatementBlock(int caret, PsiElement element) {
     GrStatement body = null;
+
+    if (element instanceof GrMethod) return ((GrMethod)element).getBlock();
+
     if (element instanceof GrIfStatement) {
-      body = ((GrIfStatement) element).getThenBranch();
-      if (caret > body.getTextRange().getEndOffset()) {
-        body = ((GrIfStatement) element).getElseBranch();
+      body = ((GrIfStatement)element).getThenBranch();
+      if (body != null && caret > body.getTextRange().getEndOffset()) {
+        body = ((GrIfStatement)element).getElseBranch();
       }
-    } else if (element instanceof GrWhileStatement) {
-      body = ((GrWhileStatement) element).getBody();
-    } else if (element instanceof GrForStatement) {
-      body = ((GrForStatement) element).getBody();
+    }
+    else if (element instanceof GrWhileStatement) {
+      body = ((GrWhileStatement)element).getBody();
+    }
+    else if (element instanceof GrForStatement) {
+      body = ((GrForStatement)element).getBody();
     }
 
-    return body instanceof GrBlockStatement ? ((GrBlockStatement) body).getBlock() : null;
+    if (body instanceof GrBlockStatement) {
+      return ((GrBlockStatement)body).getBlock();
+    }
+
+
+    return null;
   }
 }
