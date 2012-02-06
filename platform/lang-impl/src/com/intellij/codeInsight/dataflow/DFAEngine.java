@@ -16,7 +16,6 @@ package com.intellij.codeInsight.dataflow;
 
 import com.intellij.codeInsight.controlflow.ControlFlowUtil;
 import com.intellij.codeInsight.controlflow.Instruction;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 
@@ -24,7 +23,7 @@ import java.util.*;
 
 public class DFAEngine<E> {
   private static final Logger LOG = Logger.getInstance(DFAEngine.class.getName());
-  private static final double TIME_LIMIT = 3 * 10e9;
+  private static final double TIME_LIMIT = 10e9; // In nanoseconds, 10e9 = 1 sec
 
   private final Instruction[] myFlow;
 
@@ -47,7 +46,7 @@ public class DFAEngine<E> {
 
   public List<E> performDFA(final List<E> info) throws DFALimitExceededException {
     if (LOG.isDebugEnabled()) {
-      LOG.debug("Perfoming DFA\n" + "Instance: " + myDfa + " Semilattice: " + mySemilattice);
+      LOG.debug("Performing DFA\n" + "Instance: " + myDfa + " Semilattice: " + mySemilattice + "\nCon");
     }
 
 // initializing dfa
@@ -70,10 +69,7 @@ public class DFAEngine<E> {
       // Check if canceled
       ProgressManager.checkCanceled();
 
-      // Check time limit only in EDT
-      if (!ApplicationManager.getApplication().isUnitTestMode() &&
-          ApplicationManager.getApplication().isDispatchThread() &&
-          System.nanoTime() - startTime > TIME_LIMIT) {
+      if (System.nanoTime() - startTime > TIME_LIMIT) {
         if (LOG.isDebugEnabled()) {
           LOG.debug("Time limit exceeded");
         }
