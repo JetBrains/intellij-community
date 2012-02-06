@@ -189,56 +189,6 @@ class GitCheckoutOperation extends GitBranchOperation {
     return collectChangesConflictingWithCheckout(remainingRepositories);
   }
 
-  private void fatalUntrackedFilesError(@NotNull Collection<VirtualFile> untrackedFiles) {
-    if (wereSuccessful()) {
-      showUntrackedFilesDialogWithRollback(untrackedFiles);
-    }
-    else {
-      showUntrackedFilesNotification(untrackedFiles);
-    }
-  }
-
-  private void showUntrackedFilesNotification(@NotNull Collection<VirtualFile> untrackedFiles) {
-    UntrackedFilesNotifier.notifyUntrackedFilesOverwrittenBy(myProject, untrackedFiles, "checkout");
-  }
-
-  private void showUntrackedFilesDialogWithRollback(@NotNull Collection<VirtualFile> untrackedFiles) {
-    String title = "Couldn't checkout";
-    String description = UntrackedFilesNotifier.createUntrackedFilesOverwrittenDescription("checkout", true);
-
-    final SelectFilesDialog dialog = new UntrackedFilesDialog(myProject, new ArrayList<VirtualFile>(untrackedFiles),
-                                                              stripHtml(description, true));
-    dialog.setTitle(title);
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        DialogManager.getInstance(myProject).showDialog(dialog);
-      }
-    });
-
-    if (dialog.isOK()) {
-      rollback();
-    }
-  }
-
-  private class UntrackedFilesDialog extends SelectFilesDialog {
-
-    public UntrackedFilesDialog(@NotNull Project project, @NotNull List<VirtualFile> originalFiles, @NotNull String prompt) {
-      super(project, originalFiles, prompt, null, false, false);
-      setOKButtonText("Rollback");
-      setCancelButtonText("Don't rollback");
-    }
-
-    @Override
-    protected JComponent createSouthPanel() {
-      JComponent buttons = super.createSouthPanel();
-      JPanel panel = new JPanel(new VerticalFlowLayout());
-      panel.add(new JBLabel("<html>" + getRollbackProposal() + "</html>"));
-      panel.add(buttons);
-      return panel;
-    }
-  }
-
   @NotNull
   @Override
   protected String getRollbackProposal() {
@@ -437,9 +387,4 @@ class GitCheckoutOperation extends GitBranchOperation {
       // repository state will be auto-updated with this VFS refresh => no need to call GitRepository#update().
     }
   }
-  
-  private static void refreshRoot(GitRepository repository) {
-    repository.getRoot().refresh(true, true);
-  }
-  
 }

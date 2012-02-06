@@ -21,23 +21,28 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Function;
 import com.intellij.util.ui.UIUtil;
-import git4idea.GitUtil;
-import git4idea.GitVcs;
-import git4idea.MessageManager;
-import git4idea.NotificationManager;
+import git4idea.*;
 import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
+import git4idea.util.UntrackedFilesNotifier;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.openapi.util.text.StringUtil.pluralize;
+import static com.intellij.openapi.util.text.StringUtil.stripHtml;
 
 /**
  * Common class for Git operations with branches aware of multi-root configuration,
@@ -225,6 +230,69 @@ abstract class GitBranchOperation {
         }
       }
     });
+  }
+
+  /**
+   * Asynchronously refreshes the VFS root directory of the given repository.
+   */
+  protected static void refreshRoot(@NotNull GitRepository repository) {
+    repository.getRoot().refresh(true, true);
+  }
+
+  /**
+   * Shows the error "The following untracked working tree files would be overwritten by checkout/merge".
+   * If there were no repositories that succeeded the operation, shows a notification with a link to the list of these untracked files.
+   * If some repositories succeeded, shows a dialog with the list of these files and a proposal to rollback the operation of those
+   * repositories.
+   */
+  protected void fatalUntrackedFilesError(@NotNull Collection<VirtualFile> untrackedFiles) {
+    if (wereSuccessful()) {
+      showUntrackedFilesDialogWithRollback(untrackedFiles);
+    }
+    else {
+      showUntrackedFilesNotification(untrackedFiles);
+    }
+  }
+
+  private void showUntrackedFilesNotification(@NotNull Collection<VirtualFile> untrackedFiles) {
+    UntrackedFilesNotifier.notifyUntrackedFilesOverwrittenBy(myProject, untrackedFiles, "checkout");
+  }
+
+  private void showUntrackedFilesDialogWithRollback(@NotNull Collection<VirtualFile> untrackedFiles) {
+    String title = "Couldn't checkout";
+    String description = UntrackedFilesNotifier.createUntrackedFilesOverwrittenDescription("checkout", true);
+
+    final SelectFilesDialog dialog = new UntrackedFilesDialog(myProject, new ArrayList<VirtualFile>(untrackedFiles),
+                                                              stripHtml(description, true));
+    dialog.setTitle(title);
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        DialogManager.getInstance(myProject).showDialog(dialog);
+      }
+    });
+
+    if (dialog.isOK()) {
+      rollback();
+    }
+  }
+
+  private class UntrackedFilesDialog extends SelectFilesDialog {
+
+    public UntrackedFilesDialog(@NotNull Project project, @NotNull List<VirtualFile> originalFiles, @NotNull String prompt) {
+      super(project, originalFiles, prompt, null, false, false);
+      setOKButtonText("Rollback");
+      setCancelButtonText("Don't rollback");
+    }
+
+    @Override
+    protected JComponent createSouthPanel() {
+      JComponent buttons = super.createSouthPanel();
+      JPanel panel = new JPanel(new VerticalFlowLayout());
+      panel.add(new JBLabel("<html>" + getRollbackProposal() + "</html>"));
+      panel.add(buttons);
+      return panel;
+    }
   }
 
 }
