@@ -136,6 +136,10 @@ public class ProblemsHolder {
   }
 
   public void registerProblem(@NotNull PsiReference reference) {
+    registerProblem(reference, inresolvedReferenceMessage(reference), ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+  }
+
+  public static String inresolvedReferenceMessage(PsiReference reference) {
     String message;
     if (reference instanceof EmptyResolveMessageProvider) {
       String pattern = ((EmptyResolveMessageProvider)reference).getUnresolvedMessagePattern();
@@ -144,7 +148,7 @@ public class ProblemsHolder {
     else {
       message = CodeInsightBundle.message("error.cannot.resolve.default.message", reference.getCanonicalText());
     }
-    registerProblem(reference, message, ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+    return message;
   }
 
   /**
