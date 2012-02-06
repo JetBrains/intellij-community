@@ -5,7 +5,6 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.SystemProperties;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -31,11 +30,11 @@ public class VirtualEnvSdkFlavor extends CPythonSdkFlavor {
       if (rootDir != null)
         candidates.addAll(findInDirectory(rootDir));
     }
-    VirtualFile userHome = LocalFileSystem.getInstance().findFileByPath(SystemProperties.getUserHome().replace('\\','/'));
-    if (userHome != null) {
-      VirtualFile child = userHome.findChild(".virtualenvs");
-      if (child != null) {
-        candidates.addAll(findInDirectory(child));
+    String path = System.getenv().get("WORKON_HOME");
+    if (path != null) {
+      VirtualFile workonHome = LocalFileSystem.getInstance().findFileByPath(path.replace('\\','/'));
+      if (workonHome != null) {
+        candidates.addAll(findInDirectory(workonHome));
       }
     }
     return candidates;
