@@ -43,7 +43,10 @@ public class MvcProjectNode extends AbstractProjectNode {
 
   @NotNull
   public Collection<? extends AbstractTreeNode> getChildren() {
-    final List<Module> modules = MvcModuleStructureUtil.getAllModulesWithSupport(myProject, myDescriptor.getFramework());
+    List<Module> modules = MvcModuleStructureUtil.getAllModulesWithSupport(myProject, myDescriptor.getFramework());
+
+    modules = myDescriptor.getFramework().reorderModulesForMvcView(modules);
+    
     final ArrayList<AbstractTreeNode> nodes = new ArrayList<AbstractTreeNode>();
     for (Module module : modules) {
       nodes.add(new MvcModuleNode(module, getSettings(), myDescriptor));
