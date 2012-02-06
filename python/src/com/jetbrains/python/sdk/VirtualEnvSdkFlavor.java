@@ -3,7 +3,9 @@ package com.jetbrains.python.sdk;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.SystemProperties;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -28,6 +30,13 @@ public class VirtualEnvSdkFlavor extends CPythonSdkFlavor {
       VirtualFile rootDir = project.getBaseDir();
       if (rootDir != null)
         candidates.addAll(findInDirectory(rootDir));
+    }
+    VirtualFile userHome = LocalFileSystem.getInstance().findFileByPath(SystemProperties.getUserHome().replace('\\','/'));
+    if (userHome != null) {
+      VirtualFile child = userHome.findChild(".virtualenvs");
+      if (child != null) {
+        candidates.addAll(findInDirectory(child));
+      }
     }
     return candidates;
   }
