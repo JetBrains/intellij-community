@@ -308,11 +308,21 @@ class ServerState {
           }
         }
         final Sdk jdk = project.createSdk(/*"JavaSDK"*/sdk.getTypeName(), sdk.getName(), sdk.getHomePath(), additionalData);
-        jdk.setClasspath(sdk.getPaths());
+        if (jdk != null) {
+          jdk.setClasspath(sdk.getPaths());
+        }
+        else {
+          LOG.info("Failed to load SDK " + sdk.getName() + ", type: " + sdk.getTypeName());
+        }
       }
       else {
         final Library lib = project.createGlobalLibrary(library.getName(), fakeClosure);
-        lib.setClasspath(library.getPaths());
+        if (lib != null) {
+          lib.setClasspath(library.getPaths());
+        }
+        else {
+          LOG.info("Failed to load global library " + lib.getName());
+        }
       }
     }
 
