@@ -1609,6 +1609,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
 
     @Override
     public void dragOutCancelled(TabInfo source) {
+      source.setHidden(false);
       mySession.cancel();
       mySession = null;
     }
