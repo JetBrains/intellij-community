@@ -3,6 +3,8 @@ package org.jetbrains.jps.incremental.artifacts.instructions;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.List;
 
 /**
  * @author nik
@@ -18,6 +20,8 @@ public abstract class ArtifactSourceRoot {
   public abstract File getRootFile();
 
   public abstract boolean containsFile(String filePath);
+
+  public abstract void copyFromRoot(String filePath, String outputPath, List<String> outputs) throws IOException;
 
   public SourceFileFilter getFilter() {
     return myFilter;

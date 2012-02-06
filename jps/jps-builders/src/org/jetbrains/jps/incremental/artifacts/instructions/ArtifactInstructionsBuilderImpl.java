@@ -46,17 +46,17 @@ public class ArtifactInstructionsBuilderImpl implements ArtifactInstructionsBuil
 
   public boolean checkOutputPath(final String outputPath, final ArtifactSourceRoot sourceFile) {
     //todo[nik] combine intersecting roots
-    ArtifactSourceRoot old = mySourceByOutput.get(outputPath);
-    if (old == null) {
-      mySourceByOutput.put(outputPath, sourceFile);
-      return true;
-    }
+    //ArtifactSourceRoot old = mySourceByOutput.get(outputPath);
+    //if (old == null) {
+    //  mySourceByOutput.put(outputPath, sourceFile);
+    //  return true;
+    //}
     //todo[nik] show warning?
-    return false;
+    return true;
   }
 
   public boolean registerJarFile(@NotNull JarInfo jarInfo, @NotNull String outputPath) {
-    if (mySourceByOutput.containsKey(outputPath) || myJarByPath.containsKey(outputPath)) {
+    if (myJarByPath.containsKey(outputPath)) {
       return false;
     }
     myJarByPath.put(outputPath, jarInfo);

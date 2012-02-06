@@ -29,6 +29,7 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.PathUtil;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.artifacts.IncArtifactBuilder;
 import org.jetbrains.jps.incremental.artifacts.instructions.*;
@@ -182,22 +183,29 @@ public class JarsBuilder {
     }
   }
 
-  private void extractFileAndAddToJar(JarOutputStream jarOutputStream, JarBasedArtifactSourceRoot root, String relativePath, THashSet<String> writtenPaths)
+  private static void extractFileAndAddToJar(final JarOutputStream jarOutputStream, final JarBasedArtifactSourceRoot root,
+                                             final String relativeOutputPath, final THashSet<String> writtenPaths)
     throws IOException {
-    //todo[nik]
-    /*
-    relativePath = addParentDirectories(jarOutputStream, writtenPaths, relativePath);
-    if (!writtenPaths.add(relativePath)) return;
+    final long timestamp = root.getRootFile().lastModified();
+    root.processEntries(new JarBasedArtifactSourceRoot.EntryProcessor() {
+      @Override
+      public void process(@Nullable InputStream inputStream, @NotNull String relativePath) throws IOException {
+        String pathInJar = addParentDirectories(jarOutputStream, writtenPaths, PathUtil.appendToPath(relativeOutputPath, relativePath));
+        if (!writtenPaths.add(pathInJar)) return;
 
-    final BufferedInputStream input = ArtifactCompilerUtil.getJarEntryInputStream(root, myContext);
-    if (input == null) return;
+        if (inputStream != null) {
+          ZipEntry entry = new ZipEntry(pathInJar);
+          entry.setTime(timestamp);
+          jarOutputStream.putNextEntry(entry);
+          FileUtil.copy(inputStream, jarOutputStream);
+          jarOutputStream.closeEntry();
+        }
+        else {
+          addDirectoryEntry(jarOutputStream, pathInJar + "/");
+        }
+      }
+    });
 
-    ZipEntry entry = new ZipEntry(relativePath);
-    entry.setTime(root.getRootFile().lastModified());
-    jarOutputStream.putNextEntry(entry);
-    FileUtil.copy(input, jarOutputStream);
-    jarOutputStream.closeEntry();
-    */
   }
 
   private void addFileToJar(final @NotNull JarOutputStream jarOutputStream, final @NotNull File jarFile, @NotNull File file,
@@ -218,7 +226,7 @@ public class JarsBuilder {
     while (i != -1) {
       String prefix = relativePath.substring(0, i+1);
       if (!writtenPaths.contains(prefix) && prefix.length() > 1) {
-        addEntry(jarOutputStream, prefix);
+        addDirectoryEntry(jarOutputStream, prefix);
         writtenPaths.add(prefix);
       }
       i = relativePath.indexOf('/', i + 1);
@@ -226,7 +234,7 @@ public class JarsBuilder {
     return relativePath;
   }
 
-  private static void addEntry(final ZipOutputStream output, @NonNls final String relativePath) throws IOException {
+  private static void addDirectoryEntry(final ZipOutputStream output, @NonNls final String relativePath) throws IOException {
     ZipEntry e = new ZipEntry(relativePath);
     e.setMethod(ZipEntry.STORED);
     e.setSize(0);

@@ -6,7 +6,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
-import org.jetbrains.jps.PathUtil;
 import org.jetbrains.jps.artifacts.Artifact;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.ProjectBuildException;
@@ -21,7 +20,6 @@ import org.jetbrains.jps.incremental.messages.UptoDateFilesSavedEvent;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.*;
 
 /**
@@ -97,7 +95,7 @@ public class IncArtifactBuilder extends ProjectLevelBuilder {
           public void process(ArtifactSourceRoot root, Collection<DestinationInfo> destinations) throws Exception {
             for (DestinationInfo destination : destinations) {
               if (destination instanceof ExplodedDestinationInfo) {
-                copyFromRoot(root, filePath, destination.getOutputPath(), outputs);
+                root.copyFromRoot(filePath, destination.getOutputPath(), outputs);
               }
               else {
                 outputs.add(destination.getOutputFilePath());
@@ -123,26 +121,6 @@ public class IncArtifactBuilder extends ProjectLevelBuilder {
     }
     catch (Exception e) {
       throw new ProjectBuildException(e);
-    }
-  }
-
-  private static void copyFromRoot(ArtifactSourceRoot root, String path, String outputPath, List<String> outputs) throws IOException {
-    if (root instanceof FileBasedArtifactSourceRoot) {
-      final File file = new File(FileUtil.toSystemDependentName(path));
-      String targetPath;
-      if (!file.equals(root.getRootFile())) {
-        final String relativePath = FileUtil.getRelativePath(FileUtil.toSystemIndependentName(root.getRootFile().getPath()), path, '/');
-        targetPath = PathUtil.appendToPath(outputPath, relativePath);
-      }
-      else {
-        targetPath = outputPath;
-      }
-      final File targetFile = new File(FileUtil.toSystemDependentName(targetPath));
-      FileUtil.copyContent(file, targetFile);
-      outputs.add(outputPath);
-    }
-    else {
-      //todo[nik]
     }
   }
 
