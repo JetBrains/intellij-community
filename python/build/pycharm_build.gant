@@ -342,6 +342,20 @@ private layoutFull(Map args, String target, Set usedJars) {
           }
         }
       }
+      dir("python-javascript-debugger") {
+        dir("lib") {
+          jar("python-javascript-debugger.jar") {
+            module("python-javascript-debugger")
+          }
+        }
+      }
+      dir("python-remote-interpreter") {
+        dir("lib") {
+          jar("python-remote-interpreter.jar") {
+            module("python-remote-interpreter")
+          }
+        }
+      }
     }
 
     def layouts = includeFile("$home/build/scripts/layouts.gant")
