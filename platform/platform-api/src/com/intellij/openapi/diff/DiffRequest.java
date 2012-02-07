@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,10 +30,11 @@ import java.util.*;
  * A request for a diff or merge operation.
  */
 public abstract class DiffRequest {
+  @NonNls private static final String COMMON_DIFF_GROUP_KEY = "DiffWindow";
+
   private String myGroupKey = COMMON_DIFF_GROUP_KEY;
   private final Project myProject;
   private ToolbarAddons myToolbarAddons = ToolbarAddons.NOTHING;
-  @NonNls private static final String COMMON_DIFF_GROUP_KEY = "DiffWindow";
   private Factory<JComponent> myBottomComponentFactory = null;
   private final HashSet myHints = new HashSet();
   private final Map<String, Object> myGenericData;
@@ -59,6 +60,7 @@ public abstract class DiffRequest {
   /**
    * @return contents to compare
    */
+  @NotNull
   public abstract DiffContent[] getContents();
 
   /**
@@ -79,7 +81,7 @@ public abstract class DiffRequest {
   }
 
   /**
-   * <B>Work in progess. Don't rely on this functionality</B><br>
+   * <B>Work in progress. Don't rely on this functionality</B><br>
    * @return not null (possibly empty) collection of hints for diff tool.
    */
   public Collection getHints() {

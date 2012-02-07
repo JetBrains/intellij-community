@@ -123,6 +123,7 @@ public class DiffPreviewPanel implements PreviewPanel {
       super(project);
     }
 
+    @NotNull
     public DiffContent[] getContents() {
       return DiffPreviewProvider.getContents();
     }

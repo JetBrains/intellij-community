@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.diff;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -24,18 +23,20 @@ import org.jetbrains.annotations.NotNull;
  * Two contents for general diff
  */
 public class SimpleDiffRequest extends DiffRequest {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.SimpleDiffRequest");
   private final DiffContent[] myContents = new DiffContent[2];
   private final String[] myContentTitles = new String[2];
   private String myWindowTitle;
 
-  public SimpleDiffRequest(Project project, String windowtitle) {
+  public SimpleDiffRequest(Project project, String windowTitle) {
     super(project);
-    myWindowTitle = windowtitle;
+    myWindowTitle = windowTitle;
   }
 
+  @NotNull
   public DiffContent[] getContents() { return myContents; }
+
   public String[] getContentTitles() { return myContentTitles; }
+
   public String getWindowTitle() { return myWindowTitle; }
 
   public void setContents(@NotNull DiffContent content1, @NotNull DiffContent content2) {
@@ -75,6 +76,7 @@ public class SimpleDiffRequest extends DiffRequest {
       super(project, title);
     }
 
+    @NotNull
     public DiffContent[] getContents() {
       return new DiffContent[]{
         DiffContent.fromFile(getProject(), myVirtualFiles[0]),
