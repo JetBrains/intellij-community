@@ -20,11 +20,9 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.find.FindManager;
-import com.intellij.find.findUsages.AbstractFindUsagesDialog;
-import com.intellij.find.findUsages.FindUsagesHandler;
-import com.intellij.find.findUsages.FindUsagesManager;
-import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
+import com.intellij.find.findUsages.*;
 import com.intellij.find.impl.FindManagerImpl;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -225,14 +223,15 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
       }
     };
     FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(handler.getProject())).getFindUsagesManager();
-    presentation = findUsagesManager.processUsages(handler, collect);
+    FindUsagesOptions options = handler.getFindUsagesOptions(DataManager.getInstance().getDataContext());
+    presentation = findUsagesManager.processUsages(handler, collect, options);
     if (presentation == null) {
       Disposer.dispose(usageView);
       return;
     }
     final String title = presentation.getTabText();
 
-    JBPopup popup = createUsagePopup(usages, visibleNodes, title, handler, editor, popupPosition, maxUsages, usageView);
+    JBPopup popup = createUsagePopup(usages, visibleNodes, title, handler, editor, popupPosition, maxUsages, usageView, options);
     if (popup == null) {
       Disposer.dispose(usageView);
     }
@@ -301,9 +300,9 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     }
   }
 
-  private static String searchScopePresentableName(final FindUsagesHandler handler) {
-    SearchScope searchScope = FindUsagesManager.getCurrentSearchScope(handler);
-    if (searchScope == null) searchScope = ProjectScope.getAllScope(handler.getProject());
+  private static String searchScopePresentableName(FindUsagesOptions options, Project project) {
+    SearchScope searchScope = options.searchScope;
+    if (searchScope == null) searchScope = ProjectScope.getAllScope(project);
     return searchScope.getDisplayName();
   }
 
@@ -314,14 +313,15 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
                                    final Editor editor,
                                    final RelativePoint popupPosition,
                                    final int maxUsages,
-                                   final UsageViewImpl usageView) {
+                                   final UsageViewImpl usageView, FindUsagesOptions options) {
     boolean hasMore = visibleNodes.remove(UsageViewImpl.NULL_NODE);
 
     final Project project = handler.getProject();
 
     if (visibleNodes.isEmpty()) {
       if (usages.isEmpty()) {
-        String text = UsageViewBundle.message("no.usages.found.in", searchScopePresentableName(handler));
+        String text = UsageViewBundle.message("no.usages.found.in", searchScopePresentableName(options,
+                                                                                               project));
         showHint(text, editor, popupPosition, handler, maxUsages);
         return null;
       }
@@ -332,7 +332,8 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     if (visibleNodes.size() == 1 && usages.size() == 1) {
       //the only usage
       Usage usage = visibleNodes.iterator().next().getUsage();
-      navigateAndHint(usage, UsageViewBundle.message("show.usages.only.usage", searchScopePresentableName(handler)), handler, popupPosition,
+      navigateAndHint(usage, UsageViewBundle.message("show.usages.only.usage",
+                                                     searchScopePresentableName(options, project)), handler, popupPosition,
                       maxUsages);
       return null;
     }
@@ -340,7 +341,8 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
       // usage view can filter usages down to one
       Usage usage = visibleNodes.iterator().next().getUsage();
       if (areAllUsagesInThisLine(usage, usages)) {
-        String hint = UsageViewBundle.message("all.usages.are.in.this.line", usages.size(), searchScopePresentableName(handler));
+        String hint = UsageViewBundle.message("all.usages.are.in.this.line", usages.size(),
+                                              searchScopePresentableName(options, project));
         navigateAndHint(usage, hint, handler, popupPosition, maxUsages);
         return null;
       }

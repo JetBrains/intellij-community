@@ -491,6 +491,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
     private Dimension myInitialSize;
     private String myDimensionServiceKey;
     private boolean myOpened = false;
+    private boolean myActivated = false;
 
     private FocusTrackback myFocusTrackback;
     private MyDialog.MyWindowListener myWindowListener;
@@ -896,7 +897,10 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
               return;
             }
 
-
+            if (myActivated) {
+              return;
+            }
+            myActivated = true;
             JComponent toFocus = wrapper == null ? null : wrapper.getPreferredFocusedComponent();
             if (toFocus == null) {
               toFocus = getRootPane().getDefaultButton();

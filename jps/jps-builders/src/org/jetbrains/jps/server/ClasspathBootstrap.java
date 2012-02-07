@@ -82,11 +82,7 @@ public class ClasspathBootstrap {
     cp.add(getResourcePath(FileMonitor.class));  // jna-utils.jar
     cp.add(getResourcePath(ClassWriter.class));  // asm
     cp.add(getResourcePath(org.objectweb.asm.commons.EmptyVisitor.class));  // asm-commons
-    final File jpsModel = getResourcePath(MacroExpander.class);
-    cp.add(jpsModel);  // jps-model
-    cp.add(new File(jpsModel.getParentFile(), "jps-javaee"));
-    cp.add(new File(jpsModel.getParentFile(), "jps-gwt"));
-    cp.add(new File(jpsModel.getParentFile(), "jps-jpa"));
+    cp.add(getResourcePath(MacroExpander.class));  // jps-model
     cp.add(getResourcePath(AlienFormFileException.class));  // forms-compiler
     cp.add(getResourcePath(GroovyException.class));  // groovy
     cp.add(getResourcePath(org.jdom.input.SAXBuilder.class));  // jdom

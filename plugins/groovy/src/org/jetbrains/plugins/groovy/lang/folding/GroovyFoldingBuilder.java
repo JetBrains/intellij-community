@@ -18,7 +18,7 @@ package org.jetbrains.plugins.groovy.lang.folding;
 
 import com.intellij.codeInsight.folding.JavaCodeFoldingSettings;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.folding.FoldingBuilder;
+import com.intellij.lang.folding.CustomFoldingBuilder;
 import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.FoldingGroup;
@@ -33,6 +33,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -43,23 +44,23 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
 /**
  * @author ilyas
  */
-public class GroovyFoldingBuilder implements FoldingBuilder, GroovyElementTypes, DumbAware {
+public class GroovyFoldingBuilder extends CustomFoldingBuilder implements GroovyElementTypes, DumbAware {
 
-  @NotNull
-  public FoldingDescriptor[] buildFoldRegions(@NotNull ASTNode node, @NotNull Document document) {
-    List<FoldingDescriptor> descriptors = new ArrayList<FoldingDescriptor>();
-    appendDescriptors(node.getPsi(), descriptors, new HashSet<PsiElement>());
-    return descriptors.toArray(new FoldingDescriptor[descriptors.size()]);
+  @Override
+  protected void buildLanguageFoldRegions(@NotNull List<FoldingDescriptor> descriptors,
+                                          @NotNull PsiElement root,
+                                          @NotNull Document document,
+                                          boolean quick) {
+    appendDescriptors(root, descriptors, new HashSet<PsiElement>());
   }
 
-  private static void appendDescriptors(PsiElement element, List<FoldingDescriptor> descriptors, Set<PsiElement> usedComments) {
+  private void appendDescriptors(PsiElement element, List<FoldingDescriptor> descriptors, Set<PsiElement> usedComments) {
     ASTNode node = element.getNode();
     if (node == null) return;
     IElementType type = node.getElementType();
@@ -70,13 +71,13 @@ public class GroovyFoldingBuilder implements FoldingBuilder, GroovyElementTypes,
       }
     }
     // comments
-    if ((type.equals(mML_COMMENT) || type.equals(GROOVY_DOC_COMMENT)) &&
+    if (((type.equals(mML_COMMENT) && !isCustomRegionStart(node)) || type.equals(GROOVY_DOC_COMMENT)) &&
         isMultiline(element) &&
         isWellEndedComment(element)) {
       descriptors.add(new FoldingDescriptor(node, node.getTextRange()));
     }
 
-    if (type.equals(mSL_COMMENT) && !usedComments.contains(element)) {
+    if (type.equals(mSL_COMMENT) && !isCustomRegionStart(node) && !usedComments.contains(element)) {
       usedComments.add(element);
       PsiElement end = null;
       for (PsiElement current = element.getNextSibling(); current != null; current = current.getNextSibling()) {
@@ -214,7 +215,8 @@ public class GroovyFoldingBuilder implements FoldingBuilder, GroovyElementTypes,
     return text.contains("\n") || text.contains("\r") || text.contains("\r\n");
   }
 
-  public String getPlaceholderText(@NotNull ASTNode node) {
+  @Override
+  protected String getLanguagePlaceholderText(@NotNull ASTNode node, @NotNull TextRange range) {
     final IElementType elemType = node.getElementType();
     if (BLOCK_SET.contains(elemType) || elemType == CLOSABLE_BLOCK) {
       return "{...}";
@@ -236,7 +238,8 @@ public class GroovyFoldingBuilder implements FoldingBuilder, GroovyElementTypes,
     return null;
   }
 
-  public boolean isCollapsedByDefault(@NotNull ASTNode node) {
+  @Override
+  protected boolean isRegionCollapsedByDefault(@NotNull ASTNode node) {
     final JavaCodeFoldingSettings settings = JavaCodeFoldingSettings.getInstance();
     if ( node.getElementType() == IMPORT_STATEMENT ){
       return settings.isCollapseImports();
@@ -279,5 +282,16 @@ public class GroovyFoldingBuilder implements FoldingBuilder, GroovyElementTypes,
             node.getElementType().equals(REGEX)) &&
            isMultiline(node.getPsi()) &&
            GrStringUtil.isWellEndedString(node.getPsi());
+  }
+
+  @Override
+  protected boolean isCustomFoldingCandidate(ASTNode node) {
+    return node.getElementType() == GroovyTokenTypes.mSL_COMMENT;
+  }
+
+  @Override
+  protected boolean isCustomFoldingRoot(ASTNode node) {
+    IElementType nodeType = node.getElementType();
+    return nodeType == GroovyElementTypes.CLASS_DEFINITION || nodeType == GroovyElementTypes.OPEN_BLOCK;
   }
 }

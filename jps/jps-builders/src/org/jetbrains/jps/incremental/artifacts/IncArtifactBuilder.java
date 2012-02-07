@@ -120,7 +120,7 @@ public class IncArtifactBuilder extends ProjectLevelBuilder {
       }
       context.processMessage(UptoDateFilesSavedEvent.INSTANCE);
     }
-    catch (Exception e) {
+    catch (IOException e) {
       throw new ProjectBuildException(e);
     }
   }

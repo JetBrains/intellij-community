@@ -38,6 +38,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
   private final String myBuilderName;
 
   public GroovyBuilder(boolean forStubs) {
+    super(BuilderCategory.TRANSLATOR);
     myForStubs = forStubs;
     myBuilderName = BUILDER_NAME + (forStubs ? "-stubs" : "-classes");
   }

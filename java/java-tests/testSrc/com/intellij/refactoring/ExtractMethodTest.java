@@ -9,6 +9,7 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.refactoring.extractMethod.ExtractMethodHandler;
 import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
 import com.intellij.refactoring.extractMethod.PrepareFailedException;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
@@ -500,6 +501,16 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   public void testRedundantCast() throws Exception {
     doTest();
   }
+  
+  public void testDisabledParam() throws Exception {
+    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    settings.ELSE_ON_NEW_LINE = true;
+    settings.CATCH_ON_NEW_LINE = myCatchOnNewLine;
+    configureByFile(BASE_PATH + getTestName(false) + ".java");
+    boolean success = performExtractMethod(true, true, getEditor(), getFile(), getProject(), false, 0);
+    assertTrue(success);
+    checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
+  }
 
   private void doPrepareErrorTest(final String expectedMessage) throws Exception {
     String expectedError = null;
@@ -545,6 +556,17 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   public static boolean performExtractMethod(boolean doRefactor, boolean replaceAllDuplicates, Editor editor, PsiFile file, Project project,
                                              final boolean extractChainedConstructor)
     throws PrepareFailedException, IncorrectOperationException {
+    return performExtractMethod(doRefactor, replaceAllDuplicates, editor, file, project, extractChainedConstructor, null);
+  }
+
+  public static boolean performExtractMethod(boolean doRefactor,
+                                             boolean replaceAllDuplicates,
+                                             Editor editor,
+                                             PsiFile file,
+                                             Project project,
+                                             final boolean extractChainedConstructor,
+                                             int... disabledParams)
+    throws PrepareFailedException, IncorrectOperationException {
     int startOffset = editor.getSelectionModel().getSelectionStart();
     int endOffset = editor.getSelectionModel().getSelectionEnd();
 
@@ -574,7 +596,13 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     }
 
     if (doRefactor) {
-      processor.testRun();
+      processor.testPrepare();
+      if (disabledParams != null) {
+        for (int param : disabledParams) {
+          processor.doNotPassParameter(param);
+        }
+      }
+      ExtractMethodHandler.run(project, editor, processor);
     }
 
     if (replaceAllDuplicates) {

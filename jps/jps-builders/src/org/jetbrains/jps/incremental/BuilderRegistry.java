@@ -1,9 +1,6 @@
 package org.jetbrains.jps.incremental;
 
 import org.jetbrains.jps.idea.OwnServiceLoader;
-import org.jetbrains.jps.incremental.groovy.GroovyBuilder;
-import org.jetbrains.jps.incremental.java.JavaBuilder;
-import org.jetbrains.jps.incremental.resources.ResourcesBuilder;
 
 import java.util.*;
 import java.util.concurrent.ExecutorService;
@@ -37,18 +34,15 @@ public class BuilderRegistry {
       }
     });
 
-    final OwnServiceLoader<ProjectLevelBuilderService> loader = OwnServiceLoader.load(ProjectLevelBuilderService.class);
+    final OwnServiceLoader<BuilderService> loader = OwnServiceLoader.load(BuilderService.class);
 
-    for (ProjectLevelBuilderService service : loader) {
-      myProjectLevelBuilders.add(service.createBuilder());
+    for (BuilderService service : loader) {
+      myProjectLevelBuilders.addAll(service.createProjectLevelBuilders());
+      final List<? extends ModuleLevelBuilder> moduleLevelBuilders = service.createModuleLevelBuilders(myTasksExecutor);
+      for (ModuleLevelBuilder builder : moduleLevelBuilders) {
+        myModuleLevelBuilders.get(builder.getCategory()).add(builder);
+      }
     }
-    // todo: some builder registration mechanism for plugins needed
-
-    myModuleLevelBuilders.get(BuilderCategory.TRANSLATOR).add(new GroovyBuilder(true));
-    myModuleLevelBuilders.get(BuilderCategory.TRANSLATOR).add(new JavaBuilder(myTasksExecutor));
-    myModuleLevelBuilders.get(BuilderCategory.TRANSLATOR).add(new ResourcesBuilder());
-    myModuleLevelBuilders.get(BuilderCategory.TRANSLATOR).add(new GroovyBuilder(false));
-
   }
 
   public int getModuleLevelBuilderCount() {
