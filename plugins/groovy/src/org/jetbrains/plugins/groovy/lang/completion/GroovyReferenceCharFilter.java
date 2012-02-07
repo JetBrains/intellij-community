@@ -72,6 +72,9 @@ public class GroovyReferenceCharFilter extends CharFilter {
 
     if (c == '[') return CharFilter.Result.SELECT_ITEM_AND_FINISH_LOOKUP;
     if (c == '<' && item.getObject() instanceof PsiClass) return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
+    if (c == '(' && PsiKeyword.RETURN.equals(item.getLookupString())) {
+      return Result.HIDE_LOOKUP;
+    }
 
     return null;
   }

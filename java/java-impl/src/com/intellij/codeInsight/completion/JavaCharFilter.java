@@ -142,6 +142,9 @@ public class JavaCharFilter extends CharFilter {
         return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
       }
     }
+    if (c == '(' && PsiKeyword.RETURN.equals(item.getLookupString())) {
+      return Result.HIDE_LOOKUP;
+    }
     return null;
   }
 
