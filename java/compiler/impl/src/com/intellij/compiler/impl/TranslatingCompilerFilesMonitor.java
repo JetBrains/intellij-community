@@ -19,6 +19,7 @@ import com.intellij.ProjectTopics;
 import com.intellij.compiler.CompileServerManager;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerIOUtil;
+import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.make.MakeUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
@@ -82,12 +83,16 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
   public static boolean ourDebugMode = false;
   @NonNls
   private static final String PATHS_TO_DELETE_FILENAME = "paths_to_delete.dat";
+  private static final String SUSPENDED_PROJECTS_FILENAME = "suspended.dat";
   private static final String OUTPUT_ROOTS_FILENAME = "output_roots.dat";
   private static final FileAttribute ourSourceFileAttribute = new FileAttribute("_make_source_file_info_", 3);
   private static final FileAttribute ourOutputFileAttribute = new FileAttribute("_make_output_file_info_", 3);
   private static final Key<Map<String, VirtualFile>> SOURCE_FILES_CACHE = Key.create("_source_url_to_vfile_cache_");
 
   private final Object myDataLock = new Object();
+
+  private final TIntHashSet mySuspendedProjects = new TIntHashSet(); // projectId for allprojects that should not be monitored
+
   private final TIntObjectHashMap<TIntHashSet> mySourcesToRecompile = new TIntObjectHashMap<TIntHashSet>(); // ProjectId->set of source file paths
   private PersistentHashMap<Integer, TIntObjectHashMap<Pair<Integer, Integer>>> myOutputRootsStorage; // ProjectId->map[moduleId->Pair(outputDirId, testOutputDirId)]
   private final TIntObjectHashMap<Map<String, SourceUrlClassNamePair>> myOutputsToDelete = new TIntObjectHashMap<Map<String, SourceUrlClassNamePair>>(); // Map: projectId -> Map{output path -> [sourceUrl; classname]}
@@ -126,7 +131,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     }
   };
   private final ProjectManager myProjectManager;
-  private final TIntIntHashMap myInitInProgress = new TIntIntHashMap(); // projectId fior successfully initialized projects
+  private final TIntIntHashMap myInitInProgress = new TIntIntHashMap(); // projectId for successfully initialized projects
   private final Object myAsyncScanLock = new Object();
 
   public TranslatingCompilerFilesMonitor(VirtualFileManager vfsManager, ProjectManager projectManager, Application application) {
@@ -138,6 +143,46 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
 
   public static TranslatingCompilerFilesMonitor getInstance() {
     return ApplicationManager.getApplication().getComponent(TranslatingCompilerFilesMonitor.class);
+  }
+
+  public void suspendProject(Project project) {
+    final int projectId = getProjectId(project);
+
+    synchronized (myDataLock) {
+      if (!mySuspendedProjects.add(projectId)) {
+        return;
+      }
+      FileUtil.createIfDoesntExist(CompilerPaths.getRebuildMarkerFile(project));
+      // cleanup internal structures to free memory
+      mySourcesToRecompile.remove(projectId);
+      myOutputsToDelete.remove(projectId);
+      myGeneratedDataPaths.remove(project);
+      myProjectOutputRoots.remove(projectId);
+    }
+
+    try {
+      myOutputRootsStorage.remove(projectId);
+    }
+    catch (IOException e) {
+      LOG.info(e);
+    }
+
+  }
+
+  public void watchProject(Project project) {
+    synchronized (myDataLock) {
+      mySuspendedProjects.remove(getProjectId(project));
+    }
+  }
+
+  public boolean isSuspended(Project project) {
+    return isSuspended(getProjectId(project));
+  }
+
+  public boolean isSuspended(int projectId) {
+    synchronized (myDataLock) {
+      return mySuspendedProjects.contains(projectId);
+    }
   }
 
   @Nullable
@@ -420,6 +465,36 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
   }
 
   public void initComponent() {
+    loadSuspendedProjects();
+    loadPathsToDelete();
+    ensureOutputStorageInitialized();
+  }
+
+  private void loadSuspendedProjects() {
+    final File file = new File(CompilerPaths.getCompilerSystemDirectory(), SUSPENDED_PROJECTS_FILENAME);
+    try {
+      final DataInputStream is = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
+      try {
+        final int projectsCount = is.readInt();
+        synchronized (myDataLock) {
+          for (int idx = 0; idx < projectsCount; idx++) {
+            mySuspendedProjects.add(is.readInt());
+          }
+        }
+      }
+      finally {
+        is.close();
+      }
+    }
+    catch (FileNotFoundException ignored) {
+    }
+    catch (IOException e) {
+      LOG.info(e);
+      FileUtil.delete(file);
+    }
+  }
+
+  private void loadPathsToDelete() {
     final File file = new File(CompilerPaths.getCompilerSystemDirectory(), PATHS_TO_DELETE_FILENAME);
     try {
       final DataInputStream is = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
@@ -430,20 +505,29 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
             final int projectId = is.readInt();
             final int size = is.readInt();
             if (size > 0) {
-              final Map<String, SourceUrlClassNamePair> map = new HashMap<String, SourceUrlClassNamePair>();
-              myOutputsToDelete.put(projectId, map);
+              final Map<String, SourceUrlClassNamePair> map;
+              if (mySuspendedProjects.contains(projectId)) {
+                map = null;
+              }
+              else {
+                map = new HashMap<String, SourceUrlClassNamePair>();
+                myOutputsToDelete.put(projectId, map);
+              }
               for (int i = 0; i < size; i++) {
-                final String outputPath = FileUtil.toSystemIndependentName(CompilerIOUtil.readString(is));
+                final String _outputPath = CompilerIOUtil.readString(is);
                 final String srcUrl = CompilerIOUtil.readString(is);
                 final String className = CompilerIOUtil.readString(is);
+                if (map == null) {
+                  continue;
+                }
                 if (LOG.isDebugEnabled() || ourDebugMode) {
-                  final String message = "INIT path to delete: " + outputPath;
+                  final String message = "INIT path to delete: " + FileUtil.toSystemIndependentName(_outputPath);
                   LOG.debug(message);
                   if (ourDebugMode) {
                     System.out.println(message);
                   }
                 }
-                map.put(outputPath, new SourceUrlClassNamePair(srcUrl, className));
+                map.put(FileUtil.toSystemIndependentName(_outputPath), new SourceUrlClassNamePair(srcUrl, className));
               }
             }
           }
@@ -462,8 +546,6 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
       }
       FileUtil.delete(file);
     }
-
-    ensureOutputStorageInitialized();
   }
 
   private void ensureOutputStorageInitialized() {
@@ -528,12 +610,46 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
   }
 
   public void disposeComponent() {
+    saveSuspendedProjects();
+    savePathsToDelete();
+  }
+
+  private void saveSuspendedProjects() {
+    final File file = new File(CompilerPaths.getCompilerSystemDirectory(), SUSPENDED_PROJECTS_FILENAME);
+    try {
+      FileUtil.createParentDirs(file);
+      final DataOutputStream os = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(file)));
+      try {
+        synchronized (myDataLock) {
+          os.writeInt(mySuspendedProjects.size());
+          for (int projectId : mySuspendedProjects.toArray()) {
+            os.writeInt(projectId);
+          }
+        }
+      }
+      finally {
+        os.close();
+      }
+    }
+    catch (IOException e) {
+      LOG.error(e);
+    }
+  }
+
+  private void savePathsToDelete() {
     final File file = new File(CompilerPaths.getCompilerSystemDirectory(), PATHS_TO_DELETE_FILENAME);
     try {
       FileUtil.createParentDirs(file);
       final DataOutputStream os = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(file)));
       try {
         synchronized (myDataLock) {
+          mySuspendedProjects.forEach(new TIntProcedure() {
+            @Override
+            public boolean execute(int projectId) {
+              myOutputsToDelete.remove(projectId);
+              return true;
+            }
+          });
           final int[] keys = myOutputsToDelete.keys();
           os.writeInt(keys.length);
           for (int projectId : keys) {
@@ -839,10 +955,12 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
       }
     }
 
-    public void clearPaths(final int projectId){
+    public boolean clearPaths(final int projectId){
       if (myProjectToOutputPathMap != null) {
-        myProjectToOutputPathMap.remove(projectId);
+        final Serializable removed = myProjectToOutputPathMap.remove(projectId);
+        return removed != null;
       }
+      return false;
     }
 
     long getTimestamp(final int projectId) {
@@ -899,7 +1017,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
   }
 
   public static List<String> getCompiledClassNames(VirtualFile srcFile, Project project) {
-    SourceFileInfo info = loadSourceInfo(srcFile);
+    final SourceFileInfo info = loadSourceInfo(srcFile);
     if (info == null) {
       return Collections.emptyList();
     }
@@ -1083,6 +1201,9 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
 
   public void scanSourcesForCompilableFiles(final Project project) {
     final int projectId = getProjectId(project);
+    if (isSuspended(projectId)) {
+      return;
+    }
     startAsyncScan(projectId);
     StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
       public void run() {
@@ -1186,11 +1307,21 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
       final ProjectRef projRef = new ProjectRef(project);
       final int projectId = getProjectId(project);
 
+      if (CompilerWorkspaceConfiguration.getInstance(project).useCompileServer()) {
+        suspendProject(project);
+      }
+      else {
+        watchProject(project);
+      }
+
       conn.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
         private VirtualFile[] myRootsBefore;
         private Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
 
         public void beforeRootsChange(final ModuleRootEvent event) {
+          if (isSuspended(projectId)) {
+            return;
+          }
           try {
             myRootsBefore = ProjectRootManager.getInstance(projRef.get()).getContentSourceRoots();
           }
@@ -1200,6 +1331,9 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
         }
 
         public void rootsChanged(final ModuleRootEvent event) {
+          if (isSuspended(projectId)) {
+            return;
+          }
           try {
             final VirtualFile[] rootsBefore = myRootsBefore;
             myRootsBefore = null;
@@ -1323,6 +1457,9 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
                 if (srcInfo != null) {
                   final boolean srcWillBeDeleted = VfsUtil.isAncestor(eventFile, srcFile, false);
                   for (int projectId : srcInfo.getProjectIds().toArray()) {
+                    if (isSuspended(projectId)) {
+                      continue;
+                    }
                     if (srcInfo.isAssociated(projectId, filePath)) {
                       if (srcWillBeDeleted) {
                         if (LOG.isDebugEnabled() || ourDebugMode) {
@@ -1351,6 +1488,9 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
                 deletionProc.setRootBeingDeleted(eventFile);
                 final int sourceFileId = Math.abs(getFileId(file));
                 for (int projectId : projects.toArray()) {
+                  if (isSuspended(projectId)) {
+                    continue;
+                  }
                   // mark associated outputs for deletion
                   srcInfo.processOutputPaths(projectId, deletionProc);
                   if (LOG.isDebugEnabled() || ourDebugMode) {
@@ -1390,7 +1530,15 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
           final SourceFileInfo srcInfo = file.isValid()? loadSourceInfo(file) : null;
           if (srcInfo != null) {
             for (int projectId : srcInfo.getProjectIds().toArray()) {
-              addSourceForRecompilation(projectId, file, srcInfo);
+              if (isSuspended(projectId)) {
+                if (srcInfo.clearPaths(projectId)) {
+                  srcInfo.updateTimestamp(projectId, -1L);
+                  saveSourceInfo(file, srcInfo);
+                }
+              }
+              else {
+                addSourceForRecompilation(projectId, file, srcInfo);
+              }
             }
           }
           else {
@@ -1415,8 +1563,11 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
             if (!project.isInitialized()) {
               continue; // the content of this project will be scanned during its post-startup activities
             }
-            final ProjectRootManager rootManager = ProjectRootManager.getInstance(project);
             final int projectId = getProjectId(project);
+            if (isSuspended(projectId)) {
+              continue;
+            }
+            final ProjectRootManager rootManager = ProjectRootManager.getInstance(project);
             if (rootManager.getFileIndex().isInSourceContent(file)) {
               final TranslatingCompiler[] translators = CompilerManager.getInstance(project).getCompilers(TranslatingCompiler.class);
               processRecursively(file, false, new FileProcessor() {
