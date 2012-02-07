@@ -18,6 +18,7 @@ package com.intellij.openapi.components.impl;
 
 import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.application.options.ReplacePathToMacroMap;
+import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.components.PathMacroMap;
 import com.intellij.openapi.module.Module;
@@ -29,7 +30,8 @@ import java.io.File;
 public class ModulePathMacroManager extends BasePathMacroManager {
   private final Module myModule;
 
-  public ModulePathMacroManager(final Module module) {
+  public ModulePathMacroManager(PathMacros pathMacros, Module module) {
+    super(pathMacros);
     myModule = module;
   }
 

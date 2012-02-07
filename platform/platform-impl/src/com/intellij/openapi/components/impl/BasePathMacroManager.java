@@ -17,6 +17,7 @@ package com.intellij.openapi.components.impl;
 
 import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.application.options.ReplacePathToMacroMap;
+import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.PathMacroMap;
@@ -33,6 +34,11 @@ import java.util.*;
 
 public class BasePathMacroManager extends PathMacroManager {
   private PathMacrosImpl myPathMacros;
+
+
+  public BasePathMacroManager(@Nullable PathMacros pathMacros) {
+    myPathMacros = (PathMacrosImpl)pathMacros;
+  }
 
   protected static void addFileHierarchyReplacements(ReplacePathToMacroMap result,
                                                      String variableName,

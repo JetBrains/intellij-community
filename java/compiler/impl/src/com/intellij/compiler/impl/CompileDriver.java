@@ -144,8 +144,6 @@ public class CompileDriver {
     }
   };
 
-  private OutputPathFinder myOutputFinder; // need this for updating zip archives (experimental feature) 
-
   private Set<File> myAllOutputDirectories;
   private static final long ONE_MINUTE_MS = 60L /*sec*/ * 1000L /*millisec*/;
 
@@ -665,6 +663,7 @@ public class CompileDriver {
               finish - start
             );
             CompilerCacheManager.getInstance(myProject).flushCaches();
+            FileUtil.delete(CompilerPaths.getRebuildMarkerFile(myProject));
           }
         }
       };
@@ -755,8 +754,6 @@ public class CompileDriver {
       }
 
       myAllOutputDirectories = getAllOutputDirectories(compileContext);
-      // need this for updating zip archives experiment, uncomment if the feature is turned on
-      //myOutputFinder = new OutputPathFinder(myAllOutputDirectories);
       status = doCompile(compileContext, isRebuild, forceCompile, false);
     }
     catch (Throwable ex) {
@@ -827,6 +824,10 @@ public class CompileDriver {
   }
 
   private void checkCachesVersion(final CompileContextImpl compileContext, final long currentVFSTimestamp) {
+    if (CompilerPaths.getRebuildMarkerFile(compileContext.getProject()).exists()) {
+      compileContext.requestRebuildNextTime("Compiler caches are out of date, project rebuild is required");
+      return;
+    }
     final CompileStatus compileStatus = readStatus();
     if (compileStatus == null) {
       compileContext.requestRebuildNextTime(CompilerBundle.message("error.compiler.caches.corrupted"));

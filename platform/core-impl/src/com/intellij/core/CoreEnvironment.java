@@ -83,12 +83,10 @@ public class CoreEnvironment {
     myEncodingRegistry = new CoreEncodingRegistry();
 
     myApplication = new MockApplication(parentDisposable);
-    if (ApplicationManager.getApplication() == null) {
-      ApplicationManager.setApplication(myApplication,
-                                        new StaticGetter<FileTypeRegistry>(myFileTypeRegistry),
-                                        new StaticGetter<EncodingRegistry>(myEncodingRegistry),
-                                        parentDisposable);
-    }
+    ApplicationManager.setApplication(myApplication,
+                                      new StaticGetter<FileTypeRegistry>(myFileTypeRegistry),
+                                      new StaticGetter<EncodingRegistry>(myEncodingRegistry),
+                                      parentDisposable);
     myLocalFileSystem = new CoreLocalFileSystem();
     myJarFileSystem = new CoreJarFileSystem();
 

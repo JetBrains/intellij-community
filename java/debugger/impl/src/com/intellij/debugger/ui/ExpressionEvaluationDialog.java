@@ -87,7 +87,7 @@ public class ExpressionEvaluationDialog extends EvaluationDialog {
     exprPanel.add(new JLabel(DebuggerBundle.message("label.evaluate.dialog.expression")), BorderLayout.WEST);
     exprPanel.add(getExpressionCombo(), BorderLayout.CENTER);
     final JLabel help = new JLabel(
-      String.format("Press Enter to Evaluate or %s+Enter to evaluate and add to the Watches", SystemInfo.isMac ? "Meta" : "Control"), SwingConstants.RIGHT);
+      String.format("Press Enter to Evaluate or %s+Enter to evaluate and add to the Watches", SystemInfo.isMac ? "Command" : "Control"), SwingConstants.RIGHT);
     help.setBorder(IdeBorderFactory.createEmptyBorder(2,0,6,0));
     UIUtil.applyStyle(UIUtil.ComponentStyle.MINI, help);
     help.setForeground(UIUtil.getInactiveTextColor());

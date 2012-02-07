@@ -1215,4 +1215,10 @@ class Foo {{
     }
   }
 
+  public void testReturnLParen() {
+    myFixture.configureByText 'a.java', 'class Foo { int foo() { <caret> }}'
+    type 're('
+    myFixture.checkResult 'class Foo { int foo() { re(<caret>) }}'
+  }
+
 }

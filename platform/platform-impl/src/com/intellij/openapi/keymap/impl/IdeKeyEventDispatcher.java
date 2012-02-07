@@ -34,6 +34,7 @@ import com.intellij.openapi.keymap.impl.keyGestures.KeyboardGestureProcessor;
 import com.intellij.openapi.keymap.impl.ui.ShortcutTextField;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TypingTarget;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.ListPopupStep;
@@ -621,6 +622,8 @@ public final class IdeKeyEventDispatcher implements Disposable {
     myContext.setFoundComponent(null);
     myContext.getActions().clear();
 
+    if (isControlEnterOnDialog(component, sc)) return myContext;
+
     boolean hasSecondStroke = false;
 
     // here we try to find "local" shortcuts
@@ -697,6 +700,11 @@ public final class IdeKeyEventDispatcher implements Disposable {
     }
 
     return myContext;
+  }
+
+  private static KeyboardShortcut CONTROL_ENTER = KeyboardShortcut.fromString("control ENTER");
+  private static boolean isControlEnterOnDialog(Component component, Shortcut sc) {
+    return CONTROL_ENTER.equals(sc) && DialogWrapper.findInstance(component) != null;
   }
 
   /**

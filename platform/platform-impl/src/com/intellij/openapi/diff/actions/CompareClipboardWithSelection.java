@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,13 +26,13 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 
 public class CompareClipboardWithSelection extends BaseDiffAction {
-
   @Nullable
   protected DiffRequest getDiffData(DataContext dataContext) {
     Project project = PlatformDataKeys.PROJECT.getData(dataContext);
@@ -65,10 +65,11 @@ public class CompareClipboardWithSelection extends BaseDiffAction {
       return !SystemInfo.isMac;
     }
 
+    @NotNull
     public DiffContent[] getContents() {
       if (myContents != null) return myContents;
       DiffContent clipboardContent = createClipboardContent();
-      if (clipboardContent == null) return null;
+      if (clipboardContent == null) clipboardContent = new SimpleContent("");
       myContents = new DiffContent[2];
       myContents[0] = clipboardContent;
 
