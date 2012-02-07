@@ -132,7 +132,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       final Set<File> formsToCompile = new HashSet<File>();
 
       context.processFilesToRecompile(chunk, new FileProcessor() {
-        public boolean apply(Module module, File file, String sourceRoot) throws Exception {
+        public boolean apply(Module module, File file, String sourceRoot) throws IOException {
           if (JAVA_SOURCES_FILTER.accept(file)) {
             filesToCompile.add(file);
           }

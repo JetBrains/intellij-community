@@ -140,11 +140,11 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     return FileUtil.toCanonicalPath(dir.getPath());
   }
 
-  private static List<File> collectChangedFiles(CompileContext context, ModuleChunk chunk) throws Exception {
+  private static List<File> collectChangedFiles(CompileContext context, ModuleChunk chunk) throws IOException {
     final List<File> toCompile = new ArrayList<File>();
     context.processFilesToRecompile(chunk, new FileProcessor() {
       @Override
-      public boolean apply(Module module, File file, String sourceRoot) throws Exception {
+      public boolean apply(Module module, File file, String sourceRoot) throws IOException {
         final String path = file.getPath();
         if (isGroovyFile(path)) { //todo file type check
           toCompile.add(file);
@@ -159,7 +159,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
                                   ModuleChunk chunk,
                                   List<File> toCompile,
                                   String moduleOutputPath,
-                                  List<GroovycOSProcessHandler.OutputItem> successfullyCompiled) throws Exception {
+                                  List<GroovycOSProcessHandler.OutputItem> successfullyCompiled) throws IOException {
     final Mappings delta = context.createDelta();
     final List<File> successfullyCompiledFiles = new ArrayList<File>();
     if (!successfullyCompiled.isEmpty()) {
@@ -207,7 +207,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     return path.endsWith(".groovy") || path.endsWith(".gpp");
   }
 
-  private static Map<String, String> buildClassToSourceMap(ModuleChunk chunk, CompileContext context, Set<String> toCompilePaths, String moduleOutputPath) throws Exception {
+  private static Map<String, String> buildClassToSourceMap(ModuleChunk chunk, CompileContext context, Set<String> toCompilePaths, String moduleOutputPath) throws IOException {
     final Map<String, String> class2Src = new HashMap<String, String>();
     for (Module module : chunk.getModules()) {
       final String moduleName = module.getName().toLowerCase(Locale.US);

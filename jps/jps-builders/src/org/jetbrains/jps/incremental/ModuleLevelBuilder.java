@@ -43,7 +43,7 @@ public abstract class ModuleLevelBuilder extends Builder {
    * @return true if additional compilation pass is required, false otherwise
    * @throws Exception
    */
-  public final boolean updateMappings(CompileContext context, final Mappings delta, ModuleChunk chunk, Collection<File> filesToCompile, Collection<File> successfullyCompiled) throws Exception {
+  public final boolean updateMappings(CompileContext context, final Mappings delta, ModuleChunk chunk, Collection<File> filesToCompile, Collection<File> successfullyCompiled) throws IOException {
     try {
       boolean additionalPassRequired = false;
 
@@ -115,7 +115,7 @@ public abstract class ModuleLevelBuilder extends Builder {
     }
   }
 
-  private static boolean chunkContainsAffectedFiles(CompileContext context, ModuleChunk chunk, final Set<File> affected) throws Exception {
+  private static boolean chunkContainsAffectedFiles(CompileContext context, ModuleChunk chunk, final Set<File> affected) throws IOException {
     final Set<Module> chunkModules = new HashSet<Module>(chunk.getModules());
     if (!chunkModules.isEmpty()) {
       for (File file : affected) {

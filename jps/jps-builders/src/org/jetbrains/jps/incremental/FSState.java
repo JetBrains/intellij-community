@@ -9,6 +9,7 @@ import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.incremental.storage.TimestampStorage;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -66,7 +67,7 @@ public class FSState {
     getDelta(rd.module).clearRecompile(rd.root, rd.isTestRoot);
   }
 
-  public void markDirty(final File file, final RootDescriptor rd, final @Nullable TimestampStorage tsStorage) throws Exception {
+  public void markDirty(final File file, final RootDescriptor rd, final @Nullable TimestampStorage tsStorage) throws IOException {
     final FilesDelta roundDelta = myCurrentRoundDelta;
     if (roundDelta != null) {
       if (myContextModules.contains(rd.module)) {
@@ -83,7 +84,7 @@ public class FSState {
   /**
    * @return true if marked something, false otherwise
    */
-  public boolean markAllUpToDate(CompileScope scope, final RootDescriptor rd, final TimestampStorage tsStorage, final long compilationStartStamp) throws Exception {
+  public boolean markAllUpToDate(CompileScope scope, final RootDescriptor rd, final TimestampStorage tsStorage, final long compilationStartStamp) throws IOException {
     boolean marked = false;
     final FilesDelta delta = getDelta(rd.module);
     final Set<File> files = delta.clearRecompile(rd.root, rd.isTestRoot);
@@ -115,7 +116,7 @@ public class FSState {
     return marked;
   }
 
-  public boolean processFilesToRecompile(CompileContext context, final Module module, final FileProcessor processor) throws Exception {
+  public boolean processFilesToRecompile(CompileContext context, final Module module, final FileProcessor processor) throws IOException {
     final FilesDelta lastRoundDelta = myLastRoundDelta;
     final FilesDelta delta = lastRoundDelta != null? lastRoundDelta : getDelta(module);
     final Map<File, Set<File>> data = delta.getSourcesToRecompile(context.isCompilingTests());
@@ -140,7 +141,7 @@ public class FSState {
     return true;
   }
 
-  public void registerDeleted(final Module module, final File file, final boolean isTest, @Nullable TimestampStorage tsStorage) throws Exception {
+  public void registerDeleted(final Module module, final File file, final boolean isTest, @Nullable TimestampStorage tsStorage) throws IOException {
     getDelta(module).addDeleted(file, isTest);
     if (tsStorage != null) {
       tsStorage.remove(file);

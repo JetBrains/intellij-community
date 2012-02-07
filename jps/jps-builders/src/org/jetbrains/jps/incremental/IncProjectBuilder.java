@@ -460,7 +460,7 @@ public class IncProjectBuilder {
         private final Map<Module, SourceToOutputMapping> storageMap = new HashMap<Module, SourceToOutputMapping>();
 
         @Override
-        public boolean apply(Module module, File file, String sourceRoot) throws Exception {
+        public boolean apply(Module module, File file, String sourceRoot) throws IOException {
           SourceToOutputMapping srcToOut = storageMap.get(module);
           if (srcToOut == null) {
             srcToOut = dataManager.getSourceToOutputMap(module.getName().toLowerCase(Locale.US), compilingTests);

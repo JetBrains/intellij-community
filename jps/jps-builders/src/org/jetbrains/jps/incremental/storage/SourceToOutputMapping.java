@@ -20,34 +20,34 @@ import java.util.List;
  */
 public final class SourceToOutputMapping extends AbstractStateStorage<String, Collection<String>> {
 
-  public SourceToOutputMapping(File storePath) throws Exception {
+  public SourceToOutputMapping(File storePath) throws IOException {
     super(storePath, new EnumeratorStringDescriptor(), new StringCollectionExternalizer());
   }
 
   @Override
-  public void update(@NotNull String srcPath, @NotNull Collection<String> outputs) throws Exception {
+  public void update(@NotNull String srcPath, @NotNull Collection<String> outputs) throws IOException {
     super.update(FileUtil.toSystemIndependentName(srcPath), normalizePaths(outputs));
   }
 
-  public void update(@NotNull String srcPath, @NotNull String outputPath) throws Exception {
+  public void update(@NotNull String srcPath, @NotNull String outputPath) throws IOException {
     super.update(FileUtil.toSystemIndependentName(srcPath), Collections.singleton(FileUtil.toSystemIndependentName(outputPath)));
   }
 
-  public void appendData(String srcPath, String outputPath) throws Exception {
+  public void appendData(String srcPath, String outputPath) throws IOException {
     super.appendData(FileUtil.toSystemIndependentName(srcPath), Collections.singleton(FileUtil.toSystemIndependentName(outputPath)));
   }
 
-  public void appendData(String srcPath, Collection<String> data) throws Exception {
+  public void appendData(String srcPath, Collection<String> data) throws IOException {
     super.appendData(FileUtil.toSystemIndependentName(srcPath), normalizePaths(data));
   }
 
   @Override
-  public void remove(@NotNull String srcPath) throws Exception {
+  public void remove(@NotNull String srcPath) throws IOException {
     super.remove(FileUtil.toSystemIndependentName(srcPath));
   }
 
   @Override
-  public Collection<String> getState(@NotNull String srcPath) throws Exception {
+  public Collection<String> getState(@NotNull String srcPath) throws IOException {
     return super.getState(FileUtil.toSystemIndependentName(srcPath));
   }
 

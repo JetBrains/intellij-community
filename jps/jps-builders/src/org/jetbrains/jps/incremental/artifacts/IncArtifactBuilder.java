@@ -20,6 +20,7 @@ import org.jetbrains.jps.incremental.messages.UptoDateFilesSavedEvent;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -92,7 +93,7 @@ public class IncArtifactBuilder extends ProjectLevelBuilder {
         final List<String> outputs = new SmartList<String>();
         instructions.processContainingRoots(filePath, new ArtifactRootProcessor() {
           @Override
-          public void process(ArtifactSourceRoot root, Collection<DestinationInfo> destinations) throws Exception {
+          public void process(ArtifactSourceRoot root, Collection<DestinationInfo> destinations) throws IOException {
             for (DestinationInfo destination : destinations) {
               if (destination instanceof ExplodedDestinationInfo) {
                 root.copyFromRoot(filePath, destination.getOutputPath(), outputs);
@@ -125,7 +126,7 @@ public class IncArtifactBuilder extends ProjectLevelBuilder {
   }
 
   private static Set<String> deleteOutdatedFiles(Set<String> deletedFiles, CompileContext context,
-                                                 ArtifactSourceToOutputMapping mapping) throws Exception {
+                                                 ArtifactSourceToOutputMapping mapping) throws IOException {
     if (deletedFiles.isEmpty()) return Collections.emptySet();
 
     context.processMessage(new ProgressMessage("Deleting outdated files..."));

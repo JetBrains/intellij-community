@@ -7,6 +7,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.ModuleRootsIndex;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -70,14 +71,14 @@ public class ArtifactInstructionsBuilderImpl implements ArtifactInstructionsBuil
   }
 
   @Override
-  public void processRoots(ArtifactRootProcessor processor) throws Exception {
+  public void processRoots(ArtifactRootProcessor processor) throws IOException {
     for (Map.Entry<ArtifactSourceRoot, Collection<DestinationInfo>> entry : myInstructions.entrySet()) {
       processor.process(entry.getKey(), entry.getValue());
     }
   }
 
   @Override
-  public void processContainingRoots(String filePath, ArtifactRootProcessor processor) throws Exception {
+  public void processContainingRoots(String filePath, ArtifactRootProcessor processor) throws IOException {
     //todo[nik] improve?
     for (Map.Entry<ArtifactSourceRoot, Collection<DestinationInfo>> entry : myInstructions.entrySet()) {
       final ArtifactSourceRoot root = entry.getKey();

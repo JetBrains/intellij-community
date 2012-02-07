@@ -51,7 +51,7 @@ public class ResourcesBuilder extends ModuleLevelBuilder {
       // todo: process all files in case of rebuild or wholeModuleDirty
       // todo: otherwise avoid traverwing the whole module and use dirty file list taken from params
       context.processFilesToRecompile(chunk, new FileProcessor() {
-        public boolean apply(final Module module, final File file, final String sourceRoot) throws Exception {
+        public boolean apply(final Module module, final File file, final String sourceRoot) throws IOException {
           if (finalPatterns.isResourceFile(file, sourceRoot)) {
             try {
               context.processMessage(new ProgressMessage("Copying " + file.getPath()));
@@ -79,7 +79,7 @@ public class ResourcesBuilder extends ModuleLevelBuilder {
                                    Module module,
                                    File file,
                                    String sourceRoot,
-                                   final SourceToOutputMapping outputToSourceMapping) throws Exception {
+                                   final SourceToOutputMapping outputToSourceMapping) throws IOException {
     final String outputRoot = context.isCompilingTests() ? module.getTestOutputPath() : module.getOutputPath();
     final String relativePath = FileUtil.getRelativePath(sourceRoot, FileUtil.toSystemIndependentName(file.getPath()), '/');
     final String prefix = module.getSourceRootPrefixes().get(sourceRoot);
