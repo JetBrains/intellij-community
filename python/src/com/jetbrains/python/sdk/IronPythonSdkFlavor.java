@@ -1,9 +1,11 @@
 package com.jetbrains.python.sdk;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
@@ -28,11 +30,13 @@ public class IronPythonSdkFlavor extends PythonSdkFlavor {
     }
     if (root != null) {
       final File[] dirs = new File(root).listFiles();
-      for (File dir : dirs) {
-        if (dir.getName().startsWith("IronPython")) {
-          File ipy = new File(dir, "ipy.exe");
-          if (ipy.exists()) {
-            result.add(ipy.getPath());
+      if (dirs != null) {
+        for (File dir : dirs) {
+          if (dir.getName().startsWith("IronPython")) {
+            File ipy = new File(dir, "ipy.exe");
+            if (ipy.exists()) {
+              result.add(ipy.getPath());
+            }
           }
         }
       }
@@ -76,5 +80,10 @@ public class IronPythonSdkFlavor extends PythonSdkFlavor {
   @Override
   public String getName() {
     return "IronPython";
+  }
+
+  @Override
+  public Icon getIcon() {
+    return IconLoader.getIcon("/com/jetbrains/python/icons/dotnet.png");
   }
 }

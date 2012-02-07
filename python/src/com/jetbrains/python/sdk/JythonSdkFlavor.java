@@ -2,11 +2,13 @@ package com.jetbrains.python.sdk;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.ParamsGroup;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.run.PythonCommandLineState;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.io.File;
 import java.util.Collection;
 
@@ -62,5 +64,10 @@ public class JythonSdkFlavor extends PythonSdkFlavor {
 
   public static String getPythonPathCmdLineArgument(Collection<String> path) {
     return "-Dpython.path=" + appendSystemJythonPath(StringUtil.join(path, File.pathSeparator));
+  }
+
+  @Override
+  public Icon getIcon() {
+    return IconLoader.getIcon("/com/jetbrains/python/icons/jython.png");
   }
 }
