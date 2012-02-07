@@ -68,6 +68,7 @@ public class XmlRefCountHolder {
   private final Set<String> myAdditionallyDeclaredIds = new HashSet<String>();
   private final Set<PsiElement> myDoNotValidateParentsList = new HashSet<PsiElement>();
   private final Set<String> myUsedPrefixes = new HashSet<String>();
+  private final Set<String> myUsedNamespaces = new HashSet<String>();
 
   @Nullable
   public static XmlRefCountHolder getRefCountHolder(final XmlElement element) {
@@ -140,6 +141,10 @@ public class XmlRefCountHolder {
     return myUsedPrefixes.contains(prefix);
   }
 
+  public boolean isUsedNamespace(String ns) {
+    return myUsedNamespaces.contains(ns);
+  }
+
   private static class IdGatheringRecursiveVisitor extends XmlRecursiveElementVisitor {
     private final XmlRefCountHolder myHolder;
 
@@ -192,6 +197,7 @@ public class XmlRefCountHolder {
     @Override
     public void visitXmlTag(XmlTag tag) {
       myHolder.addUsedPrefix(tag.getNamespacePrefix());
+      myHolder.addUsedNamespace(tag.getNamespace());
       String text = tag.getValue().getTrimmedText();
       detectPrefix(text);
       super.visitXmlTag(tag);
@@ -202,6 +208,7 @@ public class XmlRefCountHolder {
       if (!attribute.isNamespaceDeclaration()) {
         myHolder.addUsedPrefix(attribute.getNamespacePrefix());
       }
+      myHolder.addUsedNamespace(attribute.getNamespace());
       super.visitXmlAttribute(attribute);
     }
 
@@ -268,5 +275,9 @@ public class XmlRefCountHolder {
 
   private void addUsedPrefix(String prefix) {
     myUsedPrefixes.add(prefix);
+  }
+
+  private void addUsedNamespace(String ns) {
+    myUsedNamespaces.add(ns);
   }
 }
