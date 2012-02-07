@@ -46,26 +46,7 @@ public class JavaNoVariantsDelegator extends NoVariantsDelegator {
         return;
       }
 
-      PsiElement parent = position.getParent();
-      if (parent instanceof PsiJavaCodeReferenceElement) {
-        PsiElement qualifier = ((PsiJavaCodeReferenceElement)parent).getQualifier();
-        if (qualifier instanceof PsiJavaCodeReferenceElement &&
-            !((PsiJavaCodeReferenceElement)qualifier).isQualified() &&
-            ((PsiJavaCodeReferenceElement)qualifier).resolve() == null) {
-          CompletionResultSet qualifiedCollector = result.withPrefixMatcher(position.getContainingFile().getText().substring(parent.getTextRange().getStartOffset(), parameters.getOffset()));
-          ElementFilter filter = JavaCompletionContributor.getReferenceFilter(position);
-          for (LookupElement base : suggestQualifierItems(parameters, result, (PsiJavaCodeReferenceElement)qualifier, filter)) {
-            PsiType type = JavaCompletionUtil.getLookupElementType(base);
-            if (type != null) {
-              PsiReferenceExpression ref = ReferenceExpressionCompletionContributor.createMockReference(position, type, base);
-              for (final LookupElement item : JavaSmartCompletionContributor.completeReference(position, ref, filter, true, true, parameters,
-                                                                                               result.getPrefixMatcher())) {
-                qualifiedCollector.addElement(new JavaChainLookupElement(base, item));
-              }
-            }
-          }
-        }
-      }
+      suggestChainedCalls(parameters, result, position);
     }
 
     if (parameters.getCompletionType() == CompletionType.SMART && parameters.getInvocationCount() == 2) {
@@ -73,8 +54,34 @@ public class JavaNoVariantsDelegator extends NoVariantsDelegator {
     }
   }
 
+  private static void suggestChainedCalls(CompletionParameters parameters, CompletionResultSet result, PsiElement position) {
+    PsiElement parent = position.getParent();
+    if (!(parent instanceof PsiJavaCodeReferenceElement)) {
+      return;
+    }
+    PsiElement qualifier = ((PsiJavaCodeReferenceElement)parent).getQualifier();
+    if (!(qualifier instanceof PsiJavaCodeReferenceElement) ||
+        ((PsiJavaCodeReferenceElement)qualifier).isQualified() ||
+        ((PsiJavaCodeReferenceElement)qualifier).resolve() != null) {
+      return;
+    }
+
+    String fullPrefix = position.getContainingFile().getText().substring(parent.getTextRange().getStartOffset(), parameters.getOffset());
+    CompletionResultSet qualifiedCollector = result.withPrefixMatcher(fullPrefix);
+    ElementFilter filter = JavaCompletionContributor.getReferenceFilter(position);
+    for (LookupElement base : suggestQualifierItems(parameters, (PsiJavaCodeReferenceElement)qualifier, filter)) {
+      PsiType type = JavaCompletionUtil.getLookupElementType(base);
+      if (type != null && !PsiType.VOID.equals(type)) {
+        PsiReferenceExpression ref = ReferenceExpressionCompletionContributor.createMockReference(position, type, base);
+        for (final LookupElement item : JavaSmartCompletionContributor.completeReference(position, ref, filter, true, true, parameters,
+                                                                                         result.getPrefixMatcher())) {
+          qualifiedCollector.addElement(new JavaChainLookupElement(base, item));
+        }
+      }
+    }
+  }
+
   private static Set<LookupElement> suggestQualifierItems(CompletionParameters parameters,
-                                                          CompletionResultSet result,
                                                           PsiJavaCodeReferenceElement qualifier,
                                                           ElementFilter filter) {
     String referenceName = qualifier.getReferenceName();
