@@ -3,12 +3,21 @@ package com.jetbrains.python.packaging;
 import com.google.common.collect.Lists;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PythonHelpersLocator;
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.remote.PyRemoteInterpreterException;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.remote.PythonRemoteSdkAdditionalData;
@@ -144,6 +153,96 @@ public class PyPackageManager {
     FileUtil.delete(root);
   }
 
+  @Nullable
+  public static List<PyRequirement> getRequirements(@NotNull Module module) {
+    // TODO: Cache requirements, clear cache on requirements.txt or setup.py updates
+    final Document requirementsTxt = findRequirementsTxt(module);
+    if (requirementsTxt != null) {
+      return PyRequirement.parse(requirementsTxt.getText());
+    }
+    final PyListLiteralExpression installRequires = findSetupPyInstallRequires(module);
+    if (installRequires != null) {
+      final List<String> lines = new ArrayList<String>();
+      for (PyExpression e : installRequires.getElements()) {
+        if (e instanceof PyStringLiteralExpression) {
+          lines.add(((PyStringLiteralExpression)e).getStringValue());
+        }
+      }
+      return PyRequirement.parse(StringUtil.join(lines, "\n"));
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PyListLiteralExpression findSetupPyInstallRequires(@NotNull Module module) {
+    final PyFile setupPy = findSetupPy(module);
+    if (setupPy != null) {
+      final PyCallExpression setup = findSetupCall(setupPy);
+      if (setup != null) {
+        for (PyExpression arg : setup.getArguments()) {
+          if (arg instanceof PyKeywordArgument) {
+            final PyKeywordArgument kwarg = (PyKeywordArgument)arg;
+            if ("install_requires".equals(kwarg.getKeyword())) {
+              final PyExpression value = kwarg.getValueExpression();
+              if (value instanceof PyListLiteralExpression) {
+                return (PyListLiteralExpression)value;
+              }
+            }
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PyCallExpression findSetupCall(@NotNull PyFile file) {
+    final Ref<PyCallExpression> result = new Ref<PyCallExpression>(null);
+    file.acceptChildren(new PyRecursiveElementVisitor() {
+      @Override
+      public void visitPyCallExpression(PyCallExpression node) {
+        final PyExpression callee = node.getCallee();
+        final String name = PyUtil.getReadableRepr(callee, true);
+        if ("setup".equals(name)) {
+          result.set(node);
+        }
+      }
+
+      @Override
+      public void visitPyElement(PyElement node) {
+        if (!(node instanceof ScopeOwner)) {
+          super.visitPyElement(node);
+        }
+      }
+    });
+    return result.get();
+  }
+
+  @Nullable
+  private static Document findRequirementsTxt(@NotNull Module module) {
+    for (VirtualFile root : PyUtil.getSourceRoots(module)) {
+      final VirtualFile child = root.findChild("requirements.txt");
+      if (child != null) {
+        return FileDocumentManager.getInstance().getDocument(child);
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PyFile findSetupPy(@NotNull Module module) {
+    for (VirtualFile root : PyUtil.getSourceRoots(module)) {
+      final VirtualFile child = root.findChild("setup.py");
+      if (child != null) {
+        final PsiFile file = PsiManager.getInstance(module.getProject()).findFile(child);
+        if (file instanceof PyFile) {
+          return (PyFile)file;
+        }
+      }
+    }
+    return null;
+  }
+
   public void clearCaches() {
     myPackagesCache = null;
   }
@@ -151,7 +250,6 @@ public class PyPackageManager {
   private static <T> List<T> list(T... xs) {
     return Arrays.asList(xs);
   }
-
 
   @NotNull
   private String runPythonHelper(@NotNull final String helper,

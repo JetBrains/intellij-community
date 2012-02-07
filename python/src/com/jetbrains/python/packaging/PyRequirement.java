@@ -1,8 +1,11 @@
 package com.jetbrains.python.packaging;
 
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -67,8 +70,18 @@ public class PyRequirement {
     return result;
   }
 
+  public boolean match(@NotNull List<PyPackage> packages) {
+    for (PyPackage pkg : packages) {
+      if (myName.equalsIgnoreCase(pkg.getName())) {
+        // TODO: Check package versions
+        return true;
+      }
+    }
+    return false;
+  }
+
   @Nullable
-  public static PyRequirement parse(@NotNull String s) {
+  public static PyRequirement fromString(@NotNull String s) {
     // TODO: Extras, multi-line requirements '\'
     final Matcher nameMatcher = NAME.matcher(s);
     if (nameMatcher.matches()) {
@@ -93,6 +106,24 @@ public class PyRequirement {
       return new PyRequirement(name, relation, version);
     }
     return null;
+  }
+
+  @Nullable
+  public static List<PyRequirement> parse(@NotNull String s) {
+    final List<PyRequirement> result = new ArrayList<PyRequirement>();
+    for (String line : StringUtil.splitByLines(s)) {
+      final String trimmed = line.trim();
+      if (!trimmed.isEmpty()) {
+        final PyRequirement req = fromString(line);
+        if (req != null) {
+          result.add(req);
+        }
+        else {
+          return null;
+        }
+      }
+    }
+    return result;
   }
 
   @NotNull
