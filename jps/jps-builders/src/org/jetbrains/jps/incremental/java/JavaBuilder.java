@@ -73,6 +73,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
   private final List<ClassPostProcessor> myClassProcessors = new ArrayList<ClassPostProcessor>();
 
   public JavaBuilder(ExecutorService tasksExecutor) {
+    super(BuilderCategory.TRANSLATOR);
     myTaskRunner = tasksExecutor;
     //add here class processors in the sequence they should be executed
     myClassProcessors.add(new ClassPostProcessor() {

@@ -14,6 +14,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
+ * Use {@link BuilderService} to register implementations of this class
+ *
  * @author Eugene Zhuravlev
  *         Date: 9/17/11
  */
@@ -23,11 +25,21 @@ public abstract class ModuleLevelBuilder extends Builder {
   private static final Key<Set<File>> ALL_AFFECTED_FILES_KEY = Key.create("_all_affected_files_");
   private static final Key<Set<File>> ALL_COMPILED_FILES_KEY = Key.create("_all_compiled_files_");
 
+  private final BuilderCategory myCategory;
+
+  protected ModuleLevelBuilder(BuilderCategory category) {
+    myCategory = category;
+  }
+
   public static enum ExitCode {
     OK, ABORT, ADDITIONAL_PASS_REQUIRED, CHUNK_REBUILD_REQUIRED
   }
 
   public abstract ExitCode build(CompileContext context, ModuleChunk chunk) throws ProjectBuildException;
+
+  public final BuilderCategory getCategory() {
+    return myCategory;
+  }
 
   public void cleanupResources(CompileContext context, ModuleChunk chunk) {
     ALL_AFFECTED_FILES_KEY.set(context, null);
