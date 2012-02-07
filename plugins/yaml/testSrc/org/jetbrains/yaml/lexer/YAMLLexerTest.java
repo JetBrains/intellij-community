@@ -177,4 +177,12 @@ public class YAMLLexerTest extends LexerTestCase {
   public void testOnlyyamlkey(){
     doTest("foo:");
   }
+
+  public void testKey_parens(){
+    doTest("comment(c):");
+  }
+
+  public void testKey_trailing_space(){
+    doTest("foo   :");
+  }
 }
