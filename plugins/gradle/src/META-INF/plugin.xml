@@ -48,6 +48,9 @@
 
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.config.GradleSettings"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.config.GradleProjectState"/>
+
+    <toolWindow id="Gradle" anchor="right" icon="/icons/gradle.png"
+                factoryClass="org.jetbrains.plugins.gradle.ui.GradleToolWindowFactory"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.intellij.groovy">
@@ -57,9 +60,6 @@
   </extensions>
 
   <project-components>
-    <component>
-      <implementation-class>org.jetbrains.plugins.gradle.bootstrap.GradleBootstrap</implementation-class>
-    </component>
     <component>
       <implementation-class>org.jetbrains.plugins.gradle.sync.GradleProjectStructureChangesModel</implementation-class>
     </component>
