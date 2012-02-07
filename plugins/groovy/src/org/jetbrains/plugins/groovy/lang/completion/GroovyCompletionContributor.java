@@ -45,7 +45,6 @@ import com.intellij.util.PairConsumer;
 import com.intellij.util.ProcessingContext;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -417,15 +416,6 @@ public class GroovyCompletionContributor extends CompletionContributor {
       GroovySmartCompletionContributor.generateInheritorVariants(parameters, result.getPrefixMatcher(), inheritorsHolder);
     }
 
-    final int invocationCount = parameters.getInvocationCount();
-    final boolean firstCompletionInvoked = invocationCount < 2;
-
-    final String prefix = result.getPrefixMatcher().getPrefix();
-    final boolean skipAccessors = firstCompletionInvoked && !prefix.startsWith("g") && !prefix.startsWith("s") && !prefix.startsWith("i");
-    result.restartCompletionOnPrefixChange("g");
-    result.restartCompletionOnPrefixChange("i");
-    result.restartCompletionOnPrefixChange("s");
-
     final Map<PsiModifierListOwner, LookupElement> staticMembers = hashMap();
     final PsiElement qualifier = reference.getQualifier();
     final PsiType qualifierType = qualifier instanceof GrExpression ? ((GrExpression)qualifier).getType() : null;
@@ -445,7 +435,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
           element = ((LookupElement)element).getObject();
         }
 
-        final LookupElement lookupElement = element instanceof PsiClass
+        LookupElement lookupElement = element instanceof PsiClass
                                             ? GroovyCompletionUtil.createClassLookupItem(CompletionUtil.getOriginalOrSelf((PsiClass)element))
                                             : GroovyCompletionUtil.getLookupElement(element);
         Object object = lookupElement.getObject();
@@ -460,45 +450,8 @@ public class GroovyCompletionContributor extends CompletionContributor {
         if (object instanceof PsiMember && JavaCompletionUtil.isInExcludedPackage((PsiMember)object, true)) {
           return;
         }
+        lookupElement = tweakPriority(lookupElement, object, substitutor, resolveResult, qualifierType);
 
-        final boolean autopopup = parameters.getInvocationCount() == 0;
-        //skip default groovy methods
-        if (firstCompletionInvoked &&
-            object instanceof GrGdkMethod &&
-            GroovyCompletionUtil.skipDefGroovyMethod((GrGdkMethod)object, substitutor, qualifierType)) {
-          if (!autopopup) {
-            showInfo();
-          }
-          return;
-        }
-
-        //skip operator methods
-        if (firstCompletionInvoked &&
-            object instanceof PsiMethod &&
-            GroovyCompletionUtil.OPERATOR_METHOD_NAMES.contains(((PsiMethod)object).getName())) {
-          if (!checkForIterator((PsiMethod)object)) {
-            if (!autopopup) {
-              showInfo();
-            }
-            return;
-          }
-        }
-
-        //skip accessors if there is no get, set, is prefix
-        if (skipAccessors && object instanceof PsiMethod && GroovyPropertyUtils.isSimplePropertyAccessor((PsiMethod)object)) {
-          if (!autopopup) {
-            showInfo();
-          }
-          return;
-        }
-
-        //skip inaccessible elements
-        if (firstCompletionInvoked && resolveResult != null && !resolveResult.isAccessible()) {
-          if (!autopopup) {
-            showInfo();
-          }
-          return;
-        }
 
         if ((object instanceof PsiMethod || object instanceof PsiField) &&
             ((PsiModifierListOwner)object).hasModifierProperty(PsiModifier.STATIC)) {
@@ -545,11 +498,34 @@ public class GroovyCompletionContributor extends CompletionContributor {
     return InheritanceUtil.isInheritorOrSelf(containingClass, iterator, true);
   }
 
-  private static void showInfo() {
-    if (StringUtil.isEmpty(CompletionService.getCompletionService().getAdvertisementText())) {
-      CompletionService.getCompletionService()
-        .setAdvertisementText(GroovyBundle.message("invoke.completion.second.time.to.show.skipped.methods"));
+
+  private static LookupElement tweakPriority(LookupElement lookupElement,
+                                             Object object,
+                                             PsiSubstitutor substitutor,
+                                             GroovyResolveResult resolveResult,
+                                             PsiType qualifierType) {
+    // default groovy methods
+    if (object instanceof GrGdkMethod &&
+        GroovyCompletionUtil.skipDefGroovyMethod((GrGdkMethod)object, substitutor, qualifierType)) {
+      return PrioritizedLookupElement.withPriority(lookupElement, -1);
     }
+
+    // operator methods
+    if (object instanceof PsiMethod &&
+        GroovyCompletionUtil.OPERATOR_METHOD_NAMES.contains(((PsiMethod)object).getName()) && !checkForIterator((PsiMethod)object)) {
+      return PrioritizedLookupElement.withPriority(lookupElement, -3);
+    }
+
+    // accessors if there is no get, set, is prefix
+    if (object instanceof PsiMethod && GroovyPropertyUtils.isSimplePropertyAccessor((PsiMethod)object)) {
+      return PrioritizedLookupElement.withPriority(lookupElement, -1);
+    }
+
+    // inaccessible elements
+    if (resolveResult != null && !resolveResult.isAccessible()) {
+      return PrioritizedLookupElement.withPriority(lookupElement, -2);
+    }
+    return lookupElement;
   }
 
   static StaticMemberProcessor completeStaticMembers(CompletionParameters parameters) {

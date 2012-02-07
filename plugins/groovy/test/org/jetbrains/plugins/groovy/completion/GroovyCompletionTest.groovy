@@ -891,16 +891,6 @@ class B extends A {
     checkCompletion "asse<caret>x", ' ', 'assert <caret>x'
   }
 
-  public void testDontShowAccessors() {
-    assertNull doContainsTest("getFoo", """
-class MyClass {
-  def foo
-}
-
-def a = new MyClass()
-a.<caret>""")
-  }
-
   public void testPreferInstanceof() {
     caseSensitiveNone()
 
@@ -1072,7 +1062,7 @@ class X {
   }
 
   public void testSortOrder0() {
-    doVariantableTest 'se', 'setMetaClass', 'setProperty', 'setSe'
+    doVariantableTest 'se', 'setProperty', 'setMetaClass', 'setSe'
   }
 
   public void testPrimitiveCastOverwrite() {
