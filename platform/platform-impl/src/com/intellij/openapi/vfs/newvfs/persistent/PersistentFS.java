@@ -352,11 +352,10 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
   }
 
   @Override
-  public void setTimeStamp(@NotNull final VirtualFile file, final long modstamp) throws IOException {
+  public void setTimeStamp(@NotNull final VirtualFile file, final long modStamp) throws IOException {
     final int id = getFileId(file);
-
-    FSRecords.setTimestamp(id, modstamp);
-    getDelegate(file).setTimeStamp(file, modstamp);
+    FSRecords.setTimestamp(id, modStamp);
+    getDelegate(file).setTimeStamp(file, modStamp);
   }
 
   private static int getFileId(final VirtualFile file) {
