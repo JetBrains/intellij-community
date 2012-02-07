@@ -23,10 +23,10 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn17.SvnBundle;
-import org.jetbrains.idea.svn17.SvnConfiguration17;
-import org.jetbrains.idea.svn17.SvnRevisionNumber;
-import org.jetbrains.idea.svn17.SvnVcs17;
+import org.jetbrains.idea.svn17.*;
+import org.jetbrains.idea.svn17.commandLine.SvnCommandLineUpdateClient;
+import org.jetbrains.idea.svn17.portable.SvnSvnkitUpdateClient;
+import org.jetbrains.idea.svn17.portable.SvnUpdateClientI;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -82,30 +82,35 @@ public class SvnUpdateEnvironment17 extends AbstractSvnUpdateIntegrateEnvironmen
       final SvnConfiguration17 configuration = SvnConfiguration17.getInstance(myVcs.getProject());
       final UpdateRootInfo rootInfo = configuration.getUpdateRootInfo(root, myVcs);
 
-      final SVNUpdateClient updateClient = myVcs.createUpdateClient();
-      updateClient.setEventHandler(myHandler);
-      updateClient.setUpdateLocksOnDemand(configuration.UPDATE_LOCK_ON_DEMAND);
-      if (rootInfo != null) {
-        final SVNURL url = rootInfo.getUrl();
-        if (url != null && url.equals(getSourceUrl(myVcs, root))) {
-          if (rootInfo.isUpdateToRevision()) {
-            rev = updateClient.doUpdate(root, rootInfo.getRevision(), configuration.UPDATE_DEPTH, configuration.FORCE_UPDATE, false);
-          } else {
-            rev = updateClient.doUpdate(root, SVNRevision.HEAD, configuration.UPDATE_DEPTH, configuration.FORCE_UPDATE, false);
-          }
+      final SVNURL sourceUrl = getSourceUrl(myVcs, root);
+      final boolean isSwitch = rootInfo != null && rootInfo.getUrl() != null && ! rootInfo.getUrl().equals(sourceUrl);
+      final SVNRevision updateTo = rootInfo != null && rootInfo.isUpdateToRevision() ? rootInfo.getRevision() : SVNRevision.HEAD;
 
-        } else if (url != null) {
-          rev = updateClient.doSwitch(root, url, SVNRevision.UNDEFINED, rootInfo.getRevision(), configuration.UPDATE_DEPTH, configuration.FORCE_UPDATE, false);
-        } else {
-          rev = updateClient.doUpdate(root, SVNRevision.HEAD, configuration.UPDATE_DEPTH, configuration.FORCE_UPDATE, false);
-        }
+      if (isSwitch) {
+        final SvnUpdateClientI updateClient = createUpdateClient(configuration, root, true, sourceUrl);
+        rev = updateClient.doSwitch(root, rootInfo.getUrl(), SVNRevision.UNDEFINED, rootInfo.getRevision(), configuration.UPDATE_DEPTH, configuration.FORCE_UPDATE, false);
       } else {
-        rev = updateClient.doUpdate(root, SVNRevision.HEAD, configuration.UPDATE_DEPTH, configuration.FORCE_UPDATE, false);
+        final SvnUpdateClientI updateClient = createUpdateClient(configuration, root, false, sourceUrl);
+        rev = updateClient.doUpdate(root, updateTo, configuration.UPDATE_DEPTH, configuration.FORCE_UPDATE, false);
       }
 
       myPostUpdateFiles.setRevisions(root.getAbsolutePath(), myVcs, new SvnRevisionNumber(SVNRevision.create(rev)));
 
       return rev;
+    }
+
+    private SvnUpdateClientI createUpdateClient(SvnConfiguration17 configuration, File root, boolean isSwitch, SVNURL sourceUrl) {
+      final SvnUpdateClientI updateClient;
+      // do not do from command line for switch now
+      if (! isSwitch && SvnConfiguration17.UseAcceleration.commandLine.equals(configuration.myUseAcceleration) &&
+          Svn17Detector.is17(myVcs.getProject(), root) && SvnAuthenticationManager.HTTP.equals(sourceUrl.getProtocol())) {
+        updateClient = new SvnCommandLineUpdateClient(myVcs.getProject(), null);
+      } else {
+        updateClient = new SvnSvnkitUpdateClient(myVcs.createUpdateClient());
+      }
+      updateClient.setEventHandler(myHandler);
+      updateClient.setUpdateLocksOnDemand(configuration.UPDATE_LOCK_ON_DEMAND);
+      return updateClient;
     }
 
     protected boolean isMerge() {

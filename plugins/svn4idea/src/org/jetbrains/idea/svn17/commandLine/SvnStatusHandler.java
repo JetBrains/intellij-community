@@ -339,6 +339,12 @@ public class SvnStatusHandler extends DefaultHandler {
       super(new String[]{"commit"}, new String[]{});
     }
 
+    /*<wc-status
+       props="none"
+       wc-locked="true"
+       item="normal"
+       revision="120">*/
+
     @Override
     protected void updateStatus(Attributes attributes, PortableStatus status) throws SAXException {
       final String props = attributes.getValue("props");
@@ -355,6 +361,10 @@ public class SvnStatusHandler extends DefaultHandler {
       }
 
       // optional
+      final String locked = attributes.getValue("wc-locked");
+      if (locked != null && Boolean.parseBoolean(locked)) {
+        status.setIsLocked(true);
+      }
       final String copied = attributes.getValue("copied");
       if (copied != null && Boolean.parseBoolean(copied)) {
         status.setIsCopied(true);

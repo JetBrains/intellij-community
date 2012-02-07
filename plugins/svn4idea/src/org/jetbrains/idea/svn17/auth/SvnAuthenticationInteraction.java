@@ -15,7 +15,9 @@
  */
 package org.jetbrains.idea.svn17.auth;
 
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.auth.SVNAuthentication;
 
 import java.io.File;
 
