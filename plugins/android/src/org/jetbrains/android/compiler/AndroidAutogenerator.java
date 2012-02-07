@@ -28,6 +28,7 @@ import org.jetbrains.android.fileTypes.AndroidRenderscriptFileType;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidCommonUtils;
+import org.jetbrains.android.util.AndroidCompilerMessageKind;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -120,12 +121,12 @@ public class AndroidAutogenerator {
         final String[] libPackages = getLibPackages(module, packageName);
         final Map<String, String> genFilePath2Package = new HashMap<String, String>();
 
-        final String packageDir = sourceRootPath + '/' + packageName.replace('.', '/') + '/';
+        final String packageDir = packageName.replace('.', '/') + '/';
         genFilePath2Package.put(packageDir + AndroidCommonUtils.MANIFEST_JAVA_FILE_NAME, packageName);
         genFilePath2Package.put(packageDir + AndroidCommonUtils.R_JAVA_FILENAME, packageName);
 
         for (String libPackage : libPackages) {
-          final String libPackageDir = sourceRootPath + '/' + libPackage.replace('.', '/') + '/';
+          final String libPackageDir = libPackage.replace('.', '/') + '/';
           genFilePath2Package.put(libPackageDir + AndroidCommonUtils.MANIFEST_JAVA_FILE_NAME, packageName);
           genFilePath2Package.put(libPackageDir + AndroidCommonUtils.R_JAVA_FILENAME, packageName);
         }
@@ -143,9 +144,11 @@ public class AndroidAutogenerator {
 
     final Set<VirtualFile> filesToCheck = new HashSet<VirtualFile>();
 
-    for (String genFilePath : item.myGenFile2package.keySet()) {
-      if (new File(genFilePath).exists()) {
-        final VirtualFile genFile = LocalFileSystem.getInstance().findFileByPath(genFilePath);
+    for (String genFileRelPath : item.myGenFileRelPath2package.keySet()) {
+      final String genFileFullPath = item.myOutputDirOsPath + '/' + genFileRelPath;
+
+      if (new File(genFileFullPath).exists()) {
+        final VirtualFile genFile = LocalFileSystem.getInstance().findFileByPath(genFileFullPath);
 
         if (genFile != null) {
           filesToCheck.add(genFile);
@@ -157,15 +160,59 @@ public class AndroidAutogenerator {
       return;
     }
 
+    File tempOutDir = null;
+
     try {
-      final Map<CompilerMessageCategory, List<String>> messages = AndroidCompileUtil.toCompilerMessageCategoryKeys(
+      // Aapt generation can be very long, so we generate it in temp directory first
+      tempOutDir = FileUtil.createTempDirectory("android_apt_autogeneration", "tmp");
+
+      final Map<AndroidCompilerMessageKind, List<String>> messages =
         AndroidApt.compile(item.myTarget, item.myPlatformToolsRevision, item.myManifestFileOsPath, item.myPackage,
-                           item.myOutputDirOsPath, item.myResDirOsPaths, item.myLibPackages, item.myLibrary));
+                           tempOutDir.getPath(), item.myResDirOsPaths, item.myLibPackages, item.myLibrary);
 
-      AndroidCompileUtil.addMessages(context, messages);
+      if (messages.get(AndroidCompilerMessageKind.ERROR).size() == 0) {
+        for (String genFileRelPath : item.myGenFileRelPath2package.keySet()) {
+          final File srcFile = new File(tempOutDir.getPath() + '/' + genFileRelPath);
 
-      for (Map.Entry<String, String> entry : item.myGenFile2package.entrySet()) {
-        final String path = entry.getKey();
+          if (srcFile.isFile()) {
+            final File dstFile = new File(item.myOutputDirOsPath + '/' + genFileRelPath);
+
+            if (dstFile.exists()) {
+              if (!FileUtil.delete(dstFile)) {
+                ApplicationManager.getApplication().runReadAction(new Runnable() {
+                  @Override
+                  public void run() {
+                    if (module.isDisposed() || module.getProject().isDisposed()) {
+                      return;
+                    }
+                    context.addMessage(CompilerMessageCategory.ERROR,
+                                       "Cannot delete " + FileUtil.toSystemDependentName(dstFile.getPath()), null, -1, -1);
+                  }
+                });
+              }
+            }
+
+            if (!srcFile.renameTo(dstFile)) {
+              ApplicationManager.getApplication().runReadAction(new Runnable() {
+                @Override
+                public void run() {
+                  if (module.isDisposed() || module.getProject().isDisposed()) {
+                    return;
+                  }
+                  context.addMessage(CompilerMessageCategory.ERROR, "Cannot move " +
+                                                                    FileUtil.toSystemDependentName(srcFile.getPath()) +
+                                                                    " to " +
+                                                                    FileUtil.toSystemDependentName(dstFile.getPath()), null, -1, -1);
+                }
+              });
+            }
+          }
+        }
+      }
+      AndroidCompileUtil.addMessages(context, AndroidCompileUtil.toCompilerMessageCategoryKeys(messages));
+
+      for (Map.Entry<String, String> entry : item.myGenFileRelPath2package.entrySet()) {
+        final String path = item.myOutputDirOsPath + '/' + entry.getKey();
         final String aPackage = entry.getValue();
         removeDuplicateClasses(module, aPackage, new File(path), item.myOutputDirOsPath);
       }
@@ -183,6 +230,11 @@ public class AndroidAutogenerator {
           context.addMessage(CompilerMessageCategory.ERROR, "I/O error: " + e.getMessage(), null, -1, -1);
         }
       });
+    }
+    finally {
+      if (tempOutDir != null) {
+        FileUtil.delete(tempOutDir);
+      }
     }
   }
 
@@ -429,7 +481,7 @@ public class AndroidAutogenerator {
     final String[] myResDirOsPaths;
     final String[] myLibPackages;
     final boolean myLibrary;
-    final Map<String, String> myGenFile2package;
+    final Map<String, String> myGenFileRelPath2package;
 
     private AptAutogenerationItem(@NotNull IAndroidTarget target,
                                   int platformToolsRevision,
@@ -439,7 +491,7 @@ public class AndroidAutogenerator {
                                   @NotNull String[] resDirOsPaths,
                                   @NotNull String[] libPackages,
                                   boolean library,
-                                  @NotNull Map<String, String> genFile2package) {
+                                  @NotNull Map<String, String> genFileRelPath2package) {
       myTarget = target;
       myPlatformToolsRevision = platformToolsRevision;
       myManifestFileOsPath = manifestFileOsPath;
@@ -448,7 +500,7 @@ public class AndroidAutogenerator {
       myResDirOsPaths = resDirOsPaths;
       myLibPackages = libPackages;
       myLibrary = library;
-      myGenFile2package = genFile2package;
+      myGenFileRelPath2package = genFileRelPath2package;
     }
   }
 
