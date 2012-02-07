@@ -17,6 +17,8 @@ package org.jetbrains.android.compiler;
 
 import com.android.resources.ResourceType;
 import com.intellij.CommonBundle;
+import com.intellij.compiler.CompilerConfiguration;
+import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.impl.CompileContextImpl;
 import com.intellij.compiler.impl.ModuleCompileScope;
 import com.intellij.compiler.options.CompileStepBeforeRun;
@@ -27,6 +29,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.Compiler;
+import com.intellij.openapi.compiler.options.ExcludeEntryDescription;
+import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
@@ -285,15 +289,38 @@ public class AndroidCompileUtil {
     if (root != null) {
       final ModuleRootManager manager = ModuleRootManager.getInstance(module);
       unexcludeRootIfNeccessary(root, manager);
+
+      boolean markedAsSource = false;
+
       for (VirtualFile existingRoot : manager.getSourceRoots()) {
-        if (existingRoot == root) return;
-      }
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        public void run() {
-          addSourceRoot(manager, root);
+        if (existingRoot == root) {
+          markedAsSource = true;
         }
-      });
+      }
+
+      if (!markedAsSource) {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            addSourceRoot(manager, root);
+          }
+        });
+      }
+
+      excludeFromCompilation(project, root);
     }
+  }
+
+  private static void excludeFromCompilation(@NotNull Project project, @NotNull VirtualFile dir) {
+    final ExcludedEntriesConfiguration configuration =
+      ((CompilerConfigurationImpl)CompilerConfiguration.getInstance(project)).getExcludedEntriesConfiguration();
+
+    for (ExcludeEntryDescription description : configuration.getExcludeEntryDescriptions()) {
+      if (description.getVirtualFile() == dir) {
+        return;
+      }
+    }
+
+    configuration.addExcludeEntryDescription(new ExcludeEntryDescription(dir, true, false, project));
   }
 
   private static void removeGenModule(@NotNull final Module libModule) {
