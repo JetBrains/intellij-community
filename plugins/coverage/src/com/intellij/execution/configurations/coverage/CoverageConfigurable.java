@@ -261,6 +261,9 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
 
   private void enableTracingPanel(final boolean enabled) {
     myTracingRb.setEnabled(enabled);
+    if (!enabled) {
+      mySamplingRb.setSelected(true);
+    }
   }
 
   protected void disposeEditor() {}
