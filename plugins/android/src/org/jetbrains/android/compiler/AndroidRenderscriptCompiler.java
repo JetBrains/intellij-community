@@ -171,10 +171,12 @@ public class AndroidRenderscriptCompiler implements SourceGeneratingCompiler {
     final File genRootDir = new File(genRootPath);
     if (genRootDir.exists()) {
       if (!FileUtil.delete(genRootDir)) {
-        LOG.error("Cannot delete directory " + genRootPath);
+        context.addMessage(CompilerMessageCategory.ERROR, "Cannot delete directory " + genRootPath, null, -1, -1);
+        return EMPTY_GENERATION_ITEM_ARRAY;
       }
       if (!genRootDir.mkdir()) {
-        LOG.error("Cannot create directory " + genRootPath);
+        context.addMessage(CompilerMessageCategory.ERROR, "Cannot create directory " + genRootPath, null, -1, -1);
+        return EMPTY_GENERATION_ITEM_ARRAY;
       }
     }
 
