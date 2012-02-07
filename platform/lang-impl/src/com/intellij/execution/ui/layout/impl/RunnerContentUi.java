@@ -811,9 +811,10 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   private void updateTabsUI(final boolean validateNow) {
     boolean hasToolbarContent = rebuildToolbar();
 
+    Set<String> usedNames = new HashSet<String>();
     List<TabInfo> tabs = myTabs.getTabs();
     for (TabInfo each : tabs) {
-      hasToolbarContent |= updateTabUI(each);
+      hasToolbarContent |= updateTabUI(each, usedNames);
     }
     int tabsCount = tabs.size();
     for (RunnerContentUi child : myChildren) {
@@ -827,7 +828,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     }
   }
 
-  private boolean updateTabUI(TabInfo tab) {
+  private boolean updateTabUI(TabInfo tab, Set<String> usedNames) {
     TabImpl t = getTabFor(tab);
     if (t == null) {
       return false;
@@ -842,7 +843,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     String title = contents.size() > 1 ? t.getDisplayName() : null;
     if (title == null) {
       final String name = myLayoutSettings.getDefaultDisplayName(t.getDefaultIndex());
-      if (name != null && contents.size() > 1) {
+      if (name != null && contents.size() > 1 && !usedNames.contains(name)) {
         title = name;
       } else {
         title = StringUtil.join(contents, new NotNullFunction<Content, String>() {
@@ -854,6 +855,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
         },  " | ");
       }
     }
+    usedNames.add(title);
 
     boolean hidden = true;
     for (Content content : contents) {
