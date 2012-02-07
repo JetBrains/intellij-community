@@ -33,8 +33,11 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.element.ModifierFilter;
 import com.intellij.psi.filters.types.AssignableFromFilter;
+import com.intellij.psi.impl.FakePsiElement;
+import com.intellij.psi.impl.light.LightVariableBuilder;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.infos.CandidateInfo;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -429,30 +432,31 @@ public class ReferenceExpressionCompletionContributor {
     }
   }
 
-  public static PsiReferenceExpression createMockReference(PsiElement place, @NotNull PsiType qualifierType, LookupElement qualifierItem) {
+  public static PsiReferenceExpression createMockReference(final PsiElement place, @NotNull PsiType qualifierType, LookupElement qualifierItem) {
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(place.getProject());
     if (qualifierItem.getObject() instanceof PsiClass) {
-      return (PsiReferenceExpression)JavaPsiFacade.getElementFactory(place.getProject())
+      return (PsiReferenceExpression)factory
         .createExpressionFromText(((PsiClass)qualifierItem.getObject()).getQualifiedName() + ".xxx", place);
-
     }
 
-    final JavaCodeFragmentFactory factory = JavaCodeFragmentFactory.getInstance(place.getProject());
-    PsiType varType = qualifierType;
-    if (varType instanceof PsiEllipsisType) {
-      varType = ((PsiEllipsisType)varType).getComponentType();
-    }
-    if (varType instanceof PsiWildcardType || varType instanceof PsiCapturedWildcardType) {
-      varType = TypeConversionUtil.erasure(varType);
-    }
+    return (PsiReferenceExpression) factory.createExpressionFromText("xxx.xxx", createContextWithXxxVariable(place, qualifierType));
+  }
 
-    final String typeText = varType.getCanonicalText();
-    final JavaCodeFragment block = factory.createCodeBlockCodeFragment(typeText + " xxx;xxx.xxx;", place, false);
-    final PsiElement secondChild = block.getChildren()[1];
-    if (!(secondChild instanceof PsiExpressionStatement)) {
-      LOG.error(typeText + " of " + varType.getClass());
-    }
-    final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)secondChild;
-    return (PsiReferenceExpression) expressionStatement.getExpression();
+  public static FakePsiElement createContextWithXxxVariable(final PsiElement place, final PsiType varType) {
+    return new FakePsiElement() {
+      @Override
+      public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                         @NotNull ResolveState state,
+                                         PsiElement lastParent,
+                                         @NotNull PsiElement place) {
+        return processor.execute(new LightVariableBuilder("xxx", varType, place), ResolveState.initial());
+      }
+
+      @Override
+      public PsiElement getParent() {
+        return place;
+      }
+    };
   }
 
   private static boolean shoudChain(PsiElement element, PsiType qualifierType, PsiType expectedType, LookupElement item) {
