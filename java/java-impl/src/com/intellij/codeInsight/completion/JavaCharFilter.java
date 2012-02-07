@@ -28,6 +28,7 @@ import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -84,7 +85,7 @@ public class JavaCharFilter extends CharFilter {
   public Result acceptChar(char c, final int prefixLength, final Lookup lookup) {
     if (!lookup.isCompletion()) return null;
 
-    if (!(lookup.getPsiFile() instanceof PsiJavaFile)) {
+    if (!lookup.getPsiFile().getLanguage().isKindOf(JavaLanguage.INSTANCE)) {
       return null;
     }
 
