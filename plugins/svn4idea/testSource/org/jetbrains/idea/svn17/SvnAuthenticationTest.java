@@ -1055,6 +1055,10 @@ public class SvnAuthenticationTest extends PlatformTestCase {
     }
 
     @Override
+    public void acknowledge(boolean accepted, String kind, String realm, SVNErrorMessage message, SVNAuthentication authentication) {
+    }
+
+    @Override
     public void saveAttemptStarted(ProviderType type, SVNURL url, String realm, String kind) {
       mySaved = false;
     }
@@ -1117,6 +1121,10 @@ public class SvnAuthenticationTest extends PlatformTestCase {
     private SavedOnceListener() {
       myClientRequested = new HashSet<Pair<SVNURL, String>>();
       mySaved = new HashSet<Pair<SVNURL, String>>();
+    }
+
+    @Override
+    public void acknowledge(boolean accepted, String kind, String realm, SVNErrorMessage message, SVNAuthentication authentication) {
     }
 
     public void reset() {
