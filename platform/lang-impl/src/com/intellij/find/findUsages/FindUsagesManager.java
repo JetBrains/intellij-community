@@ -20,7 +20,6 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.find.FindBundle;
-import com.intellij.ide.DataManager;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -273,13 +272,6 @@ public class FindUsagesManager implements JDOMExternalizable {
     }
   }
 
-  @Nullable
-  public static SearchScope getCurrentSearchScope(FindUsagesHandler handler) {
-    if (handler == null) return null;
-    FindUsagesOptions findUsagesOptions = handler.getFindUsagesOptions();
-    return findUsagesOptions.searchScope;
-  }
-
   public boolean isUsed(@NotNull PsiElement element, @NotNull FindUsagesOptions findUsagesOptions) {
     FindUsagesHandler handler = getFindUsagesHandler(element, true);
     if (handler == null) return false;
@@ -298,10 +290,9 @@ public class FindUsagesManager implements JDOMExternalizable {
 
   // return null on failure or cancel
   @Nullable
-  public UsageViewPresentation processUsages(FindUsagesHandler handler, @NotNull final Processor<Usage> processor) {
+  public UsageViewPresentation processUsages(FindUsagesHandler handler,
+                                             @NotNull final Processor<Usage> processor, FindUsagesOptions findUsagesOptions) {
     if (handler == null) return null;
-
-    FindUsagesOptions findUsagesOptions = handler.getFindUsagesOptions(DataManager.getInstance().getDataContext());
 
     PsiElement element = handler.getPsiElement();
     LOG.assertTrue(element.isValid());
