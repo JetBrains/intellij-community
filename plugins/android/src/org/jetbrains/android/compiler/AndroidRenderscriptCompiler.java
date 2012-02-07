@@ -227,12 +227,12 @@ public class AndroidRenderscriptCompiler implements SourceGeneratingCompiler {
     }
   }
 
-  private static Map<CompilerMessageCategory, List<String>> launchRenderscriptCompiler(@NotNull Project project,
-                                                                                       @NotNull final String sdkLocation,
-                                                                                       @NotNull IAndroidTarget target,
-                                                                                       @NotNull final VirtualFile sourceFile,
-                                                                                       @NotNull final String genFolderPath,
-                                                                                       @NotNull final String rawDirPath)
+  static Map<CompilerMessageCategory, List<String>> launchRenderscriptCompiler(@NotNull Project project,
+                                                                               @NotNull final String sdkLocation,
+                                                                               @NotNull IAndroidTarget target,
+                                                                               @NotNull final VirtualFile sourceFile,
+                                                                               @NotNull final String genFolderPath,
+                                                                               @NotNull final String rawDirPath)
     throws IOException {
     final List<String> command = new ArrayList<String>();
     command.add(

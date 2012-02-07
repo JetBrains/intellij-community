@@ -37,7 +37,6 @@ import com.intellij.facet.FacetTypeRegistry;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.compiler.GeneratingCompiler;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
@@ -73,10 +72,7 @@ import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.DomElement;
-import org.jetbrains.android.compiler.AndroidAptCompiler;
-import org.jetbrains.android.compiler.AndroidCompileUtil;
-import org.jetbrains.android.compiler.AndroidIdlCompiler;
-import org.jetbrains.android.compiler.AndroidRenderscriptCompiler;
+import org.jetbrains.android.compiler.*;
 import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.android.importDependencies.ImportDependenciesUtil;
 import org.jetbrains.android.resourceManagers.LocalResourceManager;
@@ -112,17 +108,18 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
   private final Map<String, Map<String, PsiClass>> myClassMaps = new HashMap<String, Map<String, PsiClass>>();
 
   private final Object myClassMapLock = new Object();
-  
-  private final Map<Class<?>, MergingUpdateQueue> mySourcesAutogeneratingQueueMap = new HashMap<Class<?>, MergingUpdateQueue>();
+
+  private final Map<AndroidAutogeneratorMode, MergingUpdateQueue> mySourcesAutogeneratingQueueMap =
+    new HashMap<AndroidAutogeneratorMode, MergingUpdateQueue>();
 
   public AndroidFacet(@NotNull Module module, String name, @NotNull AndroidFacetConfiguration configuration) {
     super(getFacetType(), module, name, configuration, null);
     configuration.setFacet(this);
 
-    mySourcesAutogeneratingQueueMap.put(AndroidAptCompiler.class, createSourceGeneratingQueue("AndroidAptAutogeneratingQueue"));
-    mySourcesAutogeneratingQueueMap.put(AndroidIdlCompiler.class, createSourceGeneratingQueue("AndroidIdlAutogeneratingQueue"));
+    mySourcesAutogeneratingQueueMap.put(AndroidAutogeneratorMode.AAPT, createSourceGeneratingQueue("AndroidAptAutogeneratingQueue"));
+    mySourcesAutogeneratingQueueMap.put(AndroidAutogeneratorMode.AIDL, createSourceGeneratingQueue("AndroidIdlAutogeneratingQueue"));
     mySourcesAutogeneratingQueueMap
-      .put(AndroidRenderscriptCompiler.class, createSourceGeneratingQueue("AndroidRenderscriptAutogeneratingQueue"));
+      .put(AndroidAutogeneratorMode.RENDERSCRIPT, createSourceGeneratingQueue("AndroidRenderscriptAutogeneratingQueue"));
   }
 
   private MergingUpdateQueue createSourceGeneratingQueue(@NotNull String name) {
@@ -385,12 +382,12 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
             myListener.setResourceSet(resourceSet);
 
             if (getConfiguration().REGENERATE_R_JAVA && AndroidAptCompiler.isToCompileModule(module, getConfiguration())) {
-              AndroidCompileUtil.generate(module, new AndroidAptCompiler());
+              AndroidCompileUtil.generate(module, AndroidAutogeneratorMode.AAPT);
             }
             if (getConfiguration().REGENERATE_JAVA_BY_AIDL) {
-              AndroidCompileUtil.generate(module, new AndroidIdlCompiler(project));
+              AndroidCompileUtil.generate(module, AndroidAutogeneratorMode.AIDL);
             }
-            AndroidCompileUtil.generate(module, new AndroidRenderscriptCompiler());
+            AndroidCompileUtil.generate(module, AndroidAutogeneratorMode.RENDERSCRIPT);
 
             activateSourceAutogenerating();
           }
@@ -774,17 +771,17 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
     return moduleDirPath != null ? FileUtil.toSystemDependentName(moduleDirPath + path) : null;
   }
 
-  public void scheduleSourceRegenerating(@NotNull final GeneratingCompiler compiler) {
-    final MergingUpdateQueue queue = mySourcesAutogeneratingQueueMap.get(compiler.getClass());
+  public void scheduleSourceRegenerating(@NotNull final AndroidAutogeneratorMode mode) {
+    final MergingUpdateQueue queue = mySourcesAutogeneratingQueueMap.get(mode);
 
     if (queue == null) {
-      LOG.error("Autogenerating is not supported for compiler " + compiler.getClass().getCanonicalName());
+      LOG.error("Autogenerating is not supported for mode " + mode);
     }
     else {
       queue.queue(new Update(this) {
         @Override
         public void run() {
-          AndroidCompileUtil.doGenerate(getModule(), compiler);
+          AndroidCompileUtil.doGenerate(getModule(), mode);
         }
       });
     }
