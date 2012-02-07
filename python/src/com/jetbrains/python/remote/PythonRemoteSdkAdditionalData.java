@@ -316,25 +316,29 @@ public class PythonRemoteSdkAdditionalData extends PythonSdkAdditionalData imple
   public Object clone() throws CloneNotSupportedException {
     try {
       final PythonRemoteSdkAdditionalData copy = (PythonRemoteSdkAdditionalData)super.clone();
-      copy.setHost(getHost());
-      copy.setPort(getPort());
-      copy.setAnonymous(isAnonymous());
-      copy.setUserName(getUserName());
-      copy.setPassword(getPassword());
-      copy.setPrivateKeyFile(getPrivateKeyFile());
-      copy.setKnownHostsFile(getKnownHostsFile());
-      copy.setPassphrase(getPassphrase());
-      copy.setUseKeyPair(isUseKeyPair());
-
-      copy.setInterpreterPath(getInterpreterPath());
-      copy.setStorePassword(isStorePassword());
-      copy.setStorePassphrase(isStorePassphrase());
+      copyTo(copy);
 
       return copy;
     }
     catch (CloneNotSupportedException e) {
       return null;
     }
+  }
+
+  public void copyTo(PythonRemoteSdkAdditionalData copy) {
+    copy.setHost(getHost());
+    copy.setPort(getPort());
+    copy.setAnonymous(isAnonymous());
+    copy.setUserName(getUserName());
+    copy.setPassword(getPassword());
+    copy.setPrivateKeyFile(getPrivateKeyFile());
+    copy.setKnownHostsFile(getKnownHostsFile());
+    copy.setPassphrase(getPassphrase());
+    copy.setUseKeyPair(isUseKeyPair());
+
+    copy.setInterpreterPath(getInterpreterPath());
+    copy.setStorePassword(isStorePassword());
+    copy.setStorePassphrase(isStorePassphrase());
   }
 }
 
