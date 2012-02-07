@@ -23,7 +23,7 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.Nullable;
 
 public class DelegateLexer extends LexerBase {
-  private final Lexer myDelegate;
+  protected final Lexer myDelegate;
 
   public DelegateLexer(Lexer delegate) {
     myDelegate = delegate;

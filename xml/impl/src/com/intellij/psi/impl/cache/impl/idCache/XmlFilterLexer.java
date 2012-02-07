@@ -16,20 +16,41 @@
 package com.intellij.psi.impl.cache.impl.idCache;
 
 import com.intellij.lexer.Lexer;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.cache.impl.BaseFilterLexer;
 import com.intellij.psi.impl.cache.impl.OccurrenceConsumer;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.xml.XmlElementType;
+import com.intellij.psi.xml.XmlTokenType;
 
 public class XmlFilterLexer extends BaseFilterLexer {
+  static final TokenSet ourNoWordsTokenSet = TokenSet.create(
+    XmlTokenType.TAG_WHITE_SPACE,
+    TokenType.WHITE_SPACE,
+    XmlTokenType.XML_REAL_WHITE_SPACE,
+    XmlTokenType.XML_EQ,
+    XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER,
+    XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER,
+    XmlTokenType.XML_START_TAG_START,
+    XmlTokenType.XML_EMPTY_ELEMENT_END,
+    XmlTokenType.XML_END_TAG_START,
+    XmlTokenType.XML_TAG_END,
+    XmlTokenType.XML_DOCTYPE_END,
+    XmlTokenType.XML_COMMENT_START,
+    XmlTokenType.XML_COMMENT_END,
+    XmlTokenType.XML_PI_START,
+    XmlTokenType.XML_PI_END,
+    XmlTokenType.XML_CDATA_END
+  );
 
   public XmlFilterLexer(Lexer originalLexer, OccurrenceConsumer table) {
     super(originalLexer, table);
   }
 
   public void advance() {
-    final IElementType tokenType = getDelegate().getTokenType();
+    final IElementType tokenType = myDelegate.getTokenType();
 
     if (tokenType == XmlElementType.XML_COMMENT_CHARACTERS) {
       scanWordsInToken(UsageSearchContext.IN_COMMENTS, false, false);
@@ -48,10 +69,10 @@ public class XmlFilterLexer extends BaseFilterLexer {
     else if (tokenType == XmlElementType.XML_TEXT) {
       scanWordsInToken(UsageSearchContext.IN_PLAIN_TEXT | UsageSearchContext.IN_FOREIGN_LANGUAGES, false, false);
     }
-    else {
+    else if (!ourNoWordsTokenSet.contains(tokenType)) {
       scanWordsInToken(UsageSearchContext.IN_PLAIN_TEXT, false, false);
     }
 
-    getDelegate().advance();
+    myDelegate.advance();
   }
 }

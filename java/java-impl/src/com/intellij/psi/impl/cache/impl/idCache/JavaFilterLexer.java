@@ -22,18 +22,37 @@ import com.intellij.psi.impl.cache.impl.OccurrenceConsumer;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 
 /**
  * @author ven
  */
 public class JavaFilterLexer extends BaseFilterLexer {
+  private static final TokenSet ourSkipWordsScanSet = TokenSet.orSet(
+    TokenSet.create(
+      JavaTokenType.WHITE_SPACE,
+      JavaTokenType.LPARENTH,
+      JavaTokenType.RPARENTH,
+      JavaTokenType.LBRACE,
+      JavaTokenType.RBRACE,
+      JavaTokenType.LBRACKET,
+      JavaTokenType.RBRACKET,
+      JavaTokenType.SEMICOLON,
+      JavaTokenType.COMMA,
+      JavaTokenType.DOT,
+      JavaTokenType.ELLIPSIS,
+      JavaTokenType.AT
+    ),
+    JavaTokenType.OPERATION_BIT_SET
+  );
+
   public JavaFilterLexer(final Lexer originalLexer, final OccurrenceConsumer table) {
     super(originalLexer, table);
   }
 
   @Override
   public void advance() {
-    final IElementType tokenType = getDelegate().getTokenType();
+    final IElementType tokenType = myDelegate.getTokenType();
 
     if (tokenType == JavaTokenType.IDENTIFIER
         || tokenType == JavaTokenType.LONG_LITERAL
@@ -48,10 +67,10 @@ public class JavaFilterLexer extends BaseFilterLexer {
       scanWordsInToken(UsageSearchContext.IN_COMMENTS, false, false);
       advanceTodoItemCountsInToken();
     }
-    else {
+    else if (!ourSkipWordsScanSet.contains(tokenType)) {
       scanWordsInToken(UsageSearchContext.IN_PLAIN_TEXT, false, false);
     }
 
-    getDelegate().advance();
+    myDelegate.advance();
   }
 }
