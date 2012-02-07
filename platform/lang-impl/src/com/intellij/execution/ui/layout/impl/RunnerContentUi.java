@@ -855,13 +855,14 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
       }
     }
 
-    tab.setHidden(true);
+    boolean hidden = true;
     for (Content content : contents) {
       if (!grid.isMinimized(content)) {
-        tab.setHidden(false);
+        hidden = false;
         break;
       }
     }
+    tab.setHidden(hidden);
     if (icon == null && contents.size() == 1) {
       icon = contents.get(0).getIcon();
     }
