@@ -100,4 +100,8 @@ public class CompletionParameters {
   public boolean isRelaxedMatching() {
     return myRelaxedMatching;
   }
+
+  public CompletionParameters withPosition(PsiElement element, int offset) {
+    return new CompletionParameters(element, myOriginalFile, myCompletionType, offset, myInvocationCount, myLookup, myRelaxedMatching);
+  }
 }

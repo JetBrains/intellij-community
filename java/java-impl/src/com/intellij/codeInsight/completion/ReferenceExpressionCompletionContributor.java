@@ -122,7 +122,7 @@ public class ReferenceExpressionCompletionContributor {
       final boolean secondTime = parameters.getParameters().getInvocationCount() >= 2;
 
       final Set<LookupElement> base =
-        JavaSmartCompletionContributor.completeReference(element, reference, filter, false, parameters.getParameters());
+        JavaSmartCompletionContributor.completeReference(element, reference, filter, false, true, parameters.getParameters(), null);
       for (final LookupElement item : base) {
         addSingleArrayElementAccess(element, item, parameters, result);
       }
@@ -177,7 +177,7 @@ public class ReferenceExpressionCompletionContributor {
         public boolean isClassAcceptable(Class hintClass) {
           return true;
         }
-      }), false, parameters.getParameters());
+      }), false, true, parameters.getParameters(), null);
     for (LookupElement lookupElement : elements) {
       if (lookupElement.getObject() instanceof PsiMethod) {
         final JavaMethodCallElement item = lookupElement.as(JavaMethodCallElement.CLASS_CONDITION_KEY);
@@ -419,7 +419,7 @@ public class ReferenceExpressionCompletionContributor {
                                              final Consumer<LookupElement> result,
                                              PsiType qualifierType,
                                              final PsiType expectedType, JavaSmartCompletionParameters parameters) throws IncorrectOperationException {
-    final PsiReferenceExpression mockRef = createMockReference(place, qualifierType);
+    final PsiReferenceExpression mockRef = createMockReference(place, qualifierType, qualifierItem);
 
     final ElementFilter filter = getReferenceFilter(place, true);
     for (final LookupElement item : completeFinalReference(place, mockRef, filter, parameters)) {
@@ -429,7 +429,13 @@ public class ReferenceExpressionCompletionContributor {
     }
   }
 
-  private static PsiReferenceExpression createMockReference(PsiElement place, PsiType qualifierType) {
+  public static PsiReferenceExpression createMockReference(PsiElement place, @NotNull PsiType qualifierType, LookupElement qualifierItem) {
+    if (qualifierItem.getObject() instanceof PsiClass) {
+      return (PsiReferenceExpression)JavaPsiFacade.getElementFactory(place.getProject())
+        .createExpressionFromText(((PsiClass)qualifierItem.getObject()).getQualifiedName() + ".xxx", place);
+
+    }
+
     final JavaCodeFragmentFactory factory = JavaCodeFragmentFactory.getInstance(place.getProject());
     PsiType varType = qualifierType;
     if (varType instanceof PsiEllipsisType) {
