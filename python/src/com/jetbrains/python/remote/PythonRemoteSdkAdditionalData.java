@@ -57,6 +57,11 @@ public class PythonRemoteSdkAdditionalData extends PythonSdkAdditionalData imple
     super(flavor);
   }
 
+  public PythonRemoteSdkAdditionalData(@NotNull String interpreterPath) {
+    super(computeFlavor(interpreterPath));
+    setInterpreterPath(interpreterPath);
+  }
+
   public String getInterpreterPath() {
     return myInterpreterPath;
   }
@@ -241,7 +246,7 @@ public class PythonRemoteSdkAdditionalData extends PythonSdkAdditionalData imple
 
   @NotNull
   public static PythonRemoteSdkAdditionalData loadRemote(Sdk sdk, @Nullable Element element) {
-    final PythonRemoteSdkAdditionalData data = new PythonRemoteSdkAdditionalData(computeFlavor(sdk.getHomePath()));
+    final PythonRemoteSdkAdditionalData data = new PythonRemoteSdkAdditionalData(sdk.getHomePath());
     load(element, data);
 
     if (element != null) {
