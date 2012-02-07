@@ -133,23 +133,16 @@ public class AndroidAutogenerator {
           return null;
         }
 
-        final String[] libPackages = getLibPackages(module, packageName);
         final Map<String, String> genFilePath2Package = new HashMap<String, String>();
 
         final String packageDir = packageName.replace('.', '/') + '/';
         genFilePath2Package.put(packageDir + AndroidCommonUtils.MANIFEST_JAVA_FILE_NAME, packageName);
         genFilePath2Package.put(packageDir + AndroidCommonUtils.R_JAVA_FILENAME, packageName);
 
-        for (String libPackage : libPackages) {
-          final String libPackageDir = libPackage.replace('.', '/') + '/';
-          genFilePath2Package.put(libPackageDir + AndroidCommonUtils.MANIFEST_JAVA_FILE_NAME, packageName);
-          genFilePath2Package.put(libPackageDir + AndroidCommonUtils.R_JAVA_FILENAME, packageName);
-        }
-
         final String manifestFileOsPath = FileUtil.toSystemDependentName(manifestFile.getPath());
 
         return new AptAutogenerationItem(target, platformToolsRevision, manifestFileOsPath, packageName, sourceRootPath, resPaths,
-                                         libPackages, facet.getConfiguration().LIBRARY_PROJECT, genFilePath2Package);
+                                         facet.getConfiguration().LIBRARY_PROJECT, genFilePath2Package);
       }
     });
 
@@ -183,7 +176,7 @@ public class AndroidAutogenerator {
 
       final Map<AndroidCompilerMessageKind, List<String>> messages =
         AndroidApt.compile(item.myTarget, item.myPlatformToolsRevision, item.myManifestFileOsPath, item.myPackage,
-                           tempOutDir.getPath(), item.myResDirOsPaths, item.myLibPackages, item.myLibrary);
+                           tempOutDir.getPath(), item.myResDirOsPaths, ArrayUtil.EMPTY_STRING_ARRAY, item.myLibrary);
 
       if (messages.get(AndroidCompilerMessageKind.ERROR).size() == 0) {
         for (String genFileRelPath : item.myGenFileRelPath2package.keySet()) {
@@ -517,22 +510,6 @@ public class AndroidAutogenerator {
     }
   }
 
-  @NotNull
-  private static String[] getLibPackages(@NotNull Module module, @NotNull String packageName) {
-    final Set<String> packageSet = new HashSet<String>();
-    packageSet.add(packageName);
-
-    final List<String> result = new ArrayList<String>();
-
-    for (String libPackage : AndroidUtils.getDepLibsPackages(module)) {
-      if (packageSet.add(libPackage)) {
-        result.add(libPackage);
-      }
-    }
-
-    return ArrayUtil.toStringArray(result);
-  }
-
   private static class AptAutogenerationItem {
     final IAndroidTarget myTarget;
     final int myPlatformToolsRevision;
@@ -540,7 +517,6 @@ public class AndroidAutogenerator {
     final String myPackage;
     final String myOutputDirOsPath;
     final String[] myResDirOsPaths;
-    final String[] myLibPackages;
     final boolean myLibrary;
     final Map<String, String> myGenFileRelPath2package;
 
@@ -550,7 +526,6 @@ public class AndroidAutogenerator {
                                   @NotNull String aPackage,
                                   @NotNull String outputDirOsPath,
                                   @NotNull String[] resDirOsPaths,
-                                  @NotNull String[] libPackages,
                                   boolean library,
                                   @NotNull Map<String, String> genFileRelPath2package) {
       myTarget = target;
@@ -559,7 +534,6 @@ public class AndroidAutogenerator {
       myPackage = aPackage;
       myOutputDirOsPath = outputDirOsPath;
       myResDirOsPaths = resDirOsPaths;
-      myLibPackages = libPackages;
       myLibrary = library;
       myGenFileRelPath2package = genFileRelPath2package;
     }
