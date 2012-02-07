@@ -56,29 +56,14 @@ public class IndentInfo {
     StringBuffer buffer = new StringBuffer();
     StringUtil.repeatSymbol(buffer, '\n', myLineFeeds);
 
-    if (options.USE_TAB_CHARACTER && !myForceSkipTabulationsUsage) {
-      if (options.SMART_TABS) {
-        int tabCount = myIndentSpaces / options.TAB_SIZE;
-        int leftSpaces = myIndentSpaces - tabCount * options.TAB_SIZE;
-        if (tabCount > 0) {
-          StringUtil.repeatSymbol(buffer, '\t', tabCount);
-        }
-        if (leftSpaces + mySpaces > 0) {
-          StringUtil.repeatSymbol(buffer, ' ', leftSpaces + mySpaces);
-        }
+    if (options.USE_TAB_CHARACTER) {
+      int tabCount = myIndentSpaces / options.TAB_SIZE;
+      int leftSpaces = myIndentSpaces - tabCount * options.TAB_SIZE;
+      if (tabCount > 0) {
+        StringUtil.repeatSymbol(buffer, '\t', tabCount);
       }
-      else {
-        int size = getTotalSpaces();
-        while (size > 0) {
-          if (size >= options.TAB_SIZE) {
-            buffer.append('\t');
-            size -= options.TAB_SIZE;
-          }
-          else {
-            buffer.append(' ');
-            size--;
-          }
-        }
+      if (leftSpaces + mySpaces > 0) {
+        StringUtil.repeatSymbol(buffer, ' ', leftSpaces + mySpaces);
       }
     }
     else {
