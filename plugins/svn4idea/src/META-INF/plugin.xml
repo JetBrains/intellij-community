@@ -3,7 +3,7 @@
   <id>Subversion 1.7</id>
   <version>1.0.1</version>
   <category>VCS Integration</category>
-  <idea-version since-build="111.275" until-build="112.999"/>
+  <idea-version since-build="111.275" until-build="114.999"/>
   <change-notes>Version 1.0.1 - Added an option for a status operation to be executed with command line client. (for performance reasons)</change-notes>
   <description>This plugin provides only basic support for Subversion 1.7.
        Some operations are not implemented.
