@@ -19,13 +19,9 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
-import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.commands.*;
@@ -113,7 +109,7 @@ class GitCheckoutOperation extends GitBranchOperation {
   private boolean smartCheckoutOrNotify(@NotNull GitRepository repository, 
                                         @NotNull GitMessageWithFilesDetector localChangesOverwrittenByCheckout) {
     // get changes overwritten by checkout from the error message captured from Git
-    List<Change> affectedChanges = getChangesAffectedByCheckout(repository, localChangesOverwrittenByCheckout.getRelativeFilePaths(), true);
+    List<Change> affectedChanges = GitUtil.convertPathsToChanges(repository, localChangesOverwrittenByCheckout.getRelativeFilePaths(), true);
     // get all other conflicting changes
     Map<GitRepository, List<Change>> conflictingChangesInRepositories = collectLocalChangesOnAllOtherRepositories(repository);
     Set<GitRepository> otherProblematicRepositories = conflictingChangesInRepositories.keySet();
@@ -164,7 +160,7 @@ class GitCheckoutOperation extends GitBranchOperation {
   private Map<GitRepository, List<Change>> collectLocalChangesOnAllOtherRepositories(@NotNull final GitRepository currentRepository) {
     // get changes in all other repositories (except those which already have succeeded) to avoid multiple dialogs proposing smart checkout
     List<GitRepository> remainingRepositories = getRemainingRepositoriesExceptGiven(currentRepository);
-    return collectChangesConflictingWithCheckout(remainingRepositories);
+    return collectLocalChangesConflictingWithBranch(myProject, remainingRepositories, myPreviousBranch, myStartPointReference);
   }
 
   @NotNull
@@ -219,26 +215,6 @@ class GitCheckoutOperation extends GitBranchOperation {
   }
 
   @NotNull
-  private Map<GitRepository, List<Change>> collectChangesConflictingWithCheckout(@NotNull Collection<GitRepository> repositories) {
-    Map<GitRepository, List<Change>> changes = new HashMap<GitRepository, List<Change>>();
-    for (GitRepository repository : repositories) {
-      try {
-        Collection<String> diff = GitUtil.getPathsDiffBetweenRefs(myPreviousBranch, myStartPointReference, myProject, repository.getRoot());
-        List<Change> changesInRepo = getChangesAffectedByCheckout(repository, diff, false);
-        if (!changesInRepo.isEmpty()) {
-          changes.put(repository, changesInRepo);
-        }
-      }
-      catch (VcsException e) {
-        // ignoring the exception: this is not fatal if we won't collect such a diff from other repositories. 
-        // At worst, use will get double dialog proposing the smart checkout.
-        LOG.warn(String.format("Couldn't collect diff between %s and %s in %s", myPreviousBranch, myStartPointReference, repository.getRoot()), e);
-      }
-    }
-    return changes;
-  }
-
-  @NotNull
   @Override
   public String getSuccessMessage() {
     if (myNewBranch == null) {
@@ -275,36 +251,6 @@ class GitCheckoutOperation extends GitBranchOperation {
     }
     notifyError("Couldn't checkout " + reference, compoundResult.getErrorOutputWithReposIndication());
     return false;
-  }
-
-  /**
-   * Forms the list of the changes, that would be overwritten by checkout.
-   *
-   * @param repository
-   * @param affectedPaths paths returned by Git.
-   * @param relativePaths Are the paths specified relative or absolute.
-   * @return List of Changes is these paths.
-   */
-  private List<Change> getChangesAffectedByCheckout(@NotNull GitRepository repository, @NotNull Collection<String> affectedPaths, boolean relativePaths) {
-    ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
-    List<Change> affectedChanges = new ArrayList<Change>();
-    for (String path : affectedPaths) {
-      VirtualFile file;
-      if (relativePaths) {
-        file = repository.getRoot().findFileByRelativePath(FileUtil.toSystemIndependentName(path));
-      }
-      else {
-        file = VcsUtil.getVirtualFile(path);
-      }
-
-      if (file != null) {
-        Change change = changeListManager.getChange(file);
-        if (change != null) {
-          affectedChanges.add(change);
-        }
-      }
-    }
-    return affectedChanges;
   }
 
   private static void refresh(GitRepository... repositories) {

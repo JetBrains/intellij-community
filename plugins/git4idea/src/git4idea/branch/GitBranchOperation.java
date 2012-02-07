@@ -18,11 +18,14 @@ package git4idea.branch;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBLabel;
@@ -36,9 +39,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.openapi.util.text.StringUtil.pluralize;
@@ -51,6 +52,8 @@ import static com.intellij.openapi.util.text.StringUtil.stripHtml;
  * @author Kirill Likhodedov
  */
 abstract class GitBranchOperation {
+
+  private static final Logger LOG = Logger.getInstance(GitBranchOperation.class);
 
   @NotNull protected final Project myProject;
   @NotNull private final Collection<GitRepository> myRepositories;
@@ -310,6 +313,34 @@ abstract class GitBranchOperation {
     if (dialog.isOK()) {
       rollback();
     }
+  }
+
+  /**
+   * TODO this is non-optimal and even incorrect, since such diff shows the difference between committed changes
+   * For each of the given repositories looks to the diff between current branch and the given branch and converts it to the list of
+   * local changes.
+   */
+  @NotNull
+  static Map<GitRepository, List<Change>> collectLocalChangesConflictingWithBranch(@NotNull Project project,
+                                                                                   @NotNull Collection<GitRepository> repositories,
+                                                                                   @NotNull String currentBranch,
+                                                                                   @NotNull String otherBranch) {
+    Map<GitRepository, List<Change>> changes = new HashMap<GitRepository, List<Change>>();
+    for (GitRepository repository : repositories) {
+      try {
+        Collection<String> diff = GitUtil.getPathsDiffBetweenRefs(currentBranch, otherBranch, project, repository.getRoot());
+        List<Change> changesInRepo = GitUtil.convertPathsToChanges(repository, diff, false);
+        if (!changesInRepo.isEmpty()) {
+          changes.put(repository, changesInRepo);
+        }
+      }
+      catch (VcsException e) {
+        // ignoring the exception: this is not fatal if we won't collect such a diff from other repositories.
+        // At worst, use will get double dialog proposing the smart checkout.
+        LOG.warn(String.format("Couldn't collect diff between %s and %s in %s", currentBranch, otherBranch, repository.getRoot()), e);
+      }
+    }
+    return changes;
   }
 
   private class UntrackedFilesDialog extends SelectFilesDialog {
