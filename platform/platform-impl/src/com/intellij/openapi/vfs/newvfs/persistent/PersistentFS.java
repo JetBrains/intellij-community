@@ -1101,7 +1101,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
   }
 
   @TestOnly
-  public void cleanPersistedContents() {
+  public static void cleanPersistedContents() {
     try {
       final int[] roots = FSRecords.listRoots();
       for (int root : roots) {
