@@ -26,6 +26,7 @@ import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -84,7 +85,7 @@ public class PythonSdkType extends SdkType {
   }
 
   public Icon getIcon() {
-    return PythonFileType.INSTANCE.getIcon();
+    return IconLoader.getIcon("/com/jetbrains/python/icons/python.png");
   }
 
   @NotNull
