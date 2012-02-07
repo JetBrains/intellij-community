@@ -17,6 +17,7 @@ package com.intellij.compiler;
 
 import com.intellij.ProjectTopics;
 import com.intellij.application.options.PathMacrosImpl;
+import com.intellij.compiler.server.impl.CompileServerClasspathManager;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.OSProcessHandler;
@@ -99,6 +100,7 @@ public class CompileServerManager implements ApplicationComponent{
   private final ProjectManager myProjectManager;
   private static final int MAKE_TRIGGER_DELAY = 5 * 1000 /*5 seconds*/;
   private final Map<RequestFuture, Project> myAutomakeFutures = new HashMap<RequestFuture, Project>();
+  private final CompileServerClasspathManager myClasspathManager = new CompileServerClasspathManager();
 
   public CompileServerManager(final ProjectManager projectManager) {
     myProjectManager = projectManager;
@@ -595,6 +597,7 @@ public class CompileServerManager implements ApplicationComponent{
     cmdLine.addParameter("-classpath");
 
     final List<File> cp = ClasspathBootstrap.getCompileServerApplicationClasspath();
+    cp.addAll(myClasspathManager.getCompileServerPluginsClasspath());
 
     cmdLine.addParameter(classpathToString(cp));
 
