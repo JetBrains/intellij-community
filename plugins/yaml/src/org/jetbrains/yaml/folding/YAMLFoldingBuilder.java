@@ -44,6 +44,9 @@ public class YAMLFoldingBuilder implements FoldingBuilder, DumbAware {
           node.getTreeParent().getChildren(TokenSet.create(YAMLElementTypes.DOCUMENT)).length > 1){
         descriptors.add(new FoldingDescriptor(node, nodeTextRange));
       }
+      if (type == YAMLElementTypes.SCALAR_TEXT_VALUE || type == YAMLElementTypes.SCALAR_LIST_VALUE) {
+        descriptors.add(new FoldingDescriptor(node, nodeTextRange));
+      }
     }
     for (ASTNode child : node.getChildren(null)) {
       collectDescriptors(child, descriptors);
@@ -58,6 +61,9 @@ public class YAMLFoldingBuilder implements FoldingBuilder, DumbAware {
     }
     if (type == YAMLElementTypes.KEY_VALUE_PAIR){
       return node.getFirstChildNode().getText();
+    }
+    if (type == YAMLElementTypes.SCALAR_TEXT_VALUE || type == YAMLElementTypes.SCALAR_LIST_VALUE) {
+      return node.getText().substring(0, 1);
     }
     return "...";
   }
