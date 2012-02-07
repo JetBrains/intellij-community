@@ -32,15 +32,14 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Function;
 import com.intellij.util.net.IOExceptionDialog;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.HyperlinkEvent;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author lloix
@@ -121,19 +120,23 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
               getPluginTable().updateUI();
               final InstalledPluginsTableModel pluginsModel = (InstalledPluginsTableModel)installed.getPluginsModel();
               final Set<IdeaPluginDescriptor> disabled = new HashSet<IdeaPluginDescriptor>();
+              final Set<IdeaPluginDescriptor> disabledDependants = new HashSet<IdeaPluginDescriptor>();
               for (PluginNode node : list) {
                 final PluginId pluginId = node.getPluginId();
                 if (pluginsModel.isDisabled(pluginId)) {
                   disabled.add(node);
                 }
-              }
-              if (!disabled.isEmpty()) {
-                String message = "Updated plugin" + (disabled.size() > 1 ? "s are " : " is ") + "disabled. Would you like to enable " + (disabled.size() > 1 ? "them" : "it") + "?";
-                if (Messages.showOkCancelDialog(host.pluginTable, message, CommonBundle.getWarningTitle(), Messages.getQuestionIcon()) ==
-                    DialogWrapper.OK_EXIT_CODE) {
-                  pluginsModel.enableRows(disabled.toArray(new IdeaPluginDescriptor[disabled.size()]), true);
+                final List<PluginId> depends = node.getDepends();
+                if (depends != null) {
+                  for (PluginId dependantId : depends) {
+                    final IdeaPluginDescriptor pluginDescriptor = PluginManager.getPlugin(dependantId);
+                    if (pluginDescriptor != null && pluginsModel.isDisabled(dependantId)) {
+                      disabledDependants.add(pluginDescriptor);
+                    }
+                  }
                 }
               }
+              suggestToEnableInstalledPlugins(pluginsModel, disabled, disabledDependants, list);
             }
             else {
               notifyPluginsWereInstalled();
@@ -146,6 +149,60 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
         PluginManagerMain.LOG.error(e1);
         IOExceptionDialog
           .showErrorDialog(IdeBundle.message("action.download.and.install.plugin"), IdeBundle.message("error.plugin.download.failed"));
+      }
+    }
+  }
+
+  private static void suggestToEnableInstalledPlugins(final InstalledPluginsTableModel pluginsModel,
+                                                      final Set<IdeaPluginDescriptor> disabled,
+                                                      final Set<IdeaPluginDescriptor> disabledDependants, 
+                                                      final ArrayList<PluginNode> list) {
+    if (!disabled.isEmpty() || !disabledDependants.isEmpty()) {
+      String message = "";
+      if (disabled.size() == 1) {
+        message = "Updated plugin '" + disabled.iterator().next().getName() + "' is disabled";
+      } else if (!disabled.isEmpty()) {
+        message = "Updated plugins " + StringUtil.join(disabled, new Function<IdeaPluginDescriptor, String>() {
+          @Override
+          public String fun(IdeaPluginDescriptor pluginDescriptor) {
+            return pluginDescriptor.getName();
+          }
+        }, ", ") + " are disabled.";
+      }
+
+      if (!disabledDependants.isEmpty()) {
+        if (!message.isEmpty()) {
+          message += "\n";
+        }
+        message += "Updated plugin" + (list.size() > 1 ? "s depend " : " depends ") + "on disabled";
+        if (disabledDependants.size() == 1) {
+          message += " plugin '" + disabledDependants.iterator().next().getName() + "'.";
+        } else {
+          message += " plugins " + StringUtil.join(disabledDependants, new Function<IdeaPluginDescriptor, String>() {
+            @Override
+            public String fun(IdeaPluginDescriptor pluginDescriptor) {
+              return pluginDescriptor.getName();
+            }
+          }, ", ") + ".";
+        }
+      }
+      message += "\nWould you like to enable plugins with dependencies?";
+
+      int result;
+      if (!disabled.isEmpty() && !disabledDependants.isEmpty()) {
+        result =
+          Messages.showYesNoCancelDialog(message, CommonBundle.getWarningTitle(), "Enable all",
+                                         "Enable updated plugin" + (disabled.size() > 1 ? "s" : ""), CommonBundle.getCancelButtonText(),
+                                         Messages.getQuestionIcon());
+      } else {
+        result = Messages.showOkCancelDialog(message, CommonBundle.getWarningTitle(), "Enable", CommonBundle.getCancelButtonText(), Messages.getQuestionIcon());
+      }
+
+      if (result == DialogWrapper.OK_EXIT_CODE) {
+        disabled.addAll(disabledDependants);
+        pluginsModel.enableRows(disabled.toArray(new IdeaPluginDescriptor[disabled.size()]), true);
+      } else if (result == DialogWrapper.CANCEL_EXIT_CODE && !disabled.isEmpty()) {
+        pluginsModel.enableRows(disabled.toArray(new IdeaPluginDescriptor[disabled.size()]), true);
       }
     }
   }
