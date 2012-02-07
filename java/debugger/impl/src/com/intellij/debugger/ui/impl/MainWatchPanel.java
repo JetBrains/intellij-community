@@ -46,6 +46,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
+import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 
 import javax.swing.*;
 import java.awt.*;
@@ -217,7 +218,10 @@ public class MainWatchPanel extends WatchPanel implements DataProvider {
         executeAction(DebuggerActions.NEW_WATCH, tree);
       }
     });
-    // TODO[den]: add "Add to watches action"
+    // TODO[den]: add "Add to watches action" on Mac
+    if (!SystemInfo.isMac) {
+      decorator.addExtraAction(AnActionButton.fromAction(ActionManager.getInstance().getAction(XDebuggerActions.ADD_TO_WATCH)));
+    }
     decorator.setRemoveAction(new AnActionButtonRunnable() {
       @Override
       public void run(AnActionButton button) {
