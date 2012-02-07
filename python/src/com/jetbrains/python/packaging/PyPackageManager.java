@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
@@ -59,6 +60,7 @@ public class PyPackageManager {
     return mySdk;
   }
 
+  // TODO: There are too many install() methods
   public void install(@NotNull List<PyRequirement> requirements) throws PyExternalProcessException {
     install(requirements, null);
   }
@@ -177,21 +179,18 @@ public class PyPackageManager {
 
 
   private ProcessOutput getProcessOutput(String helper, List<String> args) throws PyExternalProcessException {
-    if (mySdk.getSdkAdditionalData() instanceof PythonRemoteSdkAdditionalData) {
-      PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
-
+    final SdkAdditionalData sdkData = mySdk.getSdkAdditionalData();
+    if (sdkData instanceof PythonRemoteSdkAdditionalData) {
+      final PythonRemoteSdkAdditionalData remoteSdkData = (PythonRemoteSdkAdditionalData)sdkData;
+      final PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
       if (manager != null) {
-        PythonRemoteSdkAdditionalData data = (PythonRemoteSdkAdditionalData)mySdk.getSdkAdditionalData();
-
         final List<String> cmdline = new ArrayList<String>();
         cmdline.add(mySdk.getHomePath());
-        //noinspection ConstantConditions
-        cmdline.add(new File(data.getPyCharmTempFilesPath(),
+        cmdline.add(new File(remoteSdkData.getPyCharmTempFilesPath(),
                              helper).getPath());
         cmdline.addAll(args);
-
         try {
-          return manager.runRemoteProcess(null, data, ArrayUtil.toStringArray(cmdline));
+          return manager.runRemoteProcess(null, remoteSdkData, ArrayUtil.toStringArray(cmdline));
         }
         catch (PyRemoteInterpreterException e) {
           throw new PyExternalProcessException(ERROR_INVALID_SDK, "Error running sdk.");
