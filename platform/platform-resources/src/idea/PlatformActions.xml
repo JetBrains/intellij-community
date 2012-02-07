@@ -227,9 +227,12 @@
           <action id="RecentChangedFiles" class="com.intellij.ide.actions.ShowRecentlyEditedFilesAction"/>
         </group>
         <separator/>
-        <group id="PairFileActions">
-          <reference ref="CompareTwoFiles"/>
-          <reference ref="CompareFileWithEditor"/>
+        <group id="CompareActions">
+          <group id="PairFileActions">
+            <reference ref="CompareTwoFiles"/>
+            <reference ref="CompareFileWithEditor"/>
+          </group>
+          <action id="CompareClipboardWithSelection" class="com.intellij.openapi.diff.actions.CompareClipboardWithSelection"/>
         </group>
         <separator/>
         <action id="QuickChangeScheme" class="com.intellij.ide.actions.QuickChangeSchemesAction"/>
@@ -389,7 +392,7 @@
       <reference ref="EditorPasteSimple"/>
       <reference ref="EditorToggleColumnMode"/>
       <separator/>
-      <action id="CompareClipboardWithSelection" class="com.intellij.openapi.diff.actions.CompareClipboardWithSelection"/>
+      <reference ref="CompareClipboardWithSelection"/>
       <reference ref="ChangeFileEncodingGroup"/>
     </group>
 
