@@ -6,6 +6,7 @@ import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -14,6 +15,7 @@ import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.io.File;
 import java.nio.charset.Charset;
 import java.util.*;
@@ -202,5 +204,9 @@ public abstract class PythonSdkFlavor {
       return LanguageLevel.fromPythonVersion(version.substring(prefix.length()));
     }
     return LanguageLevel.getDefault();
+  }
+
+  public Icon getIcon() {
+    return IconLoader.getIcon("/com/jetbrains/python/icons/python.png");
   }
 }
