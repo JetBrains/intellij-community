@@ -143,6 +143,13 @@ abstract class GitBranchOperation {
     return myRemainingRepositories;
   }
 
+  @NotNull
+  protected List<GitRepository> getRemainingRepositoriesExceptGiven(@NotNull final GitRepository currentRepository) {
+    List<GitRepository> repositories = new ArrayList<GitRepository>(myRemainingRepositories);
+    repositories.remove(currentRepository);
+    return repositories;
+  }
+
   protected void notifySuccess() {
     NotificationManager.getInstance(myProject).notify(GitVcs.NOTIFICATION_GROUP_ID, "", getSuccessMessage(), NotificationType.INFORMATION);
   }

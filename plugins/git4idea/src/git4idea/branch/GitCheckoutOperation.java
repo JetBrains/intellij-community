@@ -20,7 +20,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Clock;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
@@ -29,7 +28,6 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.continuation.ContinuationContext;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -173,12 +171,7 @@ class GitCheckoutOperation extends GitBranchOperation {
   @NotNull
   private Map<GitRepository, List<Change>> collectLocalChangesOnAllOtherRepositories(@NotNull final GitRepository currentRepository) {
     // get changes in all other repositories (except those which already have succeeded) to avoid multiple dialogs proposing smart checkout
-    List<GitRepository> remainingRepositories = ContainerUtil.filter(getRepositories(), new Condition<GitRepository>() {
-      @Override
-      public boolean value(GitRepository repo) {
-        return !repo.equals(currentRepository) && !getSuccessfulRepositories().contains(repo);
-      }
-    });
+    List<GitRepository> remainingRepositories = getRemainingRepositoriesExceptGiven(currentRepository);
     return collectChangesConflictingWithCheckout(remainingRepositories);
   }
 
