@@ -419,13 +419,24 @@ public class ReferenceExpressionCompletionContributor {
                                              final Consumer<LookupElement> result,
                                              PsiType qualifierType,
                                              final PsiType expectedType, JavaSmartCompletionParameters parameters) throws IncorrectOperationException {
+    final PsiReferenceExpression mockRef = createMockReference(place, qualifierType);
+
+    final ElementFilter filter = getReferenceFilter(place, true);
+    for (final LookupElement item : completeFinalReference(place, mockRef, filter, parameters)) {
+      if (shoudChain(place, qualifierType, expectedType, item)) {
+        result.consume(new JavaChainLookupElement(qualifierItem, item));
+      }
+    }
+  }
+
+  private static PsiReferenceExpression createMockReference(PsiElement place, PsiType qualifierType) {
     final JavaCodeFragmentFactory factory = JavaCodeFragmentFactory.getInstance(place.getProject());
     PsiType varType = qualifierType;
     if (varType instanceof PsiEllipsisType) {
       varType = ((PsiEllipsisType)varType).getComponentType();
     }
     if (varType instanceof PsiWildcardType || varType instanceof PsiCapturedWildcardType) {
-      varType = TypeConversionUtil.erasure(expectedType);
+      varType = TypeConversionUtil.erasure(varType);
     }
 
     final String typeText = varType.getCanonicalText();
@@ -435,14 +446,7 @@ public class ReferenceExpressionCompletionContributor {
       LOG.error(typeText + " of " + varType.getClass());
     }
     final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)secondChild;
-    final PsiReferenceExpression mockRef = (PsiReferenceExpression) expressionStatement.getExpression();
-
-    final ElementFilter filter = getReferenceFilter(place, true);
-    for (final LookupElement item : completeFinalReference(place, mockRef, filter, parameters)) {
-      if (shoudChain(place, varType, expectedType, item)) {
-        result.consume(new JavaChainLookupElement(qualifierItem, item));
-      }
-    }
+    return (PsiReferenceExpression) expressionStatement.getExpression();
   }
 
   private static boolean shoudChain(PsiElement element, PsiType qualifierType, PsiType expectedType, LookupElement item) {
