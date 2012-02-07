@@ -19,25 +19,18 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.continuation.ContinuationContext;
-import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.commands.*;
-import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
-import git4idea.stash.GitChangesSaver;
-import git4idea.update.GitComplexProcess;
+import git4idea.util.GitPreservingProcess;
 import git4idea.util.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,7 +38,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.intellij.openapi.util.text.StringUtil.join;
 import static git4idea.commands.GitMessageWithFilesDetector.Event.LOCAL_CHANGES_OVERWRITTEN_BY_CHECKOUT;
 import static git4idea.commands.GitMessageWithFilesDetector.Event.UNTRACKED_FILES_OVERWRITTEN_BY;
 import static git4idea.util.GitUIUtil.code;
@@ -257,74 +249,16 @@ class GitCheckoutOperation extends GitBranchOperation {
 
   // stash - checkout - unstash
   private boolean smartCheckout(@NotNull final List<GitRepository> repositories, @NotNull final String reference, @Nullable final String newBranch, @NotNull ProgressIndicator indicator) {
-    final GitChangesSaver saver = configureSaver(reference, indicator);
 
     final AtomicBoolean result = new AtomicBoolean();
-    GitComplexProcess.Operation checkoutOperation = new GitComplexProcess.Operation() {
-      @Override public void run(ContinuationContext context) {
-        boolean savedSuccessfully = save(repositories, saver);
-        if (savedSuccessfully) {
-          try {
-            result.set(checkoutOrNotify(repositories, reference, newBranch, false));
-          } finally {
-            saver.restoreLocalChanges(context);
-          }
-        }
+    GitPreservingProcess preservingProcess = new GitPreservingProcess(myProject, repositories, "checkout", reference, indicator, new Runnable() {
+      @Override
+      public void run() {
+        result.set(checkoutOrNotify(repositories, reference, newBranch, false));
       }
-    };
-    GitComplexProcess.execute(myProject, "checkout", checkoutOperation);
+    });
+    preservingProcess.execute();
     return result.get();
-  }
-
-  /**
-   * Configures the saver, actually notifications and texts in the GitConflictResolver used inside.
-   */
-  private GitChangesSaver configureSaver(final String reference, ProgressIndicator indicator) {
-    GitChangesSaver saver = GitChangesSaver.getSaver(myProject, indicator, String.format("Checkout %s at %s",
-                                                                                         reference,
-                                                                                         DateFormatUtil.formatDateTime(Clock.getTime())));
-    MergeDialogCustomizer mergeDialogCustomizer = new MergeDialogCustomizer() {
-      @Override
-      public String getMultipleFileMergeDescription(Collection<VirtualFile> files) {
-        return String.format(
-          "<html>Uncommitted changes that were saved before checkout have conflicts with files from <code>%s</code></html>",
-          reference);
-      }
-
-      @Override
-      public String getLeftPanelTitle(VirtualFile file) {
-        return "Uncommitted changes";
-      }
-
-      @Override
-      public String getRightPanelTitle(VirtualFile file, VcsRevisionNumber lastRevisionNumber) {
-        return String.format("<html>Changes from <b><code>%s</code></b></html>", reference);
-      }
-    };
-
-    GitConflictResolver.Params params = new GitConflictResolver.Params().
-      setReverse(true).
-      setMergeDialogCustomizer(mergeDialogCustomizer).
-      setErrorNotificationTitle("Local changes were not restored");
-
-    saver.setConflictResolverParams(params);
-    return saver;
-  }
-
-  /**
-   * Saves local changes. In case of error shows a notification and returns false.
-   */
-  private boolean save(@NotNull Collection<GitRepository> repositories, @NotNull GitChangesSaver saver) {
-    try {
-      saver.saveLocalChanges(GitUtil.getRoots(repositories));
-      return true;
-    } catch (VcsException e) {
-      LOG.info("Couldn't save local changes", e);
-      notifyError("Couldn't save uncommitted changes.",
-                  String.format("Tried to save uncommitted changes in %s before checkout, but failed with an error.<br/>%s",
-                                saver.getSaverName(), join(e.getMessages())));
-      return false;
-    }
   }
 
   /**

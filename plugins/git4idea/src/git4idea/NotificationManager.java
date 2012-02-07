@@ -48,6 +48,10 @@ public class NotificationManager {
     notify(notificationGroup, title, message, type, null);
   }
 
+  public void notifyError(String title, String message) {
+    notify(GitVcs.IMPORTANT_ERROR_NOTIFICATION, title, message, NotificationType.ERROR, null);
+  }
+
   protected static Notification createNotification(NotificationGroup notificationGroup, String title, String message,
                                                    NotificationType type, NotificationListener listener) {
     return notificationGroup.createNotification(title, message, type, listener);
