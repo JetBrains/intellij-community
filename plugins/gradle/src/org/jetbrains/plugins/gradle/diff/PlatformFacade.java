@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.diff;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,4 +42,16 @@ public interface PlatformFacade {
    */
   @NotNull
   Icon getProjectIcon();
+
+  /**
+   * Allows to derive from the given VFS file path that may be compared to the path used by the gradle api.
+   * <p/>
+   * Generally, this method is necessary for processing binary library paths - they point to jar files and VFS uses
+   * <code>'!'</code> marks in their paths internally.
+   * 
+   * @param file  target file
+   * @return      given file's path that may be compared to the one used by the gradle api
+   */
+  @NotNull
+  String getLocalFileSystemPath(@NotNull VirtualFile file);
 }

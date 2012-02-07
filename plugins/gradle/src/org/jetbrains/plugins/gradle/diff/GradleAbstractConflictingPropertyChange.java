@@ -19,19 +19,25 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Defines contract for change that points to particular property value change.
+ * Defines general contract for a change that encapsulates information about conflicting property value of the matched gradle
+ * and intellij entities.
+ * <p/>
+ * For example we may match particular gradle library to an intellij library but they may have different set of attached binaries.
+ * <p/>
+ * Thread-safe.
  * 
  * @author Denis Zhdanov
  * @since 11/15/11 7:57 PM
+ * @param <T>   target property value type
  */
-public abstract class GradleAbstractPropertyValueChange<T> extends GradleAbstractProjectStructureChange {
+public abstract class GradleAbstractConflictingPropertyChange<T> extends GradleAbstractProjectStructureChange {
+  
+  private final String myPropertyDescription;
+  private final T myGradleValue;
+  private final T myIntellijValue;
 
-  private final String myProperyName;
-  private final T      myGradleValue;
-  private final T      myIntellijValue;
-
-  public GradleAbstractPropertyValueChange(@NotNull String propertyName, @Nullable T gradleValue, @Nullable T intellijValue) {
-    myProperyName = propertyName;
+  public GradleAbstractConflictingPropertyChange(@NotNull String propertyDescription, @Nullable T gradleValue, @Nullable T intellijValue) {
+    myPropertyDescription = propertyDescription;
     myGradleValue = gradleValue;
     myIntellijValue = intellijValue;
   }
@@ -56,7 +62,7 @@ public abstract class GradleAbstractPropertyValueChange<T> extends GradleAbstrac
   public int hashCode() {
     int result = super.hashCode();
     result = 31 * result + (myGradleValue != null ? myGradleValue.hashCode() : 0);
-    return 31 * result + (myIntellijValue != null ? myIntellijValue.hashCode() : 0);
+    return  31 * result + (myIntellijValue != null ? myIntellijValue.hashCode() : 0);
   }
 
   @Override
@@ -65,16 +71,15 @@ public abstract class GradleAbstractPropertyValueChange<T> extends GradleAbstrac
     if (o == null || getClass() != o.getClass()) return false;
     if (!super.equals(o)) return false;
 
-    GradleAbstractPropertyValueChange that = (GradleAbstractPropertyValueChange)o;
+    GradleAbstractConflictingPropertyChange that = (GradleAbstractConflictingPropertyChange)o;
 
     if (myGradleValue != null ? !myGradleValue.equals(that.myGradleValue) : that.myGradleValue != null) return false;
     if (myIntellijValue != null ? !myIntellijValue.equals(that.myIntellijValue) : that.myIntellijValue != null) return false;
-
     return true;
   }
 
   @Override
   public String toString() {
-    return String.format("%s change: gradle='%s', intellij='%s'", myProperyName, myGradleValue, myIntellijValue);
+    return String.format("%s change: gradle='%s', intellij='%s'", myPropertyDescription, myGradleValue, myIntellijValue);
   }
 }

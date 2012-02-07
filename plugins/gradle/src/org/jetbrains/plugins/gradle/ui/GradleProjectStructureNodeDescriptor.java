@@ -40,12 +40,18 @@ public class GradleProjectStructureNodeDescriptor<T> extends PresentableNodeDesc
     presentation.setClosedIcon(myClosedIcon);
   }
 
+  @NotNull
   @Override
   public T getElement() {
     return myData;
   }
 
-  public void setName(@NotNull String name) {
+  @NotNull
+  public String getText() {
+    return myName;
+  }
+  
+  public void setText(@NotNull String name) {
     myName = name;
   }
 

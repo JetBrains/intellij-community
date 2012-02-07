@@ -39,6 +39,10 @@ public class GradleLibrary extends AbstractNamedGradleEntity implements Named {
     paths.add(GradleUtil.toCanonicalPath(path));
   }
 
+  public void forgetAllPaths() {
+    myPaths.clear();
+  }
+  
   @Override
   public void invite(@NotNull GradleEntityVisitor visitor) {
     visitor.visit(this);

@@ -24,11 +24,11 @@ import org.jetbrains.annotations.NotNull;
 public class GradleProjectStructureChangeVisitorAdapter implements GradleProjectStructureChangeVisitor {
 
   @Override
-  public void visit(@NotNull GradleRenameChange change) {
+  public void visit(@NotNull GradleProjectRenameChange change) {
   }
 
   @Override
-  public void visit(@NotNull GradleProjectStructureChange change) {
+  public void visit(@NotNull GradleLanguageLevelChange change) {
   }
 
   @Override
@@ -37,5 +37,9 @@ public class GradleProjectStructureChangeVisitorAdapter implements GradleProject
 
   @Override
   public void visit(@NotNull GradleLibraryDependencyPresenceChange change) {
+  }
+
+  @Override
+  public void visit(@NotNull GradleMismatchedLibraryPathChange change) {
   }
 }

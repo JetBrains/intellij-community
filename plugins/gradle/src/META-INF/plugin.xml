@@ -39,9 +39,10 @@
     <applicationService serviceInterface="org.jetbrains.plugins.gradle.diff.GradleStructureChangesCalculator"
                         serviceImplementation="org.jetbrains.plugins.gradle.diff.GradleProjectStructureChangesCalculator"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.diff.GradleModuleStructureChangesCalculator"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.diff.GradleLibraryStructureChangesCalculator"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.diff.GradleLibraryDependencyStructureChangesCalculator"/>
     <applicationService serviceInterface="org.jetbrains.plugins.gradle.diff.PlatformFacade"
-                        serviceImplementation="org.jetbrains.plugins.gradle.diff.GradleProjectStructureHelperImpl"/>
+                        serviceImplementation="org.jetbrains.plugins.gradle.diff.PlatformFacadeImpl"/>
     <applicationService serviceInterface="org.jetbrains.plugins.gradle.notification.GradleProgressNotificationManager"
                         serviceImplementation="org.jetbrains.plugins.gradle.notification.GradleProgressNotificationManagerImpl"/>
 
@@ -61,6 +62,9 @@
     </component>
     <component>
       <implementation-class>org.jetbrains.plugins.gradle.sync.GradleProjectStructureChangesModel</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.plugins.gradle.sync.GradleProjectStructureHelper</implementation-class>
     </component>
   </project-components>
   

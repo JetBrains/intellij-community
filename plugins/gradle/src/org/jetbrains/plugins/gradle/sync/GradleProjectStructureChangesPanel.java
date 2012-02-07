@@ -29,9 +29,10 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
 
   public GradleProjectStructureChangesPanel(@NotNull Project project,
                                             @NotNull GradleProjectStructureChangesModel model,
-                                            @NotNull PlatformFacade projectStructureHelper)
+                                            @NotNull PlatformFacade platformFacade,
+                                            @NotNull GradleProjectStructureHelper projectStructureHelper)
   {
-    super(project, projectStructureHelper, GradleConstants.TOOL_WINDOW_TOOLBAR_PLACE);
+    super(project, platformFacade, projectStructureHelper, GradleConstants.TOOL_WINDOW_TOOLBAR_PLACE);
     model.addListener(new GradleProjectStructureChangeListener() {
       @Override
       public void onChanges(@NotNull final Collection<GradleProjectStructureChange> oldChanges,
@@ -41,7 +42,7 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
           @Override
           public void run() {
             myTreeModel.update(currentChanges);
-            myTreeModel.pruneObsoleteNodes(ContainerUtil.subtract(oldChanges, currentChanges));
+            myTreeModel.processObsoleteChanges(ContainerUtil.subtract(oldChanges, currentChanges));
           }
         });
       }
@@ -50,7 +51,7 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
 
   private void init() {
     myContent = new JPanel(new GridBagLayout());
-    myTreeModel = new GradleProjectStructureTreeModel(getProject(), getProjectStructureHelper());
+    myTreeModel = new GradleProjectStructureTreeModel(getProject(), getProjectFacade(), getProjectStructureHelper());
     Tree tree = new Tree(myTreeModel);
     applyInitialAppearance(tree, (DefaultMutableTreeNode)myTreeModel.getRoot());
 

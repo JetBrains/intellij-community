@@ -260,7 +260,7 @@ public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWiza
     // We build tree node, its settings control and map them altogether. The only trick here is that nodes can reuse the same
     // settings control (e.g. more than one node may have the same library as a dependency, so, library dependency node for
     // every control will use the same settings control).
-    GradleProjectStructureNode result = new GradleProjectStructureNode(myFactory.buildDescriptor(entity));
+    GradleProjectStructureNode<T> result = new GradleProjectStructureNode<T>(myFactory.buildDescriptor(entity));
     Pair<String, Collection<GradleProjectStructureNode>> pair = processed.get(entity);
     if (pair == null) {
       String cardName = String.valueOf(counter);

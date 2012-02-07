@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.diff.PlatformFacade;
 import org.jetbrains.plugins.gradle.sync.GradleProjectStructureChangesModel;
 import org.jetbrains.plugins.gradle.sync.GradleProjectStructureChangesPanel;
+import org.jetbrains.plugins.gradle.sync.GradleProjectStructureHelper;
 import org.jetbrains.plugins.gradle.ui.GradleIcons;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 
@@ -24,15 +25,18 @@ import org.jetbrains.plugins.gradle.util.GradleBundle;
 public class GradleBootstrap extends AbstractProjectComponent {
 
   private static final String GRADLE_TOOL_WINDOW_ID = GradleBundle.message("gradle.name");
-  
+
   private final GradleProjectStructureChangesModel myChangesModel;
-  private final PlatformFacade myProjectStructureHelper;
+  private final PlatformFacade                     myPlatformFacade;
+  private final GradleProjectStructureHelper       myProjectStructureHelper;
   
   public GradleBootstrap(@NotNull Project project,
                          @NotNull GradleProjectStructureChangesModel changesModel,
-                         @NotNull PlatformFacade projectStructureHelper) {
+                         @NotNull PlatformFacade platformFacade,
+                         @NotNull GradleProjectStructureHelper projectStructureHelper) {
     super(project);
     myChangesModel = changesModel;
+    myPlatformFacade = platformFacade;
     myProjectStructureHelper = projectStructureHelper;
   }
 
@@ -52,7 +56,7 @@ public class GradleBootstrap extends AbstractProjectComponent {
     toolWindow.setIcon(GradleIcons.GRADLE_ICON);
     String syncTitle = GradleBundle.message("gradle.sync.title.tab");
     final GradleProjectStructureChangesPanel projectStructureChanges
-      = new GradleProjectStructureChangesPanel(myProject, myChangesModel, myProjectStructureHelper);
+      = new GradleProjectStructureChangesPanel(myProject, myChangesModel, myPlatformFacade, myProjectStructureHelper);
     toolWindow.getContentManager().addContent(new ContentImpl(projectStructureChanges, syncTitle, true)); 
   }
 }

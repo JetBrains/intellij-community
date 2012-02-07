@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.diff;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -22,13 +23,13 @@ import org.jetbrains.annotations.Nullable;
  * 
  * @author Denis Zhdanov
  * @since 11/17/11 12:43 PM
- * @param <G>   entity type at Gradle side
- * @param <I>   entity type at IntelliJ IDEA side
+ * @param <T>   entity type
  */
-public abstract class GradleEntityPresenceChange<G, I> extends GradleAbstractProjectStructureChange {
+public abstract class GradleEntityPresenceChange<T> extends GradleAbstractProjectStructureChange {
 
-  private final G myGradleEntity;
-  private final I myIntellijEntity;
+  private final T      myGradleEntity;
+  private final T      myIntellijEntity;
+  private final String myEntityName;
 
   /**
    * Creates new <code>GradleEntityPresenceChange</code> project.
@@ -40,7 +41,11 @@ public abstract class GradleEntityPresenceChange<G, I> extends GradleAbstractPro
    * @throws IllegalArgumentException    if both of the given entities are defined or undefined. Expecting this constructor to be
    *                                     called with one <code>null</code> argument and one non-<code>null</code> argument
    */
-  public GradleEntityPresenceChange(@Nullable G gradleEntity, @Nullable I intellijEntity) throws IllegalArgumentException {
+  public GradleEntityPresenceChange(@NotNull String entityName,
+                                    @Nullable T gradleEntity,
+                                    @Nullable T intellijEntity)
+    throws IllegalArgumentException
+  {
     if (!(gradleEntity == null ^ intellijEntity == null)) {
       throw new IllegalArgumentException(String.format(
         "Can't construct %s object. Reason: expected that only gradle or intellij entity is null, actual: gradle='%s'; intellij='%s'",
@@ -49,15 +54,16 @@ public abstract class GradleEntityPresenceChange<G, I> extends GradleAbstractPro
     }
     myGradleEntity = gradleEntity;
     myIntellijEntity = intellijEntity;
+    myEntityName = entityName;
   }
 
   @Nullable
-  public G getGradleEntity() {
+  public T getGradleEntity() {
     return myGradleEntity;
   }
   
   @Nullable
-  public I getIntellijEntity() {
+  public T getIntellijEntity() {
     return myIntellijEntity;
   }
 
@@ -83,6 +89,6 @@ public abstract class GradleEntityPresenceChange<G, I> extends GradleAbstractPro
 
   @Override
   public String toString() {
-    return String.format("entity presence change: gradle='%s', intellij='%s'", myGradleEntity, myIntellijEntity);
+    return String.format("%s presence change: gradle='%s', intellij='%s'", myEntityName, myGradleEntity, myIntellijEntity);
   }
 }

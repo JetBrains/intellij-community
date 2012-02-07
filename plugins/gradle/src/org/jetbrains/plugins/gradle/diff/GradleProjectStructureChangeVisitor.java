@@ -24,8 +24,9 @@ import org.jetbrains.annotations.NotNull;
  * @since 11/16/11 8:48 PM
  */
 public interface GradleProjectStructureChangeVisitor {
-  void visit(@NotNull GradleRenameChange change);
-  void visit(@NotNull GradleProjectStructureChange change);
+  void visit(@NotNull GradleProjectRenameChange change);
+  void visit(@NotNull GradleLanguageLevelChange change);
   void visit(@NotNull GradleModulePresenceChange change);
   void visit(@NotNull GradleLibraryDependencyPresenceChange change);
+  void visit(@NotNull GradleMismatchedLibraryPathChange change);
 }
