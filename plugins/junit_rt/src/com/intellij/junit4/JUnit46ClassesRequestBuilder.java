@@ -58,6 +58,6 @@ public class JUnit46ClassesRequestBuilder {
         }
       }
     }
-    return false;
+    return classMethods.isEmpty();
   }
 }
