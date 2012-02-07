@@ -111,7 +111,10 @@ class GitCheckoutOperation extends GitBranchOperation {
     // get changes overwritten by checkout from the error message captured from Git
     List<Change> affectedChanges = GitUtil.convertPathsToChanges(repository, localChangesOverwrittenByCheckout.getRelativeFilePaths(), true);
     // get all other conflicting changes
-    Map<GitRepository, List<Change>> conflictingChangesInRepositories = collectLocalChangesOnAllOtherRepositories(repository);
+    // get changes in all other repositories (except those which already have succeeded) to avoid multiple dialogs proposing smart checkout
+    Map<GitRepository, List<Change>> conflictingChangesInRepositories =
+      collectLocalChangesConflictingWithBranch(myProject, getRemainingRepositoriesExceptGiven(repository), myPreviousBranch, myStartPointReference);
+
     Set<GitRepository> otherProblematicRepositories = conflictingChangesInRepositories.keySet();
     List<GitRepository> allConflictingRepositories = new ArrayList<GitRepository>(otherProblematicRepositories);
     allConflictingRepositories.add(repository);
@@ -154,13 +157,6 @@ class GitCheckoutOperation extends GitBranchOperation {
     else {
       showFatalNotification(title, message);
     }
-  }
-
-  @NotNull
-  private Map<GitRepository, List<Change>> collectLocalChangesOnAllOtherRepositories(@NotNull final GitRepository currentRepository) {
-    // get changes in all other repositories (except those which already have succeeded) to avoid multiple dialogs proposing smart checkout
-    List<GitRepository> remainingRepositories = getRemainingRepositoriesExceptGiven(currentRepository);
-    return collectLocalChangesConflictingWithBranch(myProject, remainingRepositories, myPreviousBranch, myStartPointReference);
   }
 
   @NotNull
