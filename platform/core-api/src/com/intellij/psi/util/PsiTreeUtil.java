@@ -713,7 +713,7 @@ public class PsiTreeUtil {
                                                                     int offset,
                                                                     @NotNull Class<T> clazz,
                                                                     boolean strictStart) {
-    final PsiElement[] psiRoots = file.getPsiRoots();
+    final List<PsiFile> psiRoots = file.getViewProvider().getAllFiles();
     T result = null;
     for (PsiElement root : psiRoots) {
       final PsiElement elementAt = root.findElementAt(offset);
@@ -739,7 +739,7 @@ public class PsiTreeUtil {
                                                                                @NotNull Class<T> clazz,
                                                                                boolean strictStart,
                                                                                @NotNull Class<? extends PsiElement>... stopAt) {
-    final PsiElement[] psiRoots = file.getPsiRoots();
+    final List<PsiFile> psiRoots = file.getViewProvider().getAllFiles();
     T result = null;
     for (PsiElement root : psiRoots) {
       final PsiElement elementAt = root.findElementAt(offset);

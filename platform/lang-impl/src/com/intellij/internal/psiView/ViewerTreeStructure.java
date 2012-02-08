@@ -67,7 +67,11 @@ public class ViewerTreeStructure extends AbstractTreeStructure {
       if (myRootPsiElement == null) {
         return ArrayUtil.EMPTY_OBJECT_ARRAY;
       }
-      return myRootPsiElement instanceof PsiFile ? ((PsiFile)myRootPsiElement).getPsiRoots() : new Object[]{myRootPsiElement};
+      if (!(myRootPsiElement instanceof PsiFile)) {
+        return new Object[]{myRootPsiElement};
+      }
+      List<PsiFile> files = ((PsiFile)myRootPsiElement).getViewProvider().getAllFiles();
+      return PsiUtilCore.toPsiFileArray(files);
     }
     final Object[][] children = new Object[1][];
     children[0] = ArrayUtil.EMPTY_OBJECT_ARRAY;
@@ -79,10 +83,8 @@ public class ViewerTreeStructure extends AbstractTreeStructure {
           final ArrayList<Object> list = new ArrayList<Object>();
           ASTNode root = element instanceof PsiElement? SourceTreeToPsiMap.psiElementToTree((PsiElement)element) :
                                element instanceof ASTNode? (ASTNode)element : null;
-          boolean injected = false;
           if (element instanceof Inject) {
             root = SourceTreeToPsiMap.psiElementToTree(((Inject)element).getPsi());
-            injected = true;
           }
 
           if (root != null) {
