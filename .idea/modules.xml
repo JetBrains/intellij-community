@@ -60,7 +60,6 @@
       <module fileurl="file://$PROJECT_DIR$/jps/jps.iml" filepath="$PROJECT_DIR$/jps/jps.iml" group="jps" />
       <module fileurl="file://$PROJECT_DIR$/jps/plugins/appLauncher/jps-appLauncher.iml" filepath="$PROJECT_DIR$/jps/plugins/appLauncher/jps-appLauncher.iml" group="jps" />
       <module fileurl="file://$PROJECT_DIR$/jps/jps-builders/jps-builders.iml" filepath="$PROJECT_DIR$/jps/jps-builders/jps-builders.iml" group="jps" />
-      <module fileurl="file://$PROJECT_DIR$/jps/plugins/gwt/jps-gwt.iml" filepath="$PROJECT_DIR$/jps/plugins/gwt/jps-gwt.iml" group="jps" />
       <module fileurl="file://$PROJECT_DIR$/jps/model/jps-model.iml" filepath="$PROJECT_DIR$/jps/model/jps-model.iml" group="jps" />
       <module fileurl="file://$PROJECT_DIR$/jps/plugins/scala/jps-scala.iml" filepath="$PROJECT_DIR$/jps/plugins/scala/jps-scala.iml" group="jps" />
       <module fileurl="file://$PROJECT_DIR$/jps/jps-tests.iml" filepath="$PROJECT_DIR$/jps/jps-tests.iml" group="jps" />
