@@ -143,7 +143,9 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
             }
           }
         }
-        alarm.addRequest(this, 2000);
+        if (!alarm.isDisposed()) {
+          alarm.addRequest(this, 2000);
+        }
       }
     }, 2000);
     return alarm;
