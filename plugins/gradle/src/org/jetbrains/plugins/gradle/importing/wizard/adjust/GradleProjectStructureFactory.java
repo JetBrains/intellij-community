@@ -138,7 +138,7 @@ public class GradleProjectStructureFactory {
           return;
         }
         for (GradleProjectStructureNode node : treeNodes) {
-          node.getDescriptor().setText(evt.getNewValue().toString());
+          node.getDescriptor().setName(evt.getNewValue().toString());
           model.nodeChanged(node);
         }
       }

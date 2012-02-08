@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.ui;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.config.GradleTextAttributes;
 import org.jetbrains.plugins.gradle.diff.GradleProjectStructureChange;
+import org.jetbrains.plugins.gradle.model.GradleEntityType;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.MutableTreeNode;
@@ -16,16 +17,24 @@ import java.util.*;
 public class GradleProjectStructureNode<T> extends DefaultMutableTreeNode implements Iterable<GradleProjectStructureNode<?>> {
   
   private final Set<GradleProjectStructureChange> myConflictChanges = new HashSet<GradleProjectStructureChange>();
-  private final GradleProjectStructureNodeDescriptor<T> myDescriptor;
   
-  public GradleProjectStructureNode(@NotNull GradleProjectStructureNodeDescriptor<T> descriptor) {
+  private final GradleProjectStructureNodeDescriptor<T> myDescriptor;
+  private final GradleEntityType                        myType;
+  
+  public GradleProjectStructureNode(@NotNull GradleProjectStructureNodeDescriptor<T> descriptor, @NotNull GradleEntityType type) {
     super(descriptor);
     myDescriptor = descriptor;
+    myType = type;
   }
 
   @NotNull
   public GradleProjectStructureNodeDescriptor<T> getDescriptor() {
     return myDescriptor;
+  }
+
+  @NotNull
+  public GradleEntityType getType() {
+    return myType;
   }
 
   @Override
@@ -41,10 +50,10 @@ public class GradleProjectStructureNode<T> extends DefaultMutableTreeNode implem
   @Override
   public void add(MutableTreeNode newChild) {
     GradleProjectStructureNode<?> child = (GradleProjectStructureNode)newChild;
-    final String newText = child.getDescriptor().getText();
+    final String newName = child.getDescriptor().getName();
     for (int i = 0; i < getChildCount(); i++) {
       GradleProjectStructureNode<?> node = getChildAt(i);
-      if (newText.compareTo(node.getDescriptor().getText()) < 0) {
+      if (newName.compareTo(node.getDescriptor().getName()) < 0) {
         insert(newChild, i);
         return;
       }
