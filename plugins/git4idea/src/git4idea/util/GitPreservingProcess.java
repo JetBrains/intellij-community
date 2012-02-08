@@ -147,7 +147,7 @@ public class GitPreservingProcess {
     }
   }
 
-  private void load() {
+  public void load() {
     try {
       mySaver.load();
     }

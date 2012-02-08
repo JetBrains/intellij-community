@@ -19,10 +19,9 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
-import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.commands.*;
 import git4idea.repo.GitRepository;
@@ -31,7 +30,8 @@ import git4idea.util.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static git4idea.commands.GitMessageWithFilesDetector.Event.LOCAL_CHANGES_OVERWRITTEN_BY_CHECKOUT;
@@ -72,7 +72,7 @@ class GitCheckoutOperation extends GitBranchOperation {
 
       VirtualFile root = repository.getRoot();
       GitMessageWithFilesDetector localChangesOverwrittenByCheckout = new GitMessageWithFilesDetector(LOCAL_CHANGES_OVERWRITTEN_BY_CHECKOUT, root);
-      GitSimpleEventDetector unmergedFiles = new GitSimpleEventDetector(GitSimpleEventDetector.Event.UNMERGED);
+      GitSimpleEventDetector unmergedFiles = new GitSimpleEventDetector(GitSimpleEventDetector.Event.UNMERGED_PREVENTING_CHECKOUT);
       GitMessageWithFilesDetector untrackedOverwrittenByCheckout = new GitMessageWithFilesDetector(UNTRACKED_FILES_OVERWRITTEN_BY, root);
 
       GitCommandResult result = Git.checkout(repository, myStartPointReference, myNewBranch, false,
@@ -108,30 +108,19 @@ class GitCheckoutOperation extends GitBranchOperation {
 
   private boolean smartCheckoutOrNotify(@NotNull GitRepository repository, 
                                         @NotNull GitMessageWithFilesDetector localChangesOverwrittenByCheckout) {
-    // get changes overwritten by checkout from the error message captured from Git
-    List<Change> affectedChanges = GitUtil.convertPathsToChanges(repository, localChangesOverwrittenByCheckout.getRelativeFilePaths(), true);
-    // get all other conflicting changes
-    // get changes in all other repositories (except those which already have succeeded) to avoid multiple dialogs proposing smart checkout
-    Map<GitRepository, List<Change>> conflictingChangesInRepositories =
-      collectLocalChangesConflictingWithBranch(myProject, getRemainingRepositoriesExceptGiven(repository), myPreviousBranch, myStartPointReference);
+    Pair<List<GitRepository>, List<Change>> conflictingRepositoriesAndAffectedChanges =
+      getConflictingRepositoriesAndAffectedChanges(repository, localChangesOverwrittenByCheckout, myPreviousBranch, myStartPointReference);
+    List<GitRepository> allConflictingRepositories = conflictingRepositoriesAndAffectedChanges.getFirst();
+    List<Change> affectedChanges = conflictingRepositoriesAndAffectedChanges.getSecond();
 
-    Set<GitRepository> otherProblematicRepositories = conflictingChangesInRepositories.keySet();
-    List<GitRepository> allConflictingRepositories = new ArrayList<GitRepository>(otherProblematicRepositories);
-    allConflictingRepositories.add(repository);
-    for (List<Change> changes : conflictingChangesInRepositories.values()) {
-      affectedChanges.addAll(changes);
-    }
-
-    int smartCheckoutDecision = GitWouldBeOverwrittenByCheckoutDialog.showAndGetAnswer(myProject, affectedChanges);
-    if (smartCheckoutDecision == GitWouldBeOverwrittenByCheckoutDialog.SMART_CHECKOUT) {
+    int smartCheckoutDecision = GitSmartOperationDialog.showAndGetAnswer(myProject, affectedChanges, "checkout", true);
+    if (smartCheckoutDecision == GitSmartOperationDialog.SMART_EXIT_CODE) {
       boolean smartCheckedOutSuccessfully = smartCheckout(allConflictingRepositories, myStartPointReference, myNewBranch, getIndicator());
       if (smartCheckedOutSuccessfully) {
-        GitRepository[] otherRepositories = ArrayUtil.toObjectArray(otherProblematicRepositories, GitRepository.class);
-
-        markSuccessful(repository);
-        markSuccessful(otherRepositories);
-        refresh(repository);
-        refresh(otherRepositories);
+        for (GitRepository conflictingRepository : allConflictingRepositories) {
+          markSuccessful(conflictingRepository);
+          refresh(conflictingRepository);
+        }
         return true;
       }
       else {
@@ -139,23 +128,12 @@ class GitCheckoutOperation extends GitBranchOperation {
         return false;
       }
     }
-    else if (smartCheckoutDecision == GitWouldBeOverwrittenByCheckoutDialog.FORCE_CHECKOUT_EXIT_CODE) {
+    else if (smartCheckoutDecision == GitSmartOperationDialog.FORCE_EXIT_CODE) {
       return checkoutOrNotify(allConflictingRepositories, myStartPointReference, myNewBranch, true);
     }
     else {
-      fatalLocalChangesError();
+      fatalLocalChangesError(myStartPointReference);
       return false;
-    }
-  }
-
-  private void fatalLocalChangesError() {
-    String title = "Couldn't checkout " + myStartPointReference;
-    String message = "Local changes would be overwritten by checkout.<br/>Stash or commit them before checking out a branch.<br/>";
-    if (wereSuccessful()) {
-      showFatalErrorDialogWithRollback(title, message);
-    }
-    else {
-      showFatalNotification(title, message);
     }
   }
 

@@ -39,7 +39,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Executor of Git branching operations.
@@ -230,6 +232,22 @@ public final class GitBranchOperationsProcessor {
     else {
       new GitCompareBranchesDialog(myProject, branchName, currentBranch, compareInfo, mySelectedRepository).show();
     }
+  }
+
+  public void merge(@NotNull final String branchName) {
+    new CommonBackgroundTask(myProject, "Merging " + branchName, myCallInAwtAfterExecution) {
+      @Override public void execute(@NotNull ProgressIndicator indicator) {
+        doMerge(branchName, indicator);
+      }
+    }.runInBackground();
+  }
+
+  private void doMerge(@NotNull String branchName, @NotNull ProgressIndicator indicator) {
+    Map<GitRepository, String> revisions = new HashMap<GitRepository, String>();
+    for (GitRepository repository : myRepositories) {
+      revisions.put(repository, repository.getCurrentRevision());
+    }
+    new GitMergeOperation(myProject, myRepositories, branchName, getCurrentBranch(), revisions, indicator).execute();
   }
 
   /**

@@ -172,25 +172,25 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
     assertBranch(myCommunity, MASTER);
     assertBranch(myContrib, MASTER);
   }
-  
+
   @Test
   public void checkout_without_problems() throws Exception {
-    prepareBranchForSimpleCheckout();
+    prepareBranchWithCommit("feature");
     doCheckout("feature", null);
     assertNotify(NotificationType.INFORMATION, "Checked out feature");
   }
-  
+
   @Test
   public void checkout_with_unmerged_files_in_first_repo_should_show_notification() throws Exception {
-    prepareBranchForSimpleCheckout();
+    prepareBranchWithCommit("feature");
     GitTestScenarioGenerator.prepareUnmergedFiles(myUltimate);
     doCheckout("feature", null);
     assertNotify(NotificationType.ERROR, unmergedFilesErrorNotificationDescription("checkout"));
   }
-  
+
   @Test
   public void checkout_with_unmerged_file_in_second_repo_should_propose_to_rollback() throws Exception {
-    prepareBranchForSimpleCheckout();
+    prepareBranchWithCommit("feature");
     GitTestScenarioGenerator.prepareUnmergedFiles(myCommunity);
     doCheckout("feature", null);
     assertMessage(unmergedFilesErrorTitle("checkout"));
@@ -198,7 +198,7 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
 
   @Test
   public void rollback_checkout_should_return_to_previous_branch() throws Exception {
-    prepareBranchForSimpleCheckout();
+    prepareBranchWithCommit("feature");
     GitTestScenarioGenerator.prepareUnmergedFiles(myCommunity);
     myMessageManager.nextAnswer(Messages.OK);
     doCheckout("feature", null);
@@ -208,7 +208,7 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
 
   @Test
   public void deny_rollback_checkout_should_do_nothing() throws Exception {
-    prepareBranchForSimpleCheckout();
+    prepareBranchWithCommit("feature");
     GitTestScenarioGenerator.prepareUnmergedFiles(myCommunity);
     myMessageManager.nextAnswer(Messages.CANCEL);
     doCheckout("feature", null);
@@ -243,7 +243,7 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
       }
     }
     assertNotNull(untrackedFilesDialogClass);
-    
+
     final AtomicBoolean dialogShown = new AtomicBoolean();
     final Class finalUntrackedFilesDialogClass = untrackedFilesDialogClass;
     myDialogManager.registerDialogHandler(untrackedFilesDialogClass, new TestDialogHandler() {
@@ -267,9 +267,9 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
     branch(myContrib, "feature");
 
     final AtomicBoolean dialogShown = new AtomicBoolean();
-    myDialogManager.registerDialogHandler(GitWouldBeOverwrittenByCheckoutDialog.class, new TestDialogHandler<GitWouldBeOverwrittenByCheckoutDialog>() {
+    myDialogManager.registerDialogHandler(GitSmartOperationDialog.class, new TestDialogHandler<GitSmartOperationDialog>() {
       @Override
-      public int handleDialog(GitWouldBeOverwrittenByCheckoutDialog dialog) {
+      public int handleDialog(GitSmartOperationDialog dialog) {
         dialogShown.set(true);
         return DialogWrapper.CANCEL_EXIT_CODE;
       }
@@ -284,10 +284,10 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
     prepareLocalChangesAndBranchWithSameModifiedFilesWithoutConflicts(myUltimate);
     prepareLocalChangesAndBranchWithSameModifiedFilesWithoutConflicts(myCommunity);
     prepareLocalChangesAndBranchWithSameModifiedFilesWithoutConflicts(myContrib);
-    myDialogManager.registerDialogHandler(GitWouldBeOverwrittenByCheckoutDialog.class,
-      new TestDialogHandler<GitWouldBeOverwrittenByCheckoutDialog>() {
+    myDialogManager.registerDialogHandler(GitSmartOperationDialog.class,
+      new TestDialogHandler<GitSmartOperationDialog>() {
         @Override
-        public int handleDialog(GitWouldBeOverwrittenByCheckoutDialog dialog) {
+        public int handleDialog(GitSmartOperationDialog dialog) {
           return DialogWrapper.OK_EXIT_CODE;
         }
     });
@@ -307,16 +307,16 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
     branch(myCommunity, "feature");
     branch(myContrib, "feature");
 
-    myDialogManager.registerDialogHandler(GitWouldBeOverwrittenByCheckoutDialog.class, new TestDialogHandler<GitWouldBeOverwrittenByCheckoutDialog>() {
+    myDialogManager.registerDialogHandler(GitSmartOperationDialog.class, new TestDialogHandler<GitSmartOperationDialog>() {
       @Override
-      public int handleDialog(GitWouldBeOverwrittenByCheckoutDialog dialog) {
+      public int handleDialog(GitSmartOperationDialog dialog) {
         return DialogWrapper.CANCEL_EXIT_CODE;
       }
     });
 
     doCheckout("feature", null);
     assertNotify(NotificationType.ERROR, "Couldn't checkout feature", stripHtmlAndBreaks("Local changes would be overwritten by checkout." +
-                                                                                  "Stash or commit them before checking out a branch."));
+                                                                                         "You should stash or commit them."));
     assertBranch("master");
   }
 
@@ -325,25 +325,25 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
     prepareLocalChangesAndBranchWithSameModifiedFilesWithoutConflicts(myCommunity);
     branch(myUltimate, "feature");
     branch(myContrib, "feature");
-    myDialogManager.registerDialogHandler(GitWouldBeOverwrittenByCheckoutDialog.class, new TestDialogHandler<GitWouldBeOverwrittenByCheckoutDialog>() {
+    myDialogManager.registerDialogHandler(GitSmartOperationDialog.class, new TestDialogHandler<GitSmartOperationDialog>() {
       @Override
-      public int handleDialog(GitWouldBeOverwrittenByCheckoutDialog dialog) {
+      public int handleDialog(GitSmartOperationDialog dialog) {
         return DialogWrapper.CANCEL_EXIT_CODE;
       }
     });
 
     doCheckout("feature", null);
-    assertMessage("Couldn't checkout feature", 
-                  "Local changes would be overwritten by checkout.<br/>Stash or commit them before checking out a branch.<br/>" + 
+    assertMessage("Couldn't checkout feature",
+                  "Local changes would be overwritten by checkout.<br/>You should stash or commit them.<br/>" +
                   "However checkout has succeeded for the following repository:<br/>" +
-                   myUltimate.getPresentableUrl() +
-                   "<br/>You may rollback (checkout back to master) not to let branches diverge.",
+                  myUltimate.getPresentableUrl() +
+                  "<br/>You may rollback (checkout back to master) not to let branches diverge.",
                   "Rollback", "Don't rollback");
   }
-  
+
   @Test
   public void rollback_checkout_branch_as_new_branch_should_delete_branches() throws Exception {
-    prepareBranchForSimpleCheckout();
+    prepareBranchWithCommit("feature");
     GitTestScenarioGenerator.prepareUnmergedFiles(myCommunity);
     myMessageManager.nextAnswer(Messages.OK);
     doCheckout("feature", "newBranch");
@@ -372,14 +372,6 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
     create(repository, "untracked.txt");
   }
 
-  private void prepareBranchForSimpleCheckout() throws IOException {
-    for (GitRepository repository : myRepositories) {
-      checkout(repository, "-b", "feature");
-      createAddCommit(repository, "feature_file.txt");
-      checkout(repository, "master");
-    }
-  }
-
   @Test
   public void delete_branch_without_problems() throws Exception {
     for (GitRepository repository : myRepositories) {
@@ -389,10 +381,10 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
     doDeleteBranch("master1");
     assertNotify(NotificationType.INFORMATION, "Deleted branch master1");
   }
-  
+
   @Test
   public void delete_unmerged_branch_should_show_dialog() throws Exception {
-    prepareUnmergedBranch(myUltimate, myCommunity, myContrib);
+    prepareBranchWithCommit("unmerged_branch", myUltimate, myCommunity, myContrib);
 
     final AtomicBoolean dialogShown = new AtomicBoolean();
     myDialogManager.registerDialogHandler(GitBranchIsNotFullyMergedDialog.class, new TestDialogHandler<GitBranchIsNotFullyMergedDialog>() {
@@ -405,41 +397,41 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
     doDeleteBranch("unmerged_branch");
     assertTrue(dialogShown.get());
   }
-  
+
   @Test
   public void ok_in_unmerged_branch_dialog_should_force_delete_branch() throws Exception {
-    prepareUnmergedBranch(myUltimate, myCommunity, myContrib);
+    prepareBranchWithCommit("unmerged_branch", myUltimate, myCommunity, myContrib);
     registerNotFullyMergedDialog(DialogWrapper.OK_EXIT_CODE);
     doDeleteBranch("unmerged_branch");
     for (GitRepository repository : myRepositories) {
       assertTrue(!branch(repository).contains("unmerged_branch"));
     }
   }
-  
+
   @Test
   public void cancel_in_unmerged_branch_dialog_in_first_repository_should_show_notification() throws Exception {
-    prepareUnmergedBranch(myUltimate, myContrib);
+    prepareBranchWithCommit("unmerged_branch", myUltimate, myContrib);
     branch(myCommunity, "unmerged_branch");
 
     registerNotFullyMergedDialog(DialogWrapper.CANCEL_EXIT_CODE);
     doDeleteBranch("unmerged_branch");
     assertNotify(NotificationType.ERROR, "Branch unmerged_branch wasn't deleted", "This branch is not fully merged to master.");
   }
-  
+
   @Test
   public void cancel_in_unmerged_branch_dialog_in_not_first_repository_should_show_rollback_proposal() throws Exception {
     branch(myUltimate, "unmerged_branch");
-    prepareUnmergedBranch(myCommunity, myContrib);
+    prepareBranchWithCommit("unmerged_branch", myCommunity, myContrib);
 
     registerNotFullyMergedDialog(DialogWrapper.CANCEL_EXIT_CODE);
     doDeleteBranch("unmerged_branch");
     assertMessage(String.format("Branch %s wasn't deleted", "unmerged_branch"));
   }
-  
+
   @Test
   public void rollback_delete_branch_should_recreate_branches() throws Exception {
     branch(myUltimate, "unmerged_branch");
-    prepareUnmergedBranch(myCommunity);
+    prepareBranchWithCommit("unmerged_branch", myCommunity);
     branch(myContrib, "unmerged_branch");
 
     registerNotFullyMergedDialog(DialogWrapper.CANCEL_EXIT_CODE);
@@ -450,13 +442,13 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
       assertTrue(branch(repository).contains("unmerged_branch"));
     }
   }
-  
+
   @Test
   public void deny_rollback_delete_branch_should_do_nothing() throws Exception {
     branch(myUltimate, "unmerged_branch");
-    prepareUnmergedBranch(myCommunity);
+    prepareBranchWithCommit("unmerged_branch", myCommunity);
     branch(myContrib, "unmerged_branch");
-    
+
     registerNotFullyMergedDialog(DialogWrapper.CANCEL_EXIT_CODE);
     myMessageManager.nextAnswer(Messages.CANCEL);
     doDeleteBranch("unmerged_branch");
@@ -464,6 +456,88 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
     assertTrue(branch(myCommunity).contains("unmerged_branch"));
     assertTrue(branch(myContrib).contains("unmerged_branch"));
     assertTrue(!branch(myUltimate).contains("unmerged_branch"));
+  }
+
+  @Test
+  public void merge_simple_without_problems() throws Exception {
+    prepareBranchWithCommit("feature", myUltimate, myCommunity, myContrib);
+    doMerge("feature");
+    assertNotify(NotificationType.INFORMATION, "Merged feature to master");
+
+    assertFile(myUltimate, "unmerged_branch_file", "content");
+    assertFile(myCommunity, "unmerged_branch_file", "content");
+    assertFile(myContrib, "unmerged_branch_file", "content");
+  }
+
+  private static void assertFile(GitRepository repository, String path, String content) throws IOException {
+    VirtualFile branchFile = repository.getRoot().findChild(path);
+    assertNotNull(branchFile);
+    assertTrue(branchFile.exists());
+    assertEquals(new String(branchFile.contentsToByteArray()), content);
+  }
+
+  @Test
+  public void merge_up_to_date_branch() throws Exception {
+    branch(myUltimate, "master2");
+    branch(myCommunity, "master2");
+    branch(myContrib, "master2");
+
+    doMerge("master2");
+
+    assertNotify(NotificationType.INFORMATION, "Already up-to-date.");
+  }
+
+  @Test
+  public void merge_one_simple_and_other_up_to_date() throws Exception {
+    branch(myUltimate, "master2");
+    branch(myContrib, "master2");
+    prepareBranchWithCommit("master2", myCommunity);
+
+    doMerge("master2");
+
+    assertNotify(NotificationType.INFORMATION, "Merged master2 to master");
+    assertFile(myCommunity, "unmerged_branch_file", "content");
+    assertNull(myUltimate.getRoot().findChild("unmerged_branch_file"));
+  }
+
+  @Test
+  public void merge_with_unmerged_files_in_first_repo_should_show_notification() throws Exception {
+    prepareBranchWithCommit("feature");
+    GitTestScenarioGenerator.prepareUnmergedFiles(myUltimate);
+    doMerge("feature");
+    assertNotify(NotificationType.ERROR, unmergedFilesErrorNotificationDescription("merge"));
+  }
+  
+  @Test
+  public void merge_with_unmerged_files_in_second_repo_should_propose_to_rollback() throws Exception {
+    prepareBranchWithCommit("feature");
+    GitTestScenarioGenerator.prepareUnmergedFiles(myCommunity);
+    doMerge("feature");
+    assertMessage(unmergedFilesErrorTitle("merge"));
+  }
+  
+  @Test
+  public void rollback_merge_should_reset_merge() throws Exception {
+    prepareBranchWithCommit("feature");
+    String ultimateTip = tip(myUltimate);
+    GitTestScenarioGenerator.prepareUnmergedFiles(myCommunity);
+    myMessageManager.nextAnswer(Messages.OK);
+    doMerge("feature");
+    assertMessage(unmergedFilesErrorTitle("merge"));
+    assertBranch("master");
+    assertEquals(tip(myUltimate), ultimateTip);
+  }
+
+  @Test
+  public void deny_rollback_merge_should_leave_as_is() throws Exception {
+    prepareBranchWithCommit("feature");
+    String ultimateTip = tip(myUltimate);
+    GitTestScenarioGenerator.prepareUnmergedFiles(myCommunity);
+    myMessageManager.nextAnswer(Messages.CANCEL);
+    doMerge("feature");
+    assertMessage(unmergedFilesErrorTitle("merge"));
+    assertBranch("master");
+    assertFalse(tip(myUltimate).equals(ultimateTip));
   }
 
   private void registerNotFullyMergedDialog(final int answer) {
@@ -475,9 +549,12 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
     });
   }
 
-  private static void prepareUnmergedBranch(GitRepository... repositories) throws IOException {
+  private void prepareBranchWithCommit(String branch, GitRepository... repositories) throws IOException {
+    if (repositories.length == 0) {
+      repositories = new GitRepository[] { myUltimate, myCommunity, myContrib };
+    }
     for (GitRepository repository : repositories) {
-      checkout(repository, "-b", "unmerged_branch");
+      checkout(repository, "-b", branch);
       createAddCommit(repository, "unmerged_branch_file");
       checkout(repository, "master");
       refresh(repository);
@@ -486,6 +563,14 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
 
   private void doCheckoutNewBranch() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
     callPrivateBranchOperationsProcessorMethod("doCheckoutNewBranch", NEW_BRANCH);
+  }
+
+  private void doMerge(String branch) throws InvocationTargetException, NoSuchMethodException, IllegalAccessException {
+    callPrivateBranchOperationsProcessorMethod("doMerge", branch);
+    // sync refresh is needed, because the refresh inside GitMergeOperation is asynchronous.
+    for (GitRepository repository : myRepositories) {
+      repository.getRoot().refresh(false, true);
+    }
   }
 
   private static String unmergedFilesErrorNotificationDescription(String operation)

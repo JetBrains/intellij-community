@@ -58,7 +58,7 @@ class GitCheckoutNewBranchOperation extends GitBranchOperation {
     while (hasMoreRepositories() && !fatalErrorHappened) {
       final GitRepository repository = next();
 
-      GitSimpleEventDetector unmergedDetector = new GitSimpleEventDetector(GitSimpleEventDetector.Event.UNMERGED);
+      GitSimpleEventDetector unmergedDetector = new GitSimpleEventDetector(GitSimpleEventDetector.Event.UNMERGED_PREVENTING_CHECKOUT);
       GitCommandResult result = Git.checkoutNewBranch(repository, myNewBranchName, unmergedDetector);
 
       if (result.success()) {

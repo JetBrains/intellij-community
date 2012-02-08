@@ -31,29 +31,33 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * The dialog that is shown when the error "The following files would be overwritten by checkout" happens.
- * Displays the list of these files and proposes to make a "smart" checkout.
+ * The dialog that is shown when the error
+ * "Your local changes to the following files would be overwritten by merge/checkout"
+ * happens.
+ * Displays the list of these files and proposes to make a "smart" merge or checkout.
  *
  * @author Kirill Likhodedov
  */
-// TODO "don't ask again" option
-class GitWouldBeOverwrittenByCheckoutDialog extends DialogWrapper {
+class GitSmartOperationDialog extends DialogWrapper {
 
-  public static final int SMART_CHECKOUT = OK_EXIT_CODE;
-  public static final int FORCE_CHECKOUT_EXIT_CODE = NEXT_USER_EXIT_CODE;
+  public static final int SMART_EXIT_CODE = OK_EXIT_CODE;
+  public static final int FORCE_EXIT_CODE = NEXT_USER_EXIT_CODE;
   
   private final Project myProject;
   private final List<Change> myChanges;
+  @NotNull private final String myOperationTitle;
+  private final boolean myForceButton;
 
   /**
-   * @return true if smart checkout has to be performed, false if user doesn't want to checkout.
+   * Shows the dialog with the list of local changes preventing merge/checkout and returns the dialog exit code.
    */
-  static int showAndGetAnswer(@NotNull final Project project, @NotNull final List<Change> changes) {
+  static int showAndGetAnswer(@NotNull final Project project, @NotNull final List<Change> changes, @NotNull final String operationTitle,
+                              final boolean forceButton) {
     final AtomicInteger exitCode = new AtomicInteger();
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
-        GitWouldBeOverwrittenByCheckoutDialog dialog = new GitWouldBeOverwrittenByCheckoutDialog(project, changes);
+        GitSmartOperationDialog dialog = new GitSmartOperationDialog(project, changes, operationTitle, forceButton);
         DialogManager.getInstance(project).showDialog(dialog);
         exitCode.set(dialog.getExitCode());
       }
@@ -61,19 +65,25 @@ class GitWouldBeOverwrittenByCheckoutDialog extends DialogWrapper {
     return exitCode.get();
   }
 
-  private GitWouldBeOverwrittenByCheckoutDialog(@NotNull Project project, @NotNull List<Change> changes) {
+  private GitSmartOperationDialog(@NotNull Project project, @NotNull List<Change> changes, @NotNull String operationTitle,
+                                  boolean forceButton) {
     super(project);
     myProject = project;
     myChanges = changes;
-    setOKButtonText("Smart checkout");
-    setCancelButtonText("Don't checkout");
+    myOperationTitle = operationTitle;
+    myForceButton = forceButton;
+    setOKButtonText("Smart " + operationTitle);
+    setCancelButtonText("Don't " + operationTitle);
     getCancelAction().putValue(FOCUSED_ACTION, Boolean.TRUE);
     init();
   }
 
   @Override
   protected Action[] createLeftSideActions() {
-    return new Action[] {new ForceCheckoutAction() };
+    if (myForceButton) {
+      return new Action[] {new ForceCheckoutAction(myOperationTitle) };
+    }
+    return new Action[0];
   }
 
   @Override
@@ -94,19 +104,19 @@ class GitWouldBeOverwrittenByCheckoutDialog extends DialogWrapper {
 
   @Override
   protected String getDimensionServiceKey() {
-    return GitWouldBeOverwrittenByCheckoutDialog.class.getName();
+    return GitSmartOperationDialog.class.getName();
   }
 
 
   private class ForceCheckoutAction extends AbstractAction {
     
-    ForceCheckoutAction() {
-      super("Force checkout");
+    ForceCheckoutAction(@NotNull String operationTitle) {
+      super("Force " + operationTitle);
     }
     
     @Override
     public void actionPerformed(ActionEvent e) {
-      close(FORCE_CHECKOUT_EXIT_CODE);
+      close(FORCE_EXIT_CODE);
     }
   }
 

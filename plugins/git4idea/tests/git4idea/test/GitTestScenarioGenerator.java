@@ -27,13 +27,15 @@ import static git4idea.test.GitExec.*;
  */
 public class GitTestScenarioGenerator {
 
+  private static final String BRANCH_FOR_UNMERGED_CONFLICTS = "unmerged_files_branch_" + Math.random();
+
   public static void prepareUnmergedFiles(@NotNull GitRepository... repositories) throws IOException {
     for (GitRepository repository : repositories) {
       String unmergedFile = "unmerged";
       create(repository, unmergedFile, "master content");
       addCommit(repository, unmergedFile);
       
-      checkoutFeatureBranch(repository);
+      checkoutBranchForUnmergedConflicts(repository);
       edit(repository, unmergedFile, "feature content");
       addCommit(repository, unmergedFile);
       
@@ -41,17 +43,17 @@ public class GitTestScenarioGenerator {
       edit(repository, unmergedFile, "master feature");
       addCommit(repository, unmergedFile);
       
-      merge(repository, "feature");
+      merge(repository, BRANCH_FOR_UNMERGED_CONFLICTS);
       refresh(repository);
     }
   }
 
-  private static void checkoutFeatureBranch(GitRepository repository) throws IOException {
+  private static void checkoutBranchForUnmergedConflicts(GitRepository repository) throws IOException {
     String branches = branch(repository);
-    if (!branches.contains("feature")) {
-      checkout(repository, "-b", "feature");
+    if (!branches.contains(BRANCH_FOR_UNMERGED_CONFLICTS)) {
+      checkout(repository, "-b", BRANCH_FOR_UNMERGED_CONFLICTS);
     } else {
-      checkout(repository, "feature");
+      checkout(repository, BRANCH_FOR_UNMERGED_CONFLICTS);
     }
   }
 }

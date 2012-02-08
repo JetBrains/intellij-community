@@ -23,6 +23,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
@@ -32,6 +33,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Function;
 import com.intellij.util.ui.UIUtil;
 import git4idea.*;
+import git4idea.commands.GitMessageWithFilesDetector;
 import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
 import git4idea.util.UntrackedFilesNotifier;
@@ -153,8 +155,12 @@ abstract class GitBranchOperation {
     return repositories;
   }
 
+  protected void notifySuccess(@NotNull String message) {
+    NotificationManager.getInstance(myProject).notify(GitVcs.NOTIFICATION_GROUP_ID, "", message, NotificationType.INFORMATION);
+  }
+
   protected void notifySuccess() {
-    NotificationManager.getInstance(myProject).notify(GitVcs.NOTIFICATION_GROUP_ID, "", getSuccessMessage(), NotificationType.INFORMATION);
+    notifySuccess(getSuccessMessage());
   }
 
   /**
@@ -277,6 +283,17 @@ abstract class GitBranchOperation {
     repository.getRoot().refresh(true, true);
   }
 
+  protected void fatalLocalChangesError(@NotNull String reference) {
+    String title = String.format("Couldn't %s %s", getOperationName(), reference);
+    String message = String.format("Local changes would be overwritten by %s.<br/>You should stash or commit them.<br/>", getOperationName());
+    if (wereSuccessful()) {
+      showFatalErrorDialogWithRollback(title, message);
+    }
+    else {
+      showFatalNotification(title, message);
+    }
+  }
+
   /**
    * Shows the error "The following untracked working tree files would be overwritten by checkout/merge".
    * If there were no repositories that succeeded the operation, shows a notification with a link to the list of these untracked files.
@@ -359,6 +376,39 @@ abstract class GitBranchOperation {
       panel.add(buttons);
       return panel;
     }
+  }
+
+  /**
+   * When checkout or merge operation on a repository fails with the error "local changes would be overwritten by...",
+   * affected local files are captured by the {@link git4idea.commands.GitMessageWithFilesDetector detector}.
+   * Then all remaining (non successful repositories) are searched if they are about to fail with the same problem.
+   * All collected local changes which prevent the operation, together with these repositories, are returned.
+   * @param currentRepository          The first repository which failed the operation.
+   * @param localChangesOverwrittenBy  The detector of local changes would be overwritten by merge/checkout.
+   * @param currentBranch              Current branch.
+   * @param nextBranch                 Branch to compare with (the branch to be checked out, or the branch to be merged).
+   * @return Repositories that have failed or would fail with the "local changes" error, together with these local changes.
+   */
+  @NotNull
+  protected Pair<List<GitRepository>, List<Change>> getConflictingRepositoriesAndAffectedChanges(
+    @NotNull GitRepository currentRepository, @NotNull GitMessageWithFilesDetector localChangesOverwrittenBy,
+    String currentBranch, String nextBranch) {
+
+    // get changes overwritten by checkout from the error message captured from Git
+    List<Change> affectedChanges = GitUtil.convertPathsToChanges(currentRepository, localChangesOverwrittenBy.getRelativeFilePaths(), true);
+    // get all other conflicting changes
+    // get changes in all other repositories (except those which already have succeeded) to avoid multiple dialogs proposing smart checkout
+    Map<GitRepository, List<Change>> conflictingChangesInRepositories =
+      collectLocalChangesConflictingWithBranch(myProject, getRemainingRepositoriesExceptGiven(currentRepository), currentBranch, nextBranch);
+
+    Set<GitRepository> otherProblematicRepositories = conflictingChangesInRepositories.keySet();
+    List<GitRepository> allConflictingRepositories = new ArrayList<GitRepository>(otherProblematicRepositories);
+    allConflictingRepositories.add(currentRepository);
+    for (List<Change> changes : conflictingChangesInRepositories.values()) {
+      affectedChanges.addAll(changes);
+    }
+
+    return Pair.create(allConflictingRepositories, affectedChanges);
   }
 
 }
