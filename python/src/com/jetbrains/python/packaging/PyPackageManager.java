@@ -27,19 +27,21 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 /**
  * @author vlan
  */
 public class PyPackageManager {
-  public final static int OK = 0;
-  public final static int ERROR_WRONG_USAGE = 1;
-  public final static int ERROR_NO_PACKAGING_TOOLS = 2;
-  public final static int ERROR_INVALID_SDK = -1;
-  public final static int ERROR_HELPER_NOT_FOUND = -2;
-  public final static int ERROR_TIMEOUT = -3;
-  public final static int ERROR_INVALID_OUTPUT = -4;
+  public static final int OK = 0;
+  public static final int ERROR_WRONG_USAGE = 1;
+  public static final int ERROR_NO_PACKAGING_TOOLS = 2;
+  public static final int ERROR_INVALID_SDK = -1;
+  public static final int ERROR_HELPER_NOT_FOUND = -2;
+  public static final int ERROR_TIMEOUT = -3;
+  public static final int ERROR_INVALID_OUTPUT = -4;
+  public static final int ERROR_ACCESS_DENIED = -5;
 
   private static final String PACKAGING_TOOL = "packaging_tool.py";
   private static final String VIRTUALENV = "virtualenv.py";
@@ -74,10 +76,6 @@ public class PyPackageManager {
     install(requirements, null);
   }
 
-  public void install(@NotNull PyRequirement requirement) throws PyExternalProcessException {
-    install(requirement, null);
-  }
-
   public void install(@NotNull PyRequirement requirement, @Nullable List<String> options) throws PyExternalProcessException {
     install(Lists.newArrayList(requirement), options);
   }
@@ -87,38 +85,48 @@ public class PyPackageManager {
     install(Lists.newArrayList(requirement), url, options);
   }
 
-  public void install(@NotNull List<PyRequirement> requirements, @Nullable String url,
+  private void install(@NotNull List<PyRequirement> requirements, @Nullable String url,
                       @Nullable List<String> options) throws PyExternalProcessException {
-    myPackagesCache = null;
     final List<String> args = new ArrayList<String>();
     args.add("install");
     if (url != null) {
       args.add("--extra-index-url");
       args.add(url);
     }
+    final File buildDir;
+    try {
+      buildDir = FileUtil.createTempDirectory("packaging", null);
+    }
+    catch (IOException e) {
+      throw new PyExternalProcessException(ERROR_ACCESS_DENIED, "Cannot create temporary build directory");
+    }
+    args.addAll(list("--build-dir", buildDir.getAbsolutePath()));
     for (PyRequirement req : requirements) {
       args.add(req.toString());
     }
     if (options != null) {
       args.addAll(options);
     }
-    runPythonHelper(PACKAGING_TOOL, args);
+    try {
+      runPythonHelper(PACKAGING_TOOL, args);
+    }
+    finally {
+      myPackagesCache = null;
+      FileUtil.delete(buildDir);
+    }
   }
 
-  public void install(@NotNull List<PyRequirement> requirements, @Nullable List<String> options) throws PyExternalProcessException {
+  private void install(@NotNull List<PyRequirement> requirements, @Nullable List<String> options) throws PyExternalProcessException {
     install(requirements, null, options);
   }
 
-  @Deprecated
-  public void install(@NotNull PyPackage pkg) throws PyExternalProcessException {
-    // TODO: Add options for mirrors, web pages with indices, upgrade flag, package file path
-    myPackagesCache = null;
-    runPythonHelper(PACKAGING_TOOL, list("install", pkg.getName()));
-  }
-
   public void uninstall(@NotNull PyPackage pkg) throws PyExternalProcessException {
-    myPackagesCache = null;
-    runPythonHelper(PACKAGING_TOOL, list("uninstall", pkg.getName()));
+    try {
+      runPythonHelper(PACKAGING_TOOL, list("uninstall", pkg.getName()));
+    }
+    finally {
+      myPackagesCache = null;
+    }
   }
 
   @NotNull
@@ -266,11 +274,9 @@ public class PyPackageManager {
       if (message.trim().isEmpty()) {
         message = stdout;
       }
-      LOG.debug(String.format("Error when running '%s'\nSTDOUT: %s\nSTDERR: %s\n\n",
-                              StringUtil.join(helper, " "),
-                              stdout,
-                              stderr));
-      throw new PyExternalProcessException(retcode, message);
+      final String header = String.format("Error when running '%s %s'", helper, StringUtil.join(args, " "));
+      LOG.debug(String.format("%s\nSTDOUT: %s\nSTDERR: %s\n\n", header, stdout, stderr));
+      throw new PyExternalProcessException(retcode, String.format("%s: %s", header, message));
     }
     return output.getStdout();
   }
