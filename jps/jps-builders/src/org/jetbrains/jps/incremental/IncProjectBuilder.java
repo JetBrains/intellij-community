@@ -77,11 +77,13 @@ public class IncProjectBuilder {
       }
       catch (ProjectBuildException e) {
         final Throwable cause = e.getCause();
-        if (cause instanceof PersistentEnumerator.CorruptedException || cause instanceof MappingFailedException) {
+        if (cause instanceof PersistentEnumerator.CorruptedException || cause instanceof MappingFailedException || cause instanceof IOException) {
           // force rebuild
-          myMessageDispatcher.processMessage(new CompilerMessage(COMPILE_SERVER_NAME, BuildMessage.Kind.INFO,
-                                                                 "Internal caches are corrupted or have outdated format, forcing project rebuild: " +
-                                                                 e.getMessage()));
+          myMessageDispatcher.processMessage(new CompilerMessage(
+            COMPILE_SERVER_NAME, BuildMessage.Kind.INFO,
+            "Internal caches are corrupted or have outdated format, forcing project rebuild: " +
+            e.getMessage())
+          );
           flushContext(context);
           context = createContext(new AllProjectScope(scope.getProject(), Collections.<Artifact>emptySet(), true), false, true);
           runBuild(context);
