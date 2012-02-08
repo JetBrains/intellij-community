@@ -20,7 +20,7 @@ public class ArtifactsBuildData {
   private final File myArtifactsDataDir;
   private final File myMappingsDir;
 
-  public ArtifactsBuildData(File artifactsDataDir) throws Exception {
+  public ArtifactsBuildData(File artifactsDataDir) throws IOException {
     myArtifactsDataDir = artifactsDataDir;
     myTimestampStorage = new ArtifactSourceTimestampStorage(new File(artifactsDataDir, "timestamps"));
     myArtifactState = new HashMap<Artifact, ArtifactSourceFilesState>();

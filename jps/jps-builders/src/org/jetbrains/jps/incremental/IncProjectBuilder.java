@@ -77,11 +77,13 @@ public class IncProjectBuilder {
       }
       catch (ProjectBuildException e) {
         final Throwable cause = e.getCause();
-        if (cause instanceof PersistentEnumerator.CorruptedException || cause instanceof MappingFailedException) {
+        if (cause instanceof PersistentEnumerator.CorruptedException || cause instanceof MappingFailedException || cause instanceof IOException) {
           // force rebuild
-          myMessageDispatcher.processMessage(new CompilerMessage(COMPILE_SERVER_NAME, BuildMessage.Kind.INFO,
-                                                                 "Internal caches are corrupted or have outdated format, forcing project rebuild: " +
-                                                                 e.getMessage()));
+          myMessageDispatcher.processMessage(new CompilerMessage(
+            COMPILE_SERVER_NAME, BuildMessage.Kind.INFO,
+            "Internal caches are corrupted or have outdated format, forcing project rebuild: " +
+            e.getMessage())
+          );
           flushContext(context);
           context = createContext(new AllProjectScope(scope.getProject(), Collections.<Artifact>emptySet(), true), false, true);
           runBuild(context);
@@ -460,7 +462,7 @@ public class IncProjectBuilder {
         private final Map<Module, SourceToOutputMapping> storageMap = new HashMap<Module, SourceToOutputMapping>();
 
         @Override
-        public boolean apply(Module module, File file, String sourceRoot) throws Exception {
+        public boolean apply(Module module, File file, String sourceRoot) throws IOException {
           SourceToOutputMapping srcToOut = storageMap.get(module);
           if (srcToOut == null) {
             srcToOut = dataManager.getSourceToOutputMap(module.getName().toLowerCase(Locale.US), compilingTests);

@@ -750,7 +750,6 @@ class Foo {
     joinCommit()
     myFixture.type 'a.'
     myFixture.checkResult(" class Foo { { int iteraaa; iteraaa.<caret> } } ")
-    assert !lookup
   }
 
   public void testRestartWithInvisibleLookup() {
@@ -1214,6 +1213,12 @@ class Foo {{
     finally {
       ((TemplateManagerImpl)TemplateManager.getInstance(getProject())).setTemplateTesting(false);
     }
+  }
+
+  public void testReturnLParen() {
+    myFixture.configureByText 'a.java', 'class Foo { int foo() { <caret> }}'
+    type 're('
+    myFixture.checkResult 'class Foo { int foo() { re(<caret>) }}'
   }
 
 }

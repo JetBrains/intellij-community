@@ -74,6 +74,14 @@ public class DirDiffElement {
     return myTarget == null ? "" : getLastModification(myTarget);
   }
 
+  public void updateTargetData() {
+    if (myTarget != null && !myTarget.isContainer()) {
+      myTargetLength = myTarget.getSize();
+    } else {
+      myTargetLength = -1;
+    }
+  }
+
   private static String getLastModification(DiffElement file) {
     final long timeStamp = file.getTimeStamp();
     return timeStamp < 0 ? "" : DateFormatUtil.formatDateTime(timeStamp);

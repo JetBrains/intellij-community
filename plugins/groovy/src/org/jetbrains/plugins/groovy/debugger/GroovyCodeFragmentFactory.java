@@ -55,7 +55,7 @@ import java.util.regex.Pattern;
 /**
  * @author ven
  */
-public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
+public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
   private static final String EVAL_NAME = "_JETGROOVY_EVAL_";
   private static final String IMPORTS = "___$$IMPORTS$$___";
   private static final String TEXT = "___$$TEXT$$___";

@@ -130,7 +130,12 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
         int index = list.getSelectedIndex();
         if (index < 0) return;
         final PsiClass aClass = (PsiClass) list.getSelectedValue();
-        doInvoke(project, aClass);
+        CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+          @Override
+          public void run() {
+            doInvoke(project, aClass);
+          }
+        }, getText(), null);
       }
     };
 
@@ -321,10 +326,15 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
         return Collections.emptyList();
       }
 
-      if (!allowOuterClasses ||
-          !isAllowOuterTargetClass() ||
-          ApplicationManager.getApplication().isUnitTestMode())
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
         return Collections.singletonList(psiClass);
+      }
+
+      if (!allowOuterClasses || !isAllowOuterTargetClass()) {
+        final ArrayList<PsiClass> classes = new ArrayList<PsiClass>();
+        collectSupers(psiClass, classes);
+        return classes;
+      }
 
       List<PsiClass> result = new ArrayList<PsiClass>();
 
@@ -334,6 +344,17 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
         psiClass = PsiTreeUtil.getParentOfType(psiClass, PsiClass.class);
       }
       return result;
+    }
+  }
+
+  private static void collectSupers(PsiClass psiClass, ArrayList<PsiClass> classes) {
+    classes.add(psiClass);
+
+    final PsiClass[] supers = psiClass.getSupers();
+    for (PsiClass aSuper : supers) {
+      if (aSuper.getManager().isInProject(aSuper)) {
+        collectSupers(aSuper, classes);
+      }
     }
   }
 

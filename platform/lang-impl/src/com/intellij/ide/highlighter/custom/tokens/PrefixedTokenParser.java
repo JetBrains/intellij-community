@@ -30,7 +30,7 @@ public abstract class PrefixedTokenParser extends TokenParser {
     myPrefix = prefix.toCharArray();
   }
 
-  public final boolean hasToken(int position) {
+  public boolean hasToken(int position) {
     final int start = position;
     int i;
     for (i = 0; i < myPrefix.length && position < myEndOffset; i++, position++) {

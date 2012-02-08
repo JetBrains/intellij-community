@@ -99,7 +99,7 @@ public class AndroidResourceUtil {
     collectDirsForPackage(module, project, null, dirs, new HashSet<Module>(), onlyInOwnPackages);
     List<PsiJavaFile> rJavaFiles = new ArrayList<PsiJavaFile>();
     for (PsiDirectory dir : dirs) {
-      VirtualFile file = dir.getVirtualFile().findChild(AndroidUtils.R_JAVA_FILENAME);
+      VirtualFile file = dir.getVirtualFile().findChild(AndroidCommonUtils.R_JAVA_FILENAME);
       if (file != null) {
         PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
         if (psiFile instanceof PsiJavaFile) {

@@ -35,6 +35,9 @@ class ProjectStructureChecker {
       check it as Node, actual.getChildAt(childIndex++) as DefaultMutableTreeNode
     }
     for (it in expected.children().findAll { it instanceof Node}) {
+      if (childIndex >= actual.childCount) {
+        fail "Expected node is not matched: $expected"
+      }
       check it as Node, actual.getChildAt(childIndex++) as DefaultMutableTreeNode
     }
     if (childIndex < actual.childCount) {
@@ -43,7 +46,7 @@ class ProjectStructureChecker {
   }
 
   private void checkName(Node expected, GradleProjectStructureNodeDescriptor actual) {
-    if (expected.name() == actual.toString()) {
+    if (AbstractProjectBuilder.SAME_TOKEN == actual.toString() || expected.name() == actual.toString()) {
       return
     }
     def clazz = BUILT_IN[expected.name()]

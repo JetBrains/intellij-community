@@ -187,6 +187,14 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
     getIgnoredElements().put(refEntity, problemDescriptors);
   }
 
+  public void ignoreCurrentElementProblem(RefEntity refEntity, CommonProblemDescriptor descriptor) {
+    CommonProblemDescriptor[] descriptors = getIgnoredElements().get(refEntity);
+    if (descriptors == null) {
+      descriptors = new CommonProblemDescriptor[0];
+    }
+    getIgnoredElements().put(refEntity, ArrayUtil.append(descriptors, descriptor));
+  }
+
   private static boolean isIgnoreProblem(QuickFix[] problemFixes, Set<QuickFix> fixes, int idx){
     if (problemFixes == null || fixes == null) {
       return true;
@@ -451,6 +459,17 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
     return false;
   }
 
+  public boolean isProblemResolved(RefEntity refEntity, CommonProblemDescriptor descriptor) {
+    if (getIgnoredElements() == null) return false;
+    for (RefEntity entity : getIgnoredElements().keySet()) {
+      if (Comparing.equal(entity, refEntity)) {
+        final CommonProblemDescriptor[] descriptors = getIgnoredElements().get(refEntity);
+        return ArrayUtil.contains(descriptor, descriptors);
+      }
+    }
+    return false;
+  }
+  
   public FileStatus getProblemStatus(final CommonProblemDescriptor descriptor) {
     final GlobalInspectionContextImpl context = getContext();
     if (context != null && context.getUIOptions().SHOW_DIFF_WITH_PREVIOUS_RUN){

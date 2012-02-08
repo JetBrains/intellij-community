@@ -39,11 +39,13 @@ import com.intellij.profile.codeInspection.ui.ErrorsConfigurable;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.Gray;
 import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -55,6 +57,7 @@ import javax.swing.plaf.basic.BasicSliderUI;
 import java.awt.*;
 import java.lang.ref.WeakReference;
 import java.util.*;
+import java.util.List;
 
 /**
  * User: anna
@@ -70,7 +73,7 @@ public class HectorComponent extends JPanel {
 
   private final String myTitle = EditorBundle.message("hector.highlighting.level.title");
 
-  public HectorComponent(PsiFile file) {
+  public HectorComponent(@NotNull PsiFile file) {
     super(new GridBagLayout());
     setBorder(BorderFactory.createEmptyBorder(0, 0, 7, 0));
     myFile = file;
@@ -83,15 +86,8 @@ public class HectorComponent extends JPanel {
     final boolean notInLibrary =
       !fileIndex.isInLibrarySource(virtualFile) && !fileIndex.isInLibraryClasses(virtualFile) || fileIndex.isInContent(virtualFile);
     final FileViewProvider viewProvider = myFile.getViewProvider();
-    //List<Language> languages = new ArrayList<Language>(viewProvider.getLanguages());
-    //Collections.sort(languages, new Comparator<Language>() {
-    //  @Override
-    //  public int compare(Language o1, Language o2) {
-    //    return o1.getID().compareTo(o2.getID());
-    //  }
-    //});
-    Collection<Language> languages = viewProvider.getLanguages();
-
+    List<Language> languages = new ArrayList<Language>(viewProvider.getLanguages());
+    Collections.sort(languages, PsiUtilBase.LANGUAGE_COMPARATOR);
     for (Language language : languages) {
       @SuppressWarnings("UseOfObsoleteCollectionType")
       final Hashtable<Integer, JLabel> sliderLabels = new Hashtable<Integer, JLabel>();

@@ -70,13 +70,13 @@ public class GradleProjectStructureChangesCalculator implements GradleStructureC
     String gradleName = gradleProject.getName();
     String intellijName = intellijProject.getName();
     if (!gradleName.equals(intellijName)) {
-      currentChanges.add(new GradleRenameChange(GradleRenameChange.Entity.PROJECT, gradleName, intellijName));
+      currentChanges.add(new GradleProjectRenameChange(gradleName, intellijName));
     }
   }
 
   private void checkLanguageLevel(@NotNull GradleProject gradleProject,
-                                                               @NotNull Project intellijProject,
-                                                               @NotNull Set<GradleProjectStructureChange> currentChanges)
+                                  @NotNull Project intellijProject,
+                                  @NotNull Set<GradleProjectStructureChange> currentChanges)
   {
     LanguageLevel gradleLevel = gradleProject.getLanguageLevel();
     LanguageLevel intellijLevel = myStructureHelper.getLanguageLevel(intellijProject);

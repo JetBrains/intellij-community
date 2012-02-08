@@ -15,16 +15,17 @@
  */
 package org.jetbrains.plugins.groovy.lang.completion.smartEnter.fixers;
 
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.plugins.groovy.lang.completion.smartEnter.GroovySmartEnterProcessor;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -34,13 +35,14 @@ public class GrMethodBodyFixer implements GrFixer {
   public void apply(Editor editor, GroovySmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
     if (!(psiElement instanceof GrMethod)) return;
     GrMethod method = (GrMethod) psiElement;
-    if (method.getContainingClass().isInterface() || method.hasModifierProperty(PsiModifier.ABSTRACT)) return;
+    final PsiClass aClass = method.getContainingClass();
+    if (aClass != null && aClass.isInterface() || method.hasModifierProperty(PsiModifier.ABSTRACT)) return;
     final GrCodeBlock body = method.getBlock();
     final Document doc = editor.getDocument();
     if (body != null) {
       // See IDEADEV-1093. This is quite hacky heuristic but it seem to be best we can do.
       String bodyText = body.getText();
-      if (bodyText.startsWith("{")) {
+      if (StringUtil.startsWithChar(bodyText, '{')) {
         final GrStatement[] statements = body.getStatements();
         if (statements.length > 0) {
 //          [todo]

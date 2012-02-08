@@ -104,7 +104,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
   private final Wrapper mySearchWrapper = new Wrapper();
   private final JPanel myLeftSide;
 
-  private boolean myFilterFocumentWasChanged;
+  private boolean myFilterDocumentWasChanged;
   //[back/forward] private ActionToolbar myToolbar;
   private Window myWindow;
   private final PropertiesComponent myProperties;
@@ -142,12 +142,12 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     myTree = new OptionsTree(myProject, groups, getContext()) {
       @Override
       protected void onTreeKeyEvent(final KeyEvent e) {
-        myFilterFocumentWasChanged = false;
+        myFilterDocumentWasChanged = false;
         try {
           mySearch.keyEventToTextField(e);
         }
         finally {
-          if (myFilterFocumentWasChanged && !isFilterFieldVisible()) {
+          if (myFilterDocumentWasChanged && !isFilterFieldVisible()) {
             setFilterFieldVisible(true, false, false);
           }
         }
@@ -883,7 +883,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
       
       final ActionCallback callback = fireUpdate(adjustSelection ? myTree.findNodeFor(toSelect) : null, adjustSelection, now);
 
-      myFilterFocumentWasChanged = true;
+      myFilterDocumentWasChanged = true;
 
       return callback;
     }

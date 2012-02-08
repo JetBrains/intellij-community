@@ -446,7 +446,7 @@ public class GroovyCompletionUtil {
 
   public static final Set<String> OPERATOR_METHOD_NAMES = CollectionFactory.newSet(
     "plus", "minus", "multiply", "power", "div", "mod", "or", "and", "xor", "next", "previous", "getAt", "putAt", "leftShift", "rightShift",
-    "isCase", "bitwiseNegate", "negative", "positive"
+    "isCase", "bitwiseNegate", "negative", "positive", "call"
   );
     
   public static boolean skipDefGroovyMethod(GrGdkMethod gdkMethod, PsiSubstitutor substitutor, @Nullable PsiType type) {

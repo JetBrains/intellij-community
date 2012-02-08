@@ -689,11 +689,11 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
         InitializationPlace initializerPlace = mySettings.getInitializerPlace();
         final PsiLocalVariable localVariable = mySettings.getLocalVariable();
         final boolean deleteLocalVariable = mySettings.isDeleteLocalVariable();
-        @Nullable PsiExpression initializer;
+        @Nullable PsiExpression initializer = null;
         if (localVariable != null) {
           initializer = localVariable.getInitializer();
         }
-        else {
+        else if (!(mySelectedExpr instanceof PsiReferenceExpression && ((PsiReferenceExpression)mySelectedExpr).resolve() == null)){
           initializer = mySelectedExpr;
         }
 

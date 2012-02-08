@@ -1,0 +1,10 @@
+<idea-plugin version="2">
+  <name>Android Designer</name>
+  <id>com.intellij.android-designer</id>
+  <vendor logo="/general/ijLogo.png">JetBrains</vendor>
+  <resource-bundle>messages.AndroidDesignerBundle</resource-bundle>
+  <depends>com.intellij.java-i18n</depends>
+  <depends>com.intellij.properties</depends>
+  <depends>org.jetbrains.android</depends>
+  <depends>com.intellij.ui-designer-new</depends>
+</idea-plugin>

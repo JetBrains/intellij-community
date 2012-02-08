@@ -531,6 +531,11 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
             ApplicationManager.getApplication().assertIsDispatchThread();
             if (!Disposer.isDisposed(DirDiffTableModel.this)) {
               DiffElement newElement = diff.get();
+              if (newElement == null && element.getTarget() != null) {
+                final int row = myElements.indexOf(element);
+                element.updateTargetData();
+                fireTableRowsUpdated(row, row);
+              }
               refreshElementAfterCopyTo(newElement, element);
               if (!errorMessage.isNull()) {
                 reportException(errorMessage.get());

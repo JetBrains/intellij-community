@@ -4811,9 +4811,13 @@ public class AbstractTreeUi {
 
   public boolean isInStructure(@Nullable Object element) {
     Object eachParent = element;
+    final AbstractTreeStructure structure = getTreeStructure();
+
+    if (structure == null) return false;
+
     while (eachParent != null) {
-      if (getTreeStructure().getRootElement().equals(eachParent)) return true;
-      eachParent = getTreeStructure().getParentElement(eachParent);
+      if (Comparing.equal(structure.getRootElement(), eachParent)) return true;
+      eachParent = structure.getParentElement(eachParent);
     }
 
     return false;

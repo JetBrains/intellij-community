@@ -54,7 +54,6 @@ import com.intellij.xdebugger.DefaultDebugProcessHandler;
 import org.jetbrains.android.actions.AndroidEnableDdmsAction;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AvdsNotSupportedException;
-import org.jetbrains.android.sdk.AndroidSdkImpl;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidOutputReceiver;
 import org.jetbrains.android.util.AndroidUtils;
@@ -426,21 +425,16 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
       myTargetDevices = targetDevices;
     }
     else if (myTargetChooser instanceof EmulatorTargetChooser) {
-      if (isAndroidSdk15OrHigher()) {
-        if (myAvdName == null) {
-          chooseAvd();
-        }
-        if (myAvdName != null) {
-          myFacet.launchEmulator(myAvdName, myCommandLine, getProcessHandler());
-        }
-        else if (getProcessHandler().isStartNotified()) {
-          message("Canceled", STDERR);
-          getProcessHandler().destroyProcess();
-          return false;
-        }
+      if (myAvdName == null) {
+        chooseAvd();
       }
-      else {
+      if (myAvdName != null) {
         myFacet.launchEmulator(myAvdName, myCommandLine, getProcessHandler());
+      }
+      else if (getProcessHandler().isStartNotified()) {
+        message("Canceled", STDERR);
+        getProcessHandler().destroyProcess();
+        return false;
       }
     }
     else {
@@ -485,10 +479,6 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
     getProcessHandler().notifyTextAvailable(message + '\n', outputKey);
   }
 
-  private boolean isAndroidSdk15OrHigher() {
-    return myFacet.getConfiguration().getAndroidSdk() instanceof AndroidSdkImpl;
-  }
-
   public void clientChanged(Client client, int changeMask) {
     synchronized (myDebugLock) {
       if (myDebugLauncher == null) {
@@ -529,10 +519,6 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
 
   @Nullable
   private Boolean isCompatibleDevice(@NotNull IDevice device) {
-    if (!isAndroidSdk15OrHigher()) {
-      return true;
-    }
-
     if (myTargetChooser instanceof EmulatorTargetChooser) {
       if (device.isEmulator()) {
         String avdName = device.isEmulator() ? device.getAvdName() : null;
@@ -747,7 +733,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
   private boolean uploadApp(IDevice device, String remotePath, String localPath) throws IOException {
     if (myStopped) return false;
     message("Uploading file\n\tlocal path: " + localPath + "\n\tremote path: " + remotePath, STDOUT);
-    String exceptionMessage = null;
+    String exceptionMessage;
     String errorMessage;
     try {
       SyncService service = device.getSyncService();

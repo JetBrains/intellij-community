@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>dup2.png</file>
+    <line>1</line>
+    <description>The following unrelated icon files have identical contents: dup1.png, dup2.png</description>
+  </problem>
+</problems>

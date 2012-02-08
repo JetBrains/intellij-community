@@ -66,7 +66,8 @@ public class LocalSearchScope extends SearchScope {
     for (final PsiElement element : scope) {
       LOG.assertTrue(element.getContainingFile() != null, element.getClass().getName());
       if (element instanceof PsiFile) {
-        ContainerUtil.addAll(localScope, ((PsiFile)element).getPsiRoots());
+        List<PsiFile> files = ((PsiFile)element).getViewProvider().getAllFiles();
+        ContainerUtil.addAll(localScope, files);
       }
       else {
         localScope.add(element);

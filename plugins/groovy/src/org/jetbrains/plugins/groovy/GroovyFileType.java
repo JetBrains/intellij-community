@@ -16,15 +16,15 @@
 
 package org.jetbrains.plugins.groovy;
 
+import com.intellij.lang.Language;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.fileTypes.EditorHighlighterProvider;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeEditorHighlighterProviders;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.editor.highlighter.EditorHighlighter;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.lang.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,7 +50,7 @@ public class GroovyFileType extends LanguageFileType {
       public EditorHighlighter getEditorHighlighter(@Nullable Project project,
                                                     @NotNull FileType fileType, @Nullable VirtualFile virtualFile,
                                                     @NotNull EditorColorsScheme colors) {
-        return new GroovyEditorHighlighter(colors, project, virtualFile);
+        return new GroovyEditorHighlighter(colors);
       }
     });
   }

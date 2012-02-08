@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,22 +16,20 @@
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.DebuggerBundle;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 
-/*
- * Class SetValueAction
+/**
  * @author Jeka
  */
 public class CompareValueWithClipboardAction extends BaseValueAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.actions.CompareValueWithClipboardAction");
   protected void processText(final Project project, final String text) {
     DiffManager.getInstance().getDiffTool().show(new ClipboardSelectionContents(text, project));
   }
@@ -57,10 +55,11 @@ public class CompareValueWithClipboardAction extends BaseValueAction {
       return !SystemInfo.isMac;
     }
 
+    @NotNull
     public DiffContent[] getContents() {
       if (myContents != null) return myContents;
       DiffContent clipboardContent = createClipboardContent();
-      if (clipboardContent == null) return null;
+      if (clipboardContent == null) clipboardContent = new SimpleContent("");
 
       myContents = new DiffContent[2];
       myContents[0] = clipboardContent;

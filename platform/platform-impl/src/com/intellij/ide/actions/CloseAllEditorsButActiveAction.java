@@ -33,13 +33,7 @@ public class CloseAllEditorsButActiveAction extends AnAction implements DumbAwar
     VirtualFile selectedFile;
     final EditorWindow window = e.getData(EditorWindow.DATA_KEY);
     if (window != null){
-      selectedFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
-      final VirtualFile[] files = window.getFiles();
-      for (final VirtualFile file : files) {
-        if (file != selectedFile && !window.isFilePinned(file)) {
-          window.closeFile(file);
-        }
-      }
+      window.closeAllExcept(e.getData(PlatformDataKeys.VIRTUAL_FILE));
       return;
     }
     selectedFile = fileEditorManager.getSelectedFiles()[0];

@@ -3,6 +3,7 @@ package org.jetbrains.jps.incremental;
 import org.jetbrains.jps.Module;
 
 import java.io.File;
+import java.io.IOException;
 
 /**
 * @author Eugene Zhuravlev
@@ -12,5 +13,5 @@ public interface FileProcessor {
   /**
    * @return true if processing should continue, false if should stop
    */
-  boolean apply(Module module, File file, String sourceRoot) throws Exception;
+  boolean apply(Module module, File file, String sourceRoot) throws IOException;
 }

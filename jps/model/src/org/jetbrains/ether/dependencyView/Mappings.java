@@ -32,6 +32,23 @@ public class Mappings {
 
   private final boolean myIsDelta;
   private final boolean myDeltaIsTransient;
+  private boolean myIsDifferentiated = false;
+
+  private final List<DependencyContext.S> myChangedClasses;
+
+  private void addChangedClass(final DependencyContext.S it) {
+    assert (myChangedClasses != null);
+    myChangedClasses.add(it);
+    myIsDifferentiated = true;
+  }
+
+  private Collection<DependencyContext.S> getChangedClasses() {
+    return myChangedClasses;
+  }
+
+  private boolean isDifferentiated() {
+    return myIsDifferentiated;
+  }
 
   private final File myRootDir;
   private DependencyContext myContext;
@@ -92,6 +109,7 @@ public class Mappings {
 
   private Mappings(final Mappings base) throws IOException {
     myIsDelta = true;
+    myChangedClasses = new LinkedList<DependencyContext.S>();
     myDeltaIsTransient = base.myDeltaIsTransient;
     myRootDir = new File(FileUtil.toSystemIndependentName(base.myRootDir.getAbsolutePath()) + File.separatorChar + "delta");
     myContext = base.myContext;
@@ -102,6 +120,7 @@ public class Mappings {
 
   public Mappings(final File rootDir, final boolean transientDelta) throws IOException {
     myIsDelta = false;
+    myChangedClasses = null;
     myDeltaIsTransient = transientDelta;
     myRootDir = rootDir;
     createImplementation();
@@ -820,6 +839,8 @@ public class Mappings {
 
         self.appendDependents(it, dependants);
 
+        delta.addChangedClass(it.name);
+
         debug("Changed: ", it.name);
 
         final int addedModifiers = diff.addedModifiers();
@@ -1382,6 +1403,7 @@ public class Mappings {
 
       debug("Processing removed classes:");
       for (ClassRepr c : classDiff.removed()) {
+        delta.addChangedClass(c.name);
         self.appendDependents(c, dependants);
         debug("Adding usages of class ", c.name);
         affectedUsages.add(c.createUsage());
@@ -1390,6 +1412,8 @@ public class Mappings {
 
       debug("Processing added classes:");
       for (ClassRepr c : classDiff.added()) {
+        delta.addChangedClass(c.name);
+
         final Collection<DependencyContext.S> depClasses = myClassToClassDependency.get(c.name);
 
         if (depClasses != null) {
@@ -1531,11 +1555,33 @@ public class Mappings {
         }
       }
 
-      myClassToSubclasses.putAll(delta.myClassToSubclasses);
+      if (delta.isDifferentiated()) {
+        for (DependencyContext.S c : delta.getChangedClasses()) {
+          myClassToSubclasses.remove(c);
+
+          final Collection<DependencyContext.S> subClasses = delta.myClassToSubclasses.get(c);
+
+          if (subClasses != null) {
+            myClassToSubclasses.put(c, subClasses);
+          }
+
+          myClassToSourceFile.remove(c);
+
+          final DependencyContext.S sourceFile = delta.myClassToSourceFile.get(c);
+
+          if (sourceFile != null) {
+            myClassToSourceFile.put(c, sourceFile);
+          }
+        }
+      }
+      else {
+        myClassToSubclasses.putAll(delta.myClassToSubclasses);
+        myClassToSourceFile.putAll(delta.myClassToSourceFile);
+      }
+
       mySourceFileToClasses.putAll(delta.mySourceFileToClasses);
       mySourceFileToUsages.putAll(delta.mySourceFileToUsages);
       mySourceFileToAnnotationUsages.putAll(delta.mySourceFileToAnnotationUsages);
-      myClassToSourceFile.putAll(delta.myClassToSourceFile);
 
       final Collection<DependencyContext.S> compiledSet = new HashSet<DependencyContext.S>(compiled.size());
 
@@ -1634,6 +1680,11 @@ public class Mappings {
 
       @Override
       public void registerConstantUsage(final String className, final String fieldName, final String fieldOwner) {
+        //To change body of implemented methods use File | Settings | File Templates.
+      }
+
+      @Override
+      public void registerImports(Collection<String> imports, String rootClass) {
         //To change body of implemented methods use File | Settings | File Templates.
       }
     };

@@ -28,5 +28,6 @@ public class Callbacks {
     void associate(String classFileName, SourceFileNameLookup sourceLookup, ClassReader cr);
     void markOverride(String className, String methodName, String methodSignature);
     void registerConstantUsage(String className, String fieldName, String fieldOwner);
+    void registerImports(Collection<String> imports, String rootClass);
   }
 }

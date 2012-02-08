@@ -110,11 +110,14 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     applyResourcePatterns(extensionString, (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject));
 
     // this will schedule for compilation all files that might become compilable after resource patterns' changing
-    TranslatingCompilerFilesMonitor.getInstance().scanSourcesForCompilableFiles(myProject);
+    final TranslatingCompilerFilesMonitor monitor = TranslatingCompilerFilesMonitor.getInstance();
     if (!workspaceConfiguration.USE_COMPILE_SERVER) {
       CompileServerManager.getInstance().shutdownServer();
+      monitor.watchProject(myProject);
+      monitor.scanSourcesForCompilableFiles(myProject);
     }
     else {
+      monitor.suspendProject(myProject);
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
           CompileServerManager.getInstance().sendReloadRequest(myProject);

@@ -906,7 +906,7 @@ public class Messages {
       for (int i = 0; i < myOptions.length; i++) {
         String option = myOptions[i];
         final int exitCode = i;
-        actions[i] = new AbstractAction(option) {
+        actions[i] = new AbstractAction(UIUtil.replaceMnemonicAmpersand(option)) {
           public void actionPerformed(ActionEvent e) {
             close(exitCode, true);
           }

@@ -6,7 +6,6 @@
       <element id="dir-copy" path="$PROJECT_DIR$/jps/model/src" />
       <element id="dir-copy" path="$PROJECT_DIR$/jps/plugins/appLauncher/src" />
       <element id="dir-copy" path="$PROJECT_DIR$/jps/plugins/gwt/src" />
-      <element id="dir-copy" path="$PROJECT_DIR$/jps/plugins/javaee/src" />
       <element id="dir-copy" path="$PROJECT_DIR$/jps/plugins/jpa/src" />
       <element id="dir-copy" path="$PROJECT_DIR$/jps/plugins/scala/src" />
       <element id="dir-copy" path="$PROJECT_DIR$/jps/src" />

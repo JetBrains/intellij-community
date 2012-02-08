@@ -33,6 +33,7 @@ import org.jetbrains.idea.svn17.SvnBundle;
 import org.jetbrains.idea.svn17.SvnStatusUtil;
 import org.jetbrains.idea.svn17.SvnVcs17;
 import org.jetbrains.idea.svn17.dialogs.SelectFilesDialog;
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.*;
 
@@ -90,7 +91,7 @@ public class MarkResolvedAction extends BasicAction {
       SVNWCClient wcClient = vcs.createWCClient();
       for (String path : pathsArray) {
         File ioFile = new File(path);
-        wcClient.doResolve(ioFile, false);
+        wcClient.doResolve(ioFile, SVNDepth.EMPTY, SVNConflictChoice.MERGED);
       }
     }
     catch (SVNException e) {

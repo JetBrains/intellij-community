@@ -15,7 +15,9 @@
  */
 package org.jetbrains.idea.svn17.auth;
 
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.auth.SVNAuthentication;
 
 import java.util.EventListener;
 
@@ -24,4 +26,5 @@ public interface SvnAuthenticationListener extends EventListener {
   void actualSaveWillBeTried(final ProviderType type, final SVNURL url, String realm, String kind);
   void saveAttemptStarted(final ProviderType type, final SVNURL url, String realm, String kind);
   void saveAttemptFinished(final ProviderType type, final SVNURL url, String realm, String kind);
+  void acknowledge(boolean accepted, String kind, String realm, SVNErrorMessage message, SVNAuthentication authentication);
 }

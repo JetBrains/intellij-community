@@ -5,7 +5,7 @@
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/lib/src/serviceMessages_279xxx_src.zip!/" />
+      <root url="jar://$PROJECT_DIR$/lib/src/serviceMessages_279xxx_src.jar!/" />
     </SOURCES>
   </library>
 </component>

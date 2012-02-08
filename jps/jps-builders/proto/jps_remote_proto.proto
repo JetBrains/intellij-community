@@ -64,7 +64,9 @@ message Message {
       message GlobalLibrary {
         required string name = 1;
         optional string homePath = 2;
-        repeated string path = 3;
+        optional string type_name = 3;
+        optional string additional_data_xml = 4;
+        repeated string path = 5;
       }
 
       repeated PathVariable path_variable = 1;

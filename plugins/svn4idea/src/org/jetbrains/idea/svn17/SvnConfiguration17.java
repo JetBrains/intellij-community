@@ -259,6 +259,20 @@ public class SvnConfiguration17 implements PersistentStateComponent<Element> {
     return myOptions;
   }
 
+  public static SvnAuthenticationManager createForTmpDir(final Project project, final File dir) {
+    final SvnVcs17 vcs = SvnVcs17.getInstance(project);
+    //final SvnAuthenticationManager manager = new SvnAuthenticationManager(project, dir);
+
+    final SvnAuthenticationManager interactive = new SvnAuthenticationManager(project, dir);
+    interactive.setRuntimeStorage(RUNTIME_AUTH_CACHE);
+    final SvnInteractiveAuthenticationProvider interactiveProvider = new SvnInteractiveAuthenticationProvider(vcs, interactive);
+    interactive.setAuthenticationProvider(interactiveProvider);
+
+    //manager.setAuthenticationProvider(new SvnAuthenticationProvider(vcs, interactiveProvider, RUNTIME_AUTH_CACHE));
+    //manager.setRuntimeStorage(RUNTIME_AUTH_CACHE);
+    return interactive;
+  }
+
   public SvnAuthenticationManager getAuthenticationManager(final SvnVcs17 svnVcs) {
     if (myAuthManager == null) {
       // reloaded when configuration directory changes
