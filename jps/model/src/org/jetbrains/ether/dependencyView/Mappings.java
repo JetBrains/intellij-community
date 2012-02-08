@@ -1593,7 +1593,7 @@ public class Mappings {
         myClassToSourceFile.putAll(delta.myClassToSourceFile);
       }
 
-      if (delta.isDifferentiated()) {
+      if (delta.isDifferentiated() && false) {
         for (DependencyContext.S f : delta.getChangedFiles()) {
           mySourceFileToClasses.remove(f);
           final Collection<ClassRepr> classes = delta.mySourceFileToClasses.get(f);
@@ -1628,32 +1628,32 @@ public class Mappings {
 
       final Collection<DependencyContext.S> changedClasses = delta.getChangedClasses();
 
-      for (DependencyContext.S file : delta.myClassToClassDependency.keyCollection()) {
-        final Collection<DependencyContext.S> now = delta.myClassToClassDependency.get(file);
+      for (DependencyContext.S aClass : delta.myClassToClassDependency.keyCollection()) {
+        final Collection<DependencyContext.S> now = delta.myClassToClassDependency.get(aClass);
 
         if (delta.isDifferentiated()) {
-          final boolean classChanged = changedClasses.contains(file);
+          final boolean classChanged = changedClasses.contains(aClass);
           final HashSet<DependencyContext.S> depClasses = new HashSet<DependencyContext.S>(now);
 
           depClasses.retainAll(changedClasses);
 
-          if (! classChanged && now.isEmpty()) {
+          if (! classChanged && depClasses.isEmpty()) {
             continue;
           }
         }
 
-        final Collection<DependencyContext.S> past = myClassToClassDependency.get(file);
+        final Collection<DependencyContext.S> past = myClassToClassDependency.get(aClass);
 
         if (past == null) {
-          myClassToClassDependency.put(file, now);
+          myClassToClassDependency.put(aClass, now);
         }
         else {
           boolean changed = past.removeAll(compiledSet);
           changed |= past.addAll(now);
 
           if (changed) {
-            myClassToClassDependency.remove(file);
-            myClassToClassDependency.put(file, past);
+            myClassToClassDependency.remove(aClass);
+            myClassToClassDependency.put(aClass, past);
           }
         }
       }
