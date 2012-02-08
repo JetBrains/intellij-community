@@ -95,6 +95,7 @@ public class CodeStyleMainPanel extends JPanel implements LanguageSelectorListen
     myDetailsComponent.setPaintBorder(false);
     myDetailsComponent.setContent(mySettingsPanel);
     myDetailsComponent.setText(getDisplayName());
+    myDetailsComponent.setBannerMinHeight(24);
 
     add(myDetailsComponent.getComponent(), BorderLayout.CENTER);
 
