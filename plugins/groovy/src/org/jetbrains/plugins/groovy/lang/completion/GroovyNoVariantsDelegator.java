@@ -92,7 +92,7 @@ public class GroovyNoVariantsDelegator extends NoVariantsDelegator {
         PsiElement refName = ref.getReferenceNameElement();
         assert refName != null;
         for (LookupElement element : GroovyCompletionContributor.completeReference(
-          parameters.withPosition(refName, refName.getTextRange().getStartOffset()), ref, inheritors, qualifiedCollector.getPrefixMatcher())) {
+          parameters.withPosition(refName, refName.getTextRange().getStartOffset()), ref, inheritors, result.getPrefixMatcher())) {
           qualifiedCollector.addElement(new JavaChainLookupElement(base, element) {
             @Override
             protected boolean shouldParenthesizeQualifier(PsiFile file, int startOffset, int endOffset) {

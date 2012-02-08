@@ -1131,4 +1131,6 @@ Util.foo()<caret>'''
     myFixture.addClass('class FooClass {}')
     doVariantableTest('FooIntf', 'FooClass')
   }
+
+  public void testPropertyChain() { doBasicTest() }
 }
