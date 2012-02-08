@@ -1682,6 +1682,11 @@ public class Mappings {
       public void registerConstantUsage(final String className, final String fieldName, final String fieldOwner) {
         //To change body of implemented methods use File | Settings | File Templates.
       }
+
+      @Override
+      public void registerImports(Collection<String> imports, String rootClass) {
+        //To change body of implemented methods use File | Settings | File Templates.
+      }
     };
   }
 
