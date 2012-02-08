@@ -33,11 +33,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.text.DateFormatUtil;
+import org.jetbrains.android.compiler.AndroidCompileUtil;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidUtils;
-import org.jetbrains.android.util.ExecutionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -141,7 +141,7 @@ public class AndroidApkBuilder {
     map.putAll(map2);
 
     if (withAlignment && map.get(ERROR).size() == 0) {
-      map2 = ExecutionUtil.execute(zipAlignPath, "-f", "4", unalignedApk, finalApk);
+      map2 = AndroidCompileUtil.execute(zipAlignPath, "-f", "4", unalignedApk, finalApk);
       map.putAll(map2);
     }
     return map;

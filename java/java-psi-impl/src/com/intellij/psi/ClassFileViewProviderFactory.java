@@ -23,10 +23,11 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.ContentBasedFileSubstitutor;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 public class ClassFileViewProviderFactory implements FileViewProviderFactory{
   @Override
-  public FileViewProvider createFileViewProvider(final VirtualFile file, final Language language, final PsiManager manager, final boolean physical) {
+  public FileViewProvider createFileViewProvider(@NotNull final VirtualFile file, final Language language, @NotNull final PsiManager manager, final boolean physical) {
     // Define language for compiled file
     final ContentBasedFileSubstitutor[] processors = Extensions.getExtensions(ContentBasedFileSubstitutor.EP_NAME);
     for (ContentBasedFileSubstitutor processor : processors) {

@@ -18,6 +18,7 @@ package com.intellij.psi;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Register in extension point {@code com.intellij.fileType.fileViewProviderFactory}
@@ -26,5 +27,5 @@ import com.intellij.openapi.vfs.VirtualFile;
  * @author yole
  */
 public interface FileViewProviderFactory {
-  FileViewProvider createFileViewProvider(final VirtualFile file, final Language language, final PsiManager manager, final boolean physical);
+  FileViewProvider createFileViewProvider(@NotNull VirtualFile file, Language language, @NotNull PsiManager manager, final boolean physical);
 }

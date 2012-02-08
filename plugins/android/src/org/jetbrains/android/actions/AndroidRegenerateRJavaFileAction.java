@@ -26,6 +26,7 @@ import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.android.compiler.AndroidAptCompiler;
+import org.jetbrains.android.compiler.AndroidAutogeneratorMode;
 import org.jetbrains.android.compiler.AndroidCompileUtil;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.util.AndroidBundle;
@@ -96,7 +97,10 @@ public class AndroidRegenerateRJavaFileAction extends AnAction {
       @Override
       public boolean execute(CompileContext context) {
         // todo: compatibility with background autogenerating
-        AndroidCompileUtil.generate(new AndroidAptCompiler(), context);
+
+        for (Module module : modules) {
+          AndroidCompileUtil.generate(module, AndroidAutogeneratorMode.AAPT, context);
+        }
         return true;
       }
     }, new ModuleCompileScope(project, modules, false), AndroidBundle.message("android.compile.messages.generating.r.java.content.name"),

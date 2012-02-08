@@ -615,10 +615,8 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
     return myCurrentSettings;
   }
   
-  public void setupCopyFromMenu(Menu copyMenu) {
-    if (copyMenu.getItemCount() > 0) {
-      copyMenu.removeAll();
-    }
+  public void setupCopyFromMenu(JPopupMenu copyMenu) {
+    copyMenu.removeAll();
   }
   
   public boolean isCopyFromMenuAvailable() {

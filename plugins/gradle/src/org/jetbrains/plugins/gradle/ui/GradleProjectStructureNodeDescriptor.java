@@ -46,12 +46,7 @@ public class GradleProjectStructureNodeDescriptor<T> extends PresentableNodeDesc
     return myData;
   }
 
-  @NotNull
-  public String getText() {
-    return myName;
-  }
-  
-  public void setText(@NotNull String name) {
+  public void setName(@NotNull String name) {
     myName = name;
   }
 

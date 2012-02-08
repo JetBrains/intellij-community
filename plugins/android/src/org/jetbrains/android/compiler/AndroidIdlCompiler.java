@@ -17,18 +17,15 @@ package org.jetbrains.android.compiler;
 
 import com.android.sdklib.IAndroidTarget;
 import com.android.sdklib.SdkConstants;
-import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.facet.FacetManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
-import com.intellij.openapi.compiler.ex.CompileContextEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.android.compiler.tools.AndroidIdl;
 import org.jetbrains.android.facet.AndroidFacet;
@@ -39,7 +36,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInput;
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -59,6 +55,7 @@ public class AndroidIdlCompiler implements SourceGeneratingCompiler {
     myProject = project;
   }
 
+  @Nullable
   @Override
   public VirtualFile getPresentableFile(CompileContext context, Module module, VirtualFile outputRoot, VirtualFile generatedFile) {
     return null;
@@ -71,23 +68,7 @@ public class AndroidIdlCompiler implements SourceGeneratingCompiler {
   public GenerationItem[] generate(CompileContext context, GenerationItem[] items, VirtualFile outputRootDirectory) {
     if (items != null && items.length > 0) {
       context.getProgressIndicator().setText("Generating AIDL files...");
-      //Application application = ApplicationManager.getApplication();
-      GenerationItem[] generationItems = /*application.runReadAction(new GenerateAction(context, items))*/ doGenerate(context, items);
-      List<VirtualFile> generatedVFiles = new ArrayList<VirtualFile>();
-      for (GenerationItem item : generationItems) {
-        File generatedFile = ((IdlGenerationItem)item).myGeneratedFile;
-        if (generatedFile != null) {
-          CompilerUtil.refreshIOFile(generatedFile);
-          VirtualFile generatedVFile = LocalFileSystem.getInstance().findFileByIoFile(generatedFile);
-          if (generatedVFile != null) {
-            generatedVFiles.add(generatedVFile);
-          }
-        }
-      }
-      if (context instanceof CompileContextEx) {
-        ((CompileContextEx)context).markGenerated(generatedVFiles);
-      }
-      return generationItems;
+      return doGenerate(context, items, outputRootDirectory);
     }
     return EMPTY_GENERATION_ITEM_ARRAY;
   }
@@ -103,7 +84,7 @@ public class AndroidIdlCompiler implements SourceGeneratingCompiler {
 
   @Nullable
   public ValidityState createValidityState(DataInput is) throws IOException {
-    return null;
+    return TimestampValidityState.load(is);
   }
 
   private final static class IdlGenerationItem implements GenerationItem {
@@ -111,13 +92,10 @@ public class AndroidIdlCompiler implements SourceGeneratingCompiler {
     final VirtualFile myFile;
     final boolean myTestSource;
     final IAndroidTarget myAndroidTarget;
-    final File myGeneratedFile;
     final String myPackageName;
-    final String mySourceRootPath;
 
     public IdlGenerationItem(@NotNull Module module,
                              @NotNull VirtualFile file,
-                             @NotNull String sourceRootPath,
                              boolean testSource,
                              @NotNull IAndroidTarget androidTarget,
                              @NotNull String packageName) {
@@ -126,19 +104,16 @@ public class AndroidIdlCompiler implements SourceGeneratingCompiler {
       myTestSource = testSource;
       myAndroidTarget = androidTarget;
       myPackageName = packageName;
-      mySourceRootPath = sourceRootPath;
-      myGeneratedFile =
-        new File(sourceRootPath, packageName.replace('.', File.separatorChar) + File.separator + file.getNameWithoutExtension() + ".java");
     }
 
     @Nullable
     public String getPath() {
-      return null;
+      return myPackageName.replace('.', '/') + '/' + myFile.getNameWithoutExtension() + ".java";
     }
 
     @Nullable
     public ValidityState getValidityState() {
-      return null;
+      return new TimestampValidityState(myFile.getTimeStamp());
     }
 
     public Module getModule() {
@@ -198,21 +173,11 @@ public class AndroidIdlCompiler implements SourceGeneratingCompiler {
         return;
       }
       ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
-      IdlGenerationItem generationItem =
-        new IdlGenerationItem(module, file, sourceRootPath, fileIndex.isInTestSourceContent(file), target, packageName);
-      if (myContext.isMake()) {
-        File generatedFile = generationItem.myGeneratedFile;
-        if (generatedFile == null || !generatedFile.exists() || generatedFile.lastModified() <= file.getModificationCount()) {
-          items.add(generationItem);
-        }
-      }
-      else {
-        items.add(generationItem);
-      }
+      items.add(new IdlGenerationItem(module, file, fileIndex.isInTestSourceContent(file), target, packageName));
     }
   }
 
-  private static GenerationItem[] doGenerate(final CompileContext context, GenerationItem[] items) {
+  private static GenerationItem[] doGenerate(final CompileContext context, GenerationItem[] items, VirtualFile outputRootDirectory) {
     if (context.getProject().isDisposed()) {
       return EMPTY_GENERATION_ITEM_ARRAY;
     }
@@ -229,8 +194,12 @@ public class AndroidIdlCompiler implements SourceGeneratingCompiler {
           VirtualFile[] sourceRoots = AndroidPackagingCompiler.getSourceRootsForModuleAndDependencies(idlItem.myModule, false);
           final String[] sourceRootPaths = AndroidCompileUtil.toOsPaths(sourceRoots);
 
-          final Map<CompilerMessageCategory, List<String>> messages = AndroidIdl
-            .execute(idlItem.myAndroidTarget, idlItem.myFile.getPath(), idlItem.myGeneratedFile.getPath(), sourceRootPaths);
+          final String outFilePath = FileUtil.toSystemDependentName(
+            outputRootDirectory.getPath() + '/' + idlItem.myPackageName.replace('.', '/') + '/' +
+            idlItem.myFile.getNameWithoutExtension() + ".java");
+
+          final Map<CompilerMessageCategory, List<String>> messages = AndroidCompileUtil.toCompilerMessageCategoryKeys(
+            AndroidIdl.execute(idlItem.myAndroidTarget, idlItem.myFile.getPath(), outFilePath, sourceRootPaths));
 
           ApplicationManager.getApplication().runReadAction(new Runnable() {
             public void run() {
@@ -240,17 +209,6 @@ public class AndroidIdlCompiler implements SourceGeneratingCompiler {
           });
           if (messages.get(CompilerMessageCategory.ERROR).isEmpty()) {
             results.add(idlItem);
-          }
-          if (idlItem.myGeneratedFile.exists()) {
-            ApplicationManager.getApplication().runReadAction(new Runnable() {
-              public void run() {
-                if (idlItem.myModule.getProject().isDisposed()) return;
-                String className = FileUtil.getNameWithoutExtension(idlItem.myGeneratedFile);
-                AndroidCompileUtil.removeDuplicatingClasses(idlItem.myModule, idlItem.myPackageName, className,
-                                                            idlItem.myGeneratedFile.exists() ? idlItem.myGeneratedFile : null,
-                                                            idlItem.mySourceRootPath);
-              }
-            });
           }
         }
         catch (final IOException e) {

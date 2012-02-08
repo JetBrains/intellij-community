@@ -108,8 +108,7 @@ public class ScopeViewPane extends AbstractProjectViewPane {
     myViewPanel = new ScopeTreeViewPanel(myProject);
     Disposer.register(this, myViewPanel);
     myViewPanel.initListeners();
-    updateFromRoot(true);
-
+    myViewPanel.selectScope(NamedScopesHolder.getScope(myProject, getSubId()));
     myTree = myViewPanel.getTree();
     PopupHandler.installPopupHandler(myTree, IdeActions.GROUP_SCOPE_VIEW_POPUP, ActionPlaces.SCOPE_VIEW_POPUP);
     enableDnD();
@@ -152,7 +151,9 @@ public class ScopeViewPane extends AbstractProjectViewPane {
   }
 
   public ActionCallback updateFromRoot(boolean restoreExpandedPaths) {
+    saveExpandedPaths();
     myViewPanel.selectScope(NamedScopesHolder.getScope(myProject, getSubId()));
+    restoreExpandedPaths();
     return new ActionCallback.Done();
   }
 

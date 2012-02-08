@@ -8,6 +8,7 @@ import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.RootPolicy;
 import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.diff.PlatformFacade;
 import org.jetbrains.plugins.gradle.model.*;
 
@@ -37,20 +38,20 @@ public class GradleProjectStructureHelper extends AbstractProjectComponent {
    *                 <code>false</code> otherwise
    */
   public boolean isIntellijLibraryDependencyExist(@NotNull final GradleLibraryDependencyId id) {
-    for (Module module : myFacade.getModules(myProject)) {
-      if (!id.getModuleName().equals(module.getName())) {
-        continue;
+    final Module module = findIntellijModuleByName(id.getModuleName());
+    if (module == null) {
+      return false;
+    }
+    
+    RootPolicy<Boolean> visitor = new RootPolicy<Boolean>() {
+      @Override
+      public Boolean visitLibraryOrderEntry(LibraryOrderEntry libraryOrderEntry, Boolean value) {
+        return id.getLibraryName().equals(libraryOrderEntry.getLibraryName());
       }
-      RootPolicy<Boolean> visitor = new RootPolicy<Boolean>() {
-        @Override
-        public Boolean visitLibraryOrderEntry(LibraryOrderEntry libraryOrderEntry, Boolean value) {
-          return id.getLibraryName().equals(libraryOrderEntry.getLibraryName());
-        }
-      };
-      for (OrderEntry entry : myFacade.getOrderEntries(module)) {
-        if (entry.accept(visitor, false)) {
-          return true;
-        }
+    };
+    for (OrderEntry entry : myFacade.getOrderEntries(module)) {
+      if (entry.accept(visitor, false)) {
+        return true;
       }
     }
     return false;
@@ -64,29 +65,55 @@ public class GradleProjectStructureHelper extends AbstractProjectComponent {
    *                 <code>false</code> otherwise
    */
   public boolean isGradleLibraryDependencyExist(@NotNull final GradleLibraryDependencyId id) {
+    return findLibraryDependency(id) != null;
+  }
+
+  @Nullable
+  public Module findIntellijModuleByName(@NotNull String name) {
+    for (Module module : myFacade.getModules(myProject)) {
+      if (name.equals(module.getName())) {
+        return module;
+      }
+    }
+    return null;
+  }
+  
+  @Nullable
+  public GradleModule findGradleModuleByName(@NotNull String name) {
     final GradleProject project = myModel.getGradleProject();
     if (project == null) {
-      return false;
+      return null;
     }
-    final Ref<Boolean> matched = new Ref<Boolean>();
+    for (GradleModule module : project.getModules()) {
+      if (name.equals(module.getName())) {
+        return module;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public GradleLibraryDependency findLibraryDependency(@NotNull final GradleLibraryDependencyId id) {
+    final GradleModule module = findGradleModuleByName(id.getModuleName());
+    if (module == null) {
+      return null;
+    }
+    final Ref<GradleLibraryDependency> ref = new Ref<GradleLibraryDependency>();
     GradleEntityVisitor visitor = new GradleEntityVisitorAdapter() {
       @Override
       public void visit(@NotNull GradleLibraryDependency dependency) {
-        matched.set(id.getLibraryName().equals(dependency.getName()));
-      }
-    };
-    for (GradleModule module : project.getModules()) {
-      if (!id.getModuleName().equals(module.getName())) {
-        continue;
-      }
-      for (GradleDependency dependency : module.getDependencies()) {
-        dependency.invite(visitor);
-        if (matched.get()) {
-          return true;
+        if (id.getLibraryName().equals(dependency.getName())) {
+          ref.set(dependency);
         }
       }
-      return false;
+    };
+    for (GradleDependency dependency : module.getDependencies()) {
+      dependency.invite(visitor);
+      final GradleLibraryDependency result = ref.get();
+      if (result != null) {
+        return result;
+      }
     }
-    return false;
+    return null;
   }
 }

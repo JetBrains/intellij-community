@@ -37,8 +37,8 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.android.compiler.AndroidAptCompiler;
+import org.jetbrains.android.compiler.AndroidAutogeneratorMode;
 import org.jetbrains.android.compiler.AndroidCompileUtil;
-import org.jetbrains.android.compiler.AndroidIdlCompiler;
 import org.jetbrains.android.maven.AndroidMavenProvider;
 import org.jetbrains.android.maven.AndroidMavenUtil;
 import org.jetbrains.android.util.AndroidBundle;
@@ -437,10 +437,10 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
       final Project project = module.getProject();
 
       if (runApt) {
-        AndroidCompileUtil.generate(module, new AndroidAptCompiler(), true);
+        AndroidCompileUtil.generate(module, AndroidAutogeneratorMode.AAPT, true);
       }
       if (runIdl) {
-        AndroidCompileUtil.generate(module, new AndroidIdlCompiler(project));
+        AndroidCompileUtil.generate(module, AndroidAutogeneratorMode.AIDL);
       }
     }
   }

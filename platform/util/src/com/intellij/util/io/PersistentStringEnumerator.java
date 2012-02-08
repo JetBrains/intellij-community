@@ -77,7 +77,11 @@ public class PersistentStringEnumerator extends PersistentEnumeratorDelegate<Str
       String s = myIdToStringCache.get(idx);
       if (s != null) return s;
     }
-    return super.valueOf(idx);
+    String s = super.valueOf(idx);
+    if (myIdToStringCache != null && s != null) {
+      myIdToStringCache.put(idx, s);
+    }
+    return s;
   }
 
   @Override

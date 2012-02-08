@@ -8,6 +8,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
+import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -23,6 +25,12 @@ import java.util.Collection;
  * @since 1/26/12 11:54 AM
  */
 public class PlatformFacadeImpl implements PlatformFacade {
+
+  @NotNull
+  @Override
+  public LibraryTable getProjectLibraryTable(@NotNull Project project) {
+    return ProjectLibraryTable.getInstance(project);
+  }
 
   @NotNull
   @Override

@@ -5,5 +5,5 @@
   <resource-bundle>messages.SwingDesignerBundle</resource-bundle>
   <depends>com.intellij.java-i18n</depends>
   <depends>com.intellij.properties</depends>
-  <depends>com.intellij.uiDesigner</depends>
+  <depends>com.intellij.ui-designer-new</depends>
 </idea-plugin>

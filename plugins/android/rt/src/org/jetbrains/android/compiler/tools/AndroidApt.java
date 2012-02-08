@@ -16,13 +16,12 @@
 package org.jetbrains.android.compiler.tools;
 
 import com.android.sdklib.IAndroidTarget;
-import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
-import org.jetbrains.android.compiler.AndroidCompileUtil;
-import org.jetbrains.android.util.AndroidUtils;
+import org.jetbrains.android.util.AndroidCommonUtils;
+import org.jetbrains.android.util.AndroidCompilerMessageKind;
 import org.jetbrains.android.util.ExecutionUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -47,22 +46,22 @@ public final class AndroidApt {
   private AndroidApt() {
   }
 
-  public static Map<CompilerMessageCategory, List<String>> compile(@NotNull IAndroidTarget target,
-                                                                   int platformToolsRevision,
-                                                                   @NotNull String manifestFileOsPath,
-                                                                   @NotNull String aPackage,
-                                                                   @NotNull String outDirOsPath,
-                                                                   @NotNull String[] resourceDirsOsPaths,
-                                                                   @NotNull String[] libPackages,
-                                                                   boolean isLibrary) throws IOException {
-    final Map<CompilerMessageCategory, List<String>> messages = new HashMap<CompilerMessageCategory, List<String>>();
-    messages.put(CompilerMessageCategory.ERROR, new ArrayList<String>());
-    messages.put(CompilerMessageCategory.INFORMATION, new ArrayList<String>());
+  public static Map<AndroidCompilerMessageKind, List<String>> compile(@NotNull IAndroidTarget target,
+                                                                      int platformToolsRevision,
+                                                                      @NotNull String manifestFileOsPath,
+                                                                      @NotNull String aPackage,
+                                                                      @NotNull String outDirOsPath,
+                                                                      @NotNull String[] resourceDirsOsPaths,
+                                                                      @NotNull String[] libPackages,
+                                                                      boolean isLibrary) throws IOException {
+    final Map<AndroidCompilerMessageKind, List<String>> messages = new HashMap<AndroidCompilerMessageKind, List<String>>();
+    messages.put(AndroidCompilerMessageKind.ERROR, new ArrayList<String>());
+    messages.put(AndroidCompilerMessageKind.INFORMATION, new ArrayList<String>());
 
     final File outOsDir = new File(outDirOsPath);
     if (!outOsDir.exists()) {
       if (!outOsDir.mkdirs()) {
-        messages.get(CompilerMessageCategory.ERROR).add("Unable to create directory " + outDirOsPath);
+        messages.get(AndroidCompilerMessageKind.ERROR).add("Unable to create directory " + outDirOsPath);
       }
     }
 
@@ -71,55 +70,55 @@ public final class AndroidApt {
     /* We actually need to delete the manifest.java as it may become empty and
     in this case aapt doesn't generate an empty one, but instead doesn't
     touch it */
-    final File manifestJavaFile = new File(packageFolderOsPath + File.separatorChar + AndroidUtils.MANIFEST_JAVA_FILE_NAME);
+    final File manifestJavaFile = new File(packageFolderOsPath + File.separatorChar + AndroidCommonUtils.MANIFEST_JAVA_FILE_NAME);
     if (manifestJavaFile.exists()) {
       if (!FileUtil.delete(manifestJavaFile)) {
-        messages.get(CompilerMessageCategory.ERROR).add("Unable to delete " + manifestJavaFile.getPath());
+        messages.get(AndroidCompilerMessageKind.ERROR).add("Unable to delete " + manifestJavaFile.getPath());
       }
     }
-    
-    final File rJavaFile = new File(packageFolderOsPath + File.separatorChar + AndroidUtils.R_JAVA_FILENAME);
+
+    final File rJavaFile = new File(packageFolderOsPath + File.separatorChar + AndroidCommonUtils.R_JAVA_FILENAME);
     if (rJavaFile.exists()) {
       if (!FileUtil.delete(rJavaFile)) {
-        messages.get(CompilerMessageCategory.ERROR).add("Unable to delete " + rJavaFile.getPath());
+        messages.get(AndroidCompilerMessageKind.ERROR).add("Unable to delete " + rJavaFile.getPath());
       }
     }
-    
+
     final File[] libRJavaFiles = new File[libPackages.length];
-    
+
     for (int i = 0; i < libPackages.length; i++) {
       final String libPackageFolderOsPath = FileUtil.toSystemDependentName(outDirOsPath + '/' + libPackages[i].replace('.', '/'));
-      libRJavaFiles[i] = new File(libPackageFolderOsPath + File.separatorChar + AndroidUtils.R_JAVA_FILENAME);
+      libRJavaFiles[i] = new File(libPackageFolderOsPath + File.separatorChar + AndroidCommonUtils.R_JAVA_FILENAME);
     }
 
     for (File libRJavaFile : libRJavaFiles) {
       if (libRJavaFile.exists()) {
         if (!FileUtil.delete(libRJavaFile)) {
-          messages.get(CompilerMessageCategory.ERROR).add("Unable to delete " + libRJavaFile.getPath());
+          messages.get(AndroidCompilerMessageKind.ERROR).add("Unable to delete " + libRJavaFile.getPath());
         }
       }
     }
 
     if (platformToolsRevision < 0 || platformToolsRevision > 7) {
-      Map<CompilerMessageCategory, List<String>> map =
+      Map<AndroidCompilerMessageKind, List<String>> map =
         doCompile(target, manifestFileOsPath, outDirOsPath, resourceDirsOsPaths, libPackages, null, isLibrary);
 
-      if (map.get(CompilerMessageCategory.ERROR).isEmpty()) {
+      if (map.get(AndroidCompilerMessageKind.ERROR).isEmpty()) {
         makeFieldsNotFinal(libRJavaFiles);
       }
 
-      AndroidCompileUtil.addMessages(messages, map);
+      ExecutionUtil.addMessages(messages, map);
       return messages;
     }
     else {
-      Map<CompilerMessageCategory, List<String>> map;
+      Map<AndroidCompilerMessageKind, List<String>> map;
 
       map = doCompile(target, manifestFileOsPath, outDirOsPath, resourceDirsOsPaths, ArrayUtil.EMPTY_STRING_ARRAY, null, false);
-      AndroidCompileUtil.addMessages(messages, map);
+      ExecutionUtil.addMessages(messages, map);
 
       for (String libPackage : libPackages) {
         map = doCompile(target, manifestFileOsPath, outDirOsPath, resourceDirsOsPaths, ArrayUtil.EMPTY_STRING_ARRAY, libPackage, false);
-        AndroidCompileUtil.addMessages(messages, map);
+        ExecutionUtil.addMessages(messages, map);
       }
       return messages;
     }
@@ -148,13 +147,13 @@ public final class AndroidApt {
     }
   }
 
-  private static Map<CompilerMessageCategory, List<String>> doCompile(@NotNull IAndroidTarget target,
-                                                                      @NotNull String manifestFileOsPath,
-                                                                      @NotNull String outDirOsPath,
-                                                                      @NotNull String[] resourceDirsOsPaths,
-                                                                      @NotNull String[] extraPackages,
-                                                                      @Nullable String customPackage,
-                                                                      boolean nonConstantIds)
+  private static Map<AndroidCompilerMessageKind, List<String>> doCompile(@NotNull IAndroidTarget target,
+                                                                         @NotNull String manifestFileOsPath,
+                                                                         @NotNull String outDirOsPath,
+                                                                         @NotNull String[] resourceDirsOsPaths,
+                                                                         @NotNull String[] extraPackages,
+                                                                         @Nullable String customPackage,
+                                                                         boolean nonConstantIds)
     throws IOException {
     final List<String> args = new ArrayList<String>();
 
@@ -174,7 +173,7 @@ public final class AndroidApt {
       args.add("--extra-packages");
       args.add(toPackagesString(extraPackages));
     }
-    
+
     if (customPackage != null) {
       args.add("--custom-package");
       args.add(customPackage);
@@ -193,8 +192,8 @@ public final class AndroidApt {
     args.add("-I");
     args.add(target.getPath(IAndroidTarget.ANDROID_JAR));
 
-    LOG.info(AndroidUtils.command2string(args));
-    return ExecutionUtil.execute(ArrayUtil.toStringArray(args));
+    LOG.info(AndroidCommonUtils.command2string(args));
+    return ExecutionUtil.doExecute(ArrayUtil.toStringArray(args));
   }
 
   @NotNull
@@ -209,9 +208,9 @@ public final class AndroidApt {
     return builder.toString();
   }
 
-  public static Map<CompilerMessageCategory, List<String>> crunch(@NotNull IAndroidTarget target,
-                                                                  @NotNull List<String> resPaths,
-                                                                  @NotNull String outputPath) throws IOException {
+  public static Map<AndroidCompilerMessageKind, List<String>> crunch(@NotNull IAndroidTarget target,
+                                                                     @NotNull List<String> resPaths,
+                                                                     @NotNull String outputPath) throws IOException {
     final ArrayList<String> args = new ArrayList<String>();
 
     //noinspection deprecation
@@ -227,19 +226,19 @@ public final class AndroidApt {
     args.add("-C");
     args.add(outputPath);
 
-    LOG.info(AndroidUtils.command2string(args));
-    return ExecutionUtil.execute(ArrayUtil.toStringArray(args));
+    LOG.info(AndroidCommonUtils.command2string(args));
+    return ExecutionUtil.doExecute(ArrayUtil.toStringArray(args));
   }
 
-  public static Map<CompilerMessageCategory, List<String>> packageResources(@NotNull IAndroidTarget target,
-                                                                            int platformToolsRevision,
-                                                                            @NotNull String manifestPath,
-                                                                            @NotNull String[] resPaths,
-                                                                            @Nullable String osAssetsPath,
-                                                                            @NotNull String outputPath,
-                                                                            @Nullable String configFilter,
-                                                                            boolean debugMode,
-                                                                            int versionCode) throws IOException {
+  public static Map<AndroidCompilerMessageKind, List<String>> packageResources(@NotNull IAndroidTarget target,
+                                                                               int platformToolsRevision,
+                                                                               @NotNull String manifestPath,
+                                                                               @NotNull String[] resPaths,
+                                                                               @Nullable String osAssetsPath,
+                                                                               @NotNull String outputPath,
+                                                                               @Nullable String configFilter,
+                                                                               boolean debugMode,
+                                                                               int versionCode) throws IOException {
     final ArrayList<String> args = new ArrayList<String>();
 
     //noinspection deprecation
@@ -290,7 +289,7 @@ public final class AndroidApt {
     args.add("-F");
     args.add(outputPath);
 
-    LOG.info(AndroidUtils.command2string(args));
-    return ExecutionUtil.execute(ArrayUtil.toStringArray(args));
+    LOG.info(AndroidCommonUtils.command2string(args));
+    return ExecutionUtil.doExecute(ArrayUtil.toStringArray(args));
   }
 }
