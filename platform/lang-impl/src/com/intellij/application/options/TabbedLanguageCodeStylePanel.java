@@ -125,14 +125,13 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
     final Container component = (Container)e;
     final Component[] components = component.getComponents();
     final Component last = components[components.length - 1];
-    initCopyFromMenu(last);
+    initCopyFromMenu();
     myCopyFromMenu.show(last, 0, last.getHeight() + 3);
   }
 
-  private void initCopyFromMenu(Component component) {
+  private void initCopyFromMenu() {
     if (myCopyFromMenu == null) {
       myCopyFromMenu = new JPopupMenu();
-      //component.add(myCopyFromMenu);
       setupCopyFromMenu(myCopyFromMenu);
     }
   }
