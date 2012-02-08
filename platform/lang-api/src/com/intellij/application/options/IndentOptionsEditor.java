@@ -25,11 +25,11 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public class IndentOptionsEditor extends OptionGroup {
-  private JTextField myIndentField;
+  protected JTextField myIndentField;
   protected JCheckBox myCbUseTab;
-  private JTextField myTabSizeField;
-  private JLabel myTabSizeLabel;
-  private JLabel myIndentLabel;
+  protected JTextField myTabSizeField;
+  protected JLabel myTabSizeLabel;
+  protected JLabel myIndentLabel;
 
   public JPanel createPanel() {
     addComponents();
