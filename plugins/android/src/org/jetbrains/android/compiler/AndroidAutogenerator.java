@@ -13,9 +13,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
+import com.intellij.psi.search.FilenameIndex;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
@@ -208,7 +207,11 @@ public class AndroidAutogenerator {
       for (Map.Entry<String, String> entry : item.myGenFileRelPath2package.entrySet()) {
         final String path = item.myOutputDirOsPath + '/' + entry.getKey();
         final String aPackage = entry.getValue();
-        removeDuplicateClasses(module, aPackage, new File(path), item.myOutputDirOsPath);
+        final File file = new File(path);
+        CompilerUtil.refreshIOFile(file);
+
+        removeAllFilesWithSameName(module, file, item.myOutputDirOsPath);
+        removeDuplicateClasses(module, aPackage, file, item.myOutputDirOsPath);
       }
 
       final VirtualFile genSourceRoot = LocalFileSystem.getInstance().findFileByPath(item.myOutputDirOsPath);
@@ -242,6 +245,46 @@ public class AndroidAutogenerator {
         FileUtil.delete(tempOutDir);
       }
     }
+  }
+
+  private static void removeAllFilesWithSameName(@NotNull final Module module, @NotNull File file, @NotNull String directoryPath) {
+    final VirtualFile vFile = LocalFileSystem.getInstance().findFileByIoFile(file);
+    final VirtualFile genDir = LocalFileSystem.getInstance().findFileByPath(directoryPath);
+
+    if (vFile == null || genDir == null) {
+      return;
+    }
+    final Collection<VirtualFile> files =
+      FilenameIndex.getVirtualFilesByName(module.getProject(), file.getName(), module.getModuleScope(false));
+
+    final List<VirtualFile> filesToDelete = new ArrayList<VirtualFile>();
+
+    for (final VirtualFile f : files) {
+      if (f != vFile && VfsUtilCore.isAncestor(genDir, f, true)) {
+        filesToDelete.add(f);
+      }
+    }
+
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            for (VirtualFile f : filesToDelete) {
+              if (f.isValid() && f.exists()) {
+                try {
+                  f.delete(module.getProject());
+                }
+                catch (IOException e) {
+                  LOG.error(e);
+                }
+              }
+            }
+          }
+        });
+      }
+    });
   }
 
   private static void runAidl(@NotNull final AndroidFacet facet, @NotNull final CompileContext context) {
