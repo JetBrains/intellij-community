@@ -33,6 +33,7 @@ import com.intellij.psi.PsiElement;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface HighlightInfoType {
   @NonNls String UNUSED_SYMBOL_SHORT_NAME = "UNUSED_SYMBOL";
@@ -92,7 +93,7 @@ public interface HighlightInfoType {
   HighlightInfoType INJECTED_LANGUAGE_FRAGMENT = new HighlightInfoTypeImpl(SYMBOL_TYPE_SEVERITY, CodeInsightColors.INFORMATION_ATTRIBUTES);
 
   @NotNull
-  HighlightSeverity getSeverity(PsiElement psiElement);
+  HighlightSeverity getSeverity(@Nullable PsiElement psiElement);
 
   TextAttributesKey getAttributesKey();
 
