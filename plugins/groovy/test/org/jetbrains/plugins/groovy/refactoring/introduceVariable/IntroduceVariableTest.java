@@ -30,6 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
+import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContextImpl;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
 import org.jetbrains.plugins.groovy.refactoring.introduce.variable.GrIntroduceVariableHandler;
 import org.jetbrains.plugins.groovy.refactoring.introduce.variable.GroovyIntroduceVariableSettings;
@@ -121,7 +122,7 @@ public class IntroduceVariableTest extends LightCodeInsightFixtureTestCase {
       varType = null;
     }
 
-    final GrIntroduceContext context = new GrIntroduceContext(getProject(), myEditor, selectedExpr, null, occurences, tempContainer);
+    final GrIntroduceContext context = new GrIntroduceContextImpl(getProject(), myEditor, selectedExpr, null, occurences, tempContainer);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {

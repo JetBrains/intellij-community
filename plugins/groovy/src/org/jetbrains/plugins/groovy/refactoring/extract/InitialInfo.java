@@ -28,7 +28,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwner;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.VariableInfo;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
@@ -52,7 +51,6 @@ public class InitialInfo implements ExtractInfoHelper {
                      VariableInfo[] outputInfos,
                      PsiElement[] innerElements,
                      GrStatement[] statements,
-                     GrMemberOwner targetClass,
                      ArrayList<GrStatement> returnStatements) {
     myInnerElements = innerElements;
     myStatements = statements;
@@ -77,15 +75,15 @@ public class InitialInfo implements ExtractInfoHelper {
       myArgumentNames[i] = info.getName();
     }
 
-    PsiType outputType = inferOutputType(outputInfos, statements, targetClass, returnStatements, myHasReturnValue);
+    PsiType outputType = inferOutputType(outputInfos, statements, returnStatements, myHasReturnValue);
     myOutputType = outputType != null ? outputType : PsiType.VOID;
   }
 
   @Nullable
   private PsiType inferOutputType(VariableInfo[] outputInfos,
                                   GrStatement[] statements,
-                                  GrMemberOwner targetClass,
-                                  ArrayList<GrStatement> returnStatements, boolean hasReturnValue) {
+                                  ArrayList<GrStatement> returnStatements,
+                                  boolean hasReturnValue) {
     PsiType outputType = PsiType.VOID;
     if (outputInfos.length > 0) {
       if (outputInfos.length == 1) {
@@ -115,7 +113,7 @@ public class InitialInfo implements ExtractInfoHelper {
           types.add(((GrExpression)statement).getType());
         }
       }
-      outputType = TypesUtil.getLeastUpperBoundNullable(types, targetClass.getManager());
+      outputType = TypesUtil.getLeastUpperBoundNullable(types, statements[0].getManager());
     }
 
     return outputType;

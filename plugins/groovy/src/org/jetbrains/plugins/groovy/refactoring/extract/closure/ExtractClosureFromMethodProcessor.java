@@ -46,6 +46,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
+import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.extract.ExtractUtil;
 import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.AnySupers;
 import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.FieldConflictsResolver;
@@ -68,10 +69,10 @@ public class ExtractClosureFromMethodProcessor extends ExtractClosureProcessorBa
   private Editor myEditor;
   private final GrStatementOwner myDeclarationOwner;
 
-  public ExtractClosureFromMethodProcessor(@NotNull ExtractClosureHelper helper, Editor editor, GrStatementOwner declarationOwner) {
+  public ExtractClosureFromMethodProcessor(@NotNull ExtractClosureHelper helper, Editor editor) {
     super(helper);
     myEditor = editor;
-    myDeclarationOwner = declarationOwner;
+    myDeclarationOwner = GroovyRefactoringUtil.getDeclarationOwner(helper.getStatements()[0]);
     myMethod = (GrMethod)myHelper.getOwner();
   }
 

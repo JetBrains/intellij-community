@@ -37,13 +37,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.refactoring.GrRefactoringError;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.HelpID;
-import org.jetbrains.plugins.groovy.refactoring.extract.ExtractHandlerBase;
+import org.jetbrains.plugins.groovy.refactoring.extract.GroovyExtractChooser;
 import org.jetbrains.plugins.groovy.refactoring.extract.InitialInfo;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
 import org.jetbrains.plugins.groovy.refactoring.ui.MethodOrClosureScopeChooser;
@@ -54,7 +52,7 @@ import java.util.List;
 /**
  * @author Max Medvedev
  */
-public class ExtractClosureHandler extends ExtractHandlerBase implements RefactoringActionHandler, MethodOrClosureScopeChooser.JBPopupOwner {
+public class ExtractClosureHandler implements RefactoringActionHandler, MethodOrClosureScopeChooser.JBPopupOwner {
   public static final String EXTRACT_CLOSURE = "Extract Closure";
   private JBPopup myPopup;
 
@@ -91,7 +89,8 @@ public class ExtractClosureHandler extends ExtractHandlerBase implements Refacto
 
   void invoke(Project project, Editor editor, PsiFile file, int start, int end) {
     try {
-      invokeOnEditor(project, editor, file, start, end);
+      final InitialInfo initialInfo = GroovyExtractChooser.invoke(project, editor, file, start, end);
+      performRefactoring(initialInfo, editor);
     }
     catch (GrRefactoringError e) {
       CommonRefactoringUtil.showErrorHint(project, editor, e.getMessage(), EXTRACT_CLOSURE, HelpID.GROOVY_EXTRACT_CLOSURE);
@@ -140,20 +139,15 @@ public class ExtractClosureHandler extends ExtractHandlerBase implements Refacto
   }
 
 
-  @Override
-  public void performRefactoring(@NotNull final InitialInfo info,
-                                 @NotNull GrMemberOwner owner,
-                                 final GrStatementOwner declarationOwner,
-                                 final Editor editor,
-                                 PsiElement startElement) {
-    findScope(startElement, editor, new PairFunction<GrParametersOwner, PsiElement, Object>() {
+  public void performRefactoring(@NotNull final InitialInfo info, final Editor editor) {
+    findScope(info.getStatements()[0], editor, new PairFunction<GrParametersOwner, PsiElement, Object>() {
       @Override
       public Object fun(GrParametersOwner owner, PsiElement toSearchFor) {
         final ExtractClosureHelper helper = getSettings(info, owner, toSearchFor);
         if (helper == null) return null;
 
         if (helper.getOwner() instanceof GrMethod) {
-          new ExtractClosureFromMethodProcessor(helper, editor, declarationOwner).run();
+          new ExtractClosureFromMethodProcessor(helper, editor).run();
         }
         return null;
       }

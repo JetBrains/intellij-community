@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.introduce;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -25,64 +24,23 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
 /**
- * @author Maxim.Medvedev
+ * @author Max Medvedev
  */
-public class GrIntroduceContext {
-  private static final Logger LOG = Logger.getInstance(GrIntroduceContext.class);
+public interface GrIntroduceContext {
+  Project getProject();
 
-  private final Project project;
-  private final Editor editor;
-  @Nullable private final GrExpression expression;
-  private final PsiElement[] occurrences;
-  private final PsiElement scope;
-  @Nullable private final GrVariable var;
-  @NotNull private final PsiElement place;
-
-  public GrIntroduceContext(Project project,
-                            Editor editor,
-                            @Nullable GrExpression expression,
-                            @Nullable GrVariable var,
-                            PsiElement[] occurrences,
-                            PsiElement scope) {
-    LOG.assertTrue(expression != null || var != null);
-
-    this.project = project;
-    this.editor = editor;
-    this.expression = expression;
-    this.occurrences = occurrences;
-    this.scope = scope;
-    this.var = var;
-    this.place = expression == null ? var : expression;
-  }
-
-  public Project getProject() {
-    return project;
-  }
-
-  public Editor getEditor() {
-    return editor;
-  }
+  Editor getEditor();
 
   @Nullable
-  public GrExpression getExpression() {
-    return expression;
-  }
+  GrExpression getExpression();
 
-  public PsiElement[] getOccurrences() {
-    return occurrences;
-  }
+  PsiElement[] getOccurrences();
 
-  public PsiElement getScope() {
-    return scope;
-  }
+  PsiElement getScope();
 
   @Nullable
-  public GrVariable getVar() {
-    return var;
-  }
+  GrVariable getVar();
 
   @NotNull
-  public PsiElement getPlace() {
-    return place;
-  }
+  PsiElement getPlace();
 }

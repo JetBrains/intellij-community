@@ -24,12 +24,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -47,9 +43,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.FragmentVariableInfos;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.ReachingDefinitionsCollector;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.VariableInfo;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GrRefactoringError;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
-import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.inline.GroovyInlineMethodUtil;
 
 import java.util.ArrayList;
@@ -57,19 +53,17 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+import static org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil.*;
+
 /**
  * @author Max Medvedev
  */
-public abstract class ExtractHandlerBase implements RefactoringActionHandler {
-  private static final Logger LOG = Logger.getInstance(ExtractHandlerBase.class);
+public class GroovyExtractChooser {
+  private static final Logger LOG = Logger.getInstance(GroovyExtractChooser.class);
 
-  public void invokeOnEditor(Project project, Editor editor, PsiFile file, int start, int end) throws GrRefactoringError {
-    /*// trim it if it's necessary
-    GroovyRefactoringUtil.trimSpacesAndComments(editor, file, false);*/
-
+  public static InitialInfo invoke(Project project, Editor editor, PsiFile file, int start, int end) throws GrRefactoringError {
     if (!(file instanceof GroovyFileBase)) {
-      String message = RefactoringBundle.getCannotRefactorMessage(GroovyRefactoringBundle.message("only.in.groovy.files"));
-      throw new GrRefactoringError(message);
+      throw new GrRefactoringError(GroovyRefactoringBundle.message("only.in.groovy.files"));
     }
 
     SelectionModel selectionModel = editor.getSelectionModel();
@@ -83,33 +77,26 @@ public abstract class ExtractHandlerBase implements RefactoringActionHandler {
     GrStatement[] statements = getStatementsByElements(elements);
 
     if (statements.length == 0) {
-      String message =
-        RefactoringBundle.getCannotRefactorMessage(GroovyRefactoringBundle.message("selected.block.should.represent.a.statement.set"));
-      throw new GrRefactoringError(message);
+      throw new GrRefactoringError(GroovyRefactoringBundle.message("selected.block.should.represent.a.statement.set"));
     }
 
     for (GrStatement statement : statements) {
-      if (GroovyRefactoringUtil.isSuperOrThisCall(statement, true, true)) {
-        String message = RefactoringBundle
-          .getCannotRefactorMessage(GroovyRefactoringBundle.message("selected.block.contains.invocation.of.another.class.constructor"));
-        throw new GrRefactoringError(message);
+      if (isSuperOrThisCall(statement, true, true)) {
+        throw new GrRefactoringError(GroovyRefactoringBundle.message("selected.block.contains.invocation.of.another.class.constructor"));
       }
     }
 
     GrStatement statement0 = statements[0];
-    GrMemberOwner owner = getMemberOwner(statement0);
+    GrMemberOwner owner = PsiUtil.getMemberOwner(statement0);
     GrStatementOwner declarationOwner = getDeclarationOwner(statement0);
     if (owner == null || declarationOwner == null && !ExtractUtil.isSingleExpression(statements)) {
-      String message =
-        RefactoringBundle.getCannotRefactorMessage(GroovyRefactoringBundle.message("refactoring.is.not.supported.in.the.current.context"));
-      throw new GrRefactoringError(message);
+      throw new GrRefactoringError(GroovyRefactoringBundle.message("refactoring.is.not.supported.in.the.current.context"));
     }
     if (declarationOwner == null &&
         ExtractUtil.isSingleExpression(statements) &&
         statement0 instanceof GrExpression &&
         PsiType.VOID.equals(((GrExpression)statement0).getType())) {
-      String message = RefactoringBundle.getCannotRefactorMessage(GroovyRefactoringBundle.message("selected.expression.has.void.type"));
-      throw new GrRefactoringError(message);
+      throw new GrRefactoringError(GroovyRefactoringBundle.message("selected.expression.has.void.type"));
     }
 
 
@@ -117,7 +104,7 @@ public abstract class ExtractHandlerBase implements RefactoringActionHandler {
 
     Set<GrStatement> allReturnStatements = new HashSet<GrStatement>();
     GrControlFlowOwner controlFlowOwner = ControlFlowUtils.findControlFlowOwner(statement0);
-    assert controlFlowOwner != null;
+    LOG.assertTrue(controlFlowOwner != null);
     allReturnStatements.addAll(ControlFlowUtils.collectReturns(controlFlowOwner, true));
 
     ArrayList<GrStatement> returnStatements = new ArrayList<GrStatement>();
@@ -136,15 +123,13 @@ public abstract class ExtractHandlerBase implements RefactoringActionHandler {
     VariableInfo[] inputInfos = fragmentVariableInfos.getInputVariableNames();
     VariableInfo[] outputInfos = fragmentVariableInfos.getOutputVariableNames();
     if (outputInfos.length == 1 && returnStatements.size() > 0) {
-      String message = GroovyRefactoringBundle.message("multiple.output.values");
-      throw new GrRefactoringError(message);
+      throw new GrRefactoringError(GroovyRefactoringBundle.message("multiple.output.values"));
     }
 
     boolean hasInterruptingStatements = false;
 
     for (GrStatement statement : statements) {
-      hasInterruptingStatements =
-        GroovyRefactoringUtil.hasWrongBreakStatements(statement) || GroovyRefactoringUtil.hasWrongContinueStatements(statement);
+      hasInterruptingStatements = hasWrongBreakStatements(statement) || hasWrongContinueStatements(statement);
       if (hasInterruptingStatements) break;
     }
 
@@ -155,14 +140,11 @@ public abstract class ExtractHandlerBase implements RefactoringActionHandler {
     boolean isReturnStatement = isReturnStatement(statements[statements.length - 1], returnStatementsCopy);
     boolean isLastStatementOfMethod = isLastStatementOfMethodOrClosure(statements);
     if (hasReturns && !isLastStatementOfMethod && !isReturnStatement || hasInterruptingStatements) {
-      String message = GroovyRefactoringBundle.message("refactoring.is.not.supported.when.return.statement.interrupts.the.execution.flow");
-      throw new GrRefactoringError(message);
+      throw new GrRefactoringError(
+        GroovyRefactoringBundle.message("refactoring.is.not.supported.when.return.statement.interrupts.the.execution.flow"));
     }
 
-    InitialInfo info = new InitialInfo(inputInfos, outputInfos, elements, statements, owner, returnStatements);
-
-
-    performRefactoring(info, owner, declarationOwner, editor, statement0);
+    return new InitialInfo(inputInfos, outputInfos, elements, statements, returnStatements);
   }
 
   private static boolean isLastStatementOfMethodOrClosure(GrStatement[] statements) {
@@ -180,12 +162,6 @@ public abstract class ExtractHandlerBase implements RefactoringActionHandler {
     return statement0.getManager().areElementsEquivalent(lastFromBlock, lastStatement);
   }
 
-  public abstract void performRefactoring(@NotNull final InitialInfo initialInfo,
-                                          @NotNull final GrMemberOwner owner,
-                                          final GrStatementOwner declarationOwner,
-                                          final Editor editor,
-                                          final PsiElement startElement);
-
   private static GrStatement[] getStatementsByElements(PsiElement[] elements) {
     ArrayList<GrStatement> statementList = new ArrayList<GrStatement>();
     for (PsiElement element : elements) {
@@ -198,7 +174,7 @@ public abstract class ExtractHandlerBase implements RefactoringActionHandler {
 
   private static PsiElement[] getElementsInOffset(PsiFile file, int startOffset, int endOffset) {
     PsiElement[] elements;
-    GrExpression expr = GroovyRefactoringUtil.findElementInRange(file, startOffset, endOffset, GrExpression.class);
+    GrExpression expr = findElementInRange(file, startOffset, endOffset, GrExpression.class);
 
     if (expr != null) {
       PsiElement parent = expr.getParent();
@@ -207,25 +183,9 @@ public abstract class ExtractHandlerBase implements RefactoringActionHandler {
       }
       elements = new PsiElement[]{expr};
     } else {
-      elements = GroovyRefactoringUtil.findStatementsInRange(file, startOffset, endOffset, true);
+      elements = findStatementsInRange(file, startOffset, endOffset, true);
     }
     return elements;
-  }
-
-  @Nullable
-  private static GrMemberOwner getMemberOwner(GrStatement statement) {
-    PsiElement parent = statement.getParent();
-    while (parent != null && !(parent instanceof GrMemberOwner)) {
-      if (parent instanceof GroovyFileBase) return (GrMemberOwner) ((GroovyFileBase) parent).getScriptClass();
-      parent = parent.getParent();
-    }
-    return parent != null ? ((GrMemberOwner) parent) : null;
-  }
-
-  @Nullable
-  private static GrStatementOwner getDeclarationOwner(GrStatement statement) {
-    PsiElement parent = statement.getParent();
-    return parent instanceof GrStatementOwner ? ((GrStatementOwner) parent) : null;
   }
 
   private static boolean isReturnStatement(GrStatement statement, Collection<GrStatement> returnStatements) {

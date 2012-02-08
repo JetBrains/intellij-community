@@ -42,6 +42,7 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.HelpID;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
+import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContextImpl;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceDialog;
 import org.jetbrains.plugins.groovy.refactoring.introduce.field.GroovyFieldValidator;
 import org.jetbrains.plugins.groovy.refactoring.ui.GrTypeComboBox;
@@ -159,7 +160,7 @@ public class GrIntroduceParameterDialog extends RefactoringDialog implements GrI
     }
     else {
       if (!myChangeVarUsages.isSelected() && myContext.getToSearchFor() != null) {
-        myContext = new GrIntroduceParameterContext(myContext, myContext.getToReplaceIn(), null);
+        myContext = new GrIntroduceParameterContextImpl(myContext, myContext.getToReplaceIn(), null);
       }
       processor = new GrIntroduceClosureParameterProcessor(settings, myContext);
     }
@@ -232,7 +233,7 @@ public class GrIntroduceParameterDialog extends RefactoringDialog implements GrI
 
     String[] possibleNames;
     final GrIntroduceContext
-      introduceContext = new GrIntroduceContext(myProject, null, myContext.getExpression(), myContext.getVar(), PsiElement.EMPTY_ARRAY,
+      introduceContext = new GrIntroduceContextImpl(myProject, null, myContext.getExpression(), myContext.getVar(), PsiElement.EMPTY_ARRAY,
                                                 myContext.getToReplaceIn());
     final GroovyFieldValidator validator = new GroovyFieldValidator(introduceContext);
     if (myContext.getExpression() != null) {

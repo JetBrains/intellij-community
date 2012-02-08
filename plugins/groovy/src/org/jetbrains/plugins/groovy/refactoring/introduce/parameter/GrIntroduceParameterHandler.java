@@ -51,6 +51,7 @@ import org.jetbrains.plugins.groovy.refactoring.GrRefactoringError;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
+import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContextImpl;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceDialog;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
 import org.jetbrains.plugins.groovy.refactoring.ui.MethodOrClosureScopeChooser;
@@ -189,7 +190,7 @@ public class GrIntroduceParameterHandler implements RefactoringActionHandler, Me
     GrIntroduceContext context;
     if (variable == null) {
       final PsiElement[] occurrences = findOccurrences(expression, toReplaceIn);
-      context = new GrIntroduceContext(project, editor, expression, variable, occurrences, toReplaceIn);
+      context = new GrIntroduceContextImpl(project, editor, expression, variable, occurrences, toReplaceIn);
     }
     else {
       final List<PsiElement> list = Collections.synchronizedList(new ArrayList<PsiElement>());
@@ -203,10 +204,10 @@ public class GrIntroduceParameterHandler implements RefactoringActionHandler, Me
           return true;
         }
       });
-      context = new GrIntroduceContext(project, editor, variable.getInitializerGroovy(), variable, list.toArray(new PsiElement[list.size()]), toReplaceIn);
+      context = new GrIntroduceContextImpl(project, editor, variable.getInitializerGroovy(), variable, list.toArray(new PsiElement[list.size()]), toReplaceIn);
     }
 
-    showDialog(new GrIntroduceParameterContext(context, toReplaceIn, toSearchFor));
+    showDialog(new GrIntroduceParameterContextImpl(context, toReplaceIn, toSearchFor));
   }
 
 

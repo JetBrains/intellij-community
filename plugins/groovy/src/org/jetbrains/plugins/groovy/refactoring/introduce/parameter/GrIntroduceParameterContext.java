@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,24 +20,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
 
 /**
- * @author Maxim.Medvedev
+ * @author Max Medvedev
  */
-public class GrIntroduceParameterContext extends GrIntroduceContext {
-  private final PsiElement toSearchFor;
-  private final GrParametersOwner toReplaceIn;
+public interface GrIntroduceParameterContext extends GrIntroduceContext {
+  PsiElement getToSearchFor();
 
-  public GrIntroduceParameterContext(GrIntroduceContext context, GrParametersOwner toReplaceIn, PsiElement toSearchFor) {
-    super(context.getProject(), context.getEditor(), context.getExpression(), context.getVar(), context.getOccurrences(),
-          context.getScope());
-    this.toReplaceIn = toReplaceIn;
-    this.toSearchFor = toSearchFor;
-  }
-
-  public PsiElement getToSearchFor() {
-    return toSearchFor;
-  }
-
-  public GrParametersOwner getToReplaceIn() {
-    return toReplaceIn;
-  }
+  GrParametersOwner getToReplaceIn();
 }

@@ -204,7 +204,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
 
     if (variable == null) {
       final PsiElement[] occurences = findOccurrences(expression, scope);
-      return new GrIntroduceContext(project, editor, expression, variable, occurences, scope);
+      return new GrIntroduceContextImpl(project, editor, expression, variable, occurences, scope);
 
     }
     else {
@@ -219,7 +219,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
           return true;
         }
       });
-      return new GrIntroduceContext(project, editor, variable.getInitializerGroovy(), variable, list.toArray(new PsiElement[list.size()]), scope
+      return new GrIntroduceContextImpl(project, editor, variable.getInitializerGroovy(), variable, list.toArray(new PsiElement[list.size()]), scope
       );
     }
   }
