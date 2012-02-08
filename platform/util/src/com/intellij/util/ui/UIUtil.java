@@ -567,7 +567,8 @@ public class UIUtil {
   }
 
   public static Color getTableBackground() {
-    return UIManager.getColor("Table.background");
+    // Under GTK+ L&F "Table.background" often has main panel color, which looks ugly
+    return isUnderGTKLookAndFeel() ? getTreeTextBackground() : UIManager.getColor("Table.background");
   }
 
   public static Color getTableSelectionForeground() {
@@ -583,7 +584,7 @@ public class UIUtil {
   }
 
   public static Color getListBackground() {
-    // Fixes most of the GTK+ L&F glitches
+    // Under GTK+ L&F "Table.background" often has main panel color, which looks ugly
     return isUnderGTKLookAndFeel() ? getTreeTextBackground() : UIManager.getColor("List.background");
   }
 
