@@ -76,21 +76,21 @@ public class XsltVariableContext implements VariableContext<XsltVariable> {
         final ResolveProcessor processor = new ResolveProcessor(reference.getReferencedName(), context);
 
         final XPathVariable variable = (XPathVariable)ResolveUtil.treeWalkUp(processor, context);
-        if (variable == null) {
-          if (!processForwardGlobals(context, processor)) {
-            final XmlFile file = PsiTreeUtil.getParentOfType(context, XmlFile.class, true);
-            if (file != null) {
-              XsltIncludeIndex.processBackwardDependencies(file, new Processor<XmlFile>() {
-                public boolean process(XmlFile xmlFile) {
-                  processor.processExternalFile(xmlFile, context);
-                  return processor.shouldContinue();
-                }
-              });
-              return (XPathVariable)processor.getResult();
-            }
+        if (variable != null) {
+          return variable;
+        }
+        if (!processForwardGlobals(context, processor)) {
+          final XmlFile file = PsiTreeUtil.getParentOfType(context, XmlFile.class, true);
+          if (file != null) {
+            XsltIncludeIndex.processBackwardDependencies(file, new Processor<XmlFile>() {
+              public boolean process(XmlFile xmlFile) {
+                processor.processExternalFile(xmlFile, context);
+                return processor.shouldContinue();
+              }
+            });
           }
         }
-        return variable;
+        return (XPathVariable)processor.getResult();
     }
 
     private static boolean processForwardGlobals(XmlTag context, VariableProcessor processor) {
@@ -101,7 +101,7 @@ public class XsltVariableContext implements VariableContext<XsltVariable> {
         processor.process(context);
         context = PsiTreeUtil.getNextSiblingOfType(context, XmlTag.class);
       }
-      return processor.shouldContinue();
+      return !processor.shouldContinue();
     }
 
     @Nullable
