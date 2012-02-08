@@ -33,9 +33,11 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.android.facet.AndroidFacet;
+import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.annotations.NotNull;
 
@@ -89,7 +91,7 @@ public class AndroidPrecompileTask implements CompileTask {
           excludeAllSourceRoots(module, configuration, addedEntries);
         }
         else {
-          unexcludeAllSourceRoots(module, configuration);
+          unexcludeAllSourceRoots(facet, configuration);
         }
       }
     }
@@ -113,11 +115,34 @@ public class AndroidPrecompileTask implements CompileTask {
     }
   }
 
-  private static void unexcludeAllSourceRoots(Module module,
+  private static void unexcludeAllSourceRoots(AndroidFacet facet,
                                               ExcludedEntriesConfiguration configuration) {
-    final VirtualFile[] sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots();
+    final VirtualFile[] sourceRoots = ModuleRootManager.getInstance(facet.getModule()).getSourceRoots();
     final Set<VirtualFile> sourceRootSet = new HashSet<VirtualFile>();
     sourceRootSet.addAll(Arrays.asList(sourceRoots));
+
+    final String aidlGenSourceRootPath = facet.getAidlGenSourceRootPath();
+    if (aidlGenSourceRootPath != null) {
+      final VirtualFile aidlGenSourceRoot = LocalFileSystem.getInstance().findFileByPath(aidlGenSourceRootPath);
+
+      if (aidlGenSourceRoot != null) {
+        sourceRootSet.remove(aidlGenSourceRoot);
+      }
+    }
+
+    final String aptGenSourceRootPath = facet.getAptGenSourceRootPath();
+    if (aptGenSourceRootPath != null) {
+      final VirtualFile aptGenSourceRoot = LocalFileSystem.getInstance().findFileByPath(aptGenSourceRootPath);
+
+      if (aptGenSourceRoot != null) {
+        sourceRootSet.remove(aptGenSourceRoot);
+      }
+    }
+
+    final VirtualFile rsGenRoot = AndroidRootUtil.getRenderscriptGenDir(facet.getModule());
+    if (rsGenRoot != null) {
+      sourceRootSet.remove(rsGenRoot);
+    }
 
     final ExcludeEntryDescription[] descriptions = configuration.getExcludeEntryDescriptions();
     configuration.removeAllExcludeEntryDescriptions();
