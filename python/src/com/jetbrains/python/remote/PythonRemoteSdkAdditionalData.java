@@ -12,6 +12,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -274,7 +275,7 @@ public class PythonRemoteSdkAdditionalData extends PythonSdkAdditionalData imple
       return null;
     }
     for (PythonSdkFlavor flavor : getApplicableFlavors(sdkPath.contains("\\"))) {
-      if (flavor.isValidSdkHome(sdkPath)) {
+      if (flavor.isValidSdkPath(new File(sdkPath))) {
         return flavor;
       }
     }
