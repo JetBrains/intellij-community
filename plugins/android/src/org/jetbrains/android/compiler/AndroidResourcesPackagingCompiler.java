@@ -152,12 +152,14 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
                                 ? item.myOutputPath + RELEASE_SUFFIX
                                 : item.myOutputPath;
 
-      Map<CompilerMessageCategory, List<String>> messages = AndroidApt.packageResources(item.myAndroidTarget,
-                                                                                        item.myPlatformToolsRevision,
-                                                                                        preprocessedManifestFile.getPath(),
-                                                                                        item.myResourceDirPaths,
-                                                                                        item.myAssetsDirPath,
-                                                                                        outputPath, null, !releasePackage, 0);
+      Map<CompilerMessageCategory, List<String>> messages = AndroidCompileUtil.toCompilerMessageCategoryKeys(
+        AndroidApt.packageResources(item.myAndroidTarget,
+                                    item.myPlatformToolsRevision,
+                                    preprocessedManifestFile.getPath(),
+                                    item.myResourceDirPaths,
+                                    item.myAssetsDirPath,
+                                    outputPath, null, !releasePackage, 0));
+
       AndroidCompileUtil.addMessages(context, messages, presentableFilesMap);
     }
     catch (final IOException e) {

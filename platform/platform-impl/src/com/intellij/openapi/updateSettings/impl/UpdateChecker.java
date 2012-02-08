@@ -175,7 +175,7 @@ public final class UpdateChecker {
           if (installedPlugin != null) {
             if (StringUtil.compareVersionNumbers(loadedPlugin.getVersion(), installedPlugin.getVersion()) > 0) {
               updateSettings.myOutdatedPlugins.add(idString);
-              if (((IdeaPluginDescriptorImpl)installedPlugin).isEnabled()) {
+              if (installedPlugin.isEnabled()) {
                 final PluginDownloader downloader = PluginDownloader.createDownloader(loadedPlugin);
                 if (downloader.prepareToInstall()) {
                   downloaded.add(downloader);

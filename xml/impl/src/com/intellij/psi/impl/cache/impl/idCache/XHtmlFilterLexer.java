@@ -32,7 +32,7 @@ public class XHtmlFilterLexer extends BaseFilterLexer {
   }
 
   public void advance() {
-    final IElementType tokenType = getDelegate().getTokenType();
+    final IElementType tokenType = myDelegate.getTokenType();
 
     if (tokenType == XmlElementType.XML_COMMENT_CHARACTERS) {
       scanWordsInToken(UsageSearchContext.IN_COMMENTS, false, false);
@@ -51,11 +51,12 @@ public class XHtmlFilterLexer extends BaseFilterLexer {
                        false);
       
       if (inComments) advanceTodoItemCountsInToken();
-    } else {
+    }
+    else if (!XmlFilterLexer.ourNoWordsTokenSet.contains(tokenType)) {
       scanWordsInToken(UsageSearchContext.IN_PLAIN_TEXT, false, false);
     }
 
-    getDelegate().advance();
+    myDelegate.advance();
   }
 
 }

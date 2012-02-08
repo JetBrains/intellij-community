@@ -99,10 +99,10 @@ public class JUnit4TestResultsSender extends RunListener {
       Matcher matcher =
         Pattern.compile("\nExpected: (.*)\n\\s*got: (.*)", Pattern.DOTALL).matcher(message);
       if (!matcher.matches()) {
-        matcher = Pattern.compile("expected same:<(.*)> was not:<(.*)>", Pattern.DOTALL).matcher(message);
+        matcher = Pattern.compile("\\s*expected same:<(.*)> was not:<(.*)>", Pattern.DOTALL).matcher(message);
       }
       if (!matcher.matches()) {
-        matcher = Pattern.compile("expected:<(.*)> but was:<(.*)>", Pattern.DOTALL).matcher(message);
+        matcher = Pattern.compile("\\s*expected:<(.*)> but was:<(.*)>", Pattern.DOTALL).matcher(message);
       }
       if (!matcher.matches()) {
         matcher = Pattern.compile("\nExpected: \"(.*)\"\n\\s*but: was \"(.*)\"", Pattern.DOTALL).matcher(message);

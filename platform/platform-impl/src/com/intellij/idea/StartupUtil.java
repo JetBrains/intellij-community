@@ -43,8 +43,7 @@ public class StartupUtil {
 
   @NonNls public static final String NOSPLASH = "nosplash";
 
-  private StartupUtil() {
-  }
+  private StartupUtil() { }
 
   public static void setDefaultLAF(String laf) {
     myDefaultLAF = laf;
@@ -73,7 +72,7 @@ public class StartupUtil {
   }
 
   /**
-   * Checks if the program can run under the JDK it was started with
+   * Checks if the program can run under the JDK it was started with.
    */
   private static boolean checkJdkVersion() {
     if (!"true".equals(System.getProperty("idea.no.jre.check"))) {
@@ -111,16 +110,8 @@ public class StartupUtil {
     }
 
     if (activateStatus != SocketLock.ActivateStatus.NO_INSTANCE) {
-      if (isHeadless()) { //team server inspections
-        System.out.println("Only one instance of " + ApplicationNamesInfo.getInstance().getFullProductName() + " can be run at a time.");
-        return false;
-      }
-      if (activateStatus == SocketLock.ActivateStatus.CANNOT_ACTIVATE) {
-        JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
-                                      "Only one instance of " + ApplicationNamesInfo.getInstance().getFullProductName() +
-                                      " can be run at a time.",
-                                      "Error",
-                                      JOptionPane.INFORMATION_MESSAGE);
+      if (isHeadless() || activateStatus == SocketLock.ActivateStatus.CANNOT_ACTIVATE) {
+        showError("Error", "Only one instance of " + ApplicationNamesInfo.getInstance().getFullProductName() + " can be run at a time.");
       }
       return false;
     }

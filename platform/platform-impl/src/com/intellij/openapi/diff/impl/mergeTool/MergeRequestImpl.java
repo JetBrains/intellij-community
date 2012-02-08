@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -36,6 +37,7 @@ import java.io.IOException;
 
 public class MergeRequestImpl extends MergeRequest {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.mergeTool.MergeRequestImpl");
+
   private final DiffContent[] myDiffContents = new DiffContent[3];
   private String myWindowTitle = null;
   private String[] myVersionTitles = null;
@@ -87,6 +89,7 @@ public class MergeRequestImpl extends MergeRequest {
     myDiffContents[2] = right;
   }
 
+  @NotNull
   public DiffContent[] getContents() { return myDiffContents; }
 
   public String[] getContentTitles() { return myVersionTitles; }

@@ -16,8 +16,8 @@
 package org.jetbrains.android.compiler.tools;
 
 import com.android.sdklib.IAndroidTarget;
-import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.android.util.AndroidCompilerMessageKind;
 import org.jetbrains.android.util.ExecutionUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,20 +36,22 @@ public final class AndroidIdl {
   }
 
   @NotNull
-  public static Map<CompilerMessageCategory, List<String>> execute(@NotNull IAndroidTarget target,
-                                                                   @NotNull String file,
-                                                                   @NotNull String outFile,
-                                                                   @NotNull String[] sourceRootPaths) throws IOException {
-    List<String> commands = new ArrayList<String>();
-    String frameworkAidlPath = target.getPath(IAndroidTarget.ANDROID_AIDL);
+  public static Map<AndroidCompilerMessageKind, List<String>> execute(@NotNull IAndroidTarget target,
+                                                                      @NotNull String file,
+                                                                      @NotNull String outFile,
+                                                                      @NotNull String[] sourceRootPaths) throws IOException {
+    final List<String> commands = new ArrayList<String>();
+    final String frameworkAidlPath = target.getPath(IAndroidTarget.ANDROID_AIDL);
+
     commands.add(target.getPath(IAndroidTarget.AIDL));
     commands.add("-p" + frameworkAidlPath);
+
     for (String path : sourceRootPaths) {
       commands.add("-I" + path);
     }
     commands.add(file);
     commands.add(outFile);
-    return ExecutionUtil.execute(ArrayUtil.toStringArray(commands));
+    return ExecutionUtil.doExecute(ArrayUtil.toStringArray(commands));
   }
 
 }

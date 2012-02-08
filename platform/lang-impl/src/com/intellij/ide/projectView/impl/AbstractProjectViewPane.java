@@ -450,7 +450,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     }
   }
 
-  void saveExpandedPaths() {
+  protected void saveExpandedPaths() {
     if (myTree != null) {
       TreeState treeState = TreeState.createOn(myTree);
       myReadTreeState.put(getSubId(), treeState);

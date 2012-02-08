@@ -62,6 +62,7 @@ public class EclipseModuleManager implements PersistentStateComponent<Element>{
   private int myExpectedModuleSourcePlace;
   private Map<String, Integer> mySrcPlace = new LinkedHashMap<String, Integer>();
   private String myInvalidJdk;
+  private boolean myGroovyDslSupport = false;
 
   public EclipseModuleManager(Module module) {
     myModule = module;
@@ -73,6 +74,14 @@ public class EclipseModuleManager implements PersistentStateComponent<Element>{
 
   public String getInvalidJdk() {
     return myInvalidJdk;
+  }
+
+  public void setGroovyDslSupport() {
+    myGroovyDslSupport = true;
+  }
+
+  public boolean isGroovyDslSupport() {
+    return myGroovyDslSupport;
   }
 
   public static EclipseModuleManager getInstance(Module module) {

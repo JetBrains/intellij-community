@@ -78,7 +78,7 @@ public class CutLineEndActionsTest extends LightPlatformCodeInsightTestCase {
   }
   
   private void doTest(@NotNull String before, @NotNull String after) throws IOException {
-    configureFromFileText(getTestName(false) + ".java", before);
+    configureFromFileText(getTestName(false) + ".txt", before);
     cutToLineEnd();
     checkResultByText(after);
   }

@@ -70,7 +70,7 @@ public class CompositeFilter implements Filter, FilterMixin {
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < count; i++) {
       Filter filter = filters.get(i);
-      if (! (filter instanceof FilterMixin)) continue;
+      if (! (filter instanceof FilterMixin) || !((FilterMixin)filter).shouldRunHeavy()) continue;
       if (!dumb || DumbService.isDumbAware(filter)) {
         ((FilterMixin) filter).applyHeavyFilter(copiedFragment, startOffset, startLineNumber, consumer);
       }

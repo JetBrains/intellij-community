@@ -350,8 +350,13 @@ public class StubBuildingVisitor<T> implements ClassVisitor {
                                    final String desc,
                                    final String signature,
                                    final String[] exceptions) {
-    if ((access & Opcodes.ACC_SYNTHETIC) != 0) return null;
-    if ((access & Opcodes.ACC_BRIDGE) != 0) return null;
+    boolean isSynthetic = (access & Opcodes.ACC_SYNTHETIC) != 0;
+
+    // JLS 13.1 says: Any constructs introduced by the compiler that do not have a corresponding construct in the source code
+    // must be marked as synthetic, except for default constructors and the class initialization method.
+    // However Scala compiler erroneously generates ACC_BRIDGE instead of ACC_SYNTHETIC flag for in-trait implementation delegation. See IDEA-78649
+    if (isSynthetic) return null;
+
     if (SYNTHETIC_CLINIT_METHOD.equals(name)) return null;
 
     boolean isDeprecated = (access & Opcodes.ACC_DEPRECATED) != 0;

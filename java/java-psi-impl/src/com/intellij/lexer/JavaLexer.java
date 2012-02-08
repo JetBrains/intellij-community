@@ -196,7 +196,7 @@ public class JavaLexer extends LexerBase {
 
   @Override
   public final IElementType getTokenType() {
-    locateToken();
+    if (myTokenType == null) _locateToken();
 
     return myTokenType;
   }
@@ -208,20 +208,15 @@ public class JavaLexer extends LexerBase {
 
   @Override
   public final int getTokenEnd() {
-    locateToken();
+    if (myTokenType == null) _locateToken();
     return myTokenEndOffset;
   }
 
 
   @Override
   public final void advance() {
-    locateToken();
+    if (myTokenType == null) _locateToken();
     myTokenType = null;
-  }
-
-  protected final void locateToken() {
-    if (myTokenType != null) return;
-    _locateToken();
   }
 
   private void _locateToken() {

@@ -82,6 +82,10 @@ public class CompilerPaths {
     return new File(getCompilerSystemDirectory(project), ".caches");
   }
 
+  public static File getRebuildMarkerFile(Project project) {
+    return new File(getCompilerSystemDirectory(project), "rebuild_required");
+  }
+
   /**
    * @param project
    * @return a directory under IDEA "system" directory where all files related to compiler subsystem are stored (such as compiler caches or generated files)

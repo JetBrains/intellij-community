@@ -6090,6 +6090,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           Rectangle visibleArea = getScrollingModel().getVisibleArea();
           startToUse = yPositionToLogicalLine(visibleArea.getLocation().y);
           endToUse = Math.min(endToUse, yPositionToLogicalLine(visibleArea.y + visibleArea.height));
+          if (endToUse <= startToUse) {
+            // There is a possible case that there is the only soft-wrapped line, i.e. end == start. We still want to update the
+            // size container's width then.
+            endToUse = Math.min(myLineWidths.size(), startToUse + 1);
+          }
         }
         int maxWidth = 0;
         for (int i = startToUse; i < endToUse; i++) {
