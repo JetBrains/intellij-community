@@ -34,8 +34,8 @@ public class Mappings {
   private final boolean myDeltaIsTransient;
   private boolean myIsDifferentiated = false;
 
-  private final List<DependencyContext.S> myChangedClasses;
-  private final List<DependencyContext.S> myChangedFiles;
+  private final Set<DependencyContext.S> myChangedClasses;
+  private final Set<DependencyContext.S> myChangedFiles;
 
   private void addChangedClass(final DependencyContext.S it) {
     assert (myChangedClasses != null && myChangedFiles != null);
@@ -121,8 +121,8 @@ public class Mappings {
 
   private Mappings(final Mappings base) throws IOException {
     myIsDelta = true;
-    myChangedClasses = new LinkedList<DependencyContext.S>();
-    myChangedFiles = new LinkedList<DependencyContext.S>();
+    myChangedClasses = new HashSet<DependencyContext.S>();
+    myChangedFiles = new HashSet<DependencyContext.S>();
     myDeltaIsTransient = base.myDeltaIsTransient;
     myRootDir = new File(FileUtil.toSystemIndependentName(base.myRootDir.getAbsolutePath()) + File.separatorChar + "delta");
     myContext = base.myContext;
