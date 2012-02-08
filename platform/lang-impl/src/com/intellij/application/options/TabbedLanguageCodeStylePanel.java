@@ -52,7 +52,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
   private JPanel myPanel;
   private JTabbedPane myTabbedPane;
   private PredefinedCodeStyle[] myPredefinedCodeStyles;
-  private PopupMenu myCopyFromMenu;
+  private JPopupMenu myCopyFromMenu;
 
   protected TabbedLanguageCodeStylePanel(@Nullable Language language, CodeStyleSettings currentSettings, CodeStyleSettings settings) {
     super(language, currentSettings, settings);
@@ -131,8 +131,8 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
 
   private void initCopyFromMenu(Component component) {
     if (myCopyFromMenu == null) {
-      myCopyFromMenu = new PopupMenu();
-      component.add(myCopyFromMenu);
+      myCopyFromMenu = new JPopupMenu();
+      //component.add(myCopyFromMenu);
       setupCopyFromMenu(myCopyFromMenu);
     }
   }
@@ -265,13 +265,13 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
 
 
   @Override
-  public void setupCopyFromMenu(Menu copyMenu) {
+  public void setupCopyFromMenu(JPopupMenu copyMenu) {
     super.setupCopyFromMenu(copyMenu);
     if (myPredefinedCodeStyles.length > 0) {
-      Menu langs = new Menu("Language"); //TODO<rv>: Move to resource bundle
+      JMenuItem langs = new JMenuItem("Language"); //TODO<rv>: Move to resource bundle
       copyMenu.add(langs);
       fillLanguages(langs);
-      Menu predefined = new Menu("Predefined Style"); //TODO<rv>: Move to resource bundle
+      JMenuItem predefined = new JMenuItem("Predefined Style"); //TODO<rv>: Move to resource bundle
       copyMenu.add(predefined);
       fillPredefined(predefined);
     }
@@ -281,14 +281,14 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
   }
 
 
-  private void fillLanguages(Menu parentMenu) {
+  private void fillLanguages(JComponent parentMenu) {
       Language[] languages = LanguageCodeStyleSettingsProvider.getLanguagesWithCodeStyleSettings();
       @SuppressWarnings("UnnecessaryFullyQualifiedName")
-      java.util.List<MenuItem> langItems = new ArrayList<MenuItem>();
+      java.util.List<JMenuItem> langItems = new ArrayList<JMenuItem>();
       for (final Language lang : languages) {
         if (!lang.equals(getDefaultLanguage())) {
           final String langName = LanguageCodeStyleSettingsProvider.getLanguageName(lang);
-          MenuItem langItem = new MenuItem(langName);
+          JMenuItem langItem = new JMenuItem(langName);
           langItem.addActionListener(new ActionListener(){
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -298,20 +298,20 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
           langItems.add(langItem);
         }
       }
-      Collections.sort(langItems, new Comparator<MenuItem>() {
+      Collections.sort(langItems, new Comparator<JMenuItem>() {
         @Override
-        public int compare(MenuItem item1, MenuItem item2) {
-          return item1.getLabel().compareToIgnoreCase(item2.getLabel());
+        public int compare(JMenuItem item1, JMenuItem item2) {
+          return item1.getText().compareToIgnoreCase(item2.getText());
         }
       });
-      for (MenuItem langItem : langItems) {
+      for (JMenuItem langItem : langItems) {
         parentMenu.add(langItem);
       }
     }
 
-  private void fillPredefined(Menu parentMenu) {
+  private void fillPredefined(JMenuItem parentMenu) {
     for (final PredefinedCodeStyle predefinedCodeStyle : myPredefinedCodeStyles) {
-      MenuItem predefinedItem = new MenuItem(predefinedCodeStyle.getName());
+      JMenuItem predefinedItem = new JMenuItem(predefinedCodeStyle.getName());
       parentMenu.add(predefinedItem);
       predefinedItem.addActionListener(new ActionListener() {
         @Override
