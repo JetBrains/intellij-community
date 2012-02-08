@@ -128,11 +128,11 @@ public class ContainerUtil {
     return list.subList(from, list.size());
   }
 
-  public static <T> void addAll(@NotNull Collection<T> collection, @NotNull Iterable<T> appendix) {
+  public static <T> void addAll(@NotNull Collection<T> collection, @NotNull Iterable<? extends T> appendix) {
     addAll(collection, appendix.iterator());
   }
 
-  public static <T> void addAll(@NotNull Collection<T> collection, @NotNull Iterator<T> iterator) {
+  public static <T> void addAll(@NotNull Collection<T> collection, @NotNull Iterator<? extends T> iterator) {
     while (iterator.hasNext()) {
       T o = iterator.next();
       collection.add(o);
@@ -516,7 +516,7 @@ public class ContainerUtil {
     return collect(FilteringIterator.create((Iterator<T>)iterator, instanceOf));
   }
 
-  public static <T> void addAll(@NotNull Collection<T> collection, @NotNull Enumeration<T> enumeration) {
+  public static <T> void addAll(@NotNull Collection<T> collection, @NotNull Enumeration<? extends T> enumeration) {
     while (enumeration.hasMoreElements()) {
       T element = enumeration.nextElement();
       collection.add(element);

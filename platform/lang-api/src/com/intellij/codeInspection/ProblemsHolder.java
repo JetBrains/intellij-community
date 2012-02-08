@@ -28,7 +28,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -91,7 +90,7 @@ public class ProblemsHolder {
 
   private boolean isInPsiFile(@NotNull PsiElement element) {
     PsiFile file = element.getContainingFile();
-    return ArrayUtil.indexOf(myFile.getPsiRoots(), file) != -1;
+    return myFile.getViewProvider() == file.getViewProvider();
   }
 
   private void redirectProblem(@NotNull final ProblemDescriptor problem, @NotNull final PsiElement target) {

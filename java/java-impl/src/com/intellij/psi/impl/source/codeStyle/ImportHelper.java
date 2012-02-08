@@ -696,7 +696,7 @@ public class ImportHelper{
                                            PsiFile context) {
     String packageName = file.getPackageName();
 
-    final PsiElement[] roots = file.getPsiRoots();
+    final List<PsiFile> roots = file.getViewProvider().getAllFiles();
     for (PsiElement root : roots) {
       addNamesToImport(names, comments, root, packageName, context);
     }

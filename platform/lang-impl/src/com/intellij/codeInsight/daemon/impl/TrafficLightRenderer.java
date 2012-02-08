@@ -20,6 +20,7 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil;
+import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -36,6 +37,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.ArrayUtil;
@@ -50,6 +52,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
   private static final Icon IN_PROGRESS_ICON = IconLoader.getIcon("/general/errorsInProgress.png");
@@ -166,13 +169,15 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
 
     List<String> noInspectionRoots = new ArrayList<String>();
     List<String> noHighlightingRoots = new ArrayList<String>();
-    final PsiFile[] roots = myFile.getPsiRoots();
-    for (PsiFile file : roots) {
-      if (!HighlightLevelUtil.shouldHighlight(file)) {
-        noHighlightingRoots.add(file.getLanguage().getID());
+    FileViewProvider provider = myFile.getViewProvider();
+    Set<Language> languages = provider.getLanguages();
+    for (Language language : languages) {
+      PsiFile root = provider.getPsi(language);
+      if (!HighlightLevelUtil.shouldHighlight(root)) {
+        noHighlightingRoots.add(language.getID());
       }
-      else if (!HighlightLevelUtil.shouldInspect(file)) {
-        noInspectionRoots.add(file.getLanguage().getID());
+      else if (!HighlightLevelUtil.shouldInspect(root)) {
+        noInspectionRoots.add(language.getID());
       }
     }
     DaemonCodeAnalyzerStatus status = new DaemonCodeAnalyzerStatus();
@@ -180,7 +185,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     status.noHighlightingRoots = noHighlightingRoots.isEmpty() ? null : ArrayUtil.toStringArray(noHighlightingRoots);
 
     status.errorCount = errorCount.clone();
-    status.rootsNumber = roots.length;
+    status.rootsNumber = languages.size();
     fillDaemonCodeAnalyzerErrorsStatus(status, fillErrorsCount, severityRegistrar);
     List<TextEditorHighlightingPass> passes = myDaemonCodeAnalyzer.getPassesToShowProgressFor(myDocument);
     status.passStati = passes.isEmpty() ? Collections.<ProgressableTextEditorHighlightingPass>emptyList() :
