@@ -1626,8 +1626,22 @@ public class Mappings {
         compiledSet.add(myContext.get(FileUtil.toSystemIndependentName(c.getAbsolutePath())));
       }
 
+      final Collection<DependencyContext.S> changedClasses = delta.getChangedClasses();
+
       for (DependencyContext.S file : delta.myClassToClassDependency.keyCollection()) {
         final Collection<DependencyContext.S> now = delta.myClassToClassDependency.get(file);
+
+        if (delta.isDifferentiated()) {
+          final boolean classChanged = changedClasses.contains(file);
+          final HashSet<DependencyContext.S> depClasses = new HashSet<DependencyContext.S>(now);
+
+          depClasses.retainAll(changedClasses);
+
+          if (! classChanged && now.isEmpty()) {
+            continue;
+          }
+        }
+
         final Collection<DependencyContext.S> past = myClassToClassDependency.get(file);
 
         if (past == null) {
