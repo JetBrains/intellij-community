@@ -35,7 +35,7 @@ public class PsiClassLocator implements PsiLocator {
 
   public static PsiClassLocator fromQualifiedName(final String name) {
     final int lastDot = name.lastIndexOf('.');
-    if (lastDot == -1 || lastDot == name.length())
+    if (lastDot == -1 || lastDot == name.length() || (name.endsWith("]") && name.contains("[")))
       return new PsiClassLocator(name, "");
     else
       return new PsiClassLocator(name.substring(lastDot + 1), name.substring(0, lastDot));
