@@ -102,7 +102,7 @@ public class AndroidSdkType extends SdkType implements JavaSdkType {
     }
 
     int choice = Messages
-      .showChooseDialog("Please select Java SDK", "Select internal Java platform", ArrayUtil.toStringArray(javaSdks), javaSdks.get(0),
+      .showChooseDialog("Please select Java SDK", "Select Internal Java Platform", ArrayUtil.toStringArray(javaSdks), javaSdks.get(0),
                         Messages.getQuestionIcon());
 
     if (choice == -1) {

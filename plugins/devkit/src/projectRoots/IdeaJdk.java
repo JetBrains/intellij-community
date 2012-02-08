@@ -233,7 +233,7 @@ public class IdeaJdk extends SdkType implements JavaSdkType {
     }
 
     final int choice = Messages
-      .showChooseDialog("Select Java SDK to be used as IDEA internal platform", "Select internal Java platform", ArrayUtil.toStringArray(javaSdks), javaSdks.get(0), Messages.getQuestionIcon());
+      .showChooseDialog("Select Java SDK to be used as IDEA internal platform", "Select Internal Java Platform", ArrayUtil.toStringArray(javaSdks), javaSdks.get(0), Messages.getQuestionIcon());
 
     if (choice != -1) {
       final String name = javaSdks.get(choice);
