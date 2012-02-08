@@ -6,7 +6,9 @@ import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkModificator;
 import com.jetbrains.python.debugger.remote.PyRemoteDebugConfiguration;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -31,6 +33,8 @@ public abstract class PythonRemoteInterpreterManager {
 
   public abstract boolean testConnection(final Project project, final PythonRemoteSdkAdditionalData data,
                                          final String title) throws PyRemoteInterpreterException;
+
+  public abstract boolean editSdk(@NotNull Project project, @NotNull SdkModificator sdkModificator);
 
   @Nullable
   public static PythonRemoteInterpreterManager getInstance() {

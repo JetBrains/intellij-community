@@ -1,7 +1,7 @@
 package com.jetbrains.python.debugger;
 
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class PySourcePosition {
@@ -20,7 +20,8 @@ public abstract class PySourcePosition {
       return file;
     }
     String res =  FileUtil.toSystemIndependentName(file);
-    if (SystemInfo.isWindows) {
+
+    if (isWindowsPath(file)) {
       res = res.toLowerCase();
     }
     return res;
@@ -57,5 +58,9 @@ public abstract class PySourcePosition {
   @Override
   public String toString() {
     return "PySourcePosition(" + file + ":" + line + ")";
+  }
+
+  public static boolean isWindowsPath(@NotNull String path) {
+    return path.contains("\\");
   }
 }

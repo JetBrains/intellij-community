@@ -458,6 +458,9 @@ public class PythonSdkType extends SdkType {
   }
 
   public static boolean setupSdkPaths(final Project project, final Sdk sdk, final SdkModificator sdkModificator) {
+    if (sdk.getSdkAdditionalData() instanceof PythonRemoteSdkAdditionalData) {
+      return true; //TODO: implement for Remote Interpreter
+    }
     final ProgressManager progman = ProgressManager.getInstance();
     final Ref<Boolean> success = new Ref<Boolean>();
     success.set(true);

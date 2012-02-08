@@ -139,38 +139,9 @@ public abstract class PythonCommandLineState extends CommandLineState {
       .patchCommandLine(myConfig, runnerSettings, commandLine, getConfigurationSettings().getRunnerId());
 
     if (sdk != null && sdk.getSdkAdditionalData() instanceof PythonRemoteSdkAdditionalData) {
-
-      PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
-      if (manager != null) {
-
-        ProcessHandler processHandler =
-          null;
-
-        while (true) {
-          try {
-            processHandler =
-              manager.doCreateProcess(myConfig.getProject(), (PythonRemoteSdkAdditionalData)sdk.getSdkAdditionalData(), commandLine,
-                                      PyRemoteDebugConfiguration
-                                        .findByName(myConfig.getProject(),
-                                                    ((PythonRunConfiguration)myConfig).getRemoteDebugConfiguration()));
-            break;
-          }
-          catch (PyRemoteInterpreterException e) {
-            if (Messages.showYesNoDialog(e.getMessage() + "\nTry again?", "Can't Run Remote Interpreter", Messages.getErrorIcon()) ==
-                Messages.NO) {
-              throw new ExecutionException("Can't run remote python interpreter: " + e.getMessage());
-            }
-          }
-        }
-        ProcessTerminatedListener.attach(processHandler);
-        return processHandler;
-      }
-      else {
-        throw new ExecutionException("Can't run remote python interpreter. WebDeployment plugin is disabled.");
-      }
+      return startRemoteProcess(sdk, commandLine);
     }
     else {
-
       final ProcessHandler processHandler = doCreateProcess(commandLine);
       ProcessTerminatedListener.attach(processHandler);
 
@@ -178,6 +149,37 @@ public abstract class PythonCommandLineState extends CommandLineState {
       PythonRunConfigurationExtensionsManager.getInstance().attachExtensionsToProcess(myConfig, processHandler, getRunnerSettings());
 
       return processHandler;
+    }
+  }
+
+  private ProcessHandler startRemoteProcess(Sdk sdk, GeneralCommandLine commandLine) throws ExecutionException {
+    PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
+    if (manager != null) {
+
+      ProcessHandler processHandler =
+        null;
+
+      while (true) {
+        try {
+          processHandler =
+            manager.doCreateProcess(myConfig.getProject(), (PythonRemoteSdkAdditionalData)sdk.getSdkAdditionalData(), commandLine,
+                                    PyRemoteDebugConfiguration
+                                      .findByName(myConfig.getProject(),
+                                                  ((PythonRunConfiguration)myConfig).getRemoteDebugConfiguration()));
+          break;
+        }
+        catch (PyRemoteInterpreterException e) {
+          if (Messages.showYesNoDialog(e.getMessage() + "\nTry again?", "Can't Run Remote Interpreter", Messages.getErrorIcon()) ==
+              Messages.NO) {
+            throw new ExecutionException("Can't run remote python interpreter: " + e.getMessage());
+          }
+        }
+      }
+      ProcessTerminatedListener.attach(processHandler);
+      return processHandler;
+    }
+    else {
+      throw new ExecutionException("Can't run remote python interpreter. WebDeployment plugin is disabled.");
     }
   }
 

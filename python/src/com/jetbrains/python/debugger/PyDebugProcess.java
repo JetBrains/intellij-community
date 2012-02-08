@@ -51,7 +51,6 @@ import static javax.swing.SwingUtilities.invokeLater;
  */
 // todo: bundle messages
 // todo: pydevd supports module reloading - look for a way to use the feature
-// todo: smart step into
 public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, ProcessListener {
   private final ProcessDebugger myDebugger;
   private final XBreakpointHandler[] myBreakpointHandlers;
@@ -93,7 +92,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
       myProcessHandler.addProcessListener(this);
     }
     if (processHandler instanceof PyRemoteProcessHandlerBase) {
-      myPositionConverter = new PyRemotePositionConverter(this, ((PyRemoteProcessHandlerBase)processHandler).getRemoteDebugConfiguration().getPathMapping());
+      myPositionConverter = new PyRemotePositionConverter(this, ((PyRemoteProcessHandlerBase)processHandler).getRemoteDebugConfiguration().getMappingSettings());
     }
     else {
       myPositionConverter = new PyLocalPositionConverter();

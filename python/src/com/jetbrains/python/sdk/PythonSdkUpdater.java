@@ -18,6 +18,7 @@ import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.remote.PythonRemoteSdkAdditionalData;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -90,17 +91,7 @@ public class PythonSdkUpdater implements StartupActivity {
                 @Override
                 public void run(@NotNull ProgressIndicator indicator) {
                   for (final Sdk sdk : sdksToUpdate) {
-                    PythonSdkType.refreshSkeletonsOfSDK(sdk); // NOTE: whole thing would need a rename
-
-                    long start_time = System.currentTimeMillis();
-                    final List<String> sysPath = PythonSdkType.getSysPath(sdk.getHomePath());
-                    ApplicationManager.getApplication().invokeLater(new Runnable() {
-                      @Override
-                      public void run() {
-                        updateSdkPath(sdk, sysPath);
-                      }
-                    });
-                    LOG.info("Updating sys.path took " + (System.currentTimeMillis() - start_time) + " ms");
+                    updateSdk(sdk);
 
                     myAlreadyUpdated.add(sdk.getHomePath());
                   }
@@ -111,6 +102,23 @@ public class PythonSdkUpdater implements StartupActivity {
         }
       });
     }
+  }
+
+  private void updateSdk(final Sdk sdk) {
+    if (sdk.getSdkAdditionalData() instanceof PythonRemoteSdkAdditionalData) {
+      return; //TODO: implement updating for remote interpreter
+    }
+    PythonSdkType.refreshSkeletonsOfSDK(sdk); // NOTE: whole thing would need a rename
+
+    long start_time = System.currentTimeMillis();
+    final List<String> sysPath = PythonSdkType.getSysPath(sdk.getHomePath());
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        updateSdkPath(sdk, sysPath);
+      }
+    });
+    LOG.info("Updating sys.path took " + (System.currentTimeMillis() - start_time) + " ms");
   }
 
   private static void updateSdkPath(Sdk sdk, List<String> sysPath) {

@@ -20,10 +20,8 @@ public class PyPySdkFlavor extends PythonSdkFlavor {
 
   public static PyPySdkFlavor INSTANCE = new PyPySdkFlavor();
 
-  @Override
-  public boolean isValidSdkHome(String path) {
-    File file = new File(path);
-    return file.isFile() && FileUtil.getNameWithoutExtension(file).toLowerCase().startsWith("pypy");
+  public boolean isValidSdkPath(@NotNull File file) {
+    return FileUtil.getNameWithoutExtension(file).toLowerCase().startsWith("pypy");
   }
 
   public String getVersionRegexp() {

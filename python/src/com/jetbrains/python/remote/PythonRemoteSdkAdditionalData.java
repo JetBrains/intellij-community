@@ -12,6 +12,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -55,6 +56,11 @@ public class PythonRemoteSdkAdditionalData extends PythonSdkAdditionalData imple
 
   public PythonRemoteSdkAdditionalData(@Nullable PythonSdkFlavor flavor) {
     super(flavor);
+  }
+
+  public PythonRemoteSdkAdditionalData(@NotNull String interpreterPath) {
+    super(computeFlavor(interpreterPath));
+    setInterpreterPath(interpreterPath);
   }
 
   public String getInterpreterPath() {
@@ -241,7 +247,7 @@ public class PythonRemoteSdkAdditionalData extends PythonSdkAdditionalData imple
 
   @NotNull
   public static PythonRemoteSdkAdditionalData loadRemote(Sdk sdk, @Nullable Element element) {
-    final PythonRemoteSdkAdditionalData data = new PythonRemoteSdkAdditionalData(computeFlavor(sdk.getHomePath()));
+    final PythonRemoteSdkAdditionalData data = new PythonRemoteSdkAdditionalData(sdk.getHomePath());
     load(element, data);
 
     if (element != null) {
@@ -269,7 +275,7 @@ public class PythonRemoteSdkAdditionalData extends PythonSdkAdditionalData imple
       return null;
     }
     for (PythonSdkFlavor flavor : getApplicableFlavors(sdkPath.contains("\\"))) {
-      if (flavor.isValidSdkHome(sdkPath)) {
+      if (flavor.isValidSdkPath(new File(sdkPath))) {
         return flavor;
       }
     }
@@ -311,25 +317,75 @@ public class PythonRemoteSdkAdditionalData extends PythonSdkAdditionalData imple
   public Object clone() throws CloneNotSupportedException {
     try {
       final PythonRemoteSdkAdditionalData copy = (PythonRemoteSdkAdditionalData)super.clone();
-      copy.setHost(getHost());
-      copy.setPort(getPort());
-      copy.setAnonymous(isAnonymous());
-      copy.setUserName(getUserName());
-      copy.setPassword(getPassword());
-      copy.setPrivateKeyFile(getPrivateKeyFile());
-      copy.setKnownHostsFile(getKnownHostsFile());
-      copy.setPassphrase(getPassphrase());
-      copy.setUseKeyPair(isUseKeyPair());
-
-      copy.setInterpreterPath(getInterpreterPath());
-      copy.setStorePassword(isStorePassword());
-      copy.setStorePassphrase(isStorePassphrase());
+      copyTo(copy);
 
       return copy;
     }
     catch (CloneNotSupportedException e) {
       return null;
     }
+  }
+
+  public void copyTo(PythonRemoteSdkAdditionalData copy) {
+    copy.setHost(getHost());
+    copy.setPort(getPort());
+    copy.setAnonymous(isAnonymous());
+    copy.setUserName(getUserName());
+    copy.setPassword(getPassword());
+    copy.setPrivateKeyFile(getPrivateKeyFile());
+    copy.setKnownHostsFile(getKnownHostsFile());
+    copy.setPassphrase(getPassphrase());
+    copy.setUseKeyPair(isUseKeyPair());
+
+    copy.setInterpreterPath(getInterpreterPath());
+    copy.setStorePassword(isStorePassword());
+    copy.setStorePassphrase(isStorePassphrase());
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    PythonRemoteSdkAdditionalData data = (PythonRemoteSdkAdditionalData)o;
+
+    if (myAnonymous != data.myAnonymous) return false;
+    if (myPort != data.myPort) return false;
+    if (myStorePassphrase != data.myStorePassphrase) return false;
+    if (myStorePassword != data.myStorePassword) return false;
+    if (myUseKeyPair != data.myUseKeyPair) return false;
+    if (myHost != null ? !myHost.equals(data.myHost) : data.myHost != null) return false;
+    if (myInterpreterPath != null ? !myInterpreterPath.equals(data.myInterpreterPath) : data.myInterpreterPath != null) return false;
+    if (myKnownHostsFile != null ? !myKnownHostsFile.equals(data.myKnownHostsFile) : data.myKnownHostsFile != null) return false;
+    if (myPassphrase != null ? !myPassphrase.equals(data.myPassphrase) : data.myPassphrase != null) return false;
+    if (myPassword != null ? !myPassword.equals(data.myPassword) : data.myPassword != null) return false;
+    if (myPrivateKeyFile != null ? !myPrivateKeyFile.equals(data.myPrivateKeyFile) : data.myPrivateKeyFile != null) return false;
+    if (myPyCharmTempFilesPath != null
+        ? !myPyCharmTempFilesPath.equals(data.myPyCharmTempFilesPath)
+        : data.myPyCharmTempFilesPath != null) {
+      return false;
+    }
+    if (myUserName != null ? !myUserName.equals(data.myUserName) : data.myUserName != null) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myHost != null ? myHost.hashCode() : 0;
+    result = 31 * result + myPort;
+    result = 31 * result + (myAnonymous ? 1 : 0);
+    result = 31 * result + (myUserName != null ? myUserName.hashCode() : 0);
+    result = 31 * result + (myPassword != null ? myPassword.hashCode() : 0);
+    result = 31 * result + (myUseKeyPair ? 1 : 0);
+    result = 31 * result + (myPrivateKeyFile != null ? myPrivateKeyFile.hashCode() : 0);
+    result = 31 * result + (myKnownHostsFile != null ? myKnownHostsFile.hashCode() : 0);
+    result = 31 * result + (myPassphrase != null ? myPassphrase.hashCode() : 0);
+    result = 31 * result + (myStorePassword ? 1 : 0);
+    result = 31 * result + (myStorePassphrase ? 1 : 0);
+    result = 31 * result + (myInterpreterPath != null ? myInterpreterPath.hashCode() : 0);
+    result = 31 * result + (myPyCharmTempFilesPath != null ? myPyCharmTempFilesPath.hashCode() : 0);
+    return result;
   }
 }
 

@@ -47,8 +47,8 @@ public class IronPythonSdkFlavor extends PythonSdkFlavor {
   }
 
   @Override
-  public boolean isValidSdkHome(String path) {
-    final String name = new File(path).getName();
+  public boolean isValidSdkPath(@NotNull File file) {
+    final String name = file.getName();
     return name.equals("ipy.exe") || name.equals("ipy64.exe");
   }
 

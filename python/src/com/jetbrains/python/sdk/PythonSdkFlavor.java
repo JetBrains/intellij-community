@@ -106,7 +106,11 @@ public abstract class PythonSdkFlavor {
    */
   public boolean isValidSdkHome(String path) {
     File file = new File(path);
-    return file.isFile() && FileUtil.getNameWithoutExtension(file).toLowerCase().startsWith("python");
+    return file.isFile() && isValidSdkPath(file);
+  }
+
+  public boolean isValidSdkPath(@NotNull File file) {
+    return FileUtil.getNameWithoutExtension(file).toLowerCase().startsWith("python");
   }
 
   public String getVersionString(String sdkHome) {

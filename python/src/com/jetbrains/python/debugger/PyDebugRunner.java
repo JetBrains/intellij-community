@@ -25,7 +25,10 @@ import com.jetbrains.python.console.PythonConsoleView;
 import com.jetbrains.python.console.PythonDebugConsoleCommunication;
 import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
-import com.jetbrains.python.run.*;
+import com.jetbrains.python.run.AbstractPythonRunConfiguration;
+import com.jetbrains.python.run.CommandLinePatcher;
+import com.jetbrains.python.run.PythonCommandLineState;
+import com.jetbrains.python.run.PythonRunConfiguration;
 import com.jetbrains.python.sdk.PythonSdkFlavor;
 import com.jetbrains.rest.run.RestRunConfiguration;
 import org.jetbrains.annotations.NotNull;
@@ -33,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.util.List;
 
 /**
  * @author yole
@@ -41,6 +45,9 @@ public class PyDebugRunner extends GenericProgramRunner {
   public static final String PY_DEBUG_RUNNER = "PyDebugRunner";
 
   public static final String DEBUGGER_MAIN = "pydev/pydevd.py";
+  public static final String CLIENT_PARAM = "--client";
+  public static final String PORT_PARAM = "--port";
+  public static final String FILE_PARAM = "--file";
 
   @NotNull
   public String getRunnerId() {
@@ -48,7 +55,9 @@ public class PyDebugRunner extends GenericProgramRunner {
   }
 
   public boolean canRun(@NotNull String executorId, @NotNull RunProfile profile) {
-    return DefaultDebugExecutor.EXECUTOR_ID.equals(executorId) && profile instanceof AbstractPythonRunConfiguration && !(profile instanceof RestRunConfiguration);
+    return DefaultDebugExecutor.EXECUTOR_ID.equals(executorId) &&
+           profile instanceof AbstractPythonRunConfiguration &&
+           !(profile instanceof RestRunConfiguration);
   }
 
   protected RunContentDescriptor doExecute(final Project project, Executor executor, RunProfileState profileState,
@@ -75,7 +84,8 @@ public class PyDebugRunner extends GenericProgramRunner {
         @NotNull
         public XDebugProcess start(@NotNull final XDebugSession session) {
           PyDebugProcess pyDebugProcess =
-            new PyDebugProcess(session, serverSocket, result.getExecutionConsole(), result.getProcessHandler(), pyState.isMultiprocessDebug());
+            new PyDebugProcess(session, serverSocket, result.getExecutionConsole(), result.getProcessHandler(),
+                               pyState.isMultiprocessDebug());
 
           createConsoleCommunicationAndSetupActions(project, result, pyDebugProcess);
 
@@ -84,6 +94,15 @@ public class PyDebugRunner extends GenericProgramRunner {
         }
       });
     return session.getRunContentDescriptor();
+  }
+
+  public static int findIndex(List<String> paramList, String paramName) {
+    for (int i = 0; i < paramList.size(); i++) {
+      if (paramName.equals(paramList.get(i))) {
+        return i + 1;
+      }
+    }
+    return -1;
   }
 
   protected static void createConsoleCommunicationAndSetupActions(@NotNull final Project project,
@@ -168,9 +187,9 @@ public class PyDebugRunner extends GenericProgramRunner {
     }
 
     final String[] debuggerArgs = new String[]{
-      "--client", "127.0.0.1",
-      "--port", String.valueOf(serverLocalPort),
-      "--file"
+      CLIENT_PARAM, "127.0.0.1",
+      PORT_PARAM, String.valueOf(serverLocalPort),
+      FILE_PARAM
     };
     for (String s : debuggerArgs) {
       debugParams.addParameter(s);
