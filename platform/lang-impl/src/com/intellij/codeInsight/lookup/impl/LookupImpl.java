@@ -771,6 +771,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   }
 
   private void insertLookupString(LookupElement item, final String prefix) {
+    Document document = myEditor.getDocument();
+
     String lookupString = getCaseCorrectedLookupString(item);
 
     if (myEditor.getSelectionModel().hasBlockSelection()) {
@@ -779,9 +781,15 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       assert blockStart != null && blockEnd != null;
 
       for (int line = blockStart.line; line <= blockEnd.line; line++) {
-        myEditor.getDocument().replaceString(myEditor.logicalPositionToOffset(new LogicalPosition(line, blockStart.column)) - prefix.length(),
-                                             myEditor.logicalPositionToOffset(new LogicalPosition(line, blockEnd.column)),
-                                             lookupString);
+        int bs = myEditor.logicalPositionToOffset(new LogicalPosition(line, blockStart.column));
+        int start = bs - prefix.length();
+        int end = myEditor.logicalPositionToOffset(new LogicalPosition(line, blockEnd.column));
+        if (start >= end) {
+          LOG.error("bs=" + bs + "; start=" + start + "; end=" + end +
+                    "; blockStart=" + blockStart + "; blockEnd=" + blockEnd + "; line=" + line + "; len=" +
+                    (document.getLineEndOffset(line) - document.getLineStartOffset(line)));
+        }
+        document.replaceString(start, end, lookupString);
       }
       LogicalPosition start = new LogicalPosition(blockStart.line, blockStart.column - prefix.length());
       LogicalPosition end = new LogicalPosition(blockEnd.line, start.column + lookupString.length());
@@ -792,11 +800,12 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       final int caretOffset = myEditor.getCaretModel().getOffset();
       int lookupStart = caretOffset - prefix.length();
   
-      int len = myEditor.getDocument().getTextLength();
-      LOG.assertTrue(lookupStart >= 0 && lookupStart <= len, "ls: " + lookupStart + " caret: " + caretOffset + " prefix:" + prefix + " doc: " + len);
+      int len = document.getTextLength();
+      LOG.assertTrue(lookupStart >= 0 && lookupStart <= len,
+                     "ls: " + lookupStart + " caret: " + caretOffset + " prefix:" + prefix + " doc: " + len);
       LOG.assertTrue(caretOffset >= 0 && caretOffset <= len, "co: " + caretOffset + " doc: " + len);
-  
-      myEditor.getDocument().replaceString(lookupStart, caretOffset, lookupString);
+
+      document.replaceString(lookupStart, caretOffset, lookupString);
   
       int offset = lookupStart + lookupString.length();
       myEditor.getCaretModel().moveToOffset(offset);
