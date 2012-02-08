@@ -25,7 +25,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
@@ -48,7 +47,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrRe
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
-import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ClosureMissingMethodContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -88,7 +86,6 @@ public class CompleteReferenceExpression {
 
   private static void getVariantsImpl(PrefixMatcher matcher, GrReferenceExpression refExpr, CompleteReferenceProcessor processor) {
     GrExpression qualifier = refExpr.getQualifierExpression();
-    getVariantsWithSameQualifier(matcher, qualifier, refExpr, processor);
     if (qualifier == null) {
       ResolveUtil.treeWalkUp(refExpr, processor, true);
 
@@ -228,7 +225,8 @@ public class CompleteReferenceExpression {
           return;
         }
       }
-      getVariantsFromQualifierType(refExpr, processor, GrClassImplUtil.getGroovyObjectType(refExpr), project);
+      getVariantsFromQualifierType(refExpr, processor,
+                                   PsiType.getJavaLangObject(refExpr.getManager(), qualifier.getResolveScope()), project);
     }
     else if (qualifierType instanceof PsiIntersectionType) {
       for (PsiType conjunct : ((PsiIntersectionType)qualifierType).getConjuncts()) {
@@ -256,20 +254,19 @@ public class CompleteReferenceExpression {
     }
   }
 
-  private static String[] getVariantsWithSameQualifier(PrefixMatcher matcher,GrExpression qualifier, GrReferenceExpression refExpr, CompleteReferenceProcessor processor) {
-    if (qualifier != null && qualifier.getType() != null) return ArrayUtil.EMPTY_STRING_ARRAY;
+  public static Set<String> getVariantsWithSameQualifier(PrefixMatcher matcher, @Nullable GrExpression qualifier, GrReferenceExpression refExpr) {
+    if (qualifier != null && qualifier.getType() != null) return Collections.emptySet();
 
     final PsiElement scope = PsiTreeUtil.getParentOfType(refExpr, GrMember.class, PsiFile.class);
     Set<String> result = new LinkedHashSet<String>();
-    addVariantsWithSameQualifier(matcher, scope, refExpr, qualifier, result, processor);
-    return ArrayUtil.toStringArray(result);
+    addVariantsWithSameQualifier(matcher, scope, refExpr, qualifier, result);
+    return result;
   }
 
   private static void addVariantsWithSameQualifier(PrefixMatcher matcher, PsiElement element,
                                                    GrReferenceExpression patternExpression,
                                                    GrExpression patternQualifier,
-                                                   Set<String> result,
-                                                   CompleteReferenceProcessor processor) {
+                                                   Set<String> result) {
     if (element instanceof GrReferenceExpression && element != patternExpression && !PsiUtil.isLValue((GroovyPsiElement)element)) {
       final GrReferenceExpression refExpr = (GrReferenceExpression)element;
       final String refName = refExpr.getReferenceName();
@@ -279,21 +276,19 @@ public class CompleteReferenceExpression {
           if (PsiEquivalenceUtil.areElementsEquivalent(hisQualifier, patternQualifier)) {
             if (refExpr.resolve() == null) {
               result.add(refName);
-              processor.consume(refName);
             }
           }
         }
         else if (hisQualifier == null && patternQualifier == null) {
           if (refExpr.resolve() == null) {
             result.add(refName);
-            processor.consume(refName);
           }
         }
       }
     }
 
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
-      addVariantsWithSameQualifier(matcher, child, patternExpression, patternQualifier, result, processor);
+      addVariantsWithSameQualifier(matcher, child, patternExpression, patternQualifier, result);
     }
   }
 

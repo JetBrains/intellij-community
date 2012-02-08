@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.file.JavaDirectoryServiceImpl;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.util.ArrayUtil;
@@ -76,9 +77,12 @@ public class JavaMoveFilesOrDirectoriesHandler extends MoveFilesOrDirectoriesHan
             @Override
             protected void run(Result<PsiElement[]> result) throws Throwable {
               final List<PsiElement> adjustedElements = new ArrayList<PsiElement>();
-              for (PsiElement element : elements) {
+              for (int i = 0, length = elements.length; i < length; i++) {
+                PsiElement element = elements[i];
                 if (element instanceof PsiClass) {
-                  final PsiFile containingFile = obtainContainingFile(element, elements);
+                  final PsiClass topLevelClass = PsiUtil.getTopLevelClass(element);
+                  elements[i] = topLevelClass;
+                  final PsiFile containingFile = obtainContainingFile(topLevelClass, elements);
                   if (containingFile != null && !adjustedElements.contains(containingFile)) {
                     adjustedElements.add(containingFile);
                   }

@@ -346,6 +346,9 @@ public class JavaCompletionUtil {
 
   @Nullable
   private static PsiType getPsiType(final Object o) {
+    if (o instanceof ResolveResult) {
+      return getPsiType(((ResolveResult)o).getElement());
+    }
     if (o instanceof PsiVariable) {
       return ((PsiVariable)o).getType();
     }

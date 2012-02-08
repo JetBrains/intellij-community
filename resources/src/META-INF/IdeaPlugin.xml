@@ -213,10 +213,12 @@
     <completion.confidence language="JAVA" implementationClass="com.intellij.codeInsight.completion.AlwaysFocusLookup" id="javaTrue" order="last"/>
     <completion.confidence language="JAVA" implementationClass="com.intellij.codeInsight.completion.SkipAutopopupInStrings" id="javaSkipAutopopupInStrings"/>
 
+    <completion.contributor language="JAVA" implementationClass="com.intellij.codeInspection.magicConstant.MagicCompletionContributor"
+                            id="magicCompletion, after javaBasic2ClassName"/>
     <completion.contributor language="JAVA" implementationClass="com.intellij.codeInsight.completion.JavaNoVariantsDelegator" id="javaBasic2ClassName"
-                            order="first, before javaMemberName, after liveTemplates"/>
+                            order="before javaMemberName, before javaLegacy, after liveTemplates"/>
     <completion.contributor language="XML" implementationClass="com.intellij.codeInsight.completion.XmlBasicToClassNameDelegator" id="basic2ClassName"
-                            order="first, after xml"/>
+                            order="after xml"/>
     <completion.contributor language="JAVA" implementationClass="com.intellij.codeInsight.completion.JavaCompletionContributor" id="javaLegacy"
                             order="last, before legacy, before default, before javaClassName"/>
     <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.JavaClassReferenceCompletionContributor"
@@ -1211,6 +1213,8 @@
     <wizardMode implementation="com.intellij.ide.util.newProjectWizard.modes.CreateProjectFromSourcesMode" id="CreateProjectFromSourcesMode" order="after CreateFromScratchMode"/>
     <wizardMode implementation="com.intellij.ide.util.newProjectWizard.modes.CreateModuleFromSourcesMode" id="CreateModuleFromSourcesMode" order="after CreateProjectFromSourcesMode"/>
     <projectStructureDetector implementation="com.intellij.ide.util.projectWizard.importSources.impl.JavaProjectStructureDetector" order="first"/>
+
+    <applicationService serviceImplementation="com.intellij.execution.JavaRunConfigurationExtensionManager"/>
 
     <regExpLanguageHost forClass="com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl"
                         implementationClass="com.intellij.psi.impl.JavaRegExpHost"/>

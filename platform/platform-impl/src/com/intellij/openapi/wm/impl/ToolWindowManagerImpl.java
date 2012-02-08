@@ -39,6 +39,7 @@ import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -2186,6 +2187,9 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         if (root != null) {
           JComponent toFocus = IdeFocusTraversalPolicy.getPreferredFocusedComponent(root);
           if (toFocus != null) {
+            if (DialogWrapper.findInstance(toFocus) != null) {
+              return new ActionCallback.Done(); //IDEA-80929
+            }
             return IdeFocusManager.findInstanceByComponent(toFocus).requestFocus(toFocus, forced);
           }
         }
