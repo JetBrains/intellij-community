@@ -41,6 +41,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.pom.Navigatable;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
@@ -88,7 +89,7 @@ public class ExecutionHelper {
           return;
         }
 
-        final RailsErrorViewPanel errorTreeView = new RailsErrorViewPanel(myProject);
+        final ErrorViewPanel errorTreeView = new ErrorViewPanel(myProject);
         try {
           openMessagesView(errorTreeView, myProject, tabDisplayName);
         }
@@ -113,7 +114,79 @@ public class ExecutionHelper {
     });
   }
 
-  private static void openMessagesView(@NotNull final RailsErrorViewPanel errorTreeView,
+  public static void showOutput(@NotNull final Project myProject,
+                                @NotNull final Output output,
+                                @NotNull final String tabDisplayName,
+                                @Nullable final VirtualFile file,
+                                final boolean activateWindow) {
+    final String stdout = output.getStdout();
+    final String stderr = output.getStderr();
+    if (ApplicationManager.getApplication().isUnitTestMode() && !(stdout.isEmpty() || stderr.isEmpty())) {
+      throw new RuntimeException("STDOUT:\n" + stdout + "\nSTDERR:\n" + stderr);
+    }
+
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      public void run() {
+        if (myProject.isDisposed()) return;
+
+        final String stdOutTitle = "[Stdout]:";
+        final String stderrTitle = "[Stderr]:";
+        final ErrorViewPanel errorTreeView = new ErrorViewPanel(myProject);
+        try {
+          openMessagesView(errorTreeView, myProject, tabDisplayName);
+        }
+        catch (NullPointerException e) {
+          final StringBuilder builder = new StringBuilder();
+          builder.append(stdOutTitle).append("\n").append(stdout != null ? stdout : "<empty>").append("\n");
+          builder.append(stderrTitle).append("\n").append(stderr != null ? stderr : "<empty>");
+          Messages.showErrorDialog(builder.toString(), "Process Output");
+          return;
+        }
+
+        if (!StringUtil.isEmpty(stdout)) {
+          final String[] stdoutLines = StringUtil.splitByLines(stdout);
+          if (stdoutLines.length > 0) {
+            if (StringUtil.isEmpty(stderr)) {
+              // Only stdout available
+              errorTreeView.addMessage(MessageCategory.SIMPLE, stdoutLines, file, -1, -1, null);
+            }
+            else {
+              // both stdout and stderr available, show as groups
+              if (file == null) {
+                errorTreeView.addMessage(MessageCategory.SIMPLE, stdoutLines, stdOutTitle, new FakeNavigatable(), null, null, null);
+              }
+              else {
+                errorTreeView.addMessage(MessageCategory.SIMPLE, new String[]{stdOutTitle}, file, -1, -1, null);
+                errorTreeView.addMessage(MessageCategory.SIMPLE, new String[]{""}, file, -1, -1, null);
+                errorTreeView.addMessage(MessageCategory.SIMPLE, stdoutLines, file, -1, -1, null);
+              }
+            }
+          }
+        }
+        if (!StringUtil.isEmpty(stderr)) {
+          final String[] stderrLines = StringUtil.splitByLines(stderr);
+          if (stderrLines.length > 0) {
+            if (file == null) {
+              errorTreeView.addMessage(MessageCategory.SIMPLE, stderrLines, stderrTitle, new FakeNavigatable(), null, null, null);
+            }
+            else {
+              errorTreeView.addMessage(MessageCategory.SIMPLE, new String[]{stderrTitle}, file, -1, -1, null);
+              errorTreeView.addMessage(MessageCategory.SIMPLE, new String[0], file, -1, -1, null);
+              errorTreeView.addMessage(MessageCategory.SIMPLE, stderrLines, file, -1, -1, null);
+            }
+          }
+        }
+        errorTreeView
+          .addMessage(MessageCategory.SIMPLE, new String[]{"Process finished with exit code " + output.getExitCode()}, null, -1, -1, null);
+
+        if (activateWindow) {
+          ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.MESSAGES_WINDOW).activate(null);
+        }
+      }
+    });
+  }
+
+  private static void openMessagesView(@NotNull final ErrorViewPanel errorTreeView,
                                        @NotNull final Project myProject,
                                        @NotNull final String tabDisplayName) {
     CommandProcessor commandProcessor = CommandProcessor.getInstance();
@@ -267,8 +340,8 @@ public class ExecutionHelper {
     });
   }
 
-  public static class RailsErrorViewPanel extends NewErrorTreeViewPanel {
-    public RailsErrorViewPanel(final Project project) {
+  public static class ErrorViewPanel extends NewErrorTreeViewPanel {
+    public ErrorViewPanel(final Project project) {
       super(project, "reference.toolWindows.messages");
     }
 
@@ -282,9 +355,9 @@ public class ExecutionHelper {
                                             @NotNull final ProcessHandler processHandler,
                                             @NotNull final ExecutionMode mode,
                                             @NotNull final GeneralCommandLine cmdline) {
-    executeExternalProcess(myProject,  processHandler,  mode, cmdline.getCommandLineString());
+    executeExternalProcess(myProject, processHandler, mode, cmdline.getCommandLineString());
   }
-  
+
   public static void executeExternalProcess(@Nullable final Project myProject,
                                             @NotNull final ProcessHandler processHandler,
                                             @NotNull final ExecutionMode mode,
@@ -349,7 +422,7 @@ public class ExecutionHelper {
 
       private final Runnable myCancelListener = new Runnable() {
         public void run() {
-          for (; ;) {
+          for (; ; ) {
             if ((myProgressIndicator != null && (myProgressIndicator.isCanceled()
                                                  || !myProgressIndicator.isRunning()))
                 || (cancelableFun != null && cancelableFun.fun(null).booleanValue())
@@ -405,7 +478,7 @@ public class ExecutionHelper {
           try {
             final boolean finished = processHandler.waitFor(1000 * timeout);
             if (!finished) {
-              final String msg = "Timeout (" + timeout + " sec) on executing: " +  presentableCmdline;
+              final String msg = "Timeout (" + timeout + " sec) on executing: " + presentableCmdline;
               LOG.error(msg);
               processHandler.destroyProcess();
             }
@@ -423,5 +496,22 @@ public class ExecutionHelper {
         mySemaphore.waitFor();
       }
     };
+  }
+
+  public static class FakeNavigatable implements Navigatable {
+    @Override
+    public void navigate(boolean requestFocus) {
+      // Do nothing
+    }
+
+    @Override
+    public boolean canNavigate() {
+      return false;
+    }
+
+    @Override
+    public boolean canNavigateToSource() {
+      return false;
+    }
   }
 }
