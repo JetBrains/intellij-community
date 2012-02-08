@@ -65,7 +65,11 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
   }
 
   private String maybeAddParentheses(String s) {
-    return myQualifier.getObject() instanceof PsiMethod ? s + "()" : s;
+    Object qObject = myQualifier.getObject();
+    if (qObject instanceof ResolveResult) {
+      qObject = ((ResolveResult)qObject).getElement();
+    }
+    return qObject instanceof PsiMethod ? s + "()" : s;
   }
 
   @Override
@@ -99,7 +103,7 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
     CompletionUtil.emulateInsertion(getDelegate(), context.getTailOffset(), context);
   }
 
-  private static boolean shouldParenthesizeQualifier(final PsiFile file, final int startOffset, final int endOffset) {
+  protected boolean shouldParenthesizeQualifier(final PsiFile file, final int startOffset, final int endOffset) {
     PsiElement element = file.findElementAt(startOffset);
     if (element == null) {
       return false;

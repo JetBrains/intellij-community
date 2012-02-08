@@ -1108,6 +1108,18 @@ public class KeyVO {
     checkSingleItemCompletion 'class Foo impl<caret> {}', 'class Foo implements <caret> {}'
   }
 
+  public void testAmbiguousClassQualifier() {
+    myFixture.addClass("package foo; public class Util { public static void foo() {} }")
+    myFixture.addClass("package bar; public class Util { public static void bar() {} }")
+    myFixture.configureByText 'a.groovy', 'Util.<caret>'
+    myFixture.completeBasic()
+    assert myFixture.lookupElementStrings[0..1] == ['Util.bar', 'Util.foo']
+    myFixture.type 'f\n'
+    myFixture.checkResult '''import foo.Util
+
+Util.foo()<caret>'''
+  }
+
   public void testPreferInterfacesInImplements() {
     myFixture.addClass('interface FooIntf {}')
     myFixture.addClass('class FooClass {}')
