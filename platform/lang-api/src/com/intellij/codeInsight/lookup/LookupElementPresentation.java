@@ -167,4 +167,10 @@ public class LookupElementPresentation {
   public void setTypeGrayed(boolean typeGrayed) {
     myTypeGrayed = typeGrayed;
   }
+
+  public static LookupElementPresentation renderElement(LookupElement element) {
+    LookupElementPresentation presentation = new LookupElementPresentation();
+    element.renderElement(presentation);
+    return presentation;
+  }
 }

@@ -1114,6 +1114,12 @@ public class KeyVO {
     myFixture.configureByText 'a.groovy', 'Util.<caret>'
     myFixture.completeBasic()
     assert myFixture.lookupElementStrings[0..1] == ['Util.bar', 'Util.foo']
+
+    def presentation = LookupElementPresentation.renderElement(myFixture.lookupElements[0])
+    assert 'Util.bar' == presentation.itemText
+    assert '() (bar)' == presentation.tailText
+    assert !presentation.tailGrayed
+
     myFixture.type 'f\n'
     myFixture.checkResult '''import foo.Util
 
