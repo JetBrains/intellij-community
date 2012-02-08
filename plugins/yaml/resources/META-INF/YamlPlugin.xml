@@ -9,7 +9,8 @@
     <lang.foldingBuilder language="yaml" implementationClass="org.jetbrains.yaml.folding.YAMLFoldingBuilder"/>
     <fileTypeFactory implementation="org.jetbrains.yaml.YAMLFileTypeLoader"/>
     <lang.psiStructureViewFactory language="yaml" implementationClass="org.jetbrains.yaml.structureView.YAMLStructureViewFactory"/>
-    <!-- <fileTypeIndentOptionsProvider implementation="org.jetbrains.yaml.YAMLIndentationOptionsProvider"/> -->
+    <langCodeStyleSettingsProvider implementation="org.jetbrains.yaml.YAMLLanguageCodeStyleSettingsProvider"/>
+    <codeStyleSettingsProvider implementation="org.jetbrains.yaml.YAMLCodeStyleSettingsProvider"/>
    </extensions>
   <project-components>
     <component>
