@@ -50,6 +50,7 @@ import static git4idea.util.GitUIUtil.code;
 class GitCheckoutOperation extends GitBranchOperation {
 
   private static final Logger LOG = Logger.getInstance(GitCheckoutOperation.class);
+  public static final String ROLLBACK_PROPOSAL_FORMAT = "You may rollback (checkout back to %s) not to let branches diverge.";
 
   @NotNull private final String myStartPointReference;
   @Nullable private final String myNewBranch;
@@ -142,7 +143,7 @@ class GitCheckoutOperation extends GitBranchOperation {
   protected String getRollbackProposal() {
     return "However checkout has succeeded for the following " + repositories() + ":<br/>" +
            successfulRepositoriesJoined() +
-           "<br/>You may rollback (checkout back to " + myPreviousBranch + ") not to let branches diverge.";
+           "<br/>" + String.format(ROLLBACK_PROPOSAL_FORMAT, myPreviousBranch);
   }
 
   @NotNull

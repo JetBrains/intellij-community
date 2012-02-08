@@ -47,6 +47,7 @@ import static git4idea.commands.GitMessageWithFilesDetector.Event.UNTRACKED_FILE
 class GitMergeOperation extends GitBranchOperation {
 
   private static final Logger LOG = Logger.getInstance(GitMergeOperation.class);
+  public static final String ROLLBACK_PROPOSAL = "You may rollback (reset to the commit before merging) not to let branches diverge.";
 
   @NotNull private final ChangeListManager myChangeListManager;
   @NotNull private final String myBranchToMerge;
@@ -287,7 +288,7 @@ class GitMergeOperation extends GitBranchOperation {
   protected String getRollbackProposal() {
     return "However merge has succeeded for the following " + repositories() + ":<br/>" +
            successfulRepositoriesJoined() +
-           "<br/>You may rollback (reset to the commit before merging) not to let branches diverge.";
+           "<br/>" + ROLLBACK_PROPOSAL;
   }
 
   @NotNull
