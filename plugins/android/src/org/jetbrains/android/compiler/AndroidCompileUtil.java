@@ -410,7 +410,7 @@ public class AndroidCompileUtil {
     }
   }
 
-  public static void doGenerate(final Module module, final AndroidAutogeneratorMode mode) {
+  public static boolean doGenerate(final Module module, final AndroidAutogeneratorMode mode) {
     final Project project = module.getProject();
     assert !ApplicationManager.getApplication().isDispatchThread();
     final CompileContext[] contextWrapper = new CompileContext[1];
@@ -424,6 +424,8 @@ public class AndroidCompileUtil {
       }
     });
     generate(module, mode, contextWrapper[0]);
+
+    return contextWrapper[0].getMessages(CompilerMessageCategory.ERROR).length == 0;
   }
 
   public static boolean isModuleAffected(CompileContext context, Module module) {
