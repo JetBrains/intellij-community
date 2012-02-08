@@ -10,7 +10,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
-      <library>
+      <library name="android-sdk-tools-jps">
         <CLASSES>
           <root url="jar://$MODULE_DIR$/../lib/sdklib.jar!/" />
         </CLASSES>
