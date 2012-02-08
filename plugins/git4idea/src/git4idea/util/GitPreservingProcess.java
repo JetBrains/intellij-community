@@ -57,6 +57,8 @@ public class GitPreservingProcess {
   @NotNull private final String myStashMessage;
 
   private GitStashChangesSaver mySaver;
+  private boolean myLoaded;
+  private final Object LOAD_LOCK = new Object();
 
   public GitPreservingProcess(@NotNull Project project, @NotNull Collection<GitRepository> repositories,
                               @NotNull String operationTitle, @NotNull String destinationName,
@@ -148,13 +150,19 @@ public class GitPreservingProcess {
   }
 
   public void load() {
-    try {
-      mySaver.load();
-    }
-    catch (VcsException e) {
-      LOG.info("Couldn't load local changes", e);
-      NotificationManager.getInstance(myProject).notifyError("Couldn't restore uncommitted changes",
-        String.format("Tried to unstash uncommitted changes, but failed with error.<br/>%s",join(e.getMessages())));
+    synchronized (LOAD_LOCK) {
+      if (myLoaded) {
+        return;
+      }
+      try {
+        mySaver.load();
+        myLoaded = true;
+      }
+      catch (VcsException e) {
+        LOG.info("Couldn't load local changes", e);
+        NotificationManager.getInstance(myProject).notifyError("Couldn't restore uncommitted changes",
+          String.format("Tried to unstash uncommitted changes, but failed with error.<br/>%s",join(e.getMessages())));
+      }
     }
   }
 
