@@ -24,6 +24,11 @@ public class IndentInfo {
   private final int mySpaces;
   private final int myIndentSpaces;
   private final int myLineFeeds;
+  //
+  // The flag is used for compatibility with older versions of Intellij IDEA where spaces could be replaced with tabs inside a line of code,
+  // not only in the beginning of the line.
+  //
+  private static boolean myInlineTabsEnabled = "true".equalsIgnoreCase(System.getProperty("enable.inline.tabs"));
 
   /** @see WhiteSpace#setForceSkipTabulationsUsage(boolean)  */
   private boolean   myForceSkipTabulationsUsage;
@@ -56,25 +61,47 @@ public class IndentInfo {
     StringBuffer buffer = new StringBuffer();
     StringUtil.repeatSymbol(buffer, '\n', myLineFeeds);
 
-    if (options.USE_TAB_CHARACTER) {
-      int tabCount = myIndentSpaces / options.TAB_SIZE;
-      int leftSpaces = myIndentSpaces - tabCount * options.TAB_SIZE;
-      if (tabCount > 0) {
-        StringUtil.repeatSymbol(buffer, '\t', tabCount);
+    if (options.USE_TAB_CHARACTER && !myForceSkipTabulationsUsage) {
+      if (options.SMART_TABS) {
+        return fillUsingSmartTabs(buffer, options);
       }
-      if (leftSpaces + mySpaces > 0) {
-        StringUtil.repeatSymbol(buffer, ' ', leftSpaces + mySpaces);
+      else if (myLineFeeds > 0 || myInlineTabsEnabled) {
+        return fillUsingTabs(buffer, options);
       }
     }
-    else {
-      int spaces = getTotalSpaces();
-      if (spaces > 0) {
-        StringUtil.repeatSymbol(buffer, ' ', spaces);
-      }
+    int spaces = getTotalSpaces();
+    if (spaces > 0) {
+      StringUtil.repeatSymbol(buffer, ' ', spaces);
     }
-
     return buffer.toString();
 
+  }
+
+  private String fillUsingTabs(StringBuffer buffer, CommonCodeStyleSettings.IndentOptions options) {
+    int size = getTotalSpaces();
+    while (size > 0) {
+      if (size >= options.TAB_SIZE) {
+        buffer.append('\t');
+        size -= options.TAB_SIZE;
+      }
+      else {
+        buffer.append(' ');
+        size--;
+      }
+    }
+    return buffer.toString();
+  }
+
+  private String fillUsingSmartTabs(StringBuffer buffer, CommonCodeStyleSettings.IndentOptions options) {
+    int tabCount = myIndentSpaces / options.TAB_SIZE;
+    int leftSpaces = myIndentSpaces - tabCount * options.TAB_SIZE;
+    if (tabCount > 0) {
+      StringUtil.repeatSymbol(buffer, '\t', tabCount);
+    }
+    if (leftSpaces + mySpaces > 0) {
+      StringUtil.repeatSymbol(buffer, ' ', leftSpaces + mySpaces);
+    }
+    return buffer.toString();
   }
 
   public int getTotalSpaces() {
