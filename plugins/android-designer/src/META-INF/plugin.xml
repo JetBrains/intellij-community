@@ -6,5 +6,5 @@
   <depends>com.intellij.java-i18n</depends>
   <depends>com.intellij.properties</depends>
   <depends>org.jetbrains.android</depends>
-  <depends>com.intellij.uiDesigner</depends>
+  <depends>com.intellij.ui-designer-new</depends>
 </idea-plugin>

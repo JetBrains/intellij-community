@@ -21,7 +21,7 @@
     <orderEntry type="module" module-name="platform-api" />
     <orderEntry type="module" module-name="spellchecker" />
     <orderEntry type="module" module-name="android" />
-    <orderEntry type="module" module-name="ui-designer" />
+    <orderEntry type="module" module-name="ui-designer-new" />
   </component>
 </module>
 
