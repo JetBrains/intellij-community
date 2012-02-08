@@ -17,6 +17,7 @@ package git4idea.branch;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.ui.IdeBorderFactory;
@@ -45,7 +46,7 @@ class GitSmartOperationDialog extends DialogWrapper {
   
   private final Project myProject;
   private final List<Change> myChanges;
-  @NotNull private final String myOperationTitle;
+  @NotNull private final String myCapitalizedOperationTitle;
   private final boolean myForceButton;
 
   /**
@@ -70,10 +71,10 @@ class GitSmartOperationDialog extends DialogWrapper {
     super(project);
     myProject = project;
     myChanges = changes;
-    myOperationTitle = operationTitle;
+    myCapitalizedOperationTitle = StringUtil.capitalize(operationTitle);
     myForceButton = forceButton;
-    setOKButtonText("Smart " + operationTitle);
-    setCancelButtonText("Don't " + operationTitle);
+    setOKButtonText("Smart " + myCapitalizedOperationTitle);
+    setCancelButtonText("Don't " + myCapitalizedOperationTitle);
     getCancelAction().putValue(FOCUSED_ACTION, Boolean.TRUE);
     init();
   }
@@ -81,7 +82,7 @@ class GitSmartOperationDialog extends DialogWrapper {
   @Override
   protected Action[] createLeftSideActions() {
     if (myForceButton) {
-      return new Action[] {new ForceCheckoutAction(myOperationTitle) };
+      return new Action[] {new ForceCheckoutAction(myCapitalizedOperationTitle) };
     }
     return new Action[0];
   }
