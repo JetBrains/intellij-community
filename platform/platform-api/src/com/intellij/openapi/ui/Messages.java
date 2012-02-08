@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1011,7 +1011,7 @@ public class Messages {
       messageComponent.setCaretPosition(0);
     }
 
-    if (UIUtil.isUnderNimbusLookAndFeel() || UIUtil.isUnderGTKLookAndFeel()) {
+    if (UIUtil.isUnderNimbusLookAndFeel()) {
       messageComponent.setOpaque(false);
       messageComponent.setBackground(UIUtil.TRANSPARENT_COLOR);
     }
