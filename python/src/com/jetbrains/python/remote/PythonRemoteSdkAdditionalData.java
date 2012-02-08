@@ -340,5 +340,51 @@ public class PythonRemoteSdkAdditionalData extends PythonSdkAdditionalData imple
     copy.setStorePassword(isStorePassword());
     copy.setStorePassphrase(isStorePassphrase());
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    PythonRemoteSdkAdditionalData data = (PythonRemoteSdkAdditionalData)o;
+
+    if (myAnonymous != data.myAnonymous) return false;
+    if (myPort != data.myPort) return false;
+    if (myStorePassphrase != data.myStorePassphrase) return false;
+    if (myStorePassword != data.myStorePassword) return false;
+    if (myUseKeyPair != data.myUseKeyPair) return false;
+    if (myHost != null ? !myHost.equals(data.myHost) : data.myHost != null) return false;
+    if (myInterpreterPath != null ? !myInterpreterPath.equals(data.myInterpreterPath) : data.myInterpreterPath != null) return false;
+    if (myKnownHostsFile != null ? !myKnownHostsFile.equals(data.myKnownHostsFile) : data.myKnownHostsFile != null) return false;
+    if (myPassphrase != null ? !myPassphrase.equals(data.myPassphrase) : data.myPassphrase != null) return false;
+    if (myPassword != null ? !myPassword.equals(data.myPassword) : data.myPassword != null) return false;
+    if (myPrivateKeyFile != null ? !myPrivateKeyFile.equals(data.myPrivateKeyFile) : data.myPrivateKeyFile != null) return false;
+    if (myPyCharmTempFilesPath != null
+        ? !myPyCharmTempFilesPath.equals(data.myPyCharmTempFilesPath)
+        : data.myPyCharmTempFilesPath != null) {
+      return false;
+    }
+    if (myUserName != null ? !myUserName.equals(data.myUserName) : data.myUserName != null) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myHost != null ? myHost.hashCode() : 0;
+    result = 31 * result + myPort;
+    result = 31 * result + (myAnonymous ? 1 : 0);
+    result = 31 * result + (myUserName != null ? myUserName.hashCode() : 0);
+    result = 31 * result + (myPassword != null ? myPassword.hashCode() : 0);
+    result = 31 * result + (myUseKeyPair ? 1 : 0);
+    result = 31 * result + (myPrivateKeyFile != null ? myPrivateKeyFile.hashCode() : 0);
+    result = 31 * result + (myKnownHostsFile != null ? myKnownHostsFile.hashCode() : 0);
+    result = 31 * result + (myPassphrase != null ? myPassphrase.hashCode() : 0);
+    result = 31 * result + (myStorePassword ? 1 : 0);
+    result = 31 * result + (myStorePassphrase ? 1 : 0);
+    result = 31 * result + (myInterpreterPath != null ? myInterpreterPath.hashCode() : 0);
+    result = 31 * result + (myPyCharmTempFilesPath != null ? myPyCharmTempFilesPath.hashCode() : 0);
+    return result;
+  }
 }
 
