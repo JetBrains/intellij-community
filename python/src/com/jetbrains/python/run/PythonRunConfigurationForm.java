@@ -9,6 +9,7 @@ import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.PanelWithAnchor;
@@ -80,22 +81,36 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
   }
 
   private void updateRemoteInterpreterMode() {
-    setRemoteInterpreterMode(isRemoteSdkSelected(myCommonOptionsForm.getSdkHome()));
+    setRemoteInterpreterMode(isRemoteSdkSelected());
     Object selection = myRemoteConfigurationCombo.getSelectedItem();
     myRemoteConfigurationCombo
       .setModel(new CollectionComboBoxModel(PyRemoteDebugConfiguration.listAllRemoteDebugConfigurations(myProject), selection));
-    myRemoteConfigurationCombo.setRenderer(new ListCellRendererWrapper<PyRemoteDebugConfiguration>(myRemoteConfigurationCombo.getRenderer()) {
-      @Override
-      public void customize(JList list, PyRemoteDebugConfiguration value, int index, boolean selected, boolean hasFocus) {
-        if (value != null) {
-        setText(value.getName());
-        setIcon(value.getIcon());
-        } else {
-          setText("<Select Python Remote Debug Configuration>");
-          setIcon(null);
+    myRemoteConfigurationCombo
+      .setRenderer(new ListCellRendererWrapper<PyRemoteDebugConfiguration>(myRemoteConfigurationCombo.getRenderer()) {
+        @Override
+        public void customize(JList list, PyRemoteDebugConfiguration value, int index, boolean selected, boolean hasFocus) {
+          if (value != null) {
+            setText(value.getName());
+            setIcon(value.getIcon());
+          }
+          else {
+            setText("<Select Python Remote Debug Configuration>");
+            setIcon(null);
+          }
         }
+      });
+  }
+
+  private boolean isRemoteSdkSelected() {
+    String sdkHome = myCommonOptionsForm.getSdkHome();
+    if (StringUtil.isEmptyOrSpaces(sdkHome)) {
+      final Sdk projectJdk = PythonSdkType.findPythonSdk(myCommonOptionsForm.getModule());
+      if (projectJdk != null) {
+        sdkHome = projectJdk.getHomePath();
       }
-    });
+    }
+
+    return isRemoteSdkSelected(sdkHome);
   }
 
   public static boolean isRemoteSdkSelected(String sdkHome) {
