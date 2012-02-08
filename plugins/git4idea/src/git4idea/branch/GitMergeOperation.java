@@ -73,7 +73,7 @@ class GitMergeOperation extends GitBranchOperation {
   @Override
   protected void execute() {
     boolean fatalErrorHappened = false;
-    boolean notAlreadyUpToDate = false;
+    int alreadyUpToDateRepositories = 0;
     while (hasMoreRepositories() && !fatalErrorHappened) {
       final GitRepository repository = next();
 
@@ -90,8 +90,8 @@ class GitMergeOperation extends GitBranchOperation {
       if (result.success()) {
         refresh(repository);
         markSuccessful(repository);
-        if (!alreadyUpToDateDetector.hasHappened()) {
-          notAlreadyUpToDate = true;
+        if (alreadyUpToDateDetector.hasHappened()) {
+          alreadyUpToDateRepositories += 1;
         }
       }
       else if (unmergedFiles.hasHappened()) {
@@ -122,7 +122,7 @@ class GitMergeOperation extends GitBranchOperation {
     boolean allConflictsResolved = resolveConflicts();
 
     if (!fatalErrorHappened && allConflictsResolved) {
-      if (notAlreadyUpToDate) {
+      if (alreadyUpToDateRepositories < getRepositories().size()) {
         notifySuccess();
       }
       else {
