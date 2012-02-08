@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import junit.framework.TestCase;
 import org.apache.log4j.Level;
 import org.apache.log4j.PropertyConfigurator;
@@ -341,8 +342,8 @@ public abstract class IncrementalTestCase extends TestCase {
         new AllProjectScope(project, Collections.<Artifact>emptySet(), false), true, false
       );
 
-      final String expected = FileUtil.loadFile(new File(getBaseDir() + ".log"));
-      final String actual = FileUtil.loadFile(new File(getWorkDir() + ".log"));
+      final String expected = StringUtil.convertLineSeparators(FileUtil.loadFile(new File(getBaseDir() + ".log")));
+      final String actual = StringUtil.convertLineSeparators(FileUtil.loadFile(new File(getWorkDir() + ".log")));
       assertEquals(expected, actual);
     }
     finally {
