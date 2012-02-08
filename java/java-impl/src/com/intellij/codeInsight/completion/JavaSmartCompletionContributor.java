@@ -155,14 +155,15 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
           final ElementFilter filter = getReferenceFilter(element);
           if (filter != null) {
             final List<ExpectedTypeInfo> infos = Arrays.asList(getExpectedTypes(parameters));
-            for (final LookupElement item : completeReference(element, reference, filter, true, parameters)) {
+            for (final LookupElement item : completeReference(element, reference, filter, true, false, parameters, result.getPrefixMatcher())) {
               if (item.getObject() instanceof PsiClass) {
                 result.addElement(decorate(LookupElementDecorator.withInsertHandler((LookupItem)item, ConstructorInsertHandler.SMART_INSTANCE), infos));
               }
             }
           }
           else if (INSIDE_TYPECAST_EXPRESSION.accepts(element)) {
-            for (final LookupElement item : completeReference(element, reference, new GeneratorFilter(AssignableToFilter.class, new CastTypeGetter()), false, parameters)) {
+            for (final LookupElement item : completeReference(element, reference, new GeneratorFilter(AssignableToFilter.class, new CastTypeGetter()), false, true, parameters,
+                                                              result.getPrefixMatcher())) {
               result.addElement(item);
             }
           }
@@ -182,7 +183,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
         final PsiElement element = parameters.getPosition();
         final PsiReference reference = element.getContainingFile().findReferenceAt(parameters.getOffset());
         assert reference != null;
-        for (final LookupElement item : completeReference(element, reference, THROWABLES_FILTER, true, parameters)) {
+        for (final LookupElement item : completeReference(element, reference, THROWABLES_FILTER, true, false, parameters, result.getPrefixMatcher())) {
           result.addElement(item);
         }
       }
@@ -456,7 +457,12 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
     return ExpectedTypesProvider.getExpectedTypes(expression, true, parameters.getCompletionType() == CompletionType.SMART, false);
   }
 
-  static Set<LookupElement> completeReference(final PsiElement element, PsiReference reference, final ElementFilter filter, final boolean acceptClasses, CompletionParameters parameters) {
+  static Set<LookupElement> completeReference(final PsiElement element,
+                                              PsiReference reference,
+                                              final ElementFilter filter,
+                                              final boolean acceptClasses,
+                                              final boolean acceptMembers,
+                                              CompletionParameters parameters, @Nullable final PrefixMatcher matcher) {
     if (reference instanceof PsiMultiReference) {
       reference = ContainerUtil.findInstance(((PsiMultiReference) reference).getReferences(), PsiJavaReference.class);
     }
@@ -470,15 +476,18 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
         }
 
         public boolean isClassAcceptable(Class hintClass) {
-          if (acceptClasses) {
-            return ReflectionCache.isAssignable(PsiClass.class, hintClass);
+          if (ReflectionCache.isAssignable(PsiClass.class, hintClass)) {
+            return acceptClasses;
           }
 
-          return ReflectionCache.isAssignable(PsiVariable.class, hintClass) ||
-                 ReflectionCache.isAssignable(PsiMethod.class, hintClass) ||
-                 ReflectionCache.isAssignable(CandidateInfo.class, hintClass);
+          if (ReflectionCache.isAssignable(PsiVariable.class, hintClass) ||
+              ReflectionCache.isAssignable(PsiMethod.class, hintClass) ||
+              ReflectionCache.isAssignable(CandidateInfo.class, hintClass)) {
+            return acceptMembers;
+          }
+          return false;
         }
-      }, true, parameters.getInvocationCount() <= 1, null, parameters);
+      }, true, parameters.getInvocationCount() <= 1, matcher, parameters);
     }
 
     return Collections.emptySet();

@@ -35,15 +35,27 @@ public class Mappings {
   private boolean myIsDifferentiated = false;
 
   private final List<DependencyContext.S> myChangedClasses;
+  private final List<DependencyContext.S> myChangedFiles;
 
   private void addChangedClass(final DependencyContext.S it) {
-    assert (myChangedClasses != null);
+    assert (myChangedClasses != null && myChangedFiles != null);
     myChangedClasses.add(it);
+
+    final DependencyContext.S file = myClassToSourceFile.get(it);
+
+    if (file != null) {
+      myChangedFiles.add(it);
+    }
+
     myIsDifferentiated = true;
   }
 
   private Collection<DependencyContext.S> getChangedClasses() {
     return myChangedClasses;
+  }
+
+  private Collection<DependencyContext.S> getChangedFiles() {
+    return myChangedFiles;
   }
 
   private boolean isDifferentiated() {
@@ -110,6 +122,7 @@ public class Mappings {
   private Mappings(final Mappings base) throws IOException {
     myIsDelta = true;
     myChangedClasses = new LinkedList<DependencyContext.S>();
+    myChangedFiles = new LinkedList<DependencyContext.S>();
     myDeltaIsTransient = base.myDeltaIsTransient;
     myRootDir = new File(FileUtil.toSystemIndependentName(base.myRootDir.getAbsolutePath()) + File.separatorChar + "delta");
     myContext = base.myContext;
@@ -121,6 +134,7 @@ public class Mappings {
   public Mappings(final File rootDir, final boolean transientDelta) throws IOException {
     myIsDelta = false;
     myChangedClasses = null;
+    myChangedFiles = null;
     myDeltaIsTransient = transientDelta;
     myRootDir = rootDir;
     createImplementation();
@@ -1579,9 +1593,32 @@ public class Mappings {
         myClassToSourceFile.putAll(delta.myClassToSourceFile);
       }
 
-      mySourceFileToClasses.putAll(delta.mySourceFileToClasses);
-      mySourceFileToUsages.putAll(delta.mySourceFileToUsages);
-      mySourceFileToAnnotationUsages.putAll(delta.mySourceFileToAnnotationUsages);
+      if (delta.isDifferentiated()) {
+        for (DependencyContext.S f : delta.getChangedFiles()) {
+          mySourceFileToClasses.remove(f);
+          final Collection<ClassRepr> classes = delta.mySourceFileToClasses.get(f);
+          if (classes != null){
+            mySourceFileToClasses.put(f, classes);
+          }
+
+          mySourceFileToUsages.remove(f);
+          final Collection<UsageRepr.Cluster> clusters = delta.mySourceFileToUsages.get(f);
+          if (clusters != null){
+            mySourceFileToUsages.put(f, clusters);
+          }
+
+          mySourceFileToAnnotationUsages.remove(f);
+          final Collection<UsageRepr.Usage> usages = delta.mySourceFileToAnnotationUsages.get(f);
+          if (usages != null){
+            mySourceFileToAnnotationUsages.put(f, usages);
+          }
+        }
+      }
+      else {
+        mySourceFileToClasses.putAll(delta.mySourceFileToClasses);
+        mySourceFileToUsages.putAll(delta.mySourceFileToUsages);
+        mySourceFileToAnnotationUsages.putAll(delta.mySourceFileToAnnotationUsages);
+      }
 
       final Collection<DependencyContext.S> compiledSet = new HashSet<DependencyContext.S>(compiled.size());
 
@@ -1681,6 +1718,24 @@ public class Mappings {
       @Override
       public void registerConstantUsage(final String className, final String fieldName, final String fieldOwner) {
         //To change body of implemented methods use File | Settings | File Templates.
+      }
+
+      @Override
+      public void registerImports(final Collection<String> imports, final String rootClass) {
+        final DependencyContext.S rootClassName = myContext.get(rootClass);
+        final DependencyContext.S fileName = myClassToSourceFile.get(rootClassName);
+
+        for (final String i : imports) {
+          final DependencyContext.S iname = myContext.get(i);
+
+          myClassToClassDependency.put(rootClassName, iname);
+
+          if (fileName != null) {
+            final UsageRepr.Cluster cluster = new UsageRepr.Cluster();
+            cluster.addUsage(rootClassName, UsageRepr.createClassUsage(myContext, iname));
+            mySourceFileToUsages.put(fileName, cluster);
+          }
+        }
       }
     };
   }

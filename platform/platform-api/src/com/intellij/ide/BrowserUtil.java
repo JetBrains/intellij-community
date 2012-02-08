@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 package com.intellij.ide;
 
 import com.intellij.CommonBundle;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -42,6 +44,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -58,20 +61,19 @@ public class BrowserUtil {
   // We have to violate the RFC since we need to distinguish
   // real schemes from local Windows paths; The only difference
   // with RFC is that we do not allow schemes with length=1 (in other case
-  // local paths like "C:/temp/index.html" whould be erroneously interpreted as
+  // local paths like "C:/temp/index.html" would be erroneously interpreted as
   // external URLs.)
-  @NonNls private static final Pattern ourExternalPrefix = Pattern.compile("^[\\w\\+\\.\\-]{2,}:");
-  private static final Pattern ourAnchorsuffix = Pattern.compile("#(.*)$");
+  private static final Pattern ourExternalPrefix = Pattern.compile("^[\\w\\+\\.\\-]{2,}:");
+  private static final Pattern ourAnchorSuffix = Pattern.compile("#(.*)$");
 
-  private BrowserUtil() {
-  }
+  private BrowserUtil() { }
 
   public static boolean isAbsoluteURL(String url) {
     return ourExternalPrefix.matcher(url.toLowerCase()).find();
   }
 
   public static String getDocURL(String url) {
-    Matcher anchorMatcher = ourAnchorsuffix.matcher(url);
+    Matcher anchorMatcher = ourAnchorSuffix.matcher(url);
 
     if (anchorMatcher.find()) {
       return anchorMatcher.reset().replaceAll("");
@@ -81,7 +83,7 @@ public class BrowserUtil {
   }
 
   @Nullable
-  public static URL getURL(String url) throws java.net.MalformedURLException {
+  public static URL getURL(String url) throws MalformedURLException {
     if (!isAbsoluteURL(url)) {
       return new URL("file", "", url);
     }
@@ -89,128 +91,95 @@ public class BrowserUtil {
     return VfsUtil.convertToURL(url);
   }
 
-  private static void launchBrowser(final String url, String[] command) {
-    try {
-      URL curl = getURL(url);
+  /**
+   * Main method: tries to launch a browser using every possible way.
+   *
+   * @param url an URL to open.
+   */
+  public static void launchBrowser(@NonNls String url) {
+    LOG.debug("Launch browser: " + url);
 
-      if (curl != null) {
-        final String urlString = curl.toString();
-        String[] commandLine;
-        if (SystemInfo.isWindows && isUseDefaultBrowser()) {
-          commandLine = new String[command.length + 2];
-          System.arraycopy(command, 0, commandLine, 0, command.length);
-          commandLine[commandLine.length - 2] = "\"\"";
-          commandLine[commandLine.length - 1] = "\"" + redirectUrl(url, urlString) + "\"";
-        }
-        else {
-          commandLine = new String[command.length + 1];
-          System.arraycopy(command, 0, commandLine, 0, command.length);
-          commandLine[commandLine.length - 1] = SystemInfo.isMac && isUseDefaultBrowser() ? escapeUrl(redirectUrl(url, urlString))
-                                                                                          : escapeUrl(urlString);
-        }
-        Runtime.getRuntime().exec(commandLine);
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Browser launched with command line: " + Arrays.toString(commandLine));
-        }
+    if (url.startsWith("jar:")) {
+      url = extractFiles(url);
+      if (url == null) return;
+    }
+
+    if (getGeneralSettingsInstance().isUseDefaultBrowser() && canStartDefaultBrowser()) {
+      final String[] command = getDefaultBrowserCommand();
+      if (command != null) {
+        launchBrowserByCommand(url, command);
       }
       else {
-        showErrorMessage(IdeBundle.message("error.malformed.url", url), CommonBundle.getErrorTitle());
+        launchBrowserUsingDesktopApi(url);
       }
-    }
-    catch (final IOException e) {
-      showErrorMessage(IdeBundle.message("error.cannot.start.browser", e.getMessage()),
-                       CommonBundle.getErrorTitle());
-    }
-  }
-
-  /**
-   * This method works around Windows 'start' command behaivor of dropping anchors from the url for local urls.
-   */
-  private static String redirectUrl(String url, @NonNls String urlString) throws IOException {
-    if (url.indexOf('&') == -1 && (!urlString.startsWith("file:") || urlString.indexOf("#") == -1)) return urlString;
-
-    File redirect = FileUtil.createTempFile("redirect", ".html");
-    redirect.deleteOnExit();
-    FileWriter writer = new FileWriter(redirect);
-    writer.write("<html><head></head><body><script type=\"text/javascript\">window.location=\"" + url + "\";</script></body></html>");
-    writer.close();
-    return VfsUtil.pathToUrl(redirect.getAbsolutePath());
-  }
-
-  private static boolean isUseDefaultBrowser() {
-    Application application = ApplicationManager.getApplication();
-    if (application == null) {
-      return true;
     }
     else {
-      return getGeneralSettingsInstance().isUseDefaultBrowser();
+      launchBrowserUsingStandardWay(url);
     }
-  }
-
-  private static void showErrorMessage(final String message, final String title) {
-    final Application app = ApplicationManager.getApplication();
-    if (app == null) {
-      return; // Not started yet. Not able to show message up. (Could happen in License panel under Linux).
-    }
-
-    Runnable runnable = new Runnable() {
-      public void run() {
-        Messages.showMessageDialog(message,
-                                   title,
-                                   Messages.getErrorIcon());
-      }
-    };
-
-    if (app.isDispatchThread()) {
-      runnable.run();
-    }
-    else {
-      app.invokeLater(runnable, ModalityState.NON_MODAL);
-    }
-  }
-
-  private static void launchBrowserUsingStandardWay(final String url) {
-    String[] command;
-    try {
-      String browserPath = getGeneralSettingsInstance().getBrowserPath();
-      if (browserPath == null || browserPath.trim().length() == 0) {
-        showErrorMessage(IdeBundle.message("error.please.specify.path.to.web.browser"),
-                         IdeBundle.message("title.browser.not.found"));
-        return;
-      }
-
-      command = getOpenBrowserCommand(browserPath);
-    }
-    catch (NullPointerException e) {
-      // todo: fix the possible problem on startup, see SCR #35066
-      command = getDefaultBrowserCommand();
-      if (command == null) {
-        showErrorMessage(IdeBundle.message("error.please.open.url.manually", url, ApplicationNamesInfo.getInstance().getProductName()),
-                         IdeBundle.message("title.browser.path.not.found"));
-        return;
-      }
-    }
-    // We do not need to check browserPath under Win32
-
-    launchBrowser(url, command);
   }
 
   private static GeneralSettings getGeneralSettingsInstance() {
-    final GeneralSettings settings = GeneralSettings.getInstance();
-    if (settings != null) return settings;
-    return new GeneralSettings();
+    final GeneralSettings settings = ApplicationManager.getApplication() != null ? GeneralSettings.getInstance() : null;
+    return settings != null ? settings : new GeneralSettings();
   }
 
-  private static boolean launchDefaultBrowserUsingJdk6Api(String sUrl) {
-    try {
-      URL url = getURL(sUrl);
-      if (url == null) return false;
-      Desktop.getDesktop().browse(url.toURI());
-      LOG.debug("Browser launched using JDK 1.6 API");
+  public static boolean canStartDefaultBrowser() {
+    if (SystemInfo.isMac || SystemInfo.isWindows) {
       return true;
     }
-    catch (Exception e) {
-      return false;
+    else if (SystemInfo.isUnix && SystemInfo.hasXdgOpen) {
+      return true;
+    }
+    else if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+      return true;
+    }
+
+    return false;
+  }
+
+  @Nullable
+  @NonNls
+  private static String[] getDefaultBrowserCommand() {
+    if (SystemInfo.isWindows9x) {
+      return new String[]{"command.com", "/c", "start"};
+    }
+    else if (SystemInfo.isWindows) {
+      return new String[]{"cmd.exe", "/c", "start"};
+    }
+    else if (SystemInfo.isMac) {
+      return new String[]{ExecUtil.getOpenCommandPath()};
+    }
+    else if (SystemInfo.isUnix && SystemInfo.hasXdgOpen) {
+      return new String[]{"xdg-open"};
+    }
+
+    return null;
+  }
+
+  private static void launchBrowserByCommand(final String url, @NotNull final String[] command) {
+    URL curl;
+    try {
+      curl = getURL(url);
+    }
+    catch (MalformedURLException ignored) {
+      curl = null;
+    }
+    if (curl == null) {
+      showErrorMessage(IdeBundle.message("error.malformed.url", url), CommonBundle.getErrorTitle());
+      return;
+    }
+
+    try {
+      final GeneralCommandLine commandLine = new GeneralCommandLine(command);
+      commandLine.addParameter(curl.toString());
+      commandLine.createProcess();
+
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Browser launched with command line: " + commandLine.getCommandLineString());
+      }
+    }
+    catch (final ExecutionException e) {
+      showErrorMessage(IdeBundle.message("error.cannot.start.browser", e.getMessage()), CommonBundle.getErrorTitle());
     }
   }
 
@@ -224,6 +193,84 @@ public class BrowserUtil {
     }
   }
 
+  private static boolean launchBrowserUsingDesktopApi(final String sUrl) {
+    try {
+      URL url = getURL(sUrl);
+      if (url == null) return false;
+      Desktop.getDesktop().browse(url.toURI());
+      LOG.debug("Browser launched using JDK 1.6 API");
+      return true;
+    }
+    catch (Exception e) {
+      return false;
+    }
+  }
+
+  private static void launchBrowserUsingStandardWay(final String url) {
+    String browserPath = getGeneralSettingsInstance().getBrowserPath();
+    if (StringUtil.isEmptyOrSpaces(browserPath)) {
+      showErrorMessage(IdeBundle.message("error.please.specify.path.to.web.browser"), IdeBundle.message("title.browser.not.found"));
+      return;
+    }
+
+    launchBrowserByCommand(url, getOpenBrowserCommand(browserPath));
+  }
+
+  /**
+   * @deprecated use {@link #getOpenBrowserCommand(String)} instead
+   */
+  @SuppressWarnings({"UnusedDeclaration"})
+  public static String[] getOpenBrowserCommand(final @NonNls @NotNull String browserPath, final String... parameters) {
+    return getOpenBrowserCommand(browserPath);
+  }
+
+  public static String[] getOpenBrowserCommand(final @NonNls @NotNull String browserPath) {
+    final String[] command;
+    if (SystemInfo.isMac) {
+      if (new File(browserPath).isFile()) {
+        // versions before 10.6 don't allow to pass command line arguments to browser via 'open' command
+        // so we use full path to browser executable in such case
+        command = new String[] {browserPath};
+      }
+      else {
+        command = new String[]{ExecUtil.getOpenCommandPath(), "-a", browserPath};
+      }
+    }
+    else if (SystemInfo.isWindows) {
+      if (new File(browserPath).isFile()) {
+        command = new String[]{browserPath};
+      }
+      else {
+        command = new String[]{SystemInfo.isWindows9x ? "command.com" : "cmd.exe", "/c", "start", browserPath};
+      }
+    }
+    else {
+      command = new String[]{browserPath};
+    }
+    return command;
+  }
+
+  private static void showErrorMessage(final String message, final String title) {
+    final Application app = ApplicationManager.getApplication();
+    if (app == null) {
+      return; // Not started yet. Not able to show message up. (Could happen in License panel under Linux).
+    }
+
+    Runnable runnable = new Runnable() {
+      public void run() {
+        Messages.showMessageDialog(message, title, Messages.getErrorIcon());
+      }
+    };
+
+    if (app.isDispatchThread()) {
+      runnable.run();
+    }
+    else {
+      app.invokeLater(runnable, ModalityState.NON_MODAL);
+    }
+  }
+
+  @Nullable
   private static String extractFiles(String url) {
     try {
       int sharpPos = url.indexOf('#');
@@ -350,98 +397,8 @@ public class BrowserUtil {
     return new File(PathManager.getSystemPath(), "ExtractedFiles");
   }
 
-  public static void launchBrowser(@NonNls String url) {
-    LOG.debug("Launch browser: " + url);
-    if (url.startsWith("jar:")) {
-      url = extractFiles(url);
-      if (url == null) return;
-    }
-    if (canStartDefaultBrowser() && isUseDefaultBrowser()) {
-      if (SystemInfo.isLinux && launchDefaultBrowserUsingJdk6Api(url)) {
-        return;
-      }
-
-      launchBrowser(url, getDefaultBrowserCommand());
-    }
-    else {
-      launchBrowserUsingStandardWay(url);
-    }
-  }
-
-  @NonNls
-  private static String[] getDefaultBrowserCommand() {
-    if (SystemInfo.isWindows9x) {
-      return new String[]{"command.com", "/c", "start"};
-    }
-    else if (SystemInfo.isWindows) {
-      return new String[]{"cmd.exe", "/c", "start"};
-    }
-    else if (SystemInfo.isMac) {
-      return new String[]{ExecUtil.getOpenCommandPath()};
-    }
-    else if (SystemInfo.isUnix) {
-      return new String[]{"mozilla"};
-    }
-    else {
-      return null;
-    }
-  }
-
-  public static boolean canStartDefaultBrowser() {
-    if (SystemInfo.isMac || SystemInfo.isWindows) {
-      return true;
-    }
-
-    if (SystemInfo.isLinux && Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
-      return true;
-    }
-
-    return false;
-  }
-
   public static boolean isOpenCommandSupportArgs() {
     return SystemInfo.isMacOSSnowLeopard;
-  }
-
-  /**
-   * @deprecated use {@link #getOpenBrowserCommand(String)} instead
-   */
-  public static String[] getOpenBrowserCommand(final @NonNls @NotNull String browserPath, final String... parameters) {
-    return getOpenBrowserCommand(browserPath);
-  }
-
-  public static String[] getOpenBrowserCommand(final @NonNls @NotNull String browserPath) {
-    String[] command;
-    if (SystemInfo.isMac) {
-      File browserExecutable = new File(browserPath);
-      if (browserExecutable.isFile()) {
-        //versions before 10.6 don't allow to pass command line arguments to browser via 'open' command so we use full path to browser executable in such cases
-        command = new String[] {browserPath};
-      }
-      else {
-        command = new String[]{ExecUtil.getOpenCommandPath(), "-a", browserPath};
-      }
-    }
-    else if (SystemInfo.isWindows9x) {
-      if (browserPath.indexOf(File.separatorChar) != -1) {
-        command = new String[]{browserPath};
-      }
-      else {
-        command = new String[]{"command.com", "/c", "start", browserPath};
-      }
-    }
-    else if (SystemInfo.isWindows) {
-      if (browserPath.indexOf(File.separatorChar) != -1) {
-        command = new String[]{browserPath};
-      }
-      else {
-        command = new String[]{"cmd.exe", "/c", "start", browserPath};
-      }
-    }
-    else {
-      command = new String[]{browserPath};
-    }
-    return command;
   }
 
   private static class ConfirmExtractDialog extends OptionsDialog {

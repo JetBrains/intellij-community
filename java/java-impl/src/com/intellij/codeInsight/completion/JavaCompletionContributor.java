@@ -106,7 +106,7 @@ public class JavaCompletionContributor extends CompletionContributor {
         withParent(or(psiElement(PsiResourceVariable.class), psiElement(PsiResourceList.class)))));
 
   @Nullable
-  private static ElementFilter getReferenceFilter(PsiElement position) {
+  public static ElementFilter getReferenceFilter(PsiElement position) {
     // Completion after extends in interface, type parameter and implements in class
     final PsiClass containingClass = PsiTreeUtil.getParentOfType(position, PsiClass.class, false, PsiCodeBlock.class, PsiMethod.class, PsiExpressionList.class, PsiVariable.class);
     if (containingClass != null && psiElement().afterLeaf(PsiKeyword.EXTENDS, PsiKeyword.IMPLEMENTS, ",", "&").accepts(position)) {
@@ -239,7 +239,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     if (!isClassNamePossible(parameters.getPosition()) || !mayStartClassName(result, parameters.isRelaxedMatching())) return;
 
     if (mayShowAllClasses(parameters)) {
-      JavaClassNameCompletionContributor.addAllClasses(parameters, result, parameters.getInvocationCount() <= 2, new Consumer<LookupElement>() {
+      JavaClassNameCompletionContributor.addAllClasses(parameters, parameters.getInvocationCount() <= 2, result.getPrefixMatcher(), new Consumer<LookupElement>() {
         @Override
         public void consume(LookupElement element) {
           if (!inheritors.alreadyProcessed(element)) {

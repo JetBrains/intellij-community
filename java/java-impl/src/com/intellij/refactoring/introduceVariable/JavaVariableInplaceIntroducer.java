@@ -45,6 +45,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -85,8 +86,10 @@ public class JavaVariableInplaceIntroducer extends InplaceVariableIntroducer<Psi
     myPointer = declarationStatement != null ? SmartPointerManager.getInstance(project).createSmartPsiElementPointer(declarationStatement) : null;
     editor.putUserData(ReassignVariableUtil.DECLARATION_KEY, myPointer);
     if (occurrenceMarkers != null) {
+      final ArrayList<RangeMarker> rangeMarkers = new ArrayList<RangeMarker>(occurrenceMarkers);
+      rangeMarkers.add(exprMarker);
       editor.putUserData(ReassignVariableUtil.OCCURRENCES_KEY,
-                         occurrenceMarkers.toArray(new RangeMarker[occurrenceMarkers.size()]));
+                         rangeMarkers.toArray(new RangeMarker[rangeMarkers.size()]));
     }
     myExpression = expression;
     final PsiType defaultType = elementToRename.getType();

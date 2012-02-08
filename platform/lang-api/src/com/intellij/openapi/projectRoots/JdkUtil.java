@@ -40,6 +40,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.UnsupportedCharsetException;
+import java.util.List;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
@@ -147,32 +148,13 @@ public class JdkUtil {
     commandLine.setExePath(exePath);
 
     ParametersList parametersList = javaParameters.getVMParametersList();
-    commandLine.addParameters(parametersList.getList());
-
-    // Value of -Dfile.encoding and charset of GeneralCommandLine should be in sync in order process's input and output be correctly handled.
-    String encoding = parametersList.getPropertyValue("file.encoding");
-    if (encoding == null) {
-      Charset charset = javaParameters.getCharset();
-      if (charset == null) charset = EncodingManager.getInstance().getDefaultCharset();
-      if (charset == null) charset = CharsetToolkit.getDefaultSystemCharset();
-      commandLine.addParameter("-Dfile.encoding=" + charset.name());
-      commandLine.setCharset(charset);
-    }
-    else {
-      try {
-        Charset charset = Charset.forName(encoding);
-        commandLine.setCharset(charset);
-      }
-      catch (UnsupportedCharsetException ignore) {
-      }
-    }
-
     commandLine.setEnvParams(javaParameters.getEnv());
     commandLine.setPassParentEnvs(javaParameters.isPassParentEnvs());
 
     final Class commandLineWrapper;
     if (forceDynamicClasspath && (commandLineWrapper = getCommandLineWrapperClass()) != null) {
       File classpathFile = null;
+      File vmParamsFile = null;
       if(!parametersList.hasParameter("-classpath") && !parametersList.hasParameter("-cp")){
         try {
           classpathFile = FileUtil.createTempFile("classpath", null);
@@ -199,16 +181,55 @@ public class JdkUtil {
         catch (IOException e) {
           LOG.error(e);
         }
+        
+        try {
+          vmParamsFile = FileUtil.createTempFile("vm_params", null);
+          final PrintWriter writer = new PrintWriter(vmParamsFile);
+          try {
+            for (String param : parametersList.getList()) {
+              if (param.startsWith("-D")) {
+                writer.println(param);
+              }
+            }
+          }
+          finally {
+            writer.close();
+          }
+        }
+        catch (IOException e) {
+          LOG.error(e);
+        }
       }
 
+      final List<String> list = parametersList.getList();
+      if (vmParamsFile == null) {
+        commandLine.addParameters(list);
+      } else {
+        for (String param : list) {
+          if (!param.trim().startsWith("-D")) {
+            commandLine.addParameter(param);
+          }
+        }
+      }
+      appendEncoding(javaParameters, commandLine, parametersList);
       if (classpathFile != null) {
         commandLine.addParameter(commandLineWrapper.getName());
         commandLine.addParameter(classpathFile.getAbsolutePath());
       }
+      if (vmParamsFile != null) {
+        commandLine.addParameter("@vm_params");
+        commandLine.addParameter(vmParamsFile.getAbsolutePath());
+      }
     }
-    else if(!parametersList.hasParameter("-classpath") && !parametersList.hasParameter("-cp")){
+    else if (!parametersList.hasParameter("-classpath") && !parametersList.hasParameter("-cp")){
+      commandLine.addParameters(parametersList.getList());
+      appendEncoding(javaParameters, commandLine, parametersList);
+
       commandLine.addParameter("-classpath");
       commandLine.addParameter(javaParameters.getClassPath().getPathsString());
+    } else {
+      commandLine.addParameters(parametersList.getList());
+      appendEncoding(javaParameters, commandLine, parametersList);
     }
 
     final String mainClass = javaParameters.getMainClass();
@@ -218,6 +239,26 @@ public class JdkUtil {
     commandLine.setWorkDirectory(javaParameters.getWorkingDirectory());
 
     return commandLine;
+  }
+
+  private static void appendEncoding(SimpleJavaParameters javaParameters, GeneralCommandLine commandLine, ParametersList parametersList) {
+    // Value of -Dfile.encoding and charset of GeneralCommandLine should be in sync in order process's input and output be correctly handled.
+    String encoding = parametersList.getPropertyValue("file.encoding");
+    if (encoding == null) {
+      Charset charset = javaParameters.getCharset();
+      if (charset == null) charset = EncodingManager.getInstance().getDefaultCharset();
+      if (charset == null) charset = CharsetToolkit.getDefaultSystemCharset();
+      commandLine.addParameter("-Dfile.encoding=" + charset.name());
+      commandLine.setCharset(charset);
+    }
+    else {
+      try {
+        Charset charset = Charset.forName(encoding);
+        commandLine.setCharset(charset);
+      }
+      catch (UnsupportedCharsetException ignore) {
+      }
+    }
   }
 
   @Nullable
