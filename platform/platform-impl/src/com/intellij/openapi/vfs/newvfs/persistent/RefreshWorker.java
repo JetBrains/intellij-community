@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vfs.newvfs.persistent;
 
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
@@ -122,8 +123,10 @@ public class RefreshWorker {
         else {
           long currentTimestamp = persistence.getTimeStamp(file);
           long upToDateTimestamp = delegate.getTimeStamp(file);
+          long currentLength = SystemInfo.isUnix ? persistence.getLength(file) : -1;
+          long upToDateLength = SystemInfo.isUnix ? delegate.getLength(file) : -1;
 
-          if (currentTimestamp != upToDateTimestamp) {
+          if (currentTimestamp != upToDateTimestamp || currentLength != upToDateLength) {
             scheduleUpdateContent(file);
           }
         }
