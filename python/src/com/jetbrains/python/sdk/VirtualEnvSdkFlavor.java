@@ -64,7 +64,7 @@ public class VirtualEnvSdkFlavor extends CPythonSdkFlavor {
         final String childName = child.getName();
         for (String name : NAMES) {
           if (childName.startsWith(name)) {
-            if (!childName.endsWith("-config")) candidates.add(child.getPath());
+            if (!childName.endsWith("-config")) candidates.add(PythonSdkType.shortenDirName(child.getPath()));
             break;
           }
         }
