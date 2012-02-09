@@ -15,7 +15,7 @@ import org.jetbrains.plugins.gradle.model.GradleLibraryDependencyId;
 import org.jetbrains.plugins.gradle.ui.GradleIcons;
 import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNode;
 import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNodeDescriptor;
-import org.jetbrains.plugins.gradle.util.GradleBundle;
+import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
@@ -34,14 +34,7 @@ import java.util.Map;
  * @since 1/30/12 4:20 PM
  */
 public class GradleProjectStructureTreeModel extends DefaultTreeModel {
-  
-  public static final GradleProjectStructureNodeDescriptor<String> DEPENDENCIES_NODE_DESCRIPTOR
-    = new GradleProjectStructureNodeDescriptor<String>(
-    GradleBundle.message("gradle.project.structure.tree.node.dependencies"),
-    GradleBundle.message("gradle.project.structure.tree.node.dependencies"),
-    null
-  );
-  
+
   /**
    * <pre>
    *     ...
@@ -144,7 +137,7 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
       myModules.put(moduleName, moduleNode);
     }
 
-    GradleProjectStructureNode<String> result = new GradleProjectStructureNode<String>(DEPENDENCIES_NODE_DESCRIPTOR, GradleEntityType.SYNTHETIC);
+    GradleProjectStructureNode<String> result = new GradleProjectStructureNode<String>(GradleConstants.DEPENDENCIES_NODE_DESCRIPTOR, GradleEntityType.SYNTHETIC);
     moduleNode.add(result);
     myModuleDependencies.put(moduleName, result);
     

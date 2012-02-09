@@ -12,6 +12,7 @@ import org.jetbrains.plugins.gradle.model.*;
 import org.jetbrains.plugins.gradle.importing.wizard.AbstractImportFromGradleWizardStep;
 import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNode;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
+import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -173,7 +174,7 @@ public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWiza
     Map<GradleEntity, Pair<String, Collection<GradleProjectStructureNode>>> entity2nodes
       = new HashMap<GradleEntity, Pair<String, Collection<GradleProjectStructureNode>>>();
     int counter = 0;
-    DefaultMutableTreeNode root = buildNode(project, entity2nodes, counter++);
+    GradleProjectStructureNode<GradleProject> root = buildNode(project, entity2nodes, counter++);
 
     List<GradleModule> modules = new ArrayList<GradleModule>(project.getModules());
     Collections.sort(modules, Named.COMPARATOR);
@@ -184,15 +185,15 @@ public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWiza
     for (GradleModule module : modules) {
       GradleModule moduleCopy = module.clone(cloneContext);
       moduleMappings.put(module, moduleCopy);
-      DefaultMutableTreeNode moduleNode = buildNode(module, entity2nodes, counter++);
+      GradleProjectStructureNode<GradleModule> moduleNode = buildNode(module, entity2nodes, counter++);
       moduleNodes.add(moduleNode);
       for (GradleContentRoot contentRoot : moduleCopy.getContentRoots()) {
         moduleNode.add(buildNode(contentRoot, entity2nodes, counter++));
       }
       Collection<GradleDependency> dependencies = module.getDependencies();
       if (!dependencies.isEmpty()) {
-        DefaultMutableTreeNode dependenciesNode
-          = new DefaultMutableTreeNode(GradleBundle.message("gradle.project.structure.tree.node.dependencies"));
+        GradleProjectStructureNode<String> dependenciesNode
+          = new GradleProjectStructureNode<String>(GradleConstants.DEPENDENCIES_NODE_DESCRIPTOR, GradleEntityType.SYNTHETIC);
         final List<GradleModuleDependency> moduleDependencies = new ArrayList<GradleModuleDependency>();
         final List<GradleLibraryDependency> libraryDependencies = new ArrayList<GradleLibraryDependency>();
         GradleEntityVisitor visitor = new GradleEntityVisitorAdapter() {
@@ -232,7 +233,8 @@ public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWiza
     }
     else {
       // Insert intermediate 'modules' and 'libraries' nodes if the project has both libraries and nodes.
-      DefaultMutableTreeNode modulesNode = new DefaultMutableTreeNode(GradleBundle.message("gradle.import.structure.tree.node.modules"));
+      GradleProjectStructureNode<String> modulesNode
+        = new GradleProjectStructureNode<String>(GradleConstants.MODULES_NODE_DESCRIPTOR, GradleEntityType.SYNTHETIC);
       for (MutableTreeNode node : moduleNodes) {
         modulesNode.add(node);
       }
@@ -240,7 +242,8 @@ public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWiza
 
       List<GradleLibrary> sortedLibraries = new ArrayList<GradleLibrary>(libraries);
       Collections.sort(sortedLibraries, Named.COMPARATOR);
-      DefaultMutableTreeNode librariesNode = new DefaultMutableTreeNode(GradleBundle.message("gradle.import.structure.tree.node.libraries"));
+      GradleProjectStructureNode<String> librariesNode
+        = new GradleProjectStructureNode<String>(GradleConstants.LIBRARIES_NODE_DESCRIPTOR, GradleEntityType.SYNTHETIC);
       for (GradleLibrary library : sortedLibraries) {
         librariesNode.add(buildNode(library, entity2nodes, counter++));
       }
@@ -254,7 +257,7 @@ public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWiza
     builder.setModuleMappings(moduleMappings);
   }
 
-  private <T extends GradleEntity> DefaultMutableTreeNode buildNode(
+  private <T extends GradleEntity> GradleProjectStructureNode<T> buildNode(
     @NotNull T entity, @NotNull Map<GradleEntity, Pair<String, Collection<GradleProjectStructureNode>>> processed, int counter)
   {
     // We build tree node, its settings control and map them altogether. The only trick here is that nodes can reuse the same

@@ -105,7 +105,7 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
   }
 
   private static void applyInitialAppearance(@NotNull Tree tree, @NotNull DefaultMutableTreeNode node) {
-    if (node.getUserObject() == GradleProjectStructureTreeModel.DEPENDENCIES_NODE_DESCRIPTOR) {
+    if (node.getUserObject() == GradleConstants.DEPENDENCIES_NODE_DESCRIPTOR) {
       tree.expandPath(new TreePath(node.getPath()));
       return;
     }
