@@ -131,6 +131,19 @@ public class Git {
     return run(handler, true);
   }
 
+  @NotNull
+  public static GitCommandResult merge(@NotNull GitRepository repository, @NotNull String branchToMerge,
+                                       @NotNull GitLineHandlerListener... listeners) {
+    final GitLineHandler mergeHandler = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.MERGE);
+    mergeHandler.setSilent(false);
+    mergeHandler.addParameters(branchToMerge);
+    for (GitLineHandlerListener listener : listeners) {
+      mergeHandler.addLineListener(listener);
+    }
+    return run(mergeHandler);
+  }
+
+
   /**
    * {@code git checkout &lt;reference&gt;} <br/>
    * {@code git checkout -b &lt;newBranch&gt; &lt;reference&gt;}
@@ -223,6 +236,13 @@ public class Git {
     final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.BRANCH);
     h.addParameters(branchName);
     return run(h);
+  }
+
+  @NotNull
+  public static GitCommandResult hardReset(@NotNull GitRepository repository, @NotNull String revision) {
+    final GitLineHandler handler = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.RESET);
+    handler.addParameters("--hard", revision);
+    return run(handler);
   }
 
   /**

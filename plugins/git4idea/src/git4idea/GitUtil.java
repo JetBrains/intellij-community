@@ -18,10 +18,13 @@ package git4idea;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.FilePathsHelper;
 import com.intellij.openapi.vcs.vfs.AbstractVcsVirtualFile;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -672,5 +675,35 @@ public class GitUtil {
       remoteChanges.add(FilePathsHelper.convertPath(path));
     }
     return remoteChanges;
+  }
+
+  /**
+   * Given the list of paths converts them to the list of {@link Change Changes} found in the {@link ChangeListManager},
+   * i.e. this works only for local changes.
+   * Paths can be absolute or relative to the repository.
+   * If a path is not in the local changes, it is ignored.
+   */
+  @NotNull
+  public static List<Change> convertPathsToChanges(@NotNull GitRepository repository,
+                                                   @NotNull Collection<String> affectedPaths, boolean relativePaths) {
+    ChangeListManager changeListManager = ChangeListManager.getInstance(repository.getProject());
+    List<Change> affectedChanges = new ArrayList<Change>();
+    for (String path : affectedPaths) {
+      VirtualFile file;
+      if (relativePaths) {
+        file = repository.getRoot().findFileByRelativePath(FileUtil.toSystemIndependentName(path));
+      }
+      else {
+        file = VcsUtil.getVirtualFile(path);
+      }
+
+      if (file != null) {
+        Change change = changeListManager.getChange(file);
+        if (change != null) {
+          affectedChanges.add(change);
+        }
+      }
+    }
+    return affectedChanges;
   }
 }
