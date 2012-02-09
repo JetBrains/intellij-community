@@ -31,10 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author yole
@@ -45,12 +42,43 @@ public class CoreJavaFileManager extends PackageIndex implements JavaFileManager
   private final CoreLocalFileSystem myLocalFileSystem;
   private final CoreJarFileSystem myJarFileSystem;
   private final List<File> myClasspath = new ArrayList<File>();
+  private VirtualFile[] myClasspathRoots = null;
+
   private final PsiManager myPsiManager;
 
   public CoreJavaFileManager(PsiManager psiManager, CoreLocalFileSystem localFileSystem, CoreJarFileSystem jarFileSystem) {
     myPsiManager = psiManager;
     myLocalFileSystem = localFileSystem;
     myJarFileSystem = jarFileSystem;
+  }
+
+  private VirtualFile[] roots() {
+    VirtualFile[] answer = myClasspathRoots;
+
+    if (answer == null) {
+      ArrayList<VirtualFile> answerList = new ArrayList<VirtualFile>(myClasspath.size());
+      for (File root : myClasspath) {
+        VirtualFile rootVfs = calcRoot(root);
+        if (rootVfs != null) {
+          answerList.add(rootVfs);
+        }
+      }
+
+      answer = answerList.toArray(new VirtualFile[answerList.size()]);
+      myClasspathRoots = answer;
+    }
+
+    return answer;
+  }
+
+  @Nullable
+  private VirtualFile calcRoot(File root) {
+    if (root.isFile()) {
+       return myJarFileSystem.findFileByPath(root.getPath() + "!/");
+    }
+    else {
+      return myLocalFileSystem.findFileByPath(root.getPath());
+    }
   }
 
   @Override
@@ -65,8 +93,8 @@ public class CoreJavaFileManager extends PackageIndex implements JavaFileManager
   private List<VirtualFile> findDirectoriesByPackageName(String packageName) {
     List<VirtualFile> result = new ArrayList<VirtualFile>();
     String dirName = packageName.replace(".", "/");
-    for (File file : myClasspath) {
-      VirtualFile classDir = findUnderClasspathEntry(file, dirName);
+    for (VirtualFile root : roots()) {
+      VirtualFile classDir = root.findFileByRelativePath(dirName);
       if (classDir != null) {
         result.add(classDir);
       }
@@ -85,22 +113,6 @@ public class CoreJavaFileManager extends PackageIndex implements JavaFileManager
     }
     return null;
   }
-  
-  @Nullable
-  private VirtualFile findUnderClasspathEntry(File classpathEntry, String relativeName) {
-    VirtualFile root = findRootInClassPathEntry(classpathEntry);
-    return root != null ? root.findFileByRelativePath(relativeName) : null;
-  }
-
-  @Nullable
-  private VirtualFile findRootInClassPathEntry(File classpathEntry) {
-    if (classpathEntry.isFile()) {
-       return myJarFileSystem.findFileByPath(classpathEntry.getPath() + "!/");
-    }
-    else {
-      return myLocalFileSystem.findFileByPath(classpathEntry.getPath());
-    }
-  }
 
   @Override
   public VirtualFile[] getDirectoriesByPackageName(@NotNull String packageName, boolean includeLibrarySources) {
@@ -114,21 +126,13 @@ public class CoreJavaFileManager extends PackageIndex implements JavaFileManager
 
   @Override
   public PsiClass findClass(@NotNull String qName, @NotNull GlobalSearchScope scope) {
-    for (File file : myClasspath) {
-      final PsiClass psiClass = findClassInClasspathEntry(qName, file);
+    for (VirtualFile root : roots()) {
+      final PsiClass psiClass = findClassInClasspathRoot(qName, root, myPsiManager);
       if (psiClass != null) {
         return psiClass;
       }
     }
     return null;
-  }
-
-  @Nullable
-  private PsiClass findClassInClasspathEntry(String qName, File rootEntry) {
-    VirtualFile root = findRootInClassPathEntry(rootEntry);
-    if (root == null) return null;
-
-    return findClassInClasspathRoot(qName, root, myPsiManager);
   }
 
   @Nullable
@@ -201,8 +205,8 @@ public class CoreJavaFileManager extends PackageIndex implements JavaFileManager
   @Override
   public PsiClass[] findClasses(@NotNull String qName, @NotNull GlobalSearchScope scope) {
     List<PsiClass> result = new ArrayList<PsiClass>();
-    for (File file : myClasspath) {
-      final PsiClass psiClass = findClassInClasspathEntry(qName, file);
+    for (VirtualFile file : roots()) {
+      final PsiClass psiClass = findClassInClasspathRoot(qName, file, myPsiManager);
       if (psiClass != null) {
         result.add(psiClass);
       }
@@ -221,5 +225,6 @@ public class CoreJavaFileManager extends PackageIndex implements JavaFileManager
 
   public void addToClasspath(File path) {
     myClasspath.add(path);
+    myClasspathRoots = null;
   }
 }

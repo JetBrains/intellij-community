@@ -29,7 +29,7 @@ import java.awt.datatransfer.Transferable;
 public class KillRegionActionTest extends AbstractRegionToKillRingTest {
 
   protected void doTest(@NotNull String text) throws Exception {
-    configureFromFileText(getTestName(false) + ".java", text);
+    configureFromFileText(getTestName(false) + ".txt", text);
     Pair<String,String> parseResult = parse();
     killRegion();
     if (parseResult.first != null) {

@@ -85,7 +85,7 @@ public class KillToWordStartActionTest extends LightPlatformCodeInsightTestCase 
   }
   
   private void doTest(@NotNull String before, @NotNull String after) throws IOException {
-    configureFromFileText(getTestName(false) + ".java", before);
+    configureFromFileText(getTestName(false) + ".txt", before);
     killToWordStart();
     checkResultByText(after);
   }

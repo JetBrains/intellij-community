@@ -79,7 +79,7 @@ public class JUnit4TestRunnerUtil {
             Request allClasses;
             try {
               Class.forName("org.junit.runner.Computer");
-              allClasses = JUnit46ClassesRequestBuilder.getClassesRequest(suiteName, classes);
+              allClasses = JUnit46ClassesRequestBuilder.getClassesRequest(suiteName, classes, classMethods);
             }
             catch (ClassNotFoundException e) {
               allClasses = getClassRequestsUsing44API(suiteName, classes);

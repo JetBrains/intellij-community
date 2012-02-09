@@ -51,8 +51,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBoxWithWidePopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.ui.CaptionPanel;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.Alarm;
 import com.sun.jdi.ObjectCollectedException;
@@ -114,6 +116,8 @@ public class FramesPanel extends UpdatableDebuggerView {
 
     final ActionToolbar toolbar = createToolbar();
     Wrapper threads = new Wrapper();
+    CustomLineBorder border = new CustomLineBorder(CaptionPanel.CNT_ACTIVE_COLOR, 0, 0, 1, 0);
+    threads.setBorder(border);
     threads.add(toolbar.getComponent(), BorderLayout.EAST);
     threads.add(myThreadsCombo, BorderLayout.CENTER);
     add(threads, BorderLayout.NORTH);

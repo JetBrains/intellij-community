@@ -18,6 +18,7 @@ package com.intellij.application.options;
 import com.google.common.collect.ImmutableSet;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathMacros;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,6 +26,8 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.util.RoamingTypeDisabled;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.JBReentrantReadWriteLock;
 import com.intellij.util.concurrency.LockFactory;
 import com.intellij.util.containers.ContainerUtil;
@@ -181,6 +184,13 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
     if (!myIgnoredMacros.contains(name)) myIgnoredMacros.add(name);
   }
 
+  public static Map<String, String> getGlobalSystemMacros() {
+    final Map<String, String> map = new HashMap<String, String>();
+    map.put(APPLICATION_HOME_MACRO_NAME, PathManager.getHomePath());
+    map.put(USER_HOME_MACRO_NAME, getUserHome());
+    return map;
+  }
+  
   @Override
   public boolean isIgnoredMacroName(@NotNull String macro) {
     return myIgnoredMacros.contains(macro);
@@ -347,5 +357,9 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
     finally {
       myLock.readLock().unlock();
     }
+  }
+
+  public static String getUserHome() {
+    return StringUtil.trimEnd(SystemProperties.getUserHome(), "/");
   }
 }

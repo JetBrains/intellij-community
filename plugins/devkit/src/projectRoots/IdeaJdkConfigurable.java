@@ -22,6 +22,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.projectRoots.*;
+import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
@@ -211,6 +212,7 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
         modificator.commitChanges();
       }
     });
+    ((ProjectJdkImpl) myIdeaJdk).resetVersionString();
     myModified = false;
   }
 

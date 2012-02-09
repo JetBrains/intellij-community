@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>proguard.cfg</file>
+    <line>1</line>
+    <description>Obsolete proguard file; use -keepclasseswithmembers instead of -keepclasseswithmembernames</description>
+  </problem>
+</problems>

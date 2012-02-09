@@ -472,22 +472,23 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
       while (range != null && !range.isEmpty()) {
         if (range.getStartOffset() >= shredEndOffset) {
           hostNum++;
-          shredEndOffset = shreds.get(hostNum).range.getEndOffset();
+          PsiLanguageInjectionHost.Shred shred = shreds.get(hostNum);
+          shredEndOffset = shred.range.getEndOffset();
           prevHostEndOffset = range.getStartOffset();
-          host = shreds.get(hostNum).host;
+          host = shred.host;
           escaper = escapers.get(hostNum);
-          rangeInsideHost = shreds.get(hostNum).getRangeInsideHost();
-          prefixLength = shreds.get(hostNum).prefix.length();
-          suffixLength = shreds.get(hostNum).suffix.length();
+          rangeInsideHost = shred.getRangeInsideHost();
+          prefixLength = shred.prefix.length();
+          suffixLength = shred.suffix.length();
         }
         //in prefix/suffix or spills over to next fragment
         if (range.getStartOffset() < prevHostEndOffset + prefixLength) {
           range = new TextRange(prevHostEndOffset + prefixLength, range.getEndOffset());
         }
         TextRange spilled = null;
-        if (range.getEndOffset() >= shredEndOffset - suffixLength) {
+        if (range.getEndOffset() > shredEndOffset - suffixLength) {
           spilled = new TextRange(shredEndOffset, range.getEndOffset());
-          range = new TextRange(range.getStartOffset(), shredEndOffset);
+          range = new TextRange(range.getStartOffset(), shredEndOffset-suffixLength);
         }
         if (!range.isEmpty()) {
           int start = escaper.getOffsetInHost(range.getStartOffset() - prevHostEndOffset - prefixLength, rangeInsideHost);

@@ -857,6 +857,18 @@ public final class JpsRemoteProto {
           return filePath_.get(index);
         }
         
+        // repeated string artifact_name = 5;
+        public static final int ARTIFACT_NAME_FIELD_NUMBER = 5;
+        private java.util.List<java.lang.String> artifactName_ =
+          java.util.Collections.emptyList();
+        public java.util.List<java.lang.String> getArtifactNameList() {
+          return artifactName_;
+        }
+        public int getArtifactNameCount() { return artifactName_.size(); }
+        public java.lang.String getArtifactName(int index) {
+          return artifactName_.get(index);
+        }
+        
         private void initFields() {
           commandType_ = org.jetbrains.jps.api.JpsRemoteProto.Message.Request.CompilationRequest.Type.REBUILD;
         }
@@ -879,6 +891,9 @@ public final class JpsRemoteProto {
           }
           for (java.lang.String element : getFilePathList()) {
             output.writeString(4, element);
+          }
+          for (java.lang.String element : getArtifactNameList()) {
+            output.writeString(5, element);
           }
         }
         
@@ -913,6 +928,15 @@ public final class JpsRemoteProto {
             }
             size += dataSize;
             size += 1 * getFilePathList().size();
+          }
+          {
+            int dataSize = 0;
+            for (java.lang.String element : getArtifactNameList()) {
+              dataSize += com.google.protobuf.CodedOutputStream
+                .computeStringSizeNoTag(element);
+            }
+            size += dataSize;
+            size += 1 * getArtifactNameList().size();
           }
           memoizedSerializedSize = size;
           return size;
@@ -1059,6 +1083,10 @@ public final class JpsRemoteProto {
               result.filePath_ =
                 java.util.Collections.unmodifiableList(result.filePath_);
             }
+            if (result.artifactName_ != java.util.Collections.EMPTY_LIST) {
+              result.artifactName_ =
+                java.util.Collections.unmodifiableList(result.artifactName_);
+            }
             org.jetbrains.jps.api.JpsRemoteProto.Message.Request.CompilationRequest returnMe = result;
             result = null;
             return returnMe;
@@ -1083,6 +1111,12 @@ public final class JpsRemoteProto {
                 result.filePath_ = new java.util.ArrayList<java.lang.String>();
               }
               result.filePath_.addAll(other.filePath_);
+            }
+            if (!other.artifactName_.isEmpty()) {
+              if (result.artifactName_.isEmpty()) {
+                result.artifactName_ = new java.util.ArrayList<java.lang.String>();
+              }
+              result.artifactName_.addAll(other.artifactName_);
             }
             return this;
           }
@@ -1120,6 +1154,10 @@ public final class JpsRemoteProto {
                 }
                 case 34: {
                   addFilePath(input.readString());
+                  break;
+                }
+                case 42: {
+                  addArtifactName(input.readString());
                   break;
                 }
               }
@@ -1246,6 +1284,46 @@ public final class JpsRemoteProto {
           }
           public Builder clearFilePath() {
             result.filePath_ = java.util.Collections.emptyList();
+            return this;
+          }
+          
+          // repeated string artifact_name = 5;
+          public java.util.List<java.lang.String> getArtifactNameList() {
+            return java.util.Collections.unmodifiableList(result.artifactName_);
+          }
+          public int getArtifactNameCount() {
+            return result.getArtifactNameCount();
+          }
+          public java.lang.String getArtifactName(int index) {
+            return result.getArtifactName(index);
+          }
+          public Builder setArtifactName(int index, java.lang.String value) {
+            if (value == null) {
+    throw new NullPointerException();
+  }
+  result.artifactName_.set(index, value);
+            return this;
+          }
+          public Builder addArtifactName(java.lang.String value) {
+            if (value == null) {
+    throw new NullPointerException();
+  }
+  if (result.artifactName_.isEmpty()) {
+              result.artifactName_ = new java.util.ArrayList<java.lang.String>();
+            }
+            result.artifactName_.add(value);
+            return this;
+          }
+          public Builder addAllArtifactName(
+              java.lang.Iterable<? extends java.lang.String> values) {
+            if (result.artifactName_.isEmpty()) {
+              result.artifactName_ = new java.util.ArrayList<java.lang.String>();
+            }
+            super.addAll(values, result.artifactName_);
+            return this;
+          }
+          public Builder clearArtifactName() {
+            result.artifactName_ = java.util.Collections.emptyList();
             return this;
           }
           
@@ -1908,8 +1986,22 @@ public final class JpsRemoteProto {
           public boolean hasHomePath() { return hasHomePath; }
           public java.lang.String getHomePath() { return homePath_; }
           
-          // repeated string path = 3;
-          public static final int PATH_FIELD_NUMBER = 3;
+          // optional string type_name = 3;
+          public static final int TYPE_NAME_FIELD_NUMBER = 3;
+          private boolean hasTypeName;
+          private java.lang.String typeName_ = "";
+          public boolean hasTypeName() { return hasTypeName; }
+          public java.lang.String getTypeName() { return typeName_; }
+          
+          // optional string additional_data_xml = 4;
+          public static final int ADDITIONAL_DATA_XML_FIELD_NUMBER = 4;
+          private boolean hasAdditionalDataXml;
+          private java.lang.String additionalDataXml_ = "";
+          public boolean hasAdditionalDataXml() { return hasAdditionalDataXml; }
+          public java.lang.String getAdditionalDataXml() { return additionalDataXml_; }
+          
+          // repeated string path = 5;
+          public static final int PATH_FIELD_NUMBER = 5;
           private java.util.List<java.lang.String> path_ =
             java.util.Collections.emptyList();
           public java.util.List<java.lang.String> getPathList() {
@@ -1936,8 +2028,14 @@ public final class JpsRemoteProto {
             if (hasHomePath()) {
               output.writeString(2, getHomePath());
             }
+            if (hasTypeName()) {
+              output.writeString(3, getTypeName());
+            }
+            if (hasAdditionalDataXml()) {
+              output.writeString(4, getAdditionalDataXml());
+            }
             for (java.lang.String element : getPathList()) {
-              output.writeString(3, element);
+              output.writeString(5, element);
             }
           }
           
@@ -1954,6 +2052,14 @@ public final class JpsRemoteProto {
             if (hasHomePath()) {
               size += com.google.protobuf.CodedOutputStream
                 .computeStringSize(2, getHomePath());
+            }
+            if (hasTypeName()) {
+              size += com.google.protobuf.CodedOutputStream
+                .computeStringSize(3, getTypeName());
+            }
+            if (hasAdditionalDataXml()) {
+              size += com.google.protobuf.CodedOutputStream
+                .computeStringSize(4, getAdditionalDataXml());
             }
             {
               int dataSize = 0;
@@ -2118,6 +2224,12 @@ public final class JpsRemoteProto {
               if (other.hasHomePath()) {
                 setHomePath(other.getHomePath());
               }
+              if (other.hasTypeName()) {
+                setTypeName(other.getTypeName());
+              }
+              if (other.hasAdditionalDataXml()) {
+                setAdditionalDataXml(other.getAdditionalDataXml());
+              }
               if (!other.path_.isEmpty()) {
                 if (result.path_.isEmpty()) {
                   result.path_ = new java.util.ArrayList<java.lang.String>();
@@ -2151,6 +2263,14 @@ public final class JpsRemoteProto {
                     break;
                   }
                   case 26: {
+                    setTypeName(input.readString());
+                    break;
+                  }
+                  case 34: {
+                    setAdditionalDataXml(input.readString());
+                    break;
+                  }
+                  case 42: {
                     addPath(input.readString());
                     break;
                   }
@@ -2201,7 +2321,49 @@ public final class JpsRemoteProto {
               return this;
             }
             
-            // repeated string path = 3;
+            // optional string type_name = 3;
+            public boolean hasTypeName() {
+              return result.hasTypeName();
+            }
+            public java.lang.String getTypeName() {
+              return result.getTypeName();
+            }
+            public Builder setTypeName(java.lang.String value) {
+              if (value == null) {
+    throw new NullPointerException();
+  }
+  result.hasTypeName = true;
+              result.typeName_ = value;
+              return this;
+            }
+            public Builder clearTypeName() {
+              result.hasTypeName = false;
+              result.typeName_ = getDefaultInstance().getTypeName();
+              return this;
+            }
+            
+            // optional string additional_data_xml = 4;
+            public boolean hasAdditionalDataXml() {
+              return result.hasAdditionalDataXml();
+            }
+            public java.lang.String getAdditionalDataXml() {
+              return result.getAdditionalDataXml();
+            }
+            public Builder setAdditionalDataXml(java.lang.String value) {
+              if (value == null) {
+    throw new NullPointerException();
+  }
+  result.hasAdditionalDataXml = true;
+              result.additionalDataXml_ = value;
+              return this;
+            }
+            public Builder clearAdditionalDataXml() {
+              result.hasAdditionalDataXml = false;
+              result.additionalDataXml_ = getDefaultInstance().getAdditionalDataXml();
+              return this;
+            }
+            
+            // repeated string path = 5;
             public java.util.List<java.lang.String> getPathList() {
               return java.util.Collections.unmodifiableList(result.path_);
             }

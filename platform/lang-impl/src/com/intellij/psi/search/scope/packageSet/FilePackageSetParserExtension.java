@@ -85,6 +85,10 @@ public class FilePackageSetParserExtension implements PackageSetParserExtension 
         wasIdentifier = false;
         pattern.append("-");
       }
+      else if (lexer.getTokenType() == ScopeTokenTypes.TILDE) {
+        wasIdentifier = false;
+        pattern.append("~");
+      }
       else {
         break;
       }

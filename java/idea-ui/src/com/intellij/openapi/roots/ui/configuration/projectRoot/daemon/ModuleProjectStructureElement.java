@@ -32,8 +32,7 @@ public class ModuleProjectStructureElement extends ProjectStructureElement {
     return myModule;
   }
 
-  @Override
-  public void check(ProjectStructureProblemsHolder problemsHolder) {
+  public void checkModulesNames(ProjectStructureProblemsHolder problemsHolder) {
     final ModifiableModuleModel moduleModel = myContext.getModulesConfigurator().getModuleModel();
     final Module[] all = moduleModel.getModules();
     if (!ArrayUtil.contains(myModule, all)) {
@@ -42,11 +41,17 @@ public class ModuleProjectStructureElement extends ProjectStructureElement {
 
     for (Module each : all) {
       if (each != myModule && myContext.getRealName(each).equals(myContext.getRealName(myModule))) {
-        problemsHolder.registerProblem(ProjectBundle.message("project.roots.module.duplicate.name.message"), null, ProjectStructureProblemType.error("duplicate-module-name"), createPlace(),
+        problemsHolder.registerProblem(ProjectBundle.message("project.roots.module.duplicate.name.message"), null,
+                                       ProjectStructureProblemType.error("duplicate-module-name"), createPlace(),
                                        null);
         break;
       }
     }
+  }
+
+  @Override
+  public void check(ProjectStructureProblemsHolder problemsHolder) {
+    checkModulesNames(problemsHolder);
 
     final ModuleRootModel rootModel = myContext.getModulesConfigurator().getRootModel(myModule);
     if (rootModel == null) return; //already disposed

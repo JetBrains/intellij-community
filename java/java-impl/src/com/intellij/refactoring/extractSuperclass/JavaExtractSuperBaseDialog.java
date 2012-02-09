@@ -125,7 +125,7 @@ public abstract class JavaExtractSuperBaseDialog extends ExtractSuperBaseDialog<
   protected void preparePackage() throws OperationFailedException {
     final String targetPackageName = getTargetPackageName();
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(myProject);
-    if (!psiFacade.getNameHelper().isIdentifier(targetPackageName)) {
+    if (!psiFacade.getNameHelper().isQualifiedName(targetPackageName)) {
       throw new OperationFailedException("Invalid package name: " + targetPackageName);
     }
     final PsiPackage aPackage = psiFacade.findPackage(targetPackageName);

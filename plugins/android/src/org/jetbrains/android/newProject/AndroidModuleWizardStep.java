@@ -391,22 +391,20 @@ public class AndroidModuleWizardStep extends ModuleWizardStep {
   @NotNull
   private static String[] getAvds(@NotNull AndroidPlatform androidPlatform) {
     final AndroidSdk sdkObject = androidPlatform.getSdk();
-    if (sdkObject instanceof AndroidSdkImpl) {
-      final SdkManager sdkManager = ((AndroidSdkImpl)sdkObject).getSdkManager();
-      try {
-        final AvdManager avdManager = new AvdManager(sdkManager, new MessageBuildingSdkLog());
-        final AvdInfo[] validAvds = avdManager.getValidAvds();
+    final SdkManager sdkManager = sdkObject.getSdkManager();
+    try {
+      final AvdManager avdManager = new AvdManager(sdkManager, new MessageBuildingSdkLog());
+      final AvdInfo[] validAvds = avdManager.getValidAvds();
 
-        final String[] avdNames = new String[validAvds.length];
-        for (int i = 0; i < validAvds.length; i++) {
-          avdNames[i] = validAvds[i].getName();
-        }
-        return avdNames;
+      final String[] avdNames = new String[validAvds.length];
+      for (int i = 0; i < validAvds.length; i++) {
+        avdNames[i] = validAvds[i].getName();
       }
-      catch (AndroidLocation.AndroidLocationException e) {
-        LOG.info(e);
-      }
+      return avdNames;
     }
-    return ArrayUtil.EMPTY_STRING_ARRAY;
+    catch (AndroidLocation.AndroidLocationException e) {
+      LOG.info(e);
+      return ArrayUtil.EMPTY_STRING_ARRAY;
+    }
   }
 }

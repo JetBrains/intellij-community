@@ -15,6 +15,7 @@ import org.jetbrains.jps.incremental.storage.SourceToOutputMapping;
 import org.jetbrains.jps.incremental.storage.TimestampStorage;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -80,14 +81,14 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
     return myIsProjectRebuild;
   }
 
-  public void markDirty(final File file) throws Exception {
+  public void markDirty(final File file) throws IOException {
     final RootDescriptor descriptor = getModuleAndRoot(file);
     if (descriptor != null) {
       myFsState.markDirty(file, descriptor, myTsStorage);
     }
   }
 
-  public void markDirty(final ModuleChunk chunk) throws Exception {
+  public void markDirty(final ModuleChunk chunk) throws IOException {
     myFsState.clearContextRoundData();
     final Set<Module> modules = chunk.getModules();
     for (Module module : modules) {
@@ -95,7 +96,7 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
     }
   }
 
-  public void markDirtyRecursively(ModuleChunk chunk) throws Exception {
+  public void markDirtyRecursively(ModuleChunk chunk) throws IOException {
     final Set<Module> modules = chunk.getModules();
     final Set<Module> dirtyModules = new HashSet<Module>(modules);
 
@@ -170,7 +171,7 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
     myFsState.beforeNextRoundStart();
   }
 
-  void onChunkBuildComplete(@NotNull ModuleChunk chunk) throws Exception {
+  void onChunkBuildComplete(@NotNull ModuleChunk chunk) throws IOException {
     myDataManager.flush(true);
 
     try {
@@ -225,13 +226,13 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
     myDelegateMessageHandler.processMessage(msg);
   }
 
-  public void processFilesToRecompile(ModuleChunk chunk, FileProcessor processor) throws Exception {
+  public void processFilesToRecompile(ModuleChunk chunk, FileProcessor processor) throws IOException {
     for (Module module : chunk.getModules()) {
       myFsState.processFilesToRecompile(this, module, processor);
     }
   }
 
-  final void ensureFSStateInitialized(ModuleChunk chunk) throws Exception {
+  final void ensureFSStateInitialized(ModuleChunk chunk) throws IOException {
     for (Module module : chunk.getModules()) {
       if (isProjectRebuild()) {
         markDirtyFiles(module, myTsStorage, true, isCompilingTests() ? DirtyMarkScope.TESTS : DirtyMarkScope.PRODUCTION, null);
@@ -252,7 +253,7 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
     }
   }
 
-  private void initModuleFSState(Module module) throws Exception {
+  private void initModuleFSState(Module module) throws IOException {
     final HashSet<File> currentFiles = new HashSet<File>();
     markDirtyFiles(module, myTsStorage, false, isCompilingTests() ? DirtyMarkScope.TESTS : DirtyMarkScope.PRODUCTION, currentFiles);
 
@@ -296,7 +297,7 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
     PRODUCTION, TESTS, BOTH
   }
 
-  private void markDirtyFiles(Module module, final TimestampStorage tsStorage, final boolean forceMarkDirty, @NotNull final DirtyMarkScope scope, @Nullable final Set<File> currentFiles) throws Exception {
+  private void markDirtyFiles(Module module, final TimestampStorage tsStorage, final boolean forceMarkDirty, @NotNull final DirtyMarkScope scope, @Nullable final Set<File> currentFiles) throws IOException {
     final Set<File> excludes = new HashSet<File>();
     for (String excludePath : module.getExcludes()) {
       excludes.add(new File(excludePath));
@@ -323,7 +324,7 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
     }
   }
 
-  private void traverseRecursively(final RootDescriptor rd, final File file, Set<File> excludes, @NotNull final TimestampStorage tsStorage, final boolean forceDirty, @Nullable Set<File> currentFiles) throws Exception {
+  private void traverseRecursively(final RootDescriptor rd, final File file, Set<File> excludes, @NotNull final TimestampStorage tsStorage, final boolean forceDirty, @Nullable Set<File> currentFiles) throws IOException {
     if (file.isDirectory()) {
       if (!PathUtil.isUnder(excludes, file)) {
         final File[] children = file.listFiles();

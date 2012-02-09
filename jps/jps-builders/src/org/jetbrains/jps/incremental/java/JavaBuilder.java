@@ -73,6 +73,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
   private final List<ClassPostProcessor> myClassProcessors = new ArrayList<ClassPostProcessor>();
 
   public JavaBuilder(ExecutorService tasksExecutor) {
+    super(BuilderCategory.TRANSLATOR);
     myTaskRunner = tasksExecutor;
     //add here class processors in the sequence they should be executed
     myClassProcessors.add(new ClassPostProcessor() {
@@ -132,7 +133,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       final Set<File> formsToCompile = new HashSet<File>();
 
       context.processFilesToRecompile(chunk, new FileProcessor() {
-        public boolean apply(Module module, File file, String sourceRoot) throws Exception {
+        public boolean apply(Module module, File file, String sourceRoot) throws IOException {
           if (JAVA_SOURCES_FILTER.accept(file)) {
             filesToCompile.add(file);
           }

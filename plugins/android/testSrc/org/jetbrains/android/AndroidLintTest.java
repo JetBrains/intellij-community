@@ -1,11 +1,20 @@
 package org.jetbrains.android;
 
+import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
+import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.android.inspections.lint.*;
+import com.intellij.testFramework.InspectionTestUtil;
+import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
+import org.jetbrains.android.inspections.lint.AndroidAddStringResourceQuickFix;
+import org.jetbrains.android.inspections.lint.AndroidLintExternalAnnotator;
+import org.jetbrains.android.inspections.lint.AndroidLintInspectionBase;
+import org.jetbrains.android.inspections.lint.AndroidLintInspectionToolProvider;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -18,6 +27,7 @@ import java.io.IOException;
  */
 public class AndroidLintTest extends AndroidTestCase {
   @NonNls private static final String BASE_PATH = "/lint/";
+  @NonNls private static final String BASE_PATH_GLOBAL = BASE_PATH + "global/";
 
   public AndroidLintTest() {
     super(false);
@@ -140,7 +150,7 @@ public class AndroidLintTest extends AndroidTestCase {
                 "/res/layout/layout.xml", "xml");
   }
 
-  /*public void testTypographyDashes() throws Exception {
+  public void testTypographyDashes() throws Exception {
     doTestWithFix(new AndroidLintInspectionToolProvider.AndroidLintTypographyDashesInspection(),
                   AndroidBundle.message("android.lint.inspections.replace.with.suggested.characters"),
                   "/res/values/typography.xml", "xml");
@@ -150,7 +160,45 @@ public class AndroidLintTest extends AndroidTestCase {
     doTestWithFix(new AndroidLintInspectionToolProvider.AndroidLintTypographyQuotesInspection(),
                   AndroidBundle.message("android.lint.inspections.replace.with.suggested.characters"),
                   "/res/values/typography.xml", "xml");
-  }*/
+  }
+
+  public void testProguard() throws Exception {
+    createManifest();
+    myFixture.copyFileToProject(getGlobalTestDir() + "/proguard.cfg", "proguard.cfg");
+    doGlobalInspectionTest(new AndroidLintInspectionToolProvider.AndroidLintProguardInspection());
+  }
+
+  public void testManifestOrder() throws Exception {
+    myFixture.copyFileToProject(getGlobalTestDir() + "/AndroidManifest.xml", "AndroidManifest.xml");
+    doGlobalInspectionTest(new AndroidLintInspectionToolProvider.AndroidLintManifestOrderInspection());
+  }
+
+  public void testDuplicateIcons() throws Exception {
+    createManifest();
+    myFixture.copyFileToProject(getGlobalTestDir() + "/dup1.png", "res/drawable/dup1.png");
+    myFixture.copyFileToProject(getGlobalTestDir() + "/dup2.png", "res/drawable/dup2.png");
+    myFixture.copyFileToProject(getGlobalTestDir() + "/other.png", "res/drawable/other.png");
+    doGlobalInspectionTest(new AndroidLintInspectionToolProvider.AndroidLintIconDuplicatesInspection());
+  }
+
+  private void doGlobalInspectionTest(@NotNull AndroidLintInspectionBase inspection) {
+    final GlobalInspectionToolWrapper wrapper = new GlobalInspectionToolWrapper(inspection);
+    myFixture.enableInspections(wrapper);
+
+    final AnalysisScope scope = new AnalysisScope(myModule);
+    scope.invalidate();
+
+    final InspectionManagerEx inspectionManager = (InspectionManagerEx)InspectionManager.getInstance(getProject());
+    final GlobalInspectionContextImpl globalContext =
+      CodeInsightTestFixtureImpl.createGlobalContextForTool(scope, getProject(), inspectionManager, wrapper);
+
+    InspectionTestUtil.runTool(wrapper, scope, globalContext, inspectionManager);
+    InspectionTestUtil.compareToolResults(wrapper, false, getTestDataPath() + getGlobalTestDir());
+  }
+
+  private String getGlobalTestDir() {
+    return BASE_PATH_GLOBAL + getTestName(true);
+  }
 
   private void doTestNoFix(@NotNull AndroidLintInspectionBase inspection, @NotNull String copyTo, @NotNull String extension)
     throws IOException {

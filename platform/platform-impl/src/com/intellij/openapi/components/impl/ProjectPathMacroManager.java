@@ -17,10 +17,10 @@ package com.intellij.openapi.components.impl;
 
 import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.application.options.ReplacePathToMacroMap;
+import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.components.PathMacroMap;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
@@ -28,9 +28,10 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 
 public class ProjectPathMacroManager extends BasePathMacroManager {
-  private final ProjectEx myProject;
+  private final Project myProject;
 
-  public ProjectPathMacroManager(final ProjectEx project) {
+  public ProjectPathMacroManager(PathMacros pathMacros, Project project) {
+    super(pathMacros);
     myProject = project;
   }
 

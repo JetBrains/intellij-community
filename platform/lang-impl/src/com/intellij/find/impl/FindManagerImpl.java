@@ -316,6 +316,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
   private static boolean isWholeWord(CharSequence text, int startOffset, int endOffset) {
     boolean isWordStart = startOffset == 0 ||
                           !Character.isJavaIdentifierPart(text.charAt(startOffset - 1)) ||
+                          !Character.isJavaIdentifierPart(text.charAt(startOffset)) ||
                           startOffset > 1 && text.charAt(startOffset - 2) == '\\';
 
     boolean isWordEnd = endOffset == text.length() ||

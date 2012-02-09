@@ -4,6 +4,7 @@ import org.jetbrains.jps.Module;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -37,7 +38,7 @@ public class FilesCollector implements FileProcessor{
     return myContainer;
   }
 
-  public boolean apply(Module module, File file, String sourceRoot) throws Exception {
+  public boolean apply(Module module, File file, String sourceRoot) throws IOException {
     if (myFilter.accept(file)) {
       myContainer.add(file);
     }

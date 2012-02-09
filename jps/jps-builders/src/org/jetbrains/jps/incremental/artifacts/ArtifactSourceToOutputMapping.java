@@ -38,7 +38,7 @@ public class ArtifactSourceToOutputMapping extends AbstractStateStorage<String, 
     }
   };
 
-  public ArtifactSourceToOutputMapping(@NonNls File storePath) throws Exception {
+  public ArtifactSourceToOutputMapping(@NonNls File storePath) throws IOException {
     super(storePath, new EnumeratorStringDescriptor(), STRING_ARRAY_EXTERNALIZER);
   }
 }

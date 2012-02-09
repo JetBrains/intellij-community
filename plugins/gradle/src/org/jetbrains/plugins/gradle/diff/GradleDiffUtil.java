@@ -37,7 +37,7 @@ public class GradleDiffUtil {
 
       @Override
       public void visit(@NotNull GradleModule module) {
-        currentChanges.add(new GradleModulePresenceChange(module, null));
+        currentChanges.add(new GradleModulePresenceChange(module.getName(), null));
         for (GradleDependency dependency : module.getDependencies()) {
           dependency.invite(this);
         }
@@ -68,11 +68,14 @@ public class GradleDiffUtil {
   /**
    * Analogues to {@link #buildLocalChanges} but targets intellij entity.
    *
+   * @param gradleProject   gradle project which structure is being compared to the intellij one   
    * @param module          target intellij-local module that doesn't present at the gradle side
    * @param currentChanges  holder for the changes built during the current call
    */
-  public static void buildLocalChanges(@NotNull Module module, @NotNull Set<GradleProjectStructureChange> currentChanges) {
-    currentChanges.add(new GradleModulePresenceChange(null, module));
+  public static void buildLocalChanges(@NotNull Module module,
+                                       @NotNull Set<GradleProjectStructureChange> currentChanges)
+  {
+    currentChanges.add(new GradleModulePresenceChange(null, module.getName()));
     // TODO den process module sub-entities here (content roots and dependencies).
   }
 
@@ -85,18 +88,20 @@ public class GradleDiffUtil {
   public static void buildLocalChanges(@NotNull LibraryOrderEntry libraryDependency,
                                        @NotNull Set<GradleProjectStructureChange> currentChanges)
   {
-    currentChanges.add(new GradleLibraryDependencyPresenceChange(null, libraryDependency));
+    final String libraryName = libraryDependency.getLibraryName();
+    if (libraryName != null) {
+      currentChanges.add(new GradleLibraryDependencyPresenceChange(null, libraryDependency));
+    }
   }
 
   /**
    * Performs argument type-based dispatch and delegates to one of strongly typed <code>'buildLocalChanges()'</code> methods.
    *
+   * @param gradleProject   gradle project which structure is being compared to the intellij one
    * @param entity          target intellij-local entity that doesn't present at the gradle side
    * @param currentChanges  holder for the changes built during the current call
    */
-  public static void buildLocalChanges(@NotNull Object entity,
-                                       @NotNull Set<GradleProjectStructureChange> currentChanges)
-  {
+  public static void buildLocalChanges(@NotNull Object entity, @NotNull Set<GradleProjectStructureChange> currentChanges) {
     if (entity instanceof GradleEntity) {
       buildLocalChanges((GradleEntity)entity, currentChanges);
     }

@@ -1,0 +1,6 @@
+def fo<caret>o()
+------
+def foo()
+{
+    <caret>
+}

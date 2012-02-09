@@ -640,9 +640,9 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   }
 
   private static boolean isEnumValuesMethodUsed(PsiMember member, ProgressIndicator progress, GlobalUsageHelper helper) {
-    final PsiClassImpl containingClass = (PsiClassImpl)member.getContainingClass();
-    if (containingClass == null) return true;
-    final PsiMethod valuesMethod = containingClass.getValuesMethod();
+    final PsiClass containingClass = member.getContainingClass();
+    if (containingClass == null || !(containingClass instanceof PsiClassImpl)) return true;
+    final PsiMethod valuesMethod = ((PsiClassImpl)containingClass).getValuesMethod();
     if (valuesMethod == null) return true;
     return isMethodReferenced(valuesMethod, progress, helper);
   }

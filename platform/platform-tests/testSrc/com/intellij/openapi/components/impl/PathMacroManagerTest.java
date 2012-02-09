@@ -3,15 +3,12 @@ package com.intellij.openapi.components.impl;
 import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.mock.MockFileSystem;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.ex.ProjectEx;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -19,6 +16,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.io.fs.FileSystem;
 import com.intellij.util.io.fs.IFileSystem;
 import org.hamcrest.Description;
+import org.jetbrains.annotations.Nullable;
 import org.jmock.Expectations;
 import org.jmock.Mockery;
 import org.jmock.api.Action;
@@ -57,7 +55,6 @@ public class PathMacroManagerTest {
   private IFileSystem myOldFileSystem;
   protected MockFileSystem myFileSystem;
   protected PicoContainer myAppPico;
-  private Disposable myDisposable = Disposer.newDisposable();
 
   @Before
   public final void setupApplication() throws Exception {
@@ -66,9 +63,12 @@ public class PathMacroManagerTest {
 
     context.checking(new Expectations() {
       {
-        allowing(myApplication).isUnitTestMode(); will(returnValue(false));
-        allowing(myApplication).getName(); will(returnValue("IDEA"));
-        allowing(myApplication).getPicoContainer(); will(returnValue(myAppPico));
+        allowing(myApplication).isUnitTestMode();
+        will(returnValue(false));
+        allowing(myApplication).getName();
+        will(returnValue("IDEA"));
+        allowing(myApplication).getPicoContainer();
+        will(returnValue(myAppPico));
 
         //some tests leave invokeLaters after them...
         allowing(myApplication).invokeLater(with(any(Runnable.class)), with(any(ModalityState.class)));
@@ -81,6 +81,7 @@ public class PathMacroManagerTest {
           }
 
           @Override
+          @Nullable
           public Object invoke(final Invocation invocation) throws Throwable {
             ((Runnable)invocation.getParameter(0)).run();
             return null;
@@ -88,8 +89,6 @@ public class PathMacroManagerTest {
         });
       }
     });
-
-    ApplicationManager.setApplication(myApplication, myDisposable);
   }
 
   @Before
@@ -97,12 +96,6 @@ public class PathMacroManagerTest {
     myOldFileSystem = FileSystem.FILE_SYSTEM;
     myFileSystem = new MockFileSystem();
     FileSystem.FILE_SYSTEM = myFileSystem;
-  }
-
-  @After
-  public final void restoreApplication() throws Exception {
-    Disposer.dispose(myDisposable);
-    myDisposable = null;
   }
 
   @After
@@ -145,7 +138,7 @@ public class PathMacroManagerTest {
 
     setUpMocks("/tmp/foo");
 
-    final ReplacePathToMacroMap replacePathMap = new ModulePathMacroManager(myModule).getReplacePathMap();
+    final ReplacePathToMacroMap replacePathMap = new ModulePathMacroManager(myPathMacros, myModule).getReplacePathMap();
     final String s = mapToString(replacePathMap);
     assertEquals("file:/tmp/foo/module -> file:$MODULE_DIR$\n" +
                  "file://tmp/foo/module -> file:/$MODULE_DIR$\n" +
@@ -190,7 +183,7 @@ public class PathMacroManagerTest {
 
     setUpMocks("/tmp/foo");
 
-    final ReplacePathToMacroMap replacePathMap = new ProjectPathMacroManager(myProject).getReplacePathMap();
+    final ReplacePathToMacroMap replacePathMap = new ProjectPathMacroManager(myPathMacros, myProject).getReplacePathMap();
     final String s = mapToString(replacePathMap);
     assertEquals("file:/tmp/foo -> file:$PROJECT_DIR$\n" +
                  "file://tmp/foo -> file:/$PROJECT_DIR$\n" +
@@ -228,7 +221,7 @@ public class PathMacroManagerTest {
 
     setUpMocks(USER_HOME + "/IdeaProjects/foo");
 
-    final ReplacePathToMacroMap replacePathMap = new ModulePathMacroManager(myModule).getReplacePathMap();
+    final ReplacePathToMacroMap replacePathMap = new ModulePathMacroManager(myPathMacros, myModule).getReplacePathMap();
     final String s = mapToString(replacePathMap);
     assertEquals("file:" + USER_HOME + "/IdeaProjects/foo/module -> file:$MODULE_DIR$\n" +
                  "file:/" + USER_HOME + "/IdeaProjects/foo/module -> file:/$MODULE_DIR$\n" +

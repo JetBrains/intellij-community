@@ -55,6 +55,7 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
   @NonNls private static final String VALUE_HAS_BRACKETS = "HAS_BRACKETS";
   @NonNls private static final String VALUE_HAS_PARENS = "HAS_PARENS";
   @NonNls private static final String VALUE_HAS_STRING_ESCAPES = "HAS_STRING_ESCAPES";
+  @NonNls private static final String VALUE_LINE_COMMENT_AT_START = "LINE_COMMENT_AT_START";
   @NonNls private static final String ELEMENT_KEYWORDS = "keywords";
   @NonNls private static final String ATTRIBUTE_IGNORE_CASE = "ignore_case";
   @NonNls private static final String ELEMENT_KEYWORD = "keyword";
@@ -139,6 +140,9 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
           else if (VALUE_NUM_POSTFIXES.equals(name)) {
             table.setNumPostfixChars(value);
           }
+          else if (VALUE_LINE_COMMENT_AT_START.equals(name)) {
+            table.lineCommentOnlyAtStart = Boolean.valueOf(value).booleanValue();
+          }
           else if (VALUE_HAS_BRACES.equals(name)) {
             table.setHasBraces(Boolean.valueOf(value).booleanValue());
           }
@@ -218,6 +222,7 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
     addElementOption(optionsElement, VALUE_HAS_BRACES, table.isHasBraces());
     addElementOption(optionsElement, VALUE_HAS_PARENS, table.isHasParens());
     addElementOption(optionsElement, VALUE_HAS_STRING_ESCAPES, table.isHasStringEscapes());
+    addElementOption(optionsElement, VALUE_LINE_COMMENT_AT_START, table.lineCommentOnlyAtStart);
 
     highlightingElement.addContent(optionsElement);
 

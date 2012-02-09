@@ -17,6 +17,7 @@
 package com.intellij.ide.highlighter.custom;
 
 import com.intellij.ide.highlighter.custom.tokens.*;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CustomHighlighterTokenType;
 
 import java.util.ArrayList;
@@ -36,7 +37,7 @@ public final class CustomFileTypeLexer extends AbstractCustomLexer {
   }
 
   private static List<TokenParser> buildTokenParsers(SyntaxTable table, boolean forHighlighting) {
-    final LineCommentParser lineCommentParser = LineCommentParser.create(table.getLineComment());
+    final LineCommentParser lineCommentParser = StringUtil.isEmpty(table.getLineComment()) ? null : new LineCommentParser(table.getLineComment(), table.lineCommentOnlyAtStart);
     final MultilineCommentParser multilineCommentParser =
             MultilineCommentParser.create(table.getStartComment(), table.getEndComment());
     final NumberParser numberParser = new NumberParser(table.getNumPostfixChars(), table.isIgnoreCase());

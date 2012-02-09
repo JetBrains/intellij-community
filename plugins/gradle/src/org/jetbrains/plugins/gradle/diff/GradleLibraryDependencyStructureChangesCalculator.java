@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.gradle.diff;
 
 import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.roots.libraries.Library;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.GradleLibraryDependency;
 
@@ -13,6 +14,12 @@ import java.util.Set;
 public class GradleLibraryDependencyStructureChangesCalculator
   implements GradleStructureChangesCalculator<GradleLibraryDependency, LibraryOrderEntry>
 {
+  
+  private final GradleLibraryStructureChangesCalculator myLibraryCalculator;
+
+  public GradleLibraryDependencyStructureChangesCalculator(@NotNull GradleLibraryStructureChangesCalculator libraryCalculator) {
+    myLibraryCalculator = libraryCalculator;
+  }
 
   @Override
   public void calculate(@NotNull GradleLibraryDependency gradleEntity,
@@ -20,7 +27,11 @@ public class GradleLibraryDependencyStructureChangesCalculator
                         @NotNull Set<GradleProjectStructureChange> knownChanges,
                         @NotNull Set<GradleProjectStructureChange> currentChanges)
   {
-    // TODO den implement 
+    final Library library = intellijEntity.getLibrary();
+    if (library == null) {
+      return;
+    }
+    myLibraryCalculator.calculate(gradleEntity.getTarget(), library, knownChanges, currentChanges);
   }
 
   @NotNull
@@ -33,7 +44,6 @@ public class GradleLibraryDependencyStructureChangesCalculator
   @NotNull
   @Override
   public Object getGradleKey(@NotNull GradleLibraryDependency entity, @NotNull Set<GradleProjectStructureChange> knownChanges) {
-    // TODO den consider the known changes
-    return entity.getName();
+    return myLibraryCalculator.getGradleKey(entity.getTarget(), knownChanges);
   }
 }

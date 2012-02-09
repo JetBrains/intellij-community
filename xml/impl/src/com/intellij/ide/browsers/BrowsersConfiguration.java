@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,7 +66,7 @@ public class BrowsersConfiguration implements PersistentStateComponent<Element> 
         return new FirefoxSettings();
       }
     },
-    CHROME(XmlBundle.message("browsers.chrome"), getWindowsPathToChrome(), "google-chrome", null, IconLoader.getIcon("/xml/browsers/chrome16.png")) {
+    CHROME(XmlBundle.message("browsers.chrome"), getWindowsPathToChrome(), "google-chrome", "Google Chrome", IconLoader.getIcon("/xml/browsers/chrome16.png")) {
       @Override
       public BrowserSpecificSettings createBrowserSpecificSettings() {
         return new ChromeSettings();

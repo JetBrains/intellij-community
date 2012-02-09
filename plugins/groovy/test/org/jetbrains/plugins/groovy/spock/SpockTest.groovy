@@ -7,6 +7,8 @@ import com.intellij.psi.PsiFile
 
 import com.intellij.psi.PsiVariable
 import com.intellij.psi.CommonClassNames
+import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
+import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUnresolvedAccessInspection
 
 /**
  * @author Sergey Evdokimov
@@ -198,5 +200,35 @@ class FooSpec extends spock.lang.Specification {
     assertEmpty("Some completion variants are missed", missedVariants);
   }
 
+  public void testVariable_resolved() {
+    myFixture.enableInspections(GroovyAssignabilityCheckInspection, GroovyUnresolvedAccessInspection)
+
+    myFixture.configureByText("FooSpec.groovy", """
+class FooSpec extends spock.lang.Specification {
+  def "foo test"() {
+    String subscriber = <warning>Mock</warning>()
+    then: (0.._) * subscriber.concat(_)
+      subscriber.concat(<warning>asdasdasd</warning>)
+      subscriber.concat<warning>(23)</warning>
+  }
+}
+""")
+
+    myFixture.checkHighlighting(true, false, true)
+  }
+
+  public void testVariable_NotExistingInCompletion() {
+    myFixture.configureByText("FooSpec.groovy", """
+class FooSpec extends spock.lang.Specification {
+  def "foo test"() {
+    String subscriber = Mock()
+    then: (0.._) * subscriber.concat(<caret>)
+  }
+}
+""")
+    myFixture.completeBasic()
+    def elements = myFixture.getLookupElementStrings()
+    assert !elements.contains("_")
+  }
 
 }

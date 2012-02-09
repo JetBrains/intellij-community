@@ -111,6 +111,8 @@ public class DiffApplication implements ApplicationStarterEx {
       settings.showInFrame = false;
       diffManager.showDiff(d1, d2, settings, null);
     } else {
+      file1.refresh(false, false);
+      file2.refresh(false, false);
       SimpleDiffRequest request = SimpleDiffRequest.compareFiles(file1, file2, null);
       request.addHint(DiffTool.HINT_SHOW_MODAL_DIALOG);
       DiffManager.getInstance().getIdeaDiffTool().show(request);

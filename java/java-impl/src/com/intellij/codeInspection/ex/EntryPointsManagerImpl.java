@@ -432,7 +432,7 @@ public class EntryPointsManagerImpl implements PersistentStateComponent<Element>
     myAddNonJavaEntries = addNonJavaEntries;
   }
   
-  public boolean isEntryPoint(PsiModifierListOwner element) {
+  public boolean isEntryPoint(@NotNull PsiModifierListOwner element) {
     return AnnotationUtil.isAnnotated(element, ADDITIONAL_ANNOTATIONS) ||
            AnnotationUtil.isAnnotated(element, getAdditionalAnnotations());
   }

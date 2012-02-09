@@ -81,6 +81,11 @@ public class LastUnchangedContentTracker {
 
     LOG.assertTrue(contentId > 0, contentId);
 
+    if (ChangeListManagerImpl.DEBUG) {
+      System.out.println("LastUnchangedContentTracker.saveContentReference");
+      System.out.println("file = " + file);
+    }
+
     long stamp = file.getModificationStamp();
     try {
       final DataOutputStream contentStream = ACQUIRED_CONTENT_ATTR.writeAttribute(file);

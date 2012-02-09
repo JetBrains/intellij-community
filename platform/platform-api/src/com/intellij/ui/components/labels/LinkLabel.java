@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.ui.UI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -60,20 +61,24 @@ public class LinkLabel extends JLabel {
     this("", LINK);
   }
 
-  public LinkLabel(String text, Icon icon) {
+  public LinkLabel(String text, @Nullable Icon icon) {
     this(text, icon, null, null, null);
   }
 
-  public LinkLabel(String text, Icon icon, LinkListener aListener) {
+  public LinkLabel(String text, @Nullable Icon icon, @Nullable LinkListener aListener) {
     this(text, icon, aListener, null, null);
   }
 
-  public LinkLabel(String text, Icon icon, LinkListener aListener, Object aLinkData) {
+  public LinkLabel(String text, @Nullable Icon icon, @Nullable LinkListener aListener, @Nullable Object aLinkData) {
     this(text, icon, aListener, aLinkData, null);
   }
 
-  public LinkLabel(String text, Icon icon, LinkListener aListener, Object aLinkData, String aVisitedLinksKey) {
-    super(text, icon, JLabel.LEFT);
+  public LinkLabel(String text,
+                   @Nullable Icon icon,
+                   @Nullable LinkListener aListener,
+                   @Nullable Object aLinkData,
+                   @Nullable String aVisitedLinksKey) {
+    super(text, icon, SwingConstants.LEFT);
     setOpaque(false);
 
     setListener(aListener, aLinkData);
@@ -92,7 +97,7 @@ public class LinkLabel extends JLabel {
     myHoveringIcon = iconForHovering;
   }
 
-  public void setListener(LinkListener listener, Object linkData) {
+  public void setListener(LinkListener listener, @Nullable Object linkData) {
     myLinkListener = listener;
     myLinkData = linkData;
   }

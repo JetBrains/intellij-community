@@ -31,9 +31,7 @@ class GradleProjectBuilder extends AbstractProjectBuilder {
   @Override
   protected createLibrary(String name, Map paths) {
     def result = new GradleLibrary(name)
-    (paths.bin?: [same]).each { result.addPath(LibraryPathType.BINARY, it) }
-    (paths.src?: [same]).each { result.addPath(LibraryPathType.SOURCE, it) }
-    (paths.doc?: [same]).each { result.addPath(LibraryPathType.DOC, it) }
+    applyLibraryPaths(result, paths)
     result
   }
 
@@ -42,5 +40,13 @@ class GradleProjectBuilder extends AbstractProjectBuilder {
     def result = new GradleLibraryDependency(module, library)
     module.addDependency(result)
     result
+  }
+
+  @Override
+  protected applyLibraryPaths(library, Map paths) {
+    library.forgetAllPaths()
+    ['bin': LibraryPathType.BINARY, 'src': LibraryPathType.SOURCE, 'doc': LibraryPathType.DOC].each {
+      key, type -> paths[key]?.each { library.addPath(type, it) }
+    }
   }
 }

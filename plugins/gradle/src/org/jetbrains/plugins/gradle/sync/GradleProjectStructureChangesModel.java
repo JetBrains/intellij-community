@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.sync;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.diff.GradleProjectStructureChange;
 import org.jetbrains.plugins.gradle.diff.GradleStructureChangesCalculator;
 import org.jetbrains.plugins.gradle.model.GradleProject;
@@ -13,7 +14,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * // TODO den add doc
+ * Manages information about the changes between the gradle and intellij project structures. 
  * <p/>
  * Thread-safe.
  * 
@@ -25,7 +26,9 @@ public class GradleProjectStructureChangesModel extends AbstractProjectComponent
   private final Set<GradleProjectStructureChangeListener> myListeners = new CopyOnWriteArraySet<GradleProjectStructureChangeListener>();
   private final AtomicReference<Set<GradleProjectStructureChange>> myChanges
     = new AtomicReference<Set<GradleProjectStructureChange>>(new HashSet<GradleProjectStructureChange>());
-
+  
+  private final AtomicReference<GradleProject> myGradleProject = new AtomicReference<GradleProject>();
+  
   private final GradleStructureChangesCalculator<GradleProject, Project> myChangesCalculator;
 
   public GradleProjectStructureChangesModel(@NotNull Project project,
@@ -54,6 +57,7 @@ public class GradleProjectStructureChangesModel extends AbstractProjectComponent
    * @param gradleProject  gradle project to sync with
    */
   public void update(@NotNull GradleProject gradleProject) {
+    myGradleProject.set(gradleProject);
     Set<GradleProjectStructureChange> knownChanges = new HashSet<GradleProjectStructureChange>(myChanges.get());
     Set<GradleProjectStructureChange> currentChanges = new HashSet<GradleProjectStructureChange>();
     myChangesCalculator.calculate(gradleProject, myProject, knownChanges, currentChanges);
@@ -66,6 +70,14 @@ public class GradleProjectStructureChangesModel extends AbstractProjectComponent
     }
   }
 
+  /**
+   * @return    last known gradle project state
+   */
+  @Nullable
+  public GradleProject getGradleProject() {
+    return myGradleProject.get();
+  }
+  
   /**
    * Registers given listener within the current model.
    * 

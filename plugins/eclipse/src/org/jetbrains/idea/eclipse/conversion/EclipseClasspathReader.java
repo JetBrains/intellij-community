@@ -272,7 +272,12 @@ public class EclipseClasspathReader {
         final Library.ModifiableModel modifiableModel = library.getModifiableModel();
         modifiableModel.addRoot(getJunitClsUrl(junitName.contains("4")), OrderRootType.CLASSES);
         modifiableModel.commit();
-      } else {
+      }
+      else if (path.equals(EclipseXml.GROOVY_DSL_CONTAINER)) {
+        eclipseModuleManager.setGroovyDslSupport();
+        eclipseModuleManager.registerSrcPlace(EclipseXml.GROOVY_DSL_CONTAINER, idx);
+      }
+      else {
         eclipseModuleManager.registerUnknownCons(path);
         addNamedLibrary(rootModel, new ArrayList<String>(), exported, path, LibraryTablesRegistrar.APPLICATION_LEVEL);
       }

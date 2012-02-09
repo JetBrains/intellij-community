@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,7 @@ import com.intellij.ide.GeneralSettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.SafeWriteRequestor;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.testFramework.PlatformLangTestCase;
@@ -269,13 +266,13 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
     FileUtil.writeToFile(file, "hello");
     VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
     assertNotNull(virtualFile);
-    String s = VfsUtil.loadText(virtualFile);
+    String s = VfsUtilCore.loadText(virtualFile);
     assertEquals("hello", s);
     assertEquals(5, virtualFile.getLength());
 
     FileUtil.writeToFile(file, "new content");
-    ((PersistentFS)ManagingFS.getInstance()).cleanPersistedContents();
-    s = VfsUtil.loadText(virtualFile);
+    PersistentFS.cleanPersistedContents();
+    s = VfsUtilCore.loadText(virtualFile);
     assertEquals("new content", s);
     assertEquals(11, virtualFile.getLength());
   }
@@ -307,7 +304,7 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
 
       final VirtualFile check = LocalFileSystem.getInstance().findFileByIoFile(hardLinkFile);
       assertNotNull(check);
-      assertEquals("hello", VfsUtil.loadText(check));
+      assertEquals("hello", VfsUtilCore.loadText(check));
     }
     finally {
       GeneralSettings.getInstance().setUseSafeWrite(safeWrite);

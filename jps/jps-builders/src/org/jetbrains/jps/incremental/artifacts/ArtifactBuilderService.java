@@ -1,16 +1,19 @@
 package org.jetbrains.jps.incremental.artifacts;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.incremental.BuilderService;
 import org.jetbrains.jps.incremental.ProjectLevelBuilder;
-import org.jetbrains.jps.incremental.ProjectLevelBuilderService;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author nik
  */
-public class ArtifactBuilderService extends ProjectLevelBuilderService {
+public class ArtifactBuilderService extends BuilderService {
   @NotNull
   @Override
-  public ProjectLevelBuilder createBuilder() {
-    return new IncArtifactBuilder();
+  public List<? extends ProjectLevelBuilder> createProjectLevelBuilders() {
+    return Collections.singletonList(new IncArtifactBuilder());
   }
 }

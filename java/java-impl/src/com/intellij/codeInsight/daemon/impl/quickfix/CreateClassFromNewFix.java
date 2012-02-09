@@ -89,7 +89,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
     setupInheritance(newExpression, aClass);
 
     PsiExpressionList argList = newExpression.getArgumentList();
-    Project project = aClass.getProject();
+    final Project project = aClass.getProject();
     if (argList != null && argList.getExpressions().length > 0) {
       PsiMethod constructor = elementFactory.createConstructor();
       constructor = (PsiMethod) aClass.add(constructor);
@@ -101,14 +101,27 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
 
       getReferenceElement(newExpression).bindToElement(aClass);
       aClass = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(aClass);
-      Template template = templateBuilder.buildTemplate();
+      final Template template = templateBuilder.buildTemplate();
       template.setToReformat(true);
 
-      Editor editor = positionCursor(project, aClass.getContainingFile(), aClass);
-      TextRange textRange = aClass.getTextRange();
-      editor.getDocument().deleteString(textRange.getStartOffset(), textRange.getEndOffset());
-
-      startTemplate(editor, template, project, null, getText());
+      final Editor editor = positionCursor(project, aClass.getContainingFile(), aClass);
+      final TextRange textRange = aClass.getTextRange();
+      final Runnable runnable = new Runnable() {
+        public void run() {
+          new WriteCommandAction(project, getText(), getText()) {
+            @Override
+            protected void run(Result result) throws Throwable {
+              editor.getDocument().deleteString(textRange.getStartOffset(), textRange.getEndOffset());
+            }
+          }.execute();
+          startTemplate(editor, template, project, null, getText());
+        }
+      };
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        runnable.run();
+      } else {
+        ApplicationManager.getApplication().invokeLater(runnable);
+      }
     }
     else {
       positionCursor(project, aClass.getContainingFile(), aClass);

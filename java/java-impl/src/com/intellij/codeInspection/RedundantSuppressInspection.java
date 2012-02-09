@@ -40,10 +40,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author cdr
@@ -162,11 +159,25 @@ public class RedundantSuppressInspection extends GlobalInspectionTool{
     Collection<InspectionTool> suppressedTools = new THashSet<InspectionTool>();
     InspectionTool[] tools = getInspectionTools(psiElement, manager);
     for (Collection<String> ids : suppressedScopes.values()) {
-      for (String id : ids) {
-        String shortName = id.trim();
+      for (Iterator<String> iterator = ids.iterator(); iterator.hasNext(); ) {
+        final String shortName = iterator.next().trim();
         for (InspectionTool tool : tools) {
-          if (tool instanceof LocalInspectionToolWrapper && ((LocalInspectionToolWrapper)tool).getTool().getID().equals(shortName) || tool.getShortName().equals(shortName)) {
-            suppressedTools.add(tool);
+          if (tool instanceof LocalInspectionToolWrapper && ((LocalInspectionToolWrapper)tool).getTool().getID().equals(shortName)) {
+            if (!((LocalInspectionToolWrapper)tool).isUnfair()) {
+              suppressedTools.add(tool);
+            } else {
+              iterator.remove();
+              break;
+            }
+          }
+          else if (tool.getShortName().equals(shortName)) {
+            //ignore global unused as it won't be checked anyway
+            if (!(tool instanceof LocalInspectionToolWrapper) && !(tool instanceof GlobalInspectionToolWrapper)) {
+              iterator.remove();
+              break;
+            } else {
+              suppressedTools.add(tool);
+            }
           }
         }
       }

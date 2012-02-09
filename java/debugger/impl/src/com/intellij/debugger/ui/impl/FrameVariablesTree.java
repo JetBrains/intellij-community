@@ -128,29 +128,35 @@ public class FrameVariablesTree extends DebuggerTree {
         return;
       }
       try {
-        final Map<String, LocalVariableProxyImpl> visibleVariables = getVisibleVariables(stackDescriptor);
-        final EvaluationContextImpl evalContext = debuggerContext.createEvaluationContext();
-        final Pair<Set<String>, Set<TextWithImports>> usedVars =
-          ApplicationManager.getApplication().runReadAction(new Computable<Pair<Set<String>, Set<TextWithImports>>>() {
-            public Pair<Set<String>, Set<TextWithImports>> compute() {
-              return findReferencedVars(visibleVariables.keySet(), sourcePosition, evalContext);
-            }
-          });
-        // add locals
-        if (myAutoWatchMode) {
-          for (String var : usedVars.first) {
-            final LocalVariableDescriptorImpl descriptor = myNodeManager.getLocalVariableDescriptor(stackDescriptor, visibleVariables.get(var));
-            myChildren.add(myNodeManager.createNode(descriptor, evaluationContext));
-          }
-        }
-        else {
+        if (!ViewsGeneralSettings.getInstance().ENABLE_AUTO_EXPRESSIONS && !myAutoWatchMode) {
+          // optimization
           super.buildVariables(stackDescriptor, evaluationContext);
         }
-        // add expressions
-        final EvaluationContextImpl evalContextCopy = evaluationContext.createEvaluationContext(evaluationContext.getThisObject());
-        evalContextCopy.setAutoLoadClasses(false);
-        for (TextWithImports text : usedVars.second) {
-          myChildren.add(myNodeManager.createNode(myNodeManager.getWatchItemDescriptor(stackDescriptor, text, null), evalContextCopy));
+        else {
+          final Map<String, LocalVariableProxyImpl> visibleVariables = getVisibleVariables(stackDescriptor);
+          final EvaluationContextImpl evalContext = debuggerContext.createEvaluationContext();
+          final Pair<Set<String>, Set<TextWithImports>> usedVars =
+            ApplicationManager.getApplication().runReadAction(new Computable<Pair<Set<String>, Set<TextWithImports>>>() {
+              public Pair<Set<String>, Set<TextWithImports>> compute() {
+                return findReferencedVars(visibleVariables.keySet(), sourcePosition, evalContext);
+              }
+            });
+          // add locals
+          if (myAutoWatchMode) {
+            for (String var : usedVars.first) {
+              final LocalVariableDescriptorImpl descriptor = myNodeManager.getLocalVariableDescriptor(stackDescriptor, visibleVariables.get(var));
+              myChildren.add(myNodeManager.createNode(descriptor, evaluationContext));
+            }
+          }
+          else {
+            super.buildVariables(stackDescriptor, evaluationContext);
+          }
+          // add expressions
+          final EvaluationContextImpl evalContextCopy = evaluationContext.createEvaluationContext(evaluationContext.getThisObject());
+          evalContextCopy.setAutoLoadClasses(false);
+          for (TextWithImports text : usedVars.second) {
+            myChildren.add(myNodeManager.createNode(myNodeManager.getWatchItemDescriptor(stackDescriptor, text, null), evalContextCopy));
+          }
         }
       }
       catch (EvaluateException e) {
@@ -450,6 +456,7 @@ public class FrameVariablesTree extends DebuggerTree {
     private final Set<String> myVars;
     private final SourcePosition myPosition;
     private final EvaluationContextImpl myEvalContext;
+    private final boolean myCollectExpressions;
 
     public VariablesCollector(final Set<String> visibleLocals,
                               final TextRange lineRange,
@@ -462,6 +469,7 @@ public class FrameVariablesTree extends DebuggerTree {
       myVars = vars;
       myPosition = position;
       myEvalContext = evalContext;
+      myCollectExpressions = ViewsGeneralSettings.getInstance().ENABLE_AUTO_EXPRESSIONS;
     }
 
     @Override 
@@ -473,9 +481,11 @@ public class FrameVariablesTree extends DebuggerTree {
 
     @Override 
     public void visitMethodCallExpression(final PsiMethodCallExpression expression) {
-      final PsiMethod psiMethod = expression.resolveMethod();
-      if (psiMethod != null && !DebuggerUtils.hasSideEffectsOrReferencesMissingVars(expression, myVisibleLocals)) {
-        myExpressions.add(new TextWithImportsImpl(expression));
+      if (myCollectExpressions) {
+        final PsiMethod psiMethod = expression.resolveMethod();
+        if (psiMethod != null && !DebuggerUtils.hasSideEffectsOrReferencesMissingVars(expression, myVisibleLocals)) {
+          myExpressions.add(new TextWithImportsImpl(expression));
+        }
       }
       super.visitMethodCallExpression(expression);
     }
@@ -487,7 +497,7 @@ public class FrameVariablesTree extends DebuggerTree {
         if (psiElement instanceof PsiVariable) {
           final PsiVariable var = (PsiVariable)psiElement;
           if (var instanceof PsiField) {
-            if (!DebuggerUtils.hasSideEffectsOrReferencesMissingVars(reference, myVisibleLocals)) {
+            if (myCollectExpressions && !DebuggerUtils.hasSideEffectsOrReferencesMissingVars(reference, myVisibleLocals)) {
               /*
               if (var instanceof PsiEnumConstant && reference.getQualifier() == null) {
                 final PsiClass enumClass = ((PsiEnumConstant)var).getContainingClass();
@@ -532,7 +542,7 @@ public class FrameVariablesTree extends DebuggerTree {
 
     @Override 
     public void visitArrayAccessExpression(final PsiArrayAccessExpression expression) {
-      if (!DebuggerUtils.hasSideEffectsOrReferencesMissingVars(expression, myVisibleLocals)) {
+      if (myCollectExpressions && !DebuggerUtils.hasSideEffectsOrReferencesMissingVars(expression, myVisibleLocals)) {
         myExpressions.add(new TextWithImportsImpl(expression));
       }
       super.visitArrayAccessExpression(expression);

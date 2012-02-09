@@ -2,6 +2,7 @@ package org.jetbrains.jps.incremental.artifacts;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.Project;
 import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.artifacts.Artifact;
@@ -37,16 +38,16 @@ public class ArtifactSourceFilesState {
   public ArtifactSourceFilesState(Artifact artifact, int artifactId, Project project,
                                   ModuleRootsIndex rootsIndex,
                                   ArtifactSourceTimestampStorage timestampStorage,
-                                  File artifactsDataDir) {
+                                  File mappingsDir) {
     myProject = project;
     myArtifact = artifact;
     myRootsIndex = rootsIndex;
     myTimestampStorage = timestampStorage;
     myArtifactId = artifactId;
-    myMappingsFile = new File(artifactsDataDir, "mappings" + File.separator + artifactId);
+    myMappingsFile = new File(mappingsDir, String.valueOf(artifactId));
   }
 
-  public ArtifactSourceToOutputMapping getOrCreateMapping() throws Exception {
+  public ArtifactSourceToOutputMapping getOrCreateMapping() throws IOException {
     if (myMapping == null) {
       myMapping = new ArtifactSourceToOutputMapping(myMappingsFile);
     }
@@ -67,7 +68,7 @@ public class ArtifactSourceFilesState {
     return myDeletedFiles;
   }
 
-  public void initState() throws Exception {
+  public void initState() throws IOException {
     /*
     if (!myInitialized.compareAndSet(false, true)) {
       return;
@@ -79,7 +80,7 @@ public class ArtifactSourceFilesState {
     myDeletedFiles.clear();
     getOrCreateInstructions().processRoots(new ArtifactRootProcessor() {
       @Override
-      public void process(ArtifactSourceRoot root, Collection<DestinationInfo> destinations) throws Exception {
+      public void process(ArtifactSourceRoot root, Collection<DestinationInfo> destinations) throws IOException {
         final File rootFile = root.getRootFile();
         if (rootFile.exists()) {
           processRecursively(rootFile, root.getFilter(), currentPaths);
@@ -100,7 +101,7 @@ public class ArtifactSourceFilesState {
     return myTimestampStorage;
   }
 
-  private void processRecursively(File file, SourceFileFilter filter, Set<String> currentPaths) throws Exception {
+  private void processRecursively(File file, SourceFileFilter filter, Set<String> currentPaths) throws IOException {
     final String filePath = FileUtil.toSystemIndependentName(FileUtil.toCanonicalPath(file.getPath()));
     if (!filter.accept(filePath)) return;
 
@@ -147,7 +148,7 @@ public class ArtifactSourceFilesState {
     return instructionsBuilder;
   }
 
-  public void updateTimestamps(Set<String> deletedFiles, Set<String> changedFiles) throws Exception {
+  public void updateTimestamps(Set<String> deletedFiles, Set<String> changedFiles) throws IOException {
     for (String filePath : deletedFiles) {
       final ArtifactSourceTimestampStorage.PerArtifactTimestamp[] state = myTimestampStorage.getState(filePath);
       if (state == null) continue;
@@ -161,18 +162,27 @@ public class ArtifactSourceFilesState {
     }
     for (String filePath : changedFiles) {
       final ArtifactSourceTimestampStorage.PerArtifactTimestamp[] state = myTimestampStorage.getState(filePath);
-      if (state == null) continue;
-      for (int i = 0, length = state.length; i < length; i++) {
-        if (state[i].myArtifactId == myArtifactId) {
-          File file = new File(FileUtil.toSystemDependentName(filePath));
-          state[i] = new ArtifactSourceTimestampStorage.PerArtifactTimestamp(myArtifactId, file.lastModified());
-          myTimestampStorage.update(filePath, state);
-          break;
-        }
-      }
+      File file = new File(FileUtil.toSystemDependentName(filePath));
+      final long timestamp = file.lastModified();
+      myTimestampStorage.update(filePath, updateTimestamp(state, timestamp));
     }
     myDeletedFiles.clear();
     myChangedFiles.clear();
+  }
+
+  @NotNull
+  private ArtifactSourceTimestampStorage.PerArtifactTimestamp[] updateTimestamp(ArtifactSourceTimestampStorage.PerArtifactTimestamp[] oldState, long timestamp) {
+    final ArtifactSourceTimestampStorage.PerArtifactTimestamp newItem = new ArtifactSourceTimestampStorage.PerArtifactTimestamp(myArtifactId, timestamp);
+    if (oldState == null) {
+      return new ArtifactSourceTimestampStorage.PerArtifactTimestamp[]{newItem};
+    }
+    for (int i = 0, length = oldState.length; i < length; i++) {
+      if (oldState[i].myArtifactId == myArtifactId) {
+        oldState[i] = newItem;
+        return oldState;
+      }
+    }
+    return ArrayUtil.append(oldState, newItem);
   }
 
   public void close() throws IOException {

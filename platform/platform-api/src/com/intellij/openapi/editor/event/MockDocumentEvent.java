@@ -22,7 +22,7 @@ public class MockDocumentEvent extends DocumentEvent {
   private final int myOffset;
   private final long myTimestamp;
 
-  public MockDocumentEvent(Document document, int offset) {
+  public MockDocumentEvent(@NotNull Document document, int offset) {
     super(document);
     myOffset = offset;
     myTimestamp = document.getModificationStamp();
@@ -45,10 +45,12 @@ public class MockDocumentEvent extends DocumentEvent {
     return 0;
   }
 
+  @NotNull
   public CharSequence getOldFragment() {
     return "";
   }
 
+  @NotNull
   public CharSequence getNewFragment() {
     return "";
   }

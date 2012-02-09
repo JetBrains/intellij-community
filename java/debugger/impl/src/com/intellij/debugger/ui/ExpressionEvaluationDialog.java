@@ -28,10 +28,14 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
 public class ExpressionEvaluationDialog extends EvaluationDialog {
@@ -77,15 +81,25 @@ public class ExpressionEvaluationDialog extends EvaluationDialog {
   }
 
   protected JComponent createCenterPanel() {
-    final JPanel panel = new JPanel(new GridBagLayout());
+    final JPanel panel = new JPanel(new BorderLayout());
 
-    final JLabel expressionLabel = new JLabel(DebuggerBundle.message("label.evaluate.dialog.expression"));
-    panel.add(expressionLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.BASELINE_LEADING, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
-    panel.add(getExpressionCombo(), new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.BASELINE_LEADING, GridBagConstraints.HORIZONTAL, new Insets(0, 10, 0, 0), 0, 0));
+    final JPanel exprPanel = new JPanel(new BorderLayout());
+    exprPanel.add(new JLabel(DebuggerBundle.message("label.evaluate.dialog.expression")), BorderLayout.WEST);
+    exprPanel.add(getExpressionCombo(), BorderLayout.CENTER);
+    final JLabel help = new JLabel(
+      String.format("Press Enter to Evaluate or %s+Enter to evaluate and add to the Watches", SystemInfo.isMac ? "Command" : "Control"), SwingConstants.RIGHT);
+    help.setBorder(IdeBorderFactory.createEmptyBorder(2,0,6,0));
+    UIUtil.applyStyle(UIUtil.ComponentStyle.MINI, help);
+    help.setForeground(UIUtil.getInactiveTextColor());
+    exprPanel.add(help, BorderLayout.SOUTH);
 
-    final JLabel resultLabel = new JLabel(DebuggerBundle.message("label.evaluate.dialog.result"));
-    panel.add(resultLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(5, 0, 0, 0), 0, 0));
-    panel.add(getEvaluationPanel(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(5, 0, 0, 0), 0, 0));
+
+    final JPanel resultPanel = new JPanel(new BorderLayout());
+    //resultPanel.add(new JLabel(DebuggerBundle.message("label.evaluate.dialog.result")), BorderLayout.NORTH);
+    resultPanel.add(getEvaluationPanel(), BorderLayout.CENTER);
+
+    panel.add(exprPanel, BorderLayout.NORTH);
+    panel.add(resultPanel, BorderLayout.CENTER);
 
     return panel;
   }
@@ -101,6 +115,31 @@ public class ExpressionEvaluationDialog extends EvaluationDialog {
 
   protected Action[] createActions() {
     return new Action[] { getOKAction(), getCancelAction(), new SwitchAction(), getHelpAction() } ;
+  }
+
+  @Override
+  protected void createDefaultActions() {
+    super.createDefaultActions();
+    myOKAction = new OkAction(){
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        super.actionPerformed(e);
+        final int mask = SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK;
+        if ((e.getModifiers() & mask) != 0) {
+          addCurrentExpressionToWatches();
+        }
+      }
+    };
+  }
+
+  private void addCurrentExpressionToWatches() {
+    final DebuggerSessionTab tab = DebuggerPanelsManager.getInstance(getProject()).getSessionTab();
+    if (tab != null) {
+      final TextWithImports evaluate = getCodeToEvaluate();
+      if (evaluate != null) {
+        tab.getWatchPanel().getWatchTree().addWatch(evaluate);
+      }
+    }
   }
 
   protected void doHelpAction() {

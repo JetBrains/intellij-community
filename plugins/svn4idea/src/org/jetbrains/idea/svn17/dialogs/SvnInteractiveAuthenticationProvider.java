@@ -17,6 +17,8 @@ package org.jetbrains.idea.svn17.dialogs;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
@@ -31,7 +33,9 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.*;
 
+import javax.swing.*;
 import java.io.File;
+import java.lang.reflect.InvocationTargetException;
 import java.security.cert.X509Certificate;
 
 public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationProvider {
@@ -200,7 +204,20 @@ public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationP
                                                     MessageType.ERROR);
       return REJECTED;
     }
-    WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(command);
+    final ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
+    if (pi != null) {
+      WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(command, pi.getModalityState());
+    } else {
+      try {
+        SwingUtilities.invokeAndWait(command);
+      }
+      catch (InterruptedException e) {
+        //
+      }
+      catch (InvocationTargetException e) {
+        //
+      }
+    }
     return result[0];
   }
 
