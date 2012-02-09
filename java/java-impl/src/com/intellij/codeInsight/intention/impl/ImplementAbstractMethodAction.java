@@ -54,7 +54,7 @@ public class ImplementAbstractMethodAction extends BaseIntentionAction {
 
     PsiClass containingClass = method.getContainingClass();
     if (containingClass == null) return false;
-    if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
+    if (method.hasModifierProperty(PsiModifier.ABSTRACT) || !method.hasModifierProperty(PsiModifier.PRIVATE)) {
       MyElementProcessor processor = new MyElementProcessor(method);
       if (containingClass.isEnum()) {
         for (PsiField field : containingClass.getFields()) {
