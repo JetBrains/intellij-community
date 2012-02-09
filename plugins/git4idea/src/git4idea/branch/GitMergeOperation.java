@@ -130,7 +130,7 @@ class GitMergeOperation extends GitBranchOperation {
         notifySuccess();
       }
       else {
-        notifySuccess("Already up-to-date.");
+        notifySuccess("Already up-to-date");
       }
     }
 
