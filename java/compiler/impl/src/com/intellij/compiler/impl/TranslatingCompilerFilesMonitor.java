@@ -1071,6 +1071,9 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
       return;
     }
     final int projectId = getProjectId(projRef.get());
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Scanning source content for project projectId=" + projectId + "; url="+ projRef.get().getPresentableUrl());
+    }
 
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(projRef.get()).getFileIndex();
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
@@ -1210,6 +1213,9 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
         new Task.Backgroundable(project, CompilerBundle.message("compiler.initial.scanning.progress.text"), false) {
           public void run(@NotNull final ProgressIndicator indicator) {
             final ProjectRef projRef = new ProjectRef(project);
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("Initial sources scan for project hash=" + projectId + "; url="+ projRef.get().getPresentableUrl());
+            }
             try {
               final IntermediateOutputCompiler[] compilers =
                   CompilerManager.getInstance(projRef.get()).getCompilers(IntermediateOutputCompiler.class);
@@ -1333,6 +1339,9 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
         public void rootsChanged(final ModuleRootEvent event) {
           if (isSuspended(projectId)) {
             return;
+          }
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Before roots changed for projectId=" + projectId + "; url="+ project.getPresentableUrl());
           }
           try {
             final VirtualFile[] rootsBefore = myRootsBefore;
