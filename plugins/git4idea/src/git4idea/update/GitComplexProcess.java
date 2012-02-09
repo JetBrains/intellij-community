@@ -15,14 +15,12 @@
  */
 package git4idea.update;
 
-import com.intellij.ide.SaveAndSyncHandler;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.util.continuation.*;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
+import git4idea.util.GitFreezingProcess;
 
 /**
  * This class executes a Git task, surrounding it with a couple of preparation and completion tasks, such as:
@@ -50,16 +48,12 @@ public class GitComplexProcess {
   private final Operation myOperation;
 
   private final String myFreezeReason;
-  private final ProjectManagerEx myProjectManager;
   private final GitRepositoryManager myRepositoryManager;
   private final ChangeListManager myChangeListManager;
 
   private final TaskDescriptor BLOCK = new TaskDescriptor("", Where.AWT) {
     @Override public void run(ContinuationContext context) {
-      myProjectManager.blockReloadingProjectOnExternalChanges();
-      FileDocumentManager.getInstance().saveAllDocuments();
-      SaveAndSyncHandler.getInstance().blockSaveOnFrameDeactivation();
-      SaveAndSyncHandler.getInstance().blockSyncOnFrameActivation();
+      GitFreezingProcess.saveAndBlock();
     }
   };
 
@@ -77,9 +71,7 @@ public class GitComplexProcess {
 
   private final TaskDescriptor UNBLOCK = new TaskDescriptor("", Where.AWT) {
     @Override public void run(ContinuationContext context) {
-      myProjectManager.unblockReloadingProjectOnExternalChanges();
-      SaveAndSyncHandler.getInstance().unblockSaveOnFrameDeactivation();
-      SaveAndSyncHandler.getInstance().unblockSyncOnFrameActivation();
+      GitFreezingProcess.unblock();
     }
 
     @Override public boolean isHaveMagicCure() {
@@ -99,7 +91,6 @@ public class GitComplexProcess {
     myOperation = operation;
     myFreezeReason = "Local changes are not available until Git " + myTitle + " is finished.";
 
-    myProjectManager = ProjectManagerEx.getInstanceEx();
     myRepositoryManager = GitRepositoryManager.getInstance(project);
     myChangeListManager = ChangeListManager.getInstance(myProject);
 

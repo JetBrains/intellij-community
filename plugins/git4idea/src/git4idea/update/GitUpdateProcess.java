@@ -31,6 +31,7 @@ import git4idea.GitBranch;
 import git4idea.GitVcs;
 import git4idea.branch.GitBranchPair;
 import git4idea.merge.GitConflictResolver;
+import git4idea.merge.GitMergeCommittingConflictResolver;
 import git4idea.merge.GitMerger;
 import git4idea.rebase.GitRebaser;
 import git4idea.stash.GitChangesSaver;
@@ -297,7 +298,7 @@ public class GitUpdateProcess {
     GitConflictResolver.Params params = new GitConflictResolver.Params();
     params.setErrorNotificationTitle("Can't update");
     params.setMergeDescription("You have unfinished merge. These conflicts must be resolved before update.");
-    return !new MergeCommittingConflictResolver(myProject, myMerger, mergingRoots, params).merge();
+    return !new GitMergeCommittingConflictResolver(myProject, myMerger, mergingRoots, params, false).merge();
   }
 
   /**
@@ -308,7 +309,7 @@ public class GitUpdateProcess {
     GitConflictResolver.Params params = new GitConflictResolver.Params();
     params.setErrorNotificationTitle("Can't update");
     params.setMergeDescription("Unmerged files detected. These conflicts must be resolved before update.");
-    return !new MergeCommittingConflictResolver(myProject, myMerger, myRoots, params).merge();
+    return !new GitMergeCommittingConflictResolver(myProject, myMerger, myRoots, params, false).merge();
   }
 
   /**
@@ -338,22 +339,4 @@ public class GitUpdateProcess {
       }
     }.merge();
   }
-
-  // conflict resolver that makes a merge commit after all conflicts are resolved
-  private static class MergeCommittingConflictResolver extends GitConflictResolver {
-    private final Collection<VirtualFile> myMergingRoots;
-    private final GitMerger myMerger;
-
-    public MergeCommittingConflictResolver(Project project, GitMerger merger, Collection<VirtualFile> mergingRoots, Params params) {
-      super(project, mergingRoots, params);
-      myMerger = merger;
-      myMergingRoots = mergingRoots;
-    }
-
-    @Override protected boolean proceedAfterAllMerged() throws VcsException {
-      myMerger.mergeCommit(myMergingRoots);
-      return true;
-    }
-  }
-  
 }

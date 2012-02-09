@@ -67,21 +67,24 @@ public class GitStashChangesSaver extends GitChangesSaver {
   }
 
   @Override
-  protected void load(ContinuationContext context) {
+  protected void load(@NotNull ContinuationContext context) {
+    try {
+      load();
+    }
+    catch (VcsException e) {
+      context.handleException(e);
+    }
+  }
+
+  public void load() throws VcsException {
     for (VirtualFile root : myStashedRoots) {
-      try {
-        loadRoot(root);
-      }
-      catch (VcsException e) {
-        context.handleException(e);
-        return;
-      }
+      loadRoot(root);
     }
     // we'll refresh more but this way we needn't compute what files under roots etc
     LocalFileSystem.getInstance().refreshIoFiles(myChangeManager.getAffectedPaths());
   }
 
-    @Override
+  @Override
   protected boolean wereChangesSaved() {
     return !myStashedRoots.isEmpty();
   }
