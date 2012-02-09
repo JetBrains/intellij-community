@@ -139,12 +139,17 @@ public class NotificationsConfigurationImpl extends NotificationsConfiguration i
                        @NotNull NotificationDisplayType displayType,
                        boolean shouldLog) {
     if (!isRegistered(groupDisplayName)) {
-      myIdToSettingsMap.put(groupDisplayName, new NotificationSettings(groupDisplayName, displayType, shouldLog));
+      changeSettings(groupDisplayName, displayType, shouldLog);
     } else if (displayType == NotificationDisplayType.TOOL_WINDOW && !hasToolWindowCapability(groupDisplayName)) {
       // the first time with tool window capability
       ObjectUtils.assertNotNull(_getSettings(groupDisplayName)).setDisplayType(NotificationDisplayType.TOOL_WINDOW);
       myToolWindowCapable.put(groupDisplayName, null);
     }
+  }
+
+  @Override
+  public void changeSettings(String groupDisplayName, NotificationDisplayType displayType, boolean shouldLog) {
+    myIdToSettingsMap.put(groupDisplayName, new NotificationSettings(groupDisplayName, displayType, shouldLog));
   }
 
   public synchronized boolean isRegistered(@NotNull final String id) {
