@@ -77,9 +77,22 @@ public class GitStashChangesSaver extends GitChangesSaver {
   }
 
   public void load() throws VcsException {
+    Collection<VirtualFile> conflictedRoots = new ArrayList<VirtualFile>();
     for (VirtualFile root : myStashedRoots) {
-      loadRoot(root);
+      boolean conflict = loadRoot(root);
+      if (conflict) {
+        conflictedRoots.add(root);
+      }
     }
+
+    boolean conflictsResolved = new UnstashConflictResolver(myProject, myStashedRoots, myParams).merge();
+    if (conflictsResolved) {
+      LOG.info("load: all conflicts resolved, dropping stash in " + myStashedRoots);
+      for (VirtualFile root : conflictedRoots) {
+        GitStashUtils.dropStash(myProject, root);
+      }
+    }
+
     // we'll refresh more but this way we needn't compute what files under roots etc
     LocalFileSystem.getInstance().refreshIoFiles(myChangeManager.getAffectedPaths());
   }
@@ -122,7 +135,11 @@ public class GitStashChangesSaver extends GitChangesSaver {
     }
   }
 
-  private void loadRoot(final VirtualFile root) throws VcsException {
+  /**
+   * Returns true if the root was loaded with conflict.
+   * False is returned in all other cases: in the case of success and in case of some other error.
+   */
+  private boolean loadRoot(final VirtualFile root) throws VcsException {
     LOG.info("loadRoot " + root);
     myProgressIndicator.setText(GitHandlerUtil.formatOperationName("Unstashing changes to", root));
     final GitLineHandler handler = new GitLineHandler(myProject, root, GitCommand.STASH);
@@ -159,26 +176,21 @@ public class GitStashChangesSaver extends GitChangesSaver {
 
     if (failure.get()) {
       if (conflict.get()) {
-        boolean conflictsResolved = new UnstashConflictResolver(myProject, root, myStashedRoots, myParams).merge();
-        if (conflictsResolved) {
-          LOG.info("loadRoot " + root + " conflicts resolved, dropping stash");
-          GitStashUtils.dropStash(myProject, root);
-        }
+        return true;
       } else {
         LOG.info("unstash failed " + handler.errors());
         GitUIUtil.notifyImportantError(myProject, "Couldn't unstash", "<br/>" + GitUIUtil.stringifyErrors(handler.errors()));
       }
     }
+    return false;
   }
 
   private static class UnstashConflictResolver extends GitConflictResolver {
 
-    private final VirtualFile myRoot;
     private final Set<VirtualFile> myStashedRoots;
 
-    public UnstashConflictResolver(@NotNull Project project, @NotNull VirtualFile root, @NotNull Set<VirtualFile> stashedRoots, @Nullable Params params) {
-      super(project, Collections.singleton(root), makeParamsOrUse(params));
-      myRoot = root;
+    public UnstashConflictResolver(@NotNull Project project, @NotNull Set<VirtualFile> stashedRoots, @Nullable Params params) {
+      super(project, stashedRoots, makeParamsOrUse(params));
       myStashedRoots = stashedRoots;
     }
 
@@ -206,7 +218,7 @@ public class GitStashChangesSaver extends GitChangesSaver {
             if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
               if (event.getDescription().equals("saver")) {
                 // we don't use #showSavedChanges to specify unmerged root first
-                GitUnstashDialog.showUnstashDialog(myProject, new ArrayList<VirtualFile>(myStashedRoots), myRoot,
+                GitUnstashDialog.showUnstashDialog(myProject, new ArrayList<VirtualFile>(myStashedRoots), myStashedRoots.iterator().next(),
                                                    new HashSet<VirtualFile>());
               } else if (event.getDescription().equals("resolve")) {
                 mergeNoProceed();
