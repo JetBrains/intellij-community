@@ -16,12 +16,12 @@
 package org.jetbrains.plugins.groovy.refactoring.extract.closure;
 
 
-import com.intellij.psi.PsiElement
+import com.intellij.refactoring.IntroduceParameterRefactoring
 import gnu.trove.TIntArrayList
-import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner
-import org.jetbrains.plugins.groovy.refactoring.extract.InitialInfo
+import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.GrIntroduceParameterHandler
+import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.GrIntroduceParameterSettings
+import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.IntroduceParameterInfo
 import org.jetbrains.plugins.groovy.util.TestUtils
 
 /**
@@ -40,25 +40,22 @@ public class ExtractClosureTest extends LightGroovyTestCase {
 
   private void doTest(String before, String after, List<Integer> toRemove, List<Integer> notToUseAsParams) {
     myFixture.configureByText '______________a____________________.groovy', before
-    def model = myFixture.editor.selectionModel
-    def handler = new ExtractClosureHandler() {
-      @Override
-      protected ExtractClosureHelper getSettings(@NotNull InitialInfo initialInfo, GrParametersOwner owner, PsiElement toSearchFor) {
-        def settings = new ExtractClosureHelper(initialInfo, owner, toSearchFor, "closure", true)
-        settings.setDeclareFinal(false)
-        settings.setGenerateDelegate(false)
-        settings.setName("closure")
-        settings.setToRemove(new TIntArrayList(toRemove as int[]))
 
-        def infos = settings.parameterInfos
-        for (int i: notToUseAsParams) {
-          infos[i].setPassAsParameter(false)
+    def handler = new GrIntroduceParameterHandler() {
+      @Override
+      protected void showDialog(IntroduceParameterInfo info) {
+
+        GrIntroduceParameterSettings helper = new ExtractClosureHelperImpl(info, "closure", false,
+                                                                           new TIntArrayList(toRemove as int[]), false,
+                                                                           IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE)
+        for (p in notToUseAsParams) {
+          helper.parameterInfos[p].setPassAsParameter(false)
         }
-        return settings
+        new ExtractClosureFromMethodProcessor(helper).run()
       }
     }
-    
-    handler.invoke myFixture.project, myFixture.editor, myFixture.file, model.selectionStart, model.selectionEnd
+
+    handler.invoke myFixture.project, myFixture.editor, myFixture.file, null
     myFixture.checkResult after
   }
 
@@ -155,7 +152,7 @@ def foo(int x, int y) {
 }
 
 foo(2, 3)
-''','''
+''', '''
 def foo(Closure closure) {
     int a = 5
     <selection>closure(a)</selection>
@@ -172,7 +169,7 @@ adventure()
 def adventure() {
 
     try {
-        <selection>killMonsters()
+        <selection><caret>killMonsters()
         collectLoot()</selection>
     } catch (ArrowToKneeException) {
         becomeTownGuard()
@@ -194,7 +191,7 @@ def adventure(Closure closure) {
 }
 '''
   }
-  
+
   void testExpression() {
     doTest('''
 adventure()

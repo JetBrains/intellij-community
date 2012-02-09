@@ -1,4 +1,4 @@
-def a = {int x, int z, def anObject ->
+def a = {int x, int z, int anObject ->
   print anObject + x+z
 }
 

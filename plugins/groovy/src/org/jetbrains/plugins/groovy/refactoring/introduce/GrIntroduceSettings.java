@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 public interface GrIntroduceSettings {
   @Nullable
   String getName();
+
   boolean replaceAllOccurrences();
 
   @Nullable

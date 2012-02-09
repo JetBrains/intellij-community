@@ -347,15 +347,19 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
     }
   }
 
-  private static void collectSupers(PsiClass psiClass, ArrayList<PsiClass> classes) {
+  private void collectSupers(PsiClass psiClass, ArrayList<PsiClass> classes) {
     classes.add(psiClass);
 
     final PsiClass[] supers = psiClass.getSupers();
     for (PsiClass aSuper : supers) {
-      if (aSuper.getManager().isInProject(aSuper)) {
+      if (canBeTargetClass(aSuper)) {
         collectSupers(aSuper, classes);
       }
     }
+  }
+  
+  protected boolean canBeTargetClass(PsiClass psiClass) {
+    return psiClass.getManager().isInProject(psiClass);
   }
 
   protected static void startTemplate (@NotNull Editor editor, final Template template, @NotNull final Project project) {

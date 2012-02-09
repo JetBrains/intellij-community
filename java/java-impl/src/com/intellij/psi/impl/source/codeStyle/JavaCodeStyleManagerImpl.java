@@ -153,7 +153,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     }
     else {
       redundants = allImports;
-      final PsiElement[] roots = file.getPsiRoots();
+      final List<PsiFile> roots = file.getViewProvider().getAllFiles();
       for (PsiElement root : roots) {
         root.accept(new JavaRecursiveElementWalkingVisitor() {
           @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {

@@ -78,8 +78,8 @@ public class LossyEncodingInspection extends LocalInspectionTool {
   @Nullable
   public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (InjectedLanguageManager.getInstance(file.getProject()).isInjectedFragment(file)) return null;
-    if (ArrayUtil.find(file.getPsiRoots(), file) != 0) return null;
     if (!file.isPhysical()) return null;
+    if (file.getViewProvider().getBaseLanguage() != file.getLanguage()) return null;
     VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null) return null;
     if (virtualFile.getFileSystem() != LocalFileSystem.getInstance()

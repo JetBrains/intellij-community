@@ -57,7 +57,8 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
         }
 
         CompletionResultSet result = _result.withPrefixMatcher(CompletionUtil.findReferenceOrAlphanumericPrefix(parameters));
-        addAllClasses(parameters, JavaCompletionSorting.addJavaSorting(parameters, result), parameters.getInvocationCount() <= 1, new Consumer<LookupElement>() {
+        addAllClasses(parameters, parameters.getInvocationCount() <= 1,
+                      JavaCompletionSorting.addJavaSorting(parameters, result).getPrefixMatcher(), new Consumer<LookupElement>() {
           @Override
           public void consume(LookupElement element) {
             _result.addElement(element);
@@ -68,8 +69,8 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
   }
 
   public static void addAllClasses(CompletionParameters parameters,
-                                   final CompletionResultSet result,
                                    final boolean filterByScope,
+                                   @NotNull final PrefixMatcher matcher,
                                    @NotNull final Consumer<LookupElement> consumer) {
     final PsiElement insertedElement = parameters.getPosition();
 
@@ -110,7 +111,7 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
     }
 
     final boolean lookingForAnnotations = PsiJavaPatterns.psiElement().afterLeaf("@").accepts(insertedElement);
-    AllClassesGetter.processJavaClasses(parameters, result.getPrefixMatcher(), filterByScope, new Consumer<PsiClass>() {
+    AllClassesGetter.processJavaClasses(parameters, matcher, filterByScope, new Consumer<PsiClass>() {
         @Override
         public void consume(PsiClass psiClass) {
           if (lookingForAnnotations && !psiClass.isAnnotationType()) return;

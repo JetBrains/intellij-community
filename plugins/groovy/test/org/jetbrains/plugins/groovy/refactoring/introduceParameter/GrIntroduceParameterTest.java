@@ -22,15 +22,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
-import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.IntroduceParameterRefactoring;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
 import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.*;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
@@ -40,7 +42,7 @@ import java.io.File;
  * @author Maxim.Medvedev
  */
 public class GrIntroduceParameterTest extends LightCodeInsightFixtureTestCase {
-  
+
   protected String getBasePath() {
     return TestUtils.getTestDataPath() + "refactoring/introduceParameterGroovy/" + getTestName(true) + '/';
   }
@@ -114,17 +116,14 @@ public class GrIntroduceParameterTest extends LightCodeInsightFixtureTestCase {
             try {
               final GrIntroduceParameterHandler hackedHandler = new GrIntroduceParameterHandler() {
                 @Override
-                protected void showDialog(final GrIntroduceParameterContext context) {
-                  final GrIntroduceParameterSettings hackedSettings =
-                    getSettings(context, removeUnusedParameters, replaceFieldsWithGetters, declareFinal, generateDelegate);
-                  BaseRefactoringProcessor processor;
-                  if (context.toReplaceIn instanceof GrMethod) {
-                    processor = new GrIntroduceParameterProcessor(hackedSettings, context);
+                protected void showDialog(IntroduceParameterInfo info) {
+                  final GrIntroduceExpressionSettings hackedSettings = getSettings(info, removeUnusedParameters, replaceFieldsWithGetters, declareFinal, generateDelegate);
+                  if (info.getToReplaceIn() instanceof GrMethod) {
+                    new GrIntroduceParameterProcessor(hackedSettings).run();
                   }
                   else {
-                    processor = new GrIntroduceClosureParameterProcessor(hackedSettings, context);
+                    new GrIntroduceClosureParameterProcessor(hackedSettings).run();
                   }
-                  processor.run();
                 }
               };
               hackedHandler.invoke(project, editor, file, null);
@@ -143,61 +142,23 @@ public class GrIntroduceParameterTest extends LightCodeInsightFixtureTestCase {
     }, "introduce Parameter", null);
   }
 
-  private static GrIntroduceParameterSettings getSettings(final GrIntroduceParameterContext context,
+  private static GrIntroduceExpressionSettings getSettings(final IntroduceParameterInfo context,
                                                           final boolean removeUnusedParameters,
                                                           final int replaceFieldsWithGetters,
                                                           final boolean declareFinal,
                                                           final boolean generateDelegate) {
-    return new GrIntroduceParameterSettings() {
-      @Override
-      public boolean generateDelegate() {
-        return generateDelegate;
-      }
 
-      @Override
-      public TIntArrayList parametersToRemove() {
-        if (removeUnusedParameters) {
-          final TObjectIntHashMap<GrParameter> parametersToRemove = GroovyIntroduceParameterUtil.findParametersToRemove(context);
-          TIntArrayList list = new TIntArrayList(parametersToRemove.size());
-          for (Object o : parametersToRemove.keys()) {
-            list.add(parametersToRemove.get((GrParameter)o));
-          }
-          return list;
-        }
-        return new TIntArrayList(0);
+    TIntArrayList toRemove = new TIntArrayList();
+    if (removeUnusedParameters) {
+      final TObjectIntHashMap<GrParameter> map = GroovyIntroduceParameterUtil.findParametersToRemove(context);
+      for (int i : map.getValues()) {
+        toRemove.add(i);
       }
-
-      @Override
-      public int replaceFieldsWithGetters() {
-        return replaceFieldsWithGetters;
-      }
-
-      @Override
-      public boolean declareFinal() {
-        return declareFinal;
-      }
-
-      @Override
-      public boolean removeLocalVariable() {
-        return false;
-      }
-
-      @Override
-      public String getName() {
-        return "anObject";
-      }
-
-      @Override
-      public boolean replaceAllOccurrences() {
-        return true;
-      }
-
-      @Override
-      public PsiType getSelectedType() {
-        PsiType type = context.var == null ? context.expression.getType() : context.var.getDeclaredType();
-        return TypesUtil.unboxPrimitiveTypeWrapper(type);
-      }
-    };
+    }
+    GrExpression expr = GrIntroduceHandlerBase.findExpression(context.getStatements()[0]);
+    GrVariable var = GrIntroduceHandlerBase.findVariable(context.getStatements()[0]);
+    final PsiType type = TypesUtil.unboxPrimitiveTypeWrapper(var == null ? expr.getType() : var.getType());
+    return new GrIntroduceExpressionSettingsImpl(context, "anObject", declareFinal, toRemove, generateDelegate, replaceFieldsWithGetters, expr, var, type);
   }
   
   

@@ -1,4 +1,4 @@
-<caret>def foo(def anObject) {
+<caret>def foo(String anObject) {
     print(anObject)
 }
 

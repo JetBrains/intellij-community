@@ -50,4 +50,6 @@ public interface ExtractInfoHelper {
   boolean hasReturnValue();
   
   String getName();
+
+  PsiElement getContext();
 }

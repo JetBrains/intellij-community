@@ -21,22 +21,27 @@ import org.jetbrains.annotations.NotNull;
 import java.util.EventObject;
 
 public abstract class DocumentEvent extends EventObject {
-  protected DocumentEvent(Document document) {
+  protected DocumentEvent(@NotNull Document document) {
     super(document);
   }
 
-  @NotNull public abstract Document getDocument();
+  @NotNull
+  public abstract Document getDocument();
 
   public abstract int getOffset();
 
   public abstract int getOldLength();
+
   public abstract int getNewLength();
 
+  @NotNull
   public abstract CharSequence getOldFragment();
+
+  @NotNull
   public abstract CharSequence getNewFragment();
 
   public abstract long getOldTimeStamp();
-  
+
   public boolean isWholeTextReplaced() {
     return getOffset() == 0 && getNewLength() == getDocument().getTextLength();
   }

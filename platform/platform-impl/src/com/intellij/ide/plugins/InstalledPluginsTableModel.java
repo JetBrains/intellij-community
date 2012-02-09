@@ -19,6 +19,9 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
@@ -37,6 +40,7 @@ import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -114,7 +118,12 @@ public class InstalledPluginsTableModel extends PluginTableModel {
 
     updatePluginDependencies();
 
-    updateRepositoryPlugins();
+    ProgressManager.getInstance().run(new Task.Backgroundable(null, "Load custom plugin repositories data...") {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        updateRepositoryPlugins();
+      }
+    });
   }
 
   public void updateRepositoryPlugins() {

@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CommandLineWrapper {
+  private static final String PREFIX = "-D";
 
   public static void main(String[] args) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException,
                                                 IllegalAccessException, IOException, InstantiationException {
@@ -54,9 +55,41 @@ public class CommandLineWrapper {
       reader.close();
     }
     file.delete();
-    String progClass = args[1];
-    String[] progArgs = new String[args.length - 2];
-    System.arraycopy(args, 2, progArgs, 0, progArgs.length);
+
+    int startArgsIdx = 2;
+    if (args[1].equals("@vm_params")) {
+      startArgsIdx = 4;
+      final File vmParamsFile = new File(args[2]);
+      final BufferedReader vmParamsReader = new BufferedReader(new FileReader(vmParamsFile));
+      try {
+        while (vmParamsReader.ready()) {
+          final String vmParam = vmParamsReader.readLine().trim();
+          final int eqIdx = vmParam.indexOf("=");
+          String vmParamName;
+          String vmParamValue;
+          
+          if (eqIdx > -1 && eqIdx < vmParam.length() - 1) {
+            vmParamName = vmParam.substring(0, eqIdx);
+            vmParamValue = vmParam.substring(eqIdx + 1);
+          } else {
+            vmParamName = vmParam;
+            vmParamValue = "";
+          }
+          vmParamName = vmParamName.trim();
+          if (vmParamName.startsWith(PREFIX)) {
+            vmParamName = vmParamName.substring(PREFIX.length());
+            System.setProperty(vmParamName, vmParamValue);
+          }
+        }
+      }
+      finally {
+        vmParamsReader.close();
+      }
+      vmParamsFile.delete();
+    }
+    String progClass = args[startArgsIdx - 1];
+    String[] progArgs = new String[args.length - startArgsIdx];
+    System.arraycopy(args, startArgsIdx, progArgs, 0, progArgs.length);
     ClassLoader loader = new URLClassLoader((URL[])urls.toArray(new URL[urls.size()]), null);
     final String classloader = System.getProperty("java.system.class.loader");
     if (classloader != null) {

@@ -121,6 +121,10 @@ public class GitExec {
     run(repository, "merge", branch);
   }
 
+  public static String tip(@NotNull GitRepository repository) throws IOException {
+    return run(repository, "rev-list", "-1", "HEAD");
+  }
+
   @NotNull
   private static String run(@NotNull GitRepository repository, @NotNull String command, String... params) throws IOException {
     return new GitTestRunEnv(new File(repository.getRoot().getPath())).run(command, params);

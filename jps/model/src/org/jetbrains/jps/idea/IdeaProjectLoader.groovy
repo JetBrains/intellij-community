@@ -36,7 +36,7 @@ public class IdeaProjectLoader {
   }
 
   public static ProjectMacroExpander loadFromPath(Project project, String path, Map<String, String> pathVariables, String script) {
-    return loadFromPath(project, path, pathVariables, script, new SystemOutErrorReporter())
+    return loadFromPath(project, path, pathVariables, script, new SystemOutErrorReporter(true))
   }
 
   public static ProjectMacroExpander loadFromPath(Project project, String path, Map<String, String> pathVariables, String script, ProjectLoadingErrorReporter errorReporter) {
@@ -111,12 +111,13 @@ public class IdeaProjectLoader {
 
   def loadFromDirectoryBased(File dir) {
     projectMacroExpander = new ProjectMacroExpander(pathVariables, dir.parentFile.absolutePath)
-    def modulesXml = new File(dir, "modules.xml")
-    if (!modulesXml.exists()) errorReporter.error("Cannot find modules.xml in $dir")
-
     def miscXml = new File(dir, "misc.xml")
-    if (!miscXml.exists()) errorReporter.error("Cannot find misc.xml in $dir")
-    loadProjectJdkAndOutput(new XmlParser(false, false).parse(miscXml))
+    if (miscXml.exists()) {
+      loadProjectJdkAndOutput(new XmlParser(false, false).parse(miscXml))
+    }
+    else {
+      errorReporter.error("Cannot find misc.xml in $dir")
+    }
 
     def encodingsXml = new File(dir, "encodings.xml")
     if (encodingsXml.exists()) {
@@ -139,8 +140,15 @@ public class IdeaProjectLoader {
       }
     }
 
-    Node modulesXmlRoot = new XmlParser(false, false).parse(modulesXml)
-    loadModules(modulesXmlRoot.component[0])
+    def modulesXml = new File(dir, "modules.xml")
+    if (modulesXml.exists()) {
+      Node modulesXmlRoot = new XmlParser(false, false).parse(modulesXml)
+      loadModules(modulesXmlRoot.component[0])
+    }
+    else {
+      errorReporter.error("Cannot find modules.xml in $dir")
+    }
+
 
     def artifactsFolder = new File(dir, "artifacts")
     if (artifactsFolder.isDirectory()) {
@@ -505,8 +513,10 @@ public class IdeaProjectLoader {
             if (projectOutputPath == null) {
               errorReporter.error("Module '$currentModuleName' uses output path inherited from project but project output path is not specified")
             }
-            currentModule.outputPath = FileUtil.toSystemIndependentName(new File(new File(projectOutputPath, "production"), currentModuleName).absolutePath)
-            currentModule.testOutputPath = FileUtil.toSystemIndependentName(new File(new File(projectOutputPath, "test"), currentModuleName).absolutePath)
+            else {
+              currentModule.outputPath = FileUtil.toSystemIndependentName(new File(new File(projectOutputPath, "production"), currentModuleName).absolutePath)
+              currentModule.testOutputPath = FileUtil.toSystemIndependentName(new File(new File(projectOutputPath, "test"), currentModuleName).absolutePath)
+            }
           }
           else {
             currentModule.outputPath = moduleMacroExpander.expandMacros(IdeaProjectLoadingUtil.pathFromUrl(componentTag.output[0]?.@url))

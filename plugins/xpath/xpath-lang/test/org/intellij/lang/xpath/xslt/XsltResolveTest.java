@@ -40,6 +40,10 @@ public class XsltResolveTest extends TestBase {
         doVariableResolveTest(true);
     }
 
+    public void testResolveForwardVariable() throws Throwable {
+        doVariableResolveTest(true);
+    }
+
     public void testResolveSingleVariable() throws Throwable {
         doVariableResolveTest(false);
     }

@@ -38,6 +38,8 @@ public class DocumentEventImpl extends DocumentEvent {
   private final long myOldTimeStamp;
   private final boolean myIsWholeDocReplaced;
   private Diff.Change myChange;
+  private static final Diff.Change TOO_BIG_FILE = new Diff.Change(0, 0, 0, 0, null) {
+  };
 
   private int myOptimizedLineShift = -1;
   private boolean myOptimizedLineShiftCalculated;
@@ -45,7 +47,11 @@ public class DocumentEventImpl extends DocumentEvent {
   private int myOptimizedOldLineShift = -1;
   private boolean myOptimizedOldLineShiftCalculated;
 
-  public DocumentEventImpl(Document document, int offset, CharSequence oldString, CharSequence newString, long oldTimeStamp,
+  public DocumentEventImpl(@NotNull Document document,
+                           int offset,
+                           CharSequence oldString,
+                           CharSequence newString,
+                           long oldTimeStamp,
                            boolean wholeTextReplaced) {
     super(document);
     myOffset = offset;
@@ -83,11 +89,13 @@ public class DocumentEventImpl extends DocumentEvent {
     return myNewLength;
   }
 
+  @NotNull
   @Override
   public CharSequence getOldFragment() {
     return myOldString;
   }
 
+  @NotNull
   @Override
   public CharSequence getNewFragment() {
     return myNewString;
@@ -96,11 +104,11 @@ public class DocumentEventImpl extends DocumentEvent {
   @Override
   @NotNull
   public Document getDocument() {
-    return (Document) getSource();
+    return (Document)getSource();
   }
 
   public int getStartOldIndex() {
-    if(isStartOldIndexCalculated) return myStartOldIndex;
+    if (isStartOldIndexCalculated) return myStartOldIndex;
 
     isStartOldIndexCalculated = true;
     myStartOldIndex = getDocument().getLineNumber(myOffset);
@@ -108,21 +116,21 @@ public class DocumentEventImpl extends DocumentEvent {
   }
 
   public boolean isOnlyOneLineChanged() {
-    if(isOnlyOneLineChangedCalculated) return isOnlyOneLineChanged;
+    if (isOnlyOneLineChangedCalculated) return isOnlyOneLineChanged;
 
     isOnlyOneLineChangedCalculated = true;
     isOnlyOneLineChanged = true;
 
-    for(int i=0; i<myOldString.length(); i++) {
-      if(myOldString.charAt(i) == '\n') {
+    for (int i = 0; i < myOldString.length(); i++) {
+      if (myOldString.charAt(i) == '\n') {
         isOnlyOneLineChanged = false;
         break;
       }
     }
 
-    if(isOnlyOneLineChanged) {
-      for(int i=0; i<myNewString.length(); i++) {
-        if(myNewString.charAt(i) == '\n') {
+    if (isOnlyOneLineChanged) {
+      for (int i = 0; i < myNewString.length(); i++) {
+        if (myNewString.charAt(i) == '\n') {
           isOnlyOneLineChanged = false;
           break;
         }
@@ -148,10 +156,8 @@ public class DocumentEventImpl extends DocumentEvent {
   }
 
   public int translateLineViaDiff(int line) throws FilesTooBigForDiffException {
-    if (myChange == null) buildDiff();
-    if (myChange == null) return line;
-
-    Diff.Change change = myChange;
+    Diff.Change change = reBuildDiffIfNeeded();
+    if (change == null) return line;
 
     int newLine = line;
 
@@ -159,7 +165,8 @@ public class DocumentEventImpl extends DocumentEvent {
       if (line < change.line0) break;
       if (line >= change.line0 + change.deleted) {
         newLine += change.inserted - change.deleted;
-      } else {
+      }
+      else {
         int delta = Math.min(change.inserted, line - change.line0);
         newLine = change.line1 + delta;
         break;
@@ -172,16 +179,23 @@ public class DocumentEventImpl extends DocumentEvent {
   }
 
   public int translateLineViaDiffStrict(int line) throws FilesTooBigForDiffException {
-    if (myChange == null) buildDiff();
-    Diff.Change change = myChange;
+    Diff.Change change = reBuildDiffIfNeeded();
     if (change == null) return line;
     return Diff.translateLine(change, line);
   }
 
-  private void buildDiff() throws FilesTooBigForDiffException {
-    //Diff diff = new Diff(strings1, strings2);
-    //myChange = diff.diff_2(false);
-    myChange = Diff.buildChanges(myOldString, myNewString);
+  private Diff.Change reBuildDiffIfNeeded() throws FilesTooBigForDiffException {
+    if (myChange == TOO_BIG_FILE) throw new FilesTooBigForDiffException(0);
+    if (myChange == null) {
+      try {
+        myChange = Diff.buildChanges(myOldString, myNewString);
+      }
+      catch (FilesTooBigForDiffException e) {
+        myChange = TOO_BIG_FILE;
+        throw e;
+      }
+    }
+    return myChange;
   }
 
   public int getOptimizedLineShift() {

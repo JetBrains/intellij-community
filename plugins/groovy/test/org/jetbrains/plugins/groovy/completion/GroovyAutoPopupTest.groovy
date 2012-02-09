@@ -56,7 +56,7 @@ class GroovyAutoPopupTest extends CompletionAutoPopupTestCase {
   public void testNoLookupFocusOnUnresolvedQualifier() {
     myFixture.configureByText("a.groovy", """xxx.<caret>""")
     type 'h' //hashCode
-    assert !lookup.focused
+    assert !lookup
   }
 
   public void testNoLookupFocusOnUntypedQualifier() {
@@ -65,7 +65,7 @@ class GroovyAutoPopupTest extends CompletionAutoPopupTestCase {
         xxx.<caret>
       }""")
     type 'h'
-    assert !lookup.focused
+    assert !lookup
   }
 
   public void testPossibleClosureParameter() {

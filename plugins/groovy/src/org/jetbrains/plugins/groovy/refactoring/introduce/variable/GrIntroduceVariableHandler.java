@@ -37,12 +37,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.refactoring.GrRefactoringError;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
-import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceRefactoringError;
 
 import java.util.ArrayList;
 
@@ -63,11 +63,11 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
     // Get container element
     final PsiElement scope = GroovyRefactoringUtil.getEnclosingContainer(selectedExpr);
     if (scope == null || !(scope instanceof GroovyPsiElement)) {
-      throw new GrIntroduceRefactoringError(
+      throw new GrRefactoringError(
         GroovyRefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", REFACTORING_NAME));
     }
     if (!GroovyRefactoringUtil.isAppropriateContainerForIntroduceVariable(scope)) {
-      throw new GrIntroduceRefactoringError(
+      throw new GrRefactoringError(
         GroovyRefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", REFACTORING_NAME));
     }
     return scope;
@@ -82,17 +82,17 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
     }
 
     if (checkInFieldInitializer(selectedExpr)) {
-      throw new GrIntroduceRefactoringError(GroovyRefactoringBundle.message("refactoring.is.not.supported.in.the.current.context"));
+      throw new GrRefactoringError(GroovyRefactoringBundle.message("refactoring.is.not.supported.in.the.current.context"));
     }
 
     if (parent instanceof GrParameter) {
-      throw new GrIntroduceRefactoringError(GroovyRefactoringBundle.message("refactoring.is.not.supported.in.method.parameters"));
+      throw new GrRefactoringError(GroovyRefactoringBundle.message("refactoring.is.not.supported.in.method.parameters"));
     }
   }
 
   @Override
-  protected void checkVariable(GrVariable variable) throws GrIntroduceRefactoringError {
-    throw new GrIntroduceRefactoringError(null);
+  protected void checkVariable(GrVariable variable) throws GrRefactoringError {
+    throw new GrRefactoringError(null);
   }
 
   @Override
@@ -120,30 +120,30 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
   public GrVariable runRefactoring(final GrIntroduceContext context, final GroovyIntroduceVariableSettings settings) {
     // Generating varibable declaration
 
-    final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(context.project);
+    final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(context.getProject());
     final GrVariableDeclaration varDecl = factory
       .createVariableDeclaration(settings.isDeclareFinal() ? new String[]{PsiModifier.FINAL} : null,
-                                 (GrExpression)PsiUtil.skipParentheses(context.expression, false), settings.getSelectedType(),
+                                 (GrExpression)PsiUtil.skipParentheses(context.getExpression(), false), settings.getSelectedType(),
                                  settings.getName());
 
     // Marker for caret posiotion
     try {
       /* insert new variable */
-      GroovyRefactoringUtil.sortOccurrences(context.occurrences);
-      if (context.occurrences.length == 0 || !(context.occurrences[0] instanceof GrExpression)) {
+      GroovyRefactoringUtil.sortOccurrences(context.getOccurrences());
+      if (context.getOccurrences().length == 0 || !(context.getOccurrences()[0] instanceof GrExpression)) {
         throw new IncorrectOperationException("Wrong expression occurrence");
       }
       GrExpression firstOccurrence;
       if (settings.replaceAllOccurrences()) {
-        firstOccurrence = ((GrExpression)context.occurrences[0]);
+        firstOccurrence = ((GrExpression)context.getOccurrences()[0]);
       }
       else {
-        firstOccurrence = context.expression;
+        firstOccurrence = context.getExpression();
       }
 
       assert varDecl.getVariables().length > 0;
 
-      resolveLocalConflicts(context.scope, varDecl.getVariables()[0].getName());
+      resolveLocalConflicts(context.getScope(), varDecl.getVariables()[0].getName());
       // Replace at the place of first occurrence
 
       GrVariable insertedVar = replaceOnlyExpression(firstOccurrence, context, varDecl);
@@ -159,13 +159,13 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
       GrReferenceExpression refExpr = factory.createReferenceExpressionFromText(settings.getName());
       if (settings.replaceAllOccurrences()) {
         ArrayList<PsiElement> replaced = new ArrayList<PsiElement>();
-        for (PsiElement occurrence : context.occurrences) {
+        for (PsiElement occurrence : context.getOccurrences()) {
           if (!(alreadyDefined && firstOccurrence.equals(occurrence))) {
             if (occurrence instanceof GrExpression) {
               GrExpression element = (GrExpression)occurrence;
               replaced.add(element.replaceWithExpression(refExpr, true));
               // For caret position
-              if (occurrence.equals(context.expression)) {
+              if (occurrence.equals(context.getExpression())) {
                 refreshPositionMarker(replaced.get(replaced.size() - 1));
               }
               refExpr = factory.createReferenceExpressionFromText(settings.getName());
@@ -175,7 +175,7 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
             }
           }
         }
-        if (context.editor != null) {
+        if (context.getEditor() != null) {
           // todo implement it...
 //              final PsiElement[] replacedOccurrences = replaced.toArray(new PsiElement[replaced.size()]);
 //              highlightReplacedOccurrences(myProject, editor, replacedOccurrences);
@@ -183,13 +183,13 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
       }
       else {
         if (!alreadyDefined) {
-          refreshPositionMarker(context.expression.replaceWithExpression(refExpr, true));
+          refreshPositionMarker(context.getExpression().replaceWithExpression(refExpr, true));
         }
       }
       // Setting caret to logical position
-      if (context.editor != null && getPositionMarker() != null) {
-        context.editor.getCaretModel().moveToOffset(getPositionMarker().getTextRange().getEndOffset());
-        context.editor.getSelectionModel().removeSelection();
+      if (context.getEditor() != null && getPositionMarker() != null) {
+        context.getEditor().getCaretModel().moveToOffset(getPositionMarker().getTextRange().getEndOffset());
+        context.getEditor().getSelectionModel().removeSelection();
       }
       return insertedVar;
     }
@@ -239,15 +239,15 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
   private GrVariable insertVariableDefinition(GrIntroduceContext context,
                                               GroovyIntroduceVariableSettings settings,
                                               GrVariableDeclaration varDecl) throws IncorrectOperationException {
-    LOG.assertTrue(context.occurrences.length > 0);
+    LOG.assertTrue(context.getOccurrences().length > 0);
 
-    PsiElement anchor = findAnchor(context, settings, context.occurrences, context.scope);
+    PsiElement anchor = findAnchor(context, settings, context.getOccurrences(), context.getScope());
     if (!(anchor instanceof GrStatement)) {
       StringBuilder error = new StringBuilder("scope:");
-      error.append(DebugUtil.psiToString(context.scope, true, false));
+      error.append(DebugUtil.psiToString(context.getScope(), true, false));
 
       error.append("occurrences: ");
-      for (PsiElement occurrence : context.occurrences) {
+      for (PsiElement occurrence : context.getOccurrences()) {
         error.append(DebugUtil.psiToString(occurrence, true, false));
       }
 
@@ -266,12 +266,12 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
       String refId = varDecl.getVariables()[0].getName();
 
       GrBlockStatement newBody;
-      final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(context.project);
-      if (context.expression.equals(PsiUtil.skipParentheses(anchorElement, false))) {
+      final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(context.getProject());
+      if (context.getExpression().equals(PsiUtil.skipParentheses(anchorElement, false))) {
         newBody = factory.createBlockStatement(varDecl);
       }
       else {
-        replaceExpressionOccurrencesInStatement(anchorElement, context.expression, refId, settings.replaceAllOccurrences());
+        replaceExpressionOccurrencesInStatement(anchorElement, context.getExpression(), refId, settings.replaceAllOccurrences());
         newBody = factory.createBlockStatement(varDecl, anchorElement);
       }
 
@@ -334,11 +334,11 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
                                            GrIntroduceContext context,
                                            @NotNull GrVariableDeclaration definition) throws IncorrectOperationException {
 
-    if (context.scope.equals(expr.getParent()) &&
-        !(context.scope instanceof GrLoopStatement) &&
-        !(context.scope instanceof GrClosableBlock)) {
+    if (context.getScope().equals(expr.getParent()) &&
+        !(context.getScope() instanceof GrLoopStatement) &&
+        !(context.getScope() instanceof GrClosableBlock)) {
       definition = expr.replaceWithStatement(definition);
-      if (expr.equals(context.expression)) {
+      if (expr.equals(context.getExpression())) {
         refreshPositionMarker(definition);
       }
 
@@ -359,7 +359,7 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
 
   protected GroovyIntroduceVariableDialog getDialog(GrIntroduceContext context) {
     final GroovyVariableValidator validator = new GroovyVariableValidator(context);
-    String[] possibleNames = GroovyNameSuggestionUtil.suggestVariableNames(context.expression, validator);
+    String[] possibleNames = GroovyNameSuggestionUtil.suggestVariableNames(context.getExpression(), validator);
     return new GroovyIntroduceVariableDialog(context, validator, possibleNames);
   }
 }

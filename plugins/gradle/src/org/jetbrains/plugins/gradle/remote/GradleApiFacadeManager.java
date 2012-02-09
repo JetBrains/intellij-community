@@ -31,7 +31,9 @@ import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.notification.GradleProgressNotificationManager;
+import org.jetbrains.plugins.gradle.notification.GradleProgressNotificationManagerImpl;
 import org.jetbrains.plugins.gradle.remote.impl.GradleApiFacadeImpl;
+import org.jetbrains.plugins.gradle.remote.wrapper.GradleApiFacadeWrapper;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleLibraryManager;
 import org.jetbrains.plugins.gradle.util.GradleLog;
@@ -69,8 +71,8 @@ public class GradleApiFacadeManager {
   private final AtomicReference<RemoteGradleProgressNotificationManager> myExportedProgressManager
     = new AtomicReference<RemoteGradleProgressNotificationManager>();
 
-  private final GradleLibraryManager                    myGradleLibraryManager;
-  private final RemoteGradleProgressNotificationManager myProgressManager;
+  @NotNull private final GradleLibraryManager                  myGradleLibraryManager;
+  @NotNull private final GradleProgressNotificationManagerImpl myProgressManager;
 
   // Please note that we don't use RemoteGradleProcessSettings as the 'Configuration' type parameter here because we need
   // to apply the settings to the newly created process. I.e. every time new process is created we need to call
@@ -80,7 +82,7 @@ public class GradleApiFacadeManager {
 
   public GradleApiFacadeManager(@NotNull GradleLibraryManager gradleLibraryManager, @NotNull GradleProgressNotificationManager manager) {
     myGradleLibraryManager = gradleLibraryManager;
-    myProgressManager = (RemoteGradleProgressNotificationManager)manager;
+    myProgressManager = (GradleProgressNotificationManagerImpl)manager;
     mySupport = new RemoteProcessSupport<Object, GradleApiFacade, Object>(GradleApiFacade.class) {
       @Override
       protected void fireModificationCountChanged() {
@@ -223,10 +225,11 @@ public class GradleApiFacadeManager {
       myFacade.compareAndSet(pair, null);
     }
 
-    GradleApiFacade result = mySupport.acquire(this, "");
-    if (result == null) {
+    final GradleApiFacade facade = mySupport.acquire(this, "");
+    if (facade == null) {
       throw new IllegalStateException("Can't obtain facade to working with gradle api at the remote process");
     }
+    final GradleApiFacade result = new GradleApiFacadeWrapper(facade, myProgressManager);
     Pair<GradleApiFacade, RemoteGradleProcessSettings> newPair
       = new Pair<GradleApiFacade, RemoteGradleProcessSettings>(result, getRemoteSettings());
     if (!myFacade.compareAndSet(null, newPair)) {

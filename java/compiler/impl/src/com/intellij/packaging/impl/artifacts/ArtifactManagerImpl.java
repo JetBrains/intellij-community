@@ -15,6 +15,7 @@
  */
 package com.intellij.packaging.impl.artifacts;
 
+import com.intellij.compiler.CompileServerManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
@@ -323,6 +324,7 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
   }
 
   private void doCommit(ArtifactModelImpl artifactModel) {
+    boolean hasChanges;
     LOG.assertTrue(!myInsideCommit, "Recursive commit");
     myInsideCommit = true;
     try {
@@ -349,6 +351,7 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
       myModel.setArtifactsList(allArtifacts);
       myModificationCount++;
       final ArtifactListener publisher = myProject.getMessageBus().syncPublisher(TOPIC);
+      hasChanges = !removed.isEmpty() || !added.isEmpty() || !changed.isEmpty();
       ProjectRootManagerEx.getInstanceEx(myProject).mergeRootsChangesDuring(new Runnable() {
         public void run() {
           for (ArtifactImpl artifact : removed) {
@@ -368,6 +371,9 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
       myInsideCommit = false;
     }
     updateWatchedRoots();
+    if (hasChanges) {
+      CompileServerManager.getInstance().sendReloadRequest(myProject);
+    }
   }
 
   public Project getProject() {

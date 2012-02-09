@@ -167,14 +167,14 @@ public class RedundantSuppressInspection extends GlobalInspectionTool{
               suppressedTools.add(tool);
             } else {
               iterator.remove();
-              if (ids.isEmpty()) break;
+              break;
             }
           }
           else if (tool.getShortName().equals(shortName)) {
             //ignore global unused as it won't be checked anyway
             if (!(tool instanceof LocalInspectionToolWrapper) && !(tool instanceof GlobalInspectionToolWrapper)) {
               iterator.remove();
-              if (ids.isEmpty()) break;
+              break;
             } else {
               suppressedTools.add(tool);
             }

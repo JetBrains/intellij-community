@@ -52,7 +52,7 @@ class GitDeleteBranchOperation extends GitBranchOperation {
   private final String myBranchName;
   private final String myCurrentBranch;
 
-  public GitDeleteBranchOperation(@NotNull Project project, @NotNull Collection<GitRepository> repositories,
+  GitDeleteBranchOperation(@NotNull Project project, @NotNull Collection<GitRepository> repositories,
                                   @NotNull String branchName, @NotNull String currentBranch, @NotNull ProgressIndicator indicator) {
     super(project, repositories, indicator);
     myBranchName = branchName;
@@ -140,6 +140,12 @@ class GitDeleteBranchOperation extends GitBranchOperation {
     return "However branch deletion has succeeded for the following " + repositories() + ":<br/>" +
            successfulRepositoriesJoined() +
            "<br/>You may rollback (recreate " + myBranchName + " in these roots) not to let branches diverge.";
+  }
+
+  @NotNull
+  @Override
+  protected String getOperationName() {
+    return "branch deletion";
   }
 
   @NotNull

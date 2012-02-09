@@ -24,29 +24,24 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
 /**
- * @author Maxim.Medvedev
+ * @author Max Medvedev
  */
-public class GrIntroduceContext {
-  public final Project project;
-  public final Editor editor;
-  @Nullable public final GrExpression expression;
-  public final PsiElement[] occurrences;
-  public final PsiElement scope;
-  @Nullable public final GrVariable var;
-  @NotNull public final PsiElement place;
+public interface GrIntroduceContext {
+  @NotNull
+  Project getProject();
 
-  public GrIntroduceContext(Project project,
-                            Editor editor,
-                            @Nullable GrExpression expression,
-                            PsiElement[] occurrences,
-                            PsiElement scope,
-                            @Nullable GrVariable var) {
-    this.project = project;
-    this.editor = editor;
-    this.expression = expression;
-    this.occurrences = occurrences;
-    this.scope = scope;
-    this.var = var;
-    this.place = expression == null ? var : expression;
-  }
+  Editor getEditor();
+
+  @Nullable
+  GrExpression getExpression();
+
+  PsiElement[] getOccurrences();
+
+  PsiElement getScope();
+
+  @Nullable
+  GrVariable getVar();
+
+  @NotNull
+  PsiElement getPlace();
 }

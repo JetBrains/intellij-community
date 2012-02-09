@@ -28,7 +28,7 @@
                      key="spellchecking.inspection.name" groupKey="spelling" enabledByDefault="true" level="TYPO"
                      implementationClass="com.intellij.spellchecker.inspections.SpellCheckingInspection"/>
 
-    <nameSuggestionProvider id="DictionarySuggestionProvider" implementation="com.intellij.spellchecker.quickfixes.DictionarySuggestionProvider"/>
+    <nameSuggestionProvider id="DictionarySuggestionProvider" implementation="com.intellij.spellchecker.quickfixes.DictionarySuggestionProvider" order="first"/>
     <severitiesProvider implementation="com.intellij.spellchecker.SpellCheckerSeveritiesProvider"/>
     
     <spellchecker.support language="TEXT" implementationClass="com.intellij.spellchecker.tokenizer.SpellcheckingStrategy"/>

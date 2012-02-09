@@ -34,6 +34,8 @@ import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
  * @author ven
  */
@@ -104,7 +106,7 @@ public class AddOnDemandStaticImportAction extends PsiElementBaseIntentionAction
     }
     importList.add(importStaticStatement);
 
-    PsiFile[] roots = file.getPsiRoots();
+    List<PsiFile> roots = file.getViewProvider().getAllFiles();
     for (final PsiFile root : roots) {
       PsiElement copy = root.copy();
       final PsiManager manager = root.getManager();

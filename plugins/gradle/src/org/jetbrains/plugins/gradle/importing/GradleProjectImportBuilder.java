@@ -1,14 +1,10 @@
 package org.jetbrains.plugins.gradle.importing;
 
-import com.intellij.execution.rmi.RemoteUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.JavaSdk;
@@ -17,7 +13,6 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.projectImport.ProjectImportBuilder;
 import org.jetbrains.annotations.NotNull;
@@ -26,11 +21,9 @@ import org.jetbrains.plugins.gradle.config.GradleSettings;
 import org.jetbrains.plugins.gradle.model.GradleEntity;
 import org.jetbrains.plugins.gradle.model.GradleModule;
 import org.jetbrains.plugins.gradle.model.GradleProject;
-import org.jetbrains.plugins.gradle.remote.GradleApiException;
-import org.jetbrains.plugins.gradle.task.GradleResolveProjectTask;
 import org.jetbrains.plugins.gradle.ui.GradleIcons;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
-import org.jetbrains.plugins.gradle.util.GradleLog;
+import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import javax.swing.*;
 import java.io.File;
@@ -156,38 +149,7 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
     final Ref<String> errorReason = new Ref<String>();
     try {
       final Project project = getProject(wizardContext);
-      ProgressManager.getInstance().run(new Task.Modal(project, GradleBundle.message("gradle.import.progress.text"), true) {
-        @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
-        @Override
-        public void run(@NotNull final ProgressIndicator indicator) {
-          GradleResolveProjectTask task = new GradleResolveProjectTask(project, myProjectFile.getAbsolutePath(), false);
-          task.execute(indicator);
-          myGradleProject = task.getProject();
-          if (myGradleProject != null) {
-            return;
-          }
-          final Throwable error = task.getError();
-          if (error == null) {
-            return;
-          }
-          Throwable unwrapped = RemoteUtil.unwrap(error);
-          String reason = unwrapped.getLocalizedMessage();
-          if (!StringUtil.isEmpty(reason)) {
-            errorReason.set(reason);
-          }
-          if (unwrapped.getClass() == NoClassDefFoundError.class) {
-            errorReason.set(GradleBundle.message("gradle.import.text.incomplete.tooling.api"));
-          }
-          else if (unwrapped.getClass() == GradleApiException.class) {
-            GradleLog.LOG.warn("Can't resolve gradle project. Reason: gradle api threw an exception:\n"
-                               + ((GradleApiException)unwrapped).getOriginalReason()
-            );
-          }
-          else {
-            GradleLog.LOG.warn("Can't resolve gradle project", unwrapped);
-          }
-        }
-      });
+      myGradleProject = GradleUtil.refreshProject(project, myProjectFile.getAbsolutePath(), errorReason, false, true);
     }
     catch (IllegalArgumentException e) {
       throw new ConfigurationException(e.getMessage(), GradleBundle.message("gradle.import.text.error.cannot.parse.project"));

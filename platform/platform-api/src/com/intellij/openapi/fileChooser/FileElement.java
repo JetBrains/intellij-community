@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,7 +67,10 @@ public class FileElement {
     if (myName != null) {
       return myName;
     }
-    return myFile.getName();
+    else if (myFile != null) {
+      return myFile.getName();
+    }
+    return "";
   }
 
   public final String getName() { return myName; }

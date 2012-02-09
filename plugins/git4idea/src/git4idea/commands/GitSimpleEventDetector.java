@@ -26,8 +26,11 @@ public class GitSimpleEventDetector implements GitLineHandlerListener {
   private boolean myHappened;
 
   public enum Event {
-    UNMERGED("you need to resolve your current index first"),
-    BRANCH_NOT_FULLY_MERGED("is not fully merged");
+    UNMERGED_PREVENTING_CHECKOUT("you need to resolve your current index first"),
+    UNMERGED_PREVENTING_MERGE("is not possible because you have unmerged files"),
+    BRANCH_NOT_FULLY_MERGED("is not fully merged"),
+    MERGE_CONFLICT("Automatic merge failed; fix conflicts and then commit the result"),
+    ALREADY_UP_TO_DATE("Already up-to-date");
 
     private final String myDetectionString;
 

@@ -97,7 +97,7 @@ public class Place implements ComparableObject {
 
   public static ActionCallback goFurther(Object object, Place place, final boolean requestFocus) {
     if (object instanceof Navigator) {
-      return ((Navigator)object).navigateTo(place, false);
+      return ((Navigator)object).navigateTo(place, requestFocus);
     } else {
       return new ActionCallback.Done();
     }

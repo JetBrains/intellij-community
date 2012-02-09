@@ -128,7 +128,10 @@ public class PackageSetFactoryImpl extends PackageSetFactory {
           pattern.append(".");
         } else if (myLexer.getTokenType() == ScopeTokenTypes.MINUS) {
           pattern.append("-");
-        } else if (myLexer.getTokenType() == ScopeTokenTypes.COLON) {
+        } else if (myLexer.getTokenType() == ScopeTokenTypes.TILDE) {
+          pattern.append("~");
+        } 
+        else if (myLexer.getTokenType() == ScopeTokenTypes.COLON) {
           pattern.append(":");
         } else {
           error(AnalysisScopeBundle.message("error.packageset.token.expectations", getTokenText()));

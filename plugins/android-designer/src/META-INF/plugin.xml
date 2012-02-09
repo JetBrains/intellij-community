@@ -2,9 +2,16 @@
   <name>Android Designer</name>
   <id>com.intellij.android-designer</id>
   <vendor logo="/general/ijLogo.png">JetBrains</vendor>
+
   <resource-bundle>messages.AndroidDesignerBundle</resource-bundle>
+
   <depends>com.intellij.java-i18n</depends>
   <depends>com.intellij.properties</depends>
   <depends>org.jetbrains.android</depends>
-  <depends>com.intellij.uiDesigner</depends>
+  <depends>com.intellij.ui-designer-new</depends>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <fileEditorProvider implementation="com.intellij.android.designer.AndroidDesignerEditorProvider"/>
+  </extensions>
+
 </idea-plugin>

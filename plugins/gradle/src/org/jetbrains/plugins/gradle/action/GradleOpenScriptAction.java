@@ -1,7 +1,5 @@
 package org.jetbrains.plugins.gradle.action;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -32,7 +30,7 @@ public class GradleOpenScriptAction extends AbstractGradleLinkedProjectAction im
   }
 
   @Override
-  protected void doUpdate(@NotNull Presentation presentation, @NotNull String linkedProjectPath) {
+  protected void doUpdate(@NotNull Presentation presentation, @NotNull Project project, @NotNull String linkedProjectPath) {
   }
 
   @Override

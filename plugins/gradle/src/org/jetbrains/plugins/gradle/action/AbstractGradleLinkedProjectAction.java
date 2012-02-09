@@ -2,6 +2,7 @@ package org.jetbrains.plugins.gradle.action;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,13 +22,13 @@ public abstract class AbstractGradleLinkedProjectAction extends AnAction {
 
   @Override
   public void update(AnActionEvent e) {
-    final String path = getLinkedProjectPath(e.getDataContext());
-    final boolean visible = path != null;
+    final Pair<Project, String> pair = deriveProjects(e.getDataContext());
+    final boolean visible = pair != null;
     e.getPresentation().setVisible(visible);
     if (!visible) {
       return;
     }
-    doUpdate(e.getPresentation(), path);
+    doUpdate(e.getPresentation(), pair.first, pair.second);
   }
 
   @Override
@@ -36,16 +37,16 @@ public abstract class AbstractGradleLinkedProjectAction extends AnAction {
     if (project == null) {
       return;
     }
-    final String path = getLinkedProjectPath(e.getDataContext());
-    if (path == null) {
+    final Pair<Project, String> pair = deriveProjects(e.getDataContext());
+    if (pair == null) {
       e.getPresentation().setVisible(false);
       return;
     }
-    doActionPerformed(project, path);
+    doActionPerformed(project, pair.second);
   }
 
   @Nullable
-  protected static String getLinkedProjectPath(@Nullable DataContext context) {
+  private static Pair<Project, String> deriveProjects(@Nullable DataContext context) {
     if (context == null) {
       return null;
     }
@@ -56,9 +57,12 @@ public abstract class AbstractGradleLinkedProjectAction extends AnAction {
     }
     
     final String path = GradleSettings.getInstance(project).LINKED_PROJECT_FILE_PATH;
-    return (StringUtil.isEmpty(path) || !new File(path).isFile()) ? null : path;
+    if (StringUtil.isEmpty(path) || !new File(path).isFile()) {
+      return null;
+    }
+    return new Pair<Project, String>(project, path);
   }
 
-  protected abstract void doUpdate(@NotNull Presentation presentation, @NotNull String linkedProjectPath);
+  protected abstract void doUpdate(@NotNull Presentation presentation, @NotNull Project project, @NotNull String linkedProjectPath);
   protected abstract void doActionPerformed(@NotNull Project project, @NotNull String linkedProjectPath);
 }

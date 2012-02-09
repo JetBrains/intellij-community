@@ -8,6 +8,11 @@ import org.jetbrains.plugins.gradle.task.GradleTaskId;
  * @since 11/10/11 12:18 PM
  */
 public class GradleTaskNotificationListenerAdapter implements GradleTaskNotificationListener {
+
+  @Override
+  public void onQueued(@NotNull GradleTaskId id) {
+  }
+
   @Override
   public void onStart(@NotNull GradleTaskId id) {
   }

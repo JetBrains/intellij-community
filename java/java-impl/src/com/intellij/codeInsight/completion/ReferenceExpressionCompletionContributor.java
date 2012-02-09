@@ -33,8 +33,11 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.element.ModifierFilter;
 import com.intellij.psi.filters.types.AssignableFromFilter;
+import com.intellij.psi.impl.FakePsiElement;
+import com.intellij.psi.impl.light.LightVariableBuilder;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.infos.CandidateInfo;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -122,7 +125,7 @@ public class ReferenceExpressionCompletionContributor {
       final boolean secondTime = parameters.getParameters().getInvocationCount() >= 2;
 
       final Set<LookupElement> base =
-        JavaSmartCompletionContributor.completeReference(element, reference, filter, false, parameters.getParameters());
+        JavaSmartCompletionContributor.completeReference(element, reference, filter, false, true, parameters.getParameters(), null);
       for (final LookupElement item : base) {
         addSingleArrayElementAccess(element, item, parameters, result);
       }
@@ -177,7 +180,7 @@ public class ReferenceExpressionCompletionContributor {
         public boolean isClassAcceptable(Class hintClass) {
           return true;
         }
-      }), false, parameters.getParameters());
+      }), false, true, parameters.getParameters(), null);
     for (LookupElement lookupElement : elements) {
       if (lookupElement.getObject() instanceof PsiMethod) {
         final JavaMethodCallElement item = lookupElement.as(JavaMethodCallElement.CLASS_CONDITION_KEY);
@@ -419,30 +422,41 @@ public class ReferenceExpressionCompletionContributor {
                                              final Consumer<LookupElement> result,
                                              PsiType qualifierType,
                                              final PsiType expectedType, JavaSmartCompletionParameters parameters) throws IncorrectOperationException {
-    final JavaCodeFragmentFactory factory = JavaCodeFragmentFactory.getInstance(place.getProject());
-    PsiType varType = qualifierType;
-    if (varType instanceof PsiEllipsisType) {
-      varType = ((PsiEllipsisType)varType).getComponentType();
-    }
-    if (varType instanceof PsiWildcardType || varType instanceof PsiCapturedWildcardType) {
-      varType = TypeConversionUtil.erasure(expectedType);
-    }
-
-    final String typeText = varType.getCanonicalText();
-    final JavaCodeFragment block = factory.createCodeBlockCodeFragment(typeText + " xxx;xxx.xxx;", place, false);
-    final PsiElement secondChild = block.getChildren()[1];
-    if (!(secondChild instanceof PsiExpressionStatement)) {
-      LOG.error(typeText + " of " + varType.getClass());
-    }
-    final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)secondChild;
-    final PsiReferenceExpression mockRef = (PsiReferenceExpression) expressionStatement.getExpression();
+    final PsiReferenceExpression mockRef = createMockReference(place, qualifierType, qualifierItem);
 
     final ElementFilter filter = getReferenceFilter(place, true);
     for (final LookupElement item : completeFinalReference(place, mockRef, filter, parameters)) {
-      if (shoudChain(place, varType, expectedType, item)) {
+      if (shoudChain(place, qualifierType, expectedType, item)) {
         result.consume(new JavaChainLookupElement(qualifierItem, item));
       }
     }
+  }
+
+  public static PsiReferenceExpression createMockReference(final PsiElement place, @NotNull PsiType qualifierType, LookupElement qualifierItem) {
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(place.getProject());
+    if (qualifierItem.getObject() instanceof PsiClass) {
+      return (PsiReferenceExpression)factory
+        .createExpressionFromText(((PsiClass)qualifierItem.getObject()).getQualifiedName() + ".xxx", place);
+    }
+
+    return (PsiReferenceExpression) factory.createExpressionFromText("xxx.xxx", createContextWithXxxVariable(place, qualifierType));
+  }
+
+  public static FakePsiElement createContextWithXxxVariable(final PsiElement place, final PsiType varType) {
+    return new FakePsiElement() {
+      @Override
+      public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                         @NotNull ResolveState state,
+                                         PsiElement lastParent,
+                                         @NotNull PsiElement place) {
+        return processor.execute(new LightVariableBuilder("xxx", varType, place), ResolveState.initial());
+      }
+
+      @Override
+      public PsiElement getParent() {
+        return place;
+      }
+    };
   }
 
   private static boolean shoudChain(PsiElement element, PsiType qualifierType, PsiType expectedType, LookupElement item) {

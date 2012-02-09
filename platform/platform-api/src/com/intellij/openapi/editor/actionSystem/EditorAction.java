@@ -23,6 +23,8 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.event.KeyEvent;
+
 public abstract class EditorAction extends AnAction implements DumbAware {
   private EditorActionHandler myHandler;
   private boolean myHandlersLoaded;
@@ -97,6 +99,10 @@ public abstract class EditorAction extends AnAction implements DumbAware {
     presentation.setEnabled(getHandler().isEnabled(editor, dataContext));
   }
 
+  public void updateForKeyboardAccess(Editor editor, Presentation presentation, DataContext dataContext) {
+    update(editor, presentation, dataContext);
+  }
+
   public void update(AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     DataContext dataContext = e.getDataContext();
@@ -105,7 +111,12 @@ public abstract class EditorAction extends AnAction implements DumbAware {
       presentation.setEnabled(false);
     }
     else {
-      update(editor, presentation, dataContext);
+      if (e.getInputEvent() instanceof KeyEvent) {
+        updateForKeyboardAccess(editor, presentation, dataContext);
+      }
+      else {
+        update(editor, presentation, dataContext);
+      }
     }
   }
 
