@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.uiDesigner;
+package com.intellij.designer;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.ide.structureView.StructureViewBuilder;
@@ -25,7 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.uiDesigner.designSurface.DesignerEditorPanel;
+import com.intellij.designer.designSurface.DesignerEditorPanel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -48,14 +48,18 @@ public abstract class DesignerEditor extends UserDataHolderBase implements FileE
     myDesignerPanel = new DesignerEditorPanel(module, file);
   }
 
+  public final DesignerEditorPanel getDesignerPanel() {
+    return myDesignerPanel;
+  }
+
   @NotNull
   @Override
-  public JComponent getComponent() {
+  public final JComponent getComponent() {
     return myDesignerPanel;
   }
 
   @Override
-  public JComponent getPreferredFocusedComponent() {
+  public final JComponent getPreferredFocusedComponent() {
     return myDesignerPanel.getPreferredFocusedComponent();
   }
 

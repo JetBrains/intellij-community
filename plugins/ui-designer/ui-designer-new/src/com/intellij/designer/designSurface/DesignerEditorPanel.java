@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.uiDesigner.designSurface;
+package com.intellij.designer.designSurface;
 
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.module.Module;
@@ -30,7 +30,7 @@ import java.awt.*;
 public final class DesignerEditorPanel extends JPanel implements DataProvider {
   public DesignerEditorPanel(@NotNull Module module, @NotNull VirtualFile file) {
     setLayout(new BorderLayout());
-    add(new JLabel("Design Surface"), BorderLayout.CENTER);
+    add(new JLabel("Design Surface", JLabel.CENTER), BorderLayout.CENTER);
   }
 
   @Override

@@ -19,7 +19,7 @@ import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.uiDesigner.DesignerEditor;
+import com.intellij.designer.DesignerEditor;
 import org.jetbrains.annotations.NotNull;
 
 /**

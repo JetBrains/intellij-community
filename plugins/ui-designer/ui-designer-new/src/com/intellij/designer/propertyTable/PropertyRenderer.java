@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.uiDesigner.propertyTable;
+package com.intellij.designer.propertyTable;
 
-import com.intellij.uiDesigner.model.RadComponent;
+import com.intellij.designer.model.RadComponent;
 
 import javax.swing.*;
 

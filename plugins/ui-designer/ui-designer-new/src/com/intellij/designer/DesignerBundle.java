@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.uiDesigner;
+package com.intellij.designer;
 
 import com.intellij.CommonBundle;
 import org.jetbrains.annotations.NonNls;
@@ -26,12 +26,12 @@ import java.util.ResourceBundle;
 /**
  * @author yole
  */
-public class UIDesignerBundle {
+public class DesignerBundle {
   private static Reference<ResourceBundle> ourBundle;
 
-  @NonNls private static final String BUNDLE = "messages.UIDesignerBundle";
+  @NonNls private static final String BUNDLE = "messages.DesignerBundle";
 
-  private UIDesignerBundle() {
+  private DesignerBundle() {
   }
 
   public static String message(@PropertyKey(resourceBundle = BUNDLE) String key, Object... params) {

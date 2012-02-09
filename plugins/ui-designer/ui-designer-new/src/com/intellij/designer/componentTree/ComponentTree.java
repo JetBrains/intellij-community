@@ -13,17 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.uiDesigner.propertyTable;
+package com.intellij.designer.componentTree;
 
-import com.intellij.uiDesigner.model.RadComponent;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.ui.treeStructure.Tree;
+import org.jetbrains.annotations.NonNls;
 
-import javax.swing.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
 
 /**
  * @author Alexander Lobas
  */
-public interface PropertyEditor {
-  JComponent getComponent(RadComponent component, Object value);
+public final class ComponentTree extends Tree implements DataProvider {
+  public ComponentTree() {
+    super(new DefaultTreeModel(new DefaultMutableTreeNode()));
+  }
 
-  Object getValue();
+  @Override
+  public Object getData(@NonNls String dataId) {
+    return null;  //To change body of implemented methods use File | Settings | File Templates.
+  }
 }

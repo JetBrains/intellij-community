@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.uiDesigner.model;
+package com.intellij.designer.model;
 
-import com.intellij.uiDesigner.propertyTable.Property;
+import com.intellij.designer.propertyTable.Property;
 
 import java.util.List;
 

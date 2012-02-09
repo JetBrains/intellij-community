@@ -13,40 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.uiDesigner;
+package com.intellij.designer.propertyTable;
 
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.ui.table.JBTable;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Alexander Lobas
  */
-public final class UIDesignerToolWindowManager implements ProjectComponent {
+public final class PropertyTable extends JBTable implements DataProvider {
   @Override
-  public void projectOpened() {
-    // TODO: Auto-generated method stub
-  }
-
-  @Override
-  public void projectClosed() {
-    // TODO: Auto-generated method stub
-  }
-
-  @Override
-  public void initComponent() {
-    // TODO: Auto-generated method stub
-  }
-
-  @Override
-  public void disposeComponent() {
-    // TODO: Auto-generated method stub
-  }
-
-  @NotNull
-  @NonNls
-  @Override
-  public String getComponentName() {
-    return "UIDesignerToolWindowManager2";
+  public Object getData(@NonNls String dataId) {
+    return null;  //To change body of implemented methods use File | Settings | File Templates.
   }
 }
