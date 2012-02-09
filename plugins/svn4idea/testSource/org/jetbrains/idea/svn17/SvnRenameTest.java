@@ -96,6 +96,10 @@ public class SvnRenameTest extends SvnTestCase {
     verifyChange(changes.get(3), "child" + File.separatorChar + "grandChild" + File.separatorChar + "b.txt", "childnew" + File.separatorChar + "grandChild" + File.separatorChar + "b.txt");
 
     VirtualFile oldChild = myWorkingCopyDir.findChild("child");
+    if (oldChild == null) {
+      myWorkingCopyDir.refresh(false, true);
+      oldChild = myWorkingCopyDir.findChild("child");
+    }
     Assert.assertEquals(FileStatus.DELETED, changeListManager.getStatus(oldChild));
   }
 
