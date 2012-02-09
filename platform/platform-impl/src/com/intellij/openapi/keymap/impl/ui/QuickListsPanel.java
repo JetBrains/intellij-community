@@ -37,6 +37,7 @@ import com.intellij.openapi.util.Factory;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -322,6 +323,7 @@ public class QuickListsPanel extends JPanel implements SearchableConfigurable, C
   private static class MyQuickListCellRenderer extends ColoredListCellRenderer {
     @Override
     protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+      setBackground(UIUtil.getListBackground(selected));
       QuickList quickList = (QuickList)value;
       append(quickList.getDisplayName());
     }
