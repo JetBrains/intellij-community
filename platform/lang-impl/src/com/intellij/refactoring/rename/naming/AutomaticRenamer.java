@@ -109,13 +109,18 @@ public abstract class AutomaticRenamer {
       final PsiNamedElement element = myElements.get(varIndex);
       final String name = element.getName();
       if (!myRenames.containsKey(element)) {
-        String canonicalName = nameToCanonicalName(name, element);
-        final String newCanonicalName = suggester.suggestName(canonicalName);
-        if (newCanonicalName.length() == 0) {
-          LOG.error("oldClassName = " + oldClassName + ", newClassName = " + newClassName + ", name = " + name + ", canonicalName = " +
-                    canonicalName + ", newCanonicalName = " + newCanonicalName);
+        String newName;
+        if (oldClassName.equals(name)) {
+          newName = newClassName;
+        } else {
+          String canonicalName = nameToCanonicalName(name, element);
+          final String newCanonicalName = suggester.suggestName(canonicalName);
+          if (newCanonicalName.length() == 0) {
+            LOG.error("oldClassName = " + oldClassName + ", newClassName = " + newClassName + ", name = " + name + ", canonicalName = " +
+                      canonicalName + ", newCanonicalName = " + newCanonicalName);
+          }
+          newName = canonicalNameToName(newCanonicalName, element);
         }
-        String newName = canonicalNameToName(newCanonicalName, element);
         if (!newName.equals(name)) {
           myRenames.put(element, newName);
         }
