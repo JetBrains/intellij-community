@@ -16,7 +16,9 @@
 package org.jetbrains.android.compiler.tools;
 
 import com.android.sdklib.IAndroidTarget;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.AndroidCompilerMessageKind;
 import org.jetbrains.android.util.ExecutionUtil;
 import org.jetbrains.annotations.NotNull;
@@ -32,6 +34,8 @@ import java.util.Map;
  * @author Alexey Efimov
  */
 public final class AndroidIdl {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.compiler.tools.AndroidIdl");
+
   private AndroidIdl() {
   }
 
@@ -51,6 +55,8 @@ public final class AndroidIdl {
     }
     commands.add(file);
     commands.add(outFile);
+
+    LOG.info(AndroidCommonUtils.command2string(commands));
     return ExecutionUtil.doExecute(ArrayUtil.toStringArray(commands));
   }
 
