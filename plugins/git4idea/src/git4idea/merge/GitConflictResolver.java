@@ -118,7 +118,6 @@ public class GitConflictResolver {
    *   the method shows a notification and returns {@code false}.
    * </p>
    *
-   * @param roots Git repositories to look for unmerged files.
    * @return {@code true} if there is nothing to merge anymore, {@code false} if unmerged files remain or in the case of error.
    */
   public final boolean merge() {
@@ -220,6 +219,11 @@ public class GitConflictResolver {
                                                            new ResolveNotificationListener()).notify(myProject);
   }
 
+
+  @NotNull
+  protected NotificationListener getResolveLinkListener() {
+    return new ResolveNotificationListener();
+  }
 
   private class ResolveNotificationListener implements NotificationListener {
     @Override public void hyperlinkUpdate(@NotNull final Notification notification, @NotNull HyperlinkEvent event) {

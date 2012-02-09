@@ -750,7 +750,6 @@ class Foo {
     joinCommit()
     myFixture.type 'a.'
     myFixture.checkResult(" class Foo { { int iteraaa; iteraaa.<caret> } } ")
-    assert !lookup
   }
 
   public void testRestartWithInvisibleLookup() {
@@ -1214,6 +1213,24 @@ class Foo {{
     finally {
       ((TemplateManagerImpl)TemplateManager.getInstance(getProject())).setTemplateTesting(false);
     }
+  }
+
+  public void testReturnLParen() {
+    myFixture.configureByText 'a.java', 'class Foo { int foo() { <caret> }}'
+    type 're('
+    myFixture.checkResult 'class Foo { int foo() { re(<caret>) }}'
+  }
+
+  public void testAmbiguousClassQualifier() {
+    myFixture.addClass("package foo; public class Util { public static void foo() {} }")
+    myFixture.addClass("package bar; public class Util { public static void bar() {} }")
+    myFixture.configureByText 'a.java', 'class Foo {{ <caret> }}'
+    type 'Util.'
+    assert myFixture.lookupElementStrings == ['Util.bar', 'Util.foo']
+    type 'fo\n'
+    myFixture.checkResult '''import foo.Util;
+
+class Foo {{ Util.foo();<caret> }}'''
   }
 
 }

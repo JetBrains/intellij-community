@@ -15,19 +15,20 @@
  */
 package org.jetbrains.plugins.gradle.diff;
 
-import com.intellij.openapi.module.Module;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.model.GradleModule;
+import org.jetbrains.plugins.gradle.util.GradleBundle;
 
 /**
  * @author Denis Zhdanov
  * @since 11/17/11 12:50 PM
  */
-public class GradleModulePresenceChange extends GradleEntityPresenceChange<GradleModule, Module> {
+public class GradleModulePresenceChange extends GradleEntityPresenceChange<String> {
 
-  public GradleModulePresenceChange(@Nullable GradleModule gradleEntity, @Nullable Module intellijEntity) throws IllegalArgumentException {
-    super(gradleEntity, intellijEntity);
+  public GradleModulePresenceChange(@Nullable String gradleModuleName, @Nullable String intellijModuleName)
+    throws IllegalArgumentException
+  {
+    super(GradleBundle.message("gradle.sync.change.entity.type.module"), gradleModuleName, intellijModuleName);
   }
 
   @Override

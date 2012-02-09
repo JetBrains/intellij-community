@@ -49,7 +49,7 @@ public abstract class RegExpElementImpl extends ASTWrapperPsiElement implements 
     }
 
     public String toString() {
-        return getClass().getSimpleName() + ": <" + getUnescapedText() + ">";
+        return getClass().getSimpleName() + ": <" + getText() + ">";
     }
 
     public void accept(@NotNull PsiElementVisitor visitor) {

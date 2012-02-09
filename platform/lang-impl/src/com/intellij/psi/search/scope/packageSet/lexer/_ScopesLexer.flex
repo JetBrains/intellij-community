@@ -34,6 +34,7 @@ DIGIT=[0-9]+
 <YYINITIAL> "!" { return ScopeTokenTypes.EXCL; }
 <YYINITIAL> "$" { return ScopeTokenTypes.IDENTIFIER;}
 <YYINITIAL> "-" { return ScopeTokenTypes.MINUS;}
+<YYINITIAL> "~" { return ScopeTokenTypes.TILDE;}
 
 <YYINITIAL> "["   { return ScopeTokenTypes.LBRACKET; }
 <YYINITIAL> "]"   { return ScopeTokenTypes.RBRACKET; }

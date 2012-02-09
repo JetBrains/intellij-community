@@ -15,15 +15,14 @@
  */
 package com.intellij.refactoring.extractInterface;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.JavaRefactoringSettings;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.turnRefsToSuper.TurnRefsToSuperProcessor;
 import com.intellij.refactoring.ui.YesNoPreviewUsagesDialog;
 
@@ -36,7 +35,7 @@ public class ExtractClassUtil {
     final SmartPsiElementPointer interfacePointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(aSuperClass);
     final PsiElement classElement = classPointer.getElement();
     final PsiElement interfaceElement = interfacePointer.getElement();
-    if (classElement instanceof PsiClass && interfaceElement instanceof PsiClass) {
+    if (classElement instanceof PsiClass && classElement.isValid() && interfaceElement instanceof PsiClass && interfaceElement.isValid()) {
       final PsiClass superClass = (PsiClass) interfaceElement;
       String superClassName = superClass.getName();
       String className = ((PsiClass) classElement).getName();
@@ -56,7 +55,7 @@ public class ExtractClassUtil {
         final boolean isPreviewUsages = dialog.isPreviewUsages();
         JavaRefactoringSettings.getInstance().EXTRACT_INTERFACE_PREVIEW_USAGES = isPreviewUsages;
         TurnRefsToSuperProcessor processor =
-                new TurnRefsToSuperProcessor(project, (PsiClass) classElement, (PsiClass) interfaceElement, true);
+                new TurnRefsToSuperProcessor(project, (PsiClass) classElement, superClass, true);
         processor.setPreviewUsages(isPreviewUsages);
         processor.run();
       }

@@ -26,7 +26,8 @@ class CustomFileTypeLexerTest extends CustomFileTypeLexerTestBase {
   protected SyntaxTable createSyntaxTable() {
     SyntaxTable table = new SyntaxTable();
 
-    table.lineComment = ''
+    table.lineComment = ';'
+    table.lineCommentOnlyAtStart = true
 
     table.addKeyword1("if");
     table.addKeyword1("then");
@@ -42,6 +43,17 @@ class CustomFileTypeLexerTest extends CustomFileTypeLexerTestBase {
     checkTypesAndTokens('if length(variable)then return 1',
                         [KEYWORD_1, WHITESPACE, KEYWORD_1, CHARACTER, IDENTIFIER, CHARACTER, KEYWORD_1, WHITESPACE, KEYWORD_2, WHITESPACE, NUMBER] as IElementType[],
                         ['if', ' ', 'length', '(', 'variable', ')', 'then', ' ', 'return', ' ', '1'] as String[])
+
+  }
+
+  public void testFortranComments() {
+    checkTypesAndTokens('''
+foo;noncomment
+;comment
+  ;noncomment
+''',
+                        [WHITESPACE, IDENTIFIER, PUNCTUATION, IDENTIFIER, WHITESPACE, LINE_COMMENT, WHITESPACE, PUNCTUATION, IDENTIFIER, WHITESPACE] as IElementType[],
+                        ['\n', 'foo', ';', 'noncomment', '\n', ';comment', '\n  ', ';', 'noncomment', '\n'] as String[])
 
   }
 }

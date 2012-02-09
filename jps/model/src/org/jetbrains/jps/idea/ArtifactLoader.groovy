@@ -58,12 +58,14 @@ class ArtifactLoader {
         def name = tag."@name"
         if (project.modules[name] == null) {
           errorReporter.error("Unknown module '$name' in '$artifactName' artifact")
+          return null
         }
         return new ModuleOutputElement(moduleName: name);
       case "module-test-output":
         def name = tag."@name"
         if (project.modules[name] == null) {
           errorReporter.error("Unknown module '$name' in '$artifactName' artifact")
+          return null
         }
         return new ModuleTestOutputElement(moduleName: name);
       case "library":
@@ -76,6 +78,7 @@ class ArtifactLoader {
     }
 
     errorReporter.error("unknown element in '$artifactName' artifact: $id");
+    return null
   }
 
   private LayoutElementTypeService findType(String typeId) {
@@ -118,6 +121,13 @@ class ArtifactLoader {
   }
 
   List<LayoutElement> loadChildren(Node node, String artifactName) {
-    node.element.collect { loadLayoutElement(it, artifactName) }
+    List<LayoutElement> children = []
+    node.element.each {
+      def child = loadLayoutElement(it, artifactName)
+      if (child != null) {
+        children << child
+      }
+    }
+    return children
   }
 }

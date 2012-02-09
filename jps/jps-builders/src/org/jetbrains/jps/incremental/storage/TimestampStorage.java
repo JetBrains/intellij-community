@@ -15,20 +15,20 @@ import java.io.IOException;
  */
 public class TimestampStorage extends AbstractStateStorage<File, TimestampValidityState> {
 
-  public TimestampStorage(File storePath) throws Exception {
+  public TimestampStorage(File storePath) throws IOException {
     super(storePath, new FileKeyDescriptor(), new StateExternalizer());
   }
 
-  public long getStamp(File file) throws Exception {
+  public long getStamp(File file) throws IOException {
     final TimestampValidityState state = getState(file);
     return state != null? state.getTimestamp() : -1L;
   }
 
-  public void saveStamp(File file, long timestamp) throws Exception {
+  public void saveStamp(File file, long timestamp) throws IOException {
     update(file, new TimestampValidityState(timestamp));
   }
 
-  public void markDirty(File file) throws Exception {
+  public void markDirty(File file) throws IOException {
     update(file, null);
   }
 

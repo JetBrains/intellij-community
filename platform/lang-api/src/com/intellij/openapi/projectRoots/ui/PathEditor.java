@@ -17,7 +17,6 @@ package com.intellij.openapi.projectRoots.ui;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,7 +25,6 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -61,7 +59,7 @@ public class PathEditor {
   private DefaultListModel myModel;
   private final Set<VirtualFile> myAllFiles = new HashSet<VirtualFile>();
   private boolean myModified = false;
-  private boolean myEnabled = false;
+  protected boolean myEnabled = false;
   private static final Icon ICON_INVALID = IconLoader.getIcon("/nodes/ppInvalid.png");
   private static final Icon ICON_EMPTY = IconLoader.getIcon("/nodes/emptyNode.png");
   private final FileChooserDescriptor myDescriptor;
@@ -79,13 +77,6 @@ public class PathEditor {
 
   protected void setEnabled(boolean enabled) {
     myEnabled = enabled;
-  }
-
-  protected boolean isShowUrlButton() {
-    return false;
-  }
-
-  protected void onSpecifyUrlButtonClicked() {
   }
 
   protected void setModified(boolean modified) {
@@ -143,22 +134,7 @@ public class PathEditor {
       }
     });
 
-    if (isShowUrlButton()) {
-      AnActionButton specifyUrlButton = new AnActionButton(ProjectBundle.message("sdk.paths.specify.url.button"), PlatformIcons.TABLE_URL) {
-        @Override
-        public void actionPerformed(AnActionEvent e) {
-          onSpecifyUrlButtonClicked();
-        }
-      };
-      specifyUrlButton.setShortcut(CustomShortcutSet.fromString("alt S"));
-      specifyUrlButton.addCustomUpdater(new AnActionButtonUpdater() {
-        @Override
-        public boolean isEnabled(AnActionEvent e) {
-          return myEnabled && !isUrlInserted();
-        }
-      });
-      toolbarDecorator.addExtraAction(specifyUrlButton);
-    }
+    addToolbarButtons(toolbarDecorator);
 
     myPanel = toolbarDecorator.createPanel();
     myPanel.setBorder(null);
@@ -178,6 +154,9 @@ public class PathEditor {
     });
 
     return myPanel;
+  }
+
+  protected void addToolbarButtons(ToolbarDecorator toolbarDecorator) {
   }
 
   protected void doRemoveItems(int[] idxs, JList list) {
@@ -234,7 +213,7 @@ public class PathEditor {
     return files;
   }
 
-  private boolean isUrlInserted() {
+  protected boolean isUrlInserted() {
     if (getRowCount() > 0) {
       return ((VirtualFile)getListModel().lastElement()).getFileSystem() instanceof HttpFileSystem;
     }

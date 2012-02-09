@@ -122,6 +122,7 @@ public class PullAsAbstractUpFix extends LocalQuickFixAndIntentionActionOnPsiEle
   }
 
   private static void pullUp(PsiMethod method, PsiClass containingClass, PsiClass baseClass) {
+    if (!CodeInsightUtilBase.prepareFileForWrite(baseClass.getContainingFile())) return;
     final MemberInfo memberInfo = new MemberInfo(method);
     memberInfo.setChecked(true);
     memberInfo.setToAbstract(true);

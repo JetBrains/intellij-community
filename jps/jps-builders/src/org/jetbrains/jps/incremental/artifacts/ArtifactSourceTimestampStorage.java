@@ -37,11 +37,11 @@ public class ArtifactSourceTimestampStorage extends AbstractStateStorage<String,
     }
   };
 
-  public ArtifactSourceTimestampStorage(@NonNls File storePath) throws Exception {
+  public ArtifactSourceTimestampStorage(@NonNls File storePath) throws IOException {
     super(storePath, new EnumeratorStringDescriptor(), TIMESTAMP_EXTERNALIZER);
   }
 
-  public void markDirty(String filePath) throws Exception {
+  public void markDirty(String filePath) throws IOException {
     update(filePath, null);
   }
 

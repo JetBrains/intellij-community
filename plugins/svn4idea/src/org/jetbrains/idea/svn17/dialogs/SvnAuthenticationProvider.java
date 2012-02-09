@@ -17,11 +17,14 @@ package org.jetbrains.idea.svn17.dialogs;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.idea.svn17.SvnAuthenticationNotifier;
+import org.jetbrains.idea.svn17.SvnConfiguration17;
 import org.jetbrains.idea.svn17.SvnVcs17;
 import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
@@ -40,11 +43,13 @@ public class SvnAuthenticationProvider implements ISVNAuthenticationProvider {
   private final Project myProject;
   private final SvnAuthenticationNotifier myAuthenticationNotifier;
   private final ISVNAuthenticationProvider mySvnInteractiveAuthenticationProvider;
+  private final SvnVcs17 mySvnVcs;
   private final ISVNAuthenticationStorage myAuthenticationStorage;
   private static final Set<Thread> ourForceInteractive = new HashSet<Thread>();
 
   public SvnAuthenticationProvider(final SvnVcs17 svnVcs, final ISVNAuthenticationProvider provider,
                                    final ISVNAuthenticationStorage authenticationStorage) {
+    mySvnVcs = svnVcs;
     myAuthenticationStorage = authenticationStorage;
     myProject = svnVcs.getProject();
     myAuthenticationNotifier = svnVcs.getAuthNotifier();

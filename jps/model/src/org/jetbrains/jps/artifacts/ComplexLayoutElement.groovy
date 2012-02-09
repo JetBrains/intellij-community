@@ -58,6 +58,7 @@ class ArtifactLayoutElement extends ComplexLayoutElement {
     Artifact artifact = project.artifacts[artifactName]
     if (artifact == null) {
       errorReporter.error("unknown artifact: $artifactName")
+      return []
     }
     def root = artifact.rootElement
     if (root instanceof RootElement) {

@@ -108,7 +108,7 @@ public abstract class JavaParsingTestCase extends ParsingTestCase {
     myFile = createPsiFile(name, text, parser);
     myFile.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, myLanguageLevel);
     try {
-      checkResult(name + ".txt", myFile);
+      checkResult(name, myFile);
     }
     catch (IOException e) {
       throw new RuntimeException(e);

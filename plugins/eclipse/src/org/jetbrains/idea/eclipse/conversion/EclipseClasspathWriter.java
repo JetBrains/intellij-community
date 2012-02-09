@@ -64,7 +64,8 @@ public class EclipseClasspathWriter {
 
     @NonNls String outputPath = "bin";
     final String compilerOutputUrl = myModel.getModuleExtension(CompilerModuleExtension.class).getCompilerOutputUrl();
-    final String linkedPath = EclipseModuleManager.getInstance(myModel.getModule()).getEclipseLinkedVarPath(compilerOutputUrl);
+    final EclipseModuleManager eclipseModuleManager = EclipseModuleManager.getInstance(myModel.getModule());
+    final String linkedPath = eclipseModuleManager.getEclipseLinkedVarPath(compilerOutputUrl);
     if (linkedPath != null) {
       outputPath = linkedPath;
     } else {
@@ -76,6 +77,10 @@ public class EclipseClasspathWriter {
       else if (output == null && compilerOutputUrl != null) {
         outputPath = EPathUtil.collapse2EclipsePath(compilerOutputUrl, myModel);
       }
+    }
+    if (eclipseModuleManager.isGroovyDslSupport()) {
+      final Integer place = eclipseModuleManager.getSrcPlace(EclipseXml.GROOVY_DSL_CONTAINER);
+      addOrderEntry(EclipseXml.CON_KIND, EclipseXml.GROOVY_DSL_CONTAINER, classpathElement, place != null ? place.intValue() : -1);
     }
     final Element orderEntry = addOrderEntry(EclipseXml.OUTPUT_KIND, outputPath, classpathElement);
     setAttributeIfAbsent(orderEntry, EclipseXml.PATH_ATTR, EclipseXml.BIN_DIR);

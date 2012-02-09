@@ -22,21 +22,21 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaCodeFragment;
 import com.intellij.psi.PsiElement;
 
-public interface CodeFragmentFactory {
-  ExtensionPointName<CodeFragmentFactory> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.debugger.codeFragmentFactory");
+public abstract class CodeFragmentFactory {
+  public static final ExtensionPointName<CodeFragmentFactory> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.debugger.codeFragmentFactory");
 
-  JavaCodeFragment createCodeFragment(TextWithImports item, PsiElement context, Project project);
+  public abstract JavaCodeFragment createCodeFragment(TextWithImports item, PsiElement context, Project project);
 
-  JavaCodeFragment createPresentationCodeFragment(TextWithImports item, PsiElement context, Project project);
+  public abstract JavaCodeFragment createPresentationCodeFragment(TextWithImports item, PsiElement context, Project project);
 
-  boolean isContextAccepted(PsiElement contextElement);
+  public abstract boolean isContextAccepted(PsiElement contextElement);
 
-  LanguageFileType getFileType();
+  public abstract LanguageFileType getFileType();
 
   /**
    * In case if createCodeFragment returns java code use
    * com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl#getInstance()
    * @return builder, which can evaluate expression for your code fragment
    */
-  EvaluatorBuilder getEvaluatorBuilder();
+  public abstract EvaluatorBuilder getEvaluatorBuilder();
 }

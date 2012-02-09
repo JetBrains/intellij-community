@@ -33,6 +33,7 @@ public interface ScopeTokenTypes extends TokenType {
   IElementType RBRACKET = new ScopeTokenType("Scope.RBRACKET");
   IElementType LPARENTH = new ScopeTokenType("Scope.LPARENTH");
   IElementType RPARENTH = new ScopeTokenType("Scope.RPARENTH");
+  IElementType TILDE = new ScopeTokenType("TILDE");
   IElementType DOT = new ScopeTokenType("Scope.DOT");
   IElementType COLON = new ScopeTokenType("Scope.COLON");
   IElementType ASTERISK = new ScopeTokenType("Scope.ASTERISK");

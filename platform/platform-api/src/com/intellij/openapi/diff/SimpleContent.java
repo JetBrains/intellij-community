@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -38,6 +39,7 @@ import java.nio.ByteBuffer;
  */
 public class SimpleContent extends DiffContent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.SimpleContent");
+
   private final byte[] myOriginalBytes;
   private final String myOriginalText;
   private final LineSeparators myLineSeparators = new LineSeparators();
@@ -53,7 +55,7 @@ public class SimpleContent extends DiffContent {
     this(text, null);
   }
 
-  public SimpleContent(@NotNull String text, FileType type) {
+  public SimpleContent(@NotNull String text, @Nullable FileType type) {
     this(text, type, EditorFactory.getInstance());
   }
 

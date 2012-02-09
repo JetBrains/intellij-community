@@ -61,6 +61,7 @@ public class XsltVariableContext implements VariableContext<XsltVariable> {
         final VariantsProcessor processor = new VariantsProcessor(context);
 
         ResolveUtil.treeWalkUp(processor, context);
+        processForwardGlobals(context, processor);
         return processor.getResult();
     }
 
@@ -75,19 +76,32 @@ public class XsltVariableContext implements VariableContext<XsltVariable> {
         final ResolveProcessor processor = new ResolveProcessor(reference.getReferencedName(), context);
 
         final XPathVariable variable = (XPathVariable)ResolveUtil.treeWalkUp(processor, context);
-        if (variable == null) {
-            final XmlFile file = PsiTreeUtil.getParentOfType(context, XmlFile.class, true);
-            if (file != null) {
-                XsltIncludeIndex.processBackwardDependencies(file, new Processor<XmlFile>() {
-                    public boolean process(XmlFile xmlFile) {
-                        processor.processExternalFile(xmlFile, context);
-                        return processor.shouldContinue();
-                    }
-                });
-                return (XPathVariable)processor.getResult();
-            }
+        if (variable != null) {
+          return variable;
         }
-        return variable;
+        if (!processForwardGlobals(context, processor)) {
+          final XmlFile file = PsiTreeUtil.getParentOfType(context, XmlFile.class, true);
+          if (file != null) {
+            XsltIncludeIndex.processBackwardDependencies(file, new Processor<XmlFile>() {
+              public boolean process(XmlFile xmlFile) {
+                processor.processExternalFile(xmlFile, context);
+                return processor.shouldContinue();
+              }
+            });
+          }
+        }
+        return (XPathVariable)processor.getResult();
+    }
+
+    private static boolean processForwardGlobals(XmlTag context, VariableProcessor processor) {
+      while (context != null && !XsltSupport.isTopLevelElement(context)) {
+        context = context.getParentTag();
+      }
+      while (context != null && processor.shouldContinue()) {
+        processor.process(context);
+        context = PsiTreeUtil.getNextSiblingOfType(context, XmlTag.class);
+      }
+      return !processor.shouldContinue();
     }
 
     @Nullable
@@ -141,6 +155,8 @@ public class XsltVariableContext implements VariableContext<XsltVariable> {
                 processVarOrParamImpl(tag);
             }
         }
+
+        protected abstract boolean shouldContinue();
     }
 
     static class VariantsProcessor extends VariableProcessor {

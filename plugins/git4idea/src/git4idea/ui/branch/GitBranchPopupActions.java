@@ -53,7 +53,6 @@ class GitBranchPopupActions {
   ActionGroup createActions(@Nullable DefaultActionGroup toInsert) {
     DefaultActionGroup popupGroup = new DefaultActionGroup(null, false);
 
-    //popupGroup.addAction(new CurrentBranchAction(GitBranchUiUtil.getDisplayableBranchText(myRepository), "in root " + GitUIUtil.getShortRepositoryName(myRepository)));
     popupGroup.addAction(new NewBranchAction(myProject, Collections.singletonList(myRepository), myRepository));
     popupGroup.addAction(new CheckoutRevisionActions(myProject, myRepository));
 
@@ -80,23 +79,6 @@ class GitBranchPopupActions {
     return popupGroup;
   }
   
-  ///**
-  // * "Current branch:" item which is disabled and is just a label to display the current branch.
-  // */
-  //static class CurrentBranchAction extends DumbAwareAction {
-  //  CurrentBranchAction(@NotNull String currentBranchName, @Nullable String rootName) {
-  //    super("", String.format("Current branch is %s %s", currentBranchName, rootName), null);
-  //    getTemplatePresentation().setText("Current Branch: " + currentBranchName, false); // no mnemonics
-  //  }
-  //
-  //  @Override public void actionPerformed(AnActionEvent e) {
-  //  }
-  //
-  //  @Override public void update(AnActionEvent e) {
-  //    e.getPresentation().setEnabled(false);         // this action works as a label
-  //  }
-  //}
-
   static class NewBranchAction extends DumbAwareAction {
     private final Project myProject;
     private final List<GitRepository> myRepositories;
@@ -205,6 +187,7 @@ class GitBranchPopupActions {
         new CheckoutAction(myProject, myRepositories, myBranchName, mySelectedRepository),
         new CheckoutAsNewBranch(myProject, myRepositories, myBranchName, mySelectedRepository),
         new CompareAction(myProject, myRepositories, myBranchName, mySelectedRepository),
+        new MergeAction(myProject, myRepositories, myBranchName, mySelectedRepository),
         new DeleteAction(myProject, myRepositories, myBranchName, mySelectedRepository)
       };
     }
@@ -308,6 +291,7 @@ class GitBranchPopupActions {
       return new AnAction[] {
         new CheckoutRemoteBranchAction(myProject, myRepositories, myBranchName, mySelectedRepository),
         new CompareAction(myProject, myRepositories, myBranchName, mySelectedRepository),
+        new MergeAction(myProject, myRepositories, myBranchName, mySelectedRepository),
       };
     }
 
@@ -342,7 +326,6 @@ class GitBranchPopupActions {
         return myRemoteBranchName.substring(slashPosition+1);
       }
     }
-
   }
   
   private static class CompareAction extends DumbAwareAction {
@@ -352,10 +335,8 @@ class GitBranchPopupActions {
     private final String myBranchName;
     private final GitRepository mySelectedRepository;
 
-    public CompareAction(@NotNull Project project,
-                         @NotNull List<GitRepository> repositories,
-                         @NotNull String branchName,
-                         GitRepository selectedRepository) {
+    public CompareAction(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName,
+                         @NotNull GitRepository selectedRepository) {
       super("Compare");
       myProject = project;
       myRepositories = repositories;
@@ -366,6 +347,29 @@ class GitBranchPopupActions {
     @Override
     public void actionPerformed(AnActionEvent e) {
       new GitBranchOperationsProcessor(myProject, myRepositories, mySelectedRepository).compare(myBranchName);
+    }
+
+  }
+
+  private static class MergeAction extends DumbAwareAction {
+
+    private final Project myProject;
+    private final List<GitRepository> myRepositories;
+    private final String myBranchName;
+    private final GitRepository mySelectedRepository;
+
+    public MergeAction(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName,
+                       @NotNull GitRepository selectedRepository) {
+      super("Merge");
+      myProject = project;
+      myRepositories = repositories;
+      myBranchName = branchName;
+      mySelectedRepository = selectedRepository;
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      new GitBranchOperationsProcessor(myProject, myRepositories, mySelectedRepository).merge(myBranchName);
     }
 
   }

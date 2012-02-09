@@ -31,10 +31,13 @@ import java.util.List;
 public class CoreLocalVirtualFile extends VirtualFile {
   private final CoreLocalFileSystem myFileSystem;
   private final File myIoFile;
+  private VirtualFile[] myChildren;
+  private final boolean isDirectory;
 
   public CoreLocalVirtualFile(CoreLocalFileSystem fileSystem, File ioFile) {
     myFileSystem = fileSystem;
     myIoFile = ioFile;
+    isDirectory = ioFile == null || ioFile.isDirectory();
   }
 
   @NotNull
@@ -56,17 +59,17 @@ public class CoreLocalVirtualFile extends VirtualFile {
 
   @Override
   public boolean isWritable() {
-    return myIoFile.canWrite();
+    return false; // Core VFS isn't writable.
   }
 
   @Override
   public boolean isDirectory() {
-    return myIoFile.isDirectory();
+    return isDirectory;
   }
 
   @Override
   public boolean isValid() {
-    return myIoFile.exists();
+    return true; // Core VFS cannot change, doesn't refresh so once found, any file is writable
   }
 
   @Override
@@ -77,12 +80,18 @@ public class CoreLocalVirtualFile extends VirtualFile {
 
   @Override
   public VirtualFile[] getChildren() {
-    List<VirtualFile> result = new ArrayList<VirtualFile>();
-    final File[] files = myIoFile.listFiles();
-    for (File file : files) {
-      result.add(new CoreLocalVirtualFile(myFileSystem, file));
+    VirtualFile[] answer = myChildren;
+    if (answer == null) {
+      List<VirtualFile> result = new ArrayList<VirtualFile>();
+      final File[] files = myIoFile.listFiles();
+      for (File file : files) {
+        result.add(new CoreLocalVirtualFile(myFileSystem, file));
+      }
+      answer = result.toArray(new VirtualFile[result.size()]);
+
+      myChildren = answer;
     }
-    return result.toArray(new VirtualFile[result.size()]);
+    return answer;
   }
 
   @NotNull

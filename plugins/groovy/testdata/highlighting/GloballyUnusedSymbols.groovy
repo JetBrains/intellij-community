@@ -9,6 +9,9 @@ class Bar<T, <warning descr="Class Unused is unused">Unused</warning>> {
   Bar usedMethod() { this }
   Object getAt(int key) {}
 
+  Object call() {}
+  Object call(String param) {}
+
   Bar getUsedPropertyGetter() {}
 
   public static void main(String[] args) { usedPrivately() }

@@ -103,6 +103,11 @@ public class ProjectJdkImpl extends UserDataHolderBase implements JDOMExternaliz
     return myVersionString;
   }
 
+  public final void resetVersionString() {
+    myVersionDefined = false;
+    myVersionString = null;
+  }
+
   public String getHomePath() {
     return myHomePath;
   }
@@ -228,12 +233,15 @@ public class ProjectJdkImpl extends UserDataHolderBase implements JDOMExternaliz
     return myRootProvider;
   }
 
-  public void copyTo(ProjectJdkImpl dest){
+  public void copyTo(ProjectJdkImpl dest) {
     final String name = getName();
     dest.setName(name);
     dest.setHomePath(getHomePath());
     if (myVersionDefined) {
       dest.setVersionString(getVersionString());
+    }
+    else {
+      dest.resetVersionString();
     }
     dest.setSdkAdditionalData(getSdkAdditionalData());
     dest.myRootContainer.startChange();

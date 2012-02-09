@@ -23,8 +23,20 @@ import com.intellij.psi.CustomHighlighterTokenType;
  * @author dsl
  */
 public class LineCommentParser extends PrefixedTokenParser {
-  private LineCommentParser(String prefix) {
+  private final boolean myAtStartOnly;
+
+  public LineCommentParser(String prefix, boolean atStartOnly) {
     super(prefix, CustomHighlighterTokenType.LINE_COMMENT);
+    myAtStartOnly = atStartOnly;
+  }
+
+  @Override
+  public boolean hasToken(int position) {
+    if (myAtStartOnly && position > 0 && myBuffer.charAt(position - 1) != '\n') {
+      return false;
+    }
+
+    return super.hasToken(position);
   }
 
   protected int getTokenEnd(int position) {
@@ -34,12 +46,4 @@ public class LineCommentParser extends PrefixedTokenParser {
     return position;
   }
 
-  public static LineCommentParser create(String prefix) {
-    final String trimmedPrefix = prefix.trim();
-    if (!"".equals(trimmedPrefix)) {
-      return new LineCommentParser(prefix);
-    } else {
-      return null;
-    }
-  }
 }

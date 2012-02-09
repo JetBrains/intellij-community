@@ -25,8 +25,8 @@ import com.intellij.util.diff.FilesTooBigForDiffException;
  * is replaced.
  * <p/>
  * Example: consider that the user selects all text at editor (Ctrl+A), copies it to the buffer (Ctrl+C) and performs paste (Ctrl+V).
- * All document text is replaced then but in essence it's the same, hence, we may want particular range markers to be still valid.   
- * 
+ * All document text is replaced then but in essence it's the same, hence, we may want particular range markers to be still valid.
+ *
  * @author max
  */
 class PersistentRangeMarker extends RangeMarkerImpl {
@@ -69,22 +69,23 @@ class PersistentRangeMarker extends RangeMarkerImpl {
   private boolean translateViaDiff(final DocumentEventImpl event) {
     try {
       myStartLine = event.translateLineViaDiffStrict(myStartLine);
-      if (myStartLine < 0 || myStartLine >= getDocument().getLineCount()){
+      if (myStartLine < 0 || myStartLine >= getDocument().getLineCount()) {
         invalidate(event);
       }
-      else{
+      else {
         setIntervalStart(getDocument().getLineStartOffset(myStartLine) + myStartColumn);
       }
 
       myEndLine = event.translateLineViaDiffStrict(myEndLine);
-      if (myEndLine < 0 || myEndLine >= getDocument().getLineCount()){
+      if (myEndLine < 0 || myEndLine >= getDocument().getLineCount()) {
         invalidate(event);
       }
-      else{
+      else {
         setIntervalEnd(getDocument().getLineStartOffset(myEndLine) + myEndColumn);
       }
       return true;
-    } catch (FilesTooBigForDiffException e) {
+    }
+    catch (FilesTooBigForDiffException e) {
       return false;
     }
   }
@@ -94,12 +95,12 @@ class PersistentRangeMarker extends RangeMarkerImpl {
     DocumentEventImpl event = (DocumentEventImpl)e;
     final boolean shouldTranslateViaDiff = PersistentRangeMarkerUtil.shouldTranslateViaDiff(event, this);
     boolean wasTranslated = shouldTranslateViaDiff;
-    if (shouldTranslateViaDiff){
+    if (shouldTranslateViaDiff) {
       wasTranslated = translateViaDiff(event);
     }
-    if (! wasTranslated) {
+    if (!wasTranslated) {
       super.changedUpdateImpl(e);
-      if (isValid()){
+      if (isValid()) {
         storeLinesAndCols(e);
       }
     }

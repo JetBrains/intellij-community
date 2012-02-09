@@ -30,6 +30,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.filters.position.SuperParentFilter;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -145,6 +146,11 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
       myJavaLTTyped = false;
       handleAfterJavaLT(editor, JavaTokenType.LT, JavaTokenType.GT, INVALID_INSIDE_REFERENCE);
       return Result.STOP;
+    }
+    else if (c == ':') {
+      if (autoIndentCase(editor, project, file)) {
+        return Result.STOP;
+      }
     }
     return Result.CONTINUE;
   }
@@ -281,6 +287,20 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
       }
     }
 
+    return false;
+  }
+  
+  private static boolean autoIndentCase(Editor editor, Project project, PsiFile file) {
+    int offset = editor.getCaretModel().getOffset();
+    PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+    PsiElement currElement = file.findElementAt(offset - 1);
+    if (currElement != null) {
+      PsiElement parent = currElement.getParent();
+      if (parent != null && parent instanceof PsiSwitchLabelStatement) {
+        CodeStyleManager.getInstance(project).adjustLineIndent(file, parent.getTextOffset());
+        return true;
+      }
+    }
     return false;
   }
 }

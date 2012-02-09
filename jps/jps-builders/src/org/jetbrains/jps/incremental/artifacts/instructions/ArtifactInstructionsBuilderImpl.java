@@ -7,6 +7,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.ModuleRootsIndex;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -46,17 +47,17 @@ public class ArtifactInstructionsBuilderImpl implements ArtifactInstructionsBuil
 
   public boolean checkOutputPath(final String outputPath, final ArtifactSourceRoot sourceFile) {
     //todo[nik] combine intersecting roots
-    ArtifactSourceRoot old = mySourceByOutput.get(outputPath);
-    if (old == null) {
-      mySourceByOutput.put(outputPath, sourceFile);
-      return true;
-    }
+    //ArtifactSourceRoot old = mySourceByOutput.get(outputPath);
+    //if (old == null) {
+    //  mySourceByOutput.put(outputPath, sourceFile);
+    //  return true;
+    //}
     //todo[nik] show warning?
-    return false;
+    return true;
   }
 
   public boolean registerJarFile(@NotNull JarInfo jarInfo, @NotNull String outputPath) {
-    if (mySourceByOutput.containsKey(outputPath) || myJarByPath.containsKey(outputPath)) {
+    if (myJarByPath.containsKey(outputPath)) {
       return false;
     }
     myJarByPath.put(outputPath, jarInfo);
@@ -70,14 +71,14 @@ public class ArtifactInstructionsBuilderImpl implements ArtifactInstructionsBuil
   }
 
   @Override
-  public void processRoots(ArtifactRootProcessor processor) throws Exception {
+  public void processRoots(ArtifactRootProcessor processor) throws IOException {
     for (Map.Entry<ArtifactSourceRoot, Collection<DestinationInfo>> entry : myInstructions.entrySet()) {
       processor.process(entry.getKey(), entry.getValue());
     }
   }
 
   @Override
-  public void processContainingRoots(String filePath, ArtifactRootProcessor processor) throws Exception {
+  public void processContainingRoots(String filePath, ArtifactRootProcessor processor) throws IOException {
     //todo[nik] improve?
     for (Map.Entry<ArtifactSourceRoot, Collection<DestinationInfo>> entry : myInstructions.entrySet()) {
       final ArtifactSourceRoot root = entry.getKey();

@@ -40,6 +40,9 @@ public class GitMessageWithFilesDetector implements GitLineHandlerListener {
   private final VirtualFile myRoot;
 
   public enum Event {
+    LOCAL_CHANGES_OVERWRITTEN_BY_MERGE(
+      "Your local changes to the following files would be overwritten by merge",
+      "commit your changes or stash them before"),
     LOCAL_CHANGES_OVERWRITTEN_BY_CHECKOUT(
       "Your local changes to the following files would be overwritten by checkout",
       "commit your changes or stash them before"),

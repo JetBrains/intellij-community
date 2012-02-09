@@ -10,6 +10,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.diff.PlatformFacade;
+import org.jetbrains.plugins.gradle.sync.GradleProjectStructureHelper;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.ui.RichTextControlBuilder;
 
@@ -43,14 +44,17 @@ public abstract class GradleToolWindowPanel extends SimpleToolWindowPanel {
   private final JPanel     myContent = new JPanel(myLayout);
 
   private final Project                      myProject;
-  private final PlatformFacade myProjectStructureHelper;
+  private final PlatformFacade               myProjectFacade;
+  private final GradleProjectStructureHelper myProjectStructureHelper;
   
   protected GradleToolWindowPanel(@NotNull Project project,
-                                  @Nullable PlatformFacade projectStructureHelper,
+                                  @Nullable PlatformFacade projectFacade,
+                                  @NotNull GradleProjectStructureHelper projectStructureHelper,
                                   @NotNull String place)
   {
     super(true);
     myProject = project;
+    myProjectFacade = projectFacade;
     myProjectStructureHelper = projectStructureHelper;
     final ActionManager actionManager = ActionManager.getInstance();
     final ActionGroup actionGroup = (ActionGroup)actionManager.getAction(TOOL_WINDOW_TOOLBAR_ID);
@@ -98,7 +102,12 @@ public abstract class GradleToolWindowPanel extends SimpleToolWindowPanel {
   }
 
   @NotNull
-  public PlatformFacade getProjectStructureHelper() {
+  public PlatformFacade getProjectFacade() {
+    return myProjectFacade;
+  }
+
+  @NotNull
+  public GradleProjectStructureHelper getProjectStructureHelper() {
     return myProjectStructureHelper;
   }
 

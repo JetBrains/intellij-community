@@ -42,6 +42,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.*;
 
 public class PsiUtilBase extends PsiUtilCore {
 
@@ -49,6 +50,12 @@ public class PsiUtilBase extends PsiUtilCore {
     @NotNull
     public ASTNode parse(IElementType root, PsiBuilder builder) {
       throw new IllegalAccessError();
+    }
+  };
+  public static final Comparator<Language> LANGUAGE_COMPARATOR = new Comparator<Language>() {
+    @Override
+    public int compare(Language o1, Language o2) {
+      return o1.getID().compareTo(o2.getID());
     }
   };
 
@@ -59,11 +66,18 @@ public class PsiUtilBase extends PsiUtilCore {
     }
     if(node != null) root = node.getPsi();
     final PsiFile containingFile = root.getContainingFile();
-    final PsiFile[] psiRoots = containingFile.getPsiRoots();
-    for (int i = 0; i < psiRoots.length; i++) {
-      if(root == psiRoots[i]) return i;
+    FileViewProvider provider = containingFile.getViewProvider();
+    Set<Language> languages = provider.getLanguages();
+    if (languages.size() == 1) {
+      return 0;
     }
-    throw new RuntimeException("invalid element");
+    List<Language> array = new ArrayList<Language>(languages);
+    Collections.sort(array, LANGUAGE_COMPARATOR);
+    for (int i = 0; i < array.size(); i++) {
+      Language language = array.get(i);
+      if (provider.getPsi(language) == containingFile) return i;
+    }
+    throw new RuntimeException("Cannot find root for: "+root);
   }
 
   @NotNull

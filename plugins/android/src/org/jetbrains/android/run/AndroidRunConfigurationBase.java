@@ -51,8 +51,6 @@ import org.jetbrains.android.facet.AndroidFacetConfiguration;
 import org.jetbrains.android.logcat.AndroidLogFilterModel;
 import org.jetbrains.android.logcat.AndroidLogcatFiltersPreferences;
 import org.jetbrains.android.sdk.AndroidPlatform;
-import org.jetbrains.android.sdk.AndroidSdk;
-import org.jetbrains.android.sdk.AndroidSdkImpl;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
@@ -108,22 +106,17 @@ public abstract class AndroidRunConfigurationBase extends ModuleBasedConfigurati
     if (PREFERRED_AVD.length() > 0) {
       AvdManager avdManager = facet.getAvdManagerSilently();
       if (avdManager == null) {
-        AndroidSdk sdk = facet.getConfiguration().getAndroidSdk();
-        if (sdk instanceof AndroidSdkImpl) {
-          throw new RuntimeConfigurationError(AndroidBundle.message("avd.cannot.be.loaded.error"));
-        }
+        throw new RuntimeConfigurationError(AndroidBundle.message("avd.cannot.be.loaded.error"));
       }
-      if (avdManager != null) {
-        AvdInfo avdInfo = avdManager.getAvd(PREFERRED_AVD, false);
-        if (avdInfo == null) {
-          throw new RuntimeConfigurationError(AndroidBundle.message("avd.not.found.error", PREFERRED_AVD));
-        }
-        if (!facet.isCompatibleAvd(avdInfo)) {
-          throw new RuntimeConfigurationError(AndroidBundle.message("avd.not.compatible.error", PREFERRED_AVD));
-        }
-        if (avdInfo.getStatus() != AvdInfo.AvdStatus.OK) {
-          throw new RuntimeConfigurationError(AndroidBundle.message("avd.not.valid.error", PREFERRED_AVD));
-        }
+      AvdInfo avdInfo = avdManager.getAvd(PREFERRED_AVD, false);
+      if (avdInfo == null) {
+        throw new RuntimeConfigurationError(AndroidBundle.message("avd.not.found.error", PREFERRED_AVD));
+      }
+      if (!facet.isCompatibleAvd(avdInfo)) {
+        throw new RuntimeConfigurationError(AndroidBundle.message("avd.not.compatible.error", PREFERRED_AVD));
+      }
+      if (avdInfo.getStatus() != AvdInfo.AvdStatus.OK) {
+        throw new RuntimeConfigurationError(AndroidBundle.message("avd.not.valid.error", PREFERRED_AVD));
       }
     }
     checkConfiguration(facet);

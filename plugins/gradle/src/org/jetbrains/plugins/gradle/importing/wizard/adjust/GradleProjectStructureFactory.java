@@ -30,9 +30,9 @@ public class GradleProjectStructureFactory {
   /** Shared instance of the current (stateless) class. */
   public static final GradleProjectStructureFactory INSTANCE = new GradleProjectStructureFactory();
 
-  @SuppressWarnings("MethodMayBeStatic")
+  @SuppressWarnings({"MethodMayBeStatic", "unchecked"})
   @NotNull
-  public <T extends GradleEntity> GradleProjectStructureNodeDescriptor buildDescriptor(@NotNull T entity) {
+  public <T extends GradleEntity> GradleProjectStructureNodeDescriptor<T> buildDescriptor(@NotNull T entity) {
     final Ref<GradleProjectStructureNodeDescriptor<GradleEntity>> result = new Ref<GradleProjectStructureNodeDescriptor<GradleEntity>>();
     entity.invite(new GradleEntityVisitor() {
       @Override
@@ -70,7 +70,7 @@ public class GradleProjectStructureFactory {
         visit(dependency.getTarget());
       }
     });
-    return result.get();
+    return (GradleProjectStructureNodeDescriptor<T>)result.get();
   }
 
   @SuppressWarnings("MethodMayBeStatic")

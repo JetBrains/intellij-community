@@ -891,16 +891,6 @@ class B extends A {
     checkCompletion "asse<caret>x", ' ', 'assert <caret>x'
   }
 
-  public void testDontShowAccessors() {
-    assertNull doContainsTest("getFoo", """
-class MyClass {
-  def foo
-}
-
-def a = new MyClass()
-a.<caret>""")
-  }
-
   public void testPreferInstanceof() {
     caseSensitiveNone()
 
@@ -1072,7 +1062,7 @@ class X {
   }
 
   public void testSortOrder0() {
-    doVariantableTest 'se', 'setMetaClass', 'setProperty', 'setSe'
+    doVariantableTest 'se', 'setProperty', 'setMetaClass', 'setSe'
   }
 
   public void testPrimitiveCastOverwrite() {
@@ -1118,9 +1108,29 @@ public class KeyVO {
     checkSingleItemCompletion 'class Foo impl<caret> {}', 'class Foo implements <caret> {}'
   }
 
+  public void testAmbiguousClassQualifier() {
+    myFixture.addClass("package foo; public class Util { public static void foo() {} }")
+    myFixture.addClass("package bar; public class Util { public static void bar() {} }")
+    myFixture.configureByText 'a.groovy', 'Util.<caret>'
+    myFixture.completeBasic()
+    assert myFixture.lookupElementStrings[0..1] == ['Util.bar', 'Util.foo']
+
+    def presentation = LookupElementPresentation.renderElement(myFixture.lookupElements[0])
+    assert 'Util.bar' == presentation.itemText
+    assert '() (bar)' == presentation.tailText
+    assert !presentation.tailGrayed
+
+    myFixture.type 'f\n'
+    myFixture.checkResult '''import foo.Util
+
+Util.foo()<caret>'''
+  }
+
   public void testPreferInterfacesInImplements() {
     myFixture.addClass('interface FooIntf {}')
     myFixture.addClass('class FooClass {}')
     doVariantableTest('FooIntf', 'FooClass')
   }
+
+  public void testPropertyChain() { doBasicTest() }
 }

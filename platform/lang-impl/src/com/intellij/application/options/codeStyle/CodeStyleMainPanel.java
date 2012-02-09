@@ -16,18 +16,20 @@
 
 package com.intellij.application.options.codeStyle;
 
+import com.intellij.application.options.CodeStyleAbstractPanel;
+import com.intellij.application.options.TabbedLanguageCodeStylePanel;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.DetailsComponent;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
-import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -93,6 +95,7 @@ public class CodeStyleMainPanel extends JPanel implements LanguageSelectorListen
     myDetailsComponent.setPaintBorder(false);
     myDetailsComponent.setContent(mySettingsPanel);
     myDetailsComponent.setText(getDisplayName());
+    myDetailsComponent.setBannerMinHeight(24);
 
     add(myDetailsComponent.getComponent(), BorderLayout.CENTER);
 
@@ -120,6 +123,7 @@ public class CodeStyleMainPanel extends JPanel implements LanguageSelectorListen
           ensureCurrentPanel().onSomethingChanged();
           String schemeName = myModel.getSelectedScheme().getName();
           myDetailsComponent.setText(schemeName);
+          updateSetFrom();
           myLayout.show(mySettingsPanel, schemeName);
         }
       }
@@ -134,6 +138,21 @@ public class CodeStyleMainPanel extends JPanel implements LanguageSelectorListen
         }
       };
       myAlarm.addRequest(request, 200);
+    }
+  }
+
+  private void updateSetFrom() {
+    final CodeStyleAbstractPanel selectedPanel = ensureCurrentPanel().getSelectedPanel();
+    if (selectedPanel instanceof TabbedLanguageCodeStylePanel) {
+      myDetailsComponent.setBannerActions(new Action[]{new AbstractAction("Set from...") {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          final CodeStyleAbstractPanel selectedPanel = ensureCurrentPanel().getSelectedPanel();
+          if (selectedPanel instanceof TabbedLanguageCodeStylePanel) {
+            ((TabbedLanguageCodeStylePanel)selectedPanel).showSetFrom(e.getSource());
+          }
+        }
+      }});
     }
   }
 

@@ -114,7 +114,13 @@ public class ProtoUtil {
           JpsRemoteProto.Message.Request.SetupCommand.GlobalLibrary.newBuilder();
         libBuilder.setName(lib.getName()).addAllPath(lib.getPaths());
         if (lib instanceof SdkLibrary) {
-          libBuilder.setHomePath(((SdkLibrary)lib).getHomePath());
+          final SdkLibrary sdk = (SdkLibrary)lib;
+          libBuilder.setHomePath(sdk.getHomePath());
+          libBuilder.setTypeName(sdk.getTypeName());
+          final String additional = sdk.getAdditionalDataXml();
+          if (additional != null) {
+            libBuilder.setAdditionalDataXml(additional);
+          }
         }
         cmdBuilder.addGlobalLibrary(libBuilder.build());
       }

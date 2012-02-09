@@ -63,6 +63,7 @@ public class SSHMain {
    * The last error
    */
   private String myLastError = "";
+  private Exception myErrorCause;
   /**
    * Path to known hosts file
    */
@@ -277,7 +278,7 @@ public class SSHMain {
       }
     }
     myXmlRpcClient.setLastSuccessful(myHandlerNo, getUserHostString(), "", myLastError);
-    throw new IOException("Authentication failed: " + myLastError);
+    throw new IOException("Authentication failed: " + myLastError, myErrorCause);
   }
 
   /**
@@ -319,6 +320,7 @@ public class SSHMain {
               catch (IOException e) {
                 // decoding failed
                 myLastError = SSHMainBundle.message("sshmain.invalidpassphrase", keyPath);
+                myErrorCause = e;
                 continue;
               }
               break;
@@ -348,6 +350,7 @@ public class SSHMain {
       return false;
     }
     catch (Exception e) {
+      myErrorCause = e;
       return false;
     }
   }

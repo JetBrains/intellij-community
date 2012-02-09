@@ -3,7 +3,6 @@ package org.jetbrains.android.compiler;
 import com.android.AndroidConstants;
 import com.android.sdklib.IAndroidTarget;
 import com.android.sdklib.SdkConstants;
-import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.facet.FacetManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
@@ -19,14 +18,15 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.fileTypes.AndroidRenderscriptFileType;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.util.AndroidBundle;
+import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.AndroidUtils;
-import org.jetbrains.android.util.ExecutionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,68 +60,64 @@ public class AndroidRenderscriptCompiler implements SourceGeneratingCompiler {
         }
 
         final VirtualFile[] files = context.getProjectCompileScope().getFiles(AndroidRenderscriptFileType.INSTANCE, true);
-        final List<GenerationItem> items = new ArrayList<GenerationItem>(files.length);
-        for (final VirtualFile file : files) {
+        final Map<Module, Collection<VirtualFile>> module2files = new HashMap<Module, Collection<VirtualFile>>();
+
+        for (VirtualFile file : files) {
           final Module module = context.getModuleByFile(file);
-          final AndroidFacet facet = FacetManager.getInstance(module).getFacetByType(AndroidFacet.ID);
-          if (facet != null) {
-            final AndroidPlatform platform = facet.getConfiguration().getAndroidPlatform();
-            if (platform == null) {
-              context.addMessage(CompilerMessageCategory.ERROR,
-                                 AndroidBundle.message("android.compilation.error.specify.platform", module.getName()), null, -1, -1);
-              continue;
+
+          if (module != null) {
+            Collection<VirtualFile> filesForModule = module2files.get(module);
+
+            if (filesForModule == null) {
+              filesForModule = new ArrayList<VirtualFile>();
+              module2files.put(module, filesForModule);
             }
 
-            final IAndroidTarget target = platform.getTarget();
-            final String sdkLocation = platform.getSdk().getLocation();
-
-            final String packageName = AndroidUtils.getPackageName(module, file);
-            if (packageName == null) {
-              context.addMessage(CompilerMessageCategory.ERROR, "Cannot compute package for file", file.getUrl(), -1, -1);
-              continue;
-            }
-
-            final String resourceDirPath = AndroidRootUtil.getResourceDirPath(facet);
-            assert resourceDirPath != null;
-
-            addItem(context, file, facet, resourceDirPath, sdkLocation, target, packageName, items);
-
-            if (facet.getConfiguration().LIBRARY_PROJECT) {
-              final HashSet<Module> usingModules = new HashSet<Module>();
-              AndroidUtils.collectModulesDependingOn(module, usingModules);
-
-              for (final Module module1 : usingModules) {
-                final AndroidFacet facet1 = AndroidFacet.getInstance(module1);
-                if (facet1 != null) {
-                  addItem(context, file, facet1, resourceDirPath, sdkLocation, target, packageName, items);
-                }
-              }
-            }
+            filesForModule.add(file);
           }
+        }
+        final List<GenerationItem> items = new ArrayList<GenerationItem>(files.length);
+
+        for (Map.Entry<Module, Collection<VirtualFile>> entry : module2files.entrySet()) {
+          final Module module = entry.getKey();
+          final AndroidFacet facet = FacetManager.getInstance(module).getFacetByType(AndroidFacet.ID);
+          if (facet == null) {
+            continue;
+          }
+
+          final AndroidPlatform platform = facet.getConfiguration().getAndroidPlatform();
+          if (platform == null) {
+            context.addMessage(CompilerMessageCategory.ERROR,
+                               AndroidBundle.message("android.compilation.error.specify.platform", module.getName()), null, -1, -1);
+            continue;
+          }
+
+          final IAndroidTarget target = platform.getTarget();
+          final String sdkLocation = platform.getSdk().getLocation();
+
+          final String resourceDirPath = AndroidRootUtil.getResourceDirPath(facet);
+          assert resourceDirPath != null;
+
+          addItem(entry.getValue(), facet, resourceDirPath, sdkLocation, target, items);
         }
         return items.toArray(new GenerationItem[items.size()]);
       }
     });
   }
 
-  private static void addItem(@NotNull final CompileContext context,
-                              @NotNull final VirtualFile sourceFile,
+  private static void addItem(@NotNull final Collection<VirtualFile> sourceFiles,
                               @NotNull final AndroidFacet facet,
                               @NotNull final String resourceDirPath,
                               @NotNull String sdkLocation,
                               @NotNull final IAndroidTarget target,
-                              @NotNull final String packageName,
                               @NotNull final List<GenerationItem> items) {
     final Module module = facet.getModule();
     final String sourceRootPath = AndroidRootUtil.getRenderscriptGenSourceRootPath(module);
     if (sourceRootPath == null) {
       return;
     }
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(context.getProject()).getFileIndex();
     final String rawDirPath = resourceDirPath + '/' + AndroidConstants.FD_RES_RAW;
-
-    items.add(new MyGenerationItem(module, sourceFile, sourceRootPath, packageName, rawDirPath, fileIndex.isInTestSourceContent(sourceFile),
-                                   sdkLocation, target));
+    items.add(new MyGenerationItem(module, sourceFiles, rawDirPath, sdkLocation, target));
   }
 
   @Override
@@ -133,19 +129,13 @@ public class AndroidRenderscriptCompiler implements SourceGeneratingCompiler {
     }
 
     context.getProgressIndicator().setText("Compiling RenderScript files...");
-    final GenerationItem[] generationItems = doGenerate(context, items);
+    final GenerationItem[] generationItems = doGenerate(context, items, outputRootDirectory);
     final Set<VirtualFile> generatedVFiles = new HashSet<VirtualFile>();
     final HashSet<VirtualFile> visited = new HashSet<VirtualFile>();
 
-    for (GenerationItem item : generationItems) {
-      final MyGenerationItem genItem = (MyGenerationItem)item;
-      final File genDir = new File(genItem.myGenRootPath);
-      CompilerUtil.refreshIODirectories(Arrays.asList(genDir));
-      final VirtualFile generatedVFile = LocalFileSystem.getInstance().findFileByIoFile(genDir);
-      if (generatedVFile != null) {
-        AndroidUtils.collectFiles(generatedVFile, visited, generatedVFiles);
-      }
-    }
+    outputRootDirectory.refresh(false, true);
+    AndroidUtils.collectFiles(outputRootDirectory, visited, generatedVFiles);
+
     if (context instanceof CompileContextEx) {
       ((CompileContextEx)context).markGenerated(generatedVFiles);
     }
@@ -169,9 +159,25 @@ public class AndroidRenderscriptCompiler implements SourceGeneratingCompiler {
     return new MyValidityState(in);
   }
 
-  private static GenerationItem[] doGenerate(@NotNull final CompileContext context, @NotNull final GenerationItem[] items) {
+  private static GenerationItem[] doGenerate(@NotNull final CompileContext context,
+                                             @NotNull final GenerationItem[] items,
+                                             VirtualFile outputRootDirectory) {
     if (context.getProject().isDisposed()) {
       return EMPTY_GENERATION_ITEM_ARRAY;
+    }
+
+    // we have one item per module there, so clear output directory
+    final String genRootPath = FileUtil.toSystemDependentName(outputRootDirectory.getPath());
+    final File genRootDir = new File(genRootPath);
+    if (genRootDir.exists()) {
+      if (!FileUtil.delete(genRootDir)) {
+        context.addMessage(CompilerMessageCategory.ERROR, "Cannot delete directory " + genRootPath, null, -1, -1);
+        return EMPTY_GENERATION_ITEM_ARRAY;
+      }
+      if (!genRootDir.mkdir()) {
+        context.addMessage(CompilerMessageCategory.ERROR, "Cannot create directory " + genRootPath, null, -1, -1);
+        return EMPTY_GENERATION_ITEM_ARRAY;
+      }
     }
 
     final List<GenerationItem> results = new ArrayList<GenerationItem>(items.length);
@@ -183,33 +189,35 @@ public class AndroidRenderscriptCompiler implements SourceGeneratingCompiler {
           continue;
         }
 
-        try {
-          final Map<CompilerMessageCategory, List<String>> messages = launchRenderscriptCompiler(context.getProject(),
-                                                                                                 genItem.mySdkLocation,
-                                                                                                 genItem.myAndroidTarget,
-                                                                                                 genItem.mySourceFile,
-                                                                                                 genItem.myGenRootPath,
-                                                                                                 genItem.myRawDirPath);
-          ApplicationManager.getApplication().runReadAction(new Runnable() {
-            public void run() {
-              if (context.getProject().isDisposed()) {
-                return;
+        for (final VirtualFile sourceFile : genItem.myFiles) {
+          try {
+            final Map<CompilerMessageCategory, List<String>> messages = launchRenderscriptCompiler(context.getProject(),
+                                                                                                   genItem.mySdkLocation,
+                                                                                                   genItem.myAndroidTarget,
+                                                                                                   sourceFile,
+                                                                                                   genRootPath,
+                                                                                                   genItem.myRawDirPath);
+            ApplicationManager.getApplication().runReadAction(new Runnable() {
+              public void run() {
+                if (context.getProject().isDisposed()) {
+                  return;
+                }
+                addMessages(context, messages, sourceFile.getUrl());
               }
-              addMessages(context, messages, genItem.mySourceFile.getUrl());
-            }
-          });
+            });
 
-          if (messages.get(CompilerMessageCategory.ERROR).isEmpty()) {
-            results.add(genItem);
-          }
-        }
-        catch (final IOException e) {
-          ApplicationManager.getApplication().runReadAction(new Runnable() {
-            public void run() {
-              if (context.getProject().isDisposed()) return;
-              context.addMessage(CompilerMessageCategory.ERROR, e.getMessage(), genItem.mySourceFile.getUrl(), -1, -1);
+            if (messages.get(CompilerMessageCategory.ERROR).isEmpty()) {
+              results.add(genItem);
             }
-          });
+          }
+          catch (final IOException e) {
+            ApplicationManager.getApplication().runReadAction(new Runnable() {
+              public void run() {
+                if (context.getProject().isDisposed()) return;
+                context.addMessage(CompilerMessageCategory.ERROR, e.getMessage(), sourceFile.getUrl(), -1, -1);
+              }
+            });
+          }
         }
       }
     }
@@ -227,12 +235,12 @@ public class AndroidRenderscriptCompiler implements SourceGeneratingCompiler {
     }
   }
 
-  private static Map<CompilerMessageCategory, List<String>> launchRenderscriptCompiler(@NotNull Project project,
-                                                                                       @NotNull final String sdkLocation,
-                                                                                       @NotNull IAndroidTarget target,
-                                                                                       @NotNull final VirtualFile sourceFile,
-                                                                                       @NotNull final String genFolderPath,
-                                                                                       @NotNull final String rawDirPath)
+  static Map<CompilerMessageCategory, List<String>> launchRenderscriptCompiler(@NotNull Project project,
+                                                                               @NotNull final String sdkLocation,
+                                                                               @NotNull IAndroidTarget target,
+                                                                               @NotNull final VirtualFile sourceFile,
+                                                                               @NotNull final String genFolderPath,
+                                                                               @NotNull final String rawDirPath)
     throws IOException {
     final List<String> command = new ArrayList<String>();
     command.add(
@@ -260,8 +268,8 @@ public class AndroidRenderscriptCompiler implements SourceGeneratingCompiler {
     command.add("-MD");
     command.add(sourceFilePath);
 
-    LOG.info(AndroidUtils.command2string(command));
-    return ExecutionUtil.execute(ArrayUtil.toStringArray(command));
+    LOG.info(AndroidCommonUtils.command2string(command));
+    return AndroidCompileUtil.execute(ArrayUtil.toStringArray(command));
   }
 
   @Nullable
@@ -288,43 +296,30 @@ public class AndroidRenderscriptCompiler implements SourceGeneratingCompiler {
   private static class MyGenerationItem implements GenerationItem {
     final Module myModule;
     final String mySdkLocation;
-    final VirtualFile mySourceFile;
-    final boolean myTestSource;
+    final Collection<VirtualFile> myFiles;
     final IAndroidTarget myAndroidTarget;
-    final String myGenRootPath;
     final String myRawDirPath;
-    final String myPackageName;
-    final boolean myFileExists;
-    final File myParentDirectory;
 
     public MyGenerationItem(@NotNull Module module,
-                            @NotNull VirtualFile sourceFile,
-                            @NotNull String genRootPath,
-                            @NotNull String packageName,
+                            @NotNull Collection<VirtualFile> files,
                             @NotNull String rawDirPath,
-                            boolean testSource,
                             @NotNull String sdkLocation,
                             @NotNull IAndroidTarget target) {
       myModule = module;
-      mySourceFile = sourceFile;
+      myFiles = files;
       myRawDirPath = rawDirPath;
-      myTestSource = testSource;
       mySdkLocation = sdkLocation;
       myAndroidTarget = target;
-      myGenRootPath = genRootPath;
-      myPackageName = packageName;
-      myParentDirectory = new File(myGenRootPath, myPackageName.replace('.', File.separatorChar));
-      myFileExists = myParentDirectory.exists();
     }
 
     @Nullable
     public String getPath() {
-      return null;
+      return "";
     }
 
     @Nullable
     public ValidityState getValidityState() {
-      return new MyValidityState(mySourceFile, myFileExists);
+      return new MyValidityState(myFiles);
     }
 
     public Module getModule() {
@@ -332,22 +327,28 @@ public class AndroidRenderscriptCompiler implements SourceGeneratingCompiler {
     }
 
     public boolean isTestSource() {
-      return myTestSource;
+      return false;
     }
   }
-  
+
   private static class MyValidityState implements ValidityState {
-    private final long myTimestamp;
-    private final boolean myFileExists;
-    
-    public MyValidityState(@NotNull DataInput in) throws IOException {
-      myTimestamp = in.readLong();
-      myFileExists = true;
+    private final Map<String, Long> myTimestamps = new HashMap<String, Long>();
+
+    MyValidityState(DataInput in) throws IOException {
+      final int size = in.readInt();
+
+      for (int i = 0; i < size; i++) {
+        final String path = in.readUTF();
+        final long timestamp = in.readLong();
+
+        myTimestamps.put(path, timestamp);
+      }
     }
 
-    public MyValidityState(@NotNull VirtualFile file, boolean fileExists) {
-      myTimestamp = file.getTimeStamp();
-      myFileExists = fileExists;
+    MyValidityState(@NotNull Collection<VirtualFile> files) {
+      for (VirtualFile file : files) {
+        myTimestamps.put(file.getPath(), file.getTimeStamp());
+      }
     }
 
     @Override
@@ -355,15 +356,17 @@ public class AndroidRenderscriptCompiler implements SourceGeneratingCompiler {
       if (!(otherState instanceof MyValidityState)) {
         return false;
       }
-
-      final MyValidityState st = (MyValidityState)otherState;
-      return myTimestamp == st.myTimestamp &&
-             myFileExists == st.myFileExists;
+      return ((MyValidityState)otherState).myTimestamps.equals(myTimestamps);
     }
 
     @Override
     public void save(DataOutput out) throws IOException {
-      out.writeLong(myTimestamp);
+      out.writeInt(myTimestamps.size());
+
+      for (Map.Entry<String, Long> entry : myTimestamps.entrySet()) {
+        out.writeUTF(entry.getKey());
+        out.writeLong(entry.getValue());
+      }
     }
   }
 }

@@ -48,6 +48,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.ui.content.*;
+import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
@@ -279,7 +280,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
       getSyncPublisher().contentRemoved(oldDescriptor, executor);
       oldDescriptor.dispose(); // is of the same category, can be reused
     }
-    else if (descriptor.getAttachedContent() == null) {
+    else if (descriptor.getAttachedContent() == null || !descriptor.getAttachedContent().isValid() ) {
       content = createNewContent(contentManager, descriptor, executor);
       final Icon icon = descriptor.getIcon();
       content.setIcon(icon == null ? executor.getToolWindowIcon() : icon);

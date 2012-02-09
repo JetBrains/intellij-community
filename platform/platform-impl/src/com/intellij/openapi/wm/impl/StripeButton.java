@@ -34,10 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionAdapter;
+import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -63,6 +60,8 @@ public final class StripeButton extends AnchoredButton implements ActionListener
   private JLabel myDragButtonImage;
   private Point myPressedPoint;
   private Stripe myLastStripe;
+  private KeyEventDispatcher myDragKeyEventDispatcher;
+  private boolean myDragCancelled = false;
 
   StripeButton(@NotNull final InternalDecorator decorator, ToolWindowsPane pane) {
     myDecorator = decorator;
@@ -172,6 +171,7 @@ public final class StripeButton extends AnchoredButton implements ActionListener
   }
 
   private void processDrag(final MouseEvent e) {
+    if (myDragCancelled) return;
     if (!isDraggingNow()) {
       if (myPressedPoint == null) return;
       if (isWithinDeadZone(e)) return;
@@ -190,6 +190,8 @@ public final class StripeButton extends AnchoredButton implements ActionListener
       myDragButtonImage.setSize(myDragButtonImage.getPreferredSize());
       setVisible(false);
       myPane.startDrag();
+      myDragKeyEventDispatcher = new DragKeyEventDispatcher();
+      KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(myDragKeyEventDispatcher);
     }
     if (!isDraggingNow()) return;
 
@@ -215,6 +217,18 @@ public final class StripeButton extends AnchoredButton implements ActionListener
     }
 
     myLastStripe = stripe;
+  }
+
+  private class DragKeyEventDispatcher implements KeyEventDispatcher {
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent e) {
+      if (isDraggingNow() && e.getKeyCode() == KeyEvent.VK_ESCAPE && e.getID() == KeyEvent.KEY_PRESSED) {
+        myDragCancelled = true;
+        finishDragging();
+        return true;
+      }
+      return false;
+    }
   }
 
   private boolean isWithinDeadZone(final MouseEvent e) {
@@ -244,6 +258,7 @@ public final class StripeButton extends AnchoredButton implements ActionListener
       if (MouseEvent.MOUSE_PRESSED == e.getID()) {
         myPressedPoint = e.getPoint();
         myPressedWhenSelected = isSelected();
+        myDragCancelled = false;
       }
       else if (MouseEvent.MOUSE_RELEASED == e.getID()) {
         finishDragging();
@@ -360,6 +375,10 @@ public final class StripeButton extends AnchoredButton implements ActionListener
     if (myLastStripe != null) {
       myLastStripe.finishDrop();
       myLastStripe = null;
+    }
+    if (myDragKeyEventDispatcher != null) {
+      KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(myDragKeyEventDispatcher);
+      myDragKeyEventDispatcher = null;
     }
   }
 

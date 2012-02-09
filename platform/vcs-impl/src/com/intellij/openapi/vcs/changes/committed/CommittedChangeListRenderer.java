@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.CachingCommittedChangesProvider;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -33,7 +34,6 @@ import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
 import java.util.Date;
-import java.util.List;
 
 public class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
   private static final SimpleTextAttributes LINK_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE, Color.blue);
@@ -148,31 +148,27 @@ public class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
       myRenderer.appendTextWithLinks(description);
     }
     else if (descWidth < descMaxWidth && !truncated) {
-      final List<String> pieces = myRenderer.appendTextWithLinks(description);
+      myRenderer.appendTextWithLinks(description);
       appendAlign(descMaxWidth);
     }
     else {
       final String moreMarker = VcsBundle.message("changes.browser.details.marker");
       int moreWidth = fontMetrics.stringWidth(moreMarker);
-      description = truncateDescription(description, fontMetrics, (descMaxWidth - moreWidth - numberWidth));
+      int remainingWidth = descMaxWidth - moreWidth - numberWidth;
+      description = truncateDescription(description, fontMetrics, remainingWidth);
       myRenderer.appendTextWithLinks(description);
-      // we don't have place for changelist number in this case
-      final int addWidth = fontMetrics.stringWidth(description + " ");
-      append(" ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
-      append(moreMarker, LINK_ATTRIBUTES, new CommittedChangesTreeBrowser.MoreLauncher(myProject, changeList));
+      if (!StringUtil.isEmpty(description)) {
+        append(" ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        append(moreMarker, LINK_ATTRIBUTES, new CommittedChangesTreeBrowser.MoreLauncher(myProject, changeList));
+      } else if (remainingWidth > 0) {
+        append(moreMarker, LINK_ATTRIBUTES, new CommittedChangesTreeBrowser.MoreLauncher(myProject, changeList));
+      }
       // align value is for the latest added piece
       appendAlign(descMaxWidth);
     }
 
     append(changeList.getCommitterName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
     append(date, SimpleTextAttributes.REGULAR_ATTRIBUTES);
-  }
-
-  private void appendDescriptionAndNumber(final String description, final String number) {
-    myRenderer.appendTextWithLinks(description);
-    if (number != null) {
-      append(number, SimpleTextAttributes.GRAY_ATTRIBUTES);
-    }
   }
 
   private static String trimLastWord(final String description) {

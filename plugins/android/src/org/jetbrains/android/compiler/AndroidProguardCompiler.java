@@ -23,14 +23,19 @@ import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.util.AndroidBundle;
-import org.jetbrains.android.util.AndroidUtils;
-import org.jetbrains.android.util.ExecutionUtil;
+import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
-import java.util.*;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Eugene.Kudelevsky
@@ -250,8 +255,8 @@ public class AndroidProguardCompiler implements ClassPostProcessingCompiler {
       commands.add(quotePath(new File(logDirOutputOsPath, "mapping.txt").getAbsolutePath()));
     }
 
-    LOG.info(AndroidUtils.command2string(commands));
-    return ExecutionUtil.execute(ArrayUtil.toStringArray(commands));
+    LOG.info(AndroidCommonUtils.command2string(commands));
+    return AndroidCompileUtil.execute(ArrayUtil.toStringArray(commands));
   }
 
   private static String quotePath(String path) {

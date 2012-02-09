@@ -31,7 +31,7 @@ public class BuildDataManager {
   private final ArtifactsBuildData myArtifactsBuildData;
   private final Mappings myMappings;
 
-  public BuildDataManager(String projectName, final boolean useMemoryTempCaches) throws Exception {
+  public BuildDataManager(String projectName, final boolean useMemoryTempCaches) throws IOException {
     myProjectName = projectName;
     mySrcToFormMap = new SourceToFormMapping(new File(getSourceToFormsRoot(), "data"));
     myMappings = new Mappings(getMappingsRoot(), useMemoryTempCaches);
@@ -39,7 +39,7 @@ public class BuildDataManager {
     myArtifactsBuildData = new ArtifactsBuildData(artifactsDataDir);
   }
 
-  public SourceToOutputMapping getSourceToOutputMap(String moduleName, boolean testSources) throws Exception {
+  public SourceToOutputMapping getSourceToOutputMap(String moduleName, boolean testSources) throws IOException {
     final Map<String, SourceToOutputMapping> storageMap = testSources? myTestSourceToOutputs : myProductionSourceToOutputs;
     SourceToOutputMapping mapping;
     synchronized (mySourceToOutputLock) {

@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
@@ -101,7 +102,25 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
         if (e.getClickCount() != 2) return;
         if (pluginTable.columnAtPoint(e.getPoint()) < 0) return;
         if (pluginTable.rowAtPoint(e.getPoint()) < 0) return;
-        new ActionInstallPlugin(AvailablePluginsManagerMain.this, installed).install();
+        IdeaPluginDescriptor[] selection = pluginTable.getSelectedObjects();
+        if (selection != null) {
+          boolean enabled = true;
+          for (IdeaPluginDescriptor descr : selection) {
+            if (descr instanceof PluginNode) {
+              enabled &= !PluginManagerColumnInfo.isDownloaded((PluginNode)descr);
+              if (((PluginNode)descr).getStatus() == PluginNode.STATUS_INSTALLED) {
+                enabled &= InstalledPluginsTableModel.hasNewerVersion(descr.getPluginId());
+              }
+            }
+            else if (descr instanceof IdeaPluginDescriptorImpl) {
+              PluginId id = descr.getPluginId();
+              enabled &= InstalledPluginsTableModel.hasNewerVersion(id);
+            }
+          }
+          if (enabled) {
+            new ActionInstallPlugin(AvailablePluginsManagerMain.this, installed).install();
+          }
+        }
       }
     });
   }

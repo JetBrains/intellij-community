@@ -47,7 +47,7 @@ public class ArtifactSourceFilesState {
     myMappingsFile = new File(mappingsDir, String.valueOf(artifactId));
   }
 
-  public ArtifactSourceToOutputMapping getOrCreateMapping() throws Exception {
+  public ArtifactSourceToOutputMapping getOrCreateMapping() throws IOException {
     if (myMapping == null) {
       myMapping = new ArtifactSourceToOutputMapping(myMappingsFile);
     }
@@ -68,7 +68,7 @@ public class ArtifactSourceFilesState {
     return myDeletedFiles;
   }
 
-  public void initState() throws Exception {
+  public void initState() throws IOException {
     /*
     if (!myInitialized.compareAndSet(false, true)) {
       return;
@@ -80,7 +80,7 @@ public class ArtifactSourceFilesState {
     myDeletedFiles.clear();
     getOrCreateInstructions().processRoots(new ArtifactRootProcessor() {
       @Override
-      public void process(ArtifactSourceRoot root, Collection<DestinationInfo> destinations) throws Exception {
+      public void process(ArtifactSourceRoot root, Collection<DestinationInfo> destinations) throws IOException {
         final File rootFile = root.getRootFile();
         if (rootFile.exists()) {
           processRecursively(rootFile, root.getFilter(), currentPaths);
@@ -101,7 +101,7 @@ public class ArtifactSourceFilesState {
     return myTimestampStorage;
   }
 
-  private void processRecursively(File file, SourceFileFilter filter, Set<String> currentPaths) throws Exception {
+  private void processRecursively(File file, SourceFileFilter filter, Set<String> currentPaths) throws IOException {
     final String filePath = FileUtil.toSystemIndependentName(FileUtil.toCanonicalPath(file.getPath()));
     if (!filter.accept(filePath)) return;
 
@@ -148,7 +148,7 @@ public class ArtifactSourceFilesState {
     return instructionsBuilder;
   }
 
-  public void updateTimestamps(Set<String> deletedFiles, Set<String> changedFiles) throws Exception {
+  public void updateTimestamps(Set<String> deletedFiles, Set<String> changedFiles) throws IOException {
     for (String filePath : deletedFiles) {
       final ArtifactSourceTimestampStorage.PerArtifactTimestamp[] state = myTimestampStorage.getState(filePath);
       if (state == null) continue;

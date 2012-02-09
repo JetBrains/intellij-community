@@ -25,12 +25,17 @@ import org.junit.runner.Request;
 import org.junit.runner.Runner;
 import org.junit.runners.model.InitializationError;
 
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+
 public class JUnit46ClassesRequestBuilder {
   private JUnit46ClassesRequestBuilder() {}
 
-  public static Request getClassesRequest(final String suiteName, Class[] classes) {
+  public static Request getClassesRequest(final String suiteName, Class[] classes, Map classMethods) {
+    boolean canUseSuiteMethod = canUseSuiteMethod(classMethods);
     try {
-      final AllDefaultPossibilitiesBuilder builder = new AllDefaultPossibilitiesBuilder(true);
+      final AllDefaultPossibilitiesBuilder builder = new AllDefaultPossibilitiesBuilder(canUseSuiteMethod);
       final Runner suite = new IdeaSuite(builder, classes, suiteName);
       return Request.runner(suite);
     }
@@ -39,4 +44,20 @@ public class JUnit46ClassesRequestBuilder {
     }
   }
 
+  private static boolean canUseSuiteMethod(Map classMethods) {
+    for (Iterator iterator = classMethods.keySet().iterator(); iterator.hasNext(); ) {
+      Object className = iterator.next();
+      Set methods = (Set) classMethods.get(className);
+      if (methods == null) {
+        return true;
+      }
+      for (Iterator iterator1 = methods.iterator(); iterator1.hasNext(); ) {
+        String methodName = (String)iterator1.next();
+        if ("suite".equals(methodName)) {
+          return true;
+        }
+      }
+    }
+    return classMethods.isEmpty();
+  }
 }

@@ -17,6 +17,7 @@ package com.intellij.compiler;
 
 import com.intellij.ProjectTopics;
 import com.intellij.application.options.PathMacrosImpl;
+import com.intellij.compiler.server.impl.CompileServerClasspathManager;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.OSProcessHandler;
@@ -35,9 +36,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
-import com.intellij.openapi.projectRoots.JavaSdkType;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
-import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
@@ -45,6 +44,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ShutDownTracker;
@@ -61,6 +61,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.NetUtils;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.*;
@@ -99,6 +100,7 @@ public class CompileServerManager implements ApplicationComponent{
   private final ProjectManager myProjectManager;
   private static final int MAKE_TRIGGER_DELAY = 5 * 1000 /*5 seconds*/;
   private final Map<RequestFuture, Project> myAutomakeFutures = new HashMap<RequestFuture, Project>();
+  private final CompileServerClasspathManager myClasspathManager = new CompileServerClasspathManager();
 
   public CompileServerManager(final ProjectManager projectManager) {
     myProjectManager = projectManager;
@@ -462,8 +464,9 @@ public class CompileServerManager implements ApplicationComponent{
   private static RequestFuture sendSetupRequest(final @NotNull CompileServerClient client) throws Exception {
     final Map<String, String> data = new HashMap<String, String>();
 
-    // need this for tests and when this macro is missing from PathMacros registry
-    data.put(PathMacrosImpl.APPLICATION_HOME_MACRO_NAME, FileUtil.toSystemIndependentName(PathManager.getHomePath()));
+    for (Map.Entry<String, String> entry : PathMacrosImpl.getGlobalSystemMacros().entrySet()) {
+      data.put(entry.getKey(), FileUtil.toSystemIndependentName(entry.getValue()));
+    }
 
     final PathMacros pathVars = PathMacros.getInstance();
     for (String name : pathVars.getAllMacroNames()) {
@@ -488,8 +491,19 @@ public class CompileServerManager implements ApplicationComponent{
       if (homePath == null) {
         continue;
       }
+      final SdkAdditionalData data = sdk.getSdkAdditionalData();
+      final String additionalDataXml;
+      final SdkType sdkType = sdk.getSdkType();
+      if (data == null) {
+        additionalDataXml = null;
+      }
+      else {
+        final Element element = new Element("additional");
+        sdkType.saveAdditionalData(data, element);
+        additionalDataXml = JDOMUtil.writeElement(element, "\n");
+      }
       final List<String> paths = convertToLocalPaths(sdk.getRootProvider().getFiles(OrderRootType.CLASSES));
-      globals.add(new SdkLibrary(name, homePath, paths));
+      globals.add(new SdkLibrary(name, sdkType.getName(), homePath, paths, additionalDataXml));
     }
   }
 
@@ -583,6 +597,7 @@ public class CompileServerManager implements ApplicationComponent{
     cmdLine.addParameter("-classpath");
 
     final List<File> cp = ClasspathBootstrap.getCompileServerApplicationClasspath();
+    cp.addAll(myClasspathManager.getCompileServerPluginsClasspath());
 
     cmdLine.addParameter(classpathToString(cp));
 

@@ -57,6 +57,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -385,6 +386,7 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
       e.getPresentation().setIcon(myTabs.isEditorTabs() ? myNewIcon : myIcon);
       e.getPresentation().setHoveredIcon(myTabs.isEditorTabs()? myNewHoveredIcon : myHoveredIcon);
       e.getPresentation().setVisible(UISettings.getInstance().SHOW_CLOSE_BUTTON);
+      e.getPresentation().setText("Close. Alt-click to close others.");
     }
 
     public void actionPerformed(final AnActionEvent e) {
@@ -399,8 +401,13 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
       }
 
       if (window != null) {
-        if (window.findFileComposite(file) != null) {
-          mgr.closeFile(file, window);
+        if ((e.getModifiers() & InputEvent.ALT_MASK) != 0) {
+          window.closeAllExcept(file);
+        }
+        else {
+          if (window.findFileComposite(file) != null) {
+            mgr.closeFile(file, window);
+          }
         }
       }
     }

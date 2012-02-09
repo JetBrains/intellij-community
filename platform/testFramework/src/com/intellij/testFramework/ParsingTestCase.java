@@ -51,17 +51,14 @@ import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.picocontainer.ComponentAdapter;
-import org.picocontainer.MutablePicoContainer;
-import org.picocontainer.PicoContainer;
-import org.picocontainer.PicoInitializationException;
-import org.picocontainer.PicoIntrospectionException;
+import org.picocontainer.*;
 import org.picocontainer.defaults.AbstractComponentAdapter;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Set;
 
 public abstract class ParsingTestCase extends PlatformLiteFixture {
   protected String myFilePrefix = "";
@@ -201,7 +198,7 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
       assertEquals("doc text mismatch", text, myFile.getViewProvider().getDocument().getText());
       assertEquals("psi text mismatch", text, myFile.getText());
       if (checkResult){
-        checkResult(name + ".txt", myFile);
+        checkResult(name, myFile);
       }
       else{
         toParseTreeText(myFile, skipSpaces(), includeRanges());
@@ -218,7 +215,7 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
     myFile = createPsiFile(name, text);
     ensureParsed(myFile);
     assertEquals(text, myFile.getText());
-    checkResult(name + suffix + ".txt", myFile);
+    checkResult(name + suffix, myFile);
   }
 
   protected void doCodeTest(String code) throws IOException {
@@ -226,7 +223,7 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
     myFile = createPsiFile("a", code);
     ensureParsed(myFile);
     assertEquals(code, myFile.getText());
-    checkResult(myFilePrefix + name + ".txt", myFile);
+    checkResult(myFilePrefix + name, myFile);
   }
 
   protected PsiFile createPsiFile(String name, String text) {
@@ -253,15 +250,18 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
                                    String targetDataName,
                                    boolean skipSpaces,
                                    boolean printRanges) throws IOException {
-    final PsiElement[] psiRoots = checkAllPsiRoots? file.getPsiRoots() : PsiElement.EMPTY_ARRAY;
-    if(psiRoots.length > 1){
-      for (int i = 0; i < psiRoots.length; i++) {
-        final PsiElement psiRoot = psiRoots[i];
-        doCheckResult(myFullDataPath, targetDataName + "." + i, toParseTreeText(psiRoot, skipSpaces, printRanges).trim());
-      }
+    FileViewProvider provider = file.getViewProvider();
+    Set<Language> languages = provider.getLanguages();
+
+    if (!checkAllPsiRoots || languages.size() == 1) {
+      doCheckResult(myFullDataPath, targetDataName + ".txt", toParseTreeText(file, skipSpaces, printRanges).trim());
+      return;
     }
-    else{
-      doCheckResult(myFullDataPath, targetDataName, toParseTreeText(file, skipSpaces, printRanges).trim());
+
+    for (Language language : languages) {
+      PsiFile root = provider.getPsi(language);
+      String expectedName = targetDataName + "." + language.getID() + ".txt";
+      doCheckResult(myFullDataPath, expectedName, toParseTreeText(root, skipSpaces, printRanges).trim());
     }
   }
 
@@ -297,8 +297,7 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
   }
 
   private static String doLoadFile(String myFullDataPath, String name) throws IOException {
-    String fullName = myFullDataPath + File.separatorChar + name;
-    String text = FileUtil.loadFile(new File(fullName), CharsetToolkit.UTF8).trim();
+    String text = FileUtil.loadFile(new File(myFullDataPath, name), CharsetToolkit.UTF8).trim();
     text = StringUtil.convertLineSeparators(text);
     return text;
   }
