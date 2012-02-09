@@ -51,7 +51,7 @@ public class ExportToHTMLDialog extends DialogWrapper{
 
   protected JComponent createCenterPanel() {
     if (!myCanBeOpenInBrowser) return null;
-    OptionGroup optionGroup = new OptionGroup(InspectionsBundle.message("inspection.export.options.panel.title"));
+    OptionGroup optionGroup = new OptionGroup();
 
     addOptions(optionGroup);
 
