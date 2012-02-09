@@ -1072,7 +1072,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     }
     final int projectId = getProjectId(projRef.get());
     if (LOG.isDebugEnabled()) {
-      LOG.debug("Scanning source content for project projectId=" + projectId + "; url="+ projRef.get().getPresentableUrl());
+      LOG.debug("Scanning source content for project projectId=" + projectId + "; url=" + projRef.get().getPresentableUrl());
     }
 
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(projRef.get()).getFileIndex();
@@ -1573,9 +1573,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
               continue; // the content of this project will be scanned during its post-startup activities
             }
             final int projectId = getProjectId(project);
-            if (isSuspended(projectId)) {
-              continue;
-            }
+            final boolean projectSuspended = isSuspended(projectId);
             final ProjectRootManager rootManager = ProjectRootManager.getInstance(project);
             if (rootManager.getFileIndex().isInSourceContent(file)) {
               final TranslatingCompiler[] translators = CompilerManager.getInstance(project).getCompilers(TranslatingCompiler.class);
@@ -1584,7 +1582,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
                   if (notifyServer) {
                     pathsToMark.add(file.getPath());
                   }
-                  if (isCompilable(file)) {
+                  if (!projectSuspended && isCompilable(file)) {
                     loadInfoAndAddSourceForRecompilation(projectId, file);
                   }
                 }
@@ -1600,7 +1598,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
               });
             }
             else {
-              if (belongsToIntermediateSources(file, project)) {
+              if (!projectSuspended && belongsToIntermediateSources(file, project)) {
                 processRecursively(file, false, new FileProcessor() {
                   public void execute(final VirtualFile file) {
                     loadInfoAndAddSourceForRecompilation(projectId, file);
