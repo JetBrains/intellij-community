@@ -148,6 +148,7 @@ public final class UpdateChecker {
   public static ActionCallback updateAndShowResult() {
     final ActionCallback result = new ActionCallback();
     final Application app = ApplicationManager.getApplication();
+    /*
     app.executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
@@ -163,6 +164,7 @@ public final class UpdateChecker {
         });
       }
     });
+    */
     return result;
   }
 
