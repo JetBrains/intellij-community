@@ -17,6 +17,7 @@ import org.jetbrains.jps.api.GlobalLibrary;
 import org.jetbrains.jps.api.SdkLibrary;
 import org.jetbrains.jps.artifacts.Artifact;
 import org.jetbrains.jps.idea.IdeaProjectLoader;
+import org.jetbrains.jps.idea.SystemOutErrorReporter;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
@@ -205,7 +206,7 @@ class ServerState {
       final Map<String, Artifact> artifactMap = pd.project.getArtifacts();
       for (String name : artifactNames) {
         final Artifact artifact = artifactMap.get(name);
-        if (!StringUtil.isEmpty(artifact.getOutputPath())) {
+        if (artifact != null && !StringUtil.isEmpty(artifact.getOutputPath())) {
           artifacts.add(artifact);
         }
       }
@@ -331,7 +332,7 @@ class ServerState {
     //String root = dirBased ? projectPath : projectFile.getParent();
 
     final String loadPath = isDirectoryBased(projectFile) ? new File(projectFile, IDEA_PROJECT_DIRNAME).getPath() : projectPath;
-    IdeaProjectLoader.loadFromPath(project, loadPath, myPathVariables, getStartupScript());
+    IdeaProjectLoader.loadFromPath(project, loadPath, myPathVariables, getStartupScript(), new SystemOutErrorReporter(false));
     final String globalEncoding = myGlobalEncoding;
     if (globalEncoding != null && project.getProjectCharset() == null) {
       project.setProjectCharset(globalEncoding);
