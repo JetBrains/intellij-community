@@ -58,9 +58,10 @@ class ConstructorInsertHandler implements InsertHandler<LookupElementDecorator<L
       final int plEnd = context.getOffset(PARAM_LIST_END);
       if (plStart >= 0 && plEnd >= 0) {
         context.getDocument().deleteString(plStart, plEnd);
-        PsiDocumentManager.getInstance(context.getProject()).commitAllDocuments();
       }
     }
+
+    context.commitDocument();
 
     OffsetKey insideRef = context.trackOffset(context.getTailOffset(), false);
 
