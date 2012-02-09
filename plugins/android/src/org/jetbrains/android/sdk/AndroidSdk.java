@@ -33,6 +33,7 @@ import com.intellij.reference.SoftReference;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.android.actions.AndroidEnableDdmsAction;
+import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.android.util.BufferingFileWrapper;
 import org.jetbrains.annotations.NotNull;
@@ -152,7 +153,7 @@ public class AndroidSdk {
 
   @Nullable
   public static AndroidSdk parse(@NotNull String path, @NotNull ISdkLog log) {
-    final SdkManager manager = AndroidSdkUtils.createSdkManager(path, log);
+    final SdkManager manager = AndroidCommonUtils.createSdkManager(path, log);
     return manager != null ? new AndroidSdk(manager, path) : null;
   }
 
