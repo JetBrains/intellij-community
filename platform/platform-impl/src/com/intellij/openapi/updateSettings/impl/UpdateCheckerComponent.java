@@ -41,9 +41,6 @@ public class UpdateCheckerComponent implements ApplicationComponent {
 
   @Override
   public void initComponent() {
-    if (UpdateChecker.checkNeeded()) {
-
-    }
     queueNextUpdateCheck(UpdateChecker.checkNeeded()
                          ? CHECK_INTERVAL
                          : UpdateSettings.getInstance().LAST_TIME_CHECKED - System.currentTimeMillis() + CHECK_INTERVAL);
