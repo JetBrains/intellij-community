@@ -16,9 +16,9 @@
 
 package com.intellij.application.options.codeStyle;
 
-import com.intellij.application.options.CodeStyleAbstractPanel;
+import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.ui.components.JBScrollPane;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,7 +26,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
 
 public class CodeStyleSchemesPanel{
@@ -58,10 +58,9 @@ public class CodeStyleSchemesPanel{
         }
       }
     });
-    myCombo.setRenderer(new DefaultListCellRenderer() {
+    myCombo.setRenderer(new ListCellRendererWrapper(myCombo.getRenderer()) {
       @Override
-      public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-        Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      public void customize(final JList list, final Object value, final int index, final boolean selected, final boolean hasFocus) {
         Font font = myDefaultComboFont;
         if (value instanceof CodeStyleScheme) {
           CodeStyleScheme scheme = (CodeStyleScheme)value;
@@ -69,8 +68,7 @@ public class CodeStyleSchemesPanel{
             font = myBoldComboFont;
           }
         }
-        component.setFont(font);
-        return component;
+        setFont(font);
       }
     });
     
