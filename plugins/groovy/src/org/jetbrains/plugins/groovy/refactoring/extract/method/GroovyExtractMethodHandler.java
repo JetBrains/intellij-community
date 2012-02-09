@@ -73,7 +73,8 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
     }
 
     try {
-      final InitialInfo initialInfo = GroovyExtractChooser.invoke(project, editor, file, model.getSelectionStart(), model.getSelectionEnd());
+      final InitialInfo initialInfo =
+        GroovyExtractChooser.invoke(project, editor, file, model.getSelectionStart(), model.getSelectionEnd(), true);
       performRefactoring(initialInfo, editor);
     }
     catch (GrRefactoringError e) {

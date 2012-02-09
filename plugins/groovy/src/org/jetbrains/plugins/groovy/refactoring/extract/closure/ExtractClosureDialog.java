@@ -19,10 +19,8 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.refactoring.IntroduceParameterRefactoring;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.IdeBorderFactory;
@@ -34,14 +32,14 @@ import gnu.trove.TObjectIntHashMap;
 import gnu.trove.TObjectIntProcedure;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.extract.ExtractUtil;
-import org.jetbrains.plugins.groovy.refactoring.extract.InitialInfo;
 import org.jetbrains.plugins.groovy.refactoring.extract.ParameterInfo;
 import org.jetbrains.plugins.groovy.refactoring.extract.ParameterTablePanel;
+import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.GrIntroduceParameterSettings;
+import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.GroovyIntroduceParameterUtil;
+import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.IntroduceParameterInfo;
 import org.jetbrains.plugins.groovy.refactoring.ui.GrMethodSignatureComponent;
 
 import javax.swing.*;
@@ -56,18 +54,18 @@ public class ExtractClosureDialog extends DialogWrapper {
   private final GrMethodSignatureComponent mySignature;
   private final EditorTextField myNameField;
 
-  private final ExtractClosureHelper myHelper;
+  private final IntroduceParameterInfo myInfo;
   private final JBCheckBox myFinalCB;
   private final JBCheckBox myGenerateDelegateCB;
 
   TObjectIntHashMap<JBCheckBox> toRemoveCBs;
 
-  public ExtractClosureDialog(InitialInfo initialInfo, GrParametersOwner owner, PsiElement toSearchFor) {
+  public ExtractClosureDialog(IntroduceParameterInfo initialInfo) {
     super(initialInfo.getProject());
 
-    myHelper = new ExtractClosureHelper(initialInfo, owner, toSearchFor, "", false);
+    myInfo = initialInfo;
 
-    setTitle(ExtractClosureHandler.EXTRACT_CLOSURE);
+    setTitle("Extract closure");
 
     myTable = new ParameterTablePanel() {
       @Override
@@ -93,7 +91,7 @@ public class ExtractClosureDialog extends DialogWrapper {
     myGenerateDelegateCB = new JBCheckBox(UIUtil.replaceMnemonicAmpersand("De&legate via overloading method"));
     myGenerateDelegateCB.setFocusable(false);
 
-    TObjectIntHashMap<GrParameter> parametersToRemove = findParametersToRemove(myHelper);
+    TObjectIntHashMap<GrParameter> parametersToRemove = GroovyIntroduceParameterUtil.findParametersToRemove(myInfo);
     toRemoveCBs = new TObjectIntHashMap<JBCheckBox>(parametersToRemove.size());
     for (Object p : parametersToRemove.keys()) {
       JBCheckBox cb = new JBCheckBox(GroovyRefactoringBundle.message("remove.parameter.0.no.longer.used", ((GrParameter)p).getName()));
@@ -118,7 +116,7 @@ public class ExtractClosureDialog extends DialogWrapper {
         if (!checkbox.isSelected()) return true;
 
 
-        final GrParameter param = myHelper.getOwner().getParameters()[index];
+        final GrParameter param = myInfo.getToReplaceIn().getParameters()[index];
         final ParameterInfo pinfo = findParamByOldName(param.getName());
         if (pinfo == null || !pinfo.passAsParameter()) return true;
 
@@ -133,7 +131,7 @@ public class ExtractClosureDialog extends DialogWrapper {
 
   @Nullable
   private ParameterInfo findParamByOldName(String name) {
-    for (ParameterInfo info : myHelper.getParameterInfos()) {
+    for (ParameterInfo info : myInfo.getParameterInfos()) {
       if (name.equals(info.getOldName())) return info;
     }
     return null;
@@ -142,7 +140,7 @@ public class ExtractClosureDialog extends DialogWrapper {
   private void updateSignature() {
     StringBuilder b = new StringBuilder();
     b.append("{ ");
-    String[] params = ExtractUtil.getParameterString(myHelper, false);
+    String[] params = ExtractUtil.getParameterString(myInfo, false);
     for (int i = 0; i < params.length; i++) {
       if (i > 0) {
         b.append("  ");
@@ -163,16 +161,16 @@ public class ExtractClosureDialog extends DialogWrapper {
   protected void init() {
     super.init();
 
-    myTable.init(myHelper);
+    myTable.init(myInfo);
 
     final JavaRefactoringSettings refactoringSettings = JavaRefactoringSettings.getInstance();
     final Boolean settingsFinals = refactoringSettings.INTRODUCE_PARAMETER_CREATE_FINALS;
     myFinalCB.setSelected(settingsFinals == null ?
-                          CodeStyleSettingsManager.getSettings(myHelper.getProject()).GENERATE_FINAL_PARAMETERS :
+                          CodeStyleSettingsManager.getSettings(myInfo.getProject()).GENERATE_FINAL_PARAMETERS :
                           settingsFinals.booleanValue());
     myGenerateDelegateCB.setSelected(false);
 
-    final GrParameter[] parameters = myHelper.getOwner().getParameters();
+    final GrParameter[] parameters = myInfo.getToReplaceIn().getParameters();
     toRemoveCBs.forEachEntry(new TObjectIntProcedure<JBCheckBox>() {
       @Override
       public boolean execute(JBCheckBox checkbox, int index) {
@@ -234,10 +232,10 @@ public class ExtractClosureDialog extends DialogWrapper {
     final JavaRefactoringSettings settings = JavaRefactoringSettings.getInstance();
     settings.INTRODUCE_PARAMETER_CREATE_FINALS = Boolean.valueOf(myFinalCB.isSelected());
 
-    myHelper.setName(myNameField.getText());
-    myHelper.setDeclareFinal(myFinalCB.isSelected());
-    myHelper.setGenerateDelegate(myGenerateDelegateCB.isSelected());
+    super.doOKAction();
+  }
 
+  public GrIntroduceParameterSettings getHelper() {
     TIntArrayList list = new TIntArrayList();
     for (Object cb : toRemoveCBs.keys()) {
       final JBCheckBox checkbox = (JBCheckBox)cb;
@@ -245,41 +243,13 @@ public class ExtractClosureDialog extends DialogWrapper {
         list.add(toRemoveCBs.get(checkbox));
       }
     }
-    myHelper.setToRemove(list);
-    super.doOKAction();
-  }
 
-  public ExtractClosureHelper getHelper() {
-    return myHelper;
-  }
-
-  private static TObjectIntHashMap<GrParameter> findParametersToRemove(ExtractClosureHelper helper) {
-    final TObjectIntHashMap<GrParameter> result = new TObjectIntHashMap<GrParameter>();
-
-    final GrStatement[] statements = helper.getStatements();
-    final int start = statements[0].getTextRange().getStartOffset();
-    final int end = statements[statements.length - 1].getTextRange().getEndOffset();
-
-    GrParameter[] parameters = helper.getOwner().getParameters();
-    for (int i = 0; i < parameters.length; i++) {
-      GrParameter parameter = parameters[i];
-      if (shouldRemove(parameter, start, end)) {
-        result.put(parameter, i);
-      }
-    }
-    return result;
-  }
-
-  private static boolean shouldRemove(GrParameter parameter, int start, int end) {
-    for (PsiReference reference : ReferencesSearch.search(parameter)) {
-      final PsiElement element = reference.getElement();
-      if (element == null) continue;
-
-      final int offset = element.getTextRange().getStartOffset();
-      if (offset < start || end <= offset) {
-        return false;
-      }
-    }
-    return true;
+    return new ExtractClosureHelperImpl(myInfo,
+                                        myNameField.getText(),
+                                        myFinalCB.isSelected(),
+                                        list,
+                                        myGenerateDelegateCB.isSelected(),
+                                        IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE
+    );
   }
 }

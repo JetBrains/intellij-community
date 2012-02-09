@@ -15,35 +15,37 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.introduce.parameter;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.NameSuggestionsField;
 import com.intellij.refactoring.ui.RefactoringDialog;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.GridBag;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TObjectIntHashMap;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.refactoring.GrRefactoringError;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.HelpID;
+import org.jetbrains.plugins.groovy.refactoring.extract.closure.ExtractClosureFromMethodProcessor;
+import org.jetbrains.plugins.groovy.refactoring.extract.closure.ExtractClosureHelperImpl;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContextImpl;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceDialog;
+import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
 import org.jetbrains.plugins.groovy.refactoring.introduce.field.GroovyFieldValidator;
 import org.jetbrains.plugins.groovy.refactoring.ui.GrTypeComboBox;
 
@@ -68,12 +70,14 @@ public class GrIntroduceParameterDialog extends RefactoringDialog implements GrI
   private JLabel myTypeLabel;
   private JLabel myNameLabel;
   private JCheckBox myChangeVarUsages;
-  private GrIntroduceParameterContext myContext;
+  private IntroduceParameterInfo myInfo;
   TObjectIntHashMap<JCheckBox> toRemoveCBs;
 
-  public GrIntroduceParameterDialog(GrIntroduceParameterContext context, TObjectIntHashMap<GrParameter> parametersToRemove) {
-    super(context.getProject(), true);
-    myContext = context;
+  public GrIntroduceParameterDialog(IntroduceParameterInfo info) {
+    super(info.getProject(), true);
+    myInfo = info;
+
+    TObjectIntHashMap<GrParameter> parametersToRemove = GroovyIntroduceParameterUtil.findParametersToRemove(info);
     toRemoveCBs = new TObjectIntHashMap<JCheckBox>(parametersToRemove.size());
     for (Object p : parametersToRemove.keys()) {
       JCheckBox cb = new JCheckBox(GroovyRefactoringBundle.message("remove.parameter.0.no.longer.used", ((GrParameter)p).getName()));
@@ -83,11 +87,7 @@ public class GrIntroduceParameterDialog extends RefactoringDialog implements GrI
 
     JavaRefactoringSettings settings = JavaRefactoringSettings.getInstance();
 
-    if (context.getOccurrences().length < 2) { //todo
-      myReplaceAllOccurrencesCheckBox.setSelected(true);
-      myReplaceAllOccurrencesCheckBox.setVisible(false);
-    }
-    if (myContext.getVar() == null) {
+    if (myInfo.getStatements().length == 1 && GrIntroduceHandlerBase.findVariable(myInfo.getStatements()[0]) == null) {
       myRemoveLocalVariableCheckBox.setSelected(false);
       myRemoveLocalVariableCheckBox.setVisible(false);
     }
@@ -99,10 +99,10 @@ public class GrIntroduceParameterDialog extends RefactoringDialog implements GrI
 
     myDeclareFinalCheckBox.setSelected(hasFinalModifier());
     
-    myChangeVarUsages.setVisible(context.getToReplaceIn() instanceof GrClosableBlock && context.getToSearchFor() instanceof GrVariable);
+    myChangeVarUsages.setVisible(info.getToReplaceIn() instanceof GrClosableBlock && info.getToSearchFor() instanceof GrVariable);
     myChangeVarUsages.setSelected(true);
 
-    myDelegateViaOverloadingMethodCheckBox.setVisible(context.getToSearchFor() != null);
+    myDelegateViaOverloadingMethodCheckBox.setVisible(info.getToSearchFor() != null);
 
     setTitle(RefactoringBundle.message("introduce.parameter.title"));
     init();
@@ -110,7 +110,7 @@ public class GrIntroduceParameterDialog extends RefactoringDialog implements GrI
 
   private void initReplaceFieldsWithGetters(JavaRefactoringSettings settings) {
 
-    final PsiField[] usedFields = GroovyIntroduceParameterUtil.findUsedFieldsWithGetters(myContext.getExpression(), getContainingClass());
+    final PsiField[] usedFields = GroovyIntroduceParameterUtil.findUsedFieldsWithGetters(myInfo.getStatements(), getContainingClass());
     myGetterPanel.setVisible(usedFields.length > 0);
     switch (settings.INTRODUCE_PARAMETER_REPLACE_FIELDS_WITH_GETTERS) {
       case REPLACE_FIELDS_WITH_GETTERS_ALL:
@@ -127,7 +127,7 @@ public class GrIntroduceParameterDialog extends RefactoringDialog implements GrI
 
   @Nullable
   private PsiClass getContainingClass() {
-    final GrParametersOwner toReplaceIn = myContext.getToReplaceIn();
+    final GrParametersOwner toReplaceIn = myInfo.getToReplaceIn();
     if (toReplaceIn instanceof GrMethod) {
       return ((GrMethod)toReplaceIn).getContainingClass();
     }
@@ -144,27 +144,39 @@ public class GrIntroduceParameterDialog extends RefactoringDialog implements GrI
   @Override
   protected void doAction() {
     saveSettings();
-    GrIntroduceParameterSettings settings = new GrIntroduceParameterSettingsImpl(
-      myNameSuggestionsField.getEnteredName(),
-      myReplaceAllOccurrencesCheckBox.isSelected(),
-      myTypeComboBox.getSelectedType(),
-      myDeclareFinalCheckBox.isSelected(),
-      myDelegateViaOverloadingMethodCheckBox.isSelected(),
-      getParametersToRemove(),
-      getReplaceFieldsWithGetter(),
-      myRemoveLocalVariableCheckBox.isSelected());
+    final GrParametersOwner toReplaceIn = myInfo.getToReplaceIn();
+    final PsiType selectedType = myTypeComboBox.getSelectedType();
 
-    final BaseRefactoringProcessor processor;
-    if (myContext.getToReplaceIn() instanceof GrMethod) {
-      processor = new GrIntroduceParameterProcessor(settings, myContext);
+    final GrExpression expr = findExpr();
+    final GrVariable var = findVar();
+
+    if ((expr == null && var == null) || selectedType != null && selectedType.equalsToText(GroovyCommonClassNames.GROOVY_LANG_CLOSURE)) {
+      GrIntroduceParameterSettings settings = new ExtractClosureHelperImpl(myInfo,
+                                                                           myNameSuggestionsField.getEnteredName(),
+                                                                           myDeclareFinalCheckBox.isSelected(),
+                                                                           getParametersToRemove(),
+                                                                           myDelegateViaOverloadingMethodCheckBox.isSelected(),
+                                                                           getReplaceFieldsWithGetter());
+      invokeRefactoring(new ExtractClosureFromMethodProcessor(settings));
     }
     else {
-      if (!myChangeVarUsages.isSelected() && myContext.getToSearchFor() != null) {
-        myContext = new GrIntroduceParameterContextImpl(myContext, myContext.getToReplaceIn(), null);
+
+      GrIntroduceExpressionSettings settings = new GrIntroduceExpressionSettingsImpl(myInfo,
+                                                                                     myNameSuggestionsField.getEnteredName(),
+                                                                                     myDeclareFinalCheckBox.isSelected(),
+                                                                                     getParametersToRemove(),
+                                                                                     myDelegateViaOverloadingMethodCheckBox.isSelected(),
+                                                                                     getReplaceFieldsWithGetter(),
+                                                                                     expr,
+                                                                                     var,
+                                                                                     myTypeComboBox.getSelectedType());
+      if (toReplaceIn instanceof GrMethod) {
+        invokeRefactoring(new GrIntroduceParameterProcessor(settings));
       }
-      processor = new GrIntroduceClosureParameterProcessor(settings, myContext);
+      else {
+        invokeRefactoring(new GrIntroduceClosureParameterProcessor(settings));
+      }
     }
-    invokeRefactoring(processor);
   }
 
   private void saveSettings() {
@@ -224,101 +236,53 @@ public class GrIntroduceParameterDialog extends RefactoringDialog implements GrI
   }
 
   private void createUIComponents() {
-    if (myContext.getVar() != null) {
-      myTypeComboBox = GrTypeComboBox.createTypeComboBoxWithDefType(myContext.getVar().getDeclaredType());
+    final GrVariable var = findVar();
+    final GrExpression expr = findExpr();
+    if (var != null) {
+      myTypeComboBox = GrTypeComboBox.createTypeComboBoxWithDefType(var.getDeclaredType());
+    }
+    else if (expr != null) {
+      myTypeComboBox = GrTypeComboBox.createTypeComboBoxFromExpression(expr);
     }
     else {
-      myTypeComboBox = GrTypeComboBox.createTypeComboBoxFromExpression(myContext.getExpression());
+      myTypeComboBox = GrTypeComboBox.createEmptyTypeComboBox();
     }
 
+    myTypeComboBox.addType(JavaPsiFacade.getElementFactory(myProject).createTypeFromText(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, myInfo.getContext()));
+
     String[] possibleNames;
-    final GrIntroduceContext
-      introduceContext = new GrIntroduceContextImpl(myProject, null, myContext.getExpression(), myContext.getVar(), PsiElement.EMPTY_ARRAY,
-                                                myContext.getToReplaceIn());
+    final GrIntroduceContext introduceContext = new GrIntroduceContextImpl(myProject, null, expr, var, PsiElement.EMPTY_ARRAY, myInfo.getToReplaceIn());
     final GroovyFieldValidator validator = new GroovyFieldValidator(introduceContext);
-    if (myContext.getExpression() != null) {
-      possibleNames = GroovyNameSuggestionUtil.suggestVariableNames(myContext.getExpression(), validator, true);
+    if (expr != null) {
+      possibleNames = GroovyNameSuggestionUtil.suggestVariableNames(expr, validator, true);
+    }
+    else if (var != null) {
+      possibleNames = GroovyNameSuggestionUtil.suggestVariableNameByType(var.getType(), validator);
     }
     else {
-      possibleNames = GroovyNameSuggestionUtil.suggestVariableNameByType(myContext.getVar().getType(), validator);
+      possibleNames = ArrayUtil.EMPTY_STRING_ARRAY;
     }
-    if (myContext.getVar() != null) {
+
+    if (var != null) {
       String[] arr = new String[possibleNames.length + 1];
-      arr[0] = myContext.getVar().getName();
+      arr[0] = var.getName();
       System.arraycopy(possibleNames, 0, arr, 1, possibleNames.length);
       possibleNames = arr;
     }
-    myNameSuggestionsField = new NameSuggestionsField(possibleNames, myContext.getProject(), GroovyFileType.GROOVY_FILE_TYPE);
+    myNameSuggestionsField = new NameSuggestionsField(possibleNames, myProject, GroovyFileType.GROOVY_FILE_TYPE);
   }
 
-  static class GrIntroduceParameterSettingsImpl implements GrIntroduceParameterSettings {
+  @Nullable
+  private GrVariable findVar() {
+    final GrStatement[] statements = myInfo.getStatements();
+    if (statements.length > 1) return null;
+    return GrIntroduceHandlerBase.findVariable(statements[0]);
+  }
 
-    private String myName;
-    private boolean myReplaceAllOccurrences;
-    private PsiType mySelectedType;
-    private boolean myDeclareFinal;
-    private boolean myIsGenerateDelegate;
-    private TIntArrayList myParameterToRemove;
-    private int myReplaceFieldWithGetters;
-    private boolean myRemoveLocalVariable;
-
-    GrIntroduceParameterSettingsImpl(String name,
-                                     boolean replaceAllOccurrences,
-                                     PsiType selectedType,
-                                     boolean declareFinal,
-                                     boolean isGenerateDelegate,
-                                     TIntArrayList parameterToRemove,
-                                     int replaceFieldWithGetters,
-                                     boolean removeLocalVariable) {
-      myName = name;
-      myReplaceAllOccurrences = replaceAllOccurrences;
-      mySelectedType = selectedType;
-      myDeclareFinal = declareFinal;
-      myIsGenerateDelegate = isGenerateDelegate;
-      myParameterToRemove = parameterToRemove;
-      myReplaceFieldWithGetters = replaceFieldWithGetters;
-      myRemoveLocalVariable = removeLocalVariable;
-    }
-
-    @Override
-    public String getName() {
-      return myName;
-    }
-
-    @Override
-    public boolean replaceAllOccurrences() {
-      return myReplaceAllOccurrences;
-    }
-
-    @Override
-    public PsiType getSelectedType() {
-      return mySelectedType;
-    }
-
-    @Override
-    public boolean declareFinal() {
-      return myDeclareFinal;
-    }
-
-    @Override
-    public boolean removeLocalVariable() {
-      return myRemoveLocalVariable;
-    }
-
-    @Override
-    public boolean generateDelegate() {
-      return myIsGenerateDelegate;
-    }
-
-    @NotNull
-    @Override
-    public TIntArrayList parametersToRemove() {
-      return myParameterToRemove;
-    }
-
-    @Override
-    public int replaceFieldsWithGetters() {
-      return myReplaceFieldWithGetters;
-    }
+  @Nullable
+  private GrExpression findExpr() {
+    final GrStatement[] statements = myInfo.getStatements();
+    if (statements.length > 1) return null;
+    return GrIntroduceHandlerBase.findExpression(statements[0]);
   }
 }

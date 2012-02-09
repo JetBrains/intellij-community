@@ -81,21 +81,19 @@ import java.util.List;
 public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance(GrIntroduceClosureParameterProcessor.class);
 
-  private GrIntroduceParameterSettings mySettings;
-  private GrIntroduceParameterContext myContext;
+  private GrIntroduceExpressionSettings mySettings;
   private GrClosableBlock toReplaceIn;
   private PsiElement toSearchFor;
   private GrExpressionWrapper myParameterInitializer;
   private GroovyPsiElementFactory myFactory = GroovyPsiElementFactory.getInstance(myProject);
 
-  public GrIntroduceClosureParameterProcessor(GrIntroduceParameterSettings settings, GrIntroduceParameterContext context) {
-    super(context.getProject(), null);
+  public GrIntroduceClosureParameterProcessor(GrIntroduceExpressionSettings settings) {
+    super(settings.getProject(), null);
     mySettings = settings;
-    myContext = context;
 
-    toReplaceIn = (GrClosableBlock)myContext.getToReplaceIn();
-    toSearchFor = myContext.getToSearchFor();
-    myParameterInitializer = new GrExpressionWrapper(this.myContext.getExpression());
+    toReplaceIn = (GrClosableBlock)mySettings.getToReplaceIn();
+    toSearchFor = mySettings.getToSearchFor();
+    myParameterInitializer = new GrExpressionWrapper(mySettings.getExpression());
   }
 
   @NotNull
@@ -123,15 +121,16 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
       detectAccessibilityConflicts(usagesIn, conflicts);
     }
 
-    if (myContext.getExpression() != null && toSearchFor instanceof PsiMember) {
+    final GrExpression expression = mySettings.getExpression();
+    if (expression != null && toSearchFor instanceof PsiMember) {
       final AnySupers anySupers = new AnySupers();
-      myContext.getExpression().accept(anySupers);
+      expression.accept(anySupers);
       if (anySupers.isResult()) {
         final PsiElement containingClass = PsiUtil.getFileOrClassContext(toReplaceIn);
         for (UsageInfo usageInfo : usagesIn) {
           if (!(usageInfo.getElement() instanceof PsiMethod) && !(usageInfo instanceof InternalUsageInfo)) {
             if (!PsiTreeUtil.isAncestor(containingClass, usageInfo.getElement(), false)) {
-              conflicts.putValue(myContext.getExpression(), RefactoringBundle
+              conflicts.putValue(expression, RefactoringBundle
                 .message("parameter.initializer.contains.0.but.not.all.calls.to.method.are.in.its.class", CommonRefactoringUtil.htmlEmphasize(PsiKeyword.SUPER)));
               break;
             }
@@ -152,10 +151,11 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
 
   private void detectAccessibilityConflicts(final UsageInfo[] usageArray, MultiMap<PsiElement, String> conflicts) {
     //todo whole method
-    if (myContext.getExpression() == null) return;
+    final GrExpression expression = mySettings.getExpression();
+    if (expression == null) return;
 
     final ReferencedElementsCollector collector = new ReferencedElementsCollector();
-    myContext.getExpression().accept(collector);
+    expression.accept(collector);
     final List<PsiElement> result = collector.getResult();
     if (result.isEmpty()) return;
 
@@ -223,14 +223,14 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
     }
 
     if (mySettings.replaceAllOccurrences()) {
-      PsiElement[] exprs = myContext.getOccurrences();
+      PsiElement[] exprs = GroovyIntroduceParameterUtil.getOccurrences(mySettings);
       for (PsiElement expr : exprs) {
         result.add(new InternalUsageInfo(expr));
       }
     }
     else {
-      if (myContext.getExpression() != null) {
-        result.add(new InternalUsageInfo(myContext.getExpression()));
+      if (mySettings.getExpression() != null) {
+        result.add(new InternalUsageInfo(mySettings.getExpression()));
       }
     }
 
@@ -314,8 +314,9 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
       processClosure(usages);
     }
 
-    if (myContext.getVar() != null && mySettings.removeLocalVariable()) {
-      myContext.getVar().delete();
+    final GrVariable var = mySettings.getVar();
+    if (var != null && mySettings.removeLocalVariable()) {
+      var.delete();
     }
   }
 
@@ -611,7 +612,7 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
 
   @Override
   protected String getCommandName() {
-    return RefactoringBundle.message("introduce.parameter.command", UsageViewUtil.getDescriptiveName(myContext.getToReplaceIn()));
+    return RefactoringBundle.message("introduce.parameter.command", UsageViewUtil.getDescriptiveName(mySettings.getToReplaceIn()));
   }
 
 

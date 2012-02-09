@@ -91,14 +91,14 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
          expression != null;
          expression = PsiTreeUtil.getParentOfType(expression, GrExpression.class)) {
       if (expressions.contains(expression)) continue;
-      if (expressionIsNotCorrect(expression)) continue;
+      if (expressionIsIncorrect(expression)) continue;
 
       expressions.add(expression);
     }
     return expressions;
   }
 
-  private static boolean expressionIsNotCorrect(GrExpression expression) {
+  private static boolean expressionIsIncorrect(GrExpression expression) {
     if (expression instanceof GrParenthesizedExpression) return true;
     if (expression instanceof GrSuperReferenceExpression) return true;
     if (expression.getType() == PsiType.VOID) return true;
@@ -298,22 +298,47 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
   }
 
   @Nullable
+  public static GrVariable findVariable(GrStatement statement) {
+    if (!(statement instanceof GrVariableDeclaration)) return null;
+    final GrVariableDeclaration variableDeclaration = (GrVariableDeclaration)statement;
+    final GrVariable[] variables = variableDeclaration.getVariables();
+
+    GrVariable var = null;
+    if (variables.length == 1) {
+      var = variables[0];
+    }
+    if (var instanceof GrParameter || var instanceof GrField) {
+      return null;
+    }
+    return var;
+  }
+
+
+  @Nullable
   public static GrExpression findExpression(PsiFile file, int startOffset, int endOffset) {
     GrExpression selectedExpr = GroovyRefactoringUtil.findElementInRange(file, startOffset, endOffset, GrExpression.class);
-    while (selectedExpr instanceof GrParenthesizedExpression) selectedExpr = ((GrParenthesizedExpression)selectedExpr).getOperand();
-    if (selectedExpr == null) return null;
-    PsiType type = selectedExpr.getType();
+    return findExpression(selectedExpr);
+  }
+
+  @Nullable
+  public static GrExpression findExpression(GrStatement selectedExpr) {
+    if (!(selectedExpr instanceof GrExpression)) return null;
+
+    GrExpression selected = (GrExpression)selectedExpr;
+    while (selected instanceof GrParenthesizedExpression) selected = ((GrParenthesizedExpression)selected).getOperand();
+    if (selected == null) return null;
+    PsiType type = selected.getType();
     if (type != null) type = TypeConversionUtil.erasure(type);
 
     if (PsiType.VOID.equals(type)) {
       throw new GrRefactoringError(GroovyRefactoringBundle.message("selected.expression.has.void.type"));
     }
 
-    if (expressionIsNotCorrect(selectedExpr)) {
+    if (expressionIsIncorrect(selected)) {
       throw new GrRefactoringError(GroovyRefactoringBundle.message("selected.block.should.represent.an.expression"));
     }
 
-    return selectedExpr;
+    return selected;
   }
 
   @Nullable

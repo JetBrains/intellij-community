@@ -38,12 +38,12 @@ public class GrIntroduceContextImpl implements GrIntroduceContext {
   @Nullable private final GrVariable var;
   @NotNull private final PsiElement place;
 
-  public GrIntroduceContextImpl(Project project,
-                            Editor editor,
-                            @Nullable GrExpression expression,
-                            @Nullable GrVariable var,
-                            PsiElement[] occurrences,
-                            PsiElement scope) {
+  public GrIntroduceContextImpl(@NotNull Project project,
+                                Editor editor,
+                                @Nullable GrExpression expression,
+                                @Nullable GrVariable var,
+                                @NotNull PsiElement[] occurrences,
+                                PsiElement scope) {
     LOG.assertTrue(expression != null || var != null);
 
     this.project = project;
@@ -55,6 +55,7 @@ public class GrIntroduceContextImpl implements GrIntroduceContext {
     this.place = expression == null ? var : expression;
   }
 
+  @NotNull
   public Project getProject() {
     return project;
   }

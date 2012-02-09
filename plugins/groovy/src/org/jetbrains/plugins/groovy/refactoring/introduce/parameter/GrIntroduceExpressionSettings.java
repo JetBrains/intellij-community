@@ -15,15 +15,19 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.introduce.parameter;
 
-import com.intellij.psi.PsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
-import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
 /**
  * @author Max Medvedev
  */
-public interface GrIntroduceParameterContext extends GrIntroduceContext {
-  PsiElement getToSearchFor();
+public interface GrIntroduceExpressionSettings extends GrIntroduceParameterSettings {
 
-  GrParametersOwner getToReplaceIn();
+  @Nullable
+  GrVariable getVar();
+
+  @Nullable
+  GrExpression getExpression();
+
 }

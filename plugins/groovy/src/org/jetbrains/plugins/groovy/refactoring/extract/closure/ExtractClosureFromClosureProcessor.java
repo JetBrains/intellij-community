@@ -27,6 +27,7 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
+import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.GrIntroduceParameterSettings;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +36,7 @@ import java.util.List;
  * @author Max Medvedev
  */
 public class ExtractClosureFromClosureProcessor extends ExtractClosureProcessorBase {
-  public ExtractClosureFromClosureProcessor(@NotNull ExtractClosureHelper helper) {
+  public ExtractClosureFromClosureProcessor(@NotNull GrIntroduceParameterSettings helper) {
     super(helper);
   }
 

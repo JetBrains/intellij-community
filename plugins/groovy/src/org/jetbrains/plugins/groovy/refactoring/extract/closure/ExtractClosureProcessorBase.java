@@ -24,14 +24,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.refactoring.extract.ExtractUtil;
+import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.GrIntroduceParameterSettings;
 
 /**
  * @author Max Medvedev
  */
 public abstract class ExtractClosureProcessorBase extends BaseRefactoringProcessor {
-  protected final ExtractClosureHelper myHelper;
+  protected final GrIntroduceParameterSettings myHelper;
+  private static final String EXTRACT_CLOSURE = "Extract closure";
 
-  public ExtractClosureProcessorBase(@NotNull ExtractClosureHelper helper) {
+  public ExtractClosureProcessorBase(@NotNull GrIntroduceParameterSettings helper) {
     super(helper.getProject());
     myHelper = helper;
   }
@@ -48,14 +50,14 @@ public abstract class ExtractClosureProcessorBase extends BaseRefactoringProcess
 
       @Override
       public String getProcessedElementsHeader() {
-        return ExtractClosureHandler.EXTRACT_CLOSURE;
+        return EXTRACT_CLOSURE;
       }
     };
   }
 
   @Override
   protected String getCommandName() {
-    return ExtractClosureHandler.EXTRACT_CLOSURE;
+    return EXTRACT_CLOSURE;
   }
 
   protected GrClosableBlock generateClosure() {
@@ -77,6 +79,6 @@ public abstract class ExtractClosureProcessorBase extends BaseRefactoringProcess
     ExtractUtil.generateBody(myHelper, false, buffer);
     buffer.append('}');
 
-    return GroovyPsiElementFactory.getInstance(myHelper.getProject()).createClosureFromText(buffer.toString(), myHelper.getOwner());
+    return GroovyPsiElementFactory.getInstance(myHelper.getProject()).createClosureFromText(buffer.toString(), myHelper.getToReplaceIn());
   }
 }

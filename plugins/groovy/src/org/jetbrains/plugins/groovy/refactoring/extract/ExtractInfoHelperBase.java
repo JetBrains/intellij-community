@@ -30,11 +30,10 @@ import java.util.Map;
  * @author Max Medvedev
  */
 public abstract class ExtractInfoHelperBase implements ExtractInfoHelper {
-  protected final InitialInfo myInitialInfo;
+  protected final ExtractInfoHelper myInitialInfo;
   protected final Map<String, ParameterInfo> myInputNamesMap;
 
-  public ExtractInfoHelperBase(
-    InitialInfo initialInfo) {
+  public ExtractInfoHelperBase(ExtractInfoHelper initialInfo) {
     myInitialInfo = initialInfo;
 
     final ParameterInfo[] infos = initialInfo.getParameterInfos();
@@ -108,5 +107,10 @@ public abstract class ExtractInfoHelperBase implements ExtractInfoHelper {
 
   public boolean hasReturnValue() {
     return myInitialInfo.hasReturnValue();
+  }
+
+  @Override
+  public PsiElement getContext() {
+    return myInitialInfo.getContext();
   }
 }

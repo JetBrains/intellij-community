@@ -18,9 +18,9 @@ package org.jetbrains.plugins.groovy.refactoring.introduce.parameter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduceParameter.ExternalUsageInfo;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterData;
@@ -42,6 +42,8 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
@@ -56,8 +58,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.refactoring.GrRefactoringError;
+import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
+import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -69,35 +76,13 @@ public class GroovyIntroduceParameterUtil {
   private GroovyIntroduceParameterUtil() {
   }
 
-  public static PsiField[] findUsedFieldsWithGetters(GrExpression expression, PsiClass containingClass) {
+  public static PsiField[] findUsedFieldsWithGetters(GrStatement[] statements, PsiClass containingClass) {
     if (containingClass == null) return PsiField.EMPTY_ARRAY;
     final FieldSearcher searcher = new FieldSearcher(containingClass);
-    expression.accept(searcher);
-    return searcher.getResult();
-  }
-
-  public static TObjectIntHashMap<GrParameter> findParametersToRemove(GrIntroduceParameterContext context) {
-    TObjectIntHashMap<GrParameter> toRemove = new TObjectIntHashMap<GrParameter>();
-    if (context.getVar() == null) {
-      final GrParametersOwner parametersOwner = context.getToReplaceIn();
-      final GrParameter[] parameters = parametersOwner.getParameters();
-      final GrExpression expr = context.getExpression();
-      for (int i = 0; i < parameters.length; i++) {
-        GrParameter parameter = parameters[i];
-        final boolean shouldRemove = ReferencesSearch.search(parameter).forEach(new Processor<PsiReference>() {
-          @Override
-          public boolean process(PsiReference ref) {
-            final PsiElement element = ref.getElement();
-            if (element == null) return false;
-            return PsiTreeUtil.isAncestor(expr, element, false);
-          }
-        });
-        if (shouldRemove) {
-          toRemove.put(parameter, i);
-        }
-      }
+    for (GrStatement statement : statements) {
+      statement.accept(searcher);
     }
-    return toRemove;
+    return searcher.getResult();
   }
 
   @Nullable
@@ -310,6 +295,69 @@ public class GroovyIntroduceParameterUtil {
     GrReferenceAdjuster.shortenReferences(method);
     return method;
   }
+
+  public static TObjectIntHashMap<GrParameter> findParametersToRemove(IntroduceParameterInfo helper) {
+    final TObjectIntHashMap<GrParameter> result = new TObjectIntHashMap<GrParameter>();
+
+    final GrStatement[] statements = helper.getStatements();
+    final int start = statements[0].getTextRange().getStartOffset();
+    final int end = statements[statements.length - 1].getTextRange().getEndOffset();
+
+    GrParameter[] parameters = helper.getToReplaceIn().getParameters();
+    for (int i = 0; i < parameters.length; i++) {
+      GrParameter parameter = parameters[i];
+      if (shouldRemove(parameter, start, end)) {
+        result.put(parameter, i);
+      }
+    }
+    return result;
+  }
+
+  private static boolean shouldRemove(GrParameter parameter, int start, int end) {
+    for (PsiReference reference : ReferencesSearch.search(parameter)) {
+      final PsiElement element = reference.getElement();
+      if (element == null) continue;
+
+      final int offset = element.getTextRange().getStartOffset();
+      if (offset < start || end <= offset) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  static PsiElement[] getOccurrences(GrIntroduceExpressionSettings settings) {
+    final GrParametersOwner scope = settings.getToReplaceIn();
+
+    final GrExpression expression = settings.getExpression();
+    if (expression != null) {
+      final PsiElement expr = PsiUtil.skipParentheses(expression, false);
+      if (expr == null) return PsiElement.EMPTY_ARRAY;
+
+      final PsiElement[] occurrences = GroovyRefactoringUtil.getExpressionOccurrences(expr, scope);
+      if (occurrences == null || occurrences.length == 0) {
+        throw new GrRefactoringError(GroovyRefactoringBundle.message("no.occurrences.found"));
+      }
+      return occurrences;
+    }
+    else {
+      final GrVariable var = settings.getVar();
+      LOG.assertTrue(var != null);
+      final List<PsiElement> list = Collections.synchronizedList(new ArrayList<PsiElement>());
+      ReferencesSearch.search(var, new LocalSearchScope(scope)).forEach(new Processor<PsiReference>() {
+        @Override
+        public boolean process(PsiReference psiReference) {
+          final PsiElement element = psiReference.getElement();
+          if (element != null) {
+            list.add(element);
+          }
+          return true;
+        }
+      });
+      return list.toArray(new PsiElement[list.size()]);
+    }
+  }
+
 
   private static class FieldSearcher extends GroovyRecursiveElementVisitor {
     PsiClass myClass;

@@ -20,35 +20,44 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import gnu.trove.TIntArrayList;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
-import org.jetbrains.plugins.groovy.refactoring.extract.ExtractInfoHelper;
 import org.jetbrains.plugins.groovy.refactoring.extract.ExtractInfoHelperBase;
-import org.jetbrains.plugins.groovy.refactoring.extract.InitialInfo;
 import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.GrIntroduceParameterSettings;
+import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.IntroduceParameterInfo;
 
 /**
  * @author Max Medvedev
  */
-public class ExtractClosureHelper extends ExtractInfoHelperBase implements ExtractInfoHelper, GrIntroduceParameterSettings {
-
+public class ExtractClosureHelperImpl extends ExtractInfoHelperBase implements GrIntroduceParameterSettings {
   private final GrParametersOwner myOwner;
   private final PsiElement myToSearchFor;
 
-  private String myName;
-  private boolean myFinal;
-  private TIntArrayList toRemove;
-  private boolean myGenerateDelegate;
+  private final String myName;
+  private final boolean myFinal;
+  private final TIntArrayList myToRemove;
+  private final boolean myGenerateDelegate;
+  private final int myReplaceFieldsWithGetters;
 
-  public ExtractClosureHelper(InitialInfo info, GrParametersOwner owner, PsiElement toSearchFor, String name, boolean declareFinal) {
+  public ExtractClosureHelperImpl(IntroduceParameterInfo info,
+                                  String name,
+                                  boolean declareFinal,
+                                  TIntArrayList toRemove,
+                                  boolean generateDelegate,
+                                  int replaceFieldsWithGetters) {
     super(info);
-    myOwner = owner;
-    myToSearchFor = toSearchFor;
+    myOwner = info.getToReplaceIn();
+    myToSearchFor = info.getToSearchFor();
     myName = name;
     myFinal = declareFinal;
+    myToRemove = toRemove;
+    myGenerateDelegate = generateDelegate;
+    myReplaceFieldsWithGetters = replaceFieldsWithGetters;
   }
 
-  public GrParametersOwner getOwner() {
+  @NotNull
+  public GrParametersOwner getToReplaceIn() {
     return myOwner;
   }
 
@@ -64,26 +73,14 @@ public class ExtractClosureHelper extends ExtractInfoHelperBase implements Extra
     return myFinal;
   }
 
-  public void setName(String name) {
-    myName = name;
-  }
-
-  public void setDeclareFinal(boolean aFinal) {
-    myFinal = aFinal;
-  }
-
-  public void setToRemove(TIntArrayList toRemove) {
-    this.toRemove = toRemove;
-  }
-
   @Override
   public TIntArrayList parametersToRemove() {
-    return toRemove;
+    return myToRemove;
   }
 
   @Override
   public int replaceFieldsWithGetters() {
-    return 0;//todo
+    return myReplaceFieldsWithGetters;
   }
 
   @Override
@@ -103,9 +100,5 @@ public class ExtractClosureHelper extends ExtractInfoHelperBase implements Extra
 
   public boolean generateDelegate() {
     return myGenerateDelegate;
-  }
-
-  public void setGenerateDelegate(boolean generateDelegate) {
-    myGenerateDelegate = generateDelegate;
   }
 }

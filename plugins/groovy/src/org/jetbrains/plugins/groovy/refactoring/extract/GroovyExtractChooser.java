@@ -24,6 +24,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
@@ -61,15 +63,21 @@ import static org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil.*;
 public class GroovyExtractChooser {
   private static final Logger LOG = Logger.getInstance(GroovyExtractChooser.class);
 
-  public static InitialInfo invoke(Project project, Editor editor, PsiFile file, int start, int end) throws GrRefactoringError {
+  public static InitialInfo invoke(Project project, Editor editor, PsiFile file, int start, int end, boolean forceStatements) throws GrRefactoringError {
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
+
     if (!(file instanceof GroovyFileBase)) {
       throw new GrRefactoringError(GroovyRefactoringBundle.message("only.in.groovy.files"));
+    }
+
+    if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) {
+      throw new GrRefactoringError(RefactoringBundle.message("readonly.occurences.found"));
     }
 
     SelectionModel selectionModel = editor.getSelectionModel();
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-    PsiElement[] elements = getElementsInOffset(file, start, end);
+    PsiElement[] elements = getElementsInOffset(file, start, end, forceStatements);
     if (elements.length == 1 && elements[0] instanceof GrExpression) {
       selectionModel.setSelection(start, elements[0].getTextRange().getEndOffset());
     }
@@ -166,26 +174,25 @@ public class GroovyExtractChooser {
     ArrayList<GrStatement> statementList = new ArrayList<GrStatement>();
     for (PsiElement element : elements) {
       if (element instanceof GrStatement) {
-        statementList.add(((GrStatement) element));
+        statementList.add(((GrStatement)element));
       }
     }
     return statementList.toArray(new GrStatement[statementList.size()]);
   }
 
-  private static PsiElement[] getElementsInOffset(PsiFile file, int startOffset, int endOffset) {
-    PsiElement[] elements;
+  private static PsiElement[] getElementsInOffset(PsiFile file, int startOffset, int endOffset, boolean forceStatements) {
     GrExpression expr = findElementInRange(file, startOffset, endOffset, GrExpression.class);
+    if (!forceStatements && expr != null) return new PsiElement[]{expr};
 
-    if (expr != null) {
-      PsiElement parent = expr.getParent();
-      if (expr.getParent() instanceof GrMethodCallExpression || parent instanceof GrIndexProperty) {
-        expr = ((GrExpression) expr.getParent());
-      }
-      elements = new PsiElement[]{expr};
-    } else {
-      elements = findStatementsInRange(file, startOffset, endOffset, true);
+    if (expr == null) {
+      return findStatementsInRange(file, startOffset, endOffset, true);
     }
-    return elements;
+
+    PsiElement parent = expr.getParent();
+    if (expr.getParent() instanceof GrMethodCallExpression || parent instanceof GrIndexProperty) {
+      expr = ((GrExpression)expr.getParent());
+    }
+    return new PsiElement[]{expr};
   }
 
   private static boolean isReturnStatement(GrStatement statement, Collection<GrStatement> returnStatements) {
@@ -193,7 +200,6 @@ public class GroovyExtractChooser {
     if (statement instanceof GrIfStatement) {
       boolean checked = GroovyInlineMethodUtil.checkTailIfStatement(((GrIfStatement)statement), returnStatements);
       return checked & returnStatements.size() == 0;
-
     }
     if (statement instanceof GrExpression) {
       return returnStatements.contains(statement);

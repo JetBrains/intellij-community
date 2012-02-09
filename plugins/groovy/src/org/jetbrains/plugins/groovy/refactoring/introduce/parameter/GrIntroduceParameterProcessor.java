@@ -38,6 +38,7 @@ import com.intellij.util.containers.MultiMap;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -51,18 +52,16 @@ import java.util.Collection;
 public class GrIntroduceParameterProcessor extends BaseRefactoringProcessor implements IntroduceParameterData {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.introduce.parameter.GrIntroduceParameterProcessor");
 
-  private final GrIntroduceParameterSettings mySettings;
-  private final GrIntroduceParameterContext myContext;
+  private final GrIntroduceExpressionSettings mySettings;
   private IntroduceParameterData.ExpressionWrapper myParameterInitializer;
 
-  public GrIntroduceParameterProcessor(GrIntroduceParameterSettings settings, GrIntroduceParameterContext context) {
-    super(context.getProject());
+  public GrIntroduceParameterProcessor(GrIntroduceExpressionSettings settings) {
+    super(settings.getProject());
     this.mySettings = settings;
-    this.myContext = context;
 
-    LOG.assertTrue(myContext.getToReplaceIn() instanceof GrMethod);
-    LOG.assertTrue(myContext.getToSearchFor() instanceof PsiMethod);
-    myParameterInitializer = new GrExpressionWrapper(this.myContext.getExpression());
+    LOG.assertTrue(mySettings.getToReplaceIn() instanceof GrMethod);
+    LOG.assertTrue(mySettings.getToSearchFor() instanceof PsiMethod);
+    myParameterInitializer = new GrExpressionWrapper(mySettings.getExpression());
   }
 
   @NotNull
@@ -72,7 +71,7 @@ public class GrIntroduceParameterProcessor extends BaseRefactoringProcessor impl
       @NotNull
       @Override
       public PsiElement[] getElements() {
-        return new PsiElement[]{myContext.getToSearchFor()};
+        return new PsiElement[]{mySettings.getToSearchFor()};
       }
 
       @Override
@@ -88,21 +87,21 @@ public class GrIntroduceParameterProcessor extends BaseRefactoringProcessor impl
     MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
 
     if (!mySettings.generateDelegate()) {
-      GroovyIntroduceParameterUtil.detectAccessibilityConflicts(myContext.getExpression(), usagesIn, conflicts,
+      GroovyIntroduceParameterUtil.detectAccessibilityConflicts(mySettings.getExpression(), usagesIn, conflicts,
                                                                 mySettings.replaceFieldsWithGetters() != IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE,
                                                                 myProject
       );
     }
 
-    final GrMethod toReplaceIn = (GrMethod)myContext.getToReplaceIn();
-    if (myContext.getExpression() != null && !toReplaceIn.hasModifierProperty(PsiModifier.PRIVATE)) {
+    final GrMethod toReplaceIn = (GrMethod)mySettings.getToReplaceIn();
+    if (mySettings.getExpression() != null && !toReplaceIn.hasModifierProperty(PsiModifier.PRIVATE)) {
       final AnySupers anySupers = new AnySupers();
-      myContext.getExpression().accept(anySupers);
+      mySettings.getExpression().accept(anySupers);
       if (anySupers.isResult()) {
         for (UsageInfo usageInfo : usagesIn) {
           if (!(usageInfo.getElement() instanceof PsiMethod) && !(usageInfo instanceof InternalUsageInfo)) {
             if (!PsiTreeUtil.isAncestor(toReplaceIn.getContainingClass(), usageInfo.getElement(), false)) {
-              conflicts.putValue(myContext.getExpression(),
+              conflicts.putValue(mySettings.getExpression(),
                                  RefactoringBundle.message("parameter.initializer.contains.0.but.not.all.calls.to.method.are.in.its.class",
                                                            CommonRefactoringUtil.htmlEmphasize(PsiKeyword.SUPER)));
               break;
@@ -124,7 +123,7 @@ public class GrIntroduceParameterProcessor extends BaseRefactoringProcessor impl
   protected UsageInfo[] findUsages() {
     ArrayList<UsageInfo> result = new ArrayList<UsageInfo>();
 
-    final PsiMethod toSearchFor = ((PsiMethod)myContext.getToSearchFor());
+    final PsiMethod toSearchFor = ((PsiMethod)mySettings.getToSearchFor());
 
     if (!mySettings.generateDelegate()) {
       Collection<PsiReference> refs =
@@ -140,7 +139,7 @@ public class GrIntroduceParameterProcessor extends BaseRefactoringProcessor impl
         else if (ref instanceof PsiClass) {
           result.add(new NoConstructorClassUsageInfo((PsiClass)ref));
         }
-        else if (!PsiTreeUtil.isAncestor(myContext.getToReplaceIn(), ref, false)) {
+        else if (!PsiTreeUtil.isAncestor(mySettings.getToReplaceIn(), ref, false)) {
           result.add(new ExternalUsageInfo(ref));
         }
         else {
@@ -150,14 +149,14 @@ public class GrIntroduceParameterProcessor extends BaseRefactoringProcessor impl
     }
 
     if (mySettings.replaceAllOccurrences()) {
-      PsiElement[] exprs = myContext.getOccurrences();
+      PsiElement[] exprs = GroovyIntroduceParameterUtil.getOccurrences(mySettings);
       for (PsiElement expr : exprs) {
         result.add(new InternalUsageInfo(expr));
       }
     }
     else {
-      if (myContext.getExpression() != null) {
-        result.add(new InternalUsageInfo(myContext.getExpression()));
+      if (mySettings.getExpression() != null) {
+        result.add(new InternalUsageInfo(mySettings.getExpression()));
       }
     }
 
@@ -181,8 +180,8 @@ public class GrIntroduceParameterProcessor extends BaseRefactoringProcessor impl
 
     IntroduceParameterUtil.processUsages(usages, this);
 
-    final GrMethod toReplaceIn = (GrMethod)myContext.getToReplaceIn();
-    final PsiMethod toSearchFor = (PsiMethod)myContext.getToSearchFor();
+    final GrMethod toReplaceIn = (GrMethod)mySettings.getToReplaceIn();
+    final PsiMethod toSearchFor = (PsiMethod)mySettings.getToSearchFor();
 
     final boolean methodsToProcessAreDifferent = toReplaceIn != toSearchFor;
     if (mySettings.generateDelegate()) {
@@ -210,8 +209,6 @@ public class GrIntroduceParameterProcessor extends BaseRefactoringProcessor impl
       IntroduceParameterUtil.changeMethodSignatureAndResolveFieldConflicts(new UsageInfo(toSearchFor), usages, this);
     }
 
-    if (myContext.getVar() != null) myContext.getVar().delete();
-
     // Replacing expression occurrences
     for (UsageInfo usage : usages) {
       if (usage instanceof ChangedMethodCallInfo) {
@@ -232,32 +229,33 @@ public class GrIntroduceParameterProcessor extends BaseRefactoringProcessor impl
       }
     }
 
-    if (myContext.getVar() != null && mySettings.removeLocalVariable()) {
-      myContext.getVar().delete();
+    final GrVariable var = mySettings.getVar();
+    if (var != null && mySettings.removeLocalVariable()) {
+      var.delete();
     }
     fieldConflictsResolver.fix();
   }
 
   @Override
   protected String getCommandName() {
-    return RefactoringBundle.message("introduce.parameter.command", UsageViewUtil.getDescriptiveName(myContext.getToReplaceIn()));
+    return RefactoringBundle.message("introduce.parameter.command", UsageViewUtil.getDescriptiveName(mySettings.getToReplaceIn()));
   }
 
   @NotNull
   @Override
   public Project getProject() {
-    return myContext.getProject();
+    return mySettings.getProject();
   }
 
   @Override
   public PsiMethod getMethodToReplaceIn() {
-    return (PsiMethod)myContext.getToReplaceIn();
+    return (PsiMethod)mySettings.getToReplaceIn();
   }
 
   @NotNull
   @Override
   public PsiMethod getMethodToSearchFor() {
-    return (PsiMethod)myContext.getToSearchFor();
+    return (PsiMethod)mySettings.getToSearchFor();
   }
 
   @Override
@@ -292,7 +290,7 @@ public class GrIntroduceParameterProcessor extends BaseRefactoringProcessor impl
     final PsiType selectedType = mySettings.getSelectedType();
     if (selectedType != null) return selectedType;
     final PsiManager manager = PsiManager.getInstance(myProject);
-    final GlobalSearchScope resolveScope = myContext.getToReplaceIn().getResolveScope();
+    final GlobalSearchScope resolveScope = mySettings.getToReplaceIn().getResolveScope();
     return PsiType.getJavaLangObject(manager, resolveScope);
   }
 

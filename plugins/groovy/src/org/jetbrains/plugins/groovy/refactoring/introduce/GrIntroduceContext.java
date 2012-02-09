@@ -27,6 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
  * @author Max Medvedev
  */
 public interface GrIntroduceContext {
+  @NotNull
   Project getProject();
 
   Editor getEditor();

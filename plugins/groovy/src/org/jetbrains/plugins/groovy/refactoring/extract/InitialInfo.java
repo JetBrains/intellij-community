@@ -90,7 +90,7 @@ public class InitialInfo implements ExtractInfoHelper {
         outputType = outputInfos[0].getType();
       }
       else {
-        outputType = JavaPsiFacade.getElementFactory(myProject).createTypeFromText(CommonClassNames.JAVA_UTIL_LIST, myStatements[0]);
+        outputType = JavaPsiFacade.getElementFactory(myProject).createTypeFromText(CommonClassNames.JAVA_UTIL_LIST, getContext());
       }
     }
     else if (ExtractUtil.isSingleExpression(statements)) {
@@ -113,7 +113,7 @@ public class InitialInfo implements ExtractInfoHelper {
           types.add(((GrExpression)statement).getType());
         }
       }
-      outputType = TypesUtil.getLeastUpperBoundNullable(types, statements[0].getManager());
+      outputType = TypesUtil.getLeastUpperBoundNullable(types, getContext().getManager());
     }
 
     return outputType;
@@ -173,5 +173,10 @@ public class InitialInfo implements ExtractInfoHelper {
   @Override
   public String getName() {
     throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public PsiElement getContext() {
+    return myStatements[0];
   }
 }

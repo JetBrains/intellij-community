@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.refactoring.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
@@ -26,15 +27,15 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
-import javax.swing.*;
 import java.util.*;
 
 /**
  * @author Maxim.Medvedev
  */
-public class GrTypeComboBox extends JComboBox {
+public class GrTypeComboBox extends ComboBox {
 
   private static final Logger LOG = Logger.getInstance(GrTypeComboBox.class);
+
 
   public static GrTypeComboBox createTypeComboBoxWithDefType(@Nullable PsiType type) {
     return new GrTypeComboBox(type, null, true, null, null, false);
@@ -55,6 +56,10 @@ public class GrTypeComboBox extends JComboBox {
     else {
       return new GrTypeComboBox(type, null, true, null, null, selectDef);
     }
+  }
+
+  public static GrTypeComboBox createEmptyTypeComboBox() {
+    return new GrTypeComboBox(null, null, false, null, null, false);
   }
 
   /**
@@ -92,6 +97,10 @@ public class GrTypeComboBox extends JComboBox {
     if (!selectDef && createDef && getItemCount() > 1) {
       setSelectedIndex(1);
     }
+  }
+
+  public void addType(PsiType type) {
+    addItem(new PsiTypeItem(type));
   }
 
   @Nullable

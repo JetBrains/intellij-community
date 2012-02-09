@@ -13,24 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.refactoring.extract.closure;
+package org.jetbrains.plugins.groovy.refactoring.introduce.parameter;
 
-import com.intellij.lang.refactoring.RefactoringSupportProvider;
-import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.refactoring.actions.BasePlatformRefactoringAction;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.psi.PsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
+import org.jetbrains.plugins.groovy.refactoring.extract.ExtractInfoHelper;
 
 /**
  * @author Max Medvedev
  */
-public class ExtractClosureAction extends BasePlatformRefactoringAction {
-  @Override
-  protected RefactoringActionHandler getRefactoringHandler(@NotNull RefactoringSupportProvider provider) {
-    return new ExtractClosureHandler();
-  }
+public interface IntroduceParameterInfo extends ExtractInfoHelper {
+  PsiElement getToSearchFor();
 
-  @Override
-  protected boolean isAvailableInEditorOnly() {
-    return true;
-  }
+  GrParametersOwner getToReplaceIn();
 }
