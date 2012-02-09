@@ -268,10 +268,10 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
   public void setupCopyFromMenu(JPopupMenu copyMenu) {
     super.setupCopyFromMenu(copyMenu);
     if (myPredefinedCodeStyles.length > 0) {
-      JMenuItem langs = new JMenuItem("Language"); //TODO<rv>: Move to resource bundle
+      JMenu langs = new JMenu("Language"); //TODO<rv>: Move to resource bundle
       copyMenu.add(langs);
       fillLanguages(langs);
-      JMenuItem predefined = new JMenuItem("Predefined Style"); //TODO<rv>: Move to resource bundle
+      JMenu predefined = new JMenu("Predefined Style"); //TODO<rv>: Move to resource bundle
       copyMenu.add(predefined);
       fillPredefined(predefined);
     }
