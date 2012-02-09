@@ -43,6 +43,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
     String coverageInformationString = myAnnotator.getPackageCoverageInformationString((PsiPackage)value, null,
                                                                                        myCoverageDataManager);
     if (coverageInformationString == null) {
+      if (!myCoverageViewManager.isReady()) return "Loading...";
       PackageAnnotator.PackageCoverageInfo info = new PackageAnnotator.PackageCoverageInfo();
       final Collection children = childNode.getChildren();
       for (Object child : children) {
@@ -51,8 +52,6 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
           final PackageAnnotator.PackageCoverageInfo coverageInfo = myAnnotator.getPackageCoverageInfo((PsiPackage)childValue, myStateBean.myFlattenPackages);
           if (coverageInfo != null) {
             info = JavaCoverageAnnotator.merge(info, coverageInfo);
-          } else {
-            return "Loading...";
           }
         } else {
           final PackageAnnotator.ClassCoverageInfo classCoverageInfo = myAnnotator.getClassCoverageInfo(((PsiClass)childValue).getQualifiedName());
