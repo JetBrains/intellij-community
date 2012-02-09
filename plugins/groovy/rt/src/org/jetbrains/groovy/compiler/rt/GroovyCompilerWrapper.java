@@ -161,14 +161,18 @@ public class GroovyCompilerWrapper {
   private static void processException(Exception exception, List collector, boolean forStubs) {
     if (exception instanceof GroovyRuntimeException) {
       addErrorMessage((GroovyRuntimeException) exception, collector);
-    } else if (forStubs) {
-      addMessageWithoutLocation(collector, "Groovyc stub generation failed: " + exception.getMessage(), false);
-    } else {
-      final StringWriter writer = new StringWriter();
-      //noinspection IOResourceOpenedButNotSafelyClosed
-      exception.printStackTrace(new PrintWriter(writer));
-      addMessageWithoutLocation(collector, writer.toString(), true);
+      return;
     }
+
+    if (forStubs) {
+      collector.add(new CompilerMessage(CompilerMessage.INFORMATION,
+                                        "Groovyc stub generation failed", null, -1, -1));
+    }
+
+    final StringWriter writer = new StringWriter();
+    //noinspection IOResourceOpenedButNotSafelyClosed
+    exception.printStackTrace(new PrintWriter(writer));
+    collector.add(new CompilerMessage(forStubs ? CompilerMessage.INFORMATION : CompilerMessage.ERROR, writer.toString(), null, -1, -1));
   }
 
   private static void addMessageWithoutLocation(List collector, String message, boolean error) {

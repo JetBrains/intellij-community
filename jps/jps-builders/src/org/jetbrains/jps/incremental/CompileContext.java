@@ -171,36 +171,35 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
     myFsState.beforeNextRoundStart();
   }
 
+  public void clearContextRoundData() {
+    myFsState.clearContextRoundData();
+  }
+
   void onChunkBuildComplete(@NotNull ModuleChunk chunk) throws IOException {
     myDataManager.flush(true);
 
-    try {
-      if (!myErrorsFound && !myCancelStatus.isCanceled()) {
-        final boolean compilingTests = isCompilingTests();
-        final DirtyMarkScope dirtyScope = compilingTests ? DirtyMarkScope.TESTS : DirtyMarkScope.PRODUCTION;
-        boolean marked = false;
-        for (Module module : chunk.getModules()) {
-          if (isMake()) {
-            // ensure non-incremental flag cleared
-            myNonIncrementalModules.remove(new Pair<Module, DirtyMarkScope>(module, dirtyScope));
-          }
-          if (isProjectRebuild()) {
-            myFsState.markInitialScanPerformed(module, compilingTests);
-          }
-          final List<RootDescriptor> roots = myRootsIndex.getModuleRoots(module);
-          for (RootDescriptor descriptor : roots) {
-            if (compilingTests? descriptor.isTestRoot : !descriptor.isTestRoot) {
-              marked |= myFsState.markAllUpToDate(getScope(), descriptor, myTsStorage, myCompilationStartStamp);
-            }
-          }
+    if (!myErrorsFound && !myCancelStatus.isCanceled()) {
+      final boolean compilingTests = isCompilingTests();
+      final DirtyMarkScope dirtyScope = compilingTests ? DirtyMarkScope.TESTS : DirtyMarkScope.PRODUCTION;
+      boolean marked = false;
+      for (Module module : chunk.getModules()) {
+        if (isMake()) {
+          // ensure non-incremental flag cleared
+          myNonIncrementalModules.remove(new Pair<Module, DirtyMarkScope>(module, dirtyScope));
         }
-        if (marked) {
-          processMessage(UptoDateFilesSavedEvent.INSTANCE);
+        if (isProjectRebuild()) {
+          myFsState.markInitialScanPerformed(module, compilingTests);
+        }
+        final List<RootDescriptor> roots = myRootsIndex.getModuleRoots(module);
+        for (RootDescriptor descriptor : roots) {
+          if (compilingTests? descriptor.isTestRoot : !descriptor.isTestRoot) {
+            marked |= myFsState.markAllUpToDate(getScope(), descriptor, myTsStorage, myCompilationStartStamp);
+          }
         }
       }
-    }
-    finally {
-      myFsState.clearContextRoundData();
+      if (marked) {
+        processMessage(UptoDateFilesSavedEvent.INSTANCE);
+      }
     }
   }
 
