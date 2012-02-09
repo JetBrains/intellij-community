@@ -23,10 +23,12 @@ import org.jdom.Element;
 public class ButtonInfo {
   private final String myName;
   private final String myUrl;
+  private final boolean myDownload;
 
   public ButtonInfo(Element element) {
     myName = element.getAttributeValue("name");
     myUrl = element.getAttributeValue("url");
+    myDownload = element.getAttributeValue("download") != null;
   }
 
   public String getName() {
@@ -35,5 +37,14 @@ public class ButtonInfo {
 
   public String getUrl() {
     return myUrl;
+  }
+
+  /**
+   * The button marked with 'download=true' attribute is hidden if patch is available.
+   *
+   * @return true if the button should be hidden when the patch is available.
+   */
+  public boolean isDownload() {
+    return myDownload;
   }
 }

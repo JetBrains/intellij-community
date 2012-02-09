@@ -15,6 +15,8 @@
  */
 package org.jetbrains.idea.svn17;
 
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
+
 /**
  * since not all constants are available from svnkit & constants are fixed
  */
@@ -57,6 +59,10 @@ public enum WorkingCopyFormat {
   }
 
   public static WorkingCopyFormat getInstance(final int value) {
+    // somewhy 1.7 wc format can also be 29
+    if (ISVNWCDb.WC_FORMAT_17 == value) {
+      return ONE_DOT_SEVEN;
+    }
     if (ONE_DOT_FIVE.getFormat() == value) {
       return ONE_DOT_FIVE;
     } else if (ONE_DOT_FOUR.getFormat() == value) {

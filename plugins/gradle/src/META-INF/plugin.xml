@@ -49,6 +49,7 @@
     <!--Generic application services-->
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.remote.GradleApiFacadeManager"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.util.GradleLibraryManager"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.task.GradleTaskManager"/>
     <applicationService serviceInterface="org.jetbrains.plugins.gradle.notification.GradleProgressNotificationManager"
                         serviceImplementation="org.jetbrains.plugins.gradle.notification.GradleProgressNotificationManagerImpl"/>
     <applicationService serviceInterface="org.jetbrains.plugins.gradle.diff.PlatformFacade"
@@ -73,6 +74,9 @@
     </component>
     <component>
       <implementation-class>org.jetbrains.plugins.gradle.sync.GradleProjectStructureHelper</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.plugins.gradle.sync.GradleProjectStructureChangesDetector</implementation-class>
     </component>
   </project-components>
   

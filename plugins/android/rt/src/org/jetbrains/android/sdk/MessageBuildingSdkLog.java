@@ -21,11 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Eugene.Kudelevsky
- * Date: Aug 25, 2009
- * Time: 5:54:47 PM
- * To change this template use File | Settings | File Templates.
+ * @author Eugene.Kudelevsky
  */
 public class MessageBuildingSdkLog implements ISdkLog {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.sdk.MessageBuildingSdkLog");

@@ -12,6 +12,16 @@ import org.jetbrains.plugins.gradle.task.GradleTaskId;
 public interface GradleTaskNotificationListener {
 
   /**
+   * Notifies that task with the given id is queued for the execution.
+   * <p/>
+   * 'Queued' here means that intellij process-local codebase receives request to execute the target task and even has not been
+   * sent it to the slave gradle api process.
+   *
+   * @param id  target task's id
+   */
+  void onQueued(@NotNull GradleTaskId id);
+  
+  /**
    * Notifies that task with the given id is about to be started.
    * 
    * @param id  target task's id
