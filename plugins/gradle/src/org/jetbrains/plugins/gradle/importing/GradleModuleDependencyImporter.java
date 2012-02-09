@@ -8,6 +8,7 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.diff.PlatformFacade;
 import org.jetbrains.plugins.gradle.model.*;
@@ -65,9 +66,18 @@ public class GradleModuleDependencyImporter {
   public void importModuleDependencies(@NotNull Iterable<GradleModuleDependency> dependencies, @NotNull Module module) {
     // TODO den implement
   }
-  
+
   public void importLibraryDependencies(@NotNull final Iterable<GradleLibraryDependency> dependencies, @NotNull final Module module) {
-    // TODO den make non-EDT agnostic
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        doImportLibraryDependencies(dependencies, module); 
+      }
+    });
+  }
+  
+  public void doImportLibraryDependencies(@NotNull final Iterable<GradleLibraryDependency> dependencies, @NotNull final Module module) {
+    // Is assumed to be called from EDT
     final LibraryTable libraryTable = myPlatformFacade.getProjectLibraryTable(module.getProject());
     final Map<GradleLibrary, Library> gradle2intellij = new HashMap<GradleLibrary, Library>(); 
     final Set<GradleLibrary> librariesToCreate = new HashSet<GradleLibrary>();
@@ -119,7 +129,6 @@ public class GradleModuleDependencyImporter {
         finally {
           moduleRootModel.commit();
         }
-        // TODO den refresh gradle project tree
       }
     });
   }
