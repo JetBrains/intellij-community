@@ -298,6 +298,11 @@ public abstract class TestObject implements JavaCommandLine {
             packetsReceiver.checkTerminated();
             final JUnitRunningModel model = packetsReceiver.getModel();
             notifyByBalloon(model, consoleProperties);
+
+            if (ApplicationManager.getApplication().isUnitTestMode()) {
+              Disposer.dispose(consoleView);
+            }
+
           }
         });
       }
