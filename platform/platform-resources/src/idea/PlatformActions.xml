@@ -21,6 +21,15 @@
     <action id="Switcher" class="com.intellij.ide.actions.Switcher" text="Switcher"/>
     <action id="QuickDocCopy" class="com.intellij.codeInsight.documentation.actions.CopyQuickDocAction" use-shortcut-of="$Copy"/>
 
+    <group id="TemplateParametersNavigation">
+      <action id="NextTemplateParameter" class="com.intellij.codeInsight.completion.NextPrevParameterAction$Next" text="Next Parameter">
+        <keyboard-shortcut first-keystroke="TAB" keymap="$default"/>
+      </action>
+      <action id="PrevTemplateParameter" class="com.intellij.codeInsight.completion.NextPrevParameterAction$Prev" text="Previous Parameter">
+        <keyboard-shortcut first-keystroke="shift TAB" keymap="$default"/>
+      </action>
+    </group>
+
     <group id="EditorActions">
       <action id="EditorPageUp" class="com.intellij.openapi.editor.actions.PageUpAction"/>
       <action id="EditorPageDown" class="com.intellij.openapi.editor.actions.PageDownAction"/>
@@ -213,6 +222,7 @@
             <action id="ConvertIndentsToTabs" class="com.intellij.openapi.editor.actions.ConvertIndentsToTabsAction"/>
           </group>
         </group>
+        <reference ref="TemplateParametersNavigation"/>
       </group>
 
       <!-- View -->

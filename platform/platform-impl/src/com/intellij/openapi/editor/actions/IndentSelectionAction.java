@@ -33,7 +33,6 @@ import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -52,10 +51,19 @@ public class IndentSelectionAction extends EditorAction {
 
   @Override
   public void update(Editor editor, Presentation presentation, DataContext dataContext) {
-    presentation.setEnabled(isEnabled(editor));
+    presentation.setEnabled(originalIsEnabled(editor));
   }
 
-  protected boolean isEnabled(Editor editor) {
+  @Override
+  public void updateForKeyboardAccess(Editor editor, Presentation presentation, DataContext dataContext) {
+    presentation.setEnabled(isEnabled(editor, dataContext));
+  }
+
+  protected boolean isEnabled(Editor editor, DataContext dataContext) {
+    return originalIsEnabled(editor);
+  }
+
+  private static boolean originalIsEnabled(Editor editor) {
     return editor.getSelectionModel().hasSelection() && !editor.isOneLineMode();
   }
 
