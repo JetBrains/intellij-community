@@ -74,13 +74,13 @@ class LiftShorterItemsClassifier extends Classifier<LookupElement> {
 
   @Override
   public Iterable<List<LookupElement>> classify(List<LookupElement> source) {
-    return liftShorterElements(source, new HashSet<LookupElement>());
+    return liftShorterElements(source, new THashSet<LookupElement>(TObjectHashingStrategy.IDENTITY));
   }
 
-  private Iterable<List<LookupElement>> liftShorterElements(List<LookupElement> source, Set<LookupElement> lifted) {
+  private Iterable<List<LookupElement>> liftShorterElements(List<LookupElement> source, THashSet<LookupElement> lifted) {
     final Set<LookupElement> srcSet = new THashSet<LookupElement>(source, TObjectHashingStrategy.IDENTITY);
     final Iterable<List<LookupElement>> classified = myNext.classify(source);
-    final Set<LookupElement> processed = new HashSet<LookupElement>();
+    final Set<LookupElement> processed = new THashSet<LookupElement>(TObjectHashingStrategy.IDENTITY);
 
     final ArrayList<List<LookupElement>> result = new ArrayList<List<LookupElement>>();
     for (List<LookupElement> list : classified) {
@@ -132,7 +132,7 @@ class LiftShorterItemsClassifier extends Classifier<LookupElement> {
   @Override
   public void describeItems(LinkedHashMap<LookupElement, StringBuilder> map) {
     final HashSet<LookupElement> lifted = new HashSet<LookupElement>();
-    liftShorterElements(new ArrayList<LookupElement>(map.keySet()), lifted);
+    liftShorterElements(new ArrayList<LookupElement>(map.keySet()), new THashSet<LookupElement>(TObjectHashingStrategy.IDENTITY));
     if (!lifted.isEmpty()) {
       for (LookupElement element : map.keySet()) {
         final StringBuilder builder = map.get(element);
