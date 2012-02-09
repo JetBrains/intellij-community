@@ -125,7 +125,7 @@ public class GotoRelatedFileAction extends AnAction {
       }
 
       @Override
-      protected DefaultListCellRenderer getRightCellRenderer() {
+      protected DefaultListCellRenderer getRightCellRenderer(Object value) {
         return null;
       }
 

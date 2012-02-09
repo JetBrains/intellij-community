@@ -114,7 +114,7 @@ public class PsiElementModuleRenderer extends DefaultListCellRenderer{
     setIcon(LIB_ICON);
     for (OrderEntry order : fileIndex.getOrderEntriesForFile(vFile)) {
       if (order instanceof LibraryOrderEntry || order instanceof JdkOrderEntry) {
-        myText = order.getPresentableName();
+        myText = getPresentableName(order, vFile);
         break;
       }
     }
@@ -124,5 +124,9 @@ public class PsiElementModuleRenderer extends DefaultListCellRenderer{
     if (jar != null && !myText.equals(jar.getName())) {
       myText += " (" + jar.getName() + ")";
     }
+  }
+
+  protected String getPresentableName(final OrderEntry order, final VirtualFile vFile) {
+    return order.getPresentableName();
   }
 }

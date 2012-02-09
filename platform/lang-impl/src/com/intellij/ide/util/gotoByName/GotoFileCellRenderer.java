@@ -109,8 +109,8 @@ public class GotoFileCellRenderer extends PsiElementListCellRenderer<PsiFile> {
   }
 
   @Override
-  protected DefaultListCellRenderer getRightCellRenderer() {
-    final DefaultListCellRenderer rightRenderer = super.getRightCellRenderer();
+  protected DefaultListCellRenderer getRightCellRenderer(final Object value) {
+    final DefaultListCellRenderer rightRenderer = super.getRightCellRenderer(value);
     if (rightRenderer instanceof PlatformModuleRendererFactory.PlatformModuleRenderer) {
       // that renderer will display file path, but we're showing it ourselves - no need to show twice
       return null;
