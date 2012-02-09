@@ -1,0 +1,5 @@
+<resources>
+  <string name="hello"<caret>>hello</string>
+  <item name="hi" type="string"/>
+  <string-array name="str_arr"></string-array>
+</resources>

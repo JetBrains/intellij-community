@@ -1,0 +1,8 @@
+<resources>
+  <string name="hello">hello</string>
+  <item name="hi" type="string"/>
+  <string-array name="str_arr">
+    <item>str1</item>
+    <item>str2</item>
+  </string-array>
+</resources>

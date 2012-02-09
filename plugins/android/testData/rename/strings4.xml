@@ -1,0 +1,3 @@
+<resources>
+  <s<caret>tring name="str">HellO!</string>
+</resources>

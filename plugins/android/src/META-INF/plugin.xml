@@ -190,6 +190,9 @@
     <externalAnnotator language="XML" implementationClass="org.jetbrains.android.inspections.lint.AndroidLintExternalAnnotator"/>
     <externalAnnotator language="TEXT" implementationClass="org.jetbrains.android.inspections.lint.AndroidLintExternalAnnotator"/>
 
+    <usageTargetProvider implementation="org.jetbrains.android.AndroidUsagesTargetProvider"/>
+    <renameHandler implementation="org.jetbrains.android.AndroidRenameHandler" order="first"/>
+
     <compileServer.plugin jar-path="jps/android-jps-plugin.jar"/>
     <compileServer.plugin jar-path="android-rt.jar"/>
 

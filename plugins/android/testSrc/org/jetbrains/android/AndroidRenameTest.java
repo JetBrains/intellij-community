@@ -18,8 +18,10 @@ package org.jetbrains.android;
 
 import com.android.sdklib.SdkConstants;
 import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -28,8 +30,10 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesProcessor;
 import com.intellij.refactoring.move.moveClassesOrPackages.SingleSourceRootMoveDestination;
-import com.intellij.refactoring.rename.RenameProcessor;
-import com.intellij.refactoring.rename.RenamePsiElementProcessor;
+import com.intellij.refactoring.rename.*;
+import org.jetbrains.annotations.NonNls;
+
+import java.io.IOException;
 
 /**
  * Created by IntelliJ IDEA.
@@ -130,6 +134,53 @@ public class AndroidRenameTest extends AndroidTestCase {
     myFixture.checkResultByFile(BASE_PATH + "layout_value_after.xml");
     myFixture.checkResultByFile(R_JAVA_PATH, BASE_PATH + "R_value_after.java", true);
     myFixture.checkResultByFile("res/values/strings.xml", BASE_PATH + "strings_after.xml", true);
+  }
+
+  public void testValueResource1() throws Throwable {
+    doTestStringRename("strings1.xml");
+  }
+
+  public void testValueResource2() throws Throwable {
+    doTestStringRename("strings2.xml");
+  }
+
+  public void testValueResource3() throws Throwable {
+    doTestStringRename("strings3.xml");
+  }
+
+  public void testValueResource4() throws Throwable {
+    doTestStringRename("strings4.xml");
+  }
+
+  private void doTestStringRename(String fileName) throws IOException {
+    createManifest();
+    VirtualFile file = myFixture.copyFileToProject(BASE_PATH + fileName, "res/values/strings.xml");
+    myFixture.configureFromExistingVirtualFile(file);
+
+    myFixture.copyFileToProject(BASE_PATH + "layoutStrUsage.xml", "res/layout/layoutStrUsage.xml");
+    myFixture.copyFileToProject(BASE_PATH + "R2.java", R_JAVA_PATH);
+
+    findHandlerAndDoRename();
+
+    myFixture.checkResultByFile(BASE_PATH + "strings_after.xml");
+    myFixture.checkResultByFile(R_JAVA_PATH, BASE_PATH + "R_value_after.java", true);
+    myFixture.checkResultByFile("res/layout/layoutStrUsage.xml", BASE_PATH + "layoutStrUsage_after.xml", true);
+  }
+
+  private void findHandlerAndDoRename() throws IOException {
+    final DataContext editorContext = ((EditorEx)myFixture.getEditor()).getDataContext();
+    final DataContext context = new DataContext() {
+      @Override
+      public Object getData(@NonNls String dataId) {
+        return PsiElementRenameHandler.DEFAULT_NAME.getName().equals(dataId)
+               ? "str1"
+               : editorContext.getData(dataId);
+      }
+    };
+    final RenameHandler renameHandler = RenameHandlerRegistry.getInstance().getRenameHandler(context);
+    assertNotNull(renameHandler);
+
+    renameHandler.invoke(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile(), context);
   }
 
   public void testJavaReferenceToFileResource() throws Throwable {
