@@ -89,11 +89,19 @@ public class GitShelveChangesSaver extends GitChangesSaver {
     return myShelvedChangeList != null;
   }
 
-  @Override public String getSaverName() {
+  @Override
+  public String getSaverName() {
     return "shelf";
   }
 
-  @Override protected void showSavedChanges() {
+  @Override
+  protected void showSavedChanges() {
     myShelveViewManager.activateView(myShelvedChangeList);
   }
+
+  @Override
+  public void refresh() {
+    // refreshed inside shelve manager
+  }
+
 }

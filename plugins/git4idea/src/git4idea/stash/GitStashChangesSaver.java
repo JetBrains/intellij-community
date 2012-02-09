@@ -35,8 +35,8 @@ import git4idea.commands.*;
 import git4idea.config.GitVcsSettings;
 import git4idea.convert.GitFileSeparatorConverter;
 import git4idea.merge.GitConflictResolver;
-import git4idea.util.GitUIUtil;
 import git4idea.ui.GitUnstashDialog;
+import git4idea.util.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -92,9 +92,6 @@ public class GitStashChangesSaver extends GitChangesSaver {
         GitStashUtils.dropStash(myProject, root);
       }
     }
-
-    // we'll refresh more but this way we needn't compute what files under roots etc
-    LocalFileSystem.getInstance().refreshIoFiles(myChangeManager.getAffectedPaths());
   }
 
   @Override
@@ -102,12 +99,20 @@ public class GitStashChangesSaver extends GitChangesSaver {
     return !myStashedRoots.isEmpty();
   }
 
-  @Override public String getSaverName() {
+  @Override
+  public String getSaverName() {
     return "stash";
   }
 
-  @Override protected void showSavedChanges() {
+  @Override
+  protected void showSavedChanges() {
     GitUnstashDialog.showUnstashDialog(myProject, new ArrayList<VirtualFile>(myStashedRoots), myStashedRoots.iterator().next(), new HashSet<VirtualFile>());
+  }
+
+  @Override
+  public void refresh() {
+    // we'll refresh more but this way we needn't compute what files under roots etc
+    LocalFileSystem.getInstance().refreshIoFiles(myChangeManager.getAffectedPaths());
   }
 
   private void stash(Collection<VirtualFile> roots) throws VcsException {
