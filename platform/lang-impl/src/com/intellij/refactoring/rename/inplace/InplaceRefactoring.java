@@ -60,6 +60,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.ProjectScope;
@@ -68,6 +69,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.rename.NameSuggestionProvider;
+import com.intellij.refactoring.rename.PreferrableNameSuggestionProvider;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NonNls;
@@ -616,7 +618,8 @@ public abstract class InplaceRefactoring {
       if (names == null) {
         names = new LinkedHashSet<String>();
         for (NameSuggestionProvider provider : Extensions.getExtensions(NameSuggestionProvider.EP_NAME)) {
-          provider.getSuggestedNames(myElementToRename, myElementToRename, names);
+          final SuggestedNameInfo suggestedNameInfo = provider.getSuggestedNames(myElementToRename, myElementToRename, names);
+          if (suggestedNameInfo != null && provider instanceof PreferrableNameSuggestionProvider && !((PreferrableNameSuggestionProvider)provider).shouldCheckOthers()) break;
         }
       }
       myLookupItems = new LookupElement[names.size()];

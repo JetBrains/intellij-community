@@ -18,19 +18,24 @@ package com.intellij.spellchecker.quickfixes;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
-import com.intellij.refactoring.rename.NameSuggestionProvider;
+import com.intellij.refactoring.rename.PreferrableNameSuggestionProvider;
 import com.intellij.spellchecker.SpellCheckerManager;
 
 import java.util.Set;
 import java.util.TreeSet;
 
 
-public class DictionarySuggestionProvider implements NameSuggestionProvider {
+public class DictionarySuggestionProvider extends PreferrableNameSuggestionProvider {
   
   private boolean active;
 
   public void setActive(boolean active) {
     this.active = active;
+  }
+
+  @Override
+  public boolean shouldCheckOthers() {
+    return !active;
   }
 
   public SuggestedNameInfo getSuggestedNames(PsiElement element, PsiElement nameSuggestionContext, Set<String> result) {
