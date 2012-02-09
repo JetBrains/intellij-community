@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.remote.RemoteGradleProgressNotificationManager;
 import org.jetbrains.plugins.gradle.task.GradleTaskId;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
@@ -19,8 +20,14 @@ public class GradleProgressNotificationManagerImpl extends RemoteObject
   implements GradleProgressNotificationManager, RemoteGradleProgressNotificationManager
 {
 
-  private final ConcurrentMap<GradleTaskNotificationListener, Set<GradleTaskId>> myListeners
+  private final ConcurrentMap<GradleTaskNotificationListener, Set<GradleTaskId>/* EMPTY_SET as a sign of 'all ids' */> myListeners
     = new ConcurrentHashMap<GradleTaskNotificationListener, Set<GradleTaskId>>();
+
+  @Override
+  public boolean addNotificationListener(@NotNull GradleTaskNotificationListener listener) {
+    Set<GradleTaskId> dummy = Collections.emptySet();
+    return myListeners.put(listener, dummy) == null;
+  }
 
   @Override
   public boolean addNotificationListener(@NotNull GradleTaskId taskId, @NotNull GradleTaskNotificationListener listener) {
@@ -42,9 +49,21 @@ public class GradleProgressNotificationManagerImpl extends RemoteObject
   }
 
   @Override
+  public void onQueued(@NotNull GradleTaskId id) {
+    for (Map.Entry<GradleTaskNotificationListener, Set<GradleTaskId>> entry : myListeners.entrySet()) {
+      final Set<GradleTaskId> ids = entry.getValue();
+      if (Collections.EMPTY_SET == ids || ids.contains(id)) {
+        entry.getKey().onQueued(id);
+      }
+    }
+
+  }
+
+  @Override
   public void onStart(@NotNull GradleTaskId id) {
     for (Map.Entry<GradleTaskNotificationListener, Set<GradleTaskId>> entry : myListeners.entrySet()) {
-      if (entry.getValue().contains(id)) {
+      final Set<GradleTaskId> ids = entry.getValue();
+      if (Collections.EMPTY_SET == ids || ids.contains(id)) {
         entry.getKey().onStart(id);
       }
     } 
@@ -53,7 +72,8 @@ public class GradleProgressNotificationManagerImpl extends RemoteObject
   @Override
   public void onStatusChange(@NotNull GradleTaskNotificationEvent event) {
     for (Map.Entry<GradleTaskNotificationListener, Set<GradleTaskId>> entry : myListeners.entrySet()) {
-      if (entry.getValue().contains(event.getId())) {
+      final Set<GradleTaskId> ids = entry.getValue();
+      if (Collections.EMPTY_SET == ids || ids.contains(event.getId())) {
         entry.getKey().onStatusChange(event);
       }
     } 
@@ -62,7 +82,8 @@ public class GradleProgressNotificationManagerImpl extends RemoteObject
   @Override
   public void onEnd(@NotNull GradleTaskId id) {
     for (Map.Entry<GradleTaskNotificationListener, Set<GradleTaskId>> entry : myListeners.entrySet()) {
-      if (entry.getValue().contains(id)) {
+      final Set<GradleTaskId> ids = entry.getValue();
+      if (Collections.EMPTY_SET == ids || ids.contains(id)) {
         entry.getKey().onEnd(id);
       }
     } 

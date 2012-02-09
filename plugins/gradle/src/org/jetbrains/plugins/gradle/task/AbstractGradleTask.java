@@ -96,7 +96,7 @@ public abstract class AbstractGradleTask implements GradleTask {
     }
     finally {
       for (GradleTaskNotificationListener listener : listeners) {
-        progressManager.addNotificationListener(getId(), listener);
+        progressManager.removeNotificationListener(listener);
       }
     }
   }
