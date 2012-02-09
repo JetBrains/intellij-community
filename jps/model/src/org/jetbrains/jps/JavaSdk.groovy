@@ -3,9 +3,16 @@ package org.jetbrains.jps
 /**
  * @author Eugene.Kudelevsky
  */
-public interface JavaSdk {
+public abstract class JavaSdk extends Sdk {
+  def JavaSdk(Project project, String name, String jdkPath, Closure initializer) {
+    super(project, name, initializer)
+  }
 
-  String getJavacExecutable();
+  JavaSdk(project, name, initializer) {
+    super(project, name, initializer)
+  }
 
-  String getJavaExecutable();
+  abstract String getJavacExecutable();
+
+  abstract String getJavaExecutable();
 }
