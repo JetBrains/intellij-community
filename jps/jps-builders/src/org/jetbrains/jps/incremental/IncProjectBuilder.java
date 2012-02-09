@@ -343,9 +343,7 @@ public class IncProjectBuilder {
 
       context.onChunkBuildStart(chunk);
 
-      for (BuilderCategory category : BuilderCategory.values()) {
-        runModuleLevelBuilders(context, chunk, category);
-      }
+      runModuleLevelBuilders(context, chunk);
     }
     catch (ProjectBuildException e) {
       throw e;
@@ -375,74 +373,75 @@ public class IncProjectBuilder {
     }
   }
 
-  private void runModuleLevelBuilders(final CompileContext context, ModuleChunk chunk, BuilderCategory category) throws ProjectBuildException {
-    final List<ModuleLevelBuilder> builders = myBuilderRegistry.getBuilders(category);
-    if (builders.isEmpty()) {
-      return;
-    }
-
+  private void runModuleLevelBuilders(final CompileContext context, ModuleChunk chunk) throws ProjectBuildException {
     boolean rebuildFromScratchRequested = false;
     float stageCount = myTotalModuleLevelBuilderCount;
-    int stagesPassed = 0;
-    final int modulesInChunk = chunk.getModules().size();
-
-    boolean nextPassRequired;
-    do {
-      nextPassRequired = false;
-      context.beforeNextCompileRound(chunk);
-
-      if (!context.isProjectRebuild()) {
-        syncOutputFiles(context, chunk);
+    CHUNK_BUILD_START:
+    for (BuilderCategory category : BuilderCategory.values()) {
+      final List<ModuleLevelBuilder> builders = myBuilderRegistry.getBuilders(category);
+      if (builders.isEmpty()) {
+        continue;
       }
 
-      for (ModuleLevelBuilder builder : builders) {
-        final ModuleLevelBuilder.ExitCode buildResult = builder.build(context, chunk);
+      final int modulesInChunk = chunk.getModules().size();
+      int buildersPassed = 0;
 
-        if (buildResult == ModuleLevelBuilder.ExitCode.ABORT) {
-          throw new ProjectBuildException("Builder " + builder.getDescription() + " requested build stop");
-        }
-        if (myCancelStatus.isCanceled()) {
-          throw new ProjectBuildException(CANCELED_MESSAGE);
-        }
-        if (buildResult == ModuleLevelBuilder.ExitCode.ADDITIONAL_PASS_REQUIRED) {
-          if (!nextPassRequired) {
-            // recalculate basis
-            myModulesProcessed -= (stagesPassed * modulesInChunk) / stageCount;
-            stageCount += myTotalModuleLevelBuilderCount;
-            myModulesProcessed += (stagesPassed * modulesInChunk) / stageCount;
-          }
-          nextPassRequired = true;
-        }
-        else if (buildResult == ModuleLevelBuilder.ExitCode.CHUNK_REBUILD_REQUIRED) {
-          if (!rebuildFromScratchRequested && !context.isProjectRebuild()) {
-            // allow rebuild from scratch only once per chunk
-            rebuildFromScratchRequested = true;
-            try {
-              // forcibly mark all files in the chunk dirty
-              context.markDirty(chunk);
-              // reverting to the beginning
-              myModulesProcessed -= (stagesPassed * modulesInChunk) / stageCount;
-              stagesPassed = 0;
-              nextPassRequired = true;
-              break;
-            }
-            catch (Exception e) {
-              throw new ProjectBuildException(e);
-            }
-          }
-          else {
-            LOG.info("Builder " + builder.getDescription() + " requested second chunk rebuild");
-          }
+      boolean nextPassRequired;
+      do {
+        nextPassRequired = false;
+        context.beforeNextCompileRound(chunk);
+
+        if (!context.isProjectRebuild()) {
+          syncOutputFiles(context, chunk);
         }
 
-        stagesPassed++;
-        final float fraction = updateFractionBuilderFinished(modulesInChunk / (stageCount));
-        context.setDone(fraction);
+        for (ModuleLevelBuilder builder : builders) {
+          final ModuleLevelBuilder.ExitCode buildResult = builder.build(context, chunk);
+
+          if (buildResult == ModuleLevelBuilder.ExitCode.ABORT) {
+            throw new ProjectBuildException("Builder " + builder.getDescription() + " requested build stop");
+          }
+          if (myCancelStatus.isCanceled()) {
+            throw new ProjectBuildException(CANCELED_MESSAGE);
+          }
+          if (buildResult == ModuleLevelBuilder.ExitCode.ADDITIONAL_PASS_REQUIRED) {
+            if (!nextPassRequired) {
+              // recalculate basis
+              myModulesProcessed -= (buildersPassed * modulesInChunk) / stageCount;
+              stageCount += builders.size();
+              myModulesProcessed += (buildersPassed * modulesInChunk) / stageCount;
+            }
+            nextPassRequired = true;
+          }
+          else if (buildResult == ModuleLevelBuilder.ExitCode.CHUNK_REBUILD_REQUIRED) {
+            if (!rebuildFromScratchRequested && !context.isProjectRebuild()) {
+              // allow rebuild from scratch only once per chunk
+              rebuildFromScratchRequested = true;
+              try {
+                // forcibly mark all files in the chunk dirty
+                context.markDirty(chunk);
+                // reverting to the beginning
+                myModulesProcessed -= (buildersPassed * modulesInChunk) / stageCount;
+                break CHUNK_BUILD_START;
+              }
+              catch (Exception e) {
+                throw new ProjectBuildException(e);
+              }
+            }
+            else {
+              LOG.info("Builder " + builder.getDescription() + " requested second chunk rebuild");
+            }
+          }
+
+          buildersPassed++;
+          final float fraction = updateFractionBuilderFinished(modulesInChunk / (stageCount));
+          context.setDone(fraction);
+        }
       }
+      while (nextPassRequired);
+
+      context.clearContextRoundData();
     }
-    while (nextPassRequired);
-
-    context.clearContextRoundData();
   }
 
   private void runProjectLevelBuilders(CompileContext context) throws ProjectBuildException {
