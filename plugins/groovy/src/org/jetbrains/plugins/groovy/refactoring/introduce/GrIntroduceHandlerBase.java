@@ -98,10 +98,9 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     return expressions;
   }
 
-  private static boolean expressionIsIncorrect(GrExpression expression) {
+  public static boolean expressionIsIncorrect(GrExpression expression) {
     if (expression instanceof GrParenthesizedExpression) return true;
     if (expression instanceof GrSuperReferenceExpression) return true;
-    if (expression.getType() == PsiType.VOID) return true;
     if (expression instanceof GrAssignmentExpression) return true;
     if (expression instanceof GrReferenceExpression && expression.getParent() instanceof GrCall) {
       final GroovyResolveResult resolveResult = ((GrReferenceExpression)expression).advancedResolve();
@@ -331,11 +330,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     if (type != null) type = TypeConversionUtil.erasure(type);
 
     if (PsiType.VOID.equals(type)) {
-      throw new GrRefactoringError(GroovyRefactoringBundle.message("selected.expression.has.void.type"));
-    }
-
-    if (expressionIsIncorrect(selected)) {
-      throw new GrRefactoringError(GroovyRefactoringBundle.message("selected.block.should.represent.an.expression"));
+      return null;
     }
 
     return selected;

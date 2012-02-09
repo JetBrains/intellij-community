@@ -25,6 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 import java.util.*;
@@ -99,8 +100,10 @@ public class GrTypeComboBox extends ComboBox {
     }
   }
 
-  public void addType(PsiType type) {
-    addItem(new PsiTypeItem(type));
+  public void addClosureTypesFrom(PsiType type, PsiElement context) {
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.getProject());
+    final PsiType cl = factory.createTypeFromText(GroovyCommonClassNames.GROOVY_LANG_CLOSURE + '<' + type.getCanonicalText() + '>', context);
+    addItem(new PsiTypeItem(cl, true));
   }
 
   @Nullable
@@ -108,6 +111,10 @@ public class GrTypeComboBox extends ComboBox {
     final Object selected = getSelectedItem();
     assert selected instanceof PsiTypeItem;
     return ((PsiTypeItem)selected).getType();
+  }
+
+  public boolean isClosureSelected() {
+    return ((PsiTypeItem)getSelectedItem()).isClosure();
   }
 
 
@@ -165,8 +172,15 @@ public class GrTypeComboBox extends ComboBox {
     @Nullable
     private final PsiType myType;
 
+    private final boolean isClosure;
+
     private PsiTypeItem(final PsiType type) {
+      this(type, false);
+    }
+
+    private PsiTypeItem(final PsiType type, boolean closure) {
       myType = type;
+      isClosure = closure;
     }
 
     @Nullable
@@ -199,6 +213,10 @@ public class GrTypeComboBox extends ComboBox {
     @Override
     public String toString() {
       return myType == null ? "def" : myType.getPresentableText();
+    }
+
+    public boolean isClosure() {
+      return isClosure;
     }
   }
 }

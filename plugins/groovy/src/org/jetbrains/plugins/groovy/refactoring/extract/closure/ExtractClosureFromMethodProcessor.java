@@ -225,7 +225,7 @@ public class ExtractClosureFromMethodProcessor extends ExtractClosureProcessorBa
     private final PsiType myType;
 
     private IntroduceParameterDataAdapter() {
-      myClosure = generateClosure();
+      myClosure = generateClosure(ExtractClosureFromMethodProcessor.this.myHelper);
       myWrapper = new GrExpressionWrapper(myClosure);
 
       PsiType type = myClosure.getType();

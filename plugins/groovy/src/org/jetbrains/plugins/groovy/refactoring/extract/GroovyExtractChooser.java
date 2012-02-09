@@ -36,6 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
@@ -49,6 +50,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GrRefactoringError;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.inline.GroovyInlineMethodUtil;
+import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -107,6 +109,13 @@ public class GroovyExtractChooser {
       throw new GrRefactoringError(GroovyRefactoringBundle.message("selected.expression.has.void.type"));
     }
 
+    if (ExtractUtil.isSingleExpression(statements) && GrIntroduceHandlerBase.expressionIsIncorrect((GrExpression)statement0)) {
+      throw new GrRefactoringError(GroovyRefactoringBundle.message("selected.block.should.represent.an.expression"));
+    }
+
+    if (ExtractUtil.isSingleExpression(statements) && statement0.getParent() instanceof GrAssignmentExpression && ((GrAssignmentExpression)statement0.getParent()).getLValue()==statement0) {
+      throw new GrRefactoringError(GroovyRefactoringBundle.message("selected.expression.should.not.be.lvalue"));
+    }
 
     // collect information about return statements in selected statement set
 

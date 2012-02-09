@@ -60,25 +60,25 @@ public abstract class ExtractClosureProcessorBase extends BaseRefactoringProcess
     return EXTRACT_CLOSURE;
   }
 
-  protected GrClosableBlock generateClosure() {
+  public static GrClosableBlock generateClosure(GrIntroduceParameterSettings helper) {
     StringBuilder buffer = new StringBuilder();
 
     buffer.append('{');
 
-    final String[] params = ExtractUtil.getParameterString(myHelper, true);
+    final String[] params = ExtractUtil.getParameterString(helper, true);
     if (params.length > 0) {
       for (String p : params) {
         buffer.append(p);
       }
       buffer.append("->");
     }
-    if (myHelper.getStatements().length > 1) {
+    if (helper.getStatements().length > 1) {
       buffer.append('\n');
     }
 
-    ExtractUtil.generateBody(myHelper, false, buffer);
+    ExtractUtil.generateBody(helper, false, buffer);
     buffer.append('}');
 
-    return GroovyPsiElementFactory.getInstance(myHelper.getProject()).createClosureFromText(buffer.toString(), myHelper.getToReplaceIn());
+    return GroovyPsiElementFactory.getInstance(helper.getProject()).createClosureFromText(buffer.toString(), helper.getToReplaceIn());
   }
 }
