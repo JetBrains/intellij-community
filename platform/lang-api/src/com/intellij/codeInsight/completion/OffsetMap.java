@@ -21,6 +21,8 @@ import com.intellij.openapi.editor.RangeMarker;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -31,6 +33,7 @@ public class OffsetMap implements Disposable {
   private final Document myDocument;
   private final Map<OffsetKey, RangeMarker> myMap = new THashMap<OffsetKey, RangeMarker>();
   private final Set<OffsetKey> myModified = new THashSet<OffsetKey>();
+  private volatile boolean myDisposed;
 
   public OffsetMap(final Document document) {
     myDocument = document;
@@ -72,6 +75,7 @@ public class OffsetMap implements Disposable {
   }
 
   private void saveOffset(OffsetKey key, int offset, boolean externally) {
+    assert !myDisposed;
     if (externally && myMap.containsKey(key)) {
       myModified.add(key);
     }
@@ -84,6 +88,7 @@ public class OffsetMap implements Disposable {
   }
 
   public void removeOffset(OffsetKey key) {
+    assert !myDisposed;
     myModified.add(key);
     RangeMarker old = myMap.get(key);
     if (old != null) old.dispose();
@@ -91,8 +96,9 @@ public class OffsetMap implements Disposable {
     myMap.remove(key);
   }
 
-  public Set<OffsetKey> keySet() {
-    return myMap.keySet();
+  public List<OffsetKey> getAllOffsets() {
+    assert !myDisposed;
+    return new ArrayList<OffsetKey>(myMap.keySet());
   }
 
   @Override
@@ -109,6 +115,7 @@ public class OffsetMap implements Disposable {
   }
 
   public void dispose() {
+    myDisposed = true;
     for (RangeMarker rangeMarker : myMap.values()) {
       rangeMarker.dispose();
     }
