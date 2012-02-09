@@ -113,7 +113,7 @@ class GitSmartOperationDialog extends DialogWrapper {
   private class ForceCheckoutAction extends AbstractAction {
     
     ForceCheckoutAction(@NotNull String operationTitle) {
-      super("Force " + capitalize(operationTitle));
+      super("&Force " + capitalize(operationTitle));
     }
     
     @Override
