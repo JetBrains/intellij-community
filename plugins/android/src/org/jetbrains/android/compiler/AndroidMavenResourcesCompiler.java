@@ -31,7 +31,7 @@ import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.maven.AndroidMavenProvider;
 import org.jetbrains.android.maven.AndroidMavenUtil;
-import org.jetbrains.android.util.AndroidUtils;
+import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -144,13 +144,13 @@ public class AndroidMavenResourcesCompiler implements SourceGeneratingCompiler {
       myModule = module;
       myPackage = aPackage;
       myGeneratedFile =
-        new File(sourceRootPath, aPackage.replace('.', File.separatorChar) + File.separator + AndroidUtils.R_JAVA_FILENAME);
+        new File(sourceRootPath, aPackage.replace('.', File.separatorChar) + File.separator + AndroidCommonUtils.R_JAVA_FILENAME);
       mySourceRootPath = sourceRootPath;
     }
 
     @Nullable
     public String getPath() {
-      return myPackage.replace('.', '/') + '/' + AndroidUtils.R_JAVA_FILENAME;
+      return myPackage.replace('.', '/') + '/' + AndroidCommonUtils.R_JAVA_FILENAME;
     }
 
     public ValidityState getValidityState() {

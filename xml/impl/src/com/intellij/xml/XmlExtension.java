@@ -59,7 +59,7 @@ public abstract class XmlExtension {
     return DEFAULT_EXTENSION;
   }
 
-  @Nullable
+  @SuppressWarnings("ConstantConditions")
   public static XmlExtension getExtensionByElement(PsiElement element) {
     final PsiFile psiFile = element.getContainingFile();
     if (psiFile != null) {

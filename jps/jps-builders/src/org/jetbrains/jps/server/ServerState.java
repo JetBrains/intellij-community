@@ -3,6 +3,8 @@ package org.jetbrains.jps.server;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import groovy.util.Node;
+import groovy.util.XmlParser;
 import org.codehaus.groovy.runtime.MethodClosure;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.Library;
@@ -15,6 +17,7 @@ import org.jetbrains.jps.api.GlobalLibrary;
 import org.jetbrains.jps.api.SdkLibrary;
 import org.jetbrains.jps.artifacts.Artifact;
 import org.jetbrains.jps.idea.IdeaProjectLoader;
+import org.jetbrains.jps.idea.SystemOutErrorReporter;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
@@ -203,7 +206,7 @@ class ServerState {
       final Map<String, Artifact> artifactMap = pd.project.getArtifacts();
       for (String name : artifactNames) {
         final Artifact artifact = artifactMap.get(name);
-        if (!StringUtil.isEmpty(artifact.getOutputPath())) {
+        if (artifact != null && !StringUtil.isEmpty(artifact.getOutputPath())) {
           artifacts.add(artifact);
         }
       }
@@ -295,12 +298,32 @@ class ServerState {
     for (GlobalLibrary library : myGlobalLibraries) {
       if (library instanceof SdkLibrary) {
         final SdkLibrary sdk = (SdkLibrary)library;
-        final Sdk jdk = project.createSdk("JavaSDK", sdk.getName(), sdk.getHomePath(), null);
-        jdk.setClasspath(sdk.getPaths());
+        Node additionalData = null;
+        final String additionalXml = sdk.getAdditionalDataXml();
+        if (additionalXml != null) {
+          try {
+            additionalData = new XmlParser(false, false).parseText(additionalXml);
+          }
+          catch (Exception e) {
+            LOG.info(e);
+          }
+        }
+        final Sdk jdk = project.createSdk(/*"JavaSDK"*/sdk.getTypeName(), sdk.getName(), sdk.getHomePath(), additionalData);
+        if (jdk != null) {
+          jdk.setClasspath(sdk.getPaths());
+        }
+        else {
+          LOG.info("Failed to load SDK " + sdk.getName() + ", type: " + sdk.getTypeName());
+        }
       }
       else {
         final Library lib = project.createGlobalLibrary(library.getName(), fakeClosure);
-        lib.setClasspath(library.getPaths());
+        if (lib != null) {
+          lib.setClasspath(library.getPaths());
+        }
+        else {
+          LOG.info("Failed to load global library " + lib.getName());
+        }
       }
     }
 
@@ -309,7 +332,7 @@ class ServerState {
     //String root = dirBased ? projectPath : projectFile.getParent();
 
     final String loadPath = isDirectoryBased(projectFile) ? new File(projectFile, IDEA_PROJECT_DIRNAME).getPath() : projectPath;
-    IdeaProjectLoader.loadFromPath(project, loadPath, myPathVariables, getStartupScript());
+    IdeaProjectLoader.loadFromPath(project, loadPath, myPathVariables, getStartupScript(), new SystemOutErrorReporter(false));
     final String globalEncoding = myGlobalEncoding;
     if (globalEncoding != null && project.getProjectCharset() == null) {
       project.setProjectCharset(globalEncoding);

@@ -142,21 +142,30 @@ public class GradleApiFacadeImpl extends RemoteServer implements GradleApiFacade
 
   @NotNull
   @Override
-  public Collection<GradleTaskId> getTasksInProgress(@NotNull GradleTaskType type) throws RemoteException {
-    Set<GradleTaskId> result = null;
+  public Map<GradleTaskType, Set<GradleTaskId>> getTasksInProgress() throws RemoteException {
+    Map<GradleTaskType, Set<GradleTaskId>> result = null;
     for (RemoteGradleService service : myRemotes.values()) {
-      final Collection<GradleTaskId> tasks = service.getTasksInProgress(type);
+      final Map<GradleTaskType, Set<GradleTaskId>> tasks = service.getTasksInProgress();
       if (tasks.isEmpty()) {
         continue;
       }
       if (result == null) {
-        result = new HashSet<GradleTaskId>();
+        result = new HashMap<GradleTaskType, Set<GradleTaskId>>();
       }
-      result.addAll(tasks);
+      for (Map.Entry<GradleTaskType, Set<GradleTaskId>> entry : tasks.entrySet()) {
+        Set<GradleTaskId> ids = result.get(entry.getKey());
+        if (ids == null) {
+          result.put(entry.getKey(), ids = new HashSet<GradleTaskId>());
+        }
+        ids.addAll(entry.getValue());
+      }
     }
-    return result == null ? Collections.<GradleTaskId>emptySet() : result;
+    if (result == null) {
+      result = Collections.emptyMap();
+    }
+    return result;
   }
-  
+
   @Override
   public void applySettings(@NotNull RemoteGradleProcessSettings settings) throws RemoteException {
     mySettings.set(settings);
@@ -206,6 +215,10 @@ public class GradleApiFacadeImpl extends RemoteServer implements GradleApiFacade
 
     SwallowingNotificationListener(@NotNull RemoteGradleProgressNotificationManager manager) {
       myManager = manager;
+    }
+
+    @Override
+    public void onQueued(@NotNull GradleTaskId id) {
     }
 
     @Override

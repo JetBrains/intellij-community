@@ -18,6 +18,7 @@ package org.jetbrains.idea.svn17;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -67,6 +68,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
   private IdeaSVNHostOptionsProvider myLocalHostOptionsProvider;
   private final ThreadLocalSavePermissions mySavePermissions;
   private final Map<Thread, String> myKeyAlgorithm;
+  private boolean myArtificialSaving;
 
   public SvnAuthenticationManager(final Project project, final File configDirectory) {
     super(configDirectory, true, null, null);
@@ -80,6 +82,10 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
       myPersistentAuthenticationProviderProxy.setProject(myProject);
     }
     myInteraction = new MySvnAuthenticationInteraction(myProject);
+  }
+
+  public void setArtificialSaving(boolean artificialSaving) {
+    myArtificialSaving = artificialSaving;
   }
 
   private void ensureListenerCreated() {
@@ -116,6 +122,11 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
   }
 
   @Override
+  public void acknowledge(boolean accepted, String kind, String realm, SVNErrorMessage message, SVNAuthentication authentication) {
+    myListener.getMulticaster().acknowledge(accepted, kind, realm, message, authentication);
+  }
+
+  @Override
   public void requested(ProviderType type, SVNURL url, String realm, String kind, boolean canceled) {
     if (ProviderType.interactive.equals(type) && (! canceled)) {
       ourJustEntered.set(true);
@@ -137,12 +148,18 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
                                         String realm,
                                         SVNErrorMessage errorMessage,
                                         SVNAuthentication authentication) throws SVNException {
+    boolean successSaving = false;
+    myListener.getMulticaster().acknowledge(accepted, kind, realm, errorMessage, authentication);
     try {
       final boolean authStorageEnabled = getHostOptionsProvider().getHostOptions(authentication.getURL()).isAuthStorageEnabled();
-      final SVNAuthentication proxy = ProxySvnAuthentication.proxy(authentication, authStorageEnabled);
+      final SVNAuthentication proxy = ProxySvnAuthentication.proxy(authentication, authStorageEnabled, myArtificialSaving);
       super.acknowledgeAuthentication(accepted, kind, realm, errorMessage, proxy);
+      successSaving = true;
     } finally {
       mySavePermissions.remove();
+      if (myArtificialSaving) {
+        throw new CredentialsSavedException(successSaving);
+      }
     }
   }
 
@@ -229,11 +246,10 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
     public void saveAuthentication(final SVNAuthentication auth, final String kind, final String realm) throws SVNException {
       final Boolean fromInteractive = ourJustEntered.get();
       ourJustEntered.set(null);
-      if (! Boolean.TRUE.equals(fromInteractive)) {
+      if (! myArtificialSaving && ! Boolean.TRUE.equals(fromInteractive)) {
         // not what user entered
         return;
       }
-
       myListener.getMulticaster().saveAttemptStarted(ProviderType.persistent, auth.getURL(), realm, auth.getKind());
       ((ISVNPersistentAuthenticationProvider) myDelegate).saveAuthentication(auth, kind, realm);
       myListener.getMulticaster().saveAttemptFinished(ProviderType.persistent, auth.getURL(), realm, auth.getKind());
@@ -820,6 +836,18 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
         }
       });
       return s[0];
+    }
+  }
+
+  public static class CredentialsSavedException extends RuntimeException {
+    private final boolean mySuccess;
+
+    public CredentialsSavedException(boolean success) {
+      mySuccess = success;
+    }
+
+    public boolean isSuccess() {
+      return mySuccess;
     }
   }
 }

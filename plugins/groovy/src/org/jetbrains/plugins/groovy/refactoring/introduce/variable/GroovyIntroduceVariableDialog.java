@@ -64,10 +64,10 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
   public GroovyIntroduceVariableDialog(GrIntroduceContext context,
                                        GrIntroduceVariableHandler.Validator validator,
                                        String[] possibleNames) {
-    super(context.project, true);
-    myProject = context.project;
-    myExpression = context.expression;
-    myOccurrencesCount = context.occurrences.length;
+    super(context.getProject(), true);
+    myProject = context.getProject();
+    myExpression = context.getExpression();
+    myOccurrencesCount = context.getOccurrences().length;
     myValidator = validator;
 
     myListenerList = new EventListenerList();

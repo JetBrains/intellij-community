@@ -354,7 +354,7 @@ public class SdkConfigurationUtil {
     popup.showUnderneathOf(popupOwner);
   }
 
-  private static List<String> filterExistingPaths(SdkType sdkType, Collection<String> sdkHomes, final Sdk[] sdks) {
+  public static List<String> filterExistingPaths(SdkType sdkType, Collection<String> sdkHomes, final Sdk[] sdks) {
     List<String> result = new ArrayList<String>();
     for (String sdkHome : sdkHomes) {
       if (findByPath(sdkType, sdks, sdkHome) == null) {

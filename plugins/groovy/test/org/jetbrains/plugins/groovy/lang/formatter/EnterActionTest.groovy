@@ -69,6 +69,9 @@ public class EnterActionTest extends GroovyFormatterTestCase {
   public void testGstring11() throws Throwable { doTest(); }
   public void testGstring12() throws Throwable { doTest(); }
   public void testGstring13() throws Throwable { doTest(); }
+  public void testGstring14() throws Throwable { doTest(); }
+  public void testGstring15() throws Throwable { doTest(); }
+  public void testGstring16() throws Throwable { doTest(); }
   public void testGstring2() throws Throwable { doTest(); }
   public void testGstring3() throws Throwable { doTest(); }
   public void testGstring4() throws Throwable { doTest(); }
@@ -78,6 +81,7 @@ public class EnterActionTest extends GroovyFormatterTestCase {
   public void testGstring8() throws Throwable { doTest(); }
   public void testGstring9() throws Throwable { doTest(); }
   public void testMultilineIndent() throws Throwable { doTest(); }
+  public void testMultilineIndent2() throws Throwable { doTest(); }
   public void testSpaces1() throws Throwable { doTest(); }
   public void testString1() throws Throwable { doTest(); }
   public void testString2() throws Throwable { doTest(); }
@@ -85,6 +89,20 @@ public class EnterActionTest extends GroovyFormatterTestCase {
   public void testString4() throws Throwable { doTest(); }
   public void testString5() throws Throwable { doTest(); }
   public void testString6() throws Throwable { doTest(); }
+  public void testString7() throws Throwable { doTest(); }
+  public void testString8() throws Throwable { doTest(); }
+  public void testString9() throws Throwable { doTest(); }
+  public void testString10() throws Throwable { doTest(); }
+  public void testRegex1() {doTest()}
+  public void testRegex2() {doTest()}
+  public void testRegex3() {doTest()}
+  public void testRegex4() {doTest()}
+  public void testRegex5() {doTest()}
+  public void testRegex6() {doTest()}
+  public void testRegex7() {doTest()}
+  public void testRegex8() {doTest()}
+  public void testRegex9() {doTest()}
+  public void testRegex10() {doTest()}
 
   def doTest(String before, String after) {
     myFixture.configureByText("a.groovy", before)
@@ -287,7 +305,6 @@ foo {
     <caret>
 } }
 '''
-
   }
 
 }

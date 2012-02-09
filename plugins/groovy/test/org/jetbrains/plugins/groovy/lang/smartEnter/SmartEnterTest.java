@@ -1,6 +1,8 @@
 package org.jetbrains.plugins.groovy.lang.smartEnter;
 
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.util.TestUtils;
@@ -37,8 +39,12 @@ public class SmartEnterTest extends LightCodeInsightFixtureTestCase {
   public void testListFixer() throws Throwable {doTest();}
   public void testSwitchBraces() throws Throwable {doTest();}
   public void testCatchClause() throws Throwable {doTest();}
+  public void testMethodBodyAtNextLine() {
+    CodeStyleSettingsManager.getSettings(myFixture.getProject()).getCommonSettings(GroovyFileType.GROOVY_LANGUAGE).METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
+    doTest();
+  }
 
-  public void doTest() throws Exception {
+  public void doTest() {
     final List<String> data = TestUtils.readInput(getTestDataPath() + getTestName(true) + ".test");
 
     myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, data.get(0));

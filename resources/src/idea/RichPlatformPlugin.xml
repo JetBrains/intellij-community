@@ -72,6 +72,7 @@
     <extensionPoint name="compiler" area="IDEA_PROJECT" interface="com.intellij.openapi.compiler.Compiler"/>
     <extensionPoint name="compilerFactory" area="IDEA_PROJECT" interface="com.intellij.openapi.compiler.CompilerFactory"/>
     <extensionPoint name="compilerSettingsFactory" area="IDEA_PROJECT" interface="com.intellij.compiler.CompilerSettingsFactory"/>
+    <extensionPoint name="compileServer.plugin" beanClass="com.intellij.compiler.server.CompileServerPlugin"/>
 
 
     <extensionPoint name="paletteItemProvider" area="IDEA_PROJECT" interface="com.intellij.ide.palette.PaletteItemProvider"/>
@@ -86,6 +87,9 @@
 
     <extensionPoint name="java.highlighting.filter"
                     interface="com.intellij.codeInsight.daemon.JavaHighlightingFilter"/>
+
+    <extensionPoint name="projectStructureValidator"
+                    interface="com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureValidator"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

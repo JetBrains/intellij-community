@@ -26,9 +26,15 @@ public class ProxySvnAuthentication {
   private ProxySvnAuthentication() {
   }
 
-  public static SVNAuthentication proxy(final SVNAuthentication in, final boolean storeAuth) {
-    if (in.isStorageAllowed() == storeAuth || (! in.isStorageAllowed())) return in;
+  public static SVNAuthentication proxy(final SVNAuthentication in, final boolean storeAuth, boolean forceSaving) {
+    if (forceSaving && storeAuth) {
+      return putPassedValueAsSave(in, forceSaving);
+    }
+    if (in.isStorageAllowed() == storeAuth || ( ! in.isStorageAllowed())) return in;
+    return putPassedValueAsSave(in, storeAuth);
+  }
 
+  private static SVNAuthentication putPassedValueAsSave(SVNAuthentication in, boolean storeAuth) {
     final String userName = in.getUserName();
     if (in instanceof SVNPasswordAuthentication) {
       return new SVNPasswordAuthentication(userName, ((SVNPasswordAuthentication)in).getPassword(),

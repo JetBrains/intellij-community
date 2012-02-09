@@ -17,7 +17,6 @@ package org.intellij.lang.xpath.xslt.context;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -61,33 +60,46 @@ public class XsltVariableContext implements VariableContext<XsltVariable> {
         final VariantsProcessor processor = new VariantsProcessor(context);
 
         ResolveUtil.treeWalkUp(processor, context);
+        processForwardGlobals(context, processor);
         return processor.getResult();
     }
 
     public XPathVariable resolve(final XPathVariableReference reference) {
-        final PsiManager mgr = reference.getManager();
-        return (XPathVariable) ResolveCache.getInstance(mgr.getProject()).resolveWithCaching(reference, RESOLVER, true, false);
+        return (XPathVariable) ResolveCache.getInstance(reference.getProject()).resolveWithCaching(reference, RESOLVER, false, false);
     }
 
     @Nullable
     private XPathVariable resolveInner(XPathVariableReference reference) {
         final XmlTag context = getContextTagImpl(reference);
-        final ResolveProcessor processor = new ResolveProcessor(reference.getReferencedName(), context);
+        final VariableResolveProcessor processor = new VariableResolveProcessor(reference.getReferencedName(), context);
 
         final XPathVariable variable = (XPathVariable)ResolveUtil.treeWalkUp(processor, context);
-        if (variable == null) {
-            final XmlFile file = PsiTreeUtil.getParentOfType(context, XmlFile.class, true);
-            if (file != null) {
-                XsltIncludeIndex.processBackwardDependencies(file, new Processor<XmlFile>() {
-                    public boolean process(XmlFile xmlFile) {
-                        processor.processExternalFile(xmlFile, context);
-                        return processor.shouldContinue();
-                    }
-                });
-                return (XPathVariable)processor.getResult();
-            }
+        if (variable != null) {
+          return variable;
         }
-        return variable;
+        if (!processForwardGlobals(context, processor)) {
+          final XmlFile file = PsiTreeUtil.getParentOfType(context, XmlFile.class, true);
+          if (file != null) {
+            XsltIncludeIndex.processBackwardDependencies(file, new Processor<XmlFile>() {
+              public boolean process(XmlFile xmlFile) {
+                processor.processExternalFile(xmlFile, context);
+                return processor.shouldContinue();
+              }
+            });
+          }
+        }
+        return (XPathVariable)processor.getResult();
+    }
+
+    private static boolean processForwardGlobals(XmlTag context, VariableProcessor processor) {
+      while (context != null && !XsltSupport.isTopLevelElement(context)) {
+        context = context.getParentTag();
+      }
+      while (context != null && processor.shouldContinue()) {
+        processor.process(context);
+        context = PsiTreeUtil.getNextSiblingOfType(context, XmlTag.class);
+      }
+      return !processor.shouldContinue();
     }
 
     @Nullable
@@ -141,6 +153,8 @@ public class XsltVariableContext implements VariableContext<XsltVariable> {
                 processVarOrParamImpl(tag);
             }
         }
+
+        protected abstract boolean shouldContinue();
     }
 
     static class VariantsProcessor extends VariableProcessor {
@@ -165,11 +179,11 @@ public class XsltVariableContext implements VariableContext<XsltVariable> {
         }
     }
 
-    static class ResolveProcessor extends VariableProcessor implements ResolveUtil.ResolveProcessor {
+    static class VariableResolveProcessor extends VariableProcessor implements ResolveUtil.ResolveProcessor {
         private final String myName;
         private PsiElement myResult = null;
 
-        public ResolveProcessor(final String name, XmlTag context) {
+        public VariableResolveProcessor(final String name, XmlTag context) {
             super(context);
             myName = name;
         }

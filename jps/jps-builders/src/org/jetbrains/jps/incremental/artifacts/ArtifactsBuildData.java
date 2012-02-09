@@ -18,19 +18,21 @@ public class ArtifactsBuildData {
   private final ArtifactSourceTimestampStorage myTimestampStorage;
   private ArtifactCompilerPersistentData myPersistentData;
   private final File myArtifactsDataDir;
+  private final File myMappingsDir;
 
-  public ArtifactsBuildData(File artifactsDataDir) throws Exception {
+  public ArtifactsBuildData(File artifactsDataDir) throws IOException {
     myArtifactsDataDir = artifactsDataDir;
     myTimestampStorage = new ArtifactSourceTimestampStorage(new File(artifactsDataDir, "timestamps"));
     myArtifactState = new HashMap<Artifact, ArtifactSourceFilesState>();
     myPersistentData = new ArtifactCompilerPersistentData(artifactsDataDir);
+    myMappingsDir = new File(myArtifactsDataDir, "mappings");
   }
 
   public ArtifactSourceFilesState getOrCreateState(Artifact artifact, Project project, ModuleRootsIndex index) {
     ArtifactSourceFilesState state = myArtifactState.get(artifact);
     if (state == null) {
       final int artifactId = myPersistentData.getId(artifact.getName());
-      state = new ArtifactSourceFilesState(artifact, artifactId, project, index, myTimestampStorage, myArtifactsDataDir);
+      state = new ArtifactSourceFilesState(artifact, artifactId, project, index, myTimestampStorage, myMappingsDir);
       myArtifactState.put(artifact, state);
     }
     return state;
@@ -42,7 +44,8 @@ public class ArtifactsBuildData {
     for (ArtifactSourceFilesState state : myArtifactState.values()) {
       state.clean();
     }
-    FileUtil.delete(myArtifactsDataDir);
+    myArtifactState.clear();
+    FileUtil.delete(myMappingsDir);
   }
 
   public void close() throws IOException {

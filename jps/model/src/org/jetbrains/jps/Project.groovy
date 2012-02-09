@@ -43,7 +43,7 @@ class Project {
   }
 
   def JavaSdk createJavaSdk(String name, String path, Closure initializer) {
-    def sdk = new JavaSdk(this, name, path, initializer)
+    def sdk = new JavaSdkImpl(this, name, path, initializer)
     sdks[name] = sdk
     return sdk
   }

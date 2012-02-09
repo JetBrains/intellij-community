@@ -53,6 +53,7 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
 
   private StateRestoringCheckBox myCbShowStaticFinalFields;
   private final ArrayRendererConfigurable myArrayRendererConfigurable;
+  private JCheckBox myCbEnableAutoExpressions;
   private JCheckBox myCbEnableAlternateViews;
 
   private JCheckBox myCbEnableToString;
@@ -92,6 +93,7 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     myCbShowStatic = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.show.static.fields"));
     myCbShowStaticFinalFields = new StateRestoringCheckBox(DebuggerBundle.message("label.base.renderer.configurable.show.static.final.fields"));
     myCbEnableAlternateViews = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.alternate.view"));
+    myCbEnableAutoExpressions = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.auto.expressions"));
     myCbShowStatic.addChangeListener(new ChangeListener(){
       public void stateChanged(ChangeEvent e) {
         if(myCbShowStatic.isSelected()) {
@@ -163,7 +165,8 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     arraysPanel.setBorder(IdeBorderFactory.createTitledBorder("Arrays", false, true, true));
     panel.add(arraysPanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 3, 1, 1.0, 0.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
 
-    panel.add(myCbEnableAlternateViews, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 10), 0, 0));
+    panel.add(myCbEnableAutoExpressions, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 10), 0, 0));
+    panel.add(myCbEnableAlternateViews, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 0, 0, 10), 0, 0));
     // starting 4-th row
     panel.add(myCbEnableToString, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 3, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 0, 0, 0), 0, 0));
     panel.add(myRbAllThatOverride, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 3, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 12, 0, 0), 0, 0));
@@ -189,6 +192,7 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     generalSettings.AUTOSCROLL_TO_NEW_LOCALS  = myCbAutoscroll.isSelected();
     rendererSettings.setAlternateCollectionViewsEnabled(myCbEnableAlternateViews.isSelected());
     generalSettings.HIDE_NULL_ARRAY_ELEMENTS  = myCbHideNullArrayElements.isSelected();
+    generalSettings.ENABLE_AUTO_EXPRESSIONS  = myCbEnableAutoExpressions.isSelected();
 
     final ClassRenderer classRenderer = rendererSettings.getClassRenderer();
     classRenderer.SORT_ASCENDING = myCbSort.isSelected();
@@ -219,6 +223,7 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     myCbAutoscroll.setSelected(generalSettings.AUTOSCROLL_TO_NEW_LOCALS);
     myCbHideNullArrayElements.setSelected(generalSettings.HIDE_NULL_ARRAY_ELEMENTS);
     myCbEnableAlternateViews.setSelected(rendererSettings.areAlternateCollectionViewsEnabled());
+    myCbEnableAutoExpressions.setSelected(generalSettings.ENABLE_AUTO_EXPRESSIONS);
 
     ClassRenderer classRenderer = rendererSettings.getClassRenderer();
 
@@ -264,6 +269,7 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     ViewsGeneralSettings generalSettings = ViewsGeneralSettings.getInstance();
     return
     (generalSettings.AUTOSCROLL_TO_NEW_LOCALS  != myCbAutoscroll.isSelected()) ||
+    (generalSettings.ENABLE_AUTO_EXPRESSIONS  != myCbEnableAutoExpressions.isSelected()) ||
     (generalSettings.HIDE_NULL_ARRAY_ELEMENTS  != myCbHideNullArrayElements.isSelected()) || myAutoTooltip.isChanged();
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,8 +43,7 @@ public class StartupUtil {
 
   @NonNls public static final String NOSPLASH = "nosplash";
 
-  private StartupUtil() {
-  }
+  private StartupUtil() { }
 
   public static void setDefaultLAF(String laf) {
     myDefaultLAF = laf;
@@ -73,7 +72,7 @@ public class StartupUtil {
   }
 
   /**
-   * Checks if the program can run under the JDK it was started with
+   * Checks if the program can run under the JDK it was started with.
    */
   private static boolean checkJdkVersion() {
     if (!"true".equals(System.getProperty("idea.no.jre.check"))) {
@@ -111,16 +110,8 @@ public class StartupUtil {
     }
 
     if (activateStatus != SocketLock.ActivateStatus.NO_INSTANCE) {
-      if (isHeadless()) { //team server inspections
-        System.out.println("Only one instance of " + ApplicationNamesInfo.getInstance().getFullProductName() + " can be run at a time.");
-        return false;
-      }
-      if (activateStatus == SocketLock.ActivateStatus.CANNOT_ACTIVATE) {
-        JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
-                                      "Only one instance of " + ApplicationNamesInfo.getInstance().getFullProductName() +
-                                      " can be run at a time.",
-                                      "Error",
-                                      JOptionPane.INFORMATION_MESSAGE);
+      if (isHeadless() || activateStatus == SocketLock.ActivateStatus.CANNOT_ACTIVATE) {
+        showError("Error", "Only one instance of " + ApplicationNamesInfo.getInstance().getFullProductName() + " can be run at a time.");
       }
       return false;
     }
@@ -129,16 +120,17 @@ public class StartupUtil {
   }
 
   private static boolean checkTmpIsAccessible() {
-    if (!SystemInfo.isUnix) return true;
+    if (!SystemInfo.isUnix || SystemInfo.isMac) return true;
 
     final File tmp;
     try {
-      tmp = File.createTempFile("idea_check_", ".tmp");
+      tmp = FileUtil.createTempFile("idea_check_", ".tmp");
       FileUtil.writeToFile(tmp, "#!/bin/sh\n" +
                                 "exit 0");
     }
     catch (IOException e) {
-      showError("Inaccessible Temp Directory", e.getMessage() + ".\nTemp directory is not accessible.\n" +
+      showError("Inaccessible Temp Directory", e.getMessage() + " (" + FileUtil.getTempDirectory() + ").\n" +
+                                               "Temp directory is not accessible.\n" +
                                                "Please set 'java.io.tmpdir' system property to point to a writable directory.");
       return false;
     }

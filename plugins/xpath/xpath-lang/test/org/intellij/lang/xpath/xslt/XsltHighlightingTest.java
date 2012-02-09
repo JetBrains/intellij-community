@@ -16,7 +16,6 @@
 package org.intellij.lang.xpath.xslt;
 
 import com.intellij.codeInsight.daemon.impl.analysis.XmlUnusedNamespaceInspection;
-import com.intellij.idea.Bombed;
 import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -26,8 +25,6 @@ import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.ArrayUtil;
 import org.intellij.lang.xpath.TestBase;
 import org.intellij.lang.xpath.xslt.impl.XsltStuffProvider;
-
-import java.util.Calendar;
 
 /*
 * Created by IntelliJ IDEA.
@@ -130,7 +127,6 @@ public class XsltHighlightingTest extends TestBase {
         doXsltHighlighting();
     }
 
-    @Bombed(user = "Maxim.Mossienko", month = Calendar.FEBRUARY, day = 15)
     public void testXsltFreeze() throws Throwable {
       doXsltHighlighting();
     }

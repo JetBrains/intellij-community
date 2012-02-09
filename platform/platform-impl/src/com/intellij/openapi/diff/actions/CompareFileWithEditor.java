@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
 
@@ -109,10 +110,11 @@ public class CompareFileWithEditor extends BaseDiffAction {
       return new String[]{getVirtualFileContentTitle(myFile), documentTitle};
     }
 
+    @NotNull
     public DiffContent[] getContents() {
       return new DiffContent[]{
-        DocumentContent.fromFile(getProject(), myFile),
-        DocumentContent.fromDocument(getProject(), myDocument)
+        DiffContent.fromFile(getProject(), myFile),
+        DiffContent.fromDocument(getProject(), myDocument)
       };
     }
 

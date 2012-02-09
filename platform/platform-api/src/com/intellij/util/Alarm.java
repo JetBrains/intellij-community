@@ -92,21 +92,21 @@ public class Alarm implements Disposable {
     }
   }
 
-  public void addRequest(final Runnable request, int delayMillis) {
+  public void addRequest(final Runnable request, long delayMillis) {
     _addRequest(request, delayMillis, myThreadToUse == ThreadToUse.SWING_THREAD ? ModalityState.current() : null);
   }
 
-  public void addComponentRequest(Runnable request, int delay) {
+  public void addComponentRequest(Runnable request, long delayMillis) {
     assert myActivationComponent != null;
-    _addRequest(request, delay, ModalityState.stateForComponent(myActivationComponent));
+    _addRequest(request, delayMillis, ModalityState.stateForComponent(myActivationComponent));
   }
 
-  public void addRequest(final Runnable request, int delayMillis, @Nullable final ModalityState modalityState) {
+  public void addRequest(final Runnable request, long delayMillis, @Nullable final ModalityState modalityState) {
     LOG.assertTrue(myThreadToUse == ThreadToUse.SWING_THREAD);
     _addRequest(request, delayMillis, modalityState);
   }
 
-  private void _addRequest(final Runnable request, int delayMillis, ModalityState modalityState) {
+  private void _addRequest(final Runnable request, long delayMillis, ModalityState modalityState) {
     synchronized (LOCK) {
       LOG.assertTrue(!myDisposed, "Already disposed");
       final Request requestToSchedule = new Request(request, modalityState, delayMillis);
@@ -191,9 +191,9 @@ public class Alarm implements Disposable {
     private Runnable myTask;
     private final ModalityState myModalityState;
     private Future<?> myFuture;
-    private final int myDelay;
+    private final long myDelay;
 
-    private Request(final Runnable task, final ModalityState modalityState, int delayMillis) {
+    private Request(final Runnable task, final ModalityState modalityState, long delayMillis) {
       myTask = task;
       myModalityState = modalityState;
       myDelay = delayMillis;

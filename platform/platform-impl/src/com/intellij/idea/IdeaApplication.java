@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,8 +31,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.updateSettings.impl.CheckForUpdateResult;
-import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
@@ -49,7 +47,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.List;
 
 
 @SuppressWarnings({"CallToPrintStackTrace"})
@@ -139,12 +136,14 @@ public class IdeaApplication {
       UIManager.put("Panel.opaque", Boolean.TRUE);
       UIManager.installLookAndFeel("Quaqua", "ch.randelshofer.quaqua.QuaquaLookAndFeel");
     }
-    else {
-      UIManager.installLookAndFeel("JGoodies Plastic", "com.jgoodies.looks.plastic.PlasticLookAndFeel");
-      UIManager.installLookAndFeel("JGoodies Plastic 3D", "com.jgoodies.looks.plastic.Plastic3DLookAndFeel");
-      UIManager.installLookAndFeel("JGoodies Plastic XP", "com.jgoodies.looks.plastic.PlasticXPLookAndFeel");
+
+    if (SystemInfo.isWindows) {
       UIManager.installLookAndFeel("JGoodies Windows L&F", "com.jgoodies.looks.windows.WindowsLookAndFeel");
     }
+
+    UIManager.installLookAndFeel("JGoodies Plastic", "com.jgoodies.looks.plastic.PlasticLookAndFeel");
+    UIManager.installLookAndFeel("JGoodies Plastic 3D", "com.jgoodies.looks.plastic.Plastic3DLookAndFeel");
+    UIManager.installLookAndFeel("JGoodies Plastic XP", "com.jgoodies.looks.plastic.PlasticXPLookAndFeel");
   }
 
   protected class IdeStarter implements ApplicationStarter {
@@ -215,7 +214,7 @@ public class IdeaApplication {
 
           if (UpdateChecker.isMyVeryFirstOpening() && UpdateChecker.checkNeeded()) {
             UpdateChecker.setMyVeryFirstOpening(false);
-            updatePlugins(true);
+            UpdateChecker.updateAndShowResult();
           }
 
           SwingUtilities.invokeLater(new Runnable() {
@@ -227,23 +226,6 @@ public class IdeaApplication {
       }, ModalityState.NON_MODAL);
     }
 
-    private void updatePlugins(final boolean showConfirmation) {
-      final Application app = ApplicationManager.getApplication();
-      app.executeOnPooledThread(new Runnable() {
-        @Override
-        public void run() {
-          final CheckForUpdateResult checkForUpdateResult = UpdateChecker.checkForUpdates();
-
-          final List<PluginDownloader> updatedPlugins = UpdateChecker.updatePlugins(false, null);
-          app.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              UpdateChecker.showUpdateResult(checkForUpdateResult, updatedPlugins, showConfirmation, true, false);
-            }
-          });
-        }
-      });
-    }
   }
 
   private void loadProject() {

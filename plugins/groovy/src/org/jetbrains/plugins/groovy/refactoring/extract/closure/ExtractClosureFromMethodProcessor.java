@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.groovy.refactoring.extract.closure;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
@@ -46,10 +45,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
+import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.extract.ExtractUtil;
 import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.AnySupers;
 import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.FieldConflictsResolver;
 import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.GrExpressionWrapper;
+import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.GrIntroduceParameterSettings;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -65,14 +66,12 @@ import static org.jetbrains.plugins.groovy.refactoring.introduce.parameter.Groov
 public class ExtractClosureFromMethodProcessor extends ExtractClosureProcessorBase {
 
   private final GrMethod myMethod;
-  private Editor myEditor;
   private final GrStatementOwner myDeclarationOwner;
 
-  public ExtractClosureFromMethodProcessor(@NotNull ExtractClosureHelper helper, Editor editor, GrStatementOwner declarationOwner) {
+  public ExtractClosureFromMethodProcessor(@NotNull GrIntroduceParameterSettings helper) {
     super(helper);
-    myEditor = editor;
-    myDeclarationOwner = declarationOwner;
-    myMethod = (GrMethod)myHelper.getOwner();
+    myDeclarationOwner = GroovyRefactoringUtil.getDeclarationOwner(helper.getStatements()[0]);
+    myMethod = (GrMethod)myHelper.getToReplaceIn();
   }
 
   @Override
@@ -210,10 +209,11 @@ public class ExtractClosureFromMethodProcessor extends ExtractClosureProcessorBa
     }
 
     final GrStatement newStatement = ExtractUtil.replaceStatement(myDeclarationOwner, myHelper);
+    /*
     if (myEditor != null) {
       PsiDocumentManager.getInstance(myProject).commitDocument(myEditor.getDocument());
       myEditor.getCaretModel().moveToOffset(ExtractUtil.getCaretOffset(newStatement));
-    }
+    }*/
 
     fieldConflictsResolver.fix();
   }
@@ -225,7 +225,7 @@ public class ExtractClosureFromMethodProcessor extends ExtractClosureProcessorBa
     private final PsiType myType;
 
     private IntroduceParameterDataAdapter() {
-      myClosure = generateClosure();
+      myClosure = generateClosure(ExtractClosureFromMethodProcessor.this.myHelper);
       myWrapper = new GrExpressionWrapper(myClosure);
 
       PsiType type = myClosure.getType();

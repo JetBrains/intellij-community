@@ -20,7 +20,7 @@ public abstract class AbstractStateStorage<Key, T> {
   private final DataExternalizer<T> myStateExternalizer;
   protected final Object myDataLock = new Object();
 
-  public AbstractStateStorage(@NonNls File storePath, KeyDescriptor<Key> keyDescriptor, DataExternalizer<T> stateExternalizer) throws Exception {
+  public AbstractStateStorage(@NonNls File storePath, KeyDescriptor<Key> keyDescriptor, DataExternalizer<T> stateExternalizer) throws IOException {
     myBaseFile = storePath;
     myKeyDescriptor = keyDescriptor;
     myStateExternalizer = stateExternalizer;
@@ -58,14 +58,14 @@ public abstract class AbstractStateStorage<Key, T> {
       try {
         myMap = createMap(myBaseFile);
       }
-      catch (Exception ignored) {
+      catch (IOException ignored) {
         return false;
       }
       return true;
     }
   }
 
-  public void update(Key key, @Nullable T state) throws Exception {
+  public void update(Key key, @Nullable T state) throws IOException {
     if (state != null) {
       synchronized (myDataLock) {
         myMap.put(key, state);
@@ -76,7 +76,7 @@ public abstract class AbstractStateStorage<Key, T> {
     }
   }
 
-  public void appendData(final Key key, final T data) throws Exception {
+  public void appendData(final Key key, final T data) throws IOException {
     synchronized (myDataLock) {
       myMap.appendData(key, new PersistentHashMap.ValueDataAppender() {
         public void append(DataOutput out) throws IOException {
@@ -86,32 +86,32 @@ public abstract class AbstractStateStorage<Key, T> {
     }
   }
 
-  public void remove(Key key) throws Exception {
+  public void remove(Key key) throws IOException {
     synchronized (myDataLock) {
       myMap.remove(key);
     }
   }
 
-  public T getState(Key key) throws Exception {
+  public T getState(Key key) throws IOException {
     synchronized (myDataLock) {
       return myMap.get(key);
     }
   }
 
-  public Collection<Key> getKeys() throws Exception {
+  public Collection<Key> getKeys() throws IOException {
     synchronized (myDataLock) {
       return myMap.getAllKeysWithExistingMapping();
     }
   }
 
-  public Iterator<Key> getKeysIterator() throws Exception {
+  public Iterator<Key> getKeysIterator() throws IOException {
     synchronized (myDataLock) {
       return myMap.getAllKeysWithExistingMapping().iterator();
     }
   }
 
 
-  private PersistentHashMap<Key, T> createMap(final File file) throws Exception {
+  private PersistentHashMap<Key, T> createMap(final File file) throws IOException {
     FileUtil.createIfDoesntExist(file);
     return new PersistentHashMap<Key,T>(file, myKeyDescriptor, myStateExternalizer);
   }

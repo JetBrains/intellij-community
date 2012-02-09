@@ -28,7 +28,6 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.ui.components.JBTabbedPane;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +35,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -47,15 +47,12 @@ import java.util.List;
  */
 
 public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPanel {
-  
-  private final static Icon COPY_ICON = IconLoader.getIcon("/actions/import.png");
-
   private CodeStyleAbstractPanel myActiveTab;
   private List<CodeStyleAbstractPanel> myTabs;
   private JPanel myPanel;
   private JTabbedPane myTabbedPane;
   private PredefinedCodeStyle[] myPredefinedCodeStyles;
-  private PopupMenu myCopyFromMenu;
+  private JPopupMenu myCopyFromMenu;
 
   protected TabbedLanguageCodeStylePanel(@Nullable Language language, CodeStyleSettings currentSettings, CodeStyleSettings settings) {
     super(language, currentSettings, settings);
@@ -120,37 +117,22 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
       myTabs = new ArrayList<CodeStyleAbstractPanel>();
       myPanel.add(myTabbedPane);
       initTabs(getSettings());
-      addSetFrom();
     }
     assert !myTabs.isEmpty();
   }
 
-  private void addSetFrom() {
-    myPredefinedCodeStyles = getPredefinedStyles();
-    JLabel dummyLabel = new JLabel("");
-    myTabbedPane.addTab("Set From...", dummyLabel);
-    int dummyIndex = myTabbedPane.indexOfComponent(dummyLabel);
-    myTabbedPane.setEnabledAt(dummyIndex, false);
-    JPanel setFromPanel = new JPanel();
-    setFromPanel.setBorder(BorderFactory.createEtchedBorder());
-    setFromPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 10, 0));
-    final JLabel setFromLabel = new JLabel("Set from...");
-    setFromPanel.add(setFromLabel);
-    setFromLabel.setIcon(COPY_ICON);
-    setFromLabel.addMouseListener(new MouseAdapter() {
-      @Override
-      public void mousePressed(MouseEvent e) {
-        initCopyFromMenu(setFromLabel);
-        myCopyFromMenu.show(e.getComponent(), e.getX(), e.getY());
-      }
-    });
-    myTabbedPane.setTabComponentAt(dummyIndex, setFromPanel);
+  public void showSetFrom(Object e) {
+    final Container component = (Container)e;
+    final Component[] components = component.getComponents();
+    final Component last = components[components.length - 1];
+    initCopyFromMenu(last);
+    myCopyFromMenu.show(last, 0, last.getHeight() + 3);
   }
-  
-  private void initCopyFromMenu(JComponent parent) {
+
+  private void initCopyFromMenu(Component component) {
     if (myCopyFromMenu == null) {
-      myCopyFromMenu = new PopupMenu();
-      parent.add(myCopyFromMenu);
+      myCopyFromMenu = new JPopupMenu();
+      //component.add(myCopyFromMenu);
       setupCopyFromMenu(myCopyFromMenu);
     }
   }
@@ -283,13 +265,13 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
 
 
   @Override
-  public void setupCopyFromMenu(Menu copyMenu) {
+  public void setupCopyFromMenu(JPopupMenu copyMenu) {
     super.setupCopyFromMenu(copyMenu);
     if (myPredefinedCodeStyles.length > 0) {
-      Menu langs = new Menu("Language"); //TODO<rv>: Move to resource bundle
+      JMenu langs = new JMenu("Language"); //TODO<rv>: Move to resource bundle
       copyMenu.add(langs);
       fillLanguages(langs);
-      Menu predefined = new Menu("Predefined Style"); //TODO<rv>: Move to resource bundle
+      JMenu predefined = new JMenu("Predefined Style"); //TODO<rv>: Move to resource bundle
       copyMenu.add(predefined);
       fillPredefined(predefined);
     }
@@ -299,14 +281,14 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
   }
 
 
-  private void fillLanguages(Menu parentMenu) {
+  private void fillLanguages(JComponent parentMenu) {
       Language[] languages = LanguageCodeStyleSettingsProvider.getLanguagesWithCodeStyleSettings();
       @SuppressWarnings("UnnecessaryFullyQualifiedName")
-      java.util.List<MenuItem> langItems = new ArrayList<MenuItem>();
+      java.util.List<JMenuItem> langItems = new ArrayList<JMenuItem>();
       for (final Language lang : languages) {
         if (!lang.equals(getDefaultLanguage())) {
           final String langName = LanguageCodeStyleSettingsProvider.getLanguageName(lang);
-          MenuItem langItem = new MenuItem(langName);
+          JMenuItem langItem = new JMenuItem(langName);
           langItem.addActionListener(new ActionListener(){
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -316,20 +298,20 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
           langItems.add(langItem);
         }
       }
-      Collections.sort(langItems, new Comparator<MenuItem>() {
+      Collections.sort(langItems, new Comparator<JMenuItem>() {
         @Override
-        public int compare(MenuItem item1, MenuItem item2) {
-          return item1.getLabel().compareToIgnoreCase(item2.getLabel());
+        public int compare(JMenuItem item1, JMenuItem item2) {
+          return item1.getText().compareToIgnoreCase(item2.getText());
         }
       });
-      for (MenuItem langItem : langItems) {
+      for (JMenuItem langItem : langItems) {
         parentMenu.add(langItem);
       }
     }
 
-  private void fillPredefined(Menu parentMenu) {
+  private void fillPredefined(JMenuItem parentMenu) {
     for (final PredefinedCodeStyle predefinedCodeStyle : myPredefinedCodeStyles) {
-      MenuItem predefinedItem = new MenuItem(predefinedCodeStyle.getName());
+      JMenuItem predefinedItem = new JMenuItem(predefinedCodeStyle.getName());
       parentMenu.add(predefinedItem);
       predefinedItem.addActionListener(new ActionListener() {
         @Override

@@ -6,7 +6,7 @@
       <root url="jar://$PROJECT_DIR$/lib/dev/jmock-cglib-1.0.1.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/dev/easymockclassextension.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/dev/objenesis-1.0.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/dev/mockobjects-core-0.09.jar!/ " />
+      <root url="jar://$PROJECT_DIR$/lib/dev/mockobjects-core-0.09.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/dev/hamcrest-core-1.1.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/dev/hamcrest-library-1.1.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/dev/jmock-2.5.1.jar!/" />

@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.SelectionModel;
@@ -45,22 +46,25 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwne
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.refactoring.GrRefactoringError;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
-import org.jetbrains.plugins.groovy.refactoring.extract.*;
+import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
+import org.jetbrains.plugins.groovy.refactoring.extract.ExtractUtil;
+import org.jetbrains.plugins.groovy.refactoring.extract.GroovyExtractChooser;
+import org.jetbrains.plugins.groovy.refactoring.extract.InitialInfo;
+import org.jetbrains.plugins.groovy.refactoring.extract.ParameterInfo;
 
 import java.util.ArrayList;
 
 /**
  * @author ilyas
  */
-public class GroovyExtractMethodHandler extends ExtractHandlerBase implements RefactoringActionHandler {
+public class GroovyExtractMethodHandler implements RefactoringActionHandler {
   protected static String REFACTORING_NAME = GroovyRefactoringBundle.message("extract.method.title");
+  private static final Logger LOG = Logger.getInstance(GroovyExtractMethodHandler.class);
 
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
-    invoke(project, editor, file);
-  }
-
-  void invoke(Project project, Editor editor, PsiFile file) throws CommonRefactoringUtil.RefactoringErrorHintException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file, @Nullable DataContext dataContext) {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     // select editor text fragment
     final SelectionModel model = editor.getSelectionModel();
@@ -69,18 +73,18 @@ public class GroovyExtractMethodHandler extends ExtractHandlerBase implements Re
     }
 
     try {
-      invokeOnEditor(project, editor, file, model.getSelectionStart(), model.getSelectionEnd());
+      final InitialInfo initialInfo =
+        GroovyExtractChooser.invoke(project, editor, file, model.getSelectionStart(), model.getSelectionEnd(), true);
+      performRefactoring(initialInfo, editor);
     }
-    catch (ExtractException e) {
+    catch (GrRefactoringError e) {
       CommonRefactoringUtil.showErrorHint(project, editor, e.getMessage(), REFACTORING_NAME, HelpID.EXTRACT_METHOD);
     }
   }
 
-  public void performRefactoring(@NotNull final InitialInfo initialInfo,
-                                 @NotNull final GrMemberOwner owner,
-                                 final GrStatementOwner declarationOwner,
-                                 final Editor editor,
-                                 final PsiElement startElement) {
+  private static void performRefactoring(@NotNull final InitialInfo initialInfo, final Editor editor) {
+    final GrMemberOwner owner = PsiUtil.getMemberOwner(initialInfo.getStatements()[0]);
+    LOG.assertTrue(owner!=null);
     final ExtractMethodInfoHelper helper = getSettings(initialInfo, owner);
     if (helper == null) return;
 
@@ -88,7 +92,8 @@ public class GroovyExtractMethodHandler extends ExtractHandlerBase implements Re
       public void run() {
         final AccessToken lock = ApplicationManager.getApplication().acquireWriteActionLock(GroovyExtractMethodHandler.class);
         try {
-          createMethod(helper, owner, startElement);
+          createMethod(helper, owner);
+          GrStatementOwner declarationOwner = GroovyRefactoringUtil.getDeclarationOwner(helper.getStatements()[0]);
           GrStatement realStatement = ExtractUtil.replaceStatement(declarationOwner, helper);
 
           // move to offset
@@ -105,9 +110,9 @@ public class GroovyExtractMethodHandler extends ExtractHandlerBase implements Re
     }, REFACTORING_NAME, null);
   }
 
-  private static void createMethod(ExtractMethodInfoHelper helper, GrMemberOwner owner, PsiElement startElement) {
+  private static void createMethod(ExtractMethodInfoHelper helper, GrMemberOwner owner) {
     final GrMethod method = ExtractUtil.createMethod(helper);
-    PsiElement anchor = calculateAnchorToInsertBefore(owner, startElement);
+    PsiElement anchor = calculateAnchorToInsertBefore(owner, helper.getStatements()[0]);
     GrMethod newMethod = owner.addMemberDeclaration(method, anchor);
     renameParameterOccurrences(newMethod, helper);
     GrReferenceAdjuster.shortenReferences(newMethod);

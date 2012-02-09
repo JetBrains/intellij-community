@@ -21,7 +21,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.introduceField.IntroduceFieldHandler;
 import com.intellij.refactoring.ui.NameSuggestionsField;
 import com.intellij.refactoring.util.RadioUpDownListener;
 import com.intellij.util.IncorrectOperationException;
@@ -86,11 +85,11 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
   private final GrIntroduceContext myContext;
 
   public GrIntroduceFieldDialog(GrIntroduceContext context) {
-    super(context.project, true);
+    super(context.getProject(), true);
     myContext = context;
 
-    GrTypeDefinition clazz = (GrTypeDefinition)context.scope;
-    myIsStatic = GrIntroduceFieldHandler.shouldBeStatic(context.place, clazz);
+    GrTypeDefinition clazz = (GrTypeDefinition)context.getScope();
+    myIsStatic = GrIntroduceFieldHandler.shouldBeStatic(context.getPlace(), clazz);
     if (myIsStatic) {
       myTypeLabel.setText("Static Field of Type:");
     }
@@ -106,12 +105,12 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
     initialization.add(myClassConstructorSRadioButton);
     new RadioUpDownListener(myCurrentMethodRadioButton, myFieldDeclarationRadioButton, myClassConstructorSRadioButton);
 
-    myCanBeInitializedOutsideBlock = canBeInitializedOutsideBlock(context.expression, (GrTypeDefinition)context.scope);
+    myCanBeInitializedOutsideBlock = canBeInitializedOutsideBlock(context.getExpression(), (GrTypeDefinition)context.getScope());
     /*if (!myCanBeInitializedOutsideBlock) {
       myClassConstructorSRadioButton.setEnabled(false);
       myFieldDeclarationRadioButton.setEnabled(false);
     }*/
-    final GrMethod containingMethod = GrIntroduceFieldHandler.getContainingMethod(context.place, clazz);
+    final GrMethod containingMethod = GrIntroduceFieldHandler.getContainingMethod(context.getPlace(), clazz);
     if (containingMethod == null) {
       myCurrentMethodRadioButton.setEnabled(false);
     }
@@ -123,15 +122,15 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
       myFieldDeclarationRadioButton.setSelected(true);
     }
 
-    myInvokedOnLocalVar  = context.var == null ? getInvokedOnLocalVar(context.expression) : context.var.getName();
+    myInvokedOnLocalVar  = context.getVar() == null ? getInvokedOnLocalVar(context.getExpression()) : context.getVar().getName();
     if (myInvokedOnLocalVar != null) {
       myReplaceAllOccurrencesCheckBox.setText("Replace all occurrences and remove variable '" + myInvokedOnLocalVar + "'");
-      if (context.var != null) {
+      if (context.getVar() != null) {
         myReplaceAllOccurrencesCheckBox.setEnabled(false);
         myReplaceAllOccurrencesCheckBox.setSelected(true);
       }
     }
-    else if (context.occurrences.length == 1) {
+    else if (context.getOccurrences().length == 1) {
       myReplaceAllOccurrencesCheckBox.setSelected(false);
       myReplaceAllOccurrencesCheckBox.setVisible(false);
     }
@@ -162,10 +161,10 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
     myTypeComboBox.addItemListener(l);
 
     isInvokedInAlwaysInvokedConstructor =
-      allOccurrencesInOneMethod(myContext.occurrences, clazz) && isAlwaysInvokedConstructor(containingMethod, clazz);
+      allOccurrencesInOneMethod(myContext.getOccurrences(), clazz) && isAlwaysInvokedConstructor(containingMethod, clazz);
     hasLHSUsages = hasLhsUsages(myContext);
 
-    setTitle(IntroduceFieldHandler.REFACTORING_NAME);
+    setTitle(REFACTORING_NAME);
     init();
     checkErrors();
   }
@@ -195,8 +194,8 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
   }
 
   private static boolean hasLhsUsages(GrIntroduceContext context) {
-    if (context.var == null && !(context.expression instanceof GrReferenceExpression)) return false;
-    if (GrIntroduceHandlerBase.hasLhs(context.occurrences)) return true;
+    if (context.getVar() == null && !(context.getExpression() instanceof GrReferenceExpression)) return false;
+    if (GrIntroduceHandlerBase.hasLhs(context.getOccurrences())) return true;
     return false;
   }
 
@@ -253,27 +252,29 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
   private void createUIComponents() {
     String[] possibleNames;
     final GroovyFieldValidator validator = new GroovyFieldValidator(myContext);
-    if (myContext.expression != null) {
-      possibleNames = GroovyNameSuggestionUtil.suggestVariableNames(myContext.expression, validator, true);
+    final GrExpression expression = myContext.getExpression();
+    final GrVariable var = myContext.getVar();
+    if (expression != null) {
+      possibleNames = GroovyNameSuggestionUtil.suggestVariableNames(expression, validator, true);
     }
     else {
-      possibleNames = GroovyNameSuggestionUtil.suggestVariableNameByType(myContext.var.getType(), validator);
+      possibleNames = GroovyNameSuggestionUtil.suggestVariableNameByType(var.getType(), validator);
     }
-    if (myContext.var != null) {
+    if (var != null) {
       String[] arr = new String[possibleNames.length + 1];
-      arr[0] = myContext.var.getName();
+      arr[0] = var.getName();
       System.arraycopy(possibleNames, 0, arr, 1, possibleNames.length);
       possibleNames = arr;
     }
-    myNameSuggestionsField = new NameSuggestionsField(possibleNames, myContext.project, GroovyFileType.GROOVY_FILE_TYPE);
+    myNameSuggestionsField = new NameSuggestionsField(possibleNames, myContext.getProject(), GroovyFileType.GROOVY_FILE_TYPE);
 
 
-    if (myContext.expression == null) {
-      myTypeComboBox = GrTypeComboBox.createTypeComboBoxWithDefType(myContext.var.getDeclaredType()
+    if (expression == null) {
+      myTypeComboBox = GrTypeComboBox.createTypeComboBoxWithDefType(var.getDeclaredType()
       );
     }
     else {
-      myTypeComboBox = GrTypeComboBox.createTypeComboBoxFromExpression(myContext.expression);
+      myTypeComboBox = GrTypeComboBox.createTypeComboBoxFromExpression(expression);
     }
   }
 
@@ -382,11 +383,11 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
 
   @Override
   protected void doOKAction() {
-    final GrTypeDefinition clazz = (GrTypeDefinition)myContext.scope;
+    final GrTypeDefinition clazz = (GrTypeDefinition)myContext.getScope();
     final String name = getName();
     String message = RefactoringBundle.message("field.exists", name, clazz.getQualifiedName());
     if (clazz.findFieldByName(name, true) != null &&
-        showYesNoDialog(myContext.project, message, REFACTORING_NAME, getWarningIcon()) != 0) {
+        showYesNoDialog(myContext.getProject(), message, REFACTORING_NAME, getWarningIcon()) != 0) {
       return;
     }
     super.doOKAction();

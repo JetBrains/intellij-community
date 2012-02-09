@@ -76,7 +76,7 @@ class ServerMessageHandler extends SimpleChannelHandler {
           for (JpsRemoteProto.Message.Request.SetupCommand.GlobalLibrary library : setupCommand.getGlobalLibraryList()) {
             libs.add(
               library.hasHomePath()?
-              new SdkLibrary(library.getName(), library.getHomePath(), library.getPathList()) :
+              new SdkLibrary(library.getName(), library.getTypeName(), library.getHomePath(), library.getPathList(), library.hasAdditionalDataXml()? library.getAdditionalDataXml() : null) :
               new GlobalLibrary(library.getName(), library.getPathList())
             );
           }
@@ -187,8 +187,8 @@ class ServerMessageHandler extends SimpleChannelHandler {
       case REBUILD: {
         channelContext.setAttachment(sessionId);
         final BuildType buildType = convertCompileType(compileType);
-        final CompilationTask task = new CompilationTask(
-          sessionId, channelContext, projectId, buildType, compileRequest.getModuleNameList(), Collections.<String>emptySet(), compileRequest.getFilePathList());
+        final CompilationTask task = new CompilationTask(sessionId, channelContext, projectId, buildType, compileRequest.getModuleNameList(),
+                                                         compileRequest.getArtifactNameList(), compileRequest.getFilePathList());
         final RunnableFuture future = getCompileTaskExecutor(projectId).submit(task);
         myBuildsInProgress.add(new Pair<RunnableFuture, CompilationTask>(future, task));
         return null;

@@ -8,6 +8,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
@@ -26,25 +27,33 @@ public class SpockMemberContributor extends NonCodeMembersContributor {
                                      GroovyPsiElement place,
                                      ResolveState state) {
     ClassHint classHint = processor.getHint(ClassHint.KEY);
-    if (classHint != null && !classHint.shouldProcess(ClassHint.ResolveKind.PROPERTY)) return;
+    if (classHint == null || classHint.shouldProcess(ClassHint.ResolveKind.PROPERTY)) {
+      GrMethod method = PsiTreeUtil.getParentOfType(place, GrMethod.class);
+      if (method == null) return;
 
-    GrMethod method = PsiTreeUtil.getParentOfType(place, GrMethod.class);
-    if (method == null) return;
+      if (aClass != method.getContainingClass()) return;
 
-    if (aClass != method.getContainingClass()) return;
+      Map<String, SpockVariableDescriptor> cachedValue = SpockUtils.getVariableMap(method);
 
-    Map<String, SpockVariableDescriptor> cachedValue = SpockUtils.getVariableMap(method);
-
-    String nameHint = ResolveUtil.getNameHint(processor);
-    if (nameHint == null) {
-      for (SpockVariableDescriptor spockVar : cachedValue.values()) {
-        if (!processor.execute(spockVar.getVariable(), state)) return;
+      String nameHint = ResolveUtil.getNameHint(processor);
+      if (nameHint == null) {
+        for (SpockVariableDescriptor spockVar : cachedValue.values()) {
+          if (!processor.execute(spockVar.getVariable(), state)) return;
+        }
+      }
+      else {
+        SpockVariableDescriptor spockVar = cachedValue.get(nameHint);
+        if (spockVar != null && spockVar.getNavigationElement() != place) {
+          if (!processor.execute(spockVar.getVariable(), state)) return;
+        }
       }
     }
-    else {
-      SpockVariableDescriptor spockVar = cachedValue.get(nameHint);
-      if (spockVar != null && spockVar.getNavigationElement() != place) {
-        if (!processor.execute(spockVar.getVariable(), state)) return;
+
+    if (classHint == null || classHint.shouldProcess(ClassHint.ResolveKind.METHOD)) {
+      if ("get_".equals(ResolveUtil.getNameHint(processor))) {
+        GrLightMethodBuilder m = new GrLightMethodBuilder(aClass.getManager(), "get_");
+        m.setReturnType(null);
+        if (!processor.execute(m, state)) return;
       }
     }
   }

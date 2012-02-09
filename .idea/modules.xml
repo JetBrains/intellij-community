@@ -9,7 +9,9 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/IntelliLang/IntelliLang-xml.iml" filepath="$PROJECT_DIR$/plugins/IntelliLang/IntelliLang-xml.iml" group="plugins/IntelliLang" />
       <module fileurl="file://$PROJECT_DIR$/plugins/IntentionPowerPak/IntentionPowerPackPlugin.iml" filepath="$PROJECT_DIR$/plugins/IntentionPowerPak/IntentionPowerPackPlugin.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/RegExpSupport/RegExpSupport.iml" filepath="$PROJECT_DIR$/RegExpSupport/RegExpSupport.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/android/android.iml" filepath="$PROJECT_DIR$/plugins/android/android.iml" group="plugins" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/android/android.iml" filepath="$PROJECT_DIR$/plugins/android/android.iml" group="plugins/Android" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/android/rt/android-rt.iml" filepath="$PROJECT_DIR$/plugins/android/rt/android-rt.iml" group="plugins/Android" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/android/jps-plugin/android-jps-plugin.iml" filepath="$PROJECT_DIR$/plugins/android/jps-plugin/android-jps-plugin.iml" group="plugins/Android"/>
       <module fileurl="file://$PROJECT_DIR$/platform/annotations/annotations.iml" filepath="$PROJECT_DIR$/platform/annotations/annotations.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/plugins/ant/ant.iml" filepath="$PROJECT_DIR$/plugins/ant/ant.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/jps/antLayout/antlayout.iml" filepath="$PROJECT_DIR$/jps/antLayout/antlayout.iml" />
@@ -59,9 +61,6 @@
       <module fileurl="file://$PROJECT_DIR$/jps/jps.iml" filepath="$PROJECT_DIR$/jps/jps.iml" group="jps" />
       <module fileurl="file://$PROJECT_DIR$/jps/plugins/appLauncher/jps-appLauncher.iml" filepath="$PROJECT_DIR$/jps/plugins/appLauncher/jps-appLauncher.iml" group="jps" />
       <module fileurl="file://$PROJECT_DIR$/jps/jps-builders/jps-builders.iml" filepath="$PROJECT_DIR$/jps/jps-builders/jps-builders.iml" group="jps" />
-      <module fileurl="file://$PROJECT_DIR$/jps/plugins/gwt/jps-gwt.iml" filepath="$PROJECT_DIR$/jps/plugins/gwt/jps-gwt.iml" group="jps" />
-      <module fileurl="file://$PROJECT_DIR$/jps/plugins/javaee/jps-javaee.iml" filepath="$PROJECT_DIR$/jps/plugins/javaee/jps-javaee.iml" group="jps" />
-      <module fileurl="file://$PROJECT_DIR$/jps/plugins/jpa/jps-jpa.iml" filepath="$PROJECT_DIR$/jps/plugins/jpa/jps-jpa.iml" group="jps" />
       <module fileurl="file://$PROJECT_DIR$/jps/model/jps-model.iml" filepath="$PROJECT_DIR$/jps/model/jps-model.iml" group="jps" />
       <module fileurl="file://$PROJECT_DIR$/jps/plugins/scala/jps-scala.iml" filepath="$PROJECT_DIR$/jps/plugins/scala/jps-scala.iml" group="jps" />
       <module fileurl="file://$PROJECT_DIR$/jps/jps-tests.iml" filepath="$PROJECT_DIR$/jps/jps-tests.iml" group="jps" />

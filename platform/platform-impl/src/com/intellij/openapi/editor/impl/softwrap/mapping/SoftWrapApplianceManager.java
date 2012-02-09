@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -419,13 +419,31 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
    * <code>'Token'</code> here stands for the number of subsequent symbols that are represented using the same font by IJ editor.
    */
   private void processNonFoldToken() {
+    int limit = 3 * (myContext.tokenEndOffset - myContext.lineStartPosition.offset);
+    int counter = 0;
+    int startOffset = myContext.currentPosition.offset;
     while (myContext.currentPosition.offset < myContext.tokenEndOffset) {
-    //for (int i = myContext.startOffset; i < myContext.endOffset; i++) {
+      if (counter++ > limit) {
+        String editorInfo = myEditor instanceof EditorImpl ? ((EditorImpl)myEditor).dumpState() : myEditor.getClass().toString();
+        LogMessageEx.error(LOG, "Cycled soft wraps recalculation detected", String.format(
+          "Start recalculation offset: %d, visible area width: %d, calculation context: %s, editor info: %s",
+          startOffset, myVisibleAreaWidth, myContext, editorInfo));
+        for (int i = myContext.currentPosition.offset; i < myContext.tokenEndOffset; i++) {
+          char c = myContext.text.charAt(i);
+          if (c == '\n') {
+            myContext.onNewLine();
+          }
+          else {
+            myContext.onNonLineFeedSymbol(c);
+          }
+        }
+        return;
+      }
       int offset = myContext.currentPosition.offset;
       if (offset > myContext.rangeEndOffset) {
         return;
       }
-      
+
       if (myContext.delayedSoftWrap != null && myContext.delayedSoftWrap.getStart() == offset) {
         processSoftWrap(myContext.delayedSoftWrap);
         myContext.delayedSoftWrap = null;
@@ -442,7 +460,7 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
         createSoftWrapIfPossible();
         continue;
       }
-      
+
       int newX = offsetToX(offset, c);
       if (myContext.exceedsVisualEdge(newX) && myContext.delayedSoftWrap == null) {
         createSoftWrapIfPossible();
@@ -1118,6 +1136,14 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
     public int            fontType;
     public boolean        notifyListenersOnLineStartPosition;
     public boolean        skipToLineEnd;
+
+    @Override
+    public String toString() {
+      return "reserved width: " + reservedWidthInPixels + ", soft wrap start offset: " + softWrapStartOffset + ", range end offset: "
+             + rangeEndOffset + ", token offsets: [" + tokenStartOffset + "; " + tokenEndOffset + "], font type: " + fontType
+             + ", skip to line end: " + skipToLineEnd + ", delayed soft wrap: " + delayedSoftWrap + ", current position: "+ currentPosition
+             + "line start position: " + lineStartPosition;
+    }
 
     public void reset() {
       text = null;

@@ -509,6 +509,11 @@ public class ExtractMethodProcessor implements MatchProvider {
       myVariableDatum[i] = myInputVariables.getInputVariables().get(i);
     }
   }
+  
+  @TestOnly
+  public void doNotPassParameter(int i) {
+    myVariableDatum[i].passAsParameter = false;
+  }
 
   /**
    * Invoked in command and in atomic action
@@ -760,6 +765,7 @@ public class ExtractMethodProcessor implements MatchProvider {
 
     for (int i = 0, length = myVariableDatum.length; i < length; i++) {
       ParameterTablePanel.VariableData data = myVariableDatum[i];
+      if (!data.passAsParameter) continue;
       final PsiVariable variable = data.variable;
       final PsiParameter psiParameter = newMethod.getParameterList().getParameters()[i];
       if (!TypeConversionUtil.isAssignable(variable.getType(), psiParameter.getType())) {

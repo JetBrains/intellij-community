@@ -21,9 +21,12 @@ import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.dnd.DnDNativeTarget;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.AnActionButtonRunnable;
+import com.intellij.ui.CaptionPanel;
 import com.intellij.ui.ToolbarDecorator;
+import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xdebugger.XDebugSession;
@@ -92,6 +95,10 @@ public class XWatchesView extends XDebugViewBase implements DnDNativeTarget {
         executeAction(XDebuggerActions.XREMOVE_WATCH);
       }
     });
+    CustomLineBorder border = new CustomLineBorder(CaptionPanel.CNT_ACTIVE_COLOR,
+                                                   SystemInfo.isMac ? 1 : 0, 0,
+                                                   SystemInfo.isMac ? 0 : 1, 0);
+    decorator.setToolbarBorder(border);
     myDecoratedPanel = decorator.createPanel();
     myDecoratedPanel.setBorder(null);
 

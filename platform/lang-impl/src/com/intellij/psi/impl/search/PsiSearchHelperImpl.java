@@ -298,8 +298,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
               public void run() {
                 try {
                   if (myManager.getProject().isDisposed()) throw new ProcessCanceledException();
-                  PsiElement[] psiRoots = file.getPsiRoots();
-                  Set<PsiElement> processed = new HashSet<PsiElement>(psiRoots.length * 2, (float)0.5);
+                  List<PsiFile> psiRoots = file.getViewProvider().getAllFiles();
+                  Set<PsiElement> processed = new HashSet<PsiElement>(psiRoots.size() * 2, (float)0.5);
                   for (PsiElement psiRoot : psiRoots) {
                     if (progress != null) progress.checkCanceled();
                     if (!processed.add(psiRoot)) continue;

@@ -62,24 +62,24 @@ public class GrIntroduceValidatorEngine implements GrIntroduceHandlerBase.Valida
   private MultiMap<PsiElement, String> isOKImpl(String varName, boolean replaceAllOccurrences) {
     PsiElement firstOccurence;
     if (replaceAllOccurrences) {
-      if (myContext.occurrences.length > 0) {
-        GroovyRefactoringUtil.sortOccurrences(myContext.occurrences);
-        firstOccurence = myContext.occurrences[0];
+      if (myContext.getOccurrences().length > 0) {
+        GroovyRefactoringUtil.sortOccurrences(myContext.getOccurrences());
+        firstOccurence = myContext.getOccurrences()[0];
       }
       else {
-        firstOccurence = myContext.place;
+        firstOccurence = myContext.getPlace();
       }
     }
     else {
-      firstOccurence = myContext.expression;
+      firstOccurence = myContext.getExpression();
     }
     final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
     assert varName != null;
 
     final int offset = firstOccurence.getTextRange().getStartOffset();
-    validateOccurrencesDown(myContext.scope, conflicts, varName, offset);
-    if (!(myContext.scope instanceof GroovyFileBase)) {
-      validateVariableOccurrencesUp(myContext.scope, conflicts, varName, offset);
+    validateOccurrencesDown(myContext.getScope(), conflicts, varName, offset);
+    if (!(myContext.getScope() instanceof GroovyFileBase)) {
+      validateVariableOccurrencesUp(myContext.getScope(), conflicts, varName, offset);
     }
     return conflicts;
   }
@@ -186,6 +186,6 @@ public class GrIntroduceValidatorEngine implements GrIntroduceHandlerBase.Valida
   }
 
   public Project getProject() {
-    return myContext.project;
+    return myContext.getProject();
   }
 }

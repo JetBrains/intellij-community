@@ -44,6 +44,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import gnu.trove.TObjectObjectProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -409,10 +410,10 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
   }
 
   private class IndexState {
-    final Map<VirtualFile, Set<String>> myExcludeRootsMap = new THashMap<VirtualFile, Set<String>>();
+    final THashMap<VirtualFile, Set<String>> myExcludeRootsMap = new THashMap<VirtualFile, Set<String>>();
     final Set<VirtualFile> myProjectExcludeRoots = new THashSet<VirtualFile>();
     final Map<VirtualFile, DirectoryInfo> myDirToInfoMap = new THashMap<VirtualFile, DirectoryInfo>();
-    final Map<String, List<VirtualFile>> myPackageNameToDirsMap = new THashMap<String, List<VirtualFile>>();
+    final THashMap<String, List<VirtualFile>> myPackageNameToDirsMap = new THashMap<String, List<VirtualFile>>();
     final Map<VirtualFile, String> myDirToPackageName = new THashMap<VirtualFile, String>();
 
     public IndexState() {
@@ -864,7 +865,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
       while (true) {
         Set<String> set = map.get(file);
         if (set == null) {
-          set = new HashSet<String>();
+          set = new THashSet<String>();
           map.put(file, set);
         }
         set.add(value);
@@ -887,18 +888,26 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     }
 
     public IndexState copy() {
-      IndexState copy = new IndexState();
+      final IndexState copy = new IndexState();
 
-      for (Map.Entry<VirtualFile, Set<String>> entry : myExcludeRootsMap.entrySet()) {
-        copy.myExcludeRootsMap.put(entry.getKey(), new HashSet<String>(entry.getValue()));
-      }
+      myExcludeRootsMap.forEachEntry(new TObjectObjectProcedure<VirtualFile, Set<String>>() {
+        @Override
+        public boolean execute(VirtualFile key, Set<String> value) {
+          copy.myExcludeRootsMap.put(key, new THashSet<String>(value));
+          return true;
+        }
+      });
 
       copy.myProjectExcludeRoots.addAll(myProjectExcludeRoots);
       copy.myDirToInfoMap.putAll(myDirToInfoMap);
 
-      for (Map.Entry<String, List<VirtualFile>> entry : myPackageNameToDirsMap.entrySet()) {
-        copy.myPackageNameToDirsMap.put(entry.getKey(), new SmartList<VirtualFile>(entry.getValue()));
-      }
+      myPackageNameToDirsMap.forEachEntry(new TObjectObjectProcedure<String, List<VirtualFile>>() {
+        @Override
+        public boolean execute(String key, List<VirtualFile> value) {
+          copy.myPackageNameToDirsMap.put(key, new SmartList<VirtualFile>(value));
+          return true;
+        }
+      });
 
       copy.myDirToPackageName.putAll(myDirToPackageName);
 

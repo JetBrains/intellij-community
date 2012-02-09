@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -906,7 +906,7 @@ public class Messages {
       for (int i = 0; i < myOptions.length; i++) {
         String option = myOptions[i];
         final int exitCode = i;
-        actions[i] = new AbstractAction(option) {
+        actions[i] = new AbstractAction(UIUtil.replaceMnemonicAmpersand(option)) {
           public void actionPerformed(ActionEvent e) {
             close(exitCode, true);
           }
@@ -1011,7 +1011,7 @@ public class Messages {
       messageComponent.setCaretPosition(0);
     }
 
-    if (UIUtil.isUnderNimbusLookAndFeel() || UIUtil.isUnderGTKLookAndFeel()) {
+    if (UIUtil.isUnderNimbusLookAndFeel()) {
       messageComponent.setOpaque(false);
       messageComponent.setBackground(UIUtil.TRANSPARENT_COLOR);
     }

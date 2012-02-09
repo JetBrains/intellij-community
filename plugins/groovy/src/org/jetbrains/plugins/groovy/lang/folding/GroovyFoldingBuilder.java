@@ -18,7 +18,7 @@ package org.jetbrains.plugins.groovy.lang.folding;
 
 import com.intellij.codeInsight.folding.JavaCodeFoldingSettings;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.folding.FoldingBuilder;
+import com.intellij.lang.folding.CustomFoldingBuilder;
 import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.FoldingGroup;
@@ -33,6 +33,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -43,40 +44,40 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
 /**
  * @author ilyas
  */
-public class GroovyFoldingBuilder implements FoldingBuilder, GroovyElementTypes, DumbAware {
+public class GroovyFoldingBuilder extends CustomFoldingBuilder implements GroovyElementTypes, DumbAware {
 
-  @NotNull
-  public FoldingDescriptor[] buildFoldRegions(@NotNull ASTNode node, @NotNull Document document) {
-    List<FoldingDescriptor> descriptors = new ArrayList<FoldingDescriptor>();
-    appendDescriptors(node.getPsi(), descriptors, new HashSet<PsiElement>());
-    return descriptors.toArray(new FoldingDescriptor[descriptors.size()]);
+  @Override
+  protected void buildLanguageFoldRegions(@NotNull List<FoldingDescriptor> descriptors,
+                                          @NotNull PsiElement root,
+                                          @NotNull Document document,
+                                          boolean quick) {
+    appendDescriptors(root, descriptors, new HashSet<PsiElement>());
   }
 
-  private static void appendDescriptors(PsiElement element, List<FoldingDescriptor> descriptors, Set<PsiElement> usedComments) {
+  private void appendDescriptors(PsiElement element, List<FoldingDescriptor> descriptors, Set<PsiElement> usedComments) {
     ASTNode node = element.getNode();
     if (node == null) return;
     IElementType type = node.getElementType();
 
-    if (BLOCK_SET.contains(type) && !isSingleClassBody(element) || type == CLOSABLE_BLOCK) {
+    if (BLOCK_SET.contains(type) && !isSingleHighLevelClassBody(element) || type == CLOSABLE_BLOCK) {
       if (isMultiline(element)) {
         descriptors.add(new FoldingDescriptor(node, node.getTextRange()));
       }
     }
     // comments
-    if ((type.equals(mML_COMMENT) || type.equals(GROOVY_DOC_COMMENT)) &&
+    if (((type.equals(mML_COMMENT) && !isCustomRegionStart(node)) || type.equals(GROOVY_DOC_COMMENT)) &&
         isMultiline(element) &&
         isWellEndedComment(element)) {
       descriptors.add(new FoldingDescriptor(node, node.getTextRange()));
     }
 
-    if (type.equals(mSL_COMMENT) && !usedComments.contains(element)) {
+    if (type.equals(mSL_COMMENT) && !isCustomRegionStart(node) && !usedComments.contains(element)) {
       usedComments.add(element);
       PsiElement end = null;
       for (PsiElement current = element.getNextSibling(); current != null; current = current.getNextSibling()) {
@@ -92,8 +93,8 @@ public class GroovyFoldingBuilder implements FoldingBuilder, GroovyElementTypes,
         break;
       }
       if (end != null) {
-        descriptors
-          .add(new FoldingDescriptor(element, new TextRange(element.getTextRange().getStartOffset(), end.getTextRange().getEndOffset())));
+        final TextRange range = new TextRange(element.getTextRange().getStartOffset(), end.getTextRange().getEndOffset());
+        descriptors.add(new FoldingDescriptor(element, range));
       }
     }
 
@@ -106,24 +107,21 @@ public class GroovyFoldingBuilder implements FoldingBuilder, GroovyElementTypes,
     }
 
     if (element instanceof GroovyFile) {
-      GroovyFile file = (GroovyFile)element;
-      addFoldingsForImports(descriptors, file);
+      processImports(descriptors, ((GroovyFile)element).getImportStatements());
     }
   }
 
-  private static boolean isSingleClassBody(PsiElement element) {
-    if (element instanceof GrTypeDefinitionBody) {
-      final PsiElement parent = element.getParent();
-      if (parent instanceof GrTypeDefinition &&
-          !((GrTypeDefinition)parent).isAnonymous() &&
-          ((GrTypeDefinition)parent).getContainingClass() == null) {
-        final PsiFile file = element.getContainingFile();
-        if (file instanceof GroovyFile) {
-          return ((GroovyFile)file).getClasses().length == 1;
-        }
-      }
-    }
-    return false;
+  private static boolean isSingleHighLevelClassBody(PsiElement element) {
+    if (!(element instanceof GrTypeDefinitionBody)) return false;
+
+    final PsiElement parent = element.getParent();
+    if (!(parent instanceof GrTypeDefinition)) return false;
+
+    final GrTypeDefinition clazz = (GrTypeDefinition)parent;
+    if (clazz.isAnonymous() || clazz.getContainingClass() != null) return false;
+
+    final PsiFile file = element.getContainingFile();
+    return file instanceof GroovyFile && ((GroovyFile)file).getClasses().length == 1;
   }
 
   private static void addFoldingForStrings(List<FoldingDescriptor> descriptors, ASTNode node) {
@@ -184,28 +182,27 @@ public class GroovyFoldingBuilder implements FoldingBuilder, GroovyElementTypes,
     }
   }
 
-  private static void addFoldingsForImports(final List<FoldingDescriptor> descriptors, final GroovyFile file) {
-    final GrImportStatement[] statements = file.getImportStatements();
-    if (statements.length > 1) {
-      PsiElement first = statements[0];
-      while (first != null) {
-        PsiElement marker = first;
-        PsiElement next = first.getNextSibling();
-        while (next instanceof GrImportStatement || next instanceof LeafPsiElement) {
-          if (next instanceof GrImportStatement) marker = next;
-          next = next.getNextSibling();
-        }
-        if (marker != first) {
-          int start = first.getTextRange().getStartOffset();
-          int end = marker.getTextRange().getEndOffset();
-          int tail = "import ".length();
-          if (start + tail < end) {
-            descriptors.add(new FoldingDescriptor(first.getNode(), new TextRange(start + tail, end)));
-          }
-        }
-        while (!(next instanceof GrImportStatement) && next != null) next = next.getNextSibling();
-        first = next;
+  private static void processImports(final List<FoldingDescriptor> descriptors, GrImportStatement[] imports) {
+    if (imports.length < 2) return;
+
+    PsiElement first = imports[0];
+    while (first != null) {
+      PsiElement marker = first;
+      PsiElement next = first.getNextSibling();
+      while (next instanceof GrImportStatement || next instanceof LeafPsiElement) {
+        if (next instanceof GrImportStatement) marker = next;
+        next = next.getNextSibling();
       }
+      if (marker != first) {
+        int start = first.getTextRange().getStartOffset();
+        int end = marker.getTextRange().getEndOffset();
+        int tail = "import ".length();
+        if (start + tail < end) {
+          descriptors.add(new FoldingDescriptor(first.getNode(), new TextRange(start + tail, end)));
+        }
+      }
+      while (!(next instanceof GrImportStatement) && next != null) next = next.getNextSibling();
+      first = next;
     }
   }
 
@@ -213,31 +210,13 @@ public class GroovyFoldingBuilder implements FoldingBuilder, GroovyElementTypes,
     return  element.getText().endsWith("*/");
   }
 
-  private static boolean isWellEndedString(PsiElement element) {
-    final String text = element.getText();
-
-    if (!text.endsWith("'''") && !text.endsWith("\"\"\"") && !text.endsWith("/") && !text.endsWith("/$")) return false;
-
-
-    final IElementType type = element.getNode().getElementType();
-    if (TokenSets.STRING_LITERAL_SET.contains(type)) return true;
-
-    final PsiElement lastChild = element.getLastChild();
-    if (lastChild == null) return false;
-
-    final IElementType lastType = lastChild.getNode().getElementType();
-    if (type == GSTRING) return lastType == mGSTRING_END;
-    if (type == REGEX) return lastType == mREGEX_END || lastChild == mDOLLAR_SLASH_REGEX_END;
-
-    return false;
-  }
-
   private static boolean isMultiline(PsiElement element) {
     String text = element.getText();
     return text.contains("\n") || text.contains("\r") || text.contains("\r\n");
   }
 
-  public String getPlaceholderText(@NotNull ASTNode node) {
+  @Override
+  protected String getLanguagePlaceholderText(@NotNull ASTNode node, @NotNull TextRange range) {
     final IElementType elemType = node.getElementType();
     if (BLOCK_SET.contains(elemType) || elemType == CLOSABLE_BLOCK) {
       return "{...}";
@@ -259,7 +238,8 @@ public class GroovyFoldingBuilder implements FoldingBuilder, GroovyElementTypes,
     return null;
   }
 
-  public boolean isCollapsedByDefault(@NotNull ASTNode node) {
+  @Override
+  protected boolean isRegionCollapsedByDefault(@NotNull ASTNode node) {
     final JavaCodeFoldingSettings settings = JavaCodeFoldingSettings.getInstance();
     if ( node.getElementType() == IMPORT_STATEMENT ){
       return settings.isCollapseImports();
@@ -301,6 +281,17 @@ public class GroovyFoldingBuilder implements FoldingBuilder, GroovyElementTypes,
             node.getElementType().equals(GSTRING) ||
             node.getElementType().equals(REGEX)) &&
            isMultiline(node.getPsi()) &&
-           isWellEndedString(node.getPsi());
+           GrStringUtil.isWellEndedString(node.getPsi());
+  }
+
+  @Override
+  protected boolean isCustomFoldingCandidate(ASTNode node) {
+    return node.getElementType() == GroovyTokenTypes.mSL_COMMENT;
+  }
+
+  @Override
+  protected boolean isCustomFoldingRoot(ASTNode node) {
+    IElementType nodeType = node.getElementType();
+    return nodeType == GroovyElementTypes.CLASS_DEFINITION || nodeType == GroovyElementTypes.OPEN_BLOCK;
   }
 }

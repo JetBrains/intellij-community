@@ -386,7 +386,7 @@ public class FindInProjectUtil {
         public boolean processFile(VirtualFile virtualFile) {
           if (!virtualFile.isDirectory() &&
               (fileMaskRegExp == null || fileMaskRegExp.matcher(virtualFile.getName()).matches()) &&
-              (customScope == null || customScope.contains(virtualFile))) {
+              customScope.contains(virtualFile)) {
             final PsiFile psiFile = psiManager.findFile(virtualFile);
             if (psiFile != null && !filesForFastWordSearch.contains(psiFile)) {
               myFiles.add(psiFile);
@@ -403,10 +403,10 @@ public class FindInProjectUtil {
 
       if (psiDirectory == null) {
         boolean success = fileIndex.iterateContent(iterator);
-        if (success && customScope instanceof GlobalSearchScope && ((GlobalSearchScope)customScope).isSearchInLibraries()) {
+        if (success && customScope.isSearchInLibraries()) {
           OrderEnumerator enumerator = module == null ? OrderEnumerator.orderEntries(project) : OrderEnumerator.orderEntries(module);
           final VirtualFile[] librarySources = enumerator.withoutModuleSourceEntries().withoutDepModules().getSourceRoots();
-          iterateAll(librarySources, (GlobalSearchScope)customScope, iterator);
+          iterateAll(librarySources, customScope, iterator);
         }
       }
       else {
@@ -440,10 +440,13 @@ public class FindInProjectUtil {
     return true;
   }
 
-  @Nullable
+  @NotNull
   private static GlobalSearchScope toGlobal(Project project, @Nullable SearchScope scope) {
-    if (scope instanceof GlobalSearchScope || scope == null) {
+    if (scope instanceof GlobalSearchScope) {
       return (GlobalSearchScope)scope;
+    }
+    if (scope == null) {
+      return GlobalSearchScope.projectScope(project);
     }
     Set<VirtualFile> files = new HashSet<VirtualFile>();
     for (PsiElement element : ((LocalSearchScope)scope).getScope()) {
@@ -472,7 +475,7 @@ public class FindInProjectUtil {
                                          ? moduleContentScope(module)
                                          : customScope instanceof GlobalSearchScope
                                            ? (GlobalSearchScope)customScope
-                                           : GlobalSearchScope.projectScope(project);
+                                           : toGlobal(project, customScope);
 
     Set<Integer> keys = new THashSet<Integer>(30);
     Set<PsiFile> resultFiles = new THashSet<PsiFile>();

@@ -400,7 +400,7 @@ public class SearchUtil {
                                      final SimpleColoredComponent textRenderer) {
     if (text == null) return;
     if (filter == null || filter.length() == 0) {
-      textRenderer.append(text, new SimpleTextAttributes(style, foreground));
+      textRenderer.append(text, new SimpleTextAttributes(background, foreground, Color.RED, style));
     }
     else { //markup
       final HashSet<String> quoted = new HashSet<String>();

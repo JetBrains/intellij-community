@@ -113,7 +113,6 @@ public class AndroidUtils {
   public static final Icon RESTART_LOGCAT_ICON = IconLoader.getIcon("/icons/restartLogcat.png");
   public static final String NAMESPACE_KEY = "android";
   public static final String SYSTEM_RESOURCE_PACKAGE = "android";
-  public static final String R_JAVA_FILENAME = "R.java";
   public static final String ANDROID_PACKAGE = "android";
   public static final String VIEW_CLASS_NAME = ANDROID_PACKAGE + ".view.View";
   public static final String APPLICATION_CLASS_NAME = "android.app.Application";
@@ -148,7 +147,6 @@ public class AndroidUtils {
   public static final String PROVIDER_CLASS_NAME = "android.content.ContentProvider";
   @NonNls public static final String DEFAULT_PROPERTIES_FILE_NAME = "default.properties";
   @NonNls public static final String PNG_EXTENSION = "png";
-  @NonNls public static final Object MANIFEST_JAVA_FILE_NAME = "Manifest.java";
 
   private AndroidUtils() {
   }
@@ -259,7 +257,7 @@ public class AndroidUtils {
   }
 
   public static boolean isRClassFile(@NotNull AndroidFacet facet, @NotNull PsiFile file) {
-    if (file.getName().equals(R_JAVA_FILENAME) && file instanceof PsiJavaFile) {
+    if (file.getName().equals(AndroidCommonUtils.R_JAVA_FILENAME) && file instanceof PsiJavaFile) {
       PsiJavaFile javaFile = (PsiJavaFile)file;
       Manifest manifest = facet.getManifest();
       if (manifest == null) return false;
@@ -959,20 +957,6 @@ public class AndroidUtils {
       xmlFiles[i] = (XmlFile)psiFile;
     }
     return xmlFiles;
-  }
-
-  public static String command2string(@NotNull Collection<String> command) {
-    final StringBuilder builder = new StringBuilder();
-    for (Iterator<String> it = command.iterator(); it.hasNext(); ) {
-      String s = it.next();
-      builder.append('[');
-      builder.append(s);
-      builder.append(']');
-      if (it.hasNext()) {
-        builder.append(' ');
-      }
-    }
-    return builder.toString();
   }
 
   @Nullable

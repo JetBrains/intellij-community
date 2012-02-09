@@ -27,11 +27,12 @@ public class CompileServerClient extends SimpleProtobufClient<JpsServerResponseH
   }
 
   @NotNull
-  public RequestFuture sendCompileRequest(boolean isMake, String projectId, Collection<String> modules, Collection<String> paths, JpsServerResponseHandler handler) throws Exception{
+  public RequestFuture sendCompileRequest(boolean isMake, String projectId, Collection<String> modules, final Collection<String> artifacts,
+                                          Collection<String> paths, JpsServerResponseHandler handler) throws Exception{
     checkConnected();
     final JpsRemoteProto.Message.Request request = isMake?
-      ProtoUtil.createMakeRequest(projectId, modules) :
-      ProtoUtil.createForceCompileRequest(projectId, modules, paths);
+      ProtoUtil.createMakeRequest(projectId, modules, artifacts) :
+      ProtoUtil.createForceCompileRequest(projectId, modules, artifacts, paths);
     return sendRequest(request, handler);
   }
 

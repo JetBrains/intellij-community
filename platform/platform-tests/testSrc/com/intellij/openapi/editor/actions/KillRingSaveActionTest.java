@@ -29,7 +29,7 @@ import java.awt.datatransfer.Transferable;
 public class KillRingSaveActionTest extends AbstractRegionToKillRingTest {
 
   protected void doTest(@NotNull String text) throws Exception {
-    configureFromFileText(getTestName(false) + ".java", text);
+    configureFromFileText(getTestName(false) + ".txt", text);
     Pair<String,String> parseResult = parse();
     String textBefore = myEditor.getDocument().getText();
     killRingSave();

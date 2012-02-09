@@ -25,9 +25,11 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.ui.popup.PopupFactoryImpl;
+import com.intellij.ui.popup.WizardPopup;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import git4idea.GitVcs;
 import git4idea.config.GitVcsSettings;
@@ -86,10 +88,22 @@ class GitBranchPopup  {
 
     String title = createPopupTitle(currentRepository);
 
-    myPopup = (ListPopupImpl) JBPopupFactory.getInstance().createActionGroupPopup(
+    myPopup = new PopupFactoryImpl.ActionGroupPopup(
       title, createActions(),
       SimpleDataContext.getProjectContext(project),
-      JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true);
+      false, false, false, true, null, -1, null, null) {
+      @Override
+      protected WizardPopup createPopup(WizardPopup parent, PopupStep step, Object parentValue) {
+        WizardPopup popup = super.createPopup(parent, step, parentValue);
+        if (parentValue instanceof PopupFactoryImpl.ActionItem) {
+          AnAction action = ((PopupFactoryImpl.ActionItem)parentValue).getAction();
+          if (action instanceof RootAction) {
+            popup.setAdText(((RootAction)action).getCaption());
+          }
+        }
+        return popup;
+      }
+    };
 
     initBranchSyncPolicyIfNotInitialized();
     setCurrentBranchInfo();
@@ -243,6 +257,11 @@ class GitBranchPopup  {
       return group.getChildren(e);
     }
 
+    @NotNull
+    public String getCaption() {
+      return "Current branch in " + GitUIUtil.getShortRepositoryName(myRepository) + ": " +
+             GitBranchUiUtil.getDisplayableBranchText(myRepository);
+    }
   }
 
 }

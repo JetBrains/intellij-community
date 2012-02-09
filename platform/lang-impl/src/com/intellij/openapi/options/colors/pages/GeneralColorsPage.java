@@ -58,7 +58,7 @@ public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSett
     "Code Inspections:\n" +
     "  <error>Error</error>\n" +
     "  <warning>Warning</warning>\n" +
-    "  <info>Info</info>\n" +
+    "  <weak_warning>Weak warning</weak_warning>\n" +
     "  <deprecated>Deprecated symbol</deprecated>\n" +
     "  <unused>Unused symbol</unused>\n"+
     "  <wrong_ref>Unknown symbol</wrong_ref>\n" +

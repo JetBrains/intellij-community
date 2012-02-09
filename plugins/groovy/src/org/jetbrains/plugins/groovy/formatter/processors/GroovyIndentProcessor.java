@@ -22,10 +22,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.formatter.GroovyBlock;
-import org.jetbrains.plugins.groovy.lang.editor.actions.GroovyEditorActionUtil;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTag;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
@@ -50,6 +50,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
  */
 public abstract class GroovyIndentProcessor implements GroovyElementTypes {
   public static final int GDOC_COMMENT_INDENT = 1;
+  private static TokenSet GSTRING_TOKENS_INNER = TokenSet.create(mGSTRING_BEGIN,mGSTRING_CONTENT,mGSTRING_END,mDOLLAR);
 
   /**
    * Calculates indent, based on code style, between parent block and child node
@@ -72,14 +73,12 @@ public abstract class GroovyIndentProcessor implements GroovyElementTypes {
       return Indent.getContinuationIndent();
     }
 
-    if (GroovyEditorActionUtil.GSTRING_TOKENS_INNER.contains(child.getElementType()) &&
-        mGSTRING_BEGIN != child.getElementType()) {
+    if (GSTRING_TOKENS_INNER.contains(child.getElementType()) && mGSTRING_BEGIN != child.getElementType()) {
       return Indent.getAbsoluteNoneIndent();
     }
 
     if (psiParent instanceof GrListOrMap) {
-      if (mLBRACK.equals(child.getElementType()) ||
-          mRBRACK.equals(child.getElementType())) {
+      if (mLBRACK.equals(child.getElementType()) || mRBRACK.equals(child.getElementType())) {
         return Indent.getNoneIndent();
       } else {
         return Indent.getContinuationWithoutFirstIndent();

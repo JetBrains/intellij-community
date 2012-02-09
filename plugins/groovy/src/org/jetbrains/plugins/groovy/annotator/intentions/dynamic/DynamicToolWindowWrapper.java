@@ -374,8 +374,6 @@ public class DynamicToolWindowWrapper {
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_F2, InputEvent.CTRL_MASK), JComponent.WHEN_FOCUSED);
 
-    myTreeTable.setAutoCreateRowSorter(true);
-
     myTreeTable.getTree().setShowsRootHandles(true);
     myTreeTable.getTableHeader().setReorderingAllowed(false);
 

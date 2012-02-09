@@ -2,6 +2,9 @@ package org.jetbrains.plugins.gradle.testutil;
 
 
 import org.jetbrains.plugins.gradle.diff.GradleLibraryDependencyPresenceChange
+import org.jetbrains.plugins.gradle.diff.GradleMismatchedLibraryPathChange
+import com.intellij.openapi.roots.libraries.Library
+import org.jetbrains.plugins.gradle.util.GradleUtil
 
 /**
  * @author Denis Zhdanov
@@ -17,10 +20,7 @@ public class ChangeBuilder extends BuilderSupport {
 
   @Override
   protected Object createNode(Object name) {
-    if (current == null) {
-      changes = []
-    }
-    changes
+    createNode(name, [:])
   }
 
   @Override
@@ -28,13 +28,31 @@ public class ChangeBuilder extends BuilderSupport {
 
   @Override
   protected Object createNode(Object name, Map attributes) {
+    if (current == null) {
+      changes = []
+    }
     switch (name) {
       case "presence": return changes
       case "lib":
         changes.addAll attributes.gradle.collect { new GradleLibraryDependencyPresenceChange(it, null)}
         changes.addAll attributes.intellij.collect { new GradleLibraryDependencyPresenceChange(null, it)}
-        return
+        return changes
+      case "libraryConflict":
+        def library = attributes.entity
+        if (!library) {
+          throw new IllegalArgumentException("No entity is defined for the library conflict change. Known attributes: $attributes")
+        }
+        if (attributes.gradle) {
+          return register(new GradleMismatchedLibraryPathChange(library, attributes.gradle, attributes.intellij))
+        }
+        return library
+      case "binaryPath":
+        // Assuming that we're processing library binary path conflict here
+        register(new GradleMismatchedLibraryPathChange(
+          current as Library, toCanonicalPath(attributes.gradle), toCanonicalPath(attributes.intellij)
+        ))  
     }
+    changes
   }
 
   @Override
@@ -43,5 +61,14 @@ public class ChangeBuilder extends BuilderSupport {
   @Override
   protected Object postNodeCompletion(Object parent, Object node) {
     parent == null ? changes.toSet() : node
+  }
+
+  protected def register(change) {
+    changes << change
+    change
+  }
+
+  private def toCanonicalPath(String path) {
+    path ? GradleUtil.toCanonicalPath(path) : path
   }
 }

@@ -19,6 +19,9 @@ public interface RemoteGradleProgressNotificationManager extends Remote {
   
   RemoteGradleProgressNotificationManager NULL_OBJECT = new RemoteGradleProgressNotificationManager() {
     @Override
+    public void onQueued(@NotNull GradleTaskId id) throws RemoteException {
+    }
+    @Override
     public void onStart(@NotNull GradleTaskId id) {
     }
     @Override
@@ -28,7 +31,9 @@ public interface RemoteGradleProgressNotificationManager extends Remote {
     public void onEnd(@NotNull GradleTaskId id) {
     }
   };
-
+  
+  void onQueued(@NotNull GradleTaskId id) throws RemoteException;
+  
   void onStart(@NotNull GradleTaskId id) throws RemoteException;
 
   void onStatusChange(@NotNull GradleTaskNotificationEvent event) throws RemoteException;

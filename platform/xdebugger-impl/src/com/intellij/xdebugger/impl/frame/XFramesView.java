@@ -24,7 +24,9 @@ import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.ui.CaptionPanel;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.containers.HashMap;
 import com.intellij.xdebugger.XDebugSession;
@@ -85,6 +87,8 @@ public class XFramesView extends XDebugViewBase {
     myThreadComboBox.addItemListener(new MyItemListener());
     final ActionToolbar toolbar = createToolbar();
     Wrapper threadsPanel = new Wrapper();
+    CustomLineBorder border = new CustomLineBorder(CaptionPanel.CNT_ACTIVE_COLOR, 0, 0, 1, 0);
+    threadsPanel.setBorder(border);
     threadsPanel.add(toolbar.getComponent(), BorderLayout.EAST);
     threadsPanel.add(myThreadComboBox, BorderLayout.CENTER);
     myMainPanel.add(threadsPanel, BorderLayout.NORTH);

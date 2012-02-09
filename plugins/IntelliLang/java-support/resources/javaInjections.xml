@@ -102,10 +102,12 @@
   <injection language="HQL" injector-id="java">
     <display-name>Session.createQuery (org.hibernate)</display-name>
     <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("createQuery").withParameters("java.lang.String").definedInClass("org.hibernate.Session"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("createQuery").withParameters("java.lang.String").definedInClass("org.hibernate.SharedSessionContract"))]]></place>
   </injection>
   <injection language="SQL" injector-id="java">
     <display-name>Session.createSQLQuery (org.hibernate)</display-name>
     <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("createSQLQuery").withParameters("java.lang.String").definedInClass("org.hibernate.Session"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("createSQLQuery").withParameters("java.lang.String").definedInClass("org.hibernate.SharedSessionContract"))]]></place>
   </injection>
 
   <injection language="SQL" injector-id="java">

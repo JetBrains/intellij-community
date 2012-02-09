@@ -23,6 +23,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.ElementBase;
 import com.intellij.psi.scope.DelegatingScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -63,6 +64,8 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+
+import static org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil.isImportToJavaOrJavax;
 
 /**
  * Implements all abstractions related to Groovy file
@@ -360,17 +363,13 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     PsiElement anchor = getAnchorToInsertImportAfter();
     final PsiElement result = addAfter(statement, anchor);
 
-    boolean isAliasedImport = false;
-    if (anchor instanceof GrImportStatement) {
-      isAliasedImport = !((GrImportStatement)anchor).isAliasedImport() && statement.isAliasedImport() ||
-                        ((GrImportStatement)anchor).isAliasedImport() && !statement.isAliasedImport();
-    }
-
     if (anchor != null) {
       int lineFeedCount = 0;
-      if (!(anchor instanceof GrImportStatement) || isAliasedImport) {
+
+      if (isAddLineFeed(statement, anchor)) {
         lineFeedCount++;
       }
+      
       final PsiElement prev = result.getPrevSibling();
       if (prev instanceof PsiWhiteSpace) {
         lineFeedCount += StringUtil.getOccurenceCount(prev.getText(), '\n');
@@ -392,6 +391,33 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
       }
     }
     return importStatement;
+  }
+
+  private static boolean isAddLineFeed(GrImportStatement statement, PsiElement anchor) {
+    if (!(anchor instanceof GrImportStatement)) {
+      return true;
+    }
+
+    final GrImportStatement _anchor = (GrImportStatement)anchor;
+
+    //aliases
+    if (statement.isAliasedImport() || _anchor.isAliasedImport()) {
+      return _anchor.isAliasedImport() ^ statement.isAliasedImport();
+    }
+
+    //static imports
+    if (CodeStyleSettingsManager.getSettings(statement.getProject()).LAYOUT_STATIC_IMPORTS_SEPARATELY) {
+      if (statement.isStatic() || _anchor.isStatic()) {
+        return statement.isStatic() ^ _anchor.isStatic();
+      }
+    }
+
+    //imports to std lib
+    if (isImportToJavaOrJavax(statement) || isImportToJavaOrJavax(_anchor)) {
+      return isImportToJavaOrJavax(statement) ^ isImportToJavaOrJavax(_anchor);
+    }
+
+    return false;
   }
 
   public boolean isScript() {

@@ -19,11 +19,13 @@ import com.intellij.codeInsight.lookup.*;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.ClassConditionKey;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
@@ -65,7 +67,16 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
   }
 
   private String maybeAddParentheses(String s) {
-    return myQualifier.getObject() instanceof PsiMethod ? s + "()" : s;
+    return getQualifierObject() instanceof PsiMethod ? s + "()" : s;
+  }
+
+  @Nullable
+  private Object getQualifierObject() {
+    Object qObject = myQualifier.getObject();
+    if (qObject instanceof ResolveResult) {
+      qObject = ((ResolveResult)qObject).getElement();
+    }
+    return qObject;
   }
 
   @Override
@@ -76,6 +87,10 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
     String name = maybeAddParentheses(qualifierPresentation.getItemText());
     final String qualifierText = myQualifier.as(CastingLookupElementDecorator.CLASS_CONDITION_KEY) != null ? "(" + name + ")" : name;
     presentation.setItemText(qualifierText + "." + presentation.getItemText());
+
+    if (getQualifierObject() instanceof PsiClass) {
+      presentation.setTailText(StringUtil.notNullize(presentation.getTailText()) + qualifierPresentation.getTailText());
+    }
   }
 
   @Override
@@ -99,7 +114,7 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
     CompletionUtil.emulateInsertion(getDelegate(), context.getTailOffset(), context);
   }
 
-  private static boolean shouldParenthesizeQualifier(final PsiFile file, final int startOffset, final int endOffset) {
+  protected boolean shouldParenthesizeQualifier(final PsiFile file, final int startOffset, final int endOffset) {
     PsiElement element = file.findElementAt(startOffset);
     if (element == null) {
       return false;

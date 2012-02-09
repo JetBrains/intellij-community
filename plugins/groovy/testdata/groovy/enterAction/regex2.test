@@ -1,0 +1,10 @@
+cl {
+  /a
+  b<caret>bc/
+}
+-----
+cl {
+  /a
+  b
+  <caret>bc/
+}

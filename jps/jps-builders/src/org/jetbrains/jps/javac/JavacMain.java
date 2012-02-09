@@ -18,6 +18,9 @@ public class JavacMain {
   private static final Set<String> FILTERED_OPTIONS = new HashSet<String>(Arrays.<String>asList(
     "-d", "-classpath", "-cp", "-bootclasspath"
   ));
+  private static final Set<String> FILTERED_SINGLE_OPTIONS = new HashSet<String>(Arrays.<String>asList(
+    "-verbose", "-proc:none"
+  ));
 
   public static boolean compile(Collection<String> options,
                                 final Collection<File> sources,
@@ -65,13 +68,22 @@ public class JavacMain {
       final JavaCompiler.CompilationTask task = compiler.getTask(
         out, fileManager, outConsumer, filterOptionList(options), null, fileManager.toJavaFileObjects(sources)
       );
-      //final JavacASTAnalyser analyzer = new JavacASTAnalyser();
+      //final JavacASTAnalyser analyzer = new JavacASTAnalyser(shouldSuppressAnnotationProcessing(options));
       //task.setProcessors(Collections.singleton(analyzer));
       return task.call();
     }
     finally {
       fileManager.close();
     }
+  }
+
+  private static boolean shouldSuppressAnnotationProcessing(final Collection<String> options) {
+    for (String option : options) {
+      if ("-proc:none".equals(option)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static Collection<String> filterOptionList(final Collection<String> options) {
@@ -86,7 +98,9 @@ public class JavacMain {
         continue;
       }
       if (!skip) {
-        result.add(option);
+        if (!FILTERED_SINGLE_OPTIONS.contains(option)) {
+          result.add(option);
+        }
       }
       skip = false;
     }

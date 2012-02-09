@@ -148,6 +148,7 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
           LocalFileSystem.getInstance().refreshAndFindFileByIoFile(target);
         }
         final CachedXmlDocumentSet fileCache = getFileCache(module);
+        DotProjectFileHelper.saveDotProjectFile(module, fileCache.getParent(EclipseXml.PROJECT_FILE));
         fileCache.delete(oldEmlName);
         fileCache.register(newName + EclipseXml.IDEA_SETTINGS_POSTFIX, ClasspathStorage.getModuleDir(module));
         fileCache.load(newName + EclipseXml.IDEA_SETTINGS_POSTFIX);

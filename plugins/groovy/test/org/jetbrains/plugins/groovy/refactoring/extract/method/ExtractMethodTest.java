@@ -37,7 +37,7 @@ public class ExtractMethodTest extends LightGroovyTestCase {
   private void doAntiTest(String errorMessage) throws Exception {
     GroovyExtractMethodHandler handler = configureFromText(readInput().get(0));
     try {
-      handler.invoke(getProject(), myFixture.getEditor(), myFixture.getFile());
+      handler.invoke(getProject(), myFixture.getEditor(), myFixture.getFile(), null);
       assertTrue(false);
     }
     catch (CommonRefactoringUtil.RefactoringErrorHintException e) {
@@ -52,7 +52,7 @@ public class ExtractMethodTest extends LightGroovyTestCase {
   private void doTest() {
     final List<String> data = readInput();
     GroovyExtractMethodHandler handler = configureFromText(data.get(0));
-    handler.invoke(getProject(), myFixture.getEditor(), myFixture.getFile());
+    handler.invoke(getProject(), myFixture.getEditor(), myFixture.getFile(), null);
     PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
     myFixture.checkResult(StringUtil.trimEnd(data.get(1), "\n"));
   }

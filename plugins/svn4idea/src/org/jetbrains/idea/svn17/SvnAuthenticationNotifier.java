@@ -178,7 +178,7 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
   @Override
   protected boolean onFirstNotification(AuthenticationRequest obj) {
     if (ProgressManager.getInstance().hasProgressIndicator()) {
-      return ask(obj, null);
+      return ask(obj, null);  // TODO
     } else {
       return false;
     }
@@ -247,12 +247,21 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
 
     private SVNURL myWcUrl;
     private boolean myOutsideCopies;
+    private boolean myForceSaving;
 
     public AuthenticationRequest(Project project, String kind, SVNURL url, String realm) {
       myProject = project;
       myKind = kind;
       myUrl = url;
       myRealm = realm;
+    }
+
+    public boolean isForceSaving() {
+      return myForceSaving;
+    }
+
+    public void setForceSaving(boolean forceSaving) {
+      myForceSaving = forceSaving;
     }
 
     public boolean isOutsideCopies() {

@@ -3,6 +3,7 @@ package org.jetbrains.jps.incremental;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.io.MappingFailedException;
 import com.intellij.util.io.PersistentEnumerator;
 import org.jetbrains.jps.*;
 import org.jetbrains.jps.api.CanceledStatus;
@@ -75,11 +76,14 @@ public class IncProjectBuilder {
         runBuild(context);
       }
       catch (ProjectBuildException e) {
-        if (e.getCause() instanceof PersistentEnumerator.CorruptedException) {
+        final Throwable cause = e.getCause();
+        if (cause instanceof PersistentEnumerator.CorruptedException || cause instanceof MappingFailedException || cause instanceof IOException) {
           // force rebuild
-          myMessageDispatcher.processMessage(new CompilerMessage(COMPILE_SERVER_NAME, BuildMessage.Kind.INFO,
-                                                                 "Internal caches are corrupted or have outdated format, forcing project rebuild: " +
-                                                                 e.getMessage()));
+          myMessageDispatcher.processMessage(new CompilerMessage(
+            COMPILE_SERVER_NAME, BuildMessage.Kind.INFO,
+            "Internal caches are corrupted or have outdated format, forcing project rebuild: " +
+            e.getMessage())
+          );
           flushContext(context);
           context = createContext(new AllProjectScope(scope.getProject(), Collections.<Artifact>emptySet(), true), false, true);
           runBuild(context);
@@ -410,7 +414,7 @@ public class IncProjectBuilder {
           nextPassRequired = true;
         }
         else if (buildResult == ModuleLevelBuilder.ExitCode.CHUNK_REBUILD_REQUIRED) {
-          if (!rebuildFromScratchRequested) {
+          if (!rebuildFromScratchRequested && !context.isProjectRebuild()) {
             // allow rebuild from scratch only once per chunk
             rebuildFromScratchRequested = true;
             try {
@@ -458,7 +462,7 @@ public class IncProjectBuilder {
         private final Map<Module, SourceToOutputMapping> storageMap = new HashMap<Module, SourceToOutputMapping>();
 
         @Override
-        public boolean apply(Module module, File file, String sourceRoot) throws Exception {
+        public boolean apply(Module module, File file, String sourceRoot) throws IOException {
           SourceToOutputMapping srcToOut = storageMap.get(module);
           if (srcToOut == null) {
             srcToOut = dataManager.getSourceToOutputMap(module.getName().toLowerCase(Locale.US), compilingTests);

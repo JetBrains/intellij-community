@@ -20,6 +20,8 @@
  */
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.JavaSdk;
@@ -31,6 +33,10 @@ import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.ui.OrderRootTypeUIFactory;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.AnActionButton;
+import com.intellij.ui.AnActionButtonUpdater;
+import com.intellij.ui.ToolbarDecorator;
+import com.intellij.util.PlatformIcons;
 
 import javax.swing.*;
 
@@ -62,12 +68,24 @@ public class JavadocOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
     }
 
     @Override
-    protected boolean isShowUrlButton() {
-      return true;
+    protected void addToolbarButtons(ToolbarDecorator toolbarDecorator) {
+      AnActionButton specifyUrlButton = new AnActionButton(ProjectBundle.message("sdk.paths.specify.url.button"), PlatformIcons.TABLE_URL) {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          onSpecifyUrlButtonClicked();
+        }
+      };
+      specifyUrlButton.setShortcut(CustomShortcutSet.fromString("alt S"));
+      specifyUrlButton.addCustomUpdater(new AnActionButtonUpdater() {
+        @Override
+        public boolean isEnabled(AnActionEvent e) {
+          return myEnabled && !isUrlInserted();
+        }
+      });
+      toolbarDecorator.addExtraAction(specifyUrlButton);
     }
 
-    @Override
-    protected void onSpecifyUrlButtonClicked() {
+    private void onSpecifyUrlButtonClicked() {
       VirtualFile virtualFile  = Util.showSpecifyJavadocUrlDialog(myPanel, getInitialValue());
       if(virtualFile != null){
         addElement(virtualFile);

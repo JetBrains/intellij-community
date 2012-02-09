@@ -17,7 +17,7 @@ public class ProjectTimestamps {
   private final String myProjectName;
   private final TimestampStorage myTimestamps;
 
-  public ProjectTimestamps(String projectName) throws Exception {
+  public ProjectTimestamps(String projectName) throws IOException {
     myProjectName = projectName;
     myTimestamps = new TimestampStorage(new File(getTimestampsRoot(projectName), "data"));
   }

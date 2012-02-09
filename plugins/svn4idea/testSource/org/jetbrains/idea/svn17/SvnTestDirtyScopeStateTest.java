@@ -1,5 +1,6 @@
 package org.jetbrains.idea.svn17;
 
+import com.intellij.idea.Bombed;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
@@ -12,6 +13,7 @@ import junit.framework.Assert;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.List;
 
@@ -23,6 +25,7 @@ public class SvnTestDirtyScopeStateTest extends SvnTestCase {
     myInitChangeListManager = false;
   }
 
+  @Bombed(user = "irengrig", year = 2012, month = Calendar.FEBRUARY, day = 15)
   @Test
   public void testWhatIsDirty() throws Exception {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);

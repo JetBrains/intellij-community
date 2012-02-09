@@ -72,6 +72,9 @@
   <extensionPoint name="implicitUsageProvider"
                   interface="com.intellij.codeInsight.daemon.ImplicitUsageProvider"/>
 
+  <extensionPoint name="templateParameterTraversalPolicy"
+                  interface="com.intellij.codeInsight.completion.TemplateParameterTraversalPolicy"/>
+
   <!-- com.intellij.psi.PsiElement -->
   <extensionPoint name="cantBeStatic"
                   interface="com.intellij.openapi.util.Condition"/>

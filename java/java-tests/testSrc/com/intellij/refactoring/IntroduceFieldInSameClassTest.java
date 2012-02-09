@@ -71,6 +71,12 @@ public class IntroduceFieldInSameClassTest extends LightCodeInsightTestCase {
   }
   //-------------------------------------------------------------------------------------------------
 
+  public void testUnresolvedReferenceToLocalVar() throws Exception {
+    configureByFile("/refactoring/introduceField/beforeUnresolvedReferenceToLocalVar.java");
+    performRefactoring(BaseExpressionToFieldHandler.InitializationPlace.IN_CURRENT_METHOD, false);
+    checkResultByFile("/refactoring/introduceField/afterUnresolvedReferenceToLocalVar.java");
+  }
+  
   private static void performRefactoring(final BaseExpressionToFieldHandler.InitializationPlace initializationPlace, final boolean declareStatic) {
     new MockIntroduceFieldHandler(initializationPlace, declareStatic).invoke(getProject(), myEditor, myFile, null);
   }

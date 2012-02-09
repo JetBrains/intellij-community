@@ -23,11 +23,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
+
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mGSTRING_LITERAL;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSTRING_LITERAL;
 
 /**
  * @author ilyas
@@ -66,7 +67,7 @@ public class GroovyEditorActionUtil {
     if (child != null && child.getNode() != null) {
       ASTNode node = child.getNode();
       assert node != null;
-      return node.getElementType() == GroovyTokenTypes.mSTRING_LITERAL;
+      return node.getElementType() == mSTRING_LITERAL;
     }
     return false;
   }
@@ -76,23 +77,8 @@ public class GroovyEditorActionUtil {
     if (child != null && child.getNode() != null) {
       ASTNode node = child.getNode();
       assert node != null;
-      return node.getElementType() == GroovyTokenTypes.mGSTRING_LITERAL;
+      return node.getElementType() == mGSTRING_LITERAL;
     }
     return false;
   }
-
-  public static TokenSet GSTRING_TOKENS = TokenSet.create(
-      GroovyTokenTypes.mGSTRING_BEGIN,
-      GroovyTokenTypes.mGSTRING_CONTENT,
-      GroovyTokenTypes.mGSTRING_END,
-      GroovyTokenTypes.mGSTRING_LITERAL,
-      GroovyTokenTypes.mDOLLAR
-  );
-
-  public static TokenSet GSTRING_TOKENS_INNER = TokenSet.create(
-      GroovyTokenTypes.mGSTRING_BEGIN,
-      GroovyTokenTypes.mGSTRING_CONTENT,
-      GroovyTokenTypes.mGSTRING_END,
-      GroovyTokenTypes.mDOLLAR
-  );
 }

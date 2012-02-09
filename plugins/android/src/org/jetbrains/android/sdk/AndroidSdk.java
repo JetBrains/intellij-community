@@ -18,10 +18,8 @@ package org.jetbrains.android.sdk;
 
 import com.android.ddmlib.AndroidDebugBridge;
 import com.android.ddmlib.DdmPreferences;
-import com.android.sdklib.IAndroidTarget;
-import com.android.sdklib.ISdkLog;
-import com.android.sdklib.SdkConstants;
-import com.android.sdklib.SdkManager;
+import com.android.sdklib.*;
+import com.android.sdklib.internal.project.ProjectProperties;
 import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -33,8 +31,11 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.containers.HashMap;
+import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.android.actions.AndroidEnableDdmsAction;
+import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.AndroidUtils;
+import org.jetbrains.android.util.BufferingFileWrapper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,13 +46,9 @@ import java.util.Map;
 import static org.jetbrains.android.util.AndroidUtils.ADB;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Eugene.Kudelevsky
- * Date: Jun 2, 2009
- * Time: 2:35:49 PM
- * To change this template use File | Settings | File Templates.
+ * @author Eugene.Kudelevsky
  */
-public abstract class AndroidSdk {
+public class AndroidSdk {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.sdk.AndroidSdk");
 
   private static volatile boolean myDdmLibInitialized = false;
@@ -63,11 +60,58 @@ public abstract class AndroidSdk {
   private final Map<IAndroidTarget, SoftReference<AndroidTargetData>> myTargetDatas =
     new HashMap<IAndroidTarget, SoftReference<AndroidTargetData>>();
 
-  @NotNull
-  public abstract String getLocation();
+  private final SdkManager mySdkManager;
+  private IAndroidTarget[] myTargets = null;
+
+  private final int myPlatformToolsRevision;
+
+  public AndroidSdk(@NotNull SdkManager sdkManager, @NotNull String sdkDirOsPath) {
+    mySdkManager = sdkManager;
+
+    final File platformToolsPropFile =
+      new File(sdkDirOsPath + File.separatorChar + SdkConstants.FD_PLATFORM_TOOLS + File.separatorChar + SdkConstants.FN_SOURCE_PROP);
+    int platformToolsRevision = -1;
+    if (platformToolsPropFile.exists() && platformToolsPropFile.isFile()) {
+      final Map<String, String> map =
+        ProjectProperties.parsePropertyFile(new BufferingFileWrapper(platformToolsPropFile), new MessageBuildingSdkLog());
+      final String revision = map.get("Pkg.Revision");
+      if (revision != null) {
+        try {
+          platformToolsRevision = Integer.parseInt(revision);
+        }
+        catch (NumberFormatException e) {
+          LOG.info(e);
+        }
+      }
+    }
+    myPlatformToolsRevision = platformToolsRevision > 0 ? platformToolsRevision : -1;
+  }
 
   @NotNull
-  public abstract IAndroidTarget[] getTargets();
+  public String getLocation() {
+    String location = mySdkManager.getLocation();
+    if (location.length() > 0) {
+      char lastChar = location.charAt(location.length() - 1);
+      if (lastChar == '/' || lastChar == File.separatorChar) {
+        return location.substring(0, location.length() - 1);
+      }
+    }
+    return location;
+  }
+
+  @NotNull
+  public IAndroidTarget[] getTargets() {
+    if (myTargets == null) {
+      IAndroidTarget[] targets = mySdkManager.getTargets();
+      if (targets != null) {
+        myTargets = new IAndroidTarget[targets.length];
+        for (int i = 0; i < targets.length; i++) {
+          myTargets[i] = new MyTargetWrapper(targets[i]);
+        }
+      }
+    }
+    return myTargets;
+  }
 
   // be careful! target name is NOT unique
 
@@ -98,28 +142,19 @@ public abstract class AndroidSdk {
   }
 
   @Nullable
-  public IAndroidTarget findTargetByLocation(@NotNull String location) {
-    for (IAndroidTarget target : getTargets()) {
-      String targetPath = FileUtil.toSystemIndependentName(target.getLocation());
-      if (FileUtil.pathsEqual(location + '/', targetPath) || FileUtil.pathsEqual(location, targetPath)) {
-        return target;
-      }
-    }
-    return null;
+  public IAndroidTarget findTargetByHashString(@NotNull String hashString) {
+    final IAndroidTarget target = mySdkManager.getTargetFromHashString(hashString);
+    return target != null ? new MyTargetWrapper(target) : null;
   }
 
-  public abstract IAndroidTarget findTargetByHashString(@NotNull String hashString);
-
-  public abstract int getPlatformToolsRevision();
+  public int getPlatformToolsRevision() {
+    return myPlatformToolsRevision;
+  }
 
   @Nullable
   public static AndroidSdk parse(@NotNull String path, @NotNull ISdkLog log) {
-    final SdkManager manager = AndroidSdkUtils.createSdkManager(path, log);
-
-    if (manager != null) {
-      return new AndroidSdkImpl(manager, path);
-    }
-    return null;
+    final SdkManager manager = AndroidCommonUtils.createSdkManager(path, log);
+    return manager != null ? new AndroidSdk(manager, path) : null;
   }
 
   @Nullable
@@ -172,6 +207,7 @@ public abstract class AndroidSdk {
 
         boolean finished = task.isFinished();
 
+        //noinspection AssignmentToStaticFieldFromInstanceMethod
         myAdbCrashed = !finished;
 
         if (task.isCanceled()) {
@@ -181,8 +217,9 @@ public abstract class AndroidSdk {
 
         if (!finished) {
           int result = Messages
-            .showOkCancelDialog(project, "ADB not responding. Please, kill \"" + SdkConstants.FN_ADB + "\" process manually and click 'Retry'",
-                        CommonBundle.getErrorTitle(), "&Retry", "&Cancel", Messages.getErrorIcon());
+            .showOkCancelDialog(project,
+                                "ADB not responding. Please, kill \"" + SdkConstants.FN_ADB + "\" process manually and click 'Retry'",
+                                CommonBundle.getErrorTitle(), "&Retry", "&Cancel", Messages.getErrorIcon());
 
           if (result == 1) {
             forceInterrupt(t);
@@ -223,6 +260,7 @@ public abstract class AndroidSdk {
     synchronized (myDdmsLock) {
       String adbPath = getAdbPath();
       if (!myDdmLibInitialized) {
+        //noinspection AssignmentToStaticFieldFromInstanceMethod
         myDdmLibInitialized = true;
         DdmPreferences.setTimeOut(AndroidUtils.TIMEOUT);
         AndroidDebugBridge.init(AndroidEnableDdmsAction.isDdmsEnabled());
@@ -284,6 +322,11 @@ public abstract class AndroidSdk {
       return null;
     }
     return AndroidDebugBridge.getBridge();
+  }
+
+  @NotNull
+  public SdkManager getSdkManager() {
+    return mySdkManager;
   }
 
   @Nullable
@@ -354,6 +397,208 @@ public abstract class AndroidSdk {
           }
         }
       }
+    }
+  }
+
+  private static class MyTargetWrapper implements IAndroidTarget {
+    private final TIntObjectHashMap<String> myAlternativePaths;
+    private final IAndroidTarget myWrapee;
+
+    private MyTargetWrapper(@NotNull IAndroidTarget wrapee) {
+      myWrapee = wrapee;
+      myAlternativePaths = new TIntObjectHashMap<String>();
+      String oldPlatformToolsFolderPath = getOldPlatformToolsFolderPath();
+      if (!canFindTool(AAPT)) {
+        myAlternativePaths.put(AAPT, oldPlatformToolsFolderPath + SdkConstants.FN_AAPT);
+      }
+      if (!canFindTool(AIDL)) {
+        myAlternativePaths.put(AIDL, oldPlatformToolsFolderPath + SdkConstants.FN_AIDL);
+      }
+      if (!canFindTool(DX)) {
+        myAlternativePaths.put(DX, oldPlatformToolsFolderPath + SdkConstants.FN_DX);
+      }
+      if (!canFindTool(DX_JAR)) {
+        myAlternativePaths.put(DX_JAR, oldPlatformToolsFolderPath + SdkConstants.FD_LIB + File.separator + SdkConstants.FN_DX_JAR);
+      }
+    }
+
+    @Nullable
+    private String getOldPlatformToolsFolderPath() {
+      String platformLocation;
+      if (myWrapee.isPlatform()) {
+        platformLocation = myWrapee.getLocation();
+      }
+      else {
+        IAndroidTarget parent = myWrapee.getParent();
+        platformLocation = parent != null ? parent.getLocation() : null;
+      }
+      if (platformLocation == null) {
+        return null;
+      }
+      return platformLocation + SdkConstants.FD_TOOLS + File.separator;
+    }
+
+    private boolean canFindTool(int pathId) {
+      String path = myWrapee.getPath(pathId);
+      return path != null && new File(path).exists();
+    }
+
+    @Override
+    public String getLocation() {
+      return myWrapee.getLocation();
+    }
+
+    @Override
+    public String getVendor() {
+      return myWrapee.getVendor();
+    }
+
+    @Override
+    public String getName() {
+      return myWrapee.getName();
+    }
+
+    @Override
+    public String getFullName() {
+      return myWrapee.getFullName();
+    }
+
+    @Override
+    public String getClasspathName() {
+      return myWrapee.getClasspathName();
+    }
+
+    @Override
+    public String getShortClasspathName() {
+      return myWrapee.getShortClasspathName();
+    }
+
+    @Override
+    public String getDescription() {
+      return myWrapee.getDescription();
+    }
+
+    @Override
+    public AndroidVersion getVersion() {
+      return myWrapee.getVersion();
+    }
+
+    @Override
+    public String getVersionName() {
+      return myWrapee.getVersionName();
+    }
+
+    @Override
+    public int getRevision() {
+      return myWrapee.getRevision();
+    }
+
+    @Override
+    public boolean isPlatform() {
+      return myWrapee.isPlatform();
+    }
+
+    @Override
+    public IAndroidTarget getParent() {
+      return myWrapee.getParent();
+    }
+
+    @Override
+    public String getPath(int pathId) {
+      String path = myAlternativePaths.get(pathId);
+      if (path != null) {
+        return path;
+      }
+      return myWrapee.getPath(pathId);
+    }
+
+    @Override
+    public boolean hasRenderingLibrary() {
+      return myWrapee.hasRenderingLibrary();
+    }
+
+    @Override
+    public String[] getSkins() {
+      return myWrapee.getSkins();
+    }
+
+    @Override
+    public String getDefaultSkin() {
+      return myWrapee.getDefaultSkin();
+    }
+
+    @Override
+    public IOptionalLibrary[] getOptionalLibraries() {
+      return myWrapee.getOptionalLibraries();
+    }
+
+    @Override
+    public String[] getPlatformLibraries() {
+      return myWrapee.getPlatformLibraries();
+    }
+
+    @Override
+    public String getProperty(String name) {
+      return myWrapee.getProperty(name);
+    }
+
+    @Override
+    public Integer getProperty(String name, Integer defaultValue) {
+      return myWrapee.getProperty(name, defaultValue);
+    }
+
+    @Override
+    public Boolean getProperty(String name, Boolean defaultValue) {
+      return myWrapee.getProperty(name, defaultValue);
+    }
+
+    @Override
+    public Map<String, String> getProperties() {
+      return myWrapee.getProperties();
+    }
+
+    @Override
+    public int getUsbVendorId() {
+      return myWrapee.getUsbVendorId();
+    }
+
+    @Override
+    public ISystemImage[] getSystemImages() {
+      return myWrapee.getSystemImages();
+    }
+
+    @Override
+    public ISystemImage getSystemImage(String abiType) {
+      return myWrapee.getSystemImage(abiType);
+    }
+
+    @Override
+    public boolean canRunOn(IAndroidTarget target) {
+      return myWrapee.canRunOn(target);
+    }
+
+    @Override
+    public String hashString() {
+      return myWrapee.hashString();
+    }
+
+    @Override
+    public int compareTo(IAndroidTarget o) {
+      return myWrapee.compareTo(o);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (!(obj instanceof MyTargetWrapper)) {
+        return false;
+      }
+      MyTargetWrapper other = (MyTargetWrapper)obj;
+      return myWrapee.equals(other.myWrapee);
+    }
+
+    @Override
+    public int hashCode() {
+      return myWrapee.hashCode();
     }
   }
 }

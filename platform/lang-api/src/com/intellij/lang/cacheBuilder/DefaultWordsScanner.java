@@ -19,6 +19,7 @@ import com.intellij.lexer.Lexer;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * The default implementation of a words scanner based on a custom language lexer.
@@ -31,6 +32,7 @@ public class DefaultWordsScanner implements WordsScanner {
   private final TokenSet myIdentifierTokenSet;
   private final TokenSet myCommentTokenSet;
   private final TokenSet myLiteralTokenSet;
+  private final TokenSet mySkipCodeContextTokenSet;
   private boolean myMayHaveFileRefsInLiterals;
 
   /**
@@ -43,18 +45,33 @@ public class DefaultWordsScanner implements WordsScanner {
    */
   public DefaultWordsScanner(final Lexer lexer, final TokenSet identifierTokenSet, final TokenSet commentTokenSet,
                              final TokenSet literalTokenSet) {
+    this(lexer, identifierTokenSet, commentTokenSet, literalTokenSet, TokenSet.EMPTY);
+  }
+
+  /**
+   * Creates a new instance of the words scanner.
+   *
+   * @param lexer              the lexer used for breaking the text into tokens.
+   * @param identifierTokenSet the set of token types which represent identifiers.
+   * @param commentTokenSet    the set of token types which represent comments.
+   * @param literalTokenSet    the set of token types which represent literals.
+   * @param SkipCodeContextTokenSet the set of token types which should not be considered as code context.
+   */
+  public DefaultWordsScanner(final Lexer lexer, final TokenSet identifierTokenSet, final TokenSet commentTokenSet,
+                             final TokenSet literalTokenSet, @NotNull TokenSet skipCodeContextTokenSet) {
     myLexer = lexer;
     myIdentifierTokenSet = identifierTokenSet;
     myCommentTokenSet = commentTokenSet;
     myLiteralTokenSet = literalTokenSet;
+    mySkipCodeContextTokenSet = skipCodeContextTokenSet;
   }
 
   public void processWords(CharSequence fileText, Processor<WordOccurrence> processor) {
     myLexer.start(fileText);
     WordOccurrence occurrence = null; // shared occurrence
 
-    while (myLexer.getTokenType() != null) {
-      final IElementType type = myLexer.getTokenType();
+    IElementType type;
+    while ((type = myLexer.getTokenType()) != null) {
       if (myIdentifierTokenSet.contains(type)) {
         if (occurrence == null) {
           occurrence = new WordOccurrence(fileText, myLexer.getTokenStart(), myLexer.getTokenEnd(), WordOccurrence.Kind.CODE);
@@ -70,9 +87,7 @@ public class DefaultWordsScanner implements WordsScanner {
       else if (myLiteralTokenSet.contains(type)) {
         if (!stripWords(processor, fileText, myLexer.getTokenStart(),myLexer.getTokenEnd(),WordOccurrence.Kind.LITERALS,occurrence, myMayHaveFileRefsInLiterals)) return;
       }
-      else {
-        // process all word-like characters as words
-        // Plugin writers may have (Maximka in JavaScript especially) some keyword token types omitted from the identifierTokenSet
+      else if (!mySkipCodeContextTokenSet.contains(type)) {
         if (!stripWords(processor, fileText, myLexer.getTokenStart(), myLexer.getTokenEnd(), WordOccurrence.Kind.CODE, occurrence, false)) return;
       }
       myLexer.advance();

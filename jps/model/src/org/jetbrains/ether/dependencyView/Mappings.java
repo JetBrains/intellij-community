@@ -32,6 +32,35 @@ public class Mappings {
 
   private final boolean myIsDelta;
   private final boolean myDeltaIsTransient;
+  private boolean myIsDifferentiated = false;
+
+  private final Set<DependencyContext.S> myChangedClasses;
+  private final Set<DependencyContext.S> myChangedFiles;
+
+  private void addChangedClass(final DependencyContext.S it) {
+    assert (myChangedClasses != null && myChangedFiles != null);
+    myChangedClasses.add(it);
+
+    final DependencyContext.S file = myClassToSourceFile.get(it);
+
+    if (file != null) {
+      myChangedFiles.add(it);
+    }
+
+    myIsDifferentiated = true;
+  }
+
+  private Collection<DependencyContext.S> getChangedClasses() {
+    return myChangedClasses;
+  }
+
+  private Collection<DependencyContext.S> getChangedFiles() {
+    return myChangedFiles;
+  }
+
+  private boolean isDifferentiated() {
+    return myIsDifferentiated;
+  }
 
   private final File myRootDir;
   private DependencyContext myContext;
@@ -92,6 +121,8 @@ public class Mappings {
 
   private Mappings(final Mappings base) throws IOException {
     myIsDelta = true;
+    myChangedClasses = new HashSet<DependencyContext.S>();
+    myChangedFiles = new HashSet<DependencyContext.S>();
     myDeltaIsTransient = base.myDeltaIsTransient;
     myRootDir = new File(FileUtil.toSystemIndependentName(base.myRootDir.getAbsolutePath()) + File.separatorChar + "delta");
     myContext = base.myContext;
@@ -102,6 +133,8 @@ public class Mappings {
 
   public Mappings(final File rootDir, final boolean transientDelta) throws IOException {
     myIsDelta = false;
+    myChangedClasses = null;
+    myChangedFiles = null;
     myDeltaIsTransient = transientDelta;
     myRootDir = rootDir;
     createImplementation();
@@ -820,6 +853,8 @@ public class Mappings {
 
         self.appendDependents(it, dependants);
 
+        delta.addChangedClass(it.name);
+
         debug("Changed: ", it.name);
 
         final int addedModifiers = diff.addedModifiers();
@@ -1382,6 +1417,7 @@ public class Mappings {
 
       debug("Processing removed classes:");
       for (ClassRepr c : classDiff.removed()) {
+        delta.addChangedClass(c.name);
         self.appendDependents(c, dependants);
         debug("Adding usages of class ", c.name);
         affectedUsages.add(c.createUsage());
@@ -1390,6 +1426,8 @@ public class Mappings {
 
       debug("Processing added classes:");
       for (ClassRepr c : classDiff.added()) {
+        delta.addChangedClass(c.name);
+
         final Collection<DependencyContext.S> depClasses = myClassToClassDependency.get(c.name);
 
         if (depClasses != null) {
@@ -1531,11 +1569,56 @@ public class Mappings {
         }
       }
 
-      myClassToSubclasses.putAll(delta.myClassToSubclasses);
-      mySourceFileToClasses.putAll(delta.mySourceFileToClasses);
-      mySourceFileToUsages.putAll(delta.mySourceFileToUsages);
-      mySourceFileToAnnotationUsages.putAll(delta.mySourceFileToAnnotationUsages);
-      myClassToSourceFile.putAll(delta.myClassToSourceFile);
+      if (delta.isDifferentiated()) {
+        for (DependencyContext.S c : delta.getChangedClasses()) {
+          myClassToSubclasses.remove(c);
+
+          final Collection<DependencyContext.S> subClasses = delta.myClassToSubclasses.get(c);
+
+          if (subClasses != null) {
+            myClassToSubclasses.put(c, subClasses);
+          }
+
+          myClassToSourceFile.remove(c);
+
+          final DependencyContext.S sourceFile = delta.myClassToSourceFile.get(c);
+
+          if (sourceFile != null) {
+            myClassToSourceFile.put(c, sourceFile);
+          }
+        }
+      }
+      else {
+        myClassToSubclasses.putAll(delta.myClassToSubclasses);
+        myClassToSourceFile.putAll(delta.myClassToSourceFile);
+      }
+
+      if (delta.isDifferentiated() && false) {
+        for (DependencyContext.S f : delta.getChangedFiles()) {
+          mySourceFileToClasses.remove(f);
+          final Collection<ClassRepr> classes = delta.mySourceFileToClasses.get(f);
+          if (classes != null){
+            mySourceFileToClasses.put(f, classes);
+          }
+
+          mySourceFileToUsages.remove(f);
+          final Collection<UsageRepr.Cluster> clusters = delta.mySourceFileToUsages.get(f);
+          if (clusters != null){
+            mySourceFileToUsages.put(f, clusters);
+          }
+
+          mySourceFileToAnnotationUsages.remove(f);
+          final Collection<UsageRepr.Usage> usages = delta.mySourceFileToAnnotationUsages.get(f);
+          if (usages != null){
+            mySourceFileToAnnotationUsages.put(f, usages);
+          }
+        }
+      }
+      else {
+        mySourceFileToClasses.putAll(delta.mySourceFileToClasses);
+        mySourceFileToUsages.putAll(delta.mySourceFileToUsages);
+        mySourceFileToAnnotationUsages.putAll(delta.mySourceFileToAnnotationUsages);
+      }
 
       final Collection<DependencyContext.S> compiledSet = new HashSet<DependencyContext.S>(compiled.size());
 
@@ -1543,20 +1626,34 @@ public class Mappings {
         compiledSet.add(myContext.get(FileUtil.toSystemIndependentName(c.getAbsolutePath())));
       }
 
-      for (DependencyContext.S file : delta.myClassToClassDependency.keyCollection()) {
-        final Collection<DependencyContext.S> now = delta.myClassToClassDependency.get(file);
-        final Collection<DependencyContext.S> past = myClassToClassDependency.get(file);
+      final Collection<DependencyContext.S> changedClasses = delta.getChangedClasses();
+
+      for (DependencyContext.S aClass : delta.myClassToClassDependency.keyCollection()) {
+        final Collection<DependencyContext.S> now = delta.myClassToClassDependency.get(aClass);
+
+        if (delta.isDifferentiated()) {
+          final boolean classChanged = changedClasses.contains(aClass);
+          final HashSet<DependencyContext.S> depClasses = new HashSet<DependencyContext.S>(now);
+
+          depClasses.retainAll(changedClasses);
+
+          if (! classChanged && depClasses.isEmpty()) {
+            continue;
+          }
+        }
+
+        final Collection<DependencyContext.S> past = myClassToClassDependency.get(aClass);
 
         if (past == null) {
-          myClassToClassDependency.put(file, now);
+          myClassToClassDependency.put(aClass, now);
         }
         else {
           boolean changed = past.removeAll(compiledSet);
           changed |= past.addAll(now);
 
           if (changed) {
-            myClassToClassDependency.remove(file);
-            myClassToClassDependency.put(file, past);
+            myClassToClassDependency.remove(aClass);
+            myClassToClassDependency.put(aClass, past);
           }
         }
       }
@@ -1635,6 +1732,24 @@ public class Mappings {
       @Override
       public void registerConstantUsage(final String className, final String fieldName, final String fieldOwner) {
         //To change body of implemented methods use File | Settings | File Templates.
+      }
+
+      @Override
+      public void registerImports(final Collection<String> imports, final String rootClass) {
+        final DependencyContext.S rootClassName = myContext.get(rootClass);
+        final DependencyContext.S fileName = myClassToSourceFile.get(rootClassName);
+
+        for (final String i : imports) {
+          final DependencyContext.S iname = myContext.get(i);
+
+          myClassToClassDependency.put(rootClassName, iname);
+
+          if (fileName != null) {
+            final UsageRepr.Cluster cluster = new UsageRepr.Cluster();
+            cluster.addUsage(rootClassName, UsageRepr.createClassUsage(myContext, iname));
+            mySourceFileToUsages.put(fileName, cluster);
+          }
+        }
       }
     };
   }

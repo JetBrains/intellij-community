@@ -136,21 +136,23 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
       }
     } else if (tokenType == XmlTokenType.XML_DATA_CHARACTERS && token.getParent() instanceof XmlText) {
       if (token.textContains(']') && token.textContains('>')) {
+
         String s = token.getText();
         String marker = "]]>";
         int i = s.indexOf(marker);
-        
-        if (i != -1) {                              // TODO: fix
-          TextRange textRange = token.getTextRange();
-          int start = textRange.getStartOffset() + i;
-          HighlightInfoType type = PsiTreeUtil.getParentOfType(token, XmlTag.class) instanceof HtmlTag ?
-                                   HighlightInfoType.WARNING : HighlightInfoType.ERROR;
-          HighlightInfo info = HighlightInfo.createHighlightInfo(
-            type,
-            start, start + marker.length(),
-            XmlErrorMessages.message("cdata.end.should.not.appear.in.content.unless.to.mark.end.of.cdata.section")
-          );
-          addToResults(info);
+
+        if (i != -1 ) {                              // TODO: fix
+          XmlTag tag = PsiTreeUtil.getParentOfType(token, XmlTag.class);
+          if (tag != null && XmlExtension.getExtensionByElement(tag).shouldBeHighlightedAsTag(tag) && !skipValidation(tag)) {
+            TextRange textRange = token.getTextRange();
+            int start = textRange.getStartOffset() + i;
+            HighlightInfo info = HighlightInfo.createHighlightInfo(
+              tag instanceof HtmlTag ? HighlightInfoType.WARNING : HighlightInfoType.ERROR,
+              start, start + marker.length(),
+              XmlErrorMessages.message("cdata.end.should.not.appear.in.content.unless.to.mark.end.of.cdata.section")
+            );
+            addToResults(info);
+          }
         }
       }
     }
@@ -317,7 +319,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
 
     if (requiredAttributes != null) {
       for (final String attrName : requiredAttributes) {
-        if (tag.getAttribute(attrName, "") == null &&
+        if (tag.getAttributeValue(attrName) == null &&
             !XmlExtension.getExtension(tag.getContainingFile()).isRequiredAttributeImplicitlyPresent(tag, attrName)) {
 
           final InsertRequiredAttributeFix insertRequiredAttributeIntention = new InsertRequiredAttributeFix(

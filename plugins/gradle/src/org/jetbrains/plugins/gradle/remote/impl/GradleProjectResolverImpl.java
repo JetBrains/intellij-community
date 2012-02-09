@@ -81,11 +81,10 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
 
   @NotNull
   @Override
-  public Collection<GradleTaskId> getTasksInProgress(@NotNull GradleTaskType type) {
-    if (type != GradleTaskType.RESOLVE_PROJECT || myTasksInProgress.isEmpty()) {
-      return Collections.emptySet();
-    }
-    return new HashSet<GradleTaskId>(myTasksInProgress);
+  public Map<GradleTaskType, Set<GradleTaskId>> getTasksInProgress() throws RemoteException {
+    Map<GradleTaskType, Set<GradleTaskId>> result = new HashMap<GradleTaskType, Set<GradleTaskId>>();
+    result.put(GradleTaskType.RESOLVE_PROJECT, new HashSet<GradleTaskId>(myTasksInProgress));
+    return result;
   }
 
   @NotNull

@@ -65,6 +65,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrI
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
@@ -1228,5 +1229,16 @@ public class PsiUtil {
 
   public static boolean isInMethodCallContext(GroovyPsiElement context) {
     return getArgumentsList(context) != null;
+  }
+
+  @Nullable
+  public static GrMemberOwner getMemberOwner(GrStatement statement) {
+    PsiElement parent = statement.getParent();
+    while (!(parent instanceof GrMemberOwner)) {
+      if (parent == null) return null;
+      if (parent instanceof GroovyFileBase) return (GrMemberOwner) ((GroovyFileBase) parent).getScriptClass();
+      parent = parent.getParent();
+    }
+    return ((GrMemberOwner) parent);
   }
 }

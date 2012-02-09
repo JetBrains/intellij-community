@@ -31,6 +31,7 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
@@ -58,6 +59,8 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.ui.FocusTrackback;
 import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
@@ -1419,11 +1422,14 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   private final class MyVirtualFileListener extends VirtualFileAdapter {
     public void beforeFileDeletion(VirtualFileEvent e) {
       assertDispatchThread();
+
+      boolean moveFocus = moveFocusOnDelete();
+
       final VirtualFile file = e.getFile();
       final VirtualFile[] openFiles = getOpenFiles();
       for (int i = openFiles.length - 1; i >= 0; i--) {
         if (VfsUtilCore.isAncestor(file, openFiles[i], false)) {
-          closeFile(openFiles[i], true, true);
+          closeFile(openFiles[i], moveFocus, true);
         }
       }
     }
@@ -1467,6 +1473,18 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
         }
       }
     }
+  }
+
+  private static boolean moveFocusOnDelete() {
+    final Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
+    if (window != null) {
+      final Component component = FocusTrackback.getFocusFor(window);
+      if (component != null) {
+        return component instanceof EditorComponentImpl;
+      }
+      return window instanceof IdeFrameImpl;
+    }
+    return true;
   }
 
   public boolean isInsideChange() {

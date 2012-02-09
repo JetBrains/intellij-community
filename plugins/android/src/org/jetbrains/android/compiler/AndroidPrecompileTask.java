@@ -19,7 +19,10 @@ import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.compiler.*;
+import com.intellij.openapi.compiler.CompilationStatusAdapter;
+import com.intellij.openapi.compiler.CompileContext;
+import com.intellij.openapi.compiler.CompileTask;
+import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription;
 import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration;
 import com.intellij.openapi.diagnostic.Logger;
@@ -30,16 +33,13 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.hash.HashSet;
-import org.jetbrains.android.AndroidProjectComponent;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.Arrays;
@@ -50,20 +50,12 @@ import java.util.Set;
  * @author Eugene.Kudelevsky
  */
 public class AndroidPrecompileTask implements CompileTask {
-  private final AndroidProjectComponent myOwner;
-  
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.compiler.AndroidPrecompileTask");
-
-  public AndroidPrecompileTask(@NotNull AndroidProjectComponent owner) {
-    myOwner = owner;
-  }
 
   @Override
   public boolean execute(CompileContext context) {
     final Project project = context.getProject();
     
-    myOwner.setCompilationStarted();
-
     ExcludedEntriesConfiguration configuration =
       ((CompilerConfigurationImpl)CompilerConfiguration.getInstance(project)).getExcludedEntriesConfiguration();
 
@@ -85,7 +77,7 @@ public class AndroidPrecompileTask implements CompileTask {
       }, indicator != null ? indicator.getModalityState() : ModalityState.NON_MODAL);
 
       if (context.isRebuild()) {
-        clearGenRootsAndResCache(facet, context);
+        clearResCache(facet, context);
       }
 
       final AndroidPlatform platform = facet.getConfiguration().getAndroidPlatform();
@@ -99,7 +91,7 @@ public class AndroidPrecompileTask implements CompileTask {
           excludeAllSourceRoots(module, configuration, addedEntries);
         }
         else {
-          unexcludeAllSourceRoots(module, configuration);
+          unexcludeAllSourceRoots(facet, configuration);
         }
       }
     }
@@ -108,28 +100,11 @@ public class AndroidPrecompileTask implements CompileTask {
       LOG.debug("Files excluded by Android: " + addedEntries.size());
       CompilerManager.getInstance(project).addCompilationStatusListener(new MyCompilationStatusListener(project, addedEntries), project);
     }
-
-    CompilerManager.getInstance(project).addCompilationStatusListener(new CompilationStatusAdapter() {
-      @Override
-      public void compilationFinished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
-        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-          @Override
-          public void run() {
-            myOwner.setCompilationFinished();
-          }
-        });
-      }
-    }, project);
-
     return true;
   }
   
-  private static void clearGenRootsAndResCache(@NotNull AndroidFacet facet, @NotNull CompileContext context) {
+  private static void clearResCache(@NotNull AndroidFacet facet, @NotNull CompileContext context) {
     final Module module = facet.getModule();
-    
-    removeAllPackages(AndroidRootUtil.getRenderscriptGenSourceRootPath(module), context);
-    removeAllPackages(facet.getAptGenSourceRootPath(), context);
-    removeAllPackages(facet.getAidlGenSourceRootPath(), context);
 
     final String dirPath = AndroidCompileUtil.findResourcesCacheDirectory(module, false, null);
     if (dirPath != null) {
@@ -139,37 +114,35 @@ public class AndroidPrecompileTask implements CompileTask {
       }
     }
   }
-  
-  private static void removeAllPackages(@Nullable String sourceRootPath, @NotNull CompileContext context) {
-    final File sourceRoot = new File(sourceRootPath);
 
-    final File[] children = sourceRoot.listFiles();
-
-    if (children != null) {
-      for (File child : children) {
-        if (child.isDirectory() &&
-            child.getName() != null &&
-            StringUtil.isJavaIdentifier(child.getName())) {
-
-          if (!FileUtil.delete(child)) {
-            context.addMessage(CompilerMessageCategory.ERROR, "Cannot delete file " + child.getAbsolutePath(),
-                               null, -1, -1);
-          }
-        }
-      }
-    }
-    final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(sourceRoot);
-
-    if (vFile != null) {
-      vFile.refresh(false, true);
-    }
-  }
-  
-  private static void unexcludeAllSourceRoots(Module module,
+  private static void unexcludeAllSourceRoots(AndroidFacet facet,
                                               ExcludedEntriesConfiguration configuration) {
-    final VirtualFile[] sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots();
+    final VirtualFile[] sourceRoots = ModuleRootManager.getInstance(facet.getModule()).getSourceRoots();
     final Set<VirtualFile> sourceRootSet = new HashSet<VirtualFile>();
     sourceRootSet.addAll(Arrays.asList(sourceRoots));
+
+    final String aidlGenSourceRootPath = facet.getAidlGenSourceRootPath();
+    if (aidlGenSourceRootPath != null) {
+      final VirtualFile aidlGenSourceRoot = LocalFileSystem.getInstance().findFileByPath(aidlGenSourceRootPath);
+
+      if (aidlGenSourceRoot != null) {
+        sourceRootSet.remove(aidlGenSourceRoot);
+      }
+    }
+
+    final String aptGenSourceRootPath = facet.getAptGenSourceRootPath();
+    if (aptGenSourceRootPath != null) {
+      final VirtualFile aptGenSourceRoot = LocalFileSystem.getInstance().findFileByPath(aptGenSourceRootPath);
+
+      if (aptGenSourceRoot != null) {
+        sourceRootSet.remove(aptGenSourceRoot);
+      }
+    }
+
+    final VirtualFile rsGenRoot = AndroidRootUtil.getRenderscriptGenDir(facet.getModule());
+    if (rsGenRoot != null) {
+      sourceRootSet.remove(rsGenRoot);
+    }
 
     final ExcludeEntryDescription[] descriptions = configuration.getExcludeEntryDescriptions();
     configuration.removeAllExcludeEntryDescriptions();

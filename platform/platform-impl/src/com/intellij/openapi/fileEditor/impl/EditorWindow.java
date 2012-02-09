@@ -103,6 +103,15 @@ public class EditorWindow {
     return myPanel.isShowing();
   }
 
+  public void closeAllExcept(final VirtualFile selectedFile) {
+    final VirtualFile[] files = getFiles();
+    for (final VirtualFile file : files) {
+      if (file != selectedFile && !isFilePinned(file)) {
+        closeFile(file);
+      }
+    }
+  }
+
   private static class AdaptiveBorder implements Border {
     @Override
     public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {

@@ -891,7 +891,7 @@ public class MavenProject {
     volatile List<MavenPlugin> myUnresolvedPluginsCache;
     volatile List<MavenArtifact> myUnresolvedExtensionsCache;
 
-    ConcurrentHashMap<Key, Object> myCache = new ConcurrentHashMap<Key, Object>();
+    transient ConcurrentHashMap<Key, Object> myCache = new ConcurrentHashMap<Key, Object>();
 
     @Override
     public State clone() {
@@ -939,6 +939,11 @@ public class MavenProject {
       result.plugins = repositoryChanged || !Comparing.equal(myPlugins, other.myPlugins);
 
       return result;
+    }
+
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+      in.defaultReadObject();
+      myCache = new ConcurrentHashMap<Key, Object>();
     }
   }
 }

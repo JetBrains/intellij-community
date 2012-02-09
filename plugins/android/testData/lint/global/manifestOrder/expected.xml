@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>AndroidManifest.xml</file>
+    <line>9</line>
+    <description>&lt;uses-sdk&gt; tag appears after &lt;application&gt; tag</description>
+  </problem>
+</problems>

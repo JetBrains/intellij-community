@@ -22,7 +22,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.ExpirableRunnable;
@@ -136,7 +135,7 @@ public class FocusTrackback {
     myLocalFocusOwner = component;
   }
 
-  private static Component getFocusFor(Window parent) {
+  public static Component getFocusFor(Window parent) {
     final WeakReference<Component> ref = ourRootWindowToFocusedMap.get(parent);
     return ref != null ? ref.get() : null;
   }

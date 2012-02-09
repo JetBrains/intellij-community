@@ -667,4 +667,10 @@ public abstract class GroovyRefactoringUtil {
     }
     return true;
   }
+
+  @Nullable
+  public static GrStatementOwner getDeclarationOwner(GrStatement statement) {
+    PsiElement parent = statement.getParent();
+    return parent instanceof GrStatementOwner ? ((GrStatementOwner) parent) : null;
+  }
 }

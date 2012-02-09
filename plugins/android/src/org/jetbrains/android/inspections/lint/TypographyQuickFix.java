@@ -2,6 +2,7 @@ package org.jetbrains.android.inspections.lint;
 
 import com.android.tools.lint.checks.TypographyDetector;
 import com.android.tools.lint.detector.api.Issue;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -42,7 +43,13 @@ class TypographyQuickFix implements AndroidLintQuickFix {
           final StringBuilder builder = new StringBuilder(value);
 
           for (TypographyDetector.ReplaceEdit edit : edits) {
-            builder.replace(edit.offset, edit.offset + edit.length, edit.replaceWith);
+            String with = edit.replaceWith;
+            
+            if (ApplicationManager.getApplication().isUnitTestMode()) {
+              with = with.replace('\u2013', '~').replace('\u2018', '{').replace('\u2019', '}');
+            }
+            
+            builder.replace(edit.offset, edit.offset + edit.length, with);
           }
 
           final String newValue = builder.toString();
