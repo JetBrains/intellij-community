@@ -185,4 +185,13 @@ public class YAMLLexerTest extends LexerTestCase {
   public void testKey_trailing_space(){
     doTest("foo   :");
   }
+
+  public void testComments(){
+    doTest("en:\n" +
+           "  aaa: \"AAA\"\n" +
+           "#  bbb:\n" +
+           "#    ccc: \"CCC\"\n" +
+           "installation:\n" +
+           "  name: [] # todo: \"Not specified\"");
+  }
 }
