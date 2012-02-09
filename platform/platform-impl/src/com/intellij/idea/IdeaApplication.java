@@ -31,8 +31,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.updateSettings.impl.CheckForUpdateResult;
-import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
@@ -49,7 +47,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.List;
 
 
 @SuppressWarnings({"CallToPrintStackTrace"})
@@ -215,7 +212,7 @@ public class IdeaApplication {
 
           if (UpdateChecker.isMyVeryFirstOpening() && UpdateChecker.checkNeeded()) {
             UpdateChecker.setMyVeryFirstOpening(false);
-            updatePlugins(true);
+            UpdateChecker.updateAndShowResult();
           }
 
           SwingUtilities.invokeLater(new Runnable() {
@@ -227,23 +224,6 @@ public class IdeaApplication {
       }, ModalityState.NON_MODAL);
     }
 
-    private void updatePlugins(final boolean showConfirmation) {
-      final Application app = ApplicationManager.getApplication();
-      app.executeOnPooledThread(new Runnable() {
-        @Override
-        public void run() {
-          final CheckForUpdateResult checkForUpdateResult = UpdateChecker.checkForUpdates();
-
-          final List<PluginDownloader> updatedPlugins = UpdateChecker.updatePlugins(false, null);
-          app.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              UpdateChecker.showUpdateResult(checkForUpdateResult, updatedPlugins, showConfirmation, true, false);
-            }
-          });
-        }
-      });
-    }
   }
 
   private void loadProject() {

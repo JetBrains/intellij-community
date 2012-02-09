@@ -57,6 +57,9 @@
     <component>
       <implementation-class>com.intellij.ui.switcher.QuickAccessSettings</implementation-class>
     </component>
+    <component>
+      <implementation-class>com.intellij.openapi.updateSettings.impl.UpdateCheckerComponent</implementation-class>
+    </component>
   </application-components>
   <project-components>
     <component>

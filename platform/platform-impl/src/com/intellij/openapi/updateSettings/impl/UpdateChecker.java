@@ -22,6 +22,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -32,6 +33,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SystemInfo;
@@ -141,6 +143,27 @@ public final class UpdateChecker {
     if (Math.abs(timeDelta) < DateFormatUtil.DAY) return false;
 
     return settings.CHECK_NEEDED;
+  }
+
+  public static ActionCallback updateAndShowResult() {
+    final ActionCallback result = new ActionCallback();
+    final Application app = ApplicationManager.getApplication();
+    app.executeOnPooledThread(new Runnable() {
+      @Override
+      public void run() {
+        final CheckForUpdateResult checkForUpdateResult = checkForUpdates();
+
+        final List<PluginDownloader> updatedPlugins = updatePlugins(false, null);
+        app.invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            showUpdateResult(checkForUpdateResult, updatedPlugins, true, true, false);
+            result.setDone();
+          }
+        });
+      }
+    });
+    return result;
   }
 
   public static List<PluginDownloader> updatePlugins(final boolean showErrorDialog,
