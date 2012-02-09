@@ -388,7 +388,10 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     if (target != null) {
       target.add(content, null);
     } else {
-      final Point location = gridCell.getLocation();
+      Point location = gridCell.getLocation();
+      if (location == null) {
+        location = getComponent().getLocationOnScreen();
+      }
       location.translate(size.width / 2, size.height / 2);
       getDockManager().createNewDockContainerFor(content, new RelativePoint(location));
     }
