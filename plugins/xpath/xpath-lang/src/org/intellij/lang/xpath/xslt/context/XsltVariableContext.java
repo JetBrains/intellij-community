@@ -17,7 +17,6 @@ package org.intellij.lang.xpath.xslt.context;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -66,14 +65,13 @@ public class XsltVariableContext implements VariableContext<XsltVariable> {
     }
 
     public XPathVariable resolve(final XPathVariableReference reference) {
-        final PsiManager mgr = reference.getManager();
-        return (XPathVariable) ResolveCache.getInstance(mgr.getProject()).resolveWithCaching(reference, RESOLVER, true, false);
+        return (XPathVariable) ResolveCache.getInstance(reference.getProject()).resolveWithCaching(reference, RESOLVER, false, false);
     }
 
     @Nullable
     private XPathVariable resolveInner(XPathVariableReference reference) {
         final XmlTag context = getContextTagImpl(reference);
-        final ResolveProcessor processor = new ResolveProcessor(reference.getReferencedName(), context);
+        final VariableResolveProcessor processor = new VariableResolveProcessor(reference.getReferencedName(), context);
 
         final XPathVariable variable = (XPathVariable)ResolveUtil.treeWalkUp(processor, context);
         if (variable != null) {
@@ -181,11 +179,11 @@ public class XsltVariableContext implements VariableContext<XsltVariable> {
         }
     }
 
-    static class ResolveProcessor extends VariableProcessor implements ResolveUtil.ResolveProcessor {
+    static class VariableResolveProcessor extends VariableProcessor implements ResolveUtil.ResolveProcessor {
         private final String myName;
         private PsiElement myResult = null;
 
-        public ResolveProcessor(final String name, XmlTag context) {
+        public VariableResolveProcessor(final String name, XmlTag context) {
             super(context);
             myName = name;
         }
