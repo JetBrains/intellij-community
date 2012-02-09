@@ -4,6 +4,7 @@ import com.android.ddmlib.Log;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -26,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Set;
@@ -93,13 +93,12 @@ class EditLogFilterDialog extends DialogWrapper {
     myPidFieldWrapper.add(myPidField);
 
     myLogLevelCombo.setModel(new EnumComboBoxModel<Log.LogLevel>(Log.LogLevel.class));
-    myLogLevelCombo.setRenderer(new DefaultListCellRenderer() {
+    myLogLevelCombo.setRenderer(new ListCellRendererWrapper(myLogLevelCombo.getRenderer()) {
       @Override
-      public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+      public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         if (value != null) {
-          value = StringUtil.capitalize(((Log.LogLevel)value).getStringValue().toLowerCase());
+          setText(StringUtil.capitalize(((Log.LogLevel)value).getStringValue().toLowerCase()));
         }
-        return super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
       }
     });
 
