@@ -17,9 +17,7 @@
 package org.jetbrains.android.sdk;
 
 import com.android.sdklib.IAndroidTarget;
-import com.android.sdklib.ISdkLog;
 import com.android.sdklib.SdkConstants;
-import com.android.sdklib.SdkManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
@@ -36,12 +34,12 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.*;
 
 /**
@@ -55,7 +53,7 @@ public class AndroidSdkUtils {
   }
 
   public static boolean isAndroidSdk(@NotNull String path) {
-    return createSdkManager(path, new EmptySdkLog()) != null;
+    return AndroidCommonUtils.createSdkManager(path, new EmptySdkLog()) != null;
   }
 
   @Nullable
@@ -369,22 +367,5 @@ public class AndroidSdkUtils {
 
   public static void openModuleDependenciesConfigurable(final Module module) {
     ProjectSettingsService.getInstance(module.getProject()).openModuleDependenciesSettings(module, null);
-  }
-
-  @Nullable
-  public static SdkManager createSdkManager(@NotNull String path, @NotNull ISdkLog log) {
-    path = FileUtil.toSystemDependentName(path);
-
-    final File f = new File(path);
-    if (!f.exists() || !f.isDirectory()) {
-      return null;
-    }
-
-    final File platformsDir = new File(f, SdkConstants.FD_PLATFORMS);
-    if (!platformsDir.exists() || !platformsDir.isDirectory()) {
-      return null;
-    }
-
-    return SdkManager.createManager(path + File.separatorChar, log);
   }
 }
