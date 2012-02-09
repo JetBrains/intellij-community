@@ -23,6 +23,7 @@ import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
 import com.intellij.codeInsight.daemon.impl.quickfix.StaticImportMethodFix;
 import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInsight.lookup.*;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -699,7 +700,8 @@ public class JavaCompletionUtil {
 
   public static int insertClassReference(PsiClass psiClass, PsiFile file, int startOffset, int endOffset) {
     final Project project = file.getProject();
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
+    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+    documentManager.commitAllDocuments();
 
     final PsiManager manager = file.getManager();
 
@@ -725,7 +727,7 @@ public class JavaCompletionUtil {
 
     final RangeMarker toDelete = insertTemporary(startOffset + name.length(), document, " ");
 
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
+    documentManager.commitAllDocuments();
 
     int newEndOffset = endOffset;
     PsiElement element = file.findElementAt(startOffset);
@@ -740,23 +742,28 @@ public class JavaCompletionUtil {
                                   ? ((PsiImportStaticReferenceElement)ref).bindToTargetClass(psiClass)
                                   : ref.bindToElement(psiClass);
 
-          newElement = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(newElement);
+          final RangeMarker rangeMarker = document.createRangeMarker(newElement.getTextRange());
+          documentManager.doPostponedOperationsAndUnblockDocument(document);
+          documentManager.commitDocument(document);
+
+          newElement = CodeInsightUtilBase.findElementInRange(file, rangeMarker.getStartOffset(), rangeMarker.getEndOffset(),
+                                                                  PsiJavaCodeReferenceElement.class,
+                                                                  JavaLanguage.INSTANCE);
+          rangeMarker.dispose();
           if (newElement != null) {
             newEndOffset = newElement.getTextRange().getEndOffset();
-            if (newElement instanceof PsiJavaCodeReferenceElement && !(newElement instanceof PsiReferenceExpression)) {
+            if (!(newElement instanceof PsiReferenceExpression)) {
               PsiReferenceParameterList parameterList = ((PsiJavaCodeReferenceElement)newElement).getParameterList();
               if (parameterList != null) {
                 newEndOffset = parameterList.getTextRange().getStartOffset();
               }
             }
-          }
 
-          if (!staticImport &&
-              newElement instanceof PsiJavaCodeReferenceElement &&
-              !psiClass.getManager().areElementsEquivalent(psiClass, resolveReference((PsiReference)newElement))) {
-            final String qName = psiClass.getQualifiedName();
-            if (qName != null) {
-              document.replaceString(newElement.getTextRange().getStartOffset(), newEndOffset, qName);
+            if (!staticImport && !psiClass.getManager().areElementsEquivalent(psiClass, resolveReference((PsiReference)newElement))) {
+              final String qName = psiClass.getQualifiedName();
+              if (qName != null) {
+                document.replaceString(newElement.getTextRange().getStartOffset(), newEndOffset, qName);
+              }
             }
           }
         }

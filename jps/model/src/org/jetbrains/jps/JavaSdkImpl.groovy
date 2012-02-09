@@ -3,7 +3,7 @@ package org.jetbrains.jps
 /**
  * @author nik
  */
-class JavaSdkImpl extends Sdk implements JavaSdk {
+class JavaSdkImpl extends JavaSdk {
   String jdkPath
 
   def JavaSdkImpl(Project project, String name, String jdkPath, Closure initializer) {

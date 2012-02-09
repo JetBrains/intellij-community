@@ -65,16 +65,14 @@ public class DelegateWithDefaultParamValueIntentionAction extends PsiElementBase
 
   private static PsiMethod generateMethodPrototype(PsiMethod method, PsiParameter param) {
     final PsiMethod prototype = (PsiMethod)method.copy();
-    PsiCodeBlock body = prototype.getBody();
+    final PsiCodeBlock body = prototype.getBody();
+    final PsiCodeBlock emptyBody = JavaPsiFacade.getElementFactory(method.getProject()).createMethodFromText("void foo(){}", prototype).getBody();
+    assert emptyBody != null;
     if (body != null) {
-      for (PsiStatement psiStatement : body.getStatements()) {
-        psiStatement.delete();
-      }
+      body.replace(emptyBody);
     } else {
       prototype.getModifierList().setModifierProperty(PsiModifier.ABSTRACT, false);
-      body =
-        (PsiCodeBlock)prototype
-          .addBefore(JavaPsiFacade.getElementFactory(method.getProject()).createMethodFromText("void foo(){}", prototype).getBody(), null);
+      prototype.addBefore(emptyBody, null);
     }
     final int parameterIndex = method.getParameterList().getParameterIndex(param);
     prototype.getParameterList().getParameters()[parameterIndex].delete();

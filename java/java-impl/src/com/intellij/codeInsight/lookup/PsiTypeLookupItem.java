@@ -71,11 +71,12 @@ public class PsiTypeLookupItem extends LookupItem {
 
   @Override
   public void handleInsert(InsertionContext context) {
-    PsiElement position = context.getFile().findElementAt(context.getStartOffset());
-    assert position != null;
     if (getObject() instanceof PsiClass) {
       addImportForItem(context, (PsiClass)getObject());
     }
+
+    PsiElement position = context.getFile().findElementAt(context.getStartOffset());
+    assert position != null;
     context.getDocument().insertString(context.getTailOffset(), calcGenerics(position));
     JavaCompletionUtil.shortenReference(context.getFile(), context.getStartOffset());
 
@@ -101,6 +102,7 @@ public class PsiTypeLookupItem extends LookupItem {
   }
 
   public String calcGenerics(@NotNull PsiElement context) {
+    assert context.isValid();
     if (myDiamond) {
       return "<>";
     }

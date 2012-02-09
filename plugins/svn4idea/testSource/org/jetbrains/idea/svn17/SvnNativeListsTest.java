@@ -43,6 +43,7 @@ public class SvnNativeListsTest extends SvnTestCase {
   @Test
   public void testAdd() throws Throwable {
     final LocalChangeList newL = myChangeListManager.addChangeList("newOne", null);
+    sleepABit();
     myDirtyScopeManager.markEverythingDirty();
     myChangeListManager.ensureUpToDate(false);
 
@@ -50,6 +51,7 @@ public class SvnNativeListsTest extends SvnTestCase {
 
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     final VirtualFile file = createFileInCommand("a.txt", "old content");
+    sleepABit();
 
     ensureAddedToNativeList();
 
@@ -66,6 +68,7 @@ public class SvnNativeListsTest extends SvnTestCase {
   @Test
   public void testDeleted() throws Throwable {
     final LocalChangeList newL = myChangeListManager.addChangeList("newOne", null);
+    sleepABit();
     myDirtyScopeManager.markEverythingDirty();
     myChangeListManager.ensureUpToDate(false);
 
@@ -74,9 +77,10 @@ public class SvnNativeListsTest extends SvnTestCase {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
     final VirtualFile file = createFileInCommand("a.txt", "old content");
+    sleepABit();
     checkin();
     deleteFileInCommand(file);
-
+    sleepABit();
     ensureAddedToNativeList();
 
     verify(runSvn("status"), "", "--- Changelist 'newOne':", "D a.txt");
@@ -85,6 +89,7 @@ public class SvnNativeListsTest extends SvnTestCase {
   @Test
   public void testEdit() throws Throwable {
     final LocalChangeList newL = myChangeListManager.addChangeList("newOne", null);
+    sleepABit();
     myDirtyScopeManager.markEverythingDirty();
     myChangeListManager.ensureUpToDate(false);
 
@@ -92,9 +97,10 @@ public class SvnNativeListsTest extends SvnTestCase {
 
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     final VirtualFile file = createFileInCommand("a.txt", "old content");
+    sleepABit();
     checkin();
     editFileInCommand(myProject, file, "111");
-
+    sleepABit();
     ensureAddedToNativeList();
 
     verify(runSvn("status"), "", "--- Changelist 'newOne':", "M a.txt");
@@ -103,7 +109,7 @@ public class SvnNativeListsTest extends SvnTestCase {
   @Test
   public void testEditAndMove() throws Throwable {
     final LocalChangeList newL = myChangeListManager.addChangeList("newOne", null);
-
+    sleepABit();
     myDirtyScopeManager.markEverythingDirty();
     myChangeListManager.ensureUpToDate(false);
 
@@ -112,14 +118,16 @@ public class SvnNativeListsTest extends SvnTestCase {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
     final VirtualFile file = createFileInCommand("a.txt", "old content");
+    sleepABit();
     checkin();
     editFileInCommand(myProject, file, "111");
-
+    sleepABit();
     ensureAddedToNativeList();
 
     verify(runSvn("status"), "", "--- Changelist 'newOne':", "M a.txt");
 
     renameFileInCommand(file, "b.txt");
+    sleepABit();
     verify(runSvn("status"), "", "--- Changelist 'newOne':", "A + b.txt", "D a.txt");
 
     ensureAddedToNativeList();
@@ -130,6 +138,7 @@ public class SvnNativeListsTest extends SvnTestCase {
   @Test
   public void testMove() throws Throwable {
     final LocalChangeList newL = myChangeListManager.addChangeList("newOne", null);
+    sleepABit();
     myDirtyScopeManager.markEverythingDirty();
     myChangeListManager.ensureUpToDate(false);
 
@@ -138,9 +147,11 @@ public class SvnNativeListsTest extends SvnTestCase {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
     final VirtualFile file = createFileInCommand("a.txt", "old content");
+    sleepABit();
     checkin();
 
     renameFileInCommand(file, "b.txt");
+    sleepABit();
     ensureAddedToNativeList();
 
     verify(runSvn("status"), "", "--- Changelist 'newOne':", "A + b.txt", "D a.txt");
@@ -149,6 +160,7 @@ public class SvnNativeListsTest extends SvnTestCase {
   @Test
   public void testMoveMove() throws Throwable {
     final LocalChangeList newL = myChangeListManager.addChangeList("newOne", null);
+    sleepABit();
     myDirtyScopeManager.markEverythingDirty();
     myChangeListManager.ensureUpToDate(false);
 
@@ -157,18 +169,30 @@ public class SvnNativeListsTest extends SvnTestCase {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
     final VirtualFile file = createFileInCommand("a.txt", "old content");
+    sleepABit();
     checkin();
 
     renameFileInCommand(file, "b.txt");
+    sleepABit();
     ensureAddedToNativeList();
 
     verify(runSvn("status"), "", "--- Changelist 'newOne':", "A + b.txt", "D a.txt");
 
     renameFileInCommand(file, "c.txt");
+    sleepABit();
     verify(runSvn("status"), "", "--- Changelist 'newOne':", "A + c.txt", "D a.txt");
 
     ensureAddedToNativeList();
 
     verify(runSvn("status"), "", "--- Changelist 'newOne':", "A + c.txt", "D a.txt");
+  }
+
+  private void sleepABit() {
+    try {
+      Thread.sleep(50);
+    }
+    catch (InterruptedException e) {
+      //
+    }
   }
 }

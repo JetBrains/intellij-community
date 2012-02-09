@@ -74,7 +74,7 @@ public class CodeInsightUtilBase {
   public static <T extends PsiElement> T forcePsiPostprocessAndRestoreElement(final T element) {
     final PsiFile psiFile = element.getContainingFile();
     final Document document = psiFile.getViewProvider().getDocument();
-    if (document == null) return element;
+    //if (document == null) return element;
     final Language language = PsiUtilBase.getDialect(element);
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(psiFile.getProject());
     final RangeMarker rangeMarker = document.createRangeMarker(element.getTextRange());

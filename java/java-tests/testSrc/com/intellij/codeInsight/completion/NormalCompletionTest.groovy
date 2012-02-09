@@ -1266,4 +1266,16 @@ public class ListUtils {
 
   public void testClassNameDot() { doTest('.') }
 
+  public void testClassNameDotBeforeCall() {
+    myFixture.addClass("package foo; public class FileInputStreamSmth {}")
+    myFixture.configureByFile(getTestName(false) + ".java")
+    PsiDocumentManager.getInstance(project).commitAllDocuments()
+    type '\b'
+    PsiDocumentManager.getInstance(project).commitAllDocuments()
+    myFixture.completeBasic()
+    assert lookup
+    type '.'
+    checkResult()
+  }
+
 }

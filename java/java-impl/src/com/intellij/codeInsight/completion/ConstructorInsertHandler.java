@@ -49,10 +49,6 @@ class ConstructorInsertHandler implements InsertHandler<LookupElementDecorator<L
   public void handleInsert(InsertionContext context, LookupElementDecorator<LookupItem> item) {
     @SuppressWarnings({"unchecked"}) final LookupItem<PsiClass> delegate = item.getDelegate();
 
-    final PsiElement position = SmartCompletionDecorator.getPosition(context, delegate);
-    final PsiExpression enclosing = PsiTreeUtil.getContextOfType(position, PsiExpression.class, true);
-    final PsiAnonymousClass anonymousClass = PsiTreeUtil.getParentOfType(position, PsiAnonymousClass.class);
-    final boolean inAnonymous = anonymousClass != null && anonymousClass.getParent() == enclosing;
     PsiClass psiClass = (PsiClass)item.getObject();
 
     boolean isAbstract = psiClass.hasModifierProperty(PsiModifier.ABSTRACT);
@@ -62,12 +58,17 @@ class ConstructorInsertHandler implements InsertHandler<LookupElementDecorator<L
       final int plEnd = context.getOffset(PARAM_LIST_END);
       if (plStart >= 0 && plEnd >= 0) {
         context.getDocument().deleteString(plStart, plEnd);
-        PsiDocumentManager.getInstance(context.getProject()).commitAllDocuments();
       }
     }
 
+    context.commitDocument();
+
     OffsetKey insideRef = context.trackOffset(context.getTailOffset(), false);
 
+    final PsiElement position = SmartCompletionDecorator.getPosition(context, delegate);
+    final PsiExpression enclosing = PsiTreeUtil.getContextOfType(position, PsiExpression.class, true);
+    final PsiAnonymousClass anonymousClass = PsiTreeUtil.getParentOfType(position, PsiAnonymousClass.class);
+    final boolean inAnonymous = anonymousClass != null && anonymousClass.getParent() == enclosing;
     boolean fillTypeArgs = false;
     if (delegate instanceof PsiTypeLookupItem) {
       fillTypeArgs = !isRawTypeExpected(context, (PsiTypeLookupItem)delegate) &&

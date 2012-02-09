@@ -144,7 +144,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
 
   public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
     removeAll();
-    DefaultListCellRenderer rightRenderer = getRightCellRenderer();
+    DefaultListCellRenderer rightRenderer = getRightCellRenderer(value);
     ListCellRenderer leftRenderer = new LeftRenderer(null, myMatcher);
     final Component leftCellRendererComponent = leftRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
     if (rightRenderer != null) {
@@ -176,9 +176,9 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
   }
 
   @Nullable
-  protected DefaultListCellRenderer getRightCellRenderer() {
+  protected DefaultListCellRenderer getRightCellRenderer(final Object value) {
     if (UISettings.getInstance().SHOW_ICONS_IN_QUICK_NAVIGATION) {
-      final DefaultListCellRenderer renderer = ModuleRendererFactory.getInstance().getModuleRenderer();
+      final DefaultListCellRenderer renderer = ModuleRendererFactory.findInstance(value).getModuleRenderer();
       if (renderer instanceof PlatformModuleRendererFactory.PlatformModuleRenderer) {
         // it won't display any new information
         return null;

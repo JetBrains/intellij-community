@@ -532,4 +532,6 @@
   
   <extensionPoint name="codeBlockProvider"
                   beanClass="com.intellij.lang.LanguageExtensionPoint"/>
+
+  <extensionPoint name="moduleRendererFactory" interface="com.intellij.ide.util.ModuleRendererFactory"/>
 </extensionPoints>

@@ -533,7 +533,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     final OffsetMap hostMap = new OffsetMap(hostEditor.getDocument());
     final OffsetMap original = initContext.getOffsetMap();
-    for (final OffsetKey key : new ArrayList<OffsetKey>(original.keySet())) {
+    for (final OffsetKey key : original.getAllOffsets()) {
       hostMap.addOffset(key, injectedLanguageManager.injectedToHost(fileCopy[0], original.getOffset(key)));
     }
 
@@ -602,7 +602,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       EditorWindow injectedEditor = (EditorWindow)InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(hostEditor, hostFile, hostStartOffset);
       assert injected == injectedEditor.getInjectedFile();
       final OffsetMap map = new OffsetMap(injectedEditor.getDocument());
-      for (final OffsetKey key : new ArrayList<OffsetKey>(hostMap.keySet())) {
+      for (final OffsetKey key : hostMap.getAllOffsets()) {
         map.addOffset(key, injectedEditor.logicalPositionToOffset(injectedEditor.hostToInjected(hostEditor.offsetToLogicalPosition(hostMap.getOffset(key)))));
       }
       context = new CompletionContext(hostFile.getProject(), injectedEditor, injected, map);

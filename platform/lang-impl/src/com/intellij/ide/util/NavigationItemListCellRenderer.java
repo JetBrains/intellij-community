@@ -66,7 +66,7 @@ public class NavigationItemListCellRenderer extends OpaquePanel implements ListC
     removeAll();
 
     final boolean hasRightRenderer = UISettings.getInstance().SHOW_ICONS_IN_QUICK_NAVIGATION;
-    final ModuleRendererFactory factory = ModuleRendererFactory.getInstance();
+    final ModuleRendererFactory factory = ModuleRendererFactory.findInstance(value);
 
     final LeftRenderer left = new LeftRenderer(!hasRightRenderer || !factory.rendersLocationString(), myMatcher);
     final Component leftCellRendererComponent = left.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);

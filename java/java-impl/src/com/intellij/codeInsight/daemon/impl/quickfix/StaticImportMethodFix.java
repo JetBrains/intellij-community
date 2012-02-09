@@ -261,8 +261,8 @@ public class StaticImportMethodFix implements IntentionAction {
       protected ListCellRenderer getListElementRenderer() {
         return new MethodCellRenderer(true, PsiFormatUtilBase.SHOW_NAME){
           @Override
-          protected DefaultListCellRenderer getRightCellRenderer() {
-            final DefaultListCellRenderer moduleRenderer = super.getRightCellRenderer();
+          protected DefaultListCellRenderer getRightCellRenderer(final Object value) {
+            final DefaultListCellRenderer moduleRenderer = super.getRightCellRenderer(value);
             return new DefaultListCellRenderer(){
               @Override
               public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
