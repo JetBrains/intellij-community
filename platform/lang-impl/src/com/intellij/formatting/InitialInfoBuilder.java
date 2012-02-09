@@ -270,6 +270,7 @@ class InitialInfoBuilder {
                                                 final int index,
                                                 Block parentBlock)
   {
+    myCurrentWhiteSpace.setForceSkipTabulationsUsage(!myCurrentWhiteSpace.containsLineFeeds());
     final LeafBlockWrapper info =
       new LeafBlockWrapper(rootBlock, parent, myCurrentWhiteSpace, myModel, myOptions, myPreviousBlock, readOnly);
     info.setDebugInfo("target block's class: " + rootBlock.getClass());
