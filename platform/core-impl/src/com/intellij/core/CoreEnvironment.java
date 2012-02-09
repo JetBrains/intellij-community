@@ -59,6 +59,7 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.CachedValuesManagerImpl;
 import com.intellij.util.Function;
 import com.intellij.util.messages.impl.MessageBusImpl;
+import org.jetbrains.annotations.NotNull;
 import org.picocontainer.MutablePicoContainer;
 
 import java.lang.reflect.Modifier;
@@ -106,7 +107,7 @@ public class CoreEnvironment {
                                                          new MessageBusImpl(myApplication, null),
                                                          new FileSystemPersistence() {
                                                            @Override
-                                                           public void refresh(boolean asynchronous, Runnable postAction, ModalityState modalityState) {
+                                                           public void refresh(boolean asynchronous, Runnable postAction, @NotNull ModalityState modalityState) {
                                                            }
 
                                                            @Override
