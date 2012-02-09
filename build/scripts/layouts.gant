@@ -157,6 +157,8 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
       jar("jps-server.jar") {
         module("jps-builders")
         module("jps-model")
+      }
+      jar("groovy-rt.jar") {
         module("groovy-rt")
       }
 
