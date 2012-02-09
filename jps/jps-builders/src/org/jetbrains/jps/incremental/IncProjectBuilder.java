@@ -441,6 +441,8 @@ public class IncProjectBuilder {
       }
     }
     while (nextPassRequired);
+
+    context.clearContextRoundData();
   }
 
   private void runProjectLevelBuilders(CompileContext context) throws ProjectBuildException {
