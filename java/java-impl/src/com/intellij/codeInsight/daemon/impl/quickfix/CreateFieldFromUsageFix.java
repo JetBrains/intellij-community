@@ -53,6 +53,11 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
   }
 
   @Override
+  protected boolean canBeTargetClass(PsiClass psiClass) {
+    return super.canBeTargetClass(psiClass) && !psiClass.isInterface() && !psiClass.isAnnotationType();
+  }
+
+  @Override
   protected void invokeImpl(final PsiClass targetClass) {
     final Project project = myReferenceExpression.getProject();
     PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
