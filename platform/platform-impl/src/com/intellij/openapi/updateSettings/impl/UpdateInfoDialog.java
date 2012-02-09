@@ -66,11 +66,14 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
       }
       else {
         for (ButtonInfo info : buttons) {
-          actions.add(new ButtonAction(info));
+          if (!info.isDownload()) {
+            actions.add(new ButtonAction(info));
+          }
         }
       }
     }
     else {
+      // the first button replaces the OK action
       for (int i = 1; i < buttons.size(); i++) {
         actions.add(new ButtonAction(buttons.get(i)));
       }
