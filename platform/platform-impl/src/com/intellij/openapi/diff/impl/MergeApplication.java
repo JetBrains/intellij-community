@@ -25,9 +25,9 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * vladimir.ru
@@ -101,11 +101,8 @@ public class MergeApplication extends DiffApplication {
     return file;
   }
 
-  /**
-   * Get direct from file because IDEA cache files(see #IDEA-81067)
-   */
   private static String getText(VirtualFile file) throws IOException {
-    FileInputStream inputStream = new FileInputStream(file.getPath());
+    InputStream inputStream = file.getInputStream();
     try {
       return StreamUtil.readText(inputStream);
     }
