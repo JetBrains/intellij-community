@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.refactoring.introduce.parameter;
 
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
@@ -150,11 +151,16 @@ public class GrIntroduceParameterDialog extends RefactoringDialog implements GrI
   @Override
   protected JComponent createCenterPanel() {
     JPanel north = new JPanel();
-    north.setLayout(new BoxLayout(north, BoxLayout.Y_AXIS));
-    north.add(createNamePanel());
+    north.setLayout(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, true));
+
+    final JPanel namePanel = createNamePanel();
+    namePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+    north.add(namePanel);
+
     createCheckBoxes(north);
 
     myGetterPanel = createFieldPanel();
+    myGetterPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
     north.add(myGetterPanel);
 
     final JPanel root = new JPanel(new BorderLayout());
@@ -198,55 +204,6 @@ public class GrIntroduceParameterDialog extends RefactoringDialog implements GrI
     return splitter;
   }
 
-  private void updateSignature() {
-    StringBuilder b = new StringBuilder();
-    b.append("{ ");
-    String[] params = ExtractUtil.getParameterString(myInfo, false);
-    for (int i = 0; i < params.length; i++) {
-      if (i > 0) {
-        b.append("  ");
-      }
-      b.append(params[i]);
-      b.append('\n');
-    }
-    b.append(" ->\n}");
-    mySignature.setSignature(b.toString());
-  }
-
-  @Override
-  protected ValidationInfo doValidate() {
-    final String text = myNameSuggestionsField.getEnteredName();
-    if (!StringUtil.isJavaIdentifier(text)) {
-      return new ValidationInfo(GroovyRefactoringBundle.message("name.is.wrong", text), myNameSuggestionsField);
-    }
-
-    final Ref<ValidationInfo> info = new Ref<ValidationInfo>();
-    toRemoveCBs.forEachEntry(new TObjectIntProcedure<JCheckBox>() {
-      @Override
-      public boolean execute(JCheckBox checkbox, int index) {
-        if (!checkbox.isSelected()) return true;
-
-        final GrParameter param = myInfo.getToReplaceIn().getParameters()[index];
-        final ParameterInfo pinfo = findParamByOldName(param.getName());
-        if (pinfo == null || !pinfo.passAsParameter()) return true;
-
-        final String message = GroovyRefactoringBundle.message("you.cannot.pass.as.parameter.0.because.you.remove.1.from.base.method",
-                                                               pinfo.getName(), param.getName());
-        info.set(new ValidationInfo(message));
-        return false;
-      }
-    });
-    return info.get();
-  }
-
-  @Nullable
-  private ParameterInfo findParamByOldName(String name) {
-    for (ParameterInfo info : myInfo.getParameterInfos()) {
-      if (name.equals(info.getOldName())) return info;
-    }
-    return null;
-  }
-
   private JPanel createFieldPanel() {
     myDoNotReplaceRadioButton = new JBRadioButton(UIUtil.replaceMnemonicAmpersand("Do n&ot replace"));
     myReplaceFieldsInaccessibleInRadioButton = new JBRadioButton(UIUtil.replaceMnemonicAmpersand("Replace fields &inaccessible in usage context"));
@@ -267,8 +224,7 @@ public class GrIntroduceParameterDialog extends RefactoringDialog implements GrI
     panel.add(myReplaceFieldsInaccessibleInRadioButton);
     panel.add(myReplaceAllFieldsRadioButton);
 
-    panel.setBorder(IdeBorderFactory.createTitledBorder(UIUtil.replaceMnemonicAmpersand("Replace fields used in expression with their getters"), false, false, true));
-
+    panel.setBorder(IdeBorderFactory.createTitledBorder("Replace fields used in expression with their getters", false, true, true));
     return panel;
   }
 
@@ -375,6 +331,54 @@ public class GrIntroduceParameterDialog extends RefactoringDialog implements GrI
         myDoNotReplaceRadioButton.setSelected(true);
         break;
     }
+  }
+
+  private void updateSignature() {
+    StringBuilder b = new StringBuilder();
+    b.append("{ ");
+    String[] params = ExtractUtil.getParameterString(myInfo, false);
+    for (int i = 0; i < params.length; i++) {
+      if (i > 0) {
+        b.append("  ");
+      }
+      b.append(params[i]);
+      b.append('\n');
+    }
+    b.append(" ->\n}");
+    mySignature.setSignature(b.toString());
+  }
+
+  @Override
+  protected ValidationInfo doValidate() {
+    final String text = myNameSuggestionsField.getEnteredName();
+    if (!StringUtil.isJavaIdentifier(text)) {
+      return new ValidationInfo(GroovyRefactoringBundle.message("name.is.wrong", text), myNameSuggestionsField);
+    }
+
+    final Ref<ValidationInfo> info = new Ref<ValidationInfo>();
+    toRemoveCBs.forEachEntry(new TObjectIntProcedure<JCheckBox>() {
+      @Override
+      public boolean execute(JCheckBox checkbox, int index) {
+        if (!checkbox.isSelected()) return true;
+
+        final GrParameter param = myInfo.getToReplaceIn().getParameters()[index];
+        final ParameterInfo pinfo = findParamByOldName(param.getName());
+        if (pinfo == null || !pinfo.passAsParameter()) return true;
+
+        final String message = GroovyRefactoringBundle.message("you.cannot.pass.as.parameter.0.because.you.remove.1.from.base.method", pinfo.getName(), param.getName());
+        info.set(new ValidationInfo(message));
+        return false;
+      }
+    });
+    return info.get();
+  }
+
+  @Nullable
+  private ParameterInfo findParamByOldName(String name) {
+    for (ParameterInfo info : myInfo.getParameterInfos()) {
+      if (name.equals(info.getOldName())) return info;
+    }
+    return null;
   }
 
   @Nullable

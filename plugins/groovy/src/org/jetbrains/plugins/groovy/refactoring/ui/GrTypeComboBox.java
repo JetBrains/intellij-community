@@ -102,7 +102,13 @@ public class GrTypeComboBox extends ComboBox {
 
   public void addClosureTypesFrom(PsiType type, PsiElement context) {
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.getProject());
-    final PsiType cl = factory.createTypeFromText(GroovyCommonClassNames.GROOVY_LANG_CLOSURE + '<' + type.getCanonicalText() + '>', context);
+    final PsiType cl;
+    if (type == null) {
+      cl = factory.createTypeFromText(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, context);
+    }
+    else {
+      cl = factory.createTypeFromText(GroovyCommonClassNames.GROOVY_LANG_CLOSURE + '<' + type.getCanonicalText() + '>', context);
+    }
     addItem(new PsiTypeItem(cl, true));
   }
 
