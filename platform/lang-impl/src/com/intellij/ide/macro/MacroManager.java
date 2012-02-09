@@ -51,6 +51,7 @@ public final class MacroManager {
     registerMacro(new FileNameMacro());
     registerMacro(new FileNameWithoutExtension());
     registerMacro(new FilePathMacro());
+    registerMacro(new FileEncodingMacro());
     registerMacro(new FileDirRelativeToProjectRootMacro());
     registerMacro(new FilePathRelativeToProjectRootMacro());
     registerMacro(new FileDirRelativeToSourcepathMacro());
