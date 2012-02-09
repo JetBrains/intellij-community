@@ -3,6 +3,8 @@ package com.intellij.mock;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
+import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -26,10 +28,17 @@ public class MockFileDocumentManagerImpl extends FileDocumentManager {
   private final WeakFactoryMap<VirtualFile,Document> myDocuments = new WeakFactoryMap<VirtualFile, Document>() {
     @Override
     protected Document create(final VirtualFile key) {
+      if (key.isDirectory() || isBinaryWithoutDecompiler(key)) return null;
+
       CharSequence text = LoadTextUtil.loadText(key);
       final Document document = myFactory.fun(text);
       document.putUserData(MOCK_VIRTUAL_FILE_KEY, key);
       return document;
+    }
+
+    private boolean isBinaryWithoutDecompiler(VirtualFile file) {
+      final FileType ft = file.getFileType();
+      return ft.isBinary() && BinaryFileTypeDecompilers.INSTANCE.forFileType(ft) == null;
     }
   };
 

@@ -70,18 +70,19 @@ public class JavaCoreEnvironment extends CoreEnvironment {
     myApplication.registerService(PsiPackageImplementationHelper.class, new CorePsiPackageImplementationHelper());
 
     myFileManager = new CoreJavaFileManager(myPsiManager, getLocalFileSystem(), myJarFileSystem);
-    JavaPsiFacadeImpl javaPsiFacade = new JavaPsiFacadeImpl(myProject, myPsiManager, myFileManager, null);
-    myProject.registerService(CoreJavaFileManager.class, myFileManager);
-    registerComponentInstance(myProject.getPicoContainer(),
-                              JavaPsiFacade.class,
-                              javaPsiFacade);
-    myProject.registerService(JavaPsiFacade.class, javaPsiFacade);
     myProject.registerService(PsiElementFactory.class, new PsiElementFactoryImpl(myPsiManager));
     myProject.registerService(JavaPsiImplementationHelper.class, new CoreJavaPsiImplementationHelper());
     myProject.registerService(PsiResolveHelper.class, new PsiResolveHelperImpl(myPsiManager));
     myProject.registerService(LanguageLevelProjectExtension.class, new CoreLanguageLevelProjectExtension());
     myProject.registerService(PackageIndex.class, myFileManager);
     myProject.registerService(JavaResolveCache.class, new JavaResolveCache(null));
+
+    JavaPsiFacadeImpl javaPsiFacade = new JavaPsiFacadeImpl(myProject, myPsiManager, myFileManager, null);
+    myProject.registerService(CoreJavaFileManager.class, myFileManager);
+    registerComponentInstance(myProject.getPicoContainer(),
+            JavaPsiFacade.class,
+            javaPsiFacade);
+    myProject.registerService(JavaPsiFacade.class, javaPsiFacade);
 
     myApplication.registerService(EmptySubstitutor.class, new EmptySubstitutorImpl());
     myApplication.registerService(JavaDirectoryService.class, new CoreJavaDirectoryService());
