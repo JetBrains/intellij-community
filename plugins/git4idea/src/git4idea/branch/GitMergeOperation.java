@@ -15,6 +15,8 @@
  */
 package git4idea.branch;
 
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -35,6 +37,7 @@ import git4idea.repo.GitRepository;
 import git4idea.util.GitPreservingProcess;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.event.HyperlinkEvent;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -52,6 +55,7 @@ class GitMergeOperation extends GitBranchOperation {
   @NotNull private final ChangeListManager myChangeListManager;
   @NotNull private final String myBranchToMerge;
   @NotNull private final String myCurrentBranch;
+  @NotNull private final GitRepository myCurrentRepository;
   @NotNull private final Map<GitRepository, String> myCurrentRevisionsBeforeMerge;
 
   // true in value if unstash will be needed after resolving conflicts.
@@ -59,13 +63,13 @@ class GitMergeOperation extends GitBranchOperation {
   private GitPreservingProcess myPreservingProcess;
 
   protected GitMergeOperation(@NotNull Project project, @NotNull Collection<GitRepository> repositories,
-                              @NotNull String branchToMerge,
-                              @NotNull String currentBranch,
+                              @NotNull String branchToMerge, @NotNull String currentBranch, @NotNull GitRepository currentRepository,
                               @NotNull Map<GitRepository, String> currentRevisionsBeforeMerge,
                               @NotNull ProgressIndicator indicator) {
     super(project, repositories, indicator);
     myBranchToMerge = branchToMerge;
     myCurrentBranch = currentBranch;
+    myCurrentRepository = currentRepository;
     myCurrentRevisionsBeforeMerge = currentRevisionsBeforeMerge;
     myChangeListManager = ChangeListManager.getInstance(myProject);
   }
@@ -131,6 +135,21 @@ class GitMergeOperation extends GitBranchOperation {
     }
 
     restoreLocalChanges();
+  }
+
+  @Override
+  protected void notifySuccess(@NotNull String message) {
+    String description = message + "<br/><a href='delete'>Delete " + myBranchToMerge + "</a>";
+    NotificationManager.getInstance(myProject).notify(GitVcs.NOTIFICATION_GROUP_ID, "", description, NotificationType.INFORMATION,
+      new NotificationListener() {
+        @Override
+        public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+          if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED && event.getDescription().equalsIgnoreCase("delete")) {
+            new GitBranchOperationsProcessor(myProject, new ArrayList<GitRepository>(getRepositories()), myCurrentRepository).
+              deleteBranch(myBranchToMerge);
+          }
+        }
+    });
   }
 
   private boolean resolveConflicts() {

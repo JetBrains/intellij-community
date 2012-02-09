@@ -247,7 +247,7 @@ public final class GitBranchOperationsProcessor {
     for (GitRepository repository : myRepositories) {
       revisions.put(repository, repository.getCurrentRevision());
     }
-    new GitMergeOperation(myProject, myRepositories, branchName, getCurrentBranch(), revisions, indicator).execute();
+    new GitMergeOperation(myProject, myRepositories, branchName, getCurrentBranch(), mySelectedRepository, revisions, indicator).execute();
   }
 
   /**

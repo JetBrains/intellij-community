@@ -159,7 +159,7 @@ abstract class GitBranchOperation {
     NotificationManager.getInstance(myProject).notify(GitVcs.NOTIFICATION_GROUP_ID, "", message, NotificationType.INFORMATION);
   }
 
-  protected void notifySuccess() {
+  protected final void notifySuccess() {
     notifySuccess(getSuccessMessage());
   }
 
