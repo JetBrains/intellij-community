@@ -7,6 +7,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.HtmlListCellRenderer;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.annotations.NonNls;
@@ -14,7 +15,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -73,15 +73,14 @@ public class ExtendedDeviceChooserDialog extends DialogWrapper {
     Disposer.register(myDisposable, myAvdCombo);
 
 
-    myAvdCombo.getComboBox().setRenderer(new DefaultListCellRenderer() {
+    myAvdCombo.getComboBox().setRenderer(new HtmlListCellRenderer(myAvdCombo.getComboBox().getRenderer()) {
       @Override
-      public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+      protected void doCustomize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         if (value == null) {
-          value = myAvdCombo.getComboBox().isEnabled()
+          setText(myAvdCombo.getComboBox().isEnabled()
                   ? "<html><font color='red'>[none]</font></html>"
-                  : "[none]";
+                  : "[none]");
         }
-        return super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
       }
     });
     myComboBoxWrapper.add(myAvdCombo);

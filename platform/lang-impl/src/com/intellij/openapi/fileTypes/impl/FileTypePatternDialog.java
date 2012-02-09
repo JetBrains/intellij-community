@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.fileTypes.impl;
 
+import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.TemplateLanguageFileType;
@@ -22,7 +23,6 @@ import com.intellij.psi.templateLanguages.TemplateDataLanguageMappings;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -51,10 +51,9 @@ public class FileTypePatternDialog {
       for (Language language : languages) {
         model.addElement(language);
       }
-      myLanguageCombo.setRenderer(new DefaultListCellRenderer() {
+      myLanguageCombo.setRenderer(new ListCellRendererWrapper(myLanguageCombo.getRenderer()) {
         @Override
-        public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-          super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
           setText(value == null ? "" : ((Language) value).getDisplayName());
           if (value != null) {
             final FileType type = ((Language)value).getAssociatedFileType();
@@ -62,7 +61,6 @@ public class FileTypePatternDialog {
               setIcon(type.getIcon());
             }
           }
-          return this;
         }
       });
       myLanguageCombo.setSelectedItem(templateDataLanguage);
