@@ -2,31 +2,26 @@ package org.jetbrains.android.compiler;
 
 import com.android.AndroidConstants;
 import com.android.sdklib.IAndroidTarget;
-import com.android.sdklib.SdkConstants;
 import com.intellij.facet.FacetManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.ex.CompileContextEx;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.android.compiler.tools.AndroidRenderscript;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.fileTypes.AndroidRenderscriptFileType;
 import org.jetbrains.android.sdk.AndroidPlatform;
-import org.jetbrains.android.util.AndroidBundle;
-import org.jetbrains.android.util.AndroidCommonUtils;
-import org.jetbrains.android.util.AndroidUtils;
+import org.jetbrains.android.util.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,8 +35,7 @@ import java.util.*;
  * @author Eugene.Kudelevsky
  */
 public class AndroidRenderscriptCompiler implements SourceGeneratingCompiler {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.compiler.AndroidRenderscriptCompiler");
-  
+
   private static final GenerationItem[] EMPTY_GENERATION_ITEM_ARRAY = {};
 
   @Nullable
@@ -190,13 +184,15 @@ public class AndroidRenderscriptCompiler implements SourceGeneratingCompiler {
         }
 
         for (final VirtualFile sourceFile : genItem.myFiles) {
+          final String depFolderOsPath = getDependencyFolder(context.getProject(), sourceFile, outputRootDirectory);
+
           try {
-            final Map<CompilerMessageCategory, List<String>> messages = launchRenderscriptCompiler(context.getProject(),
-                                                                                                   genItem.mySdkLocation,
-                                                                                                   genItem.myAndroidTarget,
-                                                                                                   sourceFile,
-                                                                                                   genRootPath,
-                                                                                                   genItem.myRawDirPath);
+            final Map<CompilerMessageCategory, List<String>> messages = AndroidCompileUtil.toCompilerMessageCategoryKeys(
+              AndroidRenderscript
+                .execute(genItem.mySdkLocation, genItem.myAndroidTarget, sourceFile.getPath(), genRootPath,
+                         depFolderOsPath,
+                         genItem.myRawDirPath));
+
             ApplicationManager.getApplication().runReadAction(new Runnable() {
               public void run() {
                 if (context.getProject().isDisposed()) {
@@ -235,47 +231,10 @@ public class AndroidRenderscriptCompiler implements SourceGeneratingCompiler {
     }
   }
 
-  static Map<CompilerMessageCategory, List<String>> launchRenderscriptCompiler(@NotNull Project project,
-                                                                               @NotNull final String sdkLocation,
-                                                                               @NotNull IAndroidTarget target,
-                                                                               @NotNull final VirtualFile sourceFile,
-                                                                               @NotNull final String genFolderPath,
-                                                                               @NotNull final String rawDirPath)
-    throws IOException {
-    final List<String> command = new ArrayList<String>();
-    command.add(
-      FileUtil.toSystemDependentName(sdkLocation + '/' + SdkConstants.OS_SDK_PLATFORM_TOOLS_FOLDER + SdkConstants.FN_RENDERSCRIPT));
-    command.add("-I");
-    command.add(target.getPath(IAndroidTarget.ANDROID_RS_CLANG));
-    command.add("-I");
-    command.add(target.getPath(IAndroidTarget.ANDROID_RS));
-    command.add("-p");
-    command.add(FileUtil.toSystemDependentName(genFolderPath));
-    command.add("-o");
-    command.add(FileUtil.toSystemDependentName(rawDirPath));
-
-    final String sourceFilePath = FileUtil.toSystemDependentName(sourceFile.getPath());
-
-    final VirtualFile genFolder = LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(genFolderPath));
-    if (genFolder != null) {
-      final String dependencyFolderPath = getDependencyFolder(project, sourceFile, genFolder);
-      if (dependencyFolderPath != null) {
-        command.add("-d");
-        command.add(FileUtil.toSystemDependentName(dependencyFolderPath));
-      }
-    }
-
-    command.add("-MD");
-    command.add(sourceFilePath);
-
-    LOG.info(AndroidCommonUtils.command2string(command));
-    return AndroidCompileUtil.execute(ArrayUtil.toStringArray(command));
-  }
-
   @Nullable
-  private static String getDependencyFolder(@NotNull final Project project,
-                                            @NotNull final VirtualFile sourceFile,
-                                            @NotNull final VirtualFile genFolder) {
+  static String getDependencyFolder(@NotNull final Project project,
+                                    @NotNull final VirtualFile sourceFile,
+                                    @NotNull final VirtualFile genFolder) {
     final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
 
     final VirtualFile sourceRoot = index.getSourceRootForFile(sourceFile);

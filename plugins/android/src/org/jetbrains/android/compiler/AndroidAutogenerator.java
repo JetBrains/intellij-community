@@ -20,6 +20,7 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.android.compiler.tools.AndroidApt;
 import org.jetbrains.android.compiler.tools.AndroidIdl;
+import org.jetbrains.android.compiler.tools.AndroidRenderscript;
 import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidRootUtil;
@@ -448,13 +449,19 @@ public class AndroidAutogenerator {
 
       try {
         tempOutDir = FileUtil.createTempDirectory("android_renderscript_autogeneration", "tmp");
+        final VirtualFile vTempOutDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempOutDir);
 
-        final Map<CompilerMessageCategory, List<String>> messages = AndroidRenderscriptCompiler.
-          launchRenderscriptCompiler(module.getProject(), item.mySdkLocation, item.myTarget, file, tempOutDir.getPath(), item.myRawDirPath);
+        final String depFolderPath =
+          vTempOutDir != null ? AndroidRenderscriptCompiler.getDependencyFolder(context.getProject(), file, vTempOutDir) : null;
+
+        final Map<CompilerMessageCategory, List<String>> messages = AndroidCompileUtil.toCompilerMessageCategoryKeys(
+          AndroidRenderscript
+            .execute(item.mySdkLocation, item.myTarget, file.getPath(), tempOutDir.getPath(), depFolderPath,
+                     item.myRawDirPath));
 
         if (messages.get(CompilerMessageCategory.ERROR).size() == 0) {
           final List<File> newFiles = new ArrayList<File>();
-          moveAllFiles(tempOutDir, new File(item.myGenDirPath), newFiles);
+          AndroidCommonUtils.moveAllFiles(tempOutDir, new File(item.myGenDirPath), newFiles);
 
           for (File newFile : newFiles) {
             final VirtualFile newVFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(newFile);
@@ -497,22 +504,6 @@ public class AndroidAutogenerator {
       finally {
         if (tempOutDir != null) {
           FileUtil.delete(tempOutDir);
-        }
-      }
-    }
-  }
-
-  private static void moveAllFiles(@NotNull File from, @NotNull File to, @NotNull Collection<File> newFiles) throws IOException {
-    if (from.isFile()) {
-      FileUtil.rename(from, to);
-      newFiles.add(to);
-    }
-    else {
-      final File[] children = from.listFiles();
-
-      if (children != null) {
-        for (File child : children) {
-          moveAllFiles(child, new File(to, child.getName()), newFiles);
         }
       }
     }
