@@ -19,6 +19,8 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -59,12 +61,20 @@ public class RemoveUnnecessarySemicolonsIntention implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!(file instanceof GroovyFileBase) || editor.getSelectionModel().hasBlockSelection()) {
+    final SelectionModel selectionModel = editor.getSelectionModel();
+    if (!(file instanceof GroovyFileBase)) return false;
+    if (selectionModel.hasBlockSelection()) return false;
+
+    if (selectionModel.hasSelection()) {
+      final HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(selectionModel.getSelectionStart());
+      final int end = selectionModel.getSelectionEnd();
+      while (!iterator.atEnd()) {
+        if (iterator.getTokenType() == GroovyTokenTypes.mSEMI) return true;
+        if (iterator.getStart() > end) return false;
+        iterator.advance();
+      }
       return false;
     }
-
-
-    if (editor.getSelectionModel().hasSelection()) return true;
 
     int offset = editor.getCaretModel().getOffset();
     if (offset >= editor.getDocument().getTextLength()) offset = editor.getDocument().getTextLength() - 1;
