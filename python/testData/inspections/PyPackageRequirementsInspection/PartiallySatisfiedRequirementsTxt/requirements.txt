@@ -1,0 +1,3 @@
+pip
+Markdown
+Django==1.3.1
