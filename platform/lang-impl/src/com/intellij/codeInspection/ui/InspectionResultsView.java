@@ -55,9 +55,7 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
-import com.intellij.ui.PopupHandler;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SmartExpander;
+import com.intellij.ui.*;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -123,7 +121,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
 
     mySplitter = new Splitter(false, AnalysisUIOptions.getInstance(myProject).SPLITTER_PROPORTION);
 
-    mySplitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree));
+    mySplitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree, SideBorder.LEFT | SideBorder.RIGHT));
     mySplitter.setSecondComponent(myBrowser);
 
     mySplitter.addPropertyChangeListener(new PropertyChangeListener() {
