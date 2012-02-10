@@ -27,6 +27,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -42,7 +43,8 @@ public class HtmlLanguageLevelForm {
   private List<MyListener> myListeners = new ArrayList<MyListener>();
 
   public HtmlLanguageLevelForm(Project project) {
-    myDoctypeTextField = new TextFieldWithAutoCompletion(project);
+    final String[] urls = ExternalResourceManager.getInstance().getResourceUrls(null, true);
+    myDoctypeTextField = TextFieldWithAutoCompletion.create(project, Arrays.asList(urls), null, true);
     myOtherDoctypeWrapper.add(myDoctypeTextField);
     ActionListener listener = new ActionListener() {
       @Override
@@ -60,7 +62,6 @@ public class HtmlLanguageLevelForm {
         fireDoctypeChanged();
       }
     });
-    myDoctypeTextField.setVariants(ExternalResourceManager.getInstance().getResourceUrls(null, true));
   }
 
   public JPanel getContentPanel() {
