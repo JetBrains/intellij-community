@@ -21,6 +21,8 @@ import com.intellij.Patches;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
@@ -719,6 +721,26 @@ public class FileUtil {
 
   public static void copyDir(@NotNull File fromDir, @NotNull File toDir) throws IOException {
     copyDir(fromDir, toDir, true);
+  }
+
+  /**
+   * Copies content of {@code fromDir} to {@code toDir}.
+   * It's equivalent to "cp -r fromDir/* toDir" unix command.
+   *
+   * @param fromDir source directory
+   * @param toDir   destination directory
+   * @throws IOException in case of any IO troubles
+   */
+  public static void copyDirContent(@NotNull File fromDir, @NotNull File toDir) throws IOException {
+    File[] children = ObjectUtils.notNull(fromDir.listFiles(), ArrayUtil.EMPTY_FILE_ARRAY);
+    for (File child : children) {
+      File target = new File(toDir, child.getName());
+      if (child.isFile()) {
+        copy(child, target);
+      } else {
+        copyDir(child, target, true);
+      }
+    }
   }
 
   public static void copyDir(@NotNull File fromDir, @NotNull File toDir, boolean copySystemFiles) throws IOException {
