@@ -389,7 +389,7 @@ public class IncProjectBuilder {
       boolean nextPassRequired;
       do {
         nextPassRequired = false;
-        context.beforeNextCompileRound(chunk);
+        context.beforeCompileRound(chunk);
 
         if (!context.isProjectRebuild()) {
           syncOutputFiles(context, chunk);
@@ -440,7 +440,7 @@ public class IncProjectBuilder {
       }
       while (nextPassRequired);
 
-      context.clearContextRoundData();
+      context.afterCompileRound();
     }
   }
 

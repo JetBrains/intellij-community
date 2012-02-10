@@ -181,6 +181,16 @@ class GitBranchPopupActions {
     }
 
     @NotNull
+    List<GitRepository> getRepositories() {
+      return myRepositories;
+    }
+
+    @NotNull
+    public String getBranchName() {
+      return myBranchName;
+    }
+
+    @NotNull
     @Override
     public AnAction[] getChildren(@Nullable AnActionEvent e) {
       return new AnAction[] {

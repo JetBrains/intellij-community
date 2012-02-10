@@ -27,6 +27,7 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.WizardPopup;
@@ -88,10 +89,33 @@ class GitBranchPopup  {
 
     String title = createPopupTitle(currentRepository);
 
+    Condition<AnAction> preselectActionCondition = new Condition<AnAction>() {
+      @Override
+      public boolean value(AnAction action) {
+        if (action instanceof GitBranchPopupActions.LocalBranchActions) {
+          GitBranchPopupActions.LocalBranchActions branchAction = (GitBranchPopupActions.LocalBranchActions)action;
+          String branchName = branchAction.getBranchName();
+
+          String recentBranch;
+          List<GitRepository> repositories = branchAction.getRepositories();
+          if (repositories.size() == 1) {
+            recentBranch = myVcsSettings.getRecentBranchesByRepository().get(repositories.iterator().next().getRoot().getPath());
+          }
+          else {
+            recentBranch = myVcsSettings.getRecentCommonBranch();
+          }
+
+          if (recentBranch != null && recentBranch.equals(branchName)) {
+            return true;
+          }
+        }
+        return false;
+      }
+    };
     myPopup = new PopupFactoryImpl.ActionGroupPopup(
       title, createActions(),
       SimpleDataContext.getProjectContext(project),
-      false, false, false, true, null, -1, null, null) {
+      false, false, false, true, null, -1, preselectActionCondition, null) {
       @Override
       protected WizardPopup createPopup(WizardPopup parent, PopupStep step, Object parentValue) {
         WizardPopup popup = super.createPopup(parent, step, parentValue);

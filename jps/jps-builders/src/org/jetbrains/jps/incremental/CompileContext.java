@@ -163,20 +163,21 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
     myCompilingTests = compilingTests;
   }
 
+  void beforeCompileRound(@NotNull ModuleChunk chunk) {
+    myFsState.beforeNextRoundStart();
+  }
+
+  public void afterCompileRound() {
+    myFsState.clearContextRoundData();
+  }
+
   public void onChunkBuildStart(ModuleChunk chunk) {
     myFsState.setContextChunk(chunk);
   }
 
-  void beforeNextCompileRound(@NotNull ModuleChunk chunk) {
-    myFsState.beforeNextRoundStart();
-  }
-
-  public void clearContextRoundData() {
-    myFsState.clearContextRoundData();
-  }
-
   void onChunkBuildComplete(@NotNull ModuleChunk chunk) throws IOException {
     myDataManager.flush(true);
+    myFsState.clearContextChunk();
 
     if (!myErrorsFound && !myCancelStatus.isCanceled()) {
       final boolean compilingTests = isCompilingTests();

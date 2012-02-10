@@ -26,7 +26,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Git VCS settings
@@ -70,6 +72,8 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     public boolean PUSH_AUTO_UPDATE = false;
     public GitBranchSyncSetting SYNC_SETTING = GitBranchSyncSetting.NOT_DECIDED;
     public String RECENT_GIT_ROOT_PATH = null;
+    public Map<String, String> RECENT_BRANCH_BY_REPOSITORY = new HashMap<String, String>();
+    public String RECENT_COMMON_BRANCH = null;
   }
 
   public GitVcsSettings(GitVcsApplicationSettings appSettings) {
@@ -80,11 +84,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     return myAppSettings;
   }
   
-  @Nullable
   public static GitVcsSettings getInstance(Project project) {
-    if (project == null || project.isDisposed()) {
-      return null;
-    }
     return PeriodicalTasksCloser.getInstance().safeGetService(project, GitVcsSettings.class);
   }
 
@@ -170,6 +170,24 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
 
   public void setRecentRoot(@NotNull String recentGitRootPath) {
     myState.RECENT_GIT_ROOT_PATH = recentGitRootPath;
+  }
+
+  @NotNull
+  public Map<String, String> getRecentBranchesByRepository() {
+    return myState.RECENT_BRANCH_BY_REPOSITORY;
+  }
+
+  public void setRecentBranchOfRepository(@NotNull String repositoryPath, @NotNull String branch) {
+    myState.RECENT_BRANCH_BY_REPOSITORY.put(repositoryPath, branch);
+  }
+
+  @Nullable
+  public String getRecentCommonBranch() {
+    return myState.RECENT_COMMON_BRANCH;
+  }
+
+  public void setRecentCommonBranch(@NotNull String branch) {
+    myState.RECENT_COMMON_BRANCH = branch;
   }
 
 }

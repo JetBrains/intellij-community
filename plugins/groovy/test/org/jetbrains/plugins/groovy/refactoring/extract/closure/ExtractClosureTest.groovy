@@ -223,4 +223,36 @@ def collectLoot(){3}
 def becomeTownGuard(){}
 ''')
   }
+
+  void testDontQualify() {
+    doTest('''
+class Some {
+     private static int smth = 1
+     private static void doSmth() {}
+
+     void m1() {
+         <selection><caret>println smth
+         doSmth()</selection>
+     }
+     void m2() {
+         m1()
+     }
+}
+''', '''
+class Some {
+     private static int smth = 1
+     private static void doSmth() {}
+
+     void m1(Closure closure) {
+         <caret>closure()
+     }
+     void m2() {
+         m1 {
+             println smth
+             doSmth()
+         }
+     }
+}
+''')
+  }
 }
