@@ -17,6 +17,7 @@ package git4idea;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -91,11 +92,16 @@ public class GitBranch extends GitReference {
    */
   @NotNull
   public String getShortName() {
-    String name = getName();
-    if (myRemote) {
-      return name.substring(name.indexOf('/') + 1);
-    }
-    return name;
+    return splitNameOfRemoteBranch(getName()).getSecond();
+  }
+
+  /**
+   * Returns the remote and the "local" name of a remote branch.
+   * Expects branch in format "origin/master", i.e. remote/branch
+   */
+  public static Pair<String, String> splitNameOfRemoteBranch(String branchName) {
+    int firstSlash = branchName.indexOf('/');
+    return Pair.create(branchName.substring(0, firstSlash), branchName.substring(firstSlash + 1));
   }
 
   /**
