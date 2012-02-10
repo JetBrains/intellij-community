@@ -11,8 +11,8 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.PlatformIcons;
-import org.jetbrains.android.resourceManagers.ResourceManager;
 import org.jetbrains.android.util.AndroidBundle;
+import org.jetbrains.android.util.AndroidResourceUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -81,7 +81,7 @@ public class CreateResourceDirectoryAction extends CreateElementActionBase {
     }
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       public Boolean compute() {
-        return ResourceManager.isResourceDirectory((PsiDirectory)element);
+        return AndroidResourceUtil.isResourceDirectory((PsiDirectory)element);
       }
     });
   }

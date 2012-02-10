@@ -27,6 +27,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlFile;
@@ -57,11 +58,7 @@ import java.util.*;
 import static org.jetbrains.android.util.AndroidUtils.loadDomElement;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Eugene.Kudelevsky
- * Date: Mar 30, 2009
- * Time: 7:44:03 PM
- * To change this template use File | Settings | File Templates.
+ * @author Eugene.Kudelevsky
  */
 public class LocalResourceManager extends ResourceManager {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.resourceManagers.ResourceManager");
@@ -283,7 +280,7 @@ public class LocalResourceManager extends ResourceManager {
   // must be invoked in a write action
   @Nullable
   public ResourceElement addValueResource(@NotNull final String type, @NotNull final String name, @Nullable final String value) {
-    String resourceFileName = getDefaultResourceFileName(type);
+    String resourceFileName = AndroidResourceUtil.getDefaultResourceFileName(type);
     if (resourceFileName == null) {
       throw new IllegalArgumentException("Incorrect resource type");
     }
@@ -315,5 +312,44 @@ public class LocalResourceManager extends ResourceManager {
       LOG.error(e);
       return null;
     }
+  }
+
+  @NotNull
+  public List<PsiElement> findResourcesByField(@NotNull PsiField field) {
+    final String type = AndroidResourceUtil.getResourceClassName(field);
+    if (type == null) {
+      return Collections.emptyList();
+    }
+
+    final String fieldName = field.getName();
+    if (fieldName == null) {
+      return Collections.emptyList();
+    }
+    return findResourcesByFieldName(type, fieldName);
+  }
+
+  @NotNull
+  public List<PsiElement> findResourcesByFieldName(@NotNull String resClassName, @NotNull String fieldName) {
+    List<PsiElement> targets = new ArrayList<PsiElement>();
+    if (resClassName.equals("id")) {
+      targets.addAll(findIdDeclarations(fieldName));
+    }
+    for (PsiFile file : findResourceFiles(resClassName, fieldName, false)) {
+      targets.add(file);
+    }
+    for (ResourceElement element : findValueResources(resClassName, fieldName, false)) {
+      targets.add(element.getName().getXmlAttributeValue());
+    }
+    if (resClassName.equals("attr")) {
+      for (Attr attr : findAttrs(fieldName)) {
+        targets.add(attr.getName().getXmlAttributeValue());
+      }
+    }
+    else if (resClassName.equals("styleable")) {
+      for (DeclareStyleable styleable : findStyleables(fieldName)) {
+        targets.add(styleable.getName().getXmlAttributeValue());
+      }
+    }
+    return targets;
   }
 }

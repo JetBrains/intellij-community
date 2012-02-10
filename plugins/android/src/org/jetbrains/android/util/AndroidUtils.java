@@ -1021,4 +1021,19 @@ public class AndroidUtils {
     }
     return null;
   }
+
+  public static boolean equal(@Nullable String s1, @Nullable String s2, boolean distinguishDelimeters) {
+    if (s1 == null || s2 == null) {
+      return false;
+    }
+    if (s1.length() != s2.length()) return false;
+    for (int i = 0, n = s1.length(); i < n; i++) {
+      char c1 = s1.charAt(i);
+      char c2 = s2.charAt(i);
+      if (distinguishDelimeters || (Character.isLetterOrDigit(c1) && Character.isLetterOrDigit(c2))) {
+        if (c1 != c2) return false;
+      }
+    }
+    return true;
+  }
 }

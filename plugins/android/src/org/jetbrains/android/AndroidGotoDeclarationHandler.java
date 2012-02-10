@@ -25,7 +25,6 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import org.jetbrains.android.dom.wrappers.FileResourceElementWrapper;
 import org.jetbrains.android.dom.wrappers.ValueResourceElementWrapper;
 import org.jetbrains.android.facet.AndroidFacet;
-import org.jetbrains.android.util.AndroidResourceUtil;
 import org.jetbrains.android.util.AndroidUtils;
 
 import java.util.List;
@@ -82,8 +81,7 @@ public class AndroidGotoDeclarationHandler implements GotoDeclarationHandler {
       return null;
     }
 
-    final List<PsiElement> resourceList =
-      AndroidResourceUtil.findResourcesByFieldName(facet.getLocalResourceManager(), resClassName, resFieldName);
+    final List<PsiElement> resourceList = facet.getLocalResourceManager().findResourcesByFieldName(resClassName, resFieldName);
     final PsiElement[] resources = resourceList.toArray(new PsiElement[resourceList.size()]);
     final PsiElement[] wrappedResources = new PsiElement[resources.length];
     

@@ -20,7 +20,6 @@ import org.jetbrains.android.dom.resources.ResourceElement;
 import org.jetbrains.android.dom.resources.Resources;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidRootUtil;
-import org.jetbrains.android.resourceManagers.ResourceManager;
 import org.jetbrains.android.uipreview.DeviceConfiguratorPanel;
 import org.jetbrains.android.uipreview.InvalidOptionValueException;
 import org.jetbrains.android.util.AndroidBundle;
@@ -112,7 +111,7 @@ public class CreateXmlResourceDialog extends DialogWrapper {
     };
     myDeviceConfigurationWrapper.add(myDeviceConfiguratorPanel, BorderLayout.CENTER);
 
-    final String defaultResFileName = ResourceManager.getDefaultResourceFileName(resourceType.getName());
+    final String defaultResFileName = AndroidResourceUtil.getDefaultResourceFileName(resourceType.getName());
     if (defaultResFileName != null) {
       myFileNameField.setText(defaultResFileName);
     }
@@ -197,7 +196,7 @@ public class CreateXmlResourceDialog extends DialogWrapper {
       return new ValidationInfo(AndroidBundle.message("not.resource.file.error", FileUtil.toSystemDependentName(resFile.getPath())));
     }
 
-    for (ResourceElement element : ResourceManager.getValueResourcesFromElement(resourceType.getName(), resources)) {
+    for (ResourceElement element : AndroidResourceUtil.getValueResourcesFromElement(resourceType.getName(), resources)) {
       if (resourceName.equals(element.getName().getValue())) {
         return new ValidationInfo("resource '" + resourceName + "' already exists in " + FileUtil.toSystemDependentName(
           resFile.getPath()));

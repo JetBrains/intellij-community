@@ -35,7 +35,6 @@ import com.intellij.xml.XmlSchemaProvider;
 import gnu.trove.THashMap;
 import org.jetbrains.android.dom.manifest.ManifestDomFileDescription;
 import org.jetbrains.android.facet.AndroidFacet;
-import org.jetbrains.android.resourceManagers.ResourceManager;
 import org.jetbrains.android.util.AndroidResourceUtil;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NonNls;
@@ -99,7 +98,7 @@ public class AndroidXmlSchemaProvider extends XmlSchemaProvider {
   }
 
   private static boolean isXmlResourceFile(XmlFile file) {
-    if (!ResourceManager.isInResourceSubdirectory(file, null)) {
+    if (!AndroidResourceUtil.isInResourceSubdirectory(file, null)) {
       return false;
     }
 

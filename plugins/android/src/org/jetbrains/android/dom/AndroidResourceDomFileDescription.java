@@ -23,7 +23,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileDescription;
-import org.jetbrains.android.resourceManagers.ResourceManager;
+import org.jetbrains.android.util.AndroidResourceUtil;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.annotations.NonNls;
@@ -59,7 +59,7 @@ public abstract class AndroidResourceDomFileDescription<T extends DomElement> ex
           return false;
         }
         for (String resourceType : resourceTypes) {
-          if (ResourceManager.isInResourceSubdirectory(file, resourceType)) {
+          if (AndroidResourceUtil.isInResourceSubdirectory(file, resourceType)) {
             return AndroidFacet.getInstance(file) != null;
           }
         }

@@ -67,7 +67,7 @@ public class AndroidRenameResourceProcessor extends RenamePsiElementProcessor {
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       public Boolean compute() {
         if (element instanceof PsiFile) {
-          return AndroidFacet.getInstance(element) != null && ResourceManager.isInResourceSubdirectory((PsiFile)element, null);
+          return AndroidFacet.getInstance(element) != null && AndroidResourceUtil.isInResourceSubdirectory((PsiFile)element, null);
         }
         else if (element instanceof PsiField) {
           PsiField field = (PsiField)element;
@@ -203,11 +203,11 @@ public class AndroidRenameResourceProcessor extends RenamePsiElementProcessor {
     if (type == null) return;
     String name = file.getName();
 
-    if (ResourceManager.getResourceName(type, name).equals(ResourceManager.getResourceName(type, newName))) {
+    if (AndroidResourceUtil.getResourceName(type, name).equals(AndroidResourceUtil.getResourceName(type, newName))) {
       return;
     }
 
-    List<PsiFile> resourceFiles = manager.findResourceFiles(type, ResourceManager.getResourceName(type, name));
+    List<PsiFile> resourceFiles = manager.findResourceFiles(type, AndroidResourceUtil.getResourceName(type, name));
     List<PsiFile> alternativeResources = new ArrayList<PsiFile>();
     for (PsiFile resourceFile : resourceFiles) {
       if (!resourceFile.getManager().areElementsEquivalent(file, resourceFile) && resourceFile.getName().equals(name)) {
@@ -231,7 +231,7 @@ public class AndroidRenameResourceProcessor extends RenamePsiElementProcessor {
     }
     PsiField[] resFields = AndroidResourceUtil.findResourceFieldsForFileResource(file, false);
     for (PsiField resField : resFields) {
-      String newFieldName = ResourceManager.getResourceName(type, newName);
+      String newFieldName = AndroidResourceUtil.getResourceName(type, newName);
       allRenames.put(resField, newFieldName);
     }
   }

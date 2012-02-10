@@ -11,7 +11,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageTargetProvider;
 import org.jetbrains.android.facet.AndroidFacet;
-import org.jetbrains.android.resourceManagers.ResourceManager;
+import org.jetbrains.android.util.AndroidResourceUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,7 +47,7 @@ public class AndroidUsagesTargetProvider implements UsageTargetProvider {
       return null;
     }
 
-    if (!ResourceManager.isInResourceSubdirectory(file, ResourceFolderType.VALUES.getName())) {
+    if (!AndroidResourceUtil.isInResourceSubdirectory(file, ResourceFolderType.VALUES.getName())) {
       return null;
     }
 
