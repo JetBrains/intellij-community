@@ -79,6 +79,10 @@ class ParameterInfoComponent extends JPanel{
     myCurrentParameterIndex = -1;
   }
 
+  public Object getHighlighted() {
+    return myHighlighted;
+  }
+
   class MyParameterContext implements ParameterInfoUIContextEx {
     private int i;
     public void setupUIComponentPresentation(String text,
