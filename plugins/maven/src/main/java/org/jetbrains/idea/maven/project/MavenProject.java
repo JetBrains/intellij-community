@@ -802,20 +802,9 @@ public class MavenProject {
 
   @NotNull
   public ModuleType getModuleType() {
-    MavenImporter mavenImporter = null;
-    ModuleType typeFromImporter = null;
-
-    for (MavenImporter each : getSuitableImporters()) {
-      final ModuleType moduleType = each.getModuleType();
-      if (typeFromImporter != null && !typeFromImporter.equals(moduleType)) {
-        MavenLog.LOG.error("Incompatible plugins: " + each.getClass().getName() + " wants to create " +
-                           moduleType.getName() + " for project " + getName() +
-                           " whereas " + mavenImporter.getClass().getName() + " requires " + typeFromImporter.getName());
-      }
-      mavenImporter = each;
-      typeFromImporter = moduleType;
-    }
-    return typeFromImporter != null ? typeFromImporter : StdModuleTypes.JAVA;
+    final List<MavenImporter> importers = getSuitableImporters();
+    // getSuitableImporters() guarantees that all returned importers require the same module type
+    return importers.size() > 0 ? importers.get(0).getModuleType() : StdModuleTypes.JAVA;
   }
 
   @NotNull
