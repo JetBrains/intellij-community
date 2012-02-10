@@ -125,6 +125,10 @@ public class CreateFromTemplateDialog extends DialogWrapper {
     }
   }
 
+  public Properties getEnteredProperties() {
+    return myAttrPanel.getProperties(new Properties());
+  }
+
   private void showErrorDialog(final Exception e) {
     Messages.showMessageDialog(myProject, filterMessage(e.getMessage()), getErrorMessage(), Messages.getErrorIcon());
   }
