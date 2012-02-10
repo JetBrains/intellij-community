@@ -24,6 +24,7 @@ import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -108,6 +109,35 @@ public class GitMultiRootBranchConfig {
       }
     }
     return trackedRemote + "/" + trackedBranch;
+  }
+
+  /**
+   * Returns local branches which track the given remote branch. Usually there is 0 or 1 such branches.
+   */
+  @NotNull
+  public Collection<String> getTrackingBranches(@NotNull String remoteBranch) {
+    Collection<String> trackingBranches = null;
+    for (GitRepository repository : myRepositories) {
+      Collection<String> tb = getTrackingBranches(repository, remoteBranch);
+      if (trackingBranches == null) {
+        trackingBranches = tb;
+      }
+      else {
+        trackingBranches.retainAll(tb);
+      }
+    }
+    return trackingBranches == null ? Collections.<String>emptyList() : trackingBranches;
+  }
+
+  @NotNull
+  public static Collection<String> getTrackingBranches(@NotNull GitRepository repository, @NotNull String remoteBranch) {
+    Collection<String> trackingBranches = new ArrayList<String>(1);
+    for (GitBranchTrackInfo trackInfo : repository.getConfig().getBranchTrackInfos()) {
+      if (remoteBranch.equals(trackInfo.getRemote().getName() + "/" + trackInfo.getRemoteBranch())) {
+        trackingBranches.add(trackInfo.getBranch());
+      }
+    }
+    return trackingBranches;
   }
 
   @Nullable

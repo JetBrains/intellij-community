@@ -30,7 +30,6 @@ public class GetInvocation implements Invocation {
   }
 
   public Object invoke(final DomInvocationHandler<?> handler, final Object[] args) throws Throwable {
-    handler.assertValid();
     if (myConverter == Converter.EMPTY_CONVERTER) {
       return getValueInner(handler, myConverter);
     }

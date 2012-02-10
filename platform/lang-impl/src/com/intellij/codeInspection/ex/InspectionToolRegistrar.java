@@ -340,8 +340,8 @@ public class InspectionToolRegistrar {
     }
 
     @Override
-    public GlobalInspectionContextImpl getContext() {
-      return getTool().getContext();
+    public void initialize(@NotNull GlobalInspectionContextImpl context) {
+      getTool().initialize(context);
     }
 
     @NotNull

@@ -89,7 +89,6 @@ public class DomRootInvocationHandler extends DomInvocationHandler<AbstractDomCh
 
   @NotNull
   public DomFileElementImpl getParent() {
-    assertValid();
     return myParent;
   }
 

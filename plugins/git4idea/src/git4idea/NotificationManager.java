@@ -21,6 +21,7 @@ import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,6 +38,12 @@ public class NotificationManager {
 
   public void notify(@NotNull NotificationGroup notificationGroup, @NotNull String title, @NotNull String message,
                      @NotNull NotificationType type, @Nullable NotificationListener listener) {
+    // title can be empty; description can't be neither null, nor empty
+    if (StringUtil.isEmptyOrSpaces(message)) {
+      message = title;
+      title = "";
+    }
+    // if both title and description were empty, then it is a problem in the calling code => Notifications engine assertion will notify.
     createNotification(notificationGroup, title, message, type, listener).notify(myProject);
   }
 

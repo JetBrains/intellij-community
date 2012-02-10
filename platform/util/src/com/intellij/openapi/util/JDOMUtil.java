@@ -36,6 +36,7 @@ import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
 
 import java.io.*;
+import java.lang.ref.SoftReference;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -47,17 +48,7 @@ import java.util.List;
  */
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class JDOMUtil {
-  private static final ThreadLocal<SAXBuilder> ourSaxBuilder = new ThreadLocal<SAXBuilder>(){
-    protected SAXBuilder initialValue() {
-      SAXBuilder saxBuilder = new SAXBuilder();
-      saxBuilder.setEntityResolver(new EntityResolver() {
-        public InputSource resolveEntity(String publicId, String systemId) {
-          return new InputSource(new CharArrayReader(ArrayUtil.EMPTY_CHAR_ARRAY));
-        }
-      });
-      return saxBuilder;
-    }
-  };
+  private static final ThreadLocal<SoftReference<SAXBuilder>> ourSaxBuilder = new ThreadLocal<SoftReference<SAXBuilder>>();
 
   private JDOMUtil() { }
 
@@ -317,14 +308,27 @@ public class JDOMUtil {
 
   @NotNull
   public static Document loadDocument(char[] chars, int length) throws IOException, JDOMException {
-    SAXBuilder builder = ourSaxBuilder.get();
-    return builder.build(new CharArrayReader(chars, 0, length));
+    return getSaxBuilder().build(new CharArrayReader(chars, 0, length));
+  }
+
+  private static SAXBuilder getSaxBuilder() {
+    SoftReference<SAXBuilder> reference = ourSaxBuilder.get();
+    SAXBuilder saxBuilder = reference != null ? reference.get() : null;
+    if (saxBuilder == null) {
+      saxBuilder = new SAXBuilder();
+      saxBuilder.setEntityResolver(new EntityResolver() {
+        public InputSource resolveEntity(String publicId, String systemId) {
+          return new InputSource(new CharArrayReader(ArrayUtil.EMPTY_CHAR_ARRAY));
+        }
+      });
+      ourSaxBuilder.set(new SoftReference<SAXBuilder>(saxBuilder));
+    }
+    return saxBuilder;
   }
 
   @NotNull
   public static Document loadDocument(CharSequence seq) throws IOException, JDOMException {
-    SAXBuilder builder = ourSaxBuilder.get();
-    return builder.build(new CharSequenceReader(seq));
+    return getSaxBuilder().build(new CharSequenceReader(seq));
   }
 
   @NotNull
@@ -351,10 +355,9 @@ public class JDOMUtil {
 
   @NotNull
   public static Document loadDocument(@NotNull InputStream stream) throws JDOMException, IOException {
-    SAXBuilder saxBuilder = ourSaxBuilder.get();
     InputStreamReader reader = new InputStreamReader(stream, ENCODING);
     try {
-      return saxBuilder.build(reader);
+      return getSaxBuilder().build(reader);
     }
     finally {
       reader.close();
