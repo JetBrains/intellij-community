@@ -719,7 +719,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
                                       final ArrayList<FinalizableCommand> commandList,
                                       boolean forced,
                                       boolean autoFocusContents) {
-    if (/*!getFocusManagerImpl(myProject).isUnforcedRequestAllowed() && */!forced) return;
+    if (!FocusManagerImpl.getInstance().isUnforcedRequestAllowed() && !forced) return;
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: activateToolWindowImpl(" + id + ")");
