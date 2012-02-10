@@ -1103,47 +1103,55 @@ public class Mappings {
           }
 
           if ((m.access & Opcodes.ACC_ABSTRACT) == 0) {
+            final Collection<Pair<MethodRepr, ClassRepr>> overriding = u.findOverridingMethods(m, it, false);
+
+            for (final Pair<MethodRepr, ClassRepr> p : overriding) {
+              final DependencyContext.S fName = myClassToSourceFile.get(p.second.name);
+              affectedFiles.add(new File(myContext.getValue(fName)));
+            }
+
             for (DependencyContext.S p : propagated) {
-              final ClassRepr s = u.reprByName(p);
+              if (!p.equals(it.name)) {
+                final ClassRepr s = u.reprByName(p);
 
-              if (s != null) {
-                final Collection<Pair<MethodRepr, ClassRepr>> overridenInS = u.findOverridenMethods(m, s);
+                if (s != null) {
+                  final Collection<Pair<MethodRepr, ClassRepr>> overridenInS = u.findOverridenMethods(m, s);
 
-                overridenInS.addAll(overridenMethods);
+                  overridenInS.addAll(overridenMethods);
 
-                boolean allAbstract = true;
-                boolean visited = false;
+                  boolean allAbstract = true;
+                  boolean visited = false;
 
-                for (Pair<MethodRepr, ClassRepr> pp : overridenInS) {
-                  final ClassRepr cc = pp.second;
+                  for (Pair<MethodRepr, ClassRepr> pp : overridenInS) {
+                    final ClassRepr cc = pp.second;
 
-                  if (cc == myMockClass) {
+                    if (cc == myMockClass) {
+                      visited = true;
+                      continue;
+                    }
+
+                    if (cc.name.equals(it.name)) {
+                      continue;
+                    }
+
                     visited = true;
-                    continue;
+                    allAbstract = ((pp.first.access & Opcodes.ACC_ABSTRACT) > 0) || ((cc.access & Opcodes.ACC_INTERFACE) > 0);
+
+                    if (!allAbstract) {
+                      break;
+                    }
                   }
 
-                  if (cc.name.equals(it.name)) {
-                    continue;
-                  }
+                  if (allAbstract && visited) {
+                    final DependencyContext.S source = myClassToSourceFile.get(p);
 
-                  visited = true;
-                  allAbstract = ((pp.first.access & Opcodes.ACC_ABSTRACT) > 0) || ((cc.access & Opcodes.ACC_INTERFACE) > 0);
-
-                  if (!allAbstract) {
-                    break;
-                  }
-                }
-
-                if (allAbstract && visited) {
-                  final DependencyContext.S source = myClassToSourceFile.get(p);
-
-                  if (source != null) {
-                    final String f = myContext.getValue(source);
-                    debug(
-                      "Removed method is not abstract & is overrides some abstract method which is not then over-overriden in subclass ",
-                      p);
-                    debug("Affecting subclass source file ", f);
-                    affectedFiles.add(new File(f));
+                    if (source != null) {
+                      final String f = myContext.getValue(source);
+                      debug("Removed method is not abstract & overrides some abstract method which is not then over-overriden in subclass ",
+                            p);
+                      debug("Affecting subclass source file ", f);
+                      affectedFiles.add(new File(f));
+                    }
                   }
                 }
               }
@@ -1597,19 +1605,19 @@ public class Mappings {
         for (DependencyContext.S f : delta.getChangedFiles()) {
           mySourceFileToClasses.remove(f);
           final Collection<ClassRepr> classes = delta.mySourceFileToClasses.get(f);
-          if (classes != null){
+          if (classes != null) {
             mySourceFileToClasses.put(f, classes);
           }
 
           mySourceFileToUsages.remove(f);
           final Collection<UsageRepr.Cluster> clusters = delta.mySourceFileToUsages.get(f);
-          if (clusters != null){
+          if (clusters != null) {
             mySourceFileToUsages.put(f, clusters);
           }
 
           mySourceFileToAnnotationUsages.remove(f);
           final Collection<UsageRepr.Usage> usages = delta.mySourceFileToAnnotationUsages.get(f);
-          if (usages != null){
+          if (usages != null) {
             mySourceFileToAnnotationUsages.put(f, usages);
           }
         }
@@ -1637,7 +1645,7 @@ public class Mappings {
 
           depClasses.retainAll(changedClasses);
 
-          if (! classChanged && depClasses.isEmpty()) {
+          if (!classChanged && depClasses.isEmpty()) {
             continue;
           }
         }
