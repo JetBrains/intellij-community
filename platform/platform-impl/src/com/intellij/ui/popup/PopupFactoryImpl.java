@@ -208,20 +208,8 @@ public class PopupFactoryImpl extends JBPopupFactory {
       builder.buildGroup(actionGroup);
       final List<ActionItem> items = builder.getItems();
 
-      int defaultOptionIndex = 0;
-      if (preselectActionCondition != null) {
-        for (int i = 0; i < items.size(); i++) {
-          final AnAction action = items.get(i).getAction();
-          if (preselectActionCondition.value(action)) {
-            defaultOptionIndex = i;
-            break;
-          }
-        }
-      }
-
       return new ActionPopupStep(items, title, component, showNumbers || honorActionMnemonics && itemsHaveMnemonics(items),
-                                 defaultOptionIndex,
-                                 false, showDisabledActions);
+                                 preselectActionCondition, false, showDisabledActions);
     }
 
     @Override
@@ -300,14 +288,42 @@ public class PopupFactoryImpl extends JBPopupFactory {
     return createActionsStep(actionGroup, dataContext, showNumbers, showDisabledActions, title, component, honorActionMnemonics, 0, false);
   }
 
-  private static ListPopupStep createActionsStep(ActionGroup actionGroup, @NotNull DataContext dataContext, boolean showNumbers, boolean useAlphaAsNumbers, boolean showDisabledActions,
-                                         String title, Component component, boolean honorActionMnemonics, int defaultOptionIndex,
-                                         final boolean autoSelectionEnabled) {
-    final ActionStepBuilder builder = new ActionStepBuilder(dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics);
-    builder.buildGroup(actionGroup);
-    final List<ActionItem> items = builder.getItems();
+  private static ListPopupStep createActionsStep(ActionGroup actionGroup, @NotNull DataContext dataContext,
+                                                 boolean showNumbers, boolean useAlphaAsNumbers, boolean showDisabledActions,
+                                                 String title, Component component, boolean honorActionMnemonics,
+                                                 final int defaultOptionIndex, final boolean autoSelectionEnabled) {
+    final List<ActionItem> items = makeActionItemsFromActionGroup(actionGroup, dataContext, showNumbers, useAlphaAsNumbers,
+                                                                  showDisabledActions, honorActionMnemonics);
+    return new ActionPopupStep(items, title, component, showNumbers || honorActionMnemonics && itemsHaveMnemonics(items),
+                               new Condition<AnAction>() {
+                                 @Override
+                                 public boolean value(AnAction action) {
+                                   return defaultOptionIndex >= 0 &&
+                                          defaultOptionIndex < items.size() &&
+                                          items.get(defaultOptionIndex).getAction().equals(action);
+                                 }
+                               }, autoSelectionEnabled, showDisabledActions);
+  }
 
-    return new ActionPopupStep(items, title, component, showNumbers || honorActionMnemonics && itemsHaveMnemonics(items), defaultOptionIndex,
+  private static List<ActionItem> makeActionItemsFromActionGroup(ActionGroup actionGroup,
+                                                                 DataContext dataContext,
+                                                                 boolean showNumbers,
+                                                                 boolean useAlphaAsNumbers,
+                                                                 boolean showDisabledActions,
+                                                                 boolean honorActionMnemonics) {
+    final ActionStepBuilder builder = new ActionStepBuilder(dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions,
+                                                            honorActionMnemonics);
+    builder.buildGroup(actionGroup);
+    return builder.getItems();
+  }
+
+  private static ListPopupStep createActionsStep(ActionGroup actionGroup, @NotNull DataContext dataContext,
+                                                 boolean showNumbers, boolean useAlphaAsNumbers, boolean showDisabledActions,
+                                                 String title, Component component, boolean honorActionMnemonics,
+                                                 Condition<AnAction> preselectActionCondition, boolean autoSelectionEnabled) {
+    final List<ActionItem> items = makeActionItemsFromActionGroup(actionGroup, dataContext, showNumbers, useAlphaAsNumbers,
+                                                                  showDisabledActions, honorActionMnemonics);
+    return new ActionPopupStep(items, title, component, showNumbers || honorActionMnemonics && itemsHaveMnemonics(items), preselectActionCondition,
                                autoSelectionEnabled, showDisabledActions);
   }
 
@@ -487,19 +503,33 @@ public class PopupFactoryImpl extends JBPopupFactory {
     private final boolean myAutoSelectionEnabled;
     private final boolean myShowDisabledActions;
     private Runnable myFinalRunnable;
+    @Nullable private final Condition<AnAction> myPreselectActionCondition;
 
-    private ActionPopupStep(@NotNull final List<ActionItem> items,
-                            final String title,
-                            Component context,
-                            boolean enableMnemonics,
-                            final int defaultOptionIndex, final boolean autoSelection, boolean showDisabledActions) {
+    private ActionPopupStep(@NotNull final List<ActionItem> items, final String title, Component context, boolean enableMnemonics,
+                            @Nullable Condition<AnAction> preselectActionCondition, final boolean autoSelection, boolean showDisabledActions) {
       myItems = items;
       myTitle = title;
       myContext = context;
       myEnableMnemonics = enableMnemonics;
-      myDefaultOptionIndex = defaultOptionIndex;
+      myDefaultOptionIndex = getDefaultOptionIndexFromSelectCondition(preselectActionCondition, items);
+      myPreselectActionCondition = preselectActionCondition;
       myAutoSelectionEnabled = autoSelection;
       myShowDisabledActions = showDisabledActions;
+    }
+
+    private static int getDefaultOptionIndexFromSelectCondition(@Nullable Condition<AnAction> preselectActionCondition,
+                                                                @NotNull List<ActionItem> items) {
+      int defaultOptionIndex = 0;
+      if (preselectActionCondition != null) {
+        for (int i = 0; i < items.size(); i++) {
+          final AnAction action = items.get(i).getAction();
+          if (preselectActionCondition.value(action)) {
+            defaultOptionIndex = i;
+            break;
+          }
+        }
+      }
+      return defaultOptionIndex;
     }
 
     @NotNull
@@ -552,13 +582,14 @@ public class PopupFactoryImpl extends JBPopupFactory {
       final DataContext dataContext = myContext != null ? mgr.getDataContext(myContext) : mgr.getDataContext();
 
       if (action instanceof ActionGroup && (!finalChoice || !((ActionGroup)action).canBePerformed(dataContext))) {
-          return JBPopupFactory.getInstance().createActionsStep((ActionGroup)action, dataContext, myEnableMnemonics, myShowDisabledActions, null, myContext, false);
+          return createActionsStep((ActionGroup)action, dataContext, myEnableMnemonics, true, myShowDisabledActions, null, myContext, false,
+                                   myPreselectActionCondition, false);
       }
       else {
         myFinalRunnable = new Runnable() {
           public void run() {
             action.actionPerformed(
-              new AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, (Presentation)action.getTemplatePresentation().clone(),
+              new AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, action.getTemplatePresentation().clone(),
                                 ActionManager.getInstance(), 0));
           }
         };
