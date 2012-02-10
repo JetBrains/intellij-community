@@ -93,17 +93,20 @@ public abstract class CachedValuesManager {
   }
 
   public static class MemoizationKey<T> extends Key<T> {
+    private final String myName;
+
     public MemoizationKey(@NotNull @NonNls String name) {
       super(name);
+      myName = name;
     }
 
     public int hashCode() {
-      return toString().hashCode();
+      return myName.hashCode();
     }
 
     @Override
     public boolean equals(Object obj) {
-      return obj instanceof MemoizationKey && toString().equals(obj.toString());
+      return obj instanceof MemoizationKey && myName.equals(((MemoizationKey)obj).myName);
     }
   }
 
