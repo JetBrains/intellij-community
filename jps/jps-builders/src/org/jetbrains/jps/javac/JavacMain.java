@@ -2,7 +2,6 @@ package org.jetbrains.jps.javac;
 
 import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.server.ClasspathBootstrap;
 
@@ -29,13 +28,14 @@ public class JavacMain {
                                 Collection<File> sourcePath,
                                 Map<File, Set<File>> outputDirToRoots,
                                 final DiagnosticOutputConsumer outConsumer,
-                                final OutputFileConsumer outputSink, @Nullable CanceledStatus canceledStatus) {
+                                final OutputFileConsumer outputSink,
+                                CanceledStatus canceledStatus) {
     final JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
 
     for (File outputDir : outputDirToRoots.keySet()) {
       outputDir.mkdirs();
     }
-    final JavacFileManager fileManager = new JavacFileManager(new ContextImpl(compiler, outConsumer, outputSink));
+    final JavacFileManager fileManager = new JavacFileManager(new ContextImpl(compiler, outConsumer, outputSink, canceledStatus));
 
     fileManager.handleOption("-bootclasspath", Collections.singleton("").iterator()); // this will clear cached stuff
     fileManager.handleOption("-extdirs", Collections.singleton("").iterator()); // this will clear cached stuff
@@ -111,10 +111,15 @@ public class JavacMain {
     private final StandardJavaFileManager myStdManager;
     private final DiagnosticOutputConsumer myOutConsumer;
     private final OutputFileConsumer myOutputFileSink;
+    private final CanceledStatus myCanceledStatus;
 
-    public ContextImpl(@NotNull JavaCompiler compiler, @NotNull DiagnosticOutputConsumer outConsumer, @NotNull OutputFileConsumer sink) {
+    public ContextImpl(@NotNull JavaCompiler compiler,
+                       @NotNull DiagnosticOutputConsumer outConsumer,
+                       @NotNull OutputFileConsumer sink,
+                       CanceledStatus canceledStatus) {
       myOutConsumer = outConsumer;
       myOutputFileSink = sink;
+      myCanceledStatus = canceledStatus;
       StandardJavaFileManager stdManager = null;
       final Class<StandardJavaFileManager> optimizedManagerClass = ClasspathBootstrap.getOptimizedFileManagerClass();
       if (optimizedManagerClass != null) {
@@ -136,7 +141,7 @@ public class JavacMain {
     }
 
     public boolean isCanceled() {
-      return false; // todo
+      return myCanceledStatus.isCanceled();
     }
 
     public StandardJavaFileManager getStandardFileManager() {

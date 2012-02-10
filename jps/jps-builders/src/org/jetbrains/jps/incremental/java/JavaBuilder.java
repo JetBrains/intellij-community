@@ -42,8 +42,8 @@ import java.net.ServerSocket;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Eugene Zhuravlev
@@ -263,7 +263,12 @@ public class JavaBuilder extends ModuleLevelBuilder {
         final boolean compiledOk = compileJava(chunk, files, classpath, platformCp, sourcePath, outs, context, diagnosticSink, outputSink);
 
         final Map<File, String> chunkSourcePath = ProjectPaths.getSourceRootsWithDependents(chunk, context.isCompilingTests());
+
+        context.checkCanceled();
+
         final ClassLoader compiledClassesLoader = createInstrumentationClassLoader(classpath, platformCp, chunkSourcePath, outputSink);
+
+        context.checkCanceled();
 
         if (!forms.isEmpty()) {
           try {
@@ -275,6 +280,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
           }
         }
 
+        context.checkCanceled();
+
         if (addNotNullAssertions) {
           try {
             context.processMessage(new ProgressMessage("Adding NotNull assertions [" + chunkName + "]"));
@@ -284,6 +291,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
             context.processMessage(new ProgressMessage("Finished adding NotNull assertions [" + chunkName + "]"));
           }
         }
+
+        context.checkCanceled();
 
         if (!compiledOk && diagnosticSink.getErrorCount() == 0) {
           diagnosticSink.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, "Compilation failed: internal java compiler error"));
@@ -356,14 +365,10 @@ public class JavaBuilder extends ModuleLevelBuilder {
         final RequestFuture<JavacServerResponseHandler> future = client.sendCompileRequest(
           options, files, classpath, platformCp, sourcePath, outs, diagnosticSink, classesConsumer
         );
-        try {
-          future.get();
-        }
-        catch (InterruptedException e) {
-          e.printStackTrace(System.err);
-        }
-        catch (ExecutionException e) {
-          e.printStackTrace(System.err);
+        while (!future.waitFor(100L, TimeUnit.MILLISECONDS)) {
+          if (context.isCanceled()) {
+            future.cancel(true);
+          }
         }
         rc = future.getResponseHandler().isTerminatedSuccessfully();
       }
