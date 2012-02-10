@@ -28,6 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.java.PsiAnnotationImpl;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -245,6 +246,38 @@ public class AnnotationsHighlightUtil {
     final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, nameRef, description);
     QuickFixAction.registerQuickFixAction(highlightInfo, new DeleteNotApplicableAnnotationAction(annotation));
     return highlightInfo;
+  }
+
+  public static HighlightInfo checkForeignInnerClassesUsed(final PsiAnnotation annotation) {
+    final HighlightInfo[] infos = new HighlightInfo[1];
+    final PsiAnnotationOwner owner = annotation.getOwner();
+    if (owner instanceof PsiModifierList) {
+      final PsiElement parent = ((PsiModifierList)owner).getParent();
+      if (parent instanceof PsiClass) {
+        annotation.accept(new JavaRecursiveElementWalkingVisitor() {
+          @Override
+          public void visitElement(PsiElement element) {
+            if (infos[0] != null) return;
+            super.visitElement(element);
+          }
+
+          @Override
+          public void visitReferenceExpression(PsiReferenceExpression expression) {
+            super.visitReferenceExpression(expression);
+            final PsiElement resolve = expression.resolve();
+            if (resolve instanceof PsiField &&
+                ((PsiMember)resolve).hasModifierProperty(PsiModifier.PRIVATE) &&
+                PsiTreeUtil.isAncestor(parent, resolve, true)) {
+              String description = JavaErrorMessages.message("private.symbol",
+                                                             HighlightUtil.formatField((PsiField)resolve),
+                                                             HighlightUtil.formatClass((PsiClass)parent));
+              infos[0] = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, expression, description);
+            }
+          }
+        });
+      }
+    }
+    return infos[0];
   }
 
   private static PsiField[] getFields(final PsiClass elementTypeClass, @NonNls final String... names) {
