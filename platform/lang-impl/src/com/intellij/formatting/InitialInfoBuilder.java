@@ -61,6 +61,8 @@ class InitialInfoBuilder {
   private LeafBlockWrapper                 myLastTokenBlock;
   private SpacingImpl                      myCurrentSpaceProperty;
   private ReadOnlyBlockInformationProvider myReadOnlyBlockInformationProvider;
+  
+  private final static boolean INLINE_TABS_ENABLED = "true".equalsIgnoreCase(System.getProperty("inline.tabs.enabled"));  
 
   private InitialInfoBuilder(final FormattingDocumentModel model,
                              final FormatTextRanges affectedRanges,
@@ -270,7 +272,9 @@ class InitialInfoBuilder {
                                                 final int index,
                                                 Block parentBlock)
   {
-    myCurrentWhiteSpace.setForceSkipTabulationsUsage(!myCurrentWhiteSpace.containsLineFeeds());
+    if (!INLINE_TABS_ENABLED && !myCurrentWhiteSpace.containsLineFeeds()) {
+      myCurrentWhiteSpace.setForceSkipTabulationsUsage(true);
+    }
     final LeafBlockWrapper info =
       new LeafBlockWrapper(rootBlock, parent, myCurrentWhiteSpace, myModel, myOptions, myPreviousBlock, readOnly);
     info.setDebugInfo("target block's class: " + rootBlock.getClass());
