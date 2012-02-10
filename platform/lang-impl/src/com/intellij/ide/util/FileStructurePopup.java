@@ -818,11 +818,16 @@ public class FileStructurePopup implements Disposable {
         final Object object = ((DefaultMutableTreeNode)last).getUserObject();
         if (object instanceof FilteringTreeStructure.FilteringNode) {
           FilteringTreeStructure.FilteringNode node = (FilteringTreeStructure.FilteringNode)object;
+          FilteringTreeStructure.FilteringNode candidate = node;
+
           while (node != null) {
             elements.add(getPsi(node));
             node = node.getParentNode();
           }
           final int size = ContainerUtil.intersection(parents, elements).size();
+          if (size == elements.size() - 1 && size == parents.size() && candidate.children().isEmpty()) {
+            return p.node;
+          }
           if (size > max) {
             max = size;
             cur.clear();
