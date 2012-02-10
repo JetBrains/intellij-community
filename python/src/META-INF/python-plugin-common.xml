@@ -407,6 +407,7 @@
                     serviceImplementation="com.jetbrains.python.coverage.PyCoverageAnnotator"/>
 
     <postStartupActivity implementation="com.jetbrains.python.sdk.PythonSdkUpdater"/>
+    <postStartupActivity implementation="com.jetbrains.python.configuration.PyPIPackagesUpdater"/>
 
     <!-- Django -->
     <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.django.annotator.ViewMethodLineMarkerProvider"/>
