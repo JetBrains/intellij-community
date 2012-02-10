@@ -79,17 +79,34 @@ public class RequestFuture<T> implements Future {
     return myDone.get();
   }
 
-  public Object get() throws InterruptedException, ExecutionException {
-    while (!isDone()) {
-      mySemaphore.tryAcquire(100L, TimeUnit.MILLISECONDS);
+  public void waitFor() {
+    try {
+      while (!isDone()) {
+        mySemaphore.tryAcquire(100L, TimeUnit.MILLISECONDS);
+      }
     }
+    catch (InterruptedException ignored) {
+    }
+  }
+
+  public boolean waitFor(long timeout, TimeUnit unit) {
+    try {
+      if (!isDone()) {
+        mySemaphore.tryAcquire(timeout, unit);
+      }
+    }
+    catch (InterruptedException ignored) {
+    }
+    return isDone();
+  }
+
+  public Object get() throws InterruptedException, ExecutionException {
+    waitFor();
     return null;
   }
 
   public Object get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-    if (!isDone()) {
-      mySemaphore.tryAcquire(timeout, unit);
-    }
+    waitFor(timeout, unit);
     return null;
   }
 

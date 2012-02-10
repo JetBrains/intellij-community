@@ -149,6 +149,11 @@ public abstract class InplaceVariableIntroducer<E extends PsiElement> extends In
   }
 
   @Override
+  protected int restoreCaretOffset(int offset) {
+    return myCaretRangeMarker.isValid() ? myCaretRangeMarker.getStartOffset() : offset;
+  }
+
+  @Override
   protected String getCommandName() {
     return myTitle;
   }
