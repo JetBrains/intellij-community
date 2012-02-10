@@ -46,7 +46,6 @@ import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.util.AndroidBundle;
-import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -68,10 +67,6 @@ public class AndroidSdkUtils {
   private AndroidSdkUtils() {
   }
 
-  public static boolean isAndroidSdk(@NotNull String path) {
-    return AndroidCommonUtils.createSdkManager(path, new EmptySdkLog()) != null;
-  }
-
   @Nullable
   private static VirtualFile getPlatformDir(@NotNull IAndroidTarget target) {
     String platformPath = target.isPlatform() ? target.getLocation() : target.getParent().getLocation();
@@ -80,6 +75,7 @@ public class AndroidSdkUtils {
     return platformDir;
   }
 
+  @NotNull
   public static List<OrderRoot> getLibraryRootsForTarget(@NotNull IAndroidTarget target, @Nullable String sdkPath) {
     List<OrderRoot> result = new ArrayList<OrderRoot>();
     VirtualFile platformDir = getPlatformDir(target);
@@ -191,6 +187,7 @@ public class AndroidSdkUtils {
     return null;
   }
 
+  @NotNull
   public static String chooseNameForNewLibrary(IAndroidTarget target) {
     if (target.isPlatform()) {
       return target.getName() + " Platform";
@@ -208,7 +205,11 @@ public class AndroidSdkUtils {
            target.getName() + " (" + target.getVersionName() + ')';
   }
 
-  public static void setUpSdk(Sdk androidSdk, @Nullable Sdk javaSdk, Sdk[] allSdks, IAndroidTarget target, boolean addRoots) {
+  public static void setUpSdk(@NotNull Sdk androidSdk,
+                              @Nullable Sdk javaSdk,
+                              @NotNull Sdk[] allSdks,
+                              @NotNull IAndroidTarget target,
+                              boolean addRoots) {
     AndroidSdkAdditionalData data = new AndroidSdkAdditionalData(androidSdk, javaSdk);
 
     data.setBuildTarget(target);
@@ -234,7 +235,7 @@ public class AndroidSdkUtils {
     sdkModificator.commitChanges();
   }
 
-  public static boolean isApplicableJdk(Sdk jdk) {
+  public static boolean isApplicableJdk(@NotNull Sdk jdk) {
     if (!(jdk.getSdkType() instanceof JavaSdk)) {
       return false;
     }
@@ -285,7 +286,7 @@ public class AndroidSdkUtils {
   }
 
   private static void setupPlatform(@NotNull Module module) {
-    if (tryToImportFromPropertyFiles(module)) {
+    if (tryToImportSdkFromPropertyFiles(module)) {
       return;
     }
 
@@ -324,7 +325,7 @@ public class AndroidSdkUtils {
     return null;
   }
 
-  private static boolean tryToImportFromPropertyFiles(@NotNull Module module) {
+  private static boolean tryToImportSdkFromPropertyFiles(@NotNull Module module) {
     final String targetHashString = AndroidRootUtil.getProjectPropertyValue(module, AndroidUtils.ANDROID_TARGET_PROPERTY);
     if (targetHashString == null) {
       return false;
@@ -374,7 +375,7 @@ public class AndroidSdkUtils {
     return false;
   }
 
-  public static void setupAndroidPlatformInNeccessary(Module module) {
+  public static void setupAndroidPlatformInNeccessary(@NotNull Module module) {
     Sdk currentSdk = ModuleRootManager.getInstance(module).getSdk();
     if (currentSdk == null || !(currentSdk.getSdkType().equals(AndroidSdkType.getInstance()))) {
       setupPlatform(module);
@@ -474,7 +475,8 @@ public class AndroidSdkUtils {
     return depFacets;
   }
 
-  public static List<AndroidFacet> getAllAndroidDependencies(Module module, boolean androidLibrariesOnly) {
+  @NotNull
+  public static List<AndroidFacet> getAllAndroidDependencies(@NotNull Module module, boolean androidLibrariesOnly) {
     final List<AndroidFacet> result = new ArrayList<AndroidFacet>();
     collectAllAndroidDependencies(module, androidLibrariesOnly, result, new HashSet<AndroidFacet>());
     return result;
