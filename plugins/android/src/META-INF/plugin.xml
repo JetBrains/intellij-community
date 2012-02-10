@@ -56,9 +56,9 @@
     <action id="Android.EnableDdms" class="org.jetbrains.android.actions.AndroidEnableDdmsAction">
       <add-to-group group-id="AndroidToolsGroup" anchor="first"/>
     </action>
-    <action id="GotoAndroidResourceDefinition" class="org.jetbrains.android.actions.GotoResourceAction">
+    <!--<action id="GotoAndroidResourceDefinition" class="org.jetbrains.android.actions.GotoResourceAction">
       <keyboard-shortcut first-keystroke="control shift alt R" keymap="$default"/>
-    </action>
+    </action>-->
     <action id="RegenerateRJavaFile" class="org.jetbrains.android.actions.AndroidRegenerateRJavaFileAction">
       <add-to-group group-id="EditorPopupMenu" anchor="last"/>
       <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
