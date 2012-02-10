@@ -81,7 +81,7 @@ public final class GitBranchOperationsProcessor {
   }
   
   @NotNull
-  private String getCurrentBranch() {
+  private String getCurrentBranchOrRev() {
     if (myRepositories.size() > 1) {
       GitMultiRootBranchConfig multiRootBranchConfig = new GitMultiRootBranchConfig(myRepositories);
       String currentBranch = multiRootBranchConfig.getCurrentBranch();
@@ -121,7 +121,7 @@ public final class GitBranchOperationsProcessor {
   }
 
   private void doCheckoutNewBranch(@NotNull final String name, @NotNull ProgressIndicator indicator) {
-    new GitCheckoutNewBranchOperation(myProject, myRepositories, name, getCurrentBranch(), indicator).execute();
+    new GitCheckoutNewBranchOperation(myProject, myRepositories, name, getCurrentBranchOrRev(), indicator).execute();
   }
 
   /**
@@ -162,7 +162,7 @@ public final class GitBranchOperationsProcessor {
   }
 
   private void doCheckout(@NotNull ProgressIndicator indicator, @NotNull String reference, @Nullable String newBranch) {
-    new GitCheckoutOperation(myProject, myRepositories, reference, newBranch, getCurrentBranch(), indicator).execute();
+    new GitCheckoutOperation(myProject, myRepositories, reference, newBranch, getCurrentBranchOrRev(), indicator).execute();
   }
 
   public void deleteBranch(final String branchName) {
@@ -174,7 +174,7 @@ public final class GitBranchOperationsProcessor {
   }
 
   private void doDelete(final String branchName, ProgressIndicator indicator) {
-    new GitDeleteBranchOperation(myProject, myRepositories, branchName, getCurrentBranch(), indicator).execute();
+    new GitDeleteBranchOperation(myProject, myRepositories, branchName, getCurrentBranchOrRev(), indicator).execute();
   }
 
   /**
@@ -197,7 +197,7 @@ public final class GitBranchOperationsProcessor {
           LOG.error("The task to get compare info didn't finish. Repositories: \n" + myRepositories + "\nbranch name: " + branchName);
           return;
         }
-        displayCompareDialog(branchName, getCurrentBranch(), myCompareInfo);
+        displayCompareDialog(branchName, getCurrentBranchOrRev(), myCompareInfo);
       }
     }.runInBackground();
   }
@@ -247,7 +247,7 @@ public final class GitBranchOperationsProcessor {
     for (GitRepository repository : myRepositories) {
       revisions.put(repository, repository.getCurrentRevision());
     }
-    new GitMergeOperation(myProject, myRepositories, branchName, getCurrentBranch(), mySelectedRepository, revisions, indicator).execute();
+    new GitMergeOperation(myProject, myRepositories, branchName, getCurrentBranchOrRev(), mySelectedRepository, revisions, indicator).execute();
   }
 
   /**
