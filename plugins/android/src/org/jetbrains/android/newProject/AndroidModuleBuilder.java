@@ -218,7 +218,7 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
     IAndroidTarget target = platform.getTarget();
 
     final String androidToolPath =
-      platform.getSdk().getLocation() + File.separator + AndroidUtils.toolPath(SdkConstants.androidCmdName());
+      platform.getSdk().getLocation() + File.separator + AndroidSdkUtils.toolPath(SdkConstants.androidCmdName());
 
     if (!new File(androidToolPath).exists()) {
       return false;
@@ -273,7 +273,7 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
       @Override
       public void run() {
         final Project project = module.getProject();
-        AndroidUtils.runExternalTool(project, commandLine, true, null);
+        AndroidUtils.runExternalTool(commandLine, null, true, project);
 
         if (finalTempContentRoot != null) {
           final File[] children = finalTempContentRoot.listFiles();
@@ -441,7 +441,7 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
       activityClass = null;
     }
     Module module = facet.getModule();
-    AndroidUtils.addRunConfiguration(module.getProject(), facet, activityClass, false, targetSelectionMode, targetAvd);
+    AndroidUtils.addRunConfiguration(facet, activityClass, false, targetSelectionMode, targetAvd);
   }
 
   private static void addTestRunConfiguration(final AndroidFacet facet, @NotNull TargetSelectionMode mode, @Nullable String preferredAvd) {

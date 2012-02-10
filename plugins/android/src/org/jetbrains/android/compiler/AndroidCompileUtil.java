@@ -61,6 +61,7 @@ import org.jetbrains.android.fileTypes.AndroidIdlFileType;
 import org.jetbrains.android.fileTypes.AndroidRenderscriptFileType;
 import org.jetbrains.android.resourceManagers.LocalResourceManager;
 import org.jetbrains.android.sdk.AndroidPlatform;
+import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.android.util.AndroidCompilerMessageKind;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.android.util.ExecutionUtil;
@@ -95,6 +96,7 @@ public class AndroidCompileUtil {
   @NonNls
   private static final String[] SCALA_TEST_CONFIGURATIONS =
     {"ScalaTestRunConfiguration", "SpecsRunConfiguration", "Specs2RunConfiguration"};
+  public static final String CLASSES_FILE_NAME = "classes.dex";
 
   private AndroidCompileUtil() {
   }
@@ -528,7 +530,7 @@ public class AndroidCompileUtil {
 
     doCollectResourceDirs(facet, collectResCacheDirs, result, context);
 
-    for (AndroidFacet depFacet : AndroidUtils.getAllAndroidDependencies(facet.getModule(), true)) {
+    for (AndroidFacet depFacet : AndroidSdkUtils.getAllAndroidDependencies(facet.getModule(), true)) {
       doCollectResourceDirs(depFacet, collectResCacheDirs, result, context);
     }
     return ArrayUtil.toStringArray(result);

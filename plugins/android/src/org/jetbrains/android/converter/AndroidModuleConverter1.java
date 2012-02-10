@@ -31,7 +31,6 @@ import org.jetbrains.android.facet.AndroidFacetType;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.sdk.AndroidSdkType;
 import org.jetbrains.android.sdk.AndroidSdkUtils;
-import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -72,7 +71,7 @@ public class AndroidModuleConverter1 extends ConversionProcessor<ModuleSettings>
 
       if (androidPlatform != null) {
 
-        Sdk androidSdk = AndroidUtils.findAppropriateAndroidPlatform(androidPlatform.getTarget(), androidPlatform.getSdk());
+        Sdk androidSdk = AndroidSdkUtils.findAppropriateAndroidPlatform(androidPlatform.getTarget(), androidPlatform.getSdk());
 
         if (androidSdk == null) {
           androidSdk = AndroidSdkUtils.createNewAndroidPlatform(androidPlatform.getTarget(), androidPlatform.getSdk().getLocation(), false);

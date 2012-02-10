@@ -321,7 +321,7 @@ public class AndroidDomExtender extends DomExtender<AndroidDomElement> {
 
   @NotNull
   public static Map<String, PsiClass> getPreferencesClassMap(@NotNull AndroidFacet facet) {
-    return facet.getClassMap(AndroidUtils.PREFERENCE_CLASS_NAME, SimpleClassMapConstructor.getInstance());
+    return facet.getClassMap(AndroidXmlResourcesUtil.PREFERENCE_CLASS_NAME, SimpleClassMapConstructor.getInstance());
   }
 
   public static void registerExtensionsForAnimation(AndroidFacet facet,
@@ -335,7 +335,7 @@ public class AndroidDomExtender extends DomExtender<AndroidDomElement> {
       }
     }
     final String styleableName = AndroidAnimationUtils.getStyleableNameByTagName(tagName);
-    PsiClass c = facet.findClass(AndroidUtils.ANIMATION_PACKAGE + '.' + styleableName);
+    PsiClass c = facet.findClass(AndroidAnimationUtils.ANIMATION_PACKAGE + '.' + styleableName);
     if (c != null) {
       registerAttributesForClassAndSuperclasses(facet, element, c, registrar, null);
     }

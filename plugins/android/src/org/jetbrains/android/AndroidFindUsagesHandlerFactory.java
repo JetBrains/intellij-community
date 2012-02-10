@@ -22,10 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlElement;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.*;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
 import org.jetbrains.android.dom.resources.ResourceElement;
@@ -33,7 +30,6 @@ import org.jetbrains.android.dom.wrappers.ResourceElementWrapper;
 import org.jetbrains.android.dom.wrappers.ValueResourceElementWrapper;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.util.AndroidResourceUtil;
-import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -133,7 +129,8 @@ public class AndroidFindUsagesHandlerFactory extends FindUsagesHandlerFactory {
       if (fields.length == 0) {
         return null;
       }
-      XmlAttributeValue nameValue = AndroidUtils.getNameAttrValue(tag);
+      final XmlAttribute nameAttr = tag.getAttribute("name");
+      final XmlAttributeValue nameValue = nameAttr != null ? nameAttr.getValueElement() : null;
       assert nameValue != null;
       return new MyFindUsagesHandler(nameValue, fields);
     }

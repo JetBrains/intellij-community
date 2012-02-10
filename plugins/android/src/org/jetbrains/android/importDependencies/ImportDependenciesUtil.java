@@ -28,6 +28,7 @@ import com.intellij.util.containers.*;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.messages.MessageBusConnection;
+import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
@@ -256,7 +257,7 @@ public class ImportDependenciesUtil {
                                          @NotNull List<MyUnresolvedDependency> unresolvedDependencies) {
     final Project project = module.getProject();
     final ModuleProvider moduleProvider = ModuleProvider.create(module);
-    final Pair<Properties, VirtualFile> pair = AndroidUtils.readProjectPropertyFile(module);
+    final Pair<Properties, VirtualFile> pair = AndroidRootUtil.readProjectPropertyFile(module);
 
     if (pair != null) {
       doImportDependencies(module, allowedDepModule, tasks, unresolvedDependencies, project, moduleProvider, pair);
@@ -269,7 +270,7 @@ public class ImportDependenciesUtil {
                                                      @NotNull List<ImportDependenciesTask> tasks,
                                                      @NotNull List<MyUnresolvedDependency> unresolvedDependencies) {
     final Pair<Properties, VirtualFile> properties =
-      AndroidUtils.readProjectPropertyFile(newModuleContentRoot);
+      AndroidRootUtil.readProjectPropertyFile(newModuleContentRoot);
     if (properties != null) {
       doImportDependencies(null, null, tasks, unresolvedDependencies, project, newModuleProvider, properties);
     }

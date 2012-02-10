@@ -27,6 +27,7 @@ import com.intellij.util.xml.DomManager;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.impl.dom.DomElementXmlDescriptor;
 import org.jetbrains.android.dom.layout.LayoutViewElement;
+import org.jetbrains.android.dom.xml.AndroidXmlResourcesUtil;
 import org.jetbrains.android.dom.xml.XmlResourceElement;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.SimpleClassMapConstructor;
@@ -79,7 +80,7 @@ public class AndroidDomElementDescriptorProvider implements XmlElementDescriptor
       className = AndroidUtils.VIEW_CLASS_NAME;
     }
     else if (domElement instanceof XmlResourceElement) {
-      className = AndroidUtils.PREFERENCE_CLASS_NAME;
+      className = AndroidXmlResourcesUtil.PREFERENCE_CLASS_NAME;
     }
     return className != null ? getDescriptor(domElement, tag, className) : null;
   }

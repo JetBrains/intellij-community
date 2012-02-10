@@ -16,10 +16,10 @@
 
 package org.jetbrains.android.dom.animation;
 
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.ClassMapConstructor;
-import org.jetbrains.android.util.AndroidUtils;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.psi.PsiClass;
@@ -36,6 +36,9 @@ import java.util.Collections;
  * To change this template use File | Settings | File Templates.
  */
 public class AndroidAnimationUtils {
+  @NonNls public static final String ANIMATION_PACKAGE = "android.view.animation";
+  @NonNls private static final String INTERPOLATOR_CLASS_NAME = "android.view.animation.Interpolator";
+
   private AndroidAnimationUtils() {
   }
 
@@ -56,7 +59,7 @@ public class AndroidAnimationUtils {
   public static List<String> getPossibleChildren(@NotNull AndroidFacet facet) {
     List<String> children = new ArrayList<String>();
     Collections.addAll(children, TAG_NAMES);
-    children.addAll(facet.getClassMap(AndroidUtils.INTERPOLATOR_CLASS_NAME, new ClassMapConstructor() {
+    children.addAll(facet.getClassMap(INTERPOLATOR_CLASS_NAME, new ClassMapConstructor() {
       @NotNull
       public String[] getTagNamesByClass(@NotNull PsiClass c) {
         String name = c.getName();

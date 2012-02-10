@@ -82,9 +82,13 @@ public class AndroidResourcesLineMarkerProvider implements LineMarkerProvider {
       return s + rClass.getName() + '.' + resClass.getName() + '.' + field.getName();
     }
     else {
-      PsiFile file = AndroidUtils.getFileTarget(element).getOriginalFile();
-      String name = file.getName();
-      PsiDirectory dir = file.getContainingDirectory();
+      final PsiFile file = AndroidUtils.getContainingFile(element);
+      if (file == null) {
+        return s;
+      }
+      final PsiFile originalFile = file.getOriginalFile();
+      String name = originalFile.getName();
+      PsiDirectory dir = originalFile.getContainingDirectory();
       if (dir == null) return s + name;
       return s + dir.getName() + '/' + name;
     }
@@ -153,7 +157,7 @@ public class AndroidResourcesLineMarkerProvider implements LineMarkerProvider {
       if (AndroidUtils.R_CLASS_NAME.equals(c.getName())) {
         PsiFile containingFile = element.getContainingFile();
         AndroidFacet facet = AndroidFacet.getInstance(containingFile);
-        if (facet != null && AndroidUtils.isRClassFile(facet, containingFile)) {
+        if (facet != null && AndroidResourceUtil.isRJavaFile(facet, containingFile)) {
           LocalResourceManager manager = facet.getLocalResourceManager();
           annotateRClass((PsiClass)element, result, manager);
         }

@@ -20,6 +20,7 @@ import org.jetbrains.android.dom.resources.ResourceElement;
 import org.jetbrains.android.dom.resources.Resources;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidRootUtil;
+import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.android.uipreview.DeviceConfiguratorPanel;
 import org.jetbrains.android.uipreview.InvalidOptionValueException;
 import org.jetbrains.android.util.AndroidBundle;
@@ -59,7 +60,7 @@ public class CreateXmlResourceDialog extends DialogWrapper {
     final Set<Module> modulesSet = new HashSet<Module>();
     modulesSet.add(module);
 
-    for (AndroidFacet depFacet : AndroidUtils.getAllAndroidDependencies(module, true)) {
+    for (AndroidFacet depFacet : AndroidSdkUtils.getAllAndroidDependencies(module, true)) {
       modulesSet.add(depFacet.getModule());
     }
 

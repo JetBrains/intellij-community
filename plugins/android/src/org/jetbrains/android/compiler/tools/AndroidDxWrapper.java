@@ -35,6 +35,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.android.compiler.AndroidCompileUtil;
 import org.jetbrains.android.compiler.AndroidDexCompilerConfiguration;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.annotations.NotNull;
@@ -63,7 +64,7 @@ public class AndroidDxWrapper {
                                                                    @NotNull IAndroidTarget target,
                                                                    @NotNull String outputDir,
                                                                    @NotNull String[] compileTargets) {
-    String outFile = outputDir + File.separatorChar + "classes.dex";
+    String outFile = outputDir + File.separatorChar + AndroidCompileUtil.CLASSES_FILE_NAME;
 
     final Map<CompilerMessageCategory, List<String>> messages = new HashMap<CompilerMessageCategory, List<String>>(2);
     messages.put(CompilerMessageCategory.ERROR, new ArrayList<String>());

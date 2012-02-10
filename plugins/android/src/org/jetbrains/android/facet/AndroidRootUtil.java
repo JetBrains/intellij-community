@@ -18,22 +18,28 @@ package org.jetbrains.android.facet;
 
 import com.android.sdklib.SdkConstants;
 import com.intellij.ide.highlighter.ArchiveFileType;
+import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.util.containers.OrderedSet;
 import org.jetbrains.android.compiler.AndroidCompileUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.*;
 
 
 /**
@@ -44,6 +50,9 @@ import java.util.Set;
  * To change this template use File | Settings | File Templates.
  */
 public class AndroidRootUtil {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.facet.AndroidRootUtil");
+  @NonNls public static final String DEFAULT_PROPERTIES_FILE_NAME = "default.properties";
+
   private AndroidRootUtil() {
   }
 
@@ -344,5 +353,91 @@ public class AndroidRootUtil {
       }
     }
     return contentRoots[0];
+  }
+
+  @Nullable
+  public static PropertiesFile findPropertyFile(@NotNull final Module module, @NotNull String propertyFileName) {
+    for (VirtualFile contentRoot : ModuleRootManager.getInstance(module).getContentRoots()) {
+      final VirtualFile vFile = contentRoot.findChild(propertyFileName);
+      if (vFile != null) {
+        final PsiFile psiFile = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
+          @Nullable
+          @Override
+          public PsiFile compute() {
+            return PsiManager.getInstance(module.getProject()).findFile(vFile);
+          }
+        });
+        if (psiFile instanceof PropertiesFile) {
+          return (PropertiesFile)psiFile;
+        }
+      }
+    }
+    return null;
+  }
+
+  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+  @Nullable
+  public static Pair<Properties, VirtualFile> readPropertyFile(@NotNull Module module, @NotNull String propertyFileName) {
+    for (VirtualFile contentRoot : ModuleRootManager.getInstance(module).getContentRoots()) {
+      final Pair<Properties, VirtualFile> result = readPropertyFile(contentRoot, propertyFileName);
+      if (result != null) {
+        return result;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public static Pair<Properties, VirtualFile> readProjectPropertyFile(@NotNull Module module) {
+    final Pair<Properties, VirtualFile> pair = readPropertyFile(module, SdkConstants.FN_PROJECT_PROPERTIES);
+    return pair != null
+           ? pair
+           : readPropertyFile(module, DEFAULT_PROPERTIES_FILE_NAME);
+  }
+
+  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+  @Nullable
+  private static Pair<Properties, VirtualFile> readPropertyFile(@NotNull VirtualFile contentRoot, @NotNull String propertyFileName) {
+    final VirtualFile vFile = contentRoot.findChild(propertyFileName);
+    if (vFile != null) {
+      final Properties properties = new Properties();
+      try {
+        properties.load(new FileInputStream(new File(vFile.getPath())));
+        return new Pair<Properties, VirtualFile>(properties, vFile);
+      }
+      catch (IOException e) {
+        LOG.info(e);
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public static Pair<Properties, VirtualFile> readProjectPropertyFile(@NotNull VirtualFile contentRoot) {
+    final Pair<Properties, VirtualFile> pair = readPropertyFile(contentRoot, SdkConstants.FN_PROJECT_PROPERTIES);
+    return pair != null
+           ? pair
+           : readPropertyFile(contentRoot, DEFAULT_PROPERTIES_FILE_NAME);
+  }
+
+  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+  @Nullable
+  public static String getPropertyValue(@NotNull Module module, @NotNull String propertyFileName, @NotNull String propertyKey) {
+    final Pair<Properties, VirtualFile> pair = readPropertyFile(module, propertyFileName);
+    if (pair != null) {
+      final String value = pair.first.getProperty(propertyKey);
+      if (value != null) {
+        return value;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public static String getProjectPropertyValue(Module module, String propertyName) {
+    final String result = getPropertyValue(module, SdkConstants.FN_PROJECT_PROPERTIES, propertyName);
+    return result != null
+           ? result
+           : getPropertyValue(module, DEFAULT_PROPERTIES_FILE_NAME, propertyName);
   }
 }

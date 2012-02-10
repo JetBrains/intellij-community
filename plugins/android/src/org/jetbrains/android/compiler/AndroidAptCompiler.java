@@ -35,6 +35,7 @@ import org.jetbrains.android.facet.AndroidFacetConfiguration;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.maven.AndroidMavenUtil;
 import org.jetbrains.android.sdk.AndroidPlatform;
+import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.AndroidUtils;
@@ -275,7 +276,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
 
       final List<String> result = new ArrayList<String>();
 
-      for (String libPackage : AndroidUtils.getDepLibsPackages(module)) {
+      for (String libPackage : AndroidSdkUtils.getDepLibsPackages(module)) {
         if (packageSet.add(libPackage)) {
           result.add(libPackage);
         }

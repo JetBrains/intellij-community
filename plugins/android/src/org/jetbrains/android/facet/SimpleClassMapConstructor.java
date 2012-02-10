@@ -20,7 +20,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiClass;
 import com.intellij.util.ArrayUtil;
-import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -65,6 +64,6 @@ public class SimpleClassMapConstructor implements ClassMapConstructor {
 
   protected static boolean isAndroidLibraryClass(@NotNull String qualifiedClassName) {
     String[] ar = qualifiedClassName.split("\\.");
-    return ar.length < 0 || ar[0].equals(AndroidUtils.ANDROID_PACKAGE);
+    return ar.length < 0 || ar[0].equals("android");
   }
 }

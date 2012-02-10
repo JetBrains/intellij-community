@@ -310,7 +310,7 @@ public class AndroidAutogenerator {
             return null;
           }
 
-          final String packageName = AndroidUtils.getPackageName(module, file);
+          final String packageName = AndroidUtils.computePackageName(module, file);
           if (packageName == null) {
             context.addMessage(CompilerMessageCategory.ERROR, "Cannot compute package for file", file.getUrl(), -1, -1);
             return null;
@@ -421,7 +421,7 @@ public class AndroidAutogenerator {
             final IAndroidTarget target = platform.getTarget();
             final String sdkLocation = platform.getSdk().getLocation();
 
-            final String packageName = AndroidUtils.getPackageName(module, file);
+            final String packageName = AndroidUtils.computePackageName(module, file);
             if (packageName == null) {
               context.addMessage(CompilerMessageCategory.ERROR, "Cannot compute package for file", file.getUrl(), -1, -1);
               return null;

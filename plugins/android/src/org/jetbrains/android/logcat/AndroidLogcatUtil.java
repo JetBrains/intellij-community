@@ -79,12 +79,12 @@ public class AndroidLogcatUtil {
 
   private static void startLogging(IDevice device, AndroidOutputReceiver receiver)
     throws IOException, ShellCommandUnresponsiveException, AdbCommandRejectedException, TimeoutException {
-    AndroidUtils.executeCommand(device, "logcat -v long", receiver, true);
+    AndroidUtils.executeCommandOnDevice(device, "logcat -v long", receiver, true);
   }
 
   public static void clearLogcat(final Project project, IDevice device) {
     try {
-      AndroidUtils.executeCommand(device, "logcat -c", new LoggingReceiver(LOG), false);
+      AndroidUtils.executeCommandOnDevice(device, "logcat -c", new LoggingReceiver(LOG), false);
     }
     catch (final Exception e) {
       LOG.info(e);

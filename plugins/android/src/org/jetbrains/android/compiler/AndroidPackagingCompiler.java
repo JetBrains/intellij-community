@@ -33,8 +33,8 @@ import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidFacetConfiguration;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.sdk.AndroidPlatform;
+import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.android.util.AndroidBundle;
-import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -115,7 +115,7 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
             File resPackage = AndroidResourcesPackagingCompiler.getOutputFile(module, outputDir);
             String resPackagePath = FileUtil.toSystemDependentName(resPackage.getPath());
 
-            File classesDexFile = new File(outputDir.getPath(), AndroidUtils.CLASSES_FILE_NAME);
+            File classesDexFile = new File(outputDir.getPath(), AndroidCompileUtil.CLASSES_FILE_NAME);
             String classesDexPath = FileUtil.toSystemDependentName(classesDexFile.getPath());
 
             AndroidPlatform platform = configuration.getAndroidPlatform();
@@ -171,7 +171,7 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
     if (libsDir != null) {
       result.add(libsDir);
     }
-    for (AndroidFacet depFacet : AndroidUtils.getAndroidDependencies(module, true)) {
+    for (AndroidFacet depFacet : AndroidSdkUtils.getAndroidDependencies(module, true)) {
       VirtualFile depLibsDir = AndroidRootUtil.getLibsDir(depFacet.getModule());
       if (depLibsDir != null) {
         result.add(depLibsDir);

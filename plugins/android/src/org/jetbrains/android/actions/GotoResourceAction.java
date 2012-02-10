@@ -194,7 +194,7 @@ public class GotoResourceAction extends AnAction {
     if (c != null && AndroidUtils.R_CLASS_NAME.equals(c.getName())) {
       AndroidFacet facet = AndroidFacet.getInstance(file);
       if (facet != null) {
-        return AndroidUtils.isRClassFile(facet, file);
+        return AndroidResourceUtil.isRJavaFile(facet, file);
       }
     }
     return false;

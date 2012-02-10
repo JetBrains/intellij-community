@@ -89,7 +89,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.*;
 
-import static org.jetbrains.android.util.AndroidUtils.EMULATOR;
 import static org.jetbrains.android.util.AndroidUtils.SYSTEM_RESOURCE_PACKAGE;
 
 /**
@@ -392,7 +391,7 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
       Project project = getModule().getProject();
       if (sdk != null) {
         SdkManager sdkManager = sdk.getSdkManager();
-        myAvdManager = new AvdManager(sdkManager, AndroidUtils.getSdkLog(project));
+        myAvdManager = new AvdManager(sdkManager, AndroidSdkUtils.getSdkLog(project));
       }
       else {
         throw new AvdsNotSupportedException();
@@ -404,7 +403,7 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
   public void launchEmulator(@Nullable final String avdName, @NotNull final String commands, @Nullable ProcessHandler handler) {
     AndroidPlatform platform = getConfiguration().getAndroidPlatform();
     if (platform != null) {
-      final String emulatorPath = platform.getSdk().getLocation() + File.separator + AndroidUtils.toolPath(EMULATOR);
+      final String emulatorPath = platform.getSdk().getLocation() + File.separator + AndroidSdkUtils.toolPath(SdkConstants.FN_EMULATOR);
       final GeneralCommandLine commandLine = new GeneralCommandLine();
       commandLine.setExePath(FileUtil.toSystemDependentName(emulatorPath));
       if (avdName != null) {
@@ -420,7 +419,7 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
       if (handler != null) {
         handler.notifyTextAvailable(commandLine.getCommandLineString() + '\n', ProcessOutputTypes.STDOUT);
       }
-      AndroidUtils.runExternalToolInSeparateThread(getModule().getProject(), commandLine, handler);
+      AndroidUtils.runExternalToolInSeparateThread(commandLine, handler);
     }
   }
 
@@ -487,12 +486,12 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
 
             PsiDocumentManager.getInstance(getModule().getProject()).commitAllDocuments();
 
-            final PropertiesFile projectProperties = AndroidUtils.findPropertyFile(getModule(), SdkConstants.FN_PROJECT_PROPERTIES);
+            final PropertiesFile projectProperties = AndroidRootUtil.findPropertyFile(getModule(), SdkConstants.FN_PROJECT_PROPERTIES);
             if (projectProperties == null) {
               return;
             }
             final Pair<Properties, VirtualFile> localProperties = 
-              AndroidUtils.readPropertyFile(getModule(), SdkConstants.FN_LOCAL_PROPERTIES);
+              AndroidRootUtil.readPropertyFile(getModule(), SdkConstants.FN_LOCAL_PROPERTIES);
 
             updateTargetProperty(projectProperties);
             updateLibraryProperty(projectProperties);
@@ -586,7 +585,7 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
   private VirtualFile[] collectDependencies() {
     final List<VirtualFile> dependenciesList = new ArrayList<VirtualFile>();
 
-    for (AndroidFacet depFacet : AndroidUtils.getAndroidDependencies(getModule(), true)) {
+    for (AndroidFacet depFacet : AndroidSdkUtils.getAndroidDependencies(getModule(), true)) {
       final Module depModule = depFacet.getModule();
       final VirtualFile libDir = getBaseAndroidContentRoot(depModule);
       if (libDir != null) {

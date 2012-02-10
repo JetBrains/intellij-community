@@ -33,10 +33,10 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.xml.XmlSchemaProvider;
 import gnu.trove.THashMap;
+import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.android.dom.manifest.ManifestDomFileDescription;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.util.AndroidResourceUtil;
-import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,6 +55,8 @@ import java.util.Set;
  */
 public class AndroidXmlSchemaProvider extends XmlSchemaProvider {
   private static final Key<Map<String, CachedValue<XmlFile>>> DESCRIPTORS_MAP_IN_MODULE = Key.create("ANDROID_DESCRIPTORS_MAP_IN_MODULE");
+
+  @NonNls private static final String NAMESPACE_PREFIX = "http://schemas.android.com/apk/res/";
 
   @Override
   public XmlFile getSchema(@NotNull @NonNls String url, @Nullable final Module module, @NotNull PsiFile baseFile) {
@@ -121,7 +123,7 @@ public class AndroidXmlSchemaProvider extends XmlSchemaProvider {
     Set<String> result = new HashSet<String>();
     AndroidFacet facet = AndroidFacet.getInstance(file);
     if (facet != null) {
-      String localNs = AndroidUtils.getLocalXmlNamespace(facet);
+      String localNs = getLocalXmlNamespace(facet);
       if (localNs != null) {
         result.add(localNs);
       }
@@ -133,5 +135,22 @@ public class AndroidXmlSchemaProvider extends XmlSchemaProvider {
   @Override
   public String getDefaultPrefix(@NotNull @NonNls String namespace, @NotNull XmlFile context) {
     return "android";
+  }
+
+  @Nullable
+  private static String getLocalXmlNamespace(@NotNull AndroidFacet facet) {
+    final Manifest manifest = facet.getManifest();
+    if (manifest != null) {
+      String aPackage = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+        @Nullable
+        public String compute() {
+          return manifest.getPackage().getValue();
+        }
+      });
+      if (aPackage != null && aPackage.length() != 0) {
+        return NAMESPACE_PREFIX + aPackage;
+      }
+    }
+    return null;
   }
 }

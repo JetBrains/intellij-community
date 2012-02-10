@@ -45,6 +45,7 @@ import org.jetbrains.android.dom.resources.ResourceElement;
 import org.jetbrains.android.dom.resources.Resources;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidRootUtil;
+import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidResourceUtil;
 import org.jetbrains.android.util.AndroidUtils;
@@ -119,7 +120,7 @@ public class LocalResourceManager extends ResourceManager {
     if (resDir != null && !result.add(resDir)) {
       return;
     }
-    for (AndroidFacet depFacet : AndroidUtils.getAllAndroidDependencies(module, false)) {
+    for (AndroidFacet depFacet : AndroidSdkUtils.getAllAndroidDependencies(module, false)) {
       collectResourceDirs(depFacet.getModule(), result, visited);
     }
   }

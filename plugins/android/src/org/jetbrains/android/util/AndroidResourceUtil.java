@@ -39,6 +39,7 @@ import org.jetbrains.android.dom.resources.Item;
 import org.jetbrains.android.dom.resources.ResourceElement;
 import org.jetbrains.android.dom.resources.Resources;
 import org.jetbrains.android.facet.AndroidFacet;
+import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -304,7 +305,7 @@ public class AndroidResourceUtil {
       AndroidFacet facet = AndroidFacet.getInstance(field);
       if (facet != null) {
         PsiFile file = c.getContainingFile();
-        if (file != null && AndroidUtils.isRClassFile(facet, file)) {
+        if (file != null && isRJavaFile(facet, file)) {
           return true;
         }
       }
@@ -549,5 +550,28 @@ public class AndroidResourceUtil {
 
   private static boolean containsAndroidJar(@NotNull PsiDirectory psiDirectory) {
     return psiDirectory.findFile(SdkConstants.FN_FRAMEWORK_LIBRARY) != null;
+  }
+
+  public static boolean isRJavaFile(@NotNull AndroidFacet facet, @NotNull PsiFile file) {
+    if (file.getName().equals(AndroidCommonUtils.R_JAVA_FILENAME) && file instanceof PsiJavaFile) {
+      final PsiJavaFile javaFile = (PsiJavaFile)file;
+
+      final Manifest manifest = facet.getManifest();
+      if (manifest == null) {
+        return false;
+      }
+
+      final String manifestPackage = manifest.getPackage().getValue();
+      if (manifestPackage != null && javaFile.getPackageName().equals(manifestPackage)) {
+        return true;
+      }
+
+      for (String aPackage : AndroidSdkUtils.getDepLibsPackages(facet.getModule())) {
+        if (javaFile.getPackageName().equals(aPackage)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 }

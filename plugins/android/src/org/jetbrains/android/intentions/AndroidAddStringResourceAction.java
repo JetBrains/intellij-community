@@ -81,8 +81,8 @@ import static org.jetbrains.android.util.AndroidUtils.VIEW_CLASS_NAME;
 public class AndroidAddStringResourceAction extends AbstractIntentionAction implements HighPriorityAction {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.intentions.AndroidAddStringResourceAction");
 
-  private static final String CONTEXT = AndroidUtils.ANDROID_PACKAGE + ".content.Context";
-  private static final String RESOURCES = AndroidUtils.ANDROID_PACKAGE + ".content.res.Resources";
+  private static final String CONTEXT = "android.content.Context";
+  private static final String RESOURCES = "android.content.res.Resources";
 
   @NotNull
   public String getText() {

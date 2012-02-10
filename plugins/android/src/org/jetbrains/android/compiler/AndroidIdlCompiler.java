@@ -148,7 +148,7 @@ public class AndroidIdlCompiler implements SourceGeneratingCompiler {
                                  AndroidBundle.message("android.compilation.error.specify.platform", module.getName()), null, -1, -1);
             continue;
           }
-          String packageName = AndroidUtils.getPackageName(module, file);
+          String packageName = AndroidUtils.computePackageName(module, file);
           if (packageName == null) {
             myContext.addMessage(CompilerMessageCategory.ERROR, "Cannot compute package for file", file.getUrl(), -1, -1);
             continue;

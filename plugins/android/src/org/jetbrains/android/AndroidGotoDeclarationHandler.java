@@ -25,6 +25,7 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import org.jetbrains.android.dom.wrappers.FileResourceElementWrapper;
 import org.jetbrains.android.dom.wrappers.ValueResourceElementWrapper;
 import org.jetbrains.android.facet.AndroidFacet;
+import org.jetbrains.android.util.AndroidResourceUtil;
 import org.jetbrains.android.util.AndroidUtils;
 
 import java.util.List;
@@ -77,7 +78,7 @@ public class AndroidGotoDeclarationHandler implements GotoDeclarationHandler {
     }
 
     final PsiFile containingFile = resolvedElement.getContainingFile();
-    if (containingFile == null || !AndroidUtils.isRClassFile(facet, containingFile)) {
+    if (containingFile == null || !AndroidResourceUtil.isRJavaFile(facet, containingFile)) {
       return null;
     }
 

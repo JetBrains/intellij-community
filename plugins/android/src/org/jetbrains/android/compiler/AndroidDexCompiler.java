@@ -36,7 +36,6 @@ import org.jetbrains.android.maven.AndroidMavenProvider;
 import org.jetbrains.android.maven.AndroidMavenUtil;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.util.AndroidBundle;
-import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,7 +61,7 @@ public class AndroidDexCompiler implements ClassPostProcessingCompiler {
     }
 
     if (items != null && items.length > 0) {
-      context.getProgressIndicator().setText("Generating " + AndroidUtils.CLASSES_FILE_NAME + "...");
+      context.getProgressIndicator().setText("Generating " + AndroidCompileUtil.CLASSES_FILE_NAME + "...");
       return new ProcessAction(context, items).compute();
     }
     return ProcessingItem.EMPTY_ARRAY;

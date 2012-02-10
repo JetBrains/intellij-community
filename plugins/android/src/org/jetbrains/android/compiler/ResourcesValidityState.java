@@ -22,7 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.sdk.AndroidPlatform;
-import org.jetbrains.android.util.AndroidUtils;
+import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInput;
@@ -61,7 +61,7 @@ public class ResourcesValidityState implements ValidityState {
     if (resourcesDir != null) {
       collectFiles(resourcesDir);
     }
-    for (AndroidFacet depFacet : AndroidUtils.getAllAndroidDependencies(module, true)) {
+    for (AndroidFacet depFacet : AndroidSdkUtils.getAllAndroidDependencies(module, true)) {
       VirtualFile depManifest = AndroidRootUtil.getManifestFile(depFacet.getModule());
       if (depManifest != null) {
         myResourceTimestamps.put(depManifest.getPath(), depManifest.getTimeStamp());
