@@ -31,12 +31,9 @@ import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
-import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.reference.UnusedDeclarationFixProvider;
 import com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection;
 import com.intellij.codeInspection.unusedParameters.UnusedParametersInspection;
@@ -230,17 +227,14 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     boolean unusedSymbolEnabled = profile.isToolEnabled(myUnusedSymbolKey, myFile);
     HighlightDisplayKey unusedImportKey = HighlightDisplayKey.find(UnusedImportLocalInspection.SHORT_NAME);
     boolean unusedImportEnabled = profile.isToolEnabled(unusedImportKey, myFile);
-    LocalInspectionToolWrapper unusedSymbolTool = (LocalInspectionToolWrapper)profile.getInspectionTool(UnusedSymbolLocalInspection.SHORT_NAME,
-                                                                                                        myFile);
-    myUnusedSymbolInspection = unusedSymbolTool == null ? null : (UnusedSymbolLocalInspection)unusedSymbolTool.getTool();
+    myUnusedSymbolInspection = (UnusedSymbolLocalInspection)profile.getUnwrappedTool(UnusedSymbolLocalInspection.SHORT_NAME, myFile);
     LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode() || myUnusedSymbolInspection != null);
 
     myDeadCodeKey = HighlightDisplayKey.find(UnusedDeclarationInspection.SHORT_NAME);
-    myDeadCodeInspection = (UnusedDeclarationInspection)profile.getInspectionTool(UnusedDeclarationInspection.SHORT_NAME, myFile);
+    myDeadCodeInspection = (UnusedDeclarationInspection)profile.getUnwrappedTool(UnusedDeclarationInspection.SHORT_NAME, myFile);
     myDeadCodeEnabled = profile.isToolEnabled(myDeadCodeKey, myFile);
 
-    final InspectionProfileEntry inspectionTool = profile.getInspectionTool(UnusedParametersInspection.SHORT_NAME, myFile);
-    myUnusedParametersInspection = inspectionTool != null ?  (UnusedParametersInspection)((GlobalInspectionToolWrapper)inspectionTool).getTool() : null;
+    myUnusedParametersInspection = (UnusedParametersInspection)profile.getUnwrappedTool(UnusedParametersInspection.SHORT_NAME, myFile);
     LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode() || myUnusedParametersInspection != null);
     if (unusedImportEnabled && JspPsiUtil.isInJspFile(myFile)) {
       final JspFile jspFile = JspPsiUtil.getJspFile(myFile);

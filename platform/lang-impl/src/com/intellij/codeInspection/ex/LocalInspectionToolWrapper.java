@@ -33,6 +33,7 @@ import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.tree.DefaultTreeModel;
 import java.util.*;
@@ -51,8 +52,18 @@ public final class LocalInspectionToolWrapper extends InspectionToolWrapper<Loca
     super(ep);
   }
 
+  @TestOnly
   public LocalInspectionToolWrapper(@Nullable LocalInspectionTool tool, @Nullable LocalInspectionEP ep) {
     super(tool, ep);
+  }
+
+  public LocalInspectionToolWrapper(LocalInspectionEP ep, LocalInspectionTool tool) {
+    super(ep, tool);
+  }
+
+  @Override
+  public InspectionToolWrapper<LocalInspectionTool, LocalInspectionEP> createCopy(InspectionToolWrapper<LocalInspectionTool, LocalInspectionEP> from) {
+    return new LocalInspectionToolWrapper(from.myEP, from.myTool);
   }
 
   public void processFile(PsiFile file, final boolean filterSuppressed, final InspectionManager manager) {

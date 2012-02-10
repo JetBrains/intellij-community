@@ -21,7 +21,6 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -135,7 +134,7 @@ public class ToolsImpl implements Tools {
     myDefaultState.getTool().writeSettings(inspectionElement);
   }
 
-  public void readExternal(Element toolElement, InspectionProfile profile) throws InvalidDataException {
+  public void readExternal(Element toolElement, InspectionProfileImpl profile) throws InvalidDataException {
     final String levelName = toolElement.getAttributeValue(InspectionProfileImpl.LEVEL_TAG);
     final ProfileManager profileManager = profile.getProfileManager();
     HighlightDisplayLevel level =
@@ -150,7 +149,7 @@ public class ToolsImpl implements Tools {
 
     final String enabledTool = toolElement.getAttributeValue(ENABLED_TAG);
     myDefaultState.setEnabled(enabledTool != null ? Boolean.parseBoolean(enabledTool) : isEnabled);
-    final InspectionProfileEntry tool = myDefaultState.getTool();
+    final InspectionToolWrapper tool = (InspectionToolWrapper)myDefaultState.getTool();
     tool.readSettings(toolElement);
     final List children = toolElement.getChildren(InspectionProfileImpl.SCOPE);
     if (!children.isEmpty()) {
@@ -165,8 +164,7 @@ public class ToolsImpl implements Tools {
           }
           final String errorLevel = scopeElement.getAttributeValue(InspectionProfileImpl.LEVEL_TAG);
           final String enabledInScope = scopeElement.getAttributeValue(InspectionProfileImpl.ENABLED_TAG);
-          final InspectionProfileEntry copyTool =
-            ((InspectionProfileImpl)profile).myRegistrar.createInspectionTool(myShortName, tool);
+          final InspectionProfileEntry copyTool = tool.createCopy(tool);
           copyTool.readSettings(scopeElement);
           HighlightDisplayLevel scopeLevel = errorLevel != null ?
              HighlightDisplayLevel.find(((SeverityProvider)profileManager).getOwnSeverityRegistrar().getSeverity(errorLevel)) : null;

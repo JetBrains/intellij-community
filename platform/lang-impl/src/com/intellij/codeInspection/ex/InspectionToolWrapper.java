@@ -27,6 +27,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.net.URL;
@@ -36,21 +37,31 @@ import java.net.URL;
  *         Date: 9/28/11
  */
 public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E extends InspectionEP> extends DescriptorProviderInspection {
-  private T myTool;
+  protected T myTool;
   protected final E myEP;
 
   protected InspectionToolWrapper(E ep) {
-    this(null, ep);
+    myTool = null;
+    myEP = ep;
   }
 
   protected InspectionToolWrapper(T tool) {
-    this(tool, null);
+    myTool = tool;
+    myEP = null;
   }
 
+  @TestOnly
   protected InspectionToolWrapper(@Nullable T tool, @Nullable E ep) {
     myEP = ep;
     myTool = tool;
   }
+
+  protected InspectionToolWrapper(E ep, T tool) {
+    myEP = ep;
+    myTool = tool == null ? null : (T)InspectionToolRegistrar.instantiateTool(tool.getClass());
+  }
+
+  public abstract InspectionToolWrapper<T, E> createCopy(InspectionToolWrapper<T, E> from);
 
   @NotNull
   public T getTool() {

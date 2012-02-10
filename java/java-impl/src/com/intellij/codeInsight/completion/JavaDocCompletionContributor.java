@@ -20,9 +20,7 @@ import com.intellij.codeInsight.completion.scope.CompletionElement;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.SuppressionUtil;
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.CaretModel;
@@ -135,8 +133,8 @@ public class JavaDocCompletionContributor extends CompletionContributor {
 
       InspectionProfile inspectionProfile =
         InspectionProjectProfileManager.getInstance(position.getProject()).getInspectionProfile();
-      final InspectionProfileEntry inspectionTool = inspectionProfile.getInspectionTool(JavaDocLocalInspection.SHORT_NAME, position);
-      JavaDocLocalInspection inspection = (JavaDocLocalInspection)((LocalInspectionToolWrapper)inspectionTool).getTool();
+      JavaDocLocalInspection inspection =
+        (JavaDocLocalInspection)inspectionProfile.getUnwrappedTool(JavaDocLocalInspection.SHORT_NAME, position);
       final StringTokenizer tokenizer = new StringTokenizer(inspection.myAdditionalJavadocTags, ", ");
       while (tokenizer.hasMoreTokens()) {
         ret.add(tokenizer.nextToken());

@@ -4,7 +4,6 @@ import com.android.tools.lint.detector.api.Issue;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.openapi.util.Pair;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
@@ -43,13 +42,8 @@ class AndroidLintUtil {
       return null;
     }
 
-    final InspectionToolWrapper toolWrapper =
-      (InspectionToolWrapper)profile.getInspectionTool(inspectionShortName, context);
-    if (toolWrapper == null) {
-      return null;
-    }
-
-    final AndroidLintInspectionBase inspection = (AndroidLintInspectionBase)toolWrapper.getTool();
+    final AndroidLintInspectionBase inspection = (AndroidLintInspectionBase)profile.getUnwrappedTool(inspectionShortName, context);
+    if (inspection == null) return null;
     final HighlightDisplayLevel errorLevel = profile.getErrorLevel(key, context);
     return new Pair<AndroidLintInspectionBase, HighlightDisplayLevel>(inspection,
                                                                       errorLevel != null ? errorLevel : HighlightDisplayLevel.WARNING);

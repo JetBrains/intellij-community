@@ -32,9 +32,12 @@ public interface InspectionProfile extends Profile {
 
   HighlightDisplayLevel getErrorLevel(@NotNull HighlightDisplayKey inspectionToolKey, PsiElement element);
   
-
   InspectionProfileEntry getInspectionTool(@NotNull String shortName, @NotNull PsiElement element);
 
+  /** Returns (unwrapped) inspection */
+  InspectionProfileEntry getUnwrappedTool(@NotNull String shortName, @NotNull PsiElement element);
+
+  @Nullable
   @Deprecated
   InspectionProfileEntry getInspectionTool(@NotNull String shortName);
 

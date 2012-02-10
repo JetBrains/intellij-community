@@ -297,11 +297,20 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     }
   }
 
+  @Nullable
   public InspectionProfileEntry getInspectionTool(@NotNull String shortName, @NotNull PsiElement element) {
     final Tools toolList = getTools(shortName);
     return toolList != null ? toolList.getInspectionTool(element) : null;
   }
 
+  @Nullable
+  @Override
+  public InspectionProfileEntry getUnwrappedTool(@NotNull String shortName, @NotNull PsiElement element) {
+    InspectionProfileEntry tool = getInspectionTool(shortName, element);
+    return tool instanceof InspectionToolWrapper ? ((InspectionToolWrapper)tool).getTool() : tool;
+  }
+
+  @Nullable
   public InspectionProfileEntry getInspectionTool(@NotNull String shortName) {
     final ToolsImpl tools = getTools(shortName);
     return tools != null? tools.getTool() : null;
@@ -442,7 +451,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       myBaseProfile.initInspectionTools(project);
     }
 
-    final List<InspectionTool> tools;
+    final List<InspectionToolWrapper> tools;
     try {
       tools = myRegistrar.createTools();
     }
@@ -507,13 +516,13 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       for (ToolsImpl toolList : profile.myTools.values()) {
         final ToolsImpl tools = myTools.get(toolList.getShortName());
         final ScopeToolState defaultState = toolList.getDefaultState();
-        tools.setDefaultState(copyToolSettings((InspectionTool)defaultState.getTool()), defaultState.isEnabled(), defaultState.getLevel());
+        tools.setDefaultState(copyToolSettings((InspectionToolWrapper)defaultState.getTool()), defaultState.isEnabled(), defaultState.getLevel());
         tools.removeAllScopes();
         tools.setEnabled(toolList.isEnabled());
         final List<ScopeToolState> nonDefaultToolStates = toolList.getNonDefaultTools();
         if (nonDefaultToolStates != null) {
           for (ScopeToolState state : nonDefaultToolStates) {
-            final InspectionTool inspectionTool = copyToolSettings((InspectionTool)state.getTool());
+            final InspectionTool inspectionTool = copyToolSettings((InspectionToolWrapper)state.getTool());
             final NamedScope scope = project != null ? state.getScope(project) : state.getScope();
             if (scope != null) {
               tools.addTool(scope, inspectionTool, state.isEnabled(), state.getLevel());
@@ -534,12 +543,12 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
   
 
-  private InspectionTool copyToolSettings(InspectionTool tool)
+  private InspectionTool copyToolSettings(InspectionToolWrapper tool)
     throws WriteExternalException, InvalidDataException {
     @NonNls String tempRoot = "config";
     Element config = new Element(tempRoot);
     tool.writeSettings(config);
-    final InspectionTool inspectionTool = myRegistrar.createInspectionTool(tool.getShortName(), tool);
+    final InspectionTool inspectionTool = tool.createCopy(tool);
     inspectionTool.readSettings(config);
     return inspectionTool;
   }
@@ -669,7 +678,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
                   final HighlightDisplayKey key = HighlightDisplayKey.find(entry.getShortName());
                   try {
                     getTools(entry.getShortName())
-                      .addTool(scope, copyToolSettings((InspectionTool)entry), inspectionProfile.isToolEnabled(key), inspectionProfile.getErrorLevel(key, (NamedScope)null));
+                      .addTool(scope, copyToolSettings((InspectionToolWrapper)entry), inspectionProfile.isToolEnabled(key), inspectionProfile.getErrorLevel(key, (NamedScope)null));
                   }
                   catch (Exception e) {
                     LOG.error(e);

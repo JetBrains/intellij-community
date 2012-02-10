@@ -29,6 +29,15 @@ public class GlobalInspectionToolWrapper extends InspectionToolWrapper<GlobalIns
     super(ep);
   }
 
+  public GlobalInspectionToolWrapper(InspectionEP ep, GlobalInspectionTool tool) {
+    super(ep, tool);
+  }
+
+  @Override
+  public InspectionToolWrapper<GlobalInspectionTool, InspectionEP> createCopy(InspectionToolWrapper<GlobalInspectionTool, InspectionEP> from) {
+    return new GlobalInspectionToolWrapper(from.myEP, from.myTool);
+  }
+
   public void initialize(@NotNull GlobalInspectionContextImpl context) {
     super.initialize(context);
     final RefGraphAnnotator annotator = getTool().getAnnotator(getRefManager());
