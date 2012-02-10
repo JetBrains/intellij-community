@@ -66,7 +66,7 @@ class GitMergeOperation extends GitBranchOperation {
                               @NotNull String branchToMerge, @NotNull String currentBranch, @NotNull GitRepository currentRepository,
                               @NotNull Map<GitRepository, String> currentRevisionsBeforeMerge,
                               @NotNull ProgressIndicator indicator) {
-    super(project, repositories, indicator);
+    super(project, repositories, currentBranch, indicator);
     myBranchToMerge = branchToMerge;
     myCurrentBranch = currentBranch;
     myCurrentRepository = currentRepository;

@@ -59,7 +59,7 @@ class GitCheckoutOperation extends GitBranchOperation {
   GitCheckoutOperation(@NotNull Project project, @NotNull Collection<GitRepository> repositories,
                               @NotNull String startPointReference, @Nullable String newBranch, @NotNull String previousBranch, 
                               @NotNull ProgressIndicator indicator) {
-    super(project, repositories, indicator);
+    super(project, repositories, previousBranch, indicator);
     myStartPointReference = startPointReference;
     myNewBranch = newBranch;
     myPreviousBranch = previousBranch;
@@ -104,10 +104,11 @@ class GitCheckoutOperation extends GitBranchOperation {
 
     if (!fatalErrorHappened) {
       notifySuccess();
+      updateRecentBranch();
     }
   }
 
-  private boolean smartCheckoutOrNotify(@NotNull GitRepository repository, 
+  private boolean smartCheckoutOrNotify(@NotNull GitRepository repository,
                                         @NotNull GitMessageWithFilesDetector localChangesOverwrittenByCheckout) {
     Pair<List<GitRepository>, List<Change>> conflictingRepositoriesAndAffectedChanges =
       getConflictingRepositoriesAndAffectedChanges(repository, localChangesOverwrittenByCheckout, myPreviousBranch, myStartPointReference);
