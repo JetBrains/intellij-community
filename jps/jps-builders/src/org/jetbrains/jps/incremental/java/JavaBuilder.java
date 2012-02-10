@@ -257,7 +257,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       if (hasSourcesToCompile) {
         final Set<File> sourcePath = TEMPORARY_SOURCE_ROOTS_KEY.get(context, Collections.<File>emptySet());
 
-        final String chunkName = chunk.getName();
+        final String chunkName = getChunkPresentableName(chunk);
         context.processMessage(new ProgressMessage("Compiling java [" + chunkName + "]"));
 
         final boolean compiledOk = compileJava(chunk, files, classpath, platformCp, sourcePath, outs, context, diagnosticSink, outputSink);
@@ -314,6 +314,24 @@ public class JavaBuilder extends ModuleLevelBuilder {
       }
     }
     return exitCode;
+  }
+
+  private static String getChunkPresentableName(ModuleChunk chunk) {
+    final Set<Module> modules = chunk.getModules();
+    if (modules.isEmpty()) {
+      return "<empty>";
+    }
+    if (modules.size() == 1) {
+      return modules.iterator().next().getName();
+    }
+    final StringBuilder buf = new StringBuilder();
+    for (Module module : modules) {
+      if (buf.length() > 0) {
+        buf.append(",");
+      }
+      buf.append(module.getName());
+    }
+    return buf.toString();
   }
 
   private boolean compileJava(ModuleChunk chunk, Collection<File> files,
