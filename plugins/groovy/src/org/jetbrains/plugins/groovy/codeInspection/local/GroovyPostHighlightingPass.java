@@ -25,6 +25,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.AnnotationSession;
@@ -86,7 +87,8 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
     if (!fileIndex.isInContent(virtualFile)) {
       return;
     }
-    final UnusedDeclarationInspection deadCodeInspection = (UnusedDeclarationInspection)profile.getInspectionTool(UnusedDeclarationInspection.SHORT_NAME, myFile);
+    final InspectionToolWrapper wrapper = (InspectionToolWrapper)profile.getInspectionTool(UnusedDeclarationInspection.SHORT_NAME, myFile);
+    final UnusedDeclarationInspection deadCodeInspection = wrapper != null ? (UnusedDeclarationInspection)wrapper.getTool() : null;
     final GlobalUsageHelper usageHelper = new GlobalUsageHelper() {
       public boolean isCurrentFileAlreadyChecked() {
         return false;
