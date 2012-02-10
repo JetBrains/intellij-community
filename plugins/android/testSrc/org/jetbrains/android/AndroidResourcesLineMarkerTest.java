@@ -1,12 +1,18 @@
 package org.jetbrains.android;
 
+import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
+
+import java.io.IOException;
+
 /**
  * @author Eugene.Kudelevsky
  */
 public class AndroidResourcesLineMarkerTest extends AndroidTestCase {
   public void test1() {}
 
-  /*private static final String BASE_PATH = "/resNavigation/";
+  private static final String BASE_PATH = "/resNavigation/";
 
   public AndroidResourcesLineMarkerTest() {
     super(false);
@@ -19,7 +25,7 @@ public class AndroidResourcesLineMarkerTest extends AndroidTestCase {
     myFixture.copyDirectoryToProject(BASE_PATH + "res", "res");
   }
 
-  public void testRJavaFile() throws Exception {
+  /*public void testRJavaFile() throws Exception {
     List<LineMarkerInfo> markers = collectMarkers("src/p1/p2/R.java");
     assertEquals(26, markers.size());
     for (LineMarkerInfo marker : markers) {
@@ -85,7 +91,7 @@ public class AndroidResourcesLineMarkerTest extends AndroidTestCase {
     // do not draw line markers on usages of a resource: AndroidGotoDeclarationHandler provides navigation instead
     assertEquals(0, markers.size());
 
-    *//*for (LineMarkerInfo marker : markers) {
+    for (LineMarkerInfo marker : markers) {
       PsiReferenceExpression expression = (PsiReferenceExpression)marker.getElement();
       PsiField field = (PsiField)expression.resolve();
       GutterIconNavigationHandler handler = marker.getNavigationHandler();
@@ -93,8 +99,8 @@ public class AndroidResourcesLineMarkerTest extends AndroidTestCase {
       Computable<PsiElement[]> targetProvider = ((AndroidResourcesLineMarkerProvider.MyLazyNavigationHandler)handler).getTargetProvider();
       PsiElement[] targets = targetProvider.compute();
       checkTargets(field, targets);
-    }*//*
-  }
+    }
+  }*/
 
   public void testJavaFileNavigation1() throws Exception {
     doJavaFileNavigationTest(1, true);
@@ -116,7 +122,7 @@ public class AndroidResourcesLineMarkerTest extends AndroidTestCase {
     doJavaFileNavigationTest(1, true);
   }
 
-  public void testRJavaFileNavigation1() throws Exception {
+  /*public void testRJavaFileNavigation1() throws Exception {
     doRJavaFileNavigationTest(1);
   }
 
@@ -134,13 +140,13 @@ public class AndroidResourcesLineMarkerTest extends AndroidTestCase {
 
   public void testRJavaFileNavigation5() throws Exception {
     doRJavaFileNavigationTest(0);
-  }
+  }*/
 
-  public void testValueResourcesNavigation() throws Exception {
+  /*public void testValueResourcesNavigation() throws Exception {
     copyRJava();
     String fileName = getTestName(false) + ".xml";
     doJavaFileNavigationTest(fileName, "res/values/" + fileName, 1, true, false);
-  }
+  }*/
 
   private void doJavaFileNavigationTest(int expectedTargets, boolean expectedEnabled) throws IOException {
     copyRJava();
@@ -148,9 +154,9 @@ public class AndroidResourcesLineMarkerTest extends AndroidTestCase {
     doJavaFileNavigationTest(path, path, expectedTargets, expectedEnabled, true);
   }
 
-  private void doRJavaFileNavigationTest(int expectedTargets) throws IOException {
+  /*private void doRJavaFileNavigationTest(int expectedTargets) throws IOException {
     doJavaFileNavigationTest("src/p1/p2/" + getTestName(false) + ".java", "src/p1/p2/R.java", expectedTargets, true, false);
-  }
+  }*/
 
   private void doJavaFileNavigationTest(String srcPath, String destPath, int expectedTargets, boolean expectedEnabled,
                                         boolean testGotoDeclaration) throws IOException {
@@ -165,16 +171,16 @@ public class AndroidResourcesLineMarkerTest extends AndroidTestCase {
     }
 
     // test Ctrl+Alt+Shift+R
-    GotoResourceAction action = new GotoResourceAction();
+    /*GotoResourceAction action = new GotoResourceAction();
     DataContext dataContext = DataManager.getInstance().getDataContextFromFocus().getResult();
     AnActionEvent event = new AnActionEvent(null, dataContext, "", action.getTemplatePresentation(), ActionManager.getInstance(), 0);
     action.update(event);
     assertEquals(expectedEnabled, event.getPresentation().isEnabled());
     PsiElement[] targets = GotoResourceAction.findTargets(dataContext);
-    assertEquals(expectedTargets, targets.length);
+    assertEquals(expectedTargets, targets.length);*/
   }
 
-  private List<LineMarkerInfo> collectMarkers(String filePath) throws IOException {
+  /*private List<LineMarkerInfo> collectMarkers(String filePath) throws IOException {
     return collectMarkers(myFixture, BASE_PATH + filePath, filePath);
   }
 
@@ -205,9 +211,9 @@ public class AndroidResourcesLineMarkerTest extends AndroidTestCase {
       return 3;
     }
     return 1;
-  }
+  }*/
 
   private void copyRJava() throws IOException {
     myFixture.copyFileToProject(BASE_PATH + "src/p1/p2/R.java", "src/p1/p2/R.java");
-  }*/
+  }
 }
