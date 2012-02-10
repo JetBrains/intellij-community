@@ -18,11 +18,10 @@ package com.intellij.execution.junit2.segments;
 import com.intellij.execution.junit.SegmentedInputStreamReader;
 import com.intellij.execution.junit2.SegmentedInputStream;
 import com.intellij.execution.testframework.Printable;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.rt.execution.junit.segments.PacketProcessor;
 
+import javax.swing.*;
 import java.io.InputStream;
 import java.io.Reader;
 import java.nio.charset.Charset;
@@ -47,11 +46,11 @@ public class Extractor {
   public void setPacketDispatcher(final PacketProcessor packetProcessor, final DeferredActionsQueue queue) {
     myFulfilledWorkGate = new DeferredActionsQueue() { //todo make it all later
       public void addLast(final Runnable runnable) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
+        SwingUtilities.invokeLater(new Runnable() {
           public void run() {
             queue.addLast(runnable);
           }
-        }, ModalityState.NON_MODAL);
+        });
       }
 
       public void setDispactchListener(final DispatchListener listener) {
