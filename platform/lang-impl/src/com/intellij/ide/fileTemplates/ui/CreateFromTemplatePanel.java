@@ -19,8 +19,7 @@ package com.intellij.ide.fileTemplates.ui;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.actions.AttributesDefaults;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.ui.impl.DialogWrapperPeerImpl;
+import com.intellij.openapi.ui.DialogWrapperPeer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.ScrollPaneFactory;
@@ -37,8 +36,6 @@ import java.util.Properties;
  */
 
 public class CreateFromTemplatePanel{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.fileTemplates.ui.CreateFromTemplatePanel");
-
   private JPanel myMainPanel;
   private JPanel myAttrPanel;
   private JTextField myFilenameField;
@@ -47,7 +44,7 @@ public class CreateFromTemplatePanel{
 
   private int myLastRow = 0;
 
-  private int myHorisontalMargin = -1;
+  private int myHorizontalMargin = -1;
   private int myVerticalMargin = -1;
   private final boolean myMustEnterName;
   private final AttributesDefaults myAttributesDefaults;
@@ -94,16 +91,16 @@ public class CreateFromTemplatePanel{
     return myMainPanel;
   }
 
-  public void ensureFitToScreen(int horisontalMargin, int verticalMargin){
-    myHorisontalMargin = horisontalMargin;
+  public void ensureFitToScreen(int horizontalMargin, int verticalMargin){
+    myHorizontalMargin = horizontalMargin;
     myVerticalMargin = verticalMargin;
   }
 
   private Dimension getMainPanelPreferredSize(Dimension superPreferredSize){
-    if((myHorisontalMargin > 0) && (myVerticalMargin > 0)){
+    if((myHorizontalMargin > 0) && (myVerticalMargin > 0)){
       Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
       Dimension preferredSize = superPreferredSize;
-      Dimension maxSize = new Dimension(screenSize.width - myHorisontalMargin, screenSize.height - myVerticalMargin);
+      Dimension maxSize = new Dimension(screenSize.width - myHorizontalMargin, screenSize.height - myVerticalMargin);
       int width = Math.min(preferredSize.width, maxSize.width);
       int height = Math.min(preferredSize.height, maxSize.height);
       if(height < preferredSize.height){
@@ -133,7 +130,7 @@ public class CreateFromTemplatePanel{
           // set predefined file name value
           myFilenameField.setText(fileName);
           final TextRange selectionRange;
-          // select range from default attrubutes or select file name without extension
+          // select range from default attributes or select file name without extension
           if (myAttributesDefaults.getDefaultFileNameSelection() != null) {
             selectionRange = myAttributesDefaults.getDefaultFileNameSelection();
           } else {
@@ -193,17 +190,17 @@ public class CreateFromTemplatePanel{
     }
   }
 
-  public Properties getProperties(Properties predefinedProperties){
+  public Properties getProperties(Properties predefinedProperties) {
     Properties result = (Properties) predefinedProperties.clone();
     for (Pair<String, JTextField> pair : myAttributes) {
-      result.put(pair.first, pair.second.getText());
+      result.setProperty(pair.first, pair.second.getText());
     }
     return result;
   }
 
-  private void setPredefinedSelectionFor(final JTextField field, final TextRange selectionRange) {
+  private static void setPredefinedSelectionFor(final JTextField field, final TextRange selectionRange) {
     field.select(selectionRange.getStartOffset(), selectionRange.getEndOffset());
-    field.putClientProperty(DialogWrapperPeerImpl.HAVE_INITIAL_SELECTION, true);
+    field.putClientProperty(DialogWrapperPeer.HAVE_INITIAL_SELECTION, true);
   }
 }
 

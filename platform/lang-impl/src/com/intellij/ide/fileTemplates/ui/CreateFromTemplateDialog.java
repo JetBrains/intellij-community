@@ -115,7 +115,7 @@ public class CreateFromTemplateDialog extends DialogWrapper {
     }
   }
 
-  private void doCreate(final String fileName)  {
+  private void doCreate(@Nullable final String fileName)  {
     try {
       myCreatedElement = FileTemplateUtil.createFromTemplate(myTemplate, fileName, myAttrPanel.getProperties(myDefaultProperties),
                                                              myDirectory);
