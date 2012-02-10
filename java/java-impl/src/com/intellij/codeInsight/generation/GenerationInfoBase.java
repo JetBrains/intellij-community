@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.generation;
 
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -57,5 +58,9 @@ public abstract class GenerationInfoBase implements GenerationInfo {
       element = leaf.getNextSibling();
     }
     return element;
+  }
+
+  public void positionCaret(Editor editor, boolean toEditMethodBody) {
+    GenerateMembersUtil.positionCaret(editor, getPsiMember(), toEditMethodBody);
   }
 }

@@ -670,7 +670,7 @@ public class OverrideImplementUtil {
       }
 
       if (!resultMembers.isEmpty()) {
-        GenerateMembersUtil.positionCaret(editor, resultMembers.get(0).getPsiMember(), true);
+        resultMembers.get(0).positionCaret(editor, true);
       }
     }
     catch(IncorrectOperationException e){
@@ -724,10 +724,11 @@ public class OverrideImplementUtil {
     Editor editor = fileEditorManager.openTextEditor(new OpenFileDescriptor(psiFile.getProject(), psiFile.getVirtualFile()), false);
     if (editor == null) return;
 
-    GenerateMembersUtil.positionCaret(editor, results.get(0).getPsiMember(), true);
+    results.get(0).positionCaret(editor, true);
     editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
   }
 
+  @Nullable
   public static PsiClass getContextClass(Project project, Editor editor, PsiFile file, boolean allowInterface) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
@@ -740,8 +741,7 @@ public class OverrideImplementUtil {
 
     final PsiClass aClass = (PsiClass)element;
     if (aClass instanceof JspClass) return null;
-    return aClass == null ||
-           !allowInterface && aClass.isInterface() ? null : aClass;
+    return aClass == null || !allowInterface && aClass.isInterface() ? null : aClass;
   }
 
   private static PsiSubstitutor getContextSubstitutor(PsiClass aClass) {

@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.generation;
 
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMember;
@@ -39,4 +40,9 @@ public interface GenerationInfo {
    */
   @Nullable
   PsiElement findInsertionAnchor(@NotNull PsiClass aClass, @NotNull PsiElement leaf);
+
+  /**
+   * Position caret in generated element in correct way
+   */
+  void positionCaret(Editor editor, boolean toEditMethodBody);
 }

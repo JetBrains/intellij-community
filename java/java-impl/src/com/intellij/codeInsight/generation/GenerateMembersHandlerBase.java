@@ -134,7 +134,7 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
       runTemplates(project, editor, templates, 0);
     }
     else if (!newMembers.isEmpty()){
-      GenerateMembersUtil.positionCaret(editor, newMembers.get(0).getPsiMember(), false);
+      newMembers.get(0).positionCaret(editor, false);
     }
   }
 

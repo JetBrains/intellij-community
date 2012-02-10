@@ -19,8 +19,8 @@ package org.jetbrains.plugins.groovy.editor.selection;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
 import java.util.List;
 
@@ -50,7 +50,7 @@ public class GroovyBlockStatementsSelectioner extends GroovyBasicSelectioner {
     PsiElement lbrace = block.getLBrace();
     if (lbrace == null) return block.getTextRange().getStartOffset();
 
-    while (isWhiteSpace(lbrace.getNextSibling())) {
+    while (PsiImplUtil.isWhiteSpace(lbrace.getNextSibling())) {
       lbrace = lbrace.getNextSibling();
     }
     return lbrace.getTextRange().getEndOffset();
@@ -60,14 +60,10 @@ public class GroovyBlockStatementsSelectioner extends GroovyBasicSelectioner {
     PsiElement rbrace = block.getRBrace();
     if (rbrace == null) return block.getTextRange().getEndOffset();
 
-    while (isWhiteSpace(rbrace.getPrevSibling()) && rbrace.getPrevSibling().getTextRange().getStartOffset() > startOffset) {
+    while (PsiImplUtil.isWhiteSpace(rbrace.getPrevSibling()) && rbrace.getPrevSibling().getTextRange().getStartOffset() > startOffset) {
       rbrace = rbrace.getPrevSibling();
     }
 
     return rbrace.getTextRange().getStartOffset();
-  }
-
-  private static boolean isWhiteSpace(PsiElement element) {
-    return element != null && TokenSets.WHITE_SPACES_SET.contains(element.getNode().getElementType());
   }
 }

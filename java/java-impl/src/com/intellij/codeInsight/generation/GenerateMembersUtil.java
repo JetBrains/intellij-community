@@ -119,6 +119,9 @@ public class GenerateMembersUtil {
     return memberPrototypes;
   }
 
+  /**
+   * @see GenerationInfo#positionCaret(com.intellij.openapi.editor.Editor, boolean)
+   */
   public static void positionCaret(@NotNull Editor editor, @NotNull PsiElement firstMember, boolean toEditMethodBody) {
     LOG.assertTrue(firstMember.isValid());
 

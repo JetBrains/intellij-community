@@ -116,7 +116,7 @@ public class GenerateMainAction extends AnAction {
                 JavaPsiFacade.getInstance(file.getProject()).getElementFactory().createMethodFromText(mainBuilder.toString(), file);
               List<PsiGenerationInfo<PsiMethod>> infos = Collections.singletonList(new PsiGenerationInfo<PsiMethod>(method));
               List<PsiGenerationInfo<PsiMethod>> resultMembers = GenerateMembersUtil.insertMembersAtOffset(file, offset, infos);
-              GenerateMembersUtil.positionCaret(editor, resultMembers.get(0).getPsiMember(), false);
+              resultMembers.get(0).positionCaret(editor, false);
             }
             catch (IncorrectOperationException e1) {
               LOG.error(e1);

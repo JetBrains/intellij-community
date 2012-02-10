@@ -40,6 +40,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.formatter.GeeseUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -674,6 +675,9 @@ public class PsiImplUtil {
     if (ref==null) return false;
     final String text = ref.getText();
     return text.startsWith("java.") || text.startsWith("javax.");
-  } 
-  
+  }
+
+  public static boolean isWhiteSpace(PsiElement element) {
+    return element != null && TokenSets.WHITE_SPACES_SET.contains(element.getNode().getElementType());
+  }
 }

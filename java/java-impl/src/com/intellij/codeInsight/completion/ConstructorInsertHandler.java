@@ -205,7 +205,7 @@ class ConstructorInsertHandler implements InsertHandler<LookupElementDecorator<L
                     List<PsiMethod> methods = OverrideImplementUtil.overrideOrImplementMethodCandidates(aClass, candidatesToImplement, false);
                     List<PsiGenerationInfo<PsiMethod>> prototypes = OverrideImplementUtil.convert2GenerationInfos(methods);
                     List<PsiGenerationInfo<PsiMethod>> resultMembers = GenerateMembersUtil.insertMembersBeforeAnchor(aClass, null, prototypes);
-                    GenerateMembersUtil.positionCaret(editor, resultMembers.get(0).getPsiMember(), true);
+                    resultMembers.get(0).positionCaret(editor, true);
                   }
                   catch(IncorrectOperationException ioe){
                     LOG.error(ioe);
@@ -260,7 +260,7 @@ class ConstructorInsertHandler implements InsertHandler<LookupElementDecorator<L
             }
 
             List<PsiGenerationInfo<PsiMethod>> resultMembers = GenerateMembersUtil.insertMembersAtOffset(aClass.getContainingFile(), offset, prototypes);
-            GenerateMembersUtil.positionCaret(editor, resultMembers.get(0).getPsiMember(), true);
+            resultMembers.get(0).positionCaret(editor, true);
           }
           catch(IncorrectOperationException e){
             LOG.error(e);

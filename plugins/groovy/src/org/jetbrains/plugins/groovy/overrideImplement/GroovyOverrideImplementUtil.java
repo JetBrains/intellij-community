@@ -186,7 +186,7 @@ public class GroovyOverrideImplementUtil {
 
     try {
       String bodyText = StringUtil.replace(template.getText(properties), ";", "");
-      final GrCodeBlock newBody = GroovyPsiElementFactory.getInstance(project).createMethodBodyFromText("\n" + bodyText + "\n");
+      final GrCodeBlock newBody = GroovyPsiElementFactory.getInstance(project).createMethodBodyFromText("\n " + bodyText + "\n");
 
       resultMethod.setBlock(newBody);
     }
