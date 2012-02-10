@@ -132,8 +132,10 @@
 
     <completion.contributor language="XML" implementationClass="org.jetbrains.android.AndroidCompletionContributor"
                             id="compositieAttributeValues" order="first"/>
-    <codeInsight.lineMarkerProvider language="JAVA" implementationClass="org.jetbrains.android.AndroidResourcesLineMarkerProvider"/>
-    <codeInsight.lineMarkerProvider language="XML" implementationClass="org.jetbrains.android.AndroidResourcesLineMarkerProvider"/>
+
+    <!--<codeInsight.lineMarkerProvider language="JAVA" implementationClass="org.jetbrains.android.AndroidResourcesLineMarkerProvider"/>
+    <codeInsight.lineMarkerProvider language="XML" implementationClass="org.jetbrains.android.AndroidResourcesLineMarkerProvider"/>-->
+
     <renamePsiElementProcessor implementation="org.jetbrains.android.AndroidRenameResourceProcessor" order="first"/>
     <intentionAction>
       <className>org.jetbrains.android.intentions.AndroidAddStringResourceAction</className>

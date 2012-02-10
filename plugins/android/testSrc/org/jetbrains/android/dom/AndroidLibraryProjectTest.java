@@ -2,27 +2,20 @@ package org.jetbrains.android.dom;
 
 import com.android.sdklib.SdkConstants;
 import com.intellij.codeInsight.completion.CompletionType;
-import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
-import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.*;
 import com.intellij.usageView.UsageInfo;
 import org.jetbrains.android.AndroidFindUsagesTest;
-import org.jetbrains.android.AndroidResourcesLineMarkerProvider;
-import org.jetbrains.android.AndroidResourcesLineMarkerTest;
 import org.jetbrains.android.AndroidTestCase;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.inspections.AndroidDomInspection;
@@ -193,7 +186,7 @@ public class AndroidLibraryProjectTest extends UsefulTestCase {
     myFixture.checkResultByFile(BASE_PATH + getTestName(true) + "_after.xml");
   }
 
-  public void testRJavaFileMarkers() throws Exception {
+  /*public void testRJavaFileMarkers() throws Exception {
     doTestRJavaFilesMarkers("/app/src/p1/p2/R.java");
   }
 
@@ -228,7 +221,7 @@ public class AndroidLibraryProjectTest extends UsefulTestCase {
     List<LineMarkerInfo> markers =
       AndroidResourcesLineMarkerTest.collectMarkers(myFixture, BASE_PATH + getTestName(false) + ".java", "/app/src/p1/p2/Java.java");
     assertEquals(0, markers.size());
-  }
+  }*/
 
   public void testJavaNavigation() throws Exception {
     createInitialStructure();
@@ -245,7 +238,7 @@ public class AndroidLibraryProjectTest extends UsefulTestCase {
     assertEquals("main.xml", ((PsiFile)targetElement).getName());
   }
 
-  public void testLayoutFileMarkers() throws Exception {
+  /*public void testLayoutFileMarkers() throws Exception {
     createInitialStructure();
     myFixture.copyFileToProject(BASE_PATH + "RJavaFileMarkers.java", "app/src/p1/p2/R.java");
     myFixture.copyFileToProject(BASE_PATH + "RJavaFileMarkers.java", "app/src/p1/p2/lib/R.java");
@@ -284,7 +277,7 @@ public class AndroidLibraryProjectTest extends UsefulTestCase {
     assertNotNull(targets);
     assertTrue(targets.length > 0);
     assertEquals(field.getName(), 1, targets.length);
-  }
+  }*/
 
   public void testFileResourceFindUsages() throws Throwable {
     doFindUsagesTest("xml", "lib/res/layout/");
