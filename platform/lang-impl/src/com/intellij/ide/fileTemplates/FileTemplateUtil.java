@@ -258,7 +258,7 @@ public class FileTemplateUtil{
   }
 
   public static PsiElement createFromTemplate(@NotNull final FileTemplate template,
-                                              @NonNls @Nullable final String fileName,
+                                              @NonNls @Nullable String fileName,
                                               @Nullable Properties props,
                                               @NotNull final PsiDirectory directory,
                                               @Nullable ClassLoader classLoader) throws Exception {
@@ -269,8 +269,15 @@ public class FileTemplateUtil{
     FileTemplateManager.getInstance().addRecentName(template.getName());
     fillDefaultProperties(props, directory);
 
+    final CreateFromTemplateHandler handler = findHandler(template);
     if (fileName != null && props.getProperty(FileTemplate.ATTRIBUTE_NAME) == null) {
       props.setProperty(FileTemplate.ATTRIBUTE_NAME, fileName);
+    }
+    else if (fileName == null && handler.isNameRequired()) {
+      fileName = props.getProperty(FileTemplate.ATTRIBUTE_NAME);
+      if (fileName == null) {
+        throw new Exception("File name must be specified");
+      }
     }
 
     //Set escaped references to dummy values to remove leading "\" (if not already explicitely set)
@@ -279,10 +286,10 @@ public class FileTemplateUtil{
       props.setProperty(dummyRef, "");
     }
 
-    final CreateFromTemplateHandler handler = findHandler(template);
     props = handler.prepareProperties(props);
 
     final Properties props_ = props;
+    final String fileName_ = fileName;
     String mergedText = ClassLoaderUtil.runWithClassLoader(classLoader != null ? classLoader : FileTemplateUtil.class.getClassLoader(),
                                                            new ThrowableComputable<String, IOException>() {
                                                              @Override
@@ -299,7 +306,7 @@ public class FileTemplateUtil{
         ApplicationManager.getApplication().runWriteAction(new Runnable(){
           public void run(){
             try{
-              result [0] = handler.createFromTemplate(project, directory, fileName, template, templateText, finalProps);
+              result [0] = handler.createFromTemplate(project, directory, fileName_, template, templateText, finalProps);
             }
             catch (Exception ex){
               commandException[0] = ex;
