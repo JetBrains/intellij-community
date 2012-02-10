@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -34,7 +35,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.*;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ui.DynamicElementSettings;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.ArrayList;
@@ -384,8 +384,7 @@ public class DynamicManagerImpl extends DynamicManager {
     final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(textEditor.getDocument());
     if (file == null) return;
 
-    GroovyPsiManager.getInstance(myProject).dropTypesCache();
-    PsiManager.getInstance(myProject).dropResolveCaches();
+    ((PsiModificationTrackerImpl)PsiManager.getInstance(myProject).getModificationTracker()).incCounter();
     DaemonCodeAnalyzer.getInstance(myProject).restart();
   }
 
