@@ -388,8 +388,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
       return results;
     }
 
-    private static GroovyResolveResult[] _resolve(GrCodeReferenceElementImpl ref, PsiManager manager,
-                                           ReferenceKind kind) {
+    private static GroovyResolveResult[] _resolve(GrCodeReferenceElementImpl ref, PsiManager manager, ReferenceKind kind) {
       final String refName = ref.getReferenceName();
       if (refName == null) {
         return GroovyResolveResult.EMPTY_ARRAY;
@@ -437,10 +436,9 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
               }
 
               if (kind == CLASS_OR_PACKAGE) {
-                for (final PsiPackage subpackage : ((PsiPackage) qualifierResolved).getSubPackages(ref.getResolveScope())) {
-                  if (refName.equals(subpackage.getName()))
-                    return new GroovyResolveResult[]{new GroovyResolveResultImpl(subpackage, true)};
-                }
+                final String fqName = ((PsiPackage)qualifierResolved).getQualifiedName() + "." + refName;
+                final PsiPackage aPackage = JavaPsiFacade.getInstance(ref.getProject()).findPackage(fqName);
+                if (aPackage != null) return new GroovyResolveResult[]{new GroovyResolveResultImpl(aPackage, true)};
               }
             } else if ((kind == CLASS || kind == CLASS_OR_PACKAGE) && qualifierResolved instanceof PsiClass) {
               PsiClass[] classes = ((PsiClass) qualifierResolved).getAllInnerClasses();
