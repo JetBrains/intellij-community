@@ -65,6 +65,11 @@ public class CreateFromTemplateDialog extends DialogWrapper {
 
     myDefaultProperties = defaultProperties == null ? FileTemplateManager.getInstance().getDefaultProperties() : defaultProperties;
     FileTemplateUtil.fillDefaultProperties(myDefaultProperties, directory);
+    boolean mustEnterName = !myTemplate.isTemplateOfType(StdFileTypes.JAVA);
+    if (attributesDefaults != null && attributesDefaults.isFixedName()) {
+      myDefaultProperties.setProperty(FileTemplate.ATTRIBUTE_NAME, attributesDefaults.getDefaultFileName());
+      mustEnterName = false;
+    }
 
     String[] unsetAttributes = null;
     try {
@@ -75,7 +80,7 @@ public class CreateFromTemplateDialog extends DialogWrapper {
     }
 
     if (unsetAttributes != null) {
-      myAttrPanel = new CreateFromTemplatePanel(unsetAttributes, !myTemplate.isTemplateOfType(StdFileTypes.JAVA), attributesDefaults);
+      myAttrPanel = new CreateFromTemplatePanel(unsetAttributes, mustEnterName, attributesDefaults);
       myAttrComponent = myAttrPanel.getComponent();
       init();
     }

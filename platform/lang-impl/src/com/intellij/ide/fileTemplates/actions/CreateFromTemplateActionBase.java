@@ -63,6 +63,7 @@ public abstract class CreateFromTemplateActionBase extends AnAction {
     }
   }
 
+  @Nullable
   protected PsiDirectory getTargetDirectory(DataContext dataContext, IdeView view) {
     return DirectoryChooserUtil.getOrChooseDirectory(view);
   }
