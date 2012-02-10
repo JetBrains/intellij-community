@@ -165,7 +165,7 @@ public class EventLog implements Notifications {
       content = title + (StringUtil.isNotEmpty(content) ? ": " + content : "");
     }
 
-    content = StringUtil.replace(StringUtil.convertLineSeparators(content), "&nbsp;", " ");
+    content = StringUtil.convertLineSeparators(content);
     boolean hasHtml = false;
     while (true) {
       Matcher tagMatcher = TAG_PATTERN.matcher(content);
@@ -248,6 +248,9 @@ public class EventLog implements Notifications {
   }
 
   private static void appendText(Document document, String text) {
+    text = StringUtil.replace(text, "&nbsp;", " ");
+    text = StringUtil.replace(text, "&raquo;", ">>");
+    text = StringUtil.replace(text, "&laquo;", "<<");
     document.insertString(document.getTextLength(), StringUtil.unescapeXml(text));
   }
 
