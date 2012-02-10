@@ -115,8 +115,7 @@ public class CreateFromTemplatePanel{
   }
 
   private void updateShown() {
-    final Insets insets = new Insets(2, 2, 2, 2);
-    myAttrPanel.add(Box.createHorizontalStrut(200), new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, insets, 0, 0));
+    final Insets insets = new Insets(2, 4, 4, 2);
     if(myMustEnterName || Arrays.asList(myUnsetAttributes).contains(FileTemplate.ATTRIBUTE_NAME)){
       final JLabel filenameLabel = new JLabel(IdeBundle.message("label.file.name"));
       myAttrPanel.add(filenameLabel, new GridBagConstraints(0, 1, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, insets, 0, 0));
@@ -147,15 +146,17 @@ public class CreateFromTemplatePanel{
           }
         }
       }
-      myAttrPanel.add(myFilenameField, new GridBagConstraints(0, 2, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, insets, 0, 0));
+      myAttrPanel.add(myFilenameField, new GridBagConstraints(1, 1, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, insets, 0, 0));
     }
 
+    myLastRow = 2;
     for (String attribute : myUnsetAttributes) {
       if (attribute.equals(FileTemplate.ATTRIBUTE_NAME)) { // already asked above
         continue;
       }
       final JLabel label = new JLabel(attribute.replace('_', ' ') + ":");
       final JTextField field = new JTextField();
+      field.setColumns(30);
       if (myAttributesDefaults != null) {
         final String defaultValue = myAttributesDefaults.getDefaultValueFor(attribute);
         final TextRange selectionRange = myAttributesDefaults.getRangeFor(attribute);
@@ -168,9 +169,9 @@ public class CreateFromTemplatePanel{
         }
       }
       myAttributes.add(new Pair<String, JTextField>(attribute, field));
-      myAttrPanel.add(label, new GridBagConstraints(0, myLastRow * 2 + 3, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE,
+      myAttrPanel.add(label, new GridBagConstraints(0, myLastRow, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE,
                                                     insets, 0, 0));
-      myAttrPanel.add(field, new GridBagConstraints(0, myLastRow * 2 + 4, 1, 1, 1.0, 0.0, GridBagConstraints.WEST,
+      myAttrPanel.add(field, new GridBagConstraints(1, myLastRow, 1, 1, 1.0, 0.0, GridBagConstraints.WEST,
                                                     GridBagConstraints.HORIZONTAL, insets, 0, 0));
       myLastRow++;
     }
