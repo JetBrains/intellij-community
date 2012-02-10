@@ -118,7 +118,7 @@ public class FileTemplateUtil{
   }
   
   public static String[] calculateAttributes(String templateContent, Properties properties, boolean includeDummies) throws ParseException {
-    final Set<String> unsetAttributes = new HashSet<String>();
+    final Set<String> unsetAttributes = new LinkedHashSet<String>();
     final Set<String> definedAttributes = new HashSet<String>();
     //noinspection HardCodedStringLiteral
     SimpleNode template = RuntimeSingleton.parse(new StringReader(templateContent), "MyTemplate");

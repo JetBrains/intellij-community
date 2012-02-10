@@ -57,7 +57,6 @@ public class CreateFromTemplatePanel{
     myMustEnterName = mustEnterName;
     myUnsetAttributes = unsetAttributes;
     myAttributesDefaults = attributesDefaults;
-    Arrays.sort(myUnsetAttributes);
   }
 
   public boolean hasSomethingToAsk() {
