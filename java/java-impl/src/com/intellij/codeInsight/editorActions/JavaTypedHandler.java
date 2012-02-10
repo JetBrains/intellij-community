@@ -60,7 +60,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
         }
 
         //do not show lookup when typing varargs ellipsis
-        final PsiElement prevSibling = lastElement.getPrevSibling();
+        final PsiElement prevSibling = PsiTreeUtil.prevVisibleLeaf(lastElement);
         if (prevSibling == null || ".".equals(prevSibling.getText())) return false;
         PsiElement parent = prevSibling;
         do {

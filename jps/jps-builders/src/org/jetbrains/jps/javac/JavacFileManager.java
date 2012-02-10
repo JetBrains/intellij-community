@@ -66,6 +66,18 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
     return super.isSameFile(a, b);
   }
 
+  @Override
+  public FileObject getFileForInput(Location location, String packageName, String relativeName) throws IOException {
+    checkCanceled();
+    return super.getFileForInput(location, packageName, relativeName);
+  }
+
+  @Override
+  public JavaFileObject getJavaFileForInput(Location location, String className, JavaFileObject.Kind kind) throws IOException {
+    checkCanceled();
+    return super.getJavaFileForInput(location, className, kind);
+  }
+
   public JavaFileObject getJavaFileForOutput(Location location, String className, JavaFileObject.Kind kind, FileObject sibling) throws IOException {
     if (kind != JavaFileObject.Kind.SOURCE && kind != JavaFileObject.Kind.CLASS) {
       throw new IllegalArgumentException("Invalid kind " + kind);
@@ -86,6 +98,8 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
   }
 
   private OutputFileObject getFileForOutput(Location location, JavaFileObject.Kind kind, String fileName, @Nullable String className, FileObject sibling) throws IOException {
+    checkCanceled();
+
     JavaFileObject src = null;
     if (sibling instanceof JavaFileObject) {
       final JavaFileObject javaFileObject = (JavaFileObject)sibling;
@@ -190,4 +204,18 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
     return name.toString().replace('.', File.separatorChar);
   }
 
+  private int myChecksCounter = 0;
+
+  private void checkCanceled() {
+    final int counter = (myChecksCounter + 1) % 10;
+    myChecksCounter = counter;
+    if (counter == 0 && myContext.isCanceled()) {
+      throw new RuntimeException("Compilation canceled") {
+        @Override
+        public Throwable fillInStackTrace() {
+          return this;
+        }
+      };
+    }
+  }
 }

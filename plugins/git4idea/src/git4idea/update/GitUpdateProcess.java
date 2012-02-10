@@ -215,6 +215,7 @@ public class GitUpdateProcess {
     final ContinuationFinalTasksInserter finalTasksInserter = new ContinuationFinalTasksInserter(context);
     finalTasksInserter.allNextAreFinal();
     mySaver.restoreLocalChanges(context);
+    mySaver.refresh();
     finalTasksInserter.removeFinalPropertyAdder();
   }
 

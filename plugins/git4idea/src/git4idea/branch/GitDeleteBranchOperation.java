@@ -53,8 +53,8 @@ class GitDeleteBranchOperation extends GitBranchOperation {
   private final String myCurrentBranch;
 
   GitDeleteBranchOperation(@NotNull Project project, @NotNull Collection<GitRepository> repositories,
-                                  @NotNull String branchName, @NotNull String currentBranch, @NotNull ProgressIndicator indicator) {
-    super(project, repositories, indicator);
+                           @NotNull String branchName, @NotNull String currentBranch, @NotNull ProgressIndicator indicator) {
+    super(project, repositories, currentBranch, indicator);
     myBranchName = branchName;
     myCurrentBranch = currentBranch;
   }

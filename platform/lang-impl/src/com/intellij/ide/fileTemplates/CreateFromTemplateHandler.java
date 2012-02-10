@@ -35,4 +35,8 @@ public interface CreateFromTemplateHandler {
                                 Properties props) throws IncorrectOperationException;
 
   boolean canCreate(final PsiDirectory[] dirs);
+  boolean isNameRequired();
+  String getErrorMessage();
+
+  Properties prepareProperties(Properties props);
 }

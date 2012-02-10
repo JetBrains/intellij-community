@@ -15,18 +15,25 @@
  */
 package git4idea.branch;
 
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.ui.UIUtil;
+import git4idea.GitBranch;
 import git4idea.GitExecutionException;
 import git4idea.GitVcs;
+import git4idea.NotificationManager;
 import git4idea.commands.Git;
+import git4idea.commands.GitCommandResult;
+import git4idea.commands.GitCompoundResult;
 import git4idea.history.GitHistoryUtils;
 import git4idea.history.browser.GitCommit;
 import git4idea.repo.GitRepository;
@@ -38,10 +45,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Executor of Git branching operations.
@@ -81,7 +86,7 @@ public final class GitBranchOperationsProcessor {
   }
   
   @NotNull
-  private String getCurrentBranch() {
+  private String getCurrentBranchOrRev() {
     if (myRepositories.size() > 1) {
       GitMultiRootBranchConfig multiRootBranchConfig = new GitMultiRootBranchConfig(myRepositories);
       String currentBranch = multiRootBranchConfig.getCurrentBranch();
@@ -121,7 +126,7 @@ public final class GitBranchOperationsProcessor {
   }
 
   private void doCheckoutNewBranch(@NotNull final String name, @NotNull ProgressIndicator indicator) {
-    new GitCheckoutNewBranchOperation(myProject, myRepositories, name, getCurrentBranch(), indicator).execute();
+    new GitCheckoutNewBranchOperation(myProject, myRepositories, name, getCurrentBranchOrRev(), indicator).execute();
   }
 
   /**
@@ -162,19 +167,153 @@ public final class GitBranchOperationsProcessor {
   }
 
   private void doCheckout(@NotNull ProgressIndicator indicator, @NotNull String reference, @Nullable String newBranch) {
-    new GitCheckoutOperation(myProject, myRepositories, reference, newBranch, getCurrentBranch(), indicator).execute();
+    new GitCheckoutOperation(myProject, myRepositories, reference, newBranch, getCurrentBranchOrRev(), indicator).execute();
   }
 
   public void deleteBranch(final String branchName) {
     new CommonBackgroundTask(myProject, "Deleting " + branchName, myCallInAwtAfterExecution) {
       @Override public void execute(@NotNull ProgressIndicator indicator) {
-        doDelete(branchName, indicator);
+        new GitDeleteBranchOperation(myProject, myRepositories, branchName, getCurrentBranchOrRev(), indicator).execute();
       }
     }.runInBackground();
   }
 
-  private void doDelete(final String branchName, ProgressIndicator indicator) {
-    new GitDeleteBranchOperation(myProject, myRepositories, branchName, getCurrentBranch(), indicator).execute();
+  public void deleteRemoteBranch(@NotNull final String branchName) {
+    final Collection<String> trackingBranches = findTrackingBranches(branchName);
+    String currentBranch = getCurrentBranchOrRev();
+    boolean currentBranchTracksBranchToDelete = false;
+    if (trackingBranches.contains(currentBranch)) {
+      currentBranchTracksBranchToDelete = true;
+      trackingBranches.remove(currentBranch);
+    }
+
+    final DeleteRemoteBranchDecision decision = confirmBranchDeletion(branchName, trackingBranches, currentBranchTracksBranchToDelete);
+
+    if (decision.delete()) {
+      new CommonBackgroundTask(myProject, "Deleting " + branchName, myCallInAwtAfterExecution) {
+        @Override public void execute(@NotNull ProgressIndicator indicator) {
+          boolean deletedSuccessfully = doDeleteRemote(branchName);
+          if (deletedSuccessfully) {
+            final Collection<String> successfullyDeletedLocalBranches = new ArrayList<String>(1);
+            if (decision.deleteTracking()) {
+              for (final String branch : trackingBranches) {
+                indicator.setText("Deleting " + branch);
+                new GitDeleteBranchOperation(myProject, myRepositories, branch, getCurrentBranchOrRev(), indicator) {
+                  @Override
+                  protected void notifySuccess(@NotNull String message) {
+                    // do nothing - will display a combo notification for all deleted branches below
+                    successfullyDeletedLocalBranches.add(branch);
+                  }
+                }.execute();
+              }
+            }
+            notifySuccessfulDeletion(branchName, successfullyDeletedLocalBranches);
+          }
+        }
+      }.runInBackground();
+    }
+  }
+
+  @NotNull
+  private Collection<String> findTrackingBranches(@NotNull String remoteBranch) {
+    return new GitMultiRootBranchConfig(myRepositories).getTrackingBranches(remoteBranch);
+  }
+
+  private boolean doDeleteRemote(String branchName) {
+    GitCompoundResult result = new GitCompoundResult(myProject);
+    for (GitRepository repository : myRepositories) {
+      Pair<String, String> pair = GitBranch.splitNameOfRemoteBranch(branchName);
+      GitCommandResult res = Git.push(repository, pair.getFirst(), ":" + pair.getSecond());
+      result.append(repository, res);
+      repository.update(GitRepository.TrackedTopic.BRANCHES);
+    }
+    if (!result.totalSuccess()) {
+      NotificationManager.getInstance(myProject).notifyError("Failed to delete remote branch " + branchName,
+                                                             result.getErrorOutputWithReposIndication());
+    }
+    return result.totalSuccess();
+  }
+
+  private void notifySuccessfulDeletion(@NotNull String remoteBranchName, @NotNull Collection<String> localBranches) {
+    String message = "";
+    if (!localBranches.isEmpty()) {
+      message = "Also deleted local " + StringUtil.pluralize("branch", localBranches.size()) + ": " + StringUtil.join(localBranches, ", ");
+    }
+    NotificationManager.getInstance(myProject).notify(GitVcs.NOTIFICATION_GROUP_ID, "Deleted remote branch " + remoteBranchName,
+                                                      message, NotificationType.INFORMATION);
+  }
+
+  private DeleteRemoteBranchDecision confirmBranchDeletion(@NotNull String branchName, @NotNull Collection<String> trackingBranches,
+                                                           boolean currentBranchTracksBranchToDelete) {
+    String title = "Delete Remote Branch";
+    String message = "Delete remote branch " + branchName;
+
+    boolean delete;
+    final boolean deleteTracking;
+    if (trackingBranches.isEmpty()) {
+      delete = Messages.showYesNoDialog(myProject, message, title, "Delete", "Cancel", Messages.getQuestionIcon()) == Messages.OK;
+      deleteTracking = false;
+    }
+    else {
+      if (currentBranchTracksBranchToDelete) {
+        message += "\n\nCurrent branch " + getCurrentBranchOrRev() + " tracks " + branchName + " but won't be deleted.";
+      }
+      final String checkboxMessage;
+      if (trackingBranches.size() == 1) {
+        checkboxMessage = "Delete tracking local branch " + trackingBranches.iterator().next() + " as well";
+      }
+      else {
+        checkboxMessage = "Delete tracking local branches " + StringUtil.join(trackingBranches, ", ");
+      }
+
+      final AtomicBoolean deleteChoice = new AtomicBoolean();
+      delete = Messages.OK == Messages.showYesNoDialog(message, title, "Delete", "Cancel", Messages.getQuestionIcon(), new DialogWrapper.DoNotAskOption() {
+        @Override
+        public boolean isToBeShown() {
+          return true;
+        }
+
+        @Override
+        public void setToBeShown(boolean value, int exitCode) {
+          deleteChoice.set(!value);
+        }
+
+        @Override
+        public boolean canBeHidden() {
+          return true;
+        }
+
+        @Override
+        public boolean shouldSaveOptionsOnCancel() {
+          return false;
+        }
+
+        @Override
+        public String getDoNotShowMessage() {
+          return checkboxMessage;
+        }
+      });
+      deleteTracking = deleteChoice.get();
+    }
+    return new DeleteRemoteBranchDecision(delete, deleteTracking);
+  }
+
+  private static class DeleteRemoteBranchDecision {
+    private final boolean delete;
+    private final boolean deleteTracking;
+
+    private DeleteRemoteBranchDecision(boolean delete, boolean deleteTracking) {
+      this.delete = delete;
+      this.deleteTracking = deleteTracking;
+    }
+
+    public boolean delete() {
+      return delete;
+    }
+
+    public boolean deleteTracking() {
+      return deleteTracking;
+    }
   }
 
   /**
@@ -197,7 +336,7 @@ public final class GitBranchOperationsProcessor {
           LOG.error("The task to get compare info didn't finish. Repositories: \n" + myRepositories + "\nbranch name: " + branchName);
           return;
         }
-        displayCompareDialog(branchName, getCurrentBranch(), myCompareInfo);
+        displayCompareDialog(branchName, getCurrentBranchOrRev(), myCompareInfo);
       }
     }.runInBackground();
   }
@@ -247,7 +386,7 @@ public final class GitBranchOperationsProcessor {
     for (GitRepository repository : myRepositories) {
       revisions.put(repository, repository.getCurrentRevision());
     }
-    new GitMergeOperation(myProject, myRepositories, branchName, getCurrentBranch(), revisions, indicator).execute();
+    new GitMergeOperation(myProject, myRepositories, branchName, getCurrentBranchOrRev(), mySelectedRepository, revisions, indicator).execute();
   }
 
   /**

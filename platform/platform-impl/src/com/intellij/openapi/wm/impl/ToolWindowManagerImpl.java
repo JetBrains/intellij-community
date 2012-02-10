@@ -200,7 +200,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       }
 
       public void fileClosed(FileEditorManager source, VirtualFile file) {
-        getFocusManagerImpl().doWhenFocusSettlesDown(new ExpirableRunnable.ForProject(myProject) {
+        getFocusManagerImpl(myProject).doWhenFocusSettlesDown(new ExpirableRunnable.ForProject(myProject) {
           public void run() {
             if (!hasOpenEditorFiles()) {
               focusToolWinowByDefault(null);
@@ -351,8 +351,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     return myFileEditorManager.getOpenFiles().length > 0;
   }
 
-  private static FocusManagerImpl getFocusManagerImpl() {
-    return FocusManagerImpl.getInstance();
+  private static IdeFocusManager getFocusManagerImpl(Project project) {
+    return IdeFocusManager.getInstance(project);
   }
 
   public Project getProject() {
@@ -619,7 +619,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     }).doWhenRejected(new Runnable() {
       public void run() {
         if (forced) {
-          getFocusManagerImpl().requestFocus(new FocusCommand() {
+          getFocusManagerImpl(myProject).requestFocus(new FocusCommand() {
             public ActionCallback run() {
               final ArrayList<FinalizableCommand> cmds = new ArrayList<FinalizableCommand>();
 
@@ -719,7 +719,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
                                       final ArrayList<FinalizableCommand> commandList,
                                       boolean forced,
                                       boolean autoFocusContents) {
-    if (!getFocusManagerImpl().isUnforcedRequestAllowed() && !forced) return;
+    if (/*!getFocusManagerImpl(myProject).isUnforcedRequestAllowed() && */!forced) return;
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: activateToolWindowImpl(" + id + ")");
@@ -1873,7 +1873,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
     @Override
     public void hyperlinkUpdate(HyperlinkEvent e) {
-      if (myBalloon != null) {
+      if (myBalloon != null && e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
         myBalloon.hide();
       }
       if (myListener != null) {
@@ -2002,15 +2002,15 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         return;
       }
       final WindowInfoImpl info = getInfo(myId);
-      getFocusManagerImpl().myFocusedComponentAlaram.cancelAllRequests();
+      //getFocusManagerImpl(myProject)..cancelAllRequests();
 
       if (!info.isActive()) {
-        getFocusManagerImpl().myFocusedComponentAlaram.addRequest(new EdtRunnable() {
+        getFocusManagerImpl(myProject).doWhenFocusSettlesDown(new EdtRunnable() {
           public void runEdt() {
             if (!myLayout.isToolWindowRegistered(myId)) return;
             activateToolWindow(myId, false, false);
           }
-        }, 100);
+        });
       }
     }
   }
@@ -2128,7 +2128,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   public ActionCallback requestDefaultFocus(final boolean forced) {
-    return getFocusManagerImpl().requestFocus(new FocusCommand() {
+    return getFocusManagerImpl(myProject).requestFocus(new FocusCommand() {
       public ActionCallback run() {
         return processDefaultFocusRequest(forced);
       }

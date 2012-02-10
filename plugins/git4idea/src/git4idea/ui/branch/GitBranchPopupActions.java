@@ -181,6 +181,16 @@ class GitBranchPopupActions {
     }
 
     @NotNull
+    List<GitRepository> getRepositories() {
+      return myRepositories;
+    }
+
+    @NotNull
+    public String getBranchName() {
+      return myBranchName;
+    }
+
+    @NotNull
     @Override
     public AnAction[] getChildren(@Nullable AnActionEvent e) {
       return new AnAction[] {
@@ -241,9 +251,6 @@ class GitBranchPopupActions {
 
     }
 
-    /**
-     * Action to delete a branch.
-     */
     private static class DeleteAction extends DumbAwareAction {
       private final Project myProject;
       private final List<GitRepository> myRepositories;
@@ -292,6 +299,7 @@ class GitBranchPopupActions {
         new CheckoutRemoteBranchAction(myProject, myRepositories, myBranchName, mySelectedRepository),
         new CompareAction(myProject, myRepositories, myBranchName, mySelectedRepository),
         new MergeAction(myProject, myRepositories, myBranchName, mySelectedRepository),
+        new RemoteDeleteAction(myProject, myRepositories, myBranchName, mySelectedRepository)
       };
     }
 
@@ -326,6 +334,28 @@ class GitBranchPopupActions {
         return myRemoteBranchName.substring(slashPosition+1);
       }
     }
+
+    private static class RemoteDeleteAction extends DumbAwareAction {
+      private final Project myProject;
+      private final List<GitRepository> myRepositories;
+      private final String myBranchName;
+      private final GitRepository mySelectedRepository;
+
+      RemoteDeleteAction(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName,
+                         @NotNull GitRepository selectedRepository) {
+        super("Delete");
+        myProject = project;
+        myRepositories = repositories;
+        myBranchName = branchName;
+        mySelectedRepository = selectedRepository;
+      }
+
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        new GitBranchOperationsProcessor(myProject, myRepositories, mySelectedRepository).deleteRemoteBranch(myBranchName);
+      }
+    }
+
   }
   
   private static class CompareAction extends DumbAwareAction {

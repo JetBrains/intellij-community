@@ -86,7 +86,7 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
     if (!fileIndex.isInContent(virtualFile)) {
       return;
     }
-    final UnusedDeclarationInspection deadCodeInspection = (UnusedDeclarationInspection)profile.getInspectionTool(UnusedDeclarationInspection.SHORT_NAME, myFile);
+    final UnusedDeclarationInspection deadCodeInspection = (UnusedDeclarationInspection)profile.getUnwrappedTool(UnusedDeclarationInspection.SHORT_NAME, myFile);
     final GlobalUsageHelper usageHelper = new GlobalUsageHelper() {
       public boolean isCurrentFileAlreadyChecked() {
         return false;

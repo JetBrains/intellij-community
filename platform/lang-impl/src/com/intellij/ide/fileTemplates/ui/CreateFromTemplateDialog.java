@@ -22,7 +22,6 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.fileTemplates.actions.AttributesDefaults;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -65,6 +64,11 @@ public class CreateFromTemplateDialog extends DialogWrapper {
 
     myDefaultProperties = defaultProperties == null ? FileTemplateManager.getInstance().getDefaultProperties() : defaultProperties;
     FileTemplateUtil.fillDefaultProperties(myDefaultProperties, directory);
+    boolean mustEnterName = FileTemplateUtil.findHandler(template).isNameRequired();
+    if (attributesDefaults != null && attributesDefaults.isFixedName()) {
+      myDefaultProperties.setProperty(FileTemplate.ATTRIBUTE_NAME, attributesDefaults.getDefaultFileName());
+      mustEnterName = false;
+    }
 
     String[] unsetAttributes = null;
     try {
@@ -75,7 +79,7 @@ public class CreateFromTemplateDialog extends DialogWrapper {
     }
 
     if (unsetAttributes != null) {
-      myAttrPanel = new CreateFromTemplatePanel(unsetAttributes, !myTemplate.isTemplateOfType(StdFileTypes.JAVA), attributesDefaults);
+      myAttrPanel = new CreateFromTemplatePanel(unsetAttributes, mustEnterName, attributesDefaults);
       myAttrComponent = myAttrPanel.getComponent();
       init();
     }
@@ -110,7 +114,7 @@ public class CreateFromTemplateDialog extends DialogWrapper {
     }
   }
 
-  private void doCreate(final String fileName)  {
+  private void doCreate(@Nullable final String fileName)  {
     try {
       myCreatedElement = FileTemplateUtil.createFromTemplate(myTemplate, fileName, myAttrPanel.getProperties(myDefaultProperties),
                                                              myDirectory);
@@ -120,12 +124,16 @@ public class CreateFromTemplateDialog extends DialogWrapper {
     }
   }
 
+  public Properties getEnteredProperties() {
+    return myAttrPanel.getProperties(new Properties());
+  }
+
   private void showErrorDialog(final Exception e) {
     Messages.showMessageDialog(myProject, filterMessage(e.getMessage()), getErrorMessage(), Messages.getErrorIcon());
   }
 
   private String getErrorMessage() {
-    return myTemplate.isTemplateOfType(StdFileTypes.JAVA) ? IdeBundle.message("title.cannot.create.class") : IdeBundle.message("title.cannot.create.file");
+    return FileTemplateUtil.findHandler(myTemplate).getErrorMessage();
   }
 
   @Nullable

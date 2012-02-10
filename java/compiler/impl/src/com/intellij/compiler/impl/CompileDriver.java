@@ -99,7 +99,7 @@ import org.jetbrains.jps.api.RequestFuture;
 
 import java.io.*;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 public class CompileDriver {
 
@@ -591,15 +591,10 @@ public class CompileDriver {
             final Set<Artifact> artifacts = ArtifactCompileScope.getArtifactsToBuild(myProject, compileContext.getCompileScope(), true);
             final RequestFuture future = compileOnServer(compileContext, modules, artifacts, paths, callback);
             if (future != null) {
-              try {
-                startCancelWatcher(indicator, future);
-                future.get();
-              }
-              catch (InterruptedException e) {
-                LOG.error(e); // todo
-              }
-              catch (ExecutionException e) {
-                LOG.error(e); // todo
+              while (!future.waitFor(200L , TimeUnit.MILLISECONDS)) {
+                if (indicator.isCanceled()) {
+                  future.cancel(true);
+                }
               }
             }
             else {
@@ -682,27 +677,6 @@ public class CompileDriver {
           }
         }
         startup(scope, isRebuild, forceCompile, callback, message, checkCachesVersion);
-      }
-    });
-  }
-
-  private static void startCancelWatcher(final ProgressIndicator indicator, final RequestFuture future) {
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      public void run() {
-        while (true) {
-          try {
-            Thread.sleep(200L);
-            if (future.isDone() || future.isCancelled()) {
-              break;
-            }
-            if (indicator.isCanceled()) {
-              future.cancel(true);
-              break;
-            }
-          }
-          catch (InterruptedException ignored) {
-          }
-        }
       }
     });
   }

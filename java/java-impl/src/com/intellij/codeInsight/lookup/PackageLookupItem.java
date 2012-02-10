@@ -33,6 +33,8 @@ class PackageLookupItem extends LookupItem<PsiPackage> {
   @Override
   public void handleInsert(InsertionContext context) {
     super.handleInsert(context);
-    AutoPopupController.getInstance(context.getProject()).scheduleAutoPopup(context.getEditor(), null);
+    if (getTailType() == TailType.DOT || context.getCompletionChar() == '.') {
+      AutoPopupController.getInstance(context.getProject()).scheduleAutoPopup(context.getEditor(), null);
+    }
   }
 }

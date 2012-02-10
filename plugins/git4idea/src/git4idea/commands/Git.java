@@ -256,19 +256,27 @@ public class Git {
     return run(h);
   }
 
-  public static GitCommandResult push(@NotNull GitRepository repository, @NotNull GitPushSpec pushSpec, @NotNull GitLineHandlerListener... listeners) {
-    final GitLineHandlerPasswordRequestAware h = new GitLineHandlerPasswordRequestAware(repository.getProject(), repository.getRoot(), GitCommand.PUSH);
+  @NotNull
+  public static GitCommandResult push(@NotNull GitRepository repository, @NotNull String remote, @NotNull String spec,
+                                      @NotNull GitLineHandlerListener... listeners) {
+    final GitLineHandlerPasswordRequestAware h = new GitLineHandlerPasswordRequestAware(repository.getProject(), repository.getRoot(),
+                                                                                        GitCommand.PUSH);
     h.setSilent(false);
-
     for (GitLineHandlerListener listener : listeners) {
       h.addLineListener(listener);
     }
+    h.addParameters(remote);
+    h.addParameters(spec);
+    return run(h, true);
+  }
+
+  @NotNull
+  public static GitCommandResult push(@NotNull GitRepository repository, @NotNull GitPushSpec pushSpec,
+                                      @NotNull GitLineHandlerListener... listeners) {
     GitRemote remote = pushSpec.getRemote();
-    h.addParameters(remote.getName());
     GitBranch remoteBranch = pushSpec.getDest();
     String destination = remoteBranch.getName().replaceFirst(remote.getName() + "/", "");
-    h.addParameters(pushSpec.getSource().getName() + ":" + destination);
-    return run(h, true);
+    return push(repository, remote.getName(), pushSpec.getSource().getName() + ":" + destination);
   }
 
   private static GitCommandResult run(@NotNull GitLineHandler handler) {

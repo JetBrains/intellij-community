@@ -26,8 +26,10 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.StringInterner;
 import com.intellij.util.io.fs.IFile;
+import gnu.trove.THashMap;
 import org.jdom.Attribute;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -62,7 +64,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
   protected Integer myProviderUpToDateHash;
   private boolean mySavingDisabled = false;
 
-  private final Map<String, Element> myStorageComponentStates = new TreeMap<String, Element>();
+  private final Map<String, Object> myStorageComponentStates = new THashMap<String, Object>(); // at loading we store Element, on setState Integer of hash// at loading we store Element, on setState Integer of hash
 
   private final ComponentVersionProvider myLocalVersionProvider;
   private final ComponentVersionProvider myRemoteVersionProvider;
@@ -125,8 +127,6 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
   public synchronized Element getState(final String componentName) throws StateStorageException {
     final StorageData storageData = getStorageData(false);
     final Element state = storageData.getState(componentName);
-
-
 
     if (state != null) {
       if (!myStorageComponentStates.containsKey(componentName)) {
@@ -309,19 +309,20 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
       if (element.getAttributes().isEmpty() && element.getChildren().isEmpty()) return;
 
       myStorageData.setState(componentName, element);
+      int hash = JDOMUtil.getTreeHash(element);
 
-      Element oldElement = myStorageComponentStates.get(componentName);
       try {
-        if (oldElement != null && !JDOMUtil.areElementsEqual(oldElement, element)) {
+        Object oldElementState = myStorageComponentStates.get(componentName);
+
+        if (oldElementState instanceof Element && !JDOMUtil.areElementsEqual((Element)oldElementState, element) ||
+            oldElementState instanceof Integer && hash != (Integer)oldElementState
+           ) {
           myListener.componentStateChanged(componentName);
         }
       }
       finally {
-        myStorageComponentStates.put(componentName, (Element)element.clone());
+        myStorageComponentStates.put(componentName, hash);
       }
-
-
-
     }
   }
 
@@ -396,10 +397,6 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
 
     protected abstract void doSave() throws StateStorageException;
 
-    public void clearHash() {
-      myUpToDateHash = null;
-    }
-
     protected Integer calcHash() {
       return null;
     }
@@ -469,10 +466,6 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
       return myUpToDateHash != null && myUpToDateHash.equals(hash);
     }
 
-    public boolean isHashUpToDate() {
-      return isHashUpToDate(calcHash());
-    }
-
     protected Document getDocumentToSave()  {
       if (myDocumentToSave != null) return myDocumentToSave;
 
@@ -520,8 +513,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
   }
 
   private Map<String, Long> loadVersions(Document copy) {
-
-    HashMap<String, Long> result = new HashMap<String, Long>();
+    THashMap<String, Long> result = new THashMap<String, Long>();
 
     List list = copy.getRootElement().getChildren(COMPONENT);
     for (Object o : list) {
@@ -550,13 +542,13 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     private Integer myHash;
 
     public StorageData(final String rootElementName) {
-      myComponentStates = new TreeMap<String, Element>();
+      myComponentStates = new THashMap<String, Element>();
       myRootElementName = rootElementName;
     }
 
     protected StorageData(StorageData storageData) {
       myRootElementName = storageData.myRootElementName;
-      myComponentStates = new TreeMap<String, Element>(storageData.myComponentStates);
+      myComponentStates = new THashMap<String, Element>(storageData.myComponentStates);
     }
 
     protected void load(@NotNull Element rootElement) throws IOException {
@@ -603,8 +595,9 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     @NotNull
     protected Element save() {
       Element rootElement = new Element(myRootElementName);
-
-      for (String componentName : myComponentStates.keySet()) {
+      String[] componentNames = ArrayUtil.toStringArray(myComponentStates.keySet());
+      Arrays.sort(componentNames);
+      for (String componentName : componentNames) {
         assert componentName != null;
         final Element element = myComponentStates.get(componentName);
 
@@ -617,7 +610,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     }
 
     @Nullable
-    public Element getState(final String name) {
+    private Element getState(final String name) {
       final Element e = myComponentStates.get(name);
 
       if (e != null) {
@@ -628,7 +621,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
       return e;
     }
 
-    public void removeState(final String componentName) {
+    private void removeState(final String componentName) {
       myComponentStates.remove(componentName);
       clearHash();
     }
@@ -799,7 +792,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
   }
 
   private void loadProviderVersions() {
-    myProviderVersions = new TreeMap<String, Long>();
+    myProviderVersions = new THashMap<String, Long>();
     for (RoamingType type : RoamingType.values()) {
       Document doc = null;
       if (myStreamProvider.isEnabled()) {

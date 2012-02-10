@@ -89,14 +89,14 @@ public class SvnChangesCorrectlyRefreshedTest extends SvnTestCase {
     //ChangeListManagerImpl.DEBUG = true;
     final SubTree subTree = new SubTree(myWorkingCopyDir);
     checkin();
-    sleep(1000);
+    sleep(100);
 
-    editFileInCommand(myProject, subTree.myS1File, "new");
+    editFileInCommand(myProject, subTree.myS1File, "new content");
 
     final CharSequence text1 = LoadTextUtil.loadText(subTree.myS1File);
-    Assert.assertEquals("new", text1.toString());
+    Assert.assertEquals("new content", text1.toString());
 
-    sleep(1000);
+    sleep(100);
     LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(subTree.myS1File.getPath()));
     VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     clManager.ensureUpToDate(false);

@@ -492,7 +492,7 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
   public void merge_simple_without_problems() throws Exception {
     prepareBranchWithCommit("feature", myUltimate, myCommunity, myContrib);
     doMerge("feature");
-    assertNotify(NotificationType.INFORMATION, "Merged feature to master");
+    assertNotify(NotificationType.INFORMATION, "Merged feature to master<br/>Delete feature");
 
     assertFile(myUltimate, "unmerged_branch_file", "content");
     assertFile(myCommunity, "unmerged_branch_file", "content");
@@ -514,7 +514,7 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
 
     doMerge("master2");
 
-    assertNotify(NotificationType.INFORMATION, "Already up-to-date.");
+    assertNotify(NotificationType.INFORMATION, "Already up-to-date<br/>Delete master2");
   }
 
   @Test
@@ -525,7 +525,7 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
 
     doMerge("master2");
 
-    assertNotify(NotificationType.INFORMATION, "Merged master2 to master");
+    assertNotify(NotificationType.INFORMATION, "Merged master2 to master<br/>Delete master2");
     assertFile(myCommunity, "unmerged_branch_file", "content");
     assertNull(myUltimate.getRoot().findChild("unmerged_branch_file"));
   }

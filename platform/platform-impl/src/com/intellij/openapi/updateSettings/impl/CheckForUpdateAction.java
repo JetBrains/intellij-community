@@ -16,6 +16,7 @@
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.plugins.PluginHostsConfigurable;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -46,7 +47,9 @@ public class CheckForUpdateAction extends AnAction implements DumbAware {
     ProgressManager.getInstance().run(new Task.Modal(project, "Checking for updates", false) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        final CheckForUpdateResult result = UpdateChecker.checkForUpdates(true);
+        final CheckForUpdateResult result = UpdateChecker.checkForUpdates(UpdateSettings.getInstance(), PropertiesComponent.getInstance(),
+                                                                          true
+        );
 
         final List<PluginDownloader> updatedPlugins = UpdateChecker.updatePlugins(true, hostsConfigurable);
         ApplicationManager.getApplication().invokeLater(new Runnable() {

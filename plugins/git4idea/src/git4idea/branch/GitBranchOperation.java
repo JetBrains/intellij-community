@@ -34,6 +34,7 @@ import com.intellij.util.Function;
 import com.intellij.util.ui.UIUtil;
 import git4idea.*;
 import git4idea.commands.GitMessageWithFilesDetector;
+import git4idea.config.GitVcsSettings;
 import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
 import git4idea.util.UntrackedFilesNotifier;
@@ -59,18 +60,22 @@ abstract class GitBranchOperation {
 
   @NotNull protected final Project myProject;
   @NotNull private final Collection<GitRepository> myRepositories;
+  @NotNull private final String myCurrentBranchOrRev;
   @NotNull private final ProgressIndicator myIndicator;
+  private final GitVcsSettings mySettings;
 
   @NotNull private final Collection<GitRepository> mySuccessfulRepositories;
   @NotNull private final Collection<GitRepository> myRemainingRepositories;
 
   protected GitBranchOperation(@NotNull Project project, @NotNull Collection<GitRepository> repositories,
-                               @NotNull ProgressIndicator indicator) {
+                               @NotNull String currentBranchOrRev, @NotNull ProgressIndicator indicator) {
     myProject = project;
     myRepositories = repositories;
+    myCurrentBranchOrRev = currentBranchOrRev;
     myIndicator = indicator;
     mySuccessfulRepositories = new ArrayList<GitRepository>();
     myRemainingRepositories = new ArrayList<GitRepository>(myRepositories);
+    mySettings = GitVcsSettings.getInstance(myProject);
   }
 
   protected abstract void execute();
@@ -159,7 +164,7 @@ abstract class GitBranchOperation {
     NotificationManager.getInstance(myProject).notify(GitVcs.NOTIFICATION_GROUP_ID, "", message, NotificationType.INFORMATION);
   }
 
-  protected void notifySuccess() {
+  protected final void notifySuccess() {
     notifySuccess(getSuccessMessage());
   }
 
@@ -240,6 +245,20 @@ abstract class GitBranchOperation {
   @NotNull
   protected String repositories() {
     return pluralize("repository", getSuccessfulRepositories().size());
+  }
+
+  /**
+   * Updates the recently visited branch in the settings.
+   * This is to be performed after successful checkout operation.
+   */
+  protected void updateRecentBranch() {
+    if (getRepositories().size() == 1) {
+      GitRepository repository = myRepositories.iterator().next();
+      mySettings.setRecentBranchOfRepository(repository.getRoot().getPath(), myCurrentBranchOrRev);
+    }
+    else {
+      mySettings.setRecentCommonBranch(myCurrentBranchOrRev);
+    }
   }
 
   private void showUnmergedFilesDialogWithRollback() {

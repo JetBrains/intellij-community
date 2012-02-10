@@ -124,7 +124,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   protected synchronized Object createComponent(Class componentInterface) {
     final Object component = getPicoContainer().getComponentInstance(componentInterface.getName());
-    assert component != null : "Can't instantiate component for: " + componentInterface;
+    LOG.assertTrue(component != null, "Can't instantiate component for: " + componentInterface);
     return component;
   }
 

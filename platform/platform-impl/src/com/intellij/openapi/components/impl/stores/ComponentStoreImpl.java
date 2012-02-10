@@ -32,6 +32,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.io.fs.IFile;
+import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,7 +45,7 @@ import java.util.*;
 abstract class ComponentStoreImpl implements IComponentStore {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.components.ComponentStoreImpl");
-  private final Map<String, Object> myComponents = Collections.synchronizedMap(new TreeMap<String, Object>());
+  private final Map<String, Object> myComponents = Collections.synchronizedMap(new THashMap<String, Object>());
   private final List<SettingsSavingComponent> mySettingsSavingComponents = Collections.synchronizedList(new ArrayList<SettingsSavingComponent>());
   @Nullable private SaveSessionImpl mySession;
 
@@ -470,7 +471,8 @@ abstract class ComponentStoreImpl implements IComponentStore {
 
       final StateStorageManager.ExternalizationSession session = storageManager.startExternalization();
 
-      final String[] names = ArrayUtil.toStringArray(myComponents.keySet());
+      String[] names = ArrayUtil.toStringArray(myComponents.keySet());
+      Arrays.sort(names);
 
       for (String name : names) {
         Object component = myComponents.get(name);

@@ -29,9 +29,9 @@ class EventLogTest extends LightPlatformTestCase {
     PlatformTestCase.initPlatformLangPrefix()
   }
 
-  public void testNbsp() {
-    def entry = EventLog.formatForLog(new Notification("xxx", "Title", "Hello&nbsp;world", NotificationType.ERROR))
-    assert entry.message == 'Title: Hello world'
+  public void testHtmlEntities() {
+    def entry = EventLog.formatForLog(new Notification("xxx", "Title", "Hello&nbsp;world&laquo;&raquo;", NotificationType.ERROR))
+    assert entry.message == 'Title: Hello world<<>>'
   }
 
   public void testParseMultilineText() {

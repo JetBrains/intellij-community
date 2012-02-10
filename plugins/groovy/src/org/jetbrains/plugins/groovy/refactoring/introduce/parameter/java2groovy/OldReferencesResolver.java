@@ -169,26 +169,29 @@ public class OldReferencesResolver {
         // "naked" field and methods  (should become qualified)
         else if ((subj instanceof PsiField || subj instanceof PsiMethod) && oldRef.getQualifierExpression() == null) {
 
-          boolean isStatic = subj instanceof PsiField && ((PsiField)subj).hasModifierProperty(PsiModifier.STATIC) ||
-                             subj instanceof PsiMethod && ((PsiMethod)subj).hasModifierProperty(PsiModifier.STATIC);
+          PsiElement newResolved = newExpr instanceof GrReferenceExpression ? ((GrReferenceExpression)newExpr).resolve() : null;
+          if (myInstanceRef != null || !subj.getManager().areElementsEquivalent(newResolved, subj)) {
+            boolean isStatic = subj instanceof PsiField && ((PsiField)subj).hasModifierProperty(PsiModifier.STATIC) ||
+                               subj instanceof PsiMethod && ((PsiMethod)subj).hasModifierProperty(PsiModifier.STATIC);
 
-          String name = ((PsiNamedElement)subj).getName();
-          boolean shouldBeAt = subj instanceof PsiField &&
-                               !PsiTreeUtil.isAncestor(((PsiMember)subj).getContainingClass(), newExpr, true) &&
-                               GroovyPropertyUtils.findGetterForField((PsiField)subj) != null;
-          final GrReferenceExpression fromText = factory.createReferenceExpressionFromText("qualifier." + (shouldBeAt ? "@" : "") + name);
-          if (isStatic) {
-            final GrReferenceExpression qualifier = factory.createReferenceElementForClass(((PsiMember)subj).getContainingClass());
-            newExpr = newExpr.replace(fromText);
-            ((GrReferenceExpression)newExpr).setQualifier(qualifier);
-            newExpr = ((GrReferenceExpression)newExpr).getReferenceNameElement();
-          }
-          else {
-            if (myInstanceRef != null) {
-              GrExpression instanceRef = getInstanceRef(factory);
-              fromText.setQualifier(instanceRef);
+            String name = ((PsiNamedElement)subj).getName();
+            boolean shouldBeAt = subj instanceof PsiField &&
+                                 !PsiTreeUtil.isAncestor(((PsiMember)subj).getContainingClass(), newExpr, true) &&
+                                 GroovyPropertyUtils.findGetterForField((PsiField)subj) != null;
+            final GrReferenceExpression fromText = factory.createReferenceExpressionFromText("qualifier." + (shouldBeAt ? "@" : "") + name);
+            if (isStatic) {
+              final GrReferenceExpression qualifier = factory.createReferenceElementForClass(((PsiMember)subj).getContainingClass());
               newExpr = newExpr.replace(fromText);
+              ((GrReferenceExpression)newExpr).setQualifier(qualifier);
               newExpr = ((GrReferenceExpression)newExpr).getReferenceNameElement();
+            }
+            else {
+              if (myInstanceRef != null) {
+                GrExpression instanceRef = getInstanceRef(factory);
+                fromText.setQualifier(instanceRef);
+                newExpr = newExpr.replace(fromText);
+                newExpr = ((GrReferenceExpression)newExpr).getReferenceNameElement();
+              }
             }
           }
         }

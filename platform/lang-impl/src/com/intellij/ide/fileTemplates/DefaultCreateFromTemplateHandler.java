@@ -16,6 +16,7 @@
 
 package com.intellij.ide.fileTemplates;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
@@ -66,5 +67,20 @@ public class DefaultCreateFromTemplateHandler implements CreateFromTemplateHandl
 
   public boolean canCreate(final PsiDirectory[] dirs) {
     return true;
+  }
+
+  @Override
+  public boolean isNameRequired() {
+    return true;
+  }
+
+  @Override
+  public String getErrorMessage() {
+    return IdeBundle.message("title.cannot.create.file");
+  }
+
+  @Override
+  public Properties prepareProperties(Properties props) {
+    return props;
   }
 }

@@ -339,6 +339,11 @@ public class InspectionToolRegistrar {
       getTool().runInspection(scope, manager);
     }
 
+    @Override
+    public void initialize(@NotNull GlobalInspectionContextImpl context) {
+      getTool().initialize(context);
+    }
+
     @NotNull
     @Override
     public JobDescriptor[] getJobDescriptors(GlobalInspectionContext globalInspectionContext) {

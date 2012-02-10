@@ -1014,7 +1014,7 @@ public class HighlightUtil {
   }
 
   // true if floating point literal consists of zeros only
-  private static boolean isFPZero(final String text) {
+  public static boolean isFPZero(final String text) {
     for (int i = 0; i < text.length(); i++) {
       final char c = text.charAt(i);
       if (Character.isDigit(c) && c != '0') return false;

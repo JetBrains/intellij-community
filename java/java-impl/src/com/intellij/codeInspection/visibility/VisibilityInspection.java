@@ -334,6 +334,9 @@ public class VisibilityInspection extends GlobalJavaInspectionTool {
 
     if (accessModifier == PsiModifier.PRIVATE) {
       if (SUGGEST_PRIVATE_FOR_INNERS) {
+        if (isInExtendsList(to, fromTopLevel.getElement().getExtendsList())) return false;
+        if (isInExtendsList(to, fromTopLevel.getElement().getImplementsList())) return false;
+        if (isInAnnotations(to, fromTopLevel)) return false;
         return fromTopLevel == toOwner || fromOwner == toTopLevel || toOwner != null && refUtil.getOwnerClass(toOwner) == from;
       }
 
@@ -354,6 +357,24 @@ public class VisibilityInspection extends GlobalJavaInspectionTool {
     return false;
   }
 
+  private static boolean isInAnnotations(final RefJavaElement to, final RefClass fromTopLevel) {
+    final PsiModifierList modifierList = fromTopLevel.getElement().getModifierList();
+    if (modifierList == null) return false;
+    final PsiElement toElement = to.getElement();
+
+    final boolean [] resolved = new boolean[] {false};
+    modifierList.accept(new JavaRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitReferenceExpression(PsiReferenceExpression expression) {
+        if (resolved[0]) return;
+        super.visitReferenceExpression(expression);
+        if (expression.resolve() == toElement) {
+          resolved[0] = true;
+        }
+      }
+    });
+    return resolved[0];
+  }
 
   private static boolean isInExtendsList(final RefJavaElement to, final PsiReferenceList extendsList) {
     if (extendsList != null) {

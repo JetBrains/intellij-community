@@ -42,8 +42,8 @@ import java.net.ServerSocket;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Eugene Zhuravlev
@@ -257,13 +257,18 @@ public class JavaBuilder extends ModuleLevelBuilder {
       if (hasSourcesToCompile) {
         final Set<File> sourcePath = TEMPORARY_SOURCE_ROOTS_KEY.get(context, Collections.<File>emptySet());
 
-        final String chunkName = chunk.getName();
+        final String chunkName = getChunkPresentableName(chunk);
         context.processMessage(new ProgressMessage("Compiling java [" + chunkName + "]"));
 
         final boolean compiledOk = compileJava(chunk, files, classpath, platformCp, sourcePath, outs, context, diagnosticSink, outputSink);
 
         final Map<File, String> chunkSourcePath = ProjectPaths.getSourceRootsWithDependents(chunk, context.isCompilingTests());
+
+        context.checkCanceled();
+
         final ClassLoader compiledClassesLoader = createInstrumentationClassLoader(classpath, platformCp, chunkSourcePath, outputSink);
+
+        context.checkCanceled();
 
         if (!forms.isEmpty()) {
           try {
@@ -275,6 +280,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
           }
         }
 
+        context.checkCanceled();
+
         if (addNotNullAssertions) {
           try {
             context.processMessage(new ProgressMessage("Adding NotNull assertions [" + chunkName + "]"));
@@ -284,6 +291,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
             context.processMessage(new ProgressMessage("Finished adding NotNull assertions [" + chunkName + "]"));
           }
         }
+
+        context.checkCanceled();
 
         if (!compiledOk && diagnosticSink.getErrorCount() == 0) {
           diagnosticSink.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, "Compilation failed: internal java compiler error"));
@@ -316,6 +325,24 @@ public class JavaBuilder extends ModuleLevelBuilder {
     return exitCode;
   }
 
+  private static String getChunkPresentableName(ModuleChunk chunk) {
+    final Set<Module> modules = chunk.getModules();
+    if (modules.isEmpty()) {
+      return "<empty>";
+    }
+    if (modules.size() == 1) {
+      return modules.iterator().next().getName();
+    }
+    final StringBuilder buf = new StringBuilder();
+    for (Module module : modules) {
+      if (buf.length() > 0) {
+        buf.append(",");
+      }
+      buf.append(module.getName());
+    }
+    return buf.toString();
+  }
+
   private boolean compileJava(ModuleChunk chunk, Collection<File> files,
                               Collection<File> classpath,
                               Collection<File> platformCp,
@@ -338,14 +365,10 @@ public class JavaBuilder extends ModuleLevelBuilder {
         final RequestFuture<JavacServerResponseHandler> future = client.sendCompileRequest(
           options, files, classpath, platformCp, sourcePath, outs, diagnosticSink, classesConsumer
         );
-        try {
-          future.get();
-        }
-        catch (InterruptedException e) {
-          e.printStackTrace(System.err);
-        }
-        catch (ExecutionException e) {
-          e.printStackTrace(System.err);
+        while (!future.waitFor(100L, TimeUnit.MILLISECONDS)) {
+          if (context.isCanceled()) {
+            future.cancel(true);
+          }
         }
         rc = future.getResponseHandler().isTerminatedSuccessfully();
       }

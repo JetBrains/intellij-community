@@ -78,7 +78,8 @@ public abstract class TemplateInsertHandler implements InsertHandler {
         String lookupString = editor.getDocument().getCharsSequence().subSequence(startOffset, endOffset).toString();
         lookupItem.setLookupString(lookupString);
 
-        final OffsetMap offsetMap = context.getOffsetMap();
+        final OffsetMap offsetMap = new OffsetMap(document);
+        offsetMap.addOffset(CompletionInitializationContext.START_OFFSET, startOffset);
         offsetMap.addOffset(CompletionInitializationContext.SELECTION_END_OFFSET, endOffset);
         offsetMap.addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, endOffset);
 

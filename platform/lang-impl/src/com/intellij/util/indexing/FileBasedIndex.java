@@ -44,6 +44,7 @@ import com.intellij.openapi.project.*;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
@@ -280,6 +281,7 @@ public class FileBasedIndex implements ApplicationComponent {
         versionChanged |= registerIndexer(extension, currentVersionCorrupted);
       }
       FileUtil.delete(corruptionMarker);
+
       String rebuildNotification = null;
       if (currentVersionCorrupted) {
         rebuildNotification = "Index files on disk are corrupted. Indices will be rebuilt.";
@@ -287,10 +289,13 @@ public class FileBasedIndex implements ApplicationComponent {
       else if (versionChanged) {
         rebuildNotification = "Index file format has changed for some indices. These indices will be rebuilt.";
       }
-      if (rebuildNotification != null && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      if (rebuildNotification != null
+          && !ApplicationManager.getApplication().isHeadlessEnvironment()
+          && Registry.is("ide.showIndexRebuildMessage")) {
         new NotificationGroup("Indexing", NotificationDisplayType.BALLOON, false)
           .createNotification("Index Rebuild", rebuildNotification, NotificationType.INFORMATION, null).notify(null);
       }
+
       dropUnregisteredIndices();
 
       // check if rebuild was requested for any index during registration

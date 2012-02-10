@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import gnu.trove.THashSet;
 import org.intellij.images.ImagesBundle;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
+import org.intellij.images.vfs.IfsUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -76,14 +77,15 @@ final class ImageFileTypeManagerImpl extends ImageFileTypeManager implements App
   }
 
   public void createFileTypes(final @NotNull FileTypeConsumer consumer) {
-    final String[] readerFormatNames = ImageIO.getReaderFormatNames();
     final Set<String> processed = new THashSet<String>();
 
+    final String[] readerFormatNames = ImageIO.getReaderFormatNames();
     for (String format : readerFormatNames) {
-      final String s = format.toLowerCase();
-      if (processed.contains(s)) continue;
-      processed.add(s);
+      final String ext = format.toLowerCase();
+      processed.add(ext);
     }
+
+    processed.add(IfsUtil.ICO_FORMAT.toLowerCase());
 
     consumer.consume(imageFileType, StringUtil.join(processed, FileTypeConsumer.EXTENSION_DELIMITER));
   }

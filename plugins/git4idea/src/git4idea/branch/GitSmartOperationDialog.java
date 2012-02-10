@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package git4idea.branch;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.ui.IdeBorderFactory;
@@ -30,6 +29,8 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static com.intellij.openapi.util.text.StringUtil.capitalize;
 
 /**
  * The dialog that is shown when the error
@@ -46,7 +47,7 @@ class GitSmartOperationDialog extends DialogWrapper {
   
   private final Project myProject;
   private final List<Change> myChanges;
-  @NotNull private final String myCapitalizedOperationTitle;
+  @NotNull private final String myOperationTitle;
   private final boolean myForceButton;
 
   /**
@@ -71,10 +72,10 @@ class GitSmartOperationDialog extends DialogWrapper {
     super(project);
     myProject = project;
     myChanges = changes;
-    myCapitalizedOperationTitle = StringUtil.capitalize(operationTitle);
+    myOperationTitle = operationTitle;
     myForceButton = forceButton;
-    setOKButtonText("Smart " + myCapitalizedOperationTitle);
-    setCancelButtonText("Don't " + myCapitalizedOperationTitle);
+    setOKButtonText("Smart " + capitalize(myOperationTitle));
+    setCancelButtonText("Don't " + capitalize(myOperationTitle));
     getCancelAction().putValue(FOCUSED_ACTION, Boolean.TRUE);
     init();
   }
@@ -82,15 +83,15 @@ class GitSmartOperationDialog extends DialogWrapper {
   @Override
   protected Action[] createLeftSideActions() {
     if (myForceButton) {
-      return new Action[] {new ForceCheckoutAction(myCapitalizedOperationTitle) };
+      return new Action[] {new ForceCheckoutAction(myOperationTitle) };
     }
     return new Action[0];
   }
 
   @Override
   protected JComponent createNorthPanel() {
-    JBLabel description = new JBLabel("<html>Your local changes to the following files would be overwritten by checkout.<br/>" +
-                                      "IDEA can stash the changes, checkout and unstash them after that.</html>");
+    JBLabel description = new JBLabel("<html>Your local changes to the following files would be overwritten by " + myOperationTitle +
+                                      ".<br/>IDEA can stash the changes, " + myOperationTitle + " and unstash them after that.</html>");
     description.setBorder(IdeBorderFactory.createEmptyBorder(0, 0, 10, 0));
     return description;
   }
@@ -112,7 +113,7 @@ class GitSmartOperationDialog extends DialogWrapper {
   private class ForceCheckoutAction extends AbstractAction {
     
     ForceCheckoutAction(@NotNull String operationTitle) {
-      super("Force " + operationTitle);
+      super("&Force " + capitalize(operationTitle));
     }
     
     @Override

@@ -16,16 +16,16 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.components.StateStorage;
+import gnu.trove.THashMap;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
  * @author mike
  */
 public class CompoundExternalizationSession {
-  private final Map<StateStorage, StateStorage.ExternalizationSession> mySessions = new HashMap<StateStorage, StateStorage.ExternalizationSession>();
+  private final Map<StateStorage, StateStorage.ExternalizationSession> mySessions = new THashMap<StateStorage, StateStorage.ExternalizationSession>(1);
 
   public StateStorage.ExternalizationSession getExternalizationSession(StateStorage stateStore) {
     StateStorage.ExternalizationSession session = mySessions.get(stateStore);

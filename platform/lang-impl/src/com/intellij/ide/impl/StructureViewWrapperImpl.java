@@ -87,13 +87,20 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
     myUpdateQueue = new MergingUpdateQueue("StructureView", Registry.intValue("structureView.coalesceTime"), false, myToolWindow.getComponent(), this, myToolWindow.getComponent(), true);
     myUpdateQueue.setRestartTimerOnAdd(true);
 
-    ActionManager.getInstance().addTimerListener(500, new TimerListener() {
+    final TimerListener timerListener = new TimerListener() {
       public ModalityState getModalityState() {
         return ModalityState.stateForComponent(myToolWindow.getComponent());
       }
 
       public void run() {
         checkUpdate();
+      }
+    };
+    ActionManager.getInstance().addTimerListener(500, timerListener);
+    Disposer.register(this, new Disposable() {
+      @Override
+      public void dispose() {
+        ActionManager.getInstance().removeTimerListener(timerListener);
       }
     });
 

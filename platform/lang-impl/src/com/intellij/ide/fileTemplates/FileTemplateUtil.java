@@ -118,7 +118,7 @@ public class FileTemplateUtil{
   }
   
   public static String[] calculateAttributes(String templateContent, Properties properties, boolean includeDummies) throws ParseException {
-    final Set<String> unsetAttributes = new HashSet<String>();
+    final Set<String> unsetAttributes = new LinkedHashSet<String>();
     final Set<String> definedAttributes = new HashSet<String>();
     //noinspection HardCodedStringLiteral
     SimpleNode template = RuntimeSingleton.parse(new StringReader(templateContent), "MyTemplate");
@@ -258,7 +258,7 @@ public class FileTemplateUtil{
   }
 
   public static PsiElement createFromTemplate(@NotNull final FileTemplate template,
-                                              @NonNls @Nullable final String fileName,
+                                              @NonNls @Nullable String fileName,
                                               @Nullable Properties props,
                                               @NotNull final PsiDirectory directory,
                                               @Nullable ClassLoader classLoader) throws Exception {
@@ -269,8 +269,15 @@ public class FileTemplateUtil{
     FileTemplateManager.getInstance().addRecentName(template.getName());
     fillDefaultProperties(props, directory);
 
+    final CreateFromTemplateHandler handler = findHandler(template);
     if (fileName != null && props.getProperty(FileTemplate.ATTRIBUTE_NAME) == null) {
       props.setProperty(FileTemplate.ATTRIBUTE_NAME, fileName);
+    }
+    else if (fileName == null && handler.isNameRequired()) {
+      fileName = props.getProperty(FileTemplate.ATTRIBUTE_NAME);
+      if (fileName == null) {
+        throw new Exception("File name must be specified");
+      }
     }
 
     //Set escaped references to dummy values to remove leading "\" (if not already explicitely set)
@@ -279,15 +286,10 @@ public class FileTemplateUtil{
       props.setProperty(dummyRef, "");
     }
 
-    if (template.isTemplateOfType(StdFileTypes.JAVA)){
-      String packageName = props.getProperty(FileTemplate.ATTRIBUTE_PACKAGE_NAME);
-      if(packageName == null || packageName.length() == 0){
-        props = new Properties(props);
-        props.setProperty(FileTemplate.ATTRIBUTE_PACKAGE_NAME, FileTemplate.ATTRIBUTE_PACKAGE_NAME);
-      }
-    }
+    props = handler.prepareProperties(props);
 
     final Properties props_ = props;
+    final String fileName_ = fileName;
     String mergedText = ClassLoaderUtil.runWithClassLoader(classLoader != null ? classLoader : FileTemplateUtil.class.getClassLoader(),
                                                            new ThrowableComputable<String, IOException>() {
                                                              @Override
@@ -304,8 +306,7 @@ public class FileTemplateUtil{
         ApplicationManager.getApplication().runWriteAction(new Runnable(){
           public void run(){
             try{
-              CreateFromTemplateHandler handler = findHandler(template);
-              result [0] = handler.createFromTemplate(project, directory, fileName, template, templateText, finalProps);
+              result [0] = handler.createFromTemplate(project, directory, fileName_, template, templateText, finalProps);
             }
             catch (Exception ex){
               commandException[0] = ex;
@@ -322,7 +323,7 @@ public class FileTemplateUtil{
     return result[0];
   }
 
-  private static CreateFromTemplateHandler findHandler(final FileTemplate template) {
+  public static CreateFromTemplateHandler findHandler(final FileTemplate template) {
     for(CreateFromTemplateHandler handler: Extensions.getExtensions(CreateFromTemplateHandler.EP_NAME)) {
       if (handler.handlesTemplate(template)) {
         return handler;
