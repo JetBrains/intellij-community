@@ -279,13 +279,8 @@ public class FileTemplateUtil{
       props.setProperty(dummyRef, "");
     }
 
-    if (template.isTemplateOfType(StdFileTypes.JAVA)){
-      String packageName = props.getProperty(FileTemplate.ATTRIBUTE_PACKAGE_NAME);
-      if(packageName == null || packageName.length() == 0){
-        props = new Properties(props);
-        props.setProperty(FileTemplate.ATTRIBUTE_PACKAGE_NAME, FileTemplate.ATTRIBUTE_PACKAGE_NAME);
-      }
-    }
+    final CreateFromTemplateHandler handler = findHandler(template);
+    props = handler.prepareProperties(props);
 
     final Properties props_ = props;
     String mergedText = ClassLoaderUtil.runWithClassLoader(classLoader != null ? classLoader : FileTemplateUtil.class.getClassLoader(),
@@ -304,7 +299,6 @@ public class FileTemplateUtil{
         ApplicationManager.getApplication().runWriteAction(new Runnable(){
           public void run(){
             try{
-              CreateFromTemplateHandler handler = findHandler(template);
               result [0] = handler.createFromTemplate(project, directory, fileName, template, templateText, finalProps);
             }
             catch (Exception ex){
@@ -322,7 +316,7 @@ public class FileTemplateUtil{
     return result[0];
   }
 
-  private static CreateFromTemplateHandler findHandler(final FileTemplate template) {
+  public static CreateFromTemplateHandler findHandler(final FileTemplate template) {
     for(CreateFromTemplateHandler handler: Extensions.getExtensions(CreateFromTemplateHandler.EP_NAME)) {
       if (handler.handlesTemplate(template)) {
         return handler;

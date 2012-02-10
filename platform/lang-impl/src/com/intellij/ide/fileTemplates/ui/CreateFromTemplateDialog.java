@@ -22,7 +22,6 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.fileTemplates.actions.AttributesDefaults;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -65,7 +64,7 @@ public class CreateFromTemplateDialog extends DialogWrapper {
 
     myDefaultProperties = defaultProperties == null ? FileTemplateManager.getInstance().getDefaultProperties() : defaultProperties;
     FileTemplateUtil.fillDefaultProperties(myDefaultProperties, directory);
-    boolean mustEnterName = !myTemplate.isTemplateOfType(StdFileTypes.JAVA);
+    boolean mustEnterName = FileTemplateUtil.findHandler(template).isNameRequired();
     if (attributesDefaults != null && attributesDefaults.isFixedName()) {
       myDefaultProperties.setProperty(FileTemplate.ATTRIBUTE_NAME, attributesDefaults.getDefaultFileName());
       mustEnterName = false;
@@ -134,7 +133,7 @@ public class CreateFromTemplateDialog extends DialogWrapper {
   }
 
   private String getErrorMessage() {
-    return myTemplate.isTemplateOfType(StdFileTypes.JAVA) ? IdeBundle.message("title.cannot.create.class") : IdeBundle.message("title.cannot.create.file");
+    return FileTemplateUtil.findHandler(myTemplate).getErrorMessage();
   }
 
   @Nullable

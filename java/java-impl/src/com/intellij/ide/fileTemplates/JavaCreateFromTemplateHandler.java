@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.fileTemplates;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
@@ -106,6 +107,26 @@ public class JavaCreateFromTemplateHandler implements CreateFromTemplateHandler 
 
   public boolean canCreate(final PsiDirectory[] dirs) {
     return false;
+  }
+
+  @Override
+  public boolean isNameRequired() {
+    return false;
+  }
+
+  @Override
+  public String getErrorMessage() {
+    return IdeBundle.message("title.cannot.create.class");
+  }
+
+  @Override
+  public Properties prepareProperties(Properties props) {
+    String packageName = props.getProperty(FileTemplate.ATTRIBUTE_PACKAGE_NAME);
+    if(packageName == null || packageName.length() == 0){
+      props = new Properties(props);
+      props.setProperty(FileTemplate.ATTRIBUTE_PACKAGE_NAME, FileTemplate.ATTRIBUTE_PACKAGE_NAME);
+    }
+    return props;
   }
 
   public static boolean canCreate(PsiDirectory dir) {
