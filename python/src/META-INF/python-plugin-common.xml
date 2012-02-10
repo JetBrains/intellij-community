@@ -933,6 +933,10 @@
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
 
+    <group id="PyPackagingMenu" popup="true" class="com.jetbrains.python.packaging.PyPackagingGroup" text="Packaging">
+      <add-to-group group-id="ToolsMenu" anchor="last"/>
+    </group>
+
     <action id="MarkTemplateDirectory" class="com.jetbrains.python.templateLanguages.MarkTemplateDirectoryAction" text="Template Directory">
       <add-to-group group-id="MarkRootGroup" anchor="after" relative-to-action="MarkSourceRoot"/>
     </action>
