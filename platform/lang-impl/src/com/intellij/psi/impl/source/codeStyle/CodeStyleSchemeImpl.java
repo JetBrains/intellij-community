@@ -133,14 +133,14 @@ public class CodeStyleSchemeImpl implements JDOMExternalizable, CodeStyleScheme,
   public static CodeStyleSchemeImpl readScheme(Document document) throws InvalidDataException, JDOMException, IOException{
     Element root = document.getRootElement();
     if (root == null){
-      throw new InvalidDataException();
+      throw new InvalidDataException("No root element in code style scheme file");
     }
 
     String schemeName = root.getAttributeValue(NAME);
     String parentName = root.getAttributeValue(PARENT);
 
-    if (schemeName == null){
-      throw new InvalidDataException();
+    if (schemeName == null) {
+      throw new InvalidDataException("Name attribute missing in code style scheme file");
     }
 
     return new CodeStyleSchemeImpl(schemeName, parentName, root);
