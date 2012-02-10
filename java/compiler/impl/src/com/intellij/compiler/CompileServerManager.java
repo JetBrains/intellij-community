@@ -284,13 +284,7 @@ public class CompileServerManager implements ApplicationComponent{
       }
       try {
         for (RequestFuture future : futures) {
-          try {
-            future.get();
-          }
-          catch (InterruptedException ignored) {
-          }
-          catch (java.util.concurrent.ExecutionException ignored) {
-          }
+          future.waitFor();
         }
       }
       finally {
@@ -447,7 +441,7 @@ public class CompileServerManager implements ApplicationComponent{
         connected = client.connect(NetUtils.getLocalHostString(), port);
         if (connected) {
           final RequestFuture setupFuture = sendSetupRequest(client);
-          setupFuture.get();
+          setupFuture.waitFor();
           myProcessHandler = processHandler;
           myClient = client;
         }

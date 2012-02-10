@@ -23,6 +23,7 @@ import java.util.*;
  *         Date: 9/17/11
  */
 public class CompileContext extends UserDataHolderBase implements MessageHandler{
+  private static final String CANCELED_MESSAGE = "The build has been canceled";
   private final CompileScope myScope;
   private final boolean myIsMake;
   private final boolean myIsProjectRebuild;
@@ -155,8 +156,18 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
     return myCompilingTests;
   }
 
-  public CanceledStatus getCancelStatus() {
+  public final CanceledStatus getCancelStatus() {
     return myCancelStatus;
+  }
+
+  public final boolean isCanceled() {
+    return getCancelStatus().isCanceled();
+  }
+
+  public final void checkCanceled() throws ProjectBuildException {
+    if (isCanceled()) {
+      throw new ProjectBuildException(CANCELED_MESSAGE);
+    }
   }
 
   void setCompilingTests(boolean compilingTests) {

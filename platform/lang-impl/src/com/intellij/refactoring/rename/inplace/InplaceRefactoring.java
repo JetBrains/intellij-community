@@ -104,7 +104,7 @@ public abstract class InplaceRefactoring {
   protected StartMarkAction myMarkAction;
   protected PsiElement myScope;
   
-  private RangeMarker myCaretRangeMarker;
+  protected RangeMarker myCaretRangeMarker;
 
   public InplaceRefactoring(Editor editor, PsiNamedElement elementToRename, Project project) {
     this(editor, elementToRename, project, elementToRename != null ? elementToRename.getName() : null,
@@ -245,6 +245,10 @@ public abstract class InplaceRefactoring {
       }
       else {
         revertState();
+        final TemplateState templateState = TemplateManagerImpl.getTemplateState(InjectedLanguageUtil.getTopLevelEditor(myEditor));
+        if (templateState != null) {
+          templateState.gotoEnd(true);
+        }
       }
       return false;
     }
@@ -350,7 +354,7 @@ public abstract class InplaceRefactoring {
   }
 
   protected int restoreCaretOffset(int offset) {
-    return myCaretRangeMarker.isValid() ? myCaretRangeMarker.getStartOffset() : offset;
+    return offset;
   }
 
   protected void navigateToAlreadyStarted(Document oldDocument, int exitCode) {
