@@ -500,7 +500,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   private ModalityState getStateForUpdate() {
-    return null;//myStateForUpdate != null ? myStateForUpdate.compute() : ModalityState.stateForComponent(this);
+    return myStateForUpdate != null ? myStateForUpdate.compute() : ModalityState.stateForComponent(this);
   }
 
   private void requestFlushImmediately() {

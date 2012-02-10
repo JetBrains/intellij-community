@@ -52,6 +52,11 @@ public abstract class GitChangesSaver {
   protected GitConflictResolver.Params myParams;
 
   /**
+   * Refreshes files changed during save or load.
+   */
+  public abstract void refresh();
+
+  /**
    * Returns an instance of the proper GitChangesSaver depending on the chosen save changes policy.
    * @return {@link GitStashChangesSaver}, {@link GitShelveChangesSaver} or {@link GitDumbChangesSaver}
    */

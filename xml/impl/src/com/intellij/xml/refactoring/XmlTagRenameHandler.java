@@ -23,6 +23,7 @@
 package com.intellij.xml.refactoring;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.ide.TitledHandler;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -45,7 +46,7 @@ import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class XmlTagRenameHandler implements RenameHandler {
+public class XmlTagRenameHandler implements RenameHandler, TitledHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.xml.refactoring.XmlTagRenameHandler");
 
 
@@ -72,6 +73,11 @@ public class XmlTagRenameHandler implements RenameHandler {
 
   public boolean isRenaming(final DataContext dataContext) {
     return isAvailableOnDataContext(dataContext);
+  }
+
+  @Override
+  public String getActionTitle() {
+    return "Rename XML tag";
   }
 
   private static boolean isInplaceRenameAvailable(final Editor editor) {

@@ -1873,7 +1873,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
     @Override
     public void hyperlinkUpdate(HyperlinkEvent e) {
-      if (myBalloon != null) {
+      if (myBalloon != null && e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
         myBalloon.hide();
       }
       if (myListener != null) {

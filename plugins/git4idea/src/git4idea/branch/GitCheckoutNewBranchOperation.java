@@ -44,9 +44,8 @@ class GitCheckoutNewBranchOperation extends GitBranchOperation {
   @NotNull private final String myPreviousBranch;
 
   GitCheckoutNewBranchOperation(@NotNull Project project, @NotNull Collection<GitRepository> repositories,
-                                       @NotNull String newBranchName, @NotNull String previousBranch,
-                                       @NotNull ProgressIndicator indicator) {
-    super(project, repositories, indicator);
+                                @NotNull String newBranchName, @NotNull String previousBranch, @NotNull ProgressIndicator indicator) {
+    super(project, repositories, previousBranch, indicator);
     myNewBranchName = newBranchName;
     myProject = project;
     myPreviousBranch = previousBranch;
@@ -77,6 +76,7 @@ class GitCheckoutNewBranchOperation extends GitBranchOperation {
 
     if (!fatalErrorHappened) {
       notifySuccess();
+      updateRecentBranch();
     }
   }
 

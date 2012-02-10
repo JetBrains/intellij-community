@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.LogicalRoot;
 import com.intellij.util.LogicalRootsManager;
+import org.apache.sanselan.ImageReadException;
+import org.apache.sanselan.common.byteSources.ByteSourceArray;
+import org.apache.sanselan.formats.ico.IcoImageParser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,9 +49,12 @@ import java.util.Iterator;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 public final class IfsUtil {
+  public static final String ICO_FORMAT = "ico";
+
   private static final Key<Long> TIMESTAMP_KEY = Key.create("Image.timeStamp");
   private static final Key<String> FORMAT_KEY = Key.create("Image.format");
   private static final Key<SoftReference<BufferedImage>> BUFFERED_IMAGE_REF_KEY = Key.create("Image.bufferedImage");
+  private static final IcoImageParser ICO_IMAGE_PARSER = new IcoImageParser();
 
   /**
    * Load image data for file and put user data attributes into file.
@@ -63,6 +69,17 @@ public final class IfsUtil {
     if (loadedTimeStamp == null || loadedTimeStamp.longValue() != file.getTimeStamp() || imageRef == null || imageRef.get() == null) {
       try {
         final byte[] content = file.contentsToByteArray();
+
+        if (ICO_FORMAT.equalsIgnoreCase(file.getExtension())) {
+          try {
+            final BufferedImage image = ICO_IMAGE_PARSER.getBufferedImage(new ByteSourceArray(content), null);
+            file.putUserData(FORMAT_KEY, ICO_FORMAT);
+            file.putUserData(BUFFERED_IMAGE_REF_KEY, new SoftReference<BufferedImage>(image));
+            return true;
+          }
+          catch (ImageReadException ignore) { }
+        }
+
         InputStream inputStream = new ByteArrayInputStream(content, 0, content.length);
         ImageInputStream imageInputStream = ImageIO.createImageInputStream(inputStream);
         try {
