@@ -238,7 +238,7 @@ public class PyPackageManager {
   }
 
   @Nullable
-  private static PyFile findSetupPy(@NotNull Module module) {
+  public static PyFile findSetupPy(@NotNull Module module) {
     for (VirtualFile root : PyUtil.getSourceRoots(module)) {
       final VirtualFile child = root.findChild("setup.py");
       if (child != null) {
