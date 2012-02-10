@@ -122,6 +122,14 @@ public class AndroidResourcesLineMarkerTest extends AndroidTestCase {
     doJavaFileNavigationTest(1, true);
   }
 
+  public void testJavaFileNavigation6() throws Exception {
+    doJavaFileNavigationTest(1, true);
+  }
+
+  public void testJavaFileNavigation7() throws Exception {
+    doJavaFileNavigationTest(1, true);
+  }
+
   /*public void testRJavaFileNavigation1() throws Exception {
     doRJavaFileNavigationTest(1);
   }

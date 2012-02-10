@@ -270,28 +270,40 @@ public class AndroidResourceUtil {
   @NotNull
   public static List<PsiElement> findResourcesByField(@NotNull LocalResourceManager manager,
                                                       @NotNull PsiField field) {
-    String type = getResourceClassName(field);
+    final String type = getResourceClassName(field);
+    if (type == null) {
+      return Collections.emptyList();
+    }
+
+    final String fieldName = field.getName();
+    if (fieldName == null) {
+      return Collections.emptyList();
+    }
+    return findResourcesByFieldName(manager, type, fieldName);
+  }
+
+  @NotNull
+  public static List<PsiElement> findResourcesByFieldName(@NotNull LocalResourceManager manager,
+                                                          @NotNull String resClassName,
+                                                          @NotNull String fieldName) {
     List<PsiElement> targets = new ArrayList<PsiElement>();
-    if (type != null) {
-      String name = field.getName();
-      if (type.equals("id")) {
-        manager.collectIdDeclarations(name, targets);
+    if (resClassName.equals("id")) {
+      manager.collectIdDeclarations(fieldName, targets);
+    }
+    for (PsiFile file : manager.findResourceFiles(resClassName, fieldName, false)) {
+      targets.add(file);
+    }
+    for (ResourceElement element : manager.findValueResources(resClassName, fieldName, false)) {
+      targets.add(element.getName().getXmlAttributeValue());
+    }
+    if (resClassName.equals("attr")) {
+      for (Attr attr : manager.findAttrs(fieldName)) {
+        targets.add(attr.getName().getXmlAttributeValue());
       }
-      for (PsiFile file : manager.findResourceFiles(type, name, false)) {
-        targets.add(file);
-      }
-      for (ResourceElement element : manager.findValueResources(type, name, false)) {
-        targets.add(element.getName().getXmlAttributeValue());
-      }
-      if (type.equals("attr")) {
-        for (Attr attr : manager.findAttrs(name)) {
-          targets.add(attr.getName().getXmlAttributeValue());
-        }
-      }
-      else if (type.equals("styleable")) {
-        for (DeclareStyleable styleable : manager.findStyleables(name)) {
-          targets.add(styleable.getName().getXmlAttributeValue());
-        }
+    }
+    else if (resClassName.equals("styleable")) {
+      for (DeclareStyleable styleable : manager.findStyleables(fieldName)) {
+        targets.add(styleable.getName().getXmlAttributeValue());
       }
     }
     return targets;

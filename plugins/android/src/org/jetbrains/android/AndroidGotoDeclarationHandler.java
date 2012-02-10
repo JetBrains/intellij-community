@@ -26,6 +26,9 @@ import org.jetbrains.android.dom.wrappers.FileResourceElementWrapper;
 import org.jetbrains.android.dom.wrappers.ValueResourceElementWrapper;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.util.AndroidResourceUtil;
+import org.jetbrains.android.util.AndroidUtils;
+
+import java.util.List;
 
 /**
  * @author Eugene.Kudelevsky
@@ -47,19 +50,41 @@ public class AndroidGotoDeclarationHandler implements GotoDeclarationHandler {
       return null;
     }
 
-    final PsiElement resolvedElement = refExp.resolve();
-    if (resolvedElement == null || !(resolvedElement instanceof PsiField)) {
+    final String resFieldName = refExp.getReferenceName();
+    if (resFieldName == null || resFieldName.length() == 0) {
       return null;
     }
 
-    final PsiField resolvedField = (PsiField)resolvedElement;
-    final PsiFile containingFile = resolvedField.getContainingFile();
+    PsiExpression qExp = refExp.getQualifierExpression();
+    if (!(qExp instanceof PsiReferenceExpression)) {
+      return null;
+    }
+    final PsiReferenceExpression resClassReference = (PsiReferenceExpression)qExp;
 
-    if (containingFile == null || !AndroidResourceUtil.isRJavaField(containingFile, resolvedField)) {
+    final String resClassName = resClassReference.getReferenceName();
+    if (resClassName == null || resClassName.length() == 0) {
       return null;
     }
 
-    final PsiElement[] resources = AndroidResourceUtil.findResources(resolvedField);
+    qExp = resClassReference.getQualifierExpression();
+    if (!(qExp instanceof PsiReferenceExpression)) {
+      return null;
+    }
+
+    final PsiElement resolvedElement = ((PsiReferenceExpression)qExp).resolve();
+    if (!(resolvedElement instanceof PsiClass) ||
+        !AndroidUtils.R_CLASS_NAME.equals(((PsiClass)resolvedElement).getName())) {
+      return null;
+    }
+
+    final PsiFile containingFile = resolvedElement.getContainingFile();
+    if (containingFile == null || !AndroidUtils.isRClassFile(facet, containingFile)) {
+      return null;
+    }
+
+    final List<PsiElement> resourceList =
+      AndroidResourceUtil.findResourcesByFieldName(facet.getLocalResourceManager(), resClassName, resFieldName);
+    final PsiElement[] resources = resourceList.toArray(new PsiElement[resourceList.size()]);
     final PsiElement[] wrappedResources = new PsiElement[resources.length];
     
     for (int i = 0; i < resources.length; i++) {

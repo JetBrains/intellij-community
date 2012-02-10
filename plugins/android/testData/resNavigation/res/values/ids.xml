@@ -3,7 +3,10 @@
 <resources>
   <item type="id" name="myId" />
   <item type="id" name="myId1" />
+  <item type="id" name="notInRJava" />
   <item type="string" name="str2" />
   <item type="string"/>
   <item type="id"/>
+
+  <dimen name="notInRJava"/>
 </resources>
