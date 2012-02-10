@@ -56,7 +56,7 @@ WHITE_SPACE =                   {WHITE_SPACE_CHAR}+
 LINE =                          .*
 COMMENT =                       "#"{LINE}
 
-ID =                            [^\n\- #{}\[\]][^\n{}\[\]>:]*
+ID =                            [^\n\-\ {}\[\]#][^\n{}\[\]>:#]*
 KEY =                           {ID}":"
 INJECTION =                     ("{{" {ID} "}"{0,2}) | ("%{" [^}\n]* "}"?)
 

@@ -192,6 +192,7 @@ public class YAMLLexerTest extends LexerTestCase {
            "#  bbb:\n" +
            "#    ccc: \"CCC\"\n" +
            "installation:\n" +
-           "  name: [] # todo: \"Not specified\"");
+           "  name: [] # todo: \"Not specified\"\n" +
+           "en #comment: TODO");
   }
 }
