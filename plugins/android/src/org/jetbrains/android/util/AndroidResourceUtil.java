@@ -24,7 +24,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
@@ -40,14 +40,13 @@ import org.jetbrains.android.resourceManagers.ResourceManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Eugene.Kudelevsky
- * Date: Aug 5, 2009
- * Time: 8:47:37 PM
- * To change this template use File | Settings | File Templates.
+ * @author Eugene.Kudelevsky
  */
 public class AndroidResourceUtil {
   public static final String NEW_ID_PREFIX = "@+id/";
@@ -384,7 +383,7 @@ public class AndroidResourceUtil {
     assert facet != null;
     LocalResourceManager manager = facet.getLocalResourceManager();
     List<PsiElement> targets = findResourcesByField(manager, resField);
-    return PsiUtilBase.toPsiElementArray(targets);
+    return PsiUtilCore.toPsiElementArray(targets);
   }
 
   @NotNull
