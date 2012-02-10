@@ -80,11 +80,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     return myAppSettings;
   }
   
-  @Nullable
   public static GitVcsSettings getInstance(Project project) {
-    if (project == null || project.isDisposed()) {
-      return null;
-    }
     return PeriodicalTasksCloser.getInstance().safeGetService(project, GitVcsSettings.class);
   }
 
