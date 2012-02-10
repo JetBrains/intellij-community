@@ -500,17 +500,22 @@ public class GitUIUtil {
   }
 
   @NotNull
-  public static String getShortRepositoryName(@NotNull GitRepository repository) {
-    VirtualFile projectDir = repository.getProject().getBaseDir();
+  public static String getShortRepositoryName(@NotNull Project project, @NotNull VirtualFile root) {
+    VirtualFile projectDir = project.getBaseDir();
 
-    String repositoryPath = repository.getPresentableUrl();
+    String repositoryPath = root.getPresentableUrl();
     if (projectDir != null) {
-      String relativePath = VfsUtilCore.getRelativePath(repository.getRoot(), projectDir, File.separatorChar);
+      String relativePath = VfsUtilCore.getRelativePath(root, projectDir, File.separatorChar);
       if (relativePath != null) {
         repositoryPath = relativePath;
       }
     }
 
     return repositoryPath.isEmpty() ? "<Project>" : repositoryPath;
+  }
+
+  @NotNull
+  public static String getShortRepositoryName(@NotNull GitRepository repository) {
+    return getShortRepositoryName(repository.getProject(), repository.getRoot());
   }
 }
