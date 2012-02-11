@@ -110,16 +110,15 @@ public class PsiImplUtil {
 
   private static boolean isAfterIdentifier(PsiElement el) {
     final PsiElement prev = GeeseUtil.getPreviousNonWhitespaceToken(el);
-    return prev != null && prev.getNode().getElementType() == GroovyTokenTypes.mIDENT;
+    return prev != null && prev.getNode().getElementType() == mIDENT;
   }
 
   public static GrExpression replaceExpression(GrExpression oldExpr, GrExpression newExpr, boolean removeUnnecessaryParentheses) {
     PsiElement oldParent = oldExpr.getParent();
     if (oldParent == null) throw new PsiInvalidElementAccessException(oldExpr);
 
-    if (newExpr instanceof GrApplicationStatement && !(oldExpr instanceof GrApplicationStatement)) {
-      GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(oldExpr.getProject());
-      newExpr = factory.createMethodCallByAppCall(((GrApplicationStatement)newExpr));
+    if (!(oldExpr instanceof GrApplicationStatement)) {
+      newExpr = ApplicationStatementUtil.convertToMethodCallExpression(newExpr);
     }
 
     // Remove unnecessary parentheses

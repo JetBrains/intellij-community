@@ -30,13 +30,16 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.VariableInfo;
+import org.jetbrains.plugins.groovy.lang.psi.impl.ApplicationStatementUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -311,21 +314,8 @@ public class ExtractUtil {
       boolean addReturn = !isVoid && expr != null && expr.getType() != null && expr.getType() != PsiType.VOID;
       if (addReturn) {
         buffer.append("return ");
-        if (expr instanceof GrApplicationStatement) {
-          final GrApplicationStatement appStatement = (GrApplicationStatement)expr;
-
-          buffer.append(appStatement.getInvokedExpression().getText());
-          buffer.append('(');
-
-          final GrCommandArgumentList argList = appStatement.getArgumentList();
-          if (argList != null) {
-            buffer.append(argList.getText());
-          }
-          buffer.append(')');
-        }
-        else {
-          buffer.append(expr.getText());
-        }
+        expr = ApplicationStatementUtil.convertToMethodCallExpression(expr);
+        buffer.append(expr.getText());
       }
       else {
         buffer.append(expr != null ? expr.getText() : "");

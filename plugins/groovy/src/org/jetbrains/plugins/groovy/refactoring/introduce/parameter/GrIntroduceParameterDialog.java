@@ -15,6 +15,8 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.introduce.parameter;
 
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Ref;
@@ -44,7 +46,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.refactoring.GrRefactoringError;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
@@ -281,7 +282,14 @@ public class GrIntroduceParameterDialog extends RefactoringDialog implements GrI
     }
 
     final ExtractClosureHelperImpl mockHelper = new ExtractClosureHelperImpl(myInfo, "__test___n_", false, new TIntArrayList(), false, 0);
-    final PsiType returnType = ExtractClosureProcessorBase.generateClosure(mockHelper).getReturnType();
+    final PsiType returnType;
+    final AccessToken token = WriteAction.start();
+    try {
+      returnType = ExtractClosureProcessorBase.generateClosure(mockHelper).getReturnType();
+    }
+    finally {
+      token.finish();
+    }
 
     box.addClosureTypesFrom(returnType, mockHelper.getContext());
     if (expr == null && var == null) {
@@ -401,12 +409,11 @@ public class GrIntroduceParameterDialog extends RefactoringDialog implements GrI
   protected void doAction() {
     saveSettings();
     final GrParametersOwner toReplaceIn = myInfo.getToReplaceIn();
-    final PsiType selectedType = myTypeComboBox.getSelectedType();
 
     final GrExpression expr = findExpr();
     final GrVariable var = findVar();
 
-    if ((expr == null && var == null) || selectedType != null && selectedType.equalsToText(GroovyCommonClassNames.GROOVY_LANG_CLOSURE)) {
+    if (myTypeComboBox.isClosureSelected()) {
       GrIntroduceParameterSettings settings = new ExtractClosureHelperImpl(myInfo,
                                                                            myNameSuggestionsField.getEnteredName(),
                                                                            myDeclareFinalCheckBox.isSelected(),
