@@ -783,11 +783,6 @@
       <categoryKey>intention.category.groovy/intention.category.control.flow</categoryKey>
       <className>org.jetbrains.plugins.groovy.intentions.control.FlipConditionalIntention</className>
     </intentionAction>
-    <intentionAction>
-      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
-      <categoryKey>intention.category.groovy/intention.category.control.flow</categoryKey>
-      <className>org.jetbrains.plugins.groovy.intentions.control.ConditionalToElvisIntention</className>
-    </intentionAction>
 
     <!-- closures -->
     <intentionAction>

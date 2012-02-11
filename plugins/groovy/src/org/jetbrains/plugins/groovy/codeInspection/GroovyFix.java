@@ -74,30 +74,26 @@ public abstract class GroovyFix implements LocalQuickFix {
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(problemElement.getProject());
     final Project project = facade.getProject();
     final ReadonlyStatusHandler handler = ReadonlyStatusHandler.getInstance(project);
-    final ReadonlyStatusHandler.OperationStatus status =
-        handler.ensureFilesWritable(virtualFile);
+    final ReadonlyStatusHandler.OperationStatus status = handler.ensureFilesWritable(virtualFile);
     return status.hasReadonlyFiles();
   }
 
   protected static void replaceExpression(GrExpression expression, String newExpression) {
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(expression.getProject());
-    final GrExpression newCall =
-        factory.createExpressionFromText(newExpression);
+    final GrExpression newCall = factory.createExpressionFromText(newExpression);
     expression.replaceWithExpression(newCall, true);
   }
 
   protected static void replaceStatement(GrStatement statement, String newStatement) {
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(statement.getProject());
-    final GrStatement newCall =
-        (GrStatement) factory.createTopElementFromText(newStatement);
+    final GrStatement newCall = (GrStatement) factory.createTopElementFromText(newStatement);
     statement.replaceWithStatement(newCall);
   }
 
   /**
    * unwraps surrounding blocks from newStatement.
    */
-  protected static void replaceStatement(GrStatement oldStatement, GrStatement newStatement)
-      throws IncorrectOperationException {
+  protected static void replaceStatement(GrStatement oldStatement, GrStatement newStatement) throws IncorrectOperationException {
     if (newStatement instanceof GrBlockStatement) {
       GrBlockStatement blockStatement = (GrBlockStatement) newStatement;
       final GrOpenBlock openBlock = blockStatement.getBlock();
