@@ -127,7 +127,7 @@ public class MissingReturnInspection extends GroovySuppressableInspectionTool {
         else if (element instanceof GrAssertStatement) {
           sometimes.set(true);
           int count = 0;
-          for (Instruction _i : instruction.allSucc()) {
+          for (Instruction _i : instruction.allSuccessors()) {
             count++;
           }
           if (count <= 1) {

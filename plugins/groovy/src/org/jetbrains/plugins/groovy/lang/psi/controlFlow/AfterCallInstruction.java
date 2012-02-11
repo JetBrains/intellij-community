@@ -23,32 +23,32 @@ import java.util.Collections;
  * @author ven
  */
 public class AfterCallInstruction extends InstructionImpl {
-  public final CallInstruction call;
-  private RetInstruction myReturnInsn;
+  public final CallInstruction myCall;
+  private ReturnInstruction myReturnInstruction;
 
   public AfterCallInstruction(int num, CallInstruction call) {
     super(null, num);
-    this.call = call;
+    this.myCall = call;
   }
 
   public String toString() {
-    return super.toString() + "AFTER CALL " + call.num();
+    return super.toString() + "AFTER CALL " + myCall.num();
   }
 
-  public Iterable<? extends Instruction> allPred() {
-    return Collections.singletonList(myReturnInsn);
+  public Iterable<? extends Instruction> allPredecessors() {
+    return Collections.singletonList(myReturnInstruction);
   }
 
-  public Iterable<? extends Instruction> pred(CallEnvironment env) {
-    getStack(env, myReturnInsn).push(call);
-    return Collections.singletonList(myReturnInsn);
+  public Iterable<? extends Instruction> predecessors(CallEnvironment environment) {
+    getStack(environment, myReturnInstruction).push(myCall);
+    return Collections.singletonList(myReturnInstruction);
   }
 
   protected String getElementPresentation() {
     return "";
   }
 
-  public void setReturnInstruction(RetInstruction retInstruction) {
-    myReturnInsn = retInstruction;
+  public void setReturnInstruction(ReturnInstruction returnInstruction) {
+    myReturnInstruction = returnInstruction;
   }
 }

@@ -18,14 +18,13 @@ package org.jetbrains.plugins.groovy.lang.psi.controlFlow;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.InstructionImpl;
 
 import java.util.Collections;
-import java.util.List;
 import java.util.Stack;
 
 /**
 * @author peter
 */
-public class RetInstruction extends InstructionImpl {
-  public RetInstruction(int num) {
+public class ReturnInstruction extends InstructionImpl {
+  public ReturnInstruction(int num) {
     super(null, num);
   }
 
@@ -37,18 +36,18 @@ public class RetInstruction extends InstructionImpl {
     return "";
   }
 
-  public Iterable<? extends Instruction> succ(CallEnvironment env) {
-    final Stack<CallInstruction> callStack = getStack(env, this);
+  public Iterable<? extends Instruction> successors(CallEnvironment environment) {
+    final Stack<CallInstruction> callStack = getStack(environment, this);
     if (callStack.isEmpty()) return Collections.emptyList();     //can be true in case env was not populated (e.g. by DFA)
 
     final CallInstruction callInstruction = callStack.peek();
-    final List<InstructionImpl> succ = callInstruction.mySucc;
+    final Iterable<? extends Instruction> successors = callInstruction.allSuccessors();
     final Stack<CallInstruction> copy = (Stack<CallInstruction>)callStack.clone();
     copy.pop();
-    for (InstructionImpl instruction : succ) {
-      env.update(copy, instruction);
+    for (Instruction instruction : successors) {
+      environment.update(copy, instruction);
     }
 
-    return succ;
+    return successors;
   }
 }

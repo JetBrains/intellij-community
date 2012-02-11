@@ -34,12 +34,12 @@ public class CallInstruction extends InstructionImpl {
     return super.toString() + " CALL " + myCallee.num();
   }
 
-  public Iterable<? extends Instruction> succ(CallEnvironment env) {
-    getStack(env, myCallee).push(this);
+  public Iterable<? extends Instruction> successors(CallEnvironment environment) {
+    getStack(environment, myCallee).push(this);
     return Collections.singletonList(myCallee);
   }
 
-  public Iterable<? extends Instruction> allSucc() {
+  public Iterable<? extends Instruction> allSuccessors() {
     return Collections.singletonList(myCallee);
   }
 
