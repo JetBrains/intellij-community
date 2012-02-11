@@ -192,6 +192,10 @@ public class DirDiffElement {
     }
   }
 
+  public void setOperation(@NotNull DirDiffOperation operation) {
+    myOperation = operation;
+  }
+
   public Icon getIcon() {
     return mySource != null ? mySource.getIcon() : myTarget.getIcon();
   }
