@@ -28,6 +28,8 @@ import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
+import gnu.trove.THashMap;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -100,13 +102,13 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
     public ModuleFileData(final String rootElementName, Module module) {
       super(rootElementName);
       myModule = module;
-      myOptions = new TreeMap<String, String>();
+      myOptions = new THashMap<String, String>(2);
     }
 
     protected ModuleFileData(final ModuleFileData storageData) {
       super(storageData);
 
-      myOptions = new TreeMap<String, String>(storageData.myOptions);
+      myOptions = new THashMap<String, String>(storageData.myOptions);
       myModule = storageData.myModule;
     }
 
@@ -130,7 +132,8 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
       final Element root = super.save();
 
       myOptions.put(VERSION_OPTION, Integer.toString(myVersion));
-      Set<String> options = myOptions.keySet();
+      String[] options = ArrayUtil.toStringArray(myOptions.keySet());
+      Arrays.sort(options);
       for (String option : options) {
         root.setAttribute(option, myOptions.get(option));
       }

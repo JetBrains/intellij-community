@@ -148,11 +148,12 @@ public final class UpdateChecker {
   public static ActionCallback updateAndShowResult() {
     final ActionCallback result = new ActionCallback();
     final Application app = ApplicationManager.getApplication();
-    /*
+    final PropertiesComponent propertiesComponent = PropertiesComponent.getInstance();
+    final UpdateSettings updateSettings = UpdateSettings.getInstance();
     app.executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
-        final CheckForUpdateResult checkForUpdateResult = checkForUpdates();
+        final CheckForUpdateResult checkForUpdateResult = checkForUpdates(updateSettings, propertiesComponent, false);
 
         final List<PluginDownloader> updatedPlugins = updatePlugins(false, null);
         app.invokeLater(new Runnable() {
@@ -164,7 +165,6 @@ public final class UpdateChecker {
         });
       }
     });
-    */
     return result;
   }
 
@@ -346,11 +346,11 @@ public final class UpdateChecker {
   }
 
   @NotNull
-  public static CheckForUpdateResult doCheckForUpdates(final UpdateSettings settings) {
+  public static CheckForUpdateResult doCheckForUpdates(final UpdateSettings settings, final PropertiesComponent instance) {
     ApplicationInfo appInfo = ApplicationInfo.getInstance();
     BuildNumber currentBuild = appInfo.getBuild();
     int majorVersion = Integer.parseInt(appInfo.getMajorVersion());
-    final UpdatesXmlLoader loader = new UpdatesXmlLoader(getUpdateUrl(), getInstallationUID(), null);
+    final UpdatesXmlLoader loader = new UpdatesXmlLoader(getUpdateUrl(), getInstallationUID(instance), null);
     final UpdatesInfo info;
     try {
       info = loader.loadUpdatesInfo();
@@ -366,25 +366,21 @@ public final class UpdateChecker {
     return strategy.checkForUpdates();
   }
 
-
   @NotNull
-  public static CheckForUpdateResult checkForUpdates() {
-    return checkForUpdates(false);
-  }
-
-  @NotNull
-  public static CheckForUpdateResult checkForUpdates(final boolean disregardIgnoredBuilds) {
+  public static CheckForUpdateResult checkForUpdates(final UpdateSettings updateSettings,
+                                                     final PropertiesComponent propertiesComponent,
+                                                     final boolean disregardIgnoredBuilds) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: auto checkForUpdates()");
     }
 
-    UserUpdateSettings settings = UpdateSettings.getInstance();
+    UserUpdateSettings settings = updateSettings;
     if (disregardIgnoredBuilds) {
       settings = new UserUpdateSettings() {
         @NotNull
         @Override
         public List<String> getKnownChannelsIds() {
-          return UpdateSettings.getInstance().getKnownChannelsIds();
+          return updateSettings.getKnownChannelsIds();
         }
 
         @Override
@@ -394,21 +390,21 @@ public final class UpdateChecker {
 
         @Override
         public void setKnownChannelIds(List<String> ids) {
-          UpdateSettings.getInstance().setKnownChannelIds(ids);
+          updateSettings.setKnownChannelIds(ids);
         }
 
         @NotNull
         @Override
         public ChannelStatus getSelectedChannelStatus() {
-          return UpdateSettings.getInstance().getSelectedChannelStatus();
+          return updateSettings.getSelectedChannelStatus();
         }
       };
     }
 
-    final CheckForUpdateResult result = doCheckForUpdates(UpdateSettings.getInstance());
+    final CheckForUpdateResult result = doCheckForUpdates(updateSettings, propertiesComponent);
 
     if (result.getState() == UpdateStrategy.State.LOADED) {
-      UpdateSettings.getInstance().LAST_TIME_CHECKED = System.currentTimeMillis();
+      updateSettings.LAST_TIME_CHECKED = System.currentTimeMillis();
       settings.setKnownChannelIds(result.getAllChannelsIds());
     }
 
@@ -444,12 +440,13 @@ public final class UpdateChecker {
     }
     final InputStream[] inputStreams = new InputStream[]{null};
     final Exception[] exception = new Exception[]{null};
+    final PropertiesComponent propertiesComponent = PropertiesComponent.getInstance();
     Future<?> downloadThreadFuture = ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
         try {
           HttpConfigurable.getInstance().prepareURL(url);
 
-          String uid = getInstallationUID();
+          String uid = getInstallationUID(propertiesComponent);
 
           final URL requestUrl =
             new URL(url + "?build=" + ApplicationInfo.getInstance().getBuild().asString() + "&uid=" + uid + ADDITIONAL_REQUEST_OPTIONS);
@@ -477,8 +474,7 @@ public final class UpdateChecker {
     return inputStreams[0];
   }
 
-  public static String getInstallationUID() {
-    final PropertiesComponent propertiesComponent = PropertiesComponent.getInstance();
+  public static String getInstallationUID(final PropertiesComponent propertiesComponent) {
     String uid = "";
     if (!propertiesComponent.isValueSet(INSTALLATION_UID)) {
       try {

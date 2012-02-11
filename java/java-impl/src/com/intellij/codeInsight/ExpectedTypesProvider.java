@@ -590,7 +590,7 @@ public class ExpectedTypesProvider {
         }
         return;
       }
-      PsiExpression anotherExpr = index > 0 ? operands[0] : operands[1];
+      PsiExpression anotherExpr = index > 0 ? operands[0] : index < operands.length ? operands[1] : null;
       PsiType anotherType = anotherExpr != null ? anotherExpr.getType() : null;
       IElementType i = expr.getOperationTokenType();
       if (i == JavaTokenType.MINUS ||

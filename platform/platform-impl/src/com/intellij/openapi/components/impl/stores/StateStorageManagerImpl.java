@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.fs.IFile;
+import gnu.trove.THashMap;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -58,8 +59,8 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   }
 
   private final Map<String, String> myMacros = new HashMap<String, String>();
-  private final Map<String, StateStorage> myStorages = new HashMap<String, StateStorage>();
-  private final Map<String, StateStorage> myPathToStorage = new HashMap<String, StateStorage>();
+  private final Map<String, StateStorage> myStorages = new THashMap<String, StateStorage>();
+  private final Map<String, StateStorage> myPathToStorage = new THashMap<String, StateStorage>();
   private final TrackingPathMacroSubstitutor myPathMacroSubstitutor;
   private final String myRootTagName;
   private Object mySession;
@@ -160,7 +161,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   }
 
   private Map<String, Long> loadVersions() {
-    TreeMap<String, Long> result = new TreeMap<String, Long>();
+    THashMap<String, Long> result = new THashMap<String, Long>();
     String filePath = getNotNullVersionsFilePath();
     if (filePath != null) {
       try {
@@ -580,8 +581,10 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
 
   public static Element createComponentVersionsXml(Map<String, Long> versions) {
     Element vers = new Element("versions");
+    String[] componentNames = ArrayUtil.toStringArray(versions.keySet());
+    Arrays.sort(componentNames);
 
-    for (String name : versions.keySet()) {
+    for (String name : componentNames) {
       long version = versions.get(name);
       if (version != 0) {
         Element element = new Element("component");

@@ -15,9 +15,12 @@
  */
 package com.intellij.designer.designSurface;
 
+import com.intellij.designer.componentTree.TreeComponentDecorator;
+import com.intellij.designer.model.RadComponent;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,7 +30,9 @@ import java.awt.*;
 /**
  * @author Alexander Lobas
  */
-public final class DesignerEditorPanel extends JPanel implements DataProvider {
+public abstract class DesignerEditorPanel extends JPanel implements DataProvider {
+  protected RadComponent myRootComponent;
+
   public DesignerEditorPanel(@NotNull Module module, @NotNull VirtualFile file) {
     setLayout(new BorderLayout());
     add(new JLabel("Design Surface", JLabel.CENTER), BorderLayout.CENTER);
@@ -45,4 +50,10 @@ public final class DesignerEditorPanel extends JPanel implements DataProvider {
   public JComponent getPreferredFocusedComponent() {
     return null;  // TODO: Auto-generated method stub
   }
+
+  public Object[] getTreeRoots() {
+    return myRootComponent == null ? ArrayUtil.EMPTY_OBJECT_ARRAY : new Object[]{myRootComponent};
+  }
+
+  public abstract TreeComponentDecorator getTreeDecorator();
 }

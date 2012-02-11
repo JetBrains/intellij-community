@@ -132,8 +132,6 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
 
   @Nullable
   public DomElement getParent() {
-    assertValid();
-
     final DomInvocationHandler handler = getParentHandler();
     return handler == null ? null : handler.getProxy();
   }
@@ -593,7 +591,6 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
 
   @NotNull
   final AttributeChildInvocationHandler getAttributeChild(final AttributeChildDescriptionImpl description) {
-     assertValid();
     final EvaluatedXmlName evaluatedXmlName = createEvaluatedXmlName(description.getXmlName());
     final XmlTag tag = getXmlTag();
     
@@ -749,7 +746,6 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     XmlTag tag = getXmlTag();
     if (tag == null) return Collections.emptyList();
 
-    assertValid();
     final List<XmlTag> subTags = tagsGetter.fun(this);
     if (subTags.isEmpty()) return Collections.emptyList();
 

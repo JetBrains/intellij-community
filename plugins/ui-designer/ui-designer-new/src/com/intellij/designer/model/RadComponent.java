@@ -16,14 +16,19 @@
 package com.intellij.designer.model;
 
 import com.intellij.designer.propertyTable.Property;
+import com.intellij.util.containers.hash.HashMap;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Alexander Lobas
  */
 public abstract class RadComponent {
   private RadComponent myParent;
+  private final Map<Object, Object> myClientProperties = new HashMap<Object, Object>();
 
   public RadComponent getRoot() {
     return myParent == null ? this : myParent.getRoot();
@@ -38,10 +43,22 @@ public abstract class RadComponent {
   }
 
   public List<RadComponent> getChildren() {
-    return null;
+    return Collections.emptyList();
+  }
+
+  public Object[] getTreeChildren() {
+    return getChildren().toArray();
   }
 
   public List<Property> getProperties() {
     return null;
+  }
+
+  public final Object getClientProperty(@NotNull Object key) {
+    return myClientProperties.get(key);
+  }
+
+  public final void putClientProperty(@NotNull Object key, Object value) {
+    myClientProperties.put(key, value);
   }
 }

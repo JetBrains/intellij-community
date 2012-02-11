@@ -32,6 +32,7 @@ public class AttributesDefaults {
   private final String myDefaultName;
   private final TextRange myDefaultRange;
   private final Map<String, Pair<String, TextRange>> myNamesToValueAndRangeMap = new HashMap<String, Pair<String, TextRange>>();
+  private boolean myFixedName;
 
   public AttributesDefaults(@NonNls @Nullable final String defaultName,
                             @Nullable final TextRange defaultRange) {
@@ -77,5 +78,14 @@ public class AttributesDefaults {
   public String getDefaultValueFor(@NonNls @NotNull final String attributeKey) {
     final Pair<String, TextRange> valueAndRange = myNamesToValueAndRangeMap.get(attributeKey);
     return valueAndRange == null ? null : valueAndRange.first;
+  }
+
+  public boolean isFixedName() {
+    return myFixedName;
+  }
+
+  public AttributesDefaults withFixedName(boolean fixedName) {
+    myFixedName = fixedName;
+    return this;
   }
 }

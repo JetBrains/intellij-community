@@ -15,8 +15,12 @@
  */
 package com.intellij.android.designer;
 
+import com.intellij.android.designer.designSurface.AndroidDesignerEditorPanel;
+import com.intellij.designer.componentTree.TreeComponentDecorator;
+import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.designer.DesignerEditor;
@@ -28,6 +32,11 @@ import org.jetbrains.annotations.NotNull;
 public final class AndroidDesignerEditor extends DesignerEditor {
   public AndroidDesignerEditor(Project project, VirtualFile file) {
     super(project, file);
+  }
+
+  @Override
+  protected DesignerEditorPanel createDesignerPanel(Module module, VirtualFile file) {
+    return new AndroidDesignerEditorPanel(module, file);
   }
 
   @NotNull

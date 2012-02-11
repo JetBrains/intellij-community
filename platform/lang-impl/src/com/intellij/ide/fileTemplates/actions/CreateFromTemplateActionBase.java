@@ -55,14 +55,18 @@ public abstract class CreateFromTemplateActionBase extends AnAction {
       }
       else {
         FileTemplateManager.getInstance().addRecentName(selectedTemplate.getName());
-        PsiElement createdElement = new CreateFromTemplateDialog(project, dir, selectedTemplate, getAttributesDefaults()).create();
+        final AttributesDefaults defaults = getAttributesDefaults(dataContext);
+        final CreateFromTemplateDialog dialog = new CreateFromTemplateDialog(project, dir, selectedTemplate, defaults);
+        PsiElement createdElement = dialog.create();
         if (createdElement != null) {
+          elementCreated(dialog, createdElement);
           view.selectElement(createdElement);
         }
       }
     }
   }
 
+  @Nullable
   protected PsiDirectory getTargetDirectory(DataContext dataContext, IdeView view) {
     return DirectoryChooserUtil.getOrChooseDirectory(view);
   }
@@ -73,7 +77,10 @@ public abstract class CreateFromTemplateActionBase extends AnAction {
   protected abstract FileTemplate getTemplate(final Project project, final PsiDirectory dir);
 
   @Nullable
-  public AttributesDefaults getAttributesDefaults() {
+  public AttributesDefaults getAttributesDefaults(DataContext dataContext) {
     return null;
+  }
+
+  protected void elementCreated(CreateFromTemplateDialog dialog, PsiElement createdElement) {
   }
 }

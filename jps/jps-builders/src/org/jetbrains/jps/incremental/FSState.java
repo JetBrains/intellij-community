@@ -52,6 +52,10 @@ public class FSState {
     myContextModules.addAll(chunk.getModules());
   }
 
+  public void clearContextChunk() {
+    myContextModules.clear();
+  }
+
   public void beforeNextRoundStart() {
     myLastRoundDelta = myCurrentRoundDelta;
     myCurrentRoundDelta = new FilesDelta();
@@ -60,7 +64,6 @@ public class FSState {
   public void clearContextRoundData() {
     myCurrentRoundDelta = null;
     myLastRoundDelta = null;
-    myContextModules.clear();
   }
 
   public void clearRecompile(RootDescriptor rd) {

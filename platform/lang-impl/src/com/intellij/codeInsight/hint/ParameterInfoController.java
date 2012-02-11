@@ -113,18 +113,31 @@ public class ParameterInfoController {
     int selectedParameterIndex = myComponent.getCurrentParameterIndex();
     List<Object> params = new ArrayList<Object>(objects.length);
 
+    final Object highlighted = myComponent.getHighlighted();
     for(Object o:objects) {
-      final Object[] availableParams = myHandler.getParametersForDocumentation(o, context);
+      if (highlighted != null && !o.equals(highlighted)) continue;
+      collectParams(context, selectedParameterIndex, params, o);
+    }
 
-      if (availableParams != null &&
-          selectedParameterIndex < availableParams.length &&
-          selectedParameterIndex >= 0
-        ) {
-        params.add(availableParams[selectedParameterIndex]);
+    //choose anything when highlighted is not applicable
+    if (highlighted != null && params.isEmpty()) {
+      for (Object o : objects) {
+        collectParams(context, selectedParameterIndex, params, o);
       }
     }
 
     return ArrayUtil.toObjectArray(params);
+  }
+
+  private void collectParams(ParameterInfoContext context, int selectedParameterIndex, List<Object> params, Object o) {
+    final Object[] availableParams = myHandler.getParametersForDocumentation(o, context);
+
+    if (availableParams != null &&
+        selectedParameterIndex < availableParams.length &&
+        selectedParameterIndex >= 0
+      ) {
+      params.add(availableParams[selectedParameterIndex]);
+    }
   }
 
   private static ArrayList<ParameterInfoController> getAllControllers(Editor editor) {

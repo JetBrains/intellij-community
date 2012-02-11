@@ -16,8 +16,10 @@
 package com.intellij.designer;
 
 import com.intellij.designer.componentTree.ComponentTree;
+import com.intellij.designer.componentTree.ComponentTreeBuilder;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.designer.propertyTable.PropertyTablePanel;
+import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -26,6 +28,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
@@ -53,6 +56,7 @@ public final class DesignerToolWindowManager implements ProjectComponent {
   private final FileEditorManager myFileEditorManager;
   private ToolWindow myToolWindow;
   private ComponentTree myComponentTree;
+  private AbstractTreeBuilder myTreeBuilder;
   private PropertyTablePanel myPropertyTablePanel;
   private boolean myToolWindowReady;
   private boolean myToolWindowDisposed;
@@ -91,9 +95,17 @@ public final class DesignerToolWindowManager implements ProjectComponent {
   public void projectClosed() {
     if (!myToolWindowDisposed) {
       myToolWindowDisposed = true;
+      clearTreeBuilder();
       myComponentTree = null;
       myPropertyTablePanel = null;
       myToolWindow = null;
+    }
+  }
+
+  private void clearTreeBuilder() {
+    if (myTreeBuilder != null) {
+      Disposer.dispose(myTreeBuilder);
+      myTreeBuilder = null;
     }
   }
 
@@ -128,10 +140,15 @@ public final class DesignerToolWindowManager implements ProjectComponent {
           }
           initToolWindow();
         }
+        clearTreeBuilder();
+        myComponentTree.newModel();
         if (designer == null) {
+          myComponentTree.setDecorator(null);
           myToolWindow.setAvailable(false, null);
         }
         else {
+          myComponentTree.setDecorator(designer.getTreeDecorator());
+          myTreeBuilder = new ComponentTreeBuilder(myComponentTree, designer);
           myToolWindow.setAvailable(true, null);
           myToolWindow.show(null);
         }

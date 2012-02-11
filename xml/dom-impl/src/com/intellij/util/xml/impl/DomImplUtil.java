@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ReflectionCache;
@@ -149,14 +150,19 @@ public class DomImplUtil {
     }
     return ContainerUtil.findAll(tag.getSubTags(), new Condition<XmlTag>() {
       public boolean value(XmlTag childTag) {
-        if (!childTag.isValid()) {
-          LOG.error("tag.getSubTags() returned invalid, " +
-                    "tag=" + tag + ", " +
-                    "containing file: " + tag.getContainingFile() +
-                    "subTag.parent=" + childTag.getNode().getTreeParent());
-          return false;
+        try {
+          return isNameSuitable(name, childTag.getLocalName(), childTag.getName(), childTag.getNamespace(), file);
         }
-        return isNameSuitable(name, childTag.getLocalName(), childTag.getName(), childTag.getNamespace(), file);
+        catch (PsiInvalidElementAccessException e) {
+          if (!childTag.isValid()) {
+            LOG.error("tag.getSubTags() returned invalid, " +
+                      "tag=" + tag + ", " +
+                      "containing file: " + tag.getContainingFile() +
+                      "subTag.parent=" + childTag.getNode().getTreeParent());
+            return false;
+          }
+          throw e;
+        }
       }
     });
   }

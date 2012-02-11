@@ -24,7 +24,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Eugene Zhuravlev
@@ -34,7 +34,6 @@ public class IncProjectBuilder {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.IncProjectBuilder");
 
   public static final String COMPILE_SERVER_NAME = "COMPILE SERVER";
-  private static final String CANCELED_MESSAGE = "The build has been canceled";
 
   private final ProjectDescriptor myProjectDescriptor;
   private final BuilderRegistry myBuilderRegistry;
@@ -119,11 +118,7 @@ public class IncProjectBuilder {
     if (descriptor != null) {
       try {
         final RequestFuture future = descriptor.client.sendShutdownRequest();
-        future.get();
-      }
-      catch (InterruptedException ignored) {
-      }
-      catch (ExecutionException ignored) {
+        future.waitFor(500L, TimeUnit.MILLISECONDS);
       }
       finally {
         // ensure process is not running
@@ -229,9 +224,7 @@ public class IncProjectBuilder {
     // check that output and source roots are not overlapping
     final List<File> filesToDelete = new ArrayList<File>();
     for (File outputRoot : rootsToDelete) {
-      if (myCancelStatus.isCanceled()) {
-        throw new ProjectBuildException(CANCELED_MESSAGE);
-      }
+      context.checkCanceled();
       boolean okToDelete = true;
       if (PathUtil.isUnder(allSourceRoots, outputRoot)) {
         okToDelete = false;
@@ -389,7 +382,7 @@ public class IncProjectBuilder {
       boolean nextPassRequired;
       do {
         nextPassRequired = false;
-        context.beforeNextCompileRound(chunk);
+        context.beforeCompileRound(chunk);
 
         if (!context.isProjectRebuild()) {
           syncOutputFiles(context, chunk);
@@ -401,9 +394,7 @@ public class IncProjectBuilder {
           if (buildResult == ModuleLevelBuilder.ExitCode.ABORT) {
             throw new ProjectBuildException("Builder " + builder.getDescription() + " requested build stop");
           }
-          if (myCancelStatus.isCanceled()) {
-            throw new ProjectBuildException(CANCELED_MESSAGE);
-          }
+          context.checkCanceled();
           if (buildResult == ModuleLevelBuilder.ExitCode.ADDITIONAL_PASS_REQUIRED) {
             if (!nextPassRequired) {
               // recalculate basis
@@ -440,16 +431,14 @@ public class IncProjectBuilder {
       }
       while (nextPassRequired);
 
-      context.clearContextRoundData();
+      context.afterCompileRound();
     }
   }
 
   private void runProjectLevelBuilders(CompileContext context) throws ProjectBuildException {
     for (ProjectLevelBuilder builder : myBuilderRegistry.getProjectLevelBuilders()) {
       builder.build(context);
-      if (myCancelStatus.isCanceled()) {
-        throw new ProjectBuildException(CANCELED_MESSAGE);
-      }
+      context.checkCanceled();
     }
   }
 

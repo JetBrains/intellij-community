@@ -11,9 +11,9 @@ import org.jboss.netty.handler.codec.protobuf.ProtobufEncoder;
 import org.jboss.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import org.jboss.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.api.CanceledStatus;
 
-import javax.tools.Diagnostic;
-import javax.tools.JavaFileObject;
+import javax.tools.*;
 import java.io.File;
 import java.net.InetSocketAddress;
 import java.util.*;
@@ -32,10 +32,11 @@ public class JavacServer {
   private final ChannelGroup myAllOpenChannels = new DefaultChannelGroup("javac-server");
   private final ChannelFactory myChannelFactory;
   private final ChannelPipelineFactory myPipelineFactory;
+  private ExecutorService myThreadPool;
 
   public JavacServer() {
-    final ExecutorService threadPool = Executors.newCachedThreadPool();
-    myChannelFactory = new NioServerSocketChannelFactory(threadPool, threadPool, 1);
+    myThreadPool = Executors.newCachedThreadPool();
+    myChannelFactory = new NioServerSocketChannelFactory(myThreadPool, myThreadPool, 1);
     final ChannelRegistrar channelRegistrar = new ChannelRegistrar();
     final ChannelHandler compilationRequestsHandler = new CompilationRequestsHandler();
     myPipelineFactory = new ChannelPipelineFactory() {
@@ -103,7 +104,15 @@ public class JavacServer {
   }
 
 
-  public static JavacRemoteProto.Message compile(final ChannelHandlerContext ctx, final UUID sessionId, List<String> options, Collection<File> files, Collection<File> classpath, Collection<File> platformCp, Collection<File> sourcePath, Map<File, Set<File>> outs) {
+  public static JavacRemoteProto.Message compile(final ChannelHandlerContext ctx,
+                                                 final UUID sessionId,
+                                                 List<String> options,
+                                                 Collection<File> files,
+                                                 Collection<File> classpath,
+                                                 Collection<File> platformCp,
+                                                 Collection<File> sourcePath,
+                                                 Map<File, Set<File>> outs,
+                                                 final CanceledStatus canceledStatus) {
     final DiagnosticOutputConsumer diagnostic = new DiagnosticOutputConsumer() {
       public void outputLineAvailable(String line) {
         Channels.write(ctx.getChannel(), JavacProtoUtil.toMessage(sessionId, JavacProtoUtil.createStdOutputResponse(line)));
@@ -122,7 +131,7 @@ public class JavacServer {
     };
 
     try {
-      final boolean rc = JavacMain.compile(options, files, classpath, platformCp, sourcePath, outs, diagnostic, outputSink, null/*todo*/);
+      final boolean rc = JavacMain.compile(options, files, classpath, platformCp, sourcePath, outs, diagnostic, outputSink, canceledStatus);
       return JavacProtoUtil.toMessage(sessionId, JavacProtoUtil.createBuildCompletedResponse(rc));
     }
     catch (Throwable e) {
@@ -131,8 +140,14 @@ public class JavacServer {
     }
   }
 
-  public static void cancelBuild() {
-    // todo
+  private final Set<CancelHandler> myCancelHandlers = Collections.synchronizedSet(new HashSet<CancelHandler>());
+
+  public void cancelBuilds() {
+    synchronized (myCancelHandlers) {
+      for (CancelHandler handler : myCancelHandlers) {
+        handler.cancel();
+      }
+    }
   }
 
   private static List<File> toFiles(List<String> paths) {
@@ -145,7 +160,7 @@ public class JavacServer {
 
   private class CompilationRequestsHandler extends SimpleChannelHandler {
 
-    public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
+    public void messageReceived(final ChannelHandlerContext ctx, MessageEvent e) throws Exception {
       final JavacRemoteProto.Message msg = (JavacRemoteProto.Message)e.getMessage();
       final UUID sessionId = JavacProtoUtil.fromProtoUUID(msg.getSessionId());
       final JavacRemoteProto.Message.Type messageType = msg.getMessageType();
@@ -172,14 +187,26 @@ public class JavacServer {
               outs.put(new File(outputGroup.getOutputRoot()), srcRoots);
             }
 
-            reply = compile(ctx, sessionId, options, files, cp, platformCp, srcPath, outs);
+            final CancelHandler cancelHandler = new CancelHandler();
+            myCancelHandlers.add(cancelHandler);
+            myThreadPool.submit(new Runnable() {
+              public void run() {
+                try {
+                  final JavacRemoteProto.Message exitMsg = compile(ctx, sessionId, options, files, cp, platformCp, srcPath, outs, cancelHandler);
+                  Channels.write(ctx.getChannel(), exitMsg);
+                }
+                finally {
+                  myCancelHandlers.remove(cancelHandler);
+                }
+              }
+            });
           }
           else if (requestType == JavacRemoteProto.Message.Request.Type.CANCEL){
-            cancelBuild();
+            cancelBuilds();
             reply = JavacProtoUtil.toMessage(sessionId, JavacProtoUtil.createRequestAckResponse());
           }
           else if (requestType == JavacRemoteProto.Message.Request.Type.SHUTDOWN){
-            cancelBuild();
+            cancelBuilds();
             new Thread("StopThread") {
               public void run() {
                 JavacServer.this.stop();
@@ -211,6 +238,21 @@ public class JavacServer {
     public void channelOpen(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
       myAllOpenChannels.add(e.getChannel());
       super.channelOpen(ctx, e);
+    }
+  }
+
+  private static class CancelHandler implements CanceledStatus {
+    private volatile boolean myIsCanceled = false;
+
+    private CancelHandler() {
+    }
+
+    public void cancel() {
+      myIsCanceled = true;
+    }
+
+    public boolean isCanceled() {
+      return myIsCanceled;
     }
   }
 }

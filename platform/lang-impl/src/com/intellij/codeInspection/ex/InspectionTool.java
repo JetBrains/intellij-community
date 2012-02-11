@@ -64,7 +64,7 @@ public abstract class InspectionTool extends InspectionProfileEntry {
   }
 
   public RefManager getRefManager() {
-    return myContext.getRefManager();
+    return getContext().getRefManager();
   }
 
   public abstract void runInspection(@NotNull AnalysisScope scope, @NotNull InspectionManager manager);

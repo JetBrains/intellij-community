@@ -45,8 +45,10 @@ public abstract class DesignerEditor extends UserDataHolderBase implements FileE
     if (module == null) {
       throw new IllegalArgumentException("No module for file " + file + " in project " + project);
     }
-    myDesignerPanel = new DesignerEditorPanel(module, file);
+    myDesignerPanel = createDesignerPanel(module, file);
   }
+
+  protected abstract DesignerEditorPanel createDesignerPanel(Module module, VirtualFile file);
 
   public final DesignerEditorPanel getDesignerPanel() {
     return myDesignerPanel;

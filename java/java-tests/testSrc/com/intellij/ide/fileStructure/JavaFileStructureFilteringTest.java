@@ -29,5 +29,7 @@ public class JavaFileStructureFilteringTest extends JavaFileStructureTestCase {
   public void testAnonymousType()throws Exception{checkTree("point");}
   public void testCamel()throws Exception{checkTree("sohe");}
   public void testCamel2()throws Exception{checkTree("soHe");}
+  public void testSelectLeafFirst()throws Exception{checkTree("clear");}
+  public void testSelectLeafFirst2()throws Exception{checkTree("clear");}
 
 }
