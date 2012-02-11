@@ -1,7 +1,6 @@
 package org.jetbrains.jps.incremental;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.incremental.groovy.GroovyBuilder;
 import org.jetbrains.jps.incremental.java.JavaBuilder;
 import org.jetbrains.jps.incremental.resources.ResourcesBuilder;
 
@@ -16,9 +15,6 @@ public class JavaBuilderService extends BuilderService {
   @NotNull
   @Override
   public List<? extends ModuleLevelBuilder> createModuleLevelBuilders(ExecutorService executorService) {
-    return Arrays.asList(new GroovyBuilder(true),
-                         new JavaBuilder(executorService),
-                         new ResourcesBuilder(),
-                         new GroovyBuilder(false));
+    return Arrays.asList(new JavaBuilder(executorService), new ResourcesBuilder());
   }
 }

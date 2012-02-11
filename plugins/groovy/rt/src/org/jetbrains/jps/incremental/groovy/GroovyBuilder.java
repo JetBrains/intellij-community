@@ -33,12 +33,12 @@ import java.util.*;
  */
 public class GroovyBuilder extends ModuleLevelBuilder {
   public static final String BUILDER_NAME = "groovy";
-  private static final Key<Boolean> CHUNK_REBUILD_ORDERED = Key.<Boolean>create("CHUNK_REBUILD_ORDERED");
+  private static final Key<Boolean> CHUNK_REBUILD_ORDERED = Key.create("CHUNK_REBUILD_ORDERED");
   private final boolean myForStubs;
   private final String myBuilderName;
 
   public GroovyBuilder(boolean forStubs) {
-    super(BuilderCategory.TRANSLATOR);
+    super(forStubs ? BuilderCategory.SOURCE_GENERATOR : BuilderCategory.OVERWRITING_TRANSLATOR);
     myForStubs = forStubs;
     myBuilderName = BUILDER_NAME + (forStubs ? "-stubs" : "-classes");
   }
@@ -88,7 +88,6 @@ public class GroovyBuilder extends ModuleLevelBuilder {
       try {
         final Process process = Runtime.getRuntime().exec(ArrayUtil.toStringArray(cmd));
         GroovycOSProcessHandler handler = GroovycOSProcessHandler.runGroovyc(process, new Consumer<String>() {
-          @Override
           public void consume(String s) {
             context.processMessage(new ProgressMessage(s));
           }
@@ -144,7 +143,6 @@ public class GroovyBuilder extends ModuleLevelBuilder {
   private static List<File> collectChangedFiles(CompileContext context, ModuleChunk chunk) throws IOException {
     final List<File> toCompile = new ArrayList<File>();
     context.processFilesToRecompile(chunk, new FileProcessor() {
-      @Override
       public boolean apply(Module module, File file, String sourceRoot) throws IOException {
         final String path = file.getPath();
         if (isGroovyFile(path)) { //todo file type check
