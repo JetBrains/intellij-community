@@ -10,6 +10,7 @@ import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
+import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import java.util.HashSet;
@@ -20,7 +21,6 @@ import java.util.Set;
  *         Date: 2/1/12
  *
  */
-//@SupportedSourceVersion(SourceVersion.RELEASE_7)
 @SupportedAnnotationTypes("*")
 public class JavacASTAnalyser extends AbstractProcessor{
   private Trees myTrees;
@@ -30,6 +30,11 @@ public class JavacASTAnalyser extends AbstractProcessor{
   public JavacASTAnalyser(DiagnosticOutputConsumer outputConsumer, boolean suppressOtherProcessors) {
     myOutputConsumer = outputConsumer;
     mySuppressOtherProcessors = suppressOtherProcessors;
+  }
+
+  @Override
+  public SourceVersion getSupportedSourceVersion() {
+    return SourceVersion.latest();
   }
 
   @Override
