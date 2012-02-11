@@ -369,23 +369,23 @@ public class IncProjectBuilder {
   private void runModuleLevelBuilders(final CompileContext context, ModuleChunk chunk) throws ProjectBuildException {
     boolean rebuildFromScratchRequested = false;
     float stageCount = myTotalModuleLevelBuilderCount;
+    final int modulesInChunk = chunk.getModules().size();
+    int buildersPassed = 0;
+    boolean nextPassRequired;
+
     CHUNK_BUILD_START:
-    for (BuilderCategory category : BuilderCategory.values()) {
-      final List<ModuleLevelBuilder> builders = myBuilderRegistry.getBuilders(category);
-      if (builders.isEmpty()) {
-        continue;
+    do {
+      nextPassRequired = false;
+      context.beforeCompileRound(chunk);
+
+      if (!context.isProjectRebuild()) {
+        syncOutputFiles(context, chunk);
       }
 
-      final int modulesInChunk = chunk.getModules().size();
-      int buildersPassed = 0;
-
-      boolean nextPassRequired;
-      do {
-        nextPassRequired = false;
-        context.beforeCompileRound(chunk);
-
-        if (!context.isProjectRebuild()) {
-          syncOutputFiles(context, chunk);
+      for (BuilderCategory category : BuilderCategory.values()) {
+        final List<ModuleLevelBuilder> builders = myBuilderRegistry.getBuilders(category);
+        if (builders.isEmpty()) {
+          continue;
         }
 
         for (ModuleLevelBuilder builder : builders) {
@@ -399,7 +399,7 @@ public class IncProjectBuilder {
             if (!nextPassRequired) {
               // recalculate basis
               myModulesProcessed -= (buildersPassed * modulesInChunk) / stageCount;
-              stageCount += builders.size();
+              stageCount += myTotalModuleLevelBuilderCount;
               myModulesProcessed += (buildersPassed * modulesInChunk) / stageCount;
             }
             nextPassRequired = true;
@@ -413,6 +413,8 @@ public class IncProjectBuilder {
                 context.markDirty(chunk);
                 // reverting to the beginning
                 myModulesProcessed -= (buildersPassed * modulesInChunk) / stageCount;
+                stageCount = myTotalModuleLevelBuilderCount;
+                buildersPassed = 0;
                 break CHUNK_BUILD_START;
               }
               catch (Exception e) {
@@ -429,10 +431,8 @@ public class IncProjectBuilder {
           context.setDone(fraction);
         }
       }
-      while (nextPassRequired);
-
-      context.afterCompileRound();
     }
+    while (nextPassRequired);
   }
 
   private void runProjectLevelBuilders(CompileContext context) throws ProjectBuildException {
