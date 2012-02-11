@@ -6,8 +6,10 @@ import com.sun.source.tree.Tree;
 import com.sun.source.util.TreeScanner;
 import com.sun.source.util.Trees;
 
-import javax.annotation.processing.*;
-import javax.lang.model.SourceVersion;
+import javax.annotation.processing.AbstractProcessor;
+import javax.annotation.processing.ProcessingEnvironment;
+import javax.annotation.processing.RoundEnvironment;
+import javax.annotation.processing.SupportedAnnotationTypes;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import java.util.HashSet;
@@ -18,7 +20,7 @@ import java.util.Set;
  *         Date: 2/1/12
  *
  */
-@SupportedSourceVersion(SourceVersion.RELEASE_7)
+//@SupportedSourceVersion(SourceVersion.RELEASE_7)
 @SupportedAnnotationTypes("*")
 public class JavacASTAnalyser extends AbstractProcessor{
   private Trees myTrees;
