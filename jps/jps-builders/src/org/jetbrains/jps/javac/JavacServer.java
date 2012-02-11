@@ -122,6 +122,12 @@ public class JavacServer {
         final JavacRemoteProto.Message.Response response = JavacProtoUtil.createBuildMessageResponse(diagnostic);
         Channels.write(ctx.getChannel(), JavacProtoUtil.toMessage(sessionId, response));
       }
+
+      @Override
+      public void registerImports(String className, Collection<String> imports, Collection<String> staticImports) {
+        final JavacRemoteProto.Message.Response response = JavacProtoUtil.createClassDataResponse(className, imports, staticImports);
+        Channels.write(ctx.getChannel(), JavacProtoUtil.toMessage(sessionId, response));
+      }
     };
 
     final OutputFileConsumer outputSink = new OutputFileConsumer() {

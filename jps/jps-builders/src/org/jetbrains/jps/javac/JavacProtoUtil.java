@@ -4,8 +4,7 @@ import com.google.protobuf.ByteString;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.Nullable;
 
-import javax.tools.Diagnostic;
-import javax.tools.JavaFileObject;
+import javax.tools.*;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.PrintStream;
@@ -83,6 +82,20 @@ public class JavacProtoUtil {
     final JavacRemoteProto.Message.Response.Builder builder = JavacRemoteProto.Message.Response.newBuilder();
     builder.setResponseType(JavacRemoteProto.Message.Response.Type.OUTPUT_OBJECT).setOutputObject(msgBuilder.build());
 
+    return builder.build();
+  }
+
+  public static JavacRemoteProto.Message.Response createClassDataResponse(String className, Collection<String> imports, Collection<String> staticImports) {
+    final JavacRemoteProto.Message.Response.ClassData.Builder msgBuilder = JavacRemoteProto.Message.Response.ClassData.newBuilder();
+    msgBuilder.setClassName(className);
+    if (!imports.isEmpty()) {
+      msgBuilder.addAllImportStatement(imports);
+    }
+    if (!staticImports.isEmpty()) {
+      msgBuilder.addAllStaticImport(imports);
+    }
+    final JavacRemoteProto.Message.Response.Builder builder = JavacRemoteProto.Message.Response.newBuilder();
+    builder.setResponseType(JavacRemoteProto.Message.Response.Type.CLASS_DATA).setClassData(msgBuilder.build());
     return builder.build();
   }
 

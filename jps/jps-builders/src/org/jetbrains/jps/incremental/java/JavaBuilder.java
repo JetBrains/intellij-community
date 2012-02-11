@@ -70,6 +70,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
   private static final Key<Callbacks.Backend> DELTA_MAPPINGS_CALLBACK_KEY = Key.create("_dependency_data_");
   private final ExecutorService myTaskRunner;
+  private int myTasksInProgress = 0;
+  private final Object myCounterLock = new Object();
   private final List<ClassPostProcessor> myClassProcessors = new ArrayList<ClassPostProcessor>();
 
   public JavaBuilder(ExecutorService tasksExecutor) {
@@ -375,9 +377,44 @@ public class JavaBuilder extends ModuleLevelBuilder {
       return rc;
     }
     finally {
-      classesConsumer.ensurePendingTasksCompleted();
+      ensurePendingTasksCompleted();
     }
   }
+
+  private void ensurePendingTasksCompleted() {
+    synchronized (myCounterLock) {
+      while (myTasksInProgress > 0) {
+        try {
+          myCounterLock.wait();
+        }
+        catch (InterruptedException ignored) {
+        }
+      }
+    }
+  }
+
+  private void submitAsyncTask(final Runnable taskRunnable) {
+    synchronized (myCounterLock) {
+      myTasksInProgress++;
+    }
+    myTaskRunner.submit(new Runnable() {
+      public void run() {
+        try {
+          taskRunnable.run();
+        }
+        finally {
+          synchronized (myCounterLock) {
+            myTasksInProgress = Math.max(0, myTasksInProgress - 1);
+            if (myTasksInProgress == 0) {
+              myCounterLock.notifyAll();
+            }
+          }
+        }
+      }
+    });
+  }
+
+
 
   private static JavacServerClient ensureJavacServerLaunched(CompileContext context) throws Exception {
     final ExternalJavacDescriptor descriptor = ExternalJavacDescriptor.KEY.get(context);
@@ -736,13 +773,27 @@ public class JavaBuilder extends ModuleLevelBuilder {
     return version >= Opcodes.V1_6 && version != Opcodes.V1_1 ? ClassWriter.COMPUTE_FRAMES : ClassWriter.COMPUTE_MAXS;
   }
 
-  private static class DiagnosticSink implements DiagnosticOutputConsumer {
+  private class DiagnosticSink implements DiagnosticOutputConsumer {
     private final CompileContext myContext;
     private volatile int myErrorCount = 0;
     private volatile int myWarningCount = 0;
 
     public DiagnosticSink(CompileContext context) {
       myContext = context;
+    }
+
+    public void registerImports(final String className, final Collection<String> imports, final Collection<String> staticImports) {
+      submitAsyncTask(new Runnable() {
+        public void run() {
+          final Callbacks.Backend callback = DELTA_MAPPINGS_CALLBACK_KEY.get(myContext);
+          if (callback != null) {
+            final BuildDataManager dataManager = myContext.getDataManager();
+            synchronized (dataManager.getMappings()) {
+              callback.registerImports(className, imports, staticImports);
+            }
+          }
+        }
+      });
     }
 
     public void outputLineAvailable(String line) {
@@ -1068,8 +1119,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
   private class ClassProcessingConsumer implements OutputFileConsumer {
     private final CompileContext myCompileContext;
     private final OutputFileConsumer myDelegateOutputFileSink;
-    private int myTasksInProgress = 0;
-    private final Object myCounterLock = new Object();
 
     public ClassProcessingConsumer(CompileContext compileContext, OutputFileConsumer sink) {
       myCompileContext = compileContext;
@@ -1081,8 +1130,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
 
     public void save(@NotNull final OutputFileObject fileObject) {
-      incTaskCount();
-      myTaskRunner.submit(new Runnable() {
+      submitAsyncTask(new Runnable() {
         public void run() {
           try {
             for (ClassPostProcessor processor : myClassProcessors) {
@@ -1090,43 +1138,10 @@ public class JavaBuilder extends ModuleLevelBuilder {
             }
           }
           finally {
-            try {
-              myDelegateOutputFileSink.save(fileObject);
-            }
-            finally {
-              decTaskCount();
-            }
+            myDelegateOutputFileSink.save(fileObject);
           }
         }
       });
     }
-
-    private void decTaskCount() {
-      synchronized (myCounterLock) {
-        myTasksInProgress = Math.max(0, myTasksInProgress - 1);
-        if (myTasksInProgress == 0) {
-          myCounterLock.notifyAll();
-        }
-      }
-    }
-
-    private void incTaskCount() {
-      synchronized (myCounterLock) {
-        myTasksInProgress++;
-      }
-    }
-
-    public void ensurePendingTasksCompleted() {
-      synchronized (myCounterLock) {
-        while (myTasksInProgress > 0) {
-          try {
-            myCounterLock.wait();
-          }
-          catch (InterruptedException ignored) {
-          }
-        }
-      }
-    }
-
   }
 }

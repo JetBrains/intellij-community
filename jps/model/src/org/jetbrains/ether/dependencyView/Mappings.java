@@ -1733,22 +1733,23 @@ public class Mappings {
       }
 
       @Override
-      public void markOverride(final String className, final String methodName, final String methodSignature) {
-        //To change body of implemented methods use File | Settings | File Templates.
-      }
-
-      @Override
       public void registerConstantUsage(final String className, final String fieldName, final String fieldOwner) {
         //To change body of implemented methods use File | Settings | File Templates.
       }
 
       @Override
-      public void registerImports(final Collection<String> imports, final String rootClass) {
-        final DependencyContext.S rootClassName = myContext.get(rootClass);
+      public void registerImports(final String className, final Collection<String> imports, Collection<String> staticImports) {
+        // todo: proces static imports as well
+        final DependencyContext.S rootClassName = myContext.get(className.replace(".", "/"));
+
+        // todo: postpone processing until data collected is complete and myClassToSourceFile contains the mapping
         final DependencyContext.S fileName = myClassToSourceFile.get(rootClassName);
 
         for (final String i : imports) {
-          final DependencyContext.S iname = myContext.get(i);
+          if (i.endsWith("*")) {
+            continue; // filter out wildcard imports
+          }
+          final DependencyContext.S iname = myContext.get(i.replace(".", "/"));
 
           myClassToClassDependency.put(rootClassName, iname);
 

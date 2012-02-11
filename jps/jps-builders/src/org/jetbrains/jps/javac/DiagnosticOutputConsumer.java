@@ -1,7 +1,7 @@
 package org.jetbrains.jps.javac;
 
-import javax.tools.DiagnosticListener;
-import javax.tools.JavaFileObject;
+import javax.tools.*;
+import java.util.Collection;
 
 /**
 * @author Eugene Zhuravlev
@@ -9,4 +9,5 @@ import javax.tools.JavaFileObject;
 */
 public interface DiagnosticOutputConsumer extends DiagnosticListener<JavaFileObject> {
   void outputLineAvailable(String line);
+  void registerImports(String className, Collection<String> imports, Collection<String> staticImports);
 }

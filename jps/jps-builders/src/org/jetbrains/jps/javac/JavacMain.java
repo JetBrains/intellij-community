@@ -68,8 +68,8 @@ public class JavacMain {
       final JavaCompiler.CompilationTask task = compiler.getTask(
         out, fileManager, outConsumer, filterOptionList(options), null, fileManager.toJavaFileObjects(sources)
       );
-      //final JavacASTAnalyser analyzer = new JavacASTAnalyser(shouldSuppressAnnotationProcessing(options));
-      //task.setProcessors(Collections.singleton(analyzer));
+      final JavacASTAnalyser analyzer = new JavacASTAnalyser(outConsumer, shouldSuppressAnnotationProcessing(options));
+      task.setProcessors(Collections.singleton(analyzer));
       return task.call();
     }
     finally {
