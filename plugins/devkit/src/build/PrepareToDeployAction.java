@@ -94,7 +94,7 @@ public class PrepareToDeployAction extends AnAction {
                                  }
 
                                  if (!errorMessages.isEmpty()) {
-                                   Messages.showErrorDialog(errorMessages.iterator().next(), DevKitBundle.message("error.occured"));
+                                   Messages.showErrorDialog(errorMessages.iterator().next(), DevKitBundle.message("error.occurred"));
                                  }
                                  else if (!successMessages.isEmpty()) {
                                    StringBuffer messageBuf = new StringBuffer();

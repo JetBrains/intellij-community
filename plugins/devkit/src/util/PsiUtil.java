@@ -27,7 +27,7 @@ public class PsiUtil {
   private PsiUtil() {
   }
 
-  public static boolean isInstanciatable(@NotNull PsiClass cls) {
+  public static boolean isInstantiatable(@NotNull PsiClass cls) {
     final PsiModifierList modifiers = cls.getModifierList();
 
     if (modifiers == null
