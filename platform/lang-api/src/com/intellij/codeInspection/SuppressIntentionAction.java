@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,10 +39,13 @@ public abstract class SuppressIntentionAction extends PsiElementBaseIntentionAct
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     final CaretModel caretModel = editor.getCaretModel();
     final int position = caretModel.getOffset();
-    invoke(project, editor, file.findElementAt(position));
+    final PsiElement element = file.findElementAt(position);
+    if (element != null) {
+      invoke(project, editor, element);
+    }
   }
 
-  public abstract void invoke(Project project, Editor editor, PsiElement element) throws IncorrectOperationException;
+  public abstract void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException;
 
   public Icon getIcon(int flags) {
     return ICON;
