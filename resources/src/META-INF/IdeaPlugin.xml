@@ -632,6 +632,7 @@
       <className>com.intellij.codeInsight.intention.impl.ConcatenationToMessageFormatAction</className>
       <category>I18N</category>
     </intentionAction>
+
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.ConvertToBasicLatinAction</className>
       <category>I18N</category>
@@ -691,6 +692,11 @@
     <intentionAction>
       <className>com.intellij.codeInsight.daemon.impl.quickfix.ConvertToStringLiteralAction</className>
       <category>Strings</category>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.SurroundAutoCloseableAction</className>
+      <category>Declaration</category>
     </intentionAction>
 
     <lang.parserDefinition language="JAVA" implementationClass="com.intellij.lang.java.JavaParserDefinition"/>

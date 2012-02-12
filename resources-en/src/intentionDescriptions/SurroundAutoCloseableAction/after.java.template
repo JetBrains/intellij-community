@@ -1,0 +1,2 @@
+try (InputStream stream = connection.getInputStream()) {
+}
