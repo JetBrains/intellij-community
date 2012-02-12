@@ -43,6 +43,11 @@ public class GeneralProjectSettingsElement extends ProjectStructureElement {
   }
 
   @Override
+  public String getTypeName() {
+    return "Project";
+  }
+
+  @Override
   public void check(ProjectStructureProblemsHolder problemsHolder) {
     final Graph<Chunk<ModifiableRootModel>> graph = ModuleCompilerUtil.toChunkGraph(
       myContext.getModulesConfigurator().createGraphGenerator());

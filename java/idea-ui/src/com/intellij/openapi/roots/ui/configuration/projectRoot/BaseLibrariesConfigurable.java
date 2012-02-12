@@ -33,6 +33,8 @@ import com.intellij.openapi.roots.ui.configuration.libraryEditor.CreateNewLibrar
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.*;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -250,42 +252,37 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
     if (table != null) {
       final Collection<ProjectStructureElementUsage> usages = myContext.getDaemonAnalyzer().getUsages(getSelectedElement());
       if (usages.size() > 0) {
-        final List<String> modules = new ArrayList<String>();
-        final List<String> artifacts = new ArrayList<String>();
+        final MultiMap<String, ProjectStructureElementUsage> containerType2Usage = new MultiMap<String, ProjectStructureElementUsage>();
         for (final ProjectStructureElementUsage usage : usages) {
-          if (usage instanceof UsageInModuleClasspath) {
-            modules.add(usage.getPresentableName());
-          } else if (usage instanceof UsageInArtifact) {
-            artifacts.add(usage.getPresentableName());
-          } else {
-            LOG.error("Unknown usage: " + usage.getClass().getName());
+          containerType2Usage.putValue(usage.getContainingElement().getTypeName(), usage);
+        }
+
+        List<String> types = new ArrayList<String>(containerType2Usage.keySet());
+        Collections.sort(types);
+
+        final StringBuilder sb = new StringBuilder("Library '");
+        sb.append(library.getName()).append("' is used in ");
+        for (int i = 0; i < types.size(); i++) {
+          if (i == types.size() - 1) {
+            sb.append(" and in ");
+          }
+          else if (i > 0) {
+            sb.append(", in ");
+          }
+          String type = types.get(i);
+          Collection<ProjectStructureElementUsage> usagesOfType = containerType2Usage.get(type);
+          if (usagesOfType.size() > 1) {
+            sb.append(usagesOfType.size()).append(" ").append(StringUtil.decapitalize(StringUtil.pluralize(type)));
+          }
+          else {
+            sb.append(StringUtil.decapitalize(usagesOfType.iterator().next().getContainingElement().getPresentableName()));
           }
         }
 
-        final StringBuilder sb = new StringBuilder("Library \"");
-        sb.append(library.getName()).append("\" is used in ");
-        if (modules.size() > 0) {
-          if (modules.size() == 1) {
-            sb.append("module ").append("\"").append(modules.get(0)).append("\"");
-          } else {
-            sb.append(modules.size()).append(" modules");
-          }
-        }
-
-        if (artifacts.size() > 0) {
-          sb.append(modules.size() > 0 ? " and in " : "");
-
-          if (artifacts.size() == 1) {
-            sb.append("artifact ").append("\"").append(artifacts.get(0)).append("\".");
-          } else {
-            sb.append(artifacts.size()).append(" artifacts.");
-          }
-        }
-
-        sb.append("\n\nAre you sure you want to delete this library?");
+        sb.append(".\n\nAre you sure you want to delete this library?");
 
         if (DialogWrapper.OK_EXIT_CODE == Messages.showOkCancelDialog(myProject, sb.toString(),
-                                    "Confirm Library Deletion", Messages.getQuestionIcon())) {
+                                    "Delete Library", Messages.getQuestionIcon())) {
 
           final ModuleStructureConfigurable rootConfigurable = ModuleStructureConfigurable.getInstance(myProject);
           for (final ProjectStructureElementUsage usage : usages) {

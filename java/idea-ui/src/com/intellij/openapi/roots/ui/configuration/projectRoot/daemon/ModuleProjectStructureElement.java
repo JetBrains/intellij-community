@@ -141,6 +141,11 @@ public class ModuleProjectStructureElement extends ProjectStructureElement {
   }
 
   @Override
+  public String getTypeName() {
+    return "Module";
+  }
+
+  @Override
   public String getId() {
     return "module:" + myModule.getName();
   }

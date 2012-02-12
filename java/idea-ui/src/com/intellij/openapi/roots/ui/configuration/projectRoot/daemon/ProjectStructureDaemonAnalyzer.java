@@ -86,7 +86,7 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
         if (LOG.isDebugEnabled()) {
           LOG.debug("collecting usages in " + element);
         }
-        result.setResult(element.getUsagesInElement());
+        result.setResult(getUsagesInElement(element));
       }
     }.execute().getResultObject();
 
@@ -100,6 +100,10 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
         updateUsages(element, usages);
       }
     });
+  }
+
+  private static List<ProjectStructureElementUsage> getUsagesInElement(final ProjectStructureElement element) {
+    return ProjectStructureValidator.getUsagesInElement(element);
   }
 
   private void updateUsages(ProjectStructureElement element, List<ProjectStructureElementUsage> usages) {
@@ -233,7 +237,7 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
   public Collection<ProjectStructureElementUsage> getUsages(ProjectStructureElement selected) {
     ProjectStructureElement[] elements = myElementWithNotCalculatedUsages.toArray(new ProjectStructureElement[myElementWithNotCalculatedUsages.size()]);
     for (ProjectStructureElement element : elements) {
-      updateUsages(element, element.getUsagesInElement());
+      updateUsages(element, getUsagesInElement(element));
     }
     final Collection<ProjectStructureElementUsage> usages = mySourceElement2Usages.get(selected);
     return usages != null ? usages : Collections.<ProjectStructureElementUsage>emptyList();
