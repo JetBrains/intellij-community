@@ -47,7 +47,6 @@ public abstract class GrBinaryExpressionImpl extends GrExpressionImpl implements
       @Override
       public GroovyResolveResult[] resolve(GrBinaryExpressionImpl binary, boolean incompleteCode) {
         final IElementType opType = binary.getOperationTokenType();
-        if (opType == null) return GroovyResolveResult.EMPTY_ARRAY;
 
         final PsiType lType = binary.getLeftOperand().getType();
         if (lType == null) return GroovyResolveResult.EMPTY_ARRAY;
@@ -80,33 +79,27 @@ public abstract class GrBinaryExpressionImpl extends GrExpressionImpl implements
 
   @NotNull
   public GrExpression getLeftOperand() {
-    GrExpression result = findChildByClass(GrExpression.class);
-    assert result != null;
-    return result;
-  }
-
-  public GrExpression getRightOperand() {
-    GrExpression left = getLeftOperand();
-    PsiElement run = left.getNextSibling();
-    while (run != null) {
-      if (run instanceof GrExpression) return (GrExpression) run;
-      run = run.getNextSibling();
-    }
-    return null;
+    return findNotNullChildByClass(GrExpression.class);
   }
 
   @Nullable
+  public GrExpression getRightOperand() {
+    final PsiElement last = getLastChild();
+    if (last instanceof GrExpression) return (GrExpression)last;
+    return null;
+  }
+
+  @NotNull
   public IElementType getOperationTokenType() {
     final PsiElement child = getOperationToken();
-    if (child == null) return null;
     final ASTNode node = child.getNode();
     assert node != null;
     return node.getElementType();
   }
 
-  @Nullable
+  @NotNull
   public PsiElement getOperationToken() {
-    return findChildByType(TokenSets.BINARY_OP_SET);
+    return findNotNullChildByType(TokenSets.BINARY_OP_SET);
   }
 
   public void accept(GroovyElementVisitor visitor) {
@@ -137,7 +130,6 @@ public abstract class GrBinaryExpressionImpl extends GrExpressionImpl implements
   @Override
   public TextRange getRangeInElement() {
     final PsiElement token = getOperationToken();
-    assert token != null;
     final int offset = token.getStartOffsetInParent();
     return new TextRange(offset, offset + token.getTextLength());
   }
@@ -181,10 +173,6 @@ public abstract class GrBinaryExpressionImpl extends GrExpressionImpl implements
 
   @Override
   public PsiReference getReference() {
-    final PsiElement token = getOperationToken();
-    if (token != null) {
-      return this;
-    }
-    return null;
+    return this;
   }
 }
