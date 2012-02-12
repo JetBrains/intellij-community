@@ -21,8 +21,8 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.CallEnvironment;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.CallInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 
+import java.util.Deque;
 import java.util.LinkedHashSet;
-import java.util.Stack;
 
 /**
  * @author ven
@@ -44,12 +44,8 @@ public class InstructionImpl implements Instruction {
     myNumber = num;
   }
 
-  protected static Stack<CallInstruction> getStack(CallEnvironment env, InstructionImpl instruction) {
-    return env.callStack(instruction);
-  }
-
   public Iterable<? extends Instruction> successors(CallEnvironment environment) {
-    final Stack<CallInstruction> stack = getStack(environment, this);
+    final Deque<CallInstruction> stack = environment.callStack(this);
     for (InstructionImpl instruction : mySuccessors) {
       environment.update(stack, instruction);
     }
@@ -58,7 +54,7 @@ public class InstructionImpl implements Instruction {
   }
 
   public Iterable<? extends Instruction> predecessors(CallEnvironment environment) {
-    final Stack<CallInstruction> stack = getStack(environment, this);
+    final Deque<CallInstruction> stack = environment.callStack(this);
     for (InstructionImpl instruction : myPredecessors) {
       environment.update(stack, instruction);
     }

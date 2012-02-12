@@ -40,7 +40,7 @@ public class AfterCallInstruction extends InstructionImpl {
   }
 
   public Iterable<? extends Instruction> predecessors(CallEnvironment environment) {
-    getStack(environment, myReturnInstruction).push(myCall);
+    environment.callStack(myReturnInstruction).push(myCall);
     return Collections.singletonList(myReturnInstruction);
   }
 

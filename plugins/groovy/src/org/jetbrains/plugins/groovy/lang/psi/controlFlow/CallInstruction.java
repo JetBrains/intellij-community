@@ -35,7 +35,7 @@ public class CallInstruction extends InstructionImpl {
   }
 
   public Iterable<? extends Instruction> successors(CallEnvironment environment) {
-    getStack(environment, myCallee).push(this);
+    environment.callStack(myCallee).push(this);
     return Collections.singletonList(myCallee);
   }
 

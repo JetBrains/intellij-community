@@ -20,10 +20,7 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.CallInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ControlFlowBuilderUtil;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.Queue;
-import java.util.Stack;
+import java.util.*;
 
 /**
  * @author ven
@@ -34,29 +31,27 @@ public class DFAEngine<E> {
   private final DfaInstance<E> myDfa;
   private final Semilattice<E> mySemilattice;
 
-  public DFAEngine(Instruction[] flow,
-                   DfaInstance<E> dfa,
-                   Semilattice<E> semilattice) {
+  public DFAEngine(Instruction[] flow, DfaInstance<E> dfa, Semilattice<E> semilattice) {
     myFlow = flow;
     myDfa = dfa;
     mySemilattice = semilattice;
   }
 
   private static class MyCallEnvironment implements CallEnvironment {
-    ArrayList<Stack<CallInstruction>> myEnv;
+    ArrayList<Deque<CallInstruction>> myEnv;
 
     private MyCallEnvironment(int instructionNum) {
-      myEnv = new ArrayList<Stack<CallInstruction>>(instructionNum);
+      myEnv = new ArrayList<Deque<CallInstruction>>(instructionNum);
       for (int i = 0; i < instructionNum; i++) {
-        myEnv.add(new Stack<CallInstruction>());
+        myEnv.add(new ArrayDeque<CallInstruction>());
       }
     }
 
-    public Stack<CallInstruction> callStack(Instruction instruction) {
+    public Deque<CallInstruction> callStack(Instruction instruction) {
       return myEnv.get(instruction.num());
     }
 
-    public void update(Stack<CallInstruction> callStack, Instruction instruction) {
+    public void update(Deque<CallInstruction> callStack, Instruction instruction) {
       myEnv.set(instruction.num(), callStack);
     }
   }
