@@ -1831,8 +1831,9 @@ public final class JavacRemoteProto {
           implements com.google.protobuf.Internal.EnumLite {
         BUILD_MESSAGE(0, 1),
         OUTPUT_OBJECT(1, 2),
-        BUILD_COMPLETED(2, 3),
-        REQUEST_ACK(3, 4),
+        CLASS_DATA(2, 3),
+        BUILD_COMPLETED(3, 4),
+        REQUEST_ACK(4, 5),
         ;
         
         
@@ -1842,8 +1843,9 @@ public final class JavacRemoteProto {
           switch (value) {
             case 1: return BUILD_MESSAGE;
             case 2: return OUTPUT_OBJECT;
-            case 3: return BUILD_COMPLETED;
-            case 4: return REQUEST_ACK;
+            case 3: return CLASS_DATA;
+            case 4: return BUILD_COMPLETED;
+            case 5: return REQUEST_ACK;
             default: return null;
           }
         }
@@ -3014,6 +3016,496 @@ public final class JavacRemoteProto {
         // @@protoc_insertion_point(class_scope:org.jetbrains.javac.Message.Response.OutputObject)
       }
       
+      public static final class ClassData extends
+          com.google.protobuf.GeneratedMessageLite {
+        // Use ClassData.newBuilder() to construct.
+        private ClassData() {
+          initFields();
+        }
+        private ClassData(boolean noInit) {}
+        
+        private static final ClassData defaultInstance;
+        public static ClassData getDefaultInstance() {
+          return defaultInstance;
+        }
+        
+        public ClassData getDefaultInstanceForType() {
+          return defaultInstance;
+        }
+        
+        // required string class_name = 1;
+        public static final int CLASS_NAME_FIELD_NUMBER = 1;
+        private boolean hasClassName;
+        private java.lang.String className_ = "";
+        public boolean hasClassName() { return hasClassName; }
+        public java.lang.String getClassName() { return className_; }
+        
+        // repeated string import_statement = 2;
+        public static final int IMPORT_STATEMENT_FIELD_NUMBER = 2;
+        private java.util.List<java.lang.String> importStatement_ =
+          java.util.Collections.emptyList();
+        public java.util.List<java.lang.String> getImportStatementList() {
+          return importStatement_;
+        }
+        public int getImportStatementCount() { return importStatement_.size(); }
+        public java.lang.String getImportStatement(int index) {
+          return importStatement_.get(index);
+        }
+        
+        // repeated string static_import = 3;
+        public static final int STATIC_IMPORT_FIELD_NUMBER = 3;
+        private java.util.List<java.lang.String> staticImport_ =
+          java.util.Collections.emptyList();
+        public java.util.List<java.lang.String> getStaticImportList() {
+          return staticImport_;
+        }
+        public int getStaticImportCount() { return staticImport_.size(); }
+        public java.lang.String getStaticImport(int index) {
+          return staticImport_.get(index);
+        }
+        
+        // repeated string identifier = 4;
+        public static final int IDENTIFIER_FIELD_NUMBER = 4;
+        private java.util.List<java.lang.String> identifier_ =
+          java.util.Collections.emptyList();
+        public java.util.List<java.lang.String> getIdentifierList() {
+          return identifier_;
+        }
+        public int getIdentifierCount() { return identifier_.size(); }
+        public java.lang.String getIdentifier(int index) {
+          return identifier_.get(index);
+        }
+        
+        private void initFields() {
+        }
+        public final boolean isInitialized() {
+          if (!hasClassName) return false;
+          return true;
+        }
+        
+        public void writeTo(com.google.protobuf.CodedOutputStream output)
+                            throws java.io.IOException {
+          getSerializedSize();
+          if (hasClassName()) {
+            output.writeString(1, getClassName());
+          }
+          for (java.lang.String element : getImportStatementList()) {
+            output.writeString(2, element);
+          }
+          for (java.lang.String element : getStaticImportList()) {
+            output.writeString(3, element);
+          }
+          for (java.lang.String element : getIdentifierList()) {
+            output.writeString(4, element);
+          }
+        }
+        
+        private int memoizedSerializedSize = -1;
+        public int getSerializedSize() {
+          int size = memoizedSerializedSize;
+          if (size != -1) return size;
+        
+          size = 0;
+          if (hasClassName()) {
+            size += com.google.protobuf.CodedOutputStream
+              .computeStringSize(1, getClassName());
+          }
+          {
+            int dataSize = 0;
+            for (java.lang.String element : getImportStatementList()) {
+              dataSize += com.google.protobuf.CodedOutputStream
+                .computeStringSizeNoTag(element);
+            }
+            size += dataSize;
+            size += 1 * getImportStatementList().size();
+          }
+          {
+            int dataSize = 0;
+            for (java.lang.String element : getStaticImportList()) {
+              dataSize += com.google.protobuf.CodedOutputStream
+                .computeStringSizeNoTag(element);
+            }
+            size += dataSize;
+            size += 1 * getStaticImportList().size();
+          }
+          {
+            int dataSize = 0;
+            for (java.lang.String element : getIdentifierList()) {
+              dataSize += com.google.protobuf.CodedOutputStream
+                .computeStringSizeNoTag(element);
+            }
+            size += dataSize;
+            size += 1 * getIdentifierList().size();
+          }
+          memoizedSerializedSize = size;
+          return size;
+        }
+        
+        public static org.jetbrains.jps.javac.JavacRemoteProto.Message.Response.ClassData parseFrom(
+            com.google.protobuf.ByteString data)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return newBuilder().mergeFrom(data).buildParsed();
+        }
+        public static org.jetbrains.jps.javac.JavacRemoteProto.Message.Response.ClassData parseFrom(
+            com.google.protobuf.ByteString data,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return newBuilder().mergeFrom(data, extensionRegistry)
+                   .buildParsed();
+        }
+        public static org.jetbrains.jps.javac.JavacRemoteProto.Message.Response.ClassData parseFrom(byte[] data)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return newBuilder().mergeFrom(data).buildParsed();
+        }
+        public static org.jetbrains.jps.javac.JavacRemoteProto.Message.Response.ClassData parseFrom(
+            byte[] data,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return newBuilder().mergeFrom(data, extensionRegistry)
+                   .buildParsed();
+        }
+        public static org.jetbrains.jps.javac.JavacRemoteProto.Message.Response.ClassData parseFrom(java.io.InputStream input)
+            throws java.io.IOException {
+          return newBuilder().mergeFrom(input).buildParsed();
+        }
+        public static org.jetbrains.jps.javac.JavacRemoteProto.Message.Response.ClassData parseFrom(
+            java.io.InputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+          return newBuilder().mergeFrom(input, extensionRegistry)
+                   .buildParsed();
+        }
+        public static org.jetbrains.jps.javac.JavacRemoteProto.Message.Response.ClassData parseDelimitedFrom(java.io.InputStream input)
+            throws java.io.IOException {
+          Builder builder = newBuilder();
+          if (builder.mergeDelimitedFrom(input)) {
+            return builder.buildParsed();
+          } else {
+            return null;
+          }
+        }
+        public static org.jetbrains.jps.javac.JavacRemoteProto.Message.Response.ClassData parseDelimitedFrom(
+            java.io.InputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+          Builder builder = newBuilder();
+          if (builder.mergeDelimitedFrom(input, extensionRegistry)) {
+            return builder.buildParsed();
+          } else {
+            return null;
+          }
+        }
+        public static org.jetbrains.jps.javac.JavacRemoteProto.Message.Response.ClassData parseFrom(
+            com.google.protobuf.CodedInputStream input)
+            throws java.io.IOException {
+          return newBuilder().mergeFrom(input).buildParsed();
+        }
+        public static org.jetbrains.jps.javac.JavacRemoteProto.Message.Response.ClassData parseFrom(
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+          return newBuilder().mergeFrom(input, extensionRegistry)
+                   .buildParsed();
+        }
+        
+        public static Builder newBuilder() { return Builder.create(); }
+        public Builder newBuilderForType() { return newBuilder(); }
+        public static Builder newBuilder(org.jetbrains.jps.javac.JavacRemoteProto.Message.Response.ClassData prototype) {
+          return newBuilder().mergeFrom(prototype);
+        }
+        public Builder toBuilder() { return newBuilder(this); }
+        
+        public static final class Builder extends
+            com.google.protobuf.GeneratedMessageLite.Builder<
+              org.jetbrains.jps.javac.JavacRemoteProto.Message.Response.ClassData, Builder> {
+          private org.jetbrains.jps.javac.JavacRemoteProto.Message.Response.ClassData result;
+          
+          // Construct using org.jetbrains.jps.javac.JavacRemoteProto.Message.Response.ClassData.newBuilder()
+          private Builder() {}
+          
+          private static Builder create() {
+            Builder builder = new Builder();
+            builder.result = new org.jetbrains.jps.javac.JavacRemoteProto.Message.Response.ClassData();
+            return builder;
+          }
+          
+          protected org.jetbrains.jps.javac.JavacRemoteProto.Message.Response.ClassData internalGetResult() {
+            return result;
+          }
+          
+          public Builder clear() {
+            if (result == null) {
+              throw new IllegalStateException(
+                "Cannot call clear() after build().");
+            }
+            result = new org.jetbrains.jps.javac.JavacRemoteProto.Message.Response.ClassData();
+            return this;
+          }
+          
+          public Builder clone() {
+            return create().mergeFrom(result);
+          }
+          
+          public org.jetbrains.jps.javac.JavacRemoteProto.Message.Response.ClassData getDefaultInstanceForType() {
+            return org.jetbrains.jps.javac.JavacRemoteProto.Message.Response.ClassData.getDefaultInstance();
+          }
+          
+          public boolean isInitialized() {
+            return result.isInitialized();
+          }
+          public org.jetbrains.jps.javac.JavacRemoteProto.Message.Response.ClassData build() {
+            if (result != null && !isInitialized()) {
+              throw newUninitializedMessageException(result);
+            }
+            return buildPartial();
+          }
+          
+          private org.jetbrains.jps.javac.JavacRemoteProto.Message.Response.ClassData buildParsed()
+              throws com.google.protobuf.InvalidProtocolBufferException {
+            if (!isInitialized()) {
+              throw newUninitializedMessageException(
+                result).asInvalidProtocolBufferException();
+            }
+            return buildPartial();
+          }
+          
+          public org.jetbrains.jps.javac.JavacRemoteProto.Message.Response.ClassData buildPartial() {
+            if (result == null) {
+              throw new IllegalStateException(
+                "build() has already been called on this Builder.");
+            }
+            if (result.importStatement_ != java.util.Collections.EMPTY_LIST) {
+              result.importStatement_ =
+                java.util.Collections.unmodifiableList(result.importStatement_);
+            }
+            if (result.staticImport_ != java.util.Collections.EMPTY_LIST) {
+              result.staticImport_ =
+                java.util.Collections.unmodifiableList(result.staticImport_);
+            }
+            if (result.identifier_ != java.util.Collections.EMPTY_LIST) {
+              result.identifier_ =
+                java.util.Collections.unmodifiableList(result.identifier_);
+            }
+            org.jetbrains.jps.javac.JavacRemoteProto.Message.Response.ClassData returnMe = result;
+            result = null;
+            return returnMe;
+          }
+          
+          public Builder mergeFrom(org.jetbrains.jps.javac.JavacRemoteProto.Message.Response.ClassData other) {
+            if (other == org.jetbrains.jps.javac.JavacRemoteProto.Message.Response.ClassData.getDefaultInstance()) return this;
+            if (other.hasClassName()) {
+              setClassName(other.getClassName());
+            }
+            if (!other.importStatement_.isEmpty()) {
+              if (result.importStatement_.isEmpty()) {
+                result.importStatement_ = new java.util.ArrayList<java.lang.String>();
+              }
+              result.importStatement_.addAll(other.importStatement_);
+            }
+            if (!other.staticImport_.isEmpty()) {
+              if (result.staticImport_.isEmpty()) {
+                result.staticImport_ = new java.util.ArrayList<java.lang.String>();
+              }
+              result.staticImport_.addAll(other.staticImport_);
+            }
+            if (!other.identifier_.isEmpty()) {
+              if (result.identifier_.isEmpty()) {
+                result.identifier_ = new java.util.ArrayList<java.lang.String>();
+              }
+              result.identifier_.addAll(other.identifier_);
+            }
+            return this;
+          }
+          
+          public Builder mergeFrom(
+              com.google.protobuf.CodedInputStream input,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws java.io.IOException {
+            while (true) {
+              int tag = input.readTag();
+              switch (tag) {
+                case 0:
+                  return this;
+                default: {
+                  if (!parseUnknownField(input, extensionRegistry, tag)) {
+                    return this;
+                  }
+                  break;
+                }
+                case 10: {
+                  setClassName(input.readString());
+                  break;
+                }
+                case 18: {
+                  addImportStatement(input.readString());
+                  break;
+                }
+                case 26: {
+                  addStaticImport(input.readString());
+                  break;
+                }
+                case 34: {
+                  addIdentifier(input.readString());
+                  break;
+                }
+              }
+            }
+          }
+          
+          
+          // required string class_name = 1;
+          public boolean hasClassName() {
+            return result.hasClassName();
+          }
+          public java.lang.String getClassName() {
+            return result.getClassName();
+          }
+          public Builder setClassName(java.lang.String value) {
+            if (value == null) {
+    throw new NullPointerException();
+  }
+  result.hasClassName = true;
+            result.className_ = value;
+            return this;
+          }
+          public Builder clearClassName() {
+            result.hasClassName = false;
+            result.className_ = getDefaultInstance().getClassName();
+            return this;
+          }
+          
+          // repeated string import_statement = 2;
+          public java.util.List<java.lang.String> getImportStatementList() {
+            return java.util.Collections.unmodifiableList(result.importStatement_);
+          }
+          public int getImportStatementCount() {
+            return result.getImportStatementCount();
+          }
+          public java.lang.String getImportStatement(int index) {
+            return result.getImportStatement(index);
+          }
+          public Builder setImportStatement(int index, java.lang.String value) {
+            if (value == null) {
+    throw new NullPointerException();
+  }
+  result.importStatement_.set(index, value);
+            return this;
+          }
+          public Builder addImportStatement(java.lang.String value) {
+            if (value == null) {
+    throw new NullPointerException();
+  }
+  if (result.importStatement_.isEmpty()) {
+              result.importStatement_ = new java.util.ArrayList<java.lang.String>();
+            }
+            result.importStatement_.add(value);
+            return this;
+          }
+          public Builder addAllImportStatement(
+              java.lang.Iterable<? extends java.lang.String> values) {
+            if (result.importStatement_.isEmpty()) {
+              result.importStatement_ = new java.util.ArrayList<java.lang.String>();
+            }
+            super.addAll(values, result.importStatement_);
+            return this;
+          }
+          public Builder clearImportStatement() {
+            result.importStatement_ = java.util.Collections.emptyList();
+            return this;
+          }
+          
+          // repeated string static_import = 3;
+          public java.util.List<java.lang.String> getStaticImportList() {
+            return java.util.Collections.unmodifiableList(result.staticImport_);
+          }
+          public int getStaticImportCount() {
+            return result.getStaticImportCount();
+          }
+          public java.lang.String getStaticImport(int index) {
+            return result.getStaticImport(index);
+          }
+          public Builder setStaticImport(int index, java.lang.String value) {
+            if (value == null) {
+    throw new NullPointerException();
+  }
+  result.staticImport_.set(index, value);
+            return this;
+          }
+          public Builder addStaticImport(java.lang.String value) {
+            if (value == null) {
+    throw new NullPointerException();
+  }
+  if (result.staticImport_.isEmpty()) {
+              result.staticImport_ = new java.util.ArrayList<java.lang.String>();
+            }
+            result.staticImport_.add(value);
+            return this;
+          }
+          public Builder addAllStaticImport(
+              java.lang.Iterable<? extends java.lang.String> values) {
+            if (result.staticImport_.isEmpty()) {
+              result.staticImport_ = new java.util.ArrayList<java.lang.String>();
+            }
+            super.addAll(values, result.staticImport_);
+            return this;
+          }
+          public Builder clearStaticImport() {
+            result.staticImport_ = java.util.Collections.emptyList();
+            return this;
+          }
+          
+          // repeated string identifier = 4;
+          public java.util.List<java.lang.String> getIdentifierList() {
+            return java.util.Collections.unmodifiableList(result.identifier_);
+          }
+          public int getIdentifierCount() {
+            return result.getIdentifierCount();
+          }
+          public java.lang.String getIdentifier(int index) {
+            return result.getIdentifier(index);
+          }
+          public Builder setIdentifier(int index, java.lang.String value) {
+            if (value == null) {
+    throw new NullPointerException();
+  }
+  result.identifier_.set(index, value);
+            return this;
+          }
+          public Builder addIdentifier(java.lang.String value) {
+            if (value == null) {
+    throw new NullPointerException();
+  }
+  if (result.identifier_.isEmpty()) {
+              result.identifier_ = new java.util.ArrayList<java.lang.String>();
+            }
+            result.identifier_.add(value);
+            return this;
+          }
+          public Builder addAllIdentifier(
+              java.lang.Iterable<? extends java.lang.String> values) {
+            if (result.identifier_.isEmpty()) {
+              result.identifier_ = new java.util.ArrayList<java.lang.String>();
+            }
+            super.addAll(values, result.identifier_);
+            return this;
+          }
+          public Builder clearIdentifier() {
+            result.identifier_ = java.util.Collections.emptyList();
+            return this;
+          }
+          
+          // @@protoc_insertion_point(builder_scope:org.jetbrains.javac.Message.Response.ClassData)
+        }
+        
+        static {
+          defaultInstance = new ClassData(true);
+          org.jetbrains.jps.javac.JavacRemoteProto.internalForceInit();
+          defaultInstance.initFields();
+        }
+        
+        // @@protoc_insertion_point(class_scope:org.jetbrains.javac.Message.Response.ClassData)
+      }
+      
       // required .org.jetbrains.javac.Message.Response.Type response_type = 1;
       public static final int RESPONSE_TYPE_FIELD_NUMBER = 1;
       private boolean hasResponseType;
@@ -3035,8 +3527,15 @@ public final class JavacRemoteProto {
       public boolean hasOutputObject() { return hasOutputObject; }
       public org.jetbrains.jps.javac.JavacRemoteProto.Message.Response.OutputObject getOutputObject() { return outputObject_; }
       
-      // optional bool completion_status = 4;
-      public static final int COMPLETION_STATUS_FIELD_NUMBER = 4;
+      // optional .org.jetbrains.javac.Message.Response.ClassData class_data = 4;
+      public static final int CLASS_DATA_FIELD_NUMBER = 4;
+      private boolean hasClassData;
+      private org.jetbrains.jps.javac.JavacRemoteProto.Message.Response.ClassData classData_;
+      public boolean hasClassData() { return hasClassData; }
+      public org.jetbrains.jps.javac.JavacRemoteProto.Message.Response.ClassData getClassData() { return classData_; }
+      
+      // optional bool completion_status = 5;
+      public static final int COMPLETION_STATUS_FIELD_NUMBER = 5;
       private boolean hasCompletionStatus;
       private boolean completionStatus_ = false;
       public boolean hasCompletionStatus() { return hasCompletionStatus; }
@@ -3046,6 +3545,7 @@ public final class JavacRemoteProto {
         responseType_ = org.jetbrains.jps.javac.JavacRemoteProto.Message.Response.Type.BUILD_MESSAGE;
         compileMessage_ = org.jetbrains.jps.javac.JavacRemoteProto.Message.Response.CompileMessage.getDefaultInstance();
         outputObject_ = org.jetbrains.jps.javac.JavacRemoteProto.Message.Response.OutputObject.getDefaultInstance();
+        classData_ = org.jetbrains.jps.javac.JavacRemoteProto.Message.Response.ClassData.getDefaultInstance();
       }
       public final boolean isInitialized() {
         if (!hasResponseType) return false;
@@ -3054,6 +3554,9 @@ public final class JavacRemoteProto {
         }
         if (hasOutputObject()) {
           if (!getOutputObject().isInitialized()) return false;
+        }
+        if (hasClassData()) {
+          if (!getClassData().isInitialized()) return false;
         }
         return true;
       }
@@ -3070,8 +3573,11 @@ public final class JavacRemoteProto {
         if (hasOutputObject()) {
           output.writeMessage(3, getOutputObject());
         }
+        if (hasClassData()) {
+          output.writeMessage(4, getClassData());
+        }
         if (hasCompletionStatus()) {
-          output.writeBool(4, getCompletionStatus());
+          output.writeBool(5, getCompletionStatus());
         }
       }
       
@@ -3093,9 +3599,13 @@ public final class JavacRemoteProto {
           size += com.google.protobuf.CodedOutputStream
             .computeMessageSize(3, getOutputObject());
         }
+        if (hasClassData()) {
+          size += com.google.protobuf.CodedOutputStream
+            .computeMessageSize(4, getClassData());
+        }
         if (hasCompletionStatus()) {
           size += com.google.protobuf.CodedOutputStream
-            .computeBoolSize(4, getCompletionStatus());
+            .computeBoolSize(5, getCompletionStatus());
         }
         memoizedSerializedSize = size;
         return size;
@@ -3250,6 +3760,9 @@ public final class JavacRemoteProto {
           if (other.hasOutputObject()) {
             mergeOutputObject(other.getOutputObject());
           }
+          if (other.hasClassData()) {
+            mergeClassData(other.getClassData());
+          }
           if (other.hasCompletionStatus()) {
             setCompletionStatus(other.getCompletionStatus());
           }
@@ -3297,7 +3810,16 @@ public final class JavacRemoteProto {
                 setOutputObject(subBuilder.buildPartial());
                 break;
               }
-              case 32: {
+              case 34: {
+                org.jetbrains.jps.javac.JavacRemoteProto.Message.Response.ClassData.Builder subBuilder = org.jetbrains.jps.javac.JavacRemoteProto.Message.Response.ClassData.newBuilder();
+                if (hasClassData()) {
+                  subBuilder.mergeFrom(getClassData());
+                }
+                input.readMessage(subBuilder, extensionRegistry);
+                setClassData(subBuilder.buildPartial());
+                break;
+              }
+              case 40: {
                 setCompletionStatus(input.readBool());
                 break;
               }
@@ -3401,7 +3923,44 @@ public final class JavacRemoteProto {
           return this;
         }
         
-        // optional bool completion_status = 4;
+        // optional .org.jetbrains.javac.Message.Response.ClassData class_data = 4;
+        public boolean hasClassData() {
+          return result.hasClassData();
+        }
+        public org.jetbrains.jps.javac.JavacRemoteProto.Message.Response.ClassData getClassData() {
+          return result.getClassData();
+        }
+        public Builder setClassData(org.jetbrains.jps.javac.JavacRemoteProto.Message.Response.ClassData value) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          result.hasClassData = true;
+          result.classData_ = value;
+          return this;
+        }
+        public Builder setClassData(org.jetbrains.jps.javac.JavacRemoteProto.Message.Response.ClassData.Builder builderForValue) {
+          result.hasClassData = true;
+          result.classData_ = builderForValue.build();
+          return this;
+        }
+        public Builder mergeClassData(org.jetbrains.jps.javac.JavacRemoteProto.Message.Response.ClassData value) {
+          if (result.hasClassData() &&
+              result.classData_ != org.jetbrains.jps.javac.JavacRemoteProto.Message.Response.ClassData.getDefaultInstance()) {
+            result.classData_ =
+              org.jetbrains.jps.javac.JavacRemoteProto.Message.Response.ClassData.newBuilder(result.classData_).mergeFrom(value).buildPartial();
+          } else {
+            result.classData_ = value;
+          }
+          result.hasClassData = true;
+          return this;
+        }
+        public Builder clearClassData() {
+          result.hasClassData = false;
+          result.classData_ = org.jetbrains.jps.javac.JavacRemoteProto.Message.Response.ClassData.getDefaultInstance();
+          return this;
+        }
+        
+        // optional bool completion_status = 5;
         public boolean hasCompletionStatus() {
           return result.hasCompletionStatus();
         }

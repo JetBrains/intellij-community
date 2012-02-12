@@ -255,4 +255,18 @@ class Some {
 }
 ''')
   }
+
+  void testAppStatement() {
+    doTest('''
+void foo() {
+    def s = <selection><caret>"zxcvbn".substring 2 charAt(1)</selection>
+}
+foo()
+''',  '''
+void foo(Closure<Character> closure) {
+    def s = <selection><caret>closure()</selection>
+}
+foo {return "zxcvbn".substring(2).charAt(1)}
+''')
+  }
 }

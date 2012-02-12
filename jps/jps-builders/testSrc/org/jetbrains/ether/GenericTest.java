@@ -72,7 +72,7 @@ public class GenericTest extends IncrementalTestCase {
   public void testChangeToCovariantMethodInBase3() throws Exception {
     doTest();
   }
-
+  */
   public void testChangeVarargSignature() throws Exception {
     doTest();
   }
@@ -80,7 +80,6 @@ public class GenericTest extends IncrementalTestCase {
   public void testChangeVarargSignature1() throws Exception {
     doTest();
   }
-  */
 
   public void testCovariance() throws Exception {
     doTest();
@@ -114,7 +113,7 @@ public class GenericTest extends IncrementalTestCase {
     doTest();
   }
 
-  /* Not working yet
+  /* Not working yet */
   public void testOverrideAnnotatedAnonymousNotRecompile() throws Exception {
     doTest();
   }
@@ -122,7 +121,6 @@ public class GenericTest extends IncrementalTestCase {
   public void testOverrideAnnotatedInner() throws Exception {
     doTest();
   }
-  */
 
   public void testParamTypes() throws Exception {
     doTest();

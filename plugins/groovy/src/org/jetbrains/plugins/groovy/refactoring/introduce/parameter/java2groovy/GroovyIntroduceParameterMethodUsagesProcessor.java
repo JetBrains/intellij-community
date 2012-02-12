@@ -59,8 +59,7 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
  *         Date: Apr 18, 2009 3:16:24 PM
  */
 public class GroovyIntroduceParameterMethodUsagesProcessor implements IntroduceParameterMethodUsagesProcessor {
-  private static final Logger LOG = Logger
-    .getInstance("#org.jetbrains.plugins.groovy.refactoring.introduce.parameter.java2groovy.GroovyIntroduceParameterMethodUsagesProcessor");
+  private static final Logger LOG = Logger.getInstance(GroovyIntroduceParameterMethodUsagesProcessor.class);
 
   private static boolean isGroovyUsage(UsageInfo usage) {
     final PsiElement el = usage.getElement();
@@ -115,7 +114,8 @@ public class GroovyIntroduceParameterMethodUsagesProcessor implements IntroduceP
 
       GrExpression newArg = addClosureToCall(initializer, argList);
       if (newArg == null) {
-        newArg = (GrExpression)argList.addAfter(initializer, anchor);
+        final PsiElement dummy = argList.addAfter(factory.createExpressionFromText("1"), anchor);
+        newArg = ((GrExpression)dummy).replaceWithExpression((GrExpression)initializer, true);
       }
       final PsiMethod methodToReplaceIn = data.getMethodToReplaceIn();
       new OldReferencesResolver(callExpression, newArg, methodToReplaceIn, data.getReplaceFieldsWithGetters(), initializer,

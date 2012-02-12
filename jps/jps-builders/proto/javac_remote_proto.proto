@@ -47,8 +47,9 @@ message Message {
     enum Type {
       BUILD_MESSAGE = 1;
       OUTPUT_OBJECT = 2;
-      BUILD_COMPLETED = 3;
-      REQUEST_ACK = 4;
+      CLASS_DATA = 3;
+      BUILD_COMPLETED = 4;
+      REQUEST_ACK = 5;
     }
 
     message CompileMessage {
@@ -87,10 +88,18 @@ message Message {
      optional bytes content = 7;
     }
 
+    message ClassData {
+     required string class_name = 1;
+     repeated string import_statement = 2;
+     repeated string static_import = 3;
+     repeated string identifier = 4;
+    }
+
     required Type response_type = 1;
     optional CompileMessage compile_message = 2;
     optional OutputObject output_object = 3;
-    optional bool completion_status = 4;
+    optional ClassData class_data = 4;
+    optional bool completion_status = 5;
   }
 
   required UUID session_id = 1;

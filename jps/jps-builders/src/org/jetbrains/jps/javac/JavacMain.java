@@ -18,7 +18,7 @@ public class JavacMain {
     "-d", "-classpath", "-cp", "-bootclasspath"
   ));
   private static final Set<String> FILTERED_SINGLE_OPTIONS = new HashSet<String>(Arrays.<String>asList(
-    "-verbose", "-proc:none"
+    "-verbose", "-proc:none", "-implicit:class", "-implicit:none"
   ));
 
   public static boolean compile(Collection<String> options,
@@ -65,11 +65,12 @@ public class JavacMain {
     };
 
     try {
+      final Collection<String> _options = prepareOptions(options);
       final JavaCompiler.CompilationTask task = compiler.getTask(
-        out, fileManager, outConsumer, filterOptionList(options), null, fileManager.toJavaFileObjects(sources)
+        out, fileManager, outConsumer, _options, null, fileManager.toJavaFileObjects(sources)
       );
-      //final JavacASTAnalyser analyzer = new JavacASTAnalyser(shouldSuppressAnnotationProcessing(options));
-      //task.setProcessors(Collections.singleton(analyzer));
+      final JavacASTAnalyser analyzer = new JavacASTAnalyser(outConsumer, shouldSuppressAnnotationProcessing(options));
+      task.setProcessors(Collections.singleton(analyzer));
       return task.call();
     }
     finally {
@@ -86,11 +87,9 @@ public class JavacMain {
     return false;
   }
 
-  private static Collection<String> filterOptionList(final Collection<String> options) {
-    if (options.isEmpty()) {
-      return options;
-    }
+  private static Collection<String> prepareOptions(final Collection<String> options) {
     final List<String> result = new ArrayList<String>();
+    result.add("-implicit:class");
     boolean skip = false;
     for (String option : options) {
       if (FILTERED_OPTIONS.contains(option)) {

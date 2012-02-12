@@ -18,6 +18,8 @@ public abstract class ProjectStructureElement {
 
   public abstract String getPresentableName();
 
+  public abstract String getTypeName();
+
   public abstract String getId();
 
   public abstract void check(ProjectStructureProblemsHolder problemsHolder);

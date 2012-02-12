@@ -16,14 +16,13 @@
 
 package org.jetbrains.plugins.groovy.refactoring.extract.method;
 
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.impl.source.PostprocessReformattingAspect;
-import com.intellij.refactoring.util.CommonRefactoringUtil;
-import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.LightGroovyTestCase;
-import org.jetbrains.plugins.groovy.util.TestUtils;
 
-import java.util.List;
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.psi.impl.source.PostprocessReformattingAspect
+import com.intellij.refactoring.util.CommonRefactoringUtil
+import org.jetbrains.plugins.groovy.GroovyFileType
+import org.jetbrains.plugins.groovy.LightGroovyTestCase
+import org.jetbrains.plugins.groovy.util.TestUtils
 
 /**
  * @author ilyas
@@ -31,29 +30,29 @@ import java.util.List;
 public class ExtractMethodTest extends LightGroovyTestCase {
   @Override
   protected String getBasePath() {
-    return TestUtils.getTestDataPath() + "groovy/refactoring/extractMethod/";
+    return TestUtils.testDataPath + "groovy/refactoring/extractMethod/";
   }
 
-  private void doAntiTest(String errorMessage) throws Exception {
+  private void doAntiTest(String errorMessage) {
     GroovyExtractMethodHandler handler = configureFromText(readInput().get(0));
     try {
-      handler.invoke(getProject(), myFixture.getEditor(), myFixture.getFile(), null);
+      handler.invoke(project, myFixture.editor, myFixture.file, null);
       assertTrue(false);
     }
     catch (CommonRefactoringUtil.RefactoringErrorHintException e) {
-      assertEquals(errorMessage, e.getLocalizedMessage());
+      assertEquals(errorMessage, e.localizedMessage);
     }
   }
 
   private List<String> readInput() {
-    return TestUtils.readInput(getTestDataPath() + getTestName(true) + ".test");
+    return TestUtils.readInput(testDataPath + getTestName(true) + ".test");
   }
 
   private void doTest() {
     final List<String> data = readInput();
     GroovyExtractMethodHandler handler = configureFromText(data.get(0));
-    handler.invoke(getProject(), myFixture.getEditor(), myFixture.getFile(), null);
-    PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
+    handler.invoke(project, myFixture.editor, myFixture.file, null);
+    PostprocessReformattingAspect.getInstance(project).doPostponedFormatting();
     myFixture.checkResult(StringUtil.trimEnd(data.get(1), "\n"));
   }
 
@@ -64,7 +63,7 @@ public class ExtractMethodTest extends LightGroovyTestCase {
     fileText = TestUtils.removeEndMarker(fileText);
     myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, fileText);
 
-    myFixture.getEditor().getSelectionModel().setSelection(startOffset, endOffset);
+    myFixture.editor.selectionModel.setSelection(startOffset, endOffset);
     return new GroovyExtractMethodHandler();
   }
 
@@ -114,4 +113,5 @@ public class ExtractMethodTest extends LightGroovyTestCase {
   public void testWildCardReturnType() {doTest();}
   public void testParamChangedInsideExtractedMethod() {doTest();}
 
+  public void testTerribleAppStatement() {doTest()}
 }

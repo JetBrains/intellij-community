@@ -49,6 +49,11 @@ public class FacetProjectStructureElement extends ProjectStructureElement {
   }
 
   @Override
+  public String getTypeName() {
+    return "Facet";
+  }
+
+  @Override
   public String getId() {
     return "facet:" + FacetPointersManager.constructId(myFacet);
   }

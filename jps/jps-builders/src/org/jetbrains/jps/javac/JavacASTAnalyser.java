@@ -1,6 +1,8 @@
 package org.jetbrains.jps.javac;
 
-import com.sun.source.tree.*;
+import com.sun.source.tree.ClassTree;
+import com.sun.source.tree.ImportTree;
+import com.sun.source.tree.Tree;
 import com.sun.source.util.TreeScanner;
 import com.sun.source.util.Trees;
 
@@ -8,10 +10,10 @@ import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
+import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
-import javax.lang.model.element.Modifier;
-import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -19,14 +21,20 @@ import java.util.Set;
  *         Date: 2/1/12
  *
  */
-//@SupportedSourceVersion(SourceVersion.RELEASE_7)
 @SupportedAnnotationTypes("*")
 public class JavacASTAnalyser extends AbstractProcessor{
   private Trees myTrees;
+  private final DiagnosticOutputConsumer myOutputConsumer;
   private final boolean mySuppressOtherProcessors;
 
-  public JavacASTAnalyser(boolean suppressOtherProcessors) {
+  public JavacASTAnalyser(DiagnosticOutputConsumer outputConsumer, boolean suppressOtherProcessors) {
+    myOutputConsumer = outputConsumer;
     mySuppressOtherProcessors = suppressOtherProcessors;
+  }
+
+  @Override
+  public SourceVersion getSupportedSourceVersion() {
+    return SourceVersion.latest();
   }
 
   @Override
@@ -37,65 +45,158 @@ public class JavacASTAnalyser extends AbstractProcessor{
 
   @Override
   public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
-    MyAnalyzer scaner = new MyAnalyzer();
-    for (Element element : roundEnv.getRootElements()) {
-      final Tree tree = myTrees.getTree(element);
-      scaner.scan(tree, myTrees);
-    }
+    final Set<? extends Element> elements = roundEnv.getRootElements();
+    for (Element element : elements) {
+      if (!(element instanceof TypeElement)) {
+        continue;
+      }
+      final TypeElement typeElement = (TypeElement)element;
 
+      final ImportsCollector importsCollector = new ImportsCollector();
+      importsCollector.scan(myTrees.getPath(typeElement).getParentPath().getLeaf(), myTrees);
+
+      final Set<String> imports = importsCollector.getImports();
+      final Set<String> staticImports = importsCollector.getStaticImports();
+
+      if (!imports.isEmpty() || !staticImports.isEmpty()) {
+        final String className = typeElement.getQualifiedName().toString();
+        myOutputConsumer.registerImports(className, imports, staticImports);
+      }
+      break;
+    }
     return mySuppressOtherProcessors;
   }
 
+  private static class ImportsCollector extends TreeScanner<Object, Trees> {
+    private Set<String> myImports = new HashSet<String>();
+    private Set<String> myStaticImports = new HashSet<String>();
 
-  private static class MyAnalyzer extends TreeScanner<Object, Trees> {
-    @Override
+    public Set<String> getImports() {
+      return myImports;
+    }
+
+    public Set<String> getStaticImports() {
+      return myStaticImports;
+    }
+
     public Object visitImport(ImportTree node, Trees trees) {
-      return null/*super.visitImport(node, trees)*/;
+      final Tree identifier = node.getQualifiedIdentifier();
+      final Set<String> container = node.isStatic()? myStaticImports : myImports;
+      container.add(identifier.toString());
+      return null;
     }
 
-    @Override
     public Object visitClass(ClassTree node, Trees trees) {
-      return scan(node.getMembers(), trees);
-    }
-
-    @Override
-    public Object visitVariable(VariableTree node, Trees trees) {
-      final ModifiersTree modifiers = node.getModifiers();
-      final Set<Modifier> flags = modifiers.getFlags();
-      if (flags.contains(Modifier.STATIC) && flags.contains(Modifier.FINAL)) {
-        final Name variableName = node.getName();
-        // todo register constant
-        final ConstantRefsFinder finder = new ConstantRefsFinder();
-        finder.scan(node.getInitializer(), trees);
-        // todo: process found refs
-      }
       return null;
     }
 
-    @Override
-    public Object visitMethod(MethodTree node, Trees trees) {
-      final ConstantRefsFinder finder = new ConstantRefsFinder();
-      finder.scan(node.getBody(), trees);
-      // todo: process found refs
-      return null;
-    }
+    //public void registerOverriddenMethod(TypeElement classElement, ExecutableElement method) {
+    //  final Elements utils = myProcessingEnvironment.getElementUtils();
+    //  final String qName = utils.getBinaryName(classElement).toString();
+    //  List<MethodDescriptor> descriptors = myOverriddenMethods.get(qName);
+    //  if (descriptors == null) {
+    //    descriptors = new ArrayList<MethodDescriptor>();
+    //    myOverriddenMethods.put(qName, descriptors);
+    //  }
+    //  final StringBuilder buf = new StringBuilder();
+    //  buf.append("(");
+    //  for (VariableElement param : method.getParameters()) {
+    //    buf.append(getSignature(param.asType()));
+    //  }
+    //  buf.append(")").append(getSignature(method.getReturnType()));
+    //  descriptors.add(new MethodDescriptor(method.getSimpleName().toString(), buf.toString()));
+    //}
+
+    //private static String getSignature(TypeMirror type) {
+    //  switch (type.getKind()) {
+    //    case BOOLEAN: return "Z";
+    //    case BYTE: return "B";
+    //    case CHAR: return "C";
+    //    case SHORT: return "S";
+    //    case INT: return "I";
+    //    case LONG: return "J";
+    //    case FLOAT: return "F";
+    //    case DOUBLE: return "D";
+    //    case VOID: return "V";
+    //    case ARRAY:
+    //      final String signature = getSignature(((ArrayType)type).getComponentType());
+    //      return signature != null? "[" + signature : null;
+    //    case DECLARED:
+    //      final TypeElement typeElement = (TypeElement)((DeclaredType)type).asElement();
+    //      final String qName = typeElement.getQualifiedName().toString().replace(".", "/");
+    //      return "L" + qName + ";";
+    //    default:
+    //      return null;
+    //  }
+    //}
   }
 
-  private static class ConstantRefsFinder extends TreeScanner<Object, Trees> {
-    @Override
-    public Object visitMethodInvocation(MethodInvocationTree node, Trees trees) {
-      return scan(node.getArguments(), trees);
-    }
-
-    @Override
-    public Object visitMemberSelect(MemberSelectTree node, Trees trees) {
-      return super.visitMemberSelect(node, trees);
-    }
-
-    @Override
-    public Object visitIdentifier(IdentifierTree node, Trees trees) {
-      return super.visitIdentifier(node, trees);
-    }
-  }
-
+  //private static class IdentifiersCollector extends TreeScanner<Object, Trees> {
+  //  private Set<Name> myIdentifiers = new HashSet<Name>();
+  //  private Set<String> myImports = new HashSet<String>();
+  //  private Set<String> myStaticImports = new HashSet<String>();
+  //
+  //  public Set<String> getIdentifiers() {
+  //    final HashSet<String> result = new HashSet<String>();
+  //    for (Name name : myIdentifiers) {
+  //      result.add(name.toString());
+  //    }
+  //    return result;
+  //  }
+  //
+  //  @Override
+  //  public Object visitImport(ImportTree node, Trees trees) {
+  //    final Tree identifier = node.getQualifiedIdentifier();
+  //    final Set<String> container = node.isStatic()? myStaticImports : myImports;
+  //    container.add(identifier.toString());
+  //    return null;
+  //  }
+  //
+  //  @Override
+  //  public Object visitAnnotation(AnnotationTree node, Trees trees) {
+  //    return scan(node.getArguments(), trees);
+  //  }
+  //
+  //  @Override
+  //  public Object visitIdentifier(IdentifierTree node, Trees trees) {
+  //    myIdentifiers.add(node.getName());
+  //    return super.visitIdentifier(node, trees);
+  //  }
+  //
+  //  @Override
+  //  public Object visitMemberSelect(MemberSelectTree node, Trees trees) {
+  //    myIdentifiers.add(node.getIdentifier());
+  //    return scan(node.getExpression(), trees);
+  //  }
+  //
+  //  @Override
+  //  public Object visitClass(ClassTree node, Trees trees) {
+  //    return scan(node.getMembers(), trees);
+  //  }
+  //
+  //  @Override
+  //  public Object visitVariable(VariableTree node, Trees trees) {
+  //    return scan(node.getInitializer(), trees);
+  //  }
+  //
+  //  @Override
+  //  public Object visitMethod(MethodTree node, Trees trees) {
+  //    return scan(node.getBody(), trees);
+  //  }
+  //
+  //  @Override
+  //  public Object visitMethodInvocation(MethodInvocationTree node, Trees trees) {
+  //    return scan(node.getArguments(), trees);
+  //  }
+  //
+  //  @Override
+  //  public Object visitTypeCast(TypeCastTree node, Trees trees) {
+  //    return scan(node.getExpression(), trees);
+  //  }
+  //
+  //  @Override
+  //  public Object visitInstanceOf(InstanceOfTree node, Trees trees) {
+  //    return scan(node.getExpression(), trees);
+  //  }
+  //}
 }

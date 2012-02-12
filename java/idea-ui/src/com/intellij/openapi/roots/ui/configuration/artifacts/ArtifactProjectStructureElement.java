@@ -134,6 +134,11 @@ public class ArtifactProjectStructureElement extends ProjectStructureElement {
   }
 
   @Override
+  public String getTypeName() {
+    return "Artifact";
+  }
+
+  @Override
   public String getId() {
     return "artifact:" + getActualArtifactName();
   }

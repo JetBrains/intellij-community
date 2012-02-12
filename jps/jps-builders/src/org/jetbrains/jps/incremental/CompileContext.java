@@ -178,16 +178,13 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
     myFsState.beforeNextRoundStart();
   }
 
-  public void afterCompileRound() {
-    myFsState.clearContextRoundData();
-  }
-
   public void onChunkBuildStart(ModuleChunk chunk) {
     myFsState.setContextChunk(chunk);
   }
 
   void onChunkBuildComplete(@NotNull ModuleChunk chunk) throws IOException {
     myDataManager.flush(true);
+    myFsState.clearContextRoundData();
     myFsState.clearContextChunk();
 
     if (!myErrorsFound && !myCancelStatus.isCanceled()) {

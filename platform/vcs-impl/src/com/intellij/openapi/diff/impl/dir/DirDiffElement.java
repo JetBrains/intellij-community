@@ -192,6 +192,15 @@ public class DirDiffElement {
     }
   }
 
+  public void setOperation(@NotNull DirDiffOperation operation) {
+    if (myType == DType.EQUAL || myType == DType.SEPARATOR) return;
+    if (myType == DType.TARGET && operation == COPY_TO) return;
+    if (myType == DType.SOURCE && operation == COPY_FROM) return;
+    if (myType == DType.CHANGED && operation == DELETE) return;
+
+    myOperation = operation;
+  }
+
   public Icon getIcon() {
     return mySource != null ? mySource.getIcon() : myTarget.getIcon();
   }

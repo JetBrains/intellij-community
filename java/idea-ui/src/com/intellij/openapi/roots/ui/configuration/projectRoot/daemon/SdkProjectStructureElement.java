@@ -49,6 +49,11 @@ public class SdkProjectStructureElement extends ProjectStructureElement {
   }
 
   @Override
+  public String getTypeName() {
+    return "SDK";
+  }
+
+  @Override
   public String getId() {
     return "sdk:" + mySdk.getName();
   }

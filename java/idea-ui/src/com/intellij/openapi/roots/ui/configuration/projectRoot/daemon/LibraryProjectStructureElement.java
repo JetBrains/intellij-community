@@ -146,6 +146,11 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
   }
 
   @Override
+  public String getTypeName() {
+    return "Library";
+  }
+
+  @Override
   public String getId() {
     return "library:" + myLibrary.getTable().getTableLevel() + ":" + myLibrary.getName();
   }

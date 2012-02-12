@@ -1,6 +1,7 @@
 package org.jetbrains.ether.dependencyView;
 
 import org.objectweb.asm.ClassReader;
+
 import java.util.Collection;
 
 /**
@@ -26,8 +27,7 @@ public class Callbacks {
   public interface Backend {
     Collection<String> getClassFiles();
     void associate(String classFileName, SourceFileNameLookup sourceLookup, ClassReader cr);
-    void markOverride(String className, String methodName, String methodSignature);
     void registerConstantUsage(String className, String fieldName, String fieldOwner);
-    void registerImports(Collection<String> imports, String rootClass);
+    void registerImports(String className, Collection<String> imports, Collection<String> staticImports);
   }
 }

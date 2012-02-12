@@ -29,6 +29,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.FilterComponent;
+import com.intellij.ui.PopupHandler;
 import com.intellij.ui.TableSpeedSearch;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
@@ -37,6 +38,7 @@ import com.intellij.ui.components.JBLoadingPanelListener;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -54,7 +56,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author Konstantin Bulenkov
  */
 @SuppressWarnings({"unchecked"})
-public class DirDiffPanel implements Disposable {
+public class DirDiffPanel implements Disposable, DataProvider {
   public static final String DIVIDER_PROPERTY = "dir.diff.panel.divider.location";
   private JPanel myDiffPanel;
   private JBTable myTable;
@@ -77,6 +79,8 @@ public class DirDiffPanel implements Disposable {
   private JComponent myViewComponent;
   private DiffElement myCurrentElement;
   private String oldFilter;
+  public static final DataKey<DirDiffTableModel> DIR_DIFF_MODEL = DataKey.create("DIR_DIFF_MODEL");
+  public static final DataKey<JTable> DIR_DIFF_TABLE = DataKey.create("DIR_DIFF_TABLE");
 
   public DirDiffPanel(DirDiffTableModel model, DirDiffWindow wnd) {
     myModel = model;
@@ -130,6 +134,7 @@ public class DirDiffPanel implements Disposable {
       myTable.addMouseListener(new MouseAdapter() {
         @Override
         public void mouseClicked(MouseEvent e) {
+          if (e.getButton() == MouseEvent.BUTTON3) return;
           if (myTable.getRowCount() > 0) {
             final int row = myTable.rowAtPoint(e.getPoint());
             final int col = myTable.columnAtPoint(e.getPoint());
@@ -192,12 +197,22 @@ public class DirDiffPanel implements Disposable {
       }
     }
     final DirDiffToolbarActions actions = new DirDiffToolbarActions(myModel, myDiffPanel);
-    final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("DirDiff", actions, true);
+    final ActionManager actionManager = ActionManager.getInstance();
+    final ActionToolbar toolbar = actionManager.createActionToolbar("DirDiff", actions, true);
     registerCustomShortcuts(actions, myTable);
     myToolBarPanel.add(toolbar.getComponent(), BorderLayout.CENTER);
     final JBLabel label = new JBLabel("Use Space button or mouse click to change operation for the selected elements. Enter to perform.", SwingConstants.CENTER);
     label.setForeground(UIUtil.getInactiveTextColor());
     UIUtil.applyStyle(UIUtil.ComponentStyle.MINI, label);
+    DataManager.registerDataProvider(myFilesPanel, this);
+    myTable.addMouseListener(new PopupHandler() {
+      @Override
+      public void invokePopup(Component comp, int x, int y) {
+        final JPopupMenu popupMenu =
+          actionManager.createActionPopupMenu("DirDiffPanel", (ActionGroup)actionManager.getAction("DirDiffMenu")).getComponent();
+        popupMenu.show(comp, x, y);
+      }
+    });
     myFilesPanel.add(label, BorderLayout.SOUTH);
     final JBLoadingPanel loadingPanel = new JBLoadingPanel(new BorderLayout(), wnd.getDisposable());
     loadingPanel.addListener(new JBLoadingPanelListener.Adapter() {
@@ -471,5 +486,19 @@ public class DirDiffPanel implements Disposable {
 
   public void setupSplitter() {
     mySplitPanel.setDividerLocation(Integer.valueOf(PropertiesComponent.getInstance().getValue(DIVIDER_PROPERTY, "200")));
+  }
+
+  @Override
+  public Object getData(@NonNls String dataId) {
+    if (PlatformDataKeys.PROJECT.is(dataId)) {
+      return myModel.getProject();
+    }
+    if (DIR_DIFF_MODEL.is(dataId)) {
+      return myModel;
+    }
+    if (DIR_DIFF_TABLE.is(dataId)) {
+      return myTable;
+    }
+    return null;
   }
 }

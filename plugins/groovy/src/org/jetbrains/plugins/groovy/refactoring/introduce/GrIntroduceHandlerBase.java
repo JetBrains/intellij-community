@@ -107,9 +107,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
       final PsiElement resolved = resolveResult.getElement();
       return resolved instanceof PsiMethod && !resolveResult.isInvokedOnProperty() || resolved instanceof PsiClass;
     }
-    if (expression instanceof GrApplicationStatement) {
-      return !PsiUtil.isExpressionStatement(expression);
-    }
+
     if (expression instanceof GrClosableBlock && expression.getParent() instanceof GrStringInjection) return true;
 
     return false;

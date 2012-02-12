@@ -154,7 +154,7 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
       case BALLOON:
       default:
         Balloon balloon = notifyByBalloon(notification, type, project);
-        if (!settings.isShouldLog()) {
+        if (!settings.isShouldLog() || type == NotificationDisplayType.STICKY_BALLOON) {
           if (balloon == null) {
             notification.expire();
           } else {

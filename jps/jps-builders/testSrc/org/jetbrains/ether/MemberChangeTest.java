@@ -116,11 +116,9 @@ public class MemberChangeTest extends IncrementalTestCase {
     doTest();
   }
 
-  /* Not working yet
   public void testDeleteMethodImplementation4() throws Exception {
     doTest();
   }
-  */
 
   public void testDeleteMethodImplementation5() throws Exception {
     doTest();

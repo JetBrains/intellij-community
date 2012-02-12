@@ -113,7 +113,9 @@ public class GroovyExtractChooser {
       throw new GrRefactoringError(GroovyRefactoringBundle.message("selected.block.should.represent.an.expression"));
     }
 
-    if (ExtractUtil.isSingleExpression(statements) && statement0.getParent() instanceof GrAssignmentExpression && ((GrAssignmentExpression)statement0.getParent()).getLValue()==statement0) {
+    if (ExtractUtil.isSingleExpression(statements) &&
+        statement0.getParent() instanceof GrAssignmentExpression &&
+        ((GrAssignmentExpression)statement0.getParent()).getLValue() == statement0) {
       throw new GrRefactoringError(GroovyRefactoringBundle.message("selected.expression.should.not.be.lvalue"));
     }
 
