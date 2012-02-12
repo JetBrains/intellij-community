@@ -32,4 +32,8 @@ public interface DiffSplitterI {
   VisibleAreaListener getVisibleAreaListener();
 
   JComponent getComponent();
+
+  void setProportion(final float proportion);
+
+  void setResizeEnabled(boolean value);
 }

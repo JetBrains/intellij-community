@@ -126,7 +126,7 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
   @NotNull
   private DiffContent createContent(final ContentRevision revision) {
     ProgressManager.checkCanceled();
-    if (revision == null) return new SimpleContent("");
+    if (revision == null) return SimpleContent.createEmpty();
     if (revision instanceof CurrentContentRevision) {
       final CurrentContentRevision current = (CurrentContentRevision)revision;
       final VirtualFile vFile = current.getVirtualFile();

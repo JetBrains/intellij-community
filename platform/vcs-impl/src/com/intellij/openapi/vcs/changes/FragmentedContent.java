@@ -30,6 +30,8 @@ public class FragmentedContent {
   private final Document myBefore;
   private final Document myAfter;
   private final List<BeforeAfter<TextRange>> myRanges;
+  private boolean myOneSide;
+  private boolean myIsAddition;
 
   public FragmentedContent(Document before, Document after, List<BeforeAfter<TextRange>> ranges) {
     myBefore = before;
@@ -54,6 +56,18 @@ public class FragmentedContent {
   }
 
   public boolean isOneSide() {
-    return myRanges.size() == 1 && (myRanges.get(0).getAfter().isEmpty() || myRanges.get(0).getBefore().isEmpty());
+    return myOneSide;
+  }
+
+  public void setOneSide(boolean oneSide) {
+    myOneSide = oneSide;
+  }
+
+  public boolean isAddition() {
+    return myIsAddition;
+  }
+
+  public void setIsAddition(boolean isAddition) {
+    myIsAddition = isAddition;
   }
 }

@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.openapi.diff.DiffContent;
+import com.intellij.openapi.diff.SimpleContent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.highlighter.*;
@@ -48,6 +50,7 @@ public class PreparedFragmentedContent {
   private List<TextRange> myAfterFragments;
   private List<BeforeAfter<Integer>> myLineRanges;
   private boolean myOneSide;
+  private boolean myIsAddition;
 
   private FragmentedEditorHighlighter myBeforeHighlighter;
   private FragmentedEditorHighlighter myAfterHighlighter;
@@ -88,6 +91,7 @@ public class PreparedFragmentedContent {
 
   private void fromFragmentedContent(final FragmentedContent fragmentedContent) {
     myOneSide = fragmentedContent.isOneSide();
+    myIsAddition = fragmentedContent.isAddition();
     List<BeforeAfter<TextRange>> expandedRanges =
       expand(fragmentedContent.getRanges(), VcsConfiguration.getInstance(myProject).SHORT_DIFF_EXTRA_LINES,
              fragmentedContent.getBefore(), fragmentedContent.getAfter());
@@ -145,6 +149,20 @@ public class PreparedFragmentedContent {
     return newConvertor;
   }
 
+  public DiffContent createBeforeContent() {
+    if (isAddition()) {
+      return SimpleContent.createEmpty();
+    }
+    return new SimpleContent(getSbOld().toString());
+  }
+
+  public DiffContent createAfterContent() {
+    if (isDeletion()) {
+      return SimpleContent.createEmpty();
+    }
+    return new SimpleContent(getSbNew().toString());
+  }
+
   public StringBuilder getSbOld() {
     return sbOld;
   }
@@ -167,6 +185,14 @@ public class PreparedFragmentedContent {
 
   public boolean isOneSide() {
     return myOneSide;
+  }
+
+  public boolean isAddition() {
+    return myOneSide && myIsAddition;
+  }
+
+  public boolean isDeletion() {
+    return myOneSide && ! myIsAddition;
   }
 
   public FragmentedEditorHighlighter getBeforeHighlighter() {

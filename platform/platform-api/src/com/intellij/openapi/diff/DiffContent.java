@@ -32,6 +32,7 @@ import java.util.List;
  */
 public abstract class DiffContent {
   private final List<Listener> myListeners = ContainerUtil.createEmptyCOWList();
+  private boolean myIsEmpty;
 
   public void addListener(Listener listener) { myListeners.add(listener); }
   public void removeListener(Listener listener) { myListeners.remove(listener); }
@@ -51,6 +52,14 @@ public abstract class DiffContent {
    * @return true if this content represents binary data
    */
   public boolean isBinary() { return false; }
+
+  public void setIsEmpty(boolean isEmpty) {
+    myIsEmpty = isEmpty;
+  }
+
+  public boolean isEmpty() {
+    return myIsEmpty;
+  }
 
   /**
    * Called by {@link com.intellij.openapi.diff.DiffTool}

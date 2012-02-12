@@ -67,6 +67,12 @@ public class SimpleContent extends DiffContent {
     myType = type;
   }
 
+  public static SimpleContent createEmpty() {
+    final SimpleContent content = new SimpleContent("");
+    content.setIsEmpty(true);
+    return content;
+  }
+
   /**
    * Make this content editable or not. By default SimpleContent isn't editable.
    */

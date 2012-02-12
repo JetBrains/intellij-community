@@ -27,8 +27,8 @@ import javax.swing.*;
  * Date: 8/12/11
  * Time: 12:05 PM
  */
-public class HorisontalDiffSplitter extends Splitter implements DiffSplitterI {
-  public HorisontalDiffSplitter(final JComponent first, final JComponent second) {
+public class HorizontalDiffSplitter extends Splitter implements DiffSplitterI {
+  public HorizontalDiffSplitter(final JComponent first, final JComponent second) {
     super(true);
     setFirstComponent(first);
     setSecondComponent(second);
@@ -46,5 +46,17 @@ public class HorisontalDiffSplitter extends Splitter implements DiffSplitterI {
   @Override
   public JComponent getComponent() {
     return this;
+  }
+
+  @Override
+  public void setProportion(float proportion) {
+    super.setProportion(proportion);
+    // I regret to put this hack here
+    if (getFirstComponent() != null) {
+      getFirstComponent().setVisible(proportion > 0.0001f);
+    }
+    if (getSecondComponent() != null) {
+      getSecondComponent().setVisible(proportion < 0.9999f);
+    }
   }
 }

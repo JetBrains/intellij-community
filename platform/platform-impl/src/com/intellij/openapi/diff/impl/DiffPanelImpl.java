@@ -34,7 +34,7 @@ import com.intellij.openapi.diff.impl.fragments.Fragment;
 import com.intellij.openapi.diff.impl.fragments.FragmentList;
 import com.intellij.openapi.diff.impl.highlighting.DiffPanelState;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
-import com.intellij.openapi.diff.impl.processing.HorisontalDiffSplitter;
+import com.intellij.openapi.diff.impl.processing.HorizontalDiffSplitter;
 import com.intellij.openapi.diff.impl.splitter.DiffDividerPaint;
 import com.intellij.openapi.diff.impl.splitter.LineBlocks;
 import com.intellij.openapi.diff.impl.util.*;
@@ -131,7 +131,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
                                   new DiffDividerPaint(this, FragmentSide.SIDE1), myData);
     }
     else {
-      mySplitter = new HorisontalDiffSplitter(myLeftSide.getComponent(), myRightSide.getComponent());
+      mySplitter = new HorizontalDiffSplitter(myLeftSide.getComponent(), myRightSide.getComponent());
     }
 
     myPanel.insertDiffComponent(mySplitter.getComponent(), new MyScrollingPanel());
@@ -237,10 +237,26 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     }
     myLeftSide.setHighlighterFactory(createHighlighter(types[0], baseFile, project));
     myRightSide.setHighlighterFactory(createHighlighter(types[1], baseFile, project));
+    setSplitterProportion(content1, content2);
     rediff();
     if (myIsRequestFocus) {
       myPanel.requestScrollEditors();
     }
+  }
+
+  private void setSplitterProportion(DiffContent content1, DiffContent content2) {
+    if (content1.isEmpty()) {
+      mySplitter.setProportion(0f);
+      mySplitter.setResizeEnabled(false);
+      return;
+    }
+    if (content2.isEmpty()) {
+      mySplitter.setProportion(1.0f);
+      mySplitter.setResizeEnabled(false);
+      return;
+    }
+    mySplitter.setProportion(0.5f);
+    mySplitter.setResizeEnabled(true);
   }
 
   public void removeStatusBar() {

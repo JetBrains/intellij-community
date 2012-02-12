@@ -115,6 +115,10 @@ public class Splitter extends JPanel {
     setOrientation(myVerticalSplit);
   }
 
+  public void setResizeEnabled(final boolean value) {
+    myDivider.setResizeEnabled(value);
+  }
+
   public boolean isShowDividerIcon() {
     return myShowDividerIcon;
   }
@@ -591,6 +595,13 @@ public class Splitter extends JPanel {
 
     public void setResizeEnabled(boolean resizeEnabled) {
       myResizeEnabled = resizeEnabled;
+      if (! myResizeEnabled) {
+        setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+      } else {
+        setCursor(getOrientation() ?
+                  Cursor.getPredefinedCursor(Cursor.N_RESIZE_CURSOR) :
+                  Cursor.getPredefinedCursor(Cursor.W_RESIZE_CURSOR));
+      }
     }
   }
 }

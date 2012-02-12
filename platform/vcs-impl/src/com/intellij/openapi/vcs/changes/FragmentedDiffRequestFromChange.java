@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffAction;
 import com.intellij.openapi.vcs.ex.Range;
@@ -76,8 +77,11 @@ public class FragmentedDiffRequestFromChange {
     }
     List<BeforeAfter<TextRange>> ranges = calculator.getRanges();
     if (ranges == null || ranges.isEmpty()) return null;
-    final PreparedFragmentedContent preparedFragmentedContent =
-      new PreparedFragmentedContent(myProject, new FragmentedContent(calculator.getOldDocument(), calculator.getDocument(), ranges),
+    FragmentedContent fragmentedContent = new FragmentedContent(calculator.getOldDocument(), calculator.getDocument(), ranges);
+    final FileStatus fs = change.getFileStatus();
+    fragmentedContent.setIsAddition(FileStatus.ADDED.equals(fs));
+    fragmentedContent.setOneSide(FileStatus.ADDED.equals(fs) || FileStatus.DELETED.equals(fs));
+    final PreparedFragmentedContent preparedFragmentedContent = new PreparedFragmentedContent(myProject, fragmentedContent,
                                     filePath.getName(), filePath.getFileType());
     VirtualFile file = filePath.getVirtualFile();
     if (file == null) {

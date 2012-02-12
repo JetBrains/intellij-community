@@ -313,7 +313,7 @@ public class ChangesFragmentedDiffPanel implements Disposable {
   private void adjustPanelData(final DiffPanelImpl diffPanel) {
     final FragmentedDiffPanelState diffPanelState = (FragmentedDiffPanelState)diffPanel.getDiffPanelState();
     diffPanelState.setRanges(myFragmentedContent.getLineRanges());
-    diffPanel.setContents(new SimpleContent(myFragmentedContent.getSbOld().toString()), new SimpleContent(myFragmentedContent.getSbNew().toString()));
+    diffPanel.setContents(myFragmentedContent.createBeforeContent(), myFragmentedContent.createAfterContent());
     diffPanel.setLineNumberConvertors(myFragmentedContent.getOldConvertor(), myFragmentedContent.getNewConvertor());
     diffPanel.prefferedSizeByContents(-1);
   }
@@ -382,6 +382,8 @@ public class ChangesFragmentedDiffPanel implements Disposable {
     if (myFragmentedContent != null && ! Comparing.equal(myPresentationState, current)) {
       myFragmentedContent.recalculate();
       refreshData(myFragmentedContent);
+    } else {
+      ensurePresentation();
     }
     myPreviousDiff.registerCustomShortcutSet(myPreviousDiff.getShortcutSet(), myParent);
     myNextDiff.registerCustomShortcutSet(myNextDiff.getShortcutSet(), myParent);
