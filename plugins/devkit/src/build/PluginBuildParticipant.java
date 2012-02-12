@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.ArtifactRootElement;
@@ -144,7 +145,7 @@ public class PluginBuildParticipant extends BuildParticipant {
           hasDirsOnly = false;
           file = ((JarFileSystem)file.getFileSystem()).getVirtualFileForJar(file);
         }
-        if (libDir != null && file != null && VfsUtil.isAncestor(libDir, file, false)) {
+        if (libDir != null && file != null && VfsUtilCore.isAncestor(libDir, file, false)) {
           context.addMessage(CompilerMessageCategory.ERROR, DevKitBundle.message("dont.add.idea.libs.to.classpath", file.getName()), null,
                              -1, -1);
         }

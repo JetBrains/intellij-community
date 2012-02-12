@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -290,7 +290,7 @@ public class NewActionDialog extends DialogWrapper implements ActionData {
     private KeyStroke myKeyStroke;
 
     public ShortcutTextField() {
-      enableEvents(KeyEvent.KEY_EVENT_MASK);
+      enableEvents(AWTEvent.KEY_EVENT_MASK);
       setFocusTraversalKeysEnabled(false);
     }
 
