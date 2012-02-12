@@ -23,6 +23,8 @@ import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.psi.codeStyle.DisplayPriority;
+import com.intellij.psi.codeStyle.DisplayPrioritySortable;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.ui.DebuggerColors;
 import org.jetbrains.annotations.NonNls;
@@ -35,7 +37,7 @@ import java.util.Map;
 /**
  * @author max
  */
-public class DebuggerColorsPage implements ColorSettingsPage {
+public class DebuggerColorsPage implements ColorSettingsPage, DisplayPrioritySortable {
   @NotNull
   public String getDisplayName() {
     return XDebuggerBundle.message("xdebugger.colors.page.name");
@@ -75,5 +77,10 @@ public class DebuggerColorsPage implements ColorSettingsPage {
   @Nullable
   public Map<String, TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap() {
     return null;
+  }
+
+  @Override
+  public DisplayPriority getPriority() {
+    return DisplayPriority.COMMON_SETTINGS;
   }
 }

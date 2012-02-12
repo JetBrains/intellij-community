@@ -52,6 +52,8 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusFactory;
 import com.intellij.openapi.vcs.FileStatusManager;
+import com.intellij.psi.codeStyle.DisplayPriority;
+import com.intellij.psi.codeStyle.DisplayPrioritySortable;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
@@ -322,11 +324,12 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   protected List<ColorAndFontPanelFactory> createPanelFactories() {
     ArrayList<ColorAndFontPanelFactory> result = new ArrayList<ColorAndFontPanelFactory>();
     result.add(new FontConfigurableFactory());
-    result.add(new ConsoleFontConfigurableFactory());
 
+    List<ColorAndFontPanelFactory> extensions = new ArrayList<ColorAndFontPanelFactory>();
+    extensions.add(new ConsoleFontConfigurableFactory());
     ColorSettingsPage[] pages = ColorSettingsPages.getInstance().getRegisteredPages();
     for (final ColorSettingsPage page : pages) {
-      result.add(new ColorAndFontPanelFactory() {
+      extensions.add(new ColorAndFontPanelFactoryEx() {
         @NotNull
         public NewColorAndFontPanel createPanel(@NotNull ColorAndFontOptions options) {
           final SimpleEditorPreview preview = new SimpleEditorPreview(options, page);
@@ -337,9 +340,37 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
         public String getPanelDisplayName() {
           return page.getDisplayName();
         }
+
+        @Override
+        public DisplayPriority getPriority() {
+          if (page instanceof DisplayPrioritySortable) {
+            return ((DisplayPrioritySortable)page).getPriority();
+          }
+          return DisplayPriority.LANGUAGE_SETTINGS;
+        }
       });
     }
-    Collections.addAll(result, Extensions.getExtensions(ColorAndFontPanelFactory.EP_NAME));
+    Collections.addAll(extensions, Extensions.getExtensions(ColorAndFontPanelFactory.EP_NAME));
+    Collections.sort(extensions, new Comparator<ColorAndFontPanelFactory>() {
+      @Override
+      public int compare(ColorAndFontPanelFactory f1, ColorAndFontPanelFactory f2) {
+        if (f1 instanceof DisplayPrioritySortable) {
+          if (f2 instanceof DisplayPrioritySortable) {
+            int result = ((DisplayPrioritySortable)f1).getPriority().compareTo(((DisplayPrioritySortable)f2).getPriority());
+            if (result != 0) return result;
+          }
+          else {
+            return 1;
+          }
+        }
+        else if (f2 instanceof DisplayPrioritySortable) {
+          return -1;
+        }
+        return f1.getPanelDisplayName().compareTo(f2.getPanelDisplayName());
+      }
+    });
+    result.addAll(extensions);
+    
     result.add(new DiffColorsPageFactory());
     result.add(new FileStatusColorsPageFactory());
     result.add(new ScopeColorsPageFactory());
@@ -365,7 +396,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     }
   }
 
-   private static class ConsoleFontConfigurableFactory implements ColorAndFontPanelFactory {
+   private static class ConsoleFontConfigurableFactory implements ColorAndFontPanelFactoryEx {
     @NotNull
     public NewColorAndFontPanel createPanel(@NotNull ColorAndFontOptions options) {
       FontEditorPreview previewPanel = new FontEditorPreview(options, false) {
@@ -386,7 +417,12 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     public String getPanelDisplayName() {
       return "Console Font";
     }
-  }
+
+     @Override
+     public DisplayPriority getPriority() {
+       return DisplayPriority.COMMON_SETTINGS;
+     }
+   }
 
   private class DiffColorsPageFactory implements ColorAndFontPanelFactory {
     @NotNull

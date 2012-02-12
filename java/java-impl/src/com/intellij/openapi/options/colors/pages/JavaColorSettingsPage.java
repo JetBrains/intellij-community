@@ -28,6 +28,8 @@ import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.codeStyle.DisplayPriority;
+import com.intellij.psi.codeStyle.DisplayPrioritySortable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,7 +37,7 @@ import javax.swing.*;
 import java.util.HashMap;
 import java.util.Map;
 
-public class JavaColorSettingsPage implements ColorSettingsPage, InspectionColorSettingsPage {
+public class JavaColorSettingsPage implements ColorSettingsPage, InspectionColorSettingsPage, DisplayPrioritySortable {
   private static final AttributesDescriptor[] ourDescriptors = {
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.keyword"), SyntaxHighlighterColors.KEYWORD),
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.number"), SyntaxHighlighterColors.NUMBER),
@@ -186,5 +188,10 @@ public class JavaColorSettingsPage implements ColorSettingsPage, InspectionColor
   @Override
   public Map<String,TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap() {
     return ourTags;
+  }
+
+  @Override
+  public DisplayPriority getPriority() {
+    return DisplayPriority.KEY_LANGUAGE_SETTINGS;
   }
 }

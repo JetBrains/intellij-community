@@ -32,13 +32,15 @@ import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
+import com.intellij.psi.codeStyle.DisplayPriority;
+import com.intellij.psi.codeStyle.DisplayPrioritySortable;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.HashMap;
 import java.util.Map;
 
-public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSettingsPage {
+public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSettingsPage, DisplayPrioritySortable {
   private static final String ADDITIONAL_DEMO_TEXT =
     "\n" +
     "<todo>//TODO: Visit JB Web resources:</todo>\n"+
@@ -186,6 +188,11 @@ public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSett
 
   public Map<String, TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap() {
     return ADDITIONAL_HIGHLIGHT_DESCRIPTORS;
+  }
+
+  @Override
+  public DisplayPriority getPriority() {
+    return DisplayPriority.GENERAL_SETTINGS;
   }
 
   private static String getCustomSeveritiesDemoText() {
