@@ -263,7 +263,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
         final StringBuilder sb = new StringBuilder("Library '");
         sb.append(library.getName()).append("' is used in ");
         for (int i = 0; i < types.size(); i++) {
-          if (i == types.size() - 1) {
+          if (i > 0 && i == types.size() - 1) {
             sb.append(" and in ");
           }
           else if (i > 0) {
