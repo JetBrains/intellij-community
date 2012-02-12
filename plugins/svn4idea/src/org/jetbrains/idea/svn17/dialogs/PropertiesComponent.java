@@ -28,10 +28,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.idea.svn17.SvnVcs17;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.core.SVNPropertyValue;
-import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -119,18 +116,18 @@ public class PropertiesComponent extends JPanel {
       myFile = file;
       myVcs = vcs;
       try {
-        vcs.createWCClient().doGetProperty(file, null, SVNRevision.UNDEFINED, SVNRevision.WORKING, false, new ISVNPropertyHandler() {
+        vcs.createWCClient().doGetProperty(file, null, SVNRevision.UNDEFINED, SVNRevision.WORKING, SVNDepth.EMPTY, new ISVNPropertyHandler() {
           public void handleProperty(File path, SVNPropertyData property) throws SVNException {
             final SVNPropertyValue value = property.getValue();
             if (value != null) {
-              props.put(property.getName(), value.getString());
+              props.put(property.getName(), SVNPropertyValue.getPropertyAsString(property.getValue()));
             }
           }
           public void handleProperty(SVNURL url, SVNPropertyData property) throws SVNException {
           }
           public void handleProperty(long revision, SVNPropertyData property) throws SVNException {
           }
-        });
+        }, null);
       } catch (SVNException e) {
         props.clear();
       }
@@ -333,7 +330,7 @@ public class PropertiesComponent extends JPanel {
         recursive = dialog.isRecursive();
         SVNWCClient wcClient = myVcs.createWCClient();
         try {
-          wcClient.doSetProperty(myFile, name, SVNPropertyValue.create(value), false, recursive, null);
+          wcClient.doSetProperty(myFile, name, SVNPropertyValue.create(value), false, recursive ? SVNDepth.INFINITY : SVNDepth.EMPTY, null, null);
         }
         catch (SVNException err) {
           // show error message
