@@ -38,7 +38,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAc
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GrRefactoringError;
-import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
@@ -115,10 +114,10 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
   }
 
   /**
-   * Inserts new variable declaratrions and replaces occurrences
+   * Inserts new variable declarations and replaces occurrences
    */
   public GrVariable runRefactoring(final GrIntroduceContext context, final GroovyIntroduceVariableSettings settings) {
-    // Generating varibable declaration
+    // Generating variable declaration
 
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(context.getProject());
     final GrVariableDeclaration varDecl = factory
@@ -126,7 +125,7 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
                                  (GrExpression)PsiUtil.skipParentheses(context.getExpression(), false), settings.getSelectedType(),
                                  settings.getName());
 
-    // Marker for caret posiotion
+    // Marker for caret position
     try {
       /* insert new variable */
       GroovyRefactoringUtil.sortOccurrences(context.getOccurrences());
@@ -254,7 +253,6 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
       LOG.error(error.toString());
     }
     GrStatement anchorElement = (GrStatement)anchor;
-    LOG.assertTrue(anchorElement != null);
     PsiElement realContainer = anchorElement.getParent();
 
     LOG.assertTrue(GroovyRefactoringUtil.isAppropriateContainerForIntroduceVariable(realContainer));
@@ -359,7 +357,6 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
 
   protected GroovyIntroduceVariableDialog getDialog(GrIntroduceContext context) {
     final GroovyVariableValidator validator = new GroovyVariableValidator(context);
-    String[] possibleNames = GroovyNameSuggestionUtil.suggestVariableNames(context.getExpression(), validator);
-    return new GroovyIntroduceVariableDialog(context, validator, possibleNames);
+    return new GroovyIntroduceVariableDialog(context, validator);
   }
 }
