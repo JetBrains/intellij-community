@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package com.intellij.codeInsight.intention;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 
@@ -30,7 +30,7 @@ public class ConvertToBasicLatinTest extends JavaCodeInsightFixtureTestCase {
   public void setUp() throws Exception {
     super.setUp();
     myIntention = CodeInsightBundle.message("intention.convert.to.basic.latin");
-    EncodingProjectManager.getInstance().setDefaultCharsetName("UTF-8");
+    EncodingManager.getInstance().setDefaultCharsetName("UTF-8");
   }
 
   public void testConvertCharLiteral() throws Exception {
