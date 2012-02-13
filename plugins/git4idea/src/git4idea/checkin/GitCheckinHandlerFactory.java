@@ -71,12 +71,11 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
         return ReturnResult.CANCEL;
       }
       
-      ReturnResult result = checkUserName();
-      if (result != ReturnResult.COMMIT) {
-        return result;
-      }
-
       if (commitOrCommitAndPush(executor)) {
+        ReturnResult result = checkUserName();
+        if (result != ReturnResult.COMMIT) {
+          return result;
+        }
         return warnAboutDetachedHeadIfNeeded();
       }
       return ReturnResult.COMMIT;
