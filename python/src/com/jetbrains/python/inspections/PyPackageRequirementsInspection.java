@@ -172,7 +172,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
             catch (final PyExternalProcessException e) {
               final String msg = "Install packages failed";
               final String description = String.format("<html>\n" +
-                                                       "  <p>Error occured when installing packages. The following command was executed:</p>\n" +
+                                                       "  <p>Error occurred when installing packages. The following command was executed:</p>\n" +
                                                        "  <br/>\n" +
                                                        "  <p><code>%s %s</code></p>\n" +
                                                        "  <br/>\n" +
@@ -182,7 +182,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
                                                        "</html>",
                                                        e.getName(), StringUtil.join(e.getArgs(), " "), e.getMessage());
               notificationRef.set(new Notification(PACKAGING_GROUP_ID, msg,
-                                                   "Error occured when installing packages. <a href=\"xxx\">Details...</a>",
+                                                   "Error occurred when installing packages. <a href=\"xxx\">Details...</a>",
                                                    NotificationType.ERROR,
                                                    new NotificationListener() {
                                                      @Override
