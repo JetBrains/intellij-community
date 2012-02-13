@@ -729,9 +729,9 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
 
   @Override
   @Nullable
-  public VirtualFileSystemEntry findRoot(@NotNull final String basePath, @NotNull final NewVirtualFileSystem fs) { // TODO: read/write locks instead of synchronized
+  public VirtualFileSystemEntry findRoot(@NotNull String basePath, @NotNull NewVirtualFileSystem fs) { // TODO: read/write locks instead of synchronized
     synchronized (LOCK) {
-      final String rootUrl = fs.getProtocol() + "://" + basePath;
+      String rootUrl = fs.getProtocol() + "://" + basePath;
       VirtualFileSystemEntry root = myRoots.get(rootUrl);
       if (root == null && basePath.isEmpty()) {
         root = myFakeRoot;
@@ -739,7 +739,23 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
       if (root == null) {
         try {
           final int rootId = FSRecords.findRootRecord(rootUrl);
-          if (!basePath.isEmpty()) {
+          if (basePath.isEmpty()) {
+            // fake root for windows
+            root = new VirtualDirectoryImpl("", null, fs, rootId) {
+              @Override
+              @NotNull
+              public VirtualFile[] getChildren() {
+                return getRoots(getFileSystem());
+              }
+
+              @Override
+              public VirtualFileSystemEntry findChild(@NotNull String name) {
+                if (name.isEmpty()) return null;
+                return findRoot(name, getFileSystem());
+              }
+            };
+          }
+          else {
             root = new VirtualDirectoryImpl(basePath, null, fs, rootId) {
               @NotNull
               @Override
@@ -747,28 +763,12 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
                 final String name = super.getName();
 
                 // TODO: HACK!!! Get to simpler solution.
-                if (fs instanceof JarFileSystem) {
+                if (getFileSystem() instanceof JarFileSystem) {
                   String jarName = name.substring(0, name.length() - JarFileSystem.JAR_SEPARATOR.length());
                   return jarName.substring(jarName.lastIndexOf('/') + 1);
                 }
 
                 return name;
-              }
-            };
-          }
-          else {
-            // fake root for windows
-            root = new VirtualDirectoryImpl("", null, fs, rootId) {
-              @Override
-              @NotNull
-              public VirtualFile[] getChildren() {
-                return getRoots(fs);
-              }
-
-              @Override
-              public VirtualFileSystemEntry findChild(@NotNull String name) {
-                if (name.isEmpty()) return null;
-                return findRoot(name, fs);
               }
             };
           }
@@ -786,12 +786,12 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
           throw new RuntimeException(e);
         }
 
-        if (!basePath.isEmpty()) {
-          myRoots.put(rootUrl, root);
-          myRootsById.put(root.getId(), root);
+        if (basePath.isEmpty()) {
+          myFakeRoot = root;
         }
         else {
-          myFakeRoot = root;
+          myRoots.put(rootUrl, root);
+          myRootsById.put(root.getId(), root);
         }
       }
 
