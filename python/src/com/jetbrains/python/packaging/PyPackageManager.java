@@ -2,7 +2,6 @@ package com.jetbrains.python.packaging;
 
 import com.google.common.collect.Lists;
 import com.intellij.execution.process.ProcessOutput;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
@@ -38,7 +37,7 @@ public class PyPackageManager {
   public static final int ERROR_WRONG_USAGE = 1;
   public static final int ERROR_NO_PACKAGING_TOOLS = 2;
   public static final int ERROR_INVALID_SDK = -1;
-  public static final int ERROR_HELPER_NOT_FOUND = -2;
+  public static final int ERROR_TOOL_NOT_FOUND = -2;
   public static final int ERROR_TIMEOUT = -3;
   public static final int ERROR_INVALID_OUTPUT = -4;
   public static final int ERROR_ACCESS_DENIED = -5;
@@ -46,7 +45,6 @@ public class PyPackageManager {
   private static final String PACKAGING_TOOL = "packaging_tool.py";
   private static final String VIRTUALENV = "virtualenv.py";
   private static final int TIMEOUT = 10 * 60 * 1000;
-  private static final Logger LOG = Logger.getInstance("#" + PyPackageManager.class.getName());
 
   private static final Map<Sdk, PyPackageManager> ourInstances = new HashMap<Sdk, PyPackageManager>();
 
@@ -98,7 +96,7 @@ public class PyPackageManager {
       buildDir = FileUtil.createTempDirectory("packaging", null);
     }
     catch (IOException e) {
-      throw new PyExternalProcessException(ERROR_ACCESS_DENIED, "Cannot create temporary build directory");
+      throw new PyExternalProcessException(ERROR_ACCESS_DENIED, PACKAGING_TOOL, args, "Cannot create temporary build directory");
     }
     args.addAll(list("--build-dir", buildDir.getAbsolutePath()));
     for (PyRequirement req : requirements) {
@@ -155,10 +153,9 @@ public class PyPackageManager {
 
   public static void deleteVirtualEnv(@NotNull String sdkHome) throws PyExternalProcessException {
     final File root = PythonSdkType.getVirtualEnvRoot(sdkHome);
-    if (root == null) {
-      throw new PyExternalProcessException(ERROR_INVALID_SDK, "Cannot find virtualenv root for interpreter");
+    if (root != null) {
+      FileUtil.delete(root);
     }
-    FileUtil.delete(root);
   }
 
   @Nullable
@@ -238,7 +235,7 @@ public class PyPackageManager {
   }
 
   @Nullable
-  private static PyFile findSetupPy(@NotNull Module module) {
+  public static PyFile findSetupPy(@NotNull Module module) {
     for (VirtualFile root : PyUtil.getSourceRoots(module)) {
       final VirtualFile child = root.findChild("setup.py");
       if (child != null) {
@@ -265,24 +262,21 @@ public class PyPackageManager {
     ProcessOutput output = getProcessOutput(helper, args);
     final int retcode = output.getExitCode();
     if (output.isTimeout()) {
-      throw new PyExternalProcessException(ERROR_TIMEOUT, "Timed out");
+      throw new PyExternalProcessException(ERROR_TIMEOUT, helper, args, "Timed out");
     }
     else if (retcode != 0) {
       final String stdout = output.getStdout();
-      final String stderr = output.getStderr();
-      String message = stderr;
+      String message = output.getStderr();
       if (message.trim().isEmpty()) {
         message = stdout;
       }
-      final String header = String.format("Error when running '%s %s'", helper, StringUtil.join(args, " "));
-      LOG.debug(String.format("%s\nSTDOUT: %s\nSTDERR: %s\n\n", header, stdout, stderr));
-      throw new PyExternalProcessException(retcode, String.format("%s: %s", header, message));
+      throw new PyExternalProcessException(retcode, helper, args, message);
     }
     return output.getStdout();
   }
 
 
-  private ProcessOutput getProcessOutput(String helper, List<String> args) throws PyExternalProcessException {
+  private ProcessOutput getProcessOutput(@NotNull String helper, @NotNull List<String> args) throws PyExternalProcessException {
     final SdkAdditionalData sdkData = mySdk.getSdkAdditionalData();
     if (sdkData instanceof PythonRemoteSdkAdditionalData) {
       final PythonRemoteSdkAdditionalData remoteSdkData = (PythonRemoteSdkAdditionalData)sdkData;
@@ -297,22 +291,22 @@ public class PyPackageManager {
           return manager.runRemoteProcess(null, remoteSdkData, ArrayUtil.toStringArray(cmdline));
         }
         catch (PyRemoteInterpreterException e) {
-          throw new PyExternalProcessException(ERROR_INVALID_SDK, "Error running sdk.");
+          throw new PyExternalProcessException(ERROR_INVALID_SDK, helper, args, "Error running SDK");
         }
       }
       else {
-        throw new PyExternalProcessException(ERROR_INVALID_SDK,
+        throw new PyExternalProcessException(ERROR_INVALID_SDK, helper, args,
                                              "Remote interpreter can't be executed. Please enable WebDeployment plugin.");
       }
     }
     else {
       final String homePath = mySdk.getHomePath();
       if (homePath == null) {
-        throw new PyExternalProcessException(ERROR_INVALID_SDK, "Cannot find interpreter for SDK");
+        throw new PyExternalProcessException(ERROR_INVALID_SDK, helper, args, "Cannot find interpreter for SDK");
       }
       final String helperPath = PythonHelpersLocator.getHelperPath(helper);
       if (helperPath == null) {
-        throw new PyExternalProcessException(ERROR_HELPER_NOT_FOUND, String.format("Cannot find helper tool: '%s'", helper));
+        throw new PyExternalProcessException(ERROR_TOOL_NOT_FOUND, helper, args, "Cannot find external tool");
       }
       final String parentDir = new File(homePath).getParent();
       final List<String> cmdline = new ArrayList<String>();
@@ -330,7 +324,8 @@ public class PyPackageManager {
     for (String line : lines) {
       final List<String> fields = StringUtil.split(line, "\t");
       if (fields.size() < 3) {
-        throw new PyExternalProcessException(ERROR_INVALID_OUTPUT, String.format("Invalid output format of '%s'", PACKAGING_TOOL));
+        throw new PyExternalProcessException(ERROR_INVALID_OUTPUT, PACKAGING_TOOL, Collections.<String>emptyList(),
+                                             "Invalid output format");
       }
       final String name = fields.get(0);
       final String version = fields.get(1);
