@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.refactoring.introduce.parameter;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;

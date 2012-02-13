@@ -44,7 +44,6 @@ import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -1717,48 +1716,4 @@ public abstract class DialogWrapper {
   }
 
   private static enum ErrorPaintingType {DOT, SIGN, LINE}
-
-  public static final class ValidationInfo {
-    public final String message;
-    public final JComponent component;
-
-    public ValidationInfo(@NotNull String message, @Nullable JComponent component) {
-      this.message = message;
-      this.component = component;
-    }
-
-    public ValidationInfo(@NotNull String message) {
-      this(message, null);
-    }
-  }
-  
-  public interface OptionAction extends Action {
-
-    @NotNull
-    Action[] getOptions();
-    
-    abstract class Impl extends AbstractAction implements OptionAction {
-      
-      private Action[] myOptions;
-      
-      public Impl(@NotNull Action[] options) {
-        myOptions = options;
-      }
-
-      public Impl(String name, @NotNull Action[] options) {
-        super(name);
-        myOptions = options;
-      }
-
-      public Impl(String name, Icon icon, @NotNull Action[] options) {
-        super(name, icon);
-        myOptions = options;
-      }
-
-      @Override
-      public Action[] getOptions() {
-        return myOptions;
-      }
-    }
-  }
 }

@@ -522,9 +522,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     return myHelpId;
   }
 
-
-
-
   private class CommitAction extends AbstractAction implements OptionAction {
 
     private Action[] myOptions = new Action[0];
