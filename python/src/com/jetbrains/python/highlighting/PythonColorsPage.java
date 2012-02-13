@@ -7,6 +7,9 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
+import com.intellij.psi.codeStyle.DisplayPriority;
+import com.intellij.psi.codeStyle.DisplayPrioritySortable;
+import com.intellij.util.PlatformUtils;
 import com.jetbrains.python.PythonFileType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -17,7 +20,7 @@ import java.util.Map;
 /**
  * @author yole
  */
-public class PythonColorsPage implements ColorSettingsPage, InspectionColorSettingsPage {
+public class PythonColorsPage implements ColorSettingsPage, InspectionColorSettingsPage, DisplayPrioritySortable {
   private static final AttributesDescriptor[] ATTRS = new AttributesDescriptor[] {
     new AttributesDescriptor("Keyword", PyHighlighter.PY_KEYWORD),
     new AttributesDescriptor("String (bytes)", PyHighlighter.PY_BYTE_STRING),
@@ -109,5 +112,10 @@ public class PythonColorsPage implements ColorSettingsPage, InspectionColorSetti
 
   public Map<String, TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap() {
     return ourTagToDescriptorMap;
+  }
+
+  @Override
+  public DisplayPriority getPriority() {
+    return PlatformUtils.isPyCharm() ? DisplayPriority.KEY_LANGUAGE_SETTINGS : DisplayPriority.LANGUAGE_SETTINGS;
   }
 }
