@@ -66,7 +66,9 @@ public class DeferredIconImpl<T> implements DeferredIcon {
   }
 
   public void paintIcon(final Component c, final Graphics g, final int x, final int y) {
-    myDelegateIcon.paintIcon(c, g, x, y);
+    if (!(myDelegateIcon instanceof DeferredIconImpl)) {
+      myDelegateIcon.paintIcon(c, g, x, y); //SOE protection
+    }
 
     if (!myIsScheduled && !isDone()) {
       myIsScheduled = true;
