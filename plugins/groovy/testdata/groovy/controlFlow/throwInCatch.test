@@ -7,9 +7,9 @@ try {
 }
 -----
 0(1) element: null
-1(2,4) element: Open block
+1(2) element: Open block
 2(3) READ a
-3(4,11) element: Reference expression MAYBE_RETURN
+3(11) element: Reference expression MAYBE_RETURN
 4(5) element: Catch clause
 5(6) WRITE e
 6(7) READ e
