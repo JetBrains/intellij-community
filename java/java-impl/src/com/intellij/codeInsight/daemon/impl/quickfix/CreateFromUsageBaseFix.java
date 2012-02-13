@@ -352,6 +352,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
 
     final PsiClass[] supers = psiClass.getSupers();
     for (PsiClass aSuper : supers) {
+      if (classes.contains(aSuper)) continue;
       if (canBeTargetClass(aSuper)) {
         collectSupers(aSuper, classes);
       }
