@@ -17,10 +17,7 @@ package org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiConstantEvaluationHelper;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nullable;
@@ -668,11 +665,49 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       condition.accept(this);
     }
     final InstructionImpl instruction = startNode(switchStatement);
-    for (GrCaseSection section : switchStatement.getCaseSections()) {
+    final GrCaseSection[] sections = switchStatement.getCaseSections();
+    if (!containsAllCases(switchStatement)) {
+      addPendingEdge(switchStatement, instruction);
+    }
+    for (GrCaseSection section : sections) {
       myHead = instruction;
       section.accept(this);
     }
     finishNode(instruction);
+  }
+
+  private static boolean containsAllCases(GrSwitchStatement statement) {
+    final GrCaseSection[] sections = statement.getCaseSections();
+    for (GrCaseSection section : sections) {
+      if (section.getCaseLabel().isDefault()) return true;
+    }
+
+    final GrExpression condition = statement.getCondition();
+    if (!(condition instanceof GrReferenceExpression)) return false;
+
+    PsiType type = TypesUtil.unboxPrimitiveTypeWrapper(condition.getNominalType());
+    if (type == null) return false;
+
+    if (type instanceof PsiPrimitiveType) {
+      if (type == PsiType.BOOLEAN) return sections.length == 2;
+      if (type == PsiType.BYTE || type == PsiType.CHAR) return sections.length == 128;
+      return false;
+    }
+
+    if (type instanceof PsiClassType) {
+      final PsiClass resolved = ((PsiClassType)type).resolve();
+      if (resolved != null && resolved.isEnum()) {
+        int enumConstantCount = 0;
+        final PsiField[] fields = resolved.getFields();
+        for (PsiField field : fields) {
+          if (field instanceof PsiEnumConstant) enumConstantCount++;
+        }
+
+        if (sections.length == enumConstantCount) return true;
+      }
+    }
+
+    return false;
   }
 
   @Override
