@@ -489,6 +489,9 @@ public class UpdateHighlightersUtil {
     else if (severityRegistrar.compare(severity, HighlightSeverity.ERROR) >= 0) {
       layer = HighlighterLayer.ERROR;
     }
+    else if (severity == HighlightInfoType.INJECTED_FRAGMENT_SEVERITY) {
+      layer = HighlighterLayer.CARET_ROW-1;
+    }
     else {
       layer = HighlighterLayer.ADDITIONAL_SYNTAX;
     }

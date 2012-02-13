@@ -125,7 +125,7 @@ public class AndroidAutogenerator {
           return null;
         }
 
-        final String sourceRootPath = facet.getAptGenSourceRootPath();
+        final String sourceRootPath = AndroidRootUtil.getAptGenSourceRootPath(facet);
         if (sourceRootPath == null) {
           context.addMessage(CompilerMessageCategory.ERROR,
                              AndroidBundle.message("android.compilation.error.apt.gen.not.specified", module.getName()),
@@ -316,7 +316,7 @@ public class AndroidAutogenerator {
             return null;
           }
 
-          final String sourceRootPath = facet.getAidlGenSourceRootPath();
+          final String sourceRootPath = AndroidRootUtil.getAidlGenSourceRootPath(facet);
           if (sourceRootPath == null) {
             context.addMessage(CompilerMessageCategory.ERROR,
                                AndroidBundle.message("android.compilation.error.apt.gen.not.specified", module.getName()), null, -1, -1);

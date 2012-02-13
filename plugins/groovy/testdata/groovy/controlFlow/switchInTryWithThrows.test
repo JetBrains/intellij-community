@@ -18,17 +18,18 @@ println v + m
 0(1) element: null
 1(2) WRITE v
 2(3) WRITE m
-3(4,8) element: Open block
+3(4) element: Open block
 4(5) READ x
-5(6,7,8,12) element: Switch statement
-6(8,12) WRITE v
-7(8) element: THROW statement
-8(9) element: Catch clause
-9(10) WRITE e
-10(11) READ e
-11(16) element: THROW statement
-12(13) READ println
-13(14) READ v
-14(15) READ m
-15(16) element: Call expression MAYBE_RETURN
-16() element: null
+5(6,7,9,13) element: Switch statement
+6(9,13) WRITE v
+7(8,9) THROW. element: NEW expression
+8(9) THROW. element: THROW statement
+9(10) element: Catch clause
+10(11) WRITE e
+11(12) READ e
+12(17) THROW. element: THROW statement
+13(14) READ println
+14(15) READ v
+15(16) READ m
+16(17) element: Call expression MAYBE_RETURN
+17() element: null

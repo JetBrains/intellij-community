@@ -36,11 +36,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrAssertStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.MaybeReturnInstruction;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ThrowingInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesProvider;
 
 /**
@@ -121,13 +121,13 @@ public class MissingReturnInspection extends GroovySuppressableInspectionTool {
             hasExplicitReturn.set(true);
           }
         }
-        else if (element instanceof GrThrowStatement) {
+        else if (instruction instanceof ThrowingInstruction) {
           sometimes.set(true);
         }
         else if (element instanceof GrAssertStatement) {
           sometimes.set(true);
           int count = 0;
-          for (Instruction _i : instruction.allSucc()) {
+          for (Instruction _i : instruction.allSuccessors()) {
             count++;
           }
           if (count <= 1) {

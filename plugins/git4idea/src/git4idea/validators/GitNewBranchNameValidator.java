@@ -60,11 +60,19 @@ public final class GitNewBranchNameValidator implements InputValidatorEx {
   }
 
   private boolean checkBranchConflict(String inputString) {
-    if (conflictsWithLocalBranch(inputString) || conflictsWithRemoteBranch(inputString)) {
+    if (isNotPermitted(inputString) || conflictsWithLocalBranch(inputString) || conflictsWithRemoteBranch(inputString)) {
       return false;
     }
     myErrorText = null;
     return true;
+  }
+
+  private boolean isNotPermitted(@NotNull String inputString) {
+    if (inputString.equalsIgnoreCase("head")) {
+      myErrorText = "Branch name " + inputString + " is not valid";
+      return true;
+    }
+    return false;
   }
 
   private boolean conflictsWithLocalBranch(String inputString) {
@@ -96,7 +104,7 @@ public final class GitNewBranchNameValidator implements InputValidatorEx {
     for (GitRepository repository : myRepositories) {
       GitBranchesCollection branchesCollection = repository.getBranches();
       Collection<GitBranch> branches = local ? branchesCollection.getLocalBranches() : branchesCollection.getRemoteBranches();
-      if (!GitUtil.getBranchNames(branches).contains(inputString)) {
+      if (!GitUtil.getBranchNamesWithoutRemoteHead(branches).contains(inputString)) {
         return false;
       }
     }

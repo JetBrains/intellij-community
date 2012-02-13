@@ -63,8 +63,8 @@ import org.jetbrains.android.resourceManagers.LocalResourceManager;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.android.util.AndroidCompilerMessageKind;
+import org.jetbrains.android.util.AndroidExecutionUtil;
 import org.jetbrains.android.util.AndroidUtils;
-import org.jetbrains.android.util.ExecutionUtil;
 import org.jetbrains.android.util.ResourceEntry;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -654,13 +654,13 @@ public class AndroidCompileUtil {
       }
     }
 
-    sourceRootPath = facet.getAptGenSourceRootPath();
+    sourceRootPath = AndroidRootUtil.getAptGenSourceRootPath(facet);
     if (sourceRootPath != null) {
       createSourceRootIfNotExist(sourceRootPath, module);
     }
 
     if (FileTypeIndex.getFiles(AndroidIdlFileType.ourFileType, moduleScope).size() > 0) {
-      sourceRootPath = facet.getAidlGenSourceRootPath();
+      sourceRootPath = AndroidRootUtil.getAidlGenSourceRootPath(facet);
       if (sourceRootPath != null) {
         createSourceRootIfNotExist(sourceRootPath, module);
       }
@@ -857,7 +857,18 @@ public class AndroidCompileUtil {
   @NotNull
   public static Map<CompilerMessageCategory, List<String>> execute(String... argv) throws IOException {
     assert !ApplicationManager.getApplication().isDispatchThread();
-    final Map<AndroidCompilerMessageKind, List<String>> messages = ExecutionUtil.doExecute(argv);
+    final Map<AndroidCompilerMessageKind, List<String>> messages = AndroidExecutionUtil.doExecute(argv);
     return toCompilerMessageCategoryKeys(messages);
+  }
+
+  public static String getApkName(Module module) {
+    return module.getName() + ".apk";
+  }
+
+  @Nullable
+  public static String getOutputPackage(@NotNull Module module) {
+    VirtualFile compilerOutput = CompilerModuleExtension.getInstance(module).getCompilerOutputPath();
+    if (compilerOutput == null) return null;
+    return new File(compilerOutput.getPath(), getApkName(module)).getPath();
   }
 }

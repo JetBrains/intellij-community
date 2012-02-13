@@ -40,10 +40,10 @@ public interface GrBinaryExpression extends GrExpression, PsiPolyVariantReferenc
   @Nullable
   GrExpression getRightOperand();
 
-  @Nullable
+  @NotNull
   IElementType getOperationTokenType();
 
-  @Nullable
+  @NotNull
   PsiElement getOperationToken();
 
   @NotNull

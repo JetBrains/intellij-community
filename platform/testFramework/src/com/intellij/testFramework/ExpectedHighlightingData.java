@@ -120,12 +120,10 @@ public class ExpectedHighlightingData {
         boolean checkWeakWarnings = false;
         boolean checkInfos = false;
 
-
-
         highlightingTypes.put(ERROR_MARKER, new ExpectedHighlightingSet(HighlightSeverity.ERROR, false, true));
         highlightingTypes.put(WARNING_MARKER, new ExpectedHighlightingSet(HighlightSeverity.WARNING, false, checkWarnings));
         highlightingTypes.put(WEAK_WARNING_MARKER, new ExpectedHighlightingSet(HighlightSeverity.WEAK_WARNING, false, checkWeakWarnings));
-        //highlightingTypes.put("inject", new ExpectedHighlightingSet(HighlightInfoType.INJECTED_FRAGMENT_SEVERITY, false, checkInfos));
+        highlightingTypes.put("inject", new ExpectedHighlightingSet(HighlightInfoType.INJECTED_FRAGMENT_SEVERITY, false, checkInfos));
         highlightingTypes.put(INFO_MARKER, new ExpectedHighlightingSet(HighlightSeverity.INFORMATION, false, checkInfos));
         highlightingTypes.put("symbolName", new ExpectedHighlightingSet(HighlightInfoType.SYMBOL_TYPE_SEVERITY, false, false));
         for (SeveritiesProvider provider : Extensions.getExtensions(SeveritiesProvider.EP_NAME)) {
@@ -162,8 +160,7 @@ public class ExpectedHighlightingData {
   }
   public void checkInfos() {
     highlightingTypes.put(INFO_MARKER, new ExpectedHighlightingSet(HighlightSeverity.INFORMATION, false, true));
-    //highlightingTypes.put("inject", new ExpectedHighlightingSet(HighlightInfoType.INJECTED_FRAGMENT_SEVERITY, false, true));
-
+    highlightingTypes.put("inject", new ExpectedHighlightingSet(HighlightInfoType.INJECTED_FRAGMENT_SEVERITY, false, true));
   }
   public void checkSymbolNames() {
     highlightingTypes.put("symbolName", new ExpectedHighlightingSet(HighlightInfoType.SYMBOL_TYPE_SEVERITY, false, true));
@@ -357,7 +354,7 @@ public class ExpectedHighlightingData {
           int x1 = startOffset - StringUtil.lineColToOffset(text, y1, 0);
           int x2 = endOffset - StringUtil.lineColToOffset(text, y2, 0);
 
-          if (failMessage.length() != 0) failMessage += '\n';
+          if (!failMessage.isEmpty()) failMessage += '\n';
           failMessage += fileName + "Extra line marker highlighted " +
                             "(" + (x1 + 1) + ", " + (y1 + 1) + ")" + "-" +
                             "(" + (x2 + 1) + ", " + (y2 + 1) + ")"
@@ -377,7 +374,7 @@ public class ExpectedHighlightingData {
         int x1 = startOffset - StringUtil.lineColToOffset(text, y1, 0);
         int x2 = endOffset - StringUtil.lineColToOffset(text, y2, 0);
 
-        if (failMessage.length() != 0) failMessage += '\n';
+        if (!failMessage.isEmpty()) failMessage += '\n';
         failMessage += fileName + "Line marker was not highlighted " +
                        "(" + (x1 + 1) + ", " + (y1 + 1) + ")" + "-" +
                        "(" + (x2 + 1) + ", " + (y2 + 1) + ")"
@@ -386,7 +383,7 @@ public class ExpectedHighlightingData {
       }
     }
 
-    if (failMessage.length() > 0) Assert.fail(failMessage);
+    if (!failMessage.isEmpty()) Assert.fail(failMessage);
   }
 
   private static boolean containsLineMarker(LineMarkerInfo info, Collection<LineMarkerInfo> where) {
@@ -427,7 +424,7 @@ public class ExpectedHighlightingData {
         int x1 = startOffset - StringUtil.lineColToOffset(text, y1, 0);
         int x2 = endOffset - StringUtil.lineColToOffset(text, y2, 0);
 
-        if (failMessage.length() != 0) failMessage += '\n';
+        if (!failMessage.isEmpty()) failMessage += '\n';
         failMessage += fileName + "Extra text fragment highlighted " +
                           "(" + (x1 + 1) + ", " + (y1 + 1) + ")" + "-" +
                           "(" + (x2 + 1) + ", " + (y2 + 1) + ")" +
@@ -453,7 +450,7 @@ public class ExpectedHighlightingData {
           int x1 = startOffset - StringUtil.lineColToOffset(text, y1, 0);
           int x2 = endOffset - StringUtil.lineColToOffset(text, y2, 0);
 
-          if (failMessage.length() != 0) failMessage += '\n';
+          if (!failMessage.isEmpty()) failMessage += '\n';
           failMessage += fileName + "Text fragment was not highlighted " +
                             "(" + (x1 + 1) + ", " + (y1 + 1) + ")" + "-" +
                             "(" + (x2 + 1) + ", " + (y2 + 1) + ")" +
@@ -464,7 +461,7 @@ public class ExpectedHighlightingData {
       }
     }
 
-    if (failMessage.length() > 0) {
+    if (!failMessage.isEmpty()) {
       compareTexts(infos, text, failMessage, filePath);
     }
   }

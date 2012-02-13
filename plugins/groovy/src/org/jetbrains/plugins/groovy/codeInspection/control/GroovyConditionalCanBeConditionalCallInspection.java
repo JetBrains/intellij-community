@@ -28,7 +28,10 @@ import org.jetbrains.plugins.groovy.codeInspection.utils.EquivalenceChecker;
 import org.jetbrains.plugins.groovy.codeInspection.utils.SideEffectChecker;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
@@ -58,8 +61,7 @@ public class GroovyConditionalCanBeConditionalCallInspection extends BaseInspect
       return "Replace with conditional call";
     }
 
-    public void doFix(Project project, ProblemDescriptor descriptor)
-        throws IncorrectOperationException {
+    public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final GrConditionalExpression expression = (GrConditionalExpression) descriptor.getPsiElement();
       final GrBinaryExpression binaryCondition = (GrBinaryExpression)PsiUtil.skipParentheses(expression.getCondition(), false);
       final GrMethodCallExpression call;
@@ -90,7 +92,7 @@ public class GroovyConditionalCanBeConditionalCallInspection extends BaseInspect
       GrExpression condition = expression.getCondition();
       final GrExpression thenBranch = expression.getThenBranch();
       final GrExpression elseBranch = expression.getElseBranch();
-      if (condition == null || thenBranch == null || elseBranch == null) {
+      if (thenBranch == null || elseBranch == null) {
         return;
       }
       if (SideEffectChecker.mayHaveSideEffects(condition)) {

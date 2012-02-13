@@ -15,18 +15,18 @@
  */
 package com.intellij.codeInsight.navigation;
 
-import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
+import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPsiElementPointer;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PsiNavigateUtil;
@@ -105,9 +105,9 @@ public abstract class NavigationGutterIconRenderer extends GutterIconRenderer im
     final List<PsiElement> list = getTargetElements();
     if (list.isEmpty()) {
       if (myEmptyText != null) {
-        final JComponent renderer = HintUtil.createErrorLabel(myEmptyText);
-        final JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(renderer, renderer).createPopup();
         if (event != null) {
+          final JComponent renderer = HintUtil.createErrorLabel(myEmptyText);
+          final JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(renderer, renderer).createPopup();
           popup.show(new RelativePoint(event));
         }
       }
@@ -117,8 +117,8 @@ public abstract class NavigationGutterIconRenderer extends GutterIconRenderer im
       PsiNavigateUtil.navigate(list.iterator().next());
     }
     else {
-      final JBPopup popup = NavigationUtil.getPsiElementPopup(PsiUtilBase.toPsiElementArray(list), myCellRenderer, myPopupTitle);
       if (event != null) {
+        final JBPopup popup = NavigationUtil.getPsiElementPopup(PsiUtilCore.toPsiElementArray(list), myCellRenderer, myPopupTitle);
         popup.show(new RelativePoint(event));
       }
     }

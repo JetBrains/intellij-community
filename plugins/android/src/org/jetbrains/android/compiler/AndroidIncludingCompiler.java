@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.android.facet.AndroidFacet;
+import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.android.util.AndroidBundle;
@@ -58,7 +59,7 @@ public class AndroidIncludingCompiler implements SourceGeneratingCompiler {
     }
 
     for (AndroidFacet depFacet : AndroidSdkUtils.getAllAndroidDependencies(module, true)) {
-      String genSrcRootPath = depFacet.getAptGenSourceRootPath();
+      String genSrcRootPath = AndroidRootUtil.getAptGenSourceRootPath(depFacet);
       VirtualFile genSrcRoot = genSrcRootPath != null ? LocalFileSystem.getInstance().findFileByPath(genSrcRootPath) : null;
       VirtualFile[] srcRoots = ModuleRootManager.getInstance(depFacet.getModule()).getSourceRoots();
 
@@ -98,12 +99,12 @@ public class AndroidIncludingCompiler implements SourceGeneratingCompiler {
               continue;
             }
 
-            final String aptGenSrcRootPath = depFacet.getAptGenSourceRootPath();
+            final String aptGenSrcRootPath = AndroidRootUtil.getAptGenSourceRootPath(depFacet);
             final VirtualFile aptGenSrcRoot = aptGenSrcRootPath != null
                                               ? LocalFileSystem.getInstance().findFileByPath(aptGenSrcRootPath)
                                               : null;
 
-            final String aidlGenSrcRootPath = depFacet.getAidlGenSourceRootPath();
+            final String aidlGenSrcRootPath = AndroidRootUtil.getAidlGenSourceRootPath(depFacet);
             final VirtualFile aidlGenSrcRoot = aidlGenSrcRootPath != null
                                                ? LocalFileSystem.getInstance().findFileByPath(aidlGenSrcRootPath)
                                                : null;

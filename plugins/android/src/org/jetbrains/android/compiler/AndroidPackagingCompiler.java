@@ -126,7 +126,7 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
               continue;
             }
             String sdkPath = platform.getSdk().getLocation();
-            String outputPath = facet.getApkPath();
+            String outputPath = AndroidRootUtil.getApkPath(facet);
             if (outputPath == null) {
               context.addMessage(CompilerMessageCategory.ERROR,
                                  AndroidBundle.message("android.compilation.error.apk.path.not.specified", module.getName()), null, -1, -1);

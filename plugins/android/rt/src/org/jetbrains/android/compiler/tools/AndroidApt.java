@@ -22,7 +22,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.AndroidCompilerMessageKind;
-import org.jetbrains.android.util.ExecutionUtil;
+import org.jetbrains.android.util.AndroidExecutionUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -107,18 +107,18 @@ public final class AndroidApt {
         makeFieldsNotFinal(libRJavaFiles);
       }
 
-      ExecutionUtil.addMessages(messages, map);
+      AndroidExecutionUtil.addMessages(messages, map);
       return messages;
     }
     else {
       Map<AndroidCompilerMessageKind, List<String>> map;
 
       map = doCompile(target, manifestFileOsPath, outDirOsPath, resourceDirsOsPaths, ArrayUtil.EMPTY_STRING_ARRAY, null, false);
-      ExecutionUtil.addMessages(messages, map);
+      AndroidExecutionUtil.addMessages(messages, map);
 
       for (String libPackage : libPackages) {
         map = doCompile(target, manifestFileOsPath, outDirOsPath, resourceDirsOsPaths, ArrayUtil.EMPTY_STRING_ARRAY, libPackage, false);
-        ExecutionUtil.addMessages(messages, map);
+        AndroidExecutionUtil.addMessages(messages, map);
       }
       return messages;
     }
@@ -193,7 +193,7 @@ public final class AndroidApt {
     args.add(target.getPath(IAndroidTarget.ANDROID_JAR));
 
     LOG.info(AndroidCommonUtils.command2string(args));
-    return ExecutionUtil.doExecute(ArrayUtil.toStringArray(args));
+    return AndroidExecutionUtil.doExecute(ArrayUtil.toStringArray(args));
   }
 
   @NotNull
@@ -227,7 +227,7 @@ public final class AndroidApt {
     args.add(outputPath);
 
     LOG.info(AndroidCommonUtils.command2string(args));
-    return ExecutionUtil.doExecute(ArrayUtil.toStringArray(args));
+    return AndroidExecutionUtil.doExecute(ArrayUtil.toStringArray(args));
   }
 
   public static Map<AndroidCompilerMessageKind, List<String>> packageResources(@NotNull IAndroidTarget target,
@@ -290,6 +290,6 @@ public final class AndroidApt {
     args.add(outputPath);
 
     LOG.info(AndroidCommonUtils.command2string(args));
-    return ExecutionUtil.doExecute(ArrayUtil.toStringArray(args));
+    return AndroidExecutionUtil.doExecute(ArrayUtil.toStringArray(args));
   }
 }

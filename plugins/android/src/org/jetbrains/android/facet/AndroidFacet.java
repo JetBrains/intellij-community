@@ -200,17 +200,6 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
     myAutogenerationEnabled = true;
   }
 
-  @Nullable
-  public static String getOutputPackage(@NotNull Module module) {
-    VirtualFile compilerOutput = CompilerModuleExtension.getInstance(module).getCompilerOutputPath();
-    if (compilerOutput == null) return null;
-    return new File(compilerOutput.getPath(), getApkName(module)).getPath();
-  }
-
-  public static String getApkName(Module module) {
-    return module.getName() + ".apk";
-  }
-
   public void androidPlatformChanged() {
     myAvdManager = null;
     myLocalResourceManager = null;
@@ -731,21 +720,6 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
     return (AndroidFacetType)FacetTypeRegistry.getInstance().findFacetType(ID);
   }
 
-  public PsiClass findClass(final String className) {
-    return findClass(className, getModule().getModuleWithDependenciesAndLibrariesScope(true));
-  }
-
-  public PsiClass findClass(final String className, final GlobalSearchScope scope) {
-    final Project project = getModule().getProject();
-    final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
-    return ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
-      @Nullable
-      public PsiClass compute() {
-        return facade.findClass(className, scope);
-      }
-    });
-  }
-
   @NotNull
   public Map<String, PsiClass> getClassMap(@NotNull String className, @NotNull ClassMapConstructor constructor) {
     synchronized (myClassMapLock) {
@@ -779,11 +753,17 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
     return viewClassMap;
   }
 
-  private boolean fillMap(@NotNull String className,
+  private boolean fillMap(@NotNull final String className,
                           @NotNull final ClassMapConstructor constructor,
                           GlobalSearchScope scope,
                           final Map<String, PsiClass> map) {
-    PsiClass baseClass = findClass(className, getModule().getModuleWithDependenciesAndLibrariesScope(true));
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(getModule().getProject());
+    final PsiClass baseClass = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
+      @Nullable
+      public PsiClass compute() {
+        return facade.findClass(className, getModule().getModuleWithDependenciesAndLibrariesScope(true));
+      }
+    });
     if (baseClass != null) {
       String[] baseClassTagNames = constructor.getTagNamesByClass(baseClass);
       for (String tagName : baseClassTagNames) {
@@ -808,37 +788,6 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
     return map.size() > 0;
   }
 
-  @Nullable
-  public String getAptGenSourceRootPath() {
-    String path = getConfiguration().GEN_FOLDER_RELATIVE_PATH_APT;
-    if (path.length() == 0) return null;
-    String moduleDirPath = getModuleDirPath();
-    return moduleDirPath != null ? moduleDirPath + path : null;
-  }
-
-
-  @Nullable
-  public String getAidlGenSourceRootPath() {
-    String path = getConfiguration().GEN_FOLDER_RELATIVE_PATH_AIDL;
-    if (path.length() == 0) return null;
-    String moduleDirPath = getModuleDirPath();
-    return moduleDirPath != null ? moduleDirPath + path : null;
-  }
-
-  @Nullable
-  public String getModuleDirPath() {
-    return AndroidRootUtil.getModuleDirPath(getModule());
-  }
-
-  @Nullable
-  public String getApkPath() {
-    String path = getConfiguration().APK_PATH;
-    if (path.length() == 0) {
-      return getOutputPackage(getModule());
-    }
-    String moduleDirPath = getModuleDirPath();
-    return moduleDirPath != null ? FileUtil.toSystemDependentName(moduleDirPath + path) : null;
-  }
 
   public void scheduleSourceRegenerating(@NotNull final AndroidAutogeneratorMode mode) {
     synchronized (myDirtyModes) {

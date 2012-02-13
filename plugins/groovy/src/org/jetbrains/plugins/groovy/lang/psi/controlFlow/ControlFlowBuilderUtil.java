@@ -47,7 +47,7 @@ public class ControlFlowBuilderUtil {
 
   private static int doVisitForPostorder(Instruction curr, int currN, int[] postorder, boolean[] visited) {
     visited[curr.num()] = true;
-    for (Instruction succ : curr.allSucc()) {
+    for (Instruction succ : curr.allSuccessors()) {
       if (!visited[succ.num()]) {
         currN = doVisitForPostorder(succ, currN, postorder, visited);
       }
@@ -122,7 +122,7 @@ public class ControlFlowBuilderUtil {
         }
       }
 
-      for (Instruction succ : curr.allSucc()) {
+      for (Instruction succ : curr.allSuccessors()) {
         if (postorder[succ.num()] > postorder[curr.num()]) {
           TIntHashSet currDefinitelyAssigned = definitelyAssigned[curr.num()];
           TIntHashSet succDefinitelyAssigned = definitelyAssigned[succ.num()];

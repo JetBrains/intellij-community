@@ -276,7 +276,7 @@ public class Git {
     GitRemote remote = pushSpec.getRemote();
     GitBranch remoteBranch = pushSpec.getDest();
     String destination = remoteBranch.getName().replaceFirst(remote.getName() + "/", "");
-    return push(repository, remote.getName(), pushSpec.getSource().getName() + ":" + destination);
+    return push(repository, remote.getName(), pushSpec.getSource().getName() + ":" + destination, listeners);
   }
 
   private static GitCommandResult run(@NotNull GitLineHandler handler) {

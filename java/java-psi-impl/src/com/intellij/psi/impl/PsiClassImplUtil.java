@@ -984,12 +984,11 @@ public class PsiClassImplUtil {
   }
 
   public static boolean isMethodEquivalentTo(PsiMethod method1, PsiElement another) {
+    if (method1 == another) return true;
     if (!(another instanceof PsiMethod)) return false;
     PsiMethod method2 = (PsiMethod)another;
-    String name1 = method1.getName();
     if (!another.isValid()) return false;
-    String name2 = method2.getName();
-    if (!name1.equals(name2)) return false;
+    if (!method1.getName().equals(method2.getName())) return false;
     PsiClass aClass1 = method1.getContainingClass();
     PsiClass aClass2 = method2.getContainingClass();
     PsiManager manager = method1.getManager();

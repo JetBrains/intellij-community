@@ -147,7 +147,7 @@ public class AndroidRootUtil {
 
   @Nullable
   public static VirtualFile getAidlGenDir(@NotNull AndroidFacet facet) {
-    final String genPath = facet.getAidlGenSourceRootPath();
+    final String genPath = getAidlGenSourceRootPath(facet);
     return genPath != null
            ? LocalFileSystem.getInstance().findFileByPath(genPath)
            : null;
@@ -417,5 +417,31 @@ public class AndroidRootUtil {
     return result != null
            ? result
            : getPropertyValue(module, DEFAULT_PROPERTIES_FILE_NAME, propertyName);
+  }
+
+  @Nullable
+  public static String getAptGenSourceRootPath(@NotNull AndroidFacet facet) {
+    String path = facet.getConfiguration().GEN_FOLDER_RELATIVE_PATH_APT;
+    if (path.length() == 0) return null;
+    String moduleDirPath = getModuleDirPath(facet.getModule());
+    return moduleDirPath != null ? moduleDirPath + path : null;
+  }
+
+  @Nullable
+  public static String getAidlGenSourceRootPath(@NotNull AndroidFacet facet) {
+    String path = facet.getConfiguration().GEN_FOLDER_RELATIVE_PATH_AIDL;
+    if (path.length() == 0) return null;
+    String moduleDirPath = getModuleDirPath(facet.getModule());
+    return moduleDirPath != null ? moduleDirPath + path : null;
+  }
+
+  @Nullable
+  public static String getApkPath(@NotNull AndroidFacet facet) {
+    String path = facet.getConfiguration().APK_PATH;
+    if (path.length() == 0) {
+      return AndroidCompileUtil.getOutputPackage(facet.getModule());
+    }
+    String moduleDirPath = getModuleDirPath(facet.getModule());
+    return moduleDirPath != null ? FileUtil.toSystemDependentName(moduleDirPath + path) : null;
   }
 }

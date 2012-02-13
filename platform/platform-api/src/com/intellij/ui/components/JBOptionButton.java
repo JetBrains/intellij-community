@@ -21,6 +21,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
+import com.intellij.ui.ScreenUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -42,7 +43,8 @@ public class JBOptionButton extends JButton implements MouseMotionListener {
   private Rectangle myMoreRecMouse;
   private Action[] myOptions;
 
-  private JPopupMenu myPopup;
+  private JPopupMenu myUnderPopup;
+  private JPopupMenu myAbovePopup;
   private boolean myPopupIsShowing;
 
   private String myOptionTooltipText;
@@ -62,7 +64,8 @@ public class JBOptionButton extends JButton implements MouseMotionListener {
     myOptions = options;
     myMoreRec = new Rectangle(0, 0, myDownIcon.getIconWidth(), myDownIcon.getIconHeight());
 
-    myPopup = fillMenu();
+    myUnderPopup = fillMenu(true);
+    myAbovePopup = fillMenu(false);
     enableEvents(MouseEvent.MOUSE_EVENT_MASK | MouseEvent.MOUSE_MOTION_EVENT_MASK);
   }
 
@@ -94,8 +97,9 @@ public class JBOptionButton extends JButton implements MouseMotionListener {
       showPopup(null, false);
     } else if (myPopupIsShowing && !insideRec) {
       final Component over = SwingUtilities.getDeepestComponentAt(e.getComponent(), e.getX(), e.getY());
-      if (over != null && myPopup.isShowing()) {
-        final Rectangle rec = new Rectangle(myPopup.getLocationOnScreen(), myPopup.getSize());
+      JPopupMenu popup = myUnderPopup.isShowing() ? myUnderPopup : myAbovePopup;
+      if (over != null && popup.isShowing()) {
+        final Rectangle rec = new Rectangle(popup.getLocationOnScreen(), popup.getSize());
         int delta = 15;
         rec.x -= delta;
         rec.width += delta * 2;
@@ -168,6 +172,15 @@ public class JBOptionButton extends JButton implements MouseMotionListener {
     if (myPopupIsShowing) return;
     
     myPopupIsShowing = true;
+    final Point loc = getLocationOnScreen();
+    final Rectangle screen = ScreenUtil.getScreenRectangle(loc);
+    final Dimension popupSize = myUnderPopup.getPreferredSize();
+    final Rectangle intersection = screen.intersection(new Rectangle(new Point(loc.x, loc.y + getHeight()), popupSize));
+    final boolean above = intersection.height < popupSize.height;
+    int y = above ? getY() - popupSize.height : getY() + getHeight();
+
+    final JPopupMenu popup = above ? myAbovePopup : myUnderPopup;
+
     final Ref<PopupMenuListener> listener = new Ref<PopupMenuListener>();
     listener.set(new PopupMenuListener() {
       @Override
@@ -176,8 +189,8 @@ public class JBOptionButton extends JButton implements MouseMotionListener {
 
       @Override
       public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
-        if (myPopup != null && listener.get() != null) {
-          myPopup.removePopupMenuListener(listener.get());
+        if (popup != null && listener.get() != null) {
+          popup.removePopupMenuListener(listener.get());
         }
         SwingUtilities.invokeLater(new Runnable() {
           @Override
@@ -191,13 +204,13 @@ public class JBOptionButton extends JButton implements MouseMotionListener {
       public void popupMenuCanceled(PopupMenuEvent e) {
       }
     });
-    myPopup.addPopupMenuListener(listener.get());
-    myPopup.show(this, 0, getY() + getHeight());
+    popup.addPopupMenuListener(listener.get());
+    popup.show(this, 0, y);
 
     SwingUtilities.invokeLater(new Runnable() {
       @Override
       public void run() {
-        if (myPopup == null || !myPopup.isShowing() || !myPopupIsShowing) return;
+        if (popup == null || !popup.isShowing() || !myPopupIsShowing) return;
         
         Action selection = actionToSelect;
         if (selection == null && myOptions.length > 0 && ensureSelection) {
@@ -206,14 +219,14 @@ public class JBOptionButton extends JButton implements MouseMotionListener {
 
         if (selection == null) return;
         
-        final MenuElement[] elements = myPopup.getSubElements();
+        final MenuElement[] elements = popup.getSubElements();
         for (MenuElement eachElement : elements) {
           if (eachElement instanceof JMenuItem) {
             JMenuItem eachItem = (JMenuItem)eachElement;
             if (selection.equals(eachItem.getAction())) {
               final MenuSelectionManager mgr = MenuSelectionManager.defaultManager();
               final MenuElement[] path = new MenuElement[2];
-              path[0] = myPopup;
+              path[0] = popup;
               path[1] = eachItem;
               mgr.setSelectedPath(path);
               break;
@@ -225,13 +238,14 @@ public class JBOptionButton extends JButton implements MouseMotionListener {
   }
 
   public void closePopup() {
-    myPopup.setVisible(false);
+    myUnderPopup.setVisible(false);
+    myAbovePopup.setVisible(false);
   }
 
-  private JPopupMenu fillMenu() {
+  private JPopupMenu fillMenu(boolean under) {
     final JPopupMenu result = new JPopupMenu();
 
-    if (myOptions.length > 0) {
+    if (under && myOptions.length > 0) {
       final JMenuItem mainAction = new JMenuItem(getAction());
       configureItem(getMenuInfo(getAction()), mainAction);
       result.add(mainAction);
@@ -246,6 +260,14 @@ public class JBOptionButton extends JButton implements MouseMotionListener {
       configureItem(info, eachItem);
       result.add(eachItem);
     }
+
+    if (!under && myOptions.length > 0) {
+      result.addSeparator();
+      final JMenuItem mainAction = new JMenuItem(getAction());
+      configureItem(getMenuInfo(getAction()), mainAction);
+      result.add(mainAction);
+    }
+
     return result;
   }
 

@@ -211,7 +211,7 @@ public class GitFetcher {
     StringBuilder info = new StringBuilder();
     if (myRepositoryManager.moreThanOneRoot()) {
       for (Map.Entry<VirtualFile, String> entry : additionalInfo.entrySet()) {
-        info.append(entry.getValue()).append(" in ").append(GitUIUtil.getShortRepositoryName(myProject, entry.getKey()));
+        info.append(entry.getValue()).append(" in ").append(GitUIUtil.getShortRepositoryName(myProject, entry.getKey())).append("<br/>");
       }
     }
     else {

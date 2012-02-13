@@ -36,10 +36,10 @@ public class TryCatchStatement implements GroovyElementTypes {
     ParserUtils.getToken(builder, kTRY);
     PsiBuilder.Marker warn = builder.mark();
     ParserUtils.getToken(builder, mNLS);
-    if (!mLCURLY.equals(builder.getTokenType()) || !OpenOrClosableBlock.parseOpenBlock(builder, parser)) {
+    if (!OpenOrClosableBlock.parseOpenBlock(builder, parser)) {
       warn.rollbackTo();
-      builder.error(GroovyBundle.message("expression.expected"));
-      marker.done(TRY_BLOCK_STATEMENT);
+      builder.error(GroovyBundle.message("lcurly.expected"));
+      marker.drop();
       return true;
     }
     warn.drop();

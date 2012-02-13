@@ -26,8 +26,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
  */
 public interface GrTryCatchStatement extends GroovyPsiElement, GrStatement {
 
+  @NotNull
   GrOpenBlock getTryBlock();
 
+  @NotNull
   GrCatchClause[] getCatchClauses();
 
   @Nullable

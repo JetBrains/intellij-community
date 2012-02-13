@@ -30,6 +30,7 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.containers.WeakHashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -42,15 +43,14 @@ public class HighlightingSettingsPerFile implements PersistentStateComponent<Ele
   @NonNls private static final String ROOT_ATT_PREFIX = "root";
   @NonNls private static final String FILE_ATT = "file";
 
-  public static HighlightingSettingsPerFile getInstance(Project progect){
-    return ServiceManager.getService(progect, HighlightingSettingsPerFile.class);
+  public static HighlightingSettingsPerFile getInstance(Project project){
+    return ServiceManager.getService(project, HighlightingSettingsPerFile.class);
   }
 
   private final Map<VirtualFile, FileHighlighingSetting[]> myHighlightSettings = new HashMap<VirtualFile, FileHighlighingSetting[]>();
-
   private final Map<PsiFile, InspectionProfile> myProfileSettings = new WeakHashMap<PsiFile, InspectionProfile>();
 
-  public FileHighlighingSetting getHighlightingSettingForRoot(PsiElement root){
+  public FileHighlighingSetting getHighlightingSettingForRoot(@NotNull PsiElement root){
     final PsiFile containingFile = root.getContainingFile();
     final VirtualFile virtualFile = containingFile.getVirtualFile();
     FileHighlighingSetting[] fileHighlighingSettings = myHighlightSettings.get(virtualFile);
@@ -62,7 +62,7 @@ public class HighlightingSettingsPerFile implements PersistentStateComponent<Ele
     return fileHighlighingSettings[index];
   }
 
-  public static FileHighlighingSetting[] getDefaults(PsiFile file){
+  public static FileHighlighingSetting[] getDefaults(@NotNull PsiFile file){
     final int rootsCount = file.getViewProvider().getLanguages().size();
     final FileHighlighingSetting[] fileHighlighingSettings = new FileHighlighingSetting[rootsCount];
     for (int i = 0; i < fileHighlighingSettings.length; i++) {
@@ -71,7 +71,7 @@ public class HighlightingSettingsPerFile implements PersistentStateComponent<Ele
     return fileHighlighingSettings;
   }
 
-  public void setHighlightingSettingForRoot(PsiElement root, FileHighlighingSetting setting) {
+  public void setHighlightingSettingForRoot(@NotNull PsiElement root, @NotNull FileHighlighingSetting setting) {
     final PsiFile containingFile = root.getContainingFile();
     final VirtualFile virtualFile = containingFile.getVirtualFile();
     if (virtualFile == null) return;
@@ -134,8 +134,7 @@ public class HighlightingSettingsPerFile implements PersistentStateComponent<Ele
     myProfileSettings.clear();
   }
 
-  public synchronized InspectionProfile getInspectionProfile(final PsiFile file) {
+  public synchronized InspectionProfile getInspectionProfile(@NotNull PsiFile file) {
     return myProfileSettings.get(file);
   }
-
 }

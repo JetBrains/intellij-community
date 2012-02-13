@@ -29,6 +29,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.android.compiler.tools.AndroidIdl;
 import org.jetbrains.android.facet.AndroidFacet;
+import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.fileTypes.AndroidIdlFileType;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidUtils;
@@ -166,7 +167,7 @@ public class AndroidIdlCompiler implements SourceGeneratingCompiler {
                          String packageName,
                          List<GenerationItem> items) {
       Module module = facet.getModule();
-      String sourceRootPath = facet.getAidlGenSourceRootPath();
+      String sourceRootPath = AndroidRootUtil.getAidlGenSourceRootPath(facet);
       if (sourceRootPath == null) {
         myContext.addMessage(CompilerMessageCategory.ERROR,
                              AndroidBundle.message("android.compilation.error.apt.gen.not.specified", module.getName()), null, -1, -1);

@@ -21,16 +21,15 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.CallEnvironment;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.CallInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 
-import java.util.ArrayList;
-import java.util.Stack;
+import java.util.Deque;
+import java.util.LinkedHashSet;
 
 /**
  * @author ven
  */
 public class InstructionImpl implements Instruction {
-  ArrayList<InstructionImpl> myPred = new ArrayList<InstructionImpl>();
-
-  public ArrayList<InstructionImpl> mySucc = new ArrayList<InstructionImpl>();
+  private final LinkedHashSet<InstructionImpl> myPredecessors = new LinkedHashSet<InstructionImpl>();
+  private final LinkedHashSet<InstructionImpl> mySuccessors = new LinkedHashSet<InstructionImpl>();
 
   PsiElement myPsiElement;
   private final int myNumber;
@@ -45,44 +44,41 @@ public class InstructionImpl implements Instruction {
     myNumber = num;
   }
 
-  protected Stack<CallInstruction> getStack(CallEnvironment env, InstructionImpl instruction) {
-    return env.callStack(instruction);
-  }
-
-  public Iterable<? extends Instruction> succ(CallEnvironment env) {
-    final Stack<CallInstruction> stack = getStack(env, this);
-    for (InstructionImpl instruction : mySucc) {
-      env.update(stack, instruction);
+  public Iterable<? extends Instruction> successors(CallEnvironment environment) {
+    final Deque<CallInstruction> stack = environment.callStack(this);
+    for (InstructionImpl instruction : mySuccessors) {
+      environment.update(stack, instruction);
     }
 
-    return mySucc;
+    return mySuccessors;
   }
 
-  public Iterable<? extends Instruction> pred(CallEnvironment env) {
-    final Stack<CallInstruction> stack = getStack(env, this);
-    for (InstructionImpl instruction : myPred) {
-      env.update(stack, instruction);
+  public Iterable<? extends Instruction> predecessors(CallEnvironment environment) {
+    final Deque<CallInstruction> stack = environment.callStack(this);
+    for (InstructionImpl instruction : myPredecessors) {
+      environment.update(stack, instruction);
     }
 
-    return myPred;
+    return myPredecessors;
   }
 
-  public Iterable<? extends Instruction> allSucc() {
-    return mySucc;
+  public Iterable<? extends Instruction> allSuccessors() {
+    return mySuccessors;
   }
 
-  public Iterable<? extends Instruction> allPred() {
-    return myPred;
+  public Iterable<? extends Instruction> allPredecessors() {
+    return myPredecessors;
   }
 
   public String toString() {
     final StringBuilder builder = new StringBuilder();
     builder.append(myNumber);
     builder.append("(");
-    for (int i = 0; i < mySucc.size(); i++) {
-      if (i > 0) builder.append(',');
-      builder.append(mySucc.get(i).myNumber);
+    for (InstructionImpl successor : mySuccessors) {
+      builder.append(successor.myNumber);
+      builder.append(',');
     }
+    if (!mySuccessors.isEmpty()) builder.delete(builder.length() - 1, builder.length());
     builder.append(") ").append(getElementPresentation());
     return builder.toString();
   }
@@ -93,5 +89,13 @@ public class InstructionImpl implements Instruction {
 
   public int num() {
     return myNumber;
+  }
+
+  public void addSuccessor(InstructionImpl instruction) {
+    mySuccessors.add(instruction);
+  }
+
+  public void addPredecessor(InstructionImpl instruction) {
+    myPredecessors.add(instruction);
   }
 }

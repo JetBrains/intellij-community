@@ -37,6 +37,7 @@ import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -137,8 +138,10 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
     final Processor<DocumentWindow> commitProcessor = new Processor<DocumentWindow>() {
       @Override
       public boolean process(DocumentWindow documentWindow) {
-        ProgressManager.checkCanceled();
-        if (documentManager.isUncommited(hostDocument)) return false; // will be committed later
+        if (myProject.isDisposed()) return false;
+        ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+        if (indicator != null && indicator.isCanceled()) return false;
+        if (documentManager.isUncommited(hostDocument) || !hostPsiFile.isValid()) return false; // will be committed later
 
         RangeMarker rangeMarker = documentWindow.getHostRanges()[0];
         PsiElement element = rangeMarker.isValid() ? hostPsiFile.findElementAt(rangeMarker.getStartOffset()) : null;
@@ -173,6 +176,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
     final Runnable commitInjectionsRunnable = new Runnable() {
       @Override
       public void run() {
+        if (myProgress.isCanceled()) return;
         JobUtil.invokeConcurrentlyUnderProgress(new ArrayList<DocumentWindow>(injected), myProgress, !synchronously, commitProcessor);
       }
     };

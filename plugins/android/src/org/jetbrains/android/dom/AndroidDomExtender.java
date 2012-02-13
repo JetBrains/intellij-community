@@ -20,6 +20,7 @@ import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
@@ -324,7 +325,7 @@ public class AndroidDomExtender extends DomExtender<AndroidDomElement> {
     return facet.getClassMap(AndroidXmlResourcesUtil.PREFERENCE_CLASS_NAME, SimpleClassMapConstructor.getInstance());
   }
 
-  public static void registerExtensionsForAnimation(AndroidFacet facet,
+  public static void registerExtensionsForAnimation(final AndroidFacet facet,
                                                     String tagName,
                                                     AnimationElement element,
                                                     DomExtensionsRegistrar registrar,
@@ -335,7 +336,14 @@ public class AndroidDomExtender extends DomExtender<AndroidDomElement> {
       }
     }
     final String styleableName = AndroidAnimationUtils.getStyleableNameByTagName(tagName);
-    PsiClass c = facet.findClass(AndroidAnimationUtils.ANIMATION_PACKAGE + '.' + styleableName);
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(facet.getModule().getProject());
+    final PsiClass c = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
+      @Nullable
+      public PsiClass compute() {
+        return facade.findClass(AndroidAnimationUtils.ANIMATION_PACKAGE + '.' + styleableName,
+                                facet.getModule().getModuleWithDependenciesAndLibrariesScope(true));
+      }
+    });
     if (c != null) {
       registerAttributesForClassAndSuperclasses(facet, element, c, registrar, null);
     }

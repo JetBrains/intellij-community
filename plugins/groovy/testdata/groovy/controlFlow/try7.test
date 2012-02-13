@@ -7,11 +7,14 @@ try {
 0(1) element: null
 1(2) element: Open block
 2(3) READ foo
-3(5) element: RETURN statement
-4(7) element: Finally clause
-5(4,6)  CALL 4
-6(10) AFTER CALL 5
-7(8) READ bar
-8(9) element: Method call MAYBE_RETURN
-9(6)  RETURN
-10() element: null
+3(4,8) THROW. element: Method call
+4(6) element: RETURN statement
+5(10) element: Finally clause
+6(5,7)  CALL 5
+7(13) AFTER CALL 6
+8(5,9)  CALL 5
+9(13) AFTER CALL 8
+10(11) READ bar
+11(12) element: Method call MAYBE_RETURN
+12(7,9)  RETURN
+13() element: null

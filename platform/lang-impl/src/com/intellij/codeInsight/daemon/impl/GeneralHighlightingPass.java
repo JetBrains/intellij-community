@@ -345,7 +345,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
           TextRange textRange = place.getRangeInsideHost().shiftRight(place.host.getTextRange().getStartOffset());
           if (textRange.isEmpty()) continue;
           String desc = injectedPsi.getLanguage().getDisplayName() + ": " + injectedPsi.getText();
-          HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.INJECTED_LANGUAGE_FRAGMENT, textRange, null, desc, injectedAttributes);
+          HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.INJECTED_LANGUAGE_BACKGROUND, textRange, null, desc, injectedAttributes);
           info.fromInjection = true;
           outInfos.add(info);
         }
@@ -521,6 +521,9 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         forcedAttributes = TextAttributes.ERASE_MARKER;
       }
       else {
+        HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.INJECTED_LANGUAGE_FRAGMENT, annRange, null,null,TextAttributes.ERASE_MARKER);
+        holder.add(info);
+
         Color back = attributes.getBackgroundColor() == null ? myGlobalScheme.getDefaultBackground() : attributes.getBackgroundColor();
         Color fore = attributes.getForegroundColor() == null ? myGlobalScheme.getDefaultForeground() : attributes.getForegroundColor();
         forcedAttributes = new TextAttributes(fore, back, attributes.getEffectColor(), attributes.getEffectType(), attributes.getFontType());

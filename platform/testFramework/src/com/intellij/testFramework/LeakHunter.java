@@ -62,6 +62,7 @@ public class LeakHunter {
           }
         }
       }
+      ((ArrayList)cached).trimToSize();
       allFields.put(aClass, cached);
     }
     return cached;

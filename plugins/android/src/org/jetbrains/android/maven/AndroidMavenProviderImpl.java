@@ -25,7 +25,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.android.facet.AndroidFacet;
+import org.jetbrains.android.compiler.AndroidCompileUtil;
 import org.jetbrains.android.facet.AndroidFacetConfiguration;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.annotations.NotNull;
@@ -64,7 +64,7 @@ public class AndroidMavenProviderImpl implements AndroidMavenProvider {
 
     if (VfsUtil.isAncestor(new File(moduleDirPath), new File(buildDirectory), true)) {
       String buildDirRelPath = FileUtil.getRelativePath(moduleDirPath, buildDirectory, '/');
-      configuration.APK_PATH = '/' + buildDirRelPath + '/' + AndroidFacet.getApkName(module);
+      configuration.APK_PATH = '/' + buildDirRelPath + '/' + AndroidCompileUtil.getApkName(module);
     }
   }
 

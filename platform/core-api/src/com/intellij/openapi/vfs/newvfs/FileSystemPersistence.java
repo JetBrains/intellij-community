@@ -16,11 +16,12 @@
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.application.ModalityState;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
 public interface FileSystemPersistence {
-  void refresh(boolean asynchronous, Runnable postAction, ModalityState modalityState);
+  void refresh(boolean asynchronous, Runnable postAction, @NotNull ModalityState modalityState);
   int getCheapFileSystemModificationCount();
 }

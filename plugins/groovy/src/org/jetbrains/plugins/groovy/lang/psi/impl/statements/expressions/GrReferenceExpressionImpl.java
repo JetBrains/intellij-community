@@ -407,15 +407,8 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
   @Override
   public boolean isFullyQualified() {
-    final Kind kind = getKind();
-    switch (kind) {
-      case TYPE_OR_PROPERTY:
-        if (resolve() instanceof PsiPackage) return true;
-        break;
-      case METHOD_OR_PROPERTY:
-        break;
+    if (getKind() == Kind.TYPE_OR_PROPERTY && resolve() instanceof PsiPackage) return true;
 
-    }
     final GrExpression qualifier = getQualifier();
     if (!(qualifier instanceof GrReferenceExpressionImpl)) return false;
     return ((GrReferenceExpressionImpl)qualifier).isFullyQualified();
@@ -469,11 +462,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   private static final OurTypesCalculator TYPES_CALCULATOR = new OurTypesCalculator();
 
   public PsiType getNominalType() {
-    return getNominalTypeImpl();
-  }
-
-  @Nullable
-  private PsiType getNominalTypeImpl() {
     IElementType dotType = getDotTokenType();
 
     final GroovyResolveResult resolveResult = advancedResolve();
@@ -594,7 +582,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     @Nullable
     public PsiType fun(GrReferenceExpressionImpl refExpr) {
       final PsiType inferred = TypeInferenceHelper.getInferredType(refExpr);
-      final PsiType nominal = refExpr.getNominalTypeImpl();
+      final PsiType nominal = refExpr.getNominalType();
       if (inferred == null || PsiType.NULL.equals(inferred)) {
         if (nominal == null) {
           //inside nested closure we could still try to infer from variable initializer. Not sound, but makes sense

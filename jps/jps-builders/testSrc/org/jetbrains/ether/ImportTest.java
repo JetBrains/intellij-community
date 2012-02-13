@@ -22,12 +22,16 @@ package org.jetbrains.ether;
  * Time: 11:57
  * To change this template use File | Settings | File Templates.
  */
-public class ImportTest extends IncrementalTestCase {
+public class ImportTest { //extends IncrementalTestCase {
   public ImportTest() throws Exception {
-    super("imports");
+    //super("imports");
   }
 
-  public void testClassImport() throws Exception {
-    doTest();
-  }
+  //public void testClassImport() throws Exception {
+  //  doTest();
+  //}
+
+  //public void testStaticImport() throws Exception {
+  //  doTest();
+  //}
 }

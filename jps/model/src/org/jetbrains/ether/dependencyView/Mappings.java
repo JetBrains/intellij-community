@@ -1768,13 +1768,15 @@ public class Mappings {
 
       @Override
       public void registerImports(final String className, final Collection<String> imports, Collection<String> staticImports) {
+        for (String s: staticImports) {
+          int i = s.length() - 1;
+          for (; s.charAt(i) != '.'; i--);
+          imports.add(s.substring(0, i));
+        }
+
         addPostPass(new PostPass() {
           public void perform() {
-
-            // todo: proces static imports as well
             final DependencyContext.S rootClassName = myContext.get(className.replace(".", "/"));
-
-            // todo: postpone processing until data collected is complete and myClassToSourceFile contains the mapping
             final DependencyContext.S fileName = myClassToSourceFile.get(rootClassName);
 
             for (final String i : imports) {

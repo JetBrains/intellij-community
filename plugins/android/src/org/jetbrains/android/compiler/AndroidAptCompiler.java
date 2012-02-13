@@ -252,7 +252,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
                                  -1, -1);
             continue;
           }
-          String sourceRootPath = facet.getAptGenSourceRootPath();
+          String sourceRootPath = AndroidRootUtil.getAptGenSourceRootPath(facet);
           if (sourceRootPath == null) {
             myContext.addMessage(CompilerMessageCategory.ERROR,
                                  AndroidBundle.message("android.compilation.error.apt.gen.not.specified", module.getName()),

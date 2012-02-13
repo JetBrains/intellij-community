@@ -121,7 +121,7 @@ public class AndroidPrecompileTask implements CompileTask {
     final Set<VirtualFile> sourceRootSet = new HashSet<VirtualFile>();
     sourceRootSet.addAll(Arrays.asList(sourceRoots));
 
-    final String aidlGenSourceRootPath = facet.getAidlGenSourceRootPath();
+    final String aidlGenSourceRootPath = AndroidRootUtil.getAidlGenSourceRootPath(facet);
     if (aidlGenSourceRootPath != null) {
       final VirtualFile aidlGenSourceRoot = LocalFileSystem.getInstance().findFileByPath(aidlGenSourceRootPath);
 
@@ -130,7 +130,7 @@ public class AndroidPrecompileTask implements CompileTask {
       }
     }
 
-    final String aptGenSourceRootPath = facet.getAptGenSourceRootPath();
+    final String aptGenSourceRootPath = AndroidRootUtil.getAptGenSourceRootPath(facet);
     if (aptGenSourceRootPath != null) {
       final VirtualFile aptGenSourceRoot = LocalFileSystem.getInstance().findFileByPath(aptGenSourceRootPath);
 

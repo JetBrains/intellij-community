@@ -16,6 +16,9 @@
 
 package org.jetbrains.android.dom.converters;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Computable;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassOwner;
 import com.intellij.psi.PsiElement;
@@ -61,10 +64,19 @@ public class ViewClassConverter extends ResolvingConverter<PsiClass> {
 
   public PsiClass fromString(@Nullable @NonNls String s, ConvertContext context) {
     if (s == null) return null;
-    AndroidFacet facet = AndroidFacet.getInstance(context);
+    final AndroidFacet facet = AndroidFacet.getInstance(context);
     if (facet != null) {
       s = s.replace('$', '.');
-      return facet.findClass(s, facet.getModule().getModuleWithDependenciesAndLibrariesScope(true));
+
+      final String className = s;
+      final JavaPsiFacade facade = JavaPsiFacade.getInstance(facet.getModule().getProject());
+
+      return ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
+        @Nullable
+        public PsiClass compute() {
+          return facade.findClass(className, facet.getModule().getModuleWithDependenciesAndLibrariesScope(true));
+        }
+      });
     }
     return null;
   }

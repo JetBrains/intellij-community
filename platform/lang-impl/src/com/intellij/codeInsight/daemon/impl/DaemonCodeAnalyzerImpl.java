@@ -211,7 +211,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     HighlightingPass[] array = passes.toArray(new HighlightingPass[passes.size()]);
 
     final DaemonProgressIndicator progress = createUpdateProgress();
-    progress.setDebug(true);
+    progress.setDebug(LOG.isDebugEnabled());
     myPassExecutorService.submitPasses(Collections.singletonMap((FileEditor)textEditor, array), progress, Job.DEFAULT_PRIORITY);
     try {
       while (progress.isRunning()) {
