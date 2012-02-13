@@ -230,6 +230,14 @@ public class JBOptionButton extends JButton implements MouseMotionListener {
 
   private JPopupMenu fillMenu() {
     final JPopupMenu result = new JPopupMenu();
+
+    if (myOptions.length > 0) {
+      final JMenuItem mainAction = new JMenuItem(getAction());
+      configureItem(getMenuInfo(getAction()), mainAction);
+      result.add(mainAction);
+      result.addSeparator();
+    }
+
     for (Action each : myOptions) {
       if (getAction() == each) continue;
       final OptionInfo info = getMenuInfo(each);
@@ -238,14 +246,6 @@ public class JBOptionButton extends JButton implements MouseMotionListener {
       configureItem(info, eachItem);
       result.add(eachItem);
     }
-
-    if (myOptions.length > 0) {
-      result.addSeparator();
-      final JMenuItem mainAction = new JMenuItem(getAction());
-      configureItem(getMenuInfo(getAction()), mainAction);
-      result.add(mainAction);
-    }
-
     return result;
   }
 
