@@ -136,10 +136,10 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
   }
 
   @Nullable
-  public static VirtualFile getResourceDirForApkCompiler(Module module, AndroidFacet facet) {
+  public static VirtualFile getResourceDirForApkCompiler(@NotNull AndroidFacet facet) {
     return facet.getConfiguration().USE_CUSTOM_APK_RESOURCE_FOLDER
            ? getCustomResourceDirForApt(facet)
-           : AndroidRootUtil.getResourceDir(module);
+           : AndroidRootUtil.getResourceDir(facet);
   }
 
   final static class AptGenerationItem implements GenerationItem {

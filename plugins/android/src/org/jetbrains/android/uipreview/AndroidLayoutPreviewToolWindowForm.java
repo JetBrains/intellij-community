@@ -956,7 +956,7 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
     final List<ThemeData> frameworkThemes = new ArrayList<ThemeData>();
     collectThemesFromManifest(facet, frameworkThemes, addedThemes, false);
     if (targetData != null) {
-      doCollectFrameworkThemes(facet.getModule(), targetData, frameworkThemes, addedThemes);
+      doCollectFrameworkThemes(facet, targetData, frameworkThemes, addedThemes);
     }
     if (frameworkThemes.size() > 0) {
       themes.add("Framework themes");
@@ -1009,11 +1009,11 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
     saveState();
   }
 
-  private static void doCollectFrameworkThemes(Module module,
+  private static void doCollectFrameworkThemes(AndroidFacet facet,
                                                @NotNull AndroidTargetData targetData,
                                                List<ThemeData> themes,
                                                Set<ThemeData> addedThemes) {
-    final List<String> frameworkThemeNames = new ArrayList<String>(targetData.getThemes(module));
+    final List<String> frameworkThemeNames = new ArrayList<String>(targetData.getThemes(facet));
     Collections.sort(frameworkThemeNames);
     for (String themeName : frameworkThemeNames) {
       final ThemeData themeData = new ThemeData(themeName, false);

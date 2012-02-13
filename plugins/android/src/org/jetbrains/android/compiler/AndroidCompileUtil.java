@@ -555,7 +555,7 @@ public class AndroidCompileUtil {
       }
     }
 
-    final VirtualFile resourcesDir = AndroidAptCompiler.getResourceDirForApkCompiler(module, facet);
+    final VirtualFile resourcesDir = AndroidAptCompiler.getResourceDirForApkCompiler(facet);
     if (resourcesDir != null) {
       result.add(resourcesDir.getPath());
     }
@@ -648,7 +648,7 @@ public class AndroidCompileUtil {
     final GlobalSearchScope moduleScope = facet.getModule().getModuleScope();
 
     if (FileTypeIndex.getFiles(AndroidRenderscriptFileType.INSTANCE, moduleScope).size() > 0) {
-      sourceRootPath = AndroidRootUtil.getRenderscriptGenSourceRootPath(module);
+      sourceRootPath = AndroidRootUtil.getRenderscriptGenSourceRootPath(facet);
       if (sourceRootPath != null) {
         createSourceRootIfNotExist(sourceRootPath, module);
       }

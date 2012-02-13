@@ -37,6 +37,7 @@ import org.jetbrains.android.AndroidValueResourcesIndex;
 import org.jetbrains.android.dom.attrs.AttributeDefinitions;
 import org.jetbrains.android.dom.resources.ResourceElement;
 import org.jetbrains.android.dom.resources.Resources;
+import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.util.AndroidResourceUtil;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.android.util.ResourceEntry;
@@ -54,13 +55,19 @@ public abstract class ResourceManager {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.resourceManagers.LocalResourceManager");
 
   protected final Module myModule;
+  protected final AndroidFacet myFacet;
 
-  protected ResourceManager(@NotNull Module module) {
-    myModule = module;
+  protected ResourceManager(@NotNull AndroidFacet facet) {
+    myFacet = facet;
+    myModule = facet.getModule();
   }
 
   public Module getModule() {
     return myModule;
+  }
+
+  public AndroidFacet getFacet() {
+    return myFacet;
   }
 
   @NotNull

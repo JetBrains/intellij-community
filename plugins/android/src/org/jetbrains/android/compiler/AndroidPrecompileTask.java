@@ -139,7 +139,7 @@ public class AndroidPrecompileTask implements CompileTask {
       }
     }
 
-    final VirtualFile rsGenRoot = AndroidRootUtil.getRenderscriptGenDir(facet.getModule());
+    final VirtualFile rsGenRoot = AndroidRootUtil.getRenderscriptGenDir(facet);
     if (rsGenRoot != null) {
       sourceRootSet.remove(rsGenRoot);
     }

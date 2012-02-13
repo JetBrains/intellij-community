@@ -57,9 +57,8 @@ public class AndroidRootUtil {
   }
 
   @Nullable
-  public static VirtualFile getManifestFile(@NotNull Module module) {
-    AndroidFacet facet = AndroidFacet.getInstance(module);
-    return facet == null ? null : getFileByRelativeModulePath(module, facet.getConfiguration().MANIFEST_FILE_RELATIVE_PATH, true);
+  public static VirtualFile getManifestFile(@NotNull AndroidFacet facet) {
+    return getFileByRelativeModulePath(facet.getModule(), facet.getConfiguration().MANIFEST_FILE_RELATIVE_PATH, true);
   }
 
   @Nullable
@@ -68,20 +67,16 @@ public class AndroidRootUtil {
   }
 
   @Nullable
-  public static VirtualFile getManifestFileForCompiler(AndroidFacet facet) {
+  public static VirtualFile getManifestFileForCompiler(@NotNull AndroidFacet facet) {
     return facet.getConfiguration().USE_CUSTOM_COMPILER_MANIFEST
            ? getCustomManifestFileForCompiler(facet)
-           : getManifestFile(facet.getModule());
+           : getManifestFile(facet);
   }
 
   @Nullable
-  public static VirtualFile getResourceDir(@NotNull Module module) {
-    AndroidFacet facet = AndroidFacet.getInstance(module);
-    if (facet == null) {
-      return null;
-    }
+  public static VirtualFile getResourceDir(@NotNull AndroidFacet facet) {
     String resRelPath = facet.getConfiguration().RES_FOLDER_RELATIVE_PATH;
-    return getFileByRelativeModulePath(module, resRelPath, true);
+    return getFileByRelativeModulePath(facet.getModule(), resRelPath, true);
   }
 
   @Nullable
@@ -111,7 +106,7 @@ public class AndroidRootUtil {
   
   @Nullable
   public static String getResourceDirPath(@NotNull AndroidFacet facet) {
-    final VirtualFile resourceDir = getResourceDir(facet.getModule());
+    final VirtualFile resourceDir = getResourceDir(facet);
     return resourceDir != null ? resourceDir.getPath() : suggestResourceDirPath(facet);
   }
 
@@ -141,35 +136,26 @@ public class AndroidRootUtil {
   }
 
   @Nullable
-  public static VirtualFile getAssetsDir(@NotNull Module module) {
-    AndroidFacet facet = AndroidFacet.getInstance(module);
-    return facet == null ? null : getFileByRelativeModulePath(module, facet.getConfiguration().ASSETS_FOLDER_RELATIVE_PATH, false);
+  public static VirtualFile getAssetsDir(@NotNull AndroidFacet facet) {
+    return getFileByRelativeModulePath(facet.getModule(), facet.getConfiguration().ASSETS_FOLDER_RELATIVE_PATH, false);
   }
 
   @Nullable
-  public static VirtualFile getLibsDir(@NotNull Module module) {
-    AndroidFacet facet = AndroidFacet.getInstance(module);
-    return facet == null ? null : getFileByRelativeModulePath(module, facet.getConfiguration().LIBS_FOLDER_RELATIVE_PATH, false);
+  public static VirtualFile getLibsDir(@NotNull AndroidFacet facet) {
+    return getFileByRelativeModulePath(facet.getModule(), facet.getConfiguration().LIBS_FOLDER_RELATIVE_PATH, false);
   }
 
   @Nullable
-  public static VirtualFile getAidlGenDir(@NotNull Module module, @Nullable AndroidFacet facet) {
-    if (facet == null) {
-      facet = AndroidFacet.getInstance(module);
-    }
-    if (facet != null) {
-      LocalFileSystem lfs = LocalFileSystem.getInstance();
-      String genPath = facet.getAidlGenSourceRootPath();
-      if (genPath != null) {
-        return lfs.findFileByPath(genPath);
-      }
-    }
-    return null;
+  public static VirtualFile getAidlGenDir(@NotNull AndroidFacet facet) {
+    final String genPath = facet.getAidlGenSourceRootPath();
+    return genPath != null
+           ? LocalFileSystem.getInstance().findFileByPath(genPath)
+           : null;
   }
 
   @Nullable
-  public static VirtualFile getRenderscriptGenDir(@NotNull Module module) {
-    final String path = getRenderscriptGenSourceRootPath(module);
+  public static VirtualFile getRenderscriptGenDir(@NotNull AndroidFacet facet) {
+    final String path = getRenderscriptGenSourceRootPath(facet);
     return path != null ? LocalFileSystem.getInstance().findFileByPath(path) : null;
   }
 
@@ -295,15 +281,11 @@ public class AndroidRootUtil {
   }
 
   @NotNull
-  public static VirtualFile[] getResourceOverlayDirs(Module module) {
-    AndroidFacet facet = AndroidFacet.getInstance(module);
-    if (facet == null) {
-      return VirtualFile.EMPTY_ARRAY;
-    }
+  public static VirtualFile[] getResourceOverlayDirs(@NotNull AndroidFacet facet) {
     List<String> overlayFolders = facet.getConfiguration().RES_OVERLAY_FOLDERS;
     List<VirtualFile> result = new ArrayList<VirtualFile>();
     for (String overlayFolder : overlayFolders) {
-      VirtualFile overlayDir = getFileByRelativeModulePath(module, overlayFolder, true);
+      VirtualFile overlayDir = getFileByRelativeModulePath(facet.getModule(), overlayFolder, true);
       if (overlayDir != null) {
         result.add(overlayDir);
       }
@@ -322,11 +304,7 @@ public class AndroidRootUtil {
   }
 
   @Nullable
-  public static String getRenderscriptGenSourceRootPath(@NotNull Module module) {
-    final AndroidFacet facet = AndroidFacet.getInstance(module);
-    if (facet == null) {
-      return null;
-    }
+  public static String getRenderscriptGenSourceRootPath(@NotNull AndroidFacet facet) {
     // todo: return correct path for mavenized module
     final VirtualFile mainContentRoot = getMainContentRoot(facet);
     final String moduleDirPath = mainContentRoot != null ? mainContentRoot.getPath() : null;
@@ -344,7 +322,7 @@ public class AndroidRootUtil {
       return null;
     }
 
-    final VirtualFile manifestFile = getManifestFile(module);
+    final VirtualFile manifestFile = getManifestFile(facet);
     if (manifestFile != null) {
       for (VirtualFile root : contentRoots) {
         if (VfsUtilCore.isAncestor(root, manifestFile, true)) {

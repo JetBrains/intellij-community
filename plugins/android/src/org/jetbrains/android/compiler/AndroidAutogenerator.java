@@ -430,7 +430,7 @@ public class AndroidAutogenerator {
             final String resourceDirPath = AndroidRootUtil.getResourceDirPath(facet);
             assert resourceDirPath != null;
 
-            final String sourceRootPath = AndroidRootUtil.getRenderscriptGenSourceRootPath(module);
+            final String sourceRootPath = AndroidRootUtil.getRenderscriptGenSourceRootPath(facet);
             if (sourceRootPath == null) {
               return null;
             }

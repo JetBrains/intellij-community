@@ -69,7 +69,7 @@ public class AndroidLintExternalAnnotator extends ExternalAnnotator<State, State
 
     if (fileType == StdFileTypes.XML) {
       if (facet.getLocalResourceManager().getFileResourceType(file) == null &&
-          AndroidRootUtil.getManifestFile(module) != vFile) {
+          AndroidRootUtil.getManifestFile(facet) != vFile) {
         return null;
       }
     }

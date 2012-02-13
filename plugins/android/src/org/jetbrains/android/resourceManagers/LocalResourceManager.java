@@ -65,15 +65,15 @@ public class LocalResourceManager extends ResourceManager {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.resourceManagers.ResourceManager");
   private AttributeDefinitions myAttrDefs;
 
-  public LocalResourceManager(@NotNull Module module) {
-    super(module);
+  public LocalResourceManager(@NotNull AndroidFacet facet) {
+    super(facet);
   }
 
   @NotNull
   @Override
   public VirtualFile[] getAllResourceDirs() {
     Set<VirtualFile> result = new HashSet<VirtualFile>();
-    collectResourceDirs(getModule(), result, new HashSet<Module>());
+    collectResourceDirs(getFacet(), result, new HashSet<Module>());
     return VfsUtil.toVirtualFileArray(result);
   }
 
@@ -93,7 +93,7 @@ public class LocalResourceManager extends ResourceManager {
   @Nullable
   @Override
   public VirtualFile getResourceDir() {
-    return AndroidRootUtil.getResourceDir(getModule());
+    return AndroidRootUtil.getResourceDir(getFacet());
   }
 
   public List<Resources> getResourceElements() {
@@ -103,7 +103,7 @@ public class LocalResourceManager extends ResourceManager {
   @NotNull
   @Override
   public VirtualFile[] getResourceOverlayDirs() {
-    return AndroidRootUtil.getResourceOverlayDirs(getModule());
+    return AndroidRootUtil.getResourceOverlayDirs(getFacet());
   }
 
   @NotNull
@@ -111,17 +111,17 @@ public class LocalResourceManager extends ResourceManager {
     return getValueResources(resourceType, null);
   }
 
-  private static void collectResourceDirs(Module module, Set<VirtualFile> result, Set<Module> visited) {
-    if (!visited.add(module)) {
+  private static void collectResourceDirs(AndroidFacet facet, Set<VirtualFile> result, Set<Module> visited) {
+    if (!visited.add(facet.getModule())) {
       return;
     }
 
-    VirtualFile resDir = AndroidRootUtil.getResourceDir(module);
+    VirtualFile resDir = AndroidRootUtil.getResourceDir(facet);
     if (resDir != null && !result.add(resDir)) {
       return;
     }
-    for (AndroidFacet depFacet : AndroidSdkUtils.getAllAndroidDependencies(module, false)) {
-      collectResourceDirs(depFacet.getModule(), result, visited);
+    for (AndroidFacet depFacet : AndroidSdkUtils.getAllAndroidDependencies(facet.getModule(), false)) {
+      collectResourceDirs(depFacet, result, visited);
     }
   }
 

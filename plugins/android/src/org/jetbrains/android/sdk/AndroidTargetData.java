@@ -17,6 +17,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.android.dom.attrs.AttributeDefinitions;
+import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.resourceManagers.SystemResourceManager;
 import org.jetbrains.android.uipreview.RenderServiceFactory;
 import org.jetbrains.android.uipreview.RenderingException;
@@ -79,10 +80,11 @@ public class AndroidTargetData {
   }
 
   @NotNull
-  public Set<String> getThemes(@NotNull final Module module) {
+  public Set<String> getThemes(@NotNull final AndroidFacet facet) {
     if (myThemes == null) {
       myThemes = new HashSet<String>();
-      final SystemResourceManager systemResourceManager = new SystemResourceManager(module, new AndroidPlatform(mySdk, myTarget));
+      final Module module = facet.getModule();
+      final SystemResourceManager systemResourceManager = new SystemResourceManager(facet, new AndroidPlatform(mySdk, myTarget));
 
       for (VirtualFile valueResourceDir : systemResourceManager.getResourceSubdirs("values")) {
         for (final VirtualFile valueResourceFile : valueResourceDir.getChildren()) {

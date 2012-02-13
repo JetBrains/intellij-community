@@ -173,7 +173,8 @@ public class CreateXmlResourceDialog extends DialogWrapper {
       return null;
     }
 
-    final VirtualFile resourceDir = AndroidRootUtil.getResourceDir(selectedModule);
+    final AndroidFacet facet = AndroidFacet.getInstance(selectedModule);
+    final VirtualFile resourceDir = facet != null ? AndroidRootUtil.getResourceDir(facet) : null;
     if (resourceDir == null) {
       return null;
     }

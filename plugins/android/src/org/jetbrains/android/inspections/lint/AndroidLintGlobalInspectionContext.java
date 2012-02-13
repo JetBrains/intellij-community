@@ -158,7 +158,8 @@ class AndroidLintGlobalInspectionContext implements GlobalInspectionContextExten
         final Module module = findModuleForLintProject(myProject, context.project);
 
         if (module != null) {
-          vFile = AndroidRootUtil.getManifestFile(module);
+          final AndroidFacet facet = AndroidFacet.getInstance(module);
+          vFile = facet != null ? AndroidRootUtil.getManifestFile(facet) : null;
           
           if (vFile != null) {
             file = new File(vFile.getPath());

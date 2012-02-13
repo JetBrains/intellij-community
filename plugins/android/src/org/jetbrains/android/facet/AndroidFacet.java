@@ -54,7 +54,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -608,11 +608,12 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
 
   @Nullable
   private static VirtualFile getBaseAndroidContentRoot(@NotNull Module module) {
-    final VirtualFile manifestFile = AndroidRootUtil.getManifestFile(module);
+    final AndroidFacet facet = getInstance(module);
+    final VirtualFile manifestFile = facet != null ? AndroidRootUtil.getManifestFile(facet) : null;
     final VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
     if (manifestFile != null) {
       for (VirtualFile contentRoot : contentRoots) {
-        if (VfsUtil.isAncestor(contentRoot, manifestFile, true)) {
+        if (VfsUtilCore.isAncestor(contentRoot, manifestFile, true)) {
           return contentRoot;
         }
       }
@@ -703,7 +704,7 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
   @NotNull
   public LocalResourceManager getLocalResourceManager() {
     if (myLocalResourceManager == null) {
-      myLocalResourceManager = new LocalResourceManager(getModule());
+      myLocalResourceManager = new LocalResourceManager(this);
     }
     return myLocalResourceManager;
   }
@@ -713,7 +714,7 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
     if (mySystemResourceManager == null) {
       AndroidPlatform platform = getConfiguration().getAndroidPlatform();
       if (platform != null) {
-        mySystemResourceManager = new SystemResourceManager(getModule(), platform);
+        mySystemResourceManager = new SystemResourceManager(this, platform);
       }
     }
     return mySystemResourceManager;
@@ -721,7 +722,7 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
 
   @Nullable
   public Manifest getManifest() {
-    final VirtualFile manifestFile = AndroidRootUtil.getManifestFile(getModule());
+    final VirtualFile manifestFile = AndroidRootUtil.getManifestFile(this);
     if (manifestFile == null) return null;
     return AndroidUtils.loadDomElement(getModule(), manifestFile, Manifest.class);
   }

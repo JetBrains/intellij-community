@@ -23,6 +23,7 @@ import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.sdk.AndroidSdkUtils;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInput;
@@ -53,44 +54,44 @@ public class ResourcesValidityState implements ValidityState {
     // becomes dirty in the next session. Actually we can pass filtered manifest to compiler ONLY after AndroidMavenResourcesCompiler
     // performed task, but MavenResourceCompiler not yet
 
-    VirtualFile manifestFile = AndroidRootUtil.getManifestFile(facet.getModule());
+    VirtualFile manifestFile = AndroidRootUtil.getManifestFile(facet);
     if (manifestFile != null) {
       myResourceTimestamps.put(manifestFile.getPath(), manifestFile.getTimeStamp());
     }
-    VirtualFile resourcesDir = getResourcesDir(module, facet);
+    VirtualFile resourcesDir = getResourcesDir(facet);
     if (resourcesDir != null) {
       collectFiles(resourcesDir);
     }
     for (AndroidFacet depFacet : AndroidSdkUtils.getAllAndroidDependencies(module, true)) {
-      VirtualFile depManifest = AndroidRootUtil.getManifestFile(depFacet.getModule());
+      VirtualFile depManifest = AndroidRootUtil.getManifestFile(depFacet);
       if (depManifest != null) {
         myResourceTimestamps.put(depManifest.getPath(), depManifest.getTimeStamp());
       }
-      VirtualFile depResDir = getResourcesDir(depFacet.getModule(), depFacet);
+      VirtualFile depResDir = getResourcesDir(depFacet);
       if (depResDir != null) {
         collectFiles(depResDir);
       }
     }
-    VirtualFile assetsDir = AndroidRootUtil.getAssetsDir(module);
+    VirtualFile assetsDir = AndroidRootUtil.getAssetsDir(facet);
     if (assetsDir != null) {
       collectFiles(assetsDir);
     }
   }
 
   @Nullable
-  private static VirtualFile getResourcesDir(Module module, AndroidFacet facet) {
+  private static VirtualFile getResourcesDir(@NotNull AndroidFacet facet) {
     // same as with manifest file we check timestamps of NOT filtered resources, because MavenResourceCompiler spoils
     // filtered ones and it and they becomes dirty in the next session. Actually we can pass filtered resources to compiler ONLY after
     // AndroidMavenResourcesCompiler performed task, but MavenResourceCompiler not yet
 
-    VirtualFile dir = AndroidAptCompiler.getResourceDirForApkCompiler(module, facet);
+    VirtualFile dir = AndroidAptCompiler.getResourceDirForApkCompiler(facet);
     if (dir != null) {
       VirtualFile parent = dir.getParent();
       if ("combined-resources".equals(parent.getName())) {
         return dir;
       }
     }
-    return AndroidRootUtil.getResourceDir(module);
+    return AndroidRootUtil.getResourceDir(facet);
   }
 
   private void collectFiles(VirtualFile resourcesDir) {
