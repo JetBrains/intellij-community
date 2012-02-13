@@ -53,6 +53,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.xdebugger.DefaultDebugProcessHandler;
 import org.jetbrains.android.actions.AndroidEnableDdmsAction;
 import org.jetbrains.android.facet.AndroidFacet;
+import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.facet.AvdsNotSupportedException;
 import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.android.util.AndroidBundle;
@@ -698,7 +699,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
   private boolean uploadAndInstall(@NotNull IDevice device, @NotNull String packageName, AndroidFacet facet)
     throws IOException, AdbCommandRejectedException, TimeoutException {
     String remotePath = "/data/local/tmp/" + packageName;
-    String localPath = facet.getApkPath();
+    String localPath = AndroidRootUtil.getApkPath(facet);
     if (localPath == null) {
       message("ERROR: APK path is not specified for module \"" + facet.getModule().getName() + '"', STDERR);
       return false;

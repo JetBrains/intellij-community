@@ -654,13 +654,13 @@ public class AndroidCompileUtil {
       }
     }
 
-    sourceRootPath = facet.getAptGenSourceRootPath();
+    sourceRootPath = AndroidRootUtil.getAptGenSourceRootPath(facet);
     if (sourceRootPath != null) {
       createSourceRootIfNotExist(sourceRootPath, module);
     }
 
     if (FileTypeIndex.getFiles(AndroidIdlFileType.ourFileType, moduleScope).size() > 0) {
-      sourceRootPath = facet.getAidlGenSourceRootPath();
+      sourceRootPath = AndroidRootUtil.getAidlGenSourceRootPath(facet);
       if (sourceRootPath != null) {
         createSourceRootIfNotExist(sourceRootPath, module);
       }
@@ -859,5 +859,16 @@ public class AndroidCompileUtil {
     assert !ApplicationManager.getApplication().isDispatchThread();
     final Map<AndroidCompilerMessageKind, List<String>> messages = AndroidExecutionUtil.doExecute(argv);
     return toCompilerMessageCategoryKeys(messages);
+  }
+
+  public static String getApkName(Module module) {
+    return module.getName() + ".apk";
+  }
+
+  @Nullable
+  public static String getOutputPackage(@NotNull Module module) {
+    VirtualFile compilerOutput = CompilerModuleExtension.getInstance(module).getCompilerOutputPath();
+    if (compilerOutput == null) return null;
+    return new File(compilerOutput.getPath(), getApkName(module)).getPath();
   }
 }

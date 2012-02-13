@@ -242,7 +242,7 @@ class ApkStep extends ExportSignedPackageWizardStep {
     SignedJarBuilder builder = new SignedJarBuilder(fos, privateKey, certificate);
     Module module = myWizard.getFacet().getModule();
     //String srcApkPath = CompilerPaths.getModuleOutputPath(module, false) + '/' + module.getName() + ".apk";
-    String srcApkPath = myWizard.getFacet().getApkPath() + AndroidPackagingCompiler.UNSIGNED_SUFFIX;
+    String srcApkPath = AndroidRootUtil.getApkPath(myWizard.getFacet()) + AndroidPackagingCompiler.UNSIGNED_SUFFIX;
     FileInputStream fis = new FileInputStream(new File(FileUtil.toSystemDependentName(srcApkPath)));
     try {
       builder.writeZip(fis, null);
