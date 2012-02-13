@@ -24,8 +24,6 @@ import com.intellij.util.continuation.GatheringContinuationContext;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.concurrent.atomic.AtomicReference;
-
 /**
  * Executes an action surrounding it with freezing-unfreezing operations.
  * It is a simple linear alternative to {@link git4idea.update.GitComplexProcess} performing tasks in a single method instead of
@@ -53,7 +51,7 @@ public class GitFreezingProcess {
         myRunnable.run();
       }
       finally {
-        unfreeze();
+        unfreezeInAwt();
       }
     }
     finally {
@@ -69,35 +67,23 @@ public class GitFreezingProcess {
   }
 
   private static void saveAndBlockInAwt() {
-    final AtomicReference<RuntimeException> exception = new AtomicReference<RuntimeException>();
-    // if an error happens, let it be thrown there (in awt) + throw it here to call unblock if anything has already been blocked
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          saveAndBlock();
-        }
-        catch (Throwable t) {
-          RuntimeException re = new RuntimeException(t);
-          exception.set(re);
-          throw re;
-        }
+    RethrowingRunnable rethrowingRunnable = new RethrowingRunnable(new Runnable() {
+      @Override public void run() {
+        saveAndBlock();
       }
     });
-
-    RuntimeException re = exception.get();
-    if (re != null) {
-      throw re;
-    }
+    UIUtil.invokeAndWaitIfNeeded(rethrowingRunnable);
+    rethrowingRunnable.rethrowIfHappened();
   }
 
   private static void unblockInAwt() {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
+    RethrowingRunnable rethrowingRunnable = new RethrowingRunnable(new Runnable() {
+      @Override public void run() {
         unblock();
       }
     });
+    UIUtil.invokeAndWaitIfNeeded(rethrowingRunnable);
+    rethrowingRunnable.rethrowIfHappened();
   }
 
   public static void unblock() {
@@ -113,6 +99,46 @@ public class GitFreezingProcess {
 
   private void unfreeze() {
     myChangeListManager.letGo();
+  }
+
+  private void unfreezeInAwt() {
+    RethrowingRunnable rethrowingRunnable = new RethrowingRunnable(new Runnable() {
+      @Override public void run() {
+        unfreeze();
+      }
+    });
+    UIUtil.invokeAndWaitIfNeeded(rethrowingRunnable);
+    rethrowingRunnable.rethrowIfHappened();
+  }
+
+  // if an error happens, let it be thrown in the calling thread (in awt actually)
+  // + throw it in this thread afterwards, to be able to execute the finally block.
+  private static class RethrowingRunnable implements Runnable {
+
+    private final Runnable myRunnable;
+    private RuntimeException myException;
+
+    RethrowingRunnable(@NotNull Runnable runnable) {
+      myRunnable = runnable;
+    }
+
+    @Override
+    public void run() {
+      try {
+        myRunnable.run();
+      }
+      catch (Throwable t) {
+        RuntimeException re = new RuntimeException(t);
+        myException = re;
+        throw re;
+      }
+    }
+
+    void rethrowIfHappened() {
+      if (myException != null) {
+        throw myException;
+      }
+    }
   }
 
 }
