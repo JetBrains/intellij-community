@@ -16,10 +16,7 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -140,6 +137,7 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
   protected ActionGroup getActionGroup(boolean inToolbar) {
     DefaultActionGroup actionGroup = new DefaultActionGroup();
     actionGroup.add(new RefreshAction());
+    actionGroup.add(Separator.getInstance());
     actionGroup.add(new ActionInstallPlugin(this, installed));
     if (inToolbar) {
       actionGroup.add(new SortByStatusAction("Sort Installed First"));

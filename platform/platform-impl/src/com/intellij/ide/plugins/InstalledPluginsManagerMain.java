@@ -155,6 +155,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
   protected ActionGroup getActionGroup(boolean inToolbar) {
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
     actionGroup.add(new RefreshAction());
+    actionGroup.add(Separator.getInstance());
     actionGroup.add(new ActionInstallPlugin(this, this));
     actionGroup.add(new ActionUninstallPlugin(this, pluginTable));
     if (inToolbar) {
