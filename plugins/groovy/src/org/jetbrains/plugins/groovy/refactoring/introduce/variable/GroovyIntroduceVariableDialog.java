@@ -20,6 +20,7 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.psi.PsiType;
 import com.intellij.refactoring.HelpID;
 import com.intellij.ui.EditorComboBoxEditor;
