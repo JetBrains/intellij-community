@@ -20,8 +20,8 @@
 
     <group id="GitFileActions">
       <action id="Git.Add" class="git4idea.actions.GitAdd" text="Add" icon="/actions/include.png" use-shortcut-of="ChangesView.AddUnversioned" />
-      <separator/>
       <reference ref="CheckinFiles"/>
+      <separator/>
       <reference ref="Annotate"/>
       <reference ref="Show.Current.Revision"/>
       <reference ref="Compare.SameVersion"/>
@@ -32,14 +32,11 @@
       <reference id="Vcs.ShowHistoryForBlock"/>
       <separator/>
       <action id="Git.Revert" class="git4idea.actions.GitRevert" text="Revert File" icon="/actions/rollback.png"/>
-      <separator/>
       <action id="Git.ResolveConflicts" class="git4idea.actions.GitResolveConflictsAction" text="Resolve Conflicts..."/>
     </group>
 
     <group id="GitRepositoryActions">
       <action id="Git.Branches" class="git4idea.ui.branch.GitBranchesAction" text="_Branches" icon="/icons/branch.png"/>
-      <separator/>
-
       <action id="Git.Tag" class="git4idea.actions.GitTag" text="Tag Files..."/>
       <action id="Git.Merge" class="git4idea.actions.GitMerge" text="Merge Changes..." icon="/vcs/mergeSourcesTree.png"/>
       <action id="Git.Stash" class="git4idea.actions.GitStash" text="Stash Changes..."/>
