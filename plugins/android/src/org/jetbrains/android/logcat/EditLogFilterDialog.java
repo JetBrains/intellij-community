@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Arrays;
-import java.util.List;
+import java.util.Collection;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -56,7 +56,7 @@ class EditLogFilterDialog extends DialogWrapper {
     myTagField = new TextFieldWithAutoCompletion<String>(project, new TextFieldWithAutoCompletion.StringsCompletionProvider(null, null) {
       @NotNull
       @Override
-      public List<String> getItems(String prefix, boolean cached) {
+      public Collection<String> getItems(String prefix, boolean cached) {
         parseExistingMessagesIfNecessary();
         setItems(Arrays.asList(myUsedTags));
         return super.getItems(prefix, cached);
@@ -69,7 +69,7 @@ class EditLogFilterDialog extends DialogWrapper {
     myPidField = new TextFieldWithAutoCompletion<String>(project, new TextFieldWithAutoCompletion.StringsCompletionProvider(null, null) {
       @NotNull
       @Override
-      public List<String> getItems(String prefix, boolean cached) {
+      public Collection<String> getItems(String prefix, boolean cached) {
         parseExistingMessagesIfNecessary();
         setItems(Arrays.asList(myUsedPids));
         return super.getItems(prefix, cached);

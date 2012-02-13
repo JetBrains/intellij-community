@@ -20,7 +20,9 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.ui.EditChangelistSupport;
+import com.intellij.tasks.actions.ActivateTaskDialog;
 import com.intellij.ui.EditorTextField;
+import com.intellij.ui.TextFieldWithAutoCompletionContributor;
 import com.intellij.util.Consumer;
 
 import javax.swing.*;
@@ -40,7 +42,10 @@ public class TaskChangelistSupport implements EditChangelistSupport {
 
   public void installSearch(EditorTextField name, final EditorTextField comment) {
     Document document = name.getDocument();
-    TaskCompletionContributor.installCompletion(document, myProject, null, false);
+    final ActivateTaskDialog.MyTextFieldWithAutoCompletionListProvider completionProvider =
+      new ActivateTaskDialog.MyTextFieldWithAutoCompletionListProvider(myProject);
+
+    TextFieldWithAutoCompletionContributor.installCompletion(document, myProject, completionProvider, false);
   }
 
   public Consumer<LocalChangeList> addControls(JPanel bottomPanel, LocalChangeList initial) {
@@ -48,8 +53,8 @@ public class TaskChangelistSupport implements EditChangelistSupport {
     checkBox.setMnemonic('t');
     checkBox.setToolTipText("Reload context (e.g. open editors) when changelist is set active");
     checkBox.setSelected(initial == null ?
-                           myTaskManager.getState().trackContextForNewChangelist :
-                           myTaskManager.getAssociatedTask(initial) != null);
+                         myTaskManager.getState().trackContextForNewChangelist :
+                         myTaskManager.getAssociatedTask(initial) != null);
     bottomPanel.add(checkBox);
     return new Consumer<LocalChangeList>() {
       public void consume(LocalChangeList changeList) {
