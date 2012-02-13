@@ -324,10 +324,8 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
       if (!rd.root.exists()) {
         continue;
       }
-      if (forceMarkDirty) {
-        myFsState.clearRecompile(rd);
-        myFsState.clearDeletedPaths(module, isCompilingTests());
-      }
+      myFsState.clearRecompile(rd);
+      myFsState.clearDeletedPaths(module, isCompilingTests());
       traverseRecursively(rd, rd.root, excludes, tsStorage, forceMarkDirty, currentFiles);
     }
   }
