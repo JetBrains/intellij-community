@@ -91,7 +91,7 @@ public class GroovyShellAction extends DumbAwareAction {
     }
 
     BaseListPopupStep<Module> step =
-      new BaseListPopupStep<Module>("Which module classpath to use?", modules, PlatformIcons.CONTENT_ROOT_ICON_CLOSED) {
+      new BaseListPopupStep<Module>("Which module to use classpath of?", modules, PlatformIcons.CONTENT_ROOT_ICON_CLOSED) {
         @NotNull
         @Override
         public String getTextFor(Module value) {
