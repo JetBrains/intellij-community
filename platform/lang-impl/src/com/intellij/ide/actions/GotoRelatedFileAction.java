@@ -32,8 +32,6 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.hash.*;
-import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +39,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.*;
-import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -64,6 +61,7 @@ public class GotoRelatedFileAction extends AnAction {
       return;
     }
     if (ApplicationManager.getApplication().isUnitTestMode()) {
+      //noinspection UseOfSystemOutOrSystemErr
       System.out.println(items);
     }
     createPopup(items, "Go to Related Files").showInBestPositionFor(context);
@@ -210,7 +208,7 @@ public class GotoRelatedFileAction extends AnAction {
       }
     }
 
-    Set<GotoRelatedItem> items = new HashSet<GotoRelatedItem> ();
+    Set<GotoRelatedItem> items = new LinkedHashSet<GotoRelatedItem>();
 
     for (GotoRelatedProvider provider : Extensions.getExtensions(GotoRelatedProvider.EP_NAME)) {
       items.addAll(provider.getItems(contextElement));
