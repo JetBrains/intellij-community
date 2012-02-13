@@ -19,8 +19,12 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.impl.light.LightElement;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NonNls;
+
+import java.util.Set;
 
 /**
  * @author ven
@@ -41,14 +45,27 @@ public class ConstructorParameterOnFieldRenameRenamer extends AutomaticRenamer {
     if (!Comparing.strEqual(propertyName, styleManager.variableNameToPropertyName(newFieldName, VariableKind.FIELD))) {
       final String paramName = styleManager.propertyNameToVariableName(propertyName, VariableKind.PARAMETER);
       final PsiClass aClass = aField.getContainingClass();
-      for (final PsiMethod constructor : aClass.getConstructors()) {
+
+      Set<PsiParameter> toRename = new HashSet<PsiParameter>();
+      for (PsiMethod constructor : aClass.getConstructors()) {
+        if (constructor instanceof PsiMirrorElement) {
+          final PsiElement prototype = ((PsiMirrorElement)constructor).getPrototype();
+          if (prototype instanceof PsiMethod && ((PsiMethod)prototype).isConstructor()) {
+            constructor = (PsiMethod)prototype;
+          }
+          else {
+            continue;
+          }
+        }
+        if (constructor instanceof LightElement) continue;
         final PsiParameter[] parameters = constructor.getParameterList().getParameters();
         for (final PsiParameter parameter : parameters) {
           if (paramName.equals(parameter.getName())) {
-            myElements.add(parameter);
+            toRename.add(parameter);
           }
         }
       }
+      myElements.addAll(toRename);
 
       suggestAllNames(aField.getName(), newFieldName);
     }
