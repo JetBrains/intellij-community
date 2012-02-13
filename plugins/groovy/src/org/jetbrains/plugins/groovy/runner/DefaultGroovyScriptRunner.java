@@ -80,8 +80,7 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
     params.getProgramParametersList().addParametersString(configuration.getScriptParameters());
   }
 
-  public static void configureGenericGroovyRunner(JavaParameters params, Module module, String mainClass) {
-    assert module != null;
+  public static void configureGenericGroovyRunner(@NotNull JavaParameters params, @NotNull Module module, @NotNull String mainClass) {
     final VirtualFile groovyJar = findGroovyJar(module);
     if (groovyJar != null) {
       params.getClassPath().add(groovyJar);
