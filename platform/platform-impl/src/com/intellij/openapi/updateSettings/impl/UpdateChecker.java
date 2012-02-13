@@ -150,6 +150,10 @@ public final class UpdateChecker {
     final Application app = ApplicationManager.getApplication();
     final PropertiesComponent propertiesComponent = PropertiesComponent.getInstance();
     final UpdateSettings updateSettings = UpdateSettings.getInstance();
+    if (!updateSettings.CHECK_NEEDED) {
+      result.setDone();
+      return result;
+    }
     app.executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
