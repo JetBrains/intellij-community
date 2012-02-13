@@ -177,7 +177,7 @@ public abstract class IncrementalTestCase extends TestCase {
     finally {
       try {
         closeAppender();
-        //delete(new File(workDir));
+        delete(new File(workDir));
       }
       finally {
         Logger.setFactory(oldFactory);

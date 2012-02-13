@@ -30,4 +30,8 @@ public class ImportTest extends IncrementalTestCase {
   public void testClassImport() throws Exception {
     doTest();
   }
+
+  public void testStaticImport() throws Exception {
+    doTest();
+  }
 }
