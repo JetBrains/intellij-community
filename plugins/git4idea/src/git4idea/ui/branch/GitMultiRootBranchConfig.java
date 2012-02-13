@@ -162,7 +162,15 @@ public class GitMultiRootBranchConfig {
         commonLocal.retainAll(GitUtil.getBranchNames(branches));
       }
     }
-    return commonLocal != null ? commonLocal : Collections.<String>emptyList();
+
+    if (commonLocal != null) {
+      ArrayList<String> common = new ArrayList<String>(commonLocal);
+      Collections.sort(common);
+      return common;
+    }
+    else {
+      return Collections.emptyList();
+    }
   }
 
   @Override
