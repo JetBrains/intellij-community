@@ -142,7 +142,7 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
     actionGroup.add(new RefreshAction());
     actionGroup.add(new ActionInstallPlugin(this, installed));
     if (inToolbar) {
-      actionGroup.add(new SortByStatusAction("Sort installed first"));
+      actionGroup.add(new SortByStatusAction("Sort Installed First"));
       actionGroup.add(new MyFilterRepositoryAction());
       actionGroup.add(new MyFilterCategoryAction());
     }
