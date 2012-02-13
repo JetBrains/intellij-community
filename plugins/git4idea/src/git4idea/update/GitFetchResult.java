@@ -99,7 +99,7 @@ public final class GitFetchResult {
   @NotNull
   public String getAdditionalInfo() {
     if (!myPrunedRefs.isEmpty()) {
-      return "Pruned obsolete remote " + pluralize("reference", myPrunedRefs.size()) + ": " + join(myPrunedRefs, ",");
+      return "Pruned obsolete remote " + pluralize("reference", myPrunedRefs.size()) + ": " + join(myPrunedRefs, ", ");
     }
     return "";
   }
