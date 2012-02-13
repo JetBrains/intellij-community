@@ -1097,6 +1097,12 @@
             icon="/org/jetbrains/plugins/groovy/images/GroovyDoc.png">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>
+    <action id="Groovy.Console"
+            class="org.jetbrains.plugins.groovy.console.GroovyShellAction"
+            text="Groovy Shell..." description="Launch Groovy Shell"
+            icon="/org/jetbrains/plugins/groovy/images/groovy_16x16.png">
+      <add-to-group group-id="ToolsMenu" anchor="last"/>
+    </action>
 
     <group id="Mvc.Actions" popup="true" class="org.jetbrains.plugins.groovy.mvc.MvcActionGroup">
       <action id="Mvc.Upgrade"
