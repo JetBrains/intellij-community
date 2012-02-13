@@ -275,7 +275,7 @@ class GitMergeOperation extends GitBranchOperation {
   @NotNull
   private GitCompoundResult smartRollback(@NotNull final Collection<GitRepository> repositories) {
     final GitCompoundResult result = new GitCompoundResult(myProject);
-    myPreservingProcess = new GitPreservingProcess(myProject, repositories, "merge", myBranchToMerge, getIndicator(),
+    GitPreservingProcess preservingProcess = new GitPreservingProcess(myProject, repositories, "merge", myBranchToMerge, getIndicator(),
       new Runnable() {
         @Override public void run() {
           for (GitRepository repository : repositories) {
@@ -283,7 +283,7 @@ class GitMergeOperation extends GitBranchOperation {
           }
         }
       });
-    myPreservingProcess.execute();
+    preservingProcess.execute();
     return result;
   }
 
