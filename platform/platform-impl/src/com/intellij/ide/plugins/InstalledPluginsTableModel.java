@@ -169,6 +169,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
       final IdeaPluginDescriptor descriptor = getObjectAt(i);
       final PluginId pluginId = descriptor.getPluginId();
       myDependentToRequiredListMap.remove(pluginId);
+      if (descriptor instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl)descriptor).isDeleted()) continue;
       final Boolean enabled = myEnabled.get(pluginId);
       if (enabled == null || enabled.booleanValue()) {
         PluginManager.checkDependants(descriptor, new Function<PluginId, IdeaPluginDescriptor>() {
