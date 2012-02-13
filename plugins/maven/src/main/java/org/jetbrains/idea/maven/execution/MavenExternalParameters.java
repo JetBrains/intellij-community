@@ -20,6 +20,7 @@ package org.jetbrains.idea.maven.execution;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.execution.configurations.ParametersList;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
@@ -59,9 +60,7 @@ public class MavenExternalParameters {
 
     final String mavenHome = resolveMavenHome(coreSettings);
 
-    for (String parameter : createVMParameters(new ArrayList<String>(), mavenHome, runnerSettings)) {
-      params.getVMParametersList().add(parameter);
-    }
+    addVMParameters(params.getVMParametersList(), mavenHome, runnerSettings);
 
     for (String path : getMavenClasspathEntries(mavenHome)) {
       params.getClassPath().add(path);
@@ -73,11 +72,7 @@ public class MavenExternalParameters {
                                       : EncodingProjectManager.getInstance(project);
     params.setCharset(encodingManager.getDefaultCharset());
 
-    for (String parameter : createMavenParameters(new ArrayList<String>(), coreSettings, runnerSettings, parameters)) {
-      if (!StringUtil.isEmpty(parameter)) {
-        params.getProgramParametersList().add(parameter);
-      }
-    }
+    addMavenParameters(params.getProgramParametersList(), coreSettings, runnerSettings, parameters);
 
     return params;
   }
@@ -109,65 +104,48 @@ public class MavenExternalParameters {
     throw new ExecutionException(RunnerBundle.message("maven.java.not.found", name));
   }
 
-  public static List<String> createVMParameters(final List<String> list, final String mavenHome, final MavenRunnerSettings runnerSettings) {
-    addParameters(list, runnerSettings.getVmOptions());
+  public static void addVMParameters(ParametersList parametersList, String mavenHome, MavenRunnerSettings runnerSettings) {
+    parametersList.addParametersString(runnerSettings.getVmOptions());
 
-    addParameters(list, StringUtil.notNullize(System.getenv(MAVEN_OPTS)));
+    parametersList.addParametersString(System.getenv(MAVEN_OPTS));
 
-    addProperty(list, "classworlds.conf", MavenUtil.getMavenConfFile(new File(mavenHome)).getPath());
+    parametersList.addProperty("classworlds.conf", MavenUtil.getMavenConfFile(new File(mavenHome)).getPath());
 
-    addProperty(list, "maven.home", mavenHome);
-
-    return list;
+    parametersList.addProperty("maven.home", mavenHome);
   }
 
-  private static List<String> createMavenParameters(final List<String> list,
-                                                    final MavenGeneralSettings coreSettings,
-                                                    final MavenRunnerSettings runnerSettings,
-                                                    final MavenRunnerParameters parameters) {
-    encodeCoreAndRunnerSettings(coreSettings, runnerSettings, list);
+  private static void addMavenParameters(ParametersList parametersList,
+                                         MavenGeneralSettings coreSettings,
+                                         MavenRunnerSettings runnerSettings,
+                                         MavenRunnerParameters parameters) {
+    encodeCoreAndRunnerSettings(coreSettings, runnerSettings, parametersList);
 
     if (runnerSettings.isSkipTests()) {
-      addProperty(list, "skipTests", "true");
+      parametersList.addProperty("skipTests", "true");
     }
 
     for (Map.Entry<String, String> entry : runnerSettings.getMavenProperties().entrySet()) {
-      addProperty(list, entry.getKey(), entry.getValue());
+      if (entry.getKey().length() > 0) {
+        parametersList.addProperty(entry.getKey(), entry.getValue());
+      }
     }
 
-
     if (parameters.getPomFilePath() != null) {
-      addOption(list, "f", parameters.getPomFilePath());
+      addOption(parametersList, "f", parameters.getPomFilePath());
     }
 
     for (String goal : parameters.getGoals()) {
-      list.add(goal);
+      parametersList.add(goal);
     }
 
-    addOption(list, "P", encodeProfiles(parameters.getProfiles()));
-
-    return list;
+    addOption(parametersList, "P", encodeProfiles(parameters.getProfiles()));
   }
 
-  private static void addOption(List<String> cmdList, @NonNls String key, @NonNls String value) {
+  private static void addOption(ParametersList cmdList, @NonNls String key, @NonNls String value) {
     if (!StringUtil.isEmptyOrSpaces(value)) {
       cmdList.add("-" + key);
       cmdList.add(value);
     }
-  }
-
-  private static void addParameters(List<String> cmdList, String parameters) {
-    if (!StringUtil.isEmptyOrSpaces(parameters)) {
-      StringTokenizer tokenizer = new StringTokenizer(parameters);
-      while (tokenizer.hasMoreTokens()) {
-        cmdList.add(tokenizer.nextToken());
-      }
-    }
-  }
-
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private static void addProperty(List<String> cmdList, @NonNls String key, @NonNls String value) {
-    cmdList.add(MessageFormat.format("-D{0}={1}", key, value));
   }
 
   public static String resolveMavenHome(@NotNull MavenGeneralSettings coreSettings) throws ExecutionException {
@@ -215,7 +193,7 @@ public class MavenExternalParameters {
   }
 
   private static void encodeCoreAndRunnerSettings(MavenGeneralSettings coreSettings, MavenRunnerSettings runnerSettings,
-                                                  @NonNls List<String> cmdList) {
+                                                  ParametersList cmdList) {
     if (coreSettings.isWorkOffline()) {
       cmdList.add("--offline");
     }
@@ -232,14 +210,20 @@ public class MavenExternalParameters {
       cmdList.add("--errors");
     }
 
-    cmdList.add(coreSettings.getFailureBehavior().getCommandLineOption());
-    cmdList.add(coreSettings.getPluginUpdatePolicy().getCommandLineOption());
-    cmdList.add(coreSettings.getChecksumPolicy().getCommandLineOption());
-    cmdList.add(coreSettings.getSnapshotUpdatePolicy().getCommandLineOption());
+    addIfNotEmpty(cmdList, coreSettings.getFailureBehavior().getCommandLineOption());
+    addIfNotEmpty(cmdList, coreSettings.getPluginUpdatePolicy().getCommandLineOption());
+    addIfNotEmpty(cmdList, coreSettings.getChecksumPolicy().getCommandLineOption());
+    addIfNotEmpty(cmdList, coreSettings.getSnapshotUpdatePolicy().getCommandLineOption());
 
     addOption(cmdList, "s", coreSettings.getUserSettingsFile());
     if (!StringUtil.isEmptyOrSpaces(coreSettings.getLocalRepository())) {
-      addProperty(cmdList, "maven.repo.local", coreSettings.getLocalRepository());
+      cmdList.addProperty("maven.repo.local", coreSettings.getLocalRepository());
+    }
+  }
+
+  private static void addIfNotEmpty(ParametersList parametersList, @Nullable String value) {
+    if (!StringUtil.isEmptyOrSpaces(value)) {
+      parametersList.add(value);
     }
   }
 
