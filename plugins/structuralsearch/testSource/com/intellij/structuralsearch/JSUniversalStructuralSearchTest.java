@@ -1,7 +1,6 @@
 package com.intellij.structuralsearch;
 
 import com.intellij.dupLocator.equivalence.EquivalenceDescriptorProvider;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.Language;
 import com.intellij.lang.javascript.ActionScriptFileType;
 import com.intellij.lang.javascript.JSLanguageDialect;
@@ -222,7 +221,7 @@ public class JSUniversalStructuralSearchTest extends StructuralSearchTestCase {
     doTest(s, "for (var $var$ = $start$; $var$ < $end$; $var$++)", 1, 1, dialect);
     doTest(s, "for (var $var$ = $start$; $var$ < $end$; $var$++) {\n" +
               "}", 0, 0, dialect);
-    PropertiesComponent.getInstance(getProject()).unsetValue(JSRootConfiguration.JS_LANGUAGE_LEVEL_PROPERTY_NAME);
+    JSRootConfiguration.unsetLanguageLevel(getProject());
   }
 
   public void testFunc1() {
