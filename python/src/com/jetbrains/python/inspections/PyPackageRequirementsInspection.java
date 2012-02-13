@@ -33,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -163,7 +164,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
             final Application application = ApplicationManager.getApplication();
             setRunningPackagingTasks(myModule, true);
             try {
-              manager.install(myUnsatisfied);
+              manager.install(myUnsatisfied, Collections.<String>emptyList());
               final String msg = "Packages installed successfully";
               notificationRef.set(new Notification(PACKAGING_GROUP_ID, msg,
                                                    String.format("Installed packages: " + requirementsToString(myUnsatisfied)),

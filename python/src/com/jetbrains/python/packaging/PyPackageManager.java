@@ -1,6 +1,5 @@
 package com.jetbrains.python.packaging;
 
-import com.google.common.collect.Lists;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -47,6 +46,7 @@ public class PyPackageManager {
   private static final int TIMEOUT = 10 * 60 * 1000;
 
   private static final Map<Sdk, PyPackageManager> ourInstances = new HashMap<Sdk, PyPackageManager>();
+  private static final String BUILD_DIR_OPTION = "--build-dir";
 
   private List<PyPackage> myPackagesCache = null;
   private Sdk mySdk;
@@ -69,28 +69,9 @@ public class PyPackageManager {
     return mySdk;
   }
 
-  // TODO: There are too many install() methods
-  public void install(@NotNull List<PyRequirement> requirements) throws PyExternalProcessException {
-    install(requirements, null);
-  }
-
-  public void install(@NotNull PyRequirement requirement, @Nullable List<String> options) throws PyExternalProcessException {
-    install(Lists.newArrayList(requirement), options);
-  }
-
-  public void install(@NotNull PyRequirement requirement, @Nullable String url,
-                      @Nullable List<String> options) throws PyExternalProcessException {
-    install(Lists.newArrayList(requirement), url, options);
-  }
-
-  private void install(@NotNull List<PyRequirement> requirements, @Nullable String url,
-                      @Nullable List<String> options) throws PyExternalProcessException {
+  public void install(@NotNull List<PyRequirement> requirements, @NotNull List<String> extraArgs) throws PyExternalProcessException {
     final List<String> args = new ArrayList<String>();
     args.add("install");
-    if (url != null) {
-      args.add("--extra-index-url");
-      args.add(url);
-    }
     final File buildDir;
     try {
       buildDir = FileUtil.createTempDirectory("packaging", null);
@@ -98,12 +79,12 @@ public class PyPackageManager {
     catch (IOException e) {
       throw new PyExternalProcessException(ERROR_ACCESS_DENIED, PACKAGING_TOOL, args, "Cannot create temporary build directory");
     }
-    args.addAll(list("--build-dir", buildDir.getAbsolutePath()));
+    if (!extraArgs.contains(BUILD_DIR_OPTION)) {
+      args.addAll(list(BUILD_DIR_OPTION, buildDir.getAbsolutePath()));
+    }
+    args.addAll(extraArgs);
     for (PyRequirement req : requirements) {
       args.add(req.toString());
-    }
-    if (options != null) {
-      args.addAll(options);
     }
     try {
       runPythonHelper(PACKAGING_TOOL, args);
@@ -112,10 +93,6 @@ public class PyPackageManager {
       myPackagesCache = null;
       FileUtil.delete(buildDir);
     }
-  }
-
-  private void install(@NotNull List<PyRequirement> requirements, @Nullable List<String> options) throws PyExternalProcessException {
-    install(requirements, null, options);
   }
 
   public void uninstall(@NotNull PyPackage pkg) throws PyExternalProcessException {
