@@ -73,9 +73,13 @@ public class JavacMain {
       task.setProcessors(Collections.singleton(analyzer));
       return task.call();
     }
+    catch(IllegalArgumentException e) {
+      outConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, e.getMessage()));
+    }
     finally {
       fileManager.close();
     }
+    return false;
   }
 
   private static boolean shouldSuppressAnnotationProcessing(final Collection<String> options) {
