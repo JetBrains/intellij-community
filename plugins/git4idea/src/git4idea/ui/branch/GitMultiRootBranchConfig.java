@@ -157,10 +157,10 @@ public class GitMultiRootBranchConfig {
       GitBranchesCollection branchesCollection = repository.getBranches();
       Collection<GitBranch> branches = local ? branchesCollection.getLocalBranches() : branchesCollection.getRemoteBranches();
       if (commonBranches == null) {
-        commonBranches = GitUtil.getBranchNames(branches);
+        commonBranches = GitUtil.getBranchNamesWithoutRemoteHead(branches);
       }
       else {
-        commonBranches.retainAll(GitUtil.getBranchNames(branches));
+        commonBranches.retainAll(GitUtil.getBranchNamesWithoutRemoteHead(branches));
       }
     }
 
