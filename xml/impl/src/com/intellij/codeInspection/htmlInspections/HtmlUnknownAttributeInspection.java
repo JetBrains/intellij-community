@@ -106,7 +106,8 @@ public class HtmlUnknownAttributeInspection extends HtmlUnknownTagInspection {
             quickfixes[2] = new SwitchToHtml5WithHighPriorityAction();
           }
 
-          holder.registerProblem(nameElement, XmlErrorMessages.message("attribute.is.not.allowed.here", name),
+          if (nameElement.getTextLength() > 0)
+            holder.registerProblem(nameElement, XmlErrorMessages.message("attribute.is.not.allowed.here", name),
                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING, quickfixes);
         }
       }
