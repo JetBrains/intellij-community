@@ -21,6 +21,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
+import com.intellij.ui.ScreenUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -192,7 +193,13 @@ public class JBOptionButton extends JButton implements MouseMotionListener {
       }
     });
     myPopup.addPopupMenuListener(listener.get());
-    myPopup.show(this, 0, getY() + getHeight());
+    final Point loc = getLocationOnScreen();
+    final Rectangle screen = ScreenUtil.getScreenRectangle(loc);
+    final Dimension popupSize = myPopup.getPreferredSize();
+    final Rectangle intersection = screen.intersection(new Rectangle(new Point(loc.x, loc.y + getHeight()), popupSize));
+    int y = intersection.height < popupSize.height ? getY() - popupSize.height : getY() + getHeight();
+
+    myPopup.show(this, 0, y);
 
     SwingUtilities.invokeLater(new Runnable() {
       @Override
