@@ -63,8 +63,8 @@ import org.jetbrains.android.resourceManagers.LocalResourceManager;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.android.util.AndroidCompilerMessageKind;
+import org.jetbrains.android.util.AndroidExecutionUtil;
 import org.jetbrains.android.util.AndroidUtils;
-import org.jetbrains.android.util.ExecutionUtil;
 import org.jetbrains.android.util.ResourceEntry;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -857,7 +857,7 @@ public class AndroidCompileUtil {
   @NotNull
   public static Map<CompilerMessageCategory, List<String>> execute(String... argv) throws IOException {
     assert !ApplicationManager.getApplication().isDispatchThread();
-    final Map<AndroidCompilerMessageKind, List<String>> messages = ExecutionUtil.doExecute(argv);
+    final Map<AndroidCompilerMessageKind, List<String>> messages = AndroidExecutionUtil.doExecute(argv);
     return toCompilerMessageCategoryKeys(messages);
   }
 }

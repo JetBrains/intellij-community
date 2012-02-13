@@ -20,7 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.AndroidCompilerMessageKind;
-import org.jetbrains.android.util.ExecutionUtil;
+import org.jetbrains.android.util.AndroidExecutionUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -57,7 +57,7 @@ public final class AndroidIdl {
     commands.add(outFile);
 
     LOG.info(AndroidCommonUtils.command2string(commands));
-    return ExecutionUtil.doExecute(ArrayUtil.toStringArray(commands));
+    return AndroidExecutionUtil.doExecute(ArrayUtil.toStringArray(commands));
   }
 
 }

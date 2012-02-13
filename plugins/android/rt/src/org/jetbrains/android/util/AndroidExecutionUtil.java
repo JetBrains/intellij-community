@@ -28,9 +28,9 @@ import java.util.Map;
  *
  * @author Alexey Efimov
  */
-public final class ExecutionUtil {
+public final class AndroidExecutionUtil {
 
-  private ExecutionUtil() {
+  private AndroidExecutionUtil() {
   }
 
   @NotNull
