@@ -29,7 +29,7 @@
       </action>
       <separator/>
       <action id="tasks.create.changelist" class="com.intellij.tasks.actions.CreateChangelistAction" text="Create Change_list..."/>
-      <action id="tasks.show.task.description" class="com.intellij.tasks.actions.ShowTaskDescription" text="Show Description" />
+      <action id="tasks.show.task.description" class="com.intellij.tasks.actions.ShowTaskDescription" text="Show Description"/>
       <action id="tasks.open.in.browser" class="com.intellij.tasks.actions.OpenTaskInBrowserAction" text="Open in _Browser">
         <keyboard-shortcut keymap="$default" first-keystroke="alt shift B"/>
       </action>
@@ -90,14 +90,12 @@
 
     <editChangelistSupport implementation="com.intellij.tasks.impl.TaskChangelistSupport"/>
 
-    <completion.contributor language="TEXT" implementationClass="com.intellij.tasks.impl.TaskCompletionContributor" order="first, before commitCompletion"/>
-
     <projectService serviceInterface="com.intellij.tasks.impl.TaskProjectConfiguration"
                     serviceImplementation="com.intellij.tasks.impl.TaskProjectConfiguration"/>
     <projectService serviceInterface="com.intellij.tasks.context.WorkingContextManager"
                     serviceImplementation="com.intellij.tasks.context.WorkingContextManager"/>
     <applicationService serviceInterface="com.intellij.tasks.config.RecentTaskRepositories"
-                    serviceImplementation="com.intellij.tasks.config.RecentTaskRepositories"/>
+                        serviceImplementation="com.intellij.tasks.config.RecentTaskRepositories"/>
 
     <lang.documentationProvider language="TEXT" implementationClass="com.intellij.tasks.doc.TaskDocumentationProvider"/>
 

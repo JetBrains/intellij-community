@@ -162,7 +162,7 @@ public class TextFieldWithAutoCompletion<T> extends LanguageTextField {
     }
 
     @Override
-    protected String getTypeText(@NotNull String item) {
+    protected String getTypeText(@NotNull final String item) {
       return null;
     }
   }
