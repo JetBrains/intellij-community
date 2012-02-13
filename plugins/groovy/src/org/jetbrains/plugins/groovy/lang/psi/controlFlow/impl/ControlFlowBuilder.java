@@ -311,7 +311,10 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     if (exception == null) return;
 
     exception.accept(this);
-    final InstructionImpl throwInstruction = startNode(throwStatement);
+    final InstructionImpl throwInstruction = new ThrowingInstruction(throwStatement, myInstructionNumber++);
+    addNode(throwInstruction);
+    checkPending(throwInstruction);
+
     interruptFlow();
     final PsiType type = exception.getNominalType();
     if (type != null) {
@@ -326,7 +329,6 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     else {
       addPendingEdge(null, throwInstruction);
     }
-    finishNode(throwInstruction);
   }
 
   private void interruptFlow() {
@@ -483,7 +485,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     if (myCaughtExceptionInfos.size() <= 0 && myFinallyCount <= 0) {
       return;
     }
-    final InstructionImpl instruction = new InstructionImpl(call, myInstructionNumber++);
+    final InstructionImpl instruction = new ThrowingInstruction(call, myInstructionNumber++);
     addNode(instruction);
     checkPending(instruction);
 

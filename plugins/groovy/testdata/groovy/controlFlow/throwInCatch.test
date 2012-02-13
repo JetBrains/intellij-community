@@ -13,7 +13,7 @@ try {
 4(5) element: Catch clause
 5(6) WRITE e
 6(7) READ e
-7(9) element: THROW statement
+7(9) THROW. element: THROW statement
 8(13) element: Finally clause
 9(8,10)  CALL 8
 10(16) AFTER CALL 9

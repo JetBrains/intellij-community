@@ -7,7 +7,7 @@ try {
 0(1) element: null
 1(2) element: Open block
 2(3) READ foo
-3(4,8) element: Method call
+3(4,8) THROW. element: Method call
 4(6) element: RETURN statement
 5(10) element: Finally clause
 6(5,7)  CALL 5
