@@ -303,6 +303,7 @@ class DaemonListeners implements Disposable {
 
   @Override
   public void dispose() {
+    stopDaemonAndRestartAllFiles();
     boolean replaced = ((UserDataHolderEx)myProject).replace(DAEMON_INITIALIZED, Boolean.TRUE, Boolean.FALSE);
     LOG.assertTrue(replaced, "Daemon listeners already disposed for the project "+myProject);
   }

@@ -81,5 +81,5 @@ public class DaemonProgressIndicator extends ProgressIndicatorBase {
   public void setDebug(boolean debug) {
     this.debug = debug;
   }
-  public static final Key<Throwable> KILL_TRACE = Key.create("KILL_TRACE");
+  private static final Key<Throwable> KILL_TRACE = Key.create("KILL_TRACE");
 }
