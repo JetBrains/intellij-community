@@ -16,7 +16,7 @@
 package com.intellij.psi.impl.light;
 
 import com.intellij.lang.Language;
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +35,7 @@ public class LightReferenceListBuilder extends LightElement implements PsiRefere
   private final PsiElementFactory myFactory;
 
   public LightReferenceListBuilder(PsiManager manager, Role role) {
-    this(manager, StdLanguages.JAVA, role);
+    this(manager, JavaLanguage.INSTANCE, role);
   }
 
   public LightReferenceListBuilder(PsiManager manager, Language language, Role role) {
@@ -59,6 +59,9 @@ public class LightReferenceListBuilder extends LightElement implements PsiRefere
   }
 
   public void addReference(PsiClassType type) {
+    final PsiClass resolved = type.resolve();
+    if (resolved == null) return;
+
     final PsiJavaCodeReferenceElement ref = myFactory.createReferenceElementByType(type);
     myRefs.add(ref);
   }

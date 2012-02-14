@@ -20,3 +20,13 @@ class UnusedDeclBug {
         } // end for
     }
 }
+
+class ForEachTest {
+  public static void main(String[] args) {
+    int count = 0;
+    for (String arg : args) {
+      count++;
+    }
+    System.out.println(count);
+  }
+}

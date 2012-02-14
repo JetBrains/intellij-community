@@ -117,7 +117,7 @@ public class GrIntroduceParameterTest extends LightCodeInsightFixtureTestCase {
               final GrIntroduceParameterHandler hackedHandler = new GrIntroduceParameterHandler() {
                 @Override
                 protected void showDialog(IntroduceParameterInfo info) {
-                  final GrIntroduceExpressionSettings hackedSettings = getSettings(info, removeUnusedParameters, replaceFieldsWithGetters, declareFinal, generateDelegate);
+                  final GrIntroduceParameterSettings hackedSettings = getSettings(info, removeUnusedParameters, replaceFieldsWithGetters, declareFinal, generateDelegate);
                   if (info.getToReplaceIn() instanceof GrMethod) {
                     new GrIntroduceParameterProcessor(hackedSettings).run();
                   }
@@ -142,7 +142,7 @@ public class GrIntroduceParameterTest extends LightCodeInsightFixtureTestCase {
     }, "introduce Parameter", null);
   }
 
-  private static GrIntroduceExpressionSettings getSettings(final IntroduceParameterInfo context,
+  private static GrIntroduceParameterSettings getSettings(final IntroduceParameterInfo context,
                                                           final boolean removeUnusedParameters,
                                                           final int replaceFieldsWithGetters,
                                                           final boolean declareFinal,
@@ -158,7 +158,7 @@ public class GrIntroduceParameterTest extends LightCodeInsightFixtureTestCase {
     GrExpression expr = GrIntroduceHandlerBase.findExpression(context.getStatements()[0]);
     GrVariable var = GrIntroduceHandlerBase.findVariable(context.getStatements()[0]);
     final PsiType type = TypesUtil.unboxPrimitiveTypeWrapper(var == null ? expr.getType() : var.getType());
-    return new GrIntroduceExpressionSettingsImpl(context, "anObject", declareFinal, toRemove, generateDelegate, replaceFieldsWithGetters, expr, var, type);
+    return new GrIntroduceExpressionSettingsImpl(context, "anObject", declareFinal, toRemove, generateDelegate, replaceFieldsWithGetters, expr, var, type, true);
   }
   
   

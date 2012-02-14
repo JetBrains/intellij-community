@@ -284,13 +284,17 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     invokeAfterUpdate(new Runnable() {
       @Override
       public void run() {
-        myUpdater.setIgnoreBackgroundOperation(false);
-        myUpdater.pause();
-        myFreezeName.set(reason);
+        freezeImmediately(reason);
         context.ping();
       }
     }, InvokeAfterUpdateMode.SILENT_CALLBACK_POOLED, "", ModalityState.NON_MODAL);
     context.suspend();
+  }
+
+  public void freezeImmediately(@Nullable String reason) {
+    myUpdater.setIgnoreBackgroundOperation(false);
+    myUpdater.pause();
+    myFreezeName.set(reason);
   }
 
   @Override

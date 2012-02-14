@@ -19,6 +19,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.paths.PathReferenceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -44,7 +45,7 @@ import java.util.List;
 public class MavenParentRelativePathConverter extends ResolvingConverter<PsiFile> implements CustomReferenceConverter {
   @Override
   public PsiFile fromString(@Nullable @NonNls String s, ConvertContext context) {
-    if (s == null) return null;
+    if (StringUtil.isEmptyOrSpaces(s)) return null;
 
     VirtualFile contextFile = context.getFile().getVirtualFile();
     if (contextFile == null) return null;
@@ -55,7 +56,7 @@ public class MavenParentRelativePathConverter extends ResolvingConverter<PsiFile
     if (f.isDirectory()) f = f.findFileByRelativePath(MavenConstants.POM_XML);
     if (f == null) return null;
 
-    return context.getXmlElement().getManager().findFile(f);
+    return context.getPsiManager().findFile(f);
   }
 
   @Override

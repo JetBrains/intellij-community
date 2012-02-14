@@ -283,7 +283,7 @@ class GitPushResult {
     NotificationListener viewUpdateFilesListener = new ViewUpdatedFilesNotificationListener(updatedFiles);
 
     if (onlySuccess) {
-      return new MySuccessfulNotification(title, sb.toString(), notificationType, viewUpdateFilesListener);
+      return new Notification(GitVcs.NOTIFICATION_GROUP_ID.getDisplayId(), title, sb.toString(), notificationType, viewUpdateFilesListener).setImportant(false);
     }
 
     return new Notification(GitVcs.IMPORTANT_ERROR_NOTIFICATION.getDisplayId(), title, sb.toString(), notificationType, viewUpdateFilesListener);
@@ -358,17 +358,6 @@ class GitPushResult {
   @NotNull
   private static String commits(int commitNum) {
     return commitNum + " " + StringUtil.pluralize("commit", commitNum);
-  }
-
-  private static class MySuccessfulNotification extends Notification {
-    public MySuccessfulNotification(@NotNull String title, @NotNull String message, @NotNull NotificationType notificationType,
-                                    @NotNull NotificationListener listener) {
-      super(GitVcs.NOTIFICATION_GROUP_ID.getDisplayId(), title, message, notificationType, listener);
-    }
-
-    @Override public boolean isImportant() {
-      return false;          // don't highlight event log if push was totally successful
-    }
   }
 
   private class ViewUpdatedFilesNotificationListener implements NotificationListener {

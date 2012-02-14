@@ -332,7 +332,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
       javaParameters.getProgramParametersList().add(TestNGCommandLineArgs.SRC_COMMAND_OPT, sb.toString());
     }*/
     try {
-      myServerSocket = new ServerSocket(0, 0, InetAddress.getByName(null));
+      myServerSocket = new ServerSocket(0, 0, InetAddress.getByName("127.0.0.1"));
       javaParameters.getProgramParametersList().add("-socket" + myServerSocket.getLocalPort());
       myTempFile = FileUtil.createTempFile("idea_testng", ".tmp");
       myTempFile.deleteOnExit();

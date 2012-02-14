@@ -76,7 +76,7 @@ public abstract class ExtractClosureProcessorBase extends BaseRefactoringProcess
       buffer.append('\n');
     }
 
-    ExtractUtil.generateBody(helper, false, buffer);
+    ExtractUtil.generateBody(helper, false, buffer, helper.isForceReturn());
     buffer.append('}');
 
     return GroovyPsiElementFactory.getInstance(helper.getProject()).createClosureFromText(buffer.toString(), helper.getToReplaceIn());

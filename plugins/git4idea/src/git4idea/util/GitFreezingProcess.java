@@ -16,15 +16,13 @@
 package git4idea.util;
 
 import com.intellij.ide.SaveAndSyncHandler;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.util.continuation.GatheringContinuationContext;
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Executes an action surrounding it with freezing-unfreezing operations.
@@ -35,30 +33,40 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class GitFreezingProcess {
 
+  private static final Logger LOG = Logger.getInstance(GitFreezingProcess.class);
+
   @NotNull private final String myOperationTitle;
   @NotNull private final Runnable myRunnable;
-  @NotNull private final ChangeListManager myChangeListManager;
+  @NotNull private final ChangeListManagerImpl myChangeListManager;
 
   public GitFreezingProcess(@NotNull Project project, @NotNull String operationTitle, @NotNull Runnable runnable) {
     myOperationTitle = operationTitle;
     myRunnable = runnable;
-    myChangeListManager = ChangeListManager.getInstance(project);
+    myChangeListManager = ChangeListManagerImpl.getInstanceImpl(project);
   }
 
   public void execute() {
+    LOG.debug("starting");
     try {
+      LOG.debug("saving documents, blocking project autosync");
       saveAndBlockInAwt();
+      LOG.debug("freezing the ChangeListManager");
       freeze();
       try {
+        LOG.debug("running the operation");
         myRunnable.run();
+        LOG.debug("operation completed.");
       }
       finally {
-        unfreeze();
+        LOG.debug("unfreezing the ChangeListManager");
+        unfreezeInAwt();
       }
     }
     finally {
+      LOG.debug("unblocking project autosync");
       unblockInAwt();
     }
+    LOG.debug("finished.");
   }
 
   public static void saveAndBlock() {
@@ -69,35 +77,23 @@ public class GitFreezingProcess {
   }
 
   private static void saveAndBlockInAwt() {
-    final AtomicReference<RuntimeException> exception = new AtomicReference<RuntimeException>();
-    // if an error happens, let it be thrown there (in awt) + throw it here to call unblock if anything has already been blocked
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          saveAndBlock();
-        }
-        catch (Throwable t) {
-          RuntimeException re = new RuntimeException(t);
-          exception.set(re);
-          throw re;
-        }
+    RethrowingRunnable rethrowingRunnable = new RethrowingRunnable(new Runnable() {
+      @Override public void run() {
+        saveAndBlock();
       }
     });
-
-    RuntimeException re = exception.get();
-    if (re != null) {
-      throw re;
-    }
+    UIUtil.invokeAndWaitIfNeeded(rethrowingRunnable);
+    rethrowingRunnable.rethrowIfHappened();
   }
 
   private static void unblockInAwt() {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
+    RethrowingRunnable rethrowingRunnable = new RethrowingRunnable(new Runnable() {
+      @Override public void run() {
         unblock();
       }
     });
+    UIUtil.invokeAndWaitIfNeeded(rethrowingRunnable);
+    rethrowingRunnable.rethrowIfHappened();
   }
 
   public static void unblock() {
@@ -107,12 +103,51 @@ public class GitFreezingProcess {
   }
 
   private void freeze() {
-    myChangeListManager.freeze(new GatheringContinuationContext(),
-                               "Local changes are not available until Git " + myOperationTitle + " is finished.");
+    myChangeListManager.freezeImmediately("Local changes are not available until Git " + myOperationTitle + " is finished.");
   }
 
   private void unfreeze() {
     myChangeListManager.letGo();
+  }
+
+  private void unfreezeInAwt() {
+    RethrowingRunnable rethrowingRunnable = new RethrowingRunnable(new Runnable() {
+      @Override public void run() {
+        unfreeze();
+      }
+    });
+    UIUtil.invokeAndWaitIfNeeded(rethrowingRunnable);
+    rethrowingRunnable.rethrowIfHappened();
+  }
+
+  // if an error happens, let it be thrown in the calling thread (in awt actually)
+  // + throw it in this thread afterwards, to be able to execute the finally block.
+  private static class RethrowingRunnable implements Runnable {
+
+    private final Runnable myRunnable;
+    private RuntimeException myException;
+
+    RethrowingRunnable(@NotNull Runnable runnable) {
+      myRunnable = runnable;
+    }
+
+    @Override
+    public void run() {
+      try {
+        myRunnable.run();
+      }
+      catch (Throwable t) {
+        RuntimeException re = new RuntimeException(t);
+        myException = re;
+        throw re;
+      }
+    }
+
+    void rethrowIfHappened() {
+      if (myException != null) {
+        throw myException;
+      }
+    }
   }
 
 }

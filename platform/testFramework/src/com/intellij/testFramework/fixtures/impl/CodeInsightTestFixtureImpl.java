@@ -1327,7 +1327,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     ((PsiFileImpl)myFile).calcTreeElement(); //to load text
 
     //to initialize caches
-    CacheManager.SERVICE.getInstance(project).getFilesWithWord(XXX, UsageSearchContext.IN_COMMENTS, GlobalSearchScope.allScope(project), true);
+    if (!DumbService.isDumb(project)) {
+      CacheManager.SERVICE.getInstance(project).getFilesWithWord(XXX, UsageSearchContext.IN_COMMENTS, GlobalSearchScope.allScope(project), true);
+    }
 
     List<HighlightInfo> infos;
     try {

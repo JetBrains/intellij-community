@@ -438,7 +438,7 @@ public final class ComponentTree extends Tree implements DataProvider {
         }
         else if (component instanceof RadRootContainer) {
           append(UIDesignerBundle.message("component.form"), getAttribute(myClassAttributes, level));
-          append("(", getAttribute(myPackageAttributes, level));
+          append(" (", getAttribute(myPackageAttributes, level));
           final String classToBind = ((RadRootContainer)component).getClassToBind();
           if (classToBind != null) {
             append(classToBind, getAttribute(myPackageAttributes, level));

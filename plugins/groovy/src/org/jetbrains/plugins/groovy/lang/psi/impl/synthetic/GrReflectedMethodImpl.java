@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMethodBuilder;
+import com.intellij.psi.impl.light.LightReferenceListBuilder;
 import com.intellij.psi.impl.light.LightTypeParameterListBuilder;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -63,7 +64,7 @@ public class GrReflectedMethodImpl extends LightMethodBuilder implements GrRefle
   public GrReflectedMethodImpl(GrMethod baseMethod, int optionalParams, PsiClassType categoryType) {
     super(baseMethod.getManager(), baseMethod.getLanguage(), baseMethod.getName(),
           new GrLightParameterListBuilder(baseMethod.getManager(), baseMethod.getLanguage()),
-          new GrLightModifierList(baseMethod), new LightReferenceList(baseMethod.getManager()),  
+          new GrLightModifierList(baseMethod), new LightReferenceListBuilder(baseMethod.getManager(), baseMethod.getLanguage(), null),
           new LightTypeParameterListBuilder(baseMethod.getManager(), baseMethod.getLanguage())
     );
     

@@ -32,11 +32,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.JBOptionButton;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.AwtVisitor;
@@ -1475,7 +1477,11 @@ public abstract class DialogWrapper {
 
     @Override
     protected void doAction(ActionEvent e) {
-      if (doValidate() != null) {
+      ValidationInfo info = doValidate();
+      if (info != null) {
+        if (info.component != null && info.component.isVisible()) {
+          IdeFocusManager.getInstance(null).requestFocus(info.component, true);
+        }
         startTrackingValidation();
         return;
       }
@@ -1533,7 +1539,7 @@ public abstract class DialogWrapper {
     }
   }
 
-  private Dimension mySizeBeforeError = null;
+  private Dimension myActualSize = null;
   private String myLastErrorText = null;
   
   protected final void setErrorText(@Nullable final String text) {
@@ -1541,8 +1547,8 @@ public abstract class DialogWrapper {
       return;
     }
     myLastErrorText = text;
-    if (mySizeBeforeError == null && !StringUtil.isEmpty(text)) {
-      mySizeBeforeError = getSize();
+    if (myActualSize == null && !StringUtil.isEmpty(text)) {
+      myActualSize = getSize();
     }
 
     myErrorTextAlarm.cancelAllRequests();
@@ -1558,14 +1564,14 @@ public abstract class DialogWrapper {
             updateHeightForErrorText();
           }
           else {
-            if (getRootPane() != null) myPeer.pack();
+            //if (getRootPane() != null) myPeer.pack();
           }
           myMaxErrorTextLength = text.length();
           updateHeightForErrorText();
         }
         myErrorText.repaint();
-        if (StringUtil.isEmpty(text) && mySizeBeforeError != null) {
-          setSize(mySizeBeforeError.width, mySizeBeforeError.height);
+        if (StringUtil.isEmpty(text) && myActualSize != null) {
+          resizeWithAnimation(myActualSize);
           myMaxErrorTextLength = 0;
         }
       }
@@ -1583,14 +1589,35 @@ public abstract class DialogWrapper {
     return null;
   }
 
-  private void updateHeightForErrorText() {
-    if (getRootPane() == null) return;
+  private void resizeWithAnimation(final Dimension size) {
+    new Thread("DialogWrapper resizer") {
+      int time = 200;
+      int steps = 7;
+      @Override
+      public void run() {
+        int step = 0;
+        final Dimension cur = getSize();
+        int h = (size.height - cur.height) / steps;
+        int w = (size.width - cur.width) / steps;
+        while (step++ < steps) {
+          setSize(cur.width + w * step, cur.height + h*step);
+          try {
+            //noinspection BusyWait
+            sleep(time / steps);
+          } catch (InterruptedException ignore) {}
+        }
+        setSize(size.width, size.height);
+        //repaint();
+        if (myErrorText.shouldBeVisible()) {
+          myErrorText.setVisible(true);
+        }
+      }
+    }.start();
+  }
 
-    int minHeight = getRootPane().getMinimumSize().height;
-    if (getRootPane().getHeight() < minHeight) {
-      int titleHeight = myPeer.getSize().height - getRootPane().getSize().height;
-      myPeer.setSize(myPeer.getSize().width, minHeight + titleHeight);
-    }
+  private void updateHeightForErrorText() {
+    Dimension errorSize = myErrorText.getPreferredSize();
+    resizeWithAnimation(new Dimension(Math.max(myActualSize.width, errorSize.width + 40), myActualSize.height + errorSize.height + 10));
   }
 
   private static class ErrorText extends JPanel {
@@ -1601,7 +1628,13 @@ public abstract class DialogWrapper {
     private ErrorText() {
       setLayout(new BorderLayout());
       UIUtil.removeQuaquaVisualMarginsIn(this);
-      add(myLabel, BorderLayout.CENTER);
+      JBScrollPane pane =
+        new JBScrollPane(myLabel, ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+      pane.setHaveBorder(false);
+      pane.setBackground(null);
+      pane.getViewport().setBackground(null);
+      pane.setOpaque(false);
+      add(pane, BorderLayout.CENTER);
     }
 
     public void setError(String text) {
@@ -1627,12 +1660,16 @@ public abstract class DialogWrapper {
       }
     }
 
+    public boolean shouldBeVisible() {
+      return !StringUtil.isEmpty(myText);
+    }
+
     public boolean isTextSet(@Nullable String text) {
       return StringUtil.equals(text, myText);
     }
 
     public Dimension getPreferredSize() {
-      return myPrefSize == null ? super.getPreferredSize() : myPrefSize;
+      return myPrefSize == null ? myLabel.getPreferredSize() : myPrefSize;
     }
   }
 

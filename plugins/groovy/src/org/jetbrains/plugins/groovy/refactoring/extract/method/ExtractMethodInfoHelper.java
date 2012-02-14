@@ -36,10 +36,12 @@ public class ExtractMethodInfoHelper extends ExtractInfoHelperBase {
   private String myVisibility;
   private String myName;
   private final GrMemberOwner myOwner;
+  private boolean myForceReturn;
 
-  public ExtractMethodInfoHelper(InitialInfo initialInfo, String name, GrMemberOwner owner) {
+  public ExtractMethodInfoHelper(InitialInfo initialInfo, String name, GrMemberOwner owner, boolean forceReturn) {
     super(initialInfo);
     myOwner = owner;
+    myForceReturn = forceReturn;
 
     myVisibility = PsiModifier.PRIVATE;
     myName = name;
@@ -80,6 +82,10 @@ public class ExtractMethodInfoHelper extends ExtractInfoHelperBase {
     return myOwner;
   }
 
+  public void setForceReturn(boolean isForceReturn) {
+    myForceReturn = isForceReturn;
+  }
+
   private static boolean canBeStatic(GrStatement statement) {
     PsiElement parent = statement.getParent();
     while (parent != null && !(parent instanceof PsiFile)) {
@@ -89,5 +95,10 @@ public class ExtractMethodInfoHelper extends ExtractInfoHelperBase {
       parent = parent.getParent();
     }
     return false;
+  }
+
+  @Override
+  public boolean isForceReturn() {
+    return myForceReturn;
   }
 }

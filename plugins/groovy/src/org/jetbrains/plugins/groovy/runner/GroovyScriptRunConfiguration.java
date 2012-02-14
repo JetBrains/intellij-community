@@ -221,7 +221,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
     scriptParams = scriptParameters;
   }
 
-  public static JavaParameters createJavaParametersWithSdk(Module module) {
+  public static JavaParameters createJavaParametersWithSdk(@Nullable Module module) {
     JavaParameters params = new JavaParameters();
     params.setCharset(null);
 

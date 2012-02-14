@@ -22,10 +22,8 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiSubstitutor;
+import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.ui.ComboBoxVisibilityPanel;
 import com.intellij.refactoring.ui.ConflictsDialog;
@@ -58,9 +56,6 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.EventListenerList;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.EventListener;
@@ -82,20 +77,21 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
   private MethodSignatureComponent mySignature;
   private ComboBoxVisibilityPanel myVisibilityPanel;
   private Splitter mySplitter;
+  private JCheckBox myForceReturnCheckBox;
   private ParameterTablePanel myParameterTablePanel;
   private final Project myProject;
 
   public GroovyExtractMethodDialog(InitialInfo info, GrMemberOwner owner) {
     super(info.getProject(), true);
     myProject = info.getProject();
-    myHelper = new ExtractMethodInfoHelper(info, "", owner);
+    myHelper = new ExtractMethodInfoHelper(info, "", owner, false);
 
-    setUpNameField();
     myParameterTablePanel.init(myHelper);
 
     setModal(true);
     setTitle(GroovyExtractMethodHandler.REFACTORING_NAME);
     init();
+    setUpNameField();
     setUpDialog();
     update();
   }
@@ -110,16 +106,21 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
   }
 
   protected void doOKAction() {
+    myHelper.setForceReturn(myForceReturnCheckBox.isSelected());
     String name = getEnteredName();
     if (name == null) return;
     GrMethod method = ExtractUtil.createMethod(myHelper);
     if (method != null && !validateMethod(method, myHelper)) {
       return;
     }
+    final GroovyApplicationSettings settings = GroovyApplicationSettings.getInstance();
     if (myCbSpecifyType.isEnabled()) {
-      GroovyApplicationSettings.getInstance().EXTRACT_METHOD_SPECIFY_TYPE = myCbSpecifyType.isSelected();
+      settings.EXTRACT_METHOD_SPECIFY_TYPE = myCbSpecifyType.isSelected();
     }
-    GroovyApplicationSettings.getInstance().EXTRACT_METHOD_VISIBILITY = myVisibilityPanel.getVisibility();
+    if (myForceReturnCheckBox.isEnabled()) {
+      settings.FORCE_RETURN = myForceReturnCheckBox.isSelected();
+    }
+    settings.EXTRACT_METHOD_VISIBILITY = myVisibilityPanel.getVisibility();
     super.doOKAction();
   }
 
@@ -141,16 +142,19 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
     myHelper.setSpecifyType(myCbSpecifyType.isSelected());
     myHelper.setVisibility(myVisibilityPanel.getVisibility());
     myNameLabel.setLabelFor(myNameField);
+
+    final PsiType type = myHelper.getOutputType();
+    if (type != PsiType.VOID) {
+      myForceReturnCheckBox.setSelected(GroovyApplicationSettings.getInstance().FORCE_RETURN);
+    }
+    else {
+      myForceReturnCheckBox.setEnabled(false);
+      myForceReturnCheckBox.setSelected(false);
+    }
   }
 
   private void setUpNameField() {
-
-    contentPane.registerKeyboardAction(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        myNameField.requestFocus();
-      }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.ALT_MASK), JComponent.WHEN_IN_FOCUSED_WINDOW);
-
+    myNameLabel.setLabelFor(myNameField);
     myNameField.addDocumentListener(new DocumentListener() {
       public void beforeDocumentChange(DocumentEvent event) {
       }
@@ -181,7 +185,15 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
     String text = getEnteredName();
     myHelper.setName(text);
     updateSignature();
-    setOKActionEnabled(GroovyNamesUtil.isIdentifier(text));
+  }
+
+  @Override
+  protected ValidationInfo doValidate() {
+    final String text = getEnteredName();
+    if (!GroovyNamesUtil.isIdentifier(text)) {
+      return new ValidationInfo(GroovyRefactoringBundle.message("name.is.wrong", text), myNameField);
+    }
+    return null;
   }
 
   @Nullable

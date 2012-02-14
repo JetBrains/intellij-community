@@ -506,13 +506,13 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
         }
       }
     }
-    else if (declarationScope instanceof PsiForeachStatement) {
+   /* else if (declarationScope instanceof PsiForeachStatement) {
       HighlightInfo highlightInfo = checkUnusedParameter(parameter, progress);
       if (highlightInfo != null) {
         QuickFixAction.registerQuickFixAction(highlightInfo, new EmptyIntentionAction(UnusedSymbolLocalInspection.DISPLAY_NAME), myUnusedSymbolKey);
         return highlightInfo;
       }
-    }
+    }*/
 
     return null;
   }

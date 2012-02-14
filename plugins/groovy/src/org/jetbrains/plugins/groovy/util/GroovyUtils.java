@@ -16,11 +16,15 @@
 
 package org.jetbrains.plugins.groovy.util;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
@@ -81,4 +85,11 @@ public abstract class GroovyUtils {
     return null;
   }
 
+  public static File getBundledGroovyJar() {
+    String root = ApplicationManager.getApplication().isUnitTestMode() ?
+                  PluginPathManager.getPluginHomePath("groovy") + "/../../lib/" : PathManager.getHomePath() + "/lib/";
+    final File[] groovyJars = getFilesInDirectoryByPattern(root, GroovyConfigUtils.GROOVY_ALL_JAR_PATTERN);
+    assert groovyJars.length == 1;
+    return groovyJars[0];
+  }
 }

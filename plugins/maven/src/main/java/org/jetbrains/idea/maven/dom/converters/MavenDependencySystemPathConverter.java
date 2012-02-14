@@ -41,7 +41,7 @@ public class MavenDependencySystemPathConverter extends ResolvingConverter<PsiFi
     if (s == null) return null;
     VirtualFile f = LocalFileSystem.getInstance().findFileByPath(s);
     if (f == null) return null;
-    return context.getXmlElement().getManager().findFile(f);
+    return context.getPsiManager().findFile(f);
   }
 
   public String toString(@Nullable PsiFile file, ConvertContext context) {

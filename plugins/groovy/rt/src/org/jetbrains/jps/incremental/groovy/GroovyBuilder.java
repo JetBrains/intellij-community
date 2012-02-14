@@ -11,9 +11,7 @@ import groovy.util.CharsetToolkit;
 import org.jetbrains.ether.dependencyView.Callbacks;
 import org.jetbrains.ether.dependencyView.Mappings;
 import org.jetbrains.groovy.compiler.rt.GroovyCompilerWrapper;
-import org.jetbrains.jps.ClasspathKind;
-import org.jetbrains.jps.Module;
-import org.jetbrains.jps.ModuleChunk;
+import org.jetbrains.jps.*;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.java.JavaBuilder;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
@@ -72,16 +70,17 @@ public class GroovyBuilder extends ModuleLevelBuilder {
         compilerOutput, toCompilePaths, FileUtil.toSystemDependentName(moduleOutput), class2Src, encoding, patchers
       );
 
-      // todo CompilerUtil.addLocaleOptions()
       //todo different outputs in a chunk
       //todo xmx
-      //todo module jdk path
       final List<String> cmd = ExternalProcessUtil.buildJavaCommandLine(
-        SystemProperties.getJavaHome() + "/bin/java",
+        getJavaExecutable(chunk),
         "org.jetbrains.groovy.compiler.rt.GroovycRunner",
         Collections.<String>emptyList(), new ArrayList<String>(generateClasspath(context, chunk)),
-        Arrays.asList("-Xmx384m"/*, "-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5239"*/),
-        Arrays.<String>asList(myForStubs ? "stubs" : "groovyc", tempFile.getPath())
+        Arrays.asList("-Xmx384m",
+                      "-Dfile.encoding=" + CharsetToolkit.getDefaultSystemCharset().name()/*,
+                      "-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5239"*/),
+        Arrays.<String>asList(myForStubs ? "stubs" : "groovyc",
+                              tempFile.getPath())
       );
 
       List<GroovycOSProcessHandler.OutputItem> successfullyCompiled = Collections.emptyList();
@@ -122,6 +121,14 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     catch (Exception e) {
       throw new ProjectBuildException(e);
     }
+  }
+
+  private static String getJavaExecutable(ModuleChunk chunk) {
+    Sdk sdk = chunk.getModules().iterator().next().getSdk();
+    if (sdk instanceof JavaSdk) {
+      return ((JavaSdk)sdk).getJavaExecutable();
+    }
+    return SystemProperties.getJavaHome() + "/bin/java";
   }
 
   private static String getModuleOutput(CompileContext context, ModuleChunk chunk) {

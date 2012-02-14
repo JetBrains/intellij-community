@@ -126,7 +126,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
   @Nullable
   private static ExtractMethodInfoHelper getSettings(@NotNull InitialInfo initialInfo, GrMemberOwner owner) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      final ExtractMethodInfoHelper helper = new ExtractMethodInfoHelper(initialInfo, "testMethod", owner);
+      final ExtractMethodInfoHelper helper = new ExtractMethodInfoHelper(initialInfo, "testMethod", owner, true);
       final PsiType type = helper.getOutputType();
       if (type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) || PsiType.VOID.equals(type)) {
         helper.setSpecifyType(false);

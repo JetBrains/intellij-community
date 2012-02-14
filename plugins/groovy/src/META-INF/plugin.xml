@@ -388,7 +388,8 @@
     <copyPastePostProcessor implementation="org.jetbrains.plugins.groovy.lang.editor.GroovyReferenceCopyPasteProcessor"/>
 
     <specialTool shortName="GroovyUnusedDeclaration" displayName="Unused declaration"
-                 groupName="Declaration Redundancy" enabledByDefault="true" level="WARNING"
+                 groupPath="Groovy"
+                 groupName="Declaration redundancy" enabledByDefault="true" level="WARNING"
                  implementationClass="org.jetbrains.plugins.groovy.codeInspection.GroovyUnusedDeclarationInspection"/>
 
     <localInspection language="Groovy" groupPath="Groovy" shortName="SecondUnsafeCall" bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
@@ -1095,6 +1096,12 @@
             class="org.jetbrains.plugins.groovy.doc.actions.GenerateGroovyDocAction"
             text="Generate GroovyDoc" description="Generating Groovy Documentation"
             icon="/org/jetbrains/plugins/groovy/images/GroovyDoc.png">
+      <add-to-group group-id="ToolsMenu" anchor="last"/>
+    </action>
+    <action id="Groovy.Console"
+            class="org.jetbrains.plugins.groovy.console.GroovyShellAction"
+            text="Groovy Shell..." description="Launch Groovy Shell"
+            icon="/org/jetbrains/plugins/groovy/images/groovy_16x16.png">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>
 

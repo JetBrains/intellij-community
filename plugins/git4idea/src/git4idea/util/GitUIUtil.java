@@ -26,6 +26,7 @@ import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Function;
 import git4idea.GitBranch;
 import git4idea.GitDeprecatedRemote;
 import git4idea.GitVcs;
@@ -517,5 +518,15 @@ public class GitUIUtil {
   @NotNull
   public static String getShortRepositoryName(@NotNull GitRepository repository) {
     return getShortRepositoryName(repository.getProject(), repository.getRoot());
+  }
+
+  @NotNull
+  public static String getShortNames(@NotNull Collection<GitRepository> repositories) {
+    return StringUtil.join(repositories, new Function<GitRepository, String>() {
+      @Override
+      public String fun(GitRepository repository) {
+        return getShortRepositoryName(repository);
+      }
+    }, ", ");
   }
 }
