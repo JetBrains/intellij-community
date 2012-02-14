@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -122,12 +122,12 @@ public class AbstractTreeUi {
 
   private boolean myCanYield = false;
 
-  private final List<TreeUpdatePass> myYeildingPasses = new ArrayList<TreeUpdatePass>();
+  private final List<TreeUpdatePass> myYieldingPasses = new ArrayList<TreeUpdatePass>();
 
-  private boolean myYeildingNow;
+  private boolean myYieldingNow;
 
   private final Set<DefaultMutableTreeNode> myPendingNodeActions = new HashSet<DefaultMutableTreeNode>();
-  private final Set<Runnable> myYeildingDoneRunnables = new HashSet<Runnable>();
+  private final Set<Runnable> myYieldingDoneRunnables = new HashSet<Runnable>();
 
   private final Alarm myBusyAlarm = new Alarm();
   private final Runnable myWaiterForReady = new Runnable() {
@@ -136,7 +136,7 @@ public class AbstractTreeUi {
     }
   };
 
-  private final RegistryValue myYeildingUpdate = Registry.get("ide.tree.yeildingUiUpdate");
+  private final RegistryValue myYieldingUpdate = Registry.get("ide.tree.yeildingUiUpdate");
   private final RegistryValue myShowBusyIndicator = Registry.get("ide.tree.showBusyIndicator");
   private final RegistryValue myWaitForReadyTime = Registry.get("ide.tree.waitForReadyTimeout");
 
@@ -167,13 +167,12 @@ public class AbstractTreeUi {
     }
   };
 
-  private boolean myPassthroughMode = false;
-
+  private boolean myPassThroughMode = false;
 
   private final Set<Object> myAutoExpandRoots = new HashSet<Object>();
   private final RegistryValue myAutoExpandDepth = Registry.get("ide.tree.autoExpandMaxDepth");
 
-  private final Set<DefaultMutableTreeNode> myWillBeExpaned = new HashSet<DefaultMutableTreeNode>();
+  private final Set<DefaultMutableTreeNode> myWillBeExpanded = new HashSet<DefaultMutableTreeNode>();
   private SimpleTimerTask myCleanupTask;
 
   private final AtomicBoolean myCancelRequest = new AtomicBoolean();
@@ -479,7 +478,7 @@ public class AbstractTreeUi {
 
       myDeferredSelections.clear();
       myDeferredExpansions.clear();
-      myYeildingDoneRunnables.clear();
+      myYieldingDoneRunnables.clear();
     }
     finally {
       releaseLock();
@@ -797,7 +796,7 @@ public class AbstractTreeUi {
       NodeDescriptor eachDescriptor = getDescriptorFrom((DefaultMutableTreeNode)eachParent);
       if (!isAutoExpand(eachDescriptor, false)) {
         TreePath path = getPathFor(eachParent);
-        return myWillBeExpaned.contains(path.getLastPathComponent()) || myTree.isExpanded(path) && myTree.isVisible(path);
+        return myWillBeExpanded.contains(path.getLastPathComponent()) || myTree.isExpanded(path) && myTree.isVisible(path);
       }
       eachParent = eachParent.getParent();
     }
@@ -1327,10 +1326,10 @@ public class AbstractTreeUi {
           final boolean expanded = isExpanded(node, wasExpanded);
 
           if (expanded) {
-            myWillBeExpaned.add(node);
+            myWillBeExpanded.add(node);
           }
           else {
-            myWillBeExpaned.remove(node);
+            myWillBeExpanded.remove(node);
           }
 
           collectNodesToInsert(descriptor, elementToIndexMap, node, expanded, loadedChildren)
@@ -1362,7 +1361,7 @@ public class AbstractTreeUi {
               }
             }).doWhenProcessed(new Runnable() {
             public void run() {
-              myWillBeExpaned.remove(node);
+              myWillBeExpanded.remove(node);
               removeFromUpdatingChildren(node);
               processNodeActionsIfReady(node);
             }
@@ -1821,10 +1820,9 @@ public class AbstractTreeUi {
     myUpdaterState = null;
     getUpdater().reset();
 
-
-    myYeildingNow = false;
-    myYeildingPasses.clear();
-    myYeildingDoneRunnables.clear();
+    myYieldingNow = false;
+    myYieldingPasses.clear();
+    myYieldingDoneRunnables.clear();
 
     myNodeActions.clear();
     myNodeChildrenActions.clear();
@@ -1878,8 +1876,8 @@ public class AbstractTreeUi {
   }
 
   private boolean yieldAndRun(final Runnable runnable, final TreeUpdatePass pass) {
-    myYeildingPasses.add(pass);
-    myYeildingNow = true;
+    myYieldingPasses.add(pass);
+    myYieldingNow = true;
     yield(new Runnable() {
       public void run() {
         if (isReleased()) return;
@@ -1898,10 +1896,10 @@ public class AbstractTreeUi {
   }
 
   public boolean isYeildingNow() {
-    return myYeildingNow;
+    return myYieldingNow;
   }
 
-  private boolean hasSheduledUpdates() {
+  private boolean hasScheduledUpdates() {
     return getUpdater().hasNodesToUpdate();
   }
 
@@ -1965,7 +1963,7 @@ public class AbstractTreeUi {
            " hasPendingWork=" + hasPendingWork() + "\n" +
            "  hasNodesToUpdate=" + hasNodesToUpdate() + "\n" +
            "  updaterState=" + myUpdaterState + "\n" +
-           "  hasScheduledUpdates=" + hasSheduledUpdates() + "\n" +
+           "  hasScheduledUpdates=" + hasScheduledUpdates() + "\n" +
            "  isPostponedMode=" + getUpdater().isInPostponeMode() + "\n" +
            " nodeActions=" + myNodeActions.keySet() + "\n" +
            " nodeChildrenActions=" + myNodeChildrenActions.keySet() + "\n" +
@@ -1981,7 +1979,7 @@ public class AbstractTreeUi {
   public boolean hasPendingWork() {
     return hasNodesToUpdate() ||
            myUpdaterState != null && myUpdaterState.isProcessingNow() ||
-           hasSheduledUpdates() && !getUpdater().isInPostponeMode();
+           hasScheduledUpdates() && !getUpdater().isInPostponeMode();
   }
 
   public boolean isIdle() {
@@ -1991,7 +1989,7 @@ public class AbstractTreeUi {
   private void executeYieldingRequest(Runnable runnable, TreeUpdatePass pass) {
     try {
       try {
-        myYeildingPasses.remove(pass);
+        myYieldingPasses.remove(pass);
 
         if (!canInitiateNewActivity()) {
           throw new ProcessCanceledException();
@@ -2011,8 +2009,8 @@ public class AbstractTreeUi {
   }
 
   private void maybeYeildingFinished() {
-    if (myYeildingPasses.isEmpty()) {
-      myYeildingNow = false;
+    if (myYieldingPasses.isEmpty()) {
+      myYieldingNow = false;
       flushPendingNodeActions();
     }
   }
@@ -2090,10 +2088,10 @@ public class AbstractTreeUi {
       processNodeActionsIfReady(each);
     }
 
-    final Runnable[] actions = myYeildingDoneRunnables.toArray(new Runnable[myYeildingDoneRunnables.size()]);
+    final Runnable[] actions = myYieldingDoneRunnables.toArray(new Runnable[myYieldingDoneRunnables.size()]);
     for (Runnable each : actions) {
       if (!isYeildingNow()) {
-        myYeildingDoneRunnables.remove(each);
+        myYieldingDoneRunnables.remove(each);
         each.run();
       }
     }
@@ -2257,7 +2255,7 @@ public class AbstractTreeUi {
   }
 
   protected boolean canYield() {
-    return myCanYield && myYeildingUpdate.asBoolean();
+    return myCanYield && myYieldingUpdate.asBoolean();
   }
 
   public long getClearOnHideDelay() {
@@ -4233,8 +4231,8 @@ public class AbstractTreeUi {
     }
 
     if (isYeildingNow()) {
-      if (!myYeildingDoneRunnables.contains(done)) {
-        myYeildingDoneRunnables.add(done);
+      if (!myYieldingDoneRunnables.contains(done)) {
+        myYieldingDoneRunnables.add(done);
       }
     }
     else {
@@ -4466,7 +4464,7 @@ public class AbstractTreeUi {
     }
 
     if (myUpdater != null) {
-      myUpdater.setPassThroughMode(myPassthroughMode);
+      myUpdater.setPassThroughMode(myPassThroughMode);
     }
   }
 
@@ -4810,13 +4808,13 @@ public class AbstractTreeUi {
   }
 
   public boolean isInStructure(@Nullable Object element) {
-    Object eachParent = element;
     final AbstractTreeStructure structure = getTreeStructure();
-
     if (structure == null) return false;
 
+    final Object rootElement = structure.getRootElement();
+    Object eachParent = element;
     while (eachParent != null) {
-      if (Comparing.equal(structure.getRootElement(), eachParent)) return true;
+      if (Comparing.equal(rootElement, eachParent)) return true;
       eachParent = structure.getParentElement(eachParent);
     }
 
@@ -4832,7 +4830,7 @@ public class AbstractTreeUi {
   }
 
   public Collection<TreeUpdatePass> getYeildingPasses() {
-    return myYeildingPasses;
+    return myYieldingPasses;
   }
 
   public boolean isBuilt(Object element) {
@@ -4980,11 +4978,11 @@ public class AbstractTreeUi {
 
 
   public void setPassthroughMode(boolean passthrough) {
-    myPassthroughMode = passthrough;
+    myPassThroughMode = passthrough;
     AbstractTreeUpdater updater = getUpdater();
 
     if (updater != null) {
-      updater.setPassThroughMode(myPassthroughMode);
+      updater.setPassThroughMode(myPassThroughMode);
     }
 
     if (!isUnitTestingMode() && passthrough) {
@@ -4994,7 +4992,7 @@ public class AbstractTreeUi {
   }
 
   public boolean isPassthroughMode() {
-    return myPassthroughMode;
+    return myPassThroughMode;
   }
 
   private static boolean isUnitTestingMode() {
