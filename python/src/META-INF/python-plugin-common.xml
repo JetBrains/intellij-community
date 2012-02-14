@@ -60,8 +60,8 @@
     <projectService serviceInterface="com.jetbrains.python.psi.PyElementGenerator"
                     serviceImplementation="com.jetbrains.python.psi.impl.PyElementGeneratorImpl"/>
 
-    <projectService serviceInterface="com.jetbrains.python.configuration.PyPackageService"
-                    serviceImplementation="com.jetbrains.python.configuration.PyPackageService"/>
+    <projectService serviceInterface="com.jetbrains.python.packaging.PyPackageService"
+                    serviceImplementation="com.jetbrains.python.packaging.PyPackageService"/>
 
     <typedHandler implementation="com.jetbrains.python.codeInsight.KeywordTypedHandler" id="pyCommaAfterKwd"/>
     <typedHandler implementation="com.jetbrains.django.lang.template.editor.DjangoBracesInterpolationTypedHandler"
@@ -408,7 +408,7 @@
                     serviceImplementation="com.jetbrains.python.coverage.PyCoverageAnnotator"/>
 
     <postStartupActivity implementation="com.jetbrains.python.sdk.PythonSdkUpdater"/>
-    <postStartupActivity implementation="com.jetbrains.python.configuration.PyPIPackagesUpdater"/>
+    <postStartupActivity implementation="com.jetbrains.python.packaging.PyPIPackagesUpdater"/>
 
     <!-- Django -->
     <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.django.annotator.ViewMethodLineMarkerProvider"/>
