@@ -139,6 +139,7 @@ public abstract class ChooseByNameBase {
   private boolean myClosedByShiftEnter = false;
   protected final int myInitialIndex;
   private String myFindUsagesTitle;
+  private ShortcutSet myCheckBoxShortcut;
 
   public boolean checkDisposed() {
     if (myDisposedFlag && myPostponedOkAction != null && !myPostponedOkAction.isProcessed()) {
@@ -363,7 +364,9 @@ public abstract class ChooseByNameBase {
     
     myCheckBox.setSelected(myModel.loadInitialCheckBoxState());
 
-    if (checkBoxName == null) myCheckBox.setVisible(false);
+    if (checkBoxName == null) {
+      myCheckBox.setVisible(false);
+    }
 
     addCard(myCheckBox, CHECK_BOX_CARD);
 
@@ -442,6 +445,17 @@ public abstract class ChooseByNameBase {
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     Font editorFont = new Font(scheme.getEditorFontName(), Font.PLAIN, scheme.getEditorFontSize());
     myTextField.setFont(editorFont);
+
+    if (checkBoxName != null) {
+      if (myCheckBox != null) {
+        new AnAction("change goto check box", null ,null) {
+          @Override
+          public void actionPerformed(AnActionEvent e) {
+            myCheckBox.setSelected(!myCheckBox.isSelected());
+          }
+        }.registerCustomShortcutSet(myCheckBoxShortcut, myTextField);
+      }
+    }
 
     if (isCloseByFocusLost()) {
       myTextField.addFocusListener(new FocusAdapter() {
@@ -594,6 +608,10 @@ public abstract class ChooseByNameBase {
     JPanel wrapper = new JPanel(new BorderLayout());
     wrapper.add(comp, BorderLayout.EAST);
     myCardContainer.add(wrapper, cardId);
+  }
+
+  public void setCheckBoxShortcut(ShortcutSet shortcutSet) {
+    myCheckBoxShortcut = shortcutSet;
   }
 
   private static Set<KeyStroke> getShortcuts(@NotNull String actionId) {

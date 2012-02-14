@@ -122,11 +122,11 @@ public abstract class GotoActionBase extends AnAction {
     return Pair.create("", 0);
   }
 
-  protected static <T> void showNavigationPopup(AnActionEvent e, ChooseByNameModel model, final GotoActionCallback<T> callback) {
+  protected <T> void showNavigationPopup(AnActionEvent e, ChooseByNameModel model, final GotoActionCallback<T> callback) {
     showNavigationPopup(e, model, callback, null, true);
   }
 
-  protected static <T> void showNavigationPopup(AnActionEvent e,
+  protected <T> void showNavigationPopup(AnActionEvent e,
                                                 ChooseByNameModel model,
                                                 final GotoActionCallback<T> callback,
                                                 @Nullable final String findUsagesTitle,
@@ -138,6 +138,7 @@ public abstract class GotoActionBase extends AnAction {
     LOG.assertTrue(startedAction != null);
     Pair<String, Integer> start = getInitialText(useSelectionFromEditor ? e.getData(PlatformDataKeys.EDITOR) : null);
     final ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, model, getPsiContext(e), start.first, mayRequestOpenInCurrentWindow, start.second);
+    popup.setCheckBoxShortcut(getShortcutSet());
     popup.setFindUsagesTitle(findUsagesTitle);
     final ChooseByNameFilter<T> filter = callback.createFilter(popup);
 
