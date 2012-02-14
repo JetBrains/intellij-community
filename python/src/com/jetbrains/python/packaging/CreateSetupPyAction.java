@@ -12,8 +12,11 @@ import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -55,6 +58,7 @@ public class CreateSetupPyAction extends CreateFromTemplateAction {
       defaults.add("Author", properties.getOrInit(AUTHOR_PROPERTY, SystemProperties.getUserName()));
       defaults.add("Author_Email", properties.getOrInit(EMAIL_PROPERTY, ""));
       defaults.addPredefined("PackageList", getPackageList(dataContext));
+      defaults.addPredefined("PackageDirs", getPackageDirs(dataContext));
     }
     return defaults;
   }
@@ -83,6 +87,24 @@ public class CreateSetupPyAction extends CreateFromTemplateAction {
         collectPackageNames(project, child, names, name + ".");
       }
     }
+  }
+
+  private static String getPackageDirs(DataContext dataContext) {
+    final Module module = LangDataKeys.MODULE.getData(dataContext);
+    if (module != null) {
+      final VirtualFile[] sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots();
+      if (sourceRoots.length > 0) {
+        for (VirtualFile sourceRoot : sourceRoots) {
+          // TODO notify if we have multiple source roots and can't build mapping automatically
+          final VirtualFile contentRoot = ProjectFileIndex.SERVICE.getInstance(module.getProject()).getContentRootForFile(sourceRoot);
+          if (contentRoot != null && contentRoot != sourceRoot) {
+            final String relativePath = VfsUtilCore.getRelativePath(sourceRoot, contentRoot, '/');
+            return "\n    package_dir={'': '" + relativePath + "'},";
+          }
+        }
+      }
+    }
+    return "";
   }
 
   @Override
