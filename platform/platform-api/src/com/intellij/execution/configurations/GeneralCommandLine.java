@@ -105,6 +105,10 @@ public class GeneralCommandLine {
     myPassParentEnvironment = passParentEnvironment;
   }
 
+  public boolean isPassParentEnvironment() {
+    return myPassParentEnvironment;
+  }
+
   public void addParameters(final String... parameters) {
     for (String parameter : parameters) {
       addParameter(parameter);
