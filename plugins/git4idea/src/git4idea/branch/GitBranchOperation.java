@@ -185,9 +185,13 @@ abstract class GitBranchOperation {
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
-        String description = "<html>" + message + "<br/>" + getRollbackProposal() + "</html>";
+        StringBuilder description = new StringBuilder("<html>");
+        if (!StringUtil.isEmptyOrSpaces(message)) {
+          description.append(message).append("<br/>");
+        }
+        description.append(getRollbackProposal()).append("</html>");
         ok.set(Messages.OK ==
-               MessageManager.showYesNoDialog(myProject, description, title, "Rollback", "Don't rollback", Messages.getErrorIcon()));
+               MessageManager.showYesNoDialog(myProject, description.toString(), title, "Rollback", "Don't rollback", Messages.getErrorIcon()));
       }
     });
     if (ok.get()) {
@@ -304,12 +308,8 @@ abstract class GitBranchOperation {
 
   protected void fatalLocalChangesError(@NotNull String reference) {
     String title = String.format("Couldn't %s %s", getOperationName(), reference);
-    String message = String.format("Local changes would be overwritten by %s.<br/>You should stash or commit them.<br/>", getOperationName());
     if (wereSuccessful()) {
-      showFatalErrorDialogWithRollback(title, message);
-    }
-    else {
-      showFatalNotification(title, message);
+      showFatalErrorDialogWithRollback(title, "");
     }
   }
 
