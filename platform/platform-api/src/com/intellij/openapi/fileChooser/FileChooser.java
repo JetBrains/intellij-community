@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ import java.awt.*;
 public class FileChooser {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileChooser.FileChooser");
 
-  private FileChooser() {}
+  private FileChooser() { }
 
   @NotNull
   public static VirtualFile[] chooseFiles(Project project, FileChooserDescriptor descriptor) {
@@ -40,28 +40,6 @@ public class FileChooser {
   @NotNull
   public static VirtualFile[] chooseFiles(Component parent, FileChooserDescriptor descriptor) {
     return chooseFiles(parent, descriptor, null);
-  }
-
-  @Nullable
-  public static VirtualFile chooseFile(Project project, FileChooserDescriptor descriptor) {
-    return chooseFile(project, descriptor, null);
-  }
-
-  @Nullable
-  public static VirtualFile chooseFile(Project project, FileChooserDescriptor descriptor, @Nullable VirtualFile toSelect) {
-    LOG.assertTrue(!descriptor.isChooseMultiple());
-    return ArrayUtil.getFirstElement(chooseFiles(project, descriptor, toSelect));
-  }
-
-  @Nullable
-  public static VirtualFile chooseFile(Component parent, FileChooserDescriptor descriptor) {
-    return chooseFile(parent, descriptor, null);
-  }
-
-  @Nullable
-  public static VirtualFile chooseFile(Component parent, FileChooserDescriptor descriptor, @Nullable VirtualFile toSelect) {
-    LOG.assertTrue(!descriptor.isChooseMultiple());
-    return ArrayUtil.getFirstElement(chooseFiles(parent, descriptor, toSelect));
   }
 
   @NotNull
@@ -76,56 +54,88 @@ public class FileChooser {
     return chooser.choose(toSelect, null);
   }
 
+  @Nullable
+  public static VirtualFile chooseFile(Project project, FileChooserDescriptor descriptor) {
+    return chooseFile(project, descriptor, null);
+  }
 
-  public static boolean isNativeMacChooserEnabled() {
-    return Boolean.valueOf(System.getProperty("native.mac.file.chooser.enabled", "true")).booleanValue() && Registry.is("ide.mac.filechooser.native");
+  @Nullable
+  public static VirtualFile chooseFile(Component parent, FileChooserDescriptor descriptor) {
+    return chooseFile(parent, descriptor, null);
+  }
+
+  @Nullable
+  public static VirtualFile chooseFile(Project project, FileChooserDescriptor descriptor, @Nullable VirtualFile toSelect) {
+    LOG.assertTrue(!descriptor.isChooseMultiple());
+    return ArrayUtil.getFirstElement(chooseFiles(project, descriptor, toSelect));
+  }
+
+  @Nullable
+  public static VirtualFile chooseFile(Component parent, FileChooserDescriptor descriptor, @Nullable VirtualFile toSelect) {
+    LOG.assertTrue(!descriptor.isChooseMultiple());
+    return ArrayUtil.getFirstElement(chooseFiles(parent, descriptor, toSelect));
   }
 
   /**
    * Shows file/folder open dialog, allows user to choose files/folders and then passes result to callback in EDT.
    * On MacOS Open Dialog will be shown with slide effect if Macish UI is turned on.
-   * @param descriptor File chooser descriptor
-   * @param project project
-   * @param toSelect file to preselect
-   * @param onChosenCallback Callback will be invoked after user have closed dialog
+   *
+   * @param descriptor file chooser descriptor
+   * @param project    project
+   * @param toSelect   file to preselect
+   * @param callback   callback will be invoked after user have closed dialog
    */
   public static void chooseFilesWithSlideEffect(@NotNull final FileChooserDescriptor descriptor,
                                                 @Nullable final Project project,
                                                 @Nullable final VirtualFile toSelect,
-                                                @NotNull final Consumer<VirtualFile[]> onChosenCallback
-  ) {
-    chooseFilesWithSlideEffect(descriptor, project, null, toSelect, onChosenCallback);
+                                                @NotNull final Consumer<VirtualFile[]> callback) {
+    chooseFilesWithSlideEffect(descriptor, project, null, toSelect, callback);
   }
 
   /**
    * Shows file/folder open dialog, allows user to choose files/folders and then passes result to callback in EDT.
    * On MacOS Open Dialog will be shown with slide effect if Macish UI is turned on.
-   * @param descriptor File chooser descriptor
-   * @param project project
-   * @param parent parent component
-   * @param toSelect file to preselect
-   * @param onChosenCallback Callback will be invoked after user have closed dialog
+   *
+   * @param descriptor file chooser descriptor
+   * @param project    project
+   * @param parent     parent component
+   * @param toSelect   file to preselect
+   * @param callback   callback will be invoked after user have closed dialog
    */
   public static void chooseFilesWithSlideEffect(@NotNull final FileChooserDescriptor descriptor,
                                                 @Nullable final Project project,
                                                 @Nullable final Component parent,
                                                 @Nullable final VirtualFile toSelect,
-                                                @NotNull final Consumer<VirtualFile[]> onChosenCallback
-  ) {
-    if (SystemInfo.isMac &&  isNativeMacChooserEnabled()) descriptor.putUserData(MacFileChooserDialog.NATIVE_MAC_FILE_CHOOSER_ENABLED, Boolean.TRUE);
+                                                @NotNull final Consumer<VirtualFile[]> callback) {
+    if (useNativeMacChooser(descriptor)) {
+      descriptor.putUserData(MacFileChooserDialog.NATIVE_MAC_FILE_CHOOSER_ENABLED, Boolean.TRUE);
+    }
+
     final FileChooserFactory factory = FileChooserFactory.getInstance();
-    final FileChooserDialog dialog = parent != null
-                                     ? factory.createFileChooser(descriptor, parent)
-                                     : factory.createFileChooser(descriptor, project);
+    final FileChooserDialog dialog = parent != null ? factory.createFileChooser(descriptor, parent)
+                                                    : factory.createFileChooser(descriptor, project);
+
     if (dialog instanceof MacFileChooserDialog) {
       ((MacFileChooserDialog)dialog).chooseWithSheet(toSelect, project, new MacFileChooserDialog.MacFileChooserCallback() {
         public void onChosen(@NotNull final VirtualFile[] files) {
-          onChosenCallback.consume(files);
+          callback.consume(files);
         }
       });
-    } else {
-      final VirtualFile[] files = dialog.choose(toSelect, project);
-      onChosenCallback.consume(files);
     }
+    else {
+      final VirtualFile[] files = dialog.choose(toSelect, project);
+      callback.consume(files);
+    }
+  }
+
+  private static boolean useNativeMacChooser(final FileChooserDescriptor descriptor) {
+    @SuppressWarnings("deprecation") final boolean nativeMacChooserEnabled = isNativeMacChooserEnabled();
+    return SystemInfo.isMac && !descriptor.isChooseJarContents() && nativeMacChooserEnabled;
+  }
+
+  /** @deprecated internal method, to make private in IDEA 12 */
+  public static boolean isNativeMacChooserEnabled() {
+    return "true".equalsIgnoreCase(System.getProperty("native.mac.file.chooser.enabled", "true")) &&
+           Registry.is("ide.mac.filechooser.native");
   }
 }

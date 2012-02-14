@@ -16,10 +16,15 @@
 package com.intellij.openapi.fileChooser;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Temporary class, do not use.
@@ -41,13 +46,38 @@ public final class FileChooserUtil {
   }
 
   @NotNull
-  public static String[] getPaths(@NotNull final VirtualFile[] files) {
-    if (files.length == 0) return ArrayUtil.EMPTY_STRING_ARRAY;
+  public static String[] getPaths(@Nullable final VirtualFile[] files) {
+    if (files == null || files.length == 0) return ArrayUtil.EMPTY_STRING_ARRAY;
 
     final String[] paths = new String[files.length];
     for (int i = 0; i < files.length; i++) {
       paths[i] = getSelectionPath(files[i]);
     }
     return paths;
+  }
+
+  @NotNull
+  public static VirtualFile[] getFiles(@Nullable final String[] paths) {
+    if (paths == null || paths.length == 0) return VirtualFile.EMPTY_ARRAY;
+
+    final List<VirtualFile> files = new ArrayList<VirtualFile>();
+    for (String path : paths) {
+      final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
+      if (file != null && file.isValid()) {
+        files.add(file);
+      }
+    }
+    return VfsUtil.toVirtualFileArray(files);
+  }
+
+  @Nullable
+  public static VirtualFile getFile(@Nullable final String path) {
+    if (path == null) return null;
+
+    final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
+    if (file == null || !file.isValid()) return null;
+
+    setSelectionPath(file, path);
+    return file;
   }
 }

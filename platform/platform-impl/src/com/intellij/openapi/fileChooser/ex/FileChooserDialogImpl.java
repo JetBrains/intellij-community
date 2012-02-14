@@ -81,14 +81,14 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
 
   public static DataKey<PathField> PATH_FIELD = DataKey.create("PathField");
 
-  public FileChooserDialogImpl(@NotNull final FileChooserDescriptor chooserDescriptor, Project project) {
+  public FileChooserDialogImpl(@NotNull final FileChooserDescriptor chooserDescriptor, @Nullable Project project) {
     super(project, true);
     myProject = project;
     myChooserDescriptor = chooserDescriptor;
     setTitle(getChooserTitle(chooserDescriptor));
   }
 
-  public FileChooserDialogImpl(@NotNull final FileChooserDescriptor chooserDescriptor, Component parent) {
+  public FileChooserDialogImpl(@NotNull final FileChooserDescriptor chooserDescriptor, @NotNull Component parent) {
     super(parent, true);
     myChooserDescriptor = chooserDescriptor;
     setTitle(getChooserTitle(chooserDescriptor));
