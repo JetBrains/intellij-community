@@ -300,6 +300,9 @@ public class JavaBuilder extends ModuleLevelBuilder {
           diagnosticSink.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, "Compilation failed: internal java compiler error"));
         }
         if (diagnosticSink.getErrorCount() > 0) {
+          if (!compiledOk) {
+            diagnosticSink.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, "Errors occurred while compiling module '" + chunkName + "'"));
+          }
           throw new ProjectBuildException(
             "Compilation failed: errors: " + diagnosticSink.getErrorCount() + "; warnings: " + diagnosticSink.getWarningCount()
           );
@@ -518,12 +521,14 @@ public class JavaBuilder extends ModuleLevelBuilder {
       loadJavacOptions(context);
       cached = JAVAC_OPTIONS.get(context);
     }
-    return cached;
-    //final List<String> options = new ArrayList<String>(cached);
-    //final Module module = chunk.getModules().iterator().next();
-    //final String langlevel = module.getLanguageLevel();
-    //final Sdk sdk = module.getSdk();
-    //return options;
+    final List<String> options = new ArrayList<String>(cached);
+    final Module module = chunk.getModules().iterator().next();
+    final String langlevel = module.getLanguageLevel();
+    if (!StringUtil.isEmpty(langlevel)) {
+      options.add("-source");
+      options.add(langlevel);
+    }
+    return options;
   }
 
   private static void loadJavacOptions(CompileContext context) {
