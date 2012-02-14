@@ -580,7 +580,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
 
       for (Object o : changedPaths.values()) {
         final SVNLogEntryPath entryPath = (SVNLogEntryPath) o;
-        if (entryPath != null && 'A' == entryPath.getType()) {
+        if (entryPath != null && 'A' == entryPath.getType() && entryPath.getCopyPath() != null) {
           if (myCurrentPath.equals(entryPath.getPath())) {
             myHadChanged = true;
             myCurrentPath = entryPath.getCopyPath();
