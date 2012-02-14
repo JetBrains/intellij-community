@@ -47,7 +47,6 @@ import com.theoryinpractice.testng.model.TestType;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.testng.internal.AnnotationTypeEnum;
 import org.testng.xml.LaunchSuite;
 import org.testng.xml.Parser;
 import org.testng.xml.SuiteGenerator;
@@ -220,7 +219,7 @@ public class SearchingForTestsTask extends Task.Backgroundable {
     }
 
     LaunchSuite suite =
-      SuiteGenerator.createSuite(myProject.getName(), null, map, groupNames, testParams, AnnotationTypeEnum.JDK.getName(), logLevel);
+      SuiteGenerator.createSuite(myProject.getName(), null, map, groupNames, testParams, "jdk", logLevel);
 
     File xmlFile = suite.save(new File(PathManager.getSystemPath()));
     String path = xmlFile.getAbsolutePath() + "\n";
