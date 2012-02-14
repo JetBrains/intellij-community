@@ -195,7 +195,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
           PsiMember newMember = handler.doMove(myOptions, member, anchors.get(member), targetClass);
           elementListener.elementMoved(newMember);
 
-          fixModifierList(newMember, usages);
+          fixModifierList(member, newMember, usages);
           for (PsiReference reference : refsToBeRebind) {
             reference.bindToElement(newMember);
           }
@@ -216,7 +216,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  private void fixModifierList(PsiMember newMember, final UsageInfo[] usages) throws IncorrectOperationException {
+  private void fixModifierList(PsiMember member, PsiMember newMember, final UsageInfo[] usages) throws IncorrectOperationException {
     PsiModifierList modifierList = newMember.getModifierList();
 
     if (modifierList != null && myTargetClass.isInterface()) {
@@ -233,11 +233,8 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
 
     final List<UsageInfo> filtered = new ArrayList<UsageInfo>();
     for (UsageInfo usage : usages) {
-      if (usage instanceof MoveMembersUsageInfo) {
-        final PsiElement reference = ((MoveMembersUsageInfo)usage).reference;
-        if (reference instanceof PsiReference && ((PsiReference)reference).resolve() == newMember) {
-          filtered.add(usage);
-        }
+      if (usage instanceof MoveMembersUsageInfo && member == ((MoveMembersUsageInfo)usage).member) {
+        filtered.add(usage);
       }
     }
     VisibilityUtil.fixVisibility(filtered.toArray(new UsageInfo[filtered.size()]), newMember, myNewVisibility);
