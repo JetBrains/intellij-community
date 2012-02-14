@@ -358,6 +358,25 @@ public class GroovyIntroduceParameterUtil {
     }
   }
 
+  @Nullable
+  public static GrExpression addClosureToCall(PsiElement initializer, GrArgumentList list) {
+    if (!(initializer instanceof GrClosableBlock)) return null;
+
+    final PsiElement parent = list.getParent();
+    if (!(parent instanceof GrMethodCallExpression)) return null;
+
+    PsiElement anchor;
+    final GrClosableBlock[] cls = ((GrMethodCallExpression)parent).getClosureArguments();
+    if (cls.length > 0) {
+      anchor = cls[cls.length - 1];
+    }
+    else {
+      anchor = list;
+    }
+
+    return (GrExpression)parent.addAfter(initializer, anchor);
+  }
+
   private static class FieldSearcher extends GroovyRecursiveElementVisitor {
     PsiClass myClass;
     private final List<PsiField> result = new ArrayList<PsiField>();

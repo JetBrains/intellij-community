@@ -404,7 +404,7 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
     GrExpression[] oldArgs = argList.getExpressionArguments();
 
     GrClosableBlock toReplaceIn = (GrClosableBlock)settings.getToReplaceIn();
-    GroovyPsiElementFactory myFactory = GroovyPsiElementFactory.getInstance(settings.getProject());
+    GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(settings.getProject());
 
     final GrExpression anchor = getAnchorForArgument(oldArgs, toReplaceIn.isVarArgs(), toReplaceIn.getParameterList());
 
@@ -415,13 +415,17 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
       GrClosureSignatureUtil.mapParametersToArguments(signature, argList, callExpression, callExpression.getClosureArguments(), true);
 
     if (PsiTreeUtil.isAncestor(toReplaceIn, callExpression, false)) {
-      argList.addAfter(myFactory.createExpressionFromText(settings.getName()), anchor);
+      argList.addAfter(factory.createExpressionFromText(settings.getName()), anchor);
     }
     else {
       PsiElement initializer = ExpressionConverter.getExpression(expression, GroovyFileType.GROOVY_LANGUAGE, settings.getProject());
       LOG.assertTrue(initializer instanceof GrExpression);
 
-      GrExpression newArg = (GrExpression)argList.addAfter(initializer, anchor);
+      GrExpression newArg = GroovyIntroduceParameterUtil.addClosureToCall(initializer, argList);
+      if (newArg == null) {
+        final PsiElement dummy = argList.addAfter(factory.createExpressionFromText("1"), anchor);
+        newArg = ((GrExpression)dummy).replaceWithExpression((GrExpression)initializer, true);
+      }
       new OldReferencesResolver(callExpression, newArg, toReplaceIn, settings.replaceFieldsWithGetters(), initializer, signature,
                                 actualArgs, toReplaceIn.getParameters()).resolve();
       ChangeContextUtil.clearContextInfo(initializer);

@@ -29,7 +29,9 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
+import org.jetbrains.plugins.groovy.refactoring.extract.ExtractUtil;
 import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.GrIntroduceClosureParameterProcessor;
 import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.GrIntroduceParameterSettings;
 import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.GroovyIntroduceParameterUtil;
@@ -64,26 +66,11 @@ public class ExtractClosureFromClosureProcessor extends ExtractClosureProcessorB
 
   @Override
   protected void performRefactoring(UsageInfo[] usages) {
-    if (myHelper.generateDelegate()) {
-      //todo
-      /*final PsiElement toSearchFor = myHelper.getToSearchFor();
-      LOG.assertTrue(toSearchFor instanceof GrVariable);
+    GrIntroduceClosureParameterProcessor.processExternalUsages(usages, myHelper, generateClosure(myHelper));
+    GrIntroduceClosureParameterProcessor.processClosure(usages, myHelper);
 
-      String newName = InlineMethodConflictSolver.suggestNewName(((GrVariable)toSearchFor).getName() + "Delegate", null, toSearchFor);
-      GrClosableBlock result = generateDelegateClosure(this.toReplaceIn, (GrVariable)toSearchFor, newName);
-
-      processClosure(usages);
-
-      final GrVariableDeclaration declaration = myFactory.createVariableDeclaration(null, toReplaceIn, ((GrVariable)toSearchFor)
-        .getDeclaredType(), newName);
-      declaration.getModifierList().replace(((GrVariable)toSearchFor).getModifierList());
-      toReplaceIn.replace(result);
-      insertDeclaration((GrVariable)toSearchFor, declaration).getVariables()[0].getInitializerGroovy();*/
-    }
-    else {
-      GrIntroduceClosureParameterProcessor.processExternalUsages(usages, myHelper, generateClosure(myHelper));
-      GrIntroduceClosureParameterProcessor.processClosure(usages, myHelper);
-    }
+    GrStatementOwner declarationOwner = GroovyRefactoringUtil.getDeclarationOwner(myHelper.getStatements()[0]);
+    ExtractUtil.replaceStatement(declarationOwner, myHelper);
   }
 
   @NotNull
