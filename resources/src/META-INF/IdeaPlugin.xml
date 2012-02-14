@@ -372,7 +372,7 @@
     <moduleConfigurationEditorProvider implementation="com.intellij.openapi.module.WebModuleConfigurationEditorProvider"/>
 
     <specialTool shortName="UnusedDeclaration" displayName="Unused declaration" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.javadoc.issues" enabledByDefault="true" level="WARNING"
+                     groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.deadCode.UnusedDeclarationInspection"/>
     <specialTool shortName="UnusedLibrary" bundle="messages.InspectionsBundle" key="unused.library.display.name"
                      groupName="Declaration redundancy" enabledByDefault="false" level="WARNING"
