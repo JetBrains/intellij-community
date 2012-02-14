@@ -19,8 +19,7 @@ import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.util.continuation.GatheringContinuationContext;
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,12 +34,12 @@ public class GitFreezingProcess {
 
   @NotNull private final String myOperationTitle;
   @NotNull private final Runnable myRunnable;
-  @NotNull private final ChangeListManager myChangeListManager;
+  @NotNull private final ChangeListManagerImpl myChangeListManager;
 
   public GitFreezingProcess(@NotNull Project project, @NotNull String operationTitle, @NotNull Runnable runnable) {
     myOperationTitle = operationTitle;
     myRunnable = runnable;
-    myChangeListManager = ChangeListManager.getInstance(project);
+    myChangeListManager = ChangeListManagerImpl.getInstanceImpl(project);
   }
 
   public void execute() {
@@ -93,8 +92,7 @@ public class GitFreezingProcess {
   }
 
   private void freeze() {
-    myChangeListManager.freeze(new GatheringContinuationContext(),
-                               "Local changes are not available until Git " + myOperationTitle + " is finished.");
+    myChangeListManager.freezeImmediately("Local changes are not available until Git " + myOperationTitle + " is finished.");
   }
 
   private void unfreeze() {
