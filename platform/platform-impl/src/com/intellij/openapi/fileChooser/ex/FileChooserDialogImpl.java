@@ -24,10 +24,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserDialog;
-import com.intellij.openapi.fileChooser.FileElement;
-import com.intellij.openapi.fileChooser.FileSystemTree;
+import com.intellij.openapi.fileChooser.*;
 import com.intellij.openapi.fileChooser.impl.FileChooserFactoryImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -269,8 +266,12 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
       }
     }
 
-
     final VirtualFile[] selectedFiles = getSelectedFiles();
+    if (selectedFiles.length == 0) {
+      close(CANCEL_EXIT_CODE);
+      return;
+    }
+
     try {
       myChooserDescriptor.validateSelectedFiles(selectedFiles);
     }
@@ -280,14 +281,13 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     }
 
     myChosenFiles = selectedFiles;
-    if (selectedFiles.length == 0) {
-      close(CANCEL_EXIT_CODE);
-      return;
-    }
-    //noinspection AssignmentToStaticFieldFromInstanceMethod
-    ourLastFile = selectedFiles[selectedFiles.length - 1];
+    setLastSelectedFile(selectedFiles[selectedFiles.length - 1]);
 
     super.doOKAction();
+  }
+
+  private static void setLastSelectedFile(final VirtualFile selectedFile) {
+    ourLastFile = selectedFile;
   }
 
   public final void doCancelAction() {
@@ -502,13 +502,9 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     });
   }
 
+  // todo[r.sh] correct path if archive is picked via symlink
   private static String getFilePath(final VirtualFile file) {
-    final String path = file.getUserData(FileSystemTree.PATH_KEY);
-    if (path != null) {
-      return path;
-    }
-
-    return file.isInLocalFileSystem() ? file.getPresentableUrl() : file.getUrl();
+    return file.isInLocalFileSystem() ? FileChooserUtil.getSelectionPath(file) : file.getUrl();
   }
 
   private void updateTreeFromPath(final String text) {
@@ -545,6 +541,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     }
   }
 
+  // todo[r.sh] fix symlink selection
   private void selectInTree(final VirtualFile[] vFile, final boolean requestFocus) {
     myTreeIsUpdating = true;
     if (!Arrays.asList(myFileSystemTree.getSelectedFiles()).contains(vFile)) {

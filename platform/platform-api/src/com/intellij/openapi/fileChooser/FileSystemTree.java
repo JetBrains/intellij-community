@@ -17,8 +17,8 @@ package com.intellij.openapi.fileChooser;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -26,7 +26,6 @@ import java.util.List;
 
 public interface FileSystemTree extends Disposable {
   DataKey<FileSystemTree> DATA_KEY = DataKey.create("FileSystemTree");
-  Key<String> PATH_KEY = Key.create("FileSystemTree.Path");
 
   JTree getTree();
 
@@ -35,11 +34,13 @@ public interface FileSystemTree extends Disposable {
   @Nullable
   VirtualFile getSelectedFile();
 
+  @NotNull
+  VirtualFile[] getSelectedFiles();
+
   @Nullable
   VirtualFile getNewFileParent();
 
   void select(VirtualFile file, @Nullable Runnable onDone);
-
   void select(VirtualFile[] files, @Nullable Runnable onDone);
 
   void expand(VirtualFile file, @Nullable Runnable onDone);
@@ -49,8 +50,6 @@ public interface FileSystemTree extends Disposable {
   boolean isUnderRoots(VirtualFile file);
 
   boolean selectionExists();
-
-  VirtualFile[] getSelectedFiles();
 
   boolean areHiddensShown();
 
