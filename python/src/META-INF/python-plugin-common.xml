@@ -924,15 +924,6 @@
       <add-to-group group-id="ProjectViewPopupMenuRunGroup" anchor="first"/>
     </action>
 
-    <group id="PyCoverageMenu">
-      <action id="SwitchPyCoverage" class="com.intellij.coverage.actions.SwitchCoverageSuiteAction" text="Show Code Co_verage Data"
-          use-shortcut-of="SwitchCoverage"/>
-      <action id="GeneratePyCoverageReport" class="com.intellij.coverage.actions.GenerateCoverageReportAction"
-              text="_Generate Coverage Report"/>
-      <separator/>
-      <add-to-group group-id="ToolsMenu" anchor="last"/>
-    </group>
-
     <group id="PyPackagingMenu" popup="true" class="com.jetbrains.python.packaging.PyPackagingGroup" text="Packaging">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
