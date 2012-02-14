@@ -47,6 +47,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.util.List;
 
 public class ExtractSuperclassHandler implements RefactoringActionHandler, ExtractSuperclassDialog.Callback, ElementsHandler {
@@ -152,7 +153,7 @@ public class ExtractSuperclassHandler implements RefactoringActionHandler, Extra
     final DocCommentPolicy javaDocPolicy = new DocCommentPolicy(dialog.getDocCommentPolicy());
     LocalHistoryAction a = LocalHistory.getInstance().startAction(getCommandName(subclass, superclassName));
     try {
-      PsiClass superclass = null;
+      final PsiClass superclass;
 
       try {
         superclass =
@@ -164,7 +165,12 @@ public class ExtractSuperclassHandler implements RefactoringActionHandler, Extra
 
       // ask whether to search references to subclass and turn them into refs to superclass if possible
       if (superclass != null) {
-        ExtractClassUtil.askAndTurnRefsToSuper(project, subclass, superclass);
+        final Runnable turnRefsToSuperRunnable = new Runnable() {
+          public void run() {
+            ExtractClassUtil.askAndTurnRefsToSuper(project, subclass, superclass);
+          }
+        };
+        SwingUtilities.invokeLater(turnRefsToSuperRunnable);
       }
     }
     catch (IncorrectOperationException e) {
