@@ -185,7 +185,10 @@ public class GitFetcher {
     Map<VirtualFile, String> additionalInfo = new HashMap<VirtualFile, String>();
     for (VirtualFile root : roots) {
       GitFetchResult result = fetch(root);
-      additionalInfo.put(root, result.getAdditionalInfo());
+      String ai = result.getAdditionalInfo();
+      if (!StringUtil.isEmptyOrSpaces(ai)) {
+        additionalInfo.put(root, ai);
+      }
       if (!result.isSuccess()) {
         displayFetchResult(myProject, result, errorNotificationTitle, getErrors());
         return false;
