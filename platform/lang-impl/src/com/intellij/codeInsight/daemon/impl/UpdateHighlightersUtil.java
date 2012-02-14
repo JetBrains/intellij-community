@@ -420,7 +420,7 @@ public class UpdateHighlightersUtil {
       infoEndOffset = docLength;
     }
 
-    info.text = document.getCharsSequence().subSequence(infoStartOffset, infoEndOffset).toString();
+    info.text = document.getText().substring(infoStartOffset, infoEndOffset);
     info.group = group;
 
     int layer = getLayer(info, severityRegistrar);
