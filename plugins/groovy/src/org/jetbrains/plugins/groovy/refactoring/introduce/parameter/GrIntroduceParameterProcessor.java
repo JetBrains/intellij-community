@@ -52,10 +52,10 @@ import java.util.Collection;
 public class GrIntroduceParameterProcessor extends BaseRefactoringProcessor implements IntroduceParameterData {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.introduce.parameter.GrIntroduceParameterProcessor");
 
-  private final GrIntroduceExpressionSettings mySettings;
+  private final GrIntroduceParameterSettings mySettings;
   private IntroduceParameterData.ExpressionWrapper myParameterInitializer;
 
-  public GrIntroduceParameterProcessor(GrIntroduceExpressionSettings settings) {
+  public GrIntroduceParameterProcessor(GrIntroduceParameterSettings settings) {
     super(settings.getProject());
     this.mySettings = settings;
 

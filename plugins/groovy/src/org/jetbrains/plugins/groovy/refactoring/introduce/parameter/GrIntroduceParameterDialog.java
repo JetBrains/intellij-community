@@ -52,6 +52,7 @@ import org.jetbrains.plugins.groovy.refactoring.*;
 import org.jetbrains.plugins.groovy.refactoring.extract.ExtractUtil;
 import org.jetbrains.plugins.groovy.refactoring.extract.ParameterInfo;
 import org.jetbrains.plugins.groovy.refactoring.extract.ParameterTablePanel;
+import org.jetbrains.plugins.groovy.refactoring.extract.closure.ExtractClosureFromClosureProcessor;
 import org.jetbrains.plugins.groovy.refactoring.extract.closure.ExtractClosureFromMethodProcessor;
 import org.jetbrains.plugins.groovy.refactoring.extract.closure.ExtractClosureHelperImpl;
 import org.jetbrains.plugins.groovy.refactoring.extract.closure.ExtractClosureProcessorBase;
@@ -451,20 +452,25 @@ public class GrIntroduceParameterDialog extends DialogWrapper implements GrIntro
                                                                            myDelegateViaOverloadingMethodCheckBox.isSelected(),
                                                                            getReplaceFieldsWithGetter(),
                                                                            myForceReturnCheckBox.isSelected());
-      invokeRefactoring(new ExtractClosureFromMethodProcessor(settings));
+      if (toReplaceIn instanceof GrMethod) {
+        invokeRefactoring(new ExtractClosureFromMethodProcessor(settings));
+      }
+      else {
+        invokeRefactoring(new ExtractClosureFromClosureProcessor(settings));
+      }
     }
     else {
 
-      GrIntroduceExpressionSettings settings = new GrIntroduceExpressionSettingsImpl(myInfo,
-                                                                                     myNameSuggestionsField.getEnteredName(),
-                                                                                     myDeclareFinalCheckBox.isSelected(),
-                                                                                     getParametersToRemove(),
-                                                                                     myDelegateViaOverloadingMethodCheckBox.isSelected(),
-                                                                                     getReplaceFieldsWithGetter(),
-                                                                                     expr,
-                                                                                     var,
-                                                                                     myTypeComboBox.getSelectedType(),
-                                                                                     myForceReturnCheckBox.isSelected());
+      GrIntroduceParameterSettings settings = new GrIntroduceExpressionSettingsImpl(myInfo,
+                                                                                    myNameSuggestionsField.getEnteredName(),
+                                                                                    myDeclareFinalCheckBox.isSelected(),
+                                                                                    getParametersToRemove(),
+                                                                                    myDelegateViaOverloadingMethodCheckBox.isSelected(),
+                                                                                    getReplaceFieldsWithGetter(),
+                                                                                    expr,
+                                                                                    var,
+                                                                                    myTypeComboBox.getSelectedType(),
+                                                                                    myForceReturnCheckBox.isSelected());
       if (toReplaceIn instanceof GrMethod) {
         invokeRefactoring(new GrIntroduceParameterProcessor(settings));
       }

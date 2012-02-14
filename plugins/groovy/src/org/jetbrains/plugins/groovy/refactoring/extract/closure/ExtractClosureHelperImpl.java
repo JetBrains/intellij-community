@@ -22,6 +22,8 @@ import com.intellij.psi.PsiType;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.refactoring.extract.ExtractInfoHelperBase;
 import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.GrIntroduceParameterSettings;
@@ -107,5 +109,15 @@ public class ExtractClosureHelperImpl extends ExtractInfoHelperBase implements G
 
   public boolean isForceReturn() {
     return myForceReturn;
+  }
+
+  @Override
+  public GrVariable getVar() {
+    return null;
+  }
+
+  @Override
+  public GrExpression getExpression() {
+    return null;
   }
 }

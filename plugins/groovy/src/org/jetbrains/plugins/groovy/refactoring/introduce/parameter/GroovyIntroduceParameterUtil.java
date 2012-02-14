@@ -326,7 +326,7 @@ public class GroovyIntroduceParameterUtil {
     return true;
   }
 
-  static PsiElement[] getOccurrences(GrIntroduceExpressionSettings settings) {
+  static PsiElement[] getOccurrences(GrIntroduceParameterSettings settings) {
     final GrParametersOwner scope = settings.getToReplaceIn();
 
     final GrExpression expression = settings.getExpression();
@@ -357,7 +357,6 @@ public class GroovyIntroduceParameterUtil {
       return list.toArray(new PsiElement[list.size()]);
     }
   }
-
 
   private static class FieldSearcher extends GroovyRecursiveElementVisitor {
     PsiClass myClass;
