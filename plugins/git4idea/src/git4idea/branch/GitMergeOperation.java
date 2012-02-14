@@ -30,7 +30,6 @@ import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.NotificationManager;
 import git4idea.commands.*;
-import git4idea.merge.GitConflictResolver;
 import git4idea.merge.GitMergeCommittingConflictResolver;
 import git4idea.merge.GitMerger;
 import git4idea.repo.GitRepository;
@@ -132,18 +131,28 @@ class GitMergeOperation extends GitBranchOperation {
       }
     }
 
-    boolean allConflictsResolved = resolveConflicts();
-
-    if (!fatalErrorHappened && allConflictsResolved) {
-      if (alreadyUpToDateRepositories < getRepositories().size()) {
-        notifySuccess();
-      }
-      else {
-        notifySuccess("Already up-to-date");
+    if (fatalErrorHappened) {
+      notifyAboutRemainingConflicts();
+    }
+    else {
+      boolean allConflictsResolved = resolveConflicts();
+      if (allConflictsResolved) {
+        if (alreadyUpToDateRepositories < getRepositories().size()) {
+          notifySuccess();
+        }
+        else {
+          notifySuccess("Already up-to-date");
+        }
       }
     }
 
     restoreLocalChanges();
+  }
+
+  private void notifyAboutRemainingConflicts() {
+    if (!myConflictedRepositories.isEmpty()) {
+      new MyMergeConflictResolver().notifyUnresolvedRemain();
+    }
   }
 
   @Override
@@ -166,19 +175,7 @@ class GitMergeOperation extends GitBranchOperation {
 
   private boolean resolveConflicts() {
     if (!myConflictedRepositories.isEmpty()) {
-      GitMerger merger = new GitMerger(myProject);
-      GitConflictResolver.Params params = new GitConflictResolver.Params();
-      GitMergeCommittingConflictResolver conflictResolver =
-        new GitMergeCommittingConflictResolver(myProject, merger, GitUtil.getRoots(myConflictedRepositories.keySet()), params, true) {
-          @Override
-          protected void notifyUnresolvedRemain() {
-            NotificationManager.getInstance(myProject).notify(
-              GitVcs.IMPORTANT_ERROR_NOTIFICATION, "Merged branch " + myBranchToMerge + " with conflicts",
-              "Unresolved conflicts remain in the project. <a href='resolve'>Resolve now.</a>", NotificationType.WARNING,
-              getResolveLinkListener());
-          }
-        };
-      return conflictResolver.merge();
+      return new MyMergeConflictResolver().merge();
     }
     return true;
   }
@@ -358,4 +355,18 @@ class GitMergeOperation extends GitBranchOperation {
     }
   }
 
+  private class MyMergeConflictResolver extends GitMergeCommittingConflictResolver {
+    public MyMergeConflictResolver() {
+      super(GitMergeOperation.this.myProject, new GitMerger(GitMergeOperation.this.myProject),
+            GitUtil.getRoots(GitMergeOperation.this.myConflictedRepositories.keySet()), new Params(), true);
+    }
+
+    @Override
+    protected void notifyUnresolvedRemain() {
+      NotificationManager.getInstance(myProject).notify(
+        GitVcs.IMPORTANT_ERROR_NOTIFICATION, "Merged branch " + myBranchToMerge + " with conflicts",
+        "Unresolved conflicts remain in the project. <a href='resolve'>Resolve now.</a>", NotificationType.WARNING,
+        getResolveLinkListener());
+    }
+  }
 }
