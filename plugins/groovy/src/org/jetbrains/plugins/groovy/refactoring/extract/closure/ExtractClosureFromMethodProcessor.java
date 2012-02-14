@@ -222,23 +222,10 @@ public class ExtractClosureFromMethodProcessor extends ExtractClosureProcessorBa
 
     private final GrClosableBlock myClosure;
     private final GrExpressionWrapper myWrapper;
-    private final PsiType myType;
 
     private IntroduceParameterDataAdapter() {
       myClosure = generateClosure(ExtractClosureFromMethodProcessor.this.myHelper);
       myWrapper = new GrExpressionWrapper(myClosure);
-
-      PsiType type = myClosure.getType();
-      if (type instanceof PsiClassType) {
-        final PsiType[] parameters = ((PsiClassType)type).getParameters();
-        if (parameters.length == 1 && parameters[0] != null) {
-          if (parameters[0].equalsToText(PsiType.VOID.getBoxedTypeName())) {
-            type = ((PsiClassType)type).rawType();
-          }
-        }
-      }
-
-      myType = type;
     }
 
     @NotNull
@@ -287,7 +274,7 @@ public class ExtractClosureFromMethodProcessor extends ExtractClosureProcessorBa
     @NotNull
     @Override
     public PsiType getForcedType() {
-      return myType;
+      return myHelper.getSelectedType();
     }
 
     @NotNull

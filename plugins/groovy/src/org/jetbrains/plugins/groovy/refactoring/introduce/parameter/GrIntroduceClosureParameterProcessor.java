@@ -412,6 +412,7 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
       new OldReferencesResolver(callExpression, newArg, toReplaceIn, settings.replaceFieldsWithGetters(), initializer, signature,
                                 actualArgs, toReplaceIn.getParameters()).resolve();
       ChangeContextUtil.clearContextInfo(initializer);
+      GrReferenceAdjuster.shortenReferences(newArg);
     }
 
     if (actualArgs == null) {
@@ -421,7 +422,20 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
     else {
       GroovyIntroduceParameterUtil.removeParametersFromCall(actualArgs, settings.parametersToRemove());
     }
+
+    if (argList.getAllArguments().length == 0 && hasClosureArgs(argList)) {
+      final GrArgumentList emptyArgList = ((GrMethodCallExpression)factory.createExpressionFromText("foo{}")).getArgumentList();
+      LOG.assertTrue(emptyArgList != null);
+      argList.replace(emptyArgList);
+    }
+
   }
+
+  private static boolean hasClosureArgs(GrArgumentList list) {
+    final PsiElement parent = list.getParent();
+    return parent instanceof GrMethodCallExpression && ((GrMethodCallExpression)parent).getClosureArguments().length > 0;
+  }
+
 
   @Nullable
   private static GrExpression getAnchorForArgument(GrExpression[] oldArgs, boolean isVarArg, PsiParameterList parameterList) {
