@@ -17,6 +17,7 @@ package com.intellij.openapi.fileChooser;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,6 +26,7 @@ import java.util.List;
 
 public interface FileSystemTree extends Disposable {
   DataKey<FileSystemTree> DATA_KEY = DataKey.create("FileSystemTree");
+  Key<String> PATH_KEY = Key.create("FileSystemTree.Path");
 
   JTree getTree();
 

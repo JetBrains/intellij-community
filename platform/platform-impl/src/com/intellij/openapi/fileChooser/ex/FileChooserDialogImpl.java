@@ -485,24 +485,12 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
 
     String text = "";
     if (selection.size() > 0) {
-      final VirtualFile vFile = selection.get(0);
-      if (vFile.isInLocalFileSystem()) {
-        text = vFile.getPresentableUrl();
-      }
-      else {
-        text = vFile.getUrl();
-      }
+      text = getFilePath(selection.get(0));
     }
     else {
       List<VirtualFile> roots = myChooserDescriptor.getRoots();
       if (!myFileSystemTree.getTree().isRootVisible() && roots.size() == 1) {
-        VirtualFile vFile = roots.get(0);
-        if (vFile.isInLocalFileSystem()) {
-          text = vFile.getPresentableUrl();
-        }
-        else {
-          text = vFile.getUrl();
-        }
+        text = getFilePath(roots.get(0));
       }
     }
 
@@ -512,6 +500,15 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
         setErrorText(null);
       }
     });
+  }
+
+  private static String getFilePath(final VirtualFile file) {
+    final String path = file.getUserData(FileSystemTree.PATH_KEY);
+    if (path != null) {
+      return path;
+    }
+
+    return file.isInLocalFileSystem() ? file.getPresentableUrl() : file.getUrl();
   }
 
   private void updateTreeFromPath(final String text) {
