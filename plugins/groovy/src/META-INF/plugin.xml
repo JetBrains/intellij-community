@@ -388,7 +388,8 @@
     <copyPastePostProcessor implementation="org.jetbrains.plugins.groovy.lang.editor.GroovyReferenceCopyPasteProcessor"/>
 
     <specialTool shortName="GroovyUnusedDeclaration" displayName="Unused declaration"
-                 groupName="Declaration Redundancy" enabledByDefault="true" level="WARNING"
+                 groupPath="Groovy"
+                 groupName="Declaration redundancy" enabledByDefault="true" level="WARNING"
                  implementationClass="org.jetbrains.plugins.groovy.codeInspection.GroovyUnusedDeclarationInspection"/>
 
     <localInspection language="Groovy" groupPath="Groovy" shortName="SecondUnsafeCall" bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
