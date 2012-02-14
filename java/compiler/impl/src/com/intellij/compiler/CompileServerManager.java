@@ -665,7 +665,7 @@ public class CompileServerManager implements ApplicationComponent{
       if (builder.length() > 0) {
         builder.append(File.pathSeparator);
       }
-      builder.append(file.getAbsolutePath());
+      builder.append(FileUtil.toCanonicalPath(file.getPath()));
     }
     return builder.toString();
   }
