@@ -1,0 +1,4 @@
+interface Factory {
+  Product create();
+}
+
