@@ -19,6 +19,8 @@ import com.intellij.designer.propertyTable.Property;
 import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
+import java.awt.*;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -48,6 +50,34 @@ public abstract class RadComponent {
 
   public Object[] getTreeChildren() {
     return getChildren().toArray();
+  }
+
+  public List<RadComponent> getSurfaceChildren() {
+    return getChildren();
+  }
+
+  public JComponent getNativeRootComponent() {
+    return null;
+  }
+
+  public Rectangle getBounds() {
+    return null;
+  }
+
+  public Point convertPoint(Component component, int x, int y) {
+    return null;
+  }
+
+  public Point convertPoint(int x, int y, Component component) {
+    return null;
+  }
+
+  public RadLayout getLayout() {
+    return null;
+  }
+
+  public RadLayoutData getLayoutData() {
+    return null;
   }
 
   public List<Property> getProperties() {

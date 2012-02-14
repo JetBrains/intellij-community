@@ -13,7 +13,7 @@ import java.util.List;
 /**
  * @author Eugene.Kudelevsky
  */
-class LayoutDevice {
+public class LayoutDevice {
   private final String myName;
   private final List<LayoutDeviceConfiguration> myConfigurations = new ArrayList<LayoutDeviceConfiguration>();
 

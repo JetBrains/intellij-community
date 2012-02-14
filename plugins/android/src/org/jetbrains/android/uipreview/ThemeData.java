@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 /**
 * @author Eugene.Kudelevsky
 */
-class ThemeData implements Comparable<ThemeData> {
+public class ThemeData implements Comparable<ThemeData> {
   private final String myName;
   private final boolean myProjectTheme;
 

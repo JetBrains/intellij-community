@@ -17,6 +17,7 @@ package com.intellij.android.designer.model;
 
 import com.intellij.designer.model.RadComponent;
 
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -44,5 +45,10 @@ public class RadViewComponent extends RadComponent {
 
   public String getTitle() {
     return myTitle;
+  }
+
+  @Override
+  public Rectangle getBounds() {
+    return new Rectangle();
   }
 }
