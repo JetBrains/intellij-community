@@ -305,6 +305,10 @@ public class OverrideImplementUtil {
     }
 
     annotateOnOverrideImplement(result, aClass, method, insertOverrideIfPossible);
+    
+    if (CodeStyleSettingsManager.getSettings(aClass.getProject()).REPEAT_SYNCHRONIZED && method.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
+      result.getModifierList().setModifierProperty(PsiModifier.SYNCHRONIZED, true);
+    }
 
     final PsiCodeBlock body = JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createCodeBlockFromText("{}", null);
     PsiCodeBlock oldbody = result.getBody();

@@ -54,6 +54,7 @@ public class CodeStyleGenerationConfigurable implements Configurable {
   private JCheckBox myCbUseExternalAnnotations;
   private JCheckBox myInsertOverrideAnnotationCheckBox;
   private JPanel myMembersPanel;
+  private JCheckBox myRepeatSynchronizedCheckBox;
 
   public CodeStyleGenerationConfigurable(CodeStyleSettings settings) {
     mySettings = settings;
@@ -226,6 +227,7 @@ public class CodeStyleGenerationConfigurable implements Configurable {
 
     myCbUseExternalAnnotations.setSelected(settings.USE_EXTERNAL_ANNOTATIONS);
     myInsertOverrideAnnotationCheckBox.setSelected(settings.INSERT_OVERRIDE_ANNOTATION);
+    myRepeatSynchronizedCheckBox.setSelected(settings.REPEAT_SYNCHRONIZED);
   }
 
   public void reset() {
@@ -253,6 +255,7 @@ public class CodeStyleGenerationConfigurable implements Configurable {
 
     settings.USE_EXTERNAL_ANNOTATIONS = myCbUseExternalAnnotations.isSelected();
     settings.INSERT_OVERRIDE_ANNOTATION = myInsertOverrideAnnotationCheckBox.isSelected();
+    settings.REPEAT_SYNCHRONIZED = myRepeatSynchronizedCheckBox.isSelected();
 
     myMembersOrderList.apply(settings);
 
@@ -287,6 +290,7 @@ public class CodeStyleGenerationConfigurable implements Configurable {
 
     isModified |= isModified(myCbUseExternalAnnotations, settings.USE_EXTERNAL_ANNOTATIONS);
     isModified |= isModified(myInsertOverrideAnnotationCheckBox, settings.INSERT_OVERRIDE_ANNOTATION);
+    isModified |= isModified(myRepeatSynchronizedCheckBox, settings.REPEAT_SYNCHRONIZED);
 
     isModified |= myMembersOrderList.isModified(settings);
 

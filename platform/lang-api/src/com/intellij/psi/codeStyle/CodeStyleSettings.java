@@ -207,6 +207,9 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
   public boolean USE_EXTERNAL_ANNOTATIONS = false;
   public boolean INSERT_OVERRIDE_ANNOTATION = true;
 
+//----------------- override -------------------
+  public boolean REPEAT_SYNCHRONIZED = true;
+
 //----------------- IMPORTS --------------------
 
   public boolean LAYOUT_STATIC_IMPORTS_SEPARATELY = true;
