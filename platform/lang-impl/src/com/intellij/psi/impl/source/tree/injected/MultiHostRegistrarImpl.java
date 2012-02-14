@@ -201,7 +201,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
       }
       PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
       assert ArrayUtil.indexOf(documentManager.getUncommittedDocuments(), myHostDocument) == -1 : "document is uncommitted: "+myHostDocument;
-      assert myHostPsiFile.getText().equals(myHostDocument.getText()) : "host text mismatch";
+      // /*commented for efficiency */ assert myHostPsiFile.getText().equals(myHostDocument.getText()) : "host text mismatch";
 
       Place place = new Place(shreds);
       DocumentWindowImpl documentWindow = new DocumentWindowImpl(myHostDocument, isOneLineEditor, place);
