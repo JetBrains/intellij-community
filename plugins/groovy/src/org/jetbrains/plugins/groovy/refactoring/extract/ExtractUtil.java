@@ -106,7 +106,8 @@ public class ExtractUtil {
       return new GrStatement[]{createAssignment(outputVars, callExpression, helper)};
     }
     if (mustAdd.size() == outputVars.length && outputVars.length == 1) {
-      final GrVariableDeclaration decl = factory.createVariableDeclaration(ArrayUtil.EMPTY_STRING_ARRAY, callExpression, outputVars[0].getType(), outputVars[0].getName());
+      final GrVariableDeclaration decl =
+        factory.createVariableDeclaration(ArrayUtil.EMPTY_STRING_ARRAY, callExpression, outputVars[0].getType(), outputVars[0].getName());
       return new GrVariableDeclaration[]{decl};
     }
     List<GrStatement> result = generateVarDeclarations(mustAdd, helper.getProject(), null);
@@ -204,7 +205,7 @@ public class ExtractUtil {
 
     final int start = statements[0].getTextRange().getStartOffset();
     final int end = statements[statements.length - 1].getTextRange().getEndOffset();
-    
+
     final GroovyRecursiveElementVisitor visitor = new GroovyRecursiveElementVisitor() {
       @Override
       public void visitReferenceExpression(GrReferenceExpression ref) {
@@ -246,7 +247,7 @@ public class ExtractUtil {
     buffer.append(") { \n");
 
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(helper.getProject());
-    generateBody(helper, type == PsiType.VOID, buffer);
+    generateBody(helper, type == PsiType.VOID, buffer, helper.isForceReturn());
 
     buffer.append("\n}");
 
@@ -256,7 +257,7 @@ public class ExtractUtil {
     return method;
   }
 
-  public static void generateBody(ExtractInfoHelper helper, boolean isVoid, StringBuilder buffer) {
+  public static void generateBody(ExtractInfoHelper helper, boolean isVoid, StringBuilder buffer, boolean forceReturn) {
     VariableInfo[] outputInfos = helper.getOutputVariableInfos();
 
     ParameterInfo[] infos = helper.getParameterInfos();
@@ -294,13 +295,16 @@ public class ExtractUtil {
       buffer.append(statement.getText()).append('\n');
     }
 
-    if (!isSingleExpression(helper.getStatements())) {
+    if (!isSingleExpression(helper.getStatements()) || statements.size() > 0) {
       for (PsiElement element : helper.getInnerElements()) {
         buffer.append(element.getText());
       }
       //append return statement
       if (!isVoid && outputInfos.length > 0) {
-        buffer.append("\n return ");
+        buffer.append('\n');
+        if (forceReturn) {
+          buffer.append("return ");
+        }
         if (outputInfos.length > 1) buffer.append('[');
         for (VariableInfo info : outputInfos) {
           buffer.append(info.getName()).append(", ");
@@ -311,7 +315,7 @@ public class ExtractUtil {
     }
     else {
       GrExpression expr = (GrExpression)PsiUtil.skipParentheses(helper.getStatements()[0], false);
-      boolean addReturn = !isVoid && expr != null && expr.getType() != null && expr.getType() != PsiType.VOID;
+      boolean addReturn = !isVoid && forceReturn;
       if (addReturn) {
         buffer.append("return ");
         expr = ApplicationStatementUtil.convertToMethodCallExpression(expr);
@@ -373,7 +377,7 @@ public class ExtractUtil {
 
   public static boolean isSingleExpression(GrStatement[] statements) {
     return statements.length == 1 && statements[0] instanceof GrExpression &&
-        !(statements[0].getParent() instanceof GrVariableDeclarationOwner && statements[0] instanceof GrAssignmentExpression);
+           !(statements[0].getParent() instanceof GrVariableDeclarationOwner && statements[0] instanceof GrAssignmentExpression);
   }
 
   private static GrMethodCallExpression createMethodCall(ExtractInfoHelper helper) {
@@ -400,12 +404,12 @@ public class ExtractUtil {
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(helper.getProject());
     GrExpression expr = factory.createExpressionFromText(callText);
     LOG.assertTrue(expr instanceof GrMethodCallExpression, callText);
-    return ((GrMethodCallExpression) expr);
+    return ((GrMethodCallExpression)expr);
   }
 
   public static int getCaretOffset(@NotNull GrStatement statement) {
     if (statement instanceof GrVariableDeclaration) {
-      GrVariable[] variables = ((GrVariableDeclaration) statement).getVariables();
+      GrVariable[] variables = ((GrVariableDeclaration)statement).getVariables();
       if (variables.length > 0) {
         GrExpression initializer = variables[0].getInitializerGroovy();
         if (initializer != null) {
@@ -414,7 +418,7 @@ public class ExtractUtil {
       }
     }
     else if (statement instanceof GrAssignmentExpression) {
-      GrExpression value = ((GrAssignmentExpression) statement).getRValue();
+      GrExpression value = ((GrAssignmentExpression)statement).getRValue();
       if (value != null) {
         return value.getTextOffset();
       }

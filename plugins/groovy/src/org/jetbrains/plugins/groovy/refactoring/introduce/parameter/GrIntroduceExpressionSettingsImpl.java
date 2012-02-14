@@ -37,8 +37,9 @@ public class GrIntroduceExpressionSettingsImpl extends ExtractClosureHelperImpl 
                                            int replaceFieldsWithGetters,
                                            GrExpression expr,
                                            GrVariable var,
-                                           PsiType selectedType) {
-    super(info, name, declareFinal, toRemove, generateDelegate, replaceFieldsWithGetters);
+                                           PsiType selectedType,
+                                           boolean forceReturn) {
+    super(info, name, declareFinal, toRemove, generateDelegate, replaceFieldsWithGetters, forceReturn);
     myExpr = expr;
     myVar = var;
     mySelectedType = selectedType;

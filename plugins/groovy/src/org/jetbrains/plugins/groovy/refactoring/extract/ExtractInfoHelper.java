@@ -52,4 +52,6 @@ public interface ExtractInfoHelper {
   String getName();
 
   PsiElement getContext();
+
+  boolean isForceReturn();
 }

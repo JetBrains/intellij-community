@@ -158,7 +158,7 @@ public class GrIntroduceParameterTest extends LightCodeInsightFixtureTestCase {
     GrExpression expr = GrIntroduceHandlerBase.findExpression(context.getStatements()[0]);
     GrVariable var = GrIntroduceHandlerBase.findVariable(context.getStatements()[0]);
     final PsiType type = TypesUtil.unboxPrimitiveTypeWrapper(var == null ? expr.getType() : var.getType());
-    return new GrIntroduceExpressionSettingsImpl(context, "anObject", declareFinal, toRemove, generateDelegate, replaceFieldsWithGetters, expr, var, type);
+    return new GrIntroduceExpressionSettingsImpl(context, "anObject", declareFinal, toRemove, generateDelegate, replaceFieldsWithGetters, expr, var, type, true);
   }
   
   

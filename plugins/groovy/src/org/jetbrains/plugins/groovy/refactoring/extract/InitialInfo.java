@@ -179,4 +179,9 @@ public class InitialInfo implements ExtractInfoHelper {
   public PsiElement getContext() {
     return myStatements[0];
   }
+
+  @Override
+  public boolean isForceReturn() {
+    return false;
+  }
 }

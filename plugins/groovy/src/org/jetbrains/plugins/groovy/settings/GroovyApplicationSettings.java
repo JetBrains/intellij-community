@@ -37,6 +37,7 @@ public class GroovyApplicationSettings implements PersistentStateComponent<Groov
 
   public boolean SPECIFY_VAR_TYPE_EXPLICITLY = false;
   public boolean INTRODUCE_LOCAL_CREATE_FINALS = false;
+  public boolean FORCE_RETURN = false;
   public Boolean EXTRACT_METHOD_SPECIFY_TYPE = null;
   public String EXTRACT_METHOD_VISIBILITY = null;
   public Boolean CONVERT_PARAM_SPECIFY_MAP_TYPE = null;

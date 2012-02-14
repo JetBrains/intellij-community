@@ -113,4 +113,9 @@ public abstract class ExtractInfoHelperBase implements ExtractInfoHelper {
   public PsiElement getContext() {
     return myInitialInfo.getContext();
   }
+
+  @Override
+  public boolean isForceReturn() {
+    return myInitialInfo.isForceReturn();
+  }
 }

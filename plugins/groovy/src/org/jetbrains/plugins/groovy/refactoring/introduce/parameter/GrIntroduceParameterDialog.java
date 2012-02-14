@@ -64,6 +64,7 @@ import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase
 import org.jetbrains.plugins.groovy.refactoring.introduce.field.GroovyFieldValidator;
 import org.jetbrains.plugins.groovy.refactoring.ui.GrMethodSignatureComponent;
 import org.jetbrains.plugins.groovy.refactoring.ui.GrTypeComboBox;
+import org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings;
 
 import javax.swing.*;
 import java.awt.*;
@@ -87,6 +88,7 @@ public class GrIntroduceParameterDialog extends RefactoringDialog implements GrI
   private GrMethodSignatureComponent mySignature;
   private ParameterTablePanel myTable;
   private JPanel mySignaturePanel;
+  private JCheckBox myForceReturnCheckBox;
 
   public GrIntroduceParameterDialog(IntroduceParameterInfo info) {
     super(info.getProject(), true);
@@ -139,6 +141,15 @@ public class GrIntroduceParameterDialog extends RefactoringDialog implements GrI
       mySignaturePanel.setVisible(false);
     }
 
+    final PsiType closureReturnType = inferClosureReturnType();
+    if (closureReturnType == PsiType.VOID) {
+      myForceReturnCheckBox.setEnabled(false);
+      myForceReturnCheckBox.setSelected(false);
+    }
+    else {
+      myForceReturnCheckBox.setSelected(isForceReturn());
+    }
+
     myTypeComboBox.addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(ItemEvent e) {
@@ -148,6 +159,10 @@ public class GrIntroduceParameterDialog extends RefactoringDialog implements GrI
     });
 
     pack();
+  }
+
+  private static boolean isForceReturn() {
+    return GroovyApplicationSettings.getInstance().FORCE_RETURN;
   }
 
   @Override
@@ -203,7 +218,13 @@ public class GrIntroduceParameterDialog extends RefactoringDialog implements GrI
     mySignature.setSize(new Dimension(500, 100));
 
     splitter.setShowDividerIcon(false);
-    return splitter;
+
+    final JPanel panel = new JPanel(new BorderLayout());
+    panel.add(splitter, BorderLayout.CENTER);
+    myForceReturnCheckBox = new JCheckBox(UIUtil.replaceMnemonicAmpersand("Use e&xplicit return statement"));
+    panel.add(myForceReturnCheckBox, BorderLayout.NORTH);
+
+    return panel;
   }
 
   private JPanel createFieldPanel() {
@@ -282,7 +303,17 @@ public class GrIntroduceParameterDialog extends RefactoringDialog implements GrI
       box = GrTypeComboBox.createEmptyTypeComboBox();
     }
 
-    final ExtractClosureHelperImpl mockHelper = new ExtractClosureHelperImpl(myInfo, "__test___n_", false, new TIntArrayList(), false, 0);
+    box.addClosureTypesFrom(inferClosureReturnType(), myInfo.getContext());
+    if (expr == null && var == null) {
+      box.setSelectedIndex(box.getItemCount() - 1);
+    }
+    return box;
+  }
+
+  @Nullable
+  private PsiType inferClosureReturnType() {
+    final ExtractClosureHelperImpl mockHelper =
+      new ExtractClosureHelperImpl(myInfo, "__test___n_", false, new TIntArrayList(), false, 0, false);
     final PsiType returnType;
     final AccessToken token = WriteAction.start();
     try {
@@ -291,12 +322,7 @@ public class GrIntroduceParameterDialog extends RefactoringDialog implements GrI
     finally {
       token.finish();
     }
-
-    box.addClosureTypesFrom(returnType, mockHelper.getContext());
-    if (expr == null && var == null) {
-      box.setSelectedIndex(box.getItemCount() - 1);
-    }
-    return box;
+    return returnType;
   }
 
   private NameSuggestionsField createNameField(GrVariable var, GrExpression expr) {
@@ -420,7 +446,8 @@ public class GrIntroduceParameterDialog extends RefactoringDialog implements GrI
                                                                            myDeclareFinalCheckBox.isSelected(),
                                                                            getParametersToRemove(),
                                                                            myDelegateViaOverloadingMethodCheckBox.isSelected(),
-                                                                           getReplaceFieldsWithGetter());
+                                                                           getReplaceFieldsWithGetter(),
+                                                                           myForceReturnCheckBox.isSelected());
       invokeRefactoring(new ExtractClosureFromMethodProcessor(settings));
     }
     else {
@@ -433,7 +460,8 @@ public class GrIntroduceParameterDialog extends RefactoringDialog implements GrI
                                                                                      getReplaceFieldsWithGetter(),
                                                                                      expr,
                                                                                      var,
-                                                                                     myTypeComboBox.getSelectedType());
+                                                                                     myTypeComboBox.getSelectedType(),
+                                                                                     myForceReturnCheckBox.isSelected());
       if (toReplaceIn instanceof GrMethod) {
         invokeRefactoring(new GrIntroduceParameterProcessor(settings));
       }
@@ -448,6 +476,9 @@ public class GrIntroduceParameterDialog extends RefactoringDialog implements GrI
     settings.INTRODUCE_PARAMETER_CREATE_FINALS = myDeclareFinalCheckBox.isSelected();
     if (myGetterPanel.isVisible()) {
       settings.INTRODUCE_PARAMETER_REPLACE_FIELDS_WITH_GETTERS = getReplaceFieldsWithGetter();
+    }
+    if (myForceReturnCheckBox.isEnabled() && mySignaturePanel.isVisible()) {
+      GroovyApplicationSettings.getInstance().FORCE_RETURN = myForceReturnCheckBox.isSelected();
     }
   }
 

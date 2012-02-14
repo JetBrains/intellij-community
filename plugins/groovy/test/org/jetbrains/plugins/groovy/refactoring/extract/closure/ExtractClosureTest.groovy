@@ -33,12 +33,7 @@ public class ExtractClosureTest extends LightGroovyTestCase {
     return "${TestUtils.testDataPath}groovy/refactoring/extractMethod/";
   }
 
-
-  private void doTest(String before, String after) {
-    doTest(before, after, [], [])
-  }
-
-  private void doTest(String before, String after, List<Integer> toRemove, List<Integer> notToUseAsParams) {
+  private void doTest(String before, String after, List<Integer> toRemove = [], List<Integer> notToUseAsParams = [], boolean forceReturn = true) {
     myFixture.configureByText '______________a____________________.groovy', before
 
     def handler = new GrIntroduceParameterHandler() {
@@ -47,7 +42,7 @@ public class ExtractClosureTest extends LightGroovyTestCase {
 
         GrIntroduceParameterSettings helper = new ExtractClosureHelperImpl(info, "closure", false,
                                                                            new TIntArrayList(toRemove as int[]), false,
-                                                                           IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE)
+                                                                           IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, forceReturn)
         for (p in notToUseAsParams) {
           helper.parameterInfos[p].setPassAsParameter(false)
         }
@@ -75,7 +70,7 @@ def foo(String s, Closure closure) {
 }
 
 foo('a') {String s -> print s}
-''')
+''', [], [], false)
   }
 
   void testRemoveUnused() {
@@ -95,7 +90,7 @@ class X {
 }
 
 new X().foo {print 'a'}
-''', [0], [0])
+''', [0], [0], false)
 
   }
 
@@ -117,7 +112,7 @@ foo {
     s += 2
     print s
 }
-''', [0], [0])
+''', [0], [0], true)
   }
 
   void testInsertQualifier() {
@@ -140,7 +135,7 @@ class X {
 
 final X x = new X()
 x.foo {x.bar()}
-''', [0], [])
+''', [0], [], false)
 
   }
 
@@ -159,7 +154,7 @@ def foo(Closure closure) {
 }
 
 foo {int a -> print 45 + 3 + a}
-''', [0, 1], [0])
+''', [0, 1], [0], false)
   }
 
   void testRPG() {

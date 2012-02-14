@@ -39,14 +39,17 @@ public class ExtractClosureHelperImpl extends ExtractInfoHelperBase implements G
   private final TIntArrayList myToRemove;
   private final boolean myGenerateDelegate;
   private final int myReplaceFieldsWithGetters;
+  private final boolean myForceReturn;
 
   public ExtractClosureHelperImpl(IntroduceParameterInfo info,
                                   String name,
                                   boolean declareFinal,
                                   TIntArrayList toRemove,
                                   boolean generateDelegate,
-                                  int replaceFieldsWithGetters) {
+                                  int replaceFieldsWithGetters,
+                                  boolean forceReturn) {
     super(info);
+    myForceReturn = forceReturn;
     myOwner = info.getToReplaceIn();
     myToSearchFor = info.getToSearchFor();
     myName = name;
@@ -100,5 +103,9 @@ public class ExtractClosureHelperImpl extends ExtractInfoHelperBase implements G
 
   public boolean generateDelegate() {
     return myGenerateDelegate;
+  }
+
+  public boolean isForceReturn() {
+    return myForceReturn;
   }
 }
