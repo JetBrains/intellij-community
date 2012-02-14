@@ -76,4 +76,9 @@ public class UsageInArtifact extends ProjectStructureElementUsage {
   public Icon getIcon() {
     return myOriginalArtifact.getArtifactType().getIcon();
   }
+
+  @Override
+  public void removeSourceElement() {
+    removeElement();
+  }
 }
