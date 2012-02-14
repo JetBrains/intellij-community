@@ -277,20 +277,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
           }
         }
       }
-      final Runnable runnable = new Runnable() {
-        public void run() {
-          performRefactoringRename(myInsertedName, myMarkAction);
-          if (myBeforeRevert != null) {
-            myBeforeRevert.dispose();
-          }
-        }
-      };
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        runnable.run();
-      }
-      else {
-        ApplicationManager.getApplication().invokeLater(runnable, myProject.getDisposed());
-      }
+      performRefactoringRename(myInsertedName, myMarkAction);
     }
     return bind;
   }

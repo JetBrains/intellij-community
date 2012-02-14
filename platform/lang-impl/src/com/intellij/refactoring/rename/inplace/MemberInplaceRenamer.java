@@ -216,6 +216,7 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
         FinishMarkAction.finish(myProject, myEditor, markAction);
         if (myBeforeRevert != null) {
           myEditor.getCaretModel().moveToOffset(myBeforeRevert.getEndOffset());
+          myBeforeRevert.dispose();
         }
       }
     }
