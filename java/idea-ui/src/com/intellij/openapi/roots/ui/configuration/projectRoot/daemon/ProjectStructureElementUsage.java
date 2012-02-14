@@ -21,4 +21,6 @@ public abstract class ProjectStructureElementUsage {
   public abstract boolean equals(Object obj);
 
   public abstract Icon getIcon();
+
+  public abstract void removeSourceElement();
 }

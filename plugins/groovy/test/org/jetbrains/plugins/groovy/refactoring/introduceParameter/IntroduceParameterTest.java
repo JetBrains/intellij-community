@@ -31,6 +31,7 @@ import com.intellij.refactoring.introduceParameter.Util;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 /**
@@ -49,7 +50,7 @@ public class IntroduceParameterTest extends LightCodeInsightFixtureTestCase {
   }
 
   private void doTest(int replaceFieldsWithGetters, boolean removeUnusedParameters, boolean searchForSuper, boolean declareFinal,
-                      String conflicts)
+                      @Nullable String conflicts)
     throws Throwable {
     final String beforeGroovy = getTestName(false)+"Before.groovy";
     final String afterGroovy = getTestName(false) + "After.groovy";
@@ -60,7 +61,7 @@ public class IntroduceParameterTest extends LightCodeInsightFixtureTestCase {
     myFixture.checkResultByFile(beforeGroovy, afterGroovy, true);
   }
 
-  private boolean executeRefactoring(boolean replaceAllOccurences,
+  private boolean executeRefactoring(boolean replaceAllOccurrences,
                                      int replaceFieldsWithGetters,
                                      @NonNls String parameterName,
                                      boolean searchForSuper,
@@ -69,8 +70,6 @@ public class IntroduceParameterTest extends LightCodeInsightFixtureTestCase {
                                      final String conflicts) {
     boolean generateDelegate = false;
     Editor editor = myFixture.getEditor();
-    int startOffset = editor.getSelectionModel().getSelectionStart();
-    int endOffset = editor.getSelectionModel().getSelectionEnd();
 
     final PsiFile myFile = myFixture.getFile();
     final ElementToWorkOn[] elementToWorkOn = new ElementToWorkOn[1];
@@ -101,11 +100,12 @@ public class IntroduceParameterTest extends LightCodeInsightFixtureTestCase {
     }
 
     PsiExpression initializer = expr == null ? localVar.getInitializer() : expr;
+    assert initializer != null;
     TIntArrayList parametersToRemove = removeUnusedParameters ? Util.findParametersToRemove(method, initializer, null) : new TIntArrayList();
     final Project project = myFixture.getProject();
     final IntroduceParameterProcessor processor =
       new IntroduceParameterProcessor(project, method, methodToSearchFor, initializer, expr, localVar, true, parameterName,
-                                      replaceAllOccurences, replaceFieldsWithGetters, declareFinal, generateDelegate, null,
+                                      replaceAllOccurrences, replaceFieldsWithGetters, declareFinal, generateDelegate, null,
                                       parametersToRemove);
 
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {

@@ -16,13 +16,15 @@
 package org.jetbrains.plugins.groovy.refactoring.extract.closure;
 
 
-import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.refactoring.extract.ExtractInfoHelperBase;
 import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.GrIntroduceParameterSettings;
 import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.IntroduceParameterInfo;
@@ -40,6 +42,8 @@ public class ExtractClosureHelperImpl extends ExtractInfoHelperBase implements G
   private final boolean myGenerateDelegate;
   private final int myReplaceFieldsWithGetters;
   private final boolean myForceReturn;
+
+  private PsiType myType = null;
 
   public ExtractClosureHelperImpl(IntroduceParameterInfo info,
                                   String name,
@@ -98,7 +102,21 @@ public class ExtractClosureHelperImpl extends ExtractInfoHelperBase implements G
 
   @Override
   public PsiType getSelectedType() {
-    return JavaPsiFacade.getElementFactory(getProject()).createTypeFromText(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, myOwner);
+    if (myType == null) {
+      final GrClosableBlock closure = ExtractClosureProcessorBase.generateClosure(this);
+      PsiType type = closure.getType();
+      if (type instanceof PsiClassType) {
+        final PsiType[] parameters = ((PsiClassType)type).getParameters();
+        if (parameters.length == 1 && parameters[0] != null) {
+          if (parameters[0].equalsToText(PsiType.VOID.getBoxedTypeName())) {
+            type = ((PsiClassType)type).rawType();
+          }
+        }
+      }
+
+      myType = type;
+    }
+    return myType;
   }
 
   public boolean generateDelegate() {
@@ -107,5 +125,15 @@ public class ExtractClosureHelperImpl extends ExtractInfoHelperBase implements G
 
   public boolean isForceReturn() {
     return myForceReturn;
+  }
+
+  @Override
+  public GrVariable getVar() {
+    return null;
+  }
+
+  @Override
+  public GrExpression getExpression() {
+    return null;
   }
 }

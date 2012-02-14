@@ -20,14 +20,21 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.refactoring.IntroduceParameterRefactoring;
 import com.intellij.refactoring.introduceParameter.ExternalUsageInfo;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
+import org.jetbrains.plugins.groovy.refactoring.extract.ExtractUtil;
+import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.GrIntroduceClosureParameterProcessor;
 import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.GrIntroduceParameterSettings;
+import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.GroovyIntroduceParameterUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,39 +49,51 @@ public class ExtractClosureFromClosureProcessor extends ExtractClosureProcessorB
 
   @Override
   protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
-    //todo
-    return true;
+    UsageInfo[] usagesIn = refUsages.get();
+    MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+
+    if (!myHelper.generateDelegate()) {
+      for (GrStatement statement : myHelper.getStatements()) {
+        GroovyIntroduceParameterUtil.detectAccessibilityConflicts(statement, usagesIn, conflicts,
+                                                                  myHelper.replaceFieldsWithGetters() !=
+                                                                  IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE,
+                                                                  myProject);
+      }
+    }
+    return showConflicts(conflicts, usagesIn);
   }
 
 
   @Override
   protected void performRefactoring(UsageInfo[] usages) {
-    //To change body of implemented methods use File | Settings | File Templates. todo
+    GrIntroduceClosureParameterProcessor.processExternalUsages(usages, myHelper, generateClosure(myHelper));
+    GrIntroduceClosureParameterProcessor.processClosure(usages, myHelper);
+
+    GrStatementOwner declarationOwner = GroovyRefactoringUtil.getDeclarationOwner(myHelper.getStatements()[0]);
+    ExtractUtil.replaceStatement(declarationOwner, myHelper);
   }
 
   @NotNull
   @Override
   protected UsageInfo[] findUsages() {
-    final List<UsageInfo> result = new ArrayList<UsageInfo>();
-
     final GrVariable var = (GrVariable)myHelper.getToSearchFor();
+    if (var != null) {
+      final List<UsageInfo> result = new ArrayList<UsageInfo>();
+      for (PsiReference ref : ReferencesSearch.search(var, GlobalSearchScope.allScope(myHelper.getProject()), true)) {
+        final PsiElement element = ref.getElement();
+        if (element.getLanguage() != GroovyFileType.GROOVY_LANGUAGE) {
+          result.add(new OtherLanguageUsageInfo(ref));
+          continue;
+        }
 
-    for (PsiReference ref : ReferencesSearch.search(var, GlobalSearchScope.allScope(myHelper.getProject()), true)) {
-      final PsiElement element = ref.getElement();
-      if (element.getLanguage() != GroovyFileType.GROOVY_LANGUAGE) {
-        result.add(new OtherLanguageUsageInfo(ref));
-        continue;
+        final GrCall call = GroovyRefactoringUtil.getCallExpressionByMethodReference(element);
+        if (call == null) continue;
+
+        result.add(new ExternalUsageInfo(element));
       }
-
-      final GrCall call = GroovyRefactoringUtil.getCallExpressionByMethodReference(element);
-      if (call == null) continue;
-
-      result.add(new ExternalUsageInfo(element));
+      return result.toArray(new UsageInfo[result.size()]);
     }
-
-    return result.toArray(new UsageInfo[result.size()]);
+    return UsageInfo.EMPTY_ARRAY;
   }
-
-
 }
 

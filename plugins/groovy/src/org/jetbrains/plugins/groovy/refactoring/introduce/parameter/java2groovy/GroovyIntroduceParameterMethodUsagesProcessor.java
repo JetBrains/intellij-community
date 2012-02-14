@@ -53,6 +53,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
+import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.GroovyIntroduceParameterUtil;
 
 /**
  * @author Maxim.Medvedev
@@ -112,7 +113,7 @@ public class GroovyIntroduceParameterMethodUsagesProcessor implements IntroduceP
       PsiElement initializer = ExpressionConverter.getExpression(_expr, GroovyFileType.GROOVY_LANGUAGE, data.getProject());
       LOG.assertTrue(initializer instanceof GrExpression);
 
-      GrExpression newArg = addClosureToCall(initializer, argList);
+      GrExpression newArg = GroovyIntroduceParameterUtil.addClosureToCall(initializer, argList);
       if (newArg == null) {
         final PsiElement dummy = argList.addAfter(factory.createExpressionFromText("1"), anchor);
         newArg = ((GrExpression)dummy).replaceWithExpression((GrExpression)initializer, true);
@@ -142,25 +143,6 @@ public class GroovyIntroduceParameterMethodUsagesProcessor implements IntroduceP
   private static boolean hasClosureArgs(GrArgumentList list) {
     final PsiElement parent = list.getParent();
     return parent instanceof GrMethodCallExpression && ((GrMethodCallExpression)parent).getClosureArguments().length > 0;
-  }
-
-  @Nullable
-  private static GrExpression addClosureToCall(PsiElement initializer, GrArgumentList list) {
-    if (!(initializer instanceof GrClosableBlock)) return null;
-
-    final PsiElement parent = list.getParent();
-    if (!(parent instanceof GrMethodCallExpression)) return null;
-
-    PsiElement anchor;
-    final GrClosableBlock[] cls = ((GrMethodCallExpression)parent).getClosureArguments();
-    if (cls.length > 0) {
-      anchor = cls[cls.length - 1];
-    }
-    else {
-      anchor = list;
-    }
-
-    return (GrExpression)parent.addAfter(initializer, anchor);
   }
 
   @Nullable

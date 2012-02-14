@@ -28,6 +28,7 @@ import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.extensions.Extensions;
@@ -182,11 +183,12 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
 
   @Nullable
   public static PsiElement[] findTargetElementsNoVS(Project project, Editor editor, int offset) {
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    final Document document = editor.getDocument();
+    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
     if (file == null) {
       return null;
     }
-    PsiElement elementAt = file.findElementAt(offset);
+    PsiElement elementAt = file.findElementAt(TargetElementUtilBase.adjustOffset(document, offset));
 
     for (GotoDeclarationHandler handler : Extensions.getExtensions(GotoDeclarationHandler.EP_NAME)) {
       try {

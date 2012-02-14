@@ -15,18 +15,16 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.introduce.parameter;
 
-import com.intellij.psi.PsiElement;
 import gnu.trove.TIntArrayList;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
-import org.jetbrains.plugins.groovy.refactoring.extract.ExtractInfoHelper;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceSettings;
 
 /**
  * @author Maxim.Medvedev
  */
-public interface GrIntroduceParameterSettings extends GrIntroduceSettings, ExtractInfoHelper {
+public interface GrIntroduceParameterSettings extends GrIntroduceSettings, IntroduceParameterInfo {
   boolean generateDelegate();
 
   TIntArrayList parametersToRemove();
@@ -40,9 +38,9 @@ public interface GrIntroduceParameterSettings extends GrIntroduceSettings, Extra
 
   boolean removeLocalVariable();
 
-  @NotNull
-  GrParametersOwner getToReplaceIn();
+  @Nullable
+  GrVariable getVar();
 
   @Nullable
-  PsiElement getToSearchFor();
+  GrExpression getExpression();
 }

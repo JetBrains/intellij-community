@@ -34,7 +34,10 @@ public class GroovyLexer extends LookAheadLexer {
     mML_COMMENT,
     mREGEX_CONTENT,
     mDOLLAR_SLASH_REGEX_CONTENT,
-    WHITE_SPACE
+    WHITE_SPACE,
+    mGSTRING_CONTENT,
+    mDOLLAR_SLASH_REGEX_CONTENT,
+    mREGEX_CONTENT
   );
 
   public GroovyLexer() {

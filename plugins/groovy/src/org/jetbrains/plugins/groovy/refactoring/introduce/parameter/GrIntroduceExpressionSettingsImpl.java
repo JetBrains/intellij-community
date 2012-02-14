@@ -24,7 +24,7 @@ import org.jetbrains.plugins.groovy.refactoring.extract.closure.ExtractClosureHe
 /**
  * @author Max Medvedev
  */
-public class GrIntroduceExpressionSettingsImpl extends ExtractClosureHelperImpl implements GrIntroduceExpressionSettings {
+public class GrIntroduceExpressionSettingsImpl extends ExtractClosureHelperImpl implements GrIntroduceParameterSettings {
   private final GrExpression myExpr;
   private final GrVariable myVar;
   private final PsiType mySelectedType;
