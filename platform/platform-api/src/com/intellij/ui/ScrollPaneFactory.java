@@ -18,6 +18,7 @@ package com.intellij.ui;
 
 
 import com.intellij.ui.components.JBScrollPane;
+import org.intellij.lang.annotations.MagicConstant;
 
 import javax.swing.*;
 import java.awt.*;
@@ -50,6 +51,13 @@ public class ScrollPaneFactory {
     if (withoutBorder) {
       scrollPane.setBorder(null);
     }
+    return scrollPane;
+
+  }
+
+  public static JScrollPane createScrollPane(Component view, @MagicConstant(flagsFromClass = SideBorder.class) int borders) {
+    JBScrollPane scrollPane = new JBScrollPane(view);
+    scrollPane.setBorder(IdeBorderFactory.createBorder(borders));
     return scrollPane;
 
   }

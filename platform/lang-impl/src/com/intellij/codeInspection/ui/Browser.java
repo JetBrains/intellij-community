@@ -35,6 +35,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SideBorder;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -51,7 +52,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Browser extends JPanel {
+class Browser extends JPanel {
   private static final String UNDER_CONSTRUCTION = InspectionsBundle.message("inspection.tool.description.under.construction.text");
   private final List<ClickListener> myClickListeners;
   private RefEntity myCurrentEntity;
@@ -252,7 +253,7 @@ public class Browser extends JPanel {
     };
     myHTMLViewer.addHyperlinkListener(myHyperLinkListener);
 
-    add(ScrollPaneFactory.createScrollPane(myHTMLViewer), BorderLayout.CENTER);
+    add(ScrollPaneFactory.createScrollPane(myHTMLViewer, SideBorder.LEFT), BorderLayout.CENTER);
   }
 
   public void addClickListener(ClickListener listener) {
