@@ -31,11 +31,9 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdkType;
-import com.intellij.openapi.projectRoots.JdkUtil;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkType;
+import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ui.configuration.ModulesAlphaComparator;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
@@ -44,24 +42,31 @@ import com.intellij.util.PathsList;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.config.AbstractConfigUtils;
+import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.runner.DefaultGroovyScriptRunner;
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfiguration;
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunner;
+import org.jetbrains.plugins.groovy.util.GroovyUtils;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author peter
  */
 public class GroovyShellAction extends DumbAwareAction {
 
-  private static List<Module> getModulesWithGroovySupport(Project project) {
+  private static final String GROOVY_SHELL_LAST_MODULE = "Groovy.Shell.LastModule";
+
+  private static List<Module> getGroovyCompatibleModules(Project project) {
     ArrayList<Module> result = new ArrayList<Module>();
     for (Module module : ModuleManager.getInstance(project).getModules()) {
-      if (LibrariesUtil.getGroovyHomePath(module) != null) {
-        result.add(module);
+      if (GroovyUtils.isSuitableModule(module)) {
+        Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
+        if (sdk != null && sdk.getSdkType() instanceof JavaSdkType) {
+          result.add(module);
+        }
       }
     }
     return result;
@@ -70,7 +75,7 @@ public class GroovyShellAction extends DumbAwareAction {
   @Override
   public void update(AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
-    if (project != null && !getModulesWithGroovySupport(project).isEmpty()) {
+    if (project != null && !getGroovyCompatibleModules(project).isEmpty()) {
       e.getPresentation().setEnabled(true);
       e.getPresentation().setVisible(true);
       return;
@@ -84,10 +89,25 @@ public class GroovyShellAction extends DumbAwareAction {
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     assert project != null;
-    List<Module> modules = getModulesWithGroovySupport(project);
+    List<Module> modules = getGroovyCompatibleModules(project);
     if (modules.size() == 1) {
       runShell(modules.get(0));
       return;
+    }
+
+    Collections.sort(modules, ModulesAlphaComparator.INSTANCE);
+
+    final Map<Module, String> versions = new HashMap<Module, String>();
+    for (Module module : modules) {
+      String homePath = LibrariesUtil.getGroovyHomePath(module);
+      boolean bundled = false;
+      if (homePath == null) {
+        homePath = GroovyUtils.getBundledGroovyJar().getParentFile().getParent();
+        bundled = true;
+      }
+      String version = GroovyConfigUtils.getInstance().getSDKVersion(homePath);
+      versions.put(module, version == AbstractConfigUtils.UNDEFINED_VERSION
+                           ? "" : " (" + (bundled ? "Bundled " : "") + "Groovy " + version + ")");
     }
 
     BaseListPopupStep<Module> step =
@@ -95,6 +115,11 @@ public class GroovyShellAction extends DumbAwareAction {
         @NotNull
         @Override
         public String getTextFor(Module value) {
+          return value.getName() + versions.get(value);
+        }
+
+        @Override
+        public String getIndexedString(Module value) {
           return value.getName();
         }
 
@@ -105,14 +130,14 @@ public class GroovyShellAction extends DumbAwareAction {
 
         @Override
         public PopupStep onChosen(Module selectedValue, boolean finalChoice) {
-          PropertiesComponent.getInstance(selectedValue.getProject()).setValue("Groovy.Shell.LastModule", selectedValue.getName());
+          PropertiesComponent.getInstance(selectedValue.getProject()).setValue(GROOVY_SHELL_LAST_MODULE, selectedValue.getName());
           runShell(selectedValue);
           return null;
         }
       };
     for (int i = 0; i < modules.size(); i++) {
       Module module = modules.get(i);
-      if (module.getName().equals(PropertiesComponent.getInstance(project).getValue("Groovy.Shell.LastModule"))) {
+      if (module.getName().equals(PropertiesComponent.getInstance(project).getValue(GROOVY_SHELL_LAST_MODULE))) {
         step.setDefaultOptionIndex(i);
         break;
       }
@@ -132,7 +157,7 @@ public class GroovyShellAction extends DumbAwareAction {
         @Override
         protected Process createProcess(CommandLineArgumentsProvider provider) throws ExecutionException {
           final JavaParameters javaParameters = GroovyScriptRunConfiguration.createJavaParametersWithSdk(module);
-          DefaultGroovyScriptRunner.configureGenericGroovyRunner(javaParameters, module, "groovy.ui.GroovyMain");
+          DefaultGroovyScriptRunner.configureGenericGroovyRunner(javaParameters, module, "groovy.ui.GroovyMain", true);
           PathsList list = GroovyScriptRunner.getClassPathFromRootModel(module, true, javaParameters, true);
           if (list != null) {
             javaParameters.getProgramParametersList().addAll("--classpath", list.getPathsString());

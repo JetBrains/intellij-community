@@ -32,9 +32,9 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.util.GroovyUtils;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import java.nio.charset.Charset;
@@ -64,7 +64,7 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
 
   @Override
   public void configureCommandLine(JavaParameters params, @Nullable Module module, boolean tests, VirtualFile script, GroovyScriptRunConfiguration configuration) throws CantRunException {
-    configureGenericGroovyRunner(params, module, "groovy.ui.GroovyMain");
+    configureGenericGroovyRunner(params, module, "groovy.ui.GroovyMain", false);
 
     addClasspathFromRootModel(module, tests, params, true);
 
@@ -80,15 +80,22 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
     params.getProgramParametersList().addParametersString(configuration.getScriptParameters());
   }
 
-  public static void configureGenericGroovyRunner(@NotNull JavaParameters params, @NotNull Module module, @NotNull String mainClass) {
+  public static void configureGenericGroovyRunner(@NotNull JavaParameters params, @NotNull Module module, @NotNull String mainClass, boolean mayUseBundled) {
     final VirtualFile groovyJar = findGroovyJar(module);
     if (groovyJar != null) {
       params.getClassPath().add(groovyJar);
+    } else if (mayUseBundled) {
+      params.getClassPath().add(GroovyUtils.getBundledGroovyJar());
     }
 
     setToolsJar(params);
 
-    final String groovyHome = FileUtil.toSystemDependentName(ObjectUtils.assertNotNull(LibrariesUtil.getGroovyHomePath(module)));
+    String groovyHome = LibrariesUtil.getGroovyHomePath(module);
+    if (groovyHome != null) {
+      groovyHome = FileUtil.toSystemDependentName(groovyHome);
+    } else if (mayUseBundled) {
+      groovyHome = FileUtil.toCanonicalPath(GroovyUtils.getBundledGroovyJar().getParentFile().getParent());
+    }
     setGroovyHome(params, groovyHome);
 
     final String confPath = getConfPath(groovyHome);

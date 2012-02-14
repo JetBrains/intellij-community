@@ -16,7 +16,6 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -47,7 +46,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
 
 import javax.swing.*;
@@ -101,10 +99,8 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
   }
 
   protected static void addGroovyLibrary(final Module to) {
-    final String root = PluginPathManager.getPluginHomePath("groovy") + "/../../lib/";
-    final File[] groovyJars = GroovyUtils.getFilesInDirectoryByPattern(root, GroovyConfigUtils.GROOVY_ALL_JAR_PATTERN);
-    assert groovyJars.length == 1;
-    PsiTestUtil.addLibrary(to, "groovy", root, groovyJars[0].getName());
+    File jar = GroovyUtils.getBundledGroovyJar();
+    PsiTestUtil.addLibrary(to, "groovy", jar.getParent(), jar.getName());
   }
 
   @Override
