@@ -32,6 +32,7 @@ import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
@@ -40,10 +41,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.PsiElementProcessor;
@@ -260,7 +258,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
   }
 
   private void showHint(String text, final Editor editor, final RelativePoint popupPosition, FindUsagesHandler handler, int maxUsages, FindUsagesOptions options) {
-    JComponent label = createHintComponent(text, handler, popupPosition, editor, HIDE_HINTS_ACTION, maxUsages, options, handler.getProject());
+    JComponent label = createHintComponent(text, handler, popupPosition, editor, HIDE_HINTS_ACTION, maxUsages, options);
     if (editor == null) {
       HintManager.getInstance().showHint(label, popupPosition, HintManager.HIDE_BY_ANY_KEY |
                                                                HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING, 0);
@@ -272,8 +270,8 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
 
   private JComponent createHintComponent(String text, final FindUsagesHandler handler, final RelativePoint popupPosition, final Editor editor,
                                          final Runnable cancelAction,
-                                         final int maxUsages, final FindUsagesOptions options, Project project) {
-    JComponent label = HintUtil.createInformationLabel(suggestSecondInvocation(options, project, text));
+                                         final int maxUsages, final FindUsagesOptions options) {
+    JComponent label = HintUtil.createInformationLabel(suggestSecondInvocation(options, handler, text));
     InplaceButton button = createSettingsButton(handler, popupPosition, editor, maxUsages, cancelAction);
 
     JPanel panel = new JPanel(new BorderLayout()) {
@@ -336,9 +334,12 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
   }
 
   private static String searchScopePresentableName(FindUsagesOptions options, Project project) {
-    SearchScope searchScope = options.searchScope;
-    if (searchScope == null) searchScope = ProjectScope.getAllScope(project);
-    return searchScope.getDisplayName();
+    return notNullizeScope(options, project).getDisplayName();
+  }
+
+  @NotNull private static SearchScope notNullizeScope(FindUsagesOptions options, Project project) {
+    if (options.searchScope == null) return ProjectScope.getAllScope(project);
+    return options.searchScope;
   }
 
   private JBPopup createUsagePopup(final List<Usage> usages,
@@ -458,7 +459,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
       else {
         s = title + " (" + UsageViewBundle.message("usages.n", usages.size()) + " found)";
       }
-      builder.setTitle(suggestSecondInvocation(options, project, s));
+      builder.setTitle(suggestSecondInvocation(options, handler, s));
     }
 
     builder.setMovable(true).setResizable(true);
@@ -540,9 +541,25 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     return popup[0];
   }
 
-  private static String suggestSecondInvocation(FindUsagesOptions options, Project project, String s) {
-    if (getShowUsagesShortcut() != null && !Comparing.equal(options.searchScope, GlobalSearchScope.allScope(project))) {
-      s += "<br><small>Press " + KeymapUtil.getShortcutText(getShowUsagesShortcut()) + " again to search in Project and Libraries</small>";
+  @NotNull
+  private static GlobalSearchScope getMaximalScope(FindUsagesHandler handler) {
+    PsiElement element = handler.getPsiElement();
+    Project project = element.getProject();
+    PsiFile file = element.getContainingFile();
+    if (file != null && ProjectFileIndex.SERVICE.getInstance(project).isInContent(file.getViewProvider().getVirtualFile())) {
+      return GlobalSearchScope.projectScope(project);
+    }
+    return GlobalSearchScope.allScope(project);
+
+  }
+
+  private static String suggestSecondInvocation(FindUsagesOptions options, FindUsagesHandler handler, String s) {
+    if (getShowUsagesShortcut() != null) {
+      GlobalSearchScope maximalScope = getMaximalScope(handler);
+      if (!notNullizeScope(options, handler.getProject()).equals(maximalScope)) {
+        s += "<br><small>Press " + KeymapUtil.getShortcutText(getShowUsagesShortcut()) +
+             " again to search in " + maximalScope.getDisplayName() + "</small>";
+      }
     }
     return "<html><body>" + s + "</body></html>";
   }
@@ -552,7 +569,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
                                 Editor editor,
                                 RelativePoint popupPosition, int maxUsages) {
     FindUsagesOptions cloned = options.clone();
-    cloned.searchScope = GlobalSearchScope.allScope(handler.getProject());
+    cloned.searchScope = getMaximalScope(handler);
     showElementUsages(handler, editor, popupPosition, maxUsages, cloned);
   }
 
