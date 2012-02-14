@@ -263,10 +263,16 @@ public class TestNGConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
   
   public void bePatternConfiguration(List<PsiClass> classes, PsiMethod method) {
     data.TEST_OBJECT = TestType.PATTERN.getType();
-    data.METHOD_NAME = method.getName();
+    final String suffix;
+    if (method != null) {
+      data.METHOD_NAME = method.getName();
+      suffix = "," + data.METHOD_NAME;
+    } else {
+      suffix = "";
+    }
     Set<String> patterns = new HashSet<String>();
     for (PsiClass pattern : classes) {
-      patterns.add(JavaExecutionUtil.getRuntimeQualifiedName(pattern) + "," + data.METHOD_NAME);
+      patterns.add(JavaExecutionUtil.getRuntimeQualifiedName(pattern) + suffix);
     }
     data.setPatterns(patterns);
     setGeneratedName();

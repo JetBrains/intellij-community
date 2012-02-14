@@ -275,7 +275,7 @@ public class JUnitUtil {
   public static PsiClass getTestClass(final Location<?> location) {
     for (Iterator<Location<PsiClass>> iterator = location.getAncestors(PsiClass.class, false); iterator.hasNext();) {
       final Location<PsiClass> classLocation = iterator.next();
-      if (isTestClass(classLocation)) return classLocation.getPsiElement();
+      if (isTestClass(classLocation.getPsiElement(), false, true)) return classLocation.getPsiElement();
     }
     PsiElement element = location.getPsiElement();
     if (element instanceof PsiClassOwner) {

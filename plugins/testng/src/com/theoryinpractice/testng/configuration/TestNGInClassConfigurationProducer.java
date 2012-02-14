@@ -100,9 +100,19 @@ public class TestNGInClassConfigurationProducer extends TestNGConfigurationProdu
 
   @Override
   public void perform(final ConfigurationContext context, final Runnable performRunnable) {
-    if (myPsiElement instanceof PsiMethod) {
-      final PsiMethod psiMethod = (PsiMethod)myPsiElement;
-      final PsiClass containingClass = psiMethod.getContainingClass();
+    if (myPsiElement instanceof PsiMethod || myPsiElement instanceof PsiClass) {
+
+      final PsiMethod psiMethod;
+      final PsiClass containingClass;
+
+      if (myPsiElement instanceof PsiMethod) {
+        psiMethod = (PsiMethod)myPsiElement;
+        containingClass = psiMethod.getContainingClass();
+      } else {
+        psiMethod = null;
+        containingClass = (PsiClass)myPsiElement;
+      }
+
       final InheritorChooser inheritorChooser = new InheritorChooser() {
         @Override
         protected void runForClasses(List<PsiClass> classes, PsiMethod method, ConfigurationContext context, Runnable performRunnable) {
@@ -115,9 +125,13 @@ public class TestNGInClassConfigurationProducer extends TestNGConfigurationProdu
                                    PsiMethod psiMethod,
                                    ConfigurationContext context,
                                    Runnable performRunnable) {
-          final Project project = psiMethod.getProject();
-          final MethodLocation methodLocation = new MethodLocation(project, psiMethod, PsiLocation.fromPsiElement(aClass));
-          ((TestNGConfiguration)context.getConfiguration().getConfiguration()).setMethodConfiguration(methodLocation);
+          if (myPsiElement instanceof PsiMethod) {
+            final Project project = psiMethod.getProject();
+            final MethodLocation methodLocation = new MethodLocation(project, psiMethod, PsiLocation.fromPsiElement(aClass));
+            ((TestNGConfiguration)context.getConfiguration().getConfiguration()).setMethodConfiguration(methodLocation);
+          } else {
+            ((TestNGConfiguration)context.getConfiguration().getConfiguration()).setClassConfiguration(aClass);
+          }
           super.runForClass(aClass, psiMethod, context, performRunnable);
         }
       };
