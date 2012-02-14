@@ -239,9 +239,19 @@ public class Git {
   }
 
   @NotNull
-  public static GitCommandResult hardReset(@NotNull GitRepository repository, @NotNull String revision) {
+  public static GitCommandResult resetHard(@NotNull GitRepository repository, @NotNull String revision) {
     final GitLineHandler handler = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.RESET);
     handler.addParameters("--hard", revision);
+    return run(handler);
+  }
+
+  @NotNull
+  public static GitCommandResult resetMerge(@NotNull GitRepository repository, @Nullable String revision) {
+    final GitLineHandler handler = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.RESET);
+    handler.addParameters("--merge");
+    if (revision != null) {
+      handler.addParameters(revision);
+    }
     return run(handler);
   }
 

@@ -59,7 +59,7 @@ class GitMergeOperation extends GitBranchOperation {
   @NotNull private final GitRepository myCurrentRepository;
   @NotNull private final Map<GitRepository, String> myCurrentRevisionsBeforeMerge;
 
-  // true in value if unstash will be needed after resolving conflicts.
+  // true in value, if we've stashed local changes before merge and will need to unstash after resolving conflicts.
   @NotNull private final Map<GitRepository, Boolean> myConflictedRepositories = new HashMap<GitRepository, Boolean>();
   private GitPreservingProcess myPreservingProcess;
 
@@ -150,15 +150,18 @@ class GitMergeOperation extends GitBranchOperation {
   protected void notifySuccess(@NotNull String message) {
     String description = message + "<br/><a href='delete'>Delete " + myBranchToMerge + "</a>";
     NotificationManager.getInstance(myProject).notify(GitVcs.NOTIFICATION_GROUP_ID, "", description, NotificationType.INFORMATION,
-      new NotificationListener() {
-        @Override
-        public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-          if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED && event.getDescription().equalsIgnoreCase("delete")) {
-            new GitBranchOperationsProcessor(myProject, new ArrayList<GitRepository>(getRepositories()), myCurrentRepository).
-              deleteBranch(myBranchToMerge);
-          }
-        }
-    });
+                                                      new NotificationListener() {
+                                                        @Override
+                                                        public void hyperlinkUpdate(@NotNull Notification notification,
+                                                                                    @NotNull HyperlinkEvent event) {
+                                                          if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED &&
+                                                              event.getDescription().equalsIgnoreCase("delete")) {
+                                                            new GitBranchOperationsProcessor(myProject, new ArrayList<GitRepository>(
+                                                              getRepositories()), myCurrentRepository).
+                                                              deleteBranch(myBranchToMerge);
+                                                          }
+                                                        }
+                                                      });
   }
 
   private boolean resolveConflicts() {
@@ -263,8 +266,12 @@ class GitMergeOperation extends GitBranchOperation {
     LOG.info("starting rollback...");
     Collection<GitRepository> repositoriesForSmartRollback = new ArrayList<GitRepository>();
     Collection<GitRepository> repositoriesForSimpleRollback = new ArrayList<GitRepository>();
+    Collection<GitRepository> repositoriesForMergeRollback = new ArrayList<GitRepository>();
     for (GitRepository repository : getSuccessfulRepositories()) {
-      if (thereAreLocalChangesIn(repository)) {
+      if (myConflictedRepositories.containsKey(repository)) {
+        repositoriesForMergeRollback.add(repository);
+      }
+      else if (thereAreLocalChangesIn(repository)) {
         repositoriesForSmartRollback.add(repository);
       }
       else {
@@ -273,11 +280,17 @@ class GitMergeOperation extends GitBranchOperation {
     }
 
     LOG.info("for smart rollback: " + GitUIUtil.getShortNames(repositoriesForSmartRollback) +
-             "; for simple rollback: " + GitUIUtil.getShortNames(repositoriesForSimpleRollback));
+             "; for simple rollback: " + GitUIUtil.getShortNames(repositoriesForSimpleRollback) +
+             "; for merge rollback: " + GitUIUtil.getShortNames(repositoriesForMergeRollback));
+
     GitCompoundResult result = smartRollback(repositoriesForSmartRollback);
     for (GitRepository repository : repositoriesForSimpleRollback) {
       result.append(repository, rollback(repository));
     }
+    for (GitRepository repository : repositoriesForMergeRollback) {
+      result.append(repository, rollbackMerge(repository));
+    }
+    myConflictedRepositories.clear();
 
     if (!result.totalSuccess()) {
       NotificationManager.getInstance(myProject).notifyError("Error during rollback", result.getErrorOutputWithReposIndication());
@@ -304,7 +317,14 @@ class GitMergeOperation extends GitBranchOperation {
 
   @NotNull
   private GitCommandResult rollback(@NotNull GitRepository repository) {
-    return Git.hardReset(repository, myCurrentRevisionsBeforeMerge.get(repository));
+    return Git.resetHard(repository, myCurrentRevisionsBeforeMerge.get(repository));
+  }
+
+  @NotNull
+  private static GitCommandResult rollbackMerge(@NotNull GitRepository repository) {
+    GitCommandResult result = Git.resetMerge(repository, null);
+    refresh(repository);
+    return result;
   }
 
   private boolean thereAreLocalChangesIn(@NotNull GitRepository repository) {
