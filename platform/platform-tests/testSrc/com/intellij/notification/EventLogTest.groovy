@@ -41,24 +41,31 @@ class EventLogTest extends LightPlatformTestCase {
                                                                        "third<br>" +
                                                                        "<a href=\"create\">Action</a><br>" +
                                                                        "</body></html>", NotificationType.ERROR))
-    assert entry.message == 'Title:  first line second line third // Action (show balloon)'
-    //                       0                                       40      48          60
-    assert entry.links.collect { it.first } == [new TextRange(40, 46), new TextRange(48, 60)]
+    assert entry.status == 'Title:  first line second line third // Action'
+    assert entry.message == '''Title
+\tfirst line
+\tsecond line
+\tthird
+\tAction (show balloon)'''
+    assert entry.links.collect { it.first } == [new TextRange(39, 45), new TextRange(47, 59)]
 
   }
 
   public void testInParagraph() {
     def entry = EventLog.formatForLog(new Notification("xxx", "Title", "<p>message</p>", NotificationType.ERROR))
     assert entry.message == 'Title: message'
+    assert entry.status == 'Title: message'
   }
 
   public void testJavaSeparators() {
     def entry = EventLog.formatForLog(new Notification("xxx", "Title", "fst\nsnd", NotificationType.ERROR))
-    assert entry.message == 'Title: fst snd'
+    assert entry.message == '''Title
+\tfst
+\tsnd'''
   }
 
   public void testLinkInTitle() {
-    def entry = EventLog.formatForLog(new Notification("xxx", '<a href="a">link</a>', "content", NotificationType.ERROR))
+    def entry = format('<a href="a">link</a>', "content")
     assert entry.message == 'link: content'
     assert entry.links.collect { it.first } == [new TextRange(0, 4)]
   }
@@ -69,13 +76,35 @@ class EventLogTest extends LightPlatformTestCase {
   }
 
   public void testVariousNewlines() throws Exception {
-    assert EventLog.formatForLog(new Notification("xxx", 'title', "foo<br/>bar", NotificationType.ERROR)).message ==  'title: foo bar'
-    assert EventLog.formatForLog(new Notification("xxx", 'title', "foo<br/>/bar", NotificationType.ERROR)).message ==  'title: foo // /bar'
-    assert EventLog.formatForLog(new Notification("xxx", 'title', "foo<br/>Bar", NotificationType.ERROR)).message ==  'title: foo // Bar'
+    def entry = format('title', "foo<br/>bar")
+    assert entry.status == 'title: foo bar'
+    assert entry.message == '''title
+\tfoo
+\tbar'''
+
+    entry = format('title', "foo<br/>/bar")
+    assert entry.status == 'title: foo // /bar'
+    assert entry.message == '''title
+\tfoo
+\t/bar'''
+
+    entry = format('title', "foo<br/>Bar")
+    assert entry.status == 'title: foo // Bar'
+    assert entry.message == '''title
+\tfoo
+\tBar'''
+  }
+
+  EventLog.LogEntry format(String title, String content) {
+    EventLog.formatForLog(new Notification("xxx", title, content, NotificationType.ERROR))
   }
 
   public void testManyNewlines() throws Exception {
-    assert EventLog.formatForLog(new Notification("xxx", 'title', "foo\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nbar", NotificationType.ERROR)).message ==  'title: foo bar'
+    def entry = format('title', "foo\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nbar")
+    assert entry.status == 'title: foo bar'
+    assert entry.message == '''title
+\tfoo
+\tbar'''
   }
 
 }
