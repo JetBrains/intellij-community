@@ -45,6 +45,7 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -149,6 +150,11 @@ public class GrIntroduceParameterDialog extends DialogWrapper implements GrIntro
     }
     else {
       myForceReturnCheckBox.setSelected(isForceReturn());
+    }
+
+    if (myInfo.getToReplaceIn() instanceof GrClosableBlock) {
+      myDelegateViaOverloadingMethodCheckBox.setEnabled(false);
+      myDelegateViaOverloadingMethodCheckBox.setToolTipText("Delegating is not allowed in closure context");
     }
 
     myTypeComboBox.addItemListener(new ItemListener() {
@@ -391,22 +397,29 @@ public class GrIntroduceParameterDialog extends DialogWrapper implements GrIntro
       return new ValidationInfo(GroovyRefactoringBundle.message("name.is.wrong", text), myNameSuggestionsField);
     }
 
-    final Ref<ValidationInfo> info = new Ref<ValidationInfo>();
-    toRemoveCBs.forEachEntry(new TObjectIntProcedure<JCheckBox>() {
-      @Override
-      public boolean execute(JCheckBox checkbox, int index) {
-        if (!checkbox.isSelected()) return true;
+    if (myTypeComboBox.isClosureSelected()) {
+      final Ref<ValidationInfo> info = new Ref<ValidationInfo>();
+      toRemoveCBs.forEachEntry(new TObjectIntProcedure<JCheckBox>() {
+        @Override
+        public boolean execute(JCheckBox checkbox, int index) {
+          if (!checkbox.isSelected()) return true;
 
-        final GrParameter param = myInfo.getToReplaceIn().getParameters()[index];
-        final ParameterInfo pinfo = findParamByOldName(param.getName());
-        if (pinfo == null || !pinfo.passAsParameter()) return true;
+          final GrParameter param = myInfo.getToReplaceIn().getParameters()[index];
+          final ParameterInfo pinfo = findParamByOldName(param.getName());
+          if (pinfo == null || !pinfo.passAsParameter()) return true;
 
-        final String message = GroovyRefactoringBundle.message("you.cannot.pass.as.parameter.0.because.you.remove.1.from.base.method", pinfo.getName(), param.getName());
-        info.set(new ValidationInfo(message));
-        return false;
+          final String message = GroovyRefactoringBundle
+            .message("you.cannot.pass.as.parameter.0.because.you.remove.1.from.base.method", pinfo.getName(), param.getName());
+          info.set(new ValidationInfo(message));
+          return false;
+        }
+      });
+      if (info.get() != null) {
+        return info.get();
       }
-    });
-    return info.get();
+    }
+
+    return null;
   }
 
   @Nullable

@@ -66,7 +66,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
-import org.jetbrains.plugins.groovy.refactoring.inline.InlineMethodConflictSolver;
 import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.java2groovy.FieldConflictsResolver;
 import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.java2groovy.OldReferencesResolver;
 
@@ -266,24 +265,8 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
 
   @Override
   protected void performRefactoring(UsageInfo[] usages) {
-    if (mySettings.generateDelegate()) {
-      LOG.assertTrue(toSearchFor instanceof GrVariable);
-
-      String newName = InlineMethodConflictSolver.suggestNewName(((GrVariable)toSearchFor).getName() + "Delegate", null, toSearchFor);
-      GrClosableBlock result = generateDelegateClosure(this.toReplaceIn, (GrVariable)toSearchFor, newName);
-
-      processClosure(usages, mySettings);
-
-      final GrVariableDeclaration declaration = myFactory.createVariableDeclaration(null, toReplaceIn, ((GrVariable)toSearchFor)
-        .getDeclaredType(), newName);
-      declaration.getModifierList().replace(((GrVariable)toSearchFor).getModifierList());
-      toReplaceIn.replace(result);
-      insertDeclaration((GrVariable)toSearchFor, declaration).getVariables()[0].getInitializerGroovy();
-    }
-    else {
-      processExternalUsages(usages, mySettings, myParameterInitializer.getExpression());
-      processClosure(usages, mySettings);
-    }
+    processExternalUsages(usages, mySettings, myParameterInitializer.getExpression());
+    processClosure(usages, mySettings);
 
     final GrVariable var = mySettings.getVar();
     if (var != null && mySettings.removeLocalVariable()) {
