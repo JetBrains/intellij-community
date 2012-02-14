@@ -22,6 +22,7 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.ui.ComboBoxVisibilityPanel;
@@ -55,9 +56,6 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.EventListenerList;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.EventListener;
@@ -88,12 +86,12 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
     myProject = info.getProject();
     myHelper = new ExtractMethodInfoHelper(info, "", owner, false);
 
-    setUpNameField();
     myParameterTablePanel.init(myHelper);
 
     setModal(true);
     setTitle(GroovyExtractMethodHandler.REFACTORING_NAME);
     init();
+    setUpNameField();
     setUpDialog();
     update();
   }
@@ -156,13 +154,7 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
   }
 
   private void setUpNameField() {
-
-    contentPane.registerKeyboardAction(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        myNameField.requestFocus();
-      }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.ALT_MASK), JComponent.WHEN_IN_FOCUSED_WINDOW);
-
+    myNameLabel.setLabelFor(myNameField);
     myNameField.addDocumentListener(new DocumentListener() {
       public void beforeDocumentChange(DocumentEvent event) {
       }
@@ -193,7 +185,15 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
     String text = getEnteredName();
     myHelper.setName(text);
     updateSignature();
-    setOKActionEnabled(GroovyNamesUtil.isIdentifier(text));
+  }
+
+  @Override
+  protected ValidationInfo doValidate() {
+    final String text = getEnteredName();
+    if (!GroovyNamesUtil.isIdentifier(text)) {
+      return new ValidationInfo(GroovyRefactoringBundle.message("name.is.wrong", text), myNameField);
+    }
+    return null;
   }
 
   @Nullable
