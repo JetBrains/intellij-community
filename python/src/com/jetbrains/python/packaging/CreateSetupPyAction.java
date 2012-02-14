@@ -23,6 +23,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyUtil;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
 
@@ -61,7 +62,7 @@ public class CreateSetupPyAction extends CreateFromTemplateAction {
   private static String getPackageList(DataContext dataContext) {
     final Module module = LangDataKeys.MODULE.getData(dataContext);
     if (module != null) {
-      final List<VirtualFile> sourceRoots = PyUtil.getSourceRoots(module);
+      final Collection<VirtualFile> sourceRoots = PyUtil.getSourceRoots(module);
       List<String> packageNames = new ArrayList<String>();
       for (VirtualFile sourceRoot : sourceRoots) {
         collectPackageNames(module.getProject(), sourceRoot, packageNames, "");
@@ -88,9 +89,9 @@ public class CreateSetupPyAction extends CreateFromTemplateAction {
   protected PsiDirectory getTargetDirectory(DataContext dataContext, IdeView view) {
     final Module module = LangDataKeys.MODULE.getData(dataContext);
     if (module != null) {
-      final List<VirtualFile> sourceRoots = PyUtil.getSourceRoots(module);
+      final Collection<VirtualFile> sourceRoots = PyUtil.getSourceRoots(module);
       if (sourceRoots.size() > 0) {
-        return PsiManager.getInstance(module.getProject()).findDirectory(sourceRoots.get(0));
+        return PsiManager.getInstance(module.getProject()).findDirectory(sourceRoots.iterator().next());
       }
     }
     return super.getTargetDirectory(dataContext, view);

@@ -37,7 +37,6 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType;
 import com.jetbrains.python.documentation.EpydocUtil;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyTupleType;
 import com.jetbrains.python.psi.types.PyType;
@@ -727,7 +726,7 @@ public class PyUtil {
   }
 
   @NotNull
-  public static List<VirtualFile> getSourceRoots(@NotNull PsiElement foothold) {
+  public static Collection<VirtualFile> getSourceRoots(@NotNull PsiElement foothold) {
     final Module module = ModuleUtil.findModuleForPsiElement(foothold);
     if (module != null) {
       return getSourceRoots(module);
@@ -736,8 +735,8 @@ public class PyUtil {
   }
 
   @NotNull
-  public static List<VirtualFile> getSourceRoots(@NotNull Module module) {
-    final List<VirtualFile> result = new ArrayList<VirtualFile>();
+  public static Collection<VirtualFile> getSourceRoots(@NotNull Module module) {
+    final Set<VirtualFile> result = new LinkedHashSet<VirtualFile>();
     final ModuleRootManager manager = ModuleRootManager.getInstance(module);
     result.addAll(Arrays.asList(manager.getSourceRoots()));
     result.addAll(Arrays.asList(manager.getContentRoots()));
