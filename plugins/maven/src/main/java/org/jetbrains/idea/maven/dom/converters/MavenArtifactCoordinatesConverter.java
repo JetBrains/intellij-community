@@ -168,6 +168,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
       return resolveInLocalRepository(id, projectsManager, psiManager);
     }
 
+    @Nullable
     protected PsiFile resolveBySpecifiedPath() {
       return null;
     }
