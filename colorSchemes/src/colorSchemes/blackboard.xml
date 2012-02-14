@@ -1572,6 +1572,26 @@
         <option name="ERROR_STRIPE_COLOR"/>
       </value>
     </option>
+    <option name="LESS_INJECTED_CODE">
+      <value>
+        <option name="FOREGROUND"/>
+        <option name="BACKGROUND"/>
+        <option name="FONT_TYPE" value="0"/>
+        <option name="EFFECT_COLOR"/>
+        <option name="EFFECT_TYPE" value="0"/>
+        <option name="ERROR_STRIPE_COLOR"/>
+      </value>
+    </option>
+    <option name="LESS_JS_CODE_DELIM">
+      <value>
+        <option name="FOREGROUND"/>
+        <option name="BACKGROUND"/>
+        <option name="FONT_TYPE" value="0"/>
+        <option name="EFFECT_COLOR"/>
+        <option name="EFFECT_TYPE" value="0"/>
+        <option name="ERROR_STRIPE_COLOR"/>
+      </value>
+    </option>
     <option name="LESS_VARIABLE">
       <value>
         <option name="FOREGROUND"/>
@@ -2513,6 +2533,76 @@
       </value>
     </option>
     <option name="SASS_VARIABLE">
+      <value>
+        <option name="FOREGROUND"/>
+        <option name="BACKGROUND"/>
+        <option name="FONT_TYPE" value="0"/>
+        <option name="EFFECT_COLOR"/>
+        <option name="EFFECT_TYPE" value="0"/>
+        <option name="ERROR_STRIPE_COLOR"/>
+      </value>
+    </option>
+    <option name="SCOPE_KEY_All">
+      <value>
+        <option name="FOREGROUND"/>
+        <option name="BACKGROUND"/>
+        <option name="FONT_TYPE" value="0"/>
+        <option name="EFFECT_COLOR"/>
+        <option name="EFFECT_TYPE" value="0"/>
+        <option name="ERROR_STRIPE_COLOR"/>
+      </value>
+    </option>
+    <option name="SCOPE_KEY_Changed Files">
+      <value>
+        <option name="FOREGROUND"/>
+        <option name="BACKGROUND"/>
+        <option name="FONT_TYPE" value="0"/>
+        <option name="EFFECT_COLOR"/>
+        <option name="EFFECT_TYPE" value="0"/>
+        <option name="ERROR_STRIPE_COLOR"/>
+      </value>
+    </option>
+    <option name="SCOPE_KEY_Default">
+      <value>
+        <option name="FOREGROUND"/>
+        <option name="BACKGROUND"/>
+        <option name="FONT_TYPE" value="0"/>
+        <option name="EFFECT_COLOR"/>
+        <option name="EFFECT_TYPE" value="0"/>
+        <option name="ERROR_STRIPE_COLOR"/>
+      </value>
+    </option>
+    <option name="SCOPE_KEY_Non-Project Files">
+      <value>
+        <option name="FOREGROUND"/>
+        <option name="BACKGROUND"/>
+        <option name="FONT_TYPE" value="0"/>
+        <option name="EFFECT_COLOR"/>
+        <option name="EFFECT_TYPE" value="0"/>
+        <option name="ERROR_STRIPE_COLOR"/>
+      </value>
+    </option>
+    <option name="SCOPE_KEY_Problems">
+      <value>
+        <option name="FOREGROUND"/>
+        <option name="BACKGROUND"/>
+        <option name="FONT_TYPE" value="0"/>
+        <option name="EFFECT_COLOR"/>
+        <option name="EFFECT_TYPE" value="0"/>
+        <option name="ERROR_STRIPE_COLOR"/>
+      </value>
+    </option>
+    <option name="SCOPE_KEY_Project Files">
+      <value>
+        <option name="FOREGROUND"/>
+        <option name="BACKGROUND"/>
+        <option name="FONT_TYPE" value="0"/>
+        <option name="EFFECT_COLOR"/>
+        <option name="EFFECT_TYPE" value="0"/>
+        <option name="ERROR_STRIPE_COLOR"/>
+      </value>
+    </option>
+    <option name="SCOPE_KEY_Tests">
       <value>
         <option name="FOREGROUND"/>
         <option name="BACKGROUND"/>
