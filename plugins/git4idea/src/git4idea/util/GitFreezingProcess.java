@@ -16,6 +16,7 @@
 package git4idea.util;
 
 import com.intellij.ide.SaveAndSyncHandler;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
@@ -32,6 +33,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public class GitFreezingProcess {
 
+  private static final Logger LOG = Logger.getInstance(GitFreezingProcess.class);
+
   @NotNull private final String myOperationTitle;
   @NotNull private final Runnable myRunnable;
   @NotNull private final ChangeListManagerImpl myChangeListManager;
@@ -43,19 +46,27 @@ public class GitFreezingProcess {
   }
 
   public void execute() {
+    LOG.debug("starting");
     try {
+      LOG.debug("saving documents, blocking project autosync");
       saveAndBlockInAwt();
+      LOG.debug("freezing the ChangeListManager");
       freeze();
       try {
+        LOG.debug("running the operation");
         myRunnable.run();
+        LOG.debug("operation completed.");
       }
       finally {
+        LOG.debug("unfreezing the ChangeListManager");
         unfreezeInAwt();
       }
     }
     finally {
+      LOG.debug("unblocking project autosync");
       unblockInAwt();
     }
+    LOG.debug("finished.");
   }
 
   public static void saveAndBlock() {

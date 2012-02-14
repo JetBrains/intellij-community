@@ -35,6 +35,7 @@ import git4idea.merge.GitMergeCommittingConflictResolver;
 import git4idea.merge.GitMerger;
 import git4idea.repo.GitRepository;
 import git4idea.util.GitPreservingProcess;
+import git4idea.util.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.HyperlinkEvent;
@@ -76,10 +77,12 @@ class GitMergeOperation extends GitBranchOperation {
 
   @Override
   protected void execute() {
+    LOG.info("starting");
     boolean fatalErrorHappened = false;
     int alreadyUpToDateRepositories = 0;
     while (hasMoreRepositories() && !fatalErrorHappened) {
       final GitRepository repository = next();
+      LOG.info("next repository: " + repository);
 
       VirtualFile root = repository.getRoot();
       GitMessageWithFilesDetector localChangesOverwrittenByMerge = new GitMessageWithFilesDetector(LOCAL_CHANGES_OVERWRITTEN_BY_MERGE, root);
@@ -92,6 +95,7 @@ class GitMergeOperation extends GitBranchOperation {
                                           localChangesOverwrittenByMerge, unmergedFiles, untrackedOverwrittenByMerge, mergeConflict,
                                           alreadyUpToDateDetector);
       if (result.success()) {
+        LOG.info("Merged successfully");
         refresh(repository);
         markSuccessful(repository);
         if (alreadyUpToDateDetector.hasHappened()) {
@@ -99,25 +103,30 @@ class GitMergeOperation extends GitBranchOperation {
         }
       }
       else if (unmergedFiles.hasHappened()) {
+        LOG.info("Unmerged files error!");
         fatalUnmergedFilesError();
         fatalErrorHappened = true;
       }
       else if (localChangesOverwrittenByMerge.wasMessageDetected()) {
+        LOG.info("Local changes would be overwritten by merge!");
         boolean smartMergeSucceeded = proposeSmartMergePerformAndNotify(repository, localChangesOverwrittenByMerge);
         if (!smartMergeSucceeded) {
           fatalErrorHappened = true;
         }
       }
       else if (mergeConflict.hasHappened()) {
+        LOG.info("Merge conflict");
         myConflictedRepositories.put(repository, Boolean.FALSE);
         refresh(repository);
         markSuccessful(repository);
       }
       else if (untrackedOverwrittenByMerge.wasMessageDetected()) {
+        LOG.info("Untracked files would be overwritten by merge!");
         fatalUntrackedFilesError(untrackedOverwrittenByMerge.getFiles());
         fatalErrorHappened = true;
       }
       else {
+        LOG.info("Unknown error. " + result);
         fatalError(getCommonErrorTitle(), result.getErrorOutputAsJoinedString());
         fatalErrorHappened = true;
       }
@@ -251,6 +260,7 @@ class GitMergeOperation extends GitBranchOperation {
 
   @Override
   protected void rollback() {
+    LOG.info("starting rollback...");
     Collection<GitRepository> repositoriesForSmartRollback = new ArrayList<GitRepository>();
     Collection<GitRepository> repositoriesForSimpleRollback = new ArrayList<GitRepository>();
     for (GitRepository repository : getSuccessfulRepositories()) {
@@ -262,6 +272,8 @@ class GitMergeOperation extends GitBranchOperation {
       }
     }
 
+    LOG.info("for smart rollback: " + GitUIUtil.getShortNames(repositoriesForSmartRollback) +
+             "; for simple rollback: " + GitUIUtil.getShortNames(repositoriesForSimpleRollback));
     GitCompoundResult result = smartRollback(repositoriesForSmartRollback);
     for (GitRepository repository : repositoriesForSimpleRollback) {
       result.append(repository, rollback(repository));
@@ -270,10 +282,12 @@ class GitMergeOperation extends GitBranchOperation {
     if (!result.totalSuccess()) {
       NotificationManager.getInstance(myProject).notifyError("Error during rollback", result.getErrorOutputWithReposIndication());
     }
+    LOG.info("rollback finished.");
   }
 
   @NotNull
   private GitCompoundResult smartRollback(@NotNull final Collection<GitRepository> repositories) {
+    LOG.info("Starting smart rollback...");
     final GitCompoundResult result = new GitCompoundResult(myProject);
     GitPreservingProcess preservingProcess = new GitPreservingProcess(myProject, repositories, "merge", myBranchToMerge, getIndicator(),
       new Runnable() {
@@ -284,6 +298,7 @@ class GitMergeOperation extends GitBranchOperation {
         }
       });
     preservingProcess.execute();
+    LOG.info("Smart rollback completed.");
     return result;
   }
 
