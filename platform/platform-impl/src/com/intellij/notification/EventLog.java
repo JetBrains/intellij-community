@@ -56,10 +56,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.event.HyperlinkEvent;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
@@ -125,16 +122,26 @@ public class EventLog implements Notifications {
   }
 
   public static LogEntry formatForLog(@NotNull final Notification notification) {
-    DocumentImpl document = new DocumentImpl(true);
+    DocumentImpl logDoc = new DocumentImpl(true);
     AtomicBoolean showMore = new AtomicBoolean(false);
     Map<RangeMarker, HyperlinkInfo> links = new LinkedHashMap<RangeMarker, HyperlinkInfo>();
     List<RangeMarker> lineSeparators = new ArrayList<RangeMarker>();
 
-    boolean hasHtml = parseHtmlContent(notification, document, showMore, links, lineSeparators);
-    removeJavaNewLines(document, lineSeparators, hasHtml);
-    insertNewLineSubstitutors(document, showMore, lineSeparators);
+    String title = notification.getTitle();
+    String content = notification.getContent();
+    RangeMarker afterTitle = null;
+    boolean hasHtml = parseHtmlContent(title, notification, logDoc, showMore, links, lineSeparators);
+    if (StringUtil.isNotEmpty(title)) {
+      if (StringUtil.isNotEmpty(content)) {
+        appendText(logDoc, ": ");
+        afterTitle = logDoc.createRangeMarker(logDoc.getTextLength() - 2, logDoc.getTextLength());
+      }
+    }
+    hasHtml |= parseHtmlContent(content, notification, logDoc, showMore, links, lineSeparators);
 
-    String status = document.getText();
+    String status = getStatusText(logDoc, showMore, lineSeparators, hasHtml);
+
+    indentNewLines(logDoc, lineSeparators, afterTitle, hasHtml);
 
     ArrayList<Pair<TextRange, HyperlinkInfo>> list = new ArrayList<Pair<TextRange, HyperlinkInfo>>();
     for (RangeMarker marker : links.keySet()) {
@@ -147,25 +154,70 @@ public class EventLog implements Notifications {
 
     if (showMore.get()) {
       String sb = "show balloon";
-      appendText(document, " (" + sb + ")");
-      list.add(new Pair<TextRange, HyperlinkInfo>(TextRange.from(document.getTextLength() - 1 - sb.length(), sb.length()),
+      if (!logDoc.getText().endsWith(" ")) {
+        appendText(logDoc, " ");
+      }
+      appendText(logDoc, "(" + sb + ")");
+      list.add(new Pair<TextRange, HyperlinkInfo>(TextRange.from(logDoc.getTextLength() - 1 - sb.length(), sb.length()),
                                                   new ShowBalloon(notification)));
     }
 
-    return new LogEntry(document.getText(), status, list);
+    return new LogEntry(logDoc.getText(), status, list);
   }
 
-  private static boolean parseHtmlContent(Notification notification,
+  private static void indentNewLines(DocumentImpl logDoc, List<RangeMarker> lineSeparators, RangeMarker afterTitle, boolean hasHtml) {
+    if (!hasHtml) {
+      int i = -1;
+      while (true) {
+        i = StringUtil.indexOf(logDoc.getText(), '\n', i + 1);
+        if (i < 0) {
+          break;
+        }
+        lineSeparators.add(logDoc.createRangeMarker(i, i + 1));
+      }
+    }
+    if (!lineSeparators.isEmpty() && afterTitle != null && afterTitle.isValid()) {
+      lineSeparators.add(afterTitle);
+    }
+    int nextLineStart = -1;
+    for (RangeMarker separator : lineSeparators) {
+      if (separator.isValid()) {
+        int start = separator.getStartOffset();
+        if (start == nextLineStart) {
+          continue;
+        }
+
+        logDoc.replaceString(start, separator.getEndOffset(), "\n\t");
+        nextLineStart = start + 2;
+        while (nextLineStart < logDoc.getTextLength() && Character.isWhitespace(logDoc.getCharsSequence().charAt(nextLineStart))) {
+          logDoc.deleteString(nextLineStart, nextLineStart + 1);
+        }
+      }
+    }
+  }
+
+  private static String getStatusText(DocumentImpl logDoc, AtomicBoolean showMore, List<RangeMarker> lineSeparators, boolean hasHtml) {
+    DocumentImpl statusDoc = new DocumentImpl(true);
+    statusDoc.setText(logDoc.getText());
+    List<RangeMarker> statusSeparators = new ArrayList<RangeMarker>();
+    for (RangeMarker separator : lineSeparators) {
+      if (separator.isValid()) {
+        statusSeparators.add(statusDoc.createRangeMarker(separator.getStartOffset(), separator.getEndOffset()));
+      }
+    }
+    removeJavaNewLines(statusDoc, statusSeparators, hasHtml);
+    insertNewLineSubstitutors(statusDoc, showMore, statusSeparators);
+
+    return statusDoc.getText();
+  }
+
+  private static boolean parseHtmlContent(String text, Notification notification,
                                           Document document,
                                           AtomicBoolean showMore,
                                           Map<RangeMarker, HyperlinkInfo> links, List<RangeMarker> lineSeparators) {
-    String content = notification.getContent();
-    String title = notification.getTitle();
-    if (StringUtil.isNotEmpty(title)) {
-      content = title + (StringUtil.isNotEmpty(content) ? ": " + content : "");
-    }
+    String content = StringUtil.convertLineSeparators(text);
 
-    content = StringUtil.convertLineSeparators(content);
+    int initialLen = document.getTextLength();
     boolean hasHtml = false;
     while (true) {
       Matcher tagMatcher = TAG_PATTERN.matcher(content);
@@ -192,19 +244,26 @@ public class EventLog implements Notifications {
 
       hasHtml = true;
       if (NEW_LINES.contains(tagStart)) {
-        lineSeparators.add(document.createRangeMarker(TextRange.from(document.getTextLength(), 0)));
+        if (initialLen != document.getTextLength()) {
+          lineSeparators.add(document.createRangeMarker(TextRange.from(document.getTextLength(), 0)));
+        }
       }
       else if (!"<html>".equals(tagStart) && !"</html>".equals(tagStart) && !"<body>".equals(tagStart) && !"</body>".equals(tagStart)) {
         showMore.set(true);
       }
       content = content.substring(tagMatcher.end());
     }
+    for (Iterator<RangeMarker> iterator = lineSeparators.iterator(); iterator.hasNext(); ) {
+      RangeMarker next = iterator.next();
+      if (next.getEndOffset() == document.getTextLength()) {
+        iterator.remove();
+      }
+    }
     return hasHtml;
   }
 
   private static void insertNewLineSubstitutors(Document document, AtomicBoolean showMore, List<RangeMarker> lineSeparators) {
-    for (int j = lineSeparators.size() - 1; j >= 0; j--) {
-      RangeMarker marker = lineSeparators.get(j);
+    for (RangeMarker marker : lineSeparators) {
       if (!marker.isValid()) {
         showMore.set(true);
         continue;

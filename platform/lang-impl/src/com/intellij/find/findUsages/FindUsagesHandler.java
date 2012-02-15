@@ -61,6 +61,7 @@ public abstract class FindUsagesHandler {
                                       toShowInNewTab, mustOpenInNewTab, isSingleFile, this);
   }
 
+  @NotNull
   public final PsiElement getPsiElement() {
     return myPsiElement;
   }
