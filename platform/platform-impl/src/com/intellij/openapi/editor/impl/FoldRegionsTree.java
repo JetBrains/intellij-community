@@ -20,12 +20,10 @@ import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.CollectionFactory;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
+import java.util.*;
 
 /**
 * User: cdr
@@ -80,7 +78,7 @@ abstract class FoldRegionsTree {
   void rebuild() {
     ArrayList<FoldRegion> topLevels = new ArrayList<FoldRegion>(myRegions.size() / 2);
     ArrayList<FoldRegion> visible = new ArrayList<FoldRegion>(myRegions.size());
-    FoldRegion[] regions = myRegions.toArray(new FoldRegion[myRegions.size()]);
+    FoldRegion[] regions = toFoldArray(myRegions);
     FoldRegion currentToplevel = null;
     for (FoldRegion region : regions) {
       if (region.isValid()) {
@@ -94,11 +92,11 @@ abstract class FoldRegionsTree {
       }
     }
 
-    myCachedTopLevelRegions = topLevels.isEmpty() ? FoldRegion.EMPTY_ARRAY : topLevels.toArray(new FoldRegion[topLevels.size()]);
+    myCachedTopLevelRegions = toFoldArray(topLevels);
 
     Arrays.sort(myCachedTopLevelRegions, BY_END_OFFSET);
 
-    FoldRegion[] visibleArrayed = visible.toArray(new FoldRegion[visible.size()]);
+    FoldRegion[] visibleArrayed = toFoldArray(visible);
     for (FoldRegion visibleRegion : visibleArrayed) {
       for (FoldRegion topLevelRegion : myCachedTopLevelRegions) {
         if (contains(topLevelRegion, visibleRegion)) {
@@ -108,11 +106,16 @@ abstract class FoldRegionsTree {
       }
     }
 
-    myCachedVisible = visible.toArray(new FoldRegion[visible.size()]);
+    myCachedVisible = toFoldArray(visible);
 
     Arrays.sort(myCachedVisible, BY_END_OFFSET_REVERSE);
 
     updateCachedOffsets();
+  }
+
+  @NotNull
+  private static FoldRegion[] toFoldArray(@NotNull List<FoldRegion> topLevels) {
+    return topLevels.isEmpty() ? FoldRegion.EMPTY_ARRAY : topLevels.toArray(new FoldRegion[topLevels.size()]);
   }
 
   void updateCachedOffsets() {
@@ -285,7 +288,7 @@ abstract class FoldRegionsTree {
       }
     }
 
-    return allCollapsed.toArray(new FoldRegion[allCollapsed.size()]);
+    return toFoldArray(allCollapsed);
   }
 
   boolean intersectsRegion(int startOffset, int endOffset) {
@@ -303,7 +306,7 @@ abstract class FoldRegionsTree {
   FoldRegion[] fetchAllRegions() {
     if (!isFoldingEnabledAndUpToDate()) return FoldRegion.EMPTY_ARRAY;
 
-    return myRegions.toArray(new FoldRegion[myRegions.size()]);
+    return toFoldArray(myRegions);
   }
 
   void removeRegion(FoldRegion range) {

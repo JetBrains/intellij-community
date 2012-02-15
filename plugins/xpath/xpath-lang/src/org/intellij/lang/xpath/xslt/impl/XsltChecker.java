@@ -57,7 +57,7 @@ public class XsltChecker extends NanoXmlUtil.IXMLBuilderAdapter {
                 stop();
             }
         } else if (myState == State.POSSIBLY_SIMPLIFIED_SYNTAX) {
-            if ("version".equals(key) && nsURI.equals(XsltSupport.XSLT_NS)) {
+            if ("version".equals(key) && XsltSupport.XSLT_NS.equals(nsURI)) {
                 checkVersion(value, State.SIMPLIFIED);
                 stop();
             }
