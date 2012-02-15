@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -295,13 +296,13 @@ public class JavaVariableInplaceIntroducer extends InplaceVariableIntroducer<Psi
     if (processor.size() > 0) {
       final Shortcut[] shortcuts = keymap.getShortcuts("IntroduceVariable");
       if (shortcuts.length > 0) {
-        return "Press " + shortcuts[0] + " to reassign existing variable";
+        return "Press " + KeymapUtil.getShortcutText(shortcuts[0]) + " to reassign existing variable";
       }
     }
     if (hasTypeSuggestion) {
       final Shortcut[] shortcuts = keymap.getShortcuts("PreviousTemplateVariable");
       if  (shortcuts.length > 0) {
-        return "Press " + shortcuts[0] + " to change type";
+        return "Press " + KeymapUtil.getShortcutText(shortcuts[0]) + " to change type";
       }
     }
     return null;
