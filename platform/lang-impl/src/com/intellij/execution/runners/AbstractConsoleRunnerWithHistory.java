@@ -78,26 +78,23 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
    */
   public void initAndRun() throws ExecutionException {
     // Create Server process
-    final Process process = createProcess(myProvider);
+    myProcessHandler = createProcess(myProvider);
+    ProcessTerminatedListener.attach(myProcessHandler);
 
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
-        initConsoleUI(process);
+        initConsoleUI();
       }
     });
   }
 
-  private void initConsoleUI(Process process) {
+  private void initConsoleUI() {
     // Init console view
     myConsoleView = createConsoleView();
     myConsoleView.setBorder(new SideBorder(UIUtil.getBorderColor(), SideBorder.LEFT));
 
-    myProcessHandler = createProcessHandler(process, myProvider.getCommandLineString());
-
     myConsoleExecuteActionHandler = createConsoleExecuteActionHandler();
-
-    ProcessTerminatedListener.attach(myProcessHandler);
 
     myProcessHandler.addProcessListener(new ProcessAdapter() {
       @Override
@@ -194,9 +191,7 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
   protected abstract T createConsoleView();
 
   @Nullable
-  protected abstract Process createProcess(CommandLineArgumentsProvider provider) throws ExecutionException;
-
-  protected abstract OSProcessHandler createProcessHandler(final Process process, final String commandLine);
+  protected abstract OSProcessHandler createProcess(CommandLineArgumentsProvider provider) throws ExecutionException;
 
   public static void registerActionShortcuts(final List<AnAction> actions, final JComponent component) {
     for (AnAction action : actions) {
@@ -253,7 +248,7 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
   protected abstract ConsoleExecuteActionHandler createConsoleExecuteActionHandler();
 
 
-  public static class ConsoleExecuteAction extends DumbAwareAction {
+  private static class ConsoleExecuteAction extends DumbAwareAction {
     public static final String ACTIONS_EXECUTE_ICON = "/actions/execute.png";
 
     private final LanguageConsoleImpl myLanguageConsole;
