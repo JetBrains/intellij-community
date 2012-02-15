@@ -244,12 +244,12 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
     LvcsHelper.addLabel(this);
 
-    fireOnTestingFinished();
-
     SMTestProxy root = getTestsRootNode();
     if (root != null) {
       selectAndNotify(root);
     }
+
+    fireOnTestingFinished();
   }
 
   public void onTestsCountInSuite(final int count) {
