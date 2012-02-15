@@ -40,6 +40,7 @@ import com.intellij.ui.SideBorder;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
+import com.intellij.util.Consumer;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -63,11 +64,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-public class FileChooserDialogImpl extends DialogWrapper implements FileChooserDialog, FileLookup {
+public class FileChooserDialogImpl extends DialogWrapper implements FileChooserDialog, PathChooserDialog, FileLookup {
+  private static String ourLastPath = null;
+
   private final FileChooserDescriptor myChooserDescriptor;
   protected FileSystemTreeImpl myFileSystemTree;
-
-  private static VirtualFile ourLastFile;
   private Project myProject;
   private VirtualFile[] myChosenFiles = VirtualFile.EMPTY_ARRAY;
 
@@ -81,17 +82,22 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
 
   public static DataKey<PathField> PATH_FIELD = DataKey.create("PathField");
 
-  public FileChooserDialogImpl(@NotNull final FileChooserDescriptor chooserDescriptor, @Nullable Project project) {
+  public FileChooserDialogImpl(@NotNull final FileChooserDescriptor descriptor, @Nullable Project project) {
     super(project, true);
+    myChooserDescriptor = descriptor;
     myProject = project;
-    myChooserDescriptor = chooserDescriptor;
-    setTitle(getChooserTitle(chooserDescriptor));
+    setTitle(getChooserTitle(descriptor));
   }
 
-  public FileChooserDialogImpl(@NotNull final FileChooserDescriptor chooserDescriptor, @NotNull Component parent) {
+  public FileChooserDialogImpl(@NotNull final FileChooserDescriptor descriptor, @NotNull Component parent) {
+    this(descriptor, parent, null);
+  }
+
+  public FileChooserDialogImpl(@NotNull final FileChooserDescriptor descriptor, @NotNull Component parent, @Nullable Project project) {
     super(parent, true);
-    myChooserDescriptor = chooserDescriptor;
-    setTitle(getChooserTitle(chooserDescriptor));
+    myChooserDescriptor = descriptor;
+    myProject = project;
+    setTitle(getChooserTitle(descriptor));
   }
 
   private static String getChooserTitle(final FileChooserDescriptor descriptor) {
@@ -99,23 +105,25 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     return title != null ? title : UIBundle.message("file.chooser.default.title");
   }
 
+  @Override
   @NotNull
-  public VirtualFile[] choose(VirtualFile toSelect, Project project) {
+  public VirtualFile[] choose(@Nullable VirtualFile toSelect, Project project) {
+    prepareAndShow(toSelect != null ? toSelect.getPath() : null, project);
+    return myChosenFiles;
+  }
+
+  @Override
+  public void choose(@Nullable String toSelect, @NotNull Consumer<List<String>> callback) {
+    prepareAndShow(toSelect, myProject);
+    callback.consume(Arrays.asList(FileChooserUtil.getPaths(myChosenFiles)));
+  }
+
+  private void prepareAndShow(@Nullable String toSelect, @Nullable Project project) {
     init();
 
-    VirtualFile selectFile = null;
+    final String selectPath = FileChooserUtil.getPathToSelect(myChooserDescriptor, project, toSelect, ourLastPath);
 
-    if (toSelect == null && ourLastFile == null) {
-      if (project != null && project.getBaseDir() != null) {
-        selectFile = project.getBaseDir();
-      }
-    }
-    else {
-      selectFile = (toSelect == null) ? ourLastFile : (ourLastFile == null ? toSelect : myChooserDescriptor.getUserData(
-        PREFER_LAST_OVER_TO_SELECT.getName()) == null ? toSelect : ourLastFile);
-    }
-
-    final VirtualFile file = selectFile;
+    final VirtualFile file = selectPath != null ? LocalFileSystem.getInstance().findFileByPath(selectPath) : null;
 
     if (file != null && file.isValid()) {
       myFileSystemTree.select(file, new Runnable() {
@@ -134,8 +142,6 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     }
 
     show();
-
-    return myChosenFiles;
   }
 
   protected DefaultActionGroup createActionGroup() {
@@ -281,13 +287,13 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     }
 
     myChosenFiles = selectedFiles;
-    setLastSelectedFile(selectedFiles[selectedFiles.length - 1]);
+    setLastSelectedPath(FileChooserUtil.getSelectionPath(selectedFiles[selectedFiles.length - 1]));
 
     super.doOKAction();
   }
 
-  private static void setLastSelectedFile(final VirtualFile selectedFile) {
-    ourLastFile = selectedFile;
+  private static void setLastSelectedPath(final String selectedPath) {
+    ourLastPath = selectedPath;
   }
 
   public final void doCancelAction() {

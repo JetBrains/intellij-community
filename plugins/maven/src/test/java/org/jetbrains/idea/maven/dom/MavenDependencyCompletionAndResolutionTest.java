@@ -1015,14 +1015,18 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
 
     @NotNull
     @Override
-    public FileChooserDialog createFileChooser(@NotNull FileChooserDescriptor descriptor, Project project) {
+    public FileChooserDialog createFileChooser(@NotNull FileChooserDescriptor descriptor,
+                                               @Nullable Project project,
+                                               @Nullable Component parent) {
       return new MyFileChooserDialog(myFiles);
     }
 
     @NotNull
     @Override
-    public FileChooserDialog createFileChooser(@NotNull FileChooserDescriptor descriptor, @NotNull Component parent) {
-      return new MyFileChooserDialog(myFiles);
+    public PathChooserDialog createPathChooser(@NotNull FileChooserDescriptor descriptor,
+                                               @Nullable Project project,
+                                               @Nullable Component parent) {
+      throw new UnsupportedOperationException();
     }
 
     @NotNull

@@ -17,7 +17,7 @@ package com.intellij.ui.mac;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserUtil;
-import com.intellij.openapi.fileChooser.MacFileChooserDialog;
+import com.intellij.openapi.fileChooser.PathChooserDialog;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -25,7 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.ui.mac.foundation.MacUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.Consumer;
 import com.sun.jna.Callback;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,14 +39,14 @@ import java.util.List;
  * @author spleaner
  */
 @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
-public class MacFileChooserDialogImpl implements MacFileChooserDialog {
+public class MacFileChooserDialogImpl implements PathChooserDialog {
   private static final int OK = 1;
 
-  private static JDialog myFakeDialog;
-  private static List<String> myResultPaths;
+  private static String ourLastPath = null;
   private static FileChooserDescriptor myChooserDescriptor;
-  private static boolean myFileChooserActive = false;
-  private static MacFileChooserCallback mySheetCallback = null;
+  private static List<String> myResultPaths = null;
+  private static Consumer<List<String>> myCallback = null;
+  private Project myProject;
 
   private static final Callback SHOULD_ENABLE_URL = new Callback() {
     @SuppressWarnings("UnusedDeclaration")
@@ -84,20 +84,19 @@ public class MacFileChooserDialogImpl implements MacFileChooserDialog {
 
       try {
         if (myResultPaths != null) {
-          final String[] paths = ArrayUtil.toStringArray(myResultPaths);
-          final MacFileChooserCallback callback = mySheetCallback;
+          final List<String> paths = myResultPaths;
+          final Consumer<List<String>> callback = myCallback;
           //noinspection SSBasedInspection
           SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-              callback.onChosen(FileChooserUtil.getFiles(paths));
+              callback.consume(paths);
             }
           });
         }
       }
       finally {
-        myFileChooserActive = false;
         myResultPaths = null;
-        mySheetCallback = null;
+        myCallback = null;
       }
 
       Foundation.cfRelease(self);
@@ -123,8 +122,8 @@ public class MacFileChooserDialogImpl implements MacFileChooserDialog {
         invoke(chooser, "_setIncludeNewFolderButton:", true);
       }
 
-      final boolean showHidden = Boolean.TRUE.equals(myChooserDescriptor.getUserData(NATIVE_MAC_FILE_CHOOSER_SHOW_HIDDEN_FILES_ENABLED));
-      if (showHidden || Registry.is("ide.mac.filechooser.showhidden.files")) {
+      final Boolean showHidden = myChooserDescriptor.getUserData(PathChooserDialog.NATIVE_MAC_CHOOSER_SHOW_HIDDEN_FILES);
+      if (Boolean.TRUE.equals(showHidden) || Registry.is("ide.mac.filechooser.showhidden.files")) {
         if (Foundation.isClassRespondsToSelector(nsOpenPanel, Foundation.createSelector("setShowsHiddenFiles:"))) {
           invoke(chooser, "setShowsHiddenFiles:", true);
         }
@@ -151,50 +150,28 @@ public class MacFileChooserDialogImpl implements MacFileChooserDialog {
         types = invoke("NSArray", "arrayWithObject:", Foundation.nsString("jar"));
       }
 
-      if (mySheetCallback != null) {
-        final Window activeWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
-        if (activeWindow != null) {
-          String activeWindowTitle = null;
-          if (activeWindow instanceof Frame) {
-            activeWindowTitle = ((Frame)activeWindow).getTitle();
-          }
-          else if (activeWindow instanceof JDialog) {
-            activeWindowTitle = ((JDialog)activeWindow).getTitle();
-          }
+      final Window activeWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+      if (activeWindow != null) {
+        String activeWindowTitle = null;
+        if (activeWindow instanceof Frame) {
+          activeWindowTitle = ((Frame)activeWindow).getTitle();
+        }
+        else if (activeWindow instanceof JDialog) {
+          activeWindowTitle = ((JDialog)activeWindow).getTitle();
+        }
 
-          final ID focusedWindow = MacUtil.findWindowForTitle(activeWindowTitle);
-          if (focusedWindow != null) {
-            invoke(chooser, "beginSheetForDirectory:file:types:modalForWindow:modalDelegate:didEndSelector:contextInfo:",
-                   directory, file, types, focusedWindow, self, Foundation.createSelector("openPanelDidEnd:returnCode:contextInfo:"), null);
-            
-            if (directory != null) {
-              Foundation.cfRelease(directory);
-            }
-
-            if (file != null) {
-              Foundation.cfRelease(file);
-            }
-          }
+        final ID focusedWindow = MacUtil.findWindowForTitle(activeWindowTitle);
+        if (focusedWindow != null) {
+          invoke(chooser, "beginSheetForDirectory:file:types:modalForWindow:modalDelegate:didEndSelector:contextInfo:",
+                 directory, file, types, focusedWindow, self, Foundation.createSelector("openPanelDidEnd:returnCode:contextInfo:"), null);
         }
       }
-      else {
-        final ID result = invoke(chooser, "runModalForDirectory:file:types:", directory, file, types);
-        processResult(result, chooser);
-      }
+
+      Foundation.cfRelease(directory, file, types);
     }
   };
 
   private static void processResult(final ID result, final ID panel) {
-    //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        if (myFakeDialog != null) {
-          myFakeDialog.dispose();
-          myFakeDialog = null;
-        }
-      }
-    });
-
     final List<String> resultFiles = new ArrayList<String>();
     if (result != null && OK == result.intValue()) {
       ID fileNamesArray = invoke(panel, "filenames");
@@ -235,105 +212,39 @@ public class MacFileChooserDialogImpl implements MacFileChooserDialog {
     Foundation.registerObjcClassPair(delegateClass);
   }
 
-  public MacFileChooserDialogImpl(@NotNull FileChooserDescriptor chooserDescriptor) {
+  public MacFileChooserDialogImpl(@NotNull FileChooserDescriptor chooserDescriptor, Project project) {
     myChooserDescriptor = chooserDescriptor;
+    myProject = project;
   }
 
-  private static void showNativeChooser(@Nullable VirtualFile toSelect) {
-    final ID autoReleasePool = createAutoReleasePool();
+  @Override
+  public void choose(@Nullable final String toSelect, @NotNull final Consumer<List<String>> callback) {
+    assert myCallback == null : "Current native file chooser should finish before next usage!";
+    myCallback = callback;
 
+    final String selectPath = FileChooserUtil.getPathToSelect(myChooserDescriptor, myProject, toSelect, ourLastPath);
+
+    //noinspection SSBasedInspection
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        showNativeChooserAsSheet(selectPath);
+      }
+    });
+  }
+
+  private static void showNativeChooserAsSheet(@Nullable String toSelect) {
+    final ID autoReleasePool = createAutoReleasePool();
     try {
       final ID delegate = invoke(Foundation.getObjcClass("NSOpenPanelDelegate_"), "new");
-
-      final ID select = toSelect == null ? null : Foundation.nsString(toSelect.getPath());
       Foundation.cfRetain(delegate);
+
+      final ID select = toSelect == null ? null : Foundation.nsString(toSelect);
 
       invoke(delegate, "performSelectorOnMainThread:withObject:waitUntilDone:", Foundation.createSelector("showOpenPanel:"), select, false);
     }
     finally {
       invoke(autoReleasePool, "release");
     }
-  }
-
-  private static void showNativeChooserAsSheet(@Nullable VirtualFile toSelect) {
-    final ID autoReleasePool = createAutoReleasePool();
-    try {
-      final ID delegate = invoke(Foundation.getObjcClass("NSOpenPanelDelegate_"), "new");
-      Foundation.cfRetain(delegate);
-
-      final ID select = toSelect == null ? null : Foundation.nsString(toSelect.getPath());
-
-      invoke(delegate, "performSelectorOnMainThread:withObject:waitUntilDone:", Foundation.createSelector("showOpenPanel:"), select, false);
-    }
-    finally {
-      invoke(autoReleasePool, "release");
-    }
-  }
-
-  public void chooseWithSheet(final VirtualFile toSelect, final Project project, @NotNull MacFileChooserCallback callback) {
-    assert !myFileChooserActive : "Current native file chooser should finish before next usage!";
-
-    mySheetCallback = callback;
-
-    //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        showNativeChooserAsSheet(getToSelect(toSelect, project));
-      }
-    });
-  }
-
-  @NotNull
-  public VirtualFile[] choose(final VirtualFile toSelect, final Project project) {
-    assert !myFileChooserActive : "Current native file chooser should finish before next usage!";
-    myFileChooserActive = true;
-
-    //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        showNativeChooser(getToSelect(toSelect, project));
-      }
-    });
-
-    final Window parent = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
-    if (parent instanceof Frame) {
-      myFakeDialog = new JDialog((Frame)parent);
-    }
-    else if (parent instanceof JDialog) {
-      myFakeDialog = new JDialog(((JDialog)parent));
-    }
-    else {
-      myFakeDialog = new JDialog((JFrame)null);
-    }
-
-    myFakeDialog.setModal(true);
-    myFakeDialog.setUndecorated(true);
-    myFakeDialog.getRootPane().putClientProperty("Window.shadow", Boolean.FALSE);
-
-    myFakeDialog.setSize(0, 0);
-    myFakeDialog.setVisible(true);
-
-    try {
-      final String[] paths = myResultPaths != null ? ArrayUtil.toStringArray(myResultPaths) : ArrayUtil.EMPTY_STRING_ARRAY;
-      return FileChooserUtil.getFiles(paths);
-    }
-    finally {
-      myFileChooserActive = false;
-      myResultPaths = null;
-    }
-  }
-
-  private static VirtualFile getToSelect(VirtualFile toSelect, Project project) {
-    final VirtualFile[] selectFile = new VirtualFile[]{null};
-    if (toSelect == null) {
-      if (project != null && project.getBaseDir() != null) {
-        selectFile[0] = project.getBaseDir();
-      }
-    }
-    else {
-      selectFile[0] = toSelect.isValid() ? toSelect : null;
-    }
-    return selectFile[0];
   }
 
   private static ID createAutoReleasePool() {

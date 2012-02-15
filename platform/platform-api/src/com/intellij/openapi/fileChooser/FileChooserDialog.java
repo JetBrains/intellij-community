@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface FileChooserDialog {
-  DataKey<Boolean> PREFER_LAST_OVER_TO_SELECT = DataKey.create("PREFER_LAST_OVER_TO_SELECT");
+  DataKey<Boolean> PREFER_LAST_OVER_TO_SELECT = PathChooserDialog.PREFER_LAST_OVER_EXPLICIT;
   
   @NotNull
   VirtualFile[] choose(@Nullable VirtualFile toSelect, @Nullable Project project);

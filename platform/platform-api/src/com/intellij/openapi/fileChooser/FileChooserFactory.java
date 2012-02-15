@@ -30,10 +30,24 @@ public abstract class FileChooserFactory {
   }
 
   @NotNull
-  public abstract FileChooserDialog createFileChooser(@NotNull FileChooserDescriptor descriptor, @Nullable Project project);
+  public FileChooserDialog createFileChooser(@NotNull FileChooserDescriptor descriptor, @Nullable Project project) {
+    return createFileChooser(descriptor, project, null);
+  }
 
   @NotNull
-  public abstract FileChooserDialog createFileChooser(@NotNull FileChooserDescriptor descriptor, @NotNull Component parent);
+  public FileChooserDialog createFileChooser(@NotNull FileChooserDescriptor descriptor, @NotNull Component parent) {
+    return createFileChooser(descriptor, null, parent);
+  }
+
+  @NotNull
+  public abstract FileChooserDialog createFileChooser(@NotNull FileChooserDescriptor descriptor,
+                                                      @Nullable Project project,
+                                                      @Nullable Component parent);
+
+  @NotNull
+  public abstract PathChooserDialog createPathChooser(@NotNull FileChooserDescriptor descriptor,
+                                                      @Nullable Project project,
+                                                      @Nullable Component parent);
 
   /**
    * Creates Save File dialog.

@@ -16,22 +16,19 @@
 package com.intellij.openapi.fileChooser;
 
 import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
- * @deprecated use {@linkplain PathChooserDialog} (to remove in IDEA 12)
+ * @author Roman Shevchenko
+ * @since 13.02.2012
  */
-@SuppressWarnings("UnusedDeclaration")
-public interface MacFileChooserDialog extends FileChooserDialog {
-  DataKey<Boolean> NATIVE_MAC_FILE_CHOOSER_ENABLED = DataKey.create("native.mac.file.chooser.enabled");
-  DataKey<Boolean> NATIVE_MAC_FILE_CHOOSER_SHOW_HIDDEN_FILES_ENABLED = PathChooserDialog.NATIVE_MAC_CHOOSER_SHOW_HIDDEN_FILES;
+public interface PathChooserDialog {
+  DataKey<Boolean> PREFER_LAST_OVER_EXPLICIT = DataKey.create("prefer.last.over.explicit");
+  DataKey<Boolean> NATIVE_MAC_CHOOSER_SHOW_HIDDEN_FILES = DataKey.create("native.mac.chooser.show.hidden.files");
 
-  void chooseWithSheet(@Nullable VirtualFile toSelect, @Nullable Project project, @NotNull final MacFileChooserCallback callback);
-
-  interface MacFileChooserCallback {
-    void onChosen(@NotNull VirtualFile[] files);
-  }
+  void choose(@Nullable String toSelect, @NotNull final Consumer<List<String>> callback);
 }

@@ -17,7 +17,6 @@ package com.intellij.openapi.fileChooser;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
@@ -26,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.List;
 
 public class FileChooser {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileChooser.FileChooser");
@@ -107,33 +107,53 @@ public class FileChooser {
                                                 @Nullable final Component parent,
                                                 @Nullable final VirtualFile toSelect,
                                                 @NotNull final Consumer<VirtualFile[]> callback) {
-    if (useNativeMacChooser(descriptor)) {
-      descriptor.putUserData(MacFileChooserDialog.NATIVE_MAC_FILE_CHOOSER_ENABLED, Boolean.TRUE);
-    }
+    final String path = toSelect != null ? FileChooserUtil.getSelectionPath(toSelect) : null;
+    choosePaths(descriptor, project, parent, path, new Consumer<List<String>>() {
+      @Override
+      public void consume(final List<String> paths) {
+        callback.consume(FileChooserUtil.getFiles(ArrayUtil.toStringArray(paths)));
+      }
+    });
+  }
 
+  /**
+   * Shows file/folder open dialog, allows user to choose files/folders and then passes result to callback in EDT.
+   * On MacOS Open Dialog will be shown with slide effect if Macish UI is turned on.
+   *
+   * @param descriptor file chooser descriptor
+   * @param project    project
+   * @param toSelect   file to preselect
+   * @param callback   callback will be invoked after user have closed dialog
+   */
+  public static void choosePaths(@NotNull final FileChooserDescriptor descriptor,
+                                 @Nullable final Project project,
+                                 @Nullable final String toSelect,
+                                 @NotNull final Consumer<List<String>> callback) {
+    choosePaths(descriptor, project, null, toSelect, callback);
+  }
+
+  /**
+   * Shows file/folder open dialog, allows user to choose files/folders and then passes result to callback in EDT.
+   * On MacOS Open Dialog will be shown with slide effect if Macish UI is turned on.
+   *
+   * @param descriptor file chooser descriptor
+   * @param project    project
+   * @param parent     parent component
+   * @param toSelect   file to preselect
+   * @param callback   callback will be invoked after user have closed dialog
+   */
+  private static void choosePaths(@NotNull final FileChooserDescriptor descriptor,
+                                  @Nullable final Project project,
+                                  @Nullable final Component parent,
+                                  @Nullable final String toSelect,
+                                  @NotNull final Consumer<List<String>> callback) {
     final FileChooserFactory factory = FileChooserFactory.getInstance();
-    final FileChooserDialog dialog = parent != null ? factory.createFileChooser(descriptor, parent)
-                                                    : factory.createFileChooser(descriptor, project);
-
-    if (dialog instanceof MacFileChooserDialog) {
-      ((MacFileChooserDialog)dialog).chooseWithSheet(toSelect, project, new MacFileChooserDialog.MacFileChooserCallback() {
-        public void onChosen(@NotNull final VirtualFile[] files) {
-          callback.consume(files);
-        }
-      });
-    }
-    else {
-      final VirtualFile[] files = dialog.choose(toSelect, project);
-      callback.consume(files);
-    }
+    final PathChooserDialog pathChooser = factory.createPathChooser(descriptor, project, parent);
+    pathChooser.choose(toSelect, callback);
   }
 
-  private static boolean useNativeMacChooser(final FileChooserDescriptor descriptor) {
-    @SuppressWarnings("deprecation") final boolean nativeMacChooserEnabled = isNativeMacChooserEnabled();
-    return SystemInfo.isMac && !descriptor.isChooseJarContents() && nativeMacChooserEnabled;
-  }
-
-  /** @deprecated internal method, to make private in IDEA 12 */
+  /** @deprecated internal method, to remove in IDEA 12 */
+  @SuppressWarnings("UnusedDeclaration")
   public static boolean isNativeMacChooserEnabled() {
     return "true".equalsIgnoreCase(System.getProperty("native.mac.file.chooser.enabled", "true")) &&
            Registry.is("ide.mac.filechooser.native");

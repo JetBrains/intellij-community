@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.fileChooser;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -79,5 +80,36 @@ public final class FileChooserUtil {
 
     setSelectionPath(file, path);
     return file;
+  }
+
+  @Nullable
+  public static String getPathToSelect(@NotNull FileChooserDescriptor descriptor,
+                                       @Nullable Project project,
+                                       @Nullable String toSelect,
+                                       @Nullable String lastPath) {
+    if (toSelect == null && lastPath == null) {
+      if (project != null) {
+        final VirtualFile baseDir = project.getBaseDir();
+        if (baseDir != null) {
+          return baseDir.getPath();
+        }
+      }
+    }
+    else if (toSelect != null && lastPath != null) {
+      if (Boolean.TRUE.equals(descriptor.getUserData(PathChooserDialog.PREFER_LAST_OVER_EXPLICIT))) {
+        return toSelect;
+      }
+      else {
+        return lastPath;
+      }
+    }
+    else if (toSelect == null) {
+      return lastPath;
+    }
+    else {
+      return toSelect;
+    }
+
+    return null;
   }
 }

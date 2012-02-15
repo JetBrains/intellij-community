@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -197,9 +197,11 @@ public class Foundation {
     myFoundationLibrary.CFRetain(id);
   }
 
-  public static void cfRelease(ID... id) {
-    for (ID id1 : id) {
-      myFoundationLibrary.CFRelease(id1);
+  public static void cfRelease(ID... ids) {
+    for (ID id : ids) {
+      if (id != null) {
+        myFoundationLibrary.CFRelease(id);
+      }
     }
   }
 
