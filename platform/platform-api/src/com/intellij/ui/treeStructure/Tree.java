@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -292,33 +292,35 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
    * See faulty code at BasicTreeUI.selectPathForEvent():2245
    *
    * Another hack to match selection UI (wide) and selection behavior (narrow) in Nimbus/GTK+.
-   *
-   * @param e
    */
-  protected void processMouseEvent(MouseEvent e) {
+  protected void processMouseEvent(final MouseEvent e) {
+    MouseEvent e2 = e;
+
     if (SystemInfo.isMac) {
       if (SwingUtilities.isLeftMouseButton(e) && e.isControlDown() && e.getID() == MouseEvent.MOUSE_PRESSED) {
         int modifiers = e.getModifiers() & ~(InputEvent.CTRL_MASK | InputEvent.BUTTON1_MASK) | InputEvent.BUTTON3_MASK;
-        e = new MouseEvent(e.getComponent(), e.getID(), e.getWhen(), modifiers, e.getX(), e.getY(), e.getClickCount(), true,
-                           MouseEvent.BUTTON3);
+        e2 = new MouseEvent(e.getComponent(), e.getID(), e.getWhen(), modifiers, e.getX(), e.getY(), e.getClickCount(),
+                            true, MouseEvent.BUTTON3);
       }
     }
     else if (UIUtil.isUnderNimbusLookAndFeel() || UIUtil.isUnderGTKLookAndFeel()) {
-      if (SwingUtilities.isLeftMouseButton(e) && e.getID() == MouseEvent.MOUSE_PRESSED) {
+      if (SwingUtilities.isLeftMouseButton(e) && (e.getID() == MouseEvent.MOUSE_PRESSED || e.getID() == MouseEvent.MOUSE_CLICKED)) {
         final TreePath path = getClosestPathForLocation(e.getX(), e.getY());
         if (path != null) {
           final Rectangle bounds = getPathBounds(path);
-          if ((e.getY() > bounds.y && e.getY() < bounds.y + bounds.height) &&
+          if (bounds != null &&
+              (e.getY() > bounds.y && e.getY() < bounds.y + bounds.height) &&
               (e.getX() >= bounds.x + bounds.width ||
                e.getX() < bounds.x && !isLocationInExpandControl(path, e.getX(), e.getY()))) {
             int newX = bounds.x + bounds.width - 2;
-            e = new MouseEvent(e.getComponent(), e.getID(), e.getWhen(), e.getModifiers(), newX, e.getY(), e.getClickCount(),
-                               e.isPopupTrigger(), e.getButton());
+            e2 = new MouseEvent(e.getComponent(), e.getID(), e.getWhen(), e.getModifiers(), newX, e.getY(), e.getClickCount(),
+                                e.isPopupTrigger(), e.getButton());
           }
         }
       }
     }
-    super.processMouseEvent(e);
+
+    super.processMouseEvent(e2);
   }
 
   private boolean isLocationInExpandControl(final TreePath path, final int x, final int y) {

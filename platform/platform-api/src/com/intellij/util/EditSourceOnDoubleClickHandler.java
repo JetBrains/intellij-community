@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
-import com.intellij.util.ui.Table;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,8 +34,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 public class EditSourceOnDoubleClickHandler {
-  private EditSourceOnDoubleClickHandler() {
-  }
+  private EditSourceOnDoubleClickHandler() { }
 
   public static void install(final JTree tree, @Nullable final Runnable whenPerformed) {
     tree.addMouseListener(new TreeMouseListener(tree, whenPerformed));
@@ -60,7 +58,7 @@ public class EditSourceOnDoubleClickHandler {
     });
   }
 
-  public static void install(final Table table) {
+  public static void install(final JTable table) {
     table.addMouseListener(new MouseAdapter(){
       public void mouseClicked(MouseEvent e) {
         if (e.getClickCount() != 2) return;
@@ -75,8 +73,7 @@ public class EditSourceOnDoubleClickHandler {
     });
   }
 
-  public static void install(final JList list,
-                           final Runnable whenPerformed) {
+  public static void install(final JList list, final Runnable whenPerformed) {
     list.addMouseListener(new MouseAdapter() {
       public void mouseClicked(MouseEvent e) {
         if (e.getClickCount() != 2) return;
@@ -107,12 +104,12 @@ public class EditSourceOnDoubleClickHandler {
     public void mouseClicked(MouseEvent e) {
       if (MouseEvent.BUTTON1 != e.getButton() || e.getClickCount() != 2) return;
 
-      if (myTree.getUI() instanceof UIUtil.MacTreeUI) {
-        if (myTree.getClosestPathForLocation(e.getX(), e.getY()) == null) return;
-      } else if (myTree.getPathForLocation(e.getX(), e.getY()) == null) return;
+      final TreePath path = myTree.getUI() instanceof UIUtil.MacTreeUI ? myTree.getClosestPathForLocation(e.getX(), e.getY())
+                                                                       : myTree.getPathForLocation(e.getX(), e.getY());
+      if (path == null) return;
 
-      DataContext dataContext = DataManager.getInstance().getDataContext(myTree);
-      Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+      final DataContext dataContext = DataManager.getInstance().getDataContext(myTree);
+      final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
       if (project == null) return;
 
       final TreePath selectionPath = myTree.getSelectionPath();
@@ -124,6 +121,7 @@ public class EditSourceOnDoubleClickHandler {
       }
     }
 
+    @SuppressWarnings("UnusedParameters")
     protected void processDoubleClick(final MouseEvent e, final DataContext dataContext, final TreeNode lastPathComponent) {
       OpenSourceUtil.openSourcesFrom(dataContext, true);
       if (myWhenPerformed != null) myWhenPerformed.run();
