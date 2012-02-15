@@ -87,4 +87,8 @@ public class ExternallyRenamedChange extends Change {
   public void setCopied(final boolean copied) {
     myCopied = copied;
   }
+
+  public String getOriginUrl() {
+    return myOriginUrl;
+  }
 }

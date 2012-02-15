@@ -150,6 +150,7 @@ public class NullityInferrer {
       final PsiModifierListOwner element = pointer.getElement();
       if (element != null) {
         if (shouldIgnore(element)) continue;
+        if (element instanceof PsiField && ((PsiField)element).hasInitializer() && element.hasModifierProperty(PsiModifier.FINAL)) continue;
         new AddAnnotationFix(manager.getDefaultNotNull(), element, manager.getDefaultNullable()).invoke(project, null,
                                                                                                         element.getContainingFile());
       }

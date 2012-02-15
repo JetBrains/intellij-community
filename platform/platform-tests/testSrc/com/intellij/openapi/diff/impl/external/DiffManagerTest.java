@@ -15,15 +15,14 @@
  */
 package com.intellij.openapi.diff.impl.external;
 
-import com.intellij.openapi.diff.BinaryContent;
-import com.intellij.openapi.diff.DiffContent;
-import com.intellij.openapi.diff.DiffRequest;
-import com.intellij.openapi.diff.DiffTool;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diff.*;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.util.ArrayUtil;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
 import java.util.ArrayList;
 
 public class DiffManagerTest extends TestCase {
@@ -51,6 +50,11 @@ public class DiffManagerTest extends TestCase {
     public boolean canShow(DiffRequest request) {
       myCanShowCount++;
       return canShowImpl(request);
+    }
+
+    @Override
+    public DiffViewer createComponent(String title, DiffRequest request, Window window, Disposable parentDisposable) {
+      return null;
     }
 
     private static boolean canShowImpl(DiffRequest request) {

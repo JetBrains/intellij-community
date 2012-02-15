@@ -17,10 +17,7 @@ package com.intellij.openapi.diff.impl;
 
 import com.intellij.ide.actions.EditSourceAction;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.CommonShortcuts;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -183,6 +180,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
   }
 
   public void reset() {
+    //myUi.getContentManager().removeAllContents(false);
     myPanel.setPreferredHeightGetter(null);
   }
 
@@ -371,6 +369,11 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
 
   public int getContentsNumber() {
     return 2;
+  }
+
+  @Override
+  public DiffViewerType getType() {
+    return DiffViewerType.contents;
   }
 
   public ComparisonPolicy getComparisonPolicy() {

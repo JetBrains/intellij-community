@@ -357,7 +357,14 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
       for (ScopeToolState state : tools.getTools()) {
         final NamedScope namedScope = state.getScope(element.getProject());
         if (namedScope == null || namedScope.getValue().contains(element.getContainingFile(), getCurrentProfile().getProfileManager().getScopesManager())) {
-          return state.isEnabled() && state.getTool() == tool;
+          if (state.isEnabled()) {
+            final InspectionProfileEntry entry = state.getTool();
+            if (entry instanceof InspectionToolWrapper && ((InspectionToolWrapper)entry).getTool() == tool) return true;
+            if (entry == tool) {
+              return true;
+            }
+          }
+          return false;
         }
       }
     }
@@ -484,7 +491,7 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
         final InspectionTool tool = (InspectionTool)state.getTool();
         try {
           if (tool.isGraphNeeded()) {
-            ((RefManagerImpl)tool.getRefManager()).findAllDeclarations();
+            ((RefManagerImpl)getRefManager()).findAllDeclarations();
           }
           tool.runInspection(scope, manager);
           if (tool.queryExternalUsagesRequests(manager)) {

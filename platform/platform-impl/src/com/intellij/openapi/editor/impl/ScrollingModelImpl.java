@@ -449,7 +449,7 @@ public class ScrollingModelImpl implements ScrollingModelEx {
       myAnimator = new Animator("Animated scroller", myStepCount, SCROLL_DURATION, false, true) {
         @Override
         public void paintNow(int frame, int totalFrames, int cycle) {
-          double time = (frame + 1) / (double)totalFrames;
+          double time = ((double)(frame + 1)) / (double)totalFrames;
           double fraction = timeToFraction(time);
 
           final int hOffset = (int)(myStartHOffset + (myEndHOffset - myStartHOffset) * fraction + 0.5);

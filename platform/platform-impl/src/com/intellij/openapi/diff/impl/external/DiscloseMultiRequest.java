@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,28 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.vcs.changes;
+package com.intellij.openapi.diff.impl.external;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.diff.DiffRequest;
+import com.intellij.openapi.diff.DiffViewer;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vcs.CalledInAwt;
-import com.intellij.openapi.vcs.CalledInBackground;
 
-import javax.swing.*;
+import java.awt.*;
+import java.util.List;
+import java.util.Map;
 
 /**
- * @author irengrig
- *         Date: 7/5/11
- *         Time: 2:49 PM
+ * Created with IntelliJ IDEA.
+ * User: Irina.Chernushina
+ * Date: 2/13/12
+ * Time: 6:58 PM
  */
-public interface VcsChangeDetailsProvider {
-  ExtensionPointName<VcsChangeDetailsProvider> EP_NAME = ExtensionPointName.create("com.intellij.vcschangedetails");
-
-  String getName();
-
-  @CalledInAwt
-  boolean canComment(final Change change);
-  @CalledInAwt
-  RefreshablePanel comment(final Change change, JComponent parent);
+public interface DiscloseMultiRequest {
+  Map<String, DiffRequest> discloseRequest(DiffRequest request);
+  DiffViewer viewerForRequest(Window window, Disposable parentDisposable, final String name, DiffRequest current);
 }

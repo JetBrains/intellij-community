@@ -105,6 +105,11 @@ public class VcsChangeDetailsManager {
     }
 
     @Override
+    public String getName() {
+      return "Contents Diff";
+    }
+
+    @Override
     public boolean canComment(Change change) {
       FilePath path = ChangesUtil.getFilePath(change);
       if (path != null && path.isDirectory()) return false;
@@ -211,6 +216,11 @@ public class VcsChangeDetailsManager {
     private FragmentedDiffDetailsProvider(Project project, final BackgroundTaskQueue queue) {
       myProject = project;
       myQueue = queue;
+    }
+
+    @Override
+    public String getName() {
+      return "Contents Diff";
     }
 
     @Override

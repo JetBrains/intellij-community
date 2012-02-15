@@ -138,6 +138,8 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     settings.SHOW_ICONS_IN_MENUS = myComponent.myCbDisplayIconsInMenu.isSelected();
     update |= settings.SHOW_MEMORY_INDICATOR != myComponent.myShowMemoryIndicatorCheckBox.isSelected();
     settings.SHOW_MEMORY_INDICATOR = myComponent.myShowMemoryIndicatorCheckBox.isSelected();
+    update |= settings.ALLOW_MERGE_BUTTONS != myComponent.myAllowMergeButtons.isSelected();
+    settings.ALLOW_MERGE_BUTTONS = myComponent.myAllowMergeButtons.isSelected();
     update |= settings.CYCLE_SCROLLING != myComponent.myCycleScrollingCheckBox.isSelected();
     settings.CYCLE_SCROLLING = myComponent.myCycleScrollingCheckBox.isSelected();
     if (settings.OVERRIDE_NONIDEA_LAF_FONTS != myComponent.myOverrideLAFFonts.isSelected()) {
@@ -200,6 +202,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     myComponent.myShowToolStripesCheckBox.setSelected(!settings.HIDE_TOOL_STRIPES);
     myComponent.myCbDisplayIconsInMenu.setSelected(settings.SHOW_ICONS_IN_MENUS);
     myComponent.myShowMemoryIndicatorCheckBox.setSelected(settings.SHOW_MEMORY_INDICATOR);
+    myComponent.myAllowMergeButtons.setSelected(settings.ALLOW_MERGE_BUTTONS);
     myComponent.myCycleScrollingCheckBox.setSelected(settings.CYCLE_SCROLLING);
 
     myComponent.myHideIconsInQuickNavigation.setSelected(settings.SHOW_ICONS_IN_QUICK_NAVIGATION);
@@ -238,6 +241,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     isModified |= myComponent.myShowToolStripesCheckBox.isSelected() == settings.HIDE_TOOL_STRIPES;
     isModified |= myComponent.myCbDisplayIconsInMenu.isSelected() != settings.SHOW_ICONS_IN_MENUS;
     isModified |= myComponent.myShowMemoryIndicatorCheckBox.isSelected() != settings.SHOW_MEMORY_INDICATOR;
+    isModified |= myComponent.myAllowMergeButtons.isSelected() != settings.ALLOW_MERGE_BUTTONS;
     isModified |= myComponent.myCycleScrollingCheckBox.isSelected() != settings.CYCLE_SCROLLING;
 
     isModified |= myComponent.myOverrideLAFFonts.isSelected() != settings.OVERRIDE_NONIDEA_LAF_FONTS;
@@ -315,6 +319,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     private JCheckBox myCbDisplayIconsInMenu;
     private JCheckBox myDisableMnemonics;
     private JBCheckBox myHideNavigationPopupsCheckBox;
+    private JCheckBox myAllowMergeButtons;
 
     public MyComponent() {
       ActionListener updater = new ActionListener() {

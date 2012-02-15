@@ -86,7 +86,7 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
 
     if (tool.isOldProblemsIncluded()) {
       final Map<RefEntity, CommonProblemDescriptor[]> oldProblems =
-        tool instanceof DescriptorProviderInspection ? ((DescriptorProviderInspection)tool)
+        tool instanceof DescriptorProviderInspection && !(tool instanceof CommonInspectionToolWrapper)? ((DescriptorProviderInspection)tool)
           .getOldProblemElements() : null;
       computeContainer = new Function<RefEntity, UserObjectContainer<RefEntity>>() {
         public UserObjectContainer<RefEntity> fun(final RefEntity refElement) {
@@ -111,7 +111,7 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
     final RefElementContainer refElementDescriptor = ((RefElementContainer)container);
     final RefEntity refElement = refElementDescriptor.getUserObject();
     if (context.getUIOptions().SHOW_ONLY_DIFF && tool.getElementStatus(refElement) == FileStatus.NOT_CHANGED) return;
-    if (tool instanceof DescriptorProviderInspection) {
+    if (tool instanceof DescriptorProviderInspection && !(tool instanceof CommonInspectionToolWrapper)) {
       final DescriptorProviderInspection descriptorProviderInspection = (DescriptorProviderInspection)tool;
       final CommonProblemDescriptor[] problems = refElementDescriptor.getProblemDescriptors();
       if (problems != null) {

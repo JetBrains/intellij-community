@@ -22,6 +22,8 @@ import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 
+import java.awt.*;
+
 public class MergeTool implements DiffTool {
   public void show(DiffRequest data) {
     if (data instanceof MergeRequestImpl) {
@@ -68,5 +70,10 @@ public class MergeTool implements DiffTool {
       if (content.getDocument() == null) return false;
     }
     return true;
+  }
+
+  @Override
+  public DiffViewer createComponent(String title, DiffRequest request, Window window, Disposable parentDisposable) {
+    return createMergeComponent(request, null, parentDisposable);
   }
 }

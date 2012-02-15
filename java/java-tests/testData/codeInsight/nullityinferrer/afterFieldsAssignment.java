@@ -32,6 +32,12 @@ class Test {
   @Nullable
   final String myFoo10;
 
+  final String myFoo11 = "";
+  @NotNull
+  final String myFoo12;
+  @Nullable
+  final String myFoo13 = null;
+
   /**
    * {@link #myFoo6}
    */
@@ -42,6 +48,7 @@ class Test {
     myFoo8 = paramNullable;
     myFoo9 = simpleParam;
     myFoo10 = foo10(false);
+    myFoo12 = "";
   }
 
   @Nullable

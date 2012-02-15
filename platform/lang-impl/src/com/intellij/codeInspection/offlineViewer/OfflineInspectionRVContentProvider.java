@@ -22,10 +22,7 @@ package com.intellij.codeInspection.offlineViewer;
 
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.QuickFix;
-import com.intellij.codeInspection.ex.DescriptorProviderInspection;
-import com.intellij.codeInspection.ex.InspectionRVContentProvider;
-import com.intellij.codeInspection.ex.InspectionTool;
-import com.intellij.codeInspection.ex.QuickFixAction;
+import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.offline.OfflineProblemDescriptor;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
@@ -96,7 +93,7 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
 
     final RefEntity[] selectedRefElements = selectedElements.toArray(new RefEntity[selectedElements.size()]);
 
-    if (tool instanceof DescriptorProviderInspection) {
+    if (tool instanceof DescriptorProviderInspection && !(tool instanceof CommonInspectionToolWrapper)) {
       return ((DescriptorProviderInspection)tool).extractActiveFixes(selectedRefElements, actions);
     }
 
@@ -171,7 +168,7 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
                                   final InspectionPackageNode packageNode,
                                   final boolean canPackageRepeat) {
     final RefElementNode elemNode = addNodeToParent(container, tool, packageNode);
-    if (tool instanceof DescriptorProviderInspection) {
+    if (tool instanceof DescriptorProviderInspection && !(tool instanceof CommonInspectionToolWrapper)) {
       elemNode.add(new OfflineProblemDescriptorNode(((OfflineProblemDescriptorContainer)container).getUserObject(), (DescriptorProviderInspection)tool));
     }
   }
