@@ -357,7 +357,7 @@ public abstract class ChooseByNameBase {
     myCardContainer.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 4));  // space between checkbox and filter/show all in view buttons
 
     final String checkBoxName = myModel.getCheckBoxName();
-    myCheckBox = new JCheckBox(checkBoxName != null ? checkBoxName + " (" + KeymapUtil.getShortcutsText(myCheckBoxShortcut.getShortcuts()) + ")" : "");
+    myCheckBox = new JCheckBox(checkBoxName != null ? checkBoxName + (myCheckBoxShortcut != null ? " (" + KeymapUtil.getShortcutsText(myCheckBoxShortcut.getShortcuts()) + ")" : "") : "");
     myCheckBox.setAlignmentX(SwingConstants.RIGHT);
     
     if (!SystemInfo.isMac) {
@@ -450,7 +450,7 @@ public abstract class ChooseByNameBase {
     myTextField.setFont(editorFont);
 
     if (checkBoxName != null) {
-      if (myCheckBox != null) {
+      if (myCheckBox != null && myCheckBoxShortcut != null) {
         new AnAction("change goto check box", null ,null) {
           @Override
           public void actionPerformed(AnActionEvent e) {
