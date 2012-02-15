@@ -26,7 +26,7 @@ public class LiveTemplateCharFilter extends CharFilter {
   @Override
   public Result acceptChar(char c, int prefixLength, Lookup lookup) {
     LookupElement item = lookup.getCurrentItem();
-    if (item instanceof LiveTemplateLookupElement) {
+    if (item instanceof LiveTemplateLookupElement && lookup.isCompletion()) {
       if (Character.isJavaIdentifierPart(c)) return Result.ADD_TO_PREFIX;
 
       if (c == ((LiveTemplateLookupElement)item).getTemplate().getShortcutChar()) {
