@@ -28,12 +28,14 @@ import org.jetbrains.annotations.Nullable;
 public interface TestResultsViewer extends Disposable {
   /**
    * Fake Root for toplevel test suits/tests
+   *
    * @return root
    */
   SMTestProxy getTestsRootNode();
 
   /**
    * Selects test or suite in Tests tree and notify about selection changed
+   *
    * @param proxy
    */
   void selectAndNotify(@Nullable AbstractTestProxy proxy);
@@ -49,24 +51,30 @@ public interface TestResultsViewer extends Disposable {
 
   interface EventsListener extends TestProxyTreeSelectionListener {
     void onTestingStarted(TestResultsViewer sender);
+
     void onTestingFinished(TestResultsViewer sender);
+
     void onTestNodeAdded(TestResultsViewer sender, SMTestProxy test);
   }
 
-  class SMEventsAdapter implements  EventsListener {
+  class SMEventsAdapter implements EventsListener {
 
     @Override
-    public void onTestingStarted(TestResultsViewer sender) {}
+    public void onTestingStarted(TestResultsViewer sender) {
+    }
 
     @Override
-    public void onTestingFinished(TestResultsViewer sender) {}
+    public void onTestingFinished(TestResultsViewer sender) {
+    }
 
     @Override
-    public void onTestNodeAdded(TestResultsViewer sender, SMTestProxy test) {}
+    public void onTestNodeAdded(TestResultsViewer sender, SMTestProxy test) {
+    }
 
     @Override
     public void onSelected(@Nullable SMTestProxy selectedTestProxy,
                            @NotNull TestResultsViewer viewer,
-                           @NotNull TestFrameworkRunningModel model) {}
+                           @NotNull TestFrameworkRunningModel model) {
+    }
   }
 }
