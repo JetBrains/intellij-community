@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,7 +95,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   @NonNls private static final String ATTRIBUTE_MAJOR_RELEASE_DATE = "majorReleaseDate";
   @NonNls private static final String ELEMENT_LOGO = "logo";
   @NonNls private static final String ATTRIBUTE_URL = "url";
-  @NonNls private static final String ATTRIBUTE_TEXTCOLOR = "textcolor";
+  @NonNls private static final String ATTRIBUTE_TEXT_COLOR = "textcolor";
   @NonNls private static final String ATTRIBUTE_PROGRESS_COLOR = "progressColor";
   @NonNls private static final String ATTRIBUTE_PROGRESS_Y = "progressY";
   @NonNls private static final String ELEMENT_ABOUT = "about";
@@ -394,11 +394,10 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     Element logoElement = parentNode.getChild(ELEMENT_LOGO);
     if (logoElement != null) {
       myLogoUrl = logoElement.getAttributeValue(ATTRIBUTE_URL);
-      final int rgb = Integer.parseInt(logoElement.getAttributeValue(ATTRIBUTE_TEXTCOLOR), 16);
-      myLogoTextColor = new Color(rgb);
+      myLogoTextColor = parseColor(logoElement.getAttributeValue(ATTRIBUTE_TEXT_COLOR));
       String v = logoElement.getAttributeValue(ATTRIBUTE_PROGRESS_COLOR);
       if (v != null) {
-        myProgressColor = new Color(Integer.parseInt(v, 16));
+        myProgressColor = parseColor(v);
       }
       v = logoElement.getAttributeValue(ATTRIBUTE_PROGRESS_Y);
       if (v != null) {
@@ -537,6 +536,11 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     catch (Exception ignore) { }
     if (month > 0) month--;
     return new GregorianCalendar(year, month, day, hour, minute);
+  }
+
+  private static Color parseColor(final String colorString) {
+    final long rgb = Long.parseLong(colorString, 16);
+    return new Color((int)rgb, rgb > 0xffffff);
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
