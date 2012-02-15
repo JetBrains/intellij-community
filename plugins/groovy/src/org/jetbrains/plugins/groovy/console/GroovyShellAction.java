@@ -40,6 +40,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathsList;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
@@ -148,8 +149,10 @@ public class GroovyShellAction extends DumbAwareAction {
   }
 
   private static void runShell(final Module module) {
+    VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
+    final String workingDir = contentRoots.length == 0 ? null : contentRoots[0].getPath();
     AbstractConsoleRunnerWithHistory<GroovyConsoleView> runner =
-      new AbstractConsoleRunnerWithHistory<GroovyConsoleView>(module.getProject(), "Groovy Shell", null) {
+      new AbstractConsoleRunnerWithHistory<GroovyConsoleView>(module.getProject(), "Groovy Shell", workingDir) {
 
         @Override
         protected GroovyConsoleView createConsoleView() {
@@ -165,6 +168,7 @@ public class GroovyShellAction extends DumbAwareAction {
             javaParameters.getProgramParametersList().addAll("--classpath", list.getPathsString());
           }
           javaParameters.getProgramParametersList().addAll("-p", GroovyScriptRunner.getPathInConf("console.txt"));
+          javaParameters.setWorkingDirectory(getWorkingDir());
 
           final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
           assert sdk != null;
