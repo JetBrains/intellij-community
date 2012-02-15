@@ -54,7 +54,6 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
   private final String myConsoleTitle;
 
   private ProcessHandler myProcessHandler;
-  private final CommandLineArgumentsProvider myProvider;
   private final String myWorkingDir;
 
   private T myConsoleView;
@@ -63,11 +62,9 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
 
   public AbstractConsoleRunnerWithHistory(@NotNull final Project project,
                                           @NotNull final String consoleTitle,
-                                          @NotNull final CommandLineArgumentsProvider provider,
                                           @Nullable final String workingDir) {
     myProject = project;
     myConsoleTitle = consoleTitle;
-    myProvider = provider;
     myWorkingDir = workingDir;
   }
 
@@ -78,7 +75,7 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
    */
   public void initAndRun() throws ExecutionException {
     // Create Server process
-    myProcessHandler = createProcess(myProvider);
+    myProcessHandler = createProcess();
     ProcessTerminatedListener.attach(myProcessHandler);
 
     UIUtil.invokeLaterIfNeeded(new Runnable() {
@@ -191,7 +188,7 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
   protected abstract T createConsoleView();
 
   @Nullable
-  protected abstract OSProcessHandler createProcess(CommandLineArgumentsProvider provider) throws ExecutionException;
+  protected abstract OSProcessHandler createProcess() throws ExecutionException;
 
   public static void registerActionShortcuts(final List<AnAction> actions, final JComponent component) {
     for (AnAction action : actions) {
@@ -303,7 +300,4 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
     return myConsoleExecuteActionHandler;
   }
 
-  protected CommandLineArgumentsProvider getProvider() {
-    return myProvider;
-  }
 }

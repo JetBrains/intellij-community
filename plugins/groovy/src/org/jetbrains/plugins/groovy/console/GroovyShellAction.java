@@ -20,7 +20,6 @@ import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.console.ConsoleHistoryController;
 import com.intellij.execution.console.LanguageConsoleImpl;
 import com.intellij.execution.console.LanguageConsoleViewImpl;
-import com.intellij.execution.process.CommandLineArgumentsProvider;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.runners.AbstractConsoleRunnerWithHistory;
 import com.intellij.execution.runners.ConsoleExecuteActionHandler;
@@ -150,7 +149,7 @@ public class GroovyShellAction extends DumbAwareAction {
 
   private static void runShell(final Module module) {
     AbstractConsoleRunnerWithHistory<GroovyConsoleView> runner =
-      new AbstractConsoleRunnerWithHistory<GroovyConsoleView>(module.getProject(), "Groovy Shell", new CommandLineArgumentsProvider(), null) {
+      new AbstractConsoleRunnerWithHistory<GroovyConsoleView>(module.getProject(), "Groovy Shell", null) {
 
         @Override
         protected GroovyConsoleView createConsoleView() {
@@ -158,7 +157,7 @@ public class GroovyShellAction extends DumbAwareAction {
         }
 
         @Override
-        protected OSProcessHandler createProcess(CommandLineArgumentsProvider provider) throws ExecutionException {
+        protected OSProcessHandler createProcess() throws ExecutionException {
           final JavaParameters javaParameters = GroovyScriptRunConfiguration.createJavaParametersWithSdk(module);
           DefaultGroovyScriptRunner.configureGenericGroovyRunner(javaParameters, module, "groovy.ui.GroovyMain", true);
           PathsList list = GroovyScriptRunner.getClassPathFromRootModel(module, true, javaParameters, true);
