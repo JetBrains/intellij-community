@@ -60,9 +60,7 @@ abstract class SuppressInspectionAction extends SuppressIntentionAction {
         return getAnchor(element) != null;
     }
 
-    public void invoke(Project project, Editor editor, PsiElement element) throws IncorrectOperationException {
-        if (element == null) return;
-
+    public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
         final XmlTag anchor = getAnchor(element);
         if (anchor == null) return;
 

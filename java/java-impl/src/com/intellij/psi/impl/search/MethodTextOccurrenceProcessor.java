@@ -58,7 +58,7 @@ public final class MethodTextOccurrenceProcessor extends RequestResultProcessor 
         continue;
       }
 
-      if (ref instanceof ResolvingHint && !((ResolvingHint)ref).canResolveTo(method)) {
+      if (ref instanceof ResolvingHint && !((ResolvingHint)ref).canResolveTo(PsiMethod.class)) {
         return true;
       }
       if (ref.isReferenceTo(method)) {

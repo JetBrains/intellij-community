@@ -83,8 +83,20 @@ public abstract class LeafElement extends TreeElement {
 
   @Override
   public boolean textContains(char c) {
-    CharSequence text = myText;
-    for (int i = 0; i < text.length(); i++) {
+    final CharSequence text = myText;
+    final int len = myText.length();
+
+    if (len > TEXT_MATCHES_THRESHOLD) {
+      char[] chars = CharArrayUtil.fromSequenceWithoutCopying(myText);
+      if (chars != null) {
+        for(int i = 0; i < chars.length; ++i) {
+          if (chars[i] == c) return true;
+        }
+        return false;
+      }
+    }
+
+    for (int i = 0; i < len; ++i) {
       if (c == text.charAt(i)) return true;
     }
 

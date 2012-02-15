@@ -369,7 +369,11 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       }
     }
     catch (IncorrectOperationException e) {
-      return createArrayCreationExpression(text, startOffset, endOffset, PsiTreeUtil.getParentOfType(elementAt, PsiMethodCallExpression.class));
+      if (elementAt instanceof PsiExpressionList) {
+        final PsiElement parent = elementAt.getParent();
+        return parent instanceof PsiCallExpression ? createArrayCreationExpression(text, startOffset, endOffset, (PsiCallExpression)parent) : null;
+      }
+      return null;
     }
 
     return tempExpr;
@@ -384,7 +388,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     return null;
   }
 
-  private static PsiExpression createArrayCreationExpression(String text, int startOffset, int endOffset, PsiMethodCallExpression parent) {
+  private static PsiExpression createArrayCreationExpression(String text, int startOffset, int endOffset, PsiCallExpression parent) {
     if (text == null || parent == null) return null;
     final String[] varargsExpressions = text.split("s*,s*");
     if (varargsExpressions.length > 1) {

@@ -26,6 +26,9 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+
+import java.util.List;
 
 public class TestClassConfigurationProducer extends JUnitConfigurationProducer {
   private PsiClass myTestClass;
@@ -55,5 +58,26 @@ public class TestClassConfigurationProducer extends JUnitConfigurationProducer {
     return myTestClass;
   }
 
+  @Override
+  public void perform(final ConfigurationContext context, final Runnable performRunnable) {
 
+    final InheritorChooser inheritorChooser = new InheritorChooser() {
+      @Override
+      protected void runForClasses(List<PsiClass> classes, PsiMethod method, ConfigurationContext context, Runnable performRunnable) {
+        ((JUnitConfiguration)context.getConfiguration().getConfiguration()).bePatternConfiguration(classes, method);
+        super.runForClasses(classes, method, context, performRunnable);
+      }
+
+      @Override
+      protected void runForClass(PsiClass aClass,
+                                 PsiMethod psiMethod,
+                                 ConfigurationContext context,
+                                 Runnable performRunnable) {
+        ((JUnitConfiguration)context.getConfiguration().getConfiguration()).beClassConfiguration(aClass);
+        super.runForClass(aClass, psiMethod, context, performRunnable);
+      }
+    };
+    if (inheritorChooser.runMethodInAbstractClass(context, performRunnable, null, myTestClass)) return;
+    super.perform(context, performRunnable);
+  }
 }

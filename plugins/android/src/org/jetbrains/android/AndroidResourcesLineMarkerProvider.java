@@ -40,7 +40,6 @@ import org.jetbrains.android.dom.resources.ResourceElement;
 import org.jetbrains.android.dom.resources.Resources;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.resourceManagers.LocalResourceManager;
-import org.jetbrains.android.resourceManagers.ResourceManager;
 import org.jetbrains.android.util.AndroidResourceUtil;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
@@ -83,9 +82,13 @@ public class AndroidResourcesLineMarkerProvider implements LineMarkerProvider {
       return s + rClass.getName() + '.' + resClass.getName() + '.' + field.getName();
     }
     else {
-      PsiFile file = AndroidUtils.getFileTarget(element).getOriginalFile();
-      String name = file.getName();
-      PsiDirectory dir = file.getContainingDirectory();
+      final PsiFile file = AndroidUtils.getContainingFile(element);
+      if (file == null) {
+        return s;
+      }
+      final PsiFile originalFile = file.getOriginalFile();
+      String name = originalFile.getName();
+      PsiDirectory dir = originalFile.getContainingDirectory();
       if (dir == null) return s + name;
       return s + dir.getName() + '/' + name;
     }
@@ -120,7 +123,8 @@ public class AndroidResourcesLineMarkerProvider implements LineMarkerProvider {
       if (attr.getLocalName().equals("name")) {
         final XmlTag tag = PsiTreeUtil.getParentOfType(attr, XmlTag.class);
         if (tag != null) {
-          final String resType = AndroidResourceUtil.getResClassNameByValueResourceTag(facet, tag);
+          String fileResType = facet.getLocalResourceManager().getFileResourceType(tag.getContainingFile());
+          final String resType = "values".equals(fileResType) ? AndroidResourceUtil.getResourceTypeByValueResourceTag(tag) : null;
           if (resType != null) {
             result.add(createLazyLineMarkerInfo(tag, new Computable<PsiElement[]>() {
               @Override
@@ -153,7 +157,7 @@ public class AndroidResourcesLineMarkerProvider implements LineMarkerProvider {
       if (AndroidUtils.R_CLASS_NAME.equals(c.getName())) {
         PsiFile containingFile = element.getContainingFile();
         AndroidFacet facet = AndroidFacet.getInstance(containingFile);
-        if (facet != null && AndroidUtils.isRClassFile(facet, containingFile)) {
+        if (facet != null && AndroidResourceUtil.isRJavaFile(facet, containingFile)) {
           LocalResourceManager manager = facet.getLocalResourceManager();
           annotateRClass((PsiClass)element, result, manager);
         }
@@ -170,8 +174,8 @@ public class AndroidResourcesLineMarkerProvider implements LineMarkerProvider {
     final Map<MyResourceEntry, List<PsiElement>> result = new HashMap<MyResourceEntry, List<PsiElement>>();
     Collection<Resources> resourceFiles = resManager.getResourceElements();
     for (Resources res : resourceFiles) {
-      for (String valueResourceType : ResourceManager.VALUE_RESOURCE_TYPES) {
-        for (ResourceElement valueResource : ResourceManager.getValueResourcesFromElement(valueResourceType, res)) {
+      for (String valueResourceType : AndroidResourceUtil.VALUE_RESOURCE_TYPES) {
+        for (ResourceElement valueResource : AndroidResourceUtil.getValueResourcesFromElement(valueResourceType, res)) {
           addResource(valueResourceType, valueResource, result);
         }
       }
@@ -203,7 +207,7 @@ public class AndroidResourcesLineMarkerProvider implements LineMarkerProvider {
               if (!resourceFile.isDirectory()) {
                 PsiFile resourcePsiFile = psiManager.findFile(resourceFile);
                 if (resourcePsiFile != null) {
-                  String resName = ResourceManager.getResourceName(resType, resourceFile.getName());
+                  String resName = AndroidResourceUtil.getResourceName(resType, resourceFile.getName());
                   MyResourceEntry key = new MyResourceEntry(resName, resType);
                   List<PsiElement> list = result.get(key);
                   if (list == null) {
@@ -264,7 +268,7 @@ public class AndroidResourcesLineMarkerProvider implements LineMarkerProvider {
             if (resourceMap != null) {
               targets = new ArrayList<PsiElement>();
               if (resType.equals("id")) {
-                manager.collectIdDeclarations(fieldName, targets);
+                targets.addAll(manager.findIdDeclarations(fieldName));
               }
               List<PsiElement> resources = resourceMap.get(new MyResourceEntry(fieldName, resType));
               if (resources != null) {
@@ -272,7 +276,7 @@ public class AndroidResourcesLineMarkerProvider implements LineMarkerProvider {
               }
             }
             else {
-              targets = AndroidResourceUtil.findResourcesByField(manager, resField);
+              targets = manager.findResourcesByField(resField);
             }
             return PsiUtilCore.toPsiElementArray(targets);
           }
@@ -306,7 +310,7 @@ public class AndroidResourcesLineMarkerProvider implements LineMarkerProvider {
 
       MyResourceEntry that = (MyResourceEntry)o;
 
-      if (!ResourceManager.equal(myName, that.myName, false)) return false;
+      if (!AndroidUtils.equal(myName, that.myName, false)) return false;
       if (!myType.equals(that.myType)) return false;
 
       return true;

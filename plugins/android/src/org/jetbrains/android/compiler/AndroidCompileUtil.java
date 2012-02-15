@@ -61,9 +61,10 @@ import org.jetbrains.android.fileTypes.AndroidIdlFileType;
 import org.jetbrains.android.fileTypes.AndroidRenderscriptFileType;
 import org.jetbrains.android.resourceManagers.LocalResourceManager;
 import org.jetbrains.android.sdk.AndroidPlatform;
+import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.android.util.AndroidCompilerMessageKind;
+import org.jetbrains.android.util.AndroidExecutionUtil;
 import org.jetbrains.android.util.AndroidUtils;
-import org.jetbrains.android.util.ExecutionUtil;
 import org.jetbrains.android.util.ResourceEntry;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -95,6 +96,7 @@ public class AndroidCompileUtil {
   @NonNls
   private static final String[] SCALA_TEST_CONFIGURATIONS =
     {"ScalaTestRunConfiguration", "SpecsRunConfiguration", "Specs2RunConfiguration"};
+  public static final String CLASSES_FILE_NAME = "classes.dex";
 
   private AndroidCompileUtil() {
   }
@@ -528,7 +530,7 @@ public class AndroidCompileUtil {
 
     doCollectResourceDirs(facet, collectResCacheDirs, result, context);
 
-    for (AndroidFacet depFacet : AndroidUtils.getAllAndroidDependencies(facet.getModule(), true)) {
+    for (AndroidFacet depFacet : AndroidSdkUtils.getAllAndroidDependencies(facet.getModule(), true)) {
       doCollectResourceDirs(depFacet, collectResCacheDirs, result, context);
     }
     return ArrayUtil.toStringArray(result);
@@ -553,7 +555,7 @@ public class AndroidCompileUtil {
       }
     }
 
-    final VirtualFile resourcesDir = AndroidAptCompiler.getResourceDirForApkCompiler(module, facet);
+    final VirtualFile resourcesDir = AndroidAptCompiler.getResourceDirForApkCompiler(facet);
     if (resourcesDir != null) {
       result.add(resourcesDir.getPath());
     }
@@ -646,19 +648,19 @@ public class AndroidCompileUtil {
     final GlobalSearchScope moduleScope = facet.getModule().getModuleScope();
 
     if (FileTypeIndex.getFiles(AndroidRenderscriptFileType.INSTANCE, moduleScope).size() > 0) {
-      sourceRootPath = AndroidRootUtil.getRenderscriptGenSourceRootPath(module);
+      sourceRootPath = AndroidRootUtil.getRenderscriptGenSourceRootPath(facet);
       if (sourceRootPath != null) {
         createSourceRootIfNotExist(sourceRootPath, module);
       }
     }
 
-    sourceRootPath = facet.getAptGenSourceRootPath();
+    sourceRootPath = AndroidRootUtil.getAptGenSourceRootPath(facet);
     if (sourceRootPath != null) {
       createSourceRootIfNotExist(sourceRootPath, module);
     }
 
     if (FileTypeIndex.getFiles(AndroidIdlFileType.ourFileType, moduleScope).size() > 0) {
-      sourceRootPath = facet.getAidlGenSourceRootPath();
+      sourceRootPath = AndroidRootUtil.getAidlGenSourceRootPath(facet);
       if (sourceRootPath != null) {
         createSourceRootIfNotExist(sourceRootPath, module);
       }
@@ -855,7 +857,18 @@ public class AndroidCompileUtil {
   @NotNull
   public static Map<CompilerMessageCategory, List<String>> execute(String... argv) throws IOException {
     assert !ApplicationManager.getApplication().isDispatchThread();
-    final Map<AndroidCompilerMessageKind, List<String>> messages = ExecutionUtil.doExecute(argv);
+    final Map<AndroidCompilerMessageKind, List<String>> messages = AndroidExecutionUtil.doExecute(argv);
     return toCompilerMessageCategoryKeys(messages);
+  }
+
+  public static String getApkName(Module module) {
+    return module.getName() + ".apk";
+  }
+
+  @Nullable
+  public static String getOutputPackage(@NotNull Module module) {
+    VirtualFile compilerOutput = CompilerModuleExtension.getInstance(module).getCompilerOutputPath();
+    if (compilerOutput == null) return null;
+    return new File(compilerOutput.getPath(), getApkName(module)).getPath();
   }
 }

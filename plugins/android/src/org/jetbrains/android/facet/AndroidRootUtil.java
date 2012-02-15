@@ -18,22 +18,28 @@ package org.jetbrains.android.facet;
 
 import com.android.sdklib.SdkConstants;
 import com.intellij.ide.highlighter.ArchiveFileType;
+import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.util.containers.OrderedSet;
 import org.jetbrains.android.compiler.AndroidCompileUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.*;
 
 
 /**
@@ -44,13 +50,15 @@ import java.util.Set;
  * To change this template use File | Settings | File Templates.
  */
 public class AndroidRootUtil {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.facet.AndroidRootUtil");
+  @NonNls public static final String DEFAULT_PROPERTIES_FILE_NAME = "default.properties";
+
   private AndroidRootUtil() {
   }
 
   @Nullable
-  public static VirtualFile getManifestFile(@NotNull Module module) {
-    AndroidFacet facet = AndroidFacet.getInstance(module);
-    return facet == null ? null : getFileByRelativeModulePath(module, facet.getConfiguration().MANIFEST_FILE_RELATIVE_PATH, true);
+  public static VirtualFile getManifestFile(@NotNull AndroidFacet facet) {
+    return getFileByRelativeModulePath(facet.getModule(), facet.getConfiguration().MANIFEST_FILE_RELATIVE_PATH, true);
   }
 
   @Nullable
@@ -59,20 +67,16 @@ public class AndroidRootUtil {
   }
 
   @Nullable
-  public static VirtualFile getManifestFileForCompiler(AndroidFacet facet) {
+  public static VirtualFile getManifestFileForCompiler(@NotNull AndroidFacet facet) {
     return facet.getConfiguration().USE_CUSTOM_COMPILER_MANIFEST
            ? getCustomManifestFileForCompiler(facet)
-           : getManifestFile(facet.getModule());
+           : getManifestFile(facet);
   }
 
   @Nullable
-  public static VirtualFile getResourceDir(@NotNull Module module) {
-    AndroidFacet facet = AndroidFacet.getInstance(module);
-    if (facet == null) {
-      return null;
-    }
+  public static VirtualFile getResourceDir(@NotNull AndroidFacet facet) {
     String resRelPath = facet.getConfiguration().RES_FOLDER_RELATIVE_PATH;
-    return getFileByRelativeModulePath(module, resRelPath, true);
+    return getFileByRelativeModulePath(facet.getModule(), resRelPath, true);
   }
 
   @Nullable
@@ -102,7 +106,7 @@ public class AndroidRootUtil {
   
   @Nullable
   public static String getResourceDirPath(@NotNull AndroidFacet facet) {
-    final VirtualFile resourceDir = getResourceDir(facet.getModule());
+    final VirtualFile resourceDir = getResourceDir(facet);
     return resourceDir != null ? resourceDir.getPath() : suggestResourceDirPath(facet);
   }
 
@@ -132,35 +136,26 @@ public class AndroidRootUtil {
   }
 
   @Nullable
-  public static VirtualFile getAssetsDir(@NotNull Module module) {
-    AndroidFacet facet = AndroidFacet.getInstance(module);
-    return facet == null ? null : getFileByRelativeModulePath(module, facet.getConfiguration().ASSETS_FOLDER_RELATIVE_PATH, false);
+  public static VirtualFile getAssetsDir(@NotNull AndroidFacet facet) {
+    return getFileByRelativeModulePath(facet.getModule(), facet.getConfiguration().ASSETS_FOLDER_RELATIVE_PATH, false);
   }
 
   @Nullable
-  public static VirtualFile getLibsDir(@NotNull Module module) {
-    AndroidFacet facet = AndroidFacet.getInstance(module);
-    return facet == null ? null : getFileByRelativeModulePath(module, facet.getConfiguration().LIBS_FOLDER_RELATIVE_PATH, false);
+  public static VirtualFile getLibsDir(@NotNull AndroidFacet facet) {
+    return getFileByRelativeModulePath(facet.getModule(), facet.getConfiguration().LIBS_FOLDER_RELATIVE_PATH, false);
   }
 
   @Nullable
-  public static VirtualFile getAidlGenDir(@NotNull Module module, @Nullable AndroidFacet facet) {
-    if (facet == null) {
-      facet = AndroidFacet.getInstance(module);
-    }
-    if (facet != null) {
-      LocalFileSystem lfs = LocalFileSystem.getInstance();
-      String genPath = facet.getAidlGenSourceRootPath();
-      if (genPath != null) {
-        return lfs.findFileByPath(genPath);
-      }
-    }
-    return null;
+  public static VirtualFile getAidlGenDir(@NotNull AndroidFacet facet) {
+    final String genPath = getAidlGenSourceRootPath(facet);
+    return genPath != null
+           ? LocalFileSystem.getInstance().findFileByPath(genPath)
+           : null;
   }
 
   @Nullable
-  public static VirtualFile getRenderscriptGenDir(@NotNull Module module) {
-    final String path = getRenderscriptGenSourceRootPath(module);
+  public static VirtualFile getRenderscriptGenDir(@NotNull AndroidFacet facet) {
+    final String path = getRenderscriptGenSourceRootPath(facet);
     return path != null ? LocalFileSystem.getInstance().findFileByPath(path) : null;
   }
 
@@ -286,15 +281,11 @@ public class AndroidRootUtil {
   }
 
   @NotNull
-  public static VirtualFile[] getResourceOverlayDirs(Module module) {
-    AndroidFacet facet = AndroidFacet.getInstance(module);
-    if (facet == null) {
-      return VirtualFile.EMPTY_ARRAY;
-    }
+  public static VirtualFile[] getResourceOverlayDirs(@NotNull AndroidFacet facet) {
     List<String> overlayFolders = facet.getConfiguration().RES_OVERLAY_FOLDERS;
     List<VirtualFile> result = new ArrayList<VirtualFile>();
     for (String overlayFolder : overlayFolders) {
-      VirtualFile overlayDir = getFileByRelativeModulePath(module, overlayFolder, true);
+      VirtualFile overlayDir = getFileByRelativeModulePath(facet.getModule(), overlayFolder, true);
       if (overlayDir != null) {
         result.add(overlayDir);
       }
@@ -313,11 +304,7 @@ public class AndroidRootUtil {
   }
 
   @Nullable
-  public static String getRenderscriptGenSourceRootPath(@NotNull Module module) {
-    final AndroidFacet facet = AndroidFacet.getInstance(module);
-    if (facet == null) {
-      return null;
-    }
+  public static String getRenderscriptGenSourceRootPath(@NotNull AndroidFacet facet) {
     // todo: return correct path for mavenized module
     final VirtualFile mainContentRoot = getMainContentRoot(facet);
     final String moduleDirPath = mainContentRoot != null ? mainContentRoot.getPath() : null;
@@ -335,7 +322,7 @@ public class AndroidRootUtil {
       return null;
     }
 
-    final VirtualFile manifestFile = getManifestFile(module);
+    final VirtualFile manifestFile = getManifestFile(facet);
     if (manifestFile != null) {
       for (VirtualFile root : contentRoots) {
         if (VfsUtilCore.isAncestor(root, manifestFile, true)) {
@@ -344,5 +331,117 @@ public class AndroidRootUtil {
       }
     }
     return contentRoots[0];
+  }
+
+  @Nullable
+  public static PropertiesFile findPropertyFile(@NotNull final Module module, @NotNull String propertyFileName) {
+    for (VirtualFile contentRoot : ModuleRootManager.getInstance(module).getContentRoots()) {
+      final VirtualFile vFile = contentRoot.findChild(propertyFileName);
+      if (vFile != null) {
+        final PsiFile psiFile = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
+          @Nullable
+          @Override
+          public PsiFile compute() {
+            return PsiManager.getInstance(module.getProject()).findFile(vFile);
+          }
+        });
+        if (psiFile instanceof PropertiesFile) {
+          return (PropertiesFile)psiFile;
+        }
+      }
+    }
+    return null;
+  }
+
+  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+  @Nullable
+  public static Pair<Properties, VirtualFile> readPropertyFile(@NotNull Module module, @NotNull String propertyFileName) {
+    for (VirtualFile contentRoot : ModuleRootManager.getInstance(module).getContentRoots()) {
+      final Pair<Properties, VirtualFile> result = readPropertyFile(contentRoot, propertyFileName);
+      if (result != null) {
+        return result;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public static Pair<Properties, VirtualFile> readProjectPropertyFile(@NotNull Module module) {
+    final Pair<Properties, VirtualFile> pair = readPropertyFile(module, SdkConstants.FN_PROJECT_PROPERTIES);
+    return pair != null
+           ? pair
+           : readPropertyFile(module, DEFAULT_PROPERTIES_FILE_NAME);
+  }
+
+  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+  @Nullable
+  private static Pair<Properties, VirtualFile> readPropertyFile(@NotNull VirtualFile contentRoot, @NotNull String propertyFileName) {
+    final VirtualFile vFile = contentRoot.findChild(propertyFileName);
+    if (vFile != null) {
+      final Properties properties = new Properties();
+      try {
+        properties.load(new FileInputStream(new File(vFile.getPath())));
+        return new Pair<Properties, VirtualFile>(properties, vFile);
+      }
+      catch (IOException e) {
+        LOG.info(e);
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public static Pair<Properties, VirtualFile> readProjectPropertyFile(@NotNull VirtualFile contentRoot) {
+    final Pair<Properties, VirtualFile> pair = readPropertyFile(contentRoot, SdkConstants.FN_PROJECT_PROPERTIES);
+    return pair != null
+           ? pair
+           : readPropertyFile(contentRoot, DEFAULT_PROPERTIES_FILE_NAME);
+  }
+
+  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+  @Nullable
+  public static String getPropertyValue(@NotNull Module module, @NotNull String propertyFileName, @NotNull String propertyKey) {
+    final Pair<Properties, VirtualFile> pair = readPropertyFile(module, propertyFileName);
+    if (pair != null) {
+      final String value = pair.first.getProperty(propertyKey);
+      if (value != null) {
+        return value;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public static String getProjectPropertyValue(Module module, String propertyName) {
+    final String result = getPropertyValue(module, SdkConstants.FN_PROJECT_PROPERTIES, propertyName);
+    return result != null
+           ? result
+           : getPropertyValue(module, DEFAULT_PROPERTIES_FILE_NAME, propertyName);
+  }
+
+  @Nullable
+  public static String getAptGenSourceRootPath(@NotNull AndroidFacet facet) {
+    String path = facet.getConfiguration().GEN_FOLDER_RELATIVE_PATH_APT;
+    if (path.length() == 0) return null;
+    String moduleDirPath = getModuleDirPath(facet.getModule());
+    return moduleDirPath != null ? moduleDirPath + path : null;
+  }
+
+  @Nullable
+  public static String getAidlGenSourceRootPath(@NotNull AndroidFacet facet) {
+    String path = facet.getConfiguration().GEN_FOLDER_RELATIVE_PATH_AIDL;
+    if (path.length() == 0) return null;
+    String moduleDirPath = getModuleDirPath(facet.getModule());
+    return moduleDirPath != null ? moduleDirPath + path : null;
+  }
+
+  @Nullable
+  public static String getApkPath(@NotNull AndroidFacet facet) {
+    String path = facet.getConfiguration().APK_PATH;
+    if (path.length() == 0) {
+      return AndroidCompileUtil.getOutputPackage(facet.getModule());
+    }
+    String moduleDirPath = getModuleDirPath(facet.getModule());
+    return moduleDirPath != null ? FileUtil.toSystemDependentName(moduleDirPath + path) : null;
   }
 }

@@ -56,7 +56,7 @@ public class CreateDirectoryOrPackageHandler implements InputValidatorEx {
       return "Trying to create a " + (myIsDirectory ? "directory" : "package") + " with ignored name, result will not be visible";
     }
     if (!myIsDirectory && inputString.length() > 0 && !PsiDirectoryFactory.getInstance(myProject).isValidPackageName(inputString)) {
-      return "Not a valid package name";
+      return "Not a valid package name, it would be impossible to create a class inside";
     }
     return null;
   }

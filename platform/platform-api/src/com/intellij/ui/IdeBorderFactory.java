@@ -17,6 +17,7 @@ package com.intellij.ui;
 
 import com.intellij.ui.border.IdeaTitledBorder;
 import com.intellij.util.ui.UIUtil;
+import org.intellij.lang.annotations.MagicConstant;
 
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
@@ -38,7 +39,7 @@ public class IdeBorderFactory {
     return createBorder(SideBorder.ALL);
   }
 
-  public static Border createBorder(int borders) {
+  public static Border createBorder(@MagicConstant(flagsFromClass = SideBorder.class) int borders) {
     return new SideBorder(getBorderColor(), borders);
   }
 

@@ -16,21 +16,22 @@
 
 package org.jetbrains.plugins.groovy.refactoring.introduce.variable;
 
-import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.psi.PsiType;
 import com.intellij.refactoring.HelpID;
 import com.intellij.ui.EditorComboBoxEditor;
 import com.intellij.ui.EditorComboBoxRenderer;
-import com.intellij.ui.EditorTextField;
 import com.intellij.ui.StringComboboxEditor;
+import com.intellij.util.ui.GridBag;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
@@ -39,9 +40,7 @@ import org.jetbrains.plugins.groovy.refactoring.ui.GrTypeComboBox;
 import org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings;
 
 import javax.swing.*;
-import javax.swing.event.EventListenerList;
-import java.awt.event.*;
-import java.util.EventListener;
+import java.awt.*;
 
 public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIntroduceDialog<GroovyIntroduceVariableSettings> {
   private static final String REFACTORING_NAME = GroovyRefactoringBundle.message("introduce.variable.title");
@@ -51,50 +50,105 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
   private final int myOccurrencesCount;
   private final GrIntroduceVariableHandler.Validator myValidator;
 
-  private final EventListenerList myListenerList;
-
-  private JPanel contentPane;
   private ComboBox myNameComboBox;
   private JCheckBox myCbIsFinal;
   private JCheckBox myCbReplaceAllOccurrences;
   private GrTypeComboBox myTypeComboBox;
-  private JLabel myTypeLabel;
-  private JLabel myNameLabel;
 
-  public GroovyIntroduceVariableDialog(GrIntroduceContext context,
-                                       GrIntroduceVariableHandler.Validator validator,
-                                       String[] possibleNames) {
+  public GroovyIntroduceVariableDialog(GrIntroduceContext context, GrIntroduceVariableHandler.Validator validator) {
     super(context.getProject(), true);
     myProject = context.getProject();
     myExpression = context.getExpression();
     myOccurrencesCount = context.getOccurrences().length;
     myValidator = validator;
+    init();
+  }
 
-    myListenerList = new EventListenerList();
-    setUpNameComboBox(possibleNames);
+  @Override
+  protected void init() {
+    super.init();
 
+    setUpNameComboBox();
     setModal(true);
     setTitle(REFACTORING_NAME);
-    init();
-    setUpDialog();
-    updateOkStatus();
+
+    myCbReplaceAllOccurrences.setFocusable(false);
+    myCbIsFinal.setFocusable(false);
+
+    myCbIsFinal.setSelected(GroovyApplicationSettings.getInstance().INTRODUCE_LOCAL_CREATE_FINALS);
+
+    // Replace occurrences
+    if (myOccurrencesCount > 1) {
+      myCbReplaceAllOccurrences.setSelected(false);
+      myCbReplaceAllOccurrences.setEnabled(true);
+      myCbReplaceAllOccurrences.setText(myCbReplaceAllOccurrences.getText() + " (" + myOccurrencesCount + " occurrences)");
+    }
+    else {
+      myCbReplaceAllOccurrences.setSelected(false);
+      myCbReplaceAllOccurrences.setEnabled(false);
+    }
+
+    pack();
   }
 
   @Nullable
   protected JComponent createCenterPanel() {
+    JPanel contentPane = new JPanel(new BorderLayout());
+    contentPane.add(createNamePanel(), BorderLayout.CENTER);
+    contentPane.add(createCBPanel(), BorderLayout.SOUTH);
     return contentPane;
   }
 
-  public JComponent getContentPane() {
-    return contentPane;
+  @Override
+  protected ValidationInfo doValidate() {
+    String text = getEnteredName();
+    if (!GroovyNamesUtil.isIdentifier(text)) {
+      return new ValidationInfo(GroovyRefactoringBundle.message("name.is.wrong", text), myNameComboBox);
+    }
+    return null;
   }
+
+  private JPanel createCBPanel() {
+    final JPanel panel = new JPanel(new FlowLayout());
+    myCbIsFinal = new JCheckBox(UIUtil.replaceMnemonicAmpersand("Declare &final"));
+    panel.add(myCbIsFinal);
+    myCbReplaceAllOccurrences = new JCheckBox(UIUtil.replaceMnemonicAmpersand("Replace &all occurrences"));
+    panel.add(myCbReplaceAllOccurrences);
+    return panel;
+  }
+
+  private JPanel createNamePanel() {
+    final GridBag c = new GridBag().setDefaultAnchor(GridBagConstraints.WEST).setDefaultInsets(1, 1, 1, 1);
+    final JPanel namePanel = new JPanel(new GridBagLayout());
+
+    final JLabel typeLabel = new JLabel(UIUtil.replaceMnemonicAmpersand("Variable of &type:"));
+    c.nextLine().next().weightx(0).fillCellNone();
+    namePanel.add(typeLabel, c);
+
+    myTypeComboBox = GrTypeComboBox.createTypeComboBoxFromExpression(myExpression, true);
+    c.next().weightx(1).fillCellHorizontally();
+    namePanel.add(myTypeComboBox, c);
+    typeLabel.setLabelFor(myTypeComboBox);
+
+    final JLabel nameLabel = new JLabel(UIUtil.replaceMnemonicAmpersand("&Name:"));
+    c.nextLine().next().weightx(0).fillCellNone();
+    namePanel.add(nameLabel, c);
+
+    myNameComboBox = new ComboBox();
+    c.next().weightx(1).fillCellHorizontally();
+    namePanel.add(myNameComboBox, c);
+    nameLabel.setLabelFor(myNameComboBox);
+    return namePanel;
+  }
+
 
   @Nullable
   protected String getEnteredName() {
     if (myNameComboBox.getEditor().getItem() instanceof String &&
-        ((String) myNameComboBox.getEditor().getItem()).length() > 0) {
-      return (String) myNameComboBox.getEditor().getItem();
-    } else {
+        ((String)myNameComboBox.getEditor().getItem()).length() > 0) {
+      return (String)myNameComboBox.getEditor().getItem();
+    }
+    else {
       return null;
     }
   }
@@ -112,36 +166,8 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
     return myTypeComboBox.getSelectedType();
   }
 
-  private void setUpDialog() {
-
-    myCbReplaceAllOccurrences.setMnemonic(KeyEvent.VK_A);
-    myCbReplaceAllOccurrences.setFocusable(false);
-    myCbIsFinal.setMnemonic(KeyEvent.VK_F);
-    myCbIsFinal.setFocusable(false);
-    myNameLabel.setLabelFor(myNameComboBox);
-    myTypeLabel.setLabelFor(myTypeComboBox);
-
-    myCbIsFinal.setSelected(GroovyApplicationSettings.getInstance().INTRODUCE_LOCAL_CREATE_FINALS);
-
-    // Replace occurrences
-    if (myOccurrencesCount > 1) {
-      myCbReplaceAllOccurrences.setSelected(false);
-      myCbReplaceAllOccurrences.setEnabled(true);
-      myCbReplaceAllOccurrences.setText(myCbReplaceAllOccurrences.getText() + " (" + myOccurrencesCount + " occurrences)");
-    } else {
-      myCbReplaceAllOccurrences.setSelected(false);
-      myCbReplaceAllOccurrences.setEnabled(false);
-    }
-
-    contentPane.registerKeyboardAction(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        myTypeComboBox.requestFocus();
-      }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_Y, InputEvent.ALT_MASK), JComponent.WHEN_IN_FOCUSED_WINDOW);
-
-  }
-
-  private void setUpNameComboBox(String[] possibleNames) {
+  private void setUpNameComboBox() {
+    String[] possibleNames = GroovyNameSuggestionUtil.suggestVariableNames(myExpression, myValidator);
 
     final EditorComboBoxEditor comboEditor = new StringComboboxEditor(myProject, GroovyFileType.GROOVY_FILE_TYPE, myNameComboBox);
 
@@ -150,31 +176,6 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
 
     myNameComboBox.setEditable(true);
     myNameComboBox.setMaximumRowCount(8);
-    myListenerList.add(DataChangedListener.class, new DataChangedListener());
-
-    myNameComboBox.addItemListener(
-      new ItemListener() {
-        public void itemStateChanged(ItemEvent e) {
-          fireNameDataChanged();
-        }
-      }
-    );
-
-    ((EditorTextField) myNameComboBox.getEditor().getEditorComponent()).addDocumentListener(new DocumentListener() {
-      public void beforeDocumentChange(DocumentEvent event) {
-      }
-
-      public void documentChanged(DocumentEvent event) {
-        fireNameDataChanged();
-      }
-    }
-    );
-
-    contentPane.registerKeyboardAction(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        myNameComboBox.requestFocus();
-      }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.ALT_MASK), JComponent.WHEN_IN_FOCUSED_WINDOW);
 
     for (String possibleName : possibleNames) {
       myNameComboBox.addItem(possibleName);
@@ -205,27 +206,7 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
   }
 
   private void createUIComponents() {
-    myTypeComboBox = GrTypeComboBox.createTypeComboBoxFromExpression(myExpression, true);
-  }
 
-  class DataChangedListener implements EventListener {
-    void dataChanged() {
-      updateOkStatus();
-    }
-  }
-
-  private void updateOkStatus() {
-    String text = getEnteredName();
-    setOKActionEnabled(GroovyNamesUtil.isIdentifier(text));
-  }
-
-  private void fireNameDataChanged() {
-    Object[] list = myListenerList.getListenerList();
-    for (Object aList : list) {
-      if (aList instanceof DataChangedListener) {
-        ((DataChangedListener) aList).dataChanged();
-      }
-    }
   }
 
   public GroovyIntroduceVariableSettings getSettings() {
@@ -260,6 +241,5 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
     public PsiType getSelectedType() {
       return mySelectedType;
     }
-
   }
 }

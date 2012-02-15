@@ -14,5 +14,5 @@
  * limitations under the License.
  */
 new A().foo(['1', '2']) {
-  print it
+    print it
 }

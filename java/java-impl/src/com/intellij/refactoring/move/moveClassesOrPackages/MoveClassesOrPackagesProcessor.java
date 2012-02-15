@@ -475,8 +475,14 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
           oldToNewElementsMapping.put(element, newElement);
           int i = 0;
           final PsiDirectory[] newDirectories = newElement.getDirectories();
-          for (PsiDirectory directory : directories) {
-            oldToNewElementsMapping.put(directory, newDirectories[i++]);
+          if (newDirectories.length == 1) {//everything is moved in one directory
+            for (PsiDirectory directory : directories) {
+              oldToNewElementsMapping.put(directory, newDirectories[0]);
+            }
+          } else {
+            for (PsiDirectory directory : directories) {
+              oldToNewElementsMapping.put(directory, newDirectories[i++]);
+            }
           }
           element = newElement;
         }

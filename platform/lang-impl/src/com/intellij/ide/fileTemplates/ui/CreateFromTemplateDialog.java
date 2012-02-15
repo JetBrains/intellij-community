@@ -46,11 +46,6 @@ public class CreateFromTemplateDialog extends DialogWrapper {
   @NotNull private final FileTemplate myTemplate;
   private final Properties myDefaultProperties;
 
-  public CreateFromTemplateDialog(@NotNull Project project, @NotNull PsiDirectory directory, @NotNull FileTemplate template,
-                                  @Nullable final AttributesDefaults attributesDefaults) {
-    this(project, directory, template, attributesDefaults, null);
-  }
-
   public CreateFromTemplateDialog(@NotNull Project project,
                                   @NotNull PsiDirectory directory,
                                   @NotNull FileTemplate template,

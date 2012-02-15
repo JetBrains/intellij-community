@@ -36,8 +36,9 @@ import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.android.compiler.AndroidCompileUtil;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.sdk.AndroidPlatform;
+import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.android.util.AndroidBundle;
-import org.jetbrains.android.util.AndroidUtils;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,7 +61,8 @@ import static com.intellij.openapi.compiler.CompilerMessageCategory.*;
 public class AndroidApkBuilder {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.compiler.tools.AndroidApkBuilder");
 
-  private static final String UNALIGNED_SUFFIX = ".unaligned";
+  @NonNls private static final String UNALIGNED_SUFFIX = ".unaligned";
+  @NonNls private static final String EXT_NATIVE_LIB = "so";
 
   private AndroidApkBuilder() {
   }
@@ -131,7 +133,7 @@ public class AndroidApkBuilder {
     }
 
     final Map<CompilerMessageCategory, List<String>> map = new HashMap<CompilerMessageCategory, List<String>>();
-    final String zipAlignPath = sdkPath + File.separator + AndroidUtils.toolPath(SdkConstants.FN_ZIPALIGN);
+    final String zipAlignPath = sdkPath + File.separator + AndroidSdkUtils.toolPath(SdkConstants.FN_ZIPALIGN);
     boolean withAlignment = new File(zipAlignPath).exists();
     String unalignedApk = finalApk + UNALIGNED_SUFFIX;
 
@@ -227,7 +229,7 @@ public class AndroidApkBuilder {
         fis.close();
       }
 
-      builder.writeFile(dexEntryFile, AndroidUtils.CLASSES_FILE_NAME);
+      builder.writeFile(dexEntryFile, AndroidCompileUtil.CLASSES_FILE_NAME);
 
       final HashSet<String> added = new HashSet<String>();
       for (VirtualFile sourceRoot : sourceRoots) {
@@ -356,7 +358,7 @@ public class AndroidApkBuilder {
       String ext = file.getExtension();
 
       // some users store jars and *.so libs in the same directory. Do not pack JARs to APK's "lib" folder!
-      if (AndroidUtils.EXT_NATIVE_LIB.equalsIgnoreCase(ext) ||
+      if (EXT_NATIVE_LIB.equalsIgnoreCase(ext) ||
           (debugBuild && !(file.getFileType() instanceof ArchiveFileType))) {
         result.add(file);
       }

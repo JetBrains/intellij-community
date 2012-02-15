@@ -56,7 +56,7 @@ public class StringUtil {
 
   @NotNull
   public static String escapePattern(final @NotNull String text) {
-    return text.replace("'", "''").replace("{", "'{'");
+    return replace(replace(text, "'", "''"), "{", "'{'");
   }
 
   public static <T> Function<T, String> createToStringFunction(Class<T> cls) {
@@ -118,8 +118,9 @@ public class StringUtil {
 
     final String text1 = ignoreCase ? text.toLowerCase() : text;
     final String oldS1 = ignoreCase ? oldS.toLowerCase() : oldS;
-    final StringBuilder newText = new StringBuilder();
+    StringBuilder newText = null;
     int i = 0;
+
     while (i < text1.length()) {
       int i1 = text1.indexOf(oldS1, i);
       if (i1 < 0) {
@@ -129,12 +130,13 @@ public class StringUtil {
       }
       else {
         if (newS == null) return null;
+        if (newText == null) newText = new StringBuilder();
         newText.append(text, i, i1);
         newText.append(newS);
         i = i1 + oldS.length();
       }
     }
-    return newText.toString();
+    return newText!= null ? newText.toString():"";
   }
 
   @NotNull

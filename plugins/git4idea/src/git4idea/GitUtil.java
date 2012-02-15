@@ -630,13 +630,15 @@ public class GitUtil {
   }
 
   /**
-   * Convert {@link GitBranch GitBranches} to their names.
+   * Convert {@link GitBranch GitBranches} to their names, and remove remote HEAD pointers.
    */
   @NotNull
-  public static Collection<String> getBranchNames(@NotNull Collection<GitBranch> branches) {
+  public static Collection<String> getBranchNamesWithoutRemoteHead(@NotNull Collection<GitBranch> branches) {
     Collection<String> names = new ArrayList<String>(branches.size());
     for (GitBranch branch : branches) {
-      names.add(branch.getName());
+      if (!branch.isRemote() || !branch.getShortName().equals("HEAD")) {
+        names.add(branch.getName());
+      }
     }
     return names;
   }

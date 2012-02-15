@@ -36,7 +36,7 @@ import java.util.List;
 /**
  * @author Eugene.Kudelevsky
  */
-class LayoutDeviceManager {
+public class LayoutDeviceManager {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.uipreview.LayoutDeviceManager");
   private static final String LAYOUT_DEVICES_XSD = "layout-devices.xsd";
 
@@ -49,7 +49,7 @@ class LayoutDeviceManager {
   private List<LayoutDevice> myAddOnLayoutDevices = new ArrayList<LayoutDevice>();
   private List<LayoutDevice> myLayoutDevices;
 
-  LayoutDeviceManager() {
+  public LayoutDeviceManager() {
     myParserFactory = SAXParserFactory.newInstance();
     myParserFactory.setNamespaceAware(true);
   }

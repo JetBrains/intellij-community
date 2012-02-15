@@ -105,13 +105,12 @@ public class AndroidRenderscriptCompiler implements SourceGeneratingCompiler {
                               @NotNull String sdkLocation,
                               @NotNull final IAndroidTarget target,
                               @NotNull final List<GenerationItem> items) {
-    final Module module = facet.getModule();
-    final String sourceRootPath = AndroidRootUtil.getRenderscriptGenSourceRootPath(module);
+    final String sourceRootPath = AndroidRootUtil.getRenderscriptGenSourceRootPath(facet);
     if (sourceRootPath == null) {
       return;
     }
     final String rawDirPath = resourceDirPath + '/' + AndroidConstants.FD_RES_RAW;
-    items.add(new MyGenerationItem(module, sourceFiles, rawDirPath, sdkLocation, target));
+    items.add(new MyGenerationItem(facet.getModule(), sourceFiles, rawDirPath, sdkLocation, target));
   }
 
   @Override

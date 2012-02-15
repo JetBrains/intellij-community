@@ -622,7 +622,7 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
       if (sdk != null) {
         IAndroidTarget target = sdk.findTargetByApiLevel(apiLevel);
         if (target != null) {
-          Sdk library = AndroidUtils.findAppropriateAndroidPlatform(target, sdk);
+          Sdk library = AndroidSdkUtils.findAppropriateAndroidPlatform(target, sdk);
           if (library == null) {
             library = AndroidSdkUtils.createNewAndroidPlatform(target, sdkPath, true);
           }

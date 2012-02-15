@@ -2,6 +2,7 @@ package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import org.jetbrains.annotations.NotNull;
 
@@ -62,5 +63,13 @@ public class UsageInModuleClasspath extends ProjectStructureElementUsage {
   @Override
   public Icon getIcon() {
     return ModuleType.get(myModule).getNodeIcon(false);
+  }
+
+  @Override
+  public void removeSourceElement() {
+    if (mySourceElement instanceof LibraryProjectStructureElement) {
+      ModuleStructureConfigurable.getInstance(myModule.getProject())
+        .removeLibraryOrderEntry(myModule, ((LibraryProjectStructureElement)mySourceElement).getLibrary());
+    }
   }
 }

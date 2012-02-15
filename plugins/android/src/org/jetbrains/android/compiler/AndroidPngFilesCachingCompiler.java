@@ -46,7 +46,7 @@ public class AndroidPngFilesCachingCompiler implements SourceGeneratingCompiler 
             continue;
           }
 
-          final VirtualFile resourcesDir = AndroidAptCompiler.getResourceDirForApkCompiler(module, facet);
+          final VirtualFile resourcesDir = AndroidAptCompiler.getResourceDirForApkCompiler(facet);
           if (resourcesDir == null) {
             continue;
           }

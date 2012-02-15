@@ -233,7 +233,7 @@ public class AndroidMavenResourcesCompiler implements SourceGeneratingCompiler {
               Manifest manifest = facet.getManifest();
               String aPackage = manifest != null ? manifest.getPackage().getValue() : null;
               if (aPackage == null) {
-                VirtualFile manifestFile = AndroidRootUtil.getManifestFile(module);
+                VirtualFile manifestFile = AndroidRootUtil.getManifestFile(facet);
                 myContext.addMessage(CompilerMessageCategory.ERROR,
                                      "Cannot find package value in AndroidManifest.xml for module " + module.getName(),
                                      manifestFile != null ? manifestFile.getUrl() : null, -1, -1);

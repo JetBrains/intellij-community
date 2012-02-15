@@ -609,7 +609,7 @@ public class ControlFlowUtils {
     if (first == last) return true;
     if (last instanceof AfterCallInstruction) {
       visited[last.num()] = true;
-      return visitAllExitPointsInner(((AfterCallInstruction)last).call, first, visited, visitor);
+      return visitAllExitPointsInner(((AfterCallInstruction)last).myCall, first, visited, visitor);
     }
     
     if (last instanceof MaybeReturnInstruction) {
@@ -617,7 +617,7 @@ public class ControlFlowUtils {
     }
     else if (last instanceof IfEndInstruction) {
       visited[last.num()] = true;
-      for (Instruction instruction : last.allPred()) {
+      for (Instruction instruction : last.allPredecessors()) {
         if (!visitAllExitPointsInner(instruction, first, visited, visitor)) return false;
       }
       return true;
@@ -639,7 +639,7 @@ public class ControlFlowUtils {
       return visitor.visitExitPoint(last, returnValue);
     }
     visited[last.num()] = true;
-    for (Instruction pred : last.allPred()) {
+    for (Instruction pred : last.allPredecessors()) {
       if (!visited[pred.num()]) {
         if (!visitAllExitPointsInner(pred, first, visited, visitor)) return false;
       }
@@ -693,7 +693,7 @@ public class ControlFlowUtils {
     
     Queue<Instruction> queue = new ArrayDeque<Instruction>();
 
-    for (Instruction i : ahead ? cur.allSucc() : cur.allPred()) {
+    for (Instruction i : ahead ? cur.allSuccessors() : cur.allPredecessors()) {
       if (visited.add(i)) {
         queue.add(i);
       }
@@ -717,7 +717,7 @@ public class ControlFlowUtils {
         }
       }
       
-      for (Instruction i : ahead ? instruction.allSucc() : instruction.allPred()) {
+      for (Instruction i : ahead ? instruction.allSuccessors() : instruction.allPredecessors()) {
         if (visited.add(i)) {
           queue.add(i);
         }

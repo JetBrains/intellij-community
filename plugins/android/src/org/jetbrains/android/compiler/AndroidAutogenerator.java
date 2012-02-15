@@ -125,7 +125,7 @@ public class AndroidAutogenerator {
           return null;
         }
 
-        final String sourceRootPath = facet.getAptGenSourceRootPath();
+        final String sourceRootPath = AndroidRootUtil.getAptGenSourceRootPath(facet);
         if (sourceRootPath == null) {
           context.addMessage(CompilerMessageCategory.ERROR,
                              AndroidBundle.message("android.compilation.error.apt.gen.not.specified", module.getName()),
@@ -310,13 +310,13 @@ public class AndroidAutogenerator {
             return null;
           }
 
-          final String packageName = AndroidUtils.getPackageName(module, file);
+          final String packageName = AndroidUtils.computePackageName(module, file);
           if (packageName == null) {
             context.addMessage(CompilerMessageCategory.ERROR, "Cannot compute package for file", file.getUrl(), -1, -1);
             return null;
           }
 
-          final String sourceRootPath = facet.getAidlGenSourceRootPath();
+          final String sourceRootPath = AndroidRootUtil.getAidlGenSourceRootPath(facet);
           if (sourceRootPath == null) {
             context.addMessage(CompilerMessageCategory.ERROR,
                                AndroidBundle.message("android.compilation.error.apt.gen.not.specified", module.getName()), null, -1, -1);
@@ -421,7 +421,7 @@ public class AndroidAutogenerator {
             final IAndroidTarget target = platform.getTarget();
             final String sdkLocation = platform.getSdk().getLocation();
 
-            final String packageName = AndroidUtils.getPackageName(module, file);
+            final String packageName = AndroidUtils.computePackageName(module, file);
             if (packageName == null) {
               context.addMessage(CompilerMessageCategory.ERROR, "Cannot compute package for file", file.getUrl(), -1, -1);
               return null;
@@ -430,7 +430,7 @@ public class AndroidAutogenerator {
             final String resourceDirPath = AndroidRootUtil.getResourceDirPath(facet);
             assert resourceDirPath != null;
 
-            final String sourceRootPath = AndroidRootUtil.getRenderscriptGenSourceRootPath(module);
+            final String sourceRootPath = AndroidRootUtil.getRenderscriptGenSourceRootPath(facet);
             if (sourceRootPath == null) {
               return null;
             }

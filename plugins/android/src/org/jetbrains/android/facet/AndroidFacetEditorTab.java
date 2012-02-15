@@ -109,22 +109,24 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
 
     AndroidFacet facet = (AndroidFacet)myContext.getFacet();
 
-    myRGenPathField.getButton().addActionListener(new MyGenSourceFieldListener(myRGenPathField, facet.getAptGenSourceRootPath()));
-    myAidlGenPathField.getButton().addActionListener(new MyGenSourceFieldListener(myAidlGenPathField, facet.getAidlGenSourceRootPath()));
+    myRGenPathField.getButton()
+      .addActionListener(new MyGenSourceFieldListener(myRGenPathField, AndroidRootUtil.getAptGenSourceRootPath(facet)));
+    myAidlGenPathField.getButton()
+      .addActionListener(new MyGenSourceFieldListener(myAidlGenPathField, AndroidRootUtil.getAidlGenSourceRootPath(facet)));
 
     Module module = myContext.getModule();
     
     myManifestFileField.getButton().addActionListener(
-      new MyFolderFieldListener(myManifestFileField, AndroidRootUtil.getManifestFile(module), true, new MyManifestFilter()));
+      new MyFolderFieldListener(myManifestFileField, AndroidRootUtil.getManifestFile(facet), true, new MyManifestFilter()));
     
     myResFolderField.getButton().addActionListener(new MyFolderFieldListener(myResFolderField,
-                                                                             AndroidRootUtil.getResourceDir(module), false, null));
+                                                                             AndroidRootUtil.getResourceDir(facet), false, null));
     
     myAssetsFolderField.getButton().addActionListener(new MyFolderFieldListener(myAssetsFolderField,
-                                                                                AndroidRootUtil.getAssetsDir(module), false, null));
+                                                                                AndroidRootUtil.getAssetsDir(facet), false, null));
     
     myNativeLibsFolder.getButton().addActionListener(new MyFolderFieldListener(myNativeLibsFolder,
-                                                                               AndroidRootUtil.getLibsDir(module), false, null));
+                                                                               AndroidRootUtil.getLibsDir(facet), false, null));
 
     myCustomAptSourceDirField.getButton().addActionListener(new MyFolderFieldListener(myCustomAptSourceDirField,
                                                                                       AndroidAptCompiler.getCustomResourceDirForApt(facet),
@@ -203,7 +205,7 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
 
   private static String[] getDefaultApks(@NotNull Module module) {
     List<String> result = new ArrayList<String>();
-    String path = AndroidFacet.getOutputPackage(module);
+    String path = AndroidCompileUtil.getOutputPackage(module);
     if (path != null) {
       result.add(path);
     }
@@ -211,7 +213,7 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     if (mavenProvider != null && mavenProvider.isMavenizedModule(module)) {
       String buildDirectory = mavenProvider.getBuildDirectory(module);
       if (buildDirectory != null) {
-        result.add(FileUtil.toSystemDependentName(buildDirectory + '/' + AndroidFacet.getApkName(module)));
+        result.add(FileUtil.toSystemDependentName(buildDirectory + '/' + AndroidCompileUtil.getApkName(module)));
       }
     }
     return ArrayUtil.toStringArray(result);

@@ -3,7 +3,7 @@
   <grid id="8cf0d" binding="myPanel" layout-manager="GridLayoutManager" row-count="6" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="18" y="29" width="514" height="528"/>
+      <xy x="18" y="29" width="514" height="536"/>
     </constraints>
     <properties/>
     <border type="none"/>
@@ -155,7 +155,7 @@
       </grid>
       <grid id="81c32" binding="myMembersPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
         <constraints>
-          <grid row="0" column="1" row-span="4" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="3" indent="0" use-parent-layout="false"/>
+          <grid row="0" column="1" row-span="5" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties/>
         <clientProperties>
@@ -235,20 +235,41 @@
       </grid>
       <component id="be81b" class="javax.swing.JCheckBox" binding="myCbUseExternalAnnotations">
         <constraints>
-          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+          <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
           <text resource-bundle="messages/ApplicationBundle" key="use.external.annotations"/>
         </properties>
       </component>
-      <component id="95854" class="javax.swing.JCheckBox" binding="myInsertOverrideAnnotationCheckBox" default-binding="true">
+      <grid id="6fb9a" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+        <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
-        <properties>
-          <text resource-bundle="messages/ApplicationBundle" key="insert.override.annotation"/>
-        </properties>
-      </component>
+        <properties/>
+        <clientProperties>
+          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$BoldSmallWithIndent"/>
+        </clientProperties>
+        <border type="etched" title="Override method signature"/>
+        <children>
+          <component id="95854" class="javax.swing.JCheckBox" binding="myInsertOverrideAnnotationCheckBox" default-binding="true">
+            <constraints>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="1" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text resource-bundle="messages/ApplicationBundle" key="insert.override.annotation"/>
+            </properties>
+          </component>
+          <component id="9c14a" class="javax.swing.JCheckBox" binding="myRepeatSynchronizedCheckBox" default-binding="true">
+            <constraints>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="1" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text value="Repeat &amp;synchronized modifier"/>
+            </properties>
+          </component>
+        </children>
+      </grid>
     </children>
   </grid>
 </form>

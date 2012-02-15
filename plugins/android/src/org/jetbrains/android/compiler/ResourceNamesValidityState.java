@@ -32,7 +32,7 @@ public class ResourceNamesValidityState implements ValidityState {
     final IAndroidTarget target = platform != null ? platform.getTarget() : null;
     myAndroidTargetHashString = target != null ? target.hashString() : "";
 
-    final VirtualFile manifestFile = AndroidRootUtil.getManifestFile(facet.getModule());
+    final VirtualFile manifestFile = AndroidRootUtil.getManifestFile(facet);
     myManifestTimestamp = manifestFile != null ? manifestFile.getModificationStamp() : -1;
 
     AndroidCompileUtil.collectAllResources(facet, myResourcesSet);

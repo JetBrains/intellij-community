@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,14 @@ import com.intellij.openapi.fileTypes.FileTypes;
 
 /**
  * Defines the standard languages supported by IDEA.
+ *
  * @author max
  */
 public class StdLanguages {
   /**
    * The definition for the Java language.
-   * @deprecated use JavaLanguage.INSTANCE instead
+   *
+   * @deprecated use {@linkplain com.intellij.lang.java.JavaLanguage#INSTANCE} instead.
    */
   public static Language JAVA = StdFileTypes.JAVA.getLanguage();
 
@@ -80,6 +82,5 @@ public class StdLanguages {
   @Deprecated
   public static Language CSS;
 
-  private StdLanguages() {
-  }
+  private StdLanguages() { }
 }

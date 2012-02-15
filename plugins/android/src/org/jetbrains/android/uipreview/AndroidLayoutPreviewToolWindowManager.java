@@ -47,12 +47,12 @@ import com.intellij.util.ui.update.Update;
 import org.jetbrains.android.dom.layout.LayoutDomFileDescription;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.maven.AndroidMavenUtil;
-import org.jetbrains.android.resourceManagers.ResourceManager;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.sdk.AndroidSdkAdditionalData;
 import org.jetbrains.android.sdk.AndroidSdkType;
 import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.android.util.AndroidBundle;
+import org.jetbrains.android.util.AndroidResourceUtil;
 import org.jetbrains.android.util.AndroidSdkNotConfiguredException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -534,13 +534,13 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
         return;
       }
 
-      if (ResourceManager.isResourceDirectory(parent, myProject)) {
+      if (AndroidResourceUtil.isLocalResourceDirectory(parent, myProject)) {
         myToolWindowForm.updateLocales();
         render();
       }
 
       final VirtualFile gp = parent.getParent();
-      if (gp != null && ResourceManager.isResourceDirectory(gp, myProject)) {
+      if (gp != null && AndroidResourceUtil.isLocalResourceDirectory(gp, myProject)) {
         myToolWindowForm.updateLocales();
         render();
       }

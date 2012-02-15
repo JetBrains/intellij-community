@@ -1137,7 +1137,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
         
         final Runnable runnable = SearchUtil.lightOptions(searchable, myContentWrapper, text, myGP);
         if (runnable != null) {
-          myVisible = myContext.isHoldingFilter();
+          myVisible = true;//myContext.isHoldingFilter();
           runnable.run();
 
           boolean pushFilteringFurther = true;

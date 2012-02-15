@@ -17,6 +17,7 @@ package com.intellij.ide.plugins;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
+import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.extensions.PluginId;
@@ -24,6 +25,7 @@ import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.util.Comparing;
@@ -42,10 +44,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * User: anna
@@ -90,9 +90,17 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
               Messages.showErrorDialog("Fail to load plugin descriptor from file " + file.getName(), CommonBundle.getErrorTitle());
               return;
             }
+            final IdeaPluginDescriptor alreadyInstalledPlugin = PluginManager.getPlugin(pluginDescriptor.getPluginId());
+            if (alreadyInstalledPlugin != null) {
+              final File oldFile = alreadyInstalledPlugin.getPath();
+              if (oldFile != null) {
+                StartupActionScriptManager.addActionCommand(new StartupActionScriptManager.DeleteCommand(oldFile));
+              }
+            }
             PluginDownloader.install(file, file.getName(), false);
             ((InstalledPluginsTableModel)pluginsModel).appendOrUpdateDescriptor(pluginDescriptor);
             select(pluginDescriptor);
+            checkInstalledPluginDependencies(pluginDescriptor);
             setRequireShutdown(true);
           }
           catch (IOException ex) {
@@ -102,6 +110,57 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
       }
     });
     myActionsPanel.add(installPluginFromFileSystem);
+  }
+
+  private void checkInstalledPluginDependencies(IdeaPluginDescriptorImpl pluginDescriptor) {
+    final Set<PluginId> notInstalled = new HashSet<PluginId>();
+    final Set<PluginId> disabledIds = new HashSet<PluginId>();
+    final PluginId[] dependentPluginIds = pluginDescriptor.getDependentPluginIds();
+    for (PluginId id : dependentPluginIds) {
+      final boolean disabled = ((InstalledPluginsTableModel)pluginsModel).isDisabled(id);
+      final boolean enabled = ((InstalledPluginsTableModel)pluginsModel).isEnabled(id);
+      if (!enabled && !disabled && !PluginManager.isModuleDependency(id)) {
+        notInstalled.add(id);
+      } else if (disabled) {
+        disabledIds.add(id);
+      }
+    }
+    if (!notInstalled.isEmpty()) {
+      Messages.showErrorDialog("Plugin " +
+                               pluginDescriptor.getName() +
+                               " depends on unknown plugin" +
+                               (notInstalled.size() > 1 ? "s " : " ") +
+                               StringUtil.join(notInstalled, new Function<PluginId, String>() {
+                                 @Override
+                                 public String fun(PluginId id) {
+                                   return id.toString();
+                                 }
+                               }, ", "), CommonBundle.getWarningTitle());
+    }
+    if (!disabledIds.isEmpty()) {
+      final Set<IdeaPluginDescriptor> dependencies = new HashSet<IdeaPluginDescriptor>();
+      for (IdeaPluginDescriptor ideaPluginDescriptor : pluginsModel.view) {
+        if (disabledIds.contains(ideaPluginDescriptor.getPluginId())) {
+          dependencies.add(ideaPluginDescriptor);
+        }
+      }
+      final String disabledPluginsMessage = "disabled plugin" + (dependencies.size() > 1 ? "s " : " ");
+      String message = "Plugin " +
+                       pluginDescriptor.getName() +
+                       " depends on " +
+                       disabledPluginsMessage +
+                       StringUtil.join(dependencies, new Function<IdeaPluginDescriptor, String>() {
+                         @Override
+                         public String fun(IdeaPluginDescriptor ideaPluginDescriptor) {
+                           return ideaPluginDescriptor.getName();
+                         }
+                       }, ", ") +
+                       ". Enable " + disabledPluginsMessage.trim() + "?";
+      if (Messages.showOkCancelDialog(myActionsPanel, message, CommonBundle.getWarningTitle(), Messages.getWarningIcon()) ==
+          DialogWrapper.OK_EXIT_CODE) {
+        ((InstalledPluginsTableModel)pluginsModel).enableRows(dependencies.toArray(new IdeaPluginDescriptor[dependencies.size()]), Boolean.TRUE);
+      }
+    }
   }
 
   @Override
@@ -155,10 +214,11 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
   protected ActionGroup getActionGroup(boolean inToolbar) {
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
     actionGroup.add(new RefreshAction());
+    actionGroup.add(Separator.getInstance());
     actionGroup.add(new ActionInstallPlugin(this, this));
     actionGroup.add(new ActionUninstallPlugin(this, pluginTable));
     if (inToolbar) {
-      actionGroup.add(new SortByStatusAction("Sort by status"));
+      actionGroup.add(new SortByStatusAction("Sort by Status"));
       actionGroup.add(new MyFilterEnabledAction());
       //actionGroup.add(new MyFilterBundleAction());
     }

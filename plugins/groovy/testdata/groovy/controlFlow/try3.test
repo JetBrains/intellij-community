@@ -8,7 +8,7 @@ try {
 }
 -----
 0(1) element: null
-1(2,7) element: Open block
+1(7) element: Open block
 2(3) element: Catch clause
 3(4) WRITE e
 4(5) WRITE a

@@ -42,6 +42,7 @@ import org.jetbrains.android.dom.xml.PreferenceElement;
 import org.jetbrains.android.dom.xml.XmlResourceElement;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.resourceManagers.ResourceManager;
+import org.jetbrains.android.util.AndroidResourceUtil;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -127,7 +128,7 @@ public class AndroidDomUtil {
     if (containsReference) {
       if (resourceTypes.contains("color")) resourceTypes.add("drawable");
       if (resourceTypes.size() == 0) {
-        resourceTypes.addAll(ResourceManager.REFERABLE_RESOURCE_TYPES);
+        resourceTypes.addAll(AndroidResourceUtil.REFERABLE_RESOURCE_TYPES);
       }
     }
     if (resourceTypes.size() > 0) {

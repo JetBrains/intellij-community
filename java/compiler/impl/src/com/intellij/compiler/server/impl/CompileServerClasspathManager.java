@@ -53,7 +53,10 @@ public class CompileServerClasspathManager {
       }
       else if (baseFile.isDirectory()) {
         final String relativePath = serverPlugin.getJarPath();
-        File jarFile = new File(new File(baseFile, "lib"), relativePath);
+
+        final File jarFile = relativePath.startsWith("../")
+                             ? new File(baseFile, relativePath.substring(3))
+                             : new File(new File(baseFile, "lib"), relativePath);
         if (jarFile.exists()) {
           classpath.add(jarFile);
         }

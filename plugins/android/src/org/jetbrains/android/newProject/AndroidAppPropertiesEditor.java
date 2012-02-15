@@ -24,7 +24,6 @@ import com.intellij.psi.JavaTokenType;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.android.util.AndroidBundle;
-import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -84,7 +83,7 @@ public class AndroidAppPropertiesEditor {
     if (!isValidPackageName(candidate)) {
       return AndroidBundle.message("not.valid.package.name.error", candidate);
     }
-    if (!AndroidUtils.contains2Ids(candidate)) {
+    if (!contains2Identifiers(candidate)) {
       return AndroidBundle.message("package.name.must.contain.2.ids.error");
     }
     return "";
@@ -157,5 +156,9 @@ public class AndroidAppPropertiesEditor {
 
   public JPanel getActivtiyPanel() {
     return myActivtiyPanel;
+  }
+
+  private static boolean contains2Identifiers(String packageName) {
+    return packageName.split("\\.").length >= 2;
   }
 }

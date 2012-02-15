@@ -48,7 +48,7 @@ public class IntentionDescriptionNotFoundInspection extends DevKitInspectionBase
     final PsiIdentifier nameIdentifier = aClass.getNameIdentifier();
     final Module module = ModuleUtil.findModuleForPsiElement(aClass);
 
-    if (nameIdentifier == null || module == null || !PsiUtil.isInstanciatable(aClass)) return null;
+    if (nameIdentifier == null || module == null || !PsiUtil.isInstantiatable(aClass)) return null;
 
     final PsiClass base = JavaPsiFacade.getInstance(project).findClass(INTENTION, GlobalSearchScope.allScope(project));
 

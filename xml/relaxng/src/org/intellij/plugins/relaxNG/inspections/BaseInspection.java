@@ -119,13 +119,12 @@ public abstract class BaseInspection extends XmlSuppressableInspectionTool {
     return ContainerUtil.map(super.getSuppressActions(element), new Function<SuppressIntentionAction, SuppressIntentionAction>() {
       public SuppressIntentionAction fun(final SuppressIntentionAction action) {
         return new SuppressIntentionAction() {
-          public void invoke(Project project, Editor editor, PsiElement element) throws IncorrectOperationException {
+          public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
             action.invoke(project, editor, element);
           }
 
           public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-            return element != null && element.getContainingFile().getFileType() == StdFileTypes.XML &&
-                    action.isAvailable(project, editor, element);
+            return element.getContainingFile().getFileType() == StdFileTypes.XML && action.isAvailable(project, editor, element);
           }
 
           @NotNull

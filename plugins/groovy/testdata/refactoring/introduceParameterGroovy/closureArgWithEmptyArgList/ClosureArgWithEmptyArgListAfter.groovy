@@ -14,5 +14,5 @@
  * limitations under the License.
  */
 new A().foo {
-  print it + 2
+    print it + 2
 }

@@ -18,6 +18,7 @@ package com.intellij.internal.validation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.ValidationInfo;
 
 import javax.swing.*;
 import java.util.regex.Pattern;
@@ -37,7 +38,7 @@ public class ValidationTest extends DialogWrapper {
       new ValidationInfo("Field2 is zip. It should contain 5 digits", myPanel.field2),
       new ValidationInfo("Field3. Value is not chosen", myPanel.field3),
       new ValidationInfo("Field4: Select A or B", myPanel.p4),
-      new ValidationInfo("Field5: You should accept license agreement")
+      new ValidationInfo("Field5: You should accept license agreement<br/>text text text text text text text text text text text text<br/>text text text text text text text text text text text text")
     };
 
     init();
@@ -46,7 +47,7 @@ public class ValidationTest extends DialogWrapper {
 
   @Override
   protected boolean postponeValidation() {
-    return false;
+    return true;
   }
 
   @Override

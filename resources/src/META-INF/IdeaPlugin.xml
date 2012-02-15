@@ -213,10 +213,10 @@
     <completion.confidence language="JAVA" implementationClass="com.intellij.codeInsight.completion.AlwaysFocusLookup" id="javaTrue" order="last"/>
     <completion.confidence language="JAVA" implementationClass="com.intellij.codeInsight.completion.SkipAutopopupInStrings" id="javaSkipAutopopupInStrings"/>
 
-    <completion.contributor language="JAVA" implementationClass="com.intellij.codeInspection.magicConstant.MagicCompletionContributor"
-                            id="magicCompletion, after javaBasic2ClassName"/>
     <completion.contributor language="JAVA" implementationClass="com.intellij.codeInsight.completion.JavaNoVariantsDelegator" id="javaBasic2ClassName"
                             order="before javaMemberName, before javaLegacy, after liveTemplates"/>
+    <completion.contributor language="JAVA" implementationClass="com.intellij.codeInspection.magicConstant.MagicCompletionContributor" id="magicCompletion"
+                            order="after javaBasic2ClassName"/>
     <completion.contributor language="XML" implementationClass="com.intellij.codeInsight.completion.XmlBasicToClassNameDelegator" id="basic2ClassName"
                             order="after xml"/>
     <completion.contributor language="JAVA" implementationClass="com.intellij.codeInsight.completion.JavaCompletionContributor" id="javaLegacy"
@@ -372,7 +372,7 @@
     <moduleConfigurationEditorProvider implementation="com.intellij.openapi.module.WebModuleConfigurationEditorProvider"/>
 
     <specialTool shortName="UnusedDeclaration" displayName="Unused declaration" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.javadoc.issues" enabledByDefault="true" level="WARNING"
+                     groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.deadCode.UnusedDeclarationInspection"/>
     <specialTool shortName="UnusedLibrary" bundle="messages.InspectionsBundle" key="unused.library.display.name"
                      groupName="Declaration redundancy" enabledByDefault="false" level="WARNING"
@@ -632,6 +632,7 @@
       <className>com.intellij.codeInsight.intention.impl.ConcatenationToMessageFormatAction</className>
       <category>I18N</category>
     </intentionAction>
+
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.ConvertToBasicLatinAction</className>
       <category>I18N</category>
@@ -691,6 +692,11 @@
     <intentionAction>
       <className>com.intellij.codeInsight.daemon.impl.quickfix.ConvertToStringLiteralAction</className>
       <category>Strings</category>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.SurroundAutoCloseableAction</className>
+      <category>Declaration</category>
     </intentionAction>
 
     <lang.parserDefinition language="JAVA" implementationClass="com.intellij.lang.java.JavaParserDefinition"/>

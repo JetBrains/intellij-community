@@ -59,7 +59,7 @@ public class AndroidFrameworkDetector extends FacetBasedFrameworkDetector<Androi
           model.setSdk(ModuleRootManager.getInstance(module).getSdk());
         }
 
-        final String androidLibraryPropValue = AndroidUtils.getProjectPropertyValue(module, AndroidUtils.ANDROID_LIBRARY_PROPERTY);
+        final String androidLibraryPropValue = AndroidRootUtil.getProjectPropertyValue(module, AndroidUtils.ANDROID_LIBRARY_PROPERTY);
 
         if (androidLibraryPropValue != null && androidLibraryPropValue.equals("true")) {
           facet.getConfiguration().LIBRARY_PROJECT = true;
@@ -68,7 +68,7 @@ public class AndroidFrameworkDetector extends FacetBasedFrameworkDetector<Androi
           Manifest manifest = facet.getManifest();
           if (manifest != null) {
             if (AndroidUtils.getDefaultActivityName(manifest) != null) {
-              AndroidUtils.addRunConfiguration(project, facet, null, true, null, null);
+              AndroidUtils.addRunConfiguration(facet, null, true, null, null);
             }
           }
         }

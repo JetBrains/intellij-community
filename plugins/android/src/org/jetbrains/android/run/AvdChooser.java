@@ -28,6 +28,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.sdk.AndroidSdk;
+import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.android.util.BooleanCellRenderer;
@@ -70,7 +71,7 @@ public class AvdChooser extends DialogWrapper {
     AndroidSdk sdk = facet.getConfiguration().getAndroidSdk();
     if (sdk == null) return null;
     String androidCmd = SdkConstants.androidCmdName();
-    return sdk.getLocation() + File.separator + AndroidUtils.toolPath(androidCmd);
+    return sdk.getLocation() + File.separator + AndroidSdkUtils.toolPath(androidCmd);
   }
 
   public AvdChooser(@NotNull final Project project,
@@ -117,7 +118,7 @@ public class AvdChooser extends DialogWrapper {
       public void actionPerformed(ActionEvent e) {
         GeneralCommandLine commandLine = new GeneralCommandLine();
         commandLine.setExePath(androidToolPath);
-        AndroidUtils.runExternalToolInSeparateThread(project, commandLine);
+        AndroidUtils.runExternalToolInSeparateThread(commandLine, null);
       }
     });
     updateTable();
@@ -174,7 +175,7 @@ public class AvdChooser extends DialogWrapper {
         Messages.showErrorDialog(myPanel, AndroidBundle.message("cant.remove.avd.error"));
       }
       else {
-        myAvdManager.deleteAvd(selectedAvd, AndroidUtils.getSdkLog(myPanel));
+        myAvdManager.deleteAvd(selectedAvd, AndroidSdkUtils.getSdkLog(myPanel));
         updateTable();
       }
     }

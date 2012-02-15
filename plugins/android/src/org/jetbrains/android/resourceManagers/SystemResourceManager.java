@@ -16,7 +16,6 @@
 package org.jetbrains.android.resourceManagers;
 
 import com.android.sdklib.IAndroidTarget;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.xml.ConvertContext;
@@ -33,8 +32,8 @@ import org.jetbrains.annotations.Nullable;
 public class SystemResourceManager extends ResourceManager {
   private final AndroidPlatform myPlatform;
 
-  public SystemResourceManager(@NotNull Module module, @NotNull AndroidPlatform androidPlatform) {
-    super(module);
+  public SystemResourceManager(@NotNull AndroidFacet facet, @NotNull AndroidPlatform androidPlatform) {
+    super(facet);
     myPlatform = androidPlatform;
   }
 

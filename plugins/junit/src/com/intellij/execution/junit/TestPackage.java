@@ -176,7 +176,7 @@ public class TestPackage extends TestObject {
     }
 
     try {
-      myServerSocket = new ServerSocket(0, 0, InetAddress.getByName(null));
+      myServerSocket = new ServerSocket(0, 0, InetAddress.getByName("127.0.0.1"));
       myJavaParameters.getProgramParametersList().add("-socket" + myServerSocket.getLocalPort());
     }
     catch (IOException e) {

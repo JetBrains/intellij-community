@@ -28,14 +28,11 @@ import gnu.trove.TIntHash;
 import net.n3.nanoxml.IXMLBuilder;
 import org.codehaus.groovy.GroovyException;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.groovy.compiler.rt.GroovyCompilerWrapper;
 import org.jetbrains.jps.MacroExpander;
 import org.jetbrains.jps.javac.JavacServer;
 import org.objectweb.asm.ClassWriter;
 
-import javax.tools.JavaCompiler;
-import javax.tools.StandardJavaFileManager;
-import javax.tools.ToolProvider;
+import javax.tools.*;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -90,7 +87,6 @@ public class ClasspathBootstrap {
     cp.add(getResourcePath(CellConstraints.class));  // jgoodies-forms
     cp.add(getResourcePath(NotNullVerifyingInstrumenter.class));  // not-null
     cp.add(getResourcePath(IXMLBuilder.class));  // nano-xml
-    cp.add(getResourcePath(GroovyCompilerWrapper.class));  // groovy_rt
     cp.add(getResourcePath(org.apache.log4j.Logger.class)); // log4j
 
     final Class<StandardJavaFileManager> optimizedFileManagerClass = getOptimizedFileManagerClass();

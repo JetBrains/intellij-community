@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package com.intellij.codeInsight.intention.impl;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.javaee.ExternalResourceManager;
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -50,7 +50,7 @@ public class ConvertToBasicLatinAction extends PsiElementBaseIntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) {
-    if (!element.getLanguage().isKindOf(StdLanguages.JAVA)) return false;
+    if (!element.getLanguage().isKindOf(JavaLanguage.INSTANCE)) return false;
     final Pair<PsiElement, Handler> pair = findHandler(element);
     if (pair == null) return false;
 
@@ -75,18 +75,15 @@ public class ConvertToBasicLatinAction extends PsiElementBaseIntentionAction {
   }
 
   @Override
-  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
-    if (element == null) return;
-
+  public void invoke(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) throws IncorrectOperationException {
     final Pair<PsiElement, Handler> pair = findHandler(element);
     if (pair == null) return;
-    element = pair.first;
+    final PsiElement workElement = pair.first;
     final Handler handler = pair.second;
 
-    final String newText = handler.processText(element);
-    final PsiElement newElement = handler.createReplacement(element, newText);
-    element.replace(newElement);
+    final String newText = handler.processText(workElement);
+    final PsiElement newElement = handler.createReplacement(workElement, newText);
+    workElement.replace(newElement);
   }
 
   @Nullable

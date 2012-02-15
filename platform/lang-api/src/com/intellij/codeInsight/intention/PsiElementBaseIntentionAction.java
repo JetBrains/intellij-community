@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,15 +32,14 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class PsiElementBaseIntentionAction extends BaseIntentionAction {
   /**
-   * Invokes intention action for the element under cursor
+   * Invokes intention action for the element under cursor.
    *
    * @param project the project in which the file is opened.
-   * @param editor the editor for the file
-   * @param element the element under cursor
-
-   * @throws com.intellij.util.IncorrectOperationException ...
+   * @param editor  the editor for the file.
+   * @param element the element under cursor.
+   * @throws com.intellij.util.IncorrectOperationException
    */
-  public void invoke(Project project, Editor editor, PsiElement element) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
@@ -59,7 +58,10 @@ public abstract class PsiElementBaseIntentionAction extends BaseIntentionAction 
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    invoke(project, editor, getElement(editor, file));
+    final PsiElement element = getElement(editor, file);
+    if (element != null) {
+      invoke(project, editor, element);
+    }
   }
 
   /**
@@ -67,7 +69,7 @@ public abstract class PsiElementBaseIntentionAction extends BaseIntentionAction 
    * If this method returns true, a light bulb for this intention is shown.
    *
    * @param project the project in which the availability is checked.
-   * @param editor the editor in which the intention will be invoked.
+   * @param editor  the editor in which the intention will be invoked.
    * @param element the element under caret.
    * @return true if the intention is available, false otherwise.
    */

@@ -51,8 +51,8 @@ import org.jetbrains.android.compiler.AndroidProguardCompiler;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.sdk.AndroidPlatform;
+import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.android.util.AndroidBundle;
-import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.android.util.SaveFileListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -196,7 +196,7 @@ class ApkStep extends ExportSignedPackageWizardStep {
     AndroidPlatform platform = myWizard.getFacet().getConfiguration().getAndroidPlatform();
     assert platform != null;
     String sdkPath = platform.getSdk().getLocation();
-    String zipAlignPath = sdkPath + File.separatorChar + AndroidUtils.toolPath(SdkConstants.FN_ZIPALIGN);
+    String zipAlignPath = sdkPath + File.separatorChar + AndroidSdkUtils.toolPath(SdkConstants.FN_ZIPALIGN);
     File zipalign = new File(zipAlignPath);
     final boolean runZipAlign = zipalign.isFile();
     File destFile = null;
@@ -242,7 +242,7 @@ class ApkStep extends ExportSignedPackageWizardStep {
     SignedJarBuilder builder = new SignedJarBuilder(fos, privateKey, certificate);
     Module module = myWizard.getFacet().getModule();
     //String srcApkPath = CompilerPaths.getModuleOutputPath(module, false) + '/' + module.getName() + ".apk";
-    String srcApkPath = myWizard.getFacet().getApkPath() + AndroidPackagingCompiler.UNSIGNED_SUFFIX;
+    String srcApkPath = AndroidRootUtil.getApkPath(myWizard.getFacet()) + AndroidPackagingCompiler.UNSIGNED_SUFFIX;
     FileInputStream fis = new FileInputStream(new File(FileUtil.toSystemDependentName(srcApkPath)));
     try {
       builder.writeZip(fis, null);

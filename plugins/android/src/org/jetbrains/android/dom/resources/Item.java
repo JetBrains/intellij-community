@@ -23,7 +23,7 @@ import org.jetbrains.android.dom.attrs.AttributeFormat;
 import org.jetbrains.android.dom.converters.FormatConverter;
 import org.jetbrains.android.dom.converters.QuietResourceReferenceConverter;
 import org.jetbrains.android.dom.converters.StaticEnumConverter;
-import org.jetbrains.android.resourceManagers.ResourceManager;
+import org.jetbrains.android.util.AndroidResourceUtil;
 
 import java.util.List;
 
@@ -38,7 +38,7 @@ import java.util.List;
 public interface Item extends ResourceElement {
   class TypeConverter extends StaticEnumConverter {
     public TypeConverter() {
-      super(ArrayUtil.toStringArray(ResourceManager.REFERABLE_RESOURCE_TYPES));
+      super(ArrayUtil.toStringArray(AndroidResourceUtil.REFERABLE_RESOURCE_TYPES));
     }
   }
 

@@ -38,6 +38,7 @@ public class Notification {
   private final NotificationListener myListener;
   private final String myTitle;
   private boolean myExpired;
+  private Boolean myImportant;
   private WeakReference<Balloon> myBalloonRef;
 
   public Notification(@NotNull final String groupDisplayId, @NotNull final String title, @NotNull final String content, @NotNull final NotificationType type) {
@@ -136,7 +137,16 @@ public class Notification {
     Notifications.Bus.notify(this, project);
   }
 
+  public Notification setImportant(boolean important) {
+    myImportant = important;
+    return this;
+  }
+
   public boolean isImportant() {
+    if (myImportant != null) {
+      return myImportant;
+    }
+
     return getListener() != null;
   }
 }

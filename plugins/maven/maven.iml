@@ -54,6 +54,7 @@
     <orderEntry type="module" module-name="testFramework-java" exported="" scope="TEST" />
     <orderEntry type="module" module-name="jetgroovy" scope="TEST" />
     <orderEntry type="module" module-name="maven2-server-impl" scope="RUNTIME" />
+    <orderEntry type="library" name="Guava" level="project" />
   </component>
   <component name="copyright">
     <Base>

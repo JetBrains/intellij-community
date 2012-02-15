@@ -61,7 +61,7 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
       AndroidFacet facet = AndroidFacet.getInstance(module);
       if (facet != null && !facet.getConfiguration().LIBRARY_PROJECT) {
         VirtualFile manifestFile = AndroidRootUtil.getManifestFileForCompiler(facet);
-        VirtualFile assetsDir = AndroidRootUtil.getAssetsDir(module);
+        VirtualFile assetsDir = AndroidRootUtil.getAssetsDir(facet);
         if (manifestFile == null) {
           context.addMessage(CompilerMessageCategory.ERROR, AndroidBundle.message("android.compilation.error.manifest.not.found"),
                              null, -1, -1);

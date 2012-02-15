@@ -35,6 +35,7 @@ import org.jetbrains.android.facet.AndroidFacetConfiguration;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.maven.AndroidMavenUtil;
 import org.jetbrains.android.sdk.AndroidPlatform;
+import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.AndroidUtils;
@@ -135,10 +136,10 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
   }
 
   @Nullable
-  public static VirtualFile getResourceDirForApkCompiler(Module module, AndroidFacet facet) {
+  public static VirtualFile getResourceDirForApkCompiler(@NotNull AndroidFacet facet) {
     return facet.getConfiguration().USE_CUSTOM_APK_RESOURCE_FOLDER
            ? getCustomResourceDirForApt(facet)
-           : AndroidRootUtil.getResourceDir(module);
+           : AndroidRootUtil.getResourceDir(facet);
   }
 
   final static class AptGenerationItem implements GenerationItem {
@@ -251,7 +252,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
                                  -1, -1);
             continue;
           }
-          String sourceRootPath = facet.getAptGenSourceRootPath();
+          String sourceRootPath = AndroidRootUtil.getAptGenSourceRootPath(facet);
           if (sourceRootPath == null) {
             myContext.addMessage(CompilerMessageCategory.ERROR,
                                  AndroidBundle.message("android.compilation.error.apt.gen.not.specified", module.getName()),
@@ -275,7 +276,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
 
       final List<String> result = new ArrayList<String>();
 
-      for (String libPackage : AndroidUtils.getDepLibsPackages(module)) {
+      for (String libPackage : AndroidSdkUtils.getDepLibsPackages(module)) {
         if (packageSet.add(libPackage)) {
           result.add(libPackage);
         }

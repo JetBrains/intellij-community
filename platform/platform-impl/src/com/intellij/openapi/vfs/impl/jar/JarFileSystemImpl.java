@@ -22,6 +22,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.*;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
@@ -217,11 +218,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
 
   @Override
   public String extractPresentableUrl(@NotNull String path) {
-    if (path.endsWith(JAR_SEPARATOR)) {
-      path = path.substring(0, path.length() - JarFileSystem.JAR_SEPARATOR.length());
-    }
-    path = super.extractPresentableUrl(path);
-    return path;
+    return super.extractPresentableUrl(StringUtil.trimEnd(path, JAR_SEPARATOR));
   }
 
   @Override

@@ -33,8 +33,8 @@ import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidFacetConfiguration;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.sdk.AndroidPlatform;
+import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.android.util.AndroidBundle;
-import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,7 +70,8 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
                                       @NotNull Set<VirtualFile> result,
                                       boolean includingTests) {
     visited.add(module);
-    VirtualFile resDir = AndroidRootUtil.getResourceDir(module);
+    final AndroidFacet facet = AndroidFacet.getInstance(module);
+    VirtualFile resDir = facet != null ? AndroidRootUtil.getResourceDir(facet) : null;
     ModuleRootManager manager = ModuleRootManager.getInstance(module);
     for (VirtualFile sourceRoot : manager.getSourceRoots(includingTests)) {
       if (resDir != sourceRoot) {
@@ -115,7 +116,7 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
             File resPackage = AndroidResourcesPackagingCompiler.getOutputFile(module, outputDir);
             String resPackagePath = FileUtil.toSystemDependentName(resPackage.getPath());
 
-            File classesDexFile = new File(outputDir.getPath(), AndroidUtils.CLASSES_FILE_NAME);
+            File classesDexFile = new File(outputDir.getPath(), AndroidCompileUtil.CLASSES_FILE_NAME);
             String classesDexPath = FileUtil.toSystemDependentName(classesDexFile.getPath());
 
             AndroidPlatform platform = configuration.getAndroidPlatform();
@@ -125,7 +126,7 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
               continue;
             }
             String sdkPath = platform.getSdk().getLocation();
-            String outputPath = facet.getApkPath();
+            String outputPath = AndroidRootUtil.getApkPath(facet);
             if (outputPath == null) {
               context.addMessage(CompilerMessageCategory.ERROR,
                                  AndroidBundle.message("android.compilation.error.apk.path.not.specified", module.getName()), null, -1, -1);
@@ -166,13 +167,12 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
   @NotNull
   private static VirtualFile[] collectNativeLibsFolders(AndroidFacet facet) {
     List<VirtualFile> result = new ArrayList<VirtualFile>();
-    Module module = facet.getModule();
-    VirtualFile libsDir = AndroidRootUtil.getLibsDir(module);
+    VirtualFile libsDir = AndroidRootUtil.getLibsDir(facet);
     if (libsDir != null) {
       result.add(libsDir);
     }
-    for (AndroidFacet depFacet : AndroidUtils.getAndroidDependencies(module, true)) {
-      VirtualFile depLibsDir = AndroidRootUtil.getLibsDir(depFacet.getModule());
+    for (AndroidFacet depFacet : AndroidSdkUtils.getAndroidDependencies(facet.getModule(), true)) {
+      VirtualFile depLibsDir = AndroidRootUtil.getLibsDir(depFacet);
       if (depLibsDir != null) {
         result.add(depLibsDir);
       }

@@ -86,7 +86,7 @@ public class AndroidResourceReference extends PsiReferenceBase.Poly<XmlElement> 
     String resType = value.getResourceType();
     if (resType != null && newElementName != null) {
       myValue.setValue(ResourceValue.referenceTo(value.getPrefix(), value.getPackage(), resType,
-                                                 ResourceManager.getResourceName(resType, newElementName)));
+                                                 AndroidResourceUtil.getResourceName(resType, newElementName)));
     }
     return myValue.getXmlTag();
   }

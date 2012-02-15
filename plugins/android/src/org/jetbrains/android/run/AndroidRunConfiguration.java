@@ -26,6 +26,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -36,6 +37,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.refactoring.listeners.RefactoringElementAdapter;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
+import org.jetbrains.android.dom.AndroidDomUtil;
+import org.jetbrains.android.dom.manifest.Activity;
+import org.jetbrains.android.dom.manifest.IntentFilter;
 import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.util.AndroidBundle;
@@ -78,7 +82,7 @@ public class AndroidRunConfiguration extends AndroidRunConfigurationBase impleme
       if (!c.isInheritor(activityClass, true)) {
         throw new RuntimeConfigurationError(AndroidBundle.message("not.activity.subclass.error", ACTIVITY_CLASS));
       }
-      if (!AndroidUtils.isActivityLaunchable(facet.getModule(), c)) {
+      if (!isActivityLaunchable(facet.getModule(), c)) {
         throw new RuntimeConfigurationError(AndroidBundle.message("activity.not.launchable.error", AndroidUtils.LAUNCH_ACTION_NAME));
       }
     }
@@ -164,6 +168,18 @@ public class AndroidRunConfiguration extends AndroidRunConfigurationBase impleme
       activityToLaunch = ACTIVITY_CLASS;
     }
     return new MyApplicationLauncher(activityToLaunch);
+  }
+
+  private static boolean isActivityLaunchable(@NotNull Module module, PsiClass c) {
+    Activity activity = AndroidDomUtil.getActivityDomElementByClass(module, c);
+    if (activity != null) {
+      for (IntentFilter filter : activity.getIntentFilters()) {
+        if (AndroidDomUtil.containsAction(filter, AndroidUtils.LAUNCH_ACTION_NAME)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   private static class MyApplicationLauncher extends AndroidApplicationLauncher {

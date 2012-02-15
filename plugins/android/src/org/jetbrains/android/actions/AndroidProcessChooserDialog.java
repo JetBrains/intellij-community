@@ -50,8 +50,8 @@ import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.android.facet.AndroidFacet;
+import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.android.util.AndroidBundle;
-import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -223,8 +223,8 @@ public class AndroidProcessChooserDialog extends DialogWrapper {
     myUpdatesQueue.queue(new Update(AndroidProcessChooserDialog.this) {
       @Override
       public void run() {
-        final AndroidDebugBridge debugBridge = AndroidUtils.getDebugBridge(myProject);
-        if (debugBridge != null && AndroidUtils.isDdmsCorrupted(debugBridge)) {
+        final AndroidDebugBridge debugBridge = AndroidSdkUtils.getDebugBridge(myProject);
+        if (debugBridge != null && AndroidSdkUtils.isDdmsCorrupted(debugBridge)) {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
             public void run() {
@@ -246,7 +246,7 @@ public class AndroidProcessChooserDialog extends DialogWrapper {
   }
 
   private void doUpdateTree() {
-    final AndroidDebugBridge debugBridge = AndroidUtils.getDebugBridge(myProject);
+    final AndroidDebugBridge debugBridge = AndroidSdkUtils.getDebugBridge(myProject);
 
     final DefaultMutableTreeNode root = new DefaultMutableTreeNode();
     final DefaultTreeModel model = new DefaultTreeModel(root);

@@ -34,7 +34,6 @@ import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.sdk.AndroidSdk;
 import org.jetbrains.android.sdk.AndroidSdkAdditionalData;
 import org.jetbrains.android.sdk.AndroidSdkType;
-import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,7 +58,7 @@ public class AndroidFacetConfiguration implements FacetConfiguration {
   public String ASSETS_FOLDER_RELATIVE_PATH = "/" + SdkConstants.FD_ASSETS;
   public String LIBS_FOLDER_RELATIVE_PATH = "/" + SdkConstants.FD_NATIVE_LIBS;
 
-  public List<String> RES_OVERLAY_FOLDERS = Arrays.asList("/" + AndroidUtils.RES_OVERLAY_DIR_NAME);
+  public List<String> RES_OVERLAY_FOLDERS = Arrays.asList("/res-overlay");
 
   public boolean REGENERATE_R_JAVA = true;
 

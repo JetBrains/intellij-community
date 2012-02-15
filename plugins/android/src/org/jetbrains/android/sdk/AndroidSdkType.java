@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.android.util.AndroidBundle;
+import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -71,7 +72,7 @@ public class AndroidSdkType extends SdkType implements JavaSdkType {
 
   @Override
   public boolean isValidSdkHome(String path) {
-    return AndroidSdkUtils.isAndroidSdk(path);
+    return AndroidCommonUtils.createSdkManager(path, new EmptySdkLog()) != null;
   }
 
   @Override

@@ -164,7 +164,8 @@ public final class DesignerToolWindowManager implements ProjectComponent {
 
     myPropertyTablePanel = new PropertyTablePanel();
 
-    Splitter toolWindowPanel = new Splitter(true, 0.33f);
+    // TODO: auto change orientation: IF (width < height) vertical ELSE horizontal
+    Splitter toolWindowPanel = new Splitter(true, 0.42f);
     toolWindowPanel.setFirstComponent(treeScrollPane);
     toolWindowPanel.setSecondComponent(myPropertyTablePanel);
 

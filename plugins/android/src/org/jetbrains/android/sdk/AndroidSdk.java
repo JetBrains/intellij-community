@@ -43,8 +43,6 @@ import java.awt.*;
 import java.io.File;
 import java.util.Map;
 
-import static org.jetbrains.android.util.AndroidUtils.ADB;
-
 /**
  * @author Eugene.Kudelevsky
  */
@@ -300,9 +298,9 @@ public class AndroidSdk {
   }
 
   private String getAdbPath() {
-    String path = getLocation() + File.separator + SdkConstants.OS_SDK_PLATFORM_TOOLS_FOLDER + ADB;
+    String path = getLocation() + File.separator + SdkConstants.OS_SDK_PLATFORM_TOOLS_FOLDER + SdkConstants.FN_ADB;
     if (!new File(path).exists()) {
-      return getLocation() + File.separator + AndroidUtils.toolPath(ADB);
+      return getLocation() + File.separator + AndroidSdkUtils.toolPath(SdkConstants.FN_ADB);
     }
     return path;
   }

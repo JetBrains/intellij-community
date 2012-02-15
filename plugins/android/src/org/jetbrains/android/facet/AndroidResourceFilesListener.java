@@ -157,7 +157,7 @@ class AndroidResourceFilesListener extends VirtualFileAdapter {
       }
 
       if (autogenerationMode == AndroidAutogeneratorMode.AAPT &&
-          AndroidRootUtil.getManifestFile(myFacet.getModule()) != myEvent.getFile()) {
+          AndroidRootUtil.getManifestFile(myFacet) != myEvent.getFile()) {
 
         final HashSet<ResourceEntry> resourceSet = new HashSet<ResourceEntry>();
 
@@ -200,7 +200,7 @@ class AndroidResourceFilesListener extends VirtualFileAdapter {
 
       final VirtualFile gp = parent.getParent();
 
-      final VirtualFile resourceDir = AndroidRootUtil.getResourceDir(module);
+      final VirtualFile resourceDir = AndroidRootUtil.getResourceDir(myFacet);
 
       if (gp == resourceDir &&
           ResourceFolderType.VALUES.getName().equals(AndroidResourceUtil.getResourceTypeByDirName(parent.getName()))) {
@@ -209,12 +209,12 @@ class AndroidResourceFilesListener extends VirtualFileAdapter {
 
       if (AndroidAptCompiler.isToCompileModule(module, myFacet.getConfiguration()) &&
           (myFacet.getConfiguration().REGENERATE_R_JAVA && (gp == resourceDir ||
-           AndroidRootUtil.getManifestFile(module) == file))) {
+           AndroidRootUtil.getManifestFile(myFacet) == file))) {
         final Manifest manifest = myFacet.getManifest();
         final String aPackage = manifest != null ? manifest.getPackage().getValue() : null;
 
         if (myCachedPackage != null && !myCachedPackage.equals(aPackage)) {
-          String aptGenDirPath = myFacet.getAptGenSourceRootPath();
+          String aptGenDirPath = AndroidRootUtil.getAptGenSourceRootPath(myFacet);
           AndroidCompileUtil.removeDuplicatingClasses(myModule, myCachedPackage, AndroidUtils.R_CLASS_NAME, null, aptGenDirPath);
         }
         myCachedPackage = aPackage;
@@ -223,14 +223,14 @@ class AndroidResourceFilesListener extends VirtualFileAdapter {
 
       if (myFacet.getConfiguration().REGENERATE_JAVA_BY_AIDL && file.getFileType() == AndroidIdlFileType.ourFileType) {
         VirtualFile sourceRoot = findSourceRoot(myModule, file);
-        if (sourceRoot != null && AndroidRootUtil.getAidlGenDir(module, myFacet) != sourceRoot) {
+        if (sourceRoot != null && AndroidRootUtil.getAidlGenDir(myFacet) != sourceRoot) {
           return AndroidAutogeneratorMode.AIDL;
         }
       }
 
       if (file.getFileType() == AndroidRenderscriptFileType.INSTANCE) {
         final VirtualFile sourceRoot = findSourceRoot(myModule, file);
-        if (sourceRoot != null && AndroidRootUtil.getRenderscriptGenDir(myModule) != sourceRoot) {
+        if (sourceRoot != null && AndroidRootUtil.getRenderscriptGenDir(myFacet) != sourceRoot) {
           return AndroidAutogeneratorMode.RENDERSCRIPT;
         }
       }

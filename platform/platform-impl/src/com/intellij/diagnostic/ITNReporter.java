@@ -164,7 +164,7 @@ public class ITNReporter extends ErrorReportSubmitter {
             } : null;
             ReportMessages.GROUP.createNotification(ReportMessages.ERROR_REPORT,
                                                     text.toString(),
-                                                    type, listener).notify(project);
+                                                    type, listener).setImportant(false).notify(project);
           }
         });
       }

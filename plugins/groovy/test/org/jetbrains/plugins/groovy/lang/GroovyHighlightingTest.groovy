@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang;
 
 
 import com.intellij.codeInspection.InspectionProfileEntry
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
@@ -49,7 +50,6 @@ import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.Groov
 import org.jetbrains.plugins.groovy.codeInspection.unusedDef.UnusedDefInspection
 import org.jetbrains.plugins.groovy.util.TestUtils
 import org.jetbrains.plugins.groovy.codeInspection.bugs.*
-import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection
 
 /**
  * @author peter
@@ -410,6 +410,14 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testUnusedDefsForArgs() {
+    doTest(new UnusedDefInspection());
+  }
+
+  public void testUsedDefBeforeTry1() {
+    doTest(new UnusedDefInspection());
+  }
+
+  public void testUsedDefBeforeTry2() {
     doTest(new UnusedDefInspection());
   }
 

@@ -216,15 +216,9 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
       case STATIC_MEMBER_FQ:
       case CLASS_OR_PACKAGE:
         if (resolve() instanceof PsiPackage) return true;
-        break;
-      case CLASS:
-      case CLASS_IN_QUALIFIED_NEW:
-        break;
     }
     final GrCodeReferenceElement qualifier = getQualifier();
-    if (qualifier == null) return false;
-    if (qualifier.resolve() instanceof PsiPackage) return true;
-    return ((GrCodeReferenceElementImpl)qualifier).isFullyQualified();
+    return qualifier != null && ((GrCodeReferenceElementImpl)qualifier).isFullyQualified();
   }
 
   public boolean isReferenceTo(PsiElement element) {

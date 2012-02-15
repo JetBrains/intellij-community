@@ -16,21 +16,17 @@
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Stack;
-import java.util.ArrayList;
 
 /**
  * @author ven
  */
 public interface Instruction {
-  Iterable<? extends Instruction> succ(CallEnvironment env);
-  Iterable<? extends Instruction> pred(CallEnvironment env);
+  Iterable<? extends Instruction> successors(CallEnvironment environment);
+  Iterable<? extends Instruction> predecessors(CallEnvironment environment);
 
-  Iterable<? extends Instruction> allSucc();
-  Iterable<? extends Instruction> allPred();
+  Iterable<? extends Instruction> allSuccessors();
+  Iterable<? extends Instruction> allPredecessors();
 
   int num();
 

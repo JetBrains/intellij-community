@@ -10,6 +10,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidUtils;
@@ -41,7 +42,9 @@ class CreateNewModuleTask extends ModuleProvidingTask {
         return depModule;
       }
     });
-    AndroidUtils.addAndroidFacetIfNecessary(depModule, myContentRoot, true);
+    if (AndroidFacet.getInstance(depModule) == null) {
+      AndroidUtils.addAndroidFacet(depModule, myContentRoot, true);
+    }
     AndroidSdkUtils.setupAndroidPlatformInNeccessary(depModule);
     setDepModule(depModule);
     return null;

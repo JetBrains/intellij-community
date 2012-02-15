@@ -161,6 +161,7 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
     final ActionCallback selectionDone = new ActionCallback();
 
     getFilteredStructure().refilter();
+    getUi().updateSubtree(getRootNode(), false);
     final Runnable selectionRunnable = new Runnable() {
       public void run() {
         revalidateTree();

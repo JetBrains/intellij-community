@@ -53,7 +53,9 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.xdebugger.DefaultDebugProcessHandler;
 import org.jetbrains.android.actions.AndroidEnableDdmsAction;
 import org.jetbrains.android.facet.AndroidFacet;
+import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.facet.AvdsNotSupportedException;
+import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidOutputReceiver;
 import org.jetbrains.android.util.AndroidUtils;
@@ -660,7 +662,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
 
   private boolean checkDdms() {
     AndroidDebugBridge bridge = AndroidDebugBridge.getBridge();
-    if (myDebugMode && bridge != null && AndroidUtils.canDdmsBeCorrupted(bridge)) {
+    if (myDebugMode && bridge != null && AndroidSdkUtils.canDdmsBeCorrupted(bridge)) {
       message(AndroidBundle.message("ddms.corrupted.error"), STDERR);
       if (myConsole != null && myRestarter != null) {
         final Runnable r = myRestarter;
@@ -697,7 +699,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
   private boolean uploadAndInstall(@NotNull IDevice device, @NotNull String packageName, AndroidFacet facet)
     throws IOException, AdbCommandRejectedException, TimeoutException {
     String remotePath = "/data/local/tmp/" + packageName;
-    String localPath = facet.getApkPath();
+    String localPath = AndroidRootUtil.getApkPath(facet);
     if (localPath == null) {
       message("ERROR: APK path is not specified for module \"" + facet.getModule().getName() + '"', STDERR);
       return false;
@@ -775,7 +777,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
                                                                                                                            AdbCommandRejectedException,
                                                                                                                            ShellCommandUnresponsiveException {
     message("DEVICE SHELL COMMAND: " + command, STDOUT);
-    AndroidUtils.executeCommand(device, command, receiver, false);
+    AndroidUtils.executeCommandOnDevice(device, command, receiver, false);
   }
 
   private static boolean isSuccess(MyReceiver receiver) {

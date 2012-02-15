@@ -19,11 +19,12 @@ package com.intellij.ide.fileTemplates.actions;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 import java.util.Map;
+import java.util.Properties;
 
 /**
  * @author Roman Chernyatchik
@@ -32,6 +33,7 @@ public class AttributesDefaults {
   private final String myDefaultName;
   private final TextRange myDefaultRange;
   private final Map<String, Pair<String, TextRange>> myNamesToValueAndRangeMap = new HashMap<String, Pair<String, TextRange>>();
+  private Properties myDefaultProperties = null;
   private boolean myFixedName;
 
   public AttributesDefaults(@NonNls @Nullable final String defaultName,
@@ -66,6 +68,17 @@ public class AttributesDefaults {
   public void add(@NonNls @NotNull final String attributeKey,
                   @NonNls @NotNull final String value) {
     add(attributeKey, value, null);
+  }
+
+  public void addPredefined(@NotNull String key, @NotNull String value) {
+    if (myDefaultProperties == null) {
+      myDefaultProperties = new Properties();
+    }
+    myDefaultProperties.setProperty(key, value);
+  }
+
+  public Properties getDefaultProperties() {
+    return myDefaultProperties;
   }
 
   @Nullable

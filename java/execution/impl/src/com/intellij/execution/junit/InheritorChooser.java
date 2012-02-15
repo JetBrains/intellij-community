@@ -102,7 +102,7 @@ public class InheritorChooser {
         }
       });
       JBPopupFactory.getInstance().createListPopupBuilder(list)
-        .setTitle("Choose executable classes to run " + psiMethod.getName())
+        .setTitle("Choose executable classes to run " + (psiMethod != null ? psiMethod.getName() : containingClass.getName()))
         .setMovable(false)
         .setResizable(false)
         .setRequestFocus(true)

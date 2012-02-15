@@ -37,12 +37,73 @@ import java.util.*;
 /**
  * @author Eugene.Kudelevsky
  */
-class RenderUtil {
+public class RenderUtil {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.uipreview.RenderUtil");
 
   private static final String DEFAULT_APP_LABEL = "Android application";
 
   private RenderUtil() {
+  }
+
+  @Nullable
+  public static RenderSession createRenderSession(@NotNull Project project,
+                                                  @NotNull String layoutXmlText,
+                                                  @Nullable VirtualFile layoutXmlFile,
+                                                  @NotNull IAndroidTarget target,
+                                                  @NotNull AndroidFacet facet,
+                                                  @NotNull FolderConfiguration config,
+                                                  float xdpi,
+                                                  float ydpi,
+                                                  @NotNull ThemeData theme)
+    throws RenderingException, IOException, AndroidSdkNotConfiguredException {
+    final Sdk sdk = ModuleRootManager.getInstance(facet.getModule()).getSdk();
+    if (sdk == null || !(sdk.getSdkType() instanceof AndroidSdkType)) {
+      throw new AndroidSdkNotConfiguredException();
+    }
+
+    final AndroidSdkAdditionalData data = (AndroidSdkAdditionalData)sdk.getSdkAdditionalData();
+    if (data == null) {
+      throw new AndroidSdkNotConfiguredException();
+    }
+
+    final AndroidPlatform platform = data.getAndroidPlatform();
+    if (platform == null) {
+      throw new AndroidSdkNotConfiguredException();
+    }
+
+    config.setVersionQualifier(new VersionQualifier(target.getVersion().getApiLevel()));
+
+    final RenderServiceFactory factory = platform.getSdk().getTargetData(target).getRenderServiceFactory(project);
+    if (factory == null) {
+      throw new RenderingException(AndroidBundle.message("android.layout.preview.cannot.load.library.error"));
+    }
+
+    final ProjectResources projectResources = new ProjectResources();
+
+    final VirtualFile[] resourceDirs = facet.getLocalResourceManager().getAllResourceDirs();
+    final IAbstractFolder[] resFolders = toAbstractFolders(project, resourceDirs);
+
+    loadResources(projectResources, layoutXmlText, layoutXmlFile, resFolders);
+    final int minSdkVersion = getMinSdkVersion(facet);
+
+    final ProjectCallback callback = new ProjectCallback(factory.getLibrary(), facet.getModule(), projectResources);
+    try {
+      callback.loadAndParseRClass();
+    }
+    catch (ClassNotFoundException e) {
+      LOG.debug(e);
+    }
+
+    final RenderResources resolver =
+      factory.createResourceResolver(facet, config, projectResources, theme.getName(), theme.isProjectTheme());
+    final RenderService renderService = factory.createService(resolver, config, xdpi, ydpi, callback, minSdkVersion);
+
+    try {
+      return renderService.createRenderSession(layoutXmlText, getAppLabelToShow(facet));
+    }
+    catch (XmlPullParserException e) {
+      throw new RenderingException(e);
+    }
   }
 
   public static boolean renderLayout(@NotNull Project project,

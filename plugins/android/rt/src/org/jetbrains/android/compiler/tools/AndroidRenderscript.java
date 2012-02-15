@@ -7,7 +7,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.AndroidCompilerMessageKind;
-import org.jetbrains.android.util.ExecutionUtil;
+import org.jetbrains.android.util.AndroidExecutionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,6 +53,6 @@ public class AndroidRenderscript {
     command.add(FileUtil.toSystemDependentName(sourceFilePath));
 
     LOG.info(AndroidCommonUtils.command2string(command));
-    return ExecutionUtil.doExecute(ArrayUtil.toStringArray(command));
+    return AndroidExecutionUtil.doExecute(ArrayUtil.toStringArray(command));
   }
 }

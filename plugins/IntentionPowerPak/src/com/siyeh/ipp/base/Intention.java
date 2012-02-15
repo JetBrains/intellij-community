@@ -46,7 +46,7 @@ public abstract class Intention extends PsiElementBaseIntentionAction {
   }
 
   @Override
-  public void invoke(Project project, Editor editor, PsiElement element) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
     if (!isWritable(project, element)) {
       return;
     }

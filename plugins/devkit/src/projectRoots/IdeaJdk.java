@@ -193,7 +193,7 @@ public class IdeaJdk extends SdkType implements JavaSdkType {
     return VfsUtil.toVirtualFileArray(result);
   }
 
-  private static void appendIdeaLibrary(final String path, @NonNls final String forbidden, final ArrayList<VirtualFile> result) {
+  private static void appendIdeaLibrary(final String path, @Nullable @NonNls final String forbidden, final ArrayList<VirtualFile> result) {
     final JarFileSystem jfs = JarFileSystem.getInstance();
     final File lib = new File(path);
     if (lib.isDirectory()) {

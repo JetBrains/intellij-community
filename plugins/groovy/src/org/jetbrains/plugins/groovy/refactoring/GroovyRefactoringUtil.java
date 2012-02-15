@@ -43,6 +43,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.*;
@@ -446,7 +447,8 @@ public abstract class GroovyRefactoringUtil {
 /*    if (declareFinal) {
       com.intellij.psi.util.PsiUtil.setModifierProperty((decl.getMembers()[0]), PsiModifier.FINAL, true);
     }*/
-    ((GrStatementOwner)anchorStatement.getParent()).addStatementBefore(decl, (GrStatement)anchorStatement);
+    final GrStatement statement = ((GrStatementOwner)anchorStatement.getParent()).addStatementBefore(decl, (GrStatement)anchorStatement);
+    GrReferenceAdjuster.shortenReferences(statement);
 
     return id;
   }
@@ -506,7 +508,7 @@ public abstract class GroovyRefactoringUtil {
         return false;
       }
     }
-    else if (newName.startsWith("'") || newName.startsWith("\"")) {
+    else if (StringUtil.startsWithChar(newName, '\'') || StringUtil.startsWithChar(newName, '"')) {
       if (newName.length() < 2 || !newName.endsWith("'")) {
         return false;
       }

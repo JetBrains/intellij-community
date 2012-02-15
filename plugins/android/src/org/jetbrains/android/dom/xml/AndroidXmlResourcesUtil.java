@@ -34,6 +34,7 @@ import java.util.Map;
  */
 public class AndroidXmlResourcesUtil {
   public static final Map<String, String> SPECIAL_STYLEABLE_NAMES = new HashMap<String, String>();
+  public static final String PREFERENCE_CLASS_NAME = "android.preference.Preference";
 
   static {
     AndroidXmlResourcesUtil.SPECIAL_STYLEABLE_NAMES.put("appwidget-provider", "AppWidgetProviderInfo");

@@ -25,6 +25,7 @@ import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -36,13 +37,13 @@ import java.util.Map;
 /**
  * @see FileChooserDescriptorFactory
  */
-public class FileChooserDescriptor implements Cloneable{
-  private boolean myChooseFiles;
+public class FileChooserDescriptor implements Cloneable {
+  private final boolean myChooseFiles;
   private boolean myChooseFolders;
-  private boolean myChooseJars;
-  private boolean myChooseJarsAsFiles;
-  private boolean myChooseJarContents;
-  private boolean myChooseMultiple;
+  private final boolean myChooseJars;
+  private final boolean myChooseJarsAsFiles;
+  private final boolean myChooseJarContents;
+  private final boolean myChooseMultiple;
 
   private String myTitle = UIBundle.message("file.chooser.default.title");
   private String myDescription;
@@ -55,22 +56,21 @@ public class FileChooserDescriptor implements Cloneable{
   private final Map<String, Object> myUserData = new HashMap<String, Object>();
 
   /**
-   * Creates new instance. Use methods from {@link FileChooserDescriptorFactory} for most used descriptors
-   * @param chooseFiles controls whether files can be chosen
-   * @param chooseFolders controls whether folders can be chosen
-   * @param chooseJars
-   * @param chooseJarsAsFiles controls whether the jar files will be returned as files or as folders
-   * @param chooseJarContents controls whether user can choose jar files and their contents
-   * @param chooseMultiple
-   */ 
-  public FileChooserDescriptor(
-    boolean chooseFiles, 
-    boolean chooseFolders, 
-    boolean chooseJars, 
-    boolean chooseJarsAsFiles, 
-    boolean chooseJarContents, 
-    boolean chooseMultiple
-  ){
+   * Creates new instance. Use methods from {@link FileChooserDescriptorFactory} for most used descriptors.
+   *
+   * @param chooseFiles       controls whether files can be chosen
+   * @param chooseFolders     controls whether folders can be chosen
+   * @param chooseJars        controls whether .jar files can be chosen
+   * @param chooseJarsAsFiles controls whether .jar files will be returned as files or as folders
+   * @param chooseJarContents controls whether .jar file contents can be chosen
+   * @param chooseMultiple    controls how many files can be chosen
+   */
+  public FileChooserDescriptor(boolean chooseFiles,
+                               boolean chooseFolders,
+                               boolean chooseJars,
+                               boolean chooseJarsAsFiles,
+                               boolean chooseJarContents,
+                               boolean chooseMultiple) {
     myChooseFiles = chooseFiles;
     myChooseFolders = chooseFolders;
     myChooseJars = chooseJars;
@@ -79,10 +79,14 @@ public class FileChooserDescriptor implements Cloneable{
     myChooseMultiple = chooseMultiple;
   }
 
+  /** @deprecated use {@linkplain FileChooserDescriptorFactory} (to remove in IDEA 12) */
+  @SuppressWarnings("UnusedDeclaration")
   public FileChooserDescriptor() {
     this(false, false, false, false, false, false);
   }
 
+  /** @deprecated use {@linkplain FileChooserDescriptorFactory} (to remove in IDEA 12) */
+  @SuppressWarnings("UnusedDeclaration")
   public FileChooserDescriptor chooseFolders() {
     myChooseFolders = true;
     return this;
@@ -216,6 +220,7 @@ public class FileChooserDescriptor implements Cloneable{
     return myChooseJars && FileElement.isArchive(file);
   }
 
+  @Nullable
   public final VirtualFile getFileToSelect(VirtualFile file) {
     if (file.isDirectory() && myChooseFolders) {
       return file;
@@ -285,11 +290,18 @@ public class FileChooserDescriptor implements Cloneable{
     return myHideIgnored;
   }
 
+  @Nullable
   public Object getUserData(String dataId) {
     return myUserData.get(dataId);
   }
 
-  public <T> void putUserData(DataKey<T> key, T data) {
+  @Nullable
+  public <T> T getUserData(@NotNull DataKey<T> key) {
+    @SuppressWarnings({"unchecked", "UnnecessaryLocalVariable"}) final T t = (T)myUserData.get(key.getName());
+    return t;
+  }
+
+  public <T> void putUserData(@NotNull DataKey<T> key, @Nullable T data) {
     myUserData.put(key.getName(), data);
   }
 

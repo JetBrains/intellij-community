@@ -67,9 +67,7 @@ public class AndroidNonConstantResIdsInSwitchInspection extends LocalInspectionT
         }
 
         final PsiField resolvedField = (PsiField)resolvedElement;
-        final PsiFile containingFile = resolvedField.getContainingFile();
-
-        if (containingFile == null || !AndroidResourceUtil.isRJavaField(containingFile, resolvedField)) {
+        if (!AndroidResourceUtil.isResourceField(resolvedField)) {
           return;
         }
 

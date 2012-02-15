@@ -144,7 +144,7 @@ public class ResourceReferenceConverter extends ResolvingConverter<ResourceValue
                                          ? null
                                          : getResourceTypesInCurrentModule(facet);
 
-        for (String type : ResourceManager.REFERABLE_RESOURCE_TYPES) {
+        for (String type : AndroidResourceUtil.REFERABLE_RESOURCE_TYPES) {
           String typePrefix = getTypePrefix(resourcePackage, type);
           if (value.startsWith(typePrefix)) {
             addResourceReferenceValues(facet, type, resourcePackage, result, true);
@@ -202,7 +202,7 @@ public class ResourceReferenceConverter extends ResolvingConverter<ResourceValue
       if (s != null) types.add(s);
     }
     if (types.size() == 0) {
-      types.addAll(ResourceManager.REFERABLE_RESOURCE_TYPES);
+      types.addAll(AndroidResourceUtil.REFERABLE_RESOURCE_TYPES);
     }
     return types;
   }
@@ -342,8 +342,8 @@ public class ResourceReferenceConverter extends ResolvingConverter<ResourceValue
     @NotNull
     public String getName() {
       String containerName;
-      if (ArrayUtil.find(ResourceManager.VALUE_RESOURCE_TYPES, myResourceType) >= 0) {
-        containerName = ResourceManager.getDefaultResourceFileName(myResourceType);
+      if (ArrayUtil.find(AndroidResourceUtil.VALUE_RESOURCE_TYPES, myResourceType) >= 0) {
+        containerName = AndroidResourceUtil.getDefaultResourceFileName(myResourceType);
       }
       else {
         containerName = '"' + myResourceType + "\" directory";
@@ -358,7 +358,7 @@ public class ResourceReferenceConverter extends ResolvingConverter<ResourceValue
 
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       LocalResourceManager manager = myFacet.getLocalResourceManager();
-      if (ArrayUtil.find(ResourceManager.VALUE_RESOURCE_TYPES, myResourceType) >= 0) {
+      if (ArrayUtil.find(AndroidResourceUtil.VALUE_RESOURCE_TYPES, myResourceType) >= 0) {
         String initialValue = !myResourceType.equals("id") ? "value" : null;
         ResourceElement resElement = manager.addValueResource(myResourceType, myResourceName, initialValue);
         if (resElement != null) {

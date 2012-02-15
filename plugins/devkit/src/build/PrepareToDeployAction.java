@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.jetbrains.idea.devkit.build;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileStatusNotification;
@@ -41,6 +42,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.io.ZipUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 
@@ -69,7 +71,7 @@ public class PrepareToDeployAction extends AnAction {
   public void actionPerformed(final AnActionEvent e) {
     final Module module = LangDataKeys.MODULE.getData(e.getDataContext());
     if (module != null && ModuleType.get(module) instanceof PluginModuleType) {
-      doPrepare(Arrays.asList(module), LangDataKeys.PROJECT.getData(e.getDataContext()));
+      doPrepare(Arrays.asList(module), PlatformDataKeys.PROJECT.getData(e.getDataContext()));
     }
   }
 
@@ -94,10 +96,10 @@ public class PrepareToDeployAction extends AnAction {
                                  }
 
                                  if (!errorMessages.isEmpty()) {
-                                   Messages.showErrorDialog(errorMessages.iterator().next(), DevKitBundle.message("error.occured"));
+                                   Messages.showErrorDialog(errorMessages.iterator().next(), DevKitBundle.message("error.occurred"));
                                  }
                                  else if (!successMessages.isEmpty()) {
-                                   StringBuffer messageBuf = new StringBuffer();
+                                   StringBuilder messageBuf = new StringBuilder();
                                    for (String message : successMessages) {
                                      if (messageBuf.length() != 0) {
                                        messageBuf.append('\n');
@@ -177,13 +179,13 @@ public class PrepareToDeployAction extends AnAction {
     return vfile == null || !ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(vfile).hasReadonlyFiles();
   }
 
-  private static FileFilter createFilter(final ProgressIndicator progressIndicator, final FileTypeManager fileTypeManager) {
+  private static FileFilter createFilter(final ProgressIndicator progressIndicator, @Nullable final FileTypeManager fileTypeManager) {
     return new FileFilter() {
-      public boolean accept(File pathname) {
+      public boolean accept(File pathName) {
         if (progressIndicator != null) {
           progressIndicator.setText2("");
         }
-        return fileTypeManager == null || !fileTypeManager.isFileIgnored(FileUtil.toSystemIndependentName(pathname.getName()));
+        return fileTypeManager == null || !fileTypeManager.isFileIgnored(FileUtil.toSystemIndependentName(pathName.getName()));
       }
     };
   }
@@ -252,7 +254,7 @@ public class PrepareToDeployAction extends AnAction {
     ZipUtil.addFileOrDirRecursively(zos, zipFile, libraryJar, getZipPath(pluginName, jarName), createFilter(progressIndicator, null), null);
   }
 
-  private static String getLibraryJarName(final String fileName, Set<String> usedJarNames, final String preferredName) {
+  private static String getLibraryJarName(final String fileName, Set<String> usedJarNames, @Nullable final String preferredName) {
     String uniqueName;
     if (preferredName != null && !usedJarNames.contains(preferredName)) {
       uniqueName = preferredName;
@@ -313,8 +315,8 @@ public class PrepareToDeployAction extends AnAction {
                                        createFilter(progressIndicator, myFileTypeManager), writtenItemRelativePaths);
       }
       final String pluginXmlPath = pluginModuleBuildProperties.getPluginXmlPath();
-      @NonNls final String metainf = "/META-INF/plugin.xml";
-      ZipUtil.addFileToZip(jarPlugin, new File(pluginXmlPath), metainf, writtenItemRelativePaths, createFilter(progressIndicator, null));
+      @NonNls final String metaInf = "/META-INF/plugin.xml";
+      ZipUtil.addFileToZip(jarPlugin, new File(pluginXmlPath), metaInf, writtenItemRelativePaths, createFilter(progressIndicator, null));
     }
     finally {
       if (jarPlugin != null) jarPlugin.close();

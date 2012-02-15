@@ -3,8 +3,7 @@
 Groovy script
   Compound Gstring
     PsiElement(Gstring begin)('"""')
-    PsiElement(Gstring content)('"')
-    PsiElement(Gstring content)('\\')
+    PsiElement(Gstring content)('"\\')
     GString injection
       PsiElement($)('$')
       Closable block

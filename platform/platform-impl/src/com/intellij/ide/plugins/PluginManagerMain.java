@@ -533,7 +533,7 @@ public abstract class PluginManagerMain implements Disposable {
 
   protected class RefreshAction extends DumbAwareAction {
     public RefreshAction() {
-      super("Reload list of plugins", "Reload list of plugins", IconLoader.getIcon("/vcs/refresh.png"));
+      super("Reload List of Plugins", "Reload list of plugins", IconLoader.getIcon("/vcs/refresh.png"));
     }
 
     @Override

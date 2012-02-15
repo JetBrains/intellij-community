@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.Disposer;
@@ -28,12 +24,17 @@ import javax.swing.plaf.basic.BasicScrollBarUI;
 import java.awt.*;
 import java.awt.event.*;
 
+/**
+ * @author max
+ */
 public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   public static final Color GRADIENT_LIGHT = Gray._251;
   public static final Color GRADIENT_DARK = Gray._215;
   public static final Color GRADIENT_THUMB_BORDER = Gray._201;
   public static final Color TRACK_BACKGROUND = LightColors.SLIGHTLY_GRAY;
   public static final Color TRACK_BORDER = Gray._230;
+
+  private static final BasicStroke BORDER_STROKE = new BasicStroke();
 
   private final AdjustmentListener myAdjustmentListener;
   private final MouseMotionAdapter myMouseMotionListener;
@@ -185,18 +186,17 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     }
 
     g.translate(thumbBounds.x, thumbBounds.y);
-    paintMaxiThumb(g, thumbBounds);
+    paintMaxiThumb((Graphics2D)g, thumbBounds);
     g.translate(-thumbBounds.x, -thumbBounds.y);
   }
 
-  private void paintMaxiThumb(Graphics g, Rectangle thumbBounds) {
+  private void paintMaxiThumb(Graphics2D g, Rectangle thumbBounds) {
     final boolean vertical = isVertical();
-    int hgap = vertical ? 2 : 1;
-    int vgap = vertical ? 1 : 2;
+    int hGap = vertical ? 2 : 1;
+    int vGap = vertical ? 1 : 2;
 
-
-    int w = adjustThumbWidth(thumbBounds.width - hgap * 2);
-    int h = thumbBounds.height - vgap * 2;
+    int w = adjustThumbWidth(thumbBounds.width - hGap * 2);
+    int h = thumbBounds.height - vGap * 2;
 
     // leave one pixel between thumb and right or bottom edge
     if (vertical) {
@@ -205,6 +205,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     else {
       w -= 1;
     }
+
     final GradientPaint paint;
     final Color start = adjustColor(GRADIENT_LIGHT);
     final Color end = adjustColor(GRADIENT_DARK);
@@ -216,11 +217,14 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
       paint = new GradientPaint(0, 1, start, 0, h + 1, end);
     }
 
-    ((Graphics2D)g).setPaint(paint);
-    g.fillRect(hgap + 1, vgap + 1, w - 1, h - 1);
+    g.setPaint(paint);
+    g.fillRect(hGap + 1, vGap + 1, w - 1, h - 1);
 
+    final Stroke stroke = g.getStroke();
+    g.setStroke(BORDER_STROKE);
     g.setColor(GRADIENT_THUMB_BORDER);
-    g.drawRoundRect(hgap, vgap, w, h, 3, 3);
+    g.drawRoundRect(hGap, vGap, w, h, 3, 3);
+    g.setStroke(stroke);
   }
 
   @Override

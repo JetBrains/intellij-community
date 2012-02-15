@@ -34,6 +34,10 @@ public class ControlFlowTest extends LightCodeInsightFixtureTestCase {
   public void testNested() throws Throwable { doTest(); }
   public void testReturn() throws Throwable { doTest(); }
   public void testSwitch1() throws Throwable { doTest(); }
+  public void testSwitch2() throws Throwable { doTest(); }
+  public void testSwitch3() throws Throwable { doTest(); }
+  public void testSwitch4() throws Throwable { doTest(); }
+  public void testSwitch5() throws Throwable { doTest(); }
   public void testThrow1() throws Throwable { doTest(); }
   public void testThrowInCatch() throws Throwable { doTest(); }
   public void testTry1() throws Throwable { doTest(); }
@@ -43,6 +47,7 @@ public class ControlFlowTest extends LightCodeInsightFixtureTestCase {
   public void testTry5() throws Throwable { doTest(); }
   public void testTry6() throws Throwable { doTest(); }
   public void testTry7() throws Throwable { doTest(); }
+  public void testTry8() throws Throwable { doTest(); }
   public void testWhile1() throws Throwable { doTest(); }
   public void testWhile2() throws Throwable { doTest(); }
   public void testWhileNonConstant() throws Throwable { doTest(); }

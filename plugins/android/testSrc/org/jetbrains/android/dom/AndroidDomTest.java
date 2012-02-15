@@ -6,7 +6,7 @@ import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.android.AndroidTestCase;
 import org.jetbrains.android.inspections.AndroidDomInspection;
-import org.jetbrains.android.resourceManagers.ResourceManager;
+import org.jetbrains.android.util.AndroidResourceUtil;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -55,7 +55,7 @@ abstract class AndroidDomTest extends AndroidTestCase {
 
   protected static List<String> getAllResources() {
     List<String> list = new ArrayList<String>();
-    for (String type : ResourceManager.REFERABLE_RESOURCE_TYPES) {
+    for (String type : AndroidResourceUtil.REFERABLE_RESOURCE_TYPES) {
       list.add('@' + type + '/');
     }
     return list;

@@ -152,17 +152,26 @@ public class GitMultiRootBranchConfig {
 
   @NotNull
   private Collection<String> getCommonBranches(boolean local) {
-    Collection<String> commonLocal = null;
+    Collection<String> commonBranches = null;
     for (GitRepository repository : myRepositories) {
       GitBranchesCollection branchesCollection = repository.getBranches();
       Collection<GitBranch> branches = local ? branchesCollection.getLocalBranches() : branchesCollection.getRemoteBranches();
-      if (commonLocal == null) {
-        commonLocal = GitUtil.getBranchNames(branches);
-      } else {
-        commonLocal.retainAll(GitUtil.getBranchNames(branches));
+      if (commonBranches == null) {
+        commonBranches = GitUtil.getBranchNamesWithoutRemoteHead(branches);
+      }
+      else {
+        commonBranches.retainAll(GitUtil.getBranchNamesWithoutRemoteHead(branches));
       }
     }
-    return commonLocal != null ? commonLocal : Collections.<String>emptyList();
+
+    if (commonBranches != null) {
+      ArrayList<String> common = new ArrayList<String>(commonBranches);
+      Collections.sort(common);
+      return common;
+    }
+    else {
+      return Collections.emptyList();
+    }
   }
 
   @Override

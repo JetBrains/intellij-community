@@ -51,8 +51,8 @@ import org.jetbrains.android.facet.AndroidFacetConfiguration;
 import org.jetbrains.android.logcat.AndroidLogFilterModel;
 import org.jetbrains.android.logcat.AndroidLogcatFiltersPreferences;
 import org.jetbrains.android.sdk.AndroidPlatform;
+import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.android.util.AndroidBundle;
-import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -200,7 +200,8 @@ public abstract class AndroidRunConfigurationBase extends ModuleBasedConfigurati
 
     boolean debug = DefaultDebugExecutor.EXECUTOR_ID.equals(executor.getId());
     if (debug) {
-      if (!AndroidUtils.activateDdmsIfNeccessary(facet)) {
+      if (!AndroidSdkUtils.activateDdmsIfNecessary(facet.getModule().getProject(),
+                                                   facet.getDebugBridge())) {
         return null;
       }
     }

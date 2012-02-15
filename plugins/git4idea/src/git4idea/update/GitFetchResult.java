@@ -21,6 +21,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
+import static com.intellij.openapi.util.text.StringUtil.join;
+import static com.intellij.openapi.util.text.StringUtil.pluralize;
+
 /**
  * @author Kirill Likhodedov
  */
@@ -28,6 +31,7 @@ public final class GitFetchResult {
 
   private final Type myType;
   private Collection<Exception> myErrors = new ArrayList<Exception>();
+  private Collection<String> myPrunedRefs = new ArrayList<String>();
 
   public enum Type {
     SUCCESS,
@@ -81,6 +85,23 @@ public final class GitFetchResult {
   @NotNull
   public Collection<? extends Exception> getErrors() {
     return myErrors;
+  }
+
+  public void addPruneInfo(@NotNull Collection<String> prunedRefs) {
+    myPrunedRefs.addAll(prunedRefs);
+  }
+
+  @NotNull
+  public Collection<String> getPrunedRefs() {
+    return myPrunedRefs;
+  }
+
+  @NotNull
+  public String getAdditionalInfo() {
+    if (!myPrunedRefs.isEmpty()) {
+      return "Pruned obsolete remote " + pluralize("reference", myPrunedRefs.size()) + ": " + join(myPrunedRefs, ", ");
+    }
+    return "";
   }
 
 }

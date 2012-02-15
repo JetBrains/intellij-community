@@ -420,7 +420,7 @@ public class UpdateHighlightersUtil {
       infoEndOffset = docLength;
     }
 
-    info.text = document.getCharsSequence().subSequence(infoStartOffset, infoEndOffset).toString();
+    info.text = document.getText().substring(infoStartOffset, infoEndOffset);
     info.group = group;
 
     int layer = getLayer(info, severityRegistrar);
@@ -488,6 +488,9 @@ public class UpdateHighlightersUtil {
     }
     else if (severityRegistrar.compare(severity, HighlightSeverity.ERROR) >= 0) {
       layer = HighlighterLayer.ERROR;
+    }
+    else if (severity == HighlightInfoType.INJECTED_FRAGMENT_SEVERITY) {
+      layer = HighlighterLayer.CARET_ROW-1;
     }
     else {
       layer = HighlighterLayer.ADDITIONAL_SYNTAX;

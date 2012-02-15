@@ -312,7 +312,9 @@ public class FileStructurePopup implements Disposable {
               token.finish();
             }
           }
-          alarm.addRequest(this, 300);
+          if (!alarm.isDisposed()) {
+            alarm.addRequest(this, 300);
+          }
         }
       }, 300);
     }

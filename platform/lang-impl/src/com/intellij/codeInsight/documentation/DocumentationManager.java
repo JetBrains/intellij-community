@@ -204,6 +204,9 @@ public class DocumentationManager {
 
     final PopupUpdateProcessor updateProcessor = new PopupUpdateProcessor(project) {
       public void updatePopup(Object lookupIteObject) {
+        if (lookupIteObject == null) {
+          return;
+        }
         if (lookupIteObject instanceof PsiElement) {
           doShowJavaDocInfo((PsiElement)lookupIteObject, false, this, originalElement, autoupdate);
           return;

@@ -29,7 +29,6 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.android.facet.AndroidFacet;
-import org.jetbrains.android.resourceManagers.ResourceManager;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidResourceUtil;
 import org.jetbrains.android.util.AndroidUtils;
@@ -37,6 +36,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.List;
 
 /**
  * @author Eugene.Kudelevsky
@@ -66,7 +66,7 @@ public class GotoResourceAction extends AnAction {
                 if (element != null) {
                   PsiField field = PsiTreeUtil.getParentOfType(element, PsiField.class);
                   if (field != null) {
-                    if (AndroidResourceUtil.isRJavaField(file, field)) {
+                    if (isRJavaField(file, field)) {
                       enabled = true;
                     }
                   }
@@ -75,14 +75,14 @@ public class GotoResourceAction extends AnAction {
                     if (element != null) {
                       PsiElement targetElement = ((PsiReferenceExpression)element).resolve();
                       if (targetElement instanceof PsiField) {
-                        if (AndroidResourceUtil.isRJavaField(targetElement.getContainingFile(), (PsiField)targetElement)) {
+                        if (isRJavaField(targetElement.getContainingFile(), (PsiField)targetElement)) {
                           enabled = true;
                         }
                       }
                     }
                   }
                 }
-                presentation.setEnabled(enabled || ResourceManager.isInResourceSubdirectory(file, null));
+                presentation.setEnabled(enabled || AndroidResourceUtil.isInResourceSubdirectory(file, null));
                 return;
               }
             }
@@ -90,7 +90,7 @@ public class GotoResourceAction extends AnAction {
           else if (PlatformDataKeys.FILE_EDITOR.getData(dataContext) != null) {
             PsiFile psiFile = getPsiFileByVirtualFileKey(project, dataContext);
             if (psiFile != null) {
-              boolean enabled = AndroidFacet.getInstance(psiFile) != null && ResourceManager.isInResourceSubdirectory(psiFile, null);
+              boolean enabled = AndroidFacet.getInstance(psiFile) != null && AndroidResourceUtil.isInResourceSubdirectory(psiFile, null);
               presentation.setEnabled(enabled);
               return;
             }
@@ -145,14 +145,16 @@ public class GotoResourceAction extends AnAction {
       }
       PsiField field = PsiTreeUtil.getParentOfType(element, PsiField.class, false);
       if (field != null) {
-        return AndroidResourceUtil.findResources(field);
+        final List<PsiElement> elements = AndroidResourceUtil.findResourcesByField(field);
+        return elements.toArray(new PsiElement[elements.size()]);
       }
       while (element != null) {
         element = PsiTreeUtil.getParentOfType(element, PsiReferenceExpression.class);
         if (element != null) {
           PsiElement targetElement = ((PsiReferenceExpression)element).resolve();
           if (targetElement instanceof PsiField) {
-            return AndroidResourceUtil.findResources((PsiField)targetElement);
+            final List<PsiElement> elements = AndroidResourceUtil.findResourcesByField((PsiField)targetElement);
+            return elements.toArray(new PsiElement[elements.size()]);
           }
         }
       }
@@ -183,5 +185,18 @@ public class GotoResourceAction extends AnAction {
     if (targets.length > 0) {
       AndroidUtils.navigateTo(targets, getRelativePointToShowPopup(context));
     }
+  }
+
+  private static boolean isRJavaField(@NotNull PsiFile file, @NotNull PsiField field) {
+    PsiClass c = field.getContainingClass();
+    if (c == null) return false;
+    c = c.getContainingClass();
+    if (c != null && AndroidUtils.R_CLASS_NAME.equals(c.getName())) {
+      AndroidFacet facet = AndroidFacet.getInstance(file);
+      if (facet != null) {
+        return AndroidResourceUtil.isRJavaFile(facet, file);
+      }
+    }
+    return false;
   }
 }

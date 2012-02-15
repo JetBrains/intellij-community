@@ -192,6 +192,11 @@ public class ConfigImportHelper {
     if (plugins.exists()) {
       FileUtil.delete(plugins);
     }
+    
+    File pluginsSettings = new File(new File(dest, "options"), "plugin_ui.xml");
+    if (pluginsSettings.exists()) {
+      FileUtil.delete(pluginsSettings);
+    }
   }
 
   @Nullable

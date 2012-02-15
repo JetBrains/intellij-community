@@ -15,13 +15,18 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow;
 
-import java.util.Stack;
+import java.util.Deque;
 
 /**
+ * @see org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ControlFlowBuilder#visitTryStatement(org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTryCatchStatement)
+ * @see ReturnInstruction#successors(CallEnvironment)
+ * @see CallInstruction#successors(CallEnvironment)
+ * @see AfterCallInstruction#predecessors(CallEnvironment)
+ *
  * @author ven
  */
 public interface CallEnvironment {
-  Stack<CallInstruction> callStack(Instruction instruction);
+  Deque<CallInstruction> callStack(Instruction instruction);
 
-  void update(Stack<CallInstruction> callStack, Instruction instruction);
+  void update(Deque<CallInstruction> callStack, Instruction instruction);
 }

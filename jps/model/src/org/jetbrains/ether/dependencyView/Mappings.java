@@ -121,6 +121,7 @@ public class Mappings {
 
   private Mappings(final Mappings base) throws IOException {
     myIsDelta = true;
+    myPostPasses = new LinkedList<PostPass>();
     myChangedClasses = new HashSet<DependencyContext.S>();
     myChangedFiles = new HashSet<DependencyContext.S>();
     myDeltaIsTransient = base.myDeltaIsTransient;
@@ -133,6 +134,7 @@ public class Mappings {
 
   public Mappings(final File rootDir, final boolean transientDelta) throws IOException {
     myIsDelta = false;
+    myPostPasses = new LinkedList<PostPass>();
     myChangedClasses = null;
     myChangedFiles = null;
     myDeltaIsTransient = transientDelta;
@@ -253,6 +255,30 @@ public class Mappings {
 
     X value() {
       return myValue;
+    }
+  }
+
+  private abstract class PostPass {
+    boolean myPerformed = false;
+    abstract void perform();
+    void run () {
+      if (!myPerformed) {
+        myPerformed = true;
+        perform();
+      }
+    }
+  }
+
+  private final List<PostPass> myPostPasses;
+
+
+  private void addPostPass(final PostPass p) {
+    myPostPasses.add(p);
+  }
+
+  private void runPostPasses() {
+    for (final PostPass p : myPostPasses) {
+      p.run();
     }
   }
 
@@ -817,6 +843,7 @@ public class Mappings {
                                final Collection<File> affectedFiles) {
     debug("Begin of Differentiate:");
 
+    delta.runPostPasses();
     delta.compensateRemovedContent(filesToCompile);
 
     final Util u = new Util(delta);
@@ -1536,6 +1563,8 @@ public class Mappings {
 
   public void integrate(final Mappings delta, final Collection<File> compiled, final Collection<String> removed) {
     try {
+      delta.runPostPasses();
+
       if (removed != null) {
         for (String file : removed) {
           final DependencyContext.S key = myContext.get(file);
@@ -1739,26 +1768,33 @@ public class Mappings {
 
       @Override
       public void registerImports(final String className, final Collection<String> imports, Collection<String> staticImports) {
-        // todo: proces static imports as well
-        final DependencyContext.S rootClassName = myContext.get(className.replace(".", "/"));
-
-        // todo: postpone processing until data collected is complete and myClassToSourceFile contains the mapping
-        final DependencyContext.S fileName = myClassToSourceFile.get(rootClassName);
-
-        for (final String i : imports) {
-          if (i.endsWith("*")) {
-            continue; // filter out wildcard imports
-          }
-          final DependencyContext.S iname = myContext.get(i.replace(".", "/"));
-
-          myClassToClassDependency.put(rootClassName, iname);
-
-          if (fileName != null) {
-            final UsageRepr.Cluster cluster = new UsageRepr.Cluster();
-            cluster.addUsage(rootClassName, UsageRepr.createClassUsage(myContext, iname));
-            mySourceFileToUsages.put(fileName, cluster);
-          }
+        for (String s: staticImports) {
+          int i = s.length() - 1;
+          for (; s.charAt(i) != '.'; i--);
+          imports.add(s.substring(0, i));
         }
+
+        addPostPass(new PostPass() {
+          public void perform() {
+            final DependencyContext.S rootClassName = myContext.get(className.replace(".", "/"));
+            final DependencyContext.S fileName = myClassToSourceFile.get(rootClassName);
+
+            for (final String i : imports) {
+              if (i.endsWith("*")) {
+                continue; // filter out wildcard imports
+              }
+              final DependencyContext.S iname = myContext.get(i.replace(".", "/"));
+
+              myClassToClassDependency.put(iname, rootClassName);
+
+              if (fileName != null) {
+                final UsageRepr.Cluster cluster = new UsageRepr.Cluster();
+                cluster.addUsage(rootClassName, UsageRepr.createClassUsage(myContext, iname));
+                mySourceFileToUsages.put(fileName, cluster);
+              }
+            }
+          }
+        });
       }
     };
   }

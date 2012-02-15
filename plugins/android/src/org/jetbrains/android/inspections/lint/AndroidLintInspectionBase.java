@@ -22,6 +22,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.annotations.Nls;
@@ -146,7 +147,8 @@ public abstract class AndroidLintInspectionBase extends GlobalInspectionTool {
           final Module module = ModuleUtil.findModuleForPsiElement(f);
 
           if (module != null) {
-            final VirtualFile manifestFile = AndroidRootUtil.getManifestFile(module);
+            final AndroidFacet facet = AndroidFacet.getInstance(module);
+            final VirtualFile manifestFile = facet != null ? AndroidRootUtil.getManifestFile(facet) : null;
 
             if (manifestFile != null) {
               f = f.getManager().findFile(manifestFile);

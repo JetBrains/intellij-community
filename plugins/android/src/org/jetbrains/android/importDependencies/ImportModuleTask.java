@@ -1,7 +1,6 @@
 package org.jetbrains.android.importDependencies;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleWithNameAlreadyExists;
@@ -11,6 +10,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.JDOMException;
+import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidUtils;
@@ -64,7 +64,9 @@ class ImportModuleTask extends ModuleProvidingTask {
       return exception;
     }
     assert moduleWrapper[0] != null;
-    AndroidUtils.addAndroidFacetIfNecessary(moduleWrapper[0], myContentRoot, true);
+    if (AndroidFacet.getInstance(moduleWrapper[0]) == null) {
+      AndroidUtils.addAndroidFacet(moduleWrapper[0], myContentRoot, true);
+    }
     AndroidSdkUtils.setupAndroidPlatformInNeccessary(moduleWrapper[0]);
     setDepModule(moduleWrapper[0]);
     return null;

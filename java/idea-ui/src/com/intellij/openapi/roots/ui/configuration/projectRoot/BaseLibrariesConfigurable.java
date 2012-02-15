@@ -261,9 +261,10 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
         Collections.sort(types);
 
         final StringBuilder sb = new StringBuilder("Library '");
-        sb.append(library.getName()).append("' is used in ");
+        Library libraryModel = myContext.getLibraryModel(library);
+        sb.append(libraryModel != null ? libraryModel.getName() : library.getName()).append("' is used in ");
         for (int i = 0; i < types.size(); i++) {
-          if (i == types.size() - 1) {
+          if (i > 0 && i == types.size() - 1) {
             sb.append(" and in ");
           }
           else if (i > 0) {
@@ -284,13 +285,8 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
         if (DialogWrapper.OK_EXIT_CODE == Messages.showOkCancelDialog(myProject, sb.toString(),
                                     "Delete Library", Messages.getQuestionIcon())) {
 
-          final ModuleStructureConfigurable rootConfigurable = ModuleStructureConfigurable.getInstance(myProject);
           for (final ProjectStructureElementUsage usage : usages) {
-            if (usage instanceof UsageInModuleClasspath) {
-              rootConfigurable.removeLibraryOrderEntry(((ModuleProjectStructureElement)usage.getContainingElement()).getModule(), library);
-            } else if (usage instanceof UsageInArtifact) {
-              ((UsageInArtifact)usage).removeElement();
-            }
+            usage.removeSourceElement();
           }
 
           getModelProvider().getModifiableModel().removeLibrary(library);

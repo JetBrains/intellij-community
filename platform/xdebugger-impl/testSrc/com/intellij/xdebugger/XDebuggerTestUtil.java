@@ -69,6 +69,15 @@ public class XDebuggerTestUtil {
     XDebuggerUtil.getInstance().toggleLineBreakpoint(project, file, line);
   }
 
+  public static <P extends XBreakpointProperties>void insertBreakpoint(final Project project, final P properties, final Class<? extends XBreakpointType<XBreakpoint<P>, P>> typeClass) {
+    new WriteAction() {
+      protected void run(final Result result) {
+        XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
+        breakpointManager.addBreakpoint((XBreakpointType<XBreakpoint<P>,P>)XDebuggerUtil.getInstance().findBreakpointType(typeClass), properties);
+      }
+    }.execute();
+  }
+
   public static void assertPosition(XSourcePosition pos, VirtualFile file, int line) throws IOException {
     Assert.assertNotNull(pos);
     Assert.assertEquals(new File(file.getPath()).getCanonicalPath(), new File(pos.getFile().getPath()).getCanonicalPath());

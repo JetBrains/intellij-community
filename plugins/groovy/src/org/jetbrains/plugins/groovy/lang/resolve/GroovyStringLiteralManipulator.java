@@ -27,7 +27,9 @@ public class GroovyStringLiteralManipulator extends AbstractElementManipulator<G
   private static final Logger LOG = Logger.getInstance(GroovyStringLiteralManipulator.class);
 
   public GrLiteralImpl handleContentChange(GrLiteral expr, TextRange range, String newContent) throws IncorrectOperationException {
-    if (!(expr.getValue() instanceof String)) throw new IncorrectOperationException("cannot handle content change");
+    if (!(expr.getValue() instanceof String)) {
+      throw new IncorrectOperationException("cannot handle content change, expr.getValue()=" + expr.getValue());
+    }
 
     LOG.assertTrue(expr instanceof GrLiteralImpl);
 

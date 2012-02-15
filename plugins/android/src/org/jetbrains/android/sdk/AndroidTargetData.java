@@ -3,9 +3,12 @@ package org.jetbrains.android.sdk;
 import com.android.sdklib.IAndroidTarget;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -14,10 +17,10 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.android.dom.attrs.AttributeDefinitions;
+import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.resourceManagers.SystemResourceManager;
 import org.jetbrains.android.uipreview.RenderServiceFactory;
 import org.jetbrains.android.uipreview.RenderingException;
-import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,6 +31,8 @@ import java.util.Set;
  * @author Eugene.Kudelevsky
  */
 public class AndroidTargetData {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.sdk.AndroidTargetData");
+
   private final AndroidSdk mySdk;
   private final IAndroidTarget myTarget;
 
@@ -48,7 +53,7 @@ public class AndroidTargetData {
         public void run() {
           final String attrsPath = myTarget.getPath(IAndroidTarget.ATTRIBUTES);
           final String attrsManifestPath = myTarget.getPath(IAndroidTarget.MANIFEST_ATTRIBUTES);
-          final XmlFile[] files = AndroidUtils.findXmlFiles(project, attrsPath, attrsManifestPath);
+          final XmlFile[] files = findXmlFiles(project, attrsPath, attrsManifestPath);
           if (files != null) {
             myAttrDefs = new AttributeDefinitions(files);
           }
@@ -75,10 +80,11 @@ public class AndroidTargetData {
   }
 
   @NotNull
-  public Set<String> getThemes(@NotNull final Module module) {
+  public Set<String> getThemes(@NotNull final AndroidFacet facet) {
     if (myThemes == null) {
       myThemes = new HashSet<String>();
-      final SystemResourceManager systemResourceManager = new SystemResourceManager(module, new AndroidPlatform(mySdk, myTarget));
+      final Module module = facet.getModule();
+      final SystemResourceManager systemResourceManager = new SystemResourceManager(facet, new AndroidPlatform(mySdk, myTarget));
 
       for (VirtualFile valueResourceDir : systemResourceManager.getResourceSubdirs("values")) {
         for (final VirtualFile valueResourceFile : valueResourceDir.getChildren()) {
@@ -126,5 +132,30 @@ public class AndroidTargetData {
   @NotNull
   public IAndroidTarget getTarget() {
     return myTarget;
+  }
+
+  @Nullable
+  private static XmlFile[] findXmlFiles(final Project project, final String... paths) {
+    XmlFile[] xmlFiles = new XmlFile[paths.length];
+    for (int i = 0; i < paths.length; i++) {
+      String path = paths[i];
+      final VirtualFile file = LocalFileSystem.getInstance().findFileByPath(path);
+      PsiFile psiFile = file != null ? ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
+        @Nullable
+        public PsiFile compute() {
+          return PsiManager.getInstance(project).findFile(file);
+        }
+      }) : null;
+      if (psiFile == null) {
+        LOG.info("File " + path + " is not found");
+        return null;
+      }
+      if (!(psiFile instanceof XmlFile)) {
+        LOG.info("File " + path + "  is not an xml psiFile");
+        return null;
+      }
+      xmlFiles[i] = (XmlFile)psiFile;
+    }
+    return xmlFiles;
   }
 }

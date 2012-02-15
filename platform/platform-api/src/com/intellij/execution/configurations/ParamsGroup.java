@@ -49,6 +49,10 @@ public class ParamsGroup implements Cloneable {
     myGroupParams.add(parameter);
   }
 
+  public void addParameterAt(int index, @NotNull @NonNls final String parameter) {
+    myGroupParams.addAt(index, parameter);
+  }
+
   public void addParameters(final String... parameters) {
     for (String parameter : parameters) {
       addParameter(parameter);

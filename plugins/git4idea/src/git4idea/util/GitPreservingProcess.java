@@ -56,7 +56,8 @@ public class GitPreservingProcess {
   @NotNull private final Runnable myOperation;
   @NotNull private final String myStashMessage;
 
-  private GitStashChangesSaver mySaver;
+  // suppressed, because only the load() method needs to be synchronized not to load twice
+  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized") private GitStashChangesSaver mySaver;
   private boolean myLoaded;
   private final Object LOAD_LOCK = new Object();
 
@@ -81,18 +82,24 @@ public class GitPreservingProcess {
     Runnable operation = new Runnable() {
       @Override
       public void run() {
+        LOG.debug("starting");
         mySaver = configureSaver();
         boolean savedSuccessfully = save();
+        LOG.debug("save result: " + savedSuccessfully);
         if (savedSuccessfully) {
           try {
+            LOG.debug("running operation");
             myOperation.run();
+            LOG.debug("operation completed.");
           }
           finally {
             if (autoLoadDecision == null || autoLoadDecision.compute()) {
+              LOG.debug("loading");
               load();
             }
           }
         }
+        LOG.debug("finished.");
       }
     };
 

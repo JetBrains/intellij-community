@@ -33,6 +33,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -66,6 +67,7 @@ import com.intellij.util.diff.FilesTooBigForDiffException;
 import com.intellij.util.text.Matcher;
 import com.intellij.util.text.MatcherHolder;
 import com.intellij.util.ui.AsyncProcessIcon;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -139,6 +141,7 @@ public abstract class ChooseByNameBase {
   private boolean myClosedByShiftEnter = false;
   protected final int myInitialIndex;
   private String myFindUsagesTitle;
+  private ShortcutSet myCheckBoxShortcut;
 
   public boolean checkDisposed() {
     if (myDisposedFlag && myPostponedOkAction != null && !myPostponedOkAction.isProcessed()) {
@@ -354,7 +357,7 @@ public abstract class ChooseByNameBase {
     myCardContainer.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 4));  // space between checkbox and filter/show all in view buttons
 
     final String checkBoxName = myModel.getCheckBoxName();
-    myCheckBox = new JCheckBox(checkBoxName != null ? checkBoxName : "");
+    myCheckBox = new JCheckBox(checkBoxName != null ? checkBoxName + (myCheckBoxShortcut != null ? " (" + KeymapUtil.getShortcutsText(myCheckBoxShortcut.getShortcuts()) + ")" : "") : "");
     myCheckBox.setAlignmentX(SwingConstants.RIGHT);
     
     if (!SystemInfo.isMac) {
@@ -363,7 +366,9 @@ public abstract class ChooseByNameBase {
     
     myCheckBox.setSelected(myModel.loadInitialCheckBoxState());
 
-    if (checkBoxName == null) myCheckBox.setVisible(false);
+    if (checkBoxName == null) {
+      myCheckBox.setVisible(false);
+    }
 
     addCard(myCheckBox, CHECK_BOX_CARD);
 
@@ -409,9 +414,10 @@ public abstract class ChooseByNameBase {
 
     hBox.add(toolbarComponent);
 
-    if (myToolArea != null) {
-      hBox.add(myToolArea);
+    if (myToolArea == null) {
+      myToolArea = new JLabel(EmptyIcon.create(1, 24));
     }
+    hBox.add(myToolArea);
     myTextFieldPanel.add(caption2Tools);
 
     myHistory = new ArrayList<Pair<String, Integer>>();
@@ -442,6 +448,17 @@ public abstract class ChooseByNameBase {
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     Font editorFont = new Font(scheme.getEditorFontName(), Font.PLAIN, scheme.getEditorFontSize());
     myTextField.setFont(editorFont);
+
+    if (checkBoxName != null) {
+      if (myCheckBox != null && myCheckBoxShortcut != null) {
+        new AnAction("change goto check box", null ,null) {
+          @Override
+          public void actionPerformed(AnActionEvent e) {
+            myCheckBox.setSelected(!myCheckBox.isSelected());
+          }
+        }.registerCustomShortcutSet(myCheckBoxShortcut, myTextField);
+      }
+    }
 
     if (isCloseByFocusLost()) {
       myTextField.addFocusListener(new FocusAdapter() {
@@ -594,6 +611,10 @@ public abstract class ChooseByNameBase {
     JPanel wrapper = new JPanel(new BorderLayout());
     wrapper.add(comp, BorderLayout.EAST);
     myCardContainer.add(wrapper, cardId);
+  }
+
+  public void setCheckBoxShortcut(ShortcutSet shortcutSet) {
+    myCheckBoxShortcut = shortcutSet;
   }
 
   private static Set<KeyStroke> getShortcuts(@NotNull String actionId) {

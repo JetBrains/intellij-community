@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 /**
 * @author Eugene.Kudelevsky
 */
-class LayoutDeviceConfiguration {
+public class LayoutDeviceConfiguration {
   private LayoutDevice myDevice;
   private final String myName;
   private final FolderConfiguration myConfiguration;

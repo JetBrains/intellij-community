@@ -39,8 +39,8 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.PsiNavigateUtil;
 import com.intellij.xml.refactoring.XmlTagInplaceRenamer;
 import org.jetbrains.android.AndroidFileTemplateProvider;
-import org.jetbrains.android.resourceManagers.ResourceManager;
 import org.jetbrains.android.util.AndroidBundle;
+import org.jetbrains.android.util.AndroidResourceUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -138,7 +138,7 @@ public class CreateTypedResourceFileAction extends CreateElementActionBase {
       public Boolean compute() {
         PsiElement e = element;
         while (e != null) {
-          if (e instanceof PsiDirectory && ResourceManager.isResourceSubdirectory((PsiDirectory)e, myResourceType)) {
+          if (e instanceof PsiDirectory && AndroidResourceUtil.isResourceSubdirectory((PsiDirectory)e, myResourceType)) {
             return true;
           }
           e = e.getParent();

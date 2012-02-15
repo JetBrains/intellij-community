@@ -54,7 +54,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -89,7 +89,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.*;
 
-import static org.jetbrains.android.util.AndroidUtils.EMULATOR;
 import static org.jetbrains.android.util.AndroidUtils.SYSTEM_RESOURCE_PACKAGE;
 
 /**
@@ -199,17 +198,6 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
 
   private void activateSourceAutogenerating() {
     myAutogenerationEnabled = true;
-  }
-
-  @Nullable
-  public static String getOutputPackage(@NotNull Module module) {
-    VirtualFile compilerOutput = CompilerModuleExtension.getInstance(module).getCompilerOutputPath();
-    if (compilerOutput == null) return null;
-    return new File(compilerOutput.getPath(), getApkName(module)).getPath();
-  }
-
-  public static String getApkName(Module module) {
-    return module.getName() + ".apk";
   }
 
   public void androidPlatformChanged() {
@@ -392,7 +380,7 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
       Project project = getModule().getProject();
       if (sdk != null) {
         SdkManager sdkManager = sdk.getSdkManager();
-        myAvdManager = new AvdManager(sdkManager, AndroidUtils.getSdkLog(project));
+        myAvdManager = new AvdManager(sdkManager, AndroidSdkUtils.getSdkLog(project));
       }
       else {
         throw new AvdsNotSupportedException();
@@ -404,7 +392,7 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
   public void launchEmulator(@Nullable final String avdName, @NotNull final String commands, @Nullable ProcessHandler handler) {
     AndroidPlatform platform = getConfiguration().getAndroidPlatform();
     if (platform != null) {
-      final String emulatorPath = platform.getSdk().getLocation() + File.separator + AndroidUtils.toolPath(EMULATOR);
+      final String emulatorPath = platform.getSdk().getLocation() + File.separator + AndroidSdkUtils.toolPath(SdkConstants.FN_EMULATOR);
       final GeneralCommandLine commandLine = new GeneralCommandLine();
       commandLine.setExePath(FileUtil.toSystemDependentName(emulatorPath));
       if (avdName != null) {
@@ -420,7 +408,7 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
       if (handler != null) {
         handler.notifyTextAvailable(commandLine.getCommandLineString() + '\n', ProcessOutputTypes.STDOUT);
       }
-      AndroidUtils.runExternalToolInSeparateThread(getModule().getProject(), commandLine, handler);
+      AndroidUtils.runExternalToolInSeparateThread(commandLine, handler);
     }
   }
 
@@ -487,12 +475,12 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
 
             PsiDocumentManager.getInstance(getModule().getProject()).commitAllDocuments();
 
-            final PropertiesFile projectProperties = AndroidUtils.findPropertyFile(getModule(), SdkConstants.FN_PROJECT_PROPERTIES);
+            final PropertiesFile projectProperties = AndroidRootUtil.findPropertyFile(getModule(), SdkConstants.FN_PROJECT_PROPERTIES);
             if (projectProperties == null) {
               return;
             }
             final Pair<Properties, VirtualFile> localProperties = 
-              AndroidUtils.readPropertyFile(getModule(), SdkConstants.FN_LOCAL_PROPERTIES);
+              AndroidRootUtil.readPropertyFile(getModule(), SdkConstants.FN_LOCAL_PROPERTIES);
 
             updateTargetProperty(projectProperties);
             updateLibraryProperty(projectProperties);
@@ -586,7 +574,7 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
   private VirtualFile[] collectDependencies() {
     final List<VirtualFile> dependenciesList = new ArrayList<VirtualFile>();
 
-    for (AndroidFacet depFacet : AndroidUtils.getAndroidDependencies(getModule(), true)) {
+    for (AndroidFacet depFacet : AndroidSdkUtils.getAndroidDependencies(getModule(), true)) {
       final Module depModule = depFacet.getModule();
       final VirtualFile libDir = getBaseAndroidContentRoot(depModule);
       if (libDir != null) {
@@ -609,11 +597,12 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
 
   @Nullable
   private static VirtualFile getBaseAndroidContentRoot(@NotNull Module module) {
-    final VirtualFile manifestFile = AndroidRootUtil.getManifestFile(module);
+    final AndroidFacet facet = getInstance(module);
+    final VirtualFile manifestFile = facet != null ? AndroidRootUtil.getManifestFile(facet) : null;
     final VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
     if (manifestFile != null) {
       for (VirtualFile contentRoot : contentRoots) {
-        if (VfsUtil.isAncestor(contentRoot, manifestFile, true)) {
+        if (VfsUtilCore.isAncestor(contentRoot, manifestFile, true)) {
           return contentRoot;
         }
       }
@@ -704,7 +693,7 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
   @NotNull
   public LocalResourceManager getLocalResourceManager() {
     if (myLocalResourceManager == null) {
-      myLocalResourceManager = new LocalResourceManager(getModule());
+      myLocalResourceManager = new LocalResourceManager(this);
     }
     return myLocalResourceManager;
   }
@@ -714,7 +703,7 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
     if (mySystemResourceManager == null) {
       AndroidPlatform platform = getConfiguration().getAndroidPlatform();
       if (platform != null) {
-        mySystemResourceManager = new SystemResourceManager(getModule(), platform);
+        mySystemResourceManager = new SystemResourceManager(this, platform);
       }
     }
     return mySystemResourceManager;
@@ -722,28 +711,13 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
 
   @Nullable
   public Manifest getManifest() {
-    final VirtualFile manifestFile = AndroidRootUtil.getManifestFile(getModule());
+    final VirtualFile manifestFile = AndroidRootUtil.getManifestFile(this);
     if (manifestFile == null) return null;
     return AndroidUtils.loadDomElement(getModule(), manifestFile, Manifest.class);
   }
 
   public static AndroidFacetType getFacetType() {
     return (AndroidFacetType)FacetTypeRegistry.getInstance().findFacetType(ID);
-  }
-
-  public PsiClass findClass(final String className) {
-    return findClass(className, getModule().getModuleWithDependenciesAndLibrariesScope(true));
-  }
-
-  public PsiClass findClass(final String className, final GlobalSearchScope scope) {
-    final Project project = getModule().getProject();
-    final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
-    return ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
-      @Nullable
-      public PsiClass compute() {
-        return facade.findClass(className, scope);
-      }
-    });
   }
 
   @NotNull
@@ -779,11 +753,17 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
     return viewClassMap;
   }
 
-  private boolean fillMap(@NotNull String className,
+  private boolean fillMap(@NotNull final String className,
                           @NotNull final ClassMapConstructor constructor,
                           GlobalSearchScope scope,
                           final Map<String, PsiClass> map) {
-    PsiClass baseClass = findClass(className, getModule().getModuleWithDependenciesAndLibrariesScope(true));
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(getModule().getProject());
+    final PsiClass baseClass = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
+      @Nullable
+      public PsiClass compute() {
+        return facade.findClass(className, getModule().getModuleWithDependenciesAndLibrariesScope(true));
+      }
+    });
     if (baseClass != null) {
       String[] baseClassTagNames = constructor.getTagNamesByClass(baseClass);
       for (String tagName : baseClassTagNames) {
@@ -808,37 +788,6 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
     return map.size() > 0;
   }
 
-  @Nullable
-  public String getAptGenSourceRootPath() {
-    String path = getConfiguration().GEN_FOLDER_RELATIVE_PATH_APT;
-    if (path.length() == 0) return null;
-    String moduleDirPath = getModuleDirPath();
-    return moduleDirPath != null ? moduleDirPath + path : null;
-  }
-
-
-  @Nullable
-  public String getAidlGenSourceRootPath() {
-    String path = getConfiguration().GEN_FOLDER_RELATIVE_PATH_AIDL;
-    if (path.length() == 0) return null;
-    String moduleDirPath = getModuleDirPath();
-    return moduleDirPath != null ? moduleDirPath + path : null;
-  }
-
-  @Nullable
-  public String getModuleDirPath() {
-    return AndroidRootUtil.getModuleDirPath(getModule());
-  }
-
-  @Nullable
-  public String getApkPath() {
-    String path = getConfiguration().APK_PATH;
-    if (path.length() == 0) {
-      return getOutputPackage(getModule());
-    }
-    String moduleDirPath = getModuleDirPath();
-    return moduleDirPath != null ? FileUtil.toSystemDependentName(moduleDirPath + path) : null;
-  }
 
   public void scheduleSourceRegenerating(@NotNull final AndroidAutogeneratorMode mode) {
     synchronized (myDirtyModes) {

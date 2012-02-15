@@ -197,6 +197,10 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
   public void testArrayFromVarargs() throws Exception {
     doTest(new MockIntroduceVariableHandler("strs", false, false, false, "java.lang.String[]"));
   }
+  
+  public void testArrayFromVarargs1() throws Exception {
+    doTest(new MockIntroduceVariableHandler("strs", false, false, false, "java.lang.String[]"));
+  }
 
   public void testFromFinalFieldOnAssignment() throws Exception {
     doTest(new MockIntroduceVariableHandler("strs", false, false, false, "java.lang.String"));

@@ -23,13 +23,8 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
@@ -44,6 +39,8 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
 
 public class ExtractInterfaceHandler implements RefactoringActionHandler, ElementsHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.extractInterface.ExtractInterfaceHandler");
@@ -116,7 +113,7 @@ public class ExtractInterfaceHandler implements RefactoringActionHandler, Elemen
 
   private void doRefactoring() throws IncorrectOperationException {
     LocalHistoryAction a = LocalHistory.getInstance().startAction(getCommandName());
-    PsiClass anInterface = null;
+    final PsiClass anInterface;
     try {
       anInterface = extractInterface(myTargetDir, myClass, myInterfaceName, mySelectedMembers, myJavaDocPolicy);
     }
@@ -125,7 +122,13 @@ public class ExtractInterfaceHandler implements RefactoringActionHandler, Elemen
     }
 
     if (anInterface != null) {
-      ExtractClassUtil.askAndTurnRefsToSuper(myProject, myClass, anInterface);
+      final Runnable turnRefsToSuperRunnable = new Runnable() {
+        @Override
+        public void run() {
+          ExtractClassUtil.askAndTurnRefsToSuper(myProject, myClass, anInterface);
+        }
+      };
+      SwingUtilities.invokeLater(turnRefsToSuperRunnable);
     }
   }
 

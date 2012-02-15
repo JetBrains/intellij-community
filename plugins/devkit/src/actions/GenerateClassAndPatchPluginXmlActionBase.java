@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.util.ComponentType;
 
 import javax.swing.*;
@@ -30,7 +31,7 @@ import javax.swing.*;
  * @author max
  */
 public abstract class GenerateClassAndPatchPluginXmlActionBase extends GeneratePluginClassAction {
-  public GenerateClassAndPatchPluginXmlActionBase(String text, String description, Icon icon) {
+  public GenerateClassAndPatchPluginXmlActionBase(String text, String description, @Nullable Icon icon) {
     super(text, description, icon);
   }
 
