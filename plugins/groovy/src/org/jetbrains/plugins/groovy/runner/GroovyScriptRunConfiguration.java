@@ -248,13 +248,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
     final VirtualFile scriptFile = getScriptFile();
     if (scriptFile == null) return null;
     final PsiFile file = PsiManager.getInstance(getProject()).findFile(scriptFile);
-    if (!(file instanceof GroovyFile)) return null;
-    if (((GroovyFile)file).isScript()) return ((GroovyFile)file).getScriptClass();
-    final PsiClass[] classes = ((GroovyFile)file).getClasses();
-    if (classes.length > 0) {
-      return classes[0];
-    }
-    return null;
+    return GroovyRunnerUtil.getRunningClass(file);
   }
 
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
@@ -268,7 +262,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
       throw new RuntimeConfigurationWarning(GroovyBundle.message("class.does.not.exist"));
     }
     if (toRun instanceof GrTypeDefinition) {
-      if (!GroovyScriptRunConfigurationProducer.canBeRunByGroovy(toRun)) {
+      if (!GroovyRunnerUtil.canBeRunByGroovy(toRun)) {
         throw new RuntimeConfigurationWarning(GroovyBundle.message("class.can't be executed"));
       }
     }
