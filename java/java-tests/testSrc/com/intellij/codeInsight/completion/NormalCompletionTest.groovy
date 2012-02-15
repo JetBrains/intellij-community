@@ -1283,4 +1283,11 @@ public class ListUtils {
     assert !('return' in myFixture.lookupElementStrings)
   }
 
+  public void testSameSignature() {
+    configure()
+    lookup.setCurrentItem(myItems[1])
+    myFixture.type('\n')
+    checkResult()
+  }
+
 }

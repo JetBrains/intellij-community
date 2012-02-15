@@ -67,11 +67,11 @@ public class PreferLocalVariablesLiteralsAndAnnoMethodsWeigher extends LookupEle
       return MyResult.localOrParameter;
     }
 
-    if (myCompletionType == CompletionType.SMART) {
-      if (object instanceof String && item.getUserData(JavaCompletionUtil.SUPER_METHOD_PARAMETERS) == Boolean.TRUE) {
-        return MyResult.superMethodParameters;
-      }
+    if (object instanceof String && item.getUserData(JavaCompletionUtil.SUPER_METHOD_PARAMETERS) == Boolean.TRUE) {
+      return MyResult.superMethodParameters;
+    }
 
+    if (myCompletionType == CompletionType.SMART) {
       if (item.getUserData(CollectionsUtilityMethodsProvider.COLLECTION_FACTORY) != null) {
         return MyResult.collectionFactory;
       }

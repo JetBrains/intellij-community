@@ -537,6 +537,9 @@ public class JavaCompletionData extends JavaAwareCompletionData{
           }
         });
       }
+      if (SameSignatureCallParametersProvider.IN_CALL_ARGUMENT.accepts(position)) {
+        new SameSignatureCallParametersProvider().addCompletions(parameters, new ProcessingContext(), result);
+      }
     }
   }
 
