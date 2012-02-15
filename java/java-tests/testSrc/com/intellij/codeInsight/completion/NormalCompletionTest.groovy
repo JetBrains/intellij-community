@@ -1278,4 +1278,9 @@ public class ListUtils {
     checkResult()
   }
 
+  public void testNoReturnAfterDot() {
+    configure()
+    assert !('return' in myFixture.lookupElementStrings)
+  }
+
 }

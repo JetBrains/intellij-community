@@ -637,7 +637,8 @@ public class JavaCompletionData extends JavaAwareCompletionData{
       return true;
     }
 
-    if (psiElement().withParents(PsiReferenceExpression.class, PsiExpressionStatement.class, PsiIfStatement.class).accepts(position)) {
+    if (psiElement().withParents(PsiReferenceExpression.class, PsiExpressionStatement.class, PsiIfStatement.class).andNot(
+      psiElement().afterLeaf(".")).accepts(position)) {
       PsiElement stmt = position.getParent().getParent();
       PsiIfStatement ifStatement = (PsiIfStatement)stmt.getParent();
       if (ifStatement.getElseBranch() == stmt || ifStatement.getThenBranch() == stmt) {
