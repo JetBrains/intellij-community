@@ -143,6 +143,7 @@ public class Queue<T> {
 
   @Override
   public String toString() {
+    if (isEmpty()) return "<empty>";
     List<Object> list = Arrays.asList(myArray);
     if (isWrapped) {
       return "[[[ " +list.subList(0, myLast) + " ||| ... " + list.subList(myLast, myFirst) + " ... ||| " + list.subList(myFirst, myArray.length) + " ]]]";
