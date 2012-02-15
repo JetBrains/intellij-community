@@ -226,6 +226,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
 
   @Override
   public void dispose() {
+    cancelPopup();
     getNavBarUI().clearItems();
     myDisposed = true;
     NavBarListener.unsubscribeFrom(this);
