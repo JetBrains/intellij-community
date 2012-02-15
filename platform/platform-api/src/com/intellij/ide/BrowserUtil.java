@@ -57,6 +57,8 @@ import java.util.zip.ZipFile;
 public class BrowserUtil {
   private static final Logger LOG = Logger.getInstance("#" + BrowserUtil.class.getName());
 
+  private static final boolean TRIM_URLS = !"false".equalsIgnoreCase(System.getProperty("idea.browse.trim.urls"));
+
   // The pattern for 'scheme' mainly according to RFC1738.
   // We have to violate the RFC since we need to distinguish
   // real schemes from local Windows paths; The only difference
@@ -97,7 +99,11 @@ public class BrowserUtil {
    * @param url an URL to open.
    */
   public static void launchBrowser(@NonNls String url) {
-    LOG.debug("Launch browser: " + url);
+    LOG.debug("Launch browser: [" + url + "]");
+
+    if (TRIM_URLS) {
+      url = url.trim();
+    }
 
     if (url.startsWith("jar:")) {
       url = extractFiles(url);
