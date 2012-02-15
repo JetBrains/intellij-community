@@ -19,11 +19,7 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.XmlSuppressableInspectionTool;
 import com.intellij.codeInspection.deprecation.DeprecationInspection;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.XmlElementVisitor;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReference;
+import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
@@ -64,7 +60,7 @@ public class DeprecatedClassUsageInspection extends XmlSuppressableInspectionToo
   private static void checkReferences(PsiElement psiElement, ProblemsHolder holder) {
     PsiReference[] references = psiElement.getReferences();
     PsiReference last = ArrayUtil.getLastElement(references);
-    if (last instanceof JavaClassReference) {
+    if (last != null && (!(last instanceof ResolvingHint) || ((ResolvingHint)last).canResolveTo(PsiDocCommentOwner.class))) {
       PsiElement resolve = last.resolve();
       DeprecationInspection.checkDeprecated(resolve, psiElement, last.getRangeInElement(), holder);
     }

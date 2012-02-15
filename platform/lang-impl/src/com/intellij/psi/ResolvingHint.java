@@ -22,5 +22,5 @@ package com.intellij.psi;
  */
 public interface ResolvingHint {
 
-  boolean canResolveTo(PsiElement element);
+  boolean canResolveTo(Class<? extends PsiElement> elementClass);
 }
