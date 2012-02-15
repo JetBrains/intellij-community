@@ -32,6 +32,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.containers.OrderedSet;
 import org.jetbrains.android.compiler.AndroidCompileUtil;
+import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -245,7 +246,7 @@ public class AndroidRootUtil {
 
               if (libraryProject) {
                 if (classDir != null) {
-                  final VirtualFile packedClassesJar = classDir.findChild(AndroidCompileUtil.CLASSES_JAR_FILE_NAME);
+                  final VirtualFile packedClassesJar = classDir.findChild(AndroidCommonUtils.CLASSES_JAR_FILE_NAME);
                   if (packedClassesJar != null) {
                     outputDirs.add(packedClassesJar);
                   }

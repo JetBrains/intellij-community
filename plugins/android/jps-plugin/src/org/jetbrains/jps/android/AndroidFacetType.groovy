@@ -17,6 +17,38 @@ class AndroidFacetType extends FacetTypeService {
 
   @Override
   Facet createFacet(Module module, String name, Node facetConfiguration, MacroExpander macroExpander) {
-    return new AndroidFacet(module, name, "");
+    def facet = new AndroidFacet(module, name);
+
+    facetConfiguration.each {Node child ->
+      String value = child."@value"
+
+      switch (child."@name") {
+        case "RES_FOLDER_RELATIVE_PATH":
+          facet.resFolderRelativePath = value
+          break
+        case "USE_CUSTOM_APK_RESOURCE_FOLDER":
+          facet.useCustomResFolderForCompilation = Boolean.parseBoolean(value)
+          break
+        case "CUSTOM_APK_RESOURCE_FOLDER":
+          facet.resFolderForCompilationRelativePath = value
+          break
+        case "LIBRARY_PROJECT":
+          facet.library = Boolean.parseBoolean(value)
+          break
+        case "MANIFEST_FILE_RELATIVE_PATH":
+          facet.manifestRelativePath = value
+          break
+        case "USE_CUSTOM_COMPILER_MANIFEST":
+          facet.useCustomManifestForCompilation = Boolean.parseBoolean(value)
+          break
+        case "CUSTOM_COMPILER_MANIFEST":
+          facet.manifestForCompilationRelativePath = value
+          break
+        case "PACK_TEST_CODE":
+          facet.packTestCode = Boolean.parseBoolean(value)
+          break
+      }
+    }
+    return facet;
   }
 }
