@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.fileChooser.ex;
 
+import com.google.common.collect.Lists;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
@@ -26,6 +27,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserUtil;
 import com.intellij.openapi.fileChooser.FileElement;
 import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.fileChooser.impl.FileComparator;
@@ -46,9 +48,11 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.containers.ConvertingIterator;
+import com.intellij.util.Function;
+import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -332,12 +336,15 @@ public class FileSystemTreeImpl implements FileSystemTree {
   public VirtualFile getSelectedFile() {
     final TreePath path = myTree.getSelectionPath();
     if (path == null) return null;
-    DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
+    final DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
     if (!(node.getUserObject() instanceof FileNodeDescriptor)) return null;
-    FileNodeDescriptor descriptor = (FileNodeDescriptor)node.getUserObject();
-    return descriptor.getElement().getFile();
+    final FileElement element = ((FileNodeDescriptor)node.getUserObject()).getElement();
+    final VirtualFile file = element.getFile();
+    FileChooserUtil.setSelectionPath(file, element.getPath());
+    return file;
   }
 
+  @Nullable
   public VirtualFile getNewFileParent() {
     if (getSelectedFile() != null) return getSelectedFile();
 
@@ -345,33 +352,51 @@ public class FileSystemTreeImpl implements FileSystemTree {
     return roots.size() > 0 ? roots.get(0) : null;
   }
 
+  @NotNull
   public VirtualFile[] getSelectedFiles() {
-    return collectSelectedFiles(new ConvertingIterator.IdConvertor<VirtualFile>());
-  }
-
-  public VirtualFile[] getChosenFiles() {
-    return collectSelectedFiles(new Convertor<VirtualFile, VirtualFile>() {
-      @Nullable
-      public VirtualFile convert(VirtualFile file) {
+    final List<VirtualFile> files = collectSelectedElements(new NullableFunction<FileElement, VirtualFile>() {
+      @Override
+      public VirtualFile fun(final FileElement element) {
+        final VirtualFile file = element.getFile();
         if (file == null || !file.isValid()) return null;
-        return myTreeStructure.getChooserDescriptor().getFileToSelect(file);
+        FileChooserUtil.setSelectionPath(file, element.getPath());
+        return file;
       }
     });
+    return VfsUtil.toVirtualFileArray(files);
   }
 
-  private VirtualFile[] collectSelectedFiles(Convertor<VirtualFile, VirtualFile> fileConverter) {
-    TreePath[] paths = myTree.getSelectionPaths();
-    if (paths == null) return VirtualFile.EMPTY_ARRAY;
-    ArrayList<VirtualFile> files = new ArrayList<VirtualFile>(paths.length);
-
-    for (TreePath path : paths) {
-      DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
-      if (!(node.getUserObject() instanceof FileNodeDescriptor)) return VirtualFile.EMPTY_ARRAY;
-      FileNodeDescriptor descriptor = (FileNodeDescriptor)node.getUserObject();
-      VirtualFile file = fileConverter.convert(descriptor.getElement().getFile());
-      if (file != null && file.isValid()) files.add(file);
-    }
+  @NotNull
+  public VirtualFile[] getChosenFiles() {
+    final List<VirtualFile> files = collectSelectedElements(new NullableFunction<FileElement, VirtualFile>() {
+      @Override
+      public VirtualFile fun(final FileElement element) {
+        VirtualFile file = element.getFile();
+        if (file == null || !file.isValid()) return null;
+        file = myTreeStructure.getChooserDescriptor().getFileToSelect(file);
+        FileChooserUtil.setSelectionPath(file, element.getPath());
+        return file;
+      }
+    });
     return VfsUtil.toVirtualFileArray(files);
+  }
+
+  private <T> List<T> collectSelectedElements(final Function<FileElement, T> converter) {
+    final TreePath[] paths = myTree.getSelectionPaths();
+    if (paths == null) return Collections.emptyList();
+
+    final List<T> elements = Lists.newArrayList();
+    for (TreePath path : paths) {
+      final DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
+      final Object userObject = node.getUserObject();
+      if (userObject instanceof FileNodeDescriptor) {
+        final T element = converter.fun(((FileNodeDescriptor)userObject).getElement());
+        if (element != null) {
+          elements.add(element);
+        }
+      }
+    }
+    return elements;
   }
 
   public boolean selectionExists() {
@@ -422,6 +447,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
             final FileElement element = ((FileNodeDescriptor)object).getElement();
             final VirtualFile file = element.getFile();
             if (file != null) {
+              FileChooserUtil.setSelectionPath(file, element.getPath());
               selection.add(file);
             }
           }
@@ -451,7 +477,8 @@ public class FileSystemTreeImpl implements FileSystemTree {
           }
 
 
-          boolean async = myTreeBuilder.getTreeStructure().isToBuildChildrenInBackground(virtualFile);
+          AbstractTreeStructure treeStructure = myTreeBuilder.getTreeStructure();
+          boolean async = treeStructure != null && treeStructure.isToBuildChildrenInBackground(virtualFile);
           if (virtualFile instanceof NewVirtualFile) {
             RefreshQueue.getInstance().refresh(async, false, null, ModalityState.stateForComponent(myTree), virtualFile);
           }
@@ -462,7 +489,6 @@ public class FileSystemTreeImpl implements FileSystemTree {
       }
     }
 
-    public void treeCollapsed(TreeExpansionEvent event) {
-    }
+    public void treeCollapsed(TreeExpansionEvent event) { }
   }
 }

@@ -138,7 +138,7 @@ public abstract class ProgressManager {
 
   /**
    * Runs a specified <code>process</code> in a background thread and shows a progress dialog, which can be made non-modal by pressing
-   * background button. Upon successfull termination of the process a <code>successRunnable</code> will be called in Swing UI thread and
+   * background button. Upon successful termination of the process a <code>successRunnable</code> will be called in Swing UI thread and
    * <code>canceledRunnable</code> will be called if terminated on behalf of the user by pressing either cancel button, while running in
    * a modal state or stop button if running in background.
    *
@@ -156,7 +156,7 @@ public abstract class ProgressManager {
                                                             @Nullable Runnable canceledRunnable);
   /**
    * Runs a specified <code>process</code> in a background thread and shows a progress dialog, which can be made non-modal by pressing
-   * background button. Upon successfull termination of the process a <code>successRunnable</code> will be called in Swing UI thread and
+   * background button. Upon successful termination of the process a <code>successRunnable</code> will be called in Swing UI thread and
    * <code>canceledRunnable</code> will be called if terminated on behalf of the user by pressing either cancel button, while running in
    * a modal state or stop button if running in background.
    *

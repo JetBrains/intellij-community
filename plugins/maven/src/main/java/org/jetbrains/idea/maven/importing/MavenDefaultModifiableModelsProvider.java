@@ -17,9 +17,7 @@ package org.jetbrains.idea.maven.importing;
 
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.ModifiableFacetModel;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -56,11 +54,13 @@ public class MavenDefaultModifiableModelsProvider extends MavenBaseModifiableMod
 
   @Override
   protected ModifiableModuleModel doGetModuleModel() {
-    return new ReadAction<ModifiableModuleModel>() {
-      protected void run(Result<ModifiableModuleModel> result) throws Throwable {
-        result.setResult(ModuleManager.getInstance(myProject).getModifiableModel());
-      }
-    }.execute().getResultObject();
+    AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
+    try {
+      return ModuleManager.getInstance(myProject).getModifiableModel();
+    }
+    finally {
+      accessToken.finish();
+    }
   }
 
   @Override

@@ -57,6 +57,8 @@ import java.util.zip.ZipFile;
 public class BrowserUtil {
   private static final Logger LOG = Logger.getInstance("#" + BrowserUtil.class.getName());
 
+  private static final boolean TRIM_URLS = !"false".equalsIgnoreCase(System.getProperty("idea.browse.trim.urls"));
+
   // The pattern for 'scheme' mainly according to RFC1738.
   // We have to violate the RFC since we need to distinguish
   // real schemes from local Windows paths; The only difference
@@ -97,7 +99,11 @@ public class BrowserUtil {
    * @param url an URL to open.
    */
   public static void launchBrowser(@NonNls String url) {
-    LOG.debug("Launch browser: " + url);
+    LOG.debug("Launch browser: [" + url + "]");
+
+    if (TRIM_URLS) {
+      url = url.trim();
+    }
 
     if (url.startsWith("jar:")) {
       url = extractFiles(url);
@@ -171,11 +177,11 @@ public class BrowserUtil {
 
     try {
       final GeneralCommandLine commandLine = new GeneralCommandLine(command);
-      commandLine.addParameter(curl.toString());
+      commandLine.addParameter(escapeUrl(curl.toString()));
       commandLine.createProcess();
 
       if (LOG.isDebugEnabled()) {
-        LOG.debug("Browser launched with command line: " + commandLine.getCommandLineString());
+        LOG.debug("Browser launched with command line: " + commandLine);
       }
     }
     catch (final ExecutionException e) {
@@ -185,12 +191,8 @@ public class BrowserUtil {
 
   @NotNull
   public static String escapeUrl(@NotNull @NonNls String url) {
-    if (SystemInfo.isWindows) {
-      return (url.indexOf(' ') > 0 || url.indexOf('&') > -1) ? "\"" + url + "\"" : url;
-    }
-    else {
-      return url.replaceAll(" ", "%20");
-    }
+    return SystemInfo.isWindows ? url.replaceAll(" ", "%20")
+                                : url;
   }
 
   private static boolean launchBrowserUsingDesktopApi(final String sUrl) {
@@ -226,6 +228,7 @@ public class BrowserUtil {
 
   public static String[] getOpenBrowserCommand(final @NonNls @NotNull String browserPath) {
     final String[] command;
+
     if (SystemInfo.isMac) {
       if (new File(browserPath).isFile()) {
         // versions before 10.6 don't allow to pass command line arguments to browser via 'open' command
@@ -247,6 +250,7 @@ public class BrowserUtil {
     else {
       command = new String[]{browserPath};
     }
+
     return command;
   }
 

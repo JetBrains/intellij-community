@@ -26,6 +26,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -88,10 +89,11 @@ public class ExceptionExFilterFactory implements ExceptionFilterFactory {
         Trinity<TextRange,TextRange,TextRange> info = worker.getInfo();
         int off = startOffset + lineStartOffset;
         final TextAttributes attributes = result.highlightAttributes;
+        attributes.setEffectColor(UIUtil.getInactiveTextColor());
         consumer.consume(new AdditionalHighlight(off + info.first.getStartOffset(), off + info.second.getEndOffset()) {
           @Override
           public TextAttributes getTextAttributes(@Nullable TextAttributes source) {
-            return new TextAttributes(null, null, attributes.getEffectColor(), EffectType.LINE_UNDERSCORE, Font.PLAIN);
+            return new TextAttributes(null, null, attributes.getEffectColor(), EffectType.BOLD_DOTTED_LINE, Font.PLAIN);
           }
         });
       }

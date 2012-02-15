@@ -769,6 +769,13 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     checkResultByTestName();
   }
 
+  public void testSameNamedArgumentsDelegation() throws Throwable {
+    configureByTestName();
+    getLookup().setCurrentItem(getLookup().getItems().get(1));
+    select();
+    checkResultByTestName();
+  }
+
   public void testWrongAnonymous() throws Throwable {
     configureByTestName();
     select();

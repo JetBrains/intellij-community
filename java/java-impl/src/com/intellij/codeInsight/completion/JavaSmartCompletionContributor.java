@@ -111,10 +111,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
   public JavaSmartCompletionContributor() {
     extend(CompletionType.SMART, SmartCastProvider.INSIDE_TYPECAST_TYPE, new SmartCastProvider());
 
-    extend(CompletionType.SMART,
-           psiElement().beforeLeaf(psiElement(JavaTokenType.RPARENTH)).afterLeaf("(").withParent(
-             psiElement(PsiReferenceExpression.class).withParent(
-               psiElement(PsiExpressionList.class).withParent(PsiCall.class))), new SameSignatureCallParametersProvider());
+    extend(CompletionType.SMART, SameSignatureCallParametersProvider.IN_CALL_ARGUMENT, new SameSignatureCallParametersProvider());
 
     extend(CompletionType.SMART, psiElement().afterLeaf(PsiKeyword.INSTANCEOF), new CompletionProvider<CompletionParameters>() {
       protected void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {

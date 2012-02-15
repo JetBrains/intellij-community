@@ -331,17 +331,15 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
   }
 
   private void traverseRecursively(final RootDescriptor rd, final File file, Set<File> excludes, @NotNull final TimestampStorage tsStorage, final boolean forceDirty, @Nullable Set<File> currentFiles) throws IOException {
-    if (file.isDirectory()) {
-      if (!PathUtil.isUnder(excludes, file)) {
-        final File[] children = file.listFiles();
-        if (children != null) {
-          for (File child : children) {
-            traverseRecursively(rd, child, excludes, tsStorage, forceDirty, currentFiles);
-          }
+    final File[] children = file.listFiles();
+    if (children != null) { // is directory
+      if (children.length > 0 && !PathUtil.isUnder(excludes, file)) {
+        for (File child : children) {
+          traverseRecursively(rd, child, excludes, tsStorage, forceDirty, currentFiles);
         }
       }
     }
-    else {
+    else { // is file
       boolean markDirty = forceDirty;
       if (!markDirty) {
         markDirty = tsStorage.getStamp(file) != file.lastModified();

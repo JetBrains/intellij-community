@@ -91,12 +91,10 @@ public class AndroidCompileUtil {
   @NonNls private static final String GEN_MODULE_PREFIX = "~generated_";
 
   @NonNls private static final String PROGUARD_CFG_FILE_NAME = "proguard.cfg";
-  @NonNls public static final String CLASSES_JAR_FILE_NAME = "classes.jar";
 
   @NonNls
   private static final String[] SCALA_TEST_CONFIGURATIONS =
     {"ScalaTestRunConfiguration", "SpecsRunConfiguration", "Specs2RunConfiguration"};
-  public static final String CLASSES_FILE_NAME = "classes.dex";
 
   private AndroidCompileUtil() {
   }

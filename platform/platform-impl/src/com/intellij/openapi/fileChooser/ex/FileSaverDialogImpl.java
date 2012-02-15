@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWrapper;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.UIBundle;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -37,24 +38,24 @@ import java.util.List;
  */
 public class FileSaverDialogImpl extends FileChooserDialogImpl implements FileSaverDialog {
   protected final JTextField myFileName = new JTextField(20);
-  protected final JComboBox myExtentions = new JComboBox();
+  protected final JComboBox myExtensions = new JComboBox();
   protected final FileSaverDescriptor myDescriptor;
 
-  public FileSaverDialogImpl(FileSaverDescriptor chooserDescriptor, Component parent) {
+  public FileSaverDialogImpl(@NotNull FileSaverDescriptor chooserDescriptor, @NotNull Component parent) {
     super(chooserDescriptor, parent);
     myDescriptor = chooserDescriptor;
     setTitle(UIBundle.message("file.chooser.save.dialog.default.title"));
     for (String ext : chooserDescriptor.getFileExtensions()) {
-      myExtentions.addItem(ext);
+      myExtensions.addItem(ext);
     }
   }
 
-  public FileSaverDialogImpl(FileSaverDescriptor chooserDescriptor, Project project) {
+  public FileSaverDialogImpl(@NotNull FileSaverDescriptor chooserDescriptor, @Nullable Project project) {
     super(chooserDescriptor, project);
     myDescriptor = chooserDescriptor;
     setTitle(UIBundle.message("file.chooser.save.dialog.default.title"));
     for (String ext : chooserDescriptor.getFileExtensions()) {
-      myExtentions.addItem(ext);
+      myExtensions.addItem(ext);
     }
   }
 
@@ -106,7 +107,7 @@ public class FileSaverDialogImpl extends FileChooserDialogImpl implements FileSa
     }
 
     if (!correctExt) {
-      path += "." + myExtentions.getSelectedItem();
+      path += "." + myExtensions.getSelectedItem();
     }
 
     return new File(path);
@@ -148,9 +149,9 @@ public class FileSaverDialogImpl extends FileChooserDialogImpl implements FileSa
     });
 
     panel.add(myFileName, BorderLayout.CENTER);
-    if (myExtentions.getModel().getSize() > 0) {
-      myExtentions.setSelectedIndex(0);
-      panel.add(myExtentions, BorderLayout.EAST);
+    if (myExtensions.getModel().getSize() > 0) {
+      myExtensions.setSelectedIndex(0);
+      panel.add(myExtensions, BorderLayout.EAST);
     }
     return panel;
   }

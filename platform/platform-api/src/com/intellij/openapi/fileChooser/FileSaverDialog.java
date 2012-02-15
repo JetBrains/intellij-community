@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,14 +21,13 @@ import com.intellij.openapi.vfs.VirtualFileWrapper;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Dialog to save a file
+ * Dialog to save a file.
  *
  * @author Konstantin Bulenkov
  * @see FileChooserFactory
  * @since 9.0
  */
 public interface FileSaverDialog {
-  
   @Nullable
   VirtualFileWrapper save(@Nullable VirtualFile baseDir, @Nullable String filename);
 }

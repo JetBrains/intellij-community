@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,16 +22,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * User: spLeaner
+ * @deprecated use {@linkplain PathChooserDialog} (to remove in IDEA 12)
  */
+@SuppressWarnings("UnusedDeclaration")
 public interface MacFileChooserDialog extends FileChooserDialog {
   DataKey<Boolean> NATIVE_MAC_FILE_CHOOSER_ENABLED = DataKey.create("native.mac.file.chooser.enabled");
-  DataKey<Boolean> NATIVE_MAC_FILE_CHOOSER_SHOW_HIDDEN_FILES_ENABLED = DataKey.create("native.mac.file.chooser.show.hidden.files.enabled");
+  DataKey<Boolean> NATIVE_MAC_FILE_CHOOSER_SHOW_HIDDEN_FILES_ENABLED = PathChooserDialog.NATIVE_MAC_CHOOSER_SHOW_HIDDEN_FILES;
 
   void chooseWithSheet(@Nullable VirtualFile toSelect, @Nullable Project project, @NotNull final MacFileChooserCallback callback);
 
   interface MacFileChooserCallback {
     void onChosen(@NotNull VirtualFile[] files);
   }
-
 }

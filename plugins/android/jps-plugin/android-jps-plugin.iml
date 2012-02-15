@@ -12,6 +12,7 @@
     <orderEntry type="module" module-name="android-rt" />
     <orderEntry type="module" module-name="jps-builders" />
     <orderEntry type="module" module-name="util" />
+    <orderEntry type="library" name="NanoXML" level="project" />
   </component>
 </module>
 
