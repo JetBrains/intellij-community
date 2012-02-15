@@ -28,29 +28,35 @@ import java.util.Set;
  */
 public class AdditionalIndexableFileSet implements IndexableFileSet {
   private volatile Set<VirtualFile> cachedFiles;
+  private volatile Set<VirtualFile> cachedDirectories;
   private volatile IndexedRootsProvider[] myExtensions;
 
   public AdditionalIndexableFileSet(IndexedRootsProvider... extensions) {
     myExtensions = extensions;
   }
 
-  private Set<VirtualFile> getFiles() {
-    Set<VirtualFile> files = cachedFiles;
-    if (files == null || filesInvalidated(files)) {
-      cachedFiles = files = collectFiles();
+  private Set<VirtualFile> getDirectories() {
+    Set<VirtualFile> directories = cachedDirectories;
+    if (directories == null || filesInvalidated(directories) || filesInvalidated(cachedFiles)) {
+      directories = collectFilesAndDirectories();
     }
-    return files;
+    return directories;
   }
 
-  private Set<VirtualFile> collectFiles() {
-    THashSet<VirtualFile> virtualFiles = new THashSet<VirtualFile>();
+  private THashSet<VirtualFile> collectFilesAndDirectories() {
+    THashSet<VirtualFile> files = new THashSet<VirtualFile>();
+    THashSet<VirtualFile> directories = new THashSet<VirtualFile>();
     if (myExtensions == null) {
       myExtensions = Extensions.getExtensions(IndexableSetContributor.EP_NAME);
     }
     for (IndexedRootsProvider provider : myExtensions) {
-      virtualFiles.addAll(IndexableSetContributor.getRootsToIndex(provider));
+      for(VirtualFile file:IndexableSetContributor.getRootsToIndex(provider)) {
+        (file.isDirectory() ? directories:files).add(file);
+      }
     }
-    return virtualFiles;
+    cachedFiles = files;
+    cachedDirectories = directories;
+    return directories;
   }
 
   public static boolean filesInvalidated(Set<VirtualFile> files) {
@@ -67,12 +73,12 @@ public class AdditionalIndexableFileSet implements IndexableFileSet {
 
   @Override
   public boolean isInSet(VirtualFile file) {
-    for (final VirtualFile root : getFiles()) {
+    for (final VirtualFile root : getDirectories()) {
       if (VfsUtil.isAncestor(root, file, false)) {
         return true;
       }
     }
-    return false;
+    return cachedFiles.contains(file);
   }
 
   @Override
