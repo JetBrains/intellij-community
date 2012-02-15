@@ -99,9 +99,7 @@ class SameSignatureCallParametersProvider extends CompletionProvider<CompletionP
         final PsiClass psiClass = ((PsiMethod)element).getContainingClass();
         if (psiClass != null) {
           for (Pair<PsiMethod, PsiSubstitutor> overload : psiClass.findMethodsAndTheirSubstitutorsByName(((PsiMethod)element).getName(), true)) {
-            if (!overload.first.hasModifierProperty(PsiModifier.ABSTRACT)/* && overload.first.hasModifierProperty(PsiModifier.STATIC)*/) {
-              candidates.add(overload);
-            }
+            candidates.add(overload);
           }
           break;
         }
