@@ -40,6 +40,7 @@ import java.awt.event.MouseEvent;
  */
 class StatusPanel extends JPanel {
   private boolean myLogMode;
+  private int myTimeStart;
   private boolean myDirty;
   private boolean myAfterClick;
   private Alarm myLogAlarm;
@@ -47,6 +48,31 @@ class StatusPanel extends JPanel {
     @Override
     protected String getTextForPreferredSize() {
       return getText();
+    }
+
+    @Override
+    public void setBounds(int x, int y, int w, int h) {
+      super.setBounds(x, y, Math.min(w, StatusPanel.this.getWidth()), h);
+    }
+
+    @Override
+    protected String truncateText(String text, Rectangle bounds, FontMetrics fm, Rectangle textR, Rectangle iconR, int maxWidth) {
+      if (myTimeStart > 0) {
+        final String time = text.substring(myTimeStart);
+        final int withoutTime = maxWidth - fm.stringWidth(time);
+
+        int end = myTimeStart - 1;
+        while (end > 0) {
+          final String truncated = text.substring(0, end) + "... ";
+          if (fm.stringWidth(truncated) < withoutTime) {
+            text = truncated + time;
+            break;
+          }
+          end--;
+        }
+      }
+
+      return super.truncateText(text, bounds, fm, textR, iconR, maxWidth);
     }
   };
 
@@ -117,13 +143,13 @@ class StatusPanel extends JPanel {
     return myLogAlarm;
   }
 
-  public boolean updateText(boolean logAllowed, @Nullable String nonLogText) {
+  public boolean updateText(@Nullable String nonLogText) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     final Project project = getActiveProject();
     final Pair<Notification, Long> statusMessage = EventLog.getStatusMessage(project);
     final Alarm alarm = getAlarm();
-    myLogMode = logAllowed && StringUtil.isEmpty(nonLogText) && statusMessage != null && alarm != null;
+    myLogMode = StringUtil.isEmpty(nonLogText) && statusMessage != null && alarm != null;
 
     if (alarm != null) {
       alarm.cancelAllRequests();
@@ -137,6 +163,7 @@ class StatusPanel extends JPanel {
           assert statusMessage != null;
           String text = EventLog.formatForLog(statusMessage.first).status;
           if (myDirty || System.currentTimeMillis() - statusMessage.second >= DateFormatUtil.MINUTE) {
+            myTimeStart = text.length() + 1;
             text += " (" + StringUtil.decapitalize(DateFormatUtil.formatPrettyDateTime(statusMessage.second)) + ")";
           }
           setStatusText(text);
@@ -145,6 +172,7 @@ class StatusPanel extends JPanel {
       }.run();
     }
     else {
+      myTimeStart = -1;
       myTextPanel.setCursor(Cursor.getDefaultCursor());
       myDirty = true;
       setStatusText(nonLogText);
@@ -157,27 +185,6 @@ class StatusPanel extends JPanel {
     myTextPanel.setText(text);
     if (!myAfterClick) {
       myTextPanel.revalidate();
-    }
-  }
-
-  public void hideLog() {
-    if (myLogMode) {
-      updateText(false, "");
-    }
-  }
-
-  public void restoreLogIfNeeded() {
-    Alarm alarm = getAlarm();
-    if (alarm != null) {
-      alarm.cancelAllRequests();
-      alarm.addRequest(new Runnable() {
-        @Override
-        public void run() {
-          if (StringUtil.isEmpty(myTextPanel.getText())) {
-            updateText(true, "");
-          }
-        }
-      }, 300);
     }
   }
 

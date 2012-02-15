@@ -86,10 +86,9 @@ public class TextPanel extends JComponent {
     viewR.width -= insets.left;
     viewR.width -= insets.right;
 
-    if (sWidth > bounds.width - insets.left - insets.right) {
-      s = SwingUtilities
-        .layoutCompoundLabel(fm, s, null, SwingConstants.CENTER, SwingConstants.CENTER, SwingConstants.CENTER, SwingConstants.TRAILING,
-                             bounds, iconR, textR, 0);
+    final int maxWidth = bounds.width - insets.left - insets.right;
+    if (sWidth > maxWidth) {
+      s = truncateText(s, bounds, fm, textR, iconR, maxWidth);
     }
 
     final int y = UIUtil.getStringY(s, bounds, g2);
@@ -100,6 +99,12 @@ public class TextPanel extends JComponent {
 
     g2.setColor(getForeground());
     g2.drawString(s, x, y);
+  }
+
+  protected String truncateText(String text, Rectangle bounds, FontMetrics fm, Rectangle textR, Rectangle iconR, int maxWidth) {
+    return SwingUtilities.layoutCompoundLabel(fm, text, null, SwingConstants.CENTER, SwingConstants.CENTER, SwingConstants.CENTER,
+                                               SwingConstants.TRAILING,
+                                               bounds, iconR, textR, 0);
   }
 
   public void setTextAlignment(final float alignment) {

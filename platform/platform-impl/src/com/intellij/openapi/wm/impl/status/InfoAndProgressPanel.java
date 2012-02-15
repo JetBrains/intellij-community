@@ -179,10 +179,6 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
     synchronized (myOriginals) {
       final boolean veryFirst = !hasProgressIndicators();
 
-      if (veryFirst) {
-        myInfoPanel.hideLog();
-      }
-
       myOriginals.add(original);
       myInfos.add(info);
 
@@ -243,10 +239,6 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
       }
 
       runQuery();
-
-      if (last) {
-        myInfoPanel.restoreLogIfNeeded();
-      }
     }
   }
 
@@ -360,7 +352,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
       return Pair.create(myInfoPanel.getText(), myCurrentRequestor);
     }
 
-    boolean logMode = myInfoPanel.updateText(!hasProgressIndicators(), requestor == EventLog.LOG_REQUESTOR
+    boolean logMode = myInfoPanel.updateText(requestor == EventLog.LOG_REQUESTOR
                                                                        ? "" : text);
     myCurrentRequestor = logMode ? EventLog.LOG_REQUESTOR : requestor;
     return Pair.create(text, requestor);
