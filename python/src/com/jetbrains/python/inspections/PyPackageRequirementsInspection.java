@@ -51,17 +51,20 @@ public class PyPackageRequirementsInspection extends PyInspection {
     public void visitPyFile(PyFile node) {
       final Module module = ModuleUtil.findModuleForPsiElement(node);
       if (module != null) {
-        if (PyPackageManager.UI.isRunningPackagingTasks(module)) {
+        if (isRunningPackagingTasks(module)) {
           return;
         }
-        final List<PyRequirement> unsatisfied = findUnsatisfiedRequirements(module);
-        if (unsatisfied != null && !unsatisfied.isEmpty()) {
-          final boolean plural = unsatisfied.size() > 1;
-          String msg = String.format("Package requirement%s %s %s not satisfied",
-                                     plural ? "s" : "",
-                                     requirementsToString(unsatisfied),
-                                     plural ? "are" : "is");
-          registerProblem(node, msg, new InstallRequirementsFix(module, unsatisfied));
+        final Sdk sdk = PythonSdkType.findPythonSdk(module);
+        if (sdk != null) {
+          final List<PyRequirement> unsatisfied = findUnsatisfiedRequirements(module, sdk);
+          if (unsatisfied != null && !unsatisfied.isEmpty()) {
+            final boolean plural = unsatisfied.size() > 1;
+            String msg = String.format("Package requirement%s %s %s not satisfied",
+                                       plural ? "s" : "",
+                                       requirementsToString(unsatisfied),
+                                       plural ? "are" : "is");
+            registerProblem(node, msg, new InstallRequirementsFix(module, sdk, unsatisfied));
+          }
         }
       }
     }
@@ -78,38 +81,46 @@ public class PyPackageRequirementsInspection extends PyInspection {
   }
 
   @Nullable
-  private static List<PyRequirement> findUnsatisfiedRequirements(@NotNull Module module) {
-    final Sdk sdk = PythonSdkType.findPythonSdk(module);
-    if (sdk != null) {
-      final PyPackageManager manager = PyPackageManager.getInstance(sdk);
-      List<PyRequirement> requirements = PyPackageManager.getRequirements(module);
-      if (requirements != null) {
-        final List<PyPackage> packages;
-        try {
-          packages = manager.getPackages();
-        }
-        catch (PyExternalProcessException ignored) {
-          return null;
-        }
-        final List<PyRequirement> unsatisfied = new ArrayList<PyRequirement>();
-        for (PyRequirement req : requirements) {
-          if (!req.match(packages)) {
-            unsatisfied.add(req);
-          }
-        }
-        return unsatisfied;
+  private static List<PyRequirement> findUnsatisfiedRequirements(@NotNull Module module, @NotNull Sdk sdk) {
+    final PyPackageManager manager = PyPackageManager.getInstance(sdk);
+    List<PyRequirement> requirements = PyPackageManager.getRequirements(module);
+    if (requirements != null) {
+      final List<PyPackage> packages;
+      try {
+        packages = manager.getPackages();
       }
+      catch (PyExternalProcessException ignored) {
+        return null;
+      }
+      final List<PyRequirement> unsatisfied = new ArrayList<PyRequirement>();
+      for (PyRequirement req : requirements) {
+        if (!req.match(packages)) {
+          unsatisfied.add(req);
+        }
+      }
+      return unsatisfied;
     }
     return null;
+  }
+
+  private static void setRunningPackagingTasks(@NotNull Module module, boolean value) {
+    module.putUserData(PyPackageManager.RUNNING_PACKAGING_TASKS, value);
+  }
+
+  private static boolean isRunningPackagingTasks(@NotNull Module module) {
+    final Boolean value = module.getUserData(PyPackageManager.RUNNING_PACKAGING_TASKS);
+    return value != null && value;
   }
 
   private static class InstallRequirementsFix implements LocalQuickFix {
     private static final String NAME = "Install requirements";
     @NotNull private final Module myModule;
+    @NotNull private Sdk mySdk;
     @NotNull private final List<PyRequirement> myUnsatisfied;
 
-    public InstallRequirementsFix(@NotNull Module module, @NotNull List<PyRequirement> unsatisfied) {
+    public InstallRequirementsFix(@NotNull Module module, @NotNull Sdk sdk, @NotNull List<PyRequirement> unsatisfied) {
       myModule = module;
+      mySdk = sdk;
       myUnsatisfied = unsatisfied;
     }
 
@@ -127,8 +138,18 @@ public class PyPackageRequirementsInspection extends PyInspection {
 
     @Override
     public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
-      final PyPackageManager.UI ui = new PyPackageManager.UI(myModule);
-      ui.install(myUnsatisfied, Collections.<String>emptyList(), "Installing requirements");
+      final PyPackageManager.UI ui = new PyPackageManager.UI(project, mySdk, new PyPackageManager.UI.Listener() {
+        @Override
+        public void started() {
+          setRunningPackagingTasks(myModule, true);
+        }
+
+        @Override
+        public void finished() {
+          setRunningPackagingTasks(myModule, false);
+        }
+      });
+      ui.install(myUnsatisfied, Collections.<String>emptyList());
     }
   }
 }

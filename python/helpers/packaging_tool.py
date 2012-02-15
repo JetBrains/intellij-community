@@ -32,12 +32,12 @@ def do_install(pkgs):
         error_no_pip()
     return pip.main(['install'] + pkgs)
 
-def do_uninstall(pkg):
+def do_uninstall(pkgs):
     try:
         import pip
     except ImportError:
         error_no_pip()
-    return pip.main(['uninstall', '-y', pkg])
+    return pip.main(['uninstall', '-y'] + pkgs)
 
 def main():
     retcode = 0
@@ -56,10 +56,10 @@ def main():
             pkgs = sys.argv[2:]
             retcode = do_install(pkgs)
         elif cmd == 'uninstall':
-            if len(sys.argv) != 3:
+            if len(sys.argv) < 2:
                 usage()
-            pkg = sys.argv[2]
-            retcode = do_uninstall(pkg)
+            pkgs = sys.argv[2:]
+            retcode = do_uninstall(pkgs)
         else:
             usage()
     except Exception:

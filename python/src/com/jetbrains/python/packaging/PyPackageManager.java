@@ -15,12 +15,12 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ArrayUtil;
@@ -68,123 +68,108 @@ public class PyPackageManager {
   private Sdk mySdk;
 
   public static class UI {
-    @Nullable private Module myModule = null;
-    @Nullable private Project myProject = null;
-    @Nullable private Sdk mySdk = null;
+    @Nullable private Listener myListener;
+    @NotNull private Project myProject;
+    @NotNull private Sdk mySdk;
 
-    public UI(@NotNull Module module) {
-      myModule = module;
+    public interface Listener {
+      void started();
+      void finished();
     }
 
-    public UI(@NotNull Project project, @NotNull Sdk sdk) {
+    public UI(@NotNull Project project, @NotNull Sdk sdk, @Nullable Listener listener) {
       myProject = project;
       mySdk = sdk;
+      myListener = listener;
     }
 
-    public void install(@NotNull final List<PyRequirement> requirements, @NotNull final List<String> extraArgs,
-                        @Nullable String progressTitle) {
+    public void install(@NotNull final List<PyRequirement> requirements, @NotNull final List<String> extraArgs) {
       run(new ExternalRunnable() {
         @Override
-        public void run(@NotNull Sdk sdk) throws PyExternalProcessException {
-          PyPackageManager.getInstance(sdk).install(requirements, extraArgs);
+        public void run() throws PyExternalProcessException {
+          PyPackageManager.getInstance(mySdk).install(requirements, extraArgs);
         }
       }, "Installing packages", "Packages installed successfully", "Installed packages: " + requirementsToString(requirements),
          "Install packages failed");
     }
 
-    public void uninstall(@NotNull final PyPackage pkg) {
+    public void uninstall(@NotNull final List<PyPackage> packages) {
+      final String packagesString = StringUtil.join(packages, new Function<PyPackage, String>() {
+        @Override
+        public String fun(PyPackage pkg) {
+          return "'" + pkg.getName() + "'";
+        }
+      }, ", ");
+
       run(new ExternalRunnable() {
         @Override
-        public void run(@NotNull Sdk sdk) throws PyExternalProcessException {
-          PyPackageManager.getInstance(sdk).uninstall(pkg);
+        public void run() throws PyExternalProcessException {
+          PyPackageManager.getInstance(mySdk).uninstall(packages);
         }
-      }, "Uninstalling package", "Package uninstalled successfully", String.format("Package '%s' uninstalled", pkg.getName()),
-         "Uninstall package failed");
+      }, "Uninstalling packages", "Packages uninstalled successfully", "Uninstalled packages: " + packagesString,
+         "Uninstall packages failed");
     }
 
     private interface ExternalRunnable {
-      void run(@NotNull Sdk sdk) throws PyExternalProcessException;
+      void run() throws PyExternalProcessException;
     }
 
     private void run(@NotNull final ExternalRunnable runnable, @NotNull final String progressTitle,
                      @NotNull final String successTitle, @NotNull final String successDescription, @NotNull final String failureTitle) {
-      final Project project;
-      if (myProject != null) {
-        project = myProject;
-      }
-      else {
-        assert myModule != null;
-        project = myModule.getProject();
-      }
-      ProgressManager.getInstance().run(new Task.Backgroundable(project, progressTitle, false) {
+      ProgressManager.getInstance().run(new Task.Backgroundable(myProject, progressTitle, false) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
-          final Sdk sdk = mySdk != null ? mySdk : PythonSdkType.findPythonSdk(myModule);
-          if (sdk != null) {
-            final PyPackageManager manager = PyPackageManager.getInstance(sdk);
-            indicator.setText(progressTitle + "...");
-            final Ref<Notification> notificationRef = new Ref<Notification>(null);
-            final String PACKAGING_GROUP_ID = "Packaging";
-            final Application application = ApplicationManager.getApplication();
-            if (myModule != null) {
-              setRunningPackagingTasks(myModule, true);
-            }
-            try {
-              runnable.run(sdk);
-              notificationRef.set(new Notification(PACKAGING_GROUP_ID, successTitle, successDescription, NotificationType.INFORMATION));
-            }
-            catch (final PyExternalProcessException e) {
-              final String progressLower = progressTitle.toLowerCase();
-              final String description = String.format("<html>\n" +
-                                                       "  <p>Error occurred when %s. The following command was executed:</p>\n" +
-                                                       "  <br/>\n" +
-                                                       "  <p><code>%s %s</code></p>\n" +
-                                                       "  <br/>\n" +
-                                                       "  <p>The error output of the command:</p>\n" +
-                                                       "  <br/>\n" +
-                                                       "  <pre><code>%s</code></pre>\n" +
-                                                       "</html>",
-                                                       progressLower, e.getName(), StringUtil.join(e.getArgs(), " "), e.getMessage());
-              notificationRef.set(new Notification(PACKAGING_GROUP_ID, failureTitle,
-                                                   String.format("Error occurred when %s. <a href=\"xxx\">Details...</a>",
-                                                                 progressLower),
-                                                   NotificationType.ERROR,
-                                                   new NotificationListener() {
-                                                     @Override
-                                                     public void hyperlinkUpdate(@NotNull Notification notification,
-                                                                                 @NotNull HyperlinkEvent event) {
-                                                       Messages.showErrorDialog(project, description, failureTitle);
-                                                       notification.expire();
-                                                     }
-                                                   }));
-            }
-            finally {
-              if (myModule != null) {
-                setRunningPackagingTasks(myModule, false);
+          indicator.setText(progressTitle + "...");
+          final Ref<Notification> notificationRef = new Ref<Notification>(null);
+          final String PACKAGING_GROUP_ID = "Packaging";
+          final Application application = ApplicationManager.getApplication();
+          if (myListener != null) {
+            application.invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                myListener.started();
               }
-              application.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                  PythonSdkType.getInstance().setupSdkPaths(sdk);
-                  final Notification notification = notificationRef.get();
-                  if (notification != null) {
-                    notification.notify(project);
-                  }
+            });
+          }
+          try {
+            runnable.run();
+            notificationRef.set(new Notification(PACKAGING_GROUP_ID, successTitle, successDescription, NotificationType.INFORMATION));
+          }
+          catch (final PyExternalProcessException e) {
+            final String progressLower = progressTitle.toLowerCase();
+            final String description = "Error occurred when " + progressLower + ".";
+            final String command = e.getName() + " " + StringUtil.join(e.getArgs(), " ");
+            notificationRef.set(new Notification(PACKAGING_GROUP_ID, failureTitle,
+                                                 String.format("Error occurred when %s. <a href=\"xxx\">Details...</a>",
+                                                               progressLower),
+                                                 NotificationType.ERROR,
+                                                 new NotificationListener() {
+                                                   @Override
+                                                   public void hyperlinkUpdate(@NotNull Notification notification,
+                                                                               @NotNull HyperlinkEvent event) {
+                                                     PyPIPackageUtil.showError(myProject, failureTitle, description, command, e.getMessage());
+                                                     notification.expire();
+                                                   }
+                                                 }));
+          }
+          finally {
+            application.invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                if (myListener != null) {
+                  myListener.finished();
                 }
-              });
-            }
+                VirtualFileManager.getInstance().refreshWithoutFileWatcher(false);
+                PythonSdkType.getInstance().setupSdkPaths(mySdk);
+                final Notification notification = notificationRef.get();
+                if (notification != null) {
+                  notification.notify(myProject);
+                }
+              }
+            });
           }
         }
       });
-    }
-
-    public static boolean isRunningPackagingTasks(@NotNull Module module) {
-      final Boolean value = module.getUserData(PyPackageManager.RUNNING_PACKAGING_TASKS);
-      return value != null && value;
-    }
-
-    private static void setRunningPackagingTasks(@NotNull Module module, boolean value) {
-      module.putUserData(RUNNING_PACKAGING_TASKS, value);
     }
   }
 
@@ -233,9 +218,14 @@ public class PyPackageManager {
     }
   }
 
-  public void uninstall(@NotNull PyPackage pkg) throws PyExternalProcessException {
+  public void uninstall(@NotNull List<PyPackage> packages) throws PyExternalProcessException {
     try {
-      runPythonHelper(PACKAGING_TOOL, list("uninstall", pkg.getName()));
+      final List<String> args = new ArrayList<String>();
+      args.add("uninstall");
+      for (PyPackage pkg : packages) {
+        args.add(pkg.getName());
+      }
+      runPythonHelper(PACKAGING_TOOL, args);
     }
     finally {
       clearCaches();
