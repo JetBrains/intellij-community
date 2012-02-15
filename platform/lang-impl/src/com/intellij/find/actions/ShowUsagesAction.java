@@ -32,6 +32,7 @@ import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
@@ -40,10 +41,8 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.SearchScope;
@@ -59,6 +58,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
@@ -106,6 +106,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     }
   };
   private final UsageViewSettings myUsageViewSettings;
+  @Nullable private Runnable mySearchEverywhereRunnable;
 
   // used from plugin.xml
   @SuppressWarnings({"UnusedDeclaration"})
@@ -137,7 +138,16 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     if (project == null) return;
+
+    Runnable searchEverywhere = mySearchEverywhereRunnable;
+    mySearchEverywhereRunnable = null;
     hideHints();
+
+    if (searchEverywhere != null) {
+      searchEverywhere.run();
+      return;
+    }
+
     myWidth = -1;
     final RelativePoint popupPosition = JBPopupFactory.getInstance().guessBestPopupLocation(e.getDataContext());
     PsiDocumentManager.getInstance(project).commitAllDocuments();
@@ -175,10 +185,17 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
       showDialogAndFindUsages(handler, popupPosition, editor, maxUsages);
       return;
     }
-    showElementUsages(handler, editor, popupPosition, maxUsages);
+    showElementUsages(handler, editor, popupPosition, maxUsages, getDefaultOptions(handler));
   }
 
-  private void showElementUsages(@NotNull final FindUsagesHandler handler, final Editor editor, final RelativePoint popupPosition, final int maxUsages) {
+  private static FindUsagesOptions getDefaultOptions(FindUsagesHandler handler) {
+    return handler.getFindUsagesOptions(DataManager.getInstance().getDataContext());
+  }
+
+  private void showElementUsages(@NotNull final FindUsagesHandler handler,
+                                 final Editor editor,
+                                 final RelativePoint popupPosition,
+                                 final int maxUsages, final FindUsagesOptions options) {
     UsageViewPresentation presentation = new UsageViewPresentation();
     presentation.setDetachedMode(true);
 
@@ -223,7 +240,6 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
       }
     };
     FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(handler.getProject())).getFindUsagesManager();
-    FindUsagesOptions options = handler.getFindUsagesOptions(DataManager.getInstance().getDataContext());
     presentation = findUsagesManager.processUsages(handler, collect, options);
     if (presentation == null) {
       Disposer.dispose(usageView);
@@ -241,8 +257,8 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     }
   }
 
-  private void showHint(String text, final Editor editor, final RelativePoint popupPosition, FindUsagesHandler handler, int maxUsages) {
-    JComponent label = createHintComponent(text, handler, popupPosition, editor, HIDE_HINTS_ACTION, maxUsages);
+  private void showHint(String text, final Editor editor, final RelativePoint popupPosition, FindUsagesHandler handler, int maxUsages, FindUsagesOptions options) {
+    JComponent label = createHintComponent(text, handler, popupPosition, editor, HIDE_HINTS_ACTION, maxUsages, options);
     if (editor == null) {
       HintManager.getInstance().showHint(label, popupPosition, HintManager.HIDE_BY_ANY_KEY |
                                                                HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING, 0);
@@ -254,10 +270,27 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
 
   private JComponent createHintComponent(String text, final FindUsagesHandler handler, final RelativePoint popupPosition, final Editor editor,
                                          final Runnable cancelAction,
-                                         int maxUsages) {
-    JComponent label = HintUtil.createInformationLabel(text);
+                                         final int maxUsages, final FindUsagesOptions options) {
+    JComponent label = HintUtil.createInformationLabel(suggestSecondInvocation(options, handler, text));
     InplaceButton button = createSettingsButton(handler, popupPosition, editor, maxUsages, cancelAction);
-    JPanel panel = new JPanel(new BorderLayout());
+
+    JPanel panel = new JPanel(new BorderLayout()) {
+      @Override
+      public void addNotify() {
+        mySearchEverywhereRunnable = new Runnable() {
+          public void run() {
+            searchEverywhere(options, handler, editor, popupPosition, maxUsages);
+          }
+        };
+        super.addNotify();
+      }
+
+      @Override
+      public void removeNotify() {
+        mySearchEverywhereRunnable = null;
+        super.removeNotify();
+      }
+    };
     button.setBackground(label.getBackground());
     panel.setBackground(label.getBackground());
     label.setOpaque(false);
@@ -296,14 +329,17 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     dialog.show();
     if (dialog.isOK()) {
       dialog.calcFindUsagesOptions();
-      showElementUsages(handler, editor, popupPosition, maxUsages);
+      showElementUsages(handler, editor, popupPosition, maxUsages, getDefaultOptions(handler));
     }
   }
 
   private static String searchScopePresentableName(FindUsagesOptions options, Project project) {
-    SearchScope searchScope = options.searchScope;
-    if (searchScope == null) searchScope = ProjectScope.getAllScope(project);
-    return searchScope.getDisplayName();
+    return notNullizeScope(options, project).getDisplayName();
+  }
+
+  @NotNull private static SearchScope notNullizeScope(FindUsagesOptions options, Project project) {
+    if (options.searchScope == null) return ProjectScope.getAllScope(project);
+    return options.searchScope;
   }
 
   private JBPopup createUsagePopup(final List<Usage> usages,
@@ -313,16 +349,15 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
                                    final Editor editor,
                                    final RelativePoint popupPosition,
                                    final int maxUsages,
-                                   final UsageViewImpl usageView, FindUsagesOptions options) {
+                                   final UsageViewImpl usageView, final FindUsagesOptions options) {
     boolean hasMore = visibleNodes.remove(UsageViewImpl.NULL_NODE);
 
     final Project project = handler.getProject();
 
     if (visibleNodes.isEmpty()) {
       if (usages.isEmpty()) {
-        String text = UsageViewBundle.message("no.usages.found.in", searchScopePresentableName(options,
-                                                                                               project));
-        showHint(text, editor, popupPosition, handler, maxUsages);
+        String text = UsageViewBundle.message("no.usages.found.in", searchScopePresentableName(options, project));
+        showHint(text, editor, popupPosition, handler, maxUsages, options);
         return null;
       }
       else {
@@ -334,7 +369,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
       Usage usage = visibleNodes.iterator().next().getUsage();
       navigateAndHint(usage, UsageViewBundle.message("show.usages.only.usage",
                                                      searchScopePresentableName(options, project)), handler, popupPosition,
-                      maxUsages);
+                      maxUsages, options);
       return null;
     }
     if (visibleNodes.size() == 1 && usages.size() >= 1) {
@@ -343,7 +378,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
       if (areAllUsagesInThisLine(usage, usages)) {
         String hint = UsageViewBundle.message("all.usages.are.in.this.line", usages.size(),
                                               searchScopePresentableName(options, project));
-        navigateAndHint(usage, hint, handler, popupPosition, maxUsages);
+        navigateAndHint(usage, hint, handler, popupPosition, maxUsages, options);
         return null;
       }
     }
@@ -373,7 +408,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
               appendMoreUsages(editor, popupPosition, handler, maxUsages);
               return;
             }
-            navigateAndHint(usage, null, handler, popupPosition, maxUsages);
+            navigateAndHint(usage, null, handler, popupPosition, maxUsages, options);
           }
         }
       }
@@ -419,33 +454,37 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     if (title != null) {
       String s;
       if (hasMore) {
-        s = "<html><body><b>Some</b> " + title + " " + "<b>(Only " + (visibleNodes.size() - 1) + " usages shown)</b></body></html>";
+        s = "<b>Some</b> " + title + " " + "<b>(Only " + (visibleNodes.size() - 1) + " usages shown)</b>";
       }
       else {
         s = title + " (" + UsageViewBundle.message("usages.n", usages.size()) + " found)";
       }
-      builder.setTitle(s);
+      builder.setTitle(suggestSecondInvocation(options, handler, s));
     }
 
     builder.setMovable(true).setResizable(true);
     builder.setItemChoosenCallback(navigateRunnable);
     final JBPopup[] popup = new JBPopup[1];
-    ActionListener editSettings = new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        popup[0].cancel();
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            showDialogAndFindUsages(handler, popupPosition, editor, maxUsages);
-          }
-        });
-      }
-    };
 
     KeyboardShortcut shortcut = getSettingsShortcut();
     if (shortcut != null) {
-      builder.registerKeyboardAction(shortcut.getFirstKeyStroke(), editSettings);
+      builder.registerKeyboardAction(shortcut.getFirstKeyStroke(), new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          popup[0].cancel();
+          showDialogAndFindUsages(handler, popupPosition, editor, maxUsages);
+        }
+      });
+    }
+    shortcut = getShowUsagesShortcut();
+    if (shortcut != null) {
+      builder.registerKeyboardAction(shortcut.getFirstKeyStroke(), new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          popup[0].cancel();
+          searchEverywhere(options, handler, editor, popupPosition, maxUsages);
+        }
+      });
     }
 
     InplaceButton button = createSettingsButton(handler, popupPosition, editor, maxUsages, new Runnable() {
@@ -500,6 +539,43 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     });
 
     return popup[0];
+  }
+
+  @NotNull
+  private static GlobalSearchScope getMaximalScope(FindUsagesHandler handler) {
+    PsiElement element = handler.getPsiElement();
+    Project project = element.getProject();
+    PsiFile file = element.getContainingFile();
+    if (file != null && ProjectFileIndex.SERVICE.getInstance(project).isInContent(file.getViewProvider().getVirtualFile())) {
+      return GlobalSearchScope.projectScope(project);
+    }
+    return GlobalSearchScope.allScope(project);
+
+  }
+
+  private static String suggestSecondInvocation(FindUsagesOptions options, FindUsagesHandler handler, String s) {
+    if (getShowUsagesShortcut() != null) {
+      GlobalSearchScope maximalScope = getMaximalScope(handler);
+      if (!notNullizeScope(options, handler.getProject()).equals(maximalScope)) {
+        s += "<br><small>Press " + KeymapUtil.getShortcutText(getShowUsagesShortcut()) +
+             " again to search in " + maximalScope.getDisplayName() + "</small>";
+      }
+    }
+    return "<html><body>" + s + "</body></html>";
+  }
+
+  private void searchEverywhere(FindUsagesOptions options,
+                                FindUsagesHandler handler,
+                                Editor editor,
+                                RelativePoint popupPosition, int maxUsages) {
+    FindUsagesOptions cloned = options.clone();
+    cloned.searchScope = getMaximalScope(handler);
+    showElementUsages(handler, editor, popupPosition, maxUsages, cloned);
+  }
+
+  @Nullable
+  private static KeyboardShortcut getShowUsagesShortcut() {
+    return ActionManagerEx.getInstanceEx().getKeyboardShortcut("ShowUsages");
   }
 
   private static int filtered(@NotNull List<Usage> usages, @NotNull UsageViewImpl usageView) {
@@ -643,7 +719,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
   }
 
   private void appendMoreUsages(Editor editor, RelativePoint popupPosition, FindUsagesHandler handler, int maxUsages) {
-    showElementUsages(handler,  editor, popupPosition, maxUsages+USAGES_PAGE_SIZE);
+    showElementUsages(handler,  editor, popupPosition, maxUsages+USAGES_PAGE_SIZE, getDefaultOptions(handler));
   }
 
   private static KeyboardShortcut getSettingsShortcut() {
@@ -671,7 +747,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
 
   private void navigateAndHint(Usage usage, final String hint, final FindUsagesHandler handler,
                                final RelativePoint popupPosition,
-                               final int maxUsages) {
+                               final int maxUsages, final FindUsagesOptions options) {
     usage.navigate(true);
     if (hint == null) return;
     final Editor newEditor = getEditorFor(usage);
@@ -689,7 +765,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
               @Override
               public void run() {
                 if (newEditor.getComponent().isShowing()) {
-                  showHint(hint, newEditor, popupPosition, handler, maxUsages);
+                  showHint(hint, newEditor, popupPosition, handler, maxUsages, options);
                 }
               }
             });
@@ -723,6 +799,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     }
 
     @Override
+    @Nullable
     protected PsiElement getPsiElementForHint(Object selectedValue) {
       if (selectedValue instanceof UsageNode) {
         final Usage usage = ((UsageNode)selectedValue).getUsage();

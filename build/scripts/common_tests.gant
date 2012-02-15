@@ -22,7 +22,7 @@ def pass(String prop) {
 target('default': 'The default target') {
   depends(compile)
 
-  ant.junit(fork: "yes", showoutput: "true") {
+  ant.junit(fork: "yes", showoutput: "true", logfailedtests:false) {
     pass("idea.test.group")
     pass("idea.test.patterns")
     pass("idea.fast.only")

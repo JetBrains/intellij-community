@@ -90,4 +90,8 @@ public class ConsoleExecuteActionHandler {
 
   public void finishExecution() {
   }
+
+  public String getEmptyExecuteAction() {
+    return "Console.Execute";
+  }
 }

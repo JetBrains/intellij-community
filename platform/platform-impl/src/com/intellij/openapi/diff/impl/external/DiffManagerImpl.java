@@ -87,13 +87,31 @@ public class DiffManagerImpl extends DiffManager implements JDOMExternalizable {
   public DiffTool getIdeaDiffTool() { return INTERNAL_DIFF; }
 
   public DiffTool getDiffTool() {
-    DiffTool[] standardTools = {
-      ExtCompareFolders.INSTANCE,
-      ExtCompareFiles.INSTANCE,
-      INTERNAL_DIFF,
-      new MergeTool(),
-      BinaryDiffTool.INSTANCE
-    };
+    DiffTool[] standardTools;
+    // there is inner check in multiple tool for external viewers as well
+    if (! ENABLE_FILES.value(myProperties) || ! ENABLE_FOLDERS.value(myProperties)) {
+      DiffTool[] embeddableTools = {
+        INTERNAL_DIFF,
+        new MergeTool(),
+        BinaryDiffTool.INSTANCE
+      };
+      standardTools = new DiffTool[]{
+        ExtCompareFolders.INSTANCE,
+        ExtCompareFiles.INSTANCE,
+        new MultiLevelDiffTool(Arrays.asList(embeddableTools)),
+        INTERNAL_DIFF,
+        new MergeTool(),
+        BinaryDiffTool.INSTANCE
+      };
+    } else {
+      standardTools = new DiffTool[]{
+        ExtCompareFolders.INSTANCE,
+        ExtCompareFiles.INSTANCE,
+        INTERNAL_DIFF,
+        new MergeTool(),
+        BinaryDiffTool.INSTANCE
+      };
+    }
     ArrayList<DiffTool> allTools = new ArrayList<DiffTool>(myAdditionTools);
     allTools.addAll(Arrays.asList(standardTools));
     return new CompositeDiffTool(allTools);

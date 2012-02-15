@@ -38,10 +38,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.*;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Vladislav.Kaznacheev
@@ -66,6 +63,16 @@ public abstract class MavenRunnerParametersConfigurable implements Configurable,
 
     if (!project.isDefault()) {
       MyCompletionProvider profilesCompletionProvider = new MyCompletionProvider(project) {
+        @NotNull
+        @Override
+        protected String getPrefix(@NotNull String currentTextPrefix) {
+          String prefix = super.getPrefix(currentTextPrefix);
+          if (prefix.startsWith("-") || prefix.startsWith("!")) {
+            prefix = prefix.substring(1);
+          }
+          return prefix;
+        }
+
         @Override
         protected void addVariants(@NotNull CompletionResultSet result, MavenProjectsManager manager) {
           for (String profile : manager.getAvailableProfiles()) {
@@ -155,13 +162,40 @@ public abstract class MavenRunnerParametersConfigurable implements Configurable,
   private void setData(final MavenRunnerParameters data) {
     data.setWorkingDirPath(workingDirComponent.getComponent().getText());
     data.setGoals(Strings.tokenize(goalsComponent.getComponent().getText(), " "));
-    data.setProfiles(Strings.tokenize(profilesComponent.getComponent().getText(), " "));
+
+    Map<String, Boolean> profilesMap = new LinkedHashMap<String, Boolean>();
+
+    for (String profile : Strings.tokenize(profilesComponent.getComponent().getText(), " ,;")) {
+      Boolean isEnabled = true;
+      if (profile.startsWith("-") || profile.startsWith("!")) {
+        profile = profile.substring(1);
+        if (profile.isEmpty()) continue;
+
+        isEnabled = false;
+      }
+
+      profilesMap.put(profile, isEnabled);
+    }
+    data.setProfilesMap(profilesMap);
   }
 
   private void getData(final MavenRunnerParameters data) {
     workingDirComponent.getComponent().setText(data.getWorkingDirPath());
     goalsComponent.getComponent().setText(Strings.detokenize(data.getGoals(), ' '));
-    profilesComponent.getComponent().setText(Strings.detokenize(data.getProfiles(), ' '));
+
+    StringBuilder sb = new StringBuilder();
+    for (Map.Entry<String, Boolean> entry : data.getProfilesMap().entrySet()) {
+      if (sb.length() != 0) {
+        sb.append(" ");
+      }
+      if (!entry.getValue()) {
+        sb.append("-");
+      }
+
+      sb.append(entry.getKey());
+    }
+
+    profilesComponent.getComponent().setText(sb.toString());
   }
 
   protected abstract MavenRunnerParameters getParameters();
@@ -179,7 +213,7 @@ public abstract class MavenRunnerParametersConfigurable implements Configurable,
     profilesComponent.setAnchor(anchor);
   }
   
-  private static abstract class MyCompletionProvider extends TextFieldCompletionProvider {
+  private abstract class MyCompletionProvider extends TextFieldCompletionProvider {
     private final Project myProject;
 
     protected MyCompletionProvider(Project project) {

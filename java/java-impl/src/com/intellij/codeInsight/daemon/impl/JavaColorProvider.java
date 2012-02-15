@@ -31,16 +31,14 @@ import java.awt.*;
 public class JavaColorProvider implements ElementColorProvider {
   @Override
   public Color getColorFrom(@NotNull PsiElement element) {
-    if (element.getLanguage() == JavaLanguage.INSTANCE) {
-      if (element instanceof PsiNewExpression) {
-        final PsiNewExpression expr = (PsiNewExpression)element;
-        final PsiType type = expr.getType();
-        if (type != null) {
-          final PsiClass aClass = PsiTypesUtil.getPsiClass(type);
-          if (aClass != null) {
-            if ("java.awt.Color".equals(aClass.getQualifiedName())) {
-              return getColor(expr.getArgumentList());
-            }
+    if (element instanceof PsiNewExpression && element.getLanguage() == JavaLanguage.INSTANCE) {
+      final PsiNewExpression expr = (PsiNewExpression)element;
+      final PsiType type = expr.getType();
+      if (type != null) {
+        final PsiClass aClass = PsiTypesUtil.getPsiClass(type);
+        if (aClass != null) {
+          if ("java.awt.Color".equals(aClass.getQualifiedName())) {
+            return getColor(expr.getArgumentList());
           }
         }
       }

@@ -36,6 +36,7 @@ import org.jetbrains.android.maven.AndroidMavenProvider;
 import org.jetbrains.android.maven.AndroidMavenUtil;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.util.AndroidBundle;
+import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,7 +62,7 @@ public class AndroidDexCompiler implements ClassPostProcessingCompiler {
     }
 
     if (items != null && items.length > 0) {
-      context.getProgressIndicator().setText("Generating " + AndroidCompileUtil.CLASSES_FILE_NAME + "...");
+      context.getProgressIndicator().setText("Generating " + AndroidCommonUtils.CLASSES_FILE_NAME + "...");
       return new ProcessAction(context, items).compute();
     }
     return ProcessingItem.EMPTY_ARRAY;
@@ -214,8 +215,8 @@ public class AndroidDexCompiler implements ClassPostProcessingCompiler {
             files[i++] = FileUtil.toSystemDependentName(file.getPath());
           }
 
-          Map<CompilerMessageCategory, List<String>> messages = AndroidDxWrapper
-            .execute(dexItem.myModule, dexItem.myAndroidTarget, outputDirPath, files);
+          Map<CompilerMessageCategory, List<String>> messages = AndroidCompileUtil.toCompilerMessageCategoryKeys(
+            AndroidDxWrapper.execute(dexItem.myModule, dexItem.myAndroidTarget, outputDirPath, files));
 
           addMessages(messages);
           if (messages.get(CompilerMessageCategory.ERROR).isEmpty()) {

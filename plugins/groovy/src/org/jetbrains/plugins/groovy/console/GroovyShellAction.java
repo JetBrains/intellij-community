@@ -20,7 +20,6 @@ import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.console.ConsoleHistoryController;
 import com.intellij.execution.console.LanguageConsoleImpl;
 import com.intellij.execution.console.LanguageConsoleViewImpl;
-import com.intellij.execution.process.CommandLineArgumentsProvider;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.runners.AbstractConsoleRunnerWithHistory;
 import com.intellij.execution.runners.ConsoleExecuteActionHandler;
@@ -31,13 +30,17 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.*;
+import com.intellij.openapi.projectRoots.JavaSdkType;
+import com.intellij.openapi.projectRoots.JdkUtil;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesAlphaComparator;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathsList;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
@@ -146,8 +149,10 @@ public class GroovyShellAction extends DumbAwareAction {
   }
 
   private static void runShell(final Module module) {
+    VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
+    final String workingDir = contentRoots.length == 0 ? null : contentRoots[0].getPath();
     AbstractConsoleRunnerWithHistory<GroovyConsoleView> runner =
-      new AbstractConsoleRunnerWithHistory<GroovyConsoleView>(module.getProject(), "Groovy Shell", new CommandLineArgumentsProvider(), null) {
+      new AbstractConsoleRunnerWithHistory<GroovyConsoleView>(module.getProject(), "Groovy Shell", workingDir) {
 
         @Override
         protected GroovyConsoleView createConsoleView() {
@@ -155,7 +160,7 @@ public class GroovyShellAction extends DumbAwareAction {
         }
 
         @Override
-        protected Process createProcess(CommandLineArgumentsProvider provider) throws ExecutionException {
+        protected OSProcessHandler createProcess() throws ExecutionException {
           final JavaParameters javaParameters = GroovyScriptRunConfiguration.createJavaParametersWithSdk(module);
           DefaultGroovyScriptRunner.configureGenericGroovyRunner(javaParameters, module, "groovy.ui.GroovyMain", true);
           PathsList list = GroovyScriptRunner.getClassPathFromRootModel(module, true, javaParameters, true);
@@ -163,6 +168,7 @@ public class GroovyShellAction extends DumbAwareAction {
             javaParameters.getProgramParametersList().addAll("--classpath", list.getPathsString());
           }
           javaParameters.getProgramParametersList().addAll("-p", GroovyScriptRunner.getPathInConf("console.txt"));
+          javaParameters.setWorkingDirectory(getWorkingDir());
 
           final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
           assert sdk != null;
@@ -170,12 +176,7 @@ public class GroovyShellAction extends DumbAwareAction {
           assert sdkType instanceof JavaSdkType;
           final String exePath = ((JavaSdkType)sdkType).getVMExecutablePath(sdk);
 
-          return JdkUtil.setupJVMCommandLine(exePath, javaParameters, true).createProcess();
-        }
-
-        @Override
-        protected OSProcessHandler createProcessHandler(Process process, String commandLine) {
-          return new OSProcessHandler(process, commandLine);
+          return new OSProcessHandler(JdkUtil.setupJVMCommandLine(exePath, javaParameters, true).createProcess(), null);
         }
 
         @NotNull
@@ -185,6 +186,11 @@ public class GroovyShellAction extends DumbAwareAction {
             @Override
             public void processLine(String line) {
               super.processLine(StringUtil.replace(line, "\n", "###\\n"));
+            }
+
+            @Override
+            public String getEmptyExecuteAction() {
+              return "Groovy.Shell.Execute";
             }
           };
           new ConsoleHistoryController("Groovy Shell", null, getLanguageConsole(), handler.getConsoleHistoryModel()).install();

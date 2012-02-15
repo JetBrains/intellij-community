@@ -50,15 +50,20 @@ public class ShowNextChangeAction extends AnAction implements DumbAware {
       return;
     }
 
-    final DiffViewer diffViewer = e.getData(PlatformDataKeys.DIFF_VIEWER);
+    DiffViewer diffViewer = e.getData(PlatformDataKeys.COMPOSITE_DIFF_VIEWER);
+    if (diffViewer == null) {
+      diffViewer = e.getData(PlatformDataKeys.DIFF_VIEWER);
+    }
     if (diffViewer == null) return;
     final DiffRequest request = chain.moveForward();
     if (request != null) {
-      if (diffViewer.getContentsNumber() == request.getContents().length) {
+      if (diffViewer.getType().equals(request.getType())) {
         diffViewer.setDiffRequest(request);
       } else {
         final Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
-        window.setVisible(false);
+        if (window != null) {
+          window.setVisible(false);
+        }
         DiffManager.getInstance().getDiffTool().show(request);
       }
     }

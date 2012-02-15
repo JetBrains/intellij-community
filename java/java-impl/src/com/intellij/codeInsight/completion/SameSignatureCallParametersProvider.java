@@ -23,6 +23,7 @@ import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -37,10 +38,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static com.intellij.patterns.PlatformPatterns.psiElement;
+
 /**
 * @author peter
 */
 class SameSignatureCallParametersProvider extends CompletionProvider<CompletionParameters> {
+  static final PsiElementPattern.Capture<PsiElement> IN_CALL_ARGUMENT =
+    psiElement().beforeLeaf(psiElement(JavaTokenType.RPARENTH)).afterLeaf("(").withParent(
+      psiElement(PsiReferenceExpression.class).withParent(
+        psiElement(PsiExpressionList.class).withParent(PsiCall.class)));
+
   @Override
   protected void addCompletions(@NotNull CompletionParameters parameters,
                                 ProcessingContext context,
@@ -99,9 +107,7 @@ class SameSignatureCallParametersProvider extends CompletionProvider<CompletionP
         final PsiClass psiClass = ((PsiMethod)element).getContainingClass();
         if (psiClass != null) {
           for (Pair<PsiMethod, PsiSubstitutor> overload : psiClass.findMethodsAndTheirSubstitutorsByName(((PsiMethod)element).getName(), true)) {
-            if (!overload.first.hasModifierProperty(PsiModifier.ABSTRACT)/* && overload.first.hasModifierProperty(PsiModifier.STATIC)*/) {
-              candidates.add(overload);
-            }
+            candidates.add(overload);
           }
           break;
         }

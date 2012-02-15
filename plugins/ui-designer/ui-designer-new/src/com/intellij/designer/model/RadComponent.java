@@ -56,10 +56,6 @@ public abstract class RadComponent {
     return getChildren();
   }
 
-  public JComponent getNativeRootComponent() {
-    return null;
-  }
-
   public Rectangle getBounds() {
     return null;
   }
@@ -90,5 +86,23 @@ public abstract class RadComponent {
 
   public final void putClientProperty(@NotNull Object key, Object value) {
     myClientProperties.put(key, value);
+  }
+
+  public void accept(RadComponentVisitor visitor, boolean forward) {
+    if (visitor.visit(this)) {
+      List<RadComponent> children = getChildren();
+      if (forward) {
+        for (RadComponent child : children) {
+          child.accept(visitor, forward);
+        }
+      }
+      else {
+        int size = children.size();
+        for (int i = size - 1; i >= 0; i--) {
+          children.get(i).accept(visitor, forward);
+        }
+      }
+      visitor.endVisit(this);
+    }
   }
 }

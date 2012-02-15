@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.android.facet.AndroidFacet;
+import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
@@ -87,7 +88,7 @@ public class AndroidLibraryPackagingCompiler implements ClassPostProcessingCompi
 
       final String[] classesDirOsPaths = AndroidCompileUtil.toOsPaths(processingItem.getClassDirectories());
       final String outputJarOsPath = FileUtil.toSystemDependentName(processingItem.getOutputDirectory().getPath() + '/' +
-                                                                    AndroidCompileUtil.CLASSES_JAR_FILE_NAME);
+                                                                    AndroidCommonUtils.CLASSES_JAR_FILE_NAME);
 
       final File outputJarFile = new File(outputJarOsPath);
       try {

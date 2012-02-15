@@ -35,6 +35,7 @@ import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.android.util.AndroidBundle;
+import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -116,7 +117,7 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
             File resPackage = AndroidResourcesPackagingCompiler.getOutputFile(module, outputDir);
             String resPackagePath = FileUtil.toSystemDependentName(resPackage.getPath());
 
-            File classesDexFile = new File(outputDir.getPath(), AndroidCompileUtil.CLASSES_FILE_NAME);
+            File classesDexFile = new File(outputDir.getPath(), AndroidCommonUtils.CLASSES_FILE_NAME);
             String classesDexPath = FileUtil.toSystemDependentName(classesDexFile.getPath());
 
             AndroidPlatform platform = configuration.getAndroidPlatform();

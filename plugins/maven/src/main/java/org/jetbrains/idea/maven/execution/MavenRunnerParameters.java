@@ -15,6 +15,13 @@
  */
 package org.jetbrains.idea.maven.execution;
 
+import com.google.common.base.Predicates;
+import com.google.common.collect.Maps;
+import com.intellij.util.xmlb.annotations.OptionTag;
+import com.intellij.util.xmlb.annotations.Transient;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.utils.Path;
 
 import java.io.File;
@@ -24,21 +31,53 @@ public class MavenRunnerParameters implements Cloneable {
   private boolean isPomExecution;
   private Path myWorkingDirPath;
   private List<String> myGoals;
-  private SortedSet<String> myProfiles;
+
+  private final Map<String, Boolean> myProfilesMap = new LinkedHashMap<String, Boolean>();
+
+  private final Collection<String> myEnabledProfilesForXmlSerializer = new TreeSet<String>();
 
   public MavenRunnerParameters() {
-    this(true, "", null, null);
+    this(true, "", null, null, null);
   }
 
-  public MavenRunnerParameters(boolean isPomExecution, String workingDirPath, List<String> goals, Collection<String> profiles) {
+  public MavenRunnerParameters(boolean isPomExecution, String workingDirPath,
+                               @Nullable List<String> goals,
+                               @Nullable Collection<String> explicitEnabledProfiles) {
+    this(isPomExecution, workingDirPath, goals, explicitEnabledProfiles, null);
+  }
+
+  public MavenRunnerParameters(boolean isPomExecution, String workingDirPath,
+                               @Nullable List<String> goals,
+                               @Nullable Collection<String> explicitEnabledProfiles,
+                               @Nullable Collection<String> explicitDisabledProfiles) {
     this.isPomExecution = isPomExecution;
     setWorkingDirPath(workingDirPath);
     setGoals(goals);
-    setProfiles(profiles);
+
+    if (explicitEnabledProfiles != null) {
+      for (String profile : explicitEnabledProfiles) {
+        myProfilesMap.put(profile, Boolean.TRUE);
+      }
+    }
+
+    if (explicitDisabledProfiles != null) {
+      for (String profile : explicitDisabledProfiles) {
+        myProfilesMap.put(profile, Boolean.FALSE);
+      }
+    }
+  }
+
+  public MavenRunnerParameters(String workingDirPath, boolean isPomExecution,
+                               @Nullable List<String> goals,
+                               @NotNull Map<String, Boolean> profilesMap) {
+    this.isPomExecution = isPomExecution;
+    setWorkingDirPath(workingDirPath);
+    setGoals(goals);
+    setProfilesMap(profilesMap);
   }
 
   public MavenRunnerParameters(MavenRunnerParameters that) {
-    this(that.isPomExecution, that.getWorkingDirPath(), that.myGoals, that.myProfiles);
+    this(that.getWorkingDirPath(), that.isPomExecution, that.myGoals, that.myProfilesMap);
   }
 
   public boolean isPomExecution() {
@@ -57,6 +96,7 @@ public class MavenRunnerParameters implements Cloneable {
     return new File(myWorkingDirPath.getPath());
   }
 
+  @Nullable
   public String getPomFilePath() {
     if (!isPomExecution) return null;
     return new File(myWorkingDirPath.getPath(), "pom.xml").getPath();
@@ -73,14 +113,68 @@ public class MavenRunnerParameters implements Cloneable {
     }
   }
 
-  public Collection<String> getProfiles() {
-    return myProfiles;
+  @Deprecated // Must be used by XML Serializer only!!!
+  @OptionTag("profiles")
+  public Collection<String> getEnabledProfilesForXmlSerializer() {
+    return myEnabledProfilesForXmlSerializer;
   }
 
-  public void setProfiles(Collection<String> profiles) {
-    myProfiles = new TreeSet<String>();
+  @Deprecated // Must be used by XML Serializer only!!!
+  public void setEnabledProfilesForXmlSerializer(@Nullable Collection<String> enabledProfilesForXmlSerializer) {
+    if (enabledProfilesForXmlSerializer != null) {
+      if (myEnabledProfilesForXmlSerializer == enabledProfilesForXmlSerializer) return; // Called from XML Serializer
+      myEnabledProfilesForXmlSerializer.retainAll(enabledProfilesForXmlSerializer);
+      myEnabledProfilesForXmlSerializer.addAll(enabledProfilesForXmlSerializer);
+    }
+  }
+
+  public void fixAfterLoadingFromOldFormat() {
+    for (String profile : myEnabledProfilesForXmlSerializer) {
+      myProfilesMap.put(profile, true);
+    }
+    myEnabledProfilesForXmlSerializer.clear();
+
+    File workingDir = getWorkingDirFile();
+    if (MavenConstants.POM_XML.equals(workingDir.getName())) {
+      setWorkingDirPath(workingDir.getParent());
+    }
+  }
+
+  @OptionTag("profilesMap")
+  public Map<String, Boolean> getProfilesMap() {
+    return myProfilesMap;
+  }
+
+  public void setProfilesMap(@NotNull Map<String, Boolean> profilesMap) {
+    if (myProfilesMap == profilesMap) return; // Called from XML Serializer
+    myProfilesMap.clear();
+    for (Map.Entry<String, Boolean> entry : profilesMap.entrySet()) {
+      if (entry.getValue() != null) {
+        myProfilesMap.put(entry.getKey(), entry.getValue());
+      }
+    }
+  }
+
+  /**
+   * Was left for compatibility with old plugins.
+   * @deprecated use getProfileMap()
+   * @return
+   */
+  @Transient
+  public Collection<String> getProfiles() {
+    return Maps.filterValues(myProfilesMap, Predicates.equalTo(true)).keySet();
+  }
+
+  /**
+   * Was left for compatibility with old plugins.
+   * @deprecated use getProfileMap()
+   * @param profiles
+   */
+  public void setProfiles(@Nullable Collection<String> profiles) {
     if (profiles != null) {
-      myProfiles.addAll(profiles);
+      for (String profile : profiles) {
+        myProfilesMap.put(profile, true);
+      }
     }
   }
 
@@ -97,7 +191,7 @@ public class MavenRunnerParameters implements Cloneable {
     if (isPomExecution != that.isPomExecution) return false;
     if (myGoals != null ? !myGoals.equals(that.myGoals) : that.myGoals != null) return false;
     if (myWorkingDirPath != null ? !myWorkingDirPath.equals(that.myWorkingDirPath) : that.myWorkingDirPath != null) return false;
-    if (myProfiles != null ? !myProfiles.equals(that.myProfiles) : that.myProfiles != null) return false;
+    if (!myProfilesMap.equals(that.myProfilesMap)) return false;
 
     return true;
   }
@@ -107,7 +201,7 @@ public class MavenRunnerParameters implements Cloneable {
     result = isPomExecution ? 1 : 0;
     result = 31 * result + (myWorkingDirPath != null ? myWorkingDirPath.hashCode() : 0);
     result = 31 * result + (myGoals != null ? myGoals.hashCode() : 0);
-    result = 31 * result + (myProfiles != null ? myProfiles.hashCode() : 0);
+    result = 31 * result + myProfilesMap.hashCode();
     return result;
   }
 }

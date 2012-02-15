@@ -17,6 +17,7 @@ package com.intellij.android.designer.model;
 
 import com.intellij.designer.model.RadComponent;
 
+import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,6 +30,8 @@ import java.util.List;
 public class RadViewComponent extends RadComponent {
   private final String myTitle;
   private final List<RadComponent> myChildren = new ArrayList<RadComponent>();
+  private Component myNativeComponent;
+  private final Rectangle myBounds = new Rectangle();
 
   public RadViewComponent(RadViewComponent parent, String title) {
     myTitle = title;
@@ -49,6 +52,24 @@ public class RadViewComponent extends RadComponent {
 
   @Override
   public Rectangle getBounds() {
-    return new Rectangle();
+    return myBounds;
+  }
+
+  public void setBounds(int x, int y, int width, int height) {
+    myBounds.setBounds(x, y, width, height);
+  }
+
+  public void setNativeComponent(Component nativeComponent) {
+    myNativeComponent = nativeComponent;
+  }
+
+  @Override
+  public Point convertPoint(Component component, int x, int y) {
+    return SwingUtilities.convertPoint(component, x, y, myNativeComponent);
+  }
+
+  @Override
+  public Point convertPoint(int x, int y, Component component) {
+    return SwingUtilities.convertPoint(myNativeComponent, x, y, component);
   }
 }

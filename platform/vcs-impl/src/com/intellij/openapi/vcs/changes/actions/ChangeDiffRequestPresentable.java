@@ -42,10 +42,16 @@ import java.util.List;
 public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
   private final Project myProject;
   private final Change myChange;
+  // I don't like that much
+  private boolean myIgnoreDirectoryFlag;
 
   public ChangeDiffRequestPresentable(final Project project, final Change change) {
     myChange = change;
     myProject = project;
+  }
+
+  public void setIgnoreDirectoryFlag(boolean ignoreDirectoryFlag) {
+    myIgnoreDirectoryFlag = ignoreDirectoryFlag;
   }
 
   public MyResult step(DiffChainContext context) {
@@ -156,6 +162,11 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
   private boolean canShowChange(DiffChainContext context) {
     final ContentRevision bRev = myChange.getBeforeRevision();
     final ContentRevision aRev = myChange.getAfterRevision();
+
+    if (myIgnoreDirectoryFlag) {
+      if (! checkContentsAvailable(bRev, aRev)) return false;
+      return true;
+    }
 
     if ((bRev != null && (bRev.getFile().getFileType().isBinary() || bRev.getFile().isDirectory())) ||
         (aRev != null && (aRev.getFile().getFileType().isBinary() || aRev.getFile().isDirectory()))) {

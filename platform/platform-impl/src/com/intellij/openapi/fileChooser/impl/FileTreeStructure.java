@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * @author Yura Cangea
- */
 package com.intellij.openapi.fileChooser.impl;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -38,25 +35,25 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.HashSet;
-import java.util.List;
 
+/**
+ * @author Yura Cangea
+ */
 public class FileTreeStructure extends AbstractTreeStructure {
   private static final Logger LOG = Logger.getInstance("#com.intellij.chooser.FileTreeStructure");
+
   private final RootFileElement myRootElement;
   private final FileChooserDescriptor myChooserDescriptor;
-  private boolean myShownHiddens;
+  private boolean myShowHidden;
   private final Project myProject;
 
   public FileTreeStructure(Project project, FileChooserDescriptor chooserDescriptor) {
     myProject = project;
-    List<VirtualFile> roots = chooserDescriptor.getRoots();
-    final VirtualFile[] rootFiles = VfsUtil.toVirtualFileArray(roots);
-    VirtualFile rootFile = rootFiles.length == 1 ? rootFiles[0] : null;
-    myRootElement = new RootFileElement(rootFiles, rootFile != null? rootFile.getPresentableUrl() : chooserDescriptor.getTitle(), chooserDescriptor.isShowFileSystemRoots());
+    final VirtualFile[] rootFiles = VfsUtil.toVirtualFileArray(chooserDescriptor.getRoots());
+    final String name = rootFiles.length == 1 && rootFiles[0] != null ? rootFiles[0].getPresentableUrl() : chooserDescriptor.getTitle();
+    myRootElement = new RootFileElement(rootFiles, name, chooserDescriptor.isShowFileSystemRoots());
     myChooserDescriptor = chooserDescriptor;
-
-    String value = PropertiesComponent.getInstance().getValue("FileChooser.showHiddens");
-    myShownHiddens = Boolean.valueOf(value).booleanValue();
+    myShowHidden = PropertiesComponent.getInstance().getBoolean("FileChooser.showHiddens", false);
   }
 
   public boolean isToBuildChildrenInBackground(final Object element) {
@@ -64,11 +61,11 @@ public class FileTreeStructure extends AbstractTreeStructure {
   }
 
   public final boolean areHiddensShown() {
-    return myShownHiddens;
+    return myShowHidden;
   }
 
   public final void showHiddens(final boolean showHiddens) {
-    myShownHiddens = showHiddens;
+    myShowHidden = showHiddens;
   }
 
   public final Object getRootElement() {
@@ -115,7 +112,7 @@ public class FileTreeStructure extends AbstractTreeStructure {
 
     HashSet<FileElement> childrenSet = new HashSet<FileElement>();
     for (VirtualFile child : children) {
-      if (myChooserDescriptor.isFileVisible(child, myShownHiddens)) {
+      if (myChooserDescriptor.isFileVisible(child, myShowHidden)) {
         final FileElement childElement = new FileElement(child, child.getName());
         childElement.setParent(element);
         childrenSet.add(childElement);
@@ -166,21 +163,20 @@ public class FileTreeStructure extends AbstractTreeStructure {
   }
 
   @Nullable
-  private VirtualFile getValidFile(FileElement element) {
+  private static VirtualFile getValidFile(FileElement element) {
     if (element == null) return null;
     final VirtualFile file = element.getFile();
     return file != null && file.isValid() ? file : null;
   }
 
-  public final void commit() {
-  }
+  public final void commit() { }
 
   public final boolean hasSomethingToCommit() {
     return false;
   }
 
   public final void dispose() {
-    PropertiesComponent.getInstance().setValue("FileChooser.showHiddens", Boolean.toString(myShownHiddens));
+    PropertiesComponent.getInstance().setValue("FileChooser.showHiddens", Boolean.toString(myShowHidden));
   }
 
   @NotNull

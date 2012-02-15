@@ -143,10 +143,7 @@ public class MavenRunConfiguration extends RunConfigurationBase implements Locat
       if (mySettings.myRunnerParameters == null) mySettings.myRunnerParameters = new MavenRunnerParameters();
 
       // fix old settings format
-      File workingDir = mySettings.myRunnerParameters.getWorkingDirFile();
-      if (MavenConstants.POM_XML.equals(workingDir.getName())) {
-        mySettings.myRunnerParameters.setWorkingDirPath(workingDir.getParent());
-      }
+      mySettings.myRunnerParameters.fixAfterLoadingFromOldFormat();
     }
   }
 

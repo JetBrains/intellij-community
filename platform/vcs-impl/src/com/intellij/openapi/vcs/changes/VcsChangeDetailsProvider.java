@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.CalledInAwt;
 import com.intellij.openapi.vcs.CalledInBackground;
@@ -28,6 +29,10 @@ import javax.swing.*;
  *         Time: 2:49 PM
  */
 public interface VcsChangeDetailsProvider {
+  ExtensionPointName<VcsChangeDetailsProvider> EP_NAME = ExtensionPointName.create("com.intellij.vcschangedetails");
+
+  String getName();
+
   @CalledInAwt
   boolean canComment(final Change change);
   @CalledInAwt

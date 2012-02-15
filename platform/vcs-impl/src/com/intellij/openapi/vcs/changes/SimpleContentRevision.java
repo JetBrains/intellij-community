@@ -22,7 +22,7 @@ public class SimpleContentRevision implements ContentRevision {
   }
 
   @Nullable
-  public String getContent() throws VcsException {
+  public String getContent() {
     return myContent;
   }
 

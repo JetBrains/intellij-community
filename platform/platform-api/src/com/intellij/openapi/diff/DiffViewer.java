@@ -28,4 +28,6 @@ public interface DiffViewer {
   JComponent getPreferredFocusedComponent();
 
   int getContentsNumber();
+
+  DiffViewerType getType();
 }

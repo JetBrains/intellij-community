@@ -18,6 +18,7 @@ package com.intellij.openapi.diff.impl;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.DiffContentUtil;
+import com.intellij.openapi.diff.DiffViewer;
 import com.intellij.openapi.diff.LineTokenizer;
 import com.intellij.openapi.diff.ex.DiffFragment;
 import com.intellij.openapi.diff.impl.external.DiffManagerImpl;
@@ -40,8 +41,7 @@ public class DiffUtil {
   private DiffUtil() {
   }
 
-  public static void initDiffFrame(FrameWrapper frameWrapper, final DiffPanelImpl diffPanel, final JComponent mainComponent) {
-    Project project = diffPanel.getProject();
+  public static void initDiffFrame(Project project, FrameWrapper frameWrapper, final DiffViewer diffPanel, final JComponent mainComponent) {
     frameWrapper.setComponent(mainComponent);
     frameWrapper.setProject(project);
     frameWrapper.setImage(ImageLoader.loadFromResource("/diff/Diff.png"));

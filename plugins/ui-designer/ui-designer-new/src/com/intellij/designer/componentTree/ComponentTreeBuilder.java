@@ -15,22 +15,82 @@
  */
 package com.intellij.designer.componentTree;
 
+import com.intellij.designer.designSurface.ComponentSelectionListener;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
+import com.intellij.designer.designSurface.EditableArea;
+import com.intellij.designer.model.RadComponent;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
-import com.intellij.ide.util.treeView.AbstractTreeStructure;
-import com.intellij.ide.util.treeView.NodeDescriptor;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultTreeModel;
-import java.util.Comparator;
+import javax.swing.tree.TreeSelectionModel;
 
 /**
  * @author Alexander Lobas
  */
-public final class ComponentTreeBuilder extends AbstractTreeBuilder {
+public final class ComponentTreeBuilder extends AbstractTreeBuilder implements ComponentSelectionListener, TreeSelectionListener {
+  private final EditableArea mySurfaceArea;
+  private final TreeSelectionModel myTreeSelectionModel;
+
   public ComponentTreeBuilder(ComponentTree tree, DesignerEditorPanel designer) {
     super(tree, (DefaultTreeModel)tree.getModel(), new TreeContentProvider(designer), null); // TODO: comparator?
     initRootNode();
+    mySurfaceArea = designer.getSurfaceArea();
+    myTreeSelectionModel = getTree().getSelectionModel();
+    // TODO: restore expanded state
+    setTreeSelection();
+    addListeners();
+  }
+
+  @Override
+  public void dispose() {
+    removeListeners();
+    super.dispose();
+  }
+
+  private void addListeners() {
+    mySurfaceArea.addSelectionListener(this);
+    myTreeSelectionModel.addTreeSelectionListener(this);
+  }
+
+  private void removeListeners() {
+    mySurfaceArea.removeSelectionListener(this);
+    myTreeSelectionModel.removeTreeSelectionListener(this);
+  }
+
+  private void handleSelection(Runnable runnable) {
+    try {
+      removeListeners();
+      runnable.run();
+    }
+    finally {
+      addListeners();
+    }
+  }
+
+  @Override
+  public void selectionChanged(EditableArea area) {
+    handleSelection(new Runnable() {
+      @Override
+      public void run() {
+        queueUpdate();
+        setTreeSelection();
+      }
+    });
+  }
+
+  private void setTreeSelection() {
+    select(mySurfaceArea.getSelection().toArray(), null);
+  }
+
+  @Override
+  public void valueChanged(TreeSelectionEvent e) {
+    handleSelection(new Runnable() {
+      @Override
+      public void run() {
+        mySurfaceArea.setSelection(getSelectedElements(RadComponent.class));
+      }
+    });
   }
 }

@@ -21,30 +21,24 @@ import com.intellij.execution.configurations.CommandLineBuilder;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;
-import com.intellij.execution.process.OSProcessHandler;
-import com.intellij.execution.process.ProcessAdapter;
-import com.intellij.execution.process.ProcessEvent;
-import com.intellij.execution.process.ProcessOutputTypes;
-import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import com.intellij.util.containers.HashMap;
-import org.jetbrains.android.compiler.AndroidCompileUtil;
 import org.jetbrains.android.compiler.AndroidDexCompilerConfiguration;
 import org.jetbrains.android.util.AndroidBundle;
+import org.jetbrains.android.util.AndroidCommonUtils;
+import org.jetbrains.android.util.AndroidCompilerMessageKind;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 /**
  * @author Eugene.Kudelevsky
@@ -52,31 +46,27 @@ import java.util.regex.Pattern;
 public class AndroidDxWrapper {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.compiler.tools.AndroidDx");
 
-  private static final Pattern WARNING_PATTERN = Pattern.compile(".*warning.*");
-  private static final Pattern ERROR_PATTERN = Pattern.compile(".*error.*");
-  private static final Pattern EXCEPTION_PATTERN = Pattern.compile(".*exception.*");
-
   private AndroidDxWrapper() {
   }
 
   @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
-  public static Map<CompilerMessageCategory, List<String>> execute(@NotNull Module module,
+  public static Map<AndroidCompilerMessageKind, List<String>> execute(@NotNull Module module,
                                                                    @NotNull IAndroidTarget target,
                                                                    @NotNull String outputDir,
                                                                    @NotNull String[] compileTargets) {
-    String outFile = outputDir + File.separatorChar + AndroidCompileUtil.CLASSES_FILE_NAME;
+    String outFile = outputDir + File.separatorChar + AndroidCommonUtils.CLASSES_FILE_NAME;
 
-    final Map<CompilerMessageCategory, List<String>> messages = new HashMap<CompilerMessageCategory, List<String>>(2);
-    messages.put(CompilerMessageCategory.ERROR, new ArrayList<String>());
-    messages.put(CompilerMessageCategory.INFORMATION, new ArrayList<String>());
-    messages.put(CompilerMessageCategory.WARNING, new ArrayList<String>());
+    final Map<AndroidCompilerMessageKind, List<String>> messages = new HashMap<AndroidCompilerMessageKind, List<String>>(2);
+    messages.put(AndroidCompilerMessageKind.ERROR, new ArrayList<String>());
+    messages.put(AndroidCompilerMessageKind.INFORMATION, new ArrayList<String>());
+    messages.put(AndroidCompilerMessageKind.WARNING, new ArrayList<String>());
 
     @SuppressWarnings("deprecation")
     String dxJarPath = target.getPath(IAndroidTarget.DX_JAR);
 
     File dxJar = new File(dxJarPath);
     if (!dxJar.isFile()) {
-      messages.get(CompilerMessageCategory.ERROR).add(AndroidBundle.message("android.file.not.exist.error", dxJarPath));
+      messages.get(AndroidCompilerMessageKind.ERROR).add(AndroidBundle.message("android.file.not.exist.error", dxJarPath));
       return messages;
     }
 
@@ -121,53 +111,12 @@ public class AndroidDxWrapper {
       process = commandLine.createProcess();
     }
     catch (ExecutionException e) {
-      messages.get(CompilerMessageCategory.ERROR).add("ExecutionException: " + e.getMessage());
+      messages.get(AndroidCompilerMessageKind.ERROR).add("ExecutionException: " + e.getMessage());
       LOG.info(e);
       return messages;
     }
 
-    final OSProcessHandler handler = new OSProcessHandler(process, "");
-    handler.addProcessListener(new ProcessAdapter() {
-      private CompilerMessageCategory myCategory = null;
-
-      @Override
-      public void onTextAvailable(ProcessEvent event, Key outputType) {
-        String[] msgs = event.getText().split("\\n");
-        for (String msg : msgs) {
-          msg = msg.trim();
-          String msglc = msg.toLowerCase();
-          if (outputType == ProcessOutputTypes.STDERR) {
-            if (WARNING_PATTERN.matcher(msglc).matches()) {
-              myCategory = CompilerMessageCategory.WARNING;
-            }
-            if (ERROR_PATTERN.matcher(msglc).matches() || EXCEPTION_PATTERN.matcher(msglc).matches() || myCategory == null) {
-              myCategory = CompilerMessageCategory.ERROR;
-            }
-            messages.get(myCategory).add(msg);
-          }
-          else if (outputType == ProcessOutputTypes.STDOUT) {
-            if (!msglc.startsWith("processing")) {
-              messages.get(CompilerMessageCategory.INFORMATION).add(msg);
-            }
-          }
-          LOG.info(msg);
-        }
-      }
-    });
-
-    handler.startNotify();
-    handler.waitFor();
-
-    final List<String> errors = messages.get(CompilerMessageCategory.ERROR);
-
-    if (new File(outFile).isFile()) {
-      // if compilation finished correctly, show all errors as warnings
-      messages.get(CompilerMessageCategory.WARNING).addAll(errors);
-      errors.clear();
-    }
-    else if (errors.size() == 0) {
-      errors.add("Cannot create classes.dex file");
-    }
+    AndroidCommonUtils.handleDexCompilationResult(process, outFile, messages);
 
     return messages;
   }

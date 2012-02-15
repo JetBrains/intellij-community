@@ -88,7 +88,7 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
   private JScrollPane myArchetypeDescriptionScrollPane;
   private JTextArea myArchetypeDescriptionField;
 
-  private AtomicBoolean myLoadingCancelled = new AtomicBoolean();
+  private Object myCurrentUpdaterMarker;
   private final AsyncProcessIcon myLoadingIcon = new AsyncProcessIcon.Big(getClass() + ".loading");
 
   public MavenModuleWizardStep(@Nullable Project project, MavenModuleBuilder builder) {
@@ -104,11 +104,18 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
     myArchetypesTree.setModel(new DefaultTreeModel(new DefaultMutableTreeNode()));
     myArchetypesScrollPane = ScrollPaneFactory.createScrollPane(myArchetypesTree);
 
-    myLoadingIcon.setVisible(false);
+    myArchetypesPanel.add(myArchetypesScrollPane, "archetypes");
 
-    myArchetypesPanel.setLayout(new MyLayout());
-    myArchetypesPanel.add(myArchetypesScrollPane);
-    myArchetypesPanel.add(myLoadingIcon);
+    JPanel loadingPanel = new JPanel(new GridBagLayout());
+    JPanel bp = new JPanel(new BorderLayout(10, 10));
+    bp.add(new JLabel("Loading archetype list..."), BorderLayout.NORTH);
+    bp.add(myLoadingIcon, BorderLayout.CENTER);
+
+    loadingPanel.add(bp, new GridBagConstraints());
+
+    myArchetypesPanel.add(ScrollPaneFactory.createScrollPane(loadingPanel), "loading");
+    ((CardLayout)myArchetypesPanel.getLayout()).show(myArchetypesPanel, "archetypes");
+
 
     mySelectAggregator.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -133,7 +140,6 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
     myInheritVersionCheckBox.addActionListener(updatingListener);
 
     myUseArchetypeCheckBox.addActionListener(updatingListener);
-    myArchetypesTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
 
     myAddArchetypeButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -189,7 +195,6 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
 
   @Override
   public void onStepLeaving() {
-    myLoadingCancelled.set(true);
     saveSettings();
   }
 
@@ -228,7 +233,7 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
     return getSavedValue(key, String.valueOf(defaultValue)).equals(String.valueOf(true));
   }
 
-  private String getSavedValue(String key, String defaultValue) {
+  private static String getSavedValue(String key, String defaultValue) {
     String value = PropertiesComponent.getInstance().getValue(key);
     return value == null ? defaultValue : value;
   }
@@ -237,7 +242,7 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
     saveValue(key, String.valueOf(value));
   }
 
-  private void saveValue(String key, String value) {
+  private static void saveValue(String key, String value) {
     PropertiesComponent props = PropertiesComponent.getInstance();
     props.setValue(key, value);
   }
@@ -272,26 +277,24 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
   }
 
   private void updateArchetypesList(final MavenArchetype selected) {
-    myLoadingCancelled.set(true);
-    myLoadingCancelled = new AtomicBoolean();
-    final AtomicBoolean currentStatus = myLoadingCancelled;
-    myLoadingIcon.setVisible(true);
+    ApplicationManager.getApplication().assertIsDispatchThread();
+
     myLoadingIcon.setBackground(myArchetypesTree.getBackground());
+
+    ((CardLayout)myArchetypesPanel.getLayout()).show(myArchetypesPanel, "loading");
+
+    final Object currentUpdaterMarker = new Object();
+    myCurrentUpdaterMarker = currentUpdaterMarker;
 
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
-        try {
-          Thread.sleep(3000);
-        }
-        catch (InterruptedException e) {
-          throw new RuntimeException(e);
-        }
         final Set<MavenArchetype> archetypes = MavenIndicesManager.getInstance().getArchetypes();
 
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
-            if (currentStatus.get()) return;
-            myLoadingIcon.setVisible(false);
+            if (currentUpdaterMarker != myCurrentUpdaterMarker) return; // Other updater has been run.
+
+            ((CardLayout)myArchetypesPanel.getLayout()).show(myArchetypesPanel, "archetypes");
 
             TreeNode root = groupAndSortArchetypes(archetypes);
             TreeModel model = new DefaultTreeModel(root);
@@ -325,7 +328,8 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
     myMainPanel.revalidate();
   }
 
-  private TreePath findNodePath(MavenArchetype object, TreeModel model, Object parent) {
+  @Nullable
+  private static TreePath findNodePath(MavenArchetype object, TreeModel model, Object parent) {
     for (int i = 0; i < model.getChildCount(parent); i++) {
       DefaultMutableTreeNode each = (DefaultMutableTreeNode)model.getChild(parent, i);
       if (each.getUserObject().equals(object)) return new TreePath(each.getPath());
@@ -336,7 +340,7 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
     return null;
   }
 
-  private TreeNode groupAndSortArchetypes(Set<MavenArchetype> archetypes) {
+  private static TreeNode groupAndSortArchetypes(Set<MavenArchetype> archetypes) {
     List<MavenArchetype> list = new ArrayList<MavenArchetype>(archetypes);
 
     Collections.sort(list, new Comparator<MavenArchetype>() {
@@ -458,7 +462,7 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
     return WIZARD_ICON;
   }
 
-  private class MyRenderer extends ColoredTreeCellRenderer {
+  private static class MyRenderer extends ColoredTreeCellRenderer {
     public void customizeCellRenderer(JTree tree,
                                       Object value,
                                       boolean selected,
@@ -485,20 +489,6 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
   @Override
   public String getHelpId() {
     return "reference.dialogs.new.project.fromScratch.maven";
-  }
-
-  private class MyLayout extends AbstractLayoutManager {
-    public Dimension preferredLayoutSize(Container parent) {
-      return myArchetypesScrollPane.getPreferredSize();
-    }
-
-    public void layoutContainer(Container parent) {
-      int w = parent.getWidth();
-      int h = parent.getHeight();
-      myArchetypesScrollPane.setBounds(new Rectangle(0, 0, w, h));
-      Dimension is = myLoadingIcon.getPreferredSize();
-      myLoadingIcon.setBounds(new Rectangle((w - is.width) / 2, (h - is.height) / 2, is.width, is.height));
-    }
   }
 }
 

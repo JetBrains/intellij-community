@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,14 +40,21 @@ public abstract class DiffRequest {
   private final HashSet myHints = new HashSet();
   private final Map<String, Object> myGenericData;
   private Runnable myOnOkRunnable;
+  private final List<Pair<String, DiffRequest>> myAdditional;
 
   protected DiffRequest(Project project) {
     myProject = project;
     myGenericData = new HashMap<String, Object>(2);
+    myAdditional = new ArrayList<Pair<String, DiffRequest>>(0);
   }
 
   public void setToolbarAddons(@NotNull ToolbarAddons toolbarAddons) {
     myToolbarAddons = toolbarAddons;
+    if (haveMultipleLayers()) {
+      for (Pair<String, DiffRequest> pair : myAdditional) {
+        pair.getSecond().setToolbarAddons(toolbarAddons);
+      }
+    }
   }
 
   public String getGroupKey() { return myGroupKey; }
@@ -63,6 +71,24 @@ public abstract class DiffRequest {
   @NotNull
   public abstract DiffContent[] getContents();
 
+  public DiffViewerType getType() {
+    if (haveMultipleLayers()) return DiffViewerType.multiLayer;
+    if (getContentTitles().length == 3) return DiffViewerType.merge;
+    return DiffViewerType.contents;
+  }
+
+  public boolean haveMultipleLayers() {
+    return ! getOtherLayers().isEmpty();
+  }
+
+  public void addOtherLayer(final String name, DiffRequest request) {
+    myAdditional.add(new Pair<String, DiffRequest>(name, request));
+  }
+
+  public List<Pair<String, DiffRequest>> getOtherLayers() {
+    return myAdditional;
+  }
+
   /**
    * @return contents names. Should have same length as {@link #getContents()}
    */
@@ -72,6 +98,10 @@ public abstract class DiffRequest {
    * Used as window title
    */
   public abstract String getWindowTitle();
+
+  public void setWindowTitle(final String value) {
+    //
+  }
 
   /**
    * <B>Work in progress. Don't rely on this functionality</B><br>
@@ -90,6 +120,11 @@ public abstract class DiffRequest {
 
   public void passForDataContext(final DataKey key, final Object value) {
     myGenericData.put(key.getName(), value);
+    if (haveMultipleLayers()) {
+      for (Pair<String, DiffRequest> pair : myAdditional) {
+        pair.getSecond().passForDataContext(key, value);
+      }
+    }
   }
 
   public Map<String, Object> getGenericData() {
@@ -102,6 +137,11 @@ public abstract class DiffRequest {
    */
   public void addHint(Object hint) {
     myHints.add(hint);
+    if (haveMultipleLayers()) {
+      for (Pair<String, DiffRequest> pair : myAdditional) {
+        pair.getSecond().addHint(hint);
+      }
+    }
   }
 
   /**
@@ -110,6 +150,11 @@ public abstract class DiffRequest {
    */
   public void removeHint(Object hint) {
     myHints.remove(hint);
+    if (haveMultipleLayers()) {
+      for (Pair<String, DiffRequest> pair : myAdditional) {
+        pair.getSecond().removeHint(hint);
+      }
+    }
   }
 
   /**

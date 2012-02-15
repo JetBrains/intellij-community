@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1013,38 +1013,48 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
       myFiles = files;
     }
 
+    @NotNull
     @Override
-    public FileChooserDialog createFileChooser(FileChooserDescriptor descriptor, Project project) {
+    public FileChooserDialog createFileChooser(@NotNull FileChooserDescriptor descriptor,
+                                               @Nullable Project project,
+                                               @Nullable Component parent) {
       return new MyFileChooserDialog(myFiles);
     }
 
+    @NotNull
     @Override
-    public FileChooserDialog createFileChooser(FileChooserDescriptor descriptor, Component parent) {
-      return new MyFileChooserDialog(myFiles);
+    public PathChooserDialog createPathChooser(@NotNull FileChooserDescriptor descriptor,
+                                               @Nullable Project project,
+                                               @Nullable Component parent) {
+      throw new UnsupportedOperationException();
     }
 
+    @NotNull
     @Override
-    public FileTextField createFileTextField(FileChooserDescriptor descriptor, boolean showHidden, Disposable parent) {
+    public FileTextField createFileTextField(@NotNull FileChooserDescriptor descriptor, boolean showHidden, Disposable parent) {
+      throw new UnsupportedOperationException();
+    }
+
+    @NotNull
+    @Override
+    public FileTextField createFileTextField(@NotNull FileChooserDescriptor descriptor, Disposable parent) {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    public FileTextField createFileTextField(FileChooserDescriptor descriptor, Disposable parent) {
+    public void installFileCompletion(@NotNull JTextField field, @NotNull FileChooserDescriptor descriptor, boolean showHidden, Disposable parent) {
       throw new UnsupportedOperationException();
     }
 
+    @NotNull
     @Override
-    public void installFileCompletion(JTextField field, FileChooserDescriptor descriptor, boolean showHidden, Disposable parent) {
+    public FileSaverDialog createSaveFileDialog(@NotNull FileSaverDescriptor descriptor, Project project) {
       throw new UnsupportedOperationException();
     }
 
+    @NotNull
     @Override
-    public FileSaverDialog createSaveFileDialog(FileSaverDescriptor descriptor, Project project) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public FileSaverDialog createSaveFileDialog(FileSaverDescriptor descriptor, Component parent) {
+    public FileSaverDialog createSaveFileDialog(@NotNull FileSaverDescriptor descriptor, @NotNull Component parent) {
       throw new UnsupportedOperationException();
     }
   }

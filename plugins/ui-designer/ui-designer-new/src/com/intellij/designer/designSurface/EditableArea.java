@@ -15,8 +15,74 @@
  */
 package com.intellij.designer.designSurface;
 
+import com.intellij.designer.model.RadComponent;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import javax.swing.event.EventListenerList;
+import java.awt.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
 /**
  * @author Alexander Lobas
  */
-public interface EditableArea {
+public abstract class EditableArea {
+  private final EventListenerList myListenerList = new EventListenerList();
+  private List<RadComponent> mySelection = new ArrayList<RadComponent>();
+
+  public void addSelectionListener(ComponentSelectionListener listener) {
+    myListenerList.add(ComponentSelectionListener.class, listener);
+  }
+
+  public void removeSelectionListener(ComponentSelectionListener listener) {
+    myListenerList.remove(ComponentSelectionListener.class, listener);
+  }
+
+  protected void fireSelectionChanged() {
+    for (ComponentSelectionListener listener : myListenerList.getListeners(ComponentSelectionListener.class)) {
+      listener.selectionChanged(this);
+    }
+  }
+
+  @NotNull
+  public List<RadComponent> getSelection() {
+    return mySelection;
+  }
+
+  public boolean isSelected(@NotNull RadComponent component) {
+    return mySelection.contains(component);
+  }
+
+  public void select(@NotNull RadComponent component) {
+    mySelection = new ArrayList<RadComponent>();
+    mySelection.add(component);
+    fireSelectionChanged();
+  }
+
+  public void deselect(@NotNull RadComponent component) {
+    mySelection.remove(component);
+    fireSelectionChanged();
+  }
+
+  public void appendSelection(@NotNull RadComponent component) {
+    mySelection.remove(component);
+    mySelection.add(component);
+    fireSelectionChanged();
+  }
+
+  public void setSelection(@NotNull Collection<RadComponent> components) {
+    mySelection = new ArrayList<RadComponent>(components);
+    fireSelectionChanged();
+  }
+
+  public abstract void setCursor(@Nullable Cursor cursor);
+
+  @NotNull
+  public abstract JComponent getNativeComponent();
+
+  @Nullable
+  public abstract RadComponent findTarget(int x, int y);
 }

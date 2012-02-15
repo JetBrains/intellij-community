@@ -1278,4 +1278,16 @@ public class ListUtils {
     checkResult()
   }
 
+  public void testNoReturnAfterDot() {
+    configure()
+    assert !('return' in myFixture.lookupElementStrings)
+  }
+
+  public void testSameSignature() {
+    configure()
+    lookup.setCurrentItem(myItems[1])
+    myFixture.type('\n')
+    checkResult()
+  }
+
 }

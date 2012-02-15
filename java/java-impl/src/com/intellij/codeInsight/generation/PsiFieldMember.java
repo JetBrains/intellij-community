@@ -30,6 +30,10 @@ public class PsiFieldMember extends PsiElementClassMember<PsiField> implements E
     super(field, PsiFormatUtil.formatVariable(field, FIELD_OPTIONS, PsiSubstitutor.EMPTY));
   }
 
+  public PsiFieldMember(PsiField psiMember, PsiSubstitutor substitutor) {
+    super(psiMember, substitutor, PsiFormatUtil.formatVariable(psiMember, FIELD_OPTIONS, PsiSubstitutor.EMPTY));
+  }
+
   @Nullable
   public PsiGenerationInfo generateGetter() {
     PsiField field = getElement();

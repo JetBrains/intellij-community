@@ -58,6 +58,7 @@ import java.util.*;
 public class SvnChangeProvider implements ChangeProvider {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnChangeProvider");
   public static final String ourDefaultListName = VcsBundle.message("changes.default.changlist.name");
+  public static final String PROPERTY_LAYER = "Property";
 
   private final SvnVcs17 myVcs;
   private final VcsContextFactory myFactory;
