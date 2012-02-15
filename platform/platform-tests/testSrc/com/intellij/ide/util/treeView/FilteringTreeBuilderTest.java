@@ -1,6 +1,5 @@
 package com.intellij.ide.util.treeView;
 
-import com.intellij.idea.Bombed;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
@@ -9,11 +8,14 @@ import com.intellij.ui.speedSearch.ElementFilter;
 import com.intellij.ui.treeStructure.*;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Calendar;
 import java.util.LinkedHashMap;
 
-@Bombed(month = Calendar.FEBRUARY, day = 10, year = 2012, user = "kb")
+/**
+ * @author Kirill Kalishev
+ * @author Konstantin Bulenkov
+ */
 public class FilteringTreeBuilderTest extends BaseTreeTestCase  {
   private FilteringTreeBuilder myBuilder;
   private MyFilter myFilter;
@@ -82,7 +84,7 @@ public class FilteringTreeBuilderTest extends BaseTreeTestCase  {
              + " -folder2\n"
              + "  file21\n");
 
-    update("f", null);
+    updateFilter("f");
     assertTree("-/\n"
              + " -folder1\n"
              + "  [file11]\n"
@@ -91,16 +93,16 @@ public class FilteringTreeBuilderTest extends BaseTreeTestCase  {
              + " -folder2\n"
              + "  file21\n");
 
-    update("fo", null);
+    updateFilter("fo");
     assertTree("-/\n"
              + " -folder1\n"
              + "  [folder11]\n"
              + " folder2\n");
 
-    update("fo_", null);
+    updateFilter("fo_");
     assertTree("+/\n");
 
-    update("", null);
+    updateFilter("");
     assertTree("-/\n"
              + " -[folder1]\n"
              + "  file11\n"
@@ -121,11 +123,11 @@ public class FilteringTreeBuilderTest extends BaseTreeTestCase  {
              + " -folder2\n"
              + "  file21\n");
 
-    update("folder2", null);
+    updateFilter("folder2");
     assertTree("-/\n"
              + " [folder2]\n");
 
-    update("", null);
+    updateFilter("");
     assertTree("-/\n"
              + " -folder1\n"
              + "  file11\n"
@@ -135,7 +137,7 @@ public class FilteringTreeBuilderTest extends BaseTreeTestCase  {
              + " -[folder2]\n"
              + "  file21\n");
 
-    update("file1", null);
+    updateFilter("file1");
     assertTree("-/\n"
              + " -[folder1]\n"
              + "  file11\n"
@@ -147,7 +149,7 @@ public class FilteringTreeBuilderTest extends BaseTreeTestCase  {
              + "  file11\n"
              + "  [file12]\n");
 
-    update("", null);
+    updateFilter("");
     assertTree("-/\n"
              + " -folder1\n"
              + "  file11\n"
@@ -164,19 +166,12 @@ public class FilteringTreeBuilderTest extends BaseTreeTestCase  {
     select(new Object[] {node}, false);
   }
 
-  private void update(final String text, final Object selection) throws Exception {
-    //final ActionCallback result = new ActionCallback();
-    //doAndWaitForBuilder(new Runnable() {
-    //  @Override
-    //  public void run() {
-        myFilter.update(text, selection)/*.notify(result)*/;
-    //  }
-    //}, new Condition<Object>() {
-    //  @Override
-    //  public boolean value(Object o) {
-    //    return result.isProcessed();
-    //  }
-    //});
+  private void updateFilter(final String text) throws Exception {
+     update(text, null);
+   }
+
+  private void update(final String text, @Nullable final Object selection) throws Exception {
+    myFilter.update(text, selection);
   }
 
   private class Node extends CachingSimpleNode {
@@ -235,7 +230,7 @@ public class FilteringTreeBuilderTest extends BaseTreeTestCase  {
   }
 
 
-  private class MyFilter extends ElementFilter.Active.Impl {
+  private static class MyFilter extends ElementFilter.Active.Impl {
 
     String myPattern = "";
 
