@@ -1,19 +1,30 @@
 package com.jetbrains.python.packaging;
 
-import com.google.common.collect.Lists;
 import com.intellij.execution.process.ProcessOutput;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.*;
@@ -25,6 +36,7 @@ import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.event.HyperlinkEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -42,14 +54,124 @@ public class PyPackageManager {
   public static final int ERROR_INVALID_OUTPUT = -4;
   public static final int ERROR_ACCESS_DENIED = -5;
 
+  public static final Key<Boolean> RUNNING_PACKAGING_TASKS = Key.create("PyPackageRequirementsInspection.RunningPackagingTasks");
+
   private static final String PACKAGING_TOOL = "packaging_tool.py";
   private static final String VIRTUALENV = "virtualenv.py";
   private static final int TIMEOUT = 10 * 60 * 1000;
 
-  private static final Map<Sdk, PyPackageManager> ourInstances = new HashMap<Sdk, PyPackageManager>();
+  // Sdk instances are re-created by ProjectSdksModel on every refresh so we cannot use them as keys for caching
+  private static final Map<String, PyPackageManager> ourInstances = new HashMap<String, PyPackageManager>();
+  private static final String BUILD_DIR_OPTION = "--build-dir";
 
   private List<PyPackage> myPackagesCache = null;
   private Sdk mySdk;
+
+  public static class UI {
+    @Nullable private Listener myListener;
+    @NotNull private Project myProject;
+    @NotNull private Sdk mySdk;
+
+    public interface Listener {
+      void started();
+      void finished();
+    }
+
+    public UI(@NotNull Project project, @NotNull Sdk sdk, @Nullable Listener listener) {
+      myProject = project;
+      mySdk = sdk;
+      myListener = listener;
+    }
+
+    public void install(@NotNull final List<PyRequirement> requirements, @NotNull final List<String> extraArgs) {
+      run(new ExternalRunnable() {
+        @Override
+        public void run() throws PyExternalProcessException {
+          PyPackageManager.getInstance(mySdk).install(requirements, extraArgs);
+        }
+      }, "Installing packages", "Packages installed successfully", "Installed packages: " + requirementsToString(requirements),
+         "Install packages failed");
+    }
+
+    public void uninstall(@NotNull final List<PyPackage> packages) {
+      final String packagesString = StringUtil.join(packages, new Function<PyPackage, String>() {
+        @Override
+        public String fun(PyPackage pkg) {
+          return "'" + pkg.getName() + "'";
+        }
+      }, ", ");
+
+      run(new ExternalRunnable() {
+        @Override
+        public void run() throws PyExternalProcessException {
+          PyPackageManager.getInstance(mySdk).uninstall(packages);
+        }
+      }, "Uninstalling packages", "Packages uninstalled successfully", "Uninstalled packages: " + packagesString,
+         "Uninstall packages failed");
+    }
+
+    private interface ExternalRunnable {
+      void run() throws PyExternalProcessException;
+    }
+
+    private void run(@NotNull final ExternalRunnable runnable, @NotNull final String progressTitle,
+                     @NotNull final String successTitle, @NotNull final String successDescription, @NotNull final String failureTitle) {
+      ProgressManager.getInstance().run(new Task.Backgroundable(myProject, progressTitle, false) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          indicator.setText(progressTitle + "...");
+          final Ref<Notification> notificationRef = new Ref<Notification>(null);
+          final String PACKAGING_GROUP_ID = "Packaging";
+          final Application application = ApplicationManager.getApplication();
+          if (myListener != null) {
+            application.invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                myListener.started();
+              }
+            });
+          }
+          try {
+            runnable.run();
+            notificationRef.set(new Notification(PACKAGING_GROUP_ID, successTitle, successDescription, NotificationType.INFORMATION));
+          }
+          catch (final PyExternalProcessException e) {
+            final String progressLower = progressTitle.toLowerCase();
+            final String description = "Error occurred when " + progressLower + ".";
+            final String command = e.getName() + " " + StringUtil.join(e.getArgs(), " ");
+            notificationRef.set(new Notification(PACKAGING_GROUP_ID, failureTitle,
+                                                 String.format("Error occurred when %s. <a href=\"xxx\">Details...</a>",
+                                                               progressLower),
+                                                 NotificationType.ERROR,
+                                                 new NotificationListener() {
+                                                   @Override
+                                                   public void hyperlinkUpdate(@NotNull Notification notification,
+                                                                               @NotNull HyperlinkEvent event) {
+                                                     PyPIPackageUtil.showError(myProject, failureTitle, description, command, e.getMessage());
+                                                     notification.expire();
+                                                   }
+                                                 }));
+          }
+          finally {
+            application.invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                if (myListener != null) {
+                  myListener.finished();
+                }
+                VirtualFileManager.getInstance().refreshWithoutFileWatcher(false);
+                PythonSdkType.getInstance().setupSdkPaths(mySdk);
+                final Notification notification = notificationRef.get();
+                if (notification != null) {
+                  notification.notify(myProject);
+                }
+              }
+            });
+          }
+        }
+      });
+    }
+  }
 
   private PyPackageManager(@NotNull Sdk sdk) {
     mySdk = sdk;
@@ -57,10 +179,11 @@ public class PyPackageManager {
 
   @NotNull
   public static PyPackageManager getInstance(@NotNull Sdk sdk) {
-    PyPackageManager manager = ourInstances.get(sdk);
+    final String name = sdk.getName();
+    PyPackageManager manager = ourInstances.get(name);
     if (manager == null) {
       manager = new PyPackageManager(sdk);
-      ourInstances.put(sdk, manager);
+      ourInstances.put(name, manager);
     }
     return manager;
   }
@@ -69,28 +192,9 @@ public class PyPackageManager {
     return mySdk;
   }
 
-  // TODO: There are too many install() methods
-  public void install(@NotNull List<PyRequirement> requirements) throws PyExternalProcessException {
-    install(requirements, null);
-  }
-
-  public void install(@NotNull PyRequirement requirement, @Nullable List<String> options) throws PyExternalProcessException {
-    install(Lists.newArrayList(requirement), options);
-  }
-
-  public void install(@NotNull PyRequirement requirement, @Nullable String url,
-                      @Nullable List<String> options) throws PyExternalProcessException {
-    install(Lists.newArrayList(requirement), url, options);
-  }
-
-  private void install(@NotNull List<PyRequirement> requirements, @Nullable String url,
-                      @Nullable List<String> options) throws PyExternalProcessException {
+  public void install(@NotNull List<PyRequirement> requirements, @NotNull List<String> extraArgs) throws PyExternalProcessException {
     final List<String> args = new ArrayList<String>();
     args.add("install");
-    if (url != null) {
-      args.add("--extra-index-url");
-      args.add(url);
-    }
     final File buildDir;
     try {
       buildDir = FileUtil.createTempDirectory("packaging", null);
@@ -98,32 +202,33 @@ public class PyPackageManager {
     catch (IOException e) {
       throw new PyExternalProcessException(ERROR_ACCESS_DENIED, PACKAGING_TOOL, args, "Cannot create temporary build directory");
     }
-    args.addAll(list("--build-dir", buildDir.getAbsolutePath()));
+    if (!extraArgs.contains(BUILD_DIR_OPTION)) {
+      args.addAll(list(BUILD_DIR_OPTION, buildDir.getAbsolutePath()));
+    }
+    args.addAll(extraArgs);
     for (PyRequirement req : requirements) {
       args.add(req.toString());
-    }
-    if (options != null) {
-      args.addAll(options);
     }
     try {
       runPythonHelper(PACKAGING_TOOL, args);
     }
     finally {
-      myPackagesCache = null;
+      clearCaches();
       FileUtil.delete(buildDir);
     }
   }
 
-  private void install(@NotNull List<PyRequirement> requirements, @Nullable List<String> options) throws PyExternalProcessException {
-    install(requirements, null, options);
-  }
-
-  public void uninstall(@NotNull PyPackage pkg) throws PyExternalProcessException {
+  public void uninstall(@NotNull List<PyPackage> packages) throws PyExternalProcessException {
     try {
-      runPythonHelper(PACKAGING_TOOL, list("uninstall", pkg.getName()));
+      final List<String> args = new ArrayList<String>();
+      args.add("uninstall");
+      for (PyPackage pkg : packages) {
+        args.add(pkg.getName());
+      }
+      runPythonHelper(PACKAGING_TOOL, args);
     }
     finally {
-      myPackagesCache = null;
+      clearCaches();
     }
   }
 
@@ -143,11 +248,11 @@ public class PyPackageManager {
   }
 
   @NotNull
-  public String createVirtualEnv(@NotNull String desinationDir) throws PyExternalProcessException {
+  public String createVirtualEnv(@NotNull String destinationDir) throws PyExternalProcessException {
     // TODO: Add boolean systemSitePackages option
-    runPythonHelper(VIRTUALENV, list("--never-download", "--distribute", desinationDir));
-    final String binary = PythonSdkType.getPythonExecutable(desinationDir);
-    final String binaryFallback = desinationDir + File.separator + "bin" + File.separator + "python";
+    runPythonHelper(VIRTUALENV, list("--never-download", "--distribute", destinationDir));
+    final String binary = PythonSdkType.getPythonExecutable(destinationDir);
+    final String binaryFallback = destinationDir + File.separator + "bin" + File.separator + "python";
     return (binary != null) ? binary : binaryFallback;
   }
 
@@ -176,6 +281,16 @@ public class PyPackageManager {
       return PyRequirement.parse(StringUtil.join(lines, "\n"));
     }
     return null;
+  }
+
+  @NotNull
+  private static String requirementsToString(@NotNull List<PyRequirement> requirements) {
+    return StringUtil.join(requirements, new Function<PyRequirement, String>() {
+      @Override
+      public String fun(PyRequirement requirement) {
+        return String.format("'%s'", requirement.toString());
+      }
+    }, ", ");
   }
 
   @Nullable

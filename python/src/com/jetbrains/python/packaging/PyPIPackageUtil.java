@@ -149,7 +149,7 @@ public class PyPIPackageUtil {
   public void updatePyPICache(Project project) throws IOException {
     parsePyPIList(getPyPIListFromWeb(), project);
   }
-  
+
   public void parsePyPIList(List<String> packages, Project project) {
     for (String pyPackage : packages) {
       try {
@@ -166,7 +166,7 @@ public class PyPIPackageUtil {
       }
     }
   }
-  
+
   @Nullable
   public List<String> getPyPIListFromWeb() throws IOException {
     final List<String> packages = new ArrayList<String>();
@@ -178,7 +178,7 @@ public class PyPIPackageUtil {
           public void handleStartTag(HTML.Tag tag, MutableAttributeSet set, int i) {
             if ("table".equals(tag.toString()))
               inTable = !inTable;
-            
+
             if (inTable && "a".equals(tag.toString())) {
               packages.add(String.valueOf(set.getAttribute(HTML.Attribute.HREF)));
             }
@@ -225,14 +225,20 @@ public class PyPIPackageUtil {
   public static Map<String, String> getPyPIPackages(Project project) {
     return PyPackageService.getInstance(project).PY_PACKAGES;
   }
-  
-  
-  public static void showError(String title, String message, Project project) {
+
+  public static void showError(@NotNull Project project, @NotNull String title, @NotNull String description,
+                               @NotNull String command, @NotNull String errorOutput) {
     final DialogBuilder builder = new DialogBuilder(project);
     builder.setTitle(title);
     final JTextArea textArea = new JTextArea();
     textArea.setEditable(false);
-    textArea.setText(message);
+    textArea.setText(String.format("%s The following command was executed:\n" +
+                                   "\n" +
+                                   "%s\n" +
+                                   "\n" +
+                                   "The error output of the command:\n" +
+                                   "%s",
+                                   description, command, errorOutput));
     textArea.setWrapStyleWord(false);
     textArea.setLineWrap(true);
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(textArea);
@@ -245,7 +251,5 @@ public class PyPIPackageUtil {
     builder.setButtonsAlignment(SwingConstants.CENTER);
     builder.addOkAction();
     builder.show();
-
   }
-
 }
