@@ -66,6 +66,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
   private static final Logger LOG = Logger.getInstance(PydevConsoleRunner.class.getName());
 
   private Sdk mySdk;
+  @NotNull private final CommandLineArgumentsProvider myCommandLineArgumentsProvider;
   private final int[] myPorts;
   private PydevConsoleCommunication myPydevConsoleCommunication;
   private PyConsoleProcessHandler myProcessHandler;
@@ -84,9 +85,10 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
                                @NotNull final CommandLineArgumentsProvider commandLineArgumentsProvider,
                                @Nullable final String workingDir,
                                int[] ports) {
-    super(project, consoleType.getTitle(), commandLineArgumentsProvider, workingDir);
+    super(project, consoleType.getTitle(), workingDir);
     mySdk = sdk;
     myConsoleType = consoleType;
+    myCommandLineArgumentsProvider = commandLineArgumentsProvider;
     myPorts = ports;
   }
 
@@ -205,7 +207,8 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
   }
 
   @Override
-  protected OSProcessHandler createProcess(CommandLineArgumentsProvider provider) throws ExecutionException {
+  protected OSProcessHandler createProcess() throws ExecutionException {
+    CommandLineArgumentsProvider provider = myCommandLineArgumentsProvider;
     final Process server = Runner.createProcess(getWorkingDir(), provider.getAdditionalEnvs(), provider.getArguments());
     try {
       myPydevConsoleCommunication = new PydevConsoleCommunication(getProject(), myPorts[0], server, myPorts[1]);
