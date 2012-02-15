@@ -1,4 +1,4 @@
-package com.jetbrains.python.packaging;
+package com.jetbrains.python.packaging.setupPy;
 
 import com.intellij.ide.IdeView;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
@@ -23,6 +23,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.SystemProperties;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.psi.PyUtil;
 
 import java.util.ArrayList;

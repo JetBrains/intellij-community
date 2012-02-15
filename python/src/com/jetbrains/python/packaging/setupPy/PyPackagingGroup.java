@@ -1,7 +1,8 @@
-package com.jetbrains.python.packaging;
+package com.jetbrains.python.packaging.setupPy;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.module.Module;
+import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.psi.PyFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
