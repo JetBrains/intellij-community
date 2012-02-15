@@ -41,7 +41,6 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
-import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
@@ -297,15 +296,16 @@ public class MergePanel2 implements DiffViewer {
     return 3;
   }
 
+  @Override
+  public DiffViewerType getType() {
+    return DiffViewerType.merge;
+  }
+
   private boolean hasAllEditors() {
     for (int i = 0; i < EDITORS_COUNT; i++) {
       if (getEditor(i) == null) return false;
     }
     return true;
-  }
-
-  public DialogBuilder getBuilder() {
-    return myBuilder;
   }
 
   public MergeRequestImpl getMergeRequest() {

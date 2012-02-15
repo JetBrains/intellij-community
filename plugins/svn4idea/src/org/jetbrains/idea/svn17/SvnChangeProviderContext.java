@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn17.actions.AbstractShowPropertiesDiffAction;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
@@ -314,17 +315,52 @@ class SvnChangeProviderContext implements StatusReceiver {
   // seems here we can only have a tree conflict; which can be marked on either path (?)
   // .. ok try to merge states
   Change createMovedChange(final ContentRevision before, final ContentRevision after, final SVNStatus copiedStatus,
-                                   final SVNStatus deletedStatus) {
-    return new ConflictedSvnChange(before, after, ConflictState.mergeState(getState(copiedStatus), getState(deletedStatus)),
-                                  ((copiedStatus != null) && (copiedStatus.getTreeConflict() != null)) ? after.getFile() : before.getFile());
+                                   final SVNStatus deletedStatus) throws SVNException {
+    // todo no convertion needed for the contents status?
+    return patchWithPropertyChange(new ConflictedSvnChange(before, after, ConflictState.mergeState(getState(copiedStatus), getState(deletedStatus)),
+             ((copiedStatus != null) && (copiedStatus.getTreeConflict() != null)) ? after.getFile() : before.getFile()), copiedStatus, deletedStatus);
   }
 
-  private Change createChange(final ContentRevision before, final ContentRevision after, final FileStatus fStatus, final SVNStatus svnStatus) {
-    return new ConflictedSvnChange(before, after, fStatus, getState(svnStatus), after == null ? before.getFile() : after.getFile());
+  private Change createChange(final ContentRevision before, final ContentRevision after, final FileStatus fStatus, final SVNStatus svnStatus)
+    throws SVNException {
+    return patchWithPropertyChange(new ConflictedSvnChange(before, after, correctContentsStatus(fStatus, svnStatus),
+             getState(svnStatus), after == null ? before.getFile() : after.getFile()), svnStatus, null);
+  }
+
+  private FileStatus correctContentsStatus(final FileStatus fs, final SVNStatus svnStatus) throws SVNException {
+    return fs;
+    //return SvnStatusConvertor.convertContentsStatus(svnStatus);
   }
 
   private LocallyDeletedChange createLocallyDeletedChange(@NotNull FilePath filePath, final SVNStatus status) {
     return new SvnLocallyDeletedChange(filePath, getState(status));
+  }
+
+  private Change patchWithPropertyChange(final Change change, final SVNStatus svnStatus, final SVNStatus deletedStatus) throws SVNException {
+    final SVNStatusType propertiesStatus = svnStatus.getPropertiesStatus();
+    if (SVNStatusType.STATUS_CONFLICTED.equals(propertiesStatus) || SVNStatusType.CHANGED.equals(propertiesStatus) ||
+        SVNStatusType.STATUS_ADDED.equals(propertiesStatus) || SVNStatusType.STATUS_DELETED.equals(propertiesStatus) ||
+        SVNStatusType.STATUS_MODIFIED.equals(propertiesStatus) || SVNStatusType.STATUS_REPLACED.equals(propertiesStatus) ||
+        SVNStatusType.MERGED.equals(propertiesStatus)) {
+
+      final FilePath path = ChangesUtil.getFilePath(change);
+      final File ioFile = path.getIOFile();
+      final SVNWCClient wcClient = myVcs.createWCClient();
+      final File beforeFile = deletedStatus != null ? deletedStatus.getFile() : ioFile;
+      final String beforeList = SVNStatusType.STATUS_ADDED.equals(propertiesStatus) && deletedStatus == null ? null :
+                                AbstractShowPropertiesDiffAction.getPropertyList(beforeFile, SVNRevision.BASE, wcClient);
+      final String afterList = SVNStatusType.STATUS_DELETED.equals(propertiesStatus) ? null :
+                               AbstractShowPropertiesDiffAction.getPropertyList(ioFile, SVNRevision.WORKING, wcClient);
+
+      final String beforeRevisionNu = change.getBeforeRevision() == null ? null : change.getBeforeRevision().getRevisionNumber().asString();
+      final String afterRevisionNu = change.getAfterRevision() == null ? null : change.getAfterRevision().getRevisionNumber().asString();
+
+      final Change propertyChange = new Change(beforeList == null ? null : new SimpleContentRevision(beforeList, path, beforeRevisionNu),
+                                        afterList == null ? null : new SimpleContentRevision(afterList, path, afterRevisionNu),
+                                        deletedStatus != null ? FileStatus.MODIFIED : SvnStatusConvertor.convertPropertyStatus(propertiesStatus));
+      change.addAdditionalLayerElement(SvnChangeProvider.PROPERTY_LAYER, propertyChange);
+    }
+    return change;
   }
 
   private ConflictState getState(@Nullable final SVNStatus svnStatus) {
@@ -332,9 +368,11 @@ class SvnChangeProviderContext implements StatusReceiver {
       return ConflictState.none;
     }
 
+    final SVNStatusType propertiesStatus = svnStatus.getPropertiesStatus();
+
     final boolean treeConflict = svnStatus.getTreeConflict() != null;
     final boolean textConflict = SVNStatusType.STATUS_CONFLICTED == svnStatus.getContentsStatus();
-    final boolean propertyConflict = SVNStatusType.STATUS_CONFLICTED == svnStatus.getPropertiesStatus();
+    final boolean propertyConflict = SVNStatusType.STATUS_CONFLICTED == propertiesStatus;
     if (treeConflict) {
       reportTreeConflict(svnStatus);
     }

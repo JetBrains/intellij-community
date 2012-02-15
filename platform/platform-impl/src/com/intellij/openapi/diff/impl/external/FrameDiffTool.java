@@ -92,7 +92,7 @@ class FrameDiffTool implements DiffTool {
         diffPanel.setPatchAppliedApproximately();
       }
       frameWrapper.setTitle(request.getWindowTitle());
-      DiffUtil.initDiffFrame(frameWrapper, diffPanel, diffPanel.getComponent());
+      DiffUtil.initDiffFrame(diffPanel.getProject(), frameWrapper, diffPanel, diffPanel.getComponent());
 
       new AnAction() {
         public void actionPerformed(final AnActionEvent e) {
@@ -143,11 +143,11 @@ class FrameDiffTool implements DiffTool {
     return diffPanel;
   }
 
-  private static void showDiffDialog(DialogBuilder builder, Collection hints) {
+  static void showDiffDialog(DialogBuilder builder, Collection hints) {
     builder.showModal(!hints.contains(DiffTool.HINT_SHOW_NOT_MODAL_DIALOG));
   }
 
-  private static boolean shouldOpenDialog(Collection hints) {
+  static boolean shouldOpenDialog(Collection hints) {
     if (hints.contains(DiffTool.HINT_SHOW_MODAL_DIALOG)) return true;
     if (hints.contains(DiffTool.HINT_SHOW_NOT_MODAL_DIALOG)) return true;
     if (hints.contains(DiffTool.HINT_SHOW_FRAME)) return false;
@@ -204,5 +204,10 @@ class FrameDiffTool implements DiffTool {
       if (file != null && file.isDirectory()) return false;
     }
     return true;
+  }
+
+  @Override
+  public DiffViewer createComponent(String title, DiffRequest request, Window window, Disposable parentDisposable) {
+    return createDiffPanelIfShouldShow(request, window, parentDisposable);
   }
 }

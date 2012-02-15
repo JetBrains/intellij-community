@@ -59,6 +59,7 @@ public class PlatformDataKeys {
    */
   public static final DataKey<Boolean> IS_MODAL_CONTEXT = DataKey.create("isModalContext");
   public static final DataKey<DiffViewer> DIFF_VIEWER = DataKey.create("diffViewer");
+  public static final DataKey<DiffViewer> COMPOSITE_DIFF_VIEWER = DataKey.create("compositeDiffViewer");
 
   /**
    * Returns help id (String)

@@ -15,15 +15,15 @@
  */
 package com.intellij.openapi.diff.impl.external;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.DiffContent;
-import com.intellij.openapi.diff.DiffRequest;
-import com.intellij.openapi.diff.DiffTool;
+import com.intellij.openapi.diff.*;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.UIBasedFileType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -45,6 +45,12 @@ class CompositeDiffTool implements DiffTool {
   public boolean canShow(DiffRequest data) {
     checkDiffData(data);
     return chooseTool(data) != null;
+  }
+
+  @Override
+  public DiffViewer createComponent(String title, DiffRequest request, Window window, Disposable parentDisposable) {
+    // should not be called for it
+    throw new IllegalStateException();
   }
 
   @Nullable

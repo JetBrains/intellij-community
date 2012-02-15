@@ -55,7 +55,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-abstract class AbstractShowPropertiesDiffAction extends AnAction implements DumbAware {
+public abstract class AbstractShowPropertiesDiffAction extends AnAction implements DumbAware {
   protected AbstractShowPropertiesDiffAction(String name) {
     super(name);
   }
@@ -215,7 +215,7 @@ abstract class AbstractShowPropertiesDiffAction extends AnAction implements Dumb
 
   private final static String ourPropertiesDelimiter = "\n";
 
-  private String getPropertyList(final ContentRevision contentRevision, final SVNRevision revision, final SVNWCClient client) throws SVNException {
+  private static String getPropertyList(final ContentRevision contentRevision, final SVNRevision revision, final SVNWCClient client) throws SVNException {
     if (contentRevision == null) {
       return "";
     }
@@ -224,13 +224,34 @@ abstract class AbstractShowPropertiesDiffAction extends AnAction implements Dumb
     final List<SVNPropertyData> lines = new ArrayList<SVNPropertyData>();
 
     final File ioFile = contentRevision.getFile().getIOFile();
+    final ISVNPropertyHandler propertyHandler = createHandler(revision, lines);
+
+    if (contentRevision instanceof SvnRepositoryContentRevision) {
+      final SvnRepositoryContentRevision svnRevision = (SvnRepositoryContentRevision) contentRevision;
+      client.doGetProperty(SVNURL.parseURIEncoded(svnRevision.getFullPath()), null, revision, revision, SVNDepth.EMPTY, propertyHandler);
+    } else {
+      client.doGetProperty(ioFile, null, revision, revision, SVNDepth.EMPTY, propertyHandler, null);
+    }
+
+    Collections.sort(lines, new Comparator<SVNPropertyData>() {
+      public int compare(final SVNPropertyData o1, final SVNPropertyData o2) {
+        return o1.getName().compareTo(o2.getName());
+      }
+    });
+    for (SVNPropertyData line : lines) {
+      addPropertyPresentation(line, sb);
+    }
+    return sb.toString();
+  }
+
+  private static ISVNPropertyHandler createHandler(SVNRevision revision, final List<SVNPropertyData> lines) {
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
       indicator.checkCanceled();
       indicator.setText(SvnBundle.message("show.properties.diff.progress.text.revision.information", revision.toString()));
     }
 
-    final ISVNPropertyHandler propertyHandler = new ISVNPropertyHandler() {
+    return new ISVNPropertyHandler() {
       public void handleProperty(final File path, final SVNPropertyData property) throws SVNException {
         if (indicator != null) {
           indicator.checkCanceled();
@@ -251,13 +272,15 @@ abstract class AbstractShowPropertiesDiffAction extends AnAction implements Dumb
         // revision properties here
       }
     };
+  }
 
-    if (contentRevision instanceof SvnRepositoryContentRevision) {
-      final SvnRepositoryContentRevision svnRevision = (SvnRepositoryContentRevision) contentRevision;
-      client.doGetProperty(SVNURL.parseURIEncoded(svnRevision.getFullPath()), null, revision, revision, SVNDepth.EMPTY, propertyHandler);
-    } else {
-      client.doGetProperty(ioFile, null, revision, revision, SVNDepth.EMPTY, propertyHandler, null);
-    }
+  public static String getPropertyList(final SVNURL url, final SVNRevision revision, final SVNWCClient client) throws SVNException {
+    final StringBuilder sb = new StringBuilder();
+    final List<SVNPropertyData> lines = new ArrayList<SVNPropertyData>();
+
+    final ISVNPropertyHandler propertyHandler = createHandler(revision, lines);
+
+    client.doGetProperty(url, null, revision, revision, SVNDepth.EMPTY, propertyHandler);
 
     Collections.sort(lines, new Comparator<SVNPropertyData>() {
       public int compare(final SVNPropertyData o1, final SVNPropertyData o2) {
@@ -271,7 +294,27 @@ abstract class AbstractShowPropertiesDiffAction extends AnAction implements Dumb
     return sb.toString();
   }
 
-  private void addPropertyPresentation(final SVNPropertyData property, final StringBuilder sb) {
+  public static String getPropertyList(final File ioFile, final SVNRevision revision, final SVNWCClient client) throws SVNException {
+    final StringBuilder sb = new StringBuilder();
+    final List<SVNPropertyData> lines = new ArrayList<SVNPropertyData>();
+
+    final ISVNPropertyHandler propertyHandler = createHandler(revision, lines);
+
+    client.doGetProperty(ioFile, null, revision, revision, SVNDepth.EMPTY, propertyHandler, null);
+
+    Collections.sort(lines, new Comparator<SVNPropertyData>() {
+      public int compare(final SVNPropertyData o1, final SVNPropertyData o2) {
+        return o1.getName().compareTo(o2.getName());
+      }
+    });
+    for (SVNPropertyData line : lines) {
+      addPropertyPresentation(line, sb);
+    }
+
+    return sb.toString();
+  }
+
+  private static void addPropertyPresentation(final SVNPropertyData property, final StringBuilder sb) {
     if (sb.length() != 0) {
       sb.append(ourPropertiesDelimiter);
     }

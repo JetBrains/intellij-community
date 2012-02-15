@@ -16,6 +16,7 @@
 package com.intellij.openapi.diff.impl.external;
 
 import com.intellij.ide.diff.DiffElement;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
@@ -28,6 +29,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 import java.io.IOException;
 import java.util.Arrays;
 
@@ -42,16 +44,16 @@ public class BinaryDiffTool implements DiffTool {
   public void show(final DiffRequest data) {
     final DiffContent current = data.getContents()[0];
     final DiffContent upToDate = data.getContents()[1];
+
     final Project project = data.getProject();
     if ((current instanceof FileContent && upToDate instanceof FileContent)
         || (current.getContentType() instanceof UIBasedFileType && upToDate.getContentType() instanceof UIBasedFileType)) {
       final VirtualFile src = current.getFile();
       final VirtualFile trg = upToDate.getFile();
       if (src != null && trg != null) {
-        final FileEditorProvider[] srcProvider = FileEditorProviderManager.getInstance().getProviders(project, src);
-        final FileEditorProvider[] trgProvider = FileEditorProviderManager.getInstance().getProviders(project, trg);
-        if (srcProvider.length > 0 && trgProvider.length > 0) {
-          new DialogWrapper(project) {
+        final PanelCreator creator = new PanelCreator(data);
+        if (creator.isCanCreatePanel()) {
+          new DialogWrapper(data.getProject()) {
             public DiffPanel myPanel;
             {
               setModal(false);
@@ -72,12 +74,7 @@ public class BinaryDiffTool implements DiffTool {
 
             @Override
             protected JComponent createCenterPanel() {
-              myPanel = DiffManager.getInstance().createDiffPanel(getWindow(), project,getDisposable());
-              myPanel.setDiffRequest(data);
-              myPanel.setTitle1(src.getPath());
-              myPanel.setTitle2(trg.getPath());
-              myPanel.enableToolbar(false);
-              myPanel.removeStatusBar();
+              myPanel = creator.create(getWindow(), getDisposable());
               return myPanel.getComponent();
             }
           }.show();
@@ -86,7 +83,7 @@ public class BinaryDiffTool implements DiffTool {
           final DirDiffManager diffManager = DirDiffManager.getInstance(project);
           final DiffElement before = diffManager.createDiffElement(src);
           final DiffElement after  = diffManager.createDiffElement(trg);
-          
+
           if (before != null && after != null && diffManager.canShow(after, before)) {
             diffManager.showDiff(before, after);
             return;
@@ -108,6 +105,49 @@ public class BinaryDiffTool implements DiffTool {
     }
   }
 
+  private static class PanelCreator {
+    private boolean myCanCreatePanel;
+    private final DiffRequest myData;
+    private VirtualFile mySrc;
+    private VirtualFile myTrg;
+
+    private PanelCreator(final DiffRequest data) {
+      myData = data;
+      final DiffContent current = data.getContents()[0];
+      final DiffContent upToDate = data.getContents()[1];
+      final Project project = data.getProject();
+      if ((current instanceof FileContent && upToDate instanceof FileContent)
+          || (current.getContentType() instanceof UIBasedFileType && upToDate.getContentType() instanceof UIBasedFileType)) {
+        mySrc = current.getFile();
+        myTrg = upToDate.getFile();
+        if (mySrc != null && myTrg != null) {
+          final FileEditorProvider[] srcProvider = FileEditorProviderManager.getInstance().getProviders(project, mySrc);
+          final FileEditorProvider[] trgProvider = FileEditorProviderManager.getInstance().getProviders(project, myTrg);
+          if (srcProvider.length > 0 && trgProvider.length > 0) {
+            myCanCreatePanel = true;
+          }
+        }
+      }
+    }
+
+    public boolean isCanCreatePanel() {
+      return myCanCreatePanel;
+    }
+
+    public DiffPanel create(final Window window, final Disposable disposable) {
+      if (! myCanCreatePanel) return null;
+
+      final Project project = myData.getProject();
+      final DiffPanel panel = DiffManager.getInstance().createDiffPanel(window, project, disposable);
+      panel.setDiffRequest(myData);
+      panel.setTitle1(mySrc.getPath());
+      panel.setTitle2(myTrg.getPath());
+      panel.enableToolbar(false);
+      panel.removeStatusBar();
+      return panel;
+    }
+  }
+
   public boolean canShow(final DiffRequest data) {
     final DiffContent[] contents = data.getContents();
     if (contents.length != 2) {
@@ -120,6 +160,13 @@ public class BinaryDiffTool implements DiffTool {
       }
     }
     return true;
+  }
+
+  @Override
+  public DiffViewer createComponent(String title, DiffRequest request, Window window, Disposable parentDisposable) {
+    final PanelCreator creator = new PanelCreator(request);
+    if (! creator.isCanCreatePanel()) return null;
+    return creator.create(window, parentDisposable);
   }
 
   public static boolean canShow(@NotNull Project project, VirtualFile file) {

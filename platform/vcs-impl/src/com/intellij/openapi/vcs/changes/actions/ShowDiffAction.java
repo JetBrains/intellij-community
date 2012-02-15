@@ -61,7 +61,7 @@ public class ShowDiffAction extends AnAction implements DumbAware {
 
   protected static boolean canShowDiff(Change[] changes) {
     if (changes == null || changes.length == 0) return false;
-    return !ChangesUtil.getFilePath(changes [0]).isDirectory();
+    return !ChangesUtil.getFilePath(changes [0]).isDirectory() || changes[0].hasOtherLayers();
   }
 
   public void actionPerformed(final AnActionEvent e) {
@@ -192,13 +192,8 @@ public class ShowDiffAction extends AnAction implements DumbAware {
     if (newIndex < 0) {
       newIndex = 0;
     }
-    
-    showDiffImpl(project, ObjectsConvertor.convert(changeList,
-            new Convertor<Change, DiffRequestPresentable>() {
-              public ChangeDiffRequestPresentable convert(Change o) {
-                return new ChangeDiffRequestPresentable(project, o);
-              }
-            }), newIndex, context);
+
+    showDiffImpl(project, ObjectsConvertor.convert(changeList, new ChangeForDiffConvertor(project, true), ObjectsConvertor.NOT_NULL), newIndex, context);
   }
 
   public static void showDiffForChange(final Change[] changes, int index, final Project project, @NotNull ShowDiffUIContext context) {
@@ -277,6 +272,7 @@ public class ShowDiffAction extends AnAction implements DumbAware {
   }
 
   public static boolean isBinaryChange(Change change) {
+    if (change.hasOtherLayers()) return false;  // +-
     final ContentRevision bRev = change.getBeforeRevision();
     final ContentRevision aRev = change.getAfterRevision();
 
@@ -319,7 +315,7 @@ public class ShowDiffAction extends AnAction implements DumbAware {
     }*/
     final FilePath path = ChangesUtil.getFilePath(change);
     if (path.isDirectory()) {
-      return true;
+      return ! change.hasOtherLayers();
     }
     final FileType type = path.getFileType();
     if ((! FileTypes.UNKNOWN.equals(type)) && (type.isBinary())) {

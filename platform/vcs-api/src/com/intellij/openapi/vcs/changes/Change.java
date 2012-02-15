@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
@@ -30,6 +31,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author max
@@ -53,6 +56,9 @@ public class Change {
   protected boolean myRenameOrMoveCached = false;
   private boolean myIsReplaced;
   private Type myType;
+  private final Map<String, Change> myOtherLayers;
+  // if null, vcs's is used. intended: for property conflict case
+  private Getter<MergeTexts> myMergeProvider;
 
   public Change(final ContentRevision beforeRevision, final ContentRevision afterRevision) {
     this(beforeRevision, afterRevision, convertStatus(beforeRevision, afterRevision));
@@ -64,12 +70,33 @@ public class Change {
     myAfterRevision = afterRevision;
     myFileStatus = fileStatus == null ? convertStatus(beforeRevision, afterRevision) : fileStatus;
     myHash = -1;
+    myOtherLayers = new HashMap<String, Change>(0);
   }
 
   private static FileStatus convertStatus(ContentRevision beforeRevision, ContentRevision afterRevision) {
     if (beforeRevision == null) return FileStatus.ADDED;
     if (afterRevision == null) return FileStatus.DELETED;
     return FileStatus.MODIFIED;
+  }
+
+  public Getter<MergeTexts> getMergeProvider() {
+    return myMergeProvider;
+  }
+
+  public void setMergeProvider(Getter<MergeTexts> mergeProvider) {
+    myMergeProvider = mergeProvider;
+  }
+
+  public void addAdditionalLayerElement(final String name, final Change change) {
+    myOtherLayers.put(name, change);
+  }
+
+  public Map<String, Change> getOtherLayers() {
+    return myOtherLayers;
+  }
+
+  public boolean hasOtherLayers() {
+    return ! myOtherLayers.isEmpty();
   }
 
   public Type getType() {

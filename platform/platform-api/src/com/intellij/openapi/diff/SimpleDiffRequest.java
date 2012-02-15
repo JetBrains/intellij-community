@@ -49,7 +49,6 @@ public class SimpleDiffRequest extends DiffRequest {
     myContentTitles[1] = title2;
   }
 
-
   public void setWindowTitle(String windowTitle) {
     myWindowTitle = windowTitle;
   }

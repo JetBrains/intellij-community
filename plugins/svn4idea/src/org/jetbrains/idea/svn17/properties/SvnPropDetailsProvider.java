@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,21 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.diff;
-
-import javax.swing.*;
+package org.jetbrains.idea.svn17.properties;
 
 /**
- * @author dyoma
+ * Created with IntelliJ IDEA.
+ * User: Irina.Chernushina
+ * Date: 2/12/12
+ * Time: 8:40 PM
  */
-public interface DiffViewer {
-  void setDiffRequest(DiffRequest request);
-
-  JComponent getComponent();
-
-  JComponent getPreferredFocusedComponent();
-
-  int getContentsNumber();
-
-  DiffViewerType getType();
+public class SvnPropDetailsProvider {
 }
