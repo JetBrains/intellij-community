@@ -60,7 +60,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
       public void paintNow(int frame, int totalFrames, int cycle) {
         myAnimationColorShift = 40;
         if (frame > delayFrames) {
-          myAnimationColorShift *= 1 - (frame - delayFrames) / (totalFrames - delayFrames);
+          myAnimationColorShift *= 1 - ((double)(frame - delayFrames)) / ((double)(totalFrames - delayFrames));
         }
 
         if (scrollbar != null) {
