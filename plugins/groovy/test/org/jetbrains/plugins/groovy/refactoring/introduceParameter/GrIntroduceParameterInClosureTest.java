@@ -81,19 +81,19 @@ public class GrIntroduceParameterInClosureTest extends LightCodeInsightFixtureTe
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, null, false);
   }
   
-  public void testDelegate() {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, null, true);
-  }
-  
   public void testVarAssignedToClosure() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, null, false);
   }
-  
+
   public void testCorrectOccurrencesForLocalVar() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, null, false);
   }
-  
+
+  /*public void testDelegate() {
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, null, true);
+  }
+
   public void testDelegateRemoveUnusedParam() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, true, false, null, true);
-  }
+  }*/
 }
