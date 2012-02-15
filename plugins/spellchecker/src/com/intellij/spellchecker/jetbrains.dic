@@ -208,6 +208,7 @@ minimizable
 minvalue
 miny
 mlslabel
+mixin
 multilinestring
 multipoint
 multipolygon
