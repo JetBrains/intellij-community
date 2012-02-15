@@ -7,10 +7,7 @@ import com.intellij.execution.ExecutionHelper;
 import com.intellij.execution.Executor;
 import com.intellij.execution.console.ConsoleHistoryController;
 import com.intellij.execution.console.LanguageConsoleViewImpl;
-import com.intellij.execution.process.CommandLineArgumentsProvider;
-import com.intellij.execution.process.ProcessAdapter;
-import com.intellij.execution.process.ProcessEvent;
-import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.process.*;
 import com.intellij.execution.runners.AbstractConsoleRunnerWithHistory;
 import com.intellij.execution.runners.ConsoleExecuteActionHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
@@ -69,6 +66,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
   private static final Logger LOG = Logger.getInstance(PydevConsoleRunner.class.getName());
 
   private Sdk mySdk;
+  @NotNull private final CommandLineArgumentsProvider myCommandLineArgumentsProvider;
   private final int[] myPorts;
   private PydevConsoleCommunication myPydevConsoleCommunication;
   private PyConsoleProcessHandler myProcessHandler;
@@ -87,9 +85,10 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
                                @NotNull final CommandLineArgumentsProvider commandLineArgumentsProvider,
                                @Nullable final String workingDir,
                                int[] ports) {
-    super(project, consoleType.getTitle(), commandLineArgumentsProvider, workingDir);
+    super(project, consoleType.getTitle(), workingDir);
     mySdk = sdk;
     myConsoleType = consoleType;
+    myCommandLineArgumentsProvider = commandLineArgumentsProvider;
     myPorts = ports;
   }
 
@@ -208,7 +207,8 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
   }
 
   @Override
-  protected Process createProcess(CommandLineArgumentsProvider provider) throws ExecutionException {
+  protected OSProcessHandler createProcess() throws ExecutionException {
+    CommandLineArgumentsProvider provider = myCommandLineArgumentsProvider;
     final Process server = Runner.createProcess(getWorkingDir(), provider.getAdditionalEnvs(), provider.getArguments());
     try {
       myPydevConsoleCommunication = new PydevConsoleCommunication(getProject(), myPorts[0], server, myPorts[1]);
@@ -216,12 +216,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     catch (Exception e) {
       throw new ExecutionException(e.getMessage());
     }
-    return server;
-  }
-
-  @Override
-  protected PyConsoleProcessHandler createProcessHandler(final Process process, final String commandLine) {
-    myProcessHandler = new PyConsoleProcessHandler(process, getConsoleView(), myPydevConsoleCommunication, commandLine,
+    myProcessHandler = new PyConsoleProcessHandler(server, getConsoleView(), myPydevConsoleCommunication, provider.getCommandLineString(),
                                                    CharsetToolkit.UTF8_CHARSET);
     return myProcessHandler;
   }
