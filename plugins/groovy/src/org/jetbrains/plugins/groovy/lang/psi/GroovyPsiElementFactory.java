@@ -92,6 +92,9 @@ public abstract class GroovyPsiElementFactory implements JVMElementFactory {
   @NotNull
   public abstract PsiElement createLineTerminator(int length);
 
+  @NotNull
+  public abstract PsiElement createLineTerminator(String text);
+
   public abstract GrArgumentList createExpressionArgumentList(GrExpression... expressions);
 
   public abstract GrNamedArgument createNamedArgument(String name, GrExpression expression);

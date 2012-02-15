@@ -497,8 +497,12 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
       text = StringUtil.repeatSymbol('\n', length);
     }
 
-    PsiFile dummyFile = PsiFileFactory.getInstance(myProject).createFileFromText(DUMMY + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(),
-        text);
+    return createLineTerminator(text);
+  }
+
+  @NotNull
+  public PsiElement createLineTerminator(String text) {
+    PsiFile dummyFile = PsiFileFactory.getInstance(myProject).createFileFromText(DUMMY + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(), text);
     PsiElement child = dummyFile.getFirstChild();
     assert child != null;
     return child;

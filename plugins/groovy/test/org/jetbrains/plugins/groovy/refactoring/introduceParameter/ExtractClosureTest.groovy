@@ -13,13 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.refactoring.extract.closure;
+package org.jetbrains.plugins.groovy.refactoring.introduceParameter;
 
 
 import com.intellij.refactoring.IntroduceParameterRefactoring
 import gnu.trove.TIntArrayList
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
+import org.jetbrains.plugins.groovy.refactoring.extract.closure.ExtractClosureFromClosureProcessor
+import org.jetbrains.plugins.groovy.refactoring.extract.closure.ExtractClosureFromMethodProcessor
+import org.jetbrains.plugins.groovy.refactoring.extract.closure.ExtractClosureHelperImpl
 import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.GrIntroduceParameterHandler
 import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.GrIntroduceParameterSettings
 import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.IntroduceParameterInfo
