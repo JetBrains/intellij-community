@@ -1,8 +1,8 @@
 package com.jetbrains.python.packaging;
 
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.module.Module;
+import com.jetbrains.python.psi.PyFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,7 +18,16 @@ public class PyPackagingGroup extends ActionGroup {
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
     List<AnAction> result = new ArrayList<AnAction>();
     result.add(new CreateSetupPyAction());
-    result.add(new RunSetupTaskAction("sdist", "Create a source distribution"));
+    if (e != null) {
+      final Module module = e.getData(LangDataKeys.MODULE);
+      if (module != null) {
+        final PyFile setupPy = PyPackageManager.findSetupPy(module);
+        if (setupPy != null) {
+          result.add(Separator.getInstance());
+          result.addAll(SetupTaskIntrospector.createSetupTaskActions(module, setupPy));
+        }
+      }
+    }
     return result.toArray(new AnAction[result.size()]);
   }
 }
