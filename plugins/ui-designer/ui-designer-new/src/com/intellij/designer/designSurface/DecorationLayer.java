@@ -15,10 +15,7 @@
  */
 package com.intellij.designer.designSurface;
 
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.SideBorder;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.designer.model.RadComponent;
 
 import javax.swing.*;
 import java.awt.*;
@@ -26,25 +23,24 @@ import java.awt.*;
 /**
  * @author Alexander Lobas
  */
-public class CaptionPanel extends JComponent implements DataProvider {
-  public CaptionPanel(DesignerEditorPanel designer, boolean horizontal) {
-    setBorder(IdeBorderFactory.createBorder(horizontal ? SideBorder.BOTTOM : SideBorder.RIGHT));
+public class DecorationLayer extends JComponent {
+  private final EditableArea myArea;
 
-    setFocusable(true);
+  public DecorationLayer(EditableArea area) {
+    myArea = area;
   }
 
   @Override
-  public Dimension getPreferredSize() {
-    return new Dimension(16, 16);
-  }
+  public void paint(Graphics g) {
+    g.setColor(Color.RED);
+    ((Graphics2D)g).setStroke(new BasicStroke(2));
 
-  @Override
-  public Dimension getMinimumSize() {
-    return getPreferredSize();
-  }
+    for (RadComponent component : myArea.getSelection()) {
+      Rectangle bounds = component.getBounds();
+      Point location = component.convertPoint(bounds.x, bounds.y, this);
+      g.drawRect(location.x, location.y, bounds.width, bounds.height);
+    }
 
-  @Override
-  public Object getData(@NonNls String dataId) {
-    return null;  // TODO: Auto-generated method stub
+    paintChildren(g);
   }
 }

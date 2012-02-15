@@ -17,6 +17,7 @@ package com.intellij.android.designer.designSurface;
 
 import com.android.ide.common.rendering.api.RenderSession;
 import com.android.ide.common.rendering.api.Result;
+import com.android.ide.common.rendering.api.ViewInfo;
 import com.android.ide.common.resources.configuration.*;
 import com.android.resources.NightMode;
 import com.android.resources.UiMode;
@@ -25,6 +26,7 @@ import com.intellij.android.designer.componentTree.AndroidTreeDecorator;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.designer.componentTree.TreeComponentDecorator;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
+import com.intellij.designer.model.RadComponent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.android.facet.AndroidFacet;
@@ -41,6 +43,7 @@ import javax.xml.parsers.SAXParserFactory;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.InputStream;
+import java.util.List;
 
 /**
  * @author Alexander Lobas
@@ -51,6 +54,8 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
 
   public AndroidDesignerEditorPanel(@NotNull Module module, @NotNull VirtualFile file) {
     super(module, file);
+
+    // TODO: (profile|device|target|...|theme) panel
 
     // TODO: use platform DOM
 
@@ -116,14 +121,59 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
         }
       }
 
+      RootView rootView = new RootView(mySession.getImage(), 30, 20);
+      updateRootComponent(mySession.getRootViews(), rootView);
+
       JPanel rootPanel = new JPanel(null);
-      rootPanel.add(new RootView(mySession.getImage(), 30, 20));
       rootPanel.setBackground(Color.WHITE);
+      rootPanel.add(rootView);
+
       myLayeredPane.add(rootPanel, LAYER_COMPONENT);
+
       showDesignerCard();
     }
     catch (Throwable e) {
       showError("Parse error: ", e);
+    }
+  }
+
+  private void updateRootComponent(List<ViewInfo> views, JComponent nativeComponent) {
+    RadViewComponent rootComponent = (RadViewComponent)myRootComponent;
+
+    int size = views.size();
+    if (size == 1) {
+      RadViewComponent newRootComponent = new RadViewComponent(null, "Device Screen");
+      newRootComponent.getChildren().add(rootComponent);
+      rootComponent.setParent(newRootComponent);
+
+      updateComponent(rootComponent, views.get(0), nativeComponent, 0, 0);
+
+      myRootComponent = rootComponent = newRootComponent;
+    }
+    else {
+      List<RadComponent> children = rootComponent.getChildren();
+      for (int i = 0; i < size; i++) {
+        updateComponent((RadViewComponent)children.get(i), views.get(i), nativeComponent, 0, 0);
+      }
+    }
+
+    rootComponent.setNativeComponent(nativeComponent);
+    rootComponent.setBounds(0, 0, nativeComponent.getWidth(), nativeComponent.getHeight());
+  }
+
+  private static void updateComponent(RadViewComponent component, ViewInfo view, JComponent nativeComponent, int parentX, int parentY) {
+    component.setNativeComponent(nativeComponent);
+
+    int left = parentX + view.getLeft();
+    int top = parentY + view.getTop();
+    component.setBounds(left, top, view.getRight() - view.getLeft(), view.getBottom() - view.getTop());
+
+    List<ViewInfo> views = view.getChildren();
+    List<RadComponent> children = component.getChildren();
+    int size = views.size();
+
+    for (int i = 0; i < size; i++) {
+      updateComponent((RadViewComponent)children.get(i), views.get(i), nativeComponent, left, top);
     }
   }
 
