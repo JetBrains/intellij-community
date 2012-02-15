@@ -223,39 +223,37 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
 
   public MavenGeneralSettings getGeneralSettings() {
     if (getParameters().myGeneralSettingsCache == null) {
-      getParameters().myGeneralSettingsCache = getDirectProjectsSettings().generalSettings.clone();
+      AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
+      try {
+        getParameters().myGeneralSettingsCache = getDirectProjectsSettings().generalSettings.clone();
+      }
+      finally {
+        accessToken.finish();
+      }
     }
     return getParameters().myGeneralSettingsCache;
   }
 
   public MavenImportingSettings getImportingSettings() {
     if (getParameters().myImportingSettingsCache == null) {
-      getParameters().myImportingSettingsCache = getDirectProjectsSettings().importingSettings.clone();
+      AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
+      try {
+        getParameters().myImportingSettingsCache = getDirectProjectsSettings().importingSettings.clone();
+      }
+      finally {
+        accessToken.finish();
+      }
     }
     return getParameters().myImportingSettingsCache;
   }
 
   private MavenWorkspaceSettings getDirectProjectsSettings() {
-    AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
-    try {
-      return MavenWorkspaceSettingsComponent.getInstance(getProject()).getState();
-    }
-    finally {
-      accessToken.finish();
-    }
-  }
+    ApplicationManager.getApplication().assertReadAccessAllowed();
 
-  @NotNull
-  private Project getProject() {
-    AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
-    try {
-      Project result = isUpdate() ? getProjectToUpdate() : null;
-      if (result == null || result.isDisposed()) result = ProjectManager.getInstance().getDefaultProject();
-      return result;
-    }
-    finally {
-      accessToken.finish();
-    }
+    Project project = isUpdate() ? getProjectToUpdate() : null;
+    if (project == null || project.isDisposed()) project = ProjectManager.getInstance().getDefaultProject();
+
+    return MavenWorkspaceSettingsComponent.getInstance(project).getState();
   }
 
   public void setFiles(List<VirtualFile> files) {
