@@ -4,11 +4,10 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.util.Ref;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.config.GradleTextAttributes;
-import org.jetbrains.plugins.gradle.model.*;
+import org.jetbrains.plugins.gradle.model.GradleEntityType;
 import org.jetbrains.plugins.gradle.model.gradle.*;
 import org.jetbrains.plugins.gradle.model.id.GradleEntityId;
 import org.jetbrains.plugins.gradle.model.id.GradleEntityIdMapper;
@@ -38,6 +37,8 @@ import java.util.*;
  *   </li>
  * </ul>
  * </pre>
+ * <p/>
+ * Thread-safe.
  * 
  * @author Denis Zhdanov
  * @since 2/10/12 11:51 AM
@@ -86,72 +87,14 @@ public class GradleLocalNodeImportHelper {
    */
   @NotNull
   public List<GradleEntity> deriveEntitiesToImport(@NotNull Iterable<GradleProjectStructureNode<?>> nodes) {
-    EntitiesToImport toImport = new EntitiesToImport();
+    Context context = new Context();
     for (GradleProjectStructureNode<?> node : nodes) {
-      collectEntitiesToImport(node, toImport);
+      collectEntitiesToImport(node, context);
     }
-    return toImport.getAll();
+    return context.getAll();
   }
   
-  private void collectEntitiesToImport(@NotNull GradleProjectStructureNode<?> node, @NotNull final EntitiesToImport toImport) {
-    final Ref<Boolean> recursive = new Ref<Boolean>(false);
-    final GradleEntityVisitor visitor = new GradleEntityVisitorAdapter() {
-      @Override
-      public void visit(@NotNull GradleModule module) {
-        final Module intellijModule = myProjectStructureHelper.findIntellijModule(module);
-        if (intellijModule != null) {
-          // Already imported
-          return;
-        }
-        toImport.modules.add(module);
-        if (!recursive.get()) {
-          return;
-        }
-        for (GradleDependency dependency : module.getDependencies()) {
-          dependency.invite(this);
-        }
-      }
-
-      @Override
-      public void visit(@NotNull GradleModuleDependency dependency) {
-        final ModuleOrderEntry intellijModuleDependency = myProjectStructureHelper.findIntellijModuleDependency(dependency);
-        if (intellijModuleDependency != null) {
-          // Already imported.
-          return;
-        }
-        toImport.dependencies.add(dependency);
-        final GradleModule gradleModule = dependency.getTarget();
-        final Module intellijModule = myProjectStructureHelper.findIntellijModule(gradleModule);
-        if (intellijModule != null) {
-          return;
-        }
-        boolean r = recursive.get();
-        recursive.set(true);
-        try {
-          gradleModule.invite(this);
-        }
-        finally {
-          recursive.set(r);
-        }
-      }
-
-      @Override
-      public void visit(@NotNull GradleLibraryDependency dependency) {
-        final LibraryOrderEntry intellijDependency
-          = myProjectStructureHelper.findIntellijLibraryDependency(dependency.getOwnerModule().getName(), dependency.getName());
-        if (intellijDependency != null) {
-          // Already imported.
-          return;
-        }
-        toImport.dependencies.add(dependency);
-        final GradleLibrary gradleLibrary = dependency.getTarget();
-        final Library intellijLibrary = myProjectStructureHelper.findIntellijLibrary(gradleLibrary);
-        if (intellijLibrary == null) {
-          toImport.libraries.add(gradleLibrary);
-        }
-      }
-    };
-    
+  private void collectEntitiesToImport(@NotNull GradleProjectStructureNode<?> node, @NotNull Context context) {
     // Collect up.
     for (GradleProjectStructureNode<?> n = node.getParent(); n != null; n = n.getParent()) {
       final GradleProjectStructureNodeDescriptor<?> descriptor = n.getDescriptor();
@@ -165,7 +108,7 @@ public class GradleLocalNodeImportHelper {
       if (id instanceof GradleEntityId) {
         final Object entity = myIdMapper.mapIdToEntity((GradleEntityId)id);
         if (entity instanceof GradleEntity) {
-          ((GradleEntity)entity).invite(visitor);
+          ((GradleEntity)entity).invite(context.visitor);
         }
       }
     }
@@ -180,15 +123,67 @@ public class GradleLocalNodeImportHelper {
       }
     }
     
-    recursive.set(true);
+    context.recursive = true;
     while (!toProcess.isEmpty()) {
       final GradleEntity entity = toProcess.pop();
-      entity.invite(visitor);
+      entity.invite(context.visitor);
+    }
+  }
+
+  private void collectModuleEntities(@NotNull GradleModule module, @NotNull Context context) {
+    final Module intellijModule = myProjectStructureHelper.findIntellijModule(module);
+    if (intellijModule != null) {
+      // Already imported
+      return;
+    }
+    context.modules.add(module);
+    if (!context.recursive) {
+      return;
+    }
+    for (GradleDependency dependency : module.getDependencies()) {
+      dependency.invite(context.visitor);
+    }
+  }
+
+  private void collectModuleDependencyEntities(@NotNull GradleModuleDependency dependency, @NotNull Context context) {
+    final ModuleOrderEntry intellijModuleDependency = myProjectStructureHelper.findIntellijModuleDependency(dependency);
+    if (intellijModuleDependency != null) {
+      // Already imported.
+      return;
+    }
+    context.dependencies.add(dependency);
+    final GradleModule gradleModule = dependency.getTarget();
+    final Module intellijModule = myProjectStructureHelper.findIntellijModule(gradleModule);
+    if (intellijModule != null) {
+      return;
+    }
+    boolean r = context.recursive;
+    context.recursive = true;
+    try {
+      gradleModule.invite(context.visitor);
+    }
+    finally {
+      context.recursive = r;
+    }
+  }
+
+  private void collectLibraryDependencyEntities(@NotNull GradleLibraryDependency dependency, @NotNull Context context) {
+    final LibraryOrderEntry intellijDependency
+      = myProjectStructureHelper.findIntellijLibraryDependency(dependency.getOwnerModule().getName(), dependency.getName());
+    if (intellijDependency != null) {
+      // Already imported.
+      return;
+    }
+    context.dependencies.add(dependency);
+    final GradleLibrary gradleLibrary = dependency.getTarget();
+    final Library intellijLibrary = myProjectStructureHelper.findIntellijLibrary(gradleLibrary);
+    if (intellijLibrary == null) {
+      context.libraries.add(gradleLibrary);
     }
   }
 
   /**
-   * Imports given 'gradle-local' entities to the current intellij projcet.
+   * Imports given 'gradle-local' entities to the current intellij project.
    * 
    * @param entities  target 'gradle-local' entities to import
    */
@@ -239,11 +234,14 @@ public class GradleLocalNodeImportHelper {
     }
   }
   
-  private static class EntitiesToImport {
-    
+  private class Context {
+
     public final Set<GradleModule>     modules      = new HashSet<GradleModule>();
     public final Set<GradleLibrary>    libraries    = new HashSet<GradleLibrary>();
     public final Set<GradleDependency> dependencies = new HashSet<GradleDependency>();
+    public final CollectingVisitor     visitor      = new CollectingVisitor(this);
+    
+    public boolean recursive;
 
     @NotNull
     public List<GradleEntity> getAll() {
@@ -253,5 +251,23 @@ public class GradleLocalNodeImportHelper {
       result.addAll(dependencies);
       return result;
     }
+  }
+  
+  private class CollectingVisitor implements GradleEntityVisitor {
+    @NotNull private final Context myContext;
+
+    CollectingVisitor(@NotNull Context context) {
+      myContext = context;
+    }
+
+    @Override public void visit(@NotNull GradleProject project) { }
+    @Override public void visit(@NotNull GradleModule module) { collectModuleEntities(module, myContext); }
+    @Override
+    public void visit(@NotNull GradleContentRoot contentRoot) {
+      // TODO den implement 
+    }
+    @Override public void visit(@NotNull GradleLibrary library) { /* Assuming that a library may be imported only as a dependency */ }
+    @Override public void visit(@NotNull GradleModuleDependency dependency) { collectModuleDependencyEntities(dependency, myContext); }
+    @Override public void visit(@NotNull GradleLibraryDependency dependency) { collectLibraryDependencyEntities(dependency, myContext); }
   }
 }
