@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -412,7 +413,12 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
       new OldReferencesResolver(callExpression, newArg, toReplaceIn, settings.replaceFieldsWithGetters(), initializer, signature,
                                 actualArgs, toReplaceIn.getParameters()).resolve();
       ChangeContextUtil.clearContextInfo(initializer);
-      GrReferenceAdjuster.shortenReferences(newArg);
+
+      //newarg can be replaced by OldReferenceResolve
+      if (newArg.isValid()) {
+        GrReferenceAdjuster.shortenReferences(newArg);
+        CodeStyleManager.getInstance(settings.getProject()).reformat(newArg);
+      }
     }
 
     if (actualArgs == null) {

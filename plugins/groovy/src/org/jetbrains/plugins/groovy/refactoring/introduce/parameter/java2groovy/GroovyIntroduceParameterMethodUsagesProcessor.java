@@ -19,6 +19,7 @@ package org.jetbrains.plugins.groovy.refactoring.introduce.parameter.java2groovy
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -122,7 +123,12 @@ public class GroovyIntroduceParameterMethodUsagesProcessor implements IntroduceP
       new OldReferencesResolver(callExpression, newArg, methodToReplaceIn, data.getReplaceFieldsWithGetters(), initializer,
                                 signature, actualArgs, methodToReplaceIn.getParameterList().getParameters()).resolve();
       ChangeContextUtil.clearContextInfo(initializer);
-      GrReferenceAdjuster.shortenReferences(newArg);
+
+      //newArg can be replaced by OldReferenceResolver
+      if (newArg.isValid()) {
+        GrReferenceAdjuster.shortenReferences(newArg);
+        CodeStyleManager.getInstance(data.getProject()).reformat(newArg);
+      }
     }
 
     if (actualArgs == null) {
