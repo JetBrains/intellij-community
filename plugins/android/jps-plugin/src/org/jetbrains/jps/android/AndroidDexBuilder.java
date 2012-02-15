@@ -30,8 +30,6 @@ import java.util.*;
 /**
  * @author Eugene.Kudelevsky
  */
-
-// todo: change output folders
 // todo: save validity state
 
 public class AndroidDexBuilder extends ModuleLevelBuilder {
@@ -181,7 +179,8 @@ public class AndroidDexBuilder extends ModuleLevelBuilder {
     classPath.add(ClasspathBootstrap.getResourcePath(AndroidDxRunner.class).getPath());
     classPath.add(ClasspathBootstrap.getResourcePath(FileUtil.class).getPath());
 
-    if (!new File(outFilePath).delete()) {
+    final File outFile = new File(outFilePath);
+    if (outFile.exists() && !outFile.delete()) {
       context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.WARNING, "Cannot delete file " + outFilePath));
     }
 
