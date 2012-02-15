@@ -41,6 +41,7 @@ import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.util.*;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.containers.Stack;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -283,7 +284,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
   @Nullable
   private static String getPackageNameForSubdir(String parentPackageName, String subdirName) {
     if (parentPackageName == null) return null;
-    return parentPackageName.length() > 0 ? parentPackageName + "." + subdirName : subdirName;
+    return parentPackageName.isEmpty() ? subdirName : parentPackageName + "." + subdirName;
   }
 
   private class MyVirtualFileListener extends VirtualFileAdapter {
@@ -419,7 +420,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     public IndexState() {
     }
 
-    DirectoryInfo getOrCreateDirInfo(VirtualFile dir) {
+    private DirectoryInfo getOrCreateDirInfo(VirtualFile dir) {
       DirectoryInfo info = myDirToInfoMap.get(dir);
       if (info == null) {
         info = new DirectoryInfo();
@@ -457,7 +458,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
 
     private abstract class DirectoryVisitor extends VirtualFileVisitor {
 
-      private Stack<DirectoryInfo> myDirectoryInfoStack = new Stack<DirectoryInfo>();
+      private final Stack<DirectoryInfo> myDirectoryInfoStack = new Stack<DirectoryInfo>();
       
       @Override
       public boolean visitFile(VirtualFile file) {
@@ -529,7 +530,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
       
       VfsUtilCore.visitChildrenRecursively(dir, new DirectoryVisitor() {
         
-        private Stack<String> myPackages = new Stack<String>();
+        private final Stack<String> myPackages = new Stack<String>();
 
         @Override
         protected DirectoryInfo updateInfo(VirtualFile file) {
@@ -539,7 +540,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
 
           if (info.isInModuleSource) { // module sources overlap
             String definedPackage = myDirToPackageName.get(file);
-            if (definedPackage != null && definedPackage.length() == 0) return null; // another source root starts here
+            if (definedPackage != null && definedPackage.isEmpty()) return null; // another source root starts here
           }
 
           info.isInModuleSource = true;
@@ -588,7 +589,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
 
       if (info.isInLibrarySource) { // library sources overlap
         String definedPackage = myDirToPackageName.get(dir);
-        if (definedPackage != null && definedPackage.length() == 0) return; // another library source root starts here
+        if (definedPackage != null && definedPackage.isEmpty()) return; // another library source root starts here
       }
 
       info.isInModuleSource = false;
@@ -627,7 +628,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
 
       if (info.libraryClassRoot != null) { // library classes overlap
         String definedPackage = myDirToPackageName.get(dir);
-        if (definedPackage != null && definedPackage.length() == 0) return; // another library root starts here
+        if (definedPackage != null && definedPackage.isEmpty()) return; // another library root starts here
       }
 
       info.libraryClassRoot = classRoot;
@@ -718,7 +719,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
         final boolean removed = oldPackageDirs.remove(dir);
         assert removed;
 
-        if (oldPackageDirs.size() == 0) {
+        if (oldPackageDirs.isEmpty()) {
           myPackageNameToDirsMap.remove(oldPackageName);
         }
       }
@@ -747,7 +748,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
       
       VfsUtilCore.visitChildrenRecursively(root, new DirectoryVisitor() {
 
-        private Stack<List<OrderEntry>> myEntries = new Stack<List<OrderEntry>>();
+        private final Stack<List<OrderEntry>> myEntries = new Stack<List<OrderEntry>>();
 
         @Override
         protected DirectoryInfo updateInfo(VirtualFile dir) {
