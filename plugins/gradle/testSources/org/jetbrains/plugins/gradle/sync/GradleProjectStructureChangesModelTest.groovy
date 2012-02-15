@@ -1,17 +1,10 @@
 package org.jetbrains.plugins.gradle.sync;
 
 
-import com.intellij.openapi.project.Project
 import com.intellij.testFramework.SkipInHeadlessEnvironment
-import com.intellij.util.containers.ContainerUtil
-import org.jetbrains.plugins.gradle.testutil.ChangeBuilder
-import org.jetbrains.plugins.gradle.testutil.GradleProjectBuilder
-import org.jetbrains.plugins.gradle.testutil.IntellijProjectBuilder
-import org.jetbrains.plugins.gradle.testutil.ProjectStructureChecker
-import org.junit.Before
+import org.jetbrains.plugins.gradle.testutil.AbstractGradleTest
 import org.junit.Test
-import org.picocontainer.defaults.DefaultPicoContainer
-import org.jetbrains.plugins.gradle.diff.*
+
 import static org.junit.Assert.assertEquals
 
 /**
@@ -19,101 +12,75 @@ import static org.junit.Assert.assertEquals
  * @since 01/25/2012
  */
 @SkipInHeadlessEnvironment
-public class GradleProjectStructureChangesModelTest {
-
-  GradleProjectStructureChangesModel changesModel
-  GradleProjectStructureTreeModel treeModel
-  def gradle
-  def intellij
-  def changes
-  def treeChecker
-  def container
-  
-  @Before
-  public void setUp() {
-    gradle = new GradleProjectBuilder()
-    intellij = new IntellijProjectBuilder()
-    changes = new ChangeBuilder()
-    treeChecker = new ProjectStructureChecker()
-    container = new DefaultPicoContainer()
-    container.registerComponentInstance(Project, intellij.project)
-    container.registerComponentInstance(PlatformFacade, intellij.platformFacade as PlatformFacade)
-    container.registerComponentImplementation(GradleProjectStructureChangesModel)
-    container.registerComponentImplementation(GradleStructureChangesCalculator, GradleProjectStructureChangesCalculator)
-    container.registerComponentImplementation(GradleModuleStructureChangesCalculator)
-    container.registerComponentImplementation(GradleLibraryDependencyStructureChangesCalculator)
-    container.registerComponentImplementation(GradleLibraryStructureChangesCalculator)
-    container.registerComponentImplementation(GradleProjectStructureTreeModel)
-    container.registerComponentImplementation(GradleProjectStructureHelper)
-    
-    changesModel = container.getComponentInstance(GradleProjectStructureChangesModel) as GradleProjectStructureChangesModel
-  }
+public class GradleProjectStructureChangesModelTest extends AbstractGradleTest {
 
   @Test
   public void processObsoleteGradleLocalChange() {
     // Configure initial projects state.
     init(
-      gradle {
-        module {
-          dependencies {
-            lib(name: "lib1")
-            lib(name: "lib2")
-            lib(name: "lib3")
-      } } },
+      gradle: {
+        project {
+          module {
+            dependencies {
+              library("lib1")
+              library("lib2")
+              library("lib3")
+        } } } },
 
-      intellij {
-        module {
-          dependencies {
-            lib(name: "lib1")
-      } } }
+      intellij: {
+        project {
+          module {
+            dependencies {
+              library("lib1")
+        } } } }
     )
     
     // Check that the initial projects state is correctly parsed.
     checkChanges {
       presence {
-        lib(gradle: gradle.modules.dependencies.flatten().findAll { it.name == "lib2" })
-        lib(gradle: gradle.modules.dependencies.flatten().findAll { it.name == "lib3" })
+        library(gradle: gradle.modules.dependencies.flatten().findAll { it.name == "lib2" })
+        library(gradle: gradle.modules.dependencies.flatten().findAll { it.name == "lib3" })
     } }
     checkTree {
       project {
         module() {
           dependencies {
+            lib2('gradle') // Gradle-local entities are on top
+            lib3('gradle') // Gradle-local entities are on top
             lib1()
-            lib2('gradle')
-            lib3('gradle')
     } } } }
 
     // Add the same library at intellij side. Expecting to have the only change now.
-    intellij {
-      module {
-        dependencies {
-          lib(name: "lib1")
-          lib(name: "lib2")
-    } } }
-    changesModel.update(gradle.project)
+    setState(intellij: {
+      project {
+        module {
+          dependencies {
+            library("lib1")
+            library("lib2")
+    } } } })
+    
     checkChanges {
       presence {
-        lib(gradle: gradle.modules.dependencies.flatten().findAll { it.name == "lib3" })
+        library(gradle: gradle.modules.dependencies.flatten().findAll { it.name == "lib3" })
     } }
     checkTree {
       project {
         module() {
           dependencies {
+            lib3('gradle') // Gradle-local entities are on top
             lib1()
             lib2()
-            lib3('gradle')
     } } } }
     
     // Remove the 'gradle local' dependency.
-    gradle {
-      module {
-        dependencies {
-          lib(name: "lib1")
-          lib(name: "lib2")
-    } } }
-    
-    // Apply the changed project state and check if it's correctly parsed.
-    changesModel.update(gradle.project)
+    setState(gradle: {
+      project {
+        module {
+          dependencies {
+            library("lib1")
+            library("lib2")
+    } } } })
+
     checkChanges { } // no changes.
     assertEquals([].toSet(), changesModel.changes)
     checkTree {
@@ -129,20 +96,22 @@ public class GradleProjectStructureChangesModelTest {
   public void libraryDependenciesWithDifferentPaths() {
     // Let the model has two differences in a library setup initially.
     init(
-      gradle {
-        module {
-          dependencies {
-            lib(name: "lib1")
-            lib(name: "lib2", bin: ['1', '2'])
-      } } },
-      intellij {
-        module {
-          dependencies {
-            lib(name: "lib1")
-            lib(name: "lib2", bin: ['2', '3'])
-      }}}
+      gradle: {
+        project {
+          module {
+            dependencies {
+              library("lib1")
+              library("lib2", bin: ['1', '2'])
+      } } } },
+      intellij: {
+        project {
+          module {
+            dependencies {
+              library("lib1")
+              library("lib2", bin: ['2', '3'])
+      } } } }
     )
-    
+
     checkChanges {
       libraryConflict(entity: intellij.libraries['lib2']) {
         binaryPath(gradle: '1', intellij: null)
@@ -157,19 +126,22 @@ public class GradleProjectStructureChangesModelTest {
     } } } }
     
     // Remove one difference from the library setup and check that the corresponding node is still marked as conflicted
-    gradle {
-      module {
-        dependencies {
-          lib(name: "lib1")
-          lib(name: "lib2", bin: ['2'])
-    } } }
-    intellij {
-      module {
-        dependencies {
-          lib(name: "lib1")
-          lib(name: "lib2", bin: ['2', '3'])
-    }}}
-    changesModel.update(gradle.project)
+    setState(
+      gradle: {
+        project {
+          module {
+            dependencies {
+              library("lib1")
+              library("lib2", bin: ['2'])
+      } } } },
+      intellij: {
+        project {
+          module {
+            dependencies {
+              library("lib1")
+              library("lib2", bin: ['2', '3'])
+      } } } }
+    )
     checkChanges {
       libraryConflict(entity: intellij.dependencies.values().flatten().find {it.library.name == 'lib2' }.library) {
         binaryPath(gradle: null, intellij: '3')
@@ -183,19 +155,22 @@ public class GradleProjectStructureChangesModelTest {
     } } } }
     
     // Match the remaining change and check that the corresponding node is not marked as conflicted anymore.
-    gradle {
-      module {
-        dependencies {
-          lib(name: "lib1")
-          lib(name: "lib2", bin: ['2', '3'])
-    } } }
-    intellij {
-      module {
-        dependencies {
-          lib(name: "lib1")
-          lib(name: "lib2", bin: ['2', '3'])
-    }}}
-    changesModel.update(gradle.project)
+    setState(
+      gradle: {
+        project {
+          module {
+            dependencies {
+              library("lib1")
+              library("lib2", bin: ['2', '3'])
+      } } } },
+      intellij: {
+        project {
+          module {
+            dependencies {
+              library("lib1")
+              library("lib2", bin: ['2', '3'])
+      } } } }
+    )
     checkChanges { } // No changes
     checkTree {
       project {
@@ -206,29 +181,80 @@ public class GradleProjectStructureChangesModelTest {
     } } } }
   }
   
-  @SuppressWarnings("GroovyAssignabilityCheck")
-  private def init(gradleProjectInit, intellijProjectInit) {
-    treeModel = container.getComponentInstance(GradleProjectStructureTreeModel) as GradleProjectStructureTreeModel
-    changesModel.addListener({ old, current ->
-      treeModel.update(current)
-      treeModel.processObsoleteChanges(ContainerUtil.subtract(old, current));
-    } as GradleProjectStructureChangeListener)
-    changesModel.update(gradle.project)
+  @Test
+  public void intellijModuleRemoval() {
+    Closure initialClosure = {
+      project {
+        module('module1')
+        module('module2') {
+          dependencies {
+            library('lib1')
+            library('lib2')
+    } } } }
+    init(gradle: initialClosure, intellij: initialClosure)
+    checkChanges { } // No changes
+    checkTree {
+      project {
+        module1()
+        module2() {
+          dependencies {
+            lib1()
+            lib2()
+    } } } }
+    
+    setState(intellij: {
+      project {
+        module('module1')
+    } } )
+    checkChanges {
+      presence {
+        module(gradle: gradle.modules.find { it.name == 'module2'})
+        libraryDependency(gradle: gradle.modules.dependencies.flatten())
+    } }
+    checkTree {
+      project {
+        module1()
+        module2('gradle') {
+          dependencies {
+            lib1('gradle')
+            lib2('gradle')
+    } } } }
   }
-
-  private def checkChanges(c) {
-    c.delegate = changes
-    def expected = c()
-    if (!expected) {
-      expected = [].toSet()
-    }
-    assertEquals(expected, changesModel.changes)
-  }
-
-  private def checkTree(c) {
-    def nodeBuilder = new NodeBuilder()
-    c.delegate = nodeBuilder
-    def expected = c()
-    treeChecker.check(expected, treeModel.root)
+  
+  @Test
+  public void gradleModuleIsImported() {
+    init(
+      gradle: {
+        project {
+          module('module1')
+          module('module2')
+      } },
+      intellij: {
+        project {
+          module('module1')
+      } }
+    )
+    checkChanges {
+      presence {
+        module(gradle: gradle.modules.find { it.name == 'module2' })
+    } }
+    checkTree {
+      project {
+        module1()
+        module2('gradle')
+    } }
+    
+    // Emulate import gradle module to intellij.
+    setState(intellij: {
+      project {
+        module('module1')
+        module('module2')
+    } })
+    checkChanges { } // No changes
+    checkTree {
+      project {
+        module1()
+        module2() // Imported module node is not highlighted anymore.
+    } }
   }
 }

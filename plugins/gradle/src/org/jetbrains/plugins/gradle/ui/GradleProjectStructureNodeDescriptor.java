@@ -6,6 +6,8 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.config.GradleTextAttributes;
+import org.jetbrains.plugins.gradle.model.GradleEntityOwner;
+import org.jetbrains.plugins.gradle.model.id.GradleEntityId;
 
 import javax.swing.*;
 
@@ -57,6 +59,18 @@ public class GradleProjectStructureNodeDescriptor<T> extends PresentableNodeDesc
 
   public void setAttributes(@NotNull TextAttributesKey attributes) {
     myAttributes = attributes;
+    // TODO den remove the type check
+    if (myData instanceof GradleEntityId) {
+      final GradleEntityId id = (GradleEntityId)myData;
+      GradleEntityOwner owner = id.getOwner();
+      if (attributes == GradleTextAttributes.GRADLE_LOCAL_CHANGE) {
+        owner = GradleEntityOwner.GRADLE;
+      }
+      else if (attributes == GradleTextAttributes.GRADLE_NO_CHANGE || attributes == GradleTextAttributes.INTELLIJ_LOCAL_CHANGE) {
+        owner = GradleEntityOwner.INTELLIJ;
+      }
+      id.setOwner(owner);
+    }
     update();
   }
 }

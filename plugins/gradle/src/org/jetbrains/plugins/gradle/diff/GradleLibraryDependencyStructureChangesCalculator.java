@@ -3,7 +3,7 @@ package org.jetbrains.plugins.gradle.diff;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.libraries.Library;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.model.GradleLibraryDependency;
+import org.jetbrains.plugins.gradle.model.gradle.GradleLibraryDependency;
 
 import java.util.Set;
 

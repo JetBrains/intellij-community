@@ -6,11 +6,12 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.model.GradleModule;
+import org.jetbrains.plugins.gradle.model.gradle.GradleModule;
 import org.jetbrains.plugins.gradle.util.GradleLog;
 
 import java.io.File;
@@ -65,6 +66,31 @@ public class GradleModuleImporter {
             final ModuleManager moduleManager = ModuleManager.getInstance(project);
             for (GradleModule module : modules) {
               final Module created = moduleManager.newModule(module.getModuleFilePath(), StdModuleTypes.JAVA);
+              
+              // Ensure that the dependencies are clear (used to be not clear when manually removing the module and importing it via gradle)
+              ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(created);
+              final ModifiableRootModel moduleRootModel = moduleRootManager.getModifiableModel();
+              RootPolicy<Object> visitor = new RootPolicy<Object>() {
+                @Override
+                public Object visitLibraryOrderEntry(LibraryOrderEntry libraryOrderEntry, Object value) {
+                  moduleRootModel.removeOrderEntry(libraryOrderEntry);
+                  return value;
+                }
+
+                @Override
+                public Object visitModuleOrderEntry(ModuleOrderEntry moduleOrderEntry, Object value) {
+                  moduleRootModel.removeOrderEntry(moduleOrderEntry);
+                  return value;
+                }
+              };
+              try {
+                for (OrderEntry orderEntry : moduleRootModel.getOrderEntries()) {
+                  orderEntry.accept(visitor, null);
+                }
+              }
+              finally {
+                moduleRootModel.commit();
+              }
               moduleMappings.put(module, created);
             }
           }

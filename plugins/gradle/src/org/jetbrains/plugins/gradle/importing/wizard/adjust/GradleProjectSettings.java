@@ -10,7 +10,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
-import org.jetbrains.plugins.gradle.model.GradleProject;
+import org.jetbrains.plugins.gradle.model.gradle.GradleProject;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 

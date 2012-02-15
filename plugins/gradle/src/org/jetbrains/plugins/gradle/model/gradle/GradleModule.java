@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.gradle.model;
+package org.jetbrains.plugins.gradle.model.gradle;
 
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.util.containers.HashMap;
@@ -135,10 +135,7 @@ public class GradleModule extends AbstractNamedGradleEntity implements Named {
 
   @Override
   public String toString() {
-    return String.format(
-      "module '%s'. Content roots: %s; inherit compile output path: %b",
-      getName(), getContentRoots(), isInheritProjectCompileOutputPath()
-    );
+    return String.format("module '%s'", getName());
   }
 
   @NotNull

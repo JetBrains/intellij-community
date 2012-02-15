@@ -29,38 +29,42 @@ public abstract class AbstractProjectBuilder extends BuilderSupport {
 
   @Override
   protected Object createNode(Object name) {
-    switch (name) {
-      case "call": return createNode("project", [name: same])
-      case "module": return createNode(name, [name: same])
-      case "dependencies": return getCurrent() // Assuming that 'current' is a module object
-    }
+    createNode(name, [:])
   }
 
   @Override
   protected Object createNode(Object name, Object value) {
-    return null
-  }
-
-  @Override
-  protected Object createNode(Object name, Map attributes) {
-    switch (name) {
-      case "project":
-        reset()
-        return project = createProject(attributes.name?: same, attributes.langLevel?: LanguageLevel.JDK_1_6)
-      case "module": def module = createModule(attributes.name?: same); modules << module; return module
-      case "lib":
-        def module = getCurrent()
-        def dep = createLibraryDependency(module, getLibrary(attributes))
-        dependencies[module] << dep
-        return dep
-    }
+    createNode(name, [name: value])
   }
 
   @Override
   protected Object createNode(Object name, Map attributes, Object value) {
-    return null
+    createNode(name, [name: value] + attributes)
   }
   
+  @Override
+  protected Object createNode(Object name, Map attributes) {
+    switch (name) {
+      case "dependencies": return current // Assuming that 'current' is a module object
+      case "project":
+        reset()
+        return project = createProject(attributes.name?: same, attributes.langLevel?: LanguageLevel.JDK_1_6)
+      case "module": def module = createModule(attributes.name?: same); modules << module; return module
+      case "library":
+        if (current == project) {
+          // Library.
+          return getLibrary(attributes)
+        }
+        else {
+          // Library dependency.
+          def module = current
+          def dep = createLibraryDependency(module, getLibrary(attributes))
+          dependencies[module] << dep
+          return dep
+        }
+    }
+  }
+
   protected abstract def createProject(String name, LanguageLevel languageLevel)
   protected abstract def createModule(String name)
   protected abstract def createLibrary(String name, Map paths)

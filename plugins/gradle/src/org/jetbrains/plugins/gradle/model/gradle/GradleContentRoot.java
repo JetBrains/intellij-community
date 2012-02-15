@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.gradle.model;
+package org.jetbrains.plugins.gradle.model.gradle;
 
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
@@ -16,20 +16,27 @@ public class GradleContentRoot extends AbstractGradleEntity {
   private static final long serialVersionUID = 1L;
   
   private final Map<SourceType, Collection<String>> myData  = new EnumMap<SourceType, Collection<String>>(SourceType.class);
-  
-  private final String myRootPath;
+
+  private final GradleModule myOwnerModule;
+  private final String       myRootPath;
 
   /**
    * Creates new <code>GradleContentRootImpl</code> object.
    * 
    * @param rootPath  path to the root directory
    */
-  public GradleContentRoot(@NotNull String rootPath) {
+  public GradleContentRoot(@NotNull GradleModule ownerModule, @NotNull String rootPath) {
+    myOwnerModule = ownerModule;
     myRootPath = GradleUtil.toCanonicalPath(rootPath);
     for (SourceType type : SourceType.values()) {
       Set<String> data = new HashSet<String>();
       myData.put(type, data);
     }
+  }
+
+  @NotNull
+  public GradleModule getOwnerModule() {
+    return myOwnerModule;
   }
 
   /**
@@ -73,7 +80,7 @@ public class GradleContentRoot extends AbstractGradleEntity {
   public int hashCode() {
     int result = myData.hashCode();
     result = 31 * result + myRootPath.hashCode();
-    return result;
+    return 31 * result + myOwnerModule.getName().hashCode();
   }
 
   @Override
@@ -83,6 +90,7 @@ public class GradleContentRoot extends AbstractGradleEntity {
 
     GradleContentRoot that = (GradleContentRoot)o;
 
+    if (!myOwnerModule.getName().equals(that.myOwnerModule.getName())) return false;
     if (!myData.equals(that.myData)) return false;
     if (!myRootPath.equals(that.myRootPath)) return false;
 
@@ -102,7 +110,7 @@ public class GradleContentRoot extends AbstractGradleEntity {
   @NotNull
   @Override
   public GradleContentRoot clone(@NotNull GradleEntityCloneContext context) {
-    GradleContentRoot result = new GradleContentRoot(getRootPath());
+    GradleContentRoot result = new GradleContentRoot(getOwnerModule(), getRootPath());
     for (Map.Entry<SourceType, Collection<String>> entry : myData.entrySet()) {
       for (String path : entry.getValue()) {
         result.storePath(entry.getKey(), path);

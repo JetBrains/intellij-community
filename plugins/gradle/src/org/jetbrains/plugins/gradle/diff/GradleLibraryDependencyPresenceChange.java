@@ -3,11 +3,10 @@ package org.jetbrains.plugins.gradle.diff;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.model.GradleLibraryDependency;
-import org.jetbrains.plugins.gradle.model.GradleLibraryDependencyId;
+import org.jetbrains.plugins.gradle.model.gradle.GradleLibraryDependency;
+import org.jetbrains.plugins.gradle.model.id.GradleEntityIdMapper;
+import org.jetbrains.plugins.gradle.model.id.GradleLibraryDependencyId;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
-
-import static org.jetbrains.plugins.gradle.model.GradleLibraryDependencyId.of;
 
 /**
  * @author Denis Zhdanov
@@ -24,5 +23,21 @@ public class GradleLibraryDependencyPresenceChange extends GradleEntityPresenceC
   @Override
   public void invite(@NotNull GradleProjectStructureChangeVisitor visitor) {
     visitor.visit(this);
+  }
+
+  @Nullable
+  private static GradleLibraryDependencyId of(@Nullable GradleLibraryDependency dependency) {
+    if (dependency == null) {
+      return null;
+    }
+    return GradleEntityIdMapper.mapEntityToId(dependency);
+  }
+
+  @Nullable
+  private static GradleLibraryDependencyId of(@Nullable LibraryOrderEntry dependency) {
+    if (dependency == null) {
+      return null;
+    }
+    return GradleEntityIdMapper.mapEntityToId(dependency);
   }
 }

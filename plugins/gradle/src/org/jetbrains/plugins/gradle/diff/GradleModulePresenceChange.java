@@ -15,24 +15,44 @@
  */
 package org.jetbrains.plugins.gradle.diff;
 
+import com.intellij.openapi.module.Module;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.model.GradleEntityOwner;
+import org.jetbrains.plugins.gradle.model.gradle.GradleModule;
+import org.jetbrains.plugins.gradle.model.id.GradleModuleId;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 
 /**
  * @author Denis Zhdanov
  * @since 11/17/11 12:50 PM
  */
-public class GradleModulePresenceChange extends GradleEntityPresenceChange<String> {
+public class GradleModulePresenceChange extends GradleEntityPresenceChange<GradleModuleId> {
 
-  public GradleModulePresenceChange(@Nullable String gradleModuleName, @Nullable String intellijModuleName)
+  public GradleModulePresenceChange(@Nullable GradleModule gradleModule, @Nullable Module intellijModule)
     throws IllegalArgumentException
   {
-    super(GradleBundle.message("gradle.sync.change.entity.type.module"), gradleModuleName, intellijModuleName);
+    super(GradleBundle.message("gradle.sync.change.entity.type.module"), of(gradleModule), of(intellijModule));
   }
 
   @Override
   public void invite(@NotNull GradleProjectStructureChangeVisitor visitor) {
     visitor.visit(this);
+  }
+
+  @Nullable
+  private static GradleModuleId of(@Nullable GradleModule module) {
+    if (module == null) {
+      return null;
+    }
+    return new GradleModuleId(GradleEntityOwner.GRADLE, module.getName());
+  }
+
+  @Nullable
+  private static GradleModuleId of(@Nullable Module module) {
+    if (module == null) {
+      return null;
+    }
+    return new GradleModuleId(GradleEntityOwner.GRADLE, module.getName());
   }
 }

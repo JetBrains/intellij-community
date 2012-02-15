@@ -4,10 +4,13 @@ import com.intellij.execution.rmi.RemoteUtil;
 import com.intellij.ide.actions.OpenProjectFileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileTypeDescriptor;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
@@ -21,7 +24,8 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.config.GradleSettings;
-import org.jetbrains.plugins.gradle.model.GradleProject;
+import org.jetbrains.plugins.gradle.model.gradle.GradleProject;
+import org.jetbrains.plugins.gradle.model.intellij.IntellijEntityVisitor;
 import org.jetbrains.plugins.gradle.remote.GradleApiException;
 import org.jetbrains.plugins.gradle.task.GradleResolveProjectTask;
 import org.jetbrains.plugins.gradle.ui.GradleIcons;
@@ -193,6 +197,27 @@ public class GradleUtil {
       }
     });
     return gradleProject.get();
+  }
+
+  /**
+   * Tries to dispatch given entity via the given visitor.
+   * 
+   * @param entity   intellij project entity candidate to dispatch
+   * @param visitor  dispatch callback to use for the given entity
+   */
+  public static void dispatch(@Nullable Object entity, @NotNull IntellijEntityVisitor visitor) {
+    if (entity instanceof Project) {
+      visitor.visit(((Project)entity));
+    }
+    else if (entity instanceof Module) {
+      visitor.visit(((Module)entity));
+    }
+    else if (entity instanceof LibraryOrderEntry) {
+      visitor.visit(((LibraryOrderEntry)entity));
+    }
+    else if (entity instanceof ModuleOrderEntry) {
+      visitor.visit(((ModuleOrderEntry)entity));
+    }
   }
   
   private interface TaskUnderProgress {

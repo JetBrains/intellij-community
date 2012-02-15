@@ -23,7 +23,7 @@ import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.model.*;
+import org.jetbrains.plugins.gradle.model.gradle.*;
 import org.jetbrains.plugins.gradle.task.GradleResolveProjectTask;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleLog;

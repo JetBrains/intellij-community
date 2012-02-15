@@ -1,10 +1,10 @@
 package org.jetbrains.plugins.gradle.testutil
 
-import org.jetbrains.plugins.gradle.model.GradleProject
-import org.jetbrains.plugins.gradle.model.GradleModule
-import org.jetbrains.plugins.gradle.model.GradleLibraryDependency
-import org.jetbrains.plugins.gradle.model.GradleLibrary
-import org.jetbrains.plugins.gradle.model.LibraryPathType
+import org.jetbrains.plugins.gradle.model.gradle.GradleProject
+import org.jetbrains.plugins.gradle.model.gradle.GradleModule
+import org.jetbrains.plugins.gradle.model.gradle.GradleLibraryDependency
+import org.jetbrains.plugins.gradle.model.gradle.GradleLibrary
+import org.jetbrains.plugins.gradle.model.gradle.LibraryPathType
 import com.intellij.pom.java.LanguageLevel
 
 /** 

@@ -4,7 +4,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.model.GradleProject;
+import org.jetbrains.plugins.gradle.model.gradle.GradleProject;
 import org.jetbrains.plugins.gradle.remote.GradleApiFacadeManager;
 import org.jetbrains.plugins.gradle.remote.GradleProjectResolver;
 import org.jetbrains.plugins.gradle.sync.GradleProjectStructureChangesModel;

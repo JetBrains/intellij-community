@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.gradle.remote;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.model.GradleProject;
+import org.jetbrains.plugins.gradle.model.gradle.GradleProject;
 import org.jetbrains.plugins.gradle.task.GradleTaskId;
 
 import java.rmi.RemoteException;

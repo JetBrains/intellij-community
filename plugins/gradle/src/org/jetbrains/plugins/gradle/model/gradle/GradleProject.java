@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.gradle.model;
+package org.jetbrains.plugins.gradle.model.gradle;
 
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -190,7 +190,7 @@ public class GradleProject extends AbstractNamedGradleEntity {
 
   @Override
   public String toString() {
-    return String.format("project '%s'. Jdk: '%s', language level: '%s', modules: %s",
+    return String.format("project '%s':jdk='%s'|language level='%s'|modules=%s",
                          getName(), getJdkVersion(), getLanguageLevel(), getModules());
   }
 

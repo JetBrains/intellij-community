@@ -5,5 +5,5 @@ package org.jetbrains.plugins.gradle.model;
  * @since 2/7/12 11:18 AM
  */
 public enum GradleEntityType {
-  PROJECT, MODULE, LIBRARY_DEPENDENCY, SYNTHETIC
+  PROJECT, MODULE, MODULE_DEPENDENCY, LIBRARY_DEPENDENCY, SYNTHETIC
 }

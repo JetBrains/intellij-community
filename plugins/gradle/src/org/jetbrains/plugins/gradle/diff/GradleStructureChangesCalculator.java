@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.gradle.diff;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.model.GradleEntity;
+import org.jetbrains.plugins.gradle.model.gradle.GradleEntity;
 
 import java.util.Set;
 
@@ -45,7 +45,7 @@ public interface GradleStructureChangesCalculator<G extends GradleEntity, I> {
    * <p/>
    * The general idea is to map evey item at the given sets of gradle and intellij entities to particular key (both gradle and
    * intellij keys are expected to belong to the same class) and then compare them. Matched keys shows that corresponding
-   * entities should be {@link #calculate(GradleEntity, Object, Set) compared to each other}; non-matched indicate that corresponding
+   * entities should be {@link #calculate(GradleEntity, Object, Set, Set)}  compared to each other}; non-matched indicate that corresponding
    * entities are gradle- or intellij-local.
    * <p/>
    * This method allows to match intellij entity to the target key.

@@ -12,6 +12,7 @@ import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.roots.OrderRootType
 import org.jetbrains.plugins.gradle.util.GradleUtil
+import com.intellij.openapi.roots.libraries.LibraryTable
 
 /** 
  * @author Denis Zhdanov
@@ -21,14 +22,19 @@ class IntellijProjectBuilder extends AbstractProjectBuilder {
 
   static def LIBRARY_ENTRY_TYPES = [(OrderRootType.CLASSES) : "bin"]
   static VirtualFile[] DUMMY_VIRTUAL_FILE_ARRAY = new VirtualFile[0]
-  
-  def projectStub = [:]
+
+  def projectStub = [getName: { same }]
   def project = projectStub as Project
+
+  def projectLibraryTableStub = [ getLibraries: { libraries.values() as Library[] } ]
+  def projectLibraryTable = projectLibraryTableStub as LibraryTable
+  
   def platformFacade = [
     getModules: { modules },
     getOrderEntries: { dependencies[it] },
     getProjectIcon: { IconLoader.getIcon("/nodes/ideaProject.png") },
-    getLocalFileSystemPath: { it.path }
+    getLocalFileSystemPath: { it.path },
+    getProjectLibraryTable: { projectLibraryTable }
   ]
   /** (library name - (library root type - paths)). */
   def libraryPaths = [:].withDefault { [:] }

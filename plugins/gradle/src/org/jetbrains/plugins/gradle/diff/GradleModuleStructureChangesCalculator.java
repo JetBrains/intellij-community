@@ -18,7 +18,7 @@ package org.jetbrains.plugins.gradle.diff;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.model.*;
+import org.jetbrains.plugins.gradle.model.gradle.*;
 
 import java.util.ArrayList;
 import java.util.List;

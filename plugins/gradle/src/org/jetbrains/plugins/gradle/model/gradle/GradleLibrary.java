@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.gradle.model;
+package org.jetbrains.plugins.gradle.model.gradle;
 
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
@@ -66,7 +66,7 @@ public class GradleLibrary extends AbstractNamedGradleEntity implements Named {
 
   @Override
   public String toString() {
-    return "library: " + getName();
+    return "library " + getName();
   }
 
   @NotNull

@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.gradle.model;
+package org.jetbrains.plugins.gradle.model.gradle;
 
 import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.NotNull;

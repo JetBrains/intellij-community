@@ -8,6 +8,8 @@ import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNodeDescriptor
 import org.junit.Assert
 import static junit.framework.Assert.assertEquals
 import static junit.framework.Assert.fail
+import org.jetbrains.plugins.gradle.model.GradleEntityOwner
+import org.jetbrains.plugins.gradle.model.id.GradleEntityId
 
 /** 
  * @author Denis Zhdanov
@@ -36,7 +38,7 @@ class ProjectStructureChecker {
     }
     for (it in expected.children().findAll { it instanceof Node}) {
       if (childIndex >= actual.childCount) {
-        fail "Expected node is not matched: $expected"
+        fail "Expected node is not matched: $it"
       }
       check it as Node, actual.getChildAt(childIndex++) as DefaultMutableTreeNode
     }
@@ -59,7 +61,12 @@ class ProjectStructureChecker {
   }
 
   def checkMarkup(Node node, GradleProjectStructureNodeDescriptor descriptor) {
-    def expected = COLORS[node.children().find {it instanceof CharSequence}]?: GradleTextAttributes.GRADLE_NO_CHANGE
-    assertEquals(expected, descriptor.attributes)
+    def expectedMarkup = COLORS[node.children().find {it instanceof CharSequence}]?: GradleTextAttributes.GRADLE_NO_CHANGE
+    assertEquals("node '$descriptor'", expectedMarkup, descriptor.attributes)
+
+    if (descriptor.element instanceof GradleEntityId) {
+      def expectedOwner = expectedMarkup == GradleTextAttributes.GRADLE_LOCAL_CHANGE ? GradleEntityOwner.GRADLE : GradleEntityOwner.INTELLIJ
+      assertEquals("node '$descriptor'", expectedOwner, descriptor.element.owner)
+    }
   }
 }

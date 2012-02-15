@@ -4,8 +4,8 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.model.GradleLibrary;
-import org.jetbrains.plugins.gradle.model.LibraryPathType;
+import org.jetbrains.plugins.gradle.model.gradle.GradleLibrary;
+import org.jetbrains.plugins.gradle.model.gradle.LibraryPathType;
 
 import java.util.HashSet;
 import java.util.Set;

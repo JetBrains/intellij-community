@@ -4,6 +4,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.RootPolicy;
 import com.intellij.util.containers.hash.HashMap;
@@ -11,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.config.GradleTextAttributes;
 import org.jetbrains.plugins.gradle.diff.*;
 import org.jetbrains.plugins.gradle.model.GradleEntityType;
-import org.jetbrains.plugins.gradle.model.GradleLibraryDependencyId;
+import org.jetbrains.plugins.gradle.model.id.*;
 import org.jetbrains.plugins.gradle.ui.GradleIcons;
 import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNode;
 import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNodeDescriptor;
@@ -47,19 +48,21 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
    */
   private final Map<String, GradleProjectStructureNode<String>> myModuleDependencies
     = new HashMap<String, GradleProjectStructureNode<String>>();
-  private final Map<String, GradleProjectStructureNode<String>> myModules
-    = new HashMap<String, GradleProjectStructureNode<String>>();
+  private final Map<String, GradleProjectStructureNode<GradleModuleId>> myModules
+    = new HashMap<String, GradleProjectStructureNode<GradleModuleId>>();
 
-  private final TreeNode[] myNodeHolder  = new TreeNode[1];
-  private final int[]      myIndexHolder = new int[1];
+  private final TreeNode[]   myNodeHolder   = new TreeNode[1];
+  private final int[]        myIndexHolder  = new int[1];
+  private final NodeListener myNodeListener = new NodeListener();
 
-  private final Project                      myProject;
-  private final PlatformFacade               myPlatformFacade;
-  private final GradleProjectStructureHelper myProjectStructureHelper;
+  @NotNull private final Project                      myProject;
+  @NotNull private final PlatformFacade               myPlatformFacade;
+  @NotNull private final GradleProjectStructureHelper myProjectStructureHelper;
 
   public GradleProjectStructureTreeModel(@NotNull Project project,
                                          @NotNull PlatformFacade platformFacade,
-                                         @NotNull GradleProjectStructureHelper projectStructureHelper) {
+                                         @NotNull GradleProjectStructureHelper projectStructureHelper)
+  {
     super(null);
     myProject = project;
     myPlatformFacade = platformFacade;
@@ -71,35 +74,45 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
     myModuleDependencies.clear();
     myModules.clear();
 
-    GradleProjectStructureNode<Project> root
-      = buildNode(getProject(), GradleEntityType.PROJECT, getProject().getName(), myPlatformFacade.getProjectIcon());
+    GradleProjectId projectId = GradleEntityIdMapper.mapEntityToId(getProject());
+    GradleProjectStructureNode<GradleProjectId> root = buildNode(projectId, getProject().getName(), myPlatformFacade.getProjectIcon());
     final Collection<Module> modules = myPlatformFacade.getModules(getProject());
-    RootPolicy<LibraryOrderEntry> policy = new RootPolicy<LibraryOrderEntry>() {
+    final List<GradleProjectStructureNode<?>> dependencies = new ArrayList<GradleProjectStructureNode<?>>();
+    RootPolicy<Object> visitor = new RootPolicy<Object>() {
       @Override
-      public LibraryOrderEntry visitLibraryOrderEntry(LibraryOrderEntry libraryOrderEntry, LibraryOrderEntry value) {
-        return libraryOrderEntry;
+      public Object visitModuleOrderEntry(ModuleOrderEntry moduleOrderEntry, Object value) {
+        GradleModuleDependencyId id = GradleEntityIdMapper.mapEntityToId(moduleOrderEntry);
+        dependencies.add(buildNode(id, moduleOrderEntry.getModuleName(), GradleIcons.MODULE_ICON));
+        return value;
+      }
+
+      @Override
+      public Object visitLibraryOrderEntry(LibraryOrderEntry libraryOrderEntry, Object value) {
+        if (libraryOrderEntry.getLibraryName() == null) {
+          return value;
+        }
+        GradleLibraryDependencyId id = GradleEntityIdMapper.mapEntityToId(libraryOrderEntry);
+        dependencies.add(buildNode(id, id.getLibraryName(), GradleIcons.LIB_ICON));
+        return value;
       }
     };
     for (Module module : modules) {
-      final GradleProjectStructureNode<String> moduleNode = buildNode(GradleEntityType.MODULE, module.getName(), GradleIcons.MODULE_ICON);
+      dependencies.clear();
+      final GradleModuleId moduleId = GradleEntityIdMapper.mapEntityToId(module);
+      final GradleProjectStructureNode<GradleModuleId> moduleNode = buildNode(moduleId, moduleId.getModuleName(), GradleIcons.MODULE_ICON);
       myModules.put(module.getName(), moduleNode); // Assuming that module names are unique.
-      List<LibraryOrderEntry> libraryDependencies = new ArrayList<LibraryOrderEntry>();
-      for (OrderEntry orderEntry : myPlatformFacade.getOrderEntries(module)) {
-        final LibraryOrderEntry libraryDependency = orderEntry.accept(policy, null);
-        libraryDependencies.add(libraryDependency);
-      }
-      if (!libraryDependencies.isEmpty()) {
-        GradleProjectStructureNode<String> dependenciesNode = getDependenciesNode(module.getName());
-        for (LibraryOrderEntry dependency : libraryDependencies) {
-          GradleLibraryDependencyId id = GradleLibraryDependencyId.of(dependency);
-          if (id == null) {
-            continue;
-          }
-          dependenciesNode.add(buildNode(id, GradleEntityType.LIBRARY_DEPENDENCY, id.getLibraryName(), GradleIcons.LIB_ICON));
-        }
-        moduleNode.add(dependenciesNode);
-      }
       root.add(moduleNode);
+      for (OrderEntry orderEntry : myPlatformFacade.getOrderEntries(module)) {
+        orderEntry.accept(visitor, null);
+      }
+      if (dependencies.isEmpty()) {
+        continue;
+      }
+      GradleProjectStructureNode<String> dependenciesNode = getDependenciesNode(moduleId);
+      for (GradleProjectStructureNode<?> dependency : dependencies) {
+        dependenciesNode.add(dependency);
+      }
+      moduleNode.add(dependenciesNode);
     }
 
     setRoot(root);
@@ -114,34 +127,39 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
     return new GradleProjectStructureNodeDescriptor<T>(entity, name, icon);
   }
 
-  private static GradleProjectStructureNode<String> buildNode(@NotNull GradleEntityType type, @NotNull String name, @NotNull Icon icon) {
-    return buildNode(name, type, name, icon);
-  }
-
-  private static <T> GradleProjectStructureNode<T> buildNode(@NotNull T entity,
-                                                             @NotNull GradleEntityType type,
-                                                             @NotNull String name,
-                                                             @NotNull Icon icon)
+  private <T extends GradleEntityId> GradleProjectStructureNode<T> buildNode(@NotNull T entityId,
+                                                                                    @NotNull String name,
+                                                                                    @NotNull Icon icon)
   {
-    return new GradleProjectStructureNode<T>(buildDescriptor(entity, name, icon), type);
+    final GradleProjectStructureNode<T> result
+      = new GradleProjectStructureNode<T>(buildDescriptor(entityId, name, icon), entityId.getType());
+    result.addListener(myNodeListener);
+    return result;
   }
 
-  private GradleProjectStructureNode<String> getDependenciesNode(@NotNull String moduleName) {
-    final GradleProjectStructureNode<String> cached = myModuleDependencies.get(moduleName);
+  private GradleProjectStructureNode<String> getDependenciesNode(@NotNull GradleModuleId id) {
+    final GradleProjectStructureNode<String> cached = myModuleDependencies.get(id.getModuleName());
     if (cached != null) {
       return cached;
     }
-    GradleProjectStructureNode<String> moduleNode = myModules.get(moduleName);
-    if (moduleNode == null) {
-      moduleNode = buildNode(GradleEntityType.MODULE, moduleName, GradleIcons.MODULE_ICON);
-      myModules.put(moduleName, moduleNode);
-    }
-
-    GradleProjectStructureNode<String> result = new GradleProjectStructureNode<String>(GradleConstants.DEPENDENCIES_NODE_DESCRIPTOR, GradleEntityType.SYNTHETIC);
+    GradleProjectStructureNode<GradleModuleId> moduleNode = getModuleNode(id);
+    GradleProjectStructureNode<String> result
+      = new GradleProjectStructureNode<String>(GradleConstants.DEPENDENCIES_NODE_DESCRIPTOR, GradleEntityType.SYNTHETIC);
     moduleNode.add(result);
-    myModuleDependencies.put(moduleName, result);
+    myModuleDependencies.put(id.getModuleName(), result);
     
     return result;
+  }
+  
+  @NotNull
+  private GradleProjectStructureNode<GradleModuleId> getModuleNode(@NotNull GradleModuleId id) {
+    GradleProjectStructureNode<GradleModuleId> moduleNode = myModules.get(id.getModuleName());
+    if (moduleNode == null) {
+      moduleNode = buildNode(id, id.getModuleName(), GradleIcons.MODULE_ICON);
+      myModules.put(id.getModuleName(), moduleNode);
+      ((GradleProjectStructureNode<?>)root).add(moduleNode);
+    }
+    return moduleNode;
   }
 
   /**
@@ -166,6 +184,24 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
         }
 
         @Override
+        public void visit(@NotNull GradleModulePresenceChange change) {
+          final GradleModuleId id;
+          final TextAttributesKey key;
+          if (change.getGradleEntity() == null) {
+            id = change.getIntellijEntity();
+            key = GradleTextAttributes.INTELLIJ_LOCAL_CHANGE;
+          }
+          else {
+            id = change.getGradleEntity();
+            key = GradleTextAttributes.GRADLE_LOCAL_CHANGE;
+          }
+          assert id != null;
+          final GradleProjectStructureNode<GradleModuleId> moduleNode = getModuleNode(id);
+          moduleNode.getDescriptor().setAttributes(key);
+          nodeChanged(moduleNode);
+        }
+
+        @Override
         public void visit(@NotNull GradleLibraryDependencyPresenceChange change) {
           GradleLibraryDependencyId id = change.getGradleEntity();
           TextAttributesKey attributes = GradleTextAttributes.GRADLE_LOCAL_CHANGE;
@@ -174,7 +210,7 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
             attributes = GradleTextAttributes.INTELLIJ_LOCAL_CHANGE;
           }
           assert id != null;
-          final GradleProjectStructureNode<String> dependenciesNode = getDependenciesNode(id.getModuleName());
+          final GradleProjectStructureNode<String> dependenciesNode = getDependenciesNode(id.getModuleId());
           for (GradleProjectStructureNode<GradleLibraryDependencyId> node : dependenciesNode.getChildren(GradleLibraryDependencyId.class)) {
             GradleProjectStructureNodeDescriptor<GradleLibraryDependencyId> d = node.getDescriptor();
             if (id.equals(d.getElement())) {
@@ -183,8 +219,7 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
               return;
             }
           }
-          GradleProjectStructureNode<GradleLibraryDependencyId> newNode
-            = buildNode(id, GradleEntityType.LIBRARY_DEPENDENCY, id.getLibraryName(), GradleIcons.LIB_ICON);
+          GradleProjectStructureNode<GradleLibraryDependencyId> newNode = buildNode(id, id.getLibraryName(), GradleIcons.LIB_ICON);
           newNode.getDescriptor().setAttributes(attributes);
           dependenciesNode.add(newNode);
           nodeStructureChanged(dependenciesNode);
@@ -208,7 +243,7 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
    */
   public void processObsoleteChanges(Collection<GradleProjectStructureChange> changes) {
     for (GradleProjectStructureChange change : changes) {
-      change.invite(new GradleProjectStructureChangeVisitorAdapter() {
+      change.invite(new GradleProjectStructureChangeVisitor() {
         @Override
         public void visit(@NotNull GradleMismatchedLibraryPathChange change) {
           for (GradleProjectStructureNode<String> holder : myModuleDependencies.values()) {
@@ -253,31 +288,55 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
               continue;
             }
             if (removeNode) {
-              removeNode(node);
+              holder.remove(node);
             }
             else {
               descriptor.setAttributes(GradleTextAttributes.GRADLE_NO_CHANGE);
+              holder.correctChildPositionIfNecessary(node);
             }
             return;
+          }
+        }
+
+        @Override
+        public void visit(@NotNull GradleProjectRenameChange change) {
+          // TODO den implement 
+        }
+
+        @Override
+        public void visit(@NotNull GradleLanguageLevelChange change) {
+          // TODO den implement 
+        }
+
+        @Override
+        public void visit(@NotNull GradleModulePresenceChange change) {
+          GradleModuleId id = change.getGradleEntity();
+          if (id == null) {
+            id = change.getIntellijEntity();
+          }
+          assert id != null;
+          final GradleProjectStructureNode<GradleModuleId> moduleNode = myModules.get(id.getModuleName());
+          if (moduleNode != null) {
+            moduleNode.getDescriptor().setAttributes(GradleTextAttributes.GRADLE_NO_CHANGE);
           }
         }
       });
     }
   }
+  
+  private class NodeListener implements GradleProjectStructureNode.Listener {
+    
+    @Override
+    public void onNodeAdded(@NotNull GradleProjectStructureNode<?> node, int index) {
+      myIndexHolder[0] = index;
+      nodesWereInserted(node.getParent(), myIndexHolder);
+    }
 
-  private void removeNode(@NotNull GradleProjectStructureNode node) {
-    final GradleProjectStructureNode parent = node.getParent();
-    if (parent == null) {
-      return;
+    @Override
+    public void onNodeRemoved(@NotNull GradleProjectStructureNode<?> node, int index) {
+      myIndexHolder[0] = index;
+      myNodeHolder[0] = node;
+      nodesWereRemoved(node.getParent(), myIndexHolder, myNodeHolder); 
     }
-    int i = parent.getIndex(node);
-    if (i < 0) {
-      assert false : node;
-      return;
-    }
-    parent.remove(i);
-    myIndexHolder[0] = i;
-    myNodeHolder[0] = node;
-    nodesWereRemoved(parent, myIndexHolder, myNodeHolder);
   }
 }

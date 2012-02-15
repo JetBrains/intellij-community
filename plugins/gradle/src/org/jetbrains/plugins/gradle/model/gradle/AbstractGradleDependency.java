@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.gradle.model;
+package org.jetbrains.plugins.gradle.model.gradle;
 
 import com.intellij.openapi.roots.DependencyScope;
 import org.jetbrains.annotations.NotNull;
@@ -71,7 +71,7 @@ public abstract class AbstractGradleDependency<T extends AbstractGradleEntity & 
     try {
       String oldName = myTarget.getName();
       myTarget.setName(name);
-      firePropertyChange(Named.NAME_PROPERTY, oldName, name);
+      firePropertyChange(NAME_PROPERTY, oldName, name);
     }
     finally {
       mySkipNameChange = false;
@@ -82,12 +82,12 @@ public abstract class AbstractGradleDependency<T extends AbstractGradleEntity & 
     myTarget.addPropertyChangeListener(new PropertyChangeListener() {
       @Override
       public void propertyChange(PropertyChangeEvent evt) {
-        if (mySkipNameChange || !Named.NAME_PROPERTY.equals(evt.getPropertyName())) {
+        if (mySkipNameChange || !NAME_PROPERTY.equals(evt.getPropertyName())) {
           return;
         }
         mySkipNameChange = true;
         try {
-          firePropertyChange(Named.NAME_PROPERTY, evt.getOldValue(), evt.getNewValue());
+          firePropertyChange(NAME_PROPERTY, evt.getOldValue(), evt.getNewValue());
         }
         finally {
           mySkipNameChange = false;
@@ -124,7 +124,7 @@ public abstract class AbstractGradleDependency<T extends AbstractGradleEntity & 
 
   @Override
   public String toString() {
-    return "scope: " + getScope() + ", exported: " + isExported() + ", dependency: " + getTarget();
+    return "dependency=" + getTarget() + "|scope=" + getScope() + "|exported=" + isExported() + "|owner=" + getOwnerModule();
   }
   
   @NotNull

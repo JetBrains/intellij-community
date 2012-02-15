@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.gradle.model;
+package org.jetbrains.plugins.gradle.model.gradle;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -26,7 +26,7 @@ public abstract class AbstractNamedGradleEntity extends AbstractGradleEntity imp
   public void setName(@NotNull String name) {
     String oldName = myName;
     myName = name;
-    firePropertyChange(Named.NAME_PROPERTY, oldName, name);
+    firePropertyChange(NAME_PROPERTY, oldName, name);
   }
 
   @Override
