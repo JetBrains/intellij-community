@@ -37,7 +37,6 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
 import java.io.IOException;
-import java.text.MessageFormat;
 import java.util.*;
 
 /**
@@ -144,7 +143,7 @@ public class MavenExternalParameters {
       parametersList.add(goal);
     }
 
-    addOption(parametersList, "P", encodeProfiles(parameters.getProfiles()));
+    addOption(parametersList, "P", encodeProfiles(parameters.getProfilesMap()));
   }
 
   private static void addOption(ParametersList cmdList, @NonNls String key, @NonNls String value) {
@@ -233,13 +232,16 @@ public class MavenExternalParameters {
     }
   }
 
-  private static String encodeProfiles(final Collection<String> profiles) {
-    final StringBuilder stringBuilder = new StringBuilder();
-    for (String profile : profiles) {
+  private static String encodeProfiles(Map<String, Boolean> profiles) {
+    StringBuilder stringBuilder = new StringBuilder();
+    for (Map.Entry<String, Boolean> entry : profiles.entrySet()) {
       if (stringBuilder.length() != 0) {
         stringBuilder.append(",");
       }
-      stringBuilder.append(profile);
+      if (!entry.getValue()) {
+        stringBuilder.append("-");
+      }
+      stringBuilder.append(entry.getKey());
     }
     return stringBuilder.toString();
   }
