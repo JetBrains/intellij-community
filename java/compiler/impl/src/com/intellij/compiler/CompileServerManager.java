@@ -76,6 +76,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.RunnableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -130,17 +131,22 @@ public class CompileServerManager implements ApplicationComponent{
             @Override
             public void run() {
               if (!myAutoMakeInProgress.getAndSet(true)) {
-                ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-                  @Override
-                  public void run() {
-                    try {
-                      runAutoMake();
+                try {
+                  ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+                    @Override
+                    public void run() {
+                      try {
+                        runAutoMake();
+                      }
+                      finally {
+                        myAutoMakeInProgress.set(false);
+                      }
                     }
-                    finally {
-                      myAutoMakeInProgress.set(false);
-                    }
-                  }
-                });
+                  });
+                }
+                catch (RejectedExecutionException ignored) {
+                  // we were shut down
+                }
               }
               else {
                 scheduleMake(this);
