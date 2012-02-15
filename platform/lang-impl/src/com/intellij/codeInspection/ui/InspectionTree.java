@@ -25,6 +25,7 @@ package com.intellij.codeInspection.ui;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ex.CommonInspectionToolWrapper;
 import com.intellij.codeInspection.ex.DescriptorProviderInspection;
 import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.codeInspection.reference.RefElement;
@@ -163,7 +164,7 @@ public class InspectionTree extends Tree {
 
   public CommonProblemDescriptor[] getSelectedDescriptors() {
     final InspectionTool tool = getSelectedTool();
-    if (getSelectionCount() == 0 || !(tool instanceof DescriptorProviderInspection)) return EMPTY_DESCRIPTORS;
+    if (getSelectionCount() == 0 || !(tool instanceof DescriptorProviderInspection && !(tool instanceof CommonInspectionToolWrapper))) return EMPTY_DESCRIPTORS;
     final TreePath[] paths = getSelectionPaths();
     final LinkedHashSet<CommonProblemDescriptor> descriptors = new LinkedHashSet<CommonProblemDescriptor>();
     for (TreePath path : paths) {

@@ -18,7 +18,6 @@ package com.intellij.codeInspection.ex;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.*;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.notification.Notification;
@@ -314,45 +313,5 @@ public class InspectionToolRegistrar {
                                                   message, NotificationType.ERROR));
       }
     });
-  }
-
-  private static class CommonInspectionToolWrapper extends InspectionToolWrapper<InspectionTool, InspectionEP> {
-    public CommonInspectionToolWrapper(InspectionEP ep) {
-      super(ep);
-    }
-
-    private CommonInspectionToolWrapper(InspectionTool tool) {
-      super(tool);
-    }
-
-    private CommonInspectionToolWrapper(InspectionEP ep, InspectionTool tool) {
-      super(ep, tool);
-    }
-
-    @Override
-    public CommonInspectionToolWrapper createCopy(InspectionToolWrapper<InspectionTool, InspectionEP> from) {
-      return new CommonInspectionToolWrapper(from.myEP, from.myTool);
-    }
-
-    @Override
-    public void runInspection(@NotNull AnalysisScope scope, @NotNull InspectionManager manager) {
-      getTool().runInspection(scope, manager);
-    }
-
-    @Override
-    public void initialize(@NotNull GlobalInspectionContextImpl context) {
-      getTool().initialize(context);
-    }
-
-    @NotNull
-    @Override
-    public JobDescriptor[] getJobDescriptors(GlobalInspectionContext globalInspectionContext) {
-      return getTool().getJobDescriptors(globalInspectionContext);
-    }
-
-    @Override
-    public boolean isGraphNeeded() {
-      return getTool().isGraphNeeded();
-    }
   }
 }

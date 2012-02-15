@@ -116,7 +116,7 @@ class Browser extends JPanel {
   private void showPageFromHistory(RefEntity newEntity) {
     InspectionTool tool = getTool(newEntity);
     try {
-      if (tool instanceof DescriptorProviderInspection) {
+      if (tool instanceof DescriptorProviderInspection && !(tool instanceof CommonInspectionToolWrapper)) {
         showEmpty();
       }
       else {
