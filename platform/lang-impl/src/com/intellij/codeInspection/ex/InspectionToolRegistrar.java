@@ -349,5 +349,10 @@ public class InspectionToolRegistrar {
     public JobDescriptor[] getJobDescriptors(GlobalInspectionContext globalInspectionContext) {
       return getTool().getJobDescriptors(globalInspectionContext);
     }
+
+    @Override
+    public boolean isGraphNeeded() {
+      return getTool().isGraphNeeded();
+    }
   }
 }
