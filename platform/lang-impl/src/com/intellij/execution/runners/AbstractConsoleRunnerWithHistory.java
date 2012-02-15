@@ -255,7 +255,6 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
 
   public static class ConsoleExecuteAction extends DumbAwareAction {
     public static final String ACTIONS_EXECUTE_ICON = "/actions/execute.png";
-    public static final String CONSOLE_EXECUTE = "Console.Execute";
 
     private final LanguageConsoleImpl myLanguageConsole;
     private final ProcessHandler myProcessHandler;
@@ -270,7 +269,7 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
       myLanguageConsole = languageConsole;
       myProcessHandler = processHandler;
       myConsoleExecuteActionHandler = consoleExecuteActionHandler;
-      EmptyAction.setupAction(this, CONSOLE_EXECUTE, null);
+      EmptyAction.setupAction(this, consoleExecuteActionHandler.getEmptyExecuteAction(), null);
     }
 
     public void actionPerformed(final AnActionEvent e) {

@@ -31,7 +31,10 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.*;
+import com.intellij.openapi.projectRoots.JavaSdkType;
+import com.intellij.openapi.projectRoots.JdkUtil;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesAlphaComparator;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -185,6 +188,11 @@ public class GroovyShellAction extends DumbAwareAction {
             @Override
             public void processLine(String line) {
               super.processLine(StringUtil.replace(line, "\n", "###\\n"));
+            }
+
+            @Override
+            public String getEmptyExecuteAction() {
+              return "Groovy.Shell.Execute";
             }
           };
           new ConsoleHistoryController("Groovy Shell", null, getLanguageConsole(), handler.getConsoleHistoryModel()).install();
