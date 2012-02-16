@@ -25,31 +25,6 @@ import java.util.*;
 public class SetupTaskIntrospector {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.packaging.setupPy.SetupTaskIntrospector");
 
-  public static class SetupTaskOption {
-    public final String name;
-    public final String description;
-    public final boolean checkbox;
-    public final boolean negative;
-
-    private SetupTaskOption(String name, String description, boolean checkbox, boolean negative) {
-      this.name = name;
-      this.description = description;
-      this.checkbox = checkbox;
-      this.negative = negative;
-    }
-  }
-
-  private static class SetupTask {
-    private final String name;
-    private String description;
-    private final List<SetupTaskOption> options = new ArrayList<SetupTaskOption>();
-
-    private SetupTask(String name) {
-      this.name = name;
-      description = name;
-    }
-  }
-
   private static final Map<String, List<SetupTask>> ourDistutilsTaskCache = new HashMap<String, List<SetupTask>>();
   private static final Map<String, List<SetupTask>> ourSetuptoolsTaskCache = new HashMap<String, List<SetupTask>>();
 
@@ -57,7 +32,7 @@ public class SetupTaskIntrospector {
     List<AnAction> result = new ArrayList<AnAction>();
     try {
       for (SetupTask task : getTaskList(module, usesSetuptools(setupPyFile))) {
-        result.add(new RunSetupTaskAction(task.name, task.name.replace("_", "__") + " (" + task.description + ")"));
+        result.add(new RunSetupTaskAction(task.getName(), task.getName().replace("_", "__") + " (" + task.getDescription() + ")"));
       }
     }
     catch (Exception e) {
@@ -86,11 +61,11 @@ public class SetupTaskIntrospector {
   }
 
   @Nullable
-  public static List<SetupTaskOption> getSetupTaskOptions(Module module, String taskName) {
+  public static List<SetupTask.Option> getSetupTaskOptions(Module module, String taskName) {
     final PyFile setupPy = PyPackageUtil.findSetupPy(module);
     for (SetupTask task : getTaskList(module, setupPy != null && usesSetuptools(setupPy))) {
-      if (task.name.equals(taskName)) {
-        return task.options;
+      if (task.getName().equals(taskName)) {
+        return task.getOptions();
       }
     }
     return null;
@@ -139,7 +114,7 @@ public class SetupTaskIntrospector {
       if (description != null) {
         final String descriptionText = PyUtil.strValue(PyUtil.flattenParens(description.findAssignedValue()));
         if (descriptionText != null) {
-          task.description = descriptionText;
+          task.setDescription(descriptionText);
         }
       }
 
@@ -161,9 +136,9 @@ public class SetupTaskIntrospector {
 
       final List<PyExpression> userOptions = resolveSequenceValue(taskClass, "user_options");
       for (PyExpression element : userOptions) {
-        final SetupTaskOption option = createOptionFromTuple(element, booleanOptionsList, negativeOptMap);
+        final SetupTask.Option option = createOptionFromTuple(element, booleanOptionsList, negativeOptMap);
         if (option != null) {
-          task.options.add(option);
+          task.addOption(option);
         }
       }
     }
@@ -213,7 +188,7 @@ public class SetupTaskIntrospector {
   }
 
   @Nullable
-  private static SetupTaskOption createOptionFromTuple(PyExpression tuple, List<String> booleanOptions, Map<String, String> negativeOptMap) {
+  private static SetupTask.Option createOptionFromTuple(PyExpression tuple, List<String> booleanOptions, Map<String, String> negativeOptMap) {
     tuple = PyUtil.flattenParens(tuple);
     if (tuple instanceof PyTupleExpression) {
       final PyExpression[] elements = ((PyTupleExpression)tuple).getElements();
@@ -235,7 +210,7 @@ public class SetupTaskIntrospector {
               }
             }
           }
-          return new SetupTaskOption(name, StringUtil.capitalize(description), checkbox, negative);
+          return new SetupTask.Option(name, StringUtil.capitalize(description), checkbox, negative);
         }
       }
     }

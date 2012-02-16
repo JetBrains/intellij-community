@@ -32,7 +32,7 @@ public class RunSetupTaskAction extends AnAction {
     if (module == null) return;
     final PyFile setupPy = PyPackageUtil.findSetupPy(module);
     try {
-      final List<SetupTaskIntrospector.SetupTaskOption> options = SetupTaskIntrospector.getSetupTaskOptions(module, myTaskName);
+      final List<SetupTask.Option> options = SetupTaskIntrospector.getSetupTaskOptions(module, myTaskName);
       List<String> parameters = new ArrayList<String>();
       parameters.add(myTaskName);
       if (options != null) {

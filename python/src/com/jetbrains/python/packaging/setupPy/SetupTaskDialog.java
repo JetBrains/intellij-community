@@ -16,19 +16,19 @@ import java.util.Map;
  */
 public class SetupTaskDialog extends DialogWrapper {
   private JPanel myOptionsPanel;
-  private Map<SetupTaskIntrospector.SetupTaskOption, JComponent> myOptionComponents = new LinkedHashMap<SetupTaskIntrospector.SetupTaskOption, JComponent>();
+  private Map<SetupTask.Option, JComponent> myOptionComponents = new LinkedHashMap<SetupTask.Option, JComponent>();
 
-  protected SetupTaskDialog(Project project, String taskName, List<SetupTaskIntrospector.SetupTaskOption> options) {
+  protected SetupTaskDialog(Project project, String taskName, List<SetupTask.Option> options) {
     super(project, true);
     myOptionsPanel = new JPanel(new GridBagLayout());
     GridBagConstraints constraints = new GridBagConstraints(0, 0, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.BOTH,
                                                             new Insets(0, 0, 0, 0), 4, 4);
-    for (SetupTaskIntrospector.SetupTaskOption option : options) {
+    for (SetupTask.Option option : options) {
       if (!option.checkbox) {
         addComponent(constraints, option);
       }
     }
-    for (SetupTaskIntrospector.SetupTaskOption option : options) {
+    for (SetupTask.Option option : options) {
       if (option.checkbox) {
         addComponent(constraints, option);
       }
@@ -37,14 +37,14 @@ public class SetupTaskDialog extends DialogWrapper {
     setTitle("Run Setup Task " + taskName);
   }
 
-  private void addComponent(GridBagConstraints constraints, SetupTaskIntrospector.SetupTaskOption option) {
+  private void addComponent(GridBagConstraints constraints, SetupTask.Option option) {
     JComponent component = createOptionComponent(option);
     myOptionsPanel.add(component, constraints);
     myOptionComponents.put(option, component);
     constraints.gridy++;
   }
 
-  private static JComponent createOptionComponent(SetupTaskIntrospector.SetupTaskOption option) {
+  private static JComponent createOptionComponent(SetupTask.Option option) {
     if (option.checkbox) {
       return new JCheckBox(option.description, option.negative);
     }
@@ -67,8 +67,8 @@ public class SetupTaskDialog extends DialogWrapper {
 
   public List<String> getCommandLine() {
     List<String> result = new ArrayList<String>();
-    for (Map.Entry<SetupTaskIntrospector.SetupTaskOption, JComponent> entry : myOptionComponents.entrySet()) {
-      final SetupTaskIntrospector.SetupTaskOption option = entry.getKey();
+    for (Map.Entry<SetupTask.Option, JComponent> entry : myOptionComponents.entrySet()) {
+      final SetupTask.Option option = entry.getKey();
       if (option.checkbox) {
         JCheckBox checkBox = (JCheckBox) entry.getValue();
         if (checkBox.isSelected() != option.negative) {
