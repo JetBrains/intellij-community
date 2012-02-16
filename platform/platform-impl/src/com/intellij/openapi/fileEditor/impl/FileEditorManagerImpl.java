@@ -1686,10 +1686,15 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
       if (pair.second.getFiles().length == 0) {
         final EditorWindow[] windows = pair.second.getOwner().getWindows();
         if (windows.length > 0 && windows[0] != null && windows[0].getFiles().length > 0) {
-          copy.add(Pair.create(pair.first, windows[0]));
+          final Pair<VirtualFile, EditorWindow> p = Pair.create(pair.first, windows[0]);
+          if (!copy.contains(p)) {
+            copy.add(p);
+          }
         }
       } else {
-        copy.add(pair);
+        if (!copy.contains(pair)) {
+          copy.add(pair);
+        }
       }
     }
     mySelectionHistory.clear();
