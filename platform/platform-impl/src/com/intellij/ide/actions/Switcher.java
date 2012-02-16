@@ -17,7 +17,6 @@ package com.intellij.ide.actions;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.IdeEventQueue;
-import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.markup.EffectType;
@@ -85,7 +84,7 @@ public class Switcher extends AnAction implements DumbAware {
     public void run() {
       synchronized (Switcher.class) {
         if (SWITCHER != null) {
-          SWITCHER.navigate();
+          //SWITCHER.navigate();
         }
       }
     }
@@ -112,8 +111,8 @@ public class Switcher extends AnAction implements DumbAware {
           if (event.getID() == KEY_RELEASED && keyEvent.getKeyCode() == CTRL_KEY) {
            SwingUtilities.invokeLater(CHECKER);
           } else if (event.getID() == KEY_PRESSED && (tw = SWITCHER.twShortcuts.get(String.valueOf((char)keyEvent.getKeyCode()))) != null) {
-            SWITCHER.myPopup.closeOk(null);
-            tw.activate(null, true, true);
+            //SWITCHER.myPopup.closeOk(null);
+            //tw.activate(null, true, true);
           }
         }
         return false;
@@ -149,7 +148,7 @@ public class Switcher extends AnAction implements DumbAware {
   }
 
   private class SwitcherPanel extends JPanel implements KeyListener, MouseListener, MouseMotionListener {
-    public final int MAX_FILES = UISettings.getInstance().EDITOR_TAB_LIMIT;
+    private static final int MAX_FILES_IN_SWITCHER = 30;
     final JBPopup myPopup;
     final Map<ToolWindow, String> ids = new HashMap<ToolWindow, String>();
     final JList toolWindows;
@@ -269,7 +268,7 @@ public class Switcher extends AnAction implements DumbAware {
           filesData.add(0, editors.get(0));
         }
       } else {
-        for (int i = 0; i < Math.min(MAX_FILES, editors.size()); i++) {
+        for (int i = 0; i < Math.min(MAX_FILES_IN_SWITCHER, editors.size()); i++) {
           filesData.add(editors.get(i));
         }
       }
