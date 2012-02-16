@@ -35,7 +35,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.*;
 
-class ClassPath {
+public class ClassPath {
   private final Stack<URL> myUrls = new Stack<URL>();
   private final ArrayList<Loader> myLoaders = new ArrayList<Loader>();
   private final HashMap<URL,Loader> myLoadersMap = new HashMap<URL, Loader>();
