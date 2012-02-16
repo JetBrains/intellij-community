@@ -84,7 +84,7 @@ public class Switcher extends AnAction implements DumbAware {
     public void run() {
       synchronized (Switcher.class) {
         if (SWITCHER != null) {
-          //SWITCHER.navigate();
+          SWITCHER.navigate();
         }
       }
     }
@@ -111,8 +111,8 @@ public class Switcher extends AnAction implements DumbAware {
           if (event.getID() == KEY_RELEASED && keyEvent.getKeyCode() == CTRL_KEY) {
            SwingUtilities.invokeLater(CHECKER);
           } else if (event.getID() == KEY_PRESSED && (tw = SWITCHER.twShortcuts.get(String.valueOf((char)keyEvent.getKeyCode()))) != null) {
-            //SWITCHER.myPopup.closeOk(null);
-            //tw.activate(null, true, true);
+            SWITCHER.myPopup.closeOk(null);
+            tw.activate(null, true, true);
           }
         }
         return false;
