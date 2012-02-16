@@ -154,6 +154,8 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
 
   public boolean USE_SAME_INDENTS = false;
 
+  public boolean IGNORE_SAME_INDENTS_FOR_LANGUAGES = false;
+
   @Deprecated
   public final IndentOptions JAVA_INDENT_OPTIONS = new IndentOptions();
   @Deprecated
@@ -611,6 +613,8 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
       copyOldIndentOptions("jsp", JSP_INDENT_OPTIONS);
       copyOldIndentOptions("xml", XML_INDENT_OPTIONS);
     }
+
+    if (USE_SAME_INDENTS) IGNORE_SAME_INDENTS_FOR_LANGUAGES = true;
   }
 
   private void copyOldIndentOptions(@NonNls final String extension, final IndentOptions options) {
