@@ -13,7 +13,6 @@ import org.jetbrains.plugins.gradle.config.GradleTextAttributes;
 import org.jetbrains.plugins.gradle.diff.*;
 import org.jetbrains.plugins.gradle.model.GradleEntityType;
 import org.jetbrains.plugins.gradle.model.id.*;
-import org.jetbrains.plugins.gradle.ui.GradleIcons;
 import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNode;
 import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNodeDescriptor;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -77,14 +76,14 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
     myModules.clear();
 
     GradleProjectId projectId = GradleEntityIdMapper.mapEntityToId(getProject());
-    GradleProjectStructureNode<GradleProjectId> root = buildNode(projectId, getProject().getName(), myPlatformFacade.getProjectIcon());
+    GradleProjectStructureNode<GradleProjectId> root = buildNode(projectId, getProject().getName());
     final Collection<Module> modules = myPlatformFacade.getModules(getProject());
     final List<GradleProjectStructureNode<?>> dependencies = new ArrayList<GradleProjectStructureNode<?>>();
     RootPolicy<Object> visitor = new RootPolicy<Object>() {
       @Override
       public Object visitModuleOrderEntry(ModuleOrderEntry moduleOrderEntry, Object value) {
         GradleModuleDependencyId id = GradleEntityIdMapper.mapEntityToId(moduleOrderEntry);
-        dependencies.add(buildNode(id, moduleOrderEntry.getModuleName(), GradleIcons.MODULE_ICON));
+        dependencies.add(buildNode(id, moduleOrderEntry.getModuleName()));
         return value;
       }
 
@@ -94,14 +93,14 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
           return value;
         }
         GradleLibraryDependencyId id = GradleEntityIdMapper.mapEntityToId(libraryOrderEntry);
-        dependencies.add(buildNode(id, id.getLibraryName(), GradleIcons.LIB_ICON));
+        dependencies.add(buildNode(id, id.getLibraryName()));
         return value;
       }
     };
     for (Module module : modules) {
       dependencies.clear();
       final GradleModuleId moduleId = GradleEntityIdMapper.mapEntityToId(module);
-      final GradleProjectStructureNode<GradleModuleId> moduleNode = buildNode(moduleId, moduleId.getModuleName(), GradleIcons.MODULE_ICON);
+      final GradleProjectStructureNode<GradleModuleId> moduleNode = buildNode(moduleId, moduleId.getModuleName());
       myModules.put(module.getName(), moduleNode); // Assuming that module names are unique.
       root.add(moduleNode);
       for (OrderEntry orderEntry : myPlatformFacade.getOrderEntries(module)) {
@@ -129,10 +128,9 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
     return new GradleProjectStructureNodeDescriptor<T>(entity, name, icon);
   }
 
-  private <T extends GradleEntityId> GradleProjectStructureNode<T> buildNode(@NotNull T entityId,
-                                                                                    @NotNull String name,
-                                                                                    @NotNull Icon icon)
-  {
+  private <T extends GradleEntityId> GradleProjectStructureNode<T> buildNode(@NotNull T entityId, @NotNull String name) {
+    final Icon icon = entityId.getType().getIcon();
+    assert icon != null;
     final GradleProjectStructureNode<T> result
       = new GradleProjectStructureNode<T>(buildDescriptor(entityId, name, icon), entityId.getType());
     result.addListener(myNodeListener);
@@ -157,7 +155,7 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
   private GradleProjectStructureNode<GradleModuleId> getModuleNode(@NotNull GradleModuleId id) {
     GradleProjectStructureNode<GradleModuleId> moduleNode = myModules.get(id.getModuleName());
     if (moduleNode == null) {
-      moduleNode = buildNode(id, id.getModuleName(), GradleIcons.MODULE_ICON);
+      moduleNode = buildNode(id, id.getModuleName());
       myModules.put(id.getModuleName(), moduleNode);
       ((GradleProjectStructureNode<?>)root).add(moduleNode);
     }
@@ -231,7 +229,7 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
         return;
       }
     }
-    GradleProjectStructureNode<GradleLibraryDependencyId> newNode = buildNode(id, id.getLibraryName(), GradleIcons.LIB_ICON);
+    GradleProjectStructureNode<GradleLibraryDependencyId> newNode = buildNode(id, id.getLibraryName());
     newNode.getDescriptor().setAttributes(attributes);
     dependenciesNode.add(newNode);
     nodeStructureChanged(dependenciesNode);
