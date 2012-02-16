@@ -11,16 +11,17 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.util.Function;
-import com.jetbrains.python.packaging.PyExternalProcessException;
-import com.jetbrains.python.packaging.PyPackage;
-import com.jetbrains.python.packaging.PyPackageManager;
-import com.jetbrains.python.packaging.PyRequirement;
-import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.codeInsight.stdlib.PyStdlibUtil;
+import com.jetbrains.python.packaging.*;
+import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -64,6 +65,63 @@ public class PyPackageRequirementsInspection extends PyInspection {
                                        requirementsToString(unsatisfied),
                                        plural ? "are" : "is");
             registerProblem(node, msg, new InstallRequirementsFix(module, sdk, unsatisfied));
+          }
+        }
+      }
+    }
+
+    @Override
+    public void visitPyFromImportStatement(PyFromImportStatement node) {
+      final PyReferenceExpression expr = node.getImportSource();
+      if (expr != null) {
+        checkPackageNameInRequirements(expr);
+      }
+    }
+
+    @Override
+    public void visitPyImportStatement(PyImportStatement node) {
+      for (PyImportElement element : node.getImportElements()) {
+        final PyReferenceExpression expr = element.getImportReferenceExpression();
+        if (expr != null) {
+          checkPackageNameInRequirements(expr);
+        }
+      }
+    }
+
+    private void checkPackageNameInRequirements(@NotNull PyQualifiedExpression importedExpression) {
+      final List<PyExpression> expressions = PyResolveUtil.unwindQualifiers(importedExpression);
+      if (!expressions.isEmpty()) {
+        final PyExpression packageReference = expressions.get(0);
+        final String packageName = packageReference.getName();
+        if (packageName != null) {
+          final Collection<String> stdlibPackages = PyStdlibUtil.getPackages();
+          if (stdlibPackages != null) {
+            for (String name : stdlibPackages) {
+              if (packageName.equals(name)) {
+                return;
+              }
+            }
+          }
+          final Module module = ModuleUtil.findModuleForPsiElement(packageReference);
+          if (module != null) {
+            final List<PyRequirement> requirements = PyPackageManager.getRequirements(module);
+            if (requirements != null) {
+              for (PyRequirement req : requirements) {
+                if (packageName.equalsIgnoreCase(req.getName())) {
+                  return;
+                }
+              }
+              final PyQualifiedName packageQName = PyQualifiedName.fromComponents(packageName);
+              for (String name : PyPackageUtil.getPackageNames(module)) {
+                final PyQualifiedName qname = PyQualifiedName.fromDottedString(name);
+                if (qname.matchesPrefix(packageQName)) {
+                  return;
+                }
+              }
+              // TODO: User-adjustable ignore settings for this inspection: maybe the "Ignore imported package 'foo'" quickfix
+              // TODO: Quickfix for adding a requirement
+              registerProblem(packageReference, String.format("Package '%s' is not listed in project requirements", packageName));
+            }
           }
         }
       }
