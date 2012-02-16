@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
@@ -79,8 +80,12 @@ class JavaResolveSnapshot extends ResolveSnapshotProvider.ResolveSnapshot {
             PsiTreeUtil.isAncestor(refereeClass, referentClass, false)) {
           if (refereeClass == referentClass ||
               refereeClass.getName() != null) {  //otherwise cannot qualify anonymous referee class
-            @NonNls String qualifer = refereeClass == referentClass ? "this" :
-                refereeClass.getName() + ".this";
+            @NonNls String qualifer;
+            if (RefactoringUtil.isInStaticContext(ref, refereeClass)) {
+              qualifer = refereeClass.getName();
+            } else {
+              qualifer = refereeClass == referentClass ? "this" : refereeClass.getName() + ".this";
+            }
             String qualifiedRefText = qualifer + "." + ref.getText();
             PsiElementFactory elementFactory = JavaPsiFacade.getInstance(referentClass.getProject()).getElementFactory();
             try {
