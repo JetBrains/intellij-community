@@ -18,6 +18,7 @@ package com.intellij.ide.ui;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExportableApplicationComponent;
@@ -159,8 +160,8 @@ public class UISettings implements PersistentStateComponent<UISettings>, Exporta
    * @return UISettings instance or default values
    */
   public static UISettings getShadowInstance() {
-    UISettings instance = getInstance();
-    return instance == null ? new UISettings() : instance;
+    Application application = ApplicationManager.getApplication();
+    return application != null ? getInstance() : new UISettings();
   }
 
   public void removeUISettingsListener(UISettingsListener listener){

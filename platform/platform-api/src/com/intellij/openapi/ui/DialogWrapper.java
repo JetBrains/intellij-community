@@ -499,8 +499,7 @@ public abstract class DialogWrapper {
   }
 
   private JPanel createButtons(Action[] actions, List<JButton> buttons) {
-    UISettings uiSettings = UISettings.getInstance();
-    if (uiSettings != null && !uiSettings.ALLOW_MERGE_BUTTONS) {
+    if (!UISettings.getShadowInstance().ALLOW_MERGE_BUTTONS) {
       final List<Action> actionList = new ArrayList<Action>();
       for (Action action : actions) {
         actionList.add(action);
@@ -553,8 +552,7 @@ public abstract class DialogWrapper {
    */
   protected JButton createJButtonForAction(Action action) {
     JButton button;
-    UISettings uiSettings = UISettings.getInstance();
-    if (action instanceof OptionAction && uiSettings != null && uiSettings.ALLOW_MERGE_BUTTONS) {
+    if (action instanceof OptionAction && UISettings.getShadowInstance().ALLOW_MERGE_BUTTONS) {
       final Action[] options = ((OptionAction)action).getOptions();
       button = new JBOptionButton(action, options);
       final JBOptionButton eachOptionsButton = (JBOptionButton)button;
