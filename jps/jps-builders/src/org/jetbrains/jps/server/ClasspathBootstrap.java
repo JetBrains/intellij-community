@@ -64,6 +64,24 @@ public class ClasspathBootstrap {
     }
   }
 
+  private static class OptimizedFileManager17ClassHolder {
+    static final String CLASS_NAME = "org.jetbrains.jps.javac.OptimizedFileManager17";
+    static final Class<StandardJavaFileManager> managerClass;
+    static {
+      Class<StandardJavaFileManager> aClass = null;
+      try {
+        aClass = (Class<StandardJavaFileManager>)Class.forName(CLASS_NAME);
+      }
+      catch (Throwable e) {
+        aClass = null;
+      }
+      managerClass = aClass;
+    }
+
+    private OptimizedFileManager17ClassHolder() {
+    }
+  }
+
   private ClasspathBootstrap() {
   }
 
@@ -150,7 +168,11 @@ public class ClasspathBootstrap {
 
   @Nullable
   public static Class<StandardJavaFileManager> getOptimizedFileManagerClass() {
-    return OptimizedFileManagerClassHolder.managerClass;
+    final Class<StandardJavaFileManager> aClass = OptimizedFileManagerClassHolder.managerClass;
+    if (aClass != null) {
+      return aClass;
+    }
+    return OptimizedFileManager17ClassHolder.managerClass;
   }
 
   public static File getResourcePath(Class aClass) {
