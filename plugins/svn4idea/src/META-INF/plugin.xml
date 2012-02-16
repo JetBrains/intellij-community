@@ -115,6 +115,7 @@
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
+    <vcsCheckinHandlerFactory implementation="org.jetbrains.idea.svn17.checkin.SvnCheckinHandlerFactory"/>
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <checkoutProvider implementation="org.jetbrains.idea.svn17.checkout.SvnCheckoutProvider"/>
     <applicationService serviceInterface="org.jetbrains.idea.svn17.SvnApplicationSettings17"

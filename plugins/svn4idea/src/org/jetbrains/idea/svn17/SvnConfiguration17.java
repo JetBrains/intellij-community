@@ -85,6 +85,7 @@ public class SvnConfiguration17 implements PersistentStateComponent<Element> {
   private boolean myIsUseDefaultProxy;
   private ISVNOptions myOptions;
   private boolean myIsKeepLocks;
+  private boolean myAutoUpdateAfterCommit;
   private boolean myRemoteStatus;
   private final Project myProject;
   private SvnAuthenticationManager myAuthManager;
@@ -402,6 +403,10 @@ public class SvnConfiguration17 implements PersistentStateComponent<Element> {
         }
       }
     }
+    final Attribute autoUpdateAfterCommit = element.getAttribute("myAutoUpdateAfterCommit");
+    if (autoUpdateAfterCommit != null) {
+      myAutoUpdateAfterCommit = Boolean.parseBoolean(autoUpdateAfterCommit.getValue());
+    }
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -435,6 +440,15 @@ public class SvnConfiguration17 implements PersistentStateComponent<Element> {
     }
     element.setAttribute("maxAnnotateRevisions", "" + myMaxAnnotateRevisions);
     element.setAttribute("myUseAcceleration", "" + myUseAcceleration);
+    element.setAttribute("myAutoUpdateAfterCommit", "" + myAutoUpdateAfterCommit);
+  }
+
+  public boolean isAutoUpdateAfterCommit() {
+    return myAutoUpdateAfterCommit;
+  }
+
+  public void setAutoUpdateAfterCommit(boolean autoUpdateAfterCommit) {
+    myAutoUpdateAfterCommit = autoUpdateAfterCommit;
   }
 
   public boolean isKeepLocks() {

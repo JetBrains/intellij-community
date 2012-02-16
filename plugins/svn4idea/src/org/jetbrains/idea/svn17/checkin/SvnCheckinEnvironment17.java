@@ -379,13 +379,16 @@ public class SvnCheckinEnvironment17 implements CheckinEnvironment {
     private final JCheckBox myKeepLocksBox;
     private boolean myIsKeepLocks;
     private final JPanel myPanel;
+    private final JCheckBox myAutoUpdate;
 
     public KeepLocksComponent(final Refreshable panel) {
 
       myPanel = new JPanel(new BorderLayout());
       myKeepLocksBox = new JCheckBox(SvnBundle.message("checkbox.chckin.keep.files.locked"));
       myKeepLocksBox.setSelected(myIsKeepLocks);
+      myAutoUpdate = new JCheckBox("Auto-update after commit");
 
+      myPanel.add(myAutoUpdate, BorderLayout.NORTH);
       myPanel.add(myKeepLocksBox, BorderLayout.CENTER);
     }
 
@@ -397,15 +400,23 @@ public class SvnCheckinEnvironment17 implements CheckinEnvironment {
       return myKeepLocksBox != null && myKeepLocksBox.isSelected();
     }
 
+    public boolean isAutoUpdate() {
+      return myAutoUpdate != null && myAutoUpdate.isSelected();
+    }
+
     public void refresh() {
     }
 
     public void saveState() {
-      mySvnVcs.getSvnConfiguration().setKeepLocks(isKeepLocks());
+      final SvnConfiguration17 configuration = mySvnVcs.getSvnConfiguration();
+      configuration.setKeepLocks(isKeepLocks());
+      configuration.setAutoUpdateAfterCommit(isAutoUpdate());
     }
 
     public void restoreState() {
-      myIsKeepLocks = mySvnVcs.getSvnConfiguration().isKeepLocks();
+      final SvnConfiguration17 configuration = mySvnVcs.getSvnConfiguration();
+      myIsKeepLocks = configuration.isKeepLocks();
+      myAutoUpdate.setSelected(configuration.isAutoUpdateAfterCommit());
     }
   }
 
