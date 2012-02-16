@@ -274,6 +274,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
 
     final VirtualFile[] selectedFiles = getSelectedFiles();
     if (selectedFiles.length == 0) {
+      myChosenFiles = VirtualFile.EMPTY_ARRAY;
       close(CANCEL_EXIT_CODE);
       return;
     }

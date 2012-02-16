@@ -16,7 +16,6 @@
 package com.intellij.openapi.fileChooser;
 
 import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.StringBuilderSpinAllocator;
@@ -58,12 +57,11 @@ public class FileElement {
       try {
         FileElement element = this;
         while (element != null) {
-          sb.insert(0, element.myName);
-          if (element.myParent == null && SystemInfo.isWindows) {
-            sb.insert(element.myName.length(), File.separator);
+          if (element.myParent != null || !element.myName.equals(File.separator)) {
+            sb.insert(0, element.myName);
           }
           element = element.myParent;
-          if (element != null && element.myParent != null) {
+          if (element != null) {
             sb.insert(0, File.separator);
           }
         }
