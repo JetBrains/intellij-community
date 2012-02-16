@@ -33,6 +33,7 @@ public class GrParameterInfo implements JavaParameterInfo {
   private final String myDefaultInitializer;
   private final int myPosition;
   private CanonicalTypes.Type myTypeWrapper;
+  private final boolean myUseAnySingleVariable;
 
   public GrParameterInfo(GrParameter parameter, int position) {
     myPosition = position;
@@ -52,17 +53,20 @@ public class GrParameterInfo implements JavaParameterInfo {
       myDefaultInitializer = "";
     }
     myDefaultValue = "";
+    myUseAnySingleVariable = false;
   }
 
   public GrParameterInfo(@NotNull String name,
                          @Nullable String defaultValue,
                          @Nullable String defaultInitializer,
                          @Nullable PsiType type,
-                         int position) {
+                         int position,
+                         boolean useAnySingleVariable) {
     myName = name;
     myDefaultValue = defaultValue;
     myDefaultInitializer = defaultInitializer;
     myPosition = position;
+    myUseAnySingleVariable = useAnySingleVariable;
     if (type != null) {
       myTypeWrapper = CanonicalTypes.createTypeWrapper(type);
     }
@@ -111,7 +115,7 @@ public class GrParameterInfo implements JavaParameterInfo {
   }
 
   public boolean isUseAnySingleVariable() {
-    return false;
+    return myUseAnySingleVariable;
   }
 
   @Override

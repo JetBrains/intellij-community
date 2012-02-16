@@ -587,6 +587,19 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     return refElements[0];
   }
 
+  @Override
+  public GrThisReferenceExpression createThisExpression(PsiManager manager, @Nullable PsiClass psiClass) {
+    final String text;
+    if (psiClass == null) {
+      text = "this";
+    }
+    else {
+      text = psiClass.getQualifiedName() + ".this";
+    }
+    final GroovyFileImpl dummy = createDummyFile(text);
+    return (GrThisReferenceExpression)dummy.getStatements()[0];
+  }
+
   public GrImportStatement createImportStatementFromText(String qName, boolean isStatic, boolean isOnDemand, String alias) {
     final String text = "import " + (isStatic ? "static " : "") + qName + (isOnDemand ? ".*" : "") +
         (alias != null && alias.length() > 0 ? " as " + alias : "");

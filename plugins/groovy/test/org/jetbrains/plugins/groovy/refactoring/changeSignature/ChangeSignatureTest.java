@@ -229,6 +229,10 @@ public class ChangeSignatureTest extends ChangeSignatureTestCase {
     doTest(new SimpleInfo("newName", 0));
   }
 
+  public void testFeelLucky() {
+    doTest(new SimpleInfo("lucky", -1, "defValue", "defInit", String.class.getName(), true));
+  }
+
   private PsiType createType(String typeText) {
     return JavaPsiFacade.getElementFactory(getProject()).createTypeByFQClassName(typeText, GlobalSearchScope.allScope(getProject()));
   }
