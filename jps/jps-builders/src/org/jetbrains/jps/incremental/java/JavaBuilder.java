@@ -25,7 +25,6 @@ import org.jetbrains.jps.api.RequestFuture;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
-import org.jetbrains.jps.incremental.messages.FileGeneratedEvent;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.SourceToFormMapping;
@@ -268,14 +267,15 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
         context.checkCanceled();
 
-        final ClassLoader compiledClassesLoader = createInstrumentationClassLoader(classpath, platformCp, chunkSourcePath, outputSink);
+        final InstrumentationClassFinder finder = createInstrumentationClassFinder(platformCp, classpath, outputSink);
 
         context.checkCanceled();
 
         if (!forms.isEmpty()) {
           try {
             context.processMessage(new ProgressMessage("Instrumenting forms [" + chunkName + "]"));
-            instrumentForms(context, chunk, chunkSourcePath, compiledClassesLoader, forms, outputSink);
+            final ClassLoader loader = createInstrumentationClassLoader(platformCp, classpath, chunkSourcePath, outputSink);
+            instrumentForms(context, chunk, chunkSourcePath, loader, finder, forms, outputSink);
           }
           finally {
             context.processMessage(new ProgressMessage("Finished instrumenting forms [" + chunkName + "]"));
@@ -287,7 +287,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         if (addNotNullAssertions) {
           try {
             context.processMessage(new ProgressMessage("Adding NotNull assertions [" + chunkName + "]"));
-            instrumentNotNull(context, outputSink, compiledClassesLoader);
+            instrumentNotNull(context, outputSink, finder);
           }
           finally {
             context.processMessage(new ProgressMessage("Finished adding NotNull assertions [" + chunkName + "]"));
@@ -485,8 +485,37 @@ public class JavaBuilder extends ModuleLevelBuilder {
     return heapSize;
   }
 
-  private static ClassLoader createInstrumentationClassLoader(Collection<File> classpath,
-                                                              Collection<File> platformCp,
+  private static InstrumentationClassFinder createInstrumentationClassFinder(Collection<File> platformCp,
+                                                                             Collection<File> classpath,
+                                                                             OutputFilesSink outputSink) throws MalformedURLException {
+    final URL[] platformUrls = new URL[platformCp.size()];
+    int index = 0;
+    for (File file : platformCp) {
+      platformUrls[index++] = file.toURI().toURL();
+    }
+    
+    final URL[] urls = new URL[classpath.size() + 1];
+    index = 0;
+    for (File file : classpath) {
+      urls[index++] = file.toURI().toURL();
+    }
+    urls[index++] = getResourcePath(GridConstraints.class).toURI().toURL(); // forms_rt.jar
+    //urls.add(getResourcePath(CellConstraints.class).toURI().toURL());  // jgoodies-forms
+    
+    final Map<String, byte[]> compiled = new HashMap<String, byte[]>();
+    for (OutputFileObject fileObject : outputSink.getFileObjects()) {
+      final String name = fileObject.getClassName();
+      if (name != null) {
+        final OutputFileObject.Content content = fileObject.getContent();
+        if (content != null) {
+          compiled.put(name, content.toByteArray());
+        }
+      }
+    }
+    return new InstrumentationClassFinder(platformUrls, urls, outputSink);
+  }
+
+  private static ClassLoader createInstrumentationClassLoader(Collection<File> platformCp, Collection<File> classpath,
                                                               Map<File, String> chunkSourcePath,
                                                               OutputFilesSink outputSink) throws MalformedURLException {
     final List<URL> urls = new ArrayList<URL>();
@@ -605,14 +634,14 @@ public class JavaBuilder extends ModuleLevelBuilder {
   }
 
   // todo: probably instrument other NotNull-like annotations defined in project settings?
-  private static void instrumentNotNull(CompileContext context, OutputFilesSink sink, final ClassLoader loader) {
+  private static void instrumentNotNull(CompileContext context, OutputFilesSink sink, final InstrumentationClassFinder finder) {
     for (final OutputFileObject fileObject : sink.getFileObjects()) {
       final OutputFileObject.Content originalContent = fileObject.getContent();
       final ClassReader reader = new ClassReader(originalContent.getBuffer(), originalContent.getOffset(), originalContent.getLength());
       final int version = getClassFileVersion(reader);
       if (version >= Opcodes.V1_5) {
         boolean success = false;
-        final ClassWriter writer = new InstrumenterClassWriter(getAsmClassWriterFlags(version), loader);
+        final ClassWriter writer = new InstrumenterClassWriter(getAsmClassWriterFlags(version), finder);
         try {
           final NotNullVerifyingInstrumenter instrumenter = new NotNullVerifyingInstrumenter(writer);
           reader.accept(instrumenter, 0);
@@ -645,7 +674,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
                                       ModuleChunk chunk,
                                       final Map<File, String> chunkSourcePath,
                                       final ClassLoader loader,
-                                      Collection<File> formsToInstrument,
+                                      final InstrumentationClassFinder finder, Collection<File> formsToInstrument,
                                       OutputFilesSink outputSink) throws ProjectBuildException {
 
     final Map<String, File> class2form = new HashMap<String, File>();
@@ -686,13 +715,12 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
       final File alreadyProcessedForm = class2form.get(classToBind);
       if (alreadyProcessedForm != null) {
-        context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.WARNING, formFile.getAbsolutePath() +
-                                                                                            ": The form is bound to the class " +
-                                                                                            classToBind +
-                                                                                            ".\nAnother form " +
-                                                                                            alreadyProcessedForm.getAbsolutePath() +
-                                                                                            " is also bound to this class",
-                                                   formFile.getAbsolutePath()));
+        context.processMessage(
+          new CompilerMessage(
+            BUILDER_NAME, BuildMessage.Kind.WARNING, 
+            formFile.getAbsolutePath() + ": The form is bound to the class " + classToBind + ".\nAnother form " + alreadyProcessedForm.getAbsolutePath() + " is also bound to this class",
+            formFile.getAbsolutePath())
+        );
         continue;
       }
 
@@ -705,7 +733,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
           new ClassReader(originalContent.getBuffer(), originalContent.getOffset(), originalContent.getLength());
 
         final int version = getClassFileVersion(classReader);
-        final InstrumenterClassWriter classWriter = new InstrumenterClassWriter(getAsmClassWriterFlags(version), loader);
+        final InstrumenterClassWriter classWriter = new InstrumenterClassWriter(getAsmClassWriterFlags(version), finder);
         final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, loader, nestedFormsLoader, false, classWriter);
         final byte[] patchedBytes = codeGenerator.patchClass(classReader);
         if (patchedBytes != null) {
@@ -858,164 +886,38 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
   }
 
-  private static class OutputFilesSink implements OutputFileConsumer {
-    private final CompileContext myContext;
-    private final Set<File> mySuccessfullyCompiled = new HashSet<File>();
-    private final Set<File> myProblematic = new HashSet<File>();
-    private final List<OutputFileObject> myFileObjects = new ArrayList<OutputFileObject>();
-    private final Map<String, OutputFileObject> myCompiledClasses = new HashMap<String, OutputFileObject>();
-
-    public OutputFilesSink(CompileContext context) {
-      myContext = context;
-    }
-
-    public void save(final @NotNull OutputFileObject fileObject) {
-      final String className = fileObject.getClassName();
-      if (className != null) {
-        final OutputFileObject.Content content = fileObject.getContent();
-        if (content != null) {
-          synchronized (myCompiledClasses) {
-            myCompiledClasses.put(className, fileObject);
-          }
-        }
-      }
-
-      synchronized (myFileObjects) {
-        myFileObjects.add(fileObject);
-      }
-    }
-
-    @Nullable
-    public OutputFileObject.Content lookupClassBytes(String className) {
-      synchronized (myCompiledClasses) {
-        final OutputFileObject object = myCompiledClasses.get(className);
-        return object != null ? object.getContent() : null;
-      }
-    }
-
-    public List<OutputFileObject> getFileObjects() {
-      return Collections.unmodifiableList(myFileObjects);
-    }
-
-    public void writePendingData() {
-      try {
-        if (!myFileObjects.isEmpty()) {
-          final FileGeneratedEvent event = new FileGeneratedEvent();
-          try {
-            for (OutputFileObject fileObject : myFileObjects) {
-              try {
-                writeToDisk(fileObject);
-                final File rootFile = fileObject.getOutputRoot();
-                if (rootFile != null) {
-                  event.add(rootFile.getPath(), fileObject.getRelativePath());
-                }
-              }
-              catch (IOException e) {
-                myContext.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, e.getMessage()));
-              }
-            }
-          }
-          finally {
-            myContext.processMessage(event);
-          }
-        }
-      }
-      finally {
-        myFileObjects.clear();
-        myCompiledClasses.clear();
-      }
-    }
-
-    public Set<File> getSuccessfullyCompiled() {
-      return Collections.unmodifiableSet(mySuccessfullyCompiled);
-    }
-
-    private void writeToDisk(@NotNull OutputFileObject fileObject) throws IOException {
-      final File file = fileObject.getFile();
-      final OutputFileObject.Content content = fileObject.getContent();
-      if (content == null) {
-        throw new IOException("Missing content for file " + file);
-      }
-
-      try {
-        _writeToFile(file, content);
-      }
-      catch (IOException e) {
-        // assuming the reason is non-existing parent
-        final File parentFile = file.getParentFile();
-        if (parentFile == null) {
-          throw e;
-        }
-        if (!parentFile.mkdirs()) {
-          throw e;
-        }
-        // second attempt
-        _writeToFile(file, content);
-      }
-
-      final File source = fileObject.getSourceFile();
-      if (source != null && !myProblematic.contains(source)) {
-        mySuccessfullyCompiled.add(source);
-        final String className = fileObject.getClassName();
-        if (className != null) {
-          myContext.processMessage(new ProgressMessage("Compiled " + className));
-        }
-      }
-    }
-
-    private static void _writeToFile(final File file, OutputFileObject.Content content) throws IOException {
-      final OutputStream stream = new BufferedOutputStream(new FileOutputStream(file));
-      try {
-        stream.write(content.getBuffer(), content.getOffset(), content.getLength());
-      }
-      finally {
-        stream.close();
-      }
-    }
-
-    public void markError(OutputFileObject outputClassFile) {
-      final File source = outputClassFile.getSourceFile();
-      if (source != null) {
-        myProblematic.add(source);
-      }
-    }
-  }
-
   public static class InstrumenterClassWriter extends ClassWriter {
-    private final ClassLoader myClassLoader;
+    private final InstrumentationClassFinder myFinder;
 
-    public InstrumenterClassWriter(int flags, final ClassLoader pseudoLoader) {
+    public InstrumenterClassWriter(int flags, final InstrumentationClassFinder finder) {
       super(flags);
-      myClassLoader = pseudoLoader;
+      myFinder = finder;
     }
 
     protected String getCommonSuperClass(final String type1, final String type2) {
-      Class c, d;
       try {
-        //c = Class.forName(type1.replace('/', '.'), true, myClassLoader);
-        //d = Class.forName(type2.replace('/', '.'), true, myClassLoader);
-        c = myClassLoader.loadClass(type1.replace('/', '.'));
-        d = myClassLoader.loadClass(type2.replace('/', '.'));
+        final InstrumentationClassFinder.PseudoClass cls1 = myFinder.loadClass(type1);
+        final InstrumentationClassFinder.PseudoClass cls2 = myFinder.loadClass(type2);
+        if (cls1.isAssignableFrom(cls2)) {
+          return cls1.getName();
+        }
+        if (cls2.isAssignableFrom(cls1)) {
+          return cls2.getName();
+        }
+        if (cls1.isInterface() || cls2.isInterface()) {
+          return "java/lang/Object";
+        }
+        else {
+          InstrumentationClassFinder.PseudoClass c = cls1;
+          do {
+            c = c.getSuperClass();
+          }
+          while (!c.isAssignableFrom(cls2));
+          return c.getName();
+        }
       }
       catch (Exception e) {
         throw new RuntimeException(e.toString(), e);
-      }
-      if (c.isAssignableFrom(d)) {
-        return type1;
-      }
-      if (d.isAssignableFrom(c)) {
-        return type2;
-      }
-      if (c.isInterface() || d.isInterface()) {
-        return "java/lang/Object";
-      }
-      else {
-        do {
-          c = c.getSuperclass();
-        }
-        while (!c.isAssignableFrom(d));
-
-        return c.getName().replace('.', '/');
       }
     }
   }
