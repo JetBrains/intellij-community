@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitVcs;
 import git4idea.NotificationManager;
 import git4idea.commands.*;
+import git4idea.config.GitVersionSpecialty;
 import git4idea.jgit.GitHttpAdapter;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
@@ -52,6 +53,7 @@ public class GitFetcher {
   private final Project myProject;
   private final GitRepositoryManager myRepositoryManager;
   private final ProgressIndicator myProgressIndicator;
+  private final GitVcs myVcs;
 
   private final Collection<Exception> myErrors = new ArrayList<Exception>();
 
@@ -59,6 +61,7 @@ public class GitFetcher {
     myProject = project;
     myProgressIndicator = progressIndicator;
     myRepositoryManager = GitRepositoryManager.getInstance(project);
+    myVcs = GitVcs.getInstance(project);
   }
 
   /**
@@ -101,7 +104,9 @@ public class GitFetcher {
 
   private GitFetchResult fetchNatively(@NotNull VirtualFile root, @NotNull GitRemote remote) {
     final GitLineHandlerPasswordRequestAware h = new GitLineHandlerPasswordRequestAware(myProject, root, GitCommand.FETCH);
-    h.addParameters("--prune");
+    if (GitVersionSpecialty.SUPPORTS_FETCH_PRUNE.existsIn(myVcs.getVersion())) {
+      h.addParameters("--prune");
+    }
     h.addParameters(remote.getName());
     final GitTask fetchTask = new GitTask(myProject, h, "Fetching...");
     fetchTask.setProgressIndicator(myProgressIndicator);

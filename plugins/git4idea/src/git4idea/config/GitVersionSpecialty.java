@@ -73,6 +73,13 @@ public enum GitVersionSpecialty {
     }
   },
 
+  SUPPORTS_FETCH_PRUNE {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.isLaterOrEqual(new GitVersion(1, 7, 0, 0));
+    }
+  },
+
   DOESNT_DEFINE_HOME_ENV_VAR {
     @Override
     public boolean existsIn(@NotNull GitVersion version) {
