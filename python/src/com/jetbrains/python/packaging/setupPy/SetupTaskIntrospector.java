@@ -122,7 +122,6 @@ public class SetupTaskIntrospector {
         }
       }
 
-
       final List<PyExpression> booleanOptions = resolveSequenceValue(taskClass, "boolean_options");
       final List<String> booleanOptionsList = new ArrayList<String>();
       for (PyExpression option : booleanOptions) {
@@ -201,6 +200,9 @@ public class SetupTaskIntrospector {
         final String description = PyUtil.strValue(elements[2]);
         if (name != null && description != null) {
           if (negativeOptMap.containsKey(name)) {
+            return null;
+          }
+          if (description.contains("don't use") || description.contains("deprecated")) {
             return null;
           }
           final boolean checkbox = booleanOptions.contains(name);
