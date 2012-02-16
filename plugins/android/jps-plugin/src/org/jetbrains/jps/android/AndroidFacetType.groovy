@@ -47,6 +47,8 @@ class AndroidFacetType extends FacetTypeService {
         case "PACK_TEST_CODE":
           facet.packTestCode = Boolean.parseBoolean(value)
           break
+        case "ASSETS_FOLDER_RELATIVE_PATH":
+          facet.assetsFolderRelativePath = value
       }
     }
     return facet;

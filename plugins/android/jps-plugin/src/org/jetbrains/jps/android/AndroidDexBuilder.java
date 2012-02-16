@@ -45,7 +45,7 @@ public class AndroidDexBuilder extends ModuleLevelBuilder {
     if (context.isCompilingTests() || !AndroidJpsUtil.containsAndroidFacet(chunk)) {
       return ModuleLevelBuilder.ExitCode.OK;
     }
-    context.processMessage(new ProgressMessage("Executing DEX"));
+    context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.dex")));
 
     try {
       return doBuild(context, chunk);
@@ -67,7 +67,7 @@ public class AndroidDexBuilder extends ModuleLevelBuilder {
       final Sdk sdk = module.getSdk();
       if (!(sdk instanceof AndroidSdk)) {
         context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR,
-                                                   "Android SDK is not specified for module " + module.getName()));
+                                                   AndroidJpsBundle.message("android.jps.errors.sdk.not.specified", module.getName())));
         success = false;
         continue;
       }
@@ -76,7 +76,7 @@ public class AndroidDexBuilder extends ModuleLevelBuilder {
       final IAndroidTarget target = AndroidJpsUtil.parseAndroidTarget(androidSdk, context, BUILDER_NAME);
       if (target == null) {
         context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR,
-                                                   "Android SDK is invalid or not specified for module " + module.getName()));
+                                                   AndroidJpsBundle.message("android.jps.errors.sdk.invalid", module.getName())));
         success = false;
         continue;
       }
@@ -85,8 +85,8 @@ public class AndroidDexBuilder extends ModuleLevelBuilder {
       final File dexOutputDir = AndroidJpsUtil.getOutputDirectoryForPackagedFiles(projectPaths, module);
 
       if (dexOutputDir == null) {
-        context.processMessage(
-          new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "Output directory is not specified for module " + module.getName()));
+        context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, AndroidJpsBundle
+          .message("android.jps.errors.output.dir.not.specified", module.getName())));
         success = false;
         continue;
       }
@@ -96,9 +96,8 @@ public class AndroidDexBuilder extends ModuleLevelBuilder {
       final File classesDir = projectPaths.getModuleOutputDir(module, false);
 
       if (classesDir == null || !classesDir.isDirectory()) {
-        context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.INFO, "Dex won't be launched for module " +
-                                                                                         module.getName() +
-                                                                                         " because it doesn't contain compiled files"));
+        context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.INFO, AndroidJpsBundle
+          .message("android.jps.warnings.dex.no.compiled.files", module.getName())));
         continue;
       }
 
@@ -171,7 +170,8 @@ public class AndroidDexBuilder extends ModuleLevelBuilder {
 
     final File outFile = new File(outFilePath);
     if (outFile.exists() && !outFile.delete()) {
-      context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.WARNING, "Cannot delete file " + outFilePath));
+      context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.WARNING,
+                                                 AndroidJpsBundle.message("android.jps.errors.cannot.delete.file", outFilePath)));
     }
 
     // todo: pass additional vm params and max heap size from settings

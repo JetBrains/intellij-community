@@ -12,6 +12,8 @@ class AndroidFacet extends Facet {
 
   boolean library;
 
+  String assetsFolderRelativePath;
+
   String resFolderRelativePath
   String resFolderForCompilationRelativePath
   boolean useCustomResFolderForCompilation;
@@ -44,6 +46,11 @@ class AndroidFacet extends Facet {
 
   File getManifestFileForCompilation() throws IOException {
     def manifestFile = findFileByRelativeModulePath(manifestForCompilationRelativePath, false);
+    return manifestFile != null ? manifestFile.getCanonicalFile() : null;
+  }
+
+  File getAssetsDir() throws IOException {
+    def manifestFile = findFileByRelativeModulePath(assetsFolderRelativePath, false);
     return manifestFile != null ? manifestFile.getCanonicalFile() : null;
   }
 

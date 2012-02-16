@@ -115,7 +115,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
   private static boolean runAidlCompiler(@NotNull final CompileContext context,
                                          @NotNull Map<File, Module> files,
                                          @NotNull Map<Module, MyModuleData> moduleDataMap) {
-    context.processMessage(new ProgressMessage("Processing AIDL files..."));
+    context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.aidl")));
 
     boolean success = true;
 
@@ -141,8 +141,8 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
         final String packageName = computePackageForFile(context, file);
         
         if (packageName == null) {
-          context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "Cannot compute package for file",
-                                                     filePath));
+          context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR,
+                                                     AndroidJpsBundle.message("android.jps.errors.cannot.compute.package", filePath)));
           success = false;
           continue;
         }
@@ -248,7 +248,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
   // todo: save validity state
   private static boolean runAaptCompiler(@NotNull final CompileContext context,
                                          @NotNull Map<Module, MyModuleData> moduleDataMap) {
-    context.processMessage(new ProgressMessage("Generating R.java and Manifest.java files"));
+    context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progess.aapt")));
 
     boolean success = true;
 
@@ -271,14 +271,14 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
         final File manifestFile = AndroidJpsUtil.getManifestFileForCompilationPath(facet);
         if (manifestFile == null || !manifestFile.exists()) {
           context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR,
-                                                     "AndroidManifest.xml file not found in the module " + module.getName()));
+                                                     AndroidJpsBundle.message("android.jps.errors.manifest.not.found", module.getName())));
           success = false;
           continue;
         }
         final String packageName = parsePackageNameFromManifestFile(manifestFile);
         if (packageName == null || packageName.length() == 0) {
-          context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR,
-                                                     "Package is not specified in AndroidManifest.xml for module " + module.getName()));
+          context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, AndroidJpsBundle
+            .message("android.jps.errors.package.not.specified", module.getName())));
           success = false;
           continue;
         }
@@ -458,7 +458,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
       final Sdk sdk = module.getSdk();
       if (!(sdk instanceof AndroidSdk)) {
         context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR,
-                                                   "Android SDK is not specified for module " + module.getName()));
+                                                   AndroidJpsBundle.message("android.jps.errors.sdk.not.specified", module.getName())));
         success = false;
         continue;
       }
@@ -467,15 +467,15 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
       final IAndroidTarget target = AndroidJpsUtil.parseAndroidTarget(androidSdk, context, BUILDER_NAME);
       if (target == null) {
         context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR,
-                                                   "Android SDK is invalid or not specified for module " + module.getName()));
+                                                   AndroidJpsBundle.message("android.jps.errors.sdk.invalid", module.getName())));
         success = false;
         continue;
       }
 
       final File outputDir = context.getProjectPaths().getModuleOutputDir(module, false);
       if (outputDir == null) {
-        context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR,
-                                                   "Cannot find output directory for module " + module.getName()));
+        context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, AndroidJpsBundle
+          .message("android.jps.errors.output.dir.not.specified", module.getName())));
         success = false;
         continue;
       }

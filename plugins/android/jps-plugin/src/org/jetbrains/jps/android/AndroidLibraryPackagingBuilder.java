@@ -38,7 +38,7 @@ public class AndroidLibraryPackagingBuilder extends ModuleLevelBuilder {
     if (context.isCompilingTests() || !AndroidJpsUtil.containsAndroidFacet(chunk)) {
       return ModuleLevelBuilder.ExitCode.OK;
     }
-    context.processMessage(new ProgressMessage("Packaging Android libraries"));
+    context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.library.packaging")));
 
     try {
       return doBuild(context, chunk);
@@ -61,8 +61,8 @@ public class AndroidLibraryPackagingBuilder extends ModuleLevelBuilder {
       final File outputDirectoryForPackagedFiles = AndroidJpsUtil.getOutputDirectoryForPackagedFiles(projectPaths, module);
 
       if (outputDirectoryForPackagedFiles == null) {
-        context.processMessage(
-          new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "Output directory is not specified for module " + module.getName()));
+        context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, AndroidJpsBundle
+          .message("android.jps.errors.output.dir.not.specified", module.getName())));
         success = false;
         continue;
       }
