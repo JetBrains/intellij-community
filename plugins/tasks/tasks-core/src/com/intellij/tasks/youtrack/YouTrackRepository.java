@@ -1,6 +1,8 @@
 package com.intellij.tasks.youtrack;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.tasks.*;
 import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
@@ -8,6 +10,7 @@ import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
+import org.apache.axis.utils.XMLChar;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.UsernamePasswordCredentials;
@@ -15,9 +18,11 @@ import org.apache.commons.httpclient.auth.AuthScope;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.jdom.Element;
+import org.jdom.JDOMException;
 import org.jdom.input.SAXBuilder;
 
 import java.io.InputStream;
+import java.io.StringReader;
 import java.util.Date;
 import java.util.List;
 
@@ -56,7 +61,22 @@ public class YouTrackRepository extends BaseRepositoryImpl {
     }
     HttpMethod method = doREST("/rest/project/issues/?filter=" + encodeUrl(query) + "&max=" + max, false);
     InputStream stream = method.getResponseBodyAsStream();
-    Element element = new SAXBuilder(false).build(stream).getRootElement();
+    // workaround for http://youtrack.jetbrains.net/issue/JT-7984
+    String s = StreamUtil.readText(stream);
+    for (int i = 0; i < s.length(); i++) {
+      if (!XMLChar.isValid(s.charAt(i))) {
+        s = s.replace(s.charAt(i), ' ');
+      }
+    }
+
+    Element element;
+    try {
+      element = new SAXBuilder(false).build(new StringReader(s)).getRootElement();
+    }
+    catch (JDOMException e) {
+      LOG.error("Can't parse YouTrack response", e);
+      throw e;
+    }
     if ("error".equals(element.getName())) {
       throw new Exception(element.getText());      
     }
@@ -199,4 +219,6 @@ public class YouTrackRepository extends BaseRepositoryImpl {
   public boolean equals(Object o) {
     return super.equals(o) && Comparing.equal(((YouTrackRepository)o).getDefaultSearch(), getDefaultSearch());
   }
+
+  private static final Logger LOG = Logger.getInstance("#com.intellij.tasks.youtrack.YouTrackRepository");
 }
