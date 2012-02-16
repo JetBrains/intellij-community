@@ -248,7 +248,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
   // todo: save validity state
   private static boolean runAaptCompiler(@NotNull final CompileContext context,
                                          @NotNull Map<Module, MyModuleData> moduleDataMap) {
-    context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progess.aapt")));
+    context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.aapt")));
 
     boolean success = true;
 
