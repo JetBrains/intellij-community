@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.typeMigration;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -23,6 +24,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.typeMigration.ui.FailedConversionsDialog;
@@ -47,9 +50,33 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
   private TypeMigrationLabeler myLabeler;
 
   public TypeMigrationProcessor(final Project project, final PsiElement root, final TypeMigrationRules rules) {
-    this(project, new PsiElement[]{root}, rules);
+    this(project, getRoots(root), rules);
   }
 
+  private static PsiElement[] getRoots(PsiElement root) {
+    if (root instanceof PsiVariable) {
+      final PsiElement parent = root.getParent();
+      if (parent instanceof PsiDeclarationStatement) {
+        return ((PsiDeclarationStatement)parent).getDeclaredElements();
+      }
+      if (root instanceof PsiField) {
+        final List<PsiField> fields = new ArrayList<PsiField>();
+        PsiField field = (PsiField)root;
+        fields.add(field);
+        while (true) {
+          ASTNode comma = PsiImplUtil.skipWhitespaceAndComments(field.getNode().getTreeNext());
+          if (comma == null || comma.getElementType() != JavaTokenType.COMMA) break;
+          ASTNode nextField = PsiImplUtil.skipWhitespaceAndComments(comma.getTreeNext());
+          if (nextField == null || nextField.getElementType() != JavaElementType.FIELD) break;
+          field = (PsiField)nextField.getPsi();
+          fields.add(field);
+        }
+        return fields.toArray(new PsiElement[fields.size()]);
+      }
+    }
+    return new PsiElement[]{root};
+  }
+  
   public TypeMigrationProcessor(final Project project, final PsiElement[] roots, final TypeMigrationRules rules) {
     super(project);
     myRoot = roots;
