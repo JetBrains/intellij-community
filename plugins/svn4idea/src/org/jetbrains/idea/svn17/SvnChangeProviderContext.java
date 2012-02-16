@@ -337,6 +337,7 @@ class SvnChangeProviderContext implements StatusReceiver {
   }
 
   private Change patchWithPropertyChange(final Change change, final SVNStatus svnStatus, final SVNStatus deletedStatus) throws SVNException {
+    if (svnStatus == null) return change;
     final SVNStatusType propertiesStatus = svnStatus.getPropertiesStatus();
     if (SVNStatusType.STATUS_CONFLICTED.equals(propertiesStatus) || SVNStatusType.CHANGED.equals(propertiesStatus) ||
         SVNStatusType.STATUS_ADDED.equals(propertiesStatus) || SVNStatusType.STATUS_DELETED.equals(propertiesStatus) ||

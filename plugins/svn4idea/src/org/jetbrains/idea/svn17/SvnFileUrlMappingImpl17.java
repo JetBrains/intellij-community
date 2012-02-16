@@ -60,7 +60,7 @@ import java.util.*;
       file = "$WORKSPACE_FILE$"
     )}
 )
-class SvnFileUrlMappingImpl17 implements SvnFileUrlMapping17, PersistentStateComponent<SvnMappingSavedPart>, ProjectComponent {
+public class SvnFileUrlMappingImpl17 implements SvnFileUrlMapping17, PersistentStateComponent<SvnMappingSavedPart>, ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnFileUrlMappingImpl17");
 
   private final SvnCompatibilityChecker myChecker;
