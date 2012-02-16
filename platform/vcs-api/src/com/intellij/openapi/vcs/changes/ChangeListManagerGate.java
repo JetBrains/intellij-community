@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -42,4 +43,6 @@ public interface ChangeListManagerGate {
   void setListsToDisappear(final Collection<String> names);
   FileStatus getStatus(final VirtualFile file);
   FileStatus getStatus(final File file);
+
+  void setDefaultChangeList(@NotNull String list);
 }

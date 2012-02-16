@@ -768,6 +768,11 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     public FileStatus getStatus(File file) {
       return myWorker.getStatus(file);
     }
+
+    @Override
+    public void setDefaultChangeList(@NotNull String list) {
+      myWorker.setDefault(list);
+    }
   }
 
   // assumes after revisions are all not null
