@@ -1,0 +1,16 @@
+Types:
+PsiField:bar : int
+PsiField:foo : int
+PsiParameter:bar : int
+PsiParameter:foo : int
+PsiReferenceExpression:bar : int
+PsiReferenceExpression:bar : int
+PsiReferenceExpression:foo : int
+PsiReferenceExpression:foo : int
+PsiReferenceExpression:this.bar : int
+PsiReferenceExpression:this.foo : int
+
+Conversions:
+
+New expression type changes:
+Fails:

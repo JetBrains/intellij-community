@@ -822,4 +822,8 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
                          PsiType.INT,
                          myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null));
   }
+  
+  public void testT135() throws Exception {
+    doTestFieldType("foo", "Test", PsiType.LONG, PsiType.INT);
+  }
 }
