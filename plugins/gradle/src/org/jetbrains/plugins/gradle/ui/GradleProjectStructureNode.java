@@ -145,7 +145,10 @@ public class GradleProjectStructureNode<T extends GradleEntityId> extends Defaul
    */
   public void addConflictChange(@NotNull GradleProjectStructureChange change) {
     myConflictChanges.add(change);
-    myDescriptor.setAttributes(GradleTextAttributes.GRADLE_CHANGE_CONFLICT);
+    if (myConflictChanges.size() == 1) {
+      myDescriptor.setAttributes(GradleTextAttributes.GRADLE_CHANGE_CONFLICT);
+      onNodeChanged(this);
+    }
   }
 
   /**
@@ -157,6 +160,7 @@ public class GradleProjectStructureNode<T extends GradleEntityId> extends Defaul
     myConflictChanges.remove(change);
     if (myConflictChanges.isEmpty()) {
       myDescriptor.setAttributes(GradleTextAttributes.GRADLE_NO_CHANGE);
+      onNodeChanged(this);
     }
   }
   
@@ -213,6 +217,11 @@ public class GradleProjectStructureNode<T extends GradleEntityId> extends Defaul
     };
   }
 
+  public void setAttributes(@NotNull TextAttributesKey key) {
+    myDescriptor.setAttributes(key);
+    onNodeChanged(this);
+  }
+  
   public void addListener(@NotNull Listener listener) {
     myListeners.add(listener);
   }
@@ -228,9 +237,16 @@ public class GradleProjectStructureNode<T extends GradleEntityId> extends Defaul
       listener.onNodeRemoved(node, index);
     }
   }
+
+  private void onNodeChanged(@NotNull GradleProjectStructureNode<?> node) {
+    for (Listener listener : myListeners) {
+      listener.onNodeChanged(node);
+    }
+  }
   
   public interface Listener {
     void onNodeAdded(@NotNull GradleProjectStructureNode<?> node, int index);
     void onNodeRemoved(@NotNull GradleProjectStructureNode<?> node, int index);
+    void onNodeChanged(@NotNull GradleProjectStructureNode<?> node);
   }
 }

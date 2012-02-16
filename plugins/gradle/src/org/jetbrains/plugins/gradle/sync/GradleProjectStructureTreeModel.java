@@ -240,8 +240,7 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
     }
     assert id != null;
     final GradleProjectStructureNode<GradleModuleId> moduleNode = getModuleNode(id);
-    moduleNode.getDescriptor().setAttributes(key);
-    nodeChanged(moduleNode);
+    moduleNode.setAttributes(key);
   }
   
   private void processObsoleteProjectRenameChange(@NotNull GradleProjectRenameChange change) {
@@ -258,7 +257,6 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
         final GradleLibraryDependencyId id = node.getDescriptor().getElement();
         if (id.getLibraryName().equals(change.getLibraryName())) {
           node.removeConflictChange(change);
-          nodeChanged(node);
           break;
         }
       }
@@ -329,6 +327,11 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
       myIndexHolder[0] = index;
       myNodeHolder[0] = node;
       nodesWereRemoved(node.getParent(), myIndexHolder, myNodeHolder); 
+    }
+
+    @Override
+    public void onNodeChanged(@NotNull GradleProjectStructureNode<?> node) {
+      nodeChanged(node);
     }
   }
   
