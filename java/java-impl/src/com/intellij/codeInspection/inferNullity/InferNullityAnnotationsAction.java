@@ -34,15 +34,21 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.TitledSeparator;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -103,7 +109,31 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
       return;
     }
     if (!modulesWithoutAnnotations.isEmpty()) {
-      if (Messages.showOkCancelDialog(project, "Infer Nullity Annotations requires that the nullity annotations" +
+      final Library annotationsLib = LibraryUtil.findLibraryByClass(NullableNotNullManager.getInstance(project).getDefaultNullable(), project);
+      if (annotationsLib != null) {
+        String message = "Module" + (modulesWithoutAnnotations.size() == 1 ? " " : "s ");
+        message += StringUtil.join(modulesWithoutAnnotations, new Function<Module, String>() {
+          @Override
+          public String fun(Module module) {
+            return module.getName();
+          }
+        }, ", ");
+        message += (modulesWithoutAnnotations.size() == 1 ? " doesn't" : " don't");
+        message += " refer to the existing '" + annotationsLib.getName() + "' library with IDEA nullity annotations. Would you like to add the dependenc";
+        message += (modulesWithoutAnnotations.size() == 1 ? "y" : "ies")+ " now?";
+        if (Messages.showOkCancelDialog(project, message, INFER_NULLITY_ANNOTATIONS, Messages.getErrorIcon()) == DialogWrapper.OK_EXIT_CODE) {
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
+            public void run() {
+              for (Module module : modulesWithoutAnnotations) {
+                final ModifiableRootModel modifiableModel = ModuleRootManager.getInstance(module).getModifiableModel();
+                modifiableModel.addLibraryEntry(annotationsLib);
+                modifiableModel.commit();
+              }
+            }
+          });
+        }
+      } else if (Messages.showOkCancelDialog(project, "Infer Nullity Annotations requires that the nullity annotations" +
                                                " be available in all your project sources.\n\nYou will need to add annotations.jar as a library. " +
                                                "It is possible to configure custom jar in e.g. Constant Conditions & Exceptions inspection or use JetBrains annotations available in installation. " +
                                                " The IDEA nullity annotations are freely usable and redistributable under the Apache 2.0 license. Would you like to do it now?",

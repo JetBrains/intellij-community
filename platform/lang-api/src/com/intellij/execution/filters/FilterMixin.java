@@ -31,6 +31,8 @@ public interface FilterMixin {
   @Nullable
   void applyHeavyFilter(Document copiedFragment, int startOffset, int startLineNumber, Consumer<AdditionalHighlight> consumer);
 
+  String getUpdateMessage();
+
   abstract class AdditionalHighlight {
     private final int myStart;
     private final int myEnd;

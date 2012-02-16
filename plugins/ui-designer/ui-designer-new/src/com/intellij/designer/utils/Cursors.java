@@ -24,6 +24,7 @@ import java.awt.*;
  */
 public final class Cursors {
   public static final Cursor RESIZE_ALL = Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR);
+  public static final Cursor CROSS = Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR);
 
   public static Cursor getNoCursor() {
     try {

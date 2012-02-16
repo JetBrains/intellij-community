@@ -98,5 +98,10 @@ public class ExceptionExFilterFactory implements ExceptionFilterFactory {
         });
       }
     }
+
+    @Override
+    public String getUpdateMessage() {
+      return "Checking try/finally blocks";
+    }
   }
 }
