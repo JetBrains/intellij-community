@@ -1,6 +1,7 @@
 package com.jetbrains.python.packaging.setupPy;
 
 import com.google.common.collect.ImmutableList;
+import com.intellij.ide.util.gotoByName.ChooseByNameItem;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -8,7 +9,7 @@ import java.util.List;
 /**
 * @author yole
 */
-public class SetupTask {
+public class SetupTask implements ChooseByNameItem {
   private final String name;
   private String description;
   private final List<Option> options = new ArrayList<Option>();

@@ -62,13 +62,17 @@ public class SetupTaskIntrospector {
 
   @Nullable
   public static List<SetupTask.Option> getSetupTaskOptions(Module module, String taskName) {
-    final PyFile setupPy = PyPackageUtil.findSetupPy(module);
-    for (SetupTask task : getTaskList(module, setupPy != null && usesSetuptools(setupPy))) {
+    for (SetupTask task : getTaskList(module)) {
       if (task.getName().equals(taskName)) {
         return task.getOptions();
       }
     }
     return null;
+  }
+
+  public static List<SetupTask> getTaskList(Module module) {
+    final PyFile setupPy = PyPackageUtil.findSetupPy(module);
+    return getTaskList(module, setupPy != null && usesSetuptools(setupPy));
   }
 
   private static List<SetupTask> getTaskList(Module module, boolean setuptools) {

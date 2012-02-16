@@ -30,20 +30,24 @@ public class RunSetupTaskAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     Module module = e.getData(LangDataKeys.MODULE);
     if (module == null) return;
+    runSetupTask(myTaskName, module);
+  }
+
+  public static void runSetupTask(String taskName, Module module) {
     final PyFile setupPy = PyPackageUtil.findSetupPy(module);
     try {
-      final List<SetupTask.Option> options = SetupTaskIntrospector.getSetupTaskOptions(module, myTaskName);
+      final List<SetupTask.Option> options = SetupTaskIntrospector.getSetupTaskOptions(module, taskName);
       List<String> parameters = new ArrayList<String>();
-      parameters.add(myTaskName);
+      parameters.add(taskName);
       if (options != null) {
-        SetupTaskDialog dialog = new SetupTaskDialog(module.getProject(), myTaskName, options);
+        SetupTaskDialog dialog = new SetupTaskDialog(module.getProject(), taskName, options);
         dialog.show();
         if (!dialog.isOK()) {
           return;
         }
         parameters.addAll(dialog.getCommandLine());
       }
-      final PythonTask task = new PythonTask(module, myTaskName);
+      final PythonTask task = new PythonTask(module, taskName);
       final VirtualFile virtualFile = setupPy.getVirtualFile();
       task.setRunnerScript(virtualFile.getPath());
       task.setWorkingDirectory(virtualFile.getParent().getPath());
@@ -57,7 +61,7 @@ public class RunSetupTaskAction extends AnAction {
       task.run();
     }
     catch (ExecutionException ee) {
-      Messages.showErrorDialog(module.getProject(), "Failed to run task: " + ee.getMessage(), myTaskName);
+      Messages.showErrorDialog(module.getProject(), "Failed to run task: " + ee.getMessage(), taskName);
     }
   }
 
