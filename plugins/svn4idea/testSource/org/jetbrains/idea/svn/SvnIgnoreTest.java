@@ -54,7 +54,6 @@ public class SvnIgnoreTest extends SvnTestCase {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
   }
 
-  @Bombed(user = "irengrig", month = Calendar.FEBRUARY, day = 20, description = "waiting for svnkit bugfix")
   @Test
   public void testOneFileCreatedDeep() throws Exception {
     final VirtualFile versionedParent = createDirInCommand(myWorkingCopyDir, "versionedParent");
@@ -84,7 +83,6 @@ public class SvnIgnoreTest extends SvnTestCase {
     }
   }
 
-  @Bombed(user = "irengrig", month = Calendar.FEBRUARY, day = 20, description = "waiting for svnkit bugfix")
   @Test
   public void testManyDeep() throws Exception {
     final VirtualFile versionedParent = createDirInCommand(myWorkingCopyDir, "versionedParent");

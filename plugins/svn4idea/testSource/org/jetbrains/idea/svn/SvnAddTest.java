@@ -1,7 +1,6 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.execution.process.ProcessOutput;
-import com.intellij.idea.Bombed;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
@@ -30,7 +29,6 @@ public class SvnAddTest extends SvnTestCase {
   }
 
   // IDEADEV-16268
-  @Bombed(user = "irengrig", month = Calendar.FEBRUARY, day = 20, description = "waiting for svnkit bugfix")
   @Test
   public void testDirAndFileInCommand() throws Exception {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
