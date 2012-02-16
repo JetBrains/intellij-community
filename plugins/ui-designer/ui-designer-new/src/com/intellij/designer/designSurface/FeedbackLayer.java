@@ -13,15 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.designer.model;
+package com.intellij.designer.designSurface;
+
+import javax.swing.*;
 
 /**
  * @author Alexander Lobas
  */
-public abstract class RadComponentVisitor {
-  public boolean visit(RadComponent component) {
-    return true;
-  }
-
-  public abstract void endVisit(RadComponent component);
+public class FeedbackLayer extends JComponent {
 }

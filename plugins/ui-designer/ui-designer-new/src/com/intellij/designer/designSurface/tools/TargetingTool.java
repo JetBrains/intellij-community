@@ -19,4 +19,7 @@ package com.intellij.designer.designSurface.tools;
  * @author Alexander Lobas
  */
 public abstract class TargetingTool extends InputTool {
+  protected void handleInvalidInput() {
+    setCommand(null);
+  }
 }

@@ -56,6 +56,7 @@ public abstract class DesignerEditorPanel extends JPanel implements ToolProvider
   protected JLayeredPane myLayeredPane;
   private GlassLayer myGlassLayer;
   private DecorationLayer myDecorationLayer;
+  private FeedbackLayer myFeedbackLayer;
   private InputTool myTool;
   protected EditableArea mySurfaceArea;
 
@@ -128,6 +129,16 @@ public abstract class DesignerEditorPanel extends JPanel implements ToolProvider
       public ComponentDecorator getRootSelectionDecorator() {
         return DesignerEditorPanel.this.getRootSelectionDecorator();
       }
+
+      @Override
+      public FeedbackLayer getFeedbackLayer() {
+        return myFeedbackLayer;
+      }
+
+      @Override
+      public RadComponent getRootComponent() {
+        return myRootComponent;
+      }
     };
 
     myGlassLayer = new GlassLayer(this, mySurfaceArea);
@@ -135,6 +146,9 @@ public abstract class DesignerEditorPanel extends JPanel implements ToolProvider
 
     myDecorationLayer = new DecorationLayer(mySurfaceArea);
     myLayeredPane.add(myDecorationLayer, LAYER_DECORATION);
+
+    myFeedbackLayer = new FeedbackLayer();
+    myLayeredPane.add(myFeedbackLayer, LAYER_FEEDBACK);
 
     gbc.gridx = 1;
     gbc.gridy = 1;
@@ -268,7 +282,7 @@ public abstract class DesignerEditorPanel extends JPanel implements ToolProvider
     }
   }
 
-  private class FindComponentVisitor implements RadComponentVisitor {
+  private class FindComponentVisitor extends RadComponentVisitor {
     private RadComponent myResult;
     private final int myX;
     private final int myY;

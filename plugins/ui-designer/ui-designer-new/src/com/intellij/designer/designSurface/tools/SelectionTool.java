@@ -18,65 +18,51 @@ package com.intellij.designer.designSurface.tools;
 import com.intellij.designer.designSurface.EditableArea;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.utils.Cursors;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.util.List;
 
 /**
  * @author Alexander Lobas
  */
 public class SelectionTool extends InputTool {
-  public SelectionTool() {
-    setDisabledCursor(Cursors.getNoCursor());
-  }
-
-  private void performSelection(RadComponent component) {
-    if (myInputEvent.isControlDown()) {
-      if (myArea.isSelected(component)) {
-        myArea.deselect(component);
-      }
-      else {
-        myArea.appendSelection(component);
-      }
-    }
-    else if (myInputEvent.isShiftDown()) {
-      myArea.appendSelection(component);
-    }
-    else {
-      myArea.select(component);
-    }
-  }
+  private InputTool myTracker;
 
   @Override
   protected void handleButtonDown(int button) {
-    if (myState == STATE_INIT && (button == 1 || button == 3)) {
+    if (myState == STATE_INIT) {
+      myState = STATE_DRAG;
+      deactivateTracker();
+
+      if (myInputEvent.isAltDown()) {
+        setTracker(new MarqueeTracker());
+        return;
+      }
+
+      InputTool tracker = myArea.findTargetTool(myCurrentScreenX, myCurrentScreenY);
+      if (tracker != null) {
+        setTracker(tracker);
+        return;
+      }
+
       RadComponent component = myArea.findTarget(myCurrentScreenX, myCurrentScreenY);
-      if (component != null) {
-        performSelection(component);
-      }
-    }
-    if (button == 1) {
-      if (myState == STATE_INIT) {
-        myState = STATE_DRAG;
-      }
-    }
-    else {
-      if (button == 3) {
-        myState = STATE_NONE;
+      if (component == null) {
+        setTracker(new MarqueeTracker());
       }
       else {
-        myState = STATE_INVALID;
+        setTracker(component.getDragTracker());
       }
-      setCommand(null);
     }
   }
 
   @Override
   protected void handleButtonUp(int button) {
     myState = STATE_INIT;
-    refreshCursor();
+    setTracker(null);
   }
 
   @Override
@@ -92,15 +78,86 @@ public class SelectionTool extends InputTool {
     }
   }
 
-  protected Cursor calculateCursor() {
-    return myState == STATE_INIT || myState == STATE_DRAG
-           ? getDefaultCursor()
-           : super.calculateCursor();
+  @Override
+  public void deactivate() {
+    deactivateTracker();
+    super.deactivate();
+  }
+
+  @Override
+  public void refreshCursor() {
+    if (myTracker == null) {
+      super.refreshCursor();
+    }
+  }
+
+  private void setTracker(@Nullable InputTool tracker) {
+    if (myTracker != tracker) {
+      deactivateTracker();
+      myTracker = tracker;
+      refreshCursor();
+
+      if (myTracker != null) {
+        myTracker.setToolProvider(myToolProvider);
+        myTracker.setArea(myArea);
+        myTracker.activate();
+      }
+    }
+  }
+
+  private void deactivateTracker() {
+    if (myTracker != null) {
+      myTracker.deactivate();
+      myTracker = null;
+    }
+  }
+
+  @Override
+  public void mouseDown(MouseEvent event, EditableArea area) throws Exception {
+    super.mouseDown(event, area);
+    if (myTracker != null) {
+      myTracker.mouseDown(event, area);
+    }
+  }
+
+  @Override
+  public void mouseUp(MouseEvent event, EditableArea area) throws Exception {
+    if (myTracker != null) {
+      myTracker.mouseUp(event, area);
+    }
+    super.mouseUp(event, area);
+  }
+
+  @Override
+  public void mouseMove(MouseEvent event, EditableArea area) throws Exception {
+    if (myTracker != null) {
+      myTracker.mouseMove(event, area);
+    }
+    super.mouseMove(event, area);
+  }
+
+  @Override
+  public void mouseDrag(MouseEvent event, EditableArea area) throws Exception {
+    if (myTracker != null) {
+      myTracker.mouseDrag(event, area);
+    }
+    super.mouseDrag(event, area);
+  }
+
+  @Override
+  public void mouseDoubleClick(MouseEvent event, EditableArea area) throws Exception {
+    super.mouseDoubleClick(event, area);
+    if (myTracker != null) {
+      myTracker.mouseDoubleClick(event, area);
+    }
   }
 
   @Override
   public void keyPressed(KeyEvent event, EditableArea area) throws Exception {
-    if (event.getKeyCode() == KeyEvent.VK_ESCAPE) {
+    if (myTracker != null) {
+      myTracker.keyPressed(event, area);
+    }
+    else if (event.getKeyCode() == KeyEvent.VK_ESCAPE) {
       List<RadComponent> selection = area.getSelection();
       if (!selection.isEmpty()) {
         RadComponent component = selection.get(0).getParent();
@@ -108,6 +165,20 @@ public class SelectionTool extends InputTool {
           area.select(component);
         }
       }
+    }
+  }
+
+  @Override
+  public void keyTyped(KeyEvent event, EditableArea area) throws Exception {
+    if (myTracker != null) {
+      myTracker.keyTyped(event, area);
+    }
+  }
+
+  @Override
+  public void keyReleased(KeyEvent event, EditableArea area) throws Exception {
+    if (myTracker != null) {
+      myTracker.keyReleased(event, area);
     }
   }
 }
