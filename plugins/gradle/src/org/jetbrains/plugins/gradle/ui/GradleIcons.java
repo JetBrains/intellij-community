@@ -1,6 +1,8 @@
 package org.jetbrains.plugins.gradle.ui;
 
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.util.IconLoader;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -14,7 +16,19 @@ public class GradleIcons {
   public static final Icon LIB_ICON          = IconLoader.getIcon("/nodes/ppLib.png");
   public static final Icon MODULE_ICON       = IconLoader.getIcon("/nodes/ModuleOpen.png");
   public static final Icon CONTENT_ROOT_ICON = IconLoader.getIcon("/modules/addContentEntry.png");
+  public static final Icon PROJECT_ICON      = getProjectIcon();
 
   private GradleIcons() {
+  }
+
+  @NotNull
+  private static Icon getProjectIcon() {
+    try {
+      return IconLoader.getIcon(ApplicationInfoEx.getInstanceEx().getSmallIconUrl());
+    }
+    catch (Exception e) {
+      // Control flow may reach this place if we run tests and platform IoC has not been initialised.
+      return IconLoader.getIcon("/nodes/ideProject.png");
+    }
   }
 }

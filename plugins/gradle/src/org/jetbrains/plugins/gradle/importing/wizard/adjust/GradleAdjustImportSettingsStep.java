@@ -8,9 +8,10 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.importing.GradleProjectImportBuilder;
-import org.jetbrains.plugins.gradle.model.*;
 import org.jetbrains.plugins.gradle.importing.wizard.AbstractImportFromGradleWizardStep;
 import org.jetbrains.plugins.gradle.model.gradle.*;
+import org.jetbrains.plugins.gradle.model.id.GradleEntityId;
+import org.jetbrains.plugins.gradle.model.id.GradleSyntheticId;
 import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNode;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -18,7 +19,10 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.tree.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.MutableTreeNode;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
@@ -175,7 +179,7 @@ public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWiza
     Map<GradleEntity, Pair<String, Collection<GradleProjectStructureNode>>> entity2nodes
       = new HashMap<GradleEntity, Pair<String, Collection<GradleProjectStructureNode>>>();
     int counter = 0;
-    GradleProjectStructureNode<GradleProject> root = buildNode(project, entity2nodes, counter++);
+    GradleProjectStructureNode<GradleEntityId> root = buildNode(project, entity2nodes, counter++);
 
     List<GradleModule> modules = new ArrayList<GradleModule>(project.getModules());
     Collections.sort(modules, Named.COMPARATOR);
@@ -186,15 +190,15 @@ public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWiza
     for (GradleModule module : modules) {
       GradleModule moduleCopy = module.clone(cloneContext);
       moduleMappings.put(module, moduleCopy);
-      GradleProjectStructureNode<GradleModule> moduleNode = buildNode(module, entity2nodes, counter++);
+      GradleProjectStructureNode<GradleEntityId> moduleNode = buildNode(module, entity2nodes, counter++);
       moduleNodes.add(moduleNode);
       for (GradleContentRoot contentRoot : moduleCopy.getContentRoots()) {
         moduleNode.add(buildNode(contentRoot, entity2nodes, counter++));
       }
       Collection<GradleDependency> dependencies = module.getDependencies();
       if (!dependencies.isEmpty()) {
-        GradleProjectStructureNode<String> dependenciesNode
-          = new GradleProjectStructureNode<String>(GradleConstants.DEPENDENCIES_NODE_DESCRIPTOR, GradleEntityType.SYNTHETIC);
+        GradleProjectStructureNode<GradleSyntheticId> dependenciesNode
+          = new GradleProjectStructureNode<GradleSyntheticId>(GradleConstants.DEPENDENCIES_NODE_DESCRIPTOR);
         final List<GradleModuleDependency> moduleDependencies = new ArrayList<GradleModuleDependency>();
         final List<GradleLibraryDependency> libraryDependencies = new ArrayList<GradleLibraryDependency>();
         GradleEntityVisitor visitor = new GradleEntityVisitorAdapter() {
@@ -234,8 +238,8 @@ public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWiza
     }
     else {
       // Insert intermediate 'modules' and 'libraries' nodes if the project has both libraries and nodes.
-      GradleProjectStructureNode<String> modulesNode
-        = new GradleProjectStructureNode<String>(GradleConstants.MODULES_NODE_DESCRIPTOR, GradleEntityType.SYNTHETIC);
+      GradleProjectStructureNode<GradleSyntheticId> modulesNode
+        = new GradleProjectStructureNode<GradleSyntheticId>(GradleConstants.MODULES_NODE_DESCRIPTOR);
       for (MutableTreeNode node : moduleNodes) {
         modulesNode.add(node);
       }
@@ -243,8 +247,8 @@ public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWiza
 
       List<GradleLibrary> sortedLibraries = new ArrayList<GradleLibrary>(libraries);
       Collections.sort(sortedLibraries, Named.COMPARATOR);
-      GradleProjectStructureNode<String> librariesNode
-        = new GradleProjectStructureNode<String>(GradleConstants.LIBRARIES_NODE_DESCRIPTOR, GradleEntityType.SYNTHETIC);
+      GradleProjectStructureNode<GradleSyntheticId> librariesNode
+        = new GradleProjectStructureNode<GradleSyntheticId>(GradleConstants.LIBRARIES_NODE_DESCRIPTOR);
       for (GradleLibrary library : sortedLibraries) {
         librariesNode.add(buildNode(library, entity2nodes, counter++));
       }
@@ -258,13 +262,13 @@ public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWiza
     builder.setModuleMappings(moduleMappings);
   }
 
-  private <T extends GradleEntity> GradleProjectStructureNode<T> buildNode(
-    @NotNull T entity, @NotNull Map<GradleEntity, Pair<String, Collection<GradleProjectStructureNode>>> processed, int counter)
+  private GradleProjectStructureNode<GradleEntityId> buildNode(
+    @NotNull GradleEntity entity, @NotNull Map<GradleEntity, Pair<String, Collection<GradleProjectStructureNode>>> processed, int counter)
   {
     // We build tree node, its settings control and map them altogether. The only trick here is that nodes can reuse the same
     // settings control (e.g. more than one node may have the same library as a dependency, so, library dependency node for
     // every control will use the same settings control).
-    GradleProjectStructureNode<T> result = new GradleProjectStructureNode<T>(myFactory.buildDescriptor(entity), GradleEntityType.SYNTHETIC);
+    GradleProjectStructureNode<GradleEntityId> result = new GradleProjectStructureNode<GradleEntityId>(myFactory.buildDescriptor(entity));
     Pair<String, Collection<GradleProjectStructureNode>> pair = processed.get(entity);
     if (pair == null) {
       String cardName = String.valueOf(counter);

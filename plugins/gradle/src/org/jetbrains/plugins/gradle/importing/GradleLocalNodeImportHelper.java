@@ -98,35 +98,31 @@ public class GradleLocalNodeImportHelper {
     // Collect up.
     for (GradleProjectStructureNode<?> n = node.getParent(); n != null; n = n.getParent()) {
       final GradleProjectStructureNodeDescriptor<?> descriptor = n.getDescriptor();
-      if (n.getType() == GradleEntityType.SYNTHETIC) {
+      if (n.getDescriptor().getElement().getType() == GradleEntityType.SYNTHETIC) {
         continue;
       }
       if (descriptor.getAttributes() != GradleTextAttributes.GRADLE_LOCAL_CHANGE) {
         break;
       }
       Object id = descriptor.getElement();
-      if (id instanceof GradleEntityId) {
-        final Object entity = myIdMapper.mapIdToEntity((GradleEntityId)id);
-        if (entity instanceof GradleEntity) {
-          ((GradleEntity)entity).invite(context.visitor);
-        }
+      final Object entity = myIdMapper.mapIdToEntity((GradleEntityId)id);
+      if (entity instanceof GradleEntity) {
+        ((GradleEntity)entity).invite(context.visitor);
       }
     }
 
     // Collect down.
     final Stack<GradleEntity> toProcess = new Stack<GradleEntity>();
     final Object id = node.getDescriptor().getElement();
-    if (id instanceof GradleEntityId) {
-      final Object entity = myIdMapper.mapIdToEntity((GradleEntityId)id);
-      if (entity instanceof GradleEntity) {
-        toProcess.push((GradleEntity)entity);
-      }
+    final Object entity = myIdMapper.mapIdToEntity((GradleEntityId)id);
+    if (entity instanceof GradleEntity) {
+      toProcess.push((GradleEntity)entity);
     }
-    
+
     context.recursive = true;
     while (!toProcess.isEmpty()) {
-      final GradleEntity entity = toProcess.pop();
-      entity.invite(context.visitor);
+      final GradleEntity e = toProcess.pop();
+      e.invite(context.visitor);
     }
   }
 

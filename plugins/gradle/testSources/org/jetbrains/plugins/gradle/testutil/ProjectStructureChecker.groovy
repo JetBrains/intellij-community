@@ -10,6 +10,7 @@ import static junit.framework.Assert.assertEquals
 import static junit.framework.Assert.fail
 import org.jetbrains.plugins.gradle.model.GradleEntityOwner
 import org.jetbrains.plugins.gradle.model.id.GradleEntityId
+import org.jetbrains.plugins.gradle.model.GradleEntityType
 
 /** 
  * @author Denis Zhdanov
@@ -64,7 +65,7 @@ class ProjectStructureChecker {
     def expectedMarkup = COLORS[node.children().find {it instanceof CharSequence}]?: GradleTextAttributes.GRADLE_NO_CHANGE
     assertEquals("node '$descriptor'", expectedMarkup, descriptor.attributes)
 
-    if (descriptor.element instanceof GradleEntityId) {
+    if (descriptor.element.type != GradleEntityType.SYNTHETIC) {
       def expectedOwner = expectedMarkup == GradleTextAttributes.GRADLE_LOCAL_CHANGE ? GradleEntityOwner.GRADLE : GradleEntityOwner.INTELLIJ
       assertEquals("node '$descriptor'", expectedOwner, descriptor.element.owner)
     }

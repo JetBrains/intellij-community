@@ -8,7 +8,7 @@ import org.jetbrains.plugins.gradle.model.GradleEntityType;
  * @author Denis Zhdanov
  * @since 2/14/12 1:34 PM
  */
-public class GradleProjectId extends AbstractGradleEntityId {
+public class GradleProjectId extends GradleAbstractEntityId {
 
   public GradleProjectId(@NotNull GradleEntityOwner owner) {
     super(GradleEntityType.PROJECT, owner);

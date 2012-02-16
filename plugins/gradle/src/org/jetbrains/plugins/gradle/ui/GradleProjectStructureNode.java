@@ -4,7 +4,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.config.GradleTextAttributes;
 import org.jetbrains.plugins.gradle.diff.GradleProjectStructureChange;
-import org.jetbrains.plugins.gradle.model.GradleEntityType;
+import org.jetbrains.plugins.gradle.model.id.GradleEntityId;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.MutableTreeNode;
@@ -18,7 +18,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @since 8/23/11 3:50 PM
  * @param <T>   type of the target entity {@link GradleProjectStructureNodeDescriptor#getElement() associated} with the current node
  */
-public class GradleProjectStructureNode<T> extends DefaultMutableTreeNode implements Iterable<GradleProjectStructureNode<?>> {
+public class GradleProjectStructureNode<T extends GradleEntityId> extends DefaultMutableTreeNode
+  implements Iterable<GradleProjectStructureNode<?>>
+{
   
   public static final Comparator<GradleProjectStructureNode<?>> NODE_COMPARATOR = new Comparator<GradleProjectStructureNode<?>>() {
     @Override
@@ -42,22 +44,15 @@ public class GradleProjectStructureNode<T> extends DefaultMutableTreeNode implem
   private final List<Listener>                    myListeners       = new CopyOnWriteArrayList<Listener>();
   
   private final GradleProjectStructureNodeDescriptor<T> myDescriptor;
-  private final GradleEntityType                        myType;
   
-  public GradleProjectStructureNode(@NotNull GradleProjectStructureNodeDescriptor<T> descriptor, @NotNull GradleEntityType type) {
+  public GradleProjectStructureNode(@NotNull GradleProjectStructureNodeDescriptor<T> descriptor) {
     super(descriptor);
     myDescriptor = descriptor;
-    myType = type;
   }
 
   @NotNull
   public GradleProjectStructureNodeDescriptor<T> getDescriptor() {
     return myDescriptor;
-  }
-
-  @NotNull
-  public GradleEntityType getType() {
-    return myType;
   }
 
   @Override
@@ -175,7 +170,7 @@ public class GradleProjectStructureNode<T> extends DefaultMutableTreeNode implem
    */
   @SuppressWarnings("unchecked")
   @NotNull
-  public <C> Collection<GradleProjectStructureNode<C>> getChildren(@NotNull Class<C> clazz) {
+  public <C extends GradleEntityId> Collection<GradleProjectStructureNode<C>> getChildren(@NotNull Class<C> clazz) {
     List<GradleProjectStructureNode<C>> result = null;
     for (int i = 0; i < getChildCount(); i++) {
       final GradleProjectStructureNode<?> child = getChildAt(i);

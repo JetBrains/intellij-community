@@ -11,13 +11,12 @@ import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.config.GradleTextAttributes;
 import org.jetbrains.plugins.gradle.diff.*;
-import org.jetbrains.plugins.gradle.model.GradleEntityType;
 import org.jetbrains.plugins.gradle.model.id.*;
 import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNode;
 import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNodeDescriptor;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
+import org.jetbrains.plugins.gradle.util.GradleUtil;
 
-import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import java.util.ArrayList;
@@ -45,8 +44,8 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
    *                  |_dependency2
    * </pre>
    */
-  private final Map<String, GradleProjectStructureNode<String>> myModuleDependencies
-    = new HashMap<String, GradleProjectStructureNode<String>>();
+  private final Map<String, GradleProjectStructureNode<GradleSyntheticId>> myModuleDependencies
+    = new HashMap<String, GradleProjectStructureNode<GradleSyntheticId>>();
   private final Map<String, GradleProjectStructureNode<GradleModuleId>> myModules
     = new HashMap<String, GradleProjectStructureNode<GradleModuleId>>();
 
@@ -109,7 +108,7 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
       if (dependencies.isEmpty()) {
         continue;
       }
-      GradleProjectStructureNode<String> dependenciesNode = getDependenciesNode(moduleId);
+      GradleProjectStructureNode<GradleSyntheticId> dependenciesNode = getDependenciesNode(moduleId);
       for (GradleProjectStructureNode<?> dependency : dependencies) {
         dependenciesNode.add(dependency);
       }
@@ -123,28 +122,21 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
   public Project getProject() {
     return myProject;
   }
-  
-  private static <T> GradleProjectStructureNodeDescriptor<T> buildDescriptor(@NotNull T entity, @NotNull String name, @NotNull Icon icon) {
-    return new GradleProjectStructureNodeDescriptor<T>(entity, name, icon);
-  }
 
-  private <T extends GradleEntityId> GradleProjectStructureNode<T> buildNode(@NotNull T entityId, @NotNull String name) {
-    final Icon icon = entityId.getType().getIcon();
-    assert icon != null;
-    final GradleProjectStructureNode<T> result
-      = new GradleProjectStructureNode<T>(buildDescriptor(entityId, name, icon), entityId.getType());
+  private <T extends GradleEntityId> GradleProjectStructureNode<T> buildNode(@NotNull T id, @NotNull String name) {
+    final GradleProjectStructureNode<T> result = GradleUtil.buildNode(id, name);
     result.addListener(myNodeListener);
     return result;
   }
 
-  private GradleProjectStructureNode<String> getDependenciesNode(@NotNull GradleModuleId id) {
-    final GradleProjectStructureNode<String> cached = myModuleDependencies.get(id.getModuleName());
+  private GradleProjectStructureNode<GradleSyntheticId> getDependenciesNode(@NotNull GradleModuleId id) {
+    final GradleProjectStructureNode<GradleSyntheticId> cached = myModuleDependencies.get(id.getModuleName());
     if (cached != null) {
       return cached;
     }
     GradleProjectStructureNode<GradleModuleId> moduleNode = getModuleNode(id);
-    GradleProjectStructureNode<String> result
-      = new GradleProjectStructureNode<String>(GradleConstants.DEPENDENCIES_NODE_DESCRIPTOR, GradleEntityType.SYNTHETIC);
+    GradleProjectStructureNode<GradleSyntheticId> result
+      = new GradleProjectStructureNode<GradleSyntheticId>(GradleConstants.DEPENDENCIES_NODE_DESCRIPTOR);
     moduleNode.add(result);
     myModuleDependencies.put(id.getModuleName(), result);
     
@@ -201,7 +193,7 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
   }
 
   private void processNewMismatchedLibraryPathChange(@NotNull GradleMismatchedLibraryPathChange change) {
-    for (GradleProjectStructureNode<String> holder : myModuleDependencies.values()) {
+    for (GradleProjectStructureNode<GradleSyntheticId> holder : myModuleDependencies.values()) {
       for (GradleProjectStructureNode<GradleLibraryDependencyId> dependencyNode : holder.getChildren(GradleLibraryDependencyId.class)) {
         final GradleLibraryDependencyId id = dependencyNode.getDescriptor().getElement();
         if (change.getLibraryName().equals(id.getLibraryName())) {
@@ -220,7 +212,7 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
       attributes = GradleTextAttributes.INTELLIJ_LOCAL_CHANGE;
     }
     assert id != null;
-    final GradleProjectStructureNode<String> dependenciesNode = getDependenciesNode(id.getModuleId());
+    final GradleProjectStructureNode<GradleSyntheticId> dependenciesNode = getDependenciesNode(id.getModuleId());
     for (GradleProjectStructureNode<GradleLibraryDependencyId> node : dependenciesNode.getChildren(GradleLibraryDependencyId.class)) {
       GradleProjectStructureNodeDescriptor<GradleLibraryDependencyId> d = node.getDescriptor();
       if (id.equals(d.getElement())) {
@@ -261,7 +253,7 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
   }
   
   private void processObsoleteMismatchedLibraryPathChange(@NotNull GradleMismatchedLibraryPathChange change) {
-    for (GradleProjectStructureNode<String> holder : myModuleDependencies.values()) {
+    for (GradleProjectStructureNode<GradleSyntheticId> holder : myModuleDependencies.values()) {
       for (GradleProjectStructureNode<GradleLibraryDependencyId> node : holder.getChildren(GradleLibraryDependencyId.class)) {
         final GradleLibraryDependencyId id = node.getDescriptor().getElement();
         if (id.getLibraryName().equals(change.getLibraryName())) {
@@ -285,7 +277,7 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
     else {
       removeNode = !myProjectStructureHelper.isGradleLibraryDependencyExist(id);
     }
-    final GradleProjectStructureNode<String> holder = myModuleDependencies.get(id.getModuleName());
+    final GradleProjectStructureNode<GradleSyntheticId> holder = myModuleDependencies.get(id.getModuleName());
     if (holder == null) {
       return;
     }

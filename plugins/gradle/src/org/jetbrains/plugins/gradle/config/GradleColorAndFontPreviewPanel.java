@@ -18,6 +18,7 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.model.id.GradleSyntheticId;
 import org.jetbrains.plugins.gradle.ui.GradleIcons;
 import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNodeDescriptor;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
@@ -257,7 +258,8 @@ public class GradleColorAndFontPreviewPanel implements PreviewPanel {
   }
 
   private DefaultMutableTreeNode createNode(@NotNull String text, @NotNull Icon icon, @Nullable TextAttributesKey textAttributesKey) {
-    final GradleProjectStructureNodeDescriptor<String> descriptor = new GradleProjectStructureNodeDescriptor<String>(text, text, icon);
+    final GradleProjectStructureNodeDescriptor<GradleSyntheticId> descriptor
+      = new GradleProjectStructureNodeDescriptor<GradleSyntheticId>(new GradleSyntheticId(text), text, icon);
     DefaultMutableTreeNode result = new DefaultMutableTreeNode(descriptor);
     if (textAttributesKey != null) {
       final PresentationData presentation = descriptor.getPresentation();

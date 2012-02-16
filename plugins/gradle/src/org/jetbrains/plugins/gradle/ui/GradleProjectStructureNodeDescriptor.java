@@ -20,16 +20,16 @@ import javax.swing.*;
  * @since 8/12/11 2:47 PM
  * @param <T>   target element type
  */
-public class GradleProjectStructureNodeDescriptor<T> extends PresentableNodeDescriptor<T> {
+public class GradleProjectStructureNodeDescriptor<T extends GradleEntityId> extends PresentableNodeDescriptor<T> {
 
   private TextAttributesKey myAttributes = GradleTextAttributes.GRADLE_NO_CHANGE;
 
-  private final T myData;
+  private final T myId;
 
   @SuppressWarnings("NullableProblems")
-  public GradleProjectStructureNodeDescriptor(@NotNull T data, @NotNull String text, @Nullable Icon icon) {
+  public GradleProjectStructureNodeDescriptor(@NotNull T id, @NotNull String text, @Nullable Icon icon) {
     super(null, null);
-    myData = data;
+    myId = id;
     myOpenIcon = myClosedIcon = icon;
     myName = text;
   }
@@ -45,7 +45,7 @@ public class GradleProjectStructureNodeDescriptor<T> extends PresentableNodeDesc
   @NotNull
   @Override
   public T getElement() {
-    return myData;
+    return myId;
   }
 
   public void setName(@NotNull String name) {
@@ -59,18 +59,14 @@ public class GradleProjectStructureNodeDescriptor<T> extends PresentableNodeDesc
 
   public void setAttributes(@NotNull TextAttributesKey attributes) {
     myAttributes = attributes;
-    // TODO den remove the type check
-    if (myData instanceof GradleEntityId) {
-      final GradleEntityId id = (GradleEntityId)myData;
-      GradleEntityOwner owner = id.getOwner();
-      if (attributes == GradleTextAttributes.GRADLE_LOCAL_CHANGE) {
-        owner = GradleEntityOwner.GRADLE;
-      }
-      else if (attributes == GradleTextAttributes.GRADLE_NO_CHANGE || attributes == GradleTextAttributes.INTELLIJ_LOCAL_CHANGE) {
-        owner = GradleEntityOwner.INTELLIJ;
-      }
-      id.setOwner(owner);
+    GradleEntityOwner owner = myId.getOwner();
+    if (attributes == GradleTextAttributes.GRADLE_LOCAL_CHANGE) {
+      owner = GradleEntityOwner.GRADLE;
     }
+    else if (attributes == GradleTextAttributes.GRADLE_NO_CHANGE || attributes == GradleTextAttributes.INTELLIJ_LOCAL_CHANGE) {
+      owner = GradleEntityOwner.INTELLIJ;
+    }
+    myId.setOwner(owner);
     update();
   }
 }

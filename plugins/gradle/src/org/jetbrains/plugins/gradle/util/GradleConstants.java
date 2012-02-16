@@ -1,6 +1,8 @@
 package org.jetbrains.plugins.gradle.util;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.model.id.GradleSyntheticId;
 import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNodeDescriptor;
 
 /**
@@ -20,27 +22,19 @@ public class GradleConstants {
   @NonNls public static final String ACTION_GROUP_SYNC_TREE = "Gradle.SyncTreeGroup";
   
   
-  public static final GradleProjectStructureNodeDescriptor<String> DEPENDENCIES_NODE_DESCRIPTOR
-    = new GradleProjectStructureNodeDescriptor<String>(
-    GradleBundle.message("gradle.project.structure.tree.node.dependencies"),
-    GradleBundle.message("gradle.project.structure.tree.node.dependencies"),
-    null
-  );
+  public static final GradleProjectStructureNodeDescriptor<GradleSyntheticId> DEPENDENCIES_NODE_DESCRIPTOR
+    = buildSyntheticDescriptor(GradleBundle.message("gradle.project.structure.tree.node.dependencies"));
 
-  public static final GradleProjectStructureNodeDescriptor<String> MODULES_NODE_DESCRIPTOR
-    = new GradleProjectStructureNodeDescriptor<String>(
-    GradleBundle.message("gradle.import.structure.tree.node.modules"),
-    GradleBundle.message("gradle.import.structure.tree.node.modules"),
-    null
-  );
+  public static final GradleProjectStructureNodeDescriptor<GradleSyntheticId> MODULES_NODE_DESCRIPTOR
+    = buildSyntheticDescriptor(GradleBundle.message("gradle.import.structure.tree.node.modules"));
 
-  public static final GradleProjectStructureNodeDescriptor<String> LIBRARIES_NODE_DESCRIPTOR
-    = new GradleProjectStructureNodeDescriptor<String>(
-    GradleBundle.message("gradle.import.structure.tree.node.libraries"),
-    GradleBundle.message("gradle.import.structure.tree.node.libraries"),
-    null
-  );
+  public static final GradleProjectStructureNodeDescriptor<GradleSyntheticId> LIBRARIES_NODE_DESCRIPTOR
+    = buildSyntheticDescriptor(GradleBundle.message("gradle.import.structure.tree.node.libraries"));
 
   private GradleConstants() {
+  }
+
+  private static GradleProjectStructureNodeDescriptor<GradleSyntheticId> buildSyntheticDescriptor(@NotNull String text) {
+    return new GradleProjectStructureNodeDescriptor<GradleSyntheticId>(new GradleSyntheticId(text), text, null);
   }
 }

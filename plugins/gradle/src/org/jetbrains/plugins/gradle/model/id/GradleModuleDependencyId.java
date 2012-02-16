@@ -8,7 +8,7 @@ import org.jetbrains.plugins.gradle.model.GradleEntityType;
  * @author Denis Zhdanov
  * @since 2/14/12 2:06 PM
  */
-public class GradleModuleDependencyId extends AbstractGradleEntityId {
+public class GradleModuleDependencyId extends GradleAbstractEntityId {
 
   @NotNull private final String myOwnerModuleName;
   @NotNull private final String myDependencyModuleName;

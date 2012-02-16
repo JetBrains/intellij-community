@@ -69,7 +69,7 @@ public class GradleEntityIdMapper {
 
         @Override
         public void visit(@NotNull GradleContentRoot contentRoot) {
-          // TODO den implement 
+          result.set(new GradleContentRootId(GradleEntityOwner.GRADLE, contentRoot.getOwnerModule().getName(), contentRoot.getRootPath())); 
         }
 
         @Override
