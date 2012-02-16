@@ -229,7 +229,7 @@ public class OverrideImplementUtil {
   }
 
   public static boolean canInsertOverride(PsiMethod superMethod, PsiClass targetClass) {
-    if (superMethod.isConstructor()) {
+    if (superMethod.isConstructor() || superMethod.hasModifierProperty(PsiModifier.STATIC)) {
       return false;
     }
     if (!PsiUtil.isLanguageLevel5OrHigher(targetClass)) {
