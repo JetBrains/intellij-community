@@ -232,9 +232,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   private File getProjectsTreeFile() {
-    File file = new File(getProjectsTreesDir(), myProject.getLocationHash() + "/tree.dat");
-    file.getParentFile().mkdirs();
-    return file;
+    return new File(getProjectsTreesDir(), myProject.getLocationHash() + "/tree.dat");
   }
 
   private static File getProjectsTreesDir() {
