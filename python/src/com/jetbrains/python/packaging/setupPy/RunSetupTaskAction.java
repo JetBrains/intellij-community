@@ -8,7 +8,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.python.packaging.PyPackageManager;
+import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.run.PythonTask;
 
@@ -30,7 +30,7 @@ public class RunSetupTaskAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     Module module = e.getData(LangDataKeys.MODULE);
     if (module == null) return;
-    final PyFile setupPy = PyPackageManager.findSetupPy(module);
+    final PyFile setupPy = PyPackageUtil.findSetupPy(module);
     try {
       final List<SetupTaskIntrospector.SetupTaskOption> options = SetupTaskIntrospector.getSetupTaskOptions(module, myTaskName);
       List<String> parameters = new ArrayList<String>();
@@ -64,6 +64,6 @@ public class RunSetupTaskAction extends AnAction {
   @Override
   public void update(AnActionEvent e) {
     final Module module = e.getData(LangDataKeys.MODULE);
-    e.getPresentation().setVisible(module != null && PyPackageManager.findSetupPy(module) != null);
+    e.getPresentation().setVisible(module != null && PyPackageUtil.findSetupPy(module) != null);
   }
 }

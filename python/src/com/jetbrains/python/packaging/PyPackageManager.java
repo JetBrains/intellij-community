@@ -7,7 +7,6 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -19,14 +18,10 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.jetbrains.python.PythonHelpersLocator;
-import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.remote.PyRemoteInterpreterException;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
@@ -89,7 +84,7 @@ public class PyPackageManager {
         public void run() throws PyExternalProcessException {
           PyPackageManager.getInstance(mySdk).install(requirements, extraArgs);
         }
-      }, "Installing packages", "Packages installed successfully", "Installed packages: " + requirementsToString(requirements),
+      }, "Installing packages", "Packages installed successfully", "Installed packages: " + PyPackageUtil.requirementsToString(requirements),
          "Install packages failed");
     }
 
@@ -266,11 +261,11 @@ public class PyPackageManager {
   @Nullable
   public static List<PyRequirement> getRequirements(@NotNull Module module) {
     // TODO: Cache requirements, clear cache on requirements.txt or setup.py updates
-    final Document requirementsTxt = findRequirementsTxt(module);
+    final Document requirementsTxt = PyPackageUtil.findRequirementsTxt(module);
     if (requirementsTxt != null) {
       return PyRequirement.parse(requirementsTxt.getText());
     }
-    final PyListLiteralExpression installRequires = findSetupPyInstallRequires(module);
+    final PyListLiteralExpression installRequires = PyPackageUtil.findSetupPyInstallRequires(module);
     if (installRequires != null) {
       final List<String> lines = new ArrayList<String>();
       for (PyExpression e : installRequires.getElements()) {
@@ -279,86 +274,6 @@ public class PyPackageManager {
         }
       }
       return PyRequirement.parse(StringUtil.join(lines, "\n"));
-    }
-    return null;
-  }
-
-  @NotNull
-  private static String requirementsToString(@NotNull List<PyRequirement> requirements) {
-    return StringUtil.join(requirements, new Function<PyRequirement, String>() {
-      @Override
-      public String fun(PyRequirement requirement) {
-        return String.format("'%s'", requirement.toString());
-      }
-    }, ", ");
-  }
-
-  @Nullable
-  private static PyListLiteralExpression findSetupPyInstallRequires(@NotNull Module module) {
-    final PyFile setupPy = findSetupPy(module);
-    if (setupPy != null) {
-      final PyCallExpression setup = findSetupCall(setupPy);
-      if (setup != null) {
-        for (PyExpression arg : setup.getArguments()) {
-          if (arg instanceof PyKeywordArgument) {
-            final PyKeywordArgument kwarg = (PyKeywordArgument)arg;
-            if ("install_requires".equals(kwarg.getKeyword())) {
-              final PyExpression value = kwarg.getValueExpression();
-              if (value instanceof PyListLiteralExpression) {
-                return (PyListLiteralExpression)value;
-              }
-            }
-          }
-        }
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  private static PyCallExpression findSetupCall(@NotNull PyFile file) {
-    final Ref<PyCallExpression> result = new Ref<PyCallExpression>(null);
-    file.acceptChildren(new PyRecursiveElementVisitor() {
-      @Override
-      public void visitPyCallExpression(PyCallExpression node) {
-        final PyExpression callee = node.getCallee();
-        final String name = PyUtil.getReadableRepr(callee, true);
-        if ("setup".equals(name)) {
-          result.set(node);
-        }
-      }
-
-      @Override
-      public void visitPyElement(PyElement node) {
-        if (!(node instanceof ScopeOwner)) {
-          super.visitPyElement(node);
-        }
-      }
-    });
-    return result.get();
-  }
-
-  @Nullable
-  private static Document findRequirementsTxt(@NotNull Module module) {
-    for (VirtualFile root : PyUtil.getSourceRoots(module)) {
-      final VirtualFile child = root.findChild("requirements.txt");
-      if (child != null) {
-        return FileDocumentManager.getInstance().getDocument(child);
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  public static PyFile findSetupPy(@NotNull Module module) {
-    for (VirtualFile root : PyUtil.getSourceRoots(module)) {
-      final VirtualFile child = root.findChild("setup.py");
-      if (child != null) {
-        final PsiFile file = PsiManager.getInstance(module.getProject()).findFile(child);
-        if (file instanceof PyFile) {
-          return (PyFile)file;
-        }
-      }
     }
     return null;
   }

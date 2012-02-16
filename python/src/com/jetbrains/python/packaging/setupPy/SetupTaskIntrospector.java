@@ -10,7 +10,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.packaging.PyPackageManager;
+import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -87,7 +87,7 @@ public class SetupTaskIntrospector {
 
   @Nullable
   public static List<SetupTaskOption> getSetupTaskOptions(Module module, String taskName) {
-    final PyFile setupPy = PyPackageManager.findSetupPy(module);
+    final PyFile setupPy = PyPackageUtil.findSetupPy(module);
     for (SetupTask task : getTaskList(module, setupPy != null && usesSetuptools(setupPy))) {
       if (task.name.equals(taskName)) {
         return task.options;

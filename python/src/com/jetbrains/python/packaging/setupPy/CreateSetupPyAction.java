@@ -14,7 +14,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -22,13 +21,10 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.SystemProperties;
-import com.jetbrains.python.PyNames;
-import com.jetbrains.python.packaging.PyPackageManager;
+import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.python.psi.PyUtil;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.Properties;
 
 /**
@@ -46,7 +42,7 @@ public class CreateSetupPyAction extends CreateFromTemplateAction {
   @Override
   public void update(AnActionEvent e) {
     final Module module = e.getData(LangDataKeys.MODULE);
-    e.getPresentation().setEnabled(module != null && PyPackageManager.findSetupPy(module) == null);
+    e.getPresentation().setEnabled(module != null && PyPackageUtil.findSetupPy(module) == null);
   }
 
   @Override
@@ -67,27 +63,9 @@ public class CreateSetupPyAction extends CreateFromTemplateAction {
   private static String getPackageList(DataContext dataContext) {
     final Module module = LangDataKeys.MODULE.getData(dataContext);
     if (module != null) {
-      final Collection<VirtualFile> sourceRoots = PyUtil.getSourceRoots(module);
-      List<String> packageNames = new ArrayList<String>();
-      for (VirtualFile sourceRoot : sourceRoots) {
-        collectPackageNames(module.getProject(), sourceRoot, packageNames, "");
-      }
-      return "['" + StringUtil.join(packageNames, "', '") + "']";
+      return "['" + StringUtil.join(PyPackageUtil.getPackageNames(module), "', '") + "']";
     }
     return "[]";
-  }
-
-  private static void collectPackageNames(Project project, VirtualFile root, List<String> names, String prefix) {
-    for (VirtualFile child : root.getChildren()) {
-      if (ProjectRootManager.getInstance(project).getFileIndex().isIgnored(child)) {
-        continue;
-      }
-      if (child.findChild(PyNames.INIT_DOT_PY) != null) {
-        final String name = prefix + child.getName();
-        names.add(name);
-        collectPackageNames(project, child, names, name + ".");
-      }
-    }
   }
 
   private static String getPackageDirs(DataContext dataContext) {

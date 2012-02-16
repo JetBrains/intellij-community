@@ -2,7 +2,7 @@ package com.jetbrains.python.packaging.setupPy;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.module.Module;
-import com.jetbrains.python.packaging.PyPackageManager;
+import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.python.psi.PyFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,7 +22,7 @@ public class PyPackagingGroup extends ActionGroup {
     if (e != null) {
       final Module module = e.getData(LangDataKeys.MODULE);
       if (module != null) {
-        final PyFile setupPy = PyPackageManager.findSetupPy(module);
+        final PyFile setupPy = PyPackageUtil.findSetupPy(module);
         if (setupPy != null) {
           result.add(Separator.getInstance());
           result.addAll(SetupTaskIntrospector.createSetupTaskActions(module, setupPy));
