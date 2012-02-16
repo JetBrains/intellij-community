@@ -40,6 +40,7 @@ public class CommonInspectionToolWrapper extends InspectionToolWrapper<Inspectio
     super(ep, tool);
   }
 
+
   @Override
   public CommonInspectionToolWrapper createCopy(InspectionToolWrapper<InspectionTool, InspectionEP> from) {
     return new CommonInspectionToolWrapper(from.myEP, from.myTool);
@@ -102,4 +103,11 @@ public class CommonInspectionToolWrapper extends InspectionToolWrapper<Inspectio
                                        boolean showStructure) {
     return getTool().createToolNode(provider, parentNode, showStructure);
   }
+
+  @Override
+  public boolean queryExternalUsagesRequests(InspectionManager manager) {
+    return getTool().queryExternalUsagesRequests(manager);
+  }
+
+
 }

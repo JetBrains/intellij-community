@@ -43,6 +43,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
+import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -94,18 +95,27 @@ public abstract class InspectionTestCase extends PsiTestCase {
     doTest(folderName, tool, jdkName, checkRange, false);
   }
 
-  public void doTest(@NonNls String folderName, InspectionTool tool, @NonNls final String jdkName, boolean checkRange, boolean runDeadCodeFirst) throws Exception {
+  public void doTest(@NonNls String folderName,
+                     InspectionTool tool,
+                     @NonNls final String jdkName,
+                     boolean checkRange,
+                     boolean runDeadCodeFirst,
+                     InspectionTool... additional) throws Exception {
     final String testDir = getTestDataPath() + "/" + folderName;
-    runTool(testDir, jdkName, tool, runDeadCodeFirst);
+    runTool(testDir, jdkName, runDeadCodeFirst, tool, additional);
 
     InspectionTestUtil.compareToolResults(tool, checkRange, testDir);
   }
 
   protected void runTool(@NonNls final String testDir, @NonNls final String jdkName, final InspectionTool tool) {
-    runTool(testDir, jdkName, tool, false);
+    runTool(testDir, jdkName, false, tool);
   }
 
-  protected void runTool(final String testDir, final String jdkName, final InspectionTool tool, boolean runDeadCodeFirst) {
+  protected void runTool(final String testDir,
+                         final String jdkName,
+                         boolean runDeadCodeFirst,
+                         final InspectionTool tool,
+                         InspectionTool... additional) {
     final VirtualFile[] sourceDir = new VirtualFile[1];
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
@@ -121,6 +131,7 @@ public abstract class InspectionTestCase extends PsiTestCase {
 
     InspectionManagerEx inspectionManager = (InspectionManagerEx) InspectionManager.getInstance(getProject());
     InspectionTool[] tools = runDeadCodeFirst ? new InspectionTool[]{new UnusedDeclarationInspection(), tool} : new InspectionTool[]{tool};
+    tools = ArrayUtil.mergeArrays(tools, additional);
     final GlobalInspectionContextImpl globalContext = CodeInsightTestFixtureImpl.createGlobalContextForTool(scope, getProject(), inspectionManager, tools);
 
     InspectionTestUtil.runTool(tool, scope, globalContext, inspectionManager);

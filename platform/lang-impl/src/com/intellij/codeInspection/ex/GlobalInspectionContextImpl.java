@@ -168,7 +168,7 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
         for (ScopeToolState state : tools.getTools()) {
           final NamedScope namedScope = state.getScope(project);
           if (namedScope == null || namedScope.getValue().contains(file, getCurrentProfile().getProfileManager().getScopesManager())) {
-            return state.isEnabled() && ((GlobalInspectionToolWrapper)state.getTool()).getTool() == tool;
+            return state.isEnabled() && ((InspectionToolWrapper)state.getTool()).getTool() == tool;
           }
         }
       }

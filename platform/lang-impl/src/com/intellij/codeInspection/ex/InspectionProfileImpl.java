@@ -458,7 +458,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     catch (ProcessCanceledException e) {
       return false;
     }
-    for (InspectionTool tool : tools) {
+    for (InspectionToolWrapper tool : tools) {
       final String shortName = tool.getShortName();
       HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
       if (key == null) {
