@@ -295,13 +295,13 @@ public class IdeEventQueue extends EventQueue {
     myPostprocessors.remove(dispatcher);
   }
 
-  private void _addProcessor(final EventDispatcher dispatcher, Disposable parent, Set<EventDispatcher> set) {
+  private static void _addProcessor(final EventDispatcher dispatcher, Disposable parent, final Set<EventDispatcher> set) {
     set.add(dispatcher);
     if (parent != null) {
       Disposer.register(parent, new Disposable() {
         @Override
         public void dispose() {
-          removeDispatcher(dispatcher);
+          set.remove(dispatcher);
         }
       });
     }

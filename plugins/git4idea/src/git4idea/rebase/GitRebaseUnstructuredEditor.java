@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,6 +67,7 @@ public class GitRebaseUnstructuredEditor extends DialogWrapper {
     encoding = GitConfigUtil.getCommitEncoding(project, root);
     myFile = new File(path);
     myTextArea.setText(FileUtil.loadFile(myFile, encoding));
+    myTextArea.setCaretPosition(0);
     init();
   }
 
@@ -92,5 +93,10 @@ public class GitRebaseUnstructuredEditor extends DialogWrapper {
   @Override
   protected String getDimensionServiceKey() {
     return getClass().getName();
+  }
+
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myTextArea;
   }
 }

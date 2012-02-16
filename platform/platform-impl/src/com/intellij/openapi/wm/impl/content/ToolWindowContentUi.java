@@ -320,10 +320,8 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
 
     c.addMouseListener(new PopupHandler() {
       public void invokePopup(final Component comp, final int x, final int y) {
-        if (c instanceof BaseLabel) {
-          final Content content = ((BaseLabel)c).getContent();
-          ui.showContextMenu(comp, x, y, ui.myWindow.getPopupGroup(), content);
-        }
+        final Content content = c instanceof BaseLabel ? ((BaseLabel)c).getContent() : null;
+        ui.showContextMenu(comp, x, y, ui.myWindow.getPopupGroup(), content);
       }
     });
 
@@ -350,15 +348,21 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     group.addSeparator();
   }
 
-  public void showContextMenu(Component comp, int x, int y, ActionGroup toolWindowGroup, Content selectedContent) {
+  public void showContextMenu(Component comp, int x, int y, ActionGroup toolWindowGroup, @Nullable Content selectedContent) {
+    if (selectedContent == null && toolWindowGroup == null) {
+      return;
+    }
     DefaultActionGroup group = new DefaultActionGroup();
-    initActionGroup(group, selectedContent);
+    if (selectedContent != null) {
+      initActionGroup(group, selectedContent);
+    }
 
     if (toolWindowGroup != null) {
       group.addAll(toolWindowGroup);
     }
 
-    final ActionPopupMenu popupMenu = ((ActionManagerImpl)ActionManager.getInstance()).createActionPopupMenu(POPUP_PLACE, group, new MenuItemPresentationFactory(true));
+    final ActionPopupMenu popupMenu =
+      ((ActionManagerImpl)ActionManager.getInstance()).createActionPopupMenu(POPUP_PLACE, group, new MenuItemPresentationFactory(true));
     popupMenu.getComponent().show(comp, x, y);
   }
 

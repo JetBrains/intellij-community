@@ -402,9 +402,9 @@
     </group>
 
     <group>
-      <action id="MarkSourceRoot" class="com.intellij.ide.projectView.actions.MarkRootAction"/>
-      <action id="MarkTestSourceRoot" class="com.intellij.ide.projectView.actions.MarkTestSourceRootAction"/>
-      <action id="MarkExcludeRoot" class="com.intellij.ide.projectView.actions.MarkExcludeRootAction"/>
+      <action id="MarkSourceRoot" class="com.intellij.ide.projectView.actions.MarkRootAction" icon="/modules/sourceRootClosed.png"/>
+      <action id="MarkTestSourceRoot" class="com.intellij.ide.projectView.actions.MarkTestSourceRootAction" icon="/modules/testRootClosed.png"/>
+      <action id="MarkExcludeRoot" class="com.intellij.ide.projectView.actions.MarkExcludeRootAction" icon="/modules/excludeRootClosed.png"/>
       <action id="UnmarkRoot" class="com.intellij.ide.projectView.actions.UnmarkRootAction"/>
       <add-to-group group-id="MarkRootGroup"/>
     </group>

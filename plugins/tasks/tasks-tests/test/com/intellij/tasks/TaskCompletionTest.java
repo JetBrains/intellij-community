@@ -3,14 +3,16 @@ package com.intellij.tasks;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.psi.PsiFile;
+import com.intellij.tasks.actions.ActivateTaskDialog;
 import com.intellij.tasks.impl.LocalTaskImpl;
-import com.intellij.tasks.impl.TaskCompletionContributor;
 import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.testFramework.MapDataContext;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.ui.TextFieldWithAutoCompletionContributor;
 
 import java.util.Arrays;
 
@@ -64,9 +66,11 @@ public class TaskCompletionTest extends LightCodeInsightFixtureTestCase {
   private void configureFile(String text) {
     PsiFile psiFile = myFixture.configureByText("test.txt", text);
     Document document = myFixture.getDocument(psiFile);
-    TaskCompletionContributor.installCompletion(document, getProject(), null, false);
+    final Project project = getProject();
+    TextFieldWithAutoCompletionContributor.installCompletion(document, project,
+                                                             new ActivateTaskDialog.MyTextFieldWithAutoCompletionListProvider(project),
+                                                             false);
     document.putUserData(CommitMessage.DATA_CONTEXT_KEY, new MapDataContext());
-
   }
 
   private void configureRepository(LocalTaskImpl... tasks) {

@@ -18,17 +18,33 @@
 package com.intellij.find.actions;
 
 import com.intellij.find.findInProject.FindInProjectManager;
+import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.ToolWindowId;
 
 public class FindInPathAction extends AnAction implements DumbAware {
+  static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.toolWindowGroup("FindInPath", ToolWindowId.FIND, false);
+
   @Override
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     Project project = e.getData(PlatformDataKeys.PROJECT);
-    
-    FindInProjectManager.getInstance(project).findInProject(dataContext);
+
+    FindInProjectManager findManager = FindInProjectManager.getInstance(project);
+    if (!findManager.isEnabled()) {
+      showNotAvailableMessage(e, project);
+      return;
+    }
+
+    findManager.findInProject(dataContext);
+  }
+
+  static void showNotAvailableMessage(AnActionEvent e, Project project) {
+    final String message = "'" + e.getPresentation().getText() + "' is not available while search is in progress";
+    NOTIFICATION_GROUP.createNotification(message, NotificationType.WARNING).notify(project);
   }
 
   @Override
@@ -36,9 +52,5 @@ public class FindInPathAction extends AnAction implements DumbAware {
     Presentation presentation = e.getPresentation();
     Project project = e.getData(PlatformDataKeys.PROJECT);
     presentation.setEnabled(project != null);
-    if (project != null) {
-      FindInProjectManager findManager = FindInProjectManager.getInstance(project);
-      presentation.setEnabled(findManager.isEnabled());
-    }
   }
 }

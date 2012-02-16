@@ -27,6 +27,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
@@ -65,17 +67,19 @@ public abstract class ContentEntryEditingAction extends ToggleAction implements 
     if (selectionPaths == null) {
       return null;
     }
-    final VirtualFile[] selected = new VirtualFile[selectionPaths.length];
-    for (int i = 0; i < selectionPaths.length; i++) {
-      TreePath treePath = selectionPaths[i];
+    final List<VirtualFile> selected = new ArrayList<VirtualFile>();
+    for (TreePath treePath : selectionPaths) {
       final DefaultMutableTreeNode node = (DefaultMutableTreeNode)treePath.getLastPathComponent();
       final Object nodeDescriptor = node.getUserObject();
       if (!(nodeDescriptor instanceof FileNodeDescriptor)) {
         return null;
       }
-      selected[i] = ((FileNodeDescriptor)nodeDescriptor).getElement().getFile();
+      final VirtualFile file = ((FileNodeDescriptor)nodeDescriptor).getElement().getFile();
+      if (file != null) {
+        selected.add(file);
+      }
     }
-    return selected;
+    return selected.toArray(new VirtualFile[selected.size()]);
   }
 
   public JComponent createCustomComponent(Presentation presentation) {
