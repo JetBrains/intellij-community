@@ -157,10 +157,10 @@ public class GradleUtil {
    */
   @Nullable
   public static GradleProject refreshProject(@NotNull final Project project,
-                                    @NotNull final String gradleProjectPath,
-                                    @NotNull final Ref<String> errorHolder,
-                                    final boolean resolveLibraries,
-                                    final boolean modal)
+                                             @NotNull final String gradleProjectPath,
+                                             @NotNull final Ref<String> errorHolder,
+                                             final boolean resolveLibraries,
+                                             final boolean modal)
   {
     final Ref<GradleProject> gradleProject = new Ref<GradleProject>();
     final TaskUnderProgress task = new TaskUnderProgress() {
@@ -196,7 +196,7 @@ public class GradleUtil {
               task.execute(indicator);
             }
           });
-        } 
+        }
       }
     });
     return gradleProject.get();
