@@ -195,7 +195,7 @@ public class AndroidProguardCompiler implements ClassPostProcessingCompiler {
     throws IOException {
     final File inputJar = FileUtil.createTempFile("proguard_input", ".jar");
 
-    AndroidCompileUtil.packClassFilesIntoJar(classFilesDirOsPaths, libClassFilesDirOsPaths, inputJar);
+    AndroidCommonUtils.packClassFilesIntoJar(classFilesDirOsPaths, libClassFilesDirOsPaths, inputJar);
     
     return FileUtil.toSystemDependentName(inputJar.getPath());
   }

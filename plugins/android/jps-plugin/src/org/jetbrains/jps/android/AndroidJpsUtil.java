@@ -14,10 +14,15 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.*;
 import org.jetbrains.jps.idea.Facet;
 import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.ModuleLevelBuilder;
+import org.jetbrains.jps.incremental.ProjectBuildException;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
+import java.io.PrintStream;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -237,5 +242,26 @@ class AndroidJpsUtil {
       }
     }
     return false;
+  }
+
+  public static ModuleLevelBuilder.ExitCode handleException(@NotNull CompileContext context, @NotNull Exception e, @NotNull String builderName)
+    throws ProjectBuildException {
+    String message = e.getMessage();
+
+    if (message == null) {
+      final ByteArrayOutputStream out = new ByteArrayOutputStream();
+      //noinspection IOResourceOpenedButNotSafelyClosed
+      e.printStackTrace(new PrintStream(out));
+      message = "Internal error: \n" + out.toString();
+    }
+    context.processMessage(new CompilerMessage(builderName, BuildMessage.Kind.ERROR, message));
+    throw new ProjectBuildException(message, e);
+  }
+
+  @Nullable
+  public static File getManifestFileForCompilationPath(@NotNull AndroidFacet facet) throws IOException {
+    return facet.getUseCustomManifestForCompilation()
+           ? facet.getManifestFileForCompilation()
+           : facet.getManifestFile();
   }
 }

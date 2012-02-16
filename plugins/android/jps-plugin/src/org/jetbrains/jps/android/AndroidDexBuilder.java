@@ -21,16 +21,15 @@ import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.server.ClasspathBootstrap;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.util.*;
 
 /**
  * @author Eugene.Kudelevsky
  */
 // todo: save validity state
+// todo: support light builds (for tests)
 
 public class AndroidDexBuilder extends ModuleLevelBuilder {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.android.AndroidDexBuilder");
@@ -52,16 +51,7 @@ public class AndroidDexBuilder extends ModuleLevelBuilder {
       return doBuild(context, chunk);
     }
     catch (Exception e) {
-      String message = e.getMessage();
-
-      if (message == null) {
-        final ByteArrayOutputStream out = new ByteArrayOutputStream();
-        //noinspection IOResourceOpenedButNotSafelyClosed
-        e.printStackTrace(new PrintStream(out));
-        message = "Internal error: \n" + out.toString();
-      }
-      context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, message));
-      throw new ProjectBuildException(message, e);
+      return AndroidJpsUtil.handleException(context, e, BUILDER_NAME);
     }
   }
 

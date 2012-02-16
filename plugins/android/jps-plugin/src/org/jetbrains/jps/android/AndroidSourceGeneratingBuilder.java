@@ -61,16 +61,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
       return doBuild(context, chunk);
     }
     catch (Exception e) {
-      String message = e.getMessage();
-
-      if (message == null) {
-        final ByteArrayOutputStream out = new ByteArrayOutputStream();
-        //noinspection IOResourceOpenedButNotSafelyClosed
-        e.printStackTrace(new PrintStream(out));
-        message = "Internal error: \n" + out.toString();
-      }
-      context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, message));
-      throw new ProjectBuildException(message, e);
+      return AndroidJpsUtil.handleException(context, e, BUILDER_NAME);
     }
   }
 
@@ -277,7 +268,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
           continue;
         }
 
-        final File manifestFile = getManifestFileForCompilationPath(facet);
+        final File manifestFile = AndroidJpsUtil.getManifestFileForCompilationPath(facet);
         if (manifestFile == null || !manifestFile.exists()) {
           context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR,
                                                      "AndroidManifest.xml file not found in the module " + module.getName()));
@@ -329,7 +320,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
     final Set<String> result = new HashSet<String>();
 
     for (AndroidFacet depFacet : getAllDependentAndroidLibraries(module)) {
-      final File depManifestFile = getManifestFileForCompilationPath(depFacet);
+      final File depManifestFile = AndroidJpsUtil.getManifestFileForCompilationPath(depFacet);
 
       if (depManifestFile != null) {
         final String packageName = parsePackageNameFromManifestFile(depManifestFile);
@@ -364,13 +355,6 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
     return facet.getUseCustomResFolderForCompilation()
            ? facet.getResourceDirForCompilation()
            : facet.getResourceDir();
-  }
-
-  @Nullable
-  private static File getManifestFileForCompilationPath(@NotNull AndroidFacet facet) throws IOException {
-    return facet.getUseCustomManifestForCompilation()
-           ? facet.getManifestFileForCompilation()
-           : facet.getManifestFile();
   }
 
   @NotNull

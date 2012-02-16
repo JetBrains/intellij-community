@@ -92,7 +92,7 @@ public class AndroidLibraryPackagingCompiler implements ClassPostProcessingCompi
 
       final File outputJarFile = new File(outputJarOsPath);
       try {
-        AndroidCompileUtil.packClassFilesIntoJar(ArrayUtil.EMPTY_STRING_ARRAY, classesDirOsPaths, outputJarFile);
+        AndroidCommonUtils.packClassFilesIntoJar(ArrayUtil.EMPTY_STRING_ARRAY, classesDirOsPaths, outputJarFile);
         CompilerUtil.refreshIOFile(outputJarFile);
         result.add(processingItem);
       }
