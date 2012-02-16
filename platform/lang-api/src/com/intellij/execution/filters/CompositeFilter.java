@@ -77,6 +77,24 @@ public class CompositeFilter implements Filter, FilterMixin {
     }
   }
 
+  @Override
+  public String getUpdateMessage() {
+    final boolean dumb = myDumbService.isDumb();
+    List<Filter> filters = myFilters;
+    final List<String> updateMessage = new ArrayList<String>();
+    int count = filters.size();
+    //noinspection ForLoopReplaceableByForEach
+    for (int i = 0; i < count; i++) {
+      Filter filter = filters.get(i);
+
+      if (!(filter instanceof FilterMixin) || !((FilterMixin)filter).shouldRunHeavy()) continue;
+      if (!dumb || DumbService.isDumbAware(filter)) {
+        updateMessage.add(((FilterMixin)filter).getUpdateMessage());
+      }
+    }
+    return updateMessage.size() == 1 ? updateMessage.get(0) : "Updating...";
+  }
+
   public boolean isEmpty() {
     return myFilters.isEmpty();
   }

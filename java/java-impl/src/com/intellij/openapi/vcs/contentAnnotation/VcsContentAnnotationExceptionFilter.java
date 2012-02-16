@@ -164,6 +164,11 @@ public class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin 
     }
   }
 
+  @Override
+  public String getUpdateMessage() {
+    return "Checking recent changes...";
+  }
+
   private static class LocalChangesCorrector {
     private final Map<VirtualFile, UpToDateLineNumberProvider> myRecentlyChanged;
     private final Project myProject;
