@@ -59,7 +59,7 @@ public class GroovyInlineLocalHandler extends InlineActionHandler {
 
   @Override
   public boolean canInlineElement(PsiElement element) {
-    return element instanceof GrVariable && GroovyRefactoringUtil.isLocalVariable((GrVariable)element);
+    return GroovyRefactoringUtil.isLocalVariable(element);
   }
 
   @Override

@@ -210,8 +210,7 @@ public class ExtractUtil {
       @Override
       public void visitReferenceExpression(GrReferenceExpression ref) {
         final PsiElement resolved = ref.resolve();
-        if ((resolved instanceof GrParameter ||
-             resolved instanceof GrVariable && GroovyRefactoringUtil.isLocalVariable((GrVariable)resolved)) && resolved.isPhysical()) {
+        if ((resolved instanceof GrParameter || GroovyRefactoringUtil.isLocalVariable(resolved)) && resolved.isPhysical()) {
           final int offset = resolved.getTextRange().getStartOffset();
           //var is declared outside of selected code
           if (offset < start || end <= offset) {

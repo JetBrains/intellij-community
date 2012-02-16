@@ -332,10 +332,8 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
   private static String getInvokedOnLocalVar(GrExpression expression) {
     if (expression instanceof GrReferenceExpression) {
       final PsiElement resolved = ((GrReferenceExpression)expression).resolve();
-      if (resolved instanceof GrVariable) {
-        if (GroovyRefactoringUtil.isLocalVariable((GrVariable)resolved)) {
-          return ((GrVariable)resolved).getName();
-        }
+      if (GroovyRefactoringUtil.isLocalVariable(resolved)) {
+        return ((GrVariable)resolved).getName();
       }
     }
     return null;
@@ -348,11 +346,9 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
 
     if (expression instanceof GrReferenceExpression) {
       final PsiElement resolved = ((GrReferenceExpression)expression).resolve();
-      if (resolved instanceof GrVariable) {
-        if (GroovyRefactoringUtil.isLocalVariable((GrVariable)resolved)) {
-          expression = ((GrVariable)resolved).getInitializerGroovy();
-          if (expression == null) return false;
-        }
+      if (GroovyRefactoringUtil.isLocalVariable(resolved)) {
+        expression = ((GrVariable)resolved).getInitializerGroovy();
+        if (expression == null) return false;
       }
     }
 
