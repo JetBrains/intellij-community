@@ -26,7 +26,7 @@ import java.awt.*;
 /**
  * @author Alexander Lobas
  */
-public class CaptionPanel extends JComponent implements EditableArea, DataProvider {
+public class CaptionPanel extends JComponent implements DataProvider {
   public CaptionPanel(DesignerEditorPanel designer, boolean horizontal) {
     setBorder(IdeBorderFactory.createBorder(horizontal ? SideBorder.BOTTOM : SideBorder.RIGHT));
 

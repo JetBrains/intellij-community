@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.CommonBundle;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
@@ -90,7 +91,8 @@ public abstract class DialogWrapper {
 
   @NonNls public static final String FOCUSED_ACTION = "FocusedAction";
   
-  private static final KeyStroke SHOW_OPTION_KEYSTROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, KeyEvent.ALT_MASK | KeyEvent.SHIFT_MASK);
+  private static final KeyStroke SHOW_OPTION_KEYSTROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER,
+                                                                                InputEvent.ALT_MASK | InputEvent.SHIFT_MASK);
 
   private final DialogWrapperPeer myPeer;
   private int myExitCode = CANCEL_EXIT_CODE;
@@ -380,18 +382,18 @@ public abstract class DialogWrapper {
     final Insets insets = SystemInfo.isMacOSLeopard ? new Insets(0, 0, 0, 0) : new Insets(8, 0, 0, 0);
 
     if (actions.length > 0 || leftSideActions.length > 0) {
-      int gridx = 0;
+      int gridX = 0;
       if (leftSideActions.length > 0) {
         JPanel buttonsPanel = createButtons(leftSideActions, buttons);
+        if (actions.length > 0) {
+          buttonsPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 20));  // leave some space between button groups
+        }
         lrButtonsPanel.add(buttonsPanel,
-                           new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE, insets, 0,
-                                                  0));
+                           new GridBagConstraints(gridX++, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE, insets, 0, 0));
 
       }
-      lrButtonsPanel.add(// left strut
-                         Box.createHorizontalGlue(),
-                         new GridBagConstraints(gridx++, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, insets, 0,
-                                                0));
+      lrButtonsPanel.add(Box.createHorizontalGlue(),    // left strut
+                         new GridBagConstraints(gridX++, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, insets, 0, 0));
       if (actions.length > 0) {
         if (SystemInfo.isMac) {
           // move ok action to the right
@@ -406,24 +408,21 @@ public abstract class DialogWrapper {
             actions = ArrayUtil.mergeArrays(new Action[] {getCancelAction()}, ArrayUtil.remove(actions, getCancelAction()));
           }
 
-          if (!hasFocusedAction(actions)) {
+          /*if (!hasFocusedAction(actions)) {
             int ndx = ArrayUtil.find(actions, getCancelAction());
             if (ndx >= 0) {
-              //actions[ndx].putValue(FOCUSED_ACTION, Boolean.TRUE);
+              actions[ndx].putValue(FOCUSED_ACTION, Boolean.TRUE);
             }
-          }
+          }*/
         }
 
         JPanel buttonsPanel = createButtons(actions, buttons);
         lrButtonsPanel.add(buttonsPanel,
-                           new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE, insets, 0,
-                                                  0));
+                           new GridBagConstraints(gridX++, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE, insets, 0, 0));
       }
       if (SwingConstants.CENTER == myButtonAlignment) {
-        lrButtonsPanel.add(// right strut
-                           Box.createHorizontalGlue(),
-                           new GridBagConstraints(gridx, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, insets, 0,
-                                                  0));
+        lrButtonsPanel.add(Box.createHorizontalGlue(),    // right strut
+                           new GridBagConstraints(gridX, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, insets, 0, 0));
       }
       myButtons = buttons.toArray(new JButton[buttons.size()]);
     }
@@ -440,16 +439,17 @@ public abstract class DialogWrapper {
 
     panel.add(lrButtonsPanel, BorderLayout.CENTER);
 
-    if (myDoNotAsk != null) {
-      myCheckBoxDoNotShowDialog = new JCheckBox(myDoNotAsk.getDoNotShowMessage());
+    final DoNotAskOption askOption = myDoNotAsk;
+    if (askOption != null) {
+      myCheckBoxDoNotShowDialog = new JCheckBox(askOption.getDoNotShowMessage());
       JComponent southPanel = panel;
 
-      if (!myDoNotAsk.canBeHidden()) {
+      if (!askOption.canBeHidden()) {
         return southPanel;
       }
 
       final JPanel withCB = addDoNotShowCheckBox(southPanel, myCheckBoxDoNotShowDialog);
-      myCheckBoxDoNotShowDialog.setSelected(!myDoNotAsk.isToBeShown());
+      myCheckBoxDoNotShowDialog.setSelected(!askOption.isToBeShown());
       DialogUtil.registerMnemonic(myCheckBoxDoNotShowDialog, '&');
 
       panel = withCB;
@@ -499,6 +499,21 @@ public abstract class DialogWrapper {
   }
 
   private JPanel createButtons(Action[] actions, List<JButton> buttons) {
+    if (!UISettings.getShadowInstance().ALLOW_MERGE_BUTTONS) {
+      final List<Action> actionList = new ArrayList<Action>();
+      for (Action action : actions) {
+        actionList.add(action);
+        if (action instanceof OptionAction) {
+          final Action[] options = ((OptionAction)action).getOptions();
+          actionList.addAll(Arrays.asList(options));
+        }
+
+      }
+      if (actionList.size() != actions.length) {
+        actions = actionList.toArray(actionList.toArray(new Action[actionList.size()]));
+      }
+    }
+    
     JPanel buttonsPanel = new JPanel(new GridLayout(1, actions.length, SystemInfo.isMacOSLeopard ? 0 : 5, 0));
     for (final Action action : actions) {
       JButton button = createJButtonForAction(action);
@@ -537,7 +552,7 @@ public abstract class DialogWrapper {
    */
   protected JButton createJButtonForAction(Action action) {
     JButton button;
-    if (action instanceof OptionAction) {
+    if (action instanceof OptionAction && UISettings.getShadowInstance().ALLOW_MERGE_BUTTONS) {
       final Action[] options = ((OptionAction)action).getOptions();
       button = new JBOptionButton(action, options);
       final JBOptionButton eachOptionsButton = (JBOptionButton)button;

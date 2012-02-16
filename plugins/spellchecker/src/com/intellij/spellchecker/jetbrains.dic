@@ -145,6 +145,7 @@ inline
 innodb
 inout
 instantiable
+insteadof
 intellij
 iphone
 iphoneos
@@ -208,6 +209,7 @@ minimizable
 minvalue
 miny
 mlslabel
+mixin
 multilinestring
 multipoint
 multipolygon

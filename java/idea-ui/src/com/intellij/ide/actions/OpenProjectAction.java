@@ -24,27 +24,23 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserDialog;
+import com.intellij.openapi.fileChooser.PathChooserDialog;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import com.intellij.projectImport.ProjectOpenProcessorBase;
 import com.intellij.util.Consumer;
 import com.intellij.util.SystemProperties;
 
-import java.io.File;
 import java.util.Collections;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 public class OpenProjectAction extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
-    final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
-
     final FileChooserDescriptor descriptor = new OpenProjectFileChooserDescriptor(true);
     descriptor.setTitle(IdeBundle.message("title.open.project"));
     final Set<String> extensions = new LinkedHashSet<String>();
@@ -58,21 +54,19 @@ public class OpenProjectAction extends AnAction implements DumbAware {
     }
     descriptor.setDescription(IdeBundle.message("filter.project.files", StringUtil.join(extensions, ", ")));
 
-    VirtualFile userHomeDir = null;
+    String userHomeDir = null;
     if (SystemInfo.isUnix) {
-      final String home = SystemProperties.getUserHome();
-      if (home != null) {
-        userHomeDir = LocalFileSystem.getInstance().findFileByIoFile(new File(home));
-      }
+      userHomeDir = SystemProperties.getUserHome();
     }
 
-    descriptor.putUserData(FileChooserDialog.PREFER_LAST_OVER_TO_SELECT, Boolean.TRUE);
+    descriptor.putUserData(PathChooserDialog.PREFER_LAST_OVER_EXPLICIT, Boolean.TRUE);
 
-    FileChooser.chooseFilesWithSlideEffect(descriptor, project, userHomeDir, new Consumer<VirtualFile[]>() {
+    final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    FileChooser.choosePaths(descriptor, project, userHomeDir, new Consumer<List<String>>() {
       @Override
-      public void consume(final VirtualFile[] files) {
-        if (files.length == 1 && files[0] != null) {
-          ProjectUtil.openOrImport(files[0].getPath(), project, false);
+      public void consume(final List<String> paths) {
+        if (paths.size() == 1) {
+          ProjectUtil.openOrImport(paths.get(0), project, false);
         }
       }
     });

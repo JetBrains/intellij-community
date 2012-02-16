@@ -38,6 +38,7 @@ import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.android.util.AndroidBundle;
+import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -229,7 +230,7 @@ public class AndroidApkBuilder {
         fis.close();
       }
 
-      builder.writeFile(dexEntryFile, AndroidCompileUtil.CLASSES_FILE_NAME);
+      builder.writeFile(dexEntryFile, AndroidCommonUtils.CLASSES_FILE_NAME);
 
       final HashSet<String> added = new HashSet<String>();
       for (VirtualFile sourceRoot : sourceRoots) {

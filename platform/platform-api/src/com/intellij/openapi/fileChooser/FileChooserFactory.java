@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.openapi.fileChooser;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -28,31 +29,58 @@ public abstract class FileChooserFactory {
     return ServiceManager.getService(FileChooserFactory.class);
   }
 
-  public abstract FileChooserDialog createFileChooser(FileChooserDescriptor descriptor, @Nullable Project project);
-  public abstract FileChooserDialog createFileChooser(FileChooserDescriptor descriptor, Component parent);
+  @NotNull
+  public FileChooserDialog createFileChooser(@NotNull FileChooserDescriptor descriptor, @Nullable Project project) {
+    return createFileChooser(descriptor, project, null);
+  }
+
+  @NotNull
+  public FileChooserDialog createFileChooser(@NotNull FileChooserDescriptor descriptor, @NotNull Component parent) {
+    return createFileChooser(descriptor, null, parent);
+  }
+
+  @NotNull
+  public abstract FileChooserDialog createFileChooser(@NotNull FileChooserDescriptor descriptor,
+                                                      @Nullable Project project,
+                                                      @Nullable Component parent);
+
+  @NotNull
+  public abstract PathChooserDialog createPathChooser(@NotNull FileChooserDescriptor descriptor,
+                                                      @Nullable Project project,
+                                                      @Nullable Component parent);
 
   /**
-   * Creates Save File dialog
+   * Creates Save File dialog.
    *
-   * @author Konstantin Bulenkov
    * @param descriptor dialog descriptor
-   * @param project current project
+   * @param project    chooser options
    * @return Save File dialog
    * @since 9.0
    */
-  public abstract FileSaverDialog createSaveFileDialog(FileSaverDescriptor descriptor, Project project);
-  public abstract FileSaverDialog createSaveFileDialog(FileSaverDescriptor descriptor, Component parent);
+  @NotNull
+  public abstract FileSaverDialog createSaveFileDialog(@NotNull FileSaverDescriptor descriptor, @Nullable Project project);
 
-  public abstract FileTextField createFileTextField(FileChooserDescriptor descriptor, boolean showHidden, Disposable parent);
-  public abstract FileTextField createFileTextField(FileChooserDescriptor descriptor, Disposable parent);
+  @NotNull
+  public abstract FileSaverDialog createSaveFileDialog(@NotNull FileSaverDescriptor descriptor, @NotNull Component parent);
+
+  @NotNull
+  public abstract FileTextField createFileTextField(@NotNull FileChooserDescriptor descriptor, boolean showHidden, @Nullable Disposable parent);
+
+  @NotNull
+  public FileTextField createFileTextField(@NotNull FileChooserDescriptor descriptor, @Nullable Disposable parent) {
+    return createFileTextField(descriptor, true, parent);
+  }
 
   /**
+   * Adds path completion listener to a given text field.
    *
-   * @param field
-   * @param descriptor
-   * @param showHidden
-   * @param parent if null then will be registered with {@link com.intellij.openapi.actionSystem.PlatformDataKeys.UI_DISPOSABLE}
+   * @param field      input field to add completion to
+   * @param descriptor chooser options
+   * @param showHidden include hidden files into completion variants
+   * @param parent     if null then will be registered with {@link com.intellij.openapi.actionSystem.PlatformDataKeys#UI_DISPOSABLE}
    */
-
-  public abstract void installFileCompletion(JTextField field, FileChooserDescriptor descriptor, boolean showHidden, @Nullable final Disposable parent);
+  public abstract void installFileCompletion(@NotNull JTextField field,
+                                             @NotNull FileChooserDescriptor descriptor,
+                                             boolean showHidden,
+                                             @Nullable Disposable parent);
 }

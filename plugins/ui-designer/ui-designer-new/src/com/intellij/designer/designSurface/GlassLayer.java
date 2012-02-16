@@ -16,6 +16,7 @@
 package com.intellij.designer.designSurface;
 
 import com.intellij.designer.designSurface.tools.InputTool;
+import com.intellij.designer.designSurface.tools.ToolProvider;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.ui.popup.PopupOwner;
 import org.jetbrains.annotations.NonNls;
@@ -28,29 +29,34 @@ import java.awt.event.MouseEvent;
 /**
  * @author Alexander Lobas
  */
-public final class GlassLayer extends JComponent implements PopupOwner, EditableArea, DataProvider {
-  private final DesignerEditorPanel myDesigner;
+public final class GlassLayer extends JComponent implements PopupOwner, DataProvider {
+  private final ToolProvider myToolProvider;
+  private final EditableArea myArea;
 
-  public GlassLayer(DesignerEditorPanel designer) {
-    myDesigner = designer;
+  public GlassLayer(ToolProvider provider, EditableArea area) {
+    myToolProvider = provider;
+    myArea = area;
     enableEvents(AWTEvent.KEY_EVENT_MASK | AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK);
+    // TODO: DND
   }
 
   @Override
   protected void processKeyEvent(KeyEvent event) {
     try {
-      InputTool tool = myDesigner.getActiveTool();
+      InputTool tool = myToolProvider.getActiveTool();
 
-      switch (event.getID()) {
-        case KeyEvent.KEY_PRESSED:
-          tool.keyPressed(event, this);
-          break;
-        case KeyEvent.KEY_TYPED:
-          tool.keyTyped(event, this);
-          break;
-        case KeyEvent.KEY_RELEASED:
-          tool.keyReleased(event, this);
-          break;
+      if (tool != null) {
+        switch (event.getID()) {
+          case KeyEvent.KEY_PRESSED:
+            tool.keyPressed(event, myArea);
+            break;
+          case KeyEvent.KEY_TYPED:
+            tool.keyTyped(event, myArea);
+            break;
+          case KeyEvent.KEY_RELEASED:
+            tool.keyReleased(event, myArea);
+            break;
+        }
       }
     }
     catch (Throwable e) {
@@ -67,26 +73,28 @@ public final class GlassLayer extends JComponent implements PopupOwner, Editable
       requestFocusInWindow();
     }
     try {
-      InputTool tool = myDesigner.getActiveTool();
+      InputTool tool = myToolProvider.getActiveTool();
 
-      switch (event.getID()) {
-        case MouseEvent.MOUSE_PRESSED:
-          tool.mouseDown(event, this);
-          break;
-        case MouseEvent.MOUSE_RELEASED:
-          tool.mouseUp(event, this);
-          break;
-        case MouseEvent.MOUSE_ENTERED:
-          tool.mouseEntered(event, this);
-          break;
-        case MouseEvent.MOUSE_EXITED:
-          tool.mouseExited(event, this);
-          break;
-        case MouseEvent.MOUSE_CLICKED:
-          if (event.getClickCount() == 2) {
-            tool.mouseDoubleClick(event, this);
-          }
-          break;
+      if (tool != null) {
+        switch (event.getID()) {
+          case MouseEvent.MOUSE_PRESSED:
+            tool.mouseDown(event, myArea);
+            break;
+          case MouseEvent.MOUSE_RELEASED:
+            tool.mouseUp(event, myArea);
+            break;
+          case MouseEvent.MOUSE_ENTERED:
+            tool.mouseEntered(event, myArea);
+            break;
+          case MouseEvent.MOUSE_EXITED:
+            tool.mouseExited(event, myArea);
+            break;
+          case MouseEvent.MOUSE_CLICKED:
+            if (event.getClickCount() == 2) {
+              tool.mouseDoubleClick(event, myArea);
+            }
+            break;
+        }
       }
     }
     catch (Throwable e) {
@@ -97,15 +105,17 @@ public final class GlassLayer extends JComponent implements PopupOwner, Editable
   @Override
   protected void processMouseMotionEvent(MouseEvent event) {
     try {
-      InputTool tool = myDesigner.getActiveTool();
+      InputTool tool = myToolProvider.getActiveTool();
 
-      switch (event.getID()) {
-        case MouseEvent.MOUSE_MOVED:
-          tool.mouseMove(event, this);
-          break;
-        case MouseEvent.MOUSE_DRAGGED:
-          tool.mouseDrag(event, this);
-          break;
+      if (tool != null) {
+        switch (event.getID()) {
+          case MouseEvent.MOUSE_MOVED:
+            tool.mouseMove(event, myArea);
+            break;
+          case MouseEvent.MOUSE_DRAGGED:
+            tool.mouseDrag(event, myArea);
+            break;
+        }
       }
     }
     catch (Throwable e) {
@@ -114,7 +124,7 @@ public final class GlassLayer extends JComponent implements PopupOwner, Editable
   }
 
   private void handleException(Throwable e) {
-    myDesigner.showError("Edit error: ", e);
+    myToolProvider.showError("Edit error: ", e);
   }
 
   @Override

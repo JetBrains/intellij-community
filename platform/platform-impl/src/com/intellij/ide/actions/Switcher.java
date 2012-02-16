@@ -17,7 +17,6 @@ package com.intellij.ide.actions;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.IdeEventQueue;
-import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.markup.EffectType;
@@ -91,6 +90,8 @@ public class Switcher extends AnAction implements DumbAware {
     }
   };
   private static final Map<String, Integer> TW_KEYMAP = new HashMap<String, Integer>();
+  private static final CustomShortcutSet TW_SHORTCUT;
+
   static {
     TW_KEYMAP.put("Messages",  0);
     TW_KEYMAP.put("Project",   1);
@@ -103,6 +104,15 @@ public class Switcher extends AnAction implements DumbAware {
     TW_KEYMAP.put("Hierarchy", 8);
     TW_KEYMAP.put("Changes",   9);
 
+    ArrayList<Shortcut> shortcuts = new ArrayList<Shortcut>();
+    for (char ch = '0'; ch <= '9'; ch++) {
+      shortcuts.add(CustomShortcutSet.fromString("control " + ch).getShortcuts()[0]);
+    }
+    for (char ch = 'A'; ch <= 'Z'; ch++) {
+      shortcuts.add(CustomShortcutSet.fromString("control " + ch).getShortcuts()[0]);
+    }
+    TW_SHORTCUT = new CustomShortcutSet(shortcuts.toArray(new Shortcut[shortcuts.size()]));
+
     IdeEventQueue.getInstance().addPostprocessor(new IdeEventQueue.EventDispatcher() {
       @Override
       public boolean dispatch(AWTEvent event) {
@@ -110,8 +120,9 @@ public class Switcher extends AnAction implements DumbAware {
         if (SWITCHER != null && event instanceof KeyEvent) {
           final KeyEvent keyEvent = (KeyEvent)event;
           if (event.getID() == KEY_RELEASED && keyEvent.getKeyCode() == CTRL_KEY) {
-           SwingUtilities.invokeLater(CHECKER);
-          } else if (event.getID() == KEY_PRESSED && (tw = SWITCHER.twShortcuts.get(String.valueOf((char)keyEvent.getKeyCode()))) != null) {
+            SwingUtilities.invokeLater(CHECKER);
+          }
+          else if (event.getID() == KEY_PRESSED && (tw = SWITCHER.twShortcuts.get(String.valueOf((char)keyEvent.getKeyCode()))) != null) {
             SWITCHER.myPopup.closeOk(null);
             tw.activate(null, true, true);
           }
@@ -149,7 +160,7 @@ public class Switcher extends AnAction implements DumbAware {
   }
 
   private class SwitcherPanel extends JPanel implements KeyListener, MouseListener, MouseMotionListener {
-    public final int MAX_FILES = UISettings.getInstance().EDITOR_TAB_LIMIT;
+    private static final int MAX_FILES_IN_SWITCHER = 30;
     final JBPopup myPopup;
     final Map<ToolWindow, String> ids = new HashMap<ToolWindow, String>();
     final JList toolWindows;
@@ -269,7 +280,7 @@ public class Switcher extends AnAction implements DumbAware {
           filesData.add(0, editors.get(0));
         }
       } else {
-        for (int i = 0; i < Math.min(MAX_FILES, editors.size()); i++) {
+        for (int i = 0; i < Math.min(MAX_FILES_IN_SWITCHER, editors.size()); i++) {
           filesData.add(editors.get(i));
         }
       }
@@ -372,6 +383,14 @@ public class Switcher extends AnAction implements DumbAware {
             return true;
           }
         }).createPopup();
+
+        new AnAction(null, null, null){
+          @Override
+          public void actionPerformed(AnActionEvent e) {
+            //suppress all actions to activate a toolwindow : IDEA-71277
+          }
+        }.registerCustomShortcutSet(TW_SHORTCUT, this, myPopup);
+
       Component comp = null;
       final EditorWindow result = FileEditorManagerEx.getInstanceEx(project).getActiveWindow().getResult();
       if (result != null) {

@@ -12,7 +12,7 @@ import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.idea.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.model.*;
+import org.jetbrains.plugins.gradle.model.gradle.*;
 import org.jetbrains.plugins.gradle.task.GradleTaskId;
 import org.jetbrains.plugins.gradle.notification.GradleTaskNotificationEvent;
 import org.jetbrains.plugins.gradle.notification.GradleTaskNotificationListener;
@@ -197,7 +197,7 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
       if (rootDirectory == null) {
         continue;
       }
-      GradleContentRoot intellijContentRoot = new GradleContentRoot(rootDirectory.getAbsolutePath());
+      GradleContentRoot intellijContentRoot = new GradleContentRoot(intellijModule, rootDirectory.getAbsolutePath());
       populateContentRoot(intellijContentRoot, SourceType.SOURCE, gradleContentRoot.getSourceDirectories());
       populateContentRoot(intellijContentRoot, SourceType.TEST, gradleContentRoot.getTestDirectories());
       Set<File> excluded = gradleContentRoot.getExcludeDirectories();

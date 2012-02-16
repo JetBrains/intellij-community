@@ -3,7 +3,7 @@ package org.jetbrains.plugins.gradle.diff;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.model.*;
+import org.jetbrains.plugins.gradle.model.gradle.*;
 
 import java.util.*;
 
@@ -37,7 +37,7 @@ public class GradleDiffUtil {
 
       @Override
       public void visit(@NotNull GradleModule module) {
-        currentChanges.add(new GradleModulePresenceChange(module.getName(), null));
+        currentChanges.add(new GradleModulePresenceChange(module, null));
         for (GradleDependency dependency : module.getDependencies()) {
           dependency.invite(this);
         }
@@ -68,14 +68,13 @@ public class GradleDiffUtil {
   /**
    * Analogues to {@link #buildLocalChanges} but targets intellij entity.
    *
-   * @param gradleProject   gradle project which structure is being compared to the intellij one   
    * @param module          target intellij-local module that doesn't present at the gradle side
    * @param currentChanges  holder for the changes built during the current call
    */
   public static void buildLocalChanges(@NotNull Module module,
                                        @NotNull Set<GradleProjectStructureChange> currentChanges)
   {
-    currentChanges.add(new GradleModulePresenceChange(null, module.getName()));
+    currentChanges.add(new GradleModulePresenceChange(null, module));
     // TODO den process module sub-entities here (content roots and dependencies).
   }
 
@@ -97,7 +96,6 @@ public class GradleDiffUtil {
   /**
    * Performs argument type-based dispatch and delegates to one of strongly typed <code>'buildLocalChanges()'</code> methods.
    *
-   * @param gradleProject   gradle project which structure is being compared to the intellij one
    * @param entity          target intellij-local entity that doesn't present at the gradle side
    * @param currentChanges  holder for the changes built during the current call
    */

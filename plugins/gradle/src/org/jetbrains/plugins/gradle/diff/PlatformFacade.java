@@ -8,7 +8,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.Collection;
 
 /**
@@ -40,12 +39,6 @@ public interface PlatformFacade {
 
   @NotNull
   Collection<OrderEntry> getOrderEntries(@NotNull Module module);
-
-  /**
-   * @return    icon that should be used for representation project root node at the tree UI controls used by the gradle integration
-   */
-  @NotNull
-  Icon getProjectIcon();
 
   /**
    * Allows to derive from the given VFS file path that may be compared to the path used by the gradle api.

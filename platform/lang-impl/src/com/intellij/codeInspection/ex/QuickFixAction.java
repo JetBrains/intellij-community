@@ -77,7 +77,8 @@ public class QuickFixAction extends AnAction {
     }
 
     final InspectionTree tree = view.getTree();
-    if (!view.isSingleToolInSelection() || tree.getSelectedTool() != myTool) {
+    final InspectionTool tool = tree.getSelectedTool();
+    if (!view.isSingleToolInSelection() || (tool instanceof InspectionToolWrapper && ((InspectionToolWrapper)tool).getTool() != myTool)) {
       e.getPresentation().setVisible(false);
       e.getPresentation().setEnabled(false);
       return;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,11 +44,9 @@ public class Splash extends JDialog implements StartupProgress {
   private int myProgressHeight = 2;
   private Color myProgressColor = null;
   private int myProgressY;
-  
-  //progress
-  //private String myMessage;
   private float myProgress;
-  private boolean mySpashIsVisible;
+  private boolean mySplashIsVisible;
+  private int myProgressLastPosition = 0;
 
   public Splash(String imageName, final Color textColor) {
     setUndecorated(true);
@@ -62,7 +60,7 @@ public class Splash extends JDialog implements StartupProgress {
       @Override
       protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        mySpashIsVisible = true;
+        mySplashIsVisible = true;
         paintProgress(g);
       }
     };
@@ -85,6 +83,7 @@ public class Splash extends JDialog implements StartupProgress {
     }
   }
 
+  @SuppressWarnings("deprecation")
   public void show() {
     super.show();
     toFront();
@@ -103,16 +102,20 @@ public class Splash extends JDialog implements StartupProgress {
   }
 
   private void paintProgress(Graphics g) {
-    if (getProgressColor() == null) return;
-    final int y = getProgressY();
-    final Color col = getProgressColor();
-    final int progressWidth = (int)((myImage.getIconWidth() - 2) * myProgress);
-    if (! mySpashIsVisible) {
+    final Color color = getProgressColor();
+    if (color == null) return;
+
+    if (!mySplashIsVisible) {
       myImage.paintIcon(this, g, 0, 0);
-      mySpashIsVisible = true;
+      mySplashIsVisible = true;
     }
-    g.setColor(col);
-    g.fillRect(1, y, progressWidth, getProgressHeight());
+
+    final int progressWidth = (int)((myImage.getIconWidth() - 2) * myProgress);
+    if (progressWidth > myProgressLastPosition + 1) {
+      g.setColor(color);
+      g.fillRect(myProgressLastPosition + 1, getProgressY(), (progressWidth - myProgressLastPosition), getProgressHeight());
+      myProgressLastPosition = progressWidth;
+    }
   }
 
   private int getProgressHeight() {

@@ -18,6 +18,7 @@ package com.intellij.ide.ui;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExportableApplicationComponent;
@@ -64,6 +65,7 @@ public class UISettings implements PersistentStateComponent<UISettings>, Exporta
   public boolean SHOW_TOOL_WINDOW_NUMBERS = true;
   public boolean HIDE_TOOL_STRIPES = false;
   public boolean SHOW_MEMORY_INDICATOR = true;
+  public boolean ALLOW_MERGE_BUTTONS = true;
   public boolean SHOW_MAIN_TOOLBAR = true;
   public boolean SHOW_STATUS_BAR = true;
   public boolean SHOW_NAVIGATION_BAR = true;
@@ -151,6 +153,15 @@ public class UISettings implements PersistentStateComponent<UISettings>, Exporta
 
   public static UISettings getInstance() {
     return ApplicationManager.getApplication().getComponent(UISettings.class);
+  }
+
+  /**
+   * Use this method if you are not sure is application initialized or not
+   * @return UISettings instance or default values
+   */
+  public static UISettings getShadowInstance() {
+    Application application = ApplicationManager.getApplication();
+    return application != null ? getInstance() : new UISettings();
   }
 
   public void removeUISettingsListener(UISettingsListener listener){

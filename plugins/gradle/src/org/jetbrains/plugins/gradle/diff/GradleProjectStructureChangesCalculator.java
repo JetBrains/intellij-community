@@ -4,8 +4,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.model.GradleModule;
-import org.jetbrains.plugins.gradle.model.GradleProject;
+import org.jetbrains.plugins.gradle.model.gradle.GradleModule;
+import org.jetbrains.plugins.gradle.model.gradle.GradleProject;
 
 import java.util.Collection;
 import java.util.Set;

@@ -54,7 +54,6 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
   private final String myConsoleTitle;
 
   private ProcessHandler myProcessHandler;
-  private final CommandLineArgumentsProvider myProvider;
   private final String myWorkingDir;
 
   private T myConsoleView;
@@ -63,11 +62,9 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
 
   public AbstractConsoleRunnerWithHistory(@NotNull final Project project,
                                           @NotNull final String consoleTitle,
-                                          @NotNull final CommandLineArgumentsProvider provider,
                                           @Nullable final String workingDir) {
     myProject = project;
     myConsoleTitle = consoleTitle;
-    myProvider = provider;
     myWorkingDir = workingDir;
   }
 
@@ -78,26 +75,23 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
    */
   public void initAndRun() throws ExecutionException {
     // Create Server process
-    final Process process = createProcess(myProvider);
+    myProcessHandler = createProcess();
+    ProcessTerminatedListener.attach(myProcessHandler);
 
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
-        initConsoleUI(process);
+        initConsoleUI();
       }
     });
   }
 
-  private void initConsoleUI(Process process) {
+  private void initConsoleUI() {
     // Init console view
     myConsoleView = createConsoleView();
     myConsoleView.setBorder(new SideBorder(UIUtil.getBorderColor(), SideBorder.LEFT));
 
-    myProcessHandler = createProcessHandler(process, myProvider.getCommandLineString());
-
     myConsoleExecuteActionHandler = createConsoleExecuteActionHandler();
-
-    ProcessTerminatedListener.attach(myProcessHandler);
 
     myProcessHandler.addProcessListener(new ProcessAdapter() {
       @Override
@@ -194,9 +188,7 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
   protected abstract T createConsoleView();
 
   @Nullable
-  protected abstract Process createProcess(CommandLineArgumentsProvider provider) throws ExecutionException;
-
-  protected abstract OSProcessHandler createProcessHandler(final Process process, final String commandLine);
+  protected abstract OSProcessHandler createProcess() throws ExecutionException;
 
   public static void registerActionShortcuts(final List<AnAction> actions, final JComponent component) {
     for (AnAction action : actions) {
@@ -253,9 +245,8 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
   protected abstract ConsoleExecuteActionHandler createConsoleExecuteActionHandler();
 
 
-  public static class ConsoleExecuteAction extends DumbAwareAction {
+  private static class ConsoleExecuteAction extends DumbAwareAction {
     public static final String ACTIONS_EXECUTE_ICON = "/actions/execute.png";
-    public static final String CONSOLE_EXECUTE = "Console.Execute";
 
     private final LanguageConsoleImpl myLanguageConsole;
     private final ProcessHandler myProcessHandler;
@@ -270,7 +261,7 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
       myLanguageConsole = languageConsole;
       myProcessHandler = processHandler;
       myConsoleExecuteActionHandler = consoleExecuteActionHandler;
-      EmptyAction.setupAction(this, CONSOLE_EXECUTE, null);
+      EmptyAction.setupAction(this, consoleExecuteActionHandler.getEmptyExecuteAction(), null);
     }
 
     public void actionPerformed(final AnActionEvent e) {
@@ -309,7 +300,4 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
     return myConsoleExecuteActionHandler;
   }
 
-  protected CommandLineArgumentsProvider getProvider() {
-    return myProvider;
-  }
 }

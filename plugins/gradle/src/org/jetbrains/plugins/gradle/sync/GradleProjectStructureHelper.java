@@ -4,15 +4,21 @@ import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.RootPolicy;
+import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.diff.PlatformFacade;
-import org.jetbrains.plugins.gradle.model.*;
+import org.jetbrains.plugins.gradle.model.gradle.*;
+import org.jetbrains.plugins.gradle.model.id.GradleLibraryDependencyId;
 
 /**
+ * Thread-safe.
+ * 
  * @author Denis Zhdanov
  * @since 2/6/12 3:28 PM
  */
@@ -29,7 +35,12 @@ public class GradleProjectStructureHelper extends AbstractProjectComponent {
     myModel = model;
     myFacade = facade;
   }
-
+  
+  @NotNull
+  public Project getProject() {
+    return myProject;
+  }
+  
   /**
    * Allows to answer if target library dependency is still available at the target project.
    *
@@ -38,7 +49,7 @@ public class GradleProjectStructureHelper extends AbstractProjectComponent {
    *                 <code>false</code> otherwise
    */
   public boolean isIntellijLibraryDependencyExist(@NotNull final GradleLibraryDependencyId id) {
-    final Module module = findIntellijModuleByName(id.getModuleName());
+    final Module module = findIntellijModule(id.getModuleName());
     if (module == null) {
       return false;
     }
@@ -58,20 +69,26 @@ public class GradleProjectStructureHelper extends AbstractProjectComponent {
   }
 
   /**
-   * Allows to answer if target library dependency is still available at the target project.
+   * Allows to answer if target library dependency is still available at the target gradle project.
    *
-   * @param id             target library id
+   * @param id       target library id
    * @return         <code>true</code> if target library dependency is still available at the target project;
    *                 <code>false</code> otherwise
    */
   public boolean isGradleLibraryDependencyExist(@NotNull final GradleLibraryDependencyId id) {
-    return findLibraryDependency(id) != null;
+    return findGradleLibraryDependency(id.getModuleName(), id.getLibraryName()) != null;
   }
-
+  
   @Nullable
-  public Module findIntellijModuleByName(@NotNull String name) {
+  public Module findIntellijModule(@NotNull GradleModule module) {
+    // TODO den consider 'merged modules' at the registered project structure changes here.
+    return findIntellijModule(module.getName());
+  }
+  
+  @Nullable
+  public Module findIntellijModule(@NotNull String intellijModuleName) {
     for (Module module : myFacade.getModules(myProject)) {
-      if (name.equals(module.getName())) {
+      if (intellijModuleName.equals(module.getName())) {
         return module;
       }
     }
@@ -79,7 +96,7 @@ public class GradleProjectStructureHelper extends AbstractProjectComponent {
   }
   
   @Nullable
-  public GradleModule findGradleModuleByName(@NotNull String name) {
+  public GradleModule findGradleModule(@NotNull String name) {
     final GradleProject project = myModel.getGradleProject();
     if (project == null) {
       return null;
@@ -93,8 +110,45 @@ public class GradleProjectStructureHelper extends AbstractProjectComponent {
   }
 
   @Nullable
-  public GradleLibraryDependency findLibraryDependency(@NotNull final GradleLibraryDependencyId id) {
-    final GradleModule module = findGradleModuleByName(id.getModuleName());
+  public Library findIntellijLibrary(@NotNull final GradleLibrary library) {
+    final LibraryTable libraryTable = myFacade.getProjectLibraryTable(myProject);
+    for (Library intellijLibrary : libraryTable.getLibraries()) {
+      // TODO den consider 'merged libraries' at the registered project structure changes here.
+      if (library.getName().equals(intellijLibrary.getName())) {
+        return intellijLibrary;
+      }
+    }
+    return null;
+  }
+  
+  @Nullable
+  public LibraryOrderEntry findIntellijLibraryDependency(@NotNull final String moduleName, @NotNull final String libraryName) {
+    final Module intellijModule = findIntellijModule(moduleName);
+    if (intellijModule == null) {
+      return null;
+    }
+    RootPolicy<LibraryOrderEntry> visitor = new RootPolicy<LibraryOrderEntry>() {
+      @Override
+      public LibraryOrderEntry visitLibraryOrderEntry(LibraryOrderEntry intellijDependency, LibraryOrderEntry value) {
+        // TODO den consider 'merged libraries' at the registered project structure changes here.
+        if (libraryName.equals(intellijDependency.getLibraryName())) {
+          return intellijDependency;
+        }
+        return value;
+      }
+    };
+    for (OrderEntry entry : myFacade.getOrderEntries(intellijModule)) {
+      final LibraryOrderEntry result = entry.accept(visitor, null);
+      if (result != null) {
+        return result;
+      }
+    }
+    return null;
+  }
+  
+  @Nullable
+  public GradleLibraryDependency findGradleLibraryDependency(@NotNull final String moduleName, @NotNull final String libraryName) {
+    final GradleModule module = findGradleModule(moduleName);
     if (module == null) {
       return null;
     }
@@ -102,7 +156,7 @@ public class GradleProjectStructureHelper extends AbstractProjectComponent {
     GradleEntityVisitor visitor = new GradleEntityVisitorAdapter() {
       @Override
       public void visit(@NotNull GradleLibraryDependency dependency) {
-        if (id.getLibraryName().equals(dependency.getName())) {
+        if (libraryName.equals(dependency.getName())) {
           ref.set(dependency);
         }
       }
@@ -115,5 +169,60 @@ public class GradleProjectStructureHelper extends AbstractProjectComponent {
       }
     }
     return null;
+  }
+
+  @Nullable
+  public GradleModuleDependency findGradleModuleDependency(@NotNull final String ownerModuleName,
+                                                           @NotNull final String dependencyModuleName)
+  {
+    final GradleModule ownerModule = findGradleModule(ownerModuleName);
+    if (ownerModule == null) {
+      return null;
+    }
+    final Ref<GradleModuleDependency> ref = new Ref<GradleModuleDependency>();
+    GradleEntityVisitor visitor = new GradleEntityVisitorAdapter() {
+      @Override
+      public void visit(@NotNull GradleModuleDependency dependency) {
+        if (dependencyModuleName.equals(dependency.getName())) {
+          ref.set(dependency);
+        }
+      }
+    };
+    for (GradleDependency dependency : ownerModule.getDependencies()) {
+      dependency.invite(visitor);
+    }
+    return ref.get();
+  }
+  
+  @Nullable
+  public ModuleOrderEntry findIntellijModuleDependency(@NotNull final GradleModuleDependency gradleDependency) {
+    return findIntellijModuleDependency(gradleDependency.getOwnerModule().getName(), gradleDependency.getTarget().getName());
+  }
+  
+  @Nullable
+  public ModuleOrderEntry findIntellijModuleDependency(@NotNull final String ownerModuleName, @NotNull final String dependencyModuleName) {
+    final Module intellijOwnerModule = findIntellijModule(ownerModuleName);
+    if (intellijOwnerModule == null) {
+      return null;
+    }
+
+    RootPolicy<ModuleOrderEntry> visitor = new RootPolicy<ModuleOrderEntry>() {
+      @Override
+      public ModuleOrderEntry visitModuleOrderEntry(ModuleOrderEntry intellijDependency, ModuleOrderEntry value) {
+        // TODO den consider 'merged modules' at the registered project structure changes here.
+        if (dependencyModuleName.equals(intellijDependency.getModuleName())) {
+          return intellijDependency;
+        }
+        return value;
+      }
+    };
+    for (OrderEntry orderEntry : myFacade.getOrderEntries(intellijOwnerModule)) {
+      final ModuleOrderEntry result = orderEntry.accept(visitor, null);
+      if (result != null) {
+        return result;
+      }
+    }
+    return null;
+
   }
 }

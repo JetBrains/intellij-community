@@ -44,9 +44,10 @@ public abstract class AbstractRunConfigurationTypeUsagesCollector extends Abstra
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
+        if (project.isDisposed()) return;
         final RunManager runManager = RunManager.getInstance(project);
         for (RunConfiguration runConfiguration : runManager.getAllConfigurations()) {
-          if ((runConfiguration != null) && isApplicable(runManager, runConfiguration)) {
+          if (runConfiguration != null && isApplicable(runManager, runConfiguration)) {
             final ConfigurationFactory configurationFactory = runConfiguration.getFactory();
             final ConfigurationType configurationType = configurationFactory.getType();
             final StringBuilder keyBuilder = new StringBuilder();

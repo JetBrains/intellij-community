@@ -51,7 +51,8 @@ public class UntrackedFilesNotifier {
 
     NotificationManager.getInstance(project).notify(GitVcs.IMPORTANT_ERROR_NOTIFICATION, notificationTitle, notificationDesc, NotificationType.ERROR, new NotificationListener() {
       @Override public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-        SelectFilesDialog dlg = new SelectFilesDialog(project, new ArrayList<VirtualFile>(untrackedFiles), dialogDesc, null, false, false) {
+        SelectFilesDialog dlg = new SelectFilesDialog(project, new ArrayList<VirtualFile>(untrackedFiles),
+                                                      StringUtil.stripHtml(dialogDesc, true), null, false, false) {
           @Override protected Action[] createActions() {
             return new Action[]{getOKAction()};
           }

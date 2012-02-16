@@ -7,8 +7,8 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.model.GradleModule;
-import org.jetbrains.plugins.gradle.model.SourceType;
+import org.jetbrains.plugins.gradle.model.gradle.GradleModule;
+import org.jetbrains.plugins.gradle.model.gradle.SourceType;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 

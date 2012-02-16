@@ -2,8 +2,8 @@ package org.jetbrains.plugins.gradle.importing.wizard.adjust;
 
 import com.intellij.ide.util.projectWizard.NamePathComponent;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.model.GradleLibrary;
-import org.jetbrains.plugins.gradle.model.LibraryPathType;
+import org.jetbrains.plugins.gradle.model.gradle.GradleLibrary;
+import org.jetbrains.plugins.gradle.model.gradle.LibraryPathType;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 
 import javax.swing.*;

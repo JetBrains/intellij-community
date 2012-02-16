@@ -66,7 +66,7 @@ public class DeferredIconImpl<T> implements DeferredIcon {
   }
 
   public void paintIcon(final Component c, final Graphics g, final int x, final int y) {
-    if (!(myDelegateIcon instanceof DeferredIconImpl)) {
+    if (!(myDelegateIcon instanceof DeferredIconImpl && ((DeferredIconImpl)myDelegateIcon).myDelegateIcon instanceof DeferredIconImpl)) {
       myDelegateIcon.paintIcon(c, g, x, y); //SOE protection
     }
 

@@ -4,8 +4,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.model.GradleLibrary;
-import org.jetbrains.plugins.gradle.model.LibraryPathType;
+import org.jetbrains.plugins.gradle.model.gradle.GradleLibrary;
+import org.jetbrains.plugins.gradle.model.gradle.LibraryPathType;
 
 import java.io.File;
 import java.util.*;

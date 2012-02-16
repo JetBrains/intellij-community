@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.gradle.diff;
 
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -10,13 +9,11 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -48,12 +45,6 @@ public class PlatformFacadeImpl implements PlatformFacade {
   @Override
   public Collection<OrderEntry> getOrderEntries(@NotNull Module module) {
     return Arrays.asList(ModuleRootManager.getInstance(module).getOrderEntries());
-  }
-
-  @NotNull
-  @Override
-  public Icon getProjectIcon() {
-    return IconLoader.getIcon(ApplicationInfoEx.getInstanceEx().getSmallIconUrl());
   }
 
   @NotNull

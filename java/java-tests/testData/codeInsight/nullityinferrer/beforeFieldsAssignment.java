@@ -23,6 +23,10 @@ class Test {
   final String myFoo9;
   final String myFoo10;
 
+  final String myFoo11 = "";
+  final String myFoo12;
+  final String myFoo13 = null;
+
   /**
    * {@link #myFoo6}
    */
@@ -33,6 +37,7 @@ class Test {
     myFoo8 = paramNullable;
     myFoo9 = simpleParam;
     myFoo10 = foo10(false);
+    myFoo12 = "";
   }
 
   String foo10(boolean flag) {

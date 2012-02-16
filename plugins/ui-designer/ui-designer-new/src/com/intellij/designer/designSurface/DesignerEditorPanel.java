@@ -18,7 +18,9 @@ package com.intellij.designer.designSurface;
 import com.intellij.designer.componentTree.TreeComponentDecorator;
 import com.intellij.designer.designSurface.tools.InputTool;
 import com.intellij.designer.designSurface.tools.SelectionTool;
+import com.intellij.designer.designSurface.tools.ToolProvider;
 import com.intellij.designer.model.RadComponent;
+import com.intellij.designer.model.RadComponentVisitor;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.module.Module;
@@ -35,7 +37,7 @@ import java.awt.*;
 /**
  * @author Alexander Lobas
  */
-public abstract class DesignerEditorPanel extends JPanel implements DataProvider {
+public abstract class DesignerEditorPanel extends JPanel implements ToolProvider, DataProvider {
   private final CardLayout myLayout = new CardLayout();
 
   protected static final Integer LAYER_COMPONENT = JLayeredPane.DEFAULT_LAYER;
@@ -53,7 +55,9 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   private JScrollPane myScrollPane;
   protected JLayeredPane myLayeredPane;
   private GlassLayer myGlassLayer;
-  private InputTool myTool = new SelectionTool();
+  private DecorationLayer myDecorationLayer;
+  private InputTool myTool;
+  protected EditableArea mySurfaceArea;
 
   @NonNls private final static String ERROR_CARD = "error";
   private JLabel myErrorLabel;
@@ -64,6 +68,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     setLayout(myLayout);
     createDesignerCard();
     createErrorCard();
+    loadDefaultTool();
   }
 
   private void createDesignerCard() {
@@ -73,8 +78,6 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     GridBagConstraints gbc = new GridBagConstraints();
     gbc.gridx = 0;
     gbc.gridy = 1;
-    gbc.weightx = 0.0;
-    gbc.weighty = 0.0;
     gbc.fill = GridBagConstraints.BOTH;
 
     myVerticalCaption = new CaptionPanel(this, false);
@@ -87,13 +90,56 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     myDesignerCard.add(myHorizontalCaption, gbc);
 
     myLayeredPane = new MyLayeredPane();
-    myGlassLayer = new GlassLayer(this);
+
+    mySurfaceArea = new EditableArea() {
+      @Override
+      public void setCursor(Cursor cursor) {
+        myLayeredPane.setCursor(cursor);
+      }
+
+      @Override
+      public JComponent getNativeComponent() {
+        return myLayeredPane;
+      }
+
+      @Override
+      protected void fireSelectionChanged() {
+        super.fireSelectionChanged();
+        myLayeredPane.revalidate();
+        myLayeredPane.repaint();
+      }
+
+      @Override
+      public RadComponent findTarget(int x, int y) {
+        if (myRootComponent != null) {
+          FindComponentVisitor visitor = new FindComponentVisitor(x, y);
+          myRootComponent.accept(visitor, false);
+          return visitor.getResult();
+        }
+        return null;
+      }
+
+      @Override
+      public InputTool findTargetTool(int x, int y) {
+        return myDecorationLayer.findTargetTool(x, y);
+      }
+
+      @Override
+      public ComponentDecorator getRootSelectionDecorator() {
+        return DesignerEditorPanel.this.getRootSelectionDecorator();
+      }
+    };
+
+    myGlassLayer = new GlassLayer(this, mySurfaceArea);
     myLayeredPane.add(myGlassLayer, LAYER_GLASS);
+
+    myDecorationLayer = new DecorationLayer(mySurfaceArea);
+    myLayeredPane.add(myDecorationLayer, LAYER_DECORATION);
 
     gbc.gridx = 1;
     gbc.gridy = 1;
-    gbc.weightx = 1.0;
-    gbc.weighty = 1.0;
+    gbc.weightx = 1;
+    gbc.weighty = 1;
 
     myScrollPane = ScrollPaneFactory.createScrollPane(myLayeredPane);
     myScrollPane.setBackground(Color.WHITE);
@@ -109,6 +155,35 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     myLayout.show(this, DESIGNER_CARD);
   }
 
+  public EditableArea getSurfaceArea() {
+    return mySurfaceArea;
+  }
+
+  protected abstract ComponentDecorator getRootSelectionDecorator();
+
+  public InputTool getActiveTool() {
+    return myTool;
+  }
+
+  @Override
+  public void setActiveTool(InputTool tool) {
+    if (myTool != null) {
+      myTool.deactivate();
+    }
+
+    myTool = tool;
+
+    if (myTool != null) {
+      myTool.setToolProvider(this);
+      myTool.activate();
+    }
+  }
+
+  @Override
+  public void loadDefaultTool() {
+    setActiveTool(new SelectionTool());
+  }
+
   public final void showError(@NonNls String message, Throwable e) {
     myRootComponent = null;
     myErrorLabel.setText(message + e.toString());
@@ -117,10 +192,6 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     if (ApplicationManagerEx.getApplicationEx().isInternal()) {
       e.printStackTrace();
     }
-  }
-
-  public InputTool getActiveTool() {
-    return myTool;
   }
 
   @Override
@@ -133,7 +204,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   }
 
   public JComponent getPreferredFocusedComponent() {
-    return null;  // TODO: Auto-generated method stub
+    return myDesignerCard.isVisible() ? myGlassLayer : myErrorLabel;
   }
 
   public Object[] getTreeRoots() {
@@ -194,6 +265,36 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
 
     public boolean getScrollableTracksViewportHeight() {
       return false;
+    }
+  }
+
+  private class FindComponentVisitor implements RadComponentVisitor {
+    private RadComponent myResult;
+    private final int myX;
+    private final int myY;
+
+    public FindComponentVisitor(int x, int y) {
+      myX = x;
+      myY = y;
+    }
+
+    public RadComponent getResult() {
+      return myResult;
+    }
+
+    @Override
+    public boolean visit(RadComponent component) {
+      return myResult == null;
+    }
+
+    @Override
+    public void endVisit(RadComponent component) {
+      if (myResult == null) {
+        Point location = component.convertPoint(myLayeredPane, myX, myY);
+        if (component.getBounds().contains(location)) {
+          myResult = component;
+        }
+      }
     }
   }
 }

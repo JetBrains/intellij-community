@@ -5,6 +5,7 @@ import org.jetbrains.plugins.gradle.diff.GradleLibraryDependencyPresenceChange
 import org.jetbrains.plugins.gradle.diff.GradleMismatchedLibraryPathChange
 import com.intellij.openapi.roots.libraries.Library
 import org.jetbrains.plugins.gradle.util.GradleUtil
+import org.jetbrains.plugins.gradle.diff.GradleModulePresenceChange
 
 /**
  * @author Denis Zhdanov
@@ -32,8 +33,15 @@ public class ChangeBuilder extends BuilderSupport {
       changes = []
     }
     switch (name) {
-      case "presence": return changes
-      case "lib":
+      case "module":
+        changes.addAll attributes.gradle.collect { new GradleModulePresenceChange(it, null)}
+        changes.addAll attributes.intellij.collect { new GradleModulePresenceChange(null, it)}
+        return changes
+      case "library":
+        changes.addAll attributes.gradle.collect { new GradleLibraryDependencyPresenceChange(it, null)}
+        changes.addAll attributes.intellij.collect { new GradleLibraryDependencyPresenceChange(null, it)}
+        return changes
+      case "libraryDependency":
         changes.addAll attributes.gradle.collect { new GradleLibraryDependencyPresenceChange(it, null)}
         changes.addAll attributes.intellij.collect { new GradleLibraryDependencyPresenceChange(null, it)}
         return changes

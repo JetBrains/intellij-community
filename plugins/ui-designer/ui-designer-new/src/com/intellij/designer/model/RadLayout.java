@@ -15,8 +15,11 @@
  */
 package com.intellij.designer.model;
 
+import com.intellij.designer.designSurface.ComponentDecorator;
+
 /**
  * @author Alexander Lobas
  */
 public abstract class RadLayout {
+  public abstract ComponentDecorator getChildSelectionDecorator(RadComponent component);
 }

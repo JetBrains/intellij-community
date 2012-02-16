@@ -5,31 +5,22 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.diff.PlatformFacade;
-import org.jetbrains.plugins.gradle.model.*;
+import org.jetbrains.plugins.gradle.model.gradle.*;
+import org.jetbrains.plugins.gradle.sync.GradleProjectStructureHelper;
 import org.jetbrains.plugins.gradle.util.GradleLog;
 
-import java.io.File;
 import java.util.*;
 
 /**
+ * Thread-safe.
+ * 
  * @author Denis Zhdanov
  * @since 2/7/12 3:23 PM
  */
 public class GradleModuleDependencyImporter {
-
-  private static final Map<LibraryPathType, OrderRootType> LIBRARY_ROOT_MAPPINGS
-    = new EnumMap<LibraryPathType, OrderRootType>(LibraryPathType.class);
-  static {
-    LIBRARY_ROOT_MAPPINGS.put(LibraryPathType.BINARY, OrderRootType.CLASSES);
-    LIBRARY_ROOT_MAPPINGS.put(LibraryPathType.SOURCE, OrderRootType.SOURCES);
-    LIBRARY_ROOT_MAPPINGS.put(LibraryPathType.DOC, JavadocOrderRootType.getInstance());
-    assert LibraryPathType.values().length == LIBRARY_ROOT_MAPPINGS.size();
-  }
   
   @NotNull private final PlatformFacade myPlatformFacade;
 
@@ -62,56 +53,83 @@ public class GradleModuleDependencyImporter {
     importModuleDependencies(moduleDependencies, module);
   }
 
-  public void importModuleDependencies(@NotNull Iterable<GradleModuleDependency> dependencies, @NotNull Module module) {
-    // TODO den implement
+  @SuppressWarnings("MethodMayBeStatic")
+  public void importModuleDependencies(@NotNull final Iterable<GradleModuleDependency> dependencies, @NotNull final Module module) {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        doImportModuleDependencies(dependencies, module);
+      }
+    });
   }
   
+  private static void doImportModuleDependencies(@NotNull final Iterable<GradleModuleDependency> dependencies,
+                                                 @NotNull final Module module)
+  {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
+        final ModifiableRootModel moduleRootModel = moduleRootManager.getModifiableModel();
+        try {
+          final GradleProjectStructureHelper projectStructureHelper = module.getProject().getComponent(GradleProjectStructureHelper.class);
+          for (GradleModuleDependency dependency : dependencies) {
+            final String moduleName = dependency.getName();
+            final Module intellijModuleDependency = projectStructureHelper.findIntellijModule(moduleName);
+            if (intellijModuleDependency == null) {
+              assert false;
+              continue;
+            }
+            moduleRootModel.addModuleOrderEntry(intellijModuleDependency);
+          }
+        }
+        finally {
+          moduleRootModel.commit();
+        }
+      }
+    });
+  }
+
   public void importLibraryDependencies(@NotNull final Iterable<GradleLibraryDependency> dependencies, @NotNull final Module module) {
-    // TODO den make non-EDT agnostic
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        doImportLibraryDependencies(dependencies, module);
+      }
+    });
+  }
+  
+  public void doImportLibraryDependencies(@NotNull final Iterable<GradleLibraryDependency> dependencies, @NotNull final Module module) {
+    // Is assumed to be called from EDT
     final LibraryTable libraryTable = myPlatformFacade.getProjectLibraryTable(module.getProject());
     final Map<GradleLibrary, Library> gradle2intellij = new HashMap<GradleLibrary, Library>(); 
-    final Set<GradleLibrary> librariesToCreate = new HashSet<GradleLibrary>();
     for (final GradleLibraryDependency dependency : dependencies) {
       // Try to find existing library in project libraries.
       Library library = libraryTable.getLibraryByName(dependency.getName());
-      if (library == null) {
-        librariesToCreate.add(dependency.getTarget());
+      if (library != null) {
+        gradle2intellij.put(dependency.getTarget(), library);
       }
       else {
-        gradle2intellij.put(dependency.getTarget(), library);
+        GradleLog.LOG.warn(String.format(
+          "Detected situation when target library for the gradle-local library dependency doesn't exist. Dependency: %s",
+          dependency
+        ));
       }
     }
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        // Create all necessary libraries.
-        if (!librariesToCreate.isEmpty()) {
-          final LibraryTable.ModifiableModel projectLibraryModel = libraryTable.getModifiableModel();
-          try {
-            for (GradleLibrary library : librariesToCreate) {
-              final Library intellijLibrary = projectLibraryModel.createLibrary(library.getName());
-              gradle2intellij.put(library, intellijLibrary);
-              final Library.ModifiableModel libraryModel = intellijLibrary.getModifiableModel();
-              try {
-                registerPaths(library, libraryModel);
-              }
-              finally {
-                libraryModel.commit();
-              }
-            }
-          }
-          finally {
-            projectLibraryModel.commit();
-          }
-        }
-        
         // Register library dependencies.
         ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
         final ModifiableRootModel moduleRootModel = moduleRootManager.getModifiableModel();
         try {
           for (GradleLibraryDependency dependency : dependencies) {
-            LibraryOrderEntry orderEntry = moduleRootModel.addLibraryEntry(gradle2intellij.get(dependency.getTarget()));
+            final Library library = gradle2intellij.get(dependency.getTarget());
+            if (library == null) {
+              continue;
+            }
+            LibraryOrderEntry orderEntry = moduleRootModel.addLibraryEntry(library);
             orderEntry.setExported(dependency.isExported());
             orderEntry.setScope(dependency.getScope());
           }
@@ -119,34 +137,7 @@ public class GradleModuleDependencyImporter {
         finally {
           moduleRootModel.commit();
         }
-        // TODO den refresh gradle project tree
       }
     });
   }
-
-  private static void registerPaths(@NotNull GradleLibrary gradleLibrary, @NotNull Library.ModifiableModel model) {
-    for (LibraryPathType pathType : LibraryPathType.values()) {
-      for (String path : gradleLibrary.getPaths(pathType)) {
-        VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(new File(path));
-        if (virtualFile == null) {
-          GradleLog.LOG.warn(String.format("Can't find %s of the library '%s' at path '%s'", pathType, gradleLibrary.getName(), path));
-          continue;
-        }
-        if (virtualFile.isDirectory()) {
-          model.addRoot(virtualFile, LIBRARY_ROOT_MAPPINGS.get(pathType));
-        }
-        else {
-          VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(virtualFile);
-          if (jarRoot == null) {
-            GradleLog.LOG.warn(String.format(
-              "Can't parse contents of the jar file at path '%s' for the library '%s''", path, gradleLibrary.getName()
-            ));
-            continue;
-          }
-          model.addRoot(jarRoot, LIBRARY_ROOT_MAPPINGS.get(pathType));
-        }
-      }
-    }
-  }
-
 }

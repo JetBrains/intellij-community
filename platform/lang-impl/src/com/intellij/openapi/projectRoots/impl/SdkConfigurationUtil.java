@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.MacFileChooserDialog;
+import com.intellij.openapi.fileChooser.PathChooserDialog;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -69,7 +69,7 @@ public class SdkConfigurationUtil {
     }
     final FileChooserDescriptor descriptor = createCompositeDescriptor(sdkTypes);
     if (SystemInfo.isMac) {
-      descriptor.putUserData(MacFileChooserDialog.NATIVE_MAC_FILE_CHOOSER_SHOW_HIDDEN_FILES_ENABLED, Boolean.TRUE);
+      descriptor.putUserData(PathChooserDialog.NATIVE_MAC_CHOOSER_SHOW_HIDDEN_FILES, Boolean.TRUE);
     }
     String suggestedPath = sdkTypes [0].suggestHomePath();
     VirtualFile suggestedDir = suggestedPath == null

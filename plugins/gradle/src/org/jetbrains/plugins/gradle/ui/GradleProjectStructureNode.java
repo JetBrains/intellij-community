@@ -1,40 +1,58 @@
 package org.jetbrains.plugins.gradle.ui;
 
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.config.GradleTextAttributes;
 import org.jetbrains.plugins.gradle.diff.GradleProjectStructureChange;
-import org.jetbrains.plugins.gradle.model.GradleEntityType;
+import org.jetbrains.plugins.gradle.model.id.GradleEntityId;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.MutableTreeNode;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
+ * Not thread-safe.
+ * 
  * @author Denis Zhdanov
  * @since 8/23/11 3:50 PM
  * @param <T>   type of the target entity {@link GradleProjectStructureNodeDescriptor#getElement() associated} with the current node
  */
-public class GradleProjectStructureNode<T> extends DefaultMutableTreeNode implements Iterable<GradleProjectStructureNode<?>> {
+public class GradleProjectStructureNode<T extends GradleEntityId> extends DefaultMutableTreeNode
+  implements Iterable<GradleProjectStructureNode<?>>
+{
   
+  public static final Comparator<GradleProjectStructureNode<?>> NODE_COMPARATOR = new Comparator<GradleProjectStructureNode<?>>() {
+    @Override
+    public int compare(GradleProjectStructureNode<?> n1, GradleProjectStructureNode<?> n2) {
+      TextAttributesKey a1 = n1.getDescriptor().getAttributes();
+      TextAttributesKey a2 = n2.getDescriptor().getAttributes();
+      
+      // Put 'gradle-local' nodes at the top.
+      if (a1 == GradleTextAttributes.GRADLE_LOCAL_CHANGE && a2 != GradleTextAttributes.GRADLE_LOCAL_CHANGE) {
+        return -1;
+      }
+      else if (a1 != GradleTextAttributes.GRADLE_LOCAL_CHANGE && a2 == GradleTextAttributes.GRADLE_LOCAL_CHANGE) {
+        return 1;
+      }
+       
+      return n1.getDescriptor().getName().compareTo(n2.getDescriptor().getName());
+    }
+  };
+
   private final Set<GradleProjectStructureChange> myConflictChanges = new HashSet<GradleProjectStructureChange>();
+  private final List<Listener>                    myListeners       = new CopyOnWriteArrayList<Listener>();
   
   private final GradleProjectStructureNodeDescriptor<T> myDescriptor;
-  private final GradleEntityType                        myType;
   
-  public GradleProjectStructureNode(@NotNull GradleProjectStructureNodeDescriptor<T> descriptor, @NotNull GradleEntityType type) {
+  public GradleProjectStructureNode(@NotNull GradleProjectStructureNodeDescriptor<T> descriptor) {
     super(descriptor);
     myDescriptor = descriptor;
-    myType = type;
   }
 
   @NotNull
   public GradleProjectStructureNodeDescriptor<T> getDescriptor() {
     return myDescriptor;
-  }
-
-  @NotNull
-  public GradleEntityType getType() {
-    return myType;
   }
 
   @Override
@@ -49,16 +67,64 @@ public class GradleProjectStructureNode<T> extends DefaultMutableTreeNode implem
 
   @Override
   public void add(MutableTreeNode newChild) {
-    GradleProjectStructureNode<?> child = (GradleProjectStructureNode)newChild;
-    final String newName = child.getDescriptor().getName();
     for (int i = 0; i < getChildCount(); i++) {
       GradleProjectStructureNode<?> node = getChildAt(i);
-      if (newName.compareTo(node.getDescriptor().getName()) < 0) {
+      if (NODE_COMPARATOR.compare((GradleProjectStructureNode<?>)newChild, node) <= 0) {
         insert(newChild, i);
+        onNodeAdded((GradleProjectStructureNode<?>)newChild, i);
         return;
       }
     }
     super.add(newChild);
+    onNodeAdded((GradleProjectStructureNode<?>)newChild, getChildCount() - 1);
+  }
+
+  @Override
+  public void insert(MutableTreeNode newChild, int childIndex) {
+    super.insert(newChild, childIndex);
+    onNodeAdded((GradleProjectStructureNode<?>)newChild, childIndex);
+  }
+
+  @Override
+  public void remove(int childIndex) {
+    final GradleProjectStructureNode<?> child = getChildAt(childIndex);
+    super.remove(childIndex);
+    onNodeRemoved(child, childIndex);
+  }
+
+  @Override
+  public void remove(MutableTreeNode aChild) {
+    final int index = getIndex(aChild);
+    super.remove(aChild);
+    onNodeRemoved((GradleProjectStructureNode<?>)aChild, index);
+  }
+
+  /**
+   * Asks current node to ensure that given child node is at the 'right position' (according to the {@link #NODE_COMPARATOR}.
+   * <p/>
+   * Does nothing if given node is not a child of the current node.
+   * 
+   * @param child  target child node
+   */
+  public void correctChildPositionIfNecessary(@NotNull GradleProjectStructureNode<?> child) {
+    int currentPosition = -1;
+    int desiredPosition = getChildCount() - 1;
+    for (int i = 0; i < getChildCount(); i++) {
+      GradleProjectStructureNode<?> node = getChildAt(i);
+      if (node == child) {
+        currentPosition = i;
+        continue;
+      }
+      if (NODE_COMPARATOR.compare(child, node) <= 0) {
+        desiredPosition = i;
+      }
+    }
+    if (currentPosition < 0) {
+      // Given node is not a child of the current node.
+      return;
+    }
+    remove(currentPosition);
+    insert(child, desiredPosition);
   }
 
   /**
@@ -79,7 +145,10 @@ public class GradleProjectStructureNode<T> extends DefaultMutableTreeNode implem
    */
   public void addConflictChange(@NotNull GradleProjectStructureChange change) {
     myConflictChanges.add(change);
-    myDescriptor.setAttributes(GradleTextAttributes.GRADLE_CHANGE_CONFLICT);
+    if (myConflictChanges.size() == 1) {
+      myDescriptor.setAttributes(GradleTextAttributes.GRADLE_CHANGE_CONFLICT);
+      onNodeChanged(this);
+    }
   }
 
   /**
@@ -91,6 +160,7 @@ public class GradleProjectStructureNode<T> extends DefaultMutableTreeNode implem
     myConflictChanges.remove(change);
     if (myConflictChanges.isEmpty()) {
       myDescriptor.setAttributes(GradleTextAttributes.GRADLE_NO_CHANGE);
+      onNodeChanged(this);
     }
   }
   
@@ -104,7 +174,7 @@ public class GradleProjectStructureNode<T> extends DefaultMutableTreeNode implem
    */
   @SuppressWarnings("unchecked")
   @NotNull
-  public <C> Collection<GradleProjectStructureNode<C>> getChildren(@NotNull Class<C> clazz) {
+  public <C extends GradleEntityId> Collection<GradleProjectStructureNode<C>> getChildren(@NotNull Class<C> clazz) {
     List<GradleProjectStructureNode<C>> result = null;
     for (int i = 0; i < getChildCount(); i++) {
       final GradleProjectStructureNode<?> child = getChildAt(i);
@@ -145,5 +215,38 @@ public class GradleProjectStructureNode<T> extends DefaultMutableTreeNode implem
         throw new UnsupportedOperationException();
       }
     };
+  }
+
+  public void setAttributes(@NotNull TextAttributesKey key) {
+    myDescriptor.setAttributes(key);
+    onNodeChanged(this);
+  }
+  
+  public void addListener(@NotNull Listener listener) {
+    myListeners.add(listener);
+  }
+
+  private void onNodeAdded(@NotNull GradleProjectStructureNode<?> node, int index) {
+    for (Listener listener : myListeners) {
+      listener.onNodeAdded(node, index);
+    }
+  }
+
+  private void onNodeRemoved(@NotNull GradleProjectStructureNode<?> node, int index) {
+    for (Listener listener : myListeners) {
+      listener.onNodeRemoved(node, index);
+    }
+  }
+
+  private void onNodeChanged(@NotNull GradleProjectStructureNode<?> node) {
+    for (Listener listener : myListeners) {
+      listener.onNodeChanged(node);
+    }
+  }
+  
+  public interface Listener {
+    void onNodeAdded(@NotNull GradleProjectStructureNode<?> node, int index);
+    void onNodeRemoved(@NotNull GradleProjectStructureNode<?> node, int index);
+    void onNodeChanged(@NotNull GradleProjectStructureNode<?> node);
   }
 }

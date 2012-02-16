@@ -2,6 +2,7 @@ package org.jetbrains.plugins.gradle.model;
 
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.model.gradle.GradleProject;
 import org.junit.Before;
 import org.junit.Test;
 
