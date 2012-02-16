@@ -2,6 +2,7 @@ package org.jetbrains.jps.android;
 
 import com.android.sdklib.IAndroidTarget;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
@@ -14,7 +15,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.Module;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.ProjectPaths;
-import org.jetbrains.jps.Sdk;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
@@ -64,22 +64,13 @@ public class AndroidDexBuilder extends ModuleLevelBuilder {
         continue;
       }
 
-      final Sdk sdk = module.getSdk();
-      if (!(sdk instanceof AndroidSdk)) {
-        context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR,
-                                                   AndroidJpsBundle.message("android.jps.errors.sdk.not.specified", module.getName())));
+      final Pair<AndroidSdk, IAndroidTarget> pair = AndroidJpsUtil.getAndroidPlatform(module, context, BUILDER_NAME);
+      if (pair == null) {
         success = false;
         continue;
       }
-      final AndroidSdk androidSdk = (AndroidSdk)sdk;
-
-      final IAndroidTarget target = AndroidJpsUtil.parseAndroidTarget(androidSdk, context, BUILDER_NAME);
-      if (target == null) {
-        context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR,
-                                                   AndroidJpsBundle.message("android.jps.errors.sdk.invalid", module.getName())));
-        success = false;
-        continue;
-      }
+      final AndroidSdk androidSdk = pair.getFirst();
+      final IAndroidTarget target = pair.getSecond();
 
       final ProjectPaths projectPaths = context.getProjectPaths();
       final File dexOutputDir = AndroidJpsUtil.getOutputDirectoryForPackagedFiles(projectPaths, module);
@@ -192,7 +183,7 @@ public class AndroidDexBuilder extends ModuleLevelBuilder {
 
       AndroidCommonUtils.handleDexCompilationResult(process, outFilePath, messages);
 
-      AndroidJpsUtil.addMessages(context, messages, null, BUILDER_NAME);
+      AndroidJpsUtil.addMessages(context, messages, BUILDER_NAME);
 
       return messages.get(AndroidCompilerMessageKind.ERROR).size() == 0;
     }

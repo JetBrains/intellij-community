@@ -2,6 +2,7 @@ package org.jetbrains.jps.android;
 
 import com.android.sdklib.IAndroidTarget;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
@@ -153,7 +154,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
         final Map<AndroidCompilerMessageKind, List<String>> messages =
           AndroidIdl.execute(target, filePath, outputFilePath, sourceRootPaths);
 
-        AndroidJpsUtil.addMessages(context, messages, filePath, BUILDER_NAME);
+        addMessages(context, messages, filePath, BUILDER_NAME);
 
         if (messages.get(AndroidCompilerMessageKind.ERROR).size() > 0) {
           success = false;
@@ -210,7 +211,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
         final Map<AndroidCompilerMessageKind, List<String>> messages =
           AndroidRenderscript.execute(sdkLocation, target, filePath, tmpOutputDirectory.getPath(), depFolderPath, rawDir.getPath());
 
-        AndroidJpsUtil.addMessages(context, messages, filePath, BUILDER_NAME);
+        addMessages(context, messages, filePath, BUILDER_NAME);
 
         if (messages.get(AndroidCompilerMessageKind.ERROR).size() > 0) {
           success = false;
@@ -262,7 +263,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
       final IAndroidTarget target = moduleData.getAndroidTarget();
 
       try {
-        final String[] resPaths = collectResourceDirs(facet);
+        final String[] resPaths = AndroidJpsUtil.collectResourceDirs(facet);
         if (resPaths.length == 0) {
           // there is no resources in the module
           continue;
@@ -298,7 +299,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
           AndroidApt.compile(target, -1, manifestFile.getPath(), packageName, aptOutputDirectory.getPath(), resPaths,
                              ArrayUtil.toStringArray(depLibPackagesSet), facet.getLibrary());
 
-        AndroidJpsUtil.addMessages(context, messages, null, BUILDER_NAME);
+        AndroidJpsUtil.addMessages(context, messages, BUILDER_NAME);
 
         if (messages.get(AndroidCompilerMessageKind.ERROR).size() > 0) {
           success = false;
@@ -319,7 +320,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
   private static Set<String> getDepLibPackages(@NotNull Module module) throws IOException {
     final Set<String> result = new HashSet<String>();
 
-    for (AndroidFacet depFacet : getAllDependentAndroidLibraries(module)) {
+    for (AndroidFacet depFacet : AndroidJpsUtil.getAllDependentAndroidLibraries(module)) {
       final File depManifestFile = AndroidJpsUtil.getManifestFileForCompilationPath(depFacet);
 
       if (depManifestFile != null) {
@@ -330,37 +331,6 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
         }
       }
     }
-    return result;
-  }
-
-  private static String[] collectResourceDirs(@NotNull AndroidFacet facet) throws IOException {
-    final List<String> result = new ArrayList<String>();
-
-    final File resDir = getResourceDirForCompilationPath(facet);
-    if (resDir != null) {
-      result.add(resDir.getPath());
-    }
-
-    for (AndroidFacet depFacet : getAllDependentAndroidLibraries(facet.getModule())) {
-      final File depResDir = getResourceDirForCompilationPath(depFacet);
-      if (depResDir != null) {
-        result.add(depResDir.getPath());
-      }
-    }
-    return ArrayUtil.toStringArray(result);
-  }
-
-  @Nullable
-  private static File getResourceDirForCompilationPath(@NotNull AndroidFacet facet) throws IOException {
-    return facet.getUseCustomResFolderForCompilation()
-           ? facet.getResourceDirForCompilation()
-           : facet.getResourceDir();
-  }
-
-  @NotNull
-  private static List<AndroidFacet> getAllDependentAndroidLibraries(@NotNull Module module) {
-    final List<AndroidFacet> result = new ArrayList<AndroidFacet>();
-    collectDependentAndroidLibraries(module, result, new HashSet<String>());
     return result;
   }
 
@@ -398,22 +368,6 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
     }
     finally {
       inputStream.close();
-    }
-  }
-
-  private static void collectDependentAndroidLibraries(@NotNull Module module,
-                                                       @NotNull List<AndroidFacet> result,
-                                                       @NotNull Set<String> visitedSet) {
-    for (ClasspathItem item : module.getClasspath(ClasspathKind.PRODUCTION_COMPILE, false)) {
-      if (item instanceof Module) {
-        final Module depModule = (Module)item;
-        final AndroidFacet depFacet = AndroidJpsUtil.getFacet(depModule);
-
-        if (depFacet != null && depFacet.getLibrary() && visitedSet.add(module.getName())) {
-          collectDependentAndroidLibraries(depModule, result, visitedSet);
-          result.add(0, depFacet);
-        }
-      }
     }
   }
 
@@ -455,22 +409,13 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
         continue;
       }
 
-      final Sdk sdk = module.getSdk();
-      if (!(sdk instanceof AndroidSdk)) {
-        context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR,
-                                                   AndroidJpsBundle.message("android.jps.errors.sdk.not.specified", module.getName())));
+      final Pair<AndroidSdk,IAndroidTarget> pair = AndroidJpsUtil.getAndroidPlatform(module, context, BUILDER_NAME);
+      if (pair == null) {
         success = false;
         continue;
       }
-      final AndroidSdk androidSdk = (AndroidSdk)sdk;
-
-      final IAndroidTarget target = AndroidJpsUtil.parseAndroidTarget(androidSdk, context, BUILDER_NAME);
-      if (target == null) {
-        context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR,
-                                                   AndroidJpsBundle.message("android.jps.errors.sdk.invalid", module.getName())));
-        success = false;
-        continue;
-      }
+      final AndroidSdk androidSdk = pair.getFirst();
+      final IAndroidTarget target = pair.getSecond();
 
       final File outputDir = context.getProjectPaths().getModuleOutputDir(module, false);
       if (outputDir == null) {
@@ -542,6 +487,24 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
   @Override
   public String getDescription() {
     return "Android Source Generating Builder";
+  }
+
+  private static void addMessages(@NotNull CompileContext context,
+                                  @NotNull Map<AndroidCompilerMessageKind, List<String>> messages,
+                                  @NotNull String sourcePath,
+                                  @NotNull String builderName) {
+    for (Map.Entry<AndroidCompilerMessageKind, List<String>> entry : messages.entrySet()) {
+      final AndroidCompilerMessageKind kind = entry.getKey();
+      final BuildMessage.Kind buildMessageKind = AndroidJpsUtil.toBuildMessageKind(kind);
+
+      if (buildMessageKind == null) {
+        continue;
+      }
+
+      for (String message : entry.getValue()) {
+        context.processMessage(new CompilerMessage(builderName, buildMessageKind, message, sourcePath));
+      }
+    }
   }
 
   private static class MyModuleData {

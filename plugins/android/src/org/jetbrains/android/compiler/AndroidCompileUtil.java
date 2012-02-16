@@ -61,10 +61,7 @@ import org.jetbrains.android.fileTypes.AndroidRenderscriptFileType;
 import org.jetbrains.android.resourceManagers.LocalResourceManager;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.sdk.AndroidSdkUtils;
-import org.jetbrains.android.util.AndroidCompilerMessageKind;
-import org.jetbrains.android.util.AndroidExecutionUtil;
-import org.jetbrains.android.util.AndroidUtils;
-import org.jetbrains.android.util.ResourceEntry;
+import org.jetbrains.android.util.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -73,15 +70,12 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * @author yole
  */
 public class AndroidCompileUtil {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.compiler.AndroidCompileUtil");
-
-  private static final Pattern ourMessagePattern = Pattern.compile("(.+):(\\d+):.+");
 
   private static final Key<Boolean> RELEASE_BUILD_KEY = new Key<Boolean>("RELEASE_BUILD_KEY");
   @NonNls private static final String RESOURCES_CACHE_DIR_NAME = "res-cache";
@@ -151,7 +145,7 @@ public class AndroidCompileUtil {
           for (String message : messageList) {
             String url = null;
             int line = -1;
-            Matcher matcher = ourMessagePattern.matcher(message);
+            Matcher matcher = AndroidCommonUtils.COMPILER_MESSAGE_PATTERN.matcher(message);
             if (matcher.matches()) {
               String fileName = matcher.group(1);
               if (new File(fileName).exists()) {

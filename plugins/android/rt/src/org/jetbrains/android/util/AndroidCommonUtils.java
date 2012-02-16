@@ -36,6 +36,8 @@ public class AndroidCommonUtils {
   private static final Pattern EXCEPTION_PATTERN = Pattern.compile(".*exception.*");
   private static Pattern R_PATTERN = Pattern.compile("R(\\$.*)?\\.class");
 
+  public static final Pattern COMPILER_MESSAGE_PATTERN = Pattern.compile("(.+):(\\d+):.+");
+
   private AndroidCommonUtils() {
   }
 
