@@ -42,11 +42,10 @@ public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView {
   }
 
   /**
-   *
    * @param consoleProperties
    * @param runnerSettings
    * @param configurationPerRunnerSettings
-   * @param splitterProperty Key to store(project level) latest value of testTree/consoleTab splitter. E.g. "RSpec.Splitter.Proportion"
+   * @param splitterProperty               Key to store(project level) latest value of testTree/consoleTab splitter. E.g. "RSpec.Splitter.Proportion"
    */
   public SMTRunnerConsoleView(final TestConsoleProperties consoleProperties, final RunnerSettings runnerSettings,
                               final ConfigurationPerRunnerSettings configurationPerRunnerSettings,
@@ -73,19 +72,7 @@ public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView {
     super.initUI();
 
     // Console
-    myResultsViewer.addEventsListener(new TestResultsViewer.EventsListener() {
-      public void onTestNodeAdded(TestResultsViewer sender, SMTestProxy test) {
-        // Do nothing
-      }
-
-      public void onTestingStarted(TestResultsViewer sender) {
-        // Do nothing
-      }
-
-      public void onTestingFinished(TestResultsViewer sender) {
-        // Do nothing
-      }
-
+    myResultsViewer.addEventsListener(new TestResultsViewer.SMEventsAdapter() {
       public void onSelected(@Nullable final SMTestProxy selectedTestProxy,
                              @NotNull final TestResultsViewer viewer,
                              @NotNull final TestFrameworkRunningModel model) {

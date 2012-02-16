@@ -26,20 +26,20 @@ public class ReplaceInPathAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-    
-    ReplaceInProjectManager.getInstance(project).replaceInProject(dataContext);
+
+    ReplaceInProjectManager replaceManager = ReplaceInProjectManager.getInstance(project);
+    if (!replaceManager.isEnabled()) {
+      FindInPathAction.showNotAvailableMessage(e, project);
+      return;
+    }
+
+    replaceManager.replaceInProject(dataContext);
   }
 
   @Override
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
-    Project project = PlatformDataKeys.PROJECT.getData(event.getDataContext());
-    if (project == null) {
-      presentation.setEnabled(false);
-    }
-    else {
-      ReplaceInProjectManager replaceManager = ReplaceInProjectManager.getInstance(project);
-      presentation.setEnabled(replaceManager.isEnabled());
-    }
+    Project project = event.getData(PlatformDataKeys.PROJECT);
+    presentation.setEnabled(project != null);
   }
 }

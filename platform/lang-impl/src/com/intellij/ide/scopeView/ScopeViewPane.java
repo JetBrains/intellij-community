@@ -226,4 +226,11 @@ public class ScopeViewPane extends AbstractProjectViewPane {
     }
     return myViewPanel != null ? myViewPanel.getData(dataId) : null;
   }
+
+  @Override
+  public ActionCallback getReady(@NotNull Object requestor) {
+    final ActionCallback callback = myViewPanel.getActionCallback();
+    return myViewPanel == null ? new ActionCallback.Rejected() :
+           callback != null ? callback : new ActionCallback.Done();
+  }
 }

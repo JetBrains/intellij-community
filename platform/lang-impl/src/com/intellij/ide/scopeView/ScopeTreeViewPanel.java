@@ -462,6 +462,10 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
     myTreeExpansionMonitor.restore();
   }
 
+  ActionCallback getActionCallback() {
+    return myActionCallback;
+  }
+
   private class MyTreeCellRenderer extends ColoredTreeCellRenderer {
     public void customizeCellRenderer(JTree tree,
                                       Object value,
