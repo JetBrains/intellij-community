@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.compiled;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
@@ -32,26 +33,27 @@ import java.io.IOException;
  */
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class DefaultClsStubBuilderFactory extends ClsStubBuilderFactory {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.DefaultClsStubBuilderFactory");
+
   @Override
   public PsiFileStub buildFileStub(VirtualFile vFile, byte[] bytes) throws ClsFormatException {
     final PsiJavaFileStubImpl file = new PsiJavaFileStubImpl("do.not.know.yet", true);
     try {
-      ClassReader reader = new ClassReader(bytes);
-
-      final StubBuildingVisitor<VirtualFile>
-        classVisitor = new StubBuildingVisitor<VirtualFile>(vFile, VirtualFileInnerClassStrategy.INSTANCE, file, 0);
+      final ClassReader reader = new ClassReader(bytes);
+      final StubBuildingVisitor<VirtualFile> classVisitor =
+        new StubBuildingVisitor<VirtualFile>(vFile, VirtualFileInnerClassStrategy.INSTANCE, file, 0);
       reader.accept(classVisitor, 0);
 
-      final PsiClassStub result = classVisitor.getResult();
+      @SuppressWarnings("unchecked") final PsiClassStub<PsiClass> result = (PsiClassStub<PsiClass>)classVisitor.getResult();
       if (result == null) return null;
 
-      //noinspection unchecked
       file.setPackageName(getPackageName(result));
+      return file;
     }
     catch (Exception e) {
+      LOG.warn(vFile.getPath(), e);
       throw new ClsFormatException();
     }
-    return file;
   }
 
   @Override
