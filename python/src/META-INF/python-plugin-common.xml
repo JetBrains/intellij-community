@@ -924,7 +924,10 @@
       <add-to-group group-id="ProjectViewPopupMenuRunGroup" anchor="first"/>
     </action>
 
-    <group id="PyPackagingMenu" popup="true" class="com.jetbrains.python.packaging.setupPy.PyPackagingGroup" text="Packaging">
+
+    <group id="PyPackagingMenu" text="Packaging">
+      <action id="CreateSetupPy" class="com.jetbrains.python.packaging.setupPy.CreateSetupPyAction"/>
+      <action id="RunSetupPyTask" class="com.jetbrains.python.packaging.setupPy.SetupTaskChooserAction"/>
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
 
