@@ -1177,9 +1177,10 @@ public class JBTabsImpl extends JComponent
   private TabInfo findEnabledForward(int from, boolean cycle) {
     if (from < 0) return null;
     int index = from;
-    while (index < myVisibleInfos.size()) {
+    while (true) {
       index++;
-      if (cycle && index == myVisibleInfos.size()) {
+      if (index == myVisibleInfos.size()) {
+        if (!cycle) break;
         index = 0;
       }
       if (index == from) break;
@@ -1194,9 +1195,10 @@ public class JBTabsImpl extends JComponent
   private TabInfo findEnabledBackward(int from, boolean cycle) {
     if (from < 0) return null;
     int index = from;
-    while (index >= 0) {
+    while (true) {
       index--;
-      if (cycle && index == -1) {
+      if (index == -1) {
+        if (!cycle) break;
         index = myVisibleInfos.size()-1;
       }
       if (index == from) break;
