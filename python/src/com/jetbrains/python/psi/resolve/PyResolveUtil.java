@@ -42,8 +42,8 @@ public class PyResolveUtil {
   /**
    * Returns closest previous node of given class, as input file would have it.
    *
-   * @param elt       node from which to look for a previous statement.
-   * @param condition determines where a node is considered found.
+   * @param elt          node from which to look for a previous statement.
+   * @param elementTypes selected element types.
    * @return previous statement, or null.
    */
   @Nullable
@@ -151,7 +151,7 @@ public class PyResolveUtil {
    * @return first element that the processor accepted.
    */
   @Nullable
-  public static PsiElement treeCrawlUp(PsiScopeProcessor processor, boolean fromunder, PsiElement elt, PsiElement roof) {
+  public static PsiElement treeCrawlUp(PsiScopeProcessor processor, boolean fromunder, PsiElement elt, @Nullable PsiElement roof) {
     if (elt == null || !elt.isValid()) return null; // can't find anyway.
     PsiElement seeker = elt;
     PsiElement cap = PyUtil.getConcealingParent(elt);
@@ -219,41 +219,6 @@ public class PyResolveUtil {
   }
 
   /**
-   * Assumes that the start element is inside a function definition. Runs processor through the outer contexts of that function,
-   * from closest to outermost. Does not scan anything within the function.
-   * Makes sense for finding names that are not visible at definition time but are visible at call time.
-   *
-   * @param start     element to start from; if it is not within a function, nothing happens.
-   * @param processor should be ready to see duplicate names defined differently in nested contexts.
-   * @return the element for which processor's {@code execute()} returned true, or null.
-   */
-  @Nullable
-  public static PsiElement scanOuterContext(@NotNull PsiScopeProcessor processor, @NotNull PsiElement start) {
-    // if we're under a cap, an external object that we want to use might be also defined below us.
-    // look through all contexts, closest first.
-    PsiElement ret = null;
-    PsiElement our_cap = PsiTreeUtil.getParentOfType(start, Callable.class);
-    if (our_cap != null) {
-      PyFunction innerFunction = PsiTreeUtil.getParentOfType(our_cap, PyFunction.class);
-      PsiElement cap = our_cap;
-      while (true) {
-        cap = PsiTreeUtil.getParentOfType(cap, PyFunction.class);
-        if (cap == null) cap = start.getContainingFile();
-        ret = treeCrawlUp(processor, true, cap);
-        if ((ret != null) && !PsiTreeUtil.isAncestor(our_cap, ret, true)) { // found something and it is below our cap
-          // maybe we're in a method, and what we found is in its class context?
-          if (!refersFromMethodToClass(innerFunction, ret)) {
-            break; // not in method -> must be all right
-          }
-        }
-        if (cap instanceof PsiFile) break; // file level, can't try more
-      }
-    }
-    return ret;
-  }
-
-
-  /**
    * @param innerFunction a method, presumably inside the class
    * @param outer an element presumably in the class context.
    * @return true if an outer element is in a class context, while the inner is a method or function inside it.
@@ -301,7 +266,7 @@ public class PyResolveUtil {
    * @return path as a list of ref expressions.
    */
   @NotNull
-  public static List<PyExpression> unwindQualifiers(final PyQualifiedExpression expr) {
+  public static List<PyExpression> unwindQualifiers(@NotNull final PyQualifiedExpression expr) {
     final List<PyExpression> path = new LinkedList<PyExpression>();
     PyQualifiedExpression e = expr;
     while (e != null) {

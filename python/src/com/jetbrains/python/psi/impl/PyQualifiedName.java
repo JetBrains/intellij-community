@@ -20,7 +20,7 @@ import java.util.List;
  * @author yole
  */
 public class PyQualifiedName {
-  private final List<String> myComponents;
+  @NotNull private final List<String> myComponents;
 
   private PyQualifiedName(int count) {
     myComponents = new ArrayList<String>(count);
@@ -74,6 +74,7 @@ public class PyQualifiedName {
     return result;
   }
 
+  @NotNull
   public List<String> getComponents() {
     return myComponents;
   }
@@ -170,16 +171,12 @@ public class PyQualifiedName {
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-
     PyQualifiedName that = (PyQualifiedName)o;
-
-    if (myComponents != null ? !myComponents.equals(that.myComponents) : that.myComponents != null) return false;
-
-    return true;
+    return myComponents.equals(that.myComponents);
   }
 
   @Override
   public int hashCode() {
-    return myComponents != null ? myComponents.hashCode() : 0;
+    return myComponents.hashCode();
   }
 }
