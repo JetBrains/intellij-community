@@ -79,6 +79,19 @@ public class SelectionTool extends InputTool {
     refreshCursor();
   }
 
+  @Override
+  protected void handleMove() {
+    if (myState == STATE_INIT) {
+      InputTool tracker = myArea.findTargetTool(myCurrentScreenX, myCurrentScreenY);
+      if (tracker == null) {
+        refreshCursor();
+      }
+      else {
+        myArea.setCursor(tracker.getDefaultCursor());
+      }
+    }
+  }
+
   protected Cursor calculateCursor() {
     return myState == STATE_INIT || myState == STATE_DRAG
            ? getDefaultCursor()

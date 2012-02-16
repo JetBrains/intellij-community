@@ -13,13 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.designer.model;
+package com.intellij.android.designer.model;
 
 import com.intellij.designer.designSurface.ComponentDecorator;
+import com.intellij.designer.designSurface.selection.NonResizeSelectionDecorator;
+import com.intellij.designer.model.RadComponent;
+import com.intellij.designer.model.RadLayout;
+
+import java.awt.*;
 
 /**
  * @author Alexander Lobas
  */
-public abstract class RadLayout {
-  public abstract ComponentDecorator getChildSelectionDecorator(RadComponent component);
+public class RadViewLayout extends RadLayout {
+  @Override
+  public ComponentDecorator getChildSelectionDecorator(RadComponent component) {
+    return new NonResizeSelectionDecorator(Color.RED, 1);
+  }
 }

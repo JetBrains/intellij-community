@@ -37,6 +37,7 @@ public final class GlassLayer extends JComponent implements PopupOwner, DataProv
     myToolProvider = provider;
     myArea = area;
     enableEvents(AWTEvent.KEY_EVENT_MASK | AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK);
+    // TODO: DND
   }
 
   @Override
@@ -44,16 +45,18 @@ public final class GlassLayer extends JComponent implements PopupOwner, DataProv
     try {
       InputTool tool = myToolProvider.getActiveTool();
 
-      switch (event.getID()) {
-        case KeyEvent.KEY_PRESSED:
-          tool.keyPressed(event, myArea);
-          break;
-        case KeyEvent.KEY_TYPED:
-          tool.keyTyped(event, myArea);
-          break;
-        case KeyEvent.KEY_RELEASED:
-          tool.keyReleased(event, myArea);
-          break;
+      if (tool != null) {
+        switch (event.getID()) {
+          case KeyEvent.KEY_PRESSED:
+            tool.keyPressed(event, myArea);
+            break;
+          case KeyEvent.KEY_TYPED:
+            tool.keyTyped(event, myArea);
+            break;
+          case KeyEvent.KEY_RELEASED:
+            tool.keyReleased(event, myArea);
+            break;
+        }
       }
     }
     catch (Throwable e) {
@@ -72,24 +75,26 @@ public final class GlassLayer extends JComponent implements PopupOwner, DataProv
     try {
       InputTool tool = myToolProvider.getActiveTool();
 
-      switch (event.getID()) {
-        case MouseEvent.MOUSE_PRESSED:
-          tool.mouseDown(event, myArea);
-          break;
-        case MouseEvent.MOUSE_RELEASED:
-          tool.mouseUp(event, myArea);
-          break;
-        case MouseEvent.MOUSE_ENTERED:
-          tool.mouseEntered(event, myArea);
-          break;
-        case MouseEvent.MOUSE_EXITED:
-          tool.mouseExited(event, myArea);
-          break;
-        case MouseEvent.MOUSE_CLICKED:
-          if (event.getClickCount() == 2) {
-            tool.mouseDoubleClick(event, myArea);
-          }
-          break;
+      if (tool != null) {
+        switch (event.getID()) {
+          case MouseEvent.MOUSE_PRESSED:
+            tool.mouseDown(event, myArea);
+            break;
+          case MouseEvent.MOUSE_RELEASED:
+            tool.mouseUp(event, myArea);
+            break;
+          case MouseEvent.MOUSE_ENTERED:
+            tool.mouseEntered(event, myArea);
+            break;
+          case MouseEvent.MOUSE_EXITED:
+            tool.mouseExited(event, myArea);
+            break;
+          case MouseEvent.MOUSE_CLICKED:
+            if (event.getClickCount() == 2) {
+              tool.mouseDoubleClick(event, myArea);
+            }
+            break;
+        }
       }
     }
     catch (Throwable e) {
@@ -102,13 +107,15 @@ public final class GlassLayer extends JComponent implements PopupOwner, DataProv
     try {
       InputTool tool = myToolProvider.getActiveTool();
 
-      switch (event.getID()) {
-        case MouseEvent.MOUSE_MOVED:
-          tool.mouseMove(event, myArea);
-          break;
-        case MouseEvent.MOUSE_DRAGGED:
-          tool.mouseDrag(event, myArea);
-          break;
+      if (tool != null) {
+        switch (event.getID()) {
+          case MouseEvent.MOUSE_MOVED:
+            tool.mouseMove(event, myArea);
+            break;
+          case MouseEvent.MOUSE_DRAGGED:
+            tool.mouseDrag(event, myArea);
+            break;
+        }
       }
     }
     catch (Throwable e) {

@@ -15,6 +15,7 @@
  */
 package com.intellij.designer.designSurface;
 
+import com.intellij.designer.designSurface.tools.InputTool;
 import com.intellij.designer.model.RadComponent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -85,4 +86,9 @@ public abstract class EditableArea {
 
   @Nullable
   public abstract RadComponent findTarget(int x, int y);
+
+  @Nullable
+  public abstract InputTool findTargetTool(int x, int y);
+
+  public abstract ComponentDecorator getRootSelectionDecorator();
 }

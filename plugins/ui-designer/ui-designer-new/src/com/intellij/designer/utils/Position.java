@@ -13,13 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.designer.model;
-
-import com.intellij.designer.designSurface.ComponentDecorator;
+package com.intellij.designer.utils;
 
 /**
  * @author Alexander Lobas
  */
-public abstract class RadLayout {
-  public abstract ComponentDecorator getChildSelectionDecorator(RadComponent component);
+public interface Position {
+  //////////////////////////////////////////////////////////////////////////////////////////
+  //
+  // Direction
+  //
+  //////////////////////////////////////////////////////////////////////////////////////////
+  int NONE = 0;
+  int NORTH = 1 << 0;
+  int SOUTH = 1 << 1;
+  int WEST = 1 << 2;
+  int EAST = 1 << 3;
+  int NORTH_EAST = NORTH | EAST;
+  int NORTH_WEST = NORTH | WEST;
+  int SOUTH_EAST = SOUTH | EAST;
+  int SOUTH_WEST = SOUTH | WEST;
+  int NORTH_SOUTH = NORTH | SOUTH;
+  int EAST_WEST = EAST | WEST;
 }

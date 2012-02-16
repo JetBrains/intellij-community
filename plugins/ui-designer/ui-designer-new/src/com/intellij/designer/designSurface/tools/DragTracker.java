@@ -15,8 +15,13 @@
  */
 package com.intellij.designer.designSurface.tools;
 
+import com.intellij.designer.utils.Cursors;
+
 /**
  * @author Alexander Lobas
  */
 public class DragTracker extends TargetingTool {
+  public DragTracker() {
+    setDefaultCursor(Cursors.RESIZE_ALL);
+  }
 }

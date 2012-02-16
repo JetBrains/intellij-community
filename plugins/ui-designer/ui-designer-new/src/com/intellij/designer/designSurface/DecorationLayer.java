@@ -15,7 +15,9 @@
  */
 package com.intellij.designer.designSurface;
 
+import com.intellij.designer.designSurface.tools.InputTool;
 import com.intellij.designer.model.RadComponent;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -32,15 +34,42 @@ public class DecorationLayer extends JComponent {
 
   @Override
   public void paint(Graphics g) {
-    g.setColor(Color.RED);
-    ((Graphics2D)g).setStroke(new BasicStroke(2));
-
-    for (RadComponent component : myArea.getSelection()) {
-      Rectangle bounds = component.getBounds();
-      Point location = component.convertPoint(bounds.x, bounds.y, this);
-      g.drawRect(location.x, location.y, bounds.width, bounds.height);
-    }
-
+    painSelection((Graphics2D)g);
     paintChildren(g);
+  }
+
+  @Nullable
+  public InputTool findTargetTool(int x, int y) {
+    for (RadComponent component : myArea.getSelection()) {
+      ComponentDecorator decorator = getDecorator(component);
+      InputTool tracker = decorator.findTargetTool(this, component, x, y);
+      if (tracker != null) {
+        return tracker;
+      }
+    }
+    return null;
+  }
+
+  private void painSelection(Graphics2D g) {
+    for (RadComponent component : myArea.getSelection()) {
+      ComponentDecorator decorator = getDecorator(component);
+      // TODO: set component clipping
+      decorator.decorate(this, g, component);
+      // TODO: restore Graphics state: color, font, stroke etc.
+    }
+  }
+
+  private ComponentDecorator getDecorator(RadComponent component) {
+    RadComponent parent = component.getParent();
+    if (parent == null) {
+      return myArea.getRootSelectionDecorator();
+    }
+    return parent.getLayout().getChildSelectionDecorator(component);
+  }
+
+  public Rectangle getComponentBounds(RadComponent component) {
+    Rectangle bounds = component.getBounds();
+    Point location = component.convertPoint(bounds.x, bounds.y, this);
+    return new Rectangle(location.x, location.y, bounds.width, bounds.height);
   }
 }

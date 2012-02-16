@@ -18,6 +18,7 @@ package com.intellij.designer.model;
 import com.intellij.designer.propertyTable.Property;
 import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -30,6 +31,7 @@ import java.util.Map;
  */
 public abstract class RadComponent {
   private RadComponent myParent;
+  private RadLayout myLayout;
   private final Map<Object, Object> myClientProperties = new HashMap<Object, Object>();
 
   public RadComponent getRoot() {
@@ -69,9 +71,14 @@ public abstract class RadComponent {
   }
 
   public RadLayout getLayout() {
-    return null;
+    return myLayout;
   }
 
+  public void setLayout(RadLayout layout) {
+    myLayout = layout;
+  }
+
+  @Nullable
   public RadLayoutData getLayoutData() {
     return null;
   }

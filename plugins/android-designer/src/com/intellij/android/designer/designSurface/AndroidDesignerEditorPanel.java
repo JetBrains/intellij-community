@@ -25,8 +25,14 @@ import com.android.sdklib.IAndroidTarget;
 import com.intellij.android.designer.componentTree.AndroidTreeDecorator;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.designer.componentTree.TreeComponentDecorator;
+import com.intellij.designer.designSurface.ComponentDecorator;
+import com.intellij.designer.designSurface.DecorationLayer;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
+import com.intellij.designer.designSurface.selection.DirectionResizePoint;
+import com.intellij.designer.designSurface.selection.NonResizeSelectionDecorator;
+import com.intellij.designer.designSurface.selection.ResizeSelectionDecorator;
 import com.intellij.designer.model.RadComponent;
+import com.intellij.designer.utils.Position;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.android.facet.AndroidFacet;
@@ -49,6 +55,7 @@ import java.util.List;
  * @author Alexander Lobas
  */
 public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
+  private static final Object RENDERING_LOCK = new Object();
   private final TreeComponentDecorator myTreeDecorator = new AndroidTreeDecorator();
   private RenderSession mySession;
 
@@ -86,7 +93,9 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
 
       String layoutXmlText = new String(file.contentsToByteArray());
 
-      mySession = RenderUtil.createRenderSession(module.getProject(), layoutXmlText, file, target, facet, config, xdpi, ydpi, theme);
+      synchronized (RENDERING_LOCK) {
+        mySession = RenderUtil.createRenderSession(module.getProject(), layoutXmlText, file, target, facet, config, xdpi, ydpi, theme);
+      }
 
       InputStream stream = file.getInputStream();
       SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
@@ -180,6 +189,13 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
   @Override
   public TreeComponentDecorator getTreeDecorator() {
     return myTreeDecorator;
+  }
+
+  @Override
+  protected ComponentDecorator getRootSelectionDecorator() {
+    return new ResizeSelectionDecorator(Color.RED, 1, new DirectionResizePoint(Position.EAST),
+                                        new DirectionResizePoint(Position.SOUTH_EAST),
+                                        new DirectionResizePoint(Position.SOUTH));
   }
 
   private static class RootView extends JComponent {

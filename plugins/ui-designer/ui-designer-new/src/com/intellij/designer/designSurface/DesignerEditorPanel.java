@@ -55,6 +55,7 @@ public abstract class DesignerEditorPanel extends JPanel implements ToolProvider
   private JScrollPane myScrollPane;
   protected JLayeredPane myLayeredPane;
   private GlassLayer myGlassLayer;
+  private DecorationLayer myDecorationLayer;
   private InputTool myTool;
   protected EditableArea mySurfaceArea;
 
@@ -89,6 +90,7 @@ public abstract class DesignerEditorPanel extends JPanel implements ToolProvider
     myDesignerCard.add(myHorizontalCaption, gbc);
 
     myLayeredPane = new MyLayeredPane();
+
     mySurfaceArea = new EditableArea() {
       @Override
       public void setCursor(Cursor cursor) {
@@ -116,10 +118,23 @@ public abstract class DesignerEditorPanel extends JPanel implements ToolProvider
         }
         return null;
       }
+
+      @Override
+      public InputTool findTargetTool(int x, int y) {
+        return myDecorationLayer.findTargetTool(x, y);
+      }
+
+      @Override
+      public ComponentDecorator getRootSelectionDecorator() {
+        return DesignerEditorPanel.this.getRootSelectionDecorator();
+      }
     };
+
     myGlassLayer = new GlassLayer(this, mySurfaceArea);
     myLayeredPane.add(myGlassLayer, LAYER_GLASS);
-    myLayeredPane.add(new DecorationLayer(mySurfaceArea), LAYER_DECORATION);
+
+    myDecorationLayer = new DecorationLayer(mySurfaceArea);
+    myLayeredPane.add(myDecorationLayer, LAYER_DECORATION);
 
     gbc.gridx = 1;
     gbc.gridy = 1;
@@ -143,6 +158,8 @@ public abstract class DesignerEditorPanel extends JPanel implements ToolProvider
   public EditableArea getSurfaceArea() {
     return mySurfaceArea;
   }
+
+  protected abstract ComponentDecorator getRootSelectionDecorator();
 
   public InputTool getActiveTool() {
     return myTool;

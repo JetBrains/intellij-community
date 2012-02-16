@@ -15,8 +15,13 @@
  */
 package com.intellij.designer.designSurface.tools;
 
+import com.intellij.designer.utils.Cursors;
+
 /**
  * @author Alexander Lobas
  */
 public class ResizeTracker extends InputTool {
+  public ResizeTracker(int direction) {
+    setDefaultCursor(Cursors.getResizeCursor(direction));
+  }
 }

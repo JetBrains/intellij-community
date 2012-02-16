@@ -13,13 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.designer.model;
+package com.intellij.designer.designSurface;
 
-import com.intellij.designer.designSurface.ComponentDecorator;
+import com.intellij.designer.designSurface.tools.InputTool;
+import com.intellij.designer.model.RadComponent;
+import org.jetbrains.annotations.Nullable;
+
+import java.awt.*;
 
 /**
  * @author Alexander Lobas
  */
-public abstract class RadLayout {
-  public abstract ComponentDecorator getChildSelectionDecorator(RadComponent component);
+public interface ComponentDecorator {
+  @Nullable
+  InputTool findTargetTool(DecorationLayer layer, RadComponent component, int x, int y);
+
+  void decorate(DecorationLayer layer, Graphics2D g, RadComponent component);
 }

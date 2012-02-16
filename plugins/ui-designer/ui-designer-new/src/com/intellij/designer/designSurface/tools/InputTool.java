@@ -34,18 +34,23 @@ public abstract class InputTool {
   protected static final int STATE_DRAG_IN_PROGRESS = 3;
   protected static final int STATE_INVALID = 4;
 
-  private ToolProvider myToolProvider;
+  protected ToolProvider myToolProvider;
   protected EditableArea myArea;
+
   private Object myCommand;
+
   private boolean myActive;
   private boolean myCanUnload = true;
+
   protected int myState;
+
   protected int myCurrentScreenX;
   protected int myCurrentScreenY;
   protected InputEvent myInputEvent;
   protected int myButton;
   protected int myStartScreenX;
   protected int myStartScreenY;
+
   private boolean myCanPastThreshold;
 
   //////////////////////////////////////////////////////////////////////////////////////////

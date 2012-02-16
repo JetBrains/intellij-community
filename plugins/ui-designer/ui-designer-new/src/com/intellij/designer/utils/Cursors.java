@@ -15,12 +15,16 @@
  */
 package com.intellij.designer.utils;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.awt.*;
 
 /**
  * @author Alexander Lobas
  */
 public final class Cursors {
+  public static final Cursor RESIZE_ALL = Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR);
+
   public static Cursor getNoCursor() {
     try {
       return Cursor.getSystemCustomCursor("MoveNoDrop.32x32");
@@ -28,5 +32,38 @@ public final class Cursors {
     catch (Exception ex) {
       return Cursor.getDefaultCursor();
     }
+  }
+
+  @Nullable
+  public static Cursor getResizeCursor(int direction) {
+    int cursor;
+    if (direction == Position.NORTH_WEST) {
+      cursor = Cursor.NW_RESIZE_CURSOR;
+    }
+    else if (direction == Position.NORTH) {
+      cursor = Cursor.N_RESIZE_CURSOR;
+    }
+    else if (direction == Position.NORTH_EAST) {
+      cursor = Cursor.NE_RESIZE_CURSOR;
+    }
+    else if (direction == Position.WEST) {
+      cursor = Cursor.W_RESIZE_CURSOR;
+    }
+    else if (direction == Position.EAST) {
+      cursor = Cursor.E_RESIZE_CURSOR;
+    }
+    else if (direction == Position.SOUTH_WEST) {
+      cursor = Cursor.SW_RESIZE_CURSOR;
+    }
+    else if (direction == Position.SOUTH) {
+      cursor = Cursor.S_RESIZE_CURSOR;
+    }
+    else if (direction == Position.SOUTH_EAST) {
+      cursor = Cursor.SE_RESIZE_CURSOR;
+    }
+    else {
+      return null;
+    }
+    return Cursor.getPredefinedCursor(cursor);
   }
 }
