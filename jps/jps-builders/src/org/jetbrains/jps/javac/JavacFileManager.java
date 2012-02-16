@@ -37,15 +37,6 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
     myContext = context;
   }
 
-  @Override
-  public Iterable<JavaFileObject> list(Location location,
-                                       String packageName,
-                                       Set<JavaFileObject.Kind> kinds,
-                                       boolean recurse) throws IOException {
-    final Iterable<JavaFileObject> result = super.list(location, packageName, kinds, recurse);
-    return result;
-  }
-
   public boolean setOutputDirectories(final Map<File, Set<File>> outputDirToSrcRoots) {
     for (File outputDir : outputDirToSrcRoots.keySet()) {
       // this will validate output dirs
