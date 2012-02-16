@@ -154,6 +154,15 @@ public class UISettings implements PersistentStateComponent<UISettings>, Exporta
     return ApplicationManager.getApplication().getComponent(UISettings.class);
   }
 
+  /**
+   * Use this method if you are not sure is application initialized or not
+   * @return UISettings instance or default values
+   */
+  public static UISettings getShadowInstance() {
+    UISettings instance = getInstance();
+    return instance == null ? new UISettings() : instance;
+  }
+
   public void removeUISettingsListener(UISettingsListener listener){
     myListenerList.remove(UISettingsListener.class,listener);
   }
