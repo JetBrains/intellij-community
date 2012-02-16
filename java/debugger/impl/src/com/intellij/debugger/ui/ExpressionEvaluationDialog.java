@@ -28,7 +28,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ui.UIUtil;
 
@@ -86,8 +85,7 @@ public class ExpressionEvaluationDialog extends EvaluationDialog {
     final JPanel exprPanel = new JPanel(new BorderLayout());
     exprPanel.add(new JLabel(DebuggerBundle.message("label.evaluate.dialog.expression")), BorderLayout.WEST);
     exprPanel.add(getExpressionCombo(), BorderLayout.CENTER);
-    final JLabel help = new JLabel(
-      String.format("Press Enter to Evaluate or %s+Enter to evaluate and add to the Watches", SystemInfo.isMac ? "Command" : "Control"), SwingConstants.RIGHT);
+    final JLabel help = new JLabel("Press Enter to Evaluate or Control+Enter to evaluate and add to the Watches", SwingConstants.RIGHT);
     help.setBorder(IdeBorderFactory.createEmptyBorder(2,0,6,0));
     UIUtil.applyStyle(UIUtil.ComponentStyle.MINI, help);
     help.setForeground(UIUtil.getInactiveTextColor());
@@ -124,8 +122,7 @@ public class ExpressionEvaluationDialog extends EvaluationDialog {
       @Override
       public void actionPerformed(ActionEvent e) {
         super.actionPerformed(e);
-        final int mask = SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK;
-        if ((e.getModifiers() & mask) != 0) {
+        if ((e.getModifiers() & InputEvent.CTRL_MASK) != 0) {
           addCurrentExpressionToWatches();
         }
       }
