@@ -106,10 +106,21 @@ public class SystemInfo {
   public static final boolean isMacOSLion = isLion();
 
   /**
+   * Running under MacOS X version 10.8 or later;
+   *
+   * @since 11.1
+   */
+  public static final boolean isMacOSMountainLion = isMountainLion();
+
+  /**
    * Operating system is supposed to have middle mouse button click occupied by paste action.
    * @since 6.0
    */
   public static boolean X11PasteEnabledSystem = isUnix && !isMac;
+
+  private static boolean isIntelMac() {
+    return isMac && "i386".equals(OS_ARCH);
+  }
 
   private static boolean isTiger() {
     return isMac &&
@@ -117,10 +128,6 @@ public class SystemInfo {
            !OS_VERSION.startsWith("10.1") &&
            !OS_VERSION.startsWith("10.2") &&
            !OS_VERSION.startsWith("10.3");
-  }
-
-  private static boolean isIntelMac() {
-    return isMac && "i386".equals(OS_ARCH);
   }
 
   private static boolean isLeopard() {
@@ -133,6 +140,10 @@ public class SystemInfo {
 
   private static boolean isLion() {
     return isMac && isSnowLeopard() && !OS_VERSION.startsWith("10.6");
+  }
+
+  private static boolean isMountainLion() {
+    return isMac && isLion() && !OS_VERSION.startsWith("10.7");
   }
 
   @NotNull

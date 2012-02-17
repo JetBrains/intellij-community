@@ -208,7 +208,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> {
         }
         params.getVMParametersList().addParametersString("-Xmx512m");
 
-        //params.getVMParametersList().addParametersString("-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5009");
+        //params.getVMParametersList().addParametersString("-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5009");
 
         return params;
       }
