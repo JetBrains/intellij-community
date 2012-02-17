@@ -15,6 +15,19 @@
       <implementation-class>com.intellij.util.indexing.FileBasedIndex</implementation-class>
     </component>
     <component>
+      <implementation-class>com.intellij.util.indexing.fileBasedIndex.impl.FileBasedIndexIndicesManager</implementation-class>
+    </component>
+    <component>
+      <interface-class>com.intellij.util.indexing.fileBasedIndex.impl.FileBasedIndexUnsavedDocumentsManager</interface-class>
+      <implementation-class>com.intellij.util.indexing.fileBasedIndex.impl.FileBasedIndexUnsavedDocumentsManagerImpl</implementation-class>
+    </component>
+    <component>
+      <implementation-class>com.intellij.util.indexing.fileBasedIndex.impl.FileBasedIndexTransactionMap</implementation-class>
+    </component>
+    <component>
+      <implementation-class>com.intellij.util.indexing.fileBasedIndex.impl.FileBasedIndexLimitsChecker</implementation-class>
+    </component>
+    <component>
       <interface-class>com.intellij.psi.stubs.StubIndex</interface-class>
       <implementation-class>com.intellij.psi.stubs.StubIndexImpl</implementation-class>
     </component>
