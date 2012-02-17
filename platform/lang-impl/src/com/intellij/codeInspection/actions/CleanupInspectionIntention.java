@@ -63,17 +63,8 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
 
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtilBase.preparePsiElementForWrite(file)) return;
-    final InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManagerEx.getInstance(project);
-    final GlobalInspectionContextImpl context = managerEx.createNewGlobalContext(false);
-    final LocalInspectionToolWrapper tool = new LocalInspectionToolWrapper(myTool);
-    tool.initialize(context);
-    ((RefManagerImpl)context.getRefManager()).inspectionReadActionStarted();
-    ((ProgressManagerImpl)ProgressManager.getInstance()).executeProcessUnderProgress(new Runnable() {
-      public void run() {
-        tool.processFile(file, true, managerEx, true);
-      }
-    }, new EmptyProgressIndicator());
-    final List<CommonProblemDescriptor> descriptions = new ArrayList<CommonProblemDescriptor>(tool.getProblemDescriptors());
+    final List<CommonProblemDescriptor> descriptions = runInspectionOnFile(file, myTool);
+
     Collections.sort(descriptions, new Comparator<CommonProblemDescriptor>() {
       public int compare(final CommonProblemDescriptor o1, final CommonProblemDescriptor o2) {
         final ProblemDescriptorImpl d1 = (ProblemDescriptorImpl)o1;
@@ -95,8 +86,27 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
         }
       }
     }
-    ((RefManagerImpl)context.getRefManager()).inspectionReadActionFinished();
-    context.cleanup(managerEx);
+  }
+
+  public static List<CommonProblemDescriptor> runInspectionOnFile(final PsiFile file,
+                                                                   final LocalInspectionTool inspectionTool) {
+    final InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManager.getInstance(file.getProject());
+    final GlobalInspectionContextImpl context = managerEx.createNewGlobalContext(false);
+    final LocalInspectionToolWrapper tool = new LocalInspectionToolWrapper(inspectionTool);
+    tool.initialize(context);
+    ((RefManagerImpl)context.getRefManager()).inspectionReadActionStarted();
+    try {
+      ((ProgressManagerImpl)ProgressManager.getInstance()).executeProcessUnderProgress(new Runnable() {
+        public void run() {
+          tool.processFile(file, true, managerEx, true);
+        }
+      }, new EmptyProgressIndicator());
+      return new ArrayList<CommonProblemDescriptor>(tool.getProblemDescriptors());
+    }
+    finally {
+      ((RefManagerImpl)context.getRefManager()).inspectionReadActionFinished();
+      context.cleanup(managerEx);
+    }
   }
 
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {

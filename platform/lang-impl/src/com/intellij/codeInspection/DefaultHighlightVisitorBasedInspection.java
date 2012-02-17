@@ -29,6 +29,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.PairConsumer;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -86,12 +87,41 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
 
   @Override
   public void checkFile(@NotNull PsiFile file,
-                        @NotNull InspectionManager manager,
+                        @NotNull final InspectionManager manager,
                         @NotNull ProblemsHolder problemsHolder,
-                        @NotNull GlobalInspectionContext globalContext,
-                        @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
-    PsiElementVisitor visitor = new MyPsiElementVisitor(manager, globalContext, problemDescriptionsProcessor, highlightErrorElements,runAnnotators);
-    file.accept(visitor);
+                        @NotNull final GlobalInspectionContext globalContext,
+                        @NotNull final ProblemDescriptionsProcessor problemDescriptionsProcessor) {
+    runGeneralHighlighting(file, highlightErrorElements, runAnnotators, new PairConsumer<PsiFile, HighlightInfo>() {
+      @Override
+      public void consume(PsiFile file, HighlightInfo info) {
+        TextRange range = new TextRange(info.startOffset, info.endOffset);
+        PsiElement element = file.findElementAt(info.startOffset);
+
+        while (element != null && !element.getTextRange().contains(range)) {
+          element = element.getParent();
+        }
+
+        if (element == null) {
+          element = file;
+        }
+        GlobalInspectionUtil.createProblem(
+          element,
+          info.description,
+          HighlightInfo.convertType(info.type),
+          range.shiftRight(-element.getNode().getStartOffset()),
+          manager,
+          problemDescriptionsProcessor,
+          globalContext
+        );
+      }
+    });
+  }
+
+  public static void runGeneralHighlighting(PsiFile file,
+                                            final boolean highlightErrorElements,
+                                            final boolean runAnnotators,
+                                            PairConsumer<PsiFile, HighlightInfo> consumer) {
+    file.accept(new MyPsiElementVisitor(highlightErrorElements, runAnnotators, consumer));
   }
 
   @Nls
@@ -102,22 +132,16 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
   }
 
   private static class MyPsiElementVisitor extends PsiElementVisitor {
-    private final InspectionManager myManager;
-    private final GlobalInspectionContext myGlobalContext;
-    private final ProblemDescriptionsProcessor myProblemDescriptionsProcessor;
     private final boolean highlightErrorElements;
     private final boolean runAnnotators;
+    private final PairConsumer<PsiFile,HighlightInfo> myConsumer;
 
-    public MyPsiElementVisitor(final InspectionManager manager,
-                               final GlobalInspectionContext globalContext,
-                               final ProblemDescriptionsProcessor problemDescriptionsProcessor,
-                               boolean highlightErrorElements,
-                               boolean runAnnotators) {
-      myManager = manager;
-      myGlobalContext = globalContext;
-      myProblemDescriptionsProcessor = problemDescriptionsProcessor;
+    public MyPsiElementVisitor(boolean highlightErrorElements,
+                               boolean runAnnotators, final PairConsumer<PsiFile, HighlightInfo> consumer) {
       this.highlightErrorElements = highlightErrorElements;
       this.runAnnotators = runAnnotators;
+      myConsumer = consumer;
+
     }
 
     @Override
@@ -147,27 +171,9 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
                   if (info == null) return true;
                   if (info.type == HighlightInfoType.INJECTED_LANGUAGE_FRAGMENT) return true;
                   if (info.severity == HighlightSeverity.INFORMATION) return true;
-                  ProblemHighlightType problemHighlightType = HighlightInfo.convertType(info.type);
-                  TextRange range = new TextRange(info.startOffset, info.endOffset);
-                  PsiElement element = file.findElementAt(info.startOffset);
 
-                  while (element != null && !element.getTextRange().contains(range)) {
-                    element = element.getParent();
-                  }
+                  myConsumer.consume(file, info);
 
-                  if (element == null) {
-                    element = file;
-                  }
-
-                  GlobalInspectionUtil.createProblem(
-                    element,
-                    info.description,
-                    problemHighlightType,
-                    range.shiftRight(-element.getNode().getStartOffset()),
-                    myManager,
-                    myProblemDescriptionsProcessor,
-                    myGlobalContext
-                  );
                   return true;
                 }
             };
