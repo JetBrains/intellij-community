@@ -18,6 +18,7 @@ package com.intellij.packageDependencies.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -31,7 +32,7 @@ import java.awt.*;
 import java.util.Map;
 import java.util.Set;
 
-public class FileNode extends PackageDependenciesNode {
+public class FileNode extends PackageDependenciesNode implements Comparable<FileNode>{
   private final VirtualFile myVFile;
   private final boolean myMarked;
 
@@ -123,5 +124,14 @@ public class FileNode extends PackageDependenciesNode {
   @Nullable
   private PsiFile getFile() {
     return myVFile.isValid() ? PsiManager.getInstance(myProject).findFile(myVFile) : null;
+  }
+
+  @Override
+  public int compareTo(FileNode o) {
+    final int compare = StringUtil.compare(myVFile != null ? myVFile.getFileType().getDefaultExtension() : null,
+                                           o.myVFile != null ? o.myVFile.getFileType().getDefaultExtension() : null,
+                                           true);
+    if (compare != 0) return compare;
+    return StringUtil.compare(toString(), o.toString(), true);
   }
 }
