@@ -23,16 +23,20 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.PairConsumer;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpleInspectionTool {
   private final boolean highlightErrorElements;
@@ -86,42 +90,43 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
   }
 
   @Override
-  public void checkFile(@NotNull PsiFile file,
+  public void checkFile(@NotNull PsiFile originalFile,
                         @NotNull final InspectionManager manager,
                         @NotNull ProblemsHolder problemsHolder,
                         @NotNull final GlobalInspectionContext globalContext,
                         @NotNull final ProblemDescriptionsProcessor problemDescriptionsProcessor) {
-    runGeneralHighlighting(file, highlightErrorElements, runAnnotators, new PairConsumer<PsiFile, HighlightInfo>() {
-      @Override
-      public void consume(PsiFile file, HighlightInfo info) {
-        TextRange range = new TextRange(info.startOffset, info.endOffset);
-        PsiElement element = file.findElementAt(info.startOffset);
+    for (Pair<PsiFile, HighlightInfo> pair : runGeneralHighlighting(originalFile, highlightErrorElements, runAnnotators)) {
+      PsiFile file = pair.first;
+      HighlightInfo info = pair.second;
+      TextRange range = new TextRange(info.startOffset, info.endOffset);
+      PsiElement element = file.findElementAt(info.startOffset);
 
-        while (element != null && !element.getTextRange().contains(range)) {
-          element = element.getParent();
-        }
-
-        if (element == null) {
-          element = file;
-        }
-        GlobalInspectionUtil.createProblem(
-          element,
-          info.description,
-          HighlightInfo.convertType(info.type),
-          range.shiftRight(-element.getNode().getStartOffset()),
-          manager,
-          problemDescriptionsProcessor,
-          globalContext
-        );
+      while (element != null && !element.getTextRange().contains(range)) {
+        element = element.getParent();
       }
-    });
+
+      if (element == null) {
+        element = file;
+      }
+      GlobalInspectionUtil.createProblem(
+        element,
+        info.description,
+        HighlightInfo.convertType(info.type),
+        range.shiftRight(-element.getNode().getStartOffset()),
+        manager,
+        problemDescriptionsProcessor,
+        globalContext
+      );
+
+    }
   }
 
-  public static void runGeneralHighlighting(PsiFile file,
+  public static List<Pair<PsiFile,HighlightInfo>> runGeneralHighlighting(PsiFile file,
                                             final boolean highlightErrorElements,
-                                            final boolean runAnnotators,
-                                            PairConsumer<PsiFile, HighlightInfo> consumer) {
-    file.accept(new MyPsiElementVisitor(highlightErrorElements, runAnnotators, consumer));
+                                            final boolean runAnnotators) {
+    MyPsiElementVisitor visitor = new MyPsiElementVisitor(highlightErrorElements, runAnnotators);
+    file.accept(visitor);
+    return new ArrayList<Pair<PsiFile, HighlightInfo>>(visitor.result);
   }
 
   @Nls
@@ -134,14 +139,11 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
   private static class MyPsiElementVisitor extends PsiElementVisitor {
     private final boolean highlightErrorElements;
     private final boolean runAnnotators;
-    private final PairConsumer<PsiFile,HighlightInfo> myConsumer;
+    final List<Pair<PsiFile,HighlightInfo>> result = ContainerUtil.createEmptyCOWList();
 
-    public MyPsiElementVisitor(boolean highlightErrorElements,
-                               boolean runAnnotators, final PairConsumer<PsiFile, HighlightInfo> consumer) {
+    public MyPsiElementVisitor(boolean highlightErrorElements, boolean runAnnotators) {
       this.highlightErrorElements = highlightErrorElements;
       this.runAnnotators = runAnnotators;
-      myConsumer = consumer;
-
     }
 
     @Override
@@ -172,7 +174,7 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
                   if (info.type == HighlightInfoType.INJECTED_LANGUAGE_FRAGMENT) return true;
                   if (info.severity == HighlightSeverity.INFORMATION) return true;
 
-                  myConsumer.consume(file, info);
+                  result.add(Pair.create(file, info));
 
                   return true;
                 }
