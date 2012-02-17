@@ -13,21 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.designer.model;
+package com.intellij.designer.designSurface;
 
-import com.intellij.designer.designSurface.ComponentDecorator;
-import com.intellij.designer.designSurface.EditOperation;
-import com.intellij.designer.designSurface.OperationContext;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.designer.model.RadComponent;
+
+import java.util.List;
 
 /**
  * @author Alexander Lobas
  */
-public abstract class RadLayout {
-  public abstract ComponentDecorator getChildSelectionDecorator(RadComponent component);
+public interface EditOperation {
+  void setComponent(RadComponent component);
 
-  @Nullable
-  public EditOperation processChildOperation(OperationContext context) {
-    return null;
-  }
+  void setComponents(List<RadComponent> component);
+
+  void showFeedback();
+
+  void eraseFeedback();
+
+  boolean canExecute();
+
+  void execute() throws Exception;
 }
