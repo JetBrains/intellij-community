@@ -270,7 +270,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
       }
     }
 
-    if (result.size() == 0 && !PyBuiltinCache.getInstance(this).hasInBuiltins(this)) {
+    if (result.size() == 0 && isValid() && !PyBuiltinCache.getInstance(this).hasInBuiltins(this)) {
       String implicitSuperclassName = LanguageLevel.forElement(this).isPy3K() ? PyNames.OBJECT : PyNames.FAKE_OLD_BASE;
       PyClass implicitSuperclass = PyBuiltinCache.getInstance(this).getClass(implicitSuperclassName);
       if (implicitSuperclass != null) {

@@ -79,12 +79,23 @@ public class PyPackageManager {
     }
 
     public void install(@NotNull final List<PyRequirement> requirements, @NotNull final List<String> extraArgs) {
+      final String progressTitle;
+      final String successTitle;
+      if (requirements.size() == 1) {
+        final PyRequirement req = requirements.get(0);
+        progressTitle = String.format("Installing package '%s'", req);
+        successTitle = String.format("Package '%s' installed successfully", req);
+      }
+      else {
+        progressTitle = "Installing packages";
+        successTitle = "Packages installed successfully";
+      }
       run(new ExternalRunnable() {
         @Override
         public void run() throws PyExternalProcessException {
           PyPackageManager.getInstance(mySdk).install(requirements, extraArgs);
         }
-      }, "Installing packages", "Packages installed successfully", "Installed packages: " + PyPackageUtil.requirementsToString(requirements),
+      }, progressTitle, successTitle, "Installed packages: " + PyPackageUtil.requirementsToString(requirements),
          "Install packages failed");
     }
 
@@ -274,6 +285,9 @@ public class PyPackageManager {
         }
       }
       return PyRequirement.parse(StringUtil.join(lines, "\n"));
+    }
+    if (PyPackageUtil.findSetupPy(module) != null) {
+      return Collections.emptyList();
     }
     return null;
   }
