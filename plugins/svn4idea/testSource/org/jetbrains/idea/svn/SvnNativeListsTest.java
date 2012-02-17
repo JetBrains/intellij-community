@@ -104,7 +104,7 @@ public class SvnNativeListsTest extends SvnTestCase {
     verify(runSvn("status"), "", "--- Changelist 'newOne':", "M a.txt");
   }
 
-  @Bombed(user = "irengrig", month = Calendar.FEBRUARY, day = 20, description = "waiting for svnkit bugfix")
+  @Bombed(user = "irengrig", month = Calendar.FEBRUARY, day = 20, description = "waiting for svnkit bugfix SVNKIT-211")
   @Test
   public void testEditAndMove() throws Throwable {
     final LocalChangeList newL = myChangeListManager.addChangeList("newOne", null);
@@ -156,7 +156,7 @@ public class SvnNativeListsTest extends SvnTestCase {
     verify(runSvn("status"), "", "--- Changelist 'newOne':", "A + b.txt", "D a.txt");
   }
 
-  @Bombed(user = "irengrig", month = Calendar.FEBRUARY, day = 20, description = "waiting for svnkit bugfix")
+  @Bombed(user = "irengrig", month = Calendar.FEBRUARY, day = 20, description = "waiting for svnkit bugfix SVNKIT-211")
   @Test
   public void testMoveMove() throws Throwable {
     final LocalChangeList newL = myChangeListManager.addChangeList("newOne", null);
