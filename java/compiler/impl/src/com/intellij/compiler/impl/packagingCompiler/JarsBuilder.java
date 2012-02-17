@@ -23,6 +23,7 @@ import com.intellij.openapi.deployment.DeploymentUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.impl.compiler.ArtifactCompilerUtil;
@@ -38,7 +39,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.util.*;
+import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
+import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -155,11 +158,19 @@ public class JarsBuilder {
     myBuiltJars.put(jar, jarFile);
 
     FileUtil.createParentDirs(jarFile);
-    final JarOutputStream jarOutputStream = new JarOutputStream(new BufferedOutputStream(new FileOutputStream(jarFile)));
+
+    VirtualFile manifestFile = null;
+    for (Pair<String, VirtualFile> pair : jar.getPackedFiles()) {
+      if (pair.getFirst().equals(JarFile.MANIFEST_NAME)) {
+        manifestFile = pair.getSecond();
+      }
+    }
+    final JarOutputStream jarOutputStream = createJarOutputStream(jarFile, manifestFile);
 
     try {
       final THashSet<String> writtenPaths = new THashSet<String>();
       for (Pair<String, VirtualFile> pair : jar.getPackedFiles()) {
+        if (pair.getFirst().equals(JarFile.MANIFEST_NAME)) continue;
         final VirtualFile sourceFile = pair.getSecond();
         if (sourceFile.isInLocalFileSystem()) {
           File file = VfsUtil.virtualToIoFile(sourceFile);
@@ -183,6 +194,24 @@ public class JarsBuilder {
     finally {
       jarOutputStream.close();
     }
+  }
+
+  private static JarOutputStream createJarOutputStream(File jarFile, VirtualFile manifestFile) throws IOException {
+    final BufferedOutputStream outputStream = new BufferedOutputStream(new FileOutputStream(jarFile));
+    final JarOutputStream jarOutputStream;
+    if (manifestFile != null) {
+      final InputStream manifestStream = manifestFile.getInputStream();
+      try {
+        jarOutputStream = new JarOutputStream(outputStream, new Manifest(manifestStream));
+      }
+      finally {
+        manifestStream.close();
+      }
+    }
+    else {
+      jarOutputStream = new JarOutputStream(outputStream);
+    }
+    return jarOutputStream;
   }
 
   private void extractFileAndAddToJar(JarOutputStream jarOutputStream, VirtualFile sourceFile, String relativePath, THashSet<String> writtenPaths)
@@ -212,9 +241,8 @@ public class JarsBuilder {
     ZipUtil.addFileToZip(jarOutputStream, file, relativePath, writtenPaths, myFileFilter);
   }
 
-  private static String addParentDirectories(JarOutputStream jarOutputStream, THashSet<String> writtenPaths, String relativePath)
-    throws IOException {
-    while (relativePath.startsWith("/")) {
+  private static String addParentDirectories(JarOutputStream jarOutputStream, THashSet<String> writtenPaths, String relativePath) throws IOException {
+    while (StringUtil.startsWithChar(relativePath, '/')) {
       relativePath = relativePath.substring(1);
     }
     int i = relativePath.indexOf('/');
