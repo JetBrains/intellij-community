@@ -48,7 +48,11 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.CollectionFactory;
-import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.DataIndexer;
+import com.intellij.util.indexing.FileContent;
+import com.intellij.util.indexing.IdDataConsumer;
+import com.intellij.util.indexing.SubstitutedFileType;
+import com.intellij.util.indexing.fileBasedIndex.impl.FileBasedIndexUnsavedDocumentsManagerImpl;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -322,7 +326,7 @@ public class IdTableBuilding {
         final OccurrenceConsumer occurrenceConsumer = new OccurrenceConsumer(null, true);
         EditorHighlighter highlighter;
 
-        final EditorHighlighter editorHighlighter = inputData.getUserData(FileBasedIndex.EDITOR_HIGHLIGHTER);
+        final EditorHighlighter editorHighlighter = inputData.getUserData(FileBasedIndexUnsavedDocumentsManagerImpl.EDITOR_HIGHLIGHTER);
         if (editorHighlighter != null && checkCanUseCachedEditorHighlighter(chars, editorHighlighter)) {
           highlighter = editorHighlighter;
         }
