@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,8 +31,6 @@ import java.io.IOException;
 import java.util.Set;
 
 public interface IProjectStore extends IComponentStore {
-
-
   boolean checkVersion();
 
   void setProjectFilePath(final String filePath);
@@ -40,6 +38,12 @@ public interface IProjectStore extends IComponentStore {
   @Nullable
   VirtualFile getProjectBaseDir();
 
+  @Nullable
+  String getProjectBasePath();
+
+  /**
+   * @deprecated please use {@linkplain #getPresentableUrl()} or {@linkplain #getProjectBasePath()} (to remove in IDEA 13).
+   */
   @Nullable
   String getLocation();
 
