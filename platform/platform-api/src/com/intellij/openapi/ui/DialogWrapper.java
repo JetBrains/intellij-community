@@ -1605,6 +1605,12 @@ public abstract class DialogWrapper {
   }
 
   private void resizeWithAnimation(final Dimension size) {
+    //todo[kb]: fix this PITA on Mac
+    if (SystemInfo.isMac) {
+      setSize(size.width, size.height);
+      return;
+    }
+
     new Thread("DialogWrapper resizer") {
       int time = 200;
       int steps = 7;
