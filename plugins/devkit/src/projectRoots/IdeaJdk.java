@@ -293,6 +293,7 @@ public class IdeaJdk extends SdkType implements JavaSdkType {
       case 48: return JavaSdkVersion.JDK_1_4;
       case 49: return JavaSdkVersion.JDK_1_5;
       case 50: return JavaSdkVersion.JDK_1_6;
+      case 51: return JavaSdkVersion.JDK_1_7;
     }
     return null;
   }
