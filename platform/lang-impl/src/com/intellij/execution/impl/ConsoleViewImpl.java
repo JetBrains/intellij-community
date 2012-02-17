@@ -322,6 +322,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       myBuffer.clear();
       myHyperlinks.clearHyperlinks();
     }
+    if (myFlushAlarm.isDisposed()) return;
     myFlushAlarm.cancelAllRequests();
     myFlushAlarm.addRequest(myClearRequest, 0, getStateForUpdate());
     cancelHeavyAlarm();
