@@ -126,7 +126,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
         method.addParameters(new NameValuePair[]{
           new NameValuePair("description", description),
           new NameValuePair("file_ext[gistfile1]", "." + file.getExtension()),
-          new NameValuePair("file_name[gistfile1]", file.getNameWithoutExtension()),
+          new NameValuePair("file_name[gistfile1]", file.getName()),
           new NameValuePair("file_contents[gistfile1]", text)
         });
         if (isPrivate){
