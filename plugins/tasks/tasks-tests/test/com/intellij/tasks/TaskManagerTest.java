@@ -1,6 +1,13 @@
 package com.intellij.tasks;
 
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationDisplayType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.util.Ref;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Collections;
 
 /**
  * @author Dmitry Avdeev
@@ -40,4 +47,42 @@ public class TaskManagerTest extends TaskManagerTestCase {
     myManager.removeTaskListener(listener);
   }
 
+  public void testNotifications() throws Exception {
+
+    final Ref<Notification> notificationRef = new Ref<Notification>();
+    getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(Notifications.TOPIC, new Notifications() {
+      @Override
+      public void notify(@NotNull Notification notification) {
+        notificationRef.set(notification);
+      }
+
+      @Override
+      public void register(@NotNull String groupDisplayName, @NotNull NotificationDisplayType defaultDisplayType) {
+
+      }
+
+      @Override
+      public void register(@NotNull String groupDisplayName,
+                           @NotNull NotificationDisplayType defaultDisplayType,
+                           boolean shouldLog) {
+
+      }
+    });
+
+    TestRepository repository = new TestRepository() {
+      @Override
+      public Task[] getIssues(@Nullable String query, int max, long since) throws Exception {
+        throw new Exception();
+      }
+    };
+    myManager.setRepositories(Collections.singletonList(repository));
+
+    myManager.updateIssues(null);
+
+    assertNull(notificationRef.get());
+
+    myManager.getIssues("");
+
+    assertNotNull(notificationRef.get());
+  }
 }

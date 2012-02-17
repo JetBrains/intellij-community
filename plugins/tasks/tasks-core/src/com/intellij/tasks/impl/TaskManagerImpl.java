@@ -75,7 +75,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       return o.getId();
     }
   };
-  private static final String TASKS_NOTIFICATION_GROUP = "Task Group";
+  static final String TASKS_NOTIFICATION_GROUP = "Task Group";
 
   private final Project myProject;
 
@@ -647,40 +647,49 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       return;
     }
     myUpdating = true;
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      public void run() {
-        try {
-          List<Task> issues = getIssuesFromRepositories(null, myConfig.updateIssuesCount, 0, false);
-
-          synchronized (myIssueCache) {
-            myIssueCache.clear();
-            for (Task issue : issues) {
-              myIssueCache.put(issue.getId(), issue);
-            }
-          }
-          // update local tasks
-           synchronized (myTasks) {
-             for (Iterator<Map.Entry<String,LocalTaskImpl>> it = myTasks.entrySet().iterator(); it.hasNext();) {
-               Map.Entry<String,LocalTaskImpl> entry = it.next();
-               Task issue = myIssueCache.get(entry.getKey());
-               if (issue != null) {
-                 if (issue.isClosed()) {
-                   it.remove();
-                 } else {
-                   entry.getValue().updateFromIssue(issue);
-                 }
-               }
-             }
-           }
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      doUpdate(onComplete);
+    }
+    else {
+      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+        public void run() {
+          doUpdate(onComplete);
         }
-        finally {
-          if (onComplete != null) {
-            onComplete.run();
-          }
-          myUpdating = false;
+      });
+    }
+  }
+
+  private void doUpdate(Runnable onComplete) {
+    try {
+      List<Task> issues = getIssuesFromRepositories(null, myConfig.updateIssuesCount, 0, false);
+
+      synchronized (myIssueCache) {
+        myIssueCache.clear();
+        for (Task issue : issues) {
+          myIssueCache.put(issue.getId(), issue);
         }
       }
-    });
+      // update local tasks
+       synchronized (myTasks) {
+         for (Iterator<Map.Entry<String,LocalTaskImpl>> it = myTasks.entrySet().iterator(); it.hasNext();) {
+           Map.Entry<String,LocalTaskImpl> entry = it.next();
+           Task issue = myIssueCache.get(entry.getKey());
+           if (issue != null) {
+             if (issue.isClosed()) {
+               it.remove();
+             } else {
+               entry.getValue().updateFromIssue(issue);
+             }
+           }
+         }
+       }
+    }
+    finally {
+      if (onComplete != null) {
+        onComplete.run();
+      }
+      myUpdating = false;
+    }
   }
 
   private List<Task> getIssuesFromRepositories(@Nullable String request, int max, long since, boolean forceRequest) {
@@ -696,23 +705,29 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       }
       catch (Exception e) {
         myBadRepositories.add(repository);
-        Notifications.Bus.register(TASKS_NOTIFICATION_GROUP, NotificationDisplayType.BALLOON);
-        Notifications.Bus.notify(new Notification(TASKS_NOTIFICATION_GROUP, "Cannot connect to " + repository.getUrl(),
-                                                  "<p><a href=\"\">Configure server...</a></p>", NotificationType.WARNING,
-                                                  new NotificationListener() {
-                                                    public void hyperlinkUpdate(@NotNull Notification notification,
-                                                                                @NotNull HyperlinkEvent event) {
-                                                      TaskRepositoriesConfigurable configurable =
-                                                        new TaskRepositoriesConfigurable(myProject);
-                                                      ShowSettingsUtil.getInstance().editConfigurable(myProject, configurable);
-                                                      if (!ArrayUtil.contains(repository, getAllRepositories())) {
-                                                        notification.expire();
-                                                      }
-                                                    }
-                                                  }), myProject);
+        if (forceRequest) {
+          notifyAboutConnectionFailure(repository);
+        }
       }
     }
     return issues;
+  }
+
+  private void notifyAboutConnectionFailure(final TaskRepository repository) {
+    Notifications.Bus.register(TASKS_NOTIFICATION_GROUP, NotificationDisplayType.BALLOON);
+    Notifications.Bus.notify(new Notification(TASKS_NOTIFICATION_GROUP, "Cannot connect to " + repository.getUrl(),
+                                              "<p><a href=\"\">Configure server...</a></p>", NotificationType.WARNING,
+                                              new NotificationListener() {
+                                                public void hyperlinkUpdate(@NotNull Notification notification,
+                                                                            @NotNull HyperlinkEvent event) {
+                                                  TaskRepositoriesConfigurable configurable =
+                                                    new TaskRepositoriesConfigurable(myProject);
+                                                  ShowSettingsUtil.getInstance().editConfigurable(myProject, configurable);
+                                                  if (!ArrayUtil.contains(repository, getAllRepositories())) {
+                                                    notification.expire();
+                                                  }
+                                                }
+                                              }), myProject);
   }
 
   @Override
