@@ -80,7 +80,7 @@ public class RefactoringUtil {
     return Comparing.equal(virtualFile, sourceRootForFile);
   }
 
-  public static boolean isInStaticContext(PsiElement element, final PsiClass aClass) {
+  public static boolean isInStaticContext(PsiElement element, @Nullable final PsiClass aClass) {
     return PsiUtil.getEnclosingStaticElement(element, aClass) != null;
   }
 
