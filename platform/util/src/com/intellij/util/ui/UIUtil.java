@@ -1553,9 +1553,9 @@ public class UIUtil {
     if (size == FontSize.MINI) {
       defFont = defFont.deriveFont(Math.max(defFont.getSize() - 4f, 9f));
     }
-    if (isBold) {
-      defFont = defFont.deriveFont(Font.BOLD);
-    }
+    //if (isBold) {
+    //  defFont = defFont.deriveFont(Font.BOLD);
+    //}
     return defFont;
   }
 
