@@ -4,6 +4,9 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
@@ -64,7 +67,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
                                        plural ? "s" : "",
                                        requirementsToString(unsatisfied),
                                        plural ? "are" : "is");
-            registerProblem(node, msg, new InstallRequirementsFix(module, sdk, unsatisfied));
+            registerProblem(node, msg, new InstallRequirementsFix(null, module, sdk, unsatisfied));
           }
         }
       }
@@ -119,8 +122,8 @@ public class PyPackageRequirementsInspection extends PyInspection {
                 }
               }
               // TODO: User-adjustable ignore settings for this inspection: maybe the "Ignore imported package 'foo'" quickfix
-              // TODO: Quickfix for adding a requirement
-              registerProblem(packageReference, String.format("Package '%s' is not listed in project requirements", packageName));
+              registerProblem(packageReference, String.format("Package '%s' is not listed in project requirements", packageName),
+                              new AddToRequirementsFix(module, packageName, LanguageLevel.forElement(importedExpression)));
             }
           }
         }
@@ -170,13 +173,15 @@ public class PyPackageRequirementsInspection extends PyInspection {
     return value != null && value;
   }
 
-  private static class InstallRequirementsFix implements LocalQuickFix {
-    private static final String NAME = "Install requirements";
+  public static class InstallRequirementsFix implements LocalQuickFix {
+    @NotNull private String myName;
     @NotNull private final Module myModule;
     @NotNull private Sdk mySdk;
     @NotNull private final List<PyRequirement> myUnsatisfied;
 
-    public InstallRequirementsFix(@NotNull Module module, @NotNull Sdk sdk, @NotNull List<PyRequirement> unsatisfied) {
+    public InstallRequirementsFix(@Nullable String name, @NotNull Module module, @NotNull Sdk sdk,
+                                  @NotNull List<PyRequirement> unsatisfied) {
+      myName = name != null ? name : "Install requirements";
       myModule = module;
       mySdk = sdk;
       myUnsatisfied = unsatisfied;
@@ -185,13 +190,13 @@ public class PyPackageRequirementsInspection extends PyInspection {
     @NotNull
     @Override
     public String getName() {
-      return NAME;
+      return myName;
     }
 
     @NotNull
     @Override
     public String getFamilyName() {
-      return NAME;
+      return myName;
     }
 
     @Override
@@ -208,6 +213,109 @@ public class PyPackageRequirementsInspection extends PyInspection {
         }
       });
       ui.install(myUnsatisfied, Collections.<String>emptyList());
+    }
+  }
+
+  private static class AddToRequirementsFix implements LocalQuickFix {
+    @Nullable private final PyListLiteralExpression myInstallRequires;
+    @Nullable private final Document myRequirementsTxt;
+    @Nullable private final PyArgumentList mySetupArgumentList;
+    @NotNull private final String myPackageName;
+    private final LanguageLevel myLanguageLevel;
+
+    private AddToRequirementsFix(@NotNull Module module, @NotNull String packageName, LanguageLevel languageLevel) {
+      myPackageName = packageName;
+      myLanguageLevel = languageLevel;
+      myRequirementsTxt = PyPackageUtil.findRequirementsTxt(module);
+      myInstallRequires = PyPackageUtil.findSetupPyInstallRequires(module);
+      final PyFile setupPy = PyPackageUtil.findSetupPy(module);
+      if (setupPy != null) {
+        final PyCallExpression setupCall = PyPackageUtil.findSetupCall(setupPy);
+        if (setupCall != null) {
+          mySetupArgumentList = setupCall.getArgumentList();
+        }
+        else {
+          mySetupArgumentList = null;
+        }
+      }
+      else {
+        mySetupArgumentList = null;
+      }
+    }
+
+    @NotNull
+    @Override
+    public String getName() {
+      final String target;
+      if (myRequirementsTxt != null) {
+        target = "requirements.txt";
+      }
+      else if (myInstallRequires != null || mySetupArgumentList != null) {
+        target = "setup.py";
+      }
+      else {
+        target = "project requirements";
+      }
+      return String.format("Add requirement '%s' to %s", myPackageName, target);
+    }
+
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return getName();
+    }
+
+    @Override
+    public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
+      CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+        @Override
+        public void run() {
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
+            public void run() {
+              if (myRequirementsTxt != null) {
+                if (myRequirementsTxt.isWritable()) {
+                  myRequirementsTxt.insertString(0, myPackageName + "\n");
+                }
+              }
+              else {
+                final PyElementGenerator generator = PyElementGenerator.getInstance(project);
+                if (myInstallRequires != null) {
+                  if (myInstallRequires.getContainingFile().isWritable()) {
+                    final PyStringLiteralExpression literal = generator.createStringLiteralFromString(myPackageName);
+                    myInstallRequires.add(literal);
+                  }
+                }
+                else if (mySetupArgumentList != null) {
+                  final PyKeywordArgument installRequiresArg = generateInstallRequiresKwarg(generator);
+                  if (installRequiresArg != null) {
+                    mySetupArgumentList.addArgument(installRequiresArg);
+                  }
+                }
+              }
+            }
+
+            @Nullable
+            private PyKeywordArgument generateInstallRequiresKwarg(PyElementGenerator generator) {
+              final String text = String.format("foo(install_requires=[\"%s\"])", myPackageName);
+              final PyExpression generated = generator.createExpressionFromText(myLanguageLevel, text);
+              PyKeywordArgument installRequiresArg = null;
+              if (generated instanceof PyCallExpression) {
+                final PyCallExpression foo = (PyCallExpression)generated;
+                for (PyExpression arg : foo.getArguments()) {
+                  if (arg instanceof PyKeywordArgument) {
+                    final PyKeywordArgument kwarg = (PyKeywordArgument)arg;
+                    if ("install_requires".equals(kwarg.getKeyword())) {
+                      installRequiresArg = kwarg;
+                    }
+                  }
+                }
+              }
+              return installRequiresArg;
+            }
+          });
+        }
+      }, getName(), null);
     }
   }
 }
