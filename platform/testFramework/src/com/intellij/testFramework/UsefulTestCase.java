@@ -479,7 +479,7 @@ public abstract class UsefulTestCase extends TestCase {
 
   public static <T> T assertInstanceOf(Object o, Class<T> aClass) {
     Assert.assertNotNull(o);
-    Assert.assertTrue(o.getClass().getName(), aClass.isInstance(o));
+    Assert.assertTrue("Expected instance of: " + aClass.getName() + " actual: " + o.getClass().getName(), aClass.isInstance(o));
     return (T)o;
   }
 

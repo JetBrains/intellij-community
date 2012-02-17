@@ -25,9 +25,7 @@ import com.android.sdklib.IAndroidTarget;
 import com.intellij.android.designer.componentTree.AndroidTreeDecorator;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.designer.componentTree.TreeComponentDecorator;
-import com.intellij.designer.designSurface.ComponentDecorator;
-import com.intellij.designer.designSurface.DecorationLayer;
-import com.intellij.designer.designSurface.DesignerEditorPanel;
+import com.intellij.designer.designSurface.*;
 import com.intellij.designer.designSurface.selection.DirectionResizePoint;
 import com.intellij.designer.designSurface.selection.NonResizeSelectionDecorator;
 import com.intellij.designer.designSurface.selection.ResizeSelectionDecorator;
@@ -193,9 +191,17 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
 
   @Override
   protected ComponentDecorator getRootSelectionDecorator() {
-    return new ResizeSelectionDecorator(Color.RED, 1, new DirectionResizePoint(Position.EAST),
-                                        new DirectionResizePoint(Position.SOUTH_EAST),
-                                        new DirectionResizePoint(Position.SOUTH));
+    return new ResizeSelectionDecorator(Color.RED, 1, new DirectionResizePoint(Position.EAST, "top_resize_"),
+                                        new DirectionResizePoint(Position.SOUTH_EAST, "top_resize"),
+                                        new DirectionResizePoint(Position.SOUTH, "top_resize"));
+  }
+
+  @Override
+  protected EditOperation processRootOperation(OperationContext context) {
+    if (context.is("top_resize")) {
+      return new ResizeOperation(context);
+    }
+    return null;
   }
 
   private static class RootView extends JComponent {

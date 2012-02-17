@@ -98,13 +98,6 @@ public class SvnCommandLineStatusClient implements SvnStatusClientI {
 
     final SVNInfo infoBase = myInfoClient.doInfo(base, revision);
 
-    // TODO check file case
-    // TODO check file case
-    // TODO check file case
-    // TODO check file case
-    // TODO check file case
-
-
     // todo can not understand why revision can be used here
     final SvnSimpleCommand command = new SvnSimpleCommand(myProject, base, SvnCommandName.st);
 
@@ -136,8 +129,10 @@ public class SvnCommandLineStatusClient implements SvnStatusClientI {
         final PortableStatus pending = svnHandl[0].getPending();
         pending.setChangelistName(changelistName[0]);
         try {
-          final String append = SVNPathUtil.append(infoBase.getURL().toString(), FileUtil.toSystemIndependentName(pending.getPath()));
-          pending.setURL(SVNURL.parseURIEncoded(append));
+          if (infoBase != null) {
+            final String append = SVNPathUtil.append(infoBase.getURL().toString(), FileUtil.toSystemIndependentName(pending.getPath()));
+            pending.setURL(SVNURL.parseURIEncoded(append));
+          }
           handler.handleStatus(pending);
         }
         catch (SVNException e) {

@@ -28,16 +28,19 @@ import java.awt.*;
  */
 public class DirectionResizePoint extends ResizePoint {
   private int myDirection;
+  private Object myType;
   private double myXSeparator;
   private double myYSeparator;
 
-  public DirectionResizePoint(int direction) {
+  public DirectionResizePoint(int direction, Object type) {
     setDirection(direction);
+    myType = type;
   }
 
-  public DirectionResizePoint(Color color, Color border, int direction) {
+  public DirectionResizePoint(Color color, Color border, int direction, Object type) {
     super(color, border);
     setDirection(direction);
+    myType = type;
   }
 
   private void setDirection(int direction) {
@@ -68,7 +71,7 @@ public class DirectionResizePoint extends ResizePoint {
 
   @Override
   protected InputTool createTool(RadComponent component) {
-    return new ResizeTracker(myDirection);
+    return new ResizeTracker(myDirection, myType);
   }
 
   @Override

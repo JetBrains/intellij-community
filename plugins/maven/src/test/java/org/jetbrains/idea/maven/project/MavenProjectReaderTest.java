@@ -23,10 +23,11 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.idea.maven.MavenTestCase;
-import org.jetbrains.idea.maven.model.*;
+import org.jetbrains.idea.maven.model.MavenId;
+import org.jetbrains.idea.maven.model.MavenModel;
+import org.jetbrains.idea.maven.model.MavenProjectProblem;
+import org.jetbrains.idea.maven.model.MavenResource;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
@@ -493,7 +494,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertEquals("${prop2}", p.getPackaging());
   }
 
-  public void testHandlingRecursionProprielyAndDoNotForgetCoClearRecursionGuard() throws Exception {
+  public void testHandlingRecursionProperlyAndDoNotForgetCoClearRecursionGuard() throws Exception {
     File repositoryPath = new File(myDir, "repository");
     setRepositoryPath(repositoryPath.getPath());
 
@@ -999,44 +1000,6 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertEquals("xxx", p.getBuild().getFinalName());
   }
 
-
-  public void testInheritingParentProfiles() throws Exception {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>parent</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<profiles>" +
-                     "  <profile>" +
-                     "    <id>profileFromParent</id>" +
-                     "  </profile>" +
-                     "</profiles>");
-
-    VirtualFile module = createModulePom("module",
-                                         "<groupId>test</groupId>" +
-                                         "<artifactId>module</artifactId>" +
-                                         "<version>1</version>" +
-
-                                         "<parent>" +
-                                         "  <groupId>test</groupId>" +
-                                         "  <artifactId>parent</artifactId>" +
-                                         "  <version>1</version>" +
-                                         "</parent>" +
-
-                                         "<profiles>" +
-                                         "  <profile>" +
-                                         "    <id>profileFromChild</id>" +
-                                         "  </profile>" +
-                                         "</profiles>");
-
-    MavenModel p = readProject(module);
-    assertOrderedElementsAreEqual(ContainerUtil.map(p.getProfiles(), new Function<MavenProfile, Object>() {
-      @Override
-      public Object fun(MavenProfile profile) {
-        return profile.getId();
-      }
-    }), "profileFromChild", "profileFromParent");
-  }
-
   public void testCorrectlyCollectProfilesFromDifferentSources() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>parent</artifactId>" +
@@ -1116,8 +1079,8 @@ public class MavenProjectReaderTest extends MavenTestCase {
 
     p = readProject(module);
     assertEquals(1, p.getProfiles().size());
-    assertEquals("parent", p.getProfiles().get(0).getModules().get(0));
-    assertEquals("pom", p.getProfiles().get(0).getSource());
+    assertEquals("settings", p.getProfiles().get(0).getModules().get(0));
+    assertEquals("settings.xml", p.getProfiles().get(0).getSource());
 
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>parent</artifactId>" +
@@ -1125,8 +1088,8 @@ public class MavenProjectReaderTest extends MavenTestCase {
 
     p = readProject(module);
     assertEquals(1, p.getProfiles().size());
-    assertEquals("parentProfiles", p.getProfiles().get(0).getModules().get(0));
-    assertEquals("profiles.xml", p.getProfiles().get(0).getSource());
+    assertEquals("settings", p.getProfiles().get(0).getModules().get(0));
+    assertEquals("settings.xml", p.getProfiles().get(0).getSource());
 
     new WriteCommandAction.Simple(myProject) {
       @Override
@@ -1140,6 +1103,34 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertEquals(1, p.getProfiles().size());
     assertEquals("settings", p.getProfiles().get(0).getModules().get(0));
     assertEquals("settings.xml", p.getProfiles().get(0).getSource());
+  }
+
+  public void testModulesAreNotInheritedFromParentsProfiles() throws Exception {
+    VirtualFile p = createProjectPom("<groupId>test</groupId>" +
+                                     "<artifactId>project</artifactId>" +
+                                     "<version>1</version>" +
+                                     "<packaging>pom</packaging>" +
+
+                                     "<profiles>" +
+                                     " <profile>" +
+                                     "  <id>one</id>" +
+                                     "   <modules>" +
+                                     "    <module>m</module>" +
+                                     "   </modules>" +
+                                     " </profile>" +
+                                     "</profiles>");
+
+    VirtualFile m = createModulePom("m", "<groupId>test</groupId>" +
+                                         "<artifactId>m</artifactId>" +
+                                         "<version>1</version>" +
+                                         "<parent>" +
+                                         " <groupId>test</groupId>" +
+                                         " <artifactId>project</artifactId>" +
+                                         " <version>1</version>" +
+                                         "</parent>");
+
+    assertSize(1, readProject(p, "one").getModules());
+    assertSize(0, readProject(m, "one").getModules());
   }
 
   public void testActivatingProfilesByDefault() throws Exception {

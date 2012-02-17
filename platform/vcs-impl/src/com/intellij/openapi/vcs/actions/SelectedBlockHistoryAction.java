@@ -32,6 +32,7 @@ import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import com.intellij.util.WaitForProgressToShow;
 import com.intellij.vcsUtil.VcsSelection;
 import com.intellij.vcsUtil.VcsSelectionUtil;
 
@@ -77,11 +78,15 @@ public class SelectedBlockHistoryAction extends AbstractVcsAction {
       final int selectionStart = selection.getSelectionStartLineNumber();
       final int selectionEnd = selection.getSelectionEndLineNumber();
 
+      final VcsException[] preloadException = new VcsException[1];
       final CachedRevisionsContents cachedRevisionsContents = new CachedRevisionsContents(project, file);
       new VcsHistoryProviderBackgroundableProxy(activeVcs, provider, activeVcs.getDiffProvider()).
         createSessionFor(activeVcs.getKeyInstanceMethod(), new FilePathImpl(file),
         new Consumer<VcsHistorySession>() {
           public void consume(VcsHistorySession session) {
+            if (preloadException[0] != null) {
+              reportError(preloadException[0]);
+            }
             if (session == null) return;
             final VcsHistoryDialog vcsHistoryDialog =
               new VcsHistoryDialog(project,
@@ -103,7 +108,12 @@ public class SelectedBlockHistoryAction extends AbstractVcsAction {
             cachedRevisionsContents.setRevisions(revisionList);
             if (VcsConfiguration.getInstance(project).SHOW_ONLY_CHANGED_IN_SELECTION_DIFF) {
               // preload while in bckgrnd
-              cachedRevisionsContents.loadContentsFor(revisionList.toArray(new VcsFileRevision[revisionList.size()]));
+              try {
+                cachedRevisionsContents.loadContentsFor(revisionList.toArray(new VcsFileRevision[revisionList.size()]));
+              }
+              catch (VcsException e) {
+                preloadException[0] = e;
+              }
             }
           }
         });
