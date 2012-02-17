@@ -5,17 +5,19 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 
+import java.util.Set;
+
 /**
  * @author Denis Zhdanov
  * @since 2/2/12 1:32 PM
  */
-public class GradleMismatchedLibraryPathChange extends GradleAbstractConflictingPropertyChange<String> {
+public class GradleMismatchedLibraryPathChange extends GradleAbstractConflictingPropertyChange<Set<String>> {
   
   private final String myLibraryName;
 
   public GradleMismatchedLibraryPathChange(@NotNull Library entity,
-                                           @Nullable String gradleValue,
-                                           @Nullable String intellijValue)
+                                           @Nullable Set<String> gradleValue,
+                                           @Nullable Set<String> intellijValue)
     throws IllegalArgumentException
   {
     super(GradleBundle.message("gradle.sync.change.library.path", entity.getName()), gradleValue, intellijValue);

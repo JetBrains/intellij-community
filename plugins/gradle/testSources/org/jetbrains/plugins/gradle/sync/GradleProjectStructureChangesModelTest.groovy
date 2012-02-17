@@ -6,6 +6,8 @@ import org.jetbrains.plugins.gradle.testutil.AbstractGradleTest
 import org.junit.Test
 
 import static org.junit.Assert.assertEquals
+import org.jetbrains.plugins.gradle.diff.GradleMismatchedLibraryPathChange
+import org.jetbrains.plugins.gradle.diff.GradleLibraryDependencyPresenceChange
 
 /**
  * @author Denis Zhdanov
@@ -15,7 +17,7 @@ import static org.junit.Assert.assertEquals
 public class GradleProjectStructureChangesModelTest extends AbstractGradleTest {
 
   @Test
-  public void processObsoleteGradleLocalChange() {
+  public void "obsolete gradle-local modules"() {
     // Configure initial projects state.
     init(
       gradle: {
@@ -93,7 +95,7 @@ public class GradleProjectStructureChangesModelTest extends AbstractGradleTest {
   }
   
   @Test
-  public void libraryDependenciesWithDifferentPaths() {
+  public void "library dependencies on binary paths"() {
     // Let the model has two differences in a library setup initially.
     init(
       gradle: {
@@ -114,8 +116,7 @@ public class GradleProjectStructureChangesModelTest extends AbstractGradleTest {
 
     checkChanges {
       libraryConflict(entity: intellij.libraries['lib2']) {
-        binaryPath(gradle: '1', intellij: null)
-        binaryPath(gradle: null, intellij: '3')
+        binaryPath(gradle: '1', intellij: ['3'])
     } }
     checkTree {
       project {
@@ -182,7 +183,7 @@ public class GradleProjectStructureChangesModelTest extends AbstractGradleTest {
   }
   
   @Test
-  public void intellijModuleRemoval() {
+  public void "intellij module removal"() {
     Closure initialClosure = {
       project {
         module('module1')
@@ -222,7 +223,7 @@ public class GradleProjectStructureChangesModelTest extends AbstractGradleTest {
   }
   
   @Test
-  public void gradleModuleIsImported() {
+  public void "gradle-local module is not treated as 'local' after import"() {
     init(
       gradle: {
         project {
@@ -256,5 +257,50 @@ public class GradleProjectStructureChangesModelTest extends AbstractGradleTest {
         module1()
         module2() // Imported module node is not highlighted anymore.
     } }
+  }
+  
+  @Test
+  public void "gradle local library dependency outweighs library path conflict"() {
+    init(
+      gradle: {
+        project {
+          module('module1') {
+            dependencies {
+              library('lib1', bin: ['1'])
+          } }
+          module('module2') {
+            dependencies {
+              library('lib1')
+      } } } },
+      intellij: {
+        project {
+          module('module1') {
+            dependencies {
+              library('lib1', bin: ['2'])
+      } } } },
+      changesSorter: changeByClassSorter([
+        (GradleMismatchedLibraryPathChange)     : 2,
+        (GradleLibraryDependencyPresenceChange) : 1
+      ])
+    )
+
+    checkChanges {
+      presence {
+        module(gradle: gradle.modules.find { it.name == 'module2' })
+        libraryDependency(gradle: gradle.dependencies[gradle.modules.find { it.name == 'module2' }].first())
+      }
+      libraryConflict(entity: intellij.libraries['lib1']) {
+        binaryPath(gradle: ['1'], intellij: ['2'])
+    } }
+    checkTree {
+      project {
+        module1() {
+          dependencies {
+            lib1('conflict')
+        } }
+        module2('gradle') {
+          dependencies {
+            lib1('gradle') // This is the point of the test. We don't expect to see 'conflict' here.
+    } } } }
   }
 }

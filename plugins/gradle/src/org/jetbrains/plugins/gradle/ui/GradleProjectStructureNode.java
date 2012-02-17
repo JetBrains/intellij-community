@@ -145,7 +145,12 @@ public class GradleProjectStructureNode<T extends GradleEntityId> extends Defaul
    */
   public void addConflictChange(@NotNull GradleProjectStructureChange change) {
     myConflictChanges.add(change);
-    if (myConflictChanges.size() == 1) {
+    if (myConflictChanges.size() != 1) {
+      return;
+    }
+    final TextAttributesKey key = myDescriptor.getAttributes();
+    boolean localNode = key == GradleTextAttributes.GRADLE_LOCAL_CHANGE || key == GradleTextAttributes.INTELLIJ_LOCAL_CHANGE;
+    if (!localNode) {
       myDescriptor.setAttributes(GradleTextAttributes.GRADLE_CHANGE_CONFLICT);
       onNodeChanged(this);
     }

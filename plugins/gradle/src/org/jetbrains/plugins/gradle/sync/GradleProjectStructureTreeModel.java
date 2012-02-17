@@ -222,9 +222,8 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
       }
     }
     GradleProjectStructureNode<GradleLibraryDependencyId> newNode = buildNode(id, id.getLibraryName());
-    newNode.getDescriptor().setAttributes(attributes);
+    newNode.setAttributes(attributes);
     dependenciesNode.add(newNode);
-    nodeStructureChanged(dependenciesNode);
   }
 
   private void processNewModulePresenceChange(@NotNull GradleModulePresenceChange change) {

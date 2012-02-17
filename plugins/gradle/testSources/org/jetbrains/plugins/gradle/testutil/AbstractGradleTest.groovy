@@ -29,15 +29,16 @@ public abstract class AbstractGradleTest {
   GradleProjectStructureTreeModel treeModel
   def gradle
   def intellij
-  def changes
+  def changesBuilder
   def treeChecker
   def container
+  private Closure changesComparator
 
   @Before
   public void setUp() {
     gradle = new GradleProjectBuilder()
     intellij = new IntellijProjectBuilder()
-    changes = new ChangeBuilder()
+    changesBuilder = new ChangeBuilder()
     treeChecker = new ProjectStructureChecker()
     container = new DefaultPicoContainer()
     container.registerComponentInstance(Project, intellij.project)
@@ -62,26 +63,35 @@ public abstract class AbstractGradleTest {
   protected def init(map = [:]) {
     treeModel = container.getComponentInstance(GradleProjectStructureTreeModel) as GradleProjectStructureTreeModel
     changesModel.addListener({ old, current ->
-                               treeModel.update(current)
-                               treeModel.processObsoleteChanges(ContainerUtil.subtract(old, current));
+                               treeModel.update(sortChanges(current))
+                               treeModel.processObsoleteChanges(sortChanges(ContainerUtil.subtract(old, current)));
     } as GradleProjectStructureChangeListener)
     setState(map, false)
     treeModel.rebuild()
     changesModel.update(gradle.project)
   }
 
+  def sortChanges(changes) {
+    if (changesComparator) {
+      return changes.toList().sort(changesComparator)
+    }
+    return changes
+  }
+  
   protected def setState(map, update = true) {
     map.intellij?.delegate = intellij
     map.intellij?.call()
     map.gradle?.delegate = gradle
     map.gradle?.call()
+    changesComparator = map.changesSorter
     if (update) {
       changesModel.update(gradle.project)
     }
   }
   
   protected def checkChanges(Closure c) {
-    c.delegate = changes
+    changesBuilder.changes.clear()
+    c.delegate = changesBuilder
     def expected = c()
     if (!expected) {
       expected = [].toSet()
@@ -94,5 +104,18 @@ public abstract class AbstractGradleTest {
     c.delegate = nodeBuilder
     def expected = c()
     treeChecker.check(expected, treeModel.root)
+  }
+
+  protected Closure changeByClassSorter(Map<Class<?>, Integer> rules) {
+    { a, b ->
+      def weightA = rules[a.class] ?: Integer.MAX_VALUE
+      def weightB = rules[b.class] ?: Integer.MAX_VALUE
+      if (weightA == weightB) {
+        return  a.hashCode() - b.hashCode()
+      }
+      else {
+        return weightA - weightB
+      }
+    }
   }
 }

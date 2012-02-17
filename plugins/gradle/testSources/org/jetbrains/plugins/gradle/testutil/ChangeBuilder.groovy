@@ -29,9 +29,6 @@ public class ChangeBuilder extends BuilderSupport {
 
   @Override
   protected Object createNode(Object name, Map attributes) {
-    if (current == null) {
-      changes = []
-    }
     switch (name) {
       case "module":
         changes.addAll attributes.gradle.collect { new GradleModulePresenceChange(it, null)}
@@ -50,14 +47,11 @@ public class ChangeBuilder extends BuilderSupport {
         if (!library) {
           throw new IllegalArgumentException("No entity is defined for the library conflict change. Known attributes: $attributes")
         }
-        if (attributes.gradle) {
-          return register(new GradleMismatchedLibraryPathChange(library, attributes.gradle, attributes.intellij))
-        }
         return library
       case "binaryPath":
         // Assuming that we're processing library binary path conflict here
         register(new GradleMismatchedLibraryPathChange(
-          current as Library, toCanonicalPath(attributes.gradle), toCanonicalPath(attributes.intellij)
+          current as Library, collectPaths(attributes.gradle), collectPaths(attributes.intellij)
         ))  
     }
     changes
@@ -73,9 +67,16 @@ public class ChangeBuilder extends BuilderSupport {
 
   protected def register(change) {
     changes << change
-    change
+    changes
   }
 
+  private def collectPaths(paths) {
+    if (!paths) {
+      return [].toSet()
+    }
+    paths.collect { toCanonicalPath(it) }.toSet()
+  }
+  
   private def toCanonicalPath(String path) {
     path ? GradleUtil.toCanonicalPath(path) : path
   }

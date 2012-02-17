@@ -29,16 +29,17 @@ public class GradleLibraryStructureChangesCalculator implements GradleStructureC
                         @NotNull Set<GradleProjectStructureChange> currentChanges)
   {
     final Set<String> gradleBinaryPaths = new HashSet<String>(gradleEntity.getPaths(LibraryPathType.BINARY));
+    final Set<String> intellijBinaryPaths = new HashSet<String>();
     for (VirtualFile file : intellijEntity.getFiles(OrderRootType.CLASSES)) {
       final String path = myPlatformFacade.getLocalFileSystemPath(file);
       if (!gradleBinaryPaths.remove(path)) {
-        currentChanges.add(new GradleMismatchedLibraryPathChange(intellijEntity, null, path));
+        intellijBinaryPaths.add(path);
       }
     }
 
-    for (String binaryPath : gradleBinaryPaths) {
-      currentChanges.add(new GradleMismatchedLibraryPathChange(intellijEntity, binaryPath, null));
-    } 
+    if (!gradleBinaryPaths.equals(intellijBinaryPaths)) {
+      currentChanges.add(new GradleMismatchedLibraryPathChange(intellijEntity, gradleBinaryPaths, intellijBinaryPaths));
+    }
   }
 
   @NotNull
