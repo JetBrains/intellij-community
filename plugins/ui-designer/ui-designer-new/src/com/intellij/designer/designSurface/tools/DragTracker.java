@@ -15,13 +15,16 @@
  */
 package com.intellij.designer.designSurface.tools;
 
+import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.utils.Cursors;
 
 /**
  * @author Alexander Lobas
  */
-public class DragTracker extends TargetingTool {
-  public DragTracker() {
+public class DragTracker extends SelectionTracker {
+  public DragTracker(RadComponent component) {
+    super(component);
     setDefaultCursor(Cursors.RESIZE_ALL);
+    setDisabledCursor(Cursors.getNoCursor());
   }
 }

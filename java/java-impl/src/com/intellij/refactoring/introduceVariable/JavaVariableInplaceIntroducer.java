@@ -37,6 +37,8 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.introduce.inplace.InplaceVariableIntroducer;
 import com.intellij.refactoring.introduceParameter.AbstractJavaInplaceIntroducer;
+import com.intellij.refactoring.rename.inplace.ResolveSnapshotProvider;
+import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.ui.NonFocusableCheckBox;
 import org.jetbrains.annotations.NotNull;
@@ -67,6 +69,8 @@ public class JavaVariableInplaceIntroducer extends InplaceVariableIntroducer<Psi
   protected final SmartTypePointer myDefaultType;
   protected final TypeExpression myExpression;
 
+  private ResolveSnapshotProvider.ResolveSnapshot myConflictResolver;
+
   public JavaVariableInplaceIntroducer(final Project project,
                                        final TypeExpression expression,
                                        final Editor editor,
@@ -93,6 +97,10 @@ public class JavaVariableInplaceIntroducer extends InplaceVariableIntroducer<Psi
                          rangeMarkers.toArray(new RangeMarker[rangeMarkers.size()]));
     }
     myExpression = expression;
+    if (declarationStatement != null) {
+      final ResolveSnapshotProvider resolveSnapshotProvider = VariableInplaceRenamer.INSTANCE.forLanguage(declarationStatement.getLanguage());
+      myConflictResolver = resolveSnapshotProvider != null ? resolveSnapshotProvider.createSnapshot(declarationStatement) : null;
+    }
     final PsiType defaultType = elementToRename.getType();
     myDefaultType = SmartTypePointerManager.getInstance(project).createSmartTypePointer(defaultType);
     setAdvertisementText(getAdvertisementText(declarationStatement, defaultType, hasTypeSuggestion));
@@ -146,6 +154,9 @@ public class JavaVariableInplaceIntroducer extends InplaceVariableIntroducer<Psi
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {
               appendTypeCasts(getOccurrenceMarkers(), file, myProject, psiVariable);
+              if (myConflictResolver != null) {
+                myConflictResolver.apply(psiVariable.getName());
+              }
             }
           });
         }

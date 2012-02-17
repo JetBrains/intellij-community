@@ -2,6 +2,7 @@ package org.jetbrains.jps.android;
 
 import com.android.sdklib.IAndroidTarget;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
@@ -14,23 +15,21 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.Module;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.ProjectPaths;
-import org.jetbrains.jps.Sdk;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.server.ClasspathBootstrap;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.util.*;
 
 /**
  * @author Eugene.Kudelevsky
  */
 // todo: save validity state
+// todo: support light builds (for tests)
 
 public class AndroidDexBuilder extends ModuleLevelBuilder {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.android.AndroidDexBuilder");
@@ -46,22 +45,13 @@ public class AndroidDexBuilder extends ModuleLevelBuilder {
     if (context.isCompilingTests() || !AndroidJpsUtil.containsAndroidFacet(chunk)) {
       return ModuleLevelBuilder.ExitCode.OK;
     }
-    context.processMessage(new ProgressMessage("Executing DEX"));
+    context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.dex")));
 
     try {
       return doBuild(context, chunk);
     }
     catch (Exception e) {
-      String message = e.getMessage();
-
-      if (message == null) {
-        final ByteArrayOutputStream out = new ByteArrayOutputStream();
-        //noinspection IOResourceOpenedButNotSafelyClosed
-        e.printStackTrace(new PrintStream(out));
-        message = "Internal error: \n" + out.toString();
-      }
-      context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, message));
-      throw new ProjectBuildException(message, e);
+      return AndroidJpsUtil.handleException(context, e, BUILDER_NAME);
     }
   }
 
@@ -74,29 +64,20 @@ public class AndroidDexBuilder extends ModuleLevelBuilder {
         continue;
       }
 
-      final Sdk sdk = module.getSdk();
-      if (!(sdk instanceof AndroidSdk)) {
-        context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR,
-                                                   "Android SDK is not specified for module " + module.getName()));
+      final Pair<AndroidSdk, IAndroidTarget> pair = AndroidJpsUtil.getAndroidPlatform(module, context, BUILDER_NAME);
+      if (pair == null) {
         success = false;
         continue;
       }
-      final AndroidSdk androidSdk = (AndroidSdk)sdk;
-
-      final IAndroidTarget target = AndroidJpsUtil.parseAndroidTarget(androidSdk, context, BUILDER_NAME);
-      if (target == null) {
-        context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR,
-                                                   "Android SDK is invalid or not specified for module " + module.getName()));
-        success = false;
-        continue;
-      }
+      final AndroidSdk androidSdk = pair.getFirst();
+      final IAndroidTarget target = pair.getSecond();
 
       final ProjectPaths projectPaths = context.getProjectPaths();
       final File dexOutputDir = AndroidJpsUtil.getOutputDirectoryForPackagedFiles(projectPaths, module);
 
       if (dexOutputDir == null) {
-        context.processMessage(
-          new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "Output directory is not specified for module " + module.getName()));
+        context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, AndroidJpsBundle
+          .message("android.jps.errors.output.dir.not.specified", module.getName())));
         success = false;
         continue;
       }
@@ -106,9 +87,8 @@ public class AndroidDexBuilder extends ModuleLevelBuilder {
       final File classesDir = projectPaths.getModuleOutputDir(module, false);
 
       if (classesDir == null || !classesDir.isDirectory()) {
-        context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.INFO, "Dex won't be launched for module " +
-                                                                                         module.getName() +
-                                                                                         " because it doesn't contain compiled files"));
+        context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.INFO, AndroidJpsBundle
+          .message("android.jps.warnings.dex.no.compiled.files", module.getName())));
         continue;
       }
 
@@ -181,7 +161,8 @@ public class AndroidDexBuilder extends ModuleLevelBuilder {
 
     final File outFile = new File(outFilePath);
     if (outFile.exists() && !outFile.delete()) {
-      context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.WARNING, "Cannot delete file " + outFilePath));
+      context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.WARNING,
+                                                 AndroidJpsBundle.message("android.jps.errors.cannot.delete.file", outFilePath)));
     }
 
     // todo: pass additional vm params and max heap size from settings
@@ -202,7 +183,7 @@ public class AndroidDexBuilder extends ModuleLevelBuilder {
 
       AndroidCommonUtils.handleDexCompilationResult(process, outFilePath, messages);
 
-      AndroidJpsUtil.addMessages(context, messages, null, BUILDER_NAME);
+      AndroidJpsUtil.addMessages(context, messages, BUILDER_NAME);
 
       return messages.get(AndroidCompilerMessageKind.ERROR).size() == 0;
     }

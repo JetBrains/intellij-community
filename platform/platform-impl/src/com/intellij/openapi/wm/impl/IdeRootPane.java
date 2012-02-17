@@ -138,7 +138,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     connect.subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener.Adapter() {
       @Override
       public void projectComponentsInitialized(Project project) {
-        Disposer.dispose(myDisposable);
+        Disposer.dispose(myWelcomeScreen);
         myWelcomeScreen = null;
         myWelcomePane = null;
         connect.disconnect();

@@ -3,7 +3,9 @@ package org.jetbrains.jps.android;
 import com.android.sdklib.IAndroidTarget;
 import com.android.sdklib.SdkManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.android.sdk.MessageBuildingSdkLog;
@@ -14,14 +16,17 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.*;
 import org.jetbrains.jps.idea.Facet;
 import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.ModuleLevelBuilder;
+import org.jetbrains.jps.incremental.ProjectBuildException;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.util.*;
+import java.util.regex.Matcher;
 
 /**
  * @author Eugene.Kudelevsky
@@ -30,6 +35,27 @@ class AndroidJpsUtil {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.android.AndroidJpsUtil");
 
   private AndroidJpsUtil() {
+  }
+
+  public static void addMessages(@NotNull CompileContext context,
+                                 @NotNull Map<AndroidCompilerMessageKind, List<String>> messages,
+                                 @NotNull String builderName) {
+    for (Map.Entry<AndroidCompilerMessageKind, List<String>> entry : messages.entrySet()) {
+      for (String message : entry.getValue()) {
+        String filePath = null;
+        int line = -1;
+        final Matcher matcher = AndroidCommonUtils.COMPILER_MESSAGE_PATTERN.matcher(message);
+
+        if (matcher.matches()) {
+          filePath = matcher.group(1);
+          line = Integer.parseInt(matcher.group(2));
+        }
+        final BuildMessage.Kind category = toBuildMessageKind(entry.getKey());
+        if (category != null) {
+          context.processMessage(new CompilerMessage(builderName, category, message, filePath, -1L, -1L, -1L, line, -1L));
+        }
+      }
+    }
   }
 
   @Nullable
@@ -182,26 +208,8 @@ class AndroidJpsUtil {
     return target;
   }
 
-  public static void addMessages(@NotNull CompileContext context,
-                                 @NotNull Map<AndroidCompilerMessageKind, List<String>> messages,
-                                 @Nullable String sourcePath,
-                                 @NotNull String builderName) {
-    for (Map.Entry<AndroidCompilerMessageKind, List<String>> entry : messages.entrySet()) {
-      final AndroidCompilerMessageKind kind = entry.getKey();
-      final BuildMessage.Kind buildMessageKind = toBuildMessageKind(kind);
-
-      if (buildMessageKind == null) {
-        continue;
-      }
-
-      for (String message : entry.getValue()) {
-        context.processMessage(new CompilerMessage(builderName, buildMessageKind, message, sourcePath));
-      }
-    }
-  }
-
   @Nullable
-  private static BuildMessage.Kind toBuildMessageKind(@NotNull AndroidCompilerMessageKind kind) {
+  public static BuildMessage.Kind toBuildMessageKind(@NotNull AndroidCompilerMessageKind kind) {
     switch (kind) {
       case ERROR:
         return BuildMessage.Kind.ERROR;
@@ -237,5 +245,96 @@ class AndroidJpsUtil {
       }
     }
     return false;
+  }
+
+  public static ModuleLevelBuilder.ExitCode handleException(@NotNull CompileContext context,
+                                                            @NotNull Exception e,
+                                                            @NotNull String builderName)
+    throws ProjectBuildException {
+    String message = e.getMessage();
+
+    if (message == null) {
+      final ByteArrayOutputStream out = new ByteArrayOutputStream();
+      //noinspection IOResourceOpenedButNotSafelyClosed
+      e.printStackTrace(new PrintStream(out));
+      message = "Internal error: \n" + out.toString();
+    }
+    context.processMessage(new CompilerMessage(builderName, BuildMessage.Kind.ERROR, message));
+    throw new ProjectBuildException(message, e);
+  }
+
+  @Nullable
+  public static File getManifestFileForCompilationPath(@NotNull AndroidFacet facet) throws IOException {
+    return facet.getUseCustomManifestForCompilation()
+           ? facet.getManifestFileForCompilation()
+           : facet.getManifestFile();
+  }
+
+  @Nullable
+  public static Pair<AndroidSdk, IAndroidTarget> getAndroidPlatform(@NotNull Module module,
+                                                                    @NotNull CompileContext context,
+                                                                    @NotNull String builderName) {
+    final Sdk sdk = module.getSdk();
+    if (!(sdk instanceof AndroidSdk)) {
+      context.processMessage(new CompilerMessage(builderName, BuildMessage.Kind.ERROR,
+                                                 AndroidJpsBundle.message("android.jps.errors.sdk.not.specified", module.getName())));
+      return null;
+    }
+    final AndroidSdk androidSdk = (AndroidSdk)sdk;
+
+    final IAndroidTarget target = parseAndroidTarget(androidSdk, context, builderName);
+    if (target == null) {
+      context.processMessage(new CompilerMessage(builderName, BuildMessage.Kind.ERROR,
+                                                 AndroidJpsBundle.message("android.jps.errors.sdk.invalid", module.getName())));
+      return null;
+    }
+    return Pair.create(androidSdk, target);
+  }
+
+  public static String[] collectResourceDirs(@NotNull AndroidFacet facet) throws IOException {
+    final List<String> result = new ArrayList<String>();
+
+    final File resDir = getResourceDirForCompilationPath(facet);
+    if (resDir != null) {
+      result.add(resDir.getPath());
+    }
+
+    for (AndroidFacet depFacet : getAllDependentAndroidLibraries(facet.getModule())) {
+      final File depResDir = getResourceDirForCompilationPath(depFacet);
+      if (depResDir != null) {
+        result.add(depResDir.getPath());
+      }
+    }
+    return ArrayUtil.toStringArray(result);
+  }
+
+  @Nullable
+  private static File getResourceDirForCompilationPath(@NotNull AndroidFacet facet) throws IOException {
+    return facet.getUseCustomResFolderForCompilation()
+           ? facet.getResourceDirForCompilation()
+           : facet.getResourceDir();
+  }
+
+  @NotNull
+  static List<AndroidFacet> getAllDependentAndroidLibraries(@NotNull Module module) {
+    final List<AndroidFacet> result = new ArrayList<AndroidFacet>();
+    collectDependentAndroidLibraries(module, result, new HashSet<String>());
+    return result;
+  }
+
+  private static void collectDependentAndroidLibraries(@NotNull Module module,
+                                                       @NotNull List<AndroidFacet> result,
+                                                       @NotNull Set<String> visitedSet) {
+    for (ClasspathItem item : module.getClasspath(ClasspathKind.PRODUCTION_COMPILE, false)) {
+      if (item instanceof Module) {
+        final Module depModule = (Module)item;
+        final AndroidFacet depFacet = getFacet(depModule);
+
+        if (depFacet != null && depFacet.getLibrary() && visitedSet.add(module.getName())) {
+          collectDependentAndroidLibraries(depModule, result, visitedSet);
+          result.add(0, depFacet);
+        }
+      }
+    }
   }
 }

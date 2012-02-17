@@ -17,8 +17,6 @@ package com.theoryinpractice.testng.model;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 import com.theoryinpractice.testng.configuration.TestNGRunnableState;
 import org.testng.remote.strprotocol.*;
@@ -36,6 +34,7 @@ public class IDEARemoteTestRunnerClient extends AbstractRemoteTestRunnerClient
 
   public synchronized void startListening(TestNGConfiguration config) {
       final IMessageSender messageSender = TestNGRunnableState.supportSerializationProtocol(config)
+                                           //todo pass ack = true
                                            ? new SerializedMessageSender("localhost", myPort)
                                            : new StringMessageSender("localhost", myPort);
       final ServerConnection srvConnection = new ServerConnection(messageSender) {

@@ -23,7 +23,11 @@ import java.util.Collection;
 import java.util.List;
 
 public class MavenRepositoryLayoutConverter extends MavenConstantListConverter {
-  private static final List<String> VALUES = Arrays.asList("default", "legacy");
+  private static final List<String> VALUES = Arrays.asList("default", "legacy", "p2");
+
+  public MavenRepositoryLayoutConverter() {
+    super(false);
+  }
 
   protected Collection<String> getValues(@NotNull ConvertContext context) {
     return VALUES;

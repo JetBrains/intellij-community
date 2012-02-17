@@ -25,10 +25,16 @@ package com.intellij.execution;
 public class Output {
   private final String stdout;
   private final String stderr;
+  private int exitCode;
 
   public Output(String stdout, String stderr) {
+    this(stdout, stderr, -1);
+  }
+
+  public Output(String stdout, String stderr, int exitCode) {
     this.stdout = stdout;
     this.stderr = stderr;
+    this.exitCode = exitCode;
   }
 
   public String getStdout() {
@@ -37,5 +43,9 @@ public class Output {
 
   public String getStderr() {
     return stderr;
+  }
+
+  public int getExitCode() {
+    return exitCode;
   }
 }

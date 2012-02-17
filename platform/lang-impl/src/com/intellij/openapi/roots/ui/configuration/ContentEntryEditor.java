@@ -19,10 +19,11 @@ package com.intellij.openapi.roots.ui.configuration;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.EventDispatcher;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -274,7 +275,7 @@ public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallb
     return getExcludeFolder(file) != null;
   }
 
-  public boolean isUnderExcludedDirectory(final VirtualFile file) {
+  public boolean isUnderExcludedDirectory(@NotNull final VirtualFile file) {
     final ContentEntry contentEntry = getContentEntry();
     if (contentEntry == null) {
       return false;
@@ -285,7 +286,7 @@ public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallb
       if (excludedDir == null) {
         continue;
       }
-      if (VfsUtil.isAncestor(excludedDir, file, true)) {
+      if (VfsUtilCore.isAncestor(excludedDir, file, true)) {
         return true;
       }
     }

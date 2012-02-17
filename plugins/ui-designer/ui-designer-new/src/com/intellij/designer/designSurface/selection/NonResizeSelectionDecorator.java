@@ -39,14 +39,15 @@ public class NonResizeSelectionDecorator implements ComponentDecorator {
   @Override
   public InputTool findTargetTool(DecorationLayer layer, RadComponent component, int x, int y) {
     Rectangle bounds = layer.getComponentBounds(component);
+    int lineWidth = Math.max(myLineWidth, 2);
 
-    Rectangle top = new Rectangle(bounds.x, bounds.y, bounds.width, myLineWidth);
-    Rectangle bottom = new Rectangle(bounds.x, bounds.y + bounds.height - myLineWidth, bounds.width, myLineWidth);
-    Rectangle left = new Rectangle(bounds.x, bounds.y, myLineWidth, bounds.height);
-    Rectangle right = new Rectangle(bounds.x + bounds.width - myLineWidth, bounds.y, myLineWidth, bounds.height);
+    Rectangle top = new Rectangle(bounds.x, bounds.y, bounds.width, lineWidth);
+    Rectangle bottom = new Rectangle(bounds.x, bounds.y + bounds.height - lineWidth, bounds.width, lineWidth);
+    Rectangle left = new Rectangle(bounds.x, bounds.y, lineWidth, bounds.height);
+    Rectangle right = new Rectangle(bounds.x + bounds.width - lineWidth, bounds.y, lineWidth, bounds.height);
 
     if (top.contains(x, y) || bottom.contains(x, y) || left.contains(x, y) || right.contains(x, y)) {
-      return new DragTracker();
+      return new DragTracker(component);
     }
 
     return null;

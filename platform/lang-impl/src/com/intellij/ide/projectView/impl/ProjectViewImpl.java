@@ -541,7 +541,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     if (toolWindow != null) {
       myContentManager = toolWindow.getContentManager();
       toolWindow.setContentUiType(ToolWindowContentUiType.getInstance("combo"), null);
-      toolWindow.setIcon(IconLoader.getIcon(ApplicationInfoEx.getInstanceEx().getToolWindowIconUrl()));
       ((ToolWindowEx)toolWindow).setAdditionalGearActions(myActionGroup);
       toolWindow.getComponent().putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true");
     } else {

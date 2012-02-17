@@ -33,6 +33,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
@@ -168,12 +169,16 @@ public class EclipseCompiler extends ExternalCompiler {
 
     final String classPath = chunk.getCompilationClasspath();
 
-    commandLine.add("-bootclasspath");
-    // important: need to quote boot classpath if path to jdk contain spaces
-    commandLine.add(quoteBootClasspath ? CompilerUtil.quotePath(bootCp) : bootCp);
+    if (!StringUtil.isEmpty(bootCp)) {
+      commandLine.add("-bootclasspath");
+      // important: need to quote boot classpath if path to jdk contain spaces
+      commandLine.add(quoteBootClasspath ? CompilerUtil.quotePath(bootCp) : bootCp);
+    }
 
-    commandLine.add("-classpath");
-    commandLine.add(classPath);
+    if (!StringUtil.isEmpty(classPath)) {
+      commandLine.add("-classpath");
+      commandLine.add(classPath);
+    }
 
     commandLine.add("-d");
     commandLine.add(outputPath.replace('/', File.separatorChar));

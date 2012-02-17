@@ -73,7 +73,7 @@ public class CommonCodeStyleSettings {
           myIndentOptions.copyFrom(fileTypeIdentOptions);
           rootSettings.unregisterAdditionalIndentOptions(myFileType);
         }
-        else if (rootSettings.USE_SAME_INDENTS) {
+        else if (rootSettings.USE_SAME_INDENTS && !rootSettings.IGNORE_SAME_INDENTS_FOR_LANGUAGES) {
           myIndentOptions.copyFrom(rootSettings.OTHER_INDENT_OPTIONS);
         }
       }

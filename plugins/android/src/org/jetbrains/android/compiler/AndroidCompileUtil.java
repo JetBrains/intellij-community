@@ -40,7 +40,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.JavaPsiFacade;
@@ -62,29 +61,21 @@ import org.jetbrains.android.fileTypes.AndroidRenderscriptFileType;
 import org.jetbrains.android.resourceManagers.LocalResourceManager;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.sdk.AndroidSdkUtils;
-import org.jetbrains.android.util.AndroidCompilerMessageKind;
-import org.jetbrains.android.util.AndroidExecutionUtil;
-import org.jetbrains.android.util.AndroidUtils;
-import org.jetbrains.android.util.ResourceEntry;
+import org.jetbrains.android.util.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
-import java.util.jar.JarEntry;
-import java.util.jar.JarOutputStream;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * @author yole
  */
 public class AndroidCompileUtil {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.compiler.AndroidCompileUtil");
-  private static Pattern R_PATTERN = Pattern.compile("R(\\$.*)?\\.class");
-
-  private static final Pattern ourMessagePattern = Pattern.compile("(.+):(\\d+):.+");
 
   private static final Key<Boolean> RELEASE_BUILD_KEY = new Key<Boolean>("RELEASE_BUILD_KEY");
   @NonNls private static final String RESOURCES_CACHE_DIR_NAME = "res-cache";
@@ -154,7 +145,7 @@ public class AndroidCompileUtil {
           for (String message : messageList) {
             String url = null;
             int line = -1;
-            Matcher matcher = ourMessagePattern.matcher(message);
+            Matcher matcher = AndroidCommonUtils.COMPILER_MESSAGE_PATTERN.matcher(message);
             if (matcher.matches()) {
               String fileName = matcher.group(1);
               if (new File(fileName).exists()) {
@@ -747,97 +738,6 @@ public class AndroidCompileUtil {
   private static void waitForSmartMode(Project project) {
     if (!ApplicationManager.getApplication().isReadAccessAllowed()) {
       DumbService.getInstance(project).waitForSmartMode();
-    }
-  }
-
-  public static void packClassFilesIntoJar(@NotNull String[] firstPackageDirPaths,
-                                           @NotNull String[] libFirstPackageDirPaths,
-                                           @NotNull File jarFile) throws IOException {
-    final List<Pair<File, String>> files = new ArrayList<Pair<File, String>>();
-    for (String path : firstPackageDirPaths) {
-      final File firstPackageDir = new File(path);
-      if (firstPackageDir.exists()) {
-        addFileToJar(firstPackageDir, firstPackageDir.getParentFile(), true, files);
-      }
-    }
-
-    for (String path : libFirstPackageDirPaths) {
-      final File firstPackageDir = new File(path);
-      if (firstPackageDir.exists()) {
-        addFileToJar(firstPackageDir, firstPackageDir.getParentFile(), false, files);
-      }
-    }
-
-    if (files.size() > 0) {
-      final JarOutputStream jos = new JarOutputStream(new FileOutputStream(jarFile));
-      try {
-        for (Pair<File, String> pair : files) {
-          packIntoJar(jos, pair.getFirst(), pair.getSecond());
-        }
-      }
-      finally {
-        jos.close();
-      }
-    }
-    else if (jarFile.isFile()) {
-      if (!jarFile.delete()) {
-        throw new IOException("Cannot delete file " + FileUtil.toSystemDependentName(jarFile.getPath()));
-      }
-    }
-  }
-
-  private static void addFileToJar(@NotNull File file,
-                                   @NotNull File rootDirectory,
-                                   boolean packRClasses,
-                                   @NotNull List<Pair<File, String>> files)
-    throws IOException {
-
-    if (file.isDirectory()) {
-      final File[] children = file.listFiles();
-
-      if (children != null) {
-        for (File child : children) {
-          addFileToJar(child, rootDirectory, packRClasses, files);
-        }
-      }
-    }
-    else if (file.isFile()) {
-      if (!FileUtil.getExtension(file.getName()).equals("class")) {
-        return;
-      }
-
-      if (!packRClasses && R_PATTERN.matcher(file.getName()).matches()) {
-        return;
-      }
-
-      final String rootPath = rootDirectory.getAbsolutePath();
-
-      String path = file.getAbsolutePath();
-      path = FileUtil.toSystemIndependentName(path.substring(rootPath.length()));
-      if (path.charAt(0) == '/') {
-        path = path.substring(1);
-      }
-
-      files.add(new Pair<File, String>(file, path));
-    }
-  }
-
-  private static void packIntoJar(@NotNull JarOutputStream jar, @NotNull File file, @NotNull String path) throws IOException {
-    final JarEntry entry = new JarEntry(path);
-    entry.setTime(file.lastModified());
-    jar.putNextEntry(entry);
-
-    BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file));
-    try {
-      final byte[] buffer = new byte[1024];
-      int count;
-      while ((count = bis.read(buffer)) != -1) {
-        jar.write(buffer, 0, count);
-      }
-      jar.closeEntry();
-    }
-    finally {
-      bis.close();
     }
   }
 

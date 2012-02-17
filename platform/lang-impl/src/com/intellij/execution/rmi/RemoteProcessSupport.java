@@ -72,7 +72,11 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     }
     for (ProcessHandler handler : allHandlers) {
       handler.destroyProcess();
-      if (wait) handler.waitFor();
+    }
+    if (wait) {
+      for (ProcessHandler handler : allHandlers) {
+        handler.waitFor();
+      }
     }
   }
 

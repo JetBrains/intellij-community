@@ -67,22 +67,29 @@ public interface Notifications {
     }
 
     public static void notify(@NotNull final Notification notification, @Nullable final Project project) {
-      if (ApplicationManager.getApplication().isUnitTestMode()) return;
-      //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          if (project != null && !project.isDisposed()) {
-            project.getMessageBus().syncPublisher(TOPIC).notify(notification);
-          } else {
-            Application app = ApplicationManager.getApplication();
-            if (!app.isDisposed()) {
-              app.getMessageBus().syncPublisher(TOPIC).notify(notification);
-            }
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        doNotify(notification, project);
+      }
+      else {
+        //noinspection SSBasedInspection
+        SwingUtilities.invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            doNotify(notification, project);
           }
-        }
-      });
+        });
+      }
     }
 
+    private static void doNotify(Notification notification, Project project) {
+      if (project != null && !project.isDisposed()) {
+        project.getMessageBus().syncPublisher(TOPIC).notify(notification);
+      } else {
+        Application app = ApplicationManager.getApplication();
+        if (!app.isDisposed()) {
+          app.getMessageBus().syncPublisher(TOPIC).notify(notification);
+        }
+      }
+    }
   }
 }

@@ -26,6 +26,8 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.PersistentStringEnumerator;
+import gnu.trove.TIntObjectHashMap;
+import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -33,9 +35,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /*
@@ -46,8 +46,8 @@ public class SerializationManagerImpl extends SerializationManager implements Ap
 
   private PersistentStringEnumerator myNameStorage;
 
-  private final Map<Integer, StubSerializer<? extends StubElement>> myIdToSerializer = new HashMap<Integer, StubSerializer<? extends StubElement>>();
-  private final Map<StubSerializer<? extends StubElement>, Integer> mySerializerToId = new HashMap<StubSerializer<? extends StubElement>, Integer>();
+  private final TIntObjectHashMap<StubSerializer<? extends StubElement>> myIdToSerializer = new TIntObjectHashMap<StubSerializer<? extends StubElement>>();
+  private final TObjectIntHashMap<StubSerializer<? extends StubElement>> mySerializerToId = new TObjectIntHashMap<StubSerializer<? extends StubElement>>();
   private final List<StubSerializer<? extends StubElement>> myAllSerializers = new ArrayList<StubSerializer<? extends StubElement>>();
   private final AtomicBoolean myNameStorageCrashed = new AtomicBoolean(false);
   private final File myFile = new File(PathManager.getIndexRoot(), "rep.names");
@@ -132,8 +132,8 @@ public class SerializationManagerImpl extends SerializationManager implements Ap
     final StubSerializer old = myIdToSerializer.put(id, serializer);
     assert old == null : "ID: " + serializer.getExternalId() + " is not unique; Already registered serializer with this ID: " + old.getClass().getName();
 
-    final Integer oldId = mySerializerToId.put(serializer, id);
-    assert oldId == null : "Serializer " + serializer + " is already registered; Old ID:" + oldId;
+    final int oldId = mySerializerToId.put(serializer, id);
+    assert oldId == 0 : "Serializer " + serializer + " is already registered; Old ID:" + oldId;
   }
 
   private int persistentId(@NotNull final StubSerializer<? extends StubElement> serializer) throws IOException {
@@ -229,9 +229,9 @@ public class SerializationManagerImpl extends SerializationManager implements Ap
   }
 
   private int getClassId(final StubSerializer serializer) {
-    final Integer idValue = mySerializerToId.get(serializer);
-    assert idValue != null: "No ID found for serializer " + LogUtil.objectAndClass(serializer);
-    return idValue.intValue();
+    final int idValue = mySerializerToId.get(serializer);
+    assert idValue != 0: "No ID found for serializer " + LogUtil.objectAndClass(serializer);
+    return idValue;
   }
 
   private StubSerializer getClassById(int id) {

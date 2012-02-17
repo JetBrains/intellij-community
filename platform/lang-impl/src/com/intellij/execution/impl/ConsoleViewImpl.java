@@ -320,13 +320,11 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       // rear document content will be cleared on next flush;
       myContentSize = 0;
       myBuffer.clear();
+      myHyperlinks.clearHyperlinks();
     }
     myFlushAlarm.cancelAllRequests();
     myFlushAlarm.addRequest(myClearRequest, 0, getStateForUpdate());
-    if (myHeavyAlarm != null) {
-      myHeavyAlarm.cancelAllRequests();
-      ++ myHeavyUpdateTicket;
-    }
+    cancelHeavyAlarm();
   }
 
   public void scrollTo(final int offset) {
@@ -402,7 +400,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   public JComponent getComponent() {
     if (myMainPanel == null) {
       myMainPanel = new JPanel(new BorderLayout());
-      myJLayeredPane = new MyDiffContainer(myMainPanel, "Checking recent changes...");
+      myJLayeredPane = new MyDiffContainer(myMainPanel, myPredefinedMessageFilter.getUpdateMessage());
       add(myJLayeredPane, BorderLayout.CENTER);
     }
 
@@ -410,7 +408,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       myEditor = createEditor();
       myEditor.getScrollPane().setBorder(null);
       myHyperlinks = new EditorHyperlinkSupport(myEditor, myProject);
-      requestFlushImmediately();
+      //requestFlushImmediately();
       myMainPanel.add(createCenterComponent(), BorderLayout.CENTER);
       myEditor.getScrollingModel().addVisibleAreaListener(new VisibleAreaListener() {
         @Override
@@ -500,7 +498,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   private ModalityState getStateForUpdate() {
-    return myStateForUpdate != null ? myStateForUpdate.compute() : ModalityState.stateForComponent(this);
+    return null;//myStateForUpdate != null ? myStateForUpdate.compute() : ModalityState.stateForComponent(this);
   }
 
   private void requestFlushImmediately() {
@@ -527,6 +525,10 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   private void flushDeferredText(boolean clear) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (myProject.isDisposed()) {
+      return;
+    }
+    if (myEditor == null) {
+      //already disposed
       return;
     }
     if (clear) {
@@ -564,6 +566,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       }
       deferredTokensSize = deferredTokens.size();
       myBuffer.clear(false);
+      cancelHeavyAlarm();
     }
     final Document document = myEditor.getDocument();
     final int oldLineCount = document.getLineCount();
@@ -620,6 +623,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
           it.remove();
         }
       }
+      cancelHeavyAlarm();
       highlightHyperlinksAndFoldings(newLineCount >= lineCount + 1 ? newLineCount - lineCount - 1 : 0, newLineCount - 1);
     }
     else if (oldLineCount < newLineCount) {
@@ -628,6 +632,13 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
     if (isAtEndOfDocument) {
       EditorUtil.scrollToTheEnd(myEditor);
+    }
+  }
+
+  private void cancelHeavyAlarm() {
+    if (myHeavyAlarm != null) {
+      myHeavyAlarm.cancelAllRequests();
+      ++myHeavyUpdateTicket;
     }
   }
 
@@ -853,20 +864,14 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         myPredefinedMessageFilter.applyHeavyFilter(documentCopy, startOffset, startLine, new Consumer<FilterMixin.AdditionalHighlight>() {
           @Override
           public void consume(final FilterMixin.AdditionalHighlight additionalHighlight) {
-            SwingUtilities.invokeLater(
-              new Runnable() {
-                @Override
-                public void run() {
-                  if (myFlushAlarm.isDisposed()) return;
-                  myFlushAlarm.addRequest(new Runnable() {
-                    @Override
-                    public void run() {
-                      if (myHeavyUpdateTicket != currentValue) return;
-                      myHyperlinks.adjustHighlighters(Collections.singletonList(additionalHighlight));
-                    }
-                  }, 0);
-                }
-              });
+            if (myFlushAlarm.isDisposed()) return;
+            myFlushAlarm.addRequest(new Runnable() {
+              @Override
+              public void run() {
+                if (myHeavyUpdateTicket != currentValue) return;
+                myHyperlinks.adjustHighlighters(Collections.singletonList(additionalHighlight));
+              }
+            }, 0, getStateForUpdate());
           }
         });
         if (myHeavyAlarm.getActiveRequestCount() == 0) {
@@ -992,7 +997,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     public void update(AnActionEvent e) {
       final boolean enabled = e.getData(LangDataKeys.CONSOLE_VIEW) != null;
       e.getPresentation().setEnabled(enabled);
-      e.getPresentation().setVisible(enabled);
     }
 
     public void actionPerformed(final AnActionEvent e) {

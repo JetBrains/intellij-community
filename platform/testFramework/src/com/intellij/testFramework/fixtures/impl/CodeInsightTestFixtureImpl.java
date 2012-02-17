@@ -449,19 +449,32 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
                                                                        final Project project,
                                                                        final InspectionManagerEx inspectionManager,
                                                                        final InspectionTool... tools) {
-    final GlobalInspectionContextImpl globalContext = new GlobalInspectionContextImpl(project, inspectionManager.getContentManager()){
+
+    InspectionToolRegistrar registrar = new InspectionToolRegistrar(null) {
+      @Override
+      public List<InspectionToolWrapper> createTools() {
+        return ContainerUtil.map(tools, new Function<InspectionTool, InspectionToolWrapper>() {
+          @Override
+          public InspectionToolWrapper fun(InspectionTool tool) {
+            return tool instanceof InspectionToolWrapper ? (InspectionToolWrapper)tool : wrapTool(tool);
+          }
+        });
+      }
+    };
+    final InspectionProfileImpl profile = new InspectionProfileImpl("test", registrar, InspectionProfileManager.getInstance());
+    GlobalInspectionContextImpl globalContext = new GlobalInspectionContextImpl(project, inspectionManager.getContentManager()) {
       @Override
       protected List<ToolsImpl> getUsedTools() {
-        List<ToolsImpl> result = new ArrayList<ToolsImpl>();
-        for (InspectionTool tool : tools) {
-          result.add(new ToolsImpl(tool, tool.getDefaultLevel(), true));
+        try {
+          InspectionProfileImpl.INIT_INSPECTIONS = true;
+          for (InspectionTool tool : tools) {
+            profile.enableTool(tool.getShortName());
+          }
+          return profile.getAllEnabledInspectionTools(project);
         }
-        return result;
-      }
-
-      @Override
-      public boolean isToCheckMember(PsiElement element, InspectionProfileEntry tool) {
-        return true;
+        finally {
+          InspectionProfileImpl.INIT_INSPECTIONS = false;
+        }
       }
     };
     globalContext.setCurrentScope(scope);

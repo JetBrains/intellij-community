@@ -18,8 +18,10 @@ package com.intellij.designer.model;
 /**
  * @author Alexander Lobas
  */
-public interface RadComponentVisitor {
-  boolean visit(RadComponent component);
+public abstract class RadComponentVisitor {
+  public boolean visit(RadComponent component) {
+    return true;
+  }
 
-  void endVisit(RadComponent component);
+  public abstract void endVisit(RadComponent component);
 }

@@ -367,10 +367,10 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
         doc = doc.getPrevSibling();
       }
       if (doc instanceof PsiComment) {
-        if (text.length() != 0) text.append("\n");
+        if (text.length() != 0) text.insert(0, "\n");
         String comment = doc.getText();
         String trimmed = StringUtil.trimStart(StringUtil.trimStart(comment, "#"), "!");
-        text.append(trimmed.trim());
+        text.insert(0, trimmed.trim());
       }
       else {
         break;

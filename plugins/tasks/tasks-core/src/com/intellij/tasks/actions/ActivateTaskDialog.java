@@ -17,10 +17,14 @@
 package com.intellij.tasks.actions;
 
 import com.intellij.CommonBundle;
+import com.intellij.codeInsight.completion.InsertHandler;
+import com.intellij.codeInsight.completion.InsertionContext;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -35,15 +39,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.tasks.*;
 import com.intellij.tasks.config.TaskRepositoriesConfigurable;
-import com.intellij.tasks.impl.TaskCompletionContributor;
 import com.intellij.tasks.impl.TaskManagerImpl;
-import com.intellij.ui.EditorTextField;
-import com.intellij.ui.HyperlinkAdapter;
-import com.intellij.ui.HyperlinkLabel;
-import com.intellij.ui.LanguageTextField;
-import com.intellij.util.Consumer;
+import com.intellij.ui.*;
 import com.intellij.util.ui.AsyncProcessIcon;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -51,7 +51,9 @@ import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * @author Dmitry Avdeev
@@ -83,21 +85,17 @@ public class ActivateTaskDialog extends DialogWrapper {
     myProject = project;
     setTitle("Open Task");
 
-    myTaskName = new LanguageTextField(PlainTextLanguage.INSTANCE, project, "");
-    myEditorPanel.add(myTaskName);
-
-    TaskCompletionContributor.installCompletion(myTaskName.getDocument(), myProject, new Consumer<Task>() {
-      @Override
-      public void consume(Task task) {
+    myTaskName = new TextFieldWithAutoCompletion<Task>(project, new MyTextFieldWithAutoCompletionListProvider(project) {
+      protected void handleInsert(@NotNull final Task task) {
         mySelectedTask = task;
         taskChanged();
       }
-    }, true);
-    
+    }, false);
+    myEditorPanel.add(myTaskName);
     myTaskName.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       public void documentChanged(DocumentEvent e) {
-        taskChanged();        
+        taskChanged();
       }
     });
 
@@ -107,7 +105,7 @@ public class ActivateTaskDialog extends DialogWrapper {
       myNameLabel.setText("Enter task name or press " + KeymapUtil.getShortcutText(shortcuts[0]) + " to choose an existing task:");
     }
     myNameLabel.setLabelFor(myTaskName);
-    
+
     TaskManagerImpl manager = (TaskManagerImpl)TaskManager.getManager(project);
     ControlBinder binder = new ControlBinder(manager.getState());
     binder.bindAnnotations(this);
@@ -140,7 +138,8 @@ public class ActivateTaskDialog extends DialogWrapper {
           });
         }
       });
-    } else {
+    }
+    else {
       myUpdateIcon.setVisible(false);
       myUpdateLabel.setText("");
     }
@@ -184,7 +183,7 @@ public class ActivateTaskDialog extends DialogWrapper {
 
     // refresh change lists
     ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
-    for (Iterator<ChangeListInfo> it = taskManager.getOpenChangelists(task).iterator(); it.hasNext();) {
+    for (Iterator<ChangeListInfo> it = taskManager.getOpenChangelists(task).iterator(); it.hasNext(); ) {
       ChangeListInfo changeListInfo = it.next();
       if (changeListManager.getChangeList(changeListInfo.id) == null) {
         it.remove();
@@ -194,10 +193,12 @@ public class ActivateTaskDialog extends DialogWrapper {
     if (!myVcsEnabled) {
       myCreateChangelist.setEnabled(false);
       myCreateChangelist.setSelected(false);
-    } else if (task != null && !taskManager.getOpenChangelists(task).isEmpty()) {
+    }
+    else if (task != null && !taskManager.getOpenChangelists(task).isEmpty()) {
       myCreateChangelist.setSelected(true);
       myCreateChangelist.setEnabled(false);
-    } else {
+    }
+    else {
       myCreateChangelist.setSelected(taskManager.getState().createChangelist);
       myCreateChangelist.setEnabled(true);
     }
@@ -236,11 +237,11 @@ public class ActivateTaskDialog extends DialogWrapper {
       }
       else if (mySelectedTask == null) {
         if (Messages.showOkCancelDialog(myProject,
-                            "Issue " + lastId + " not found.\n" +
-                            "Do you want to create local task?",
-                            "Issue Not Found",
-                            CommonBundle.getNoButtonText(), CommonBundle.getYesButtonText(),
-                            Messages.getQuestionIcon()) == DialogWrapper.OK_EXIT_CODE) {
+                                        "Issue " + lastId + " not found.\n" +
+                                        "Do you want to create local task?",
+                                        "Issue Not Found",
+                                        CommonBundle.getNoButtonText(), CommonBundle.getYesButtonText(),
+                                        Messages.getQuestionIcon()) == DialogWrapper.OK_EXIT_CODE) {
           return;
         }
         mySelectedTask = manager.createLocalTask(taskName);
@@ -307,5 +308,89 @@ public class ActivateTaskDialog extends DialogWrapper {
         }
       }
     });
+  }
+
+  public static class MyTextFieldWithAutoCompletionListProvider extends TextFieldWithAutoCompletionListProvider<Task> {
+    private final TaskSearchSupport mySearchSupport;
+
+    public MyTextFieldWithAutoCompletionListProvider(@Nullable final Project project) {
+      super(null);
+      mySearchSupport = new TaskSearchSupport(project);
+    }
+
+    @Override
+    protected String getQuickDocHotKeyAdvertisementTail(@NotNull String shortcut) {
+      return " would show task description and comments";
+    }
+
+    @NotNull
+    @Override
+    public List<Task> getItems(final String prefix, final boolean cached) {
+      return mySearchSupport.getItems(prefix, cached);
+    }
+
+    @Override
+    public void setItems(@Nullable Collection variants) {
+      // Do nothing
+    }
+
+    @Override
+    public LookupElementBuilder createLookupBuilder(@NotNull final Task task) {
+      LookupElementBuilder builder = super.createLookupBuilder(task);
+
+      builder = builder.addLookupString(task.getSummary());
+      if (task.isClosed()) {
+        builder = builder.setStrikeout();
+      }
+
+      return builder;
+    }
+
+    @Override
+    protected InsertHandler<LookupElement> createInsertHandler(@NotNull final Task task) {
+      return new InsertHandler<LookupElement>() {
+        @Override
+        public void handleInsert(InsertionContext context, LookupElement item) {
+          Document document = context.getEditor().getDocument();
+          String s = task.getId() + ": " + task.getSummary();
+          s = StringUtil.convertLineSeparators(s);
+          document.replaceString(context.getStartOffset(), context.getTailOffset(), s);
+          context.getEditor().getCaretModel().moveToOffset(context.getStartOffset() + s.length());
+
+          MyTextFieldWithAutoCompletionListProvider.this.handleInsert(task);
+        }
+      };
+    }
+
+    protected void handleInsert(@NotNull final Task task) {
+      // Override it for autocompletion insert handler
+    }
+
+    @Override
+    protected Icon getIcon(@NotNull final Task task) {
+      return task.getIcon();
+    }
+
+    @NotNull
+    @Override
+    protected String getLookupString(@NotNull final Task task) {
+      return task.getId();
+    }
+
+    @Override
+    protected String getTailText(@NotNull final Task task) {
+      return " " + task.getSummary();
+    }
+
+    @Override
+    protected String getTypeText(@NotNull final Task task) {
+      return null;
+    }
+
+    @Override
+    public int compare(@NotNull final Task task1, @NotNull final Task task2) {
+      // N/A here
+      throw new UnsupportedOperationException();
+    }
   }
 }

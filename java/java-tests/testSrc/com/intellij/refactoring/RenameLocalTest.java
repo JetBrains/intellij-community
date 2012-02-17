@@ -91,6 +91,10 @@ public class RenameLocalTest extends LightRefactoringTestCase {
     doTestInplaceRename("r1");
   }
 
+  public void testRenameInPlaceInStaticContextWithConflictingField() throws Exception {
+    doTestInplaceRename("s");
+  }
+
   private void doTestInplaceRename(final String newName) throws Exception {
     configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
 

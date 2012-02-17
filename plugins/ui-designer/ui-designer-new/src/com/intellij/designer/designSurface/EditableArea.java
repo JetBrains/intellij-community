@@ -91,4 +91,8 @@ public abstract class EditableArea {
   public abstract InputTool findTargetTool(int x, int y);
 
   public abstract ComponentDecorator getRootSelectionDecorator();
+
+  public abstract FeedbackLayer getFeedbackLayer();
+
+  public abstract RadComponent getRootComponent();
 }

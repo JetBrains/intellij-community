@@ -1,35 +1,41 @@
 package com.intellij.codeInspection;
 
-import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.codeInspection.ex.InspectionToolRegistrar;
+import com.intellij.codeInspection.emptyMethod.EmptyMethodInspection;
+import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.i18n.I18nInspection;
+import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.InspectionTestCase;
 
 public class RedundantSuppressTest extends InspectionTestCase {
   private GlobalInspectionToolWrapper myWrapper;
+  private InspectionTool[] myInspectionTools;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
     InspectionToolRegistrar.getInstance().ensureInitialized();
-    myWrapper = new GlobalInspectionToolWrapper(new RedundantSuppressInspection());
+    myInspectionTools = new InspectionTool[]{new LocalInspectionToolWrapper(new I18nInspection()),
+      new GlobalInspectionToolWrapper(new EmptyMethodInspection())};
+
+    myWrapper = new GlobalInspectionToolWrapper(new RedundantSuppressInspection() {
+      @Override
+      protected InspectionTool[] getInspectionTools(PsiElement psiElement, InspectionManager manager) {
+        return myInspectionTools;
+      }
+    });
   }
 
   public void testDefaultFile() throws Exception {
-    InspectionProfileImpl.INIT_INSPECTIONS = true;
     doTest();
-    InspectionProfileImpl.INIT_INSPECTIONS = false;
   }
 
   public void testSuppressAll() throws Exception {
-    InspectionProfileImpl.INIT_INSPECTIONS = true;
     try {
       ((RedundantSuppressInspection)myWrapper.getTool()).IGNORE_ALL = true;
       doTest();
     }
     finally {
       ((RedundantSuppressInspection)myWrapper.getTool()).IGNORE_ALL = false;
-      InspectionProfileImpl.INIT_INSPECTIONS = false;
     }
   }
 

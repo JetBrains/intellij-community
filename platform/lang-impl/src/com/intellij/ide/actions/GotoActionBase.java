@@ -29,13 +29,18 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.awt.*;
 import java.util.Map;
 
 /**
@@ -104,11 +109,25 @@ public abstract class GotoActionBase extends AnAction {
     public abstract void elementChosen(ChooseByNamePopup popup, Object element);
   }
 
-  private static Pair<String, Integer> getInitialText(Editor editor) {
+  private static Pair<String, Integer> getInitialText(boolean useEditorSelection, AnActionEvent e) {
+    final Editor editor = e.getData(PlatformDataKeys.EDITOR);
     if (editor != null) {
       final String selectedText = editor.getSelectionModel().getSelectedText();
       if (selectedText != null && !selectedText.contains("\n")) {
         return Pair.create(selectedText, 0);
+      }
+    }
+
+    final String query = e.getData(SpeedSearchSupply.SPEED_SEARCH_CURRENT_QUERY);
+    if (!StringUtil.isEmpty(query)) {
+      return Pair.create(query, 0);
+    }
+
+    final Component focusOwner = IdeFocusManager.getInstance(getEventProject(e)).getFocusOwner();
+    if (focusOwner instanceof JComponent) {
+      final SpeedSearchSupply supply = SpeedSearchSupply.getSupply((JComponent)focusOwner);
+      if (supply != null) {
+        return Pair.create(supply.getEnteredPrefix(), 0);
       }
     }
 
@@ -136,7 +155,7 @@ public abstract class GotoActionBase extends AnAction {
     boolean mayRequestOpenInCurrentWindow = model.willOpenEditor() && FileEditorManagerEx.getInstanceEx(project).hasSplitOrUndockedWindows();
     final Class startedAction = myInAction;
     LOG.assertTrue(startedAction != null);
-    Pair<String, Integer> start = getInitialText(useSelectionFromEditor ? e.getData(PlatformDataKeys.EDITOR) : null);
+    Pair<String, Integer> start = getInitialText(useSelectionFromEditor, e);
     final ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, model, getPsiContext(e), start.first, mayRequestOpenInCurrentWindow, start.second);
     popup.setCheckBoxShortcut(getShortcutSet());
     popup.setFindUsagesTitle(findUsagesTitle);

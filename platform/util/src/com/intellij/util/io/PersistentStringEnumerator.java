@@ -54,19 +54,21 @@ public class PersistentStringEnumerator extends PersistentEnumeratorDelegate<Str
     if (myHashcodeToIdCache != null && value != null) {
       Integer cachedId = myHashcodeToIdCache.get(valueHashCode = value.hashCode());
       if (cachedId != null) {
-        String s = myIdToStringCache.get(cachedId.intValue());
+        String s = myIdToStringCache.get(cachedId);
         if (s != null && value.equals(s)) return cachedId.intValue();
       }
     }
 
     int enumerate = super.enumerate(value);
+    Integer enumeratedInteger = null;
 
-    if (myHashcodeToIdCache != null && value != null) {
-      myHashcodeToIdCache.put(valueHashCode, enumerate);
+    if (myHashcodeToIdCache != null) {
+      enumeratedInteger = enumerate;
+      if (value != null) myHashcodeToIdCache.put(valueHashCode, enumeratedInteger);
     }
 
     if (myIdToStringCache != null) {
-      myIdToStringCache.put(enumerate, value);
+      myIdToStringCache.put(enumeratedInteger, value);
     }
     return enumerate;
   }

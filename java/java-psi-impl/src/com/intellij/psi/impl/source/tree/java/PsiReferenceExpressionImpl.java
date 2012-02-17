@@ -299,7 +299,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
       return null;
     }
     ResolveResult[] results = ResolveCache.getInstance(getProject()).resolveWithCaching(this, OurGenericsResolver.INSTANCE, true, incompleteCode);
-    return (JavaResolveResult[])results;
+    return results.length == 0 ? JavaResolveResult.EMPTY_ARRAY : (JavaResolveResult[])results;
   }
 
   @Override

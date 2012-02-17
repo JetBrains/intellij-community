@@ -101,18 +101,22 @@ public class InspectionToolRegistrar {
         for (final InspectionProfileEntry profileEntry : factory.createTools()) {
           myInspectionToolFactories.add(new Factory<InspectionToolWrapper>() {
             public InspectionToolWrapper create() {
-              if (profileEntry instanceof LocalInspectionTool) {
-                return new LocalInspectionToolWrapper((LocalInspectionTool)profileEntry);
-              }
-              else if (profileEntry instanceof GlobalInspectionTool) {
-                return new GlobalInspectionToolWrapper((GlobalInspectionTool)profileEntry);
-              }
-              return new CommonInspectionToolWrapper((InspectionTool)profileEntry);
+              return wrapTool(profileEntry);
             }
           });
         }
       }
     }
+  }
+
+  protected static InspectionToolWrapper wrapTool(InspectionProfileEntry profileEntry) {
+    if (profileEntry instanceof LocalInspectionTool) {
+      return new LocalInspectionToolWrapper((LocalInspectionTool)profileEntry);
+    }
+    else if (profileEntry instanceof GlobalInspectionTool) {
+      return new GlobalInspectionToolWrapper((GlobalInspectionTool)profileEntry);
+    }
+    return new CommonInspectionToolWrapper((InspectionTool)profileEntry);
   }
 
   public void registerTools(final InspectionToolProvider[] providers) {

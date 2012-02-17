@@ -3,16 +3,19 @@ package com.intellij.tasks;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.psi.PsiFile;
+import com.intellij.tasks.actions.ActivateTaskDialog;
 import com.intellij.tasks.impl.LocalTaskImpl;
-import com.intellij.tasks.impl.TaskCompletionContributor;
 import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.testFramework.MapDataContext;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.ui.TextFieldWithAutoCompletionContributor;
 
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Dmitry Avdeev
@@ -45,9 +48,18 @@ public class TaskCompletionTest extends LightCodeInsightFixtureTestCase {
 
   public void testKeepOrder() throws Exception {
     configureFile("<caret>");
-    configureRepository(new LocalTaskImpl("TEST-002", "Test task 2"), new LocalTaskImpl("TEST-001", "Test task 1"));
+    configureRepository(new LocalTaskImpl("TEST-002", "Test task 2"),
+                        new LocalTaskImpl("TEST-003", "Test task 1"),
+                        new LocalTaskImpl("TEST-001", "Test task 1"),
+                        new LocalTaskImpl("TEST-004", "Test task 1")
+    );
+
+    getManager().updateIssues(null);
+    List<Task> issues = getManager().getCachedIssues();
+//    assertEquals("TEST-002", issues.get(0).getSummary());
+
     myFixture.complete(CompletionType.BASIC);
-    assertEquals(Arrays.asList("TEST-002", "TEST-001"), myFixture.getLookupElementStrings());
+    assertEquals(Arrays.asList("TEST-002", "TEST-003", "TEST-001", "TEST-004"), myFixture.getLookupElementStrings());
   }
 
   public void testSIOOBE() throws Exception {
@@ -64,14 +76,22 @@ public class TaskCompletionTest extends LightCodeInsightFixtureTestCase {
   private void configureFile(String text) {
     PsiFile psiFile = myFixture.configureByText("test.txt", text);
     Document document = myFixture.getDocument(psiFile);
-    TaskCompletionContributor.installCompletion(document, getProject(), null, false);
+    final Project project = getProject();
+    TextFieldWithAutoCompletionContributor.installCompletion(document, project,
+                                                             new ActivateTaskDialog.MyTextFieldWithAutoCompletionListProvider(project),
+                                                             false);
     document.putUserData(CommitMessage.DATA_CONTEXT_KEY, new MapDataContext());
-
   }
 
-  private void configureRepository(LocalTaskImpl... tasks) {
-    TaskManagerImpl manager = (TaskManagerImpl)TaskManager.getManager(getProject());
-    manager.setRepositories(Arrays.asList(new TestRepository(tasks)));
+  private TestRepository configureRepository(LocalTaskImpl... tasks) {
+    TaskManagerImpl manager = getManager();
+    TestRepository repository = new TestRepository(tasks);
+    manager.setRepositories(Arrays.asList(repository));
     manager.getState().updateEnabled = false;
+    return repository;
+  }
+
+  private TaskManagerImpl getManager() {
+    return (TaskManagerImpl)TaskManager.getManager(getProject());
   }
 }

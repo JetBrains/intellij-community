@@ -32,7 +32,7 @@ import java.util.List;
 /**
  * @author Roman Chernyatchik
  */
-public class SMTRunnerUIActionsHandler implements TestResultsViewer.EventsListener {
+public class SMTRunnerUIActionsHandler extends TestResultsViewer.SMEventsAdapter {
   private final TestConsoleProperties myConsoleProperties;
 
   public SMTRunnerUIActionsHandler(final TestConsoleProperties consoleProperties) {
@@ -43,10 +43,6 @@ public class SMTRunnerUIActionsHandler implements TestResultsViewer.EventsListen
     if (TestConsoleProperties.TRACK_RUNNING_TEST.value(myConsoleProperties)) {
       sender.selectAndNotify(test);
     }
-  }
-
-  public void onTestingStarted(TestResultsViewer sender) {
-    // Do nothing
   }
 
   public void onTestingFinished(final TestResultsViewer sender) {
@@ -60,12 +56,14 @@ public class SMTRunnerUIActionsHandler implements TestResultsViewer.EventsListen
       final List<SMTestProxy> allTests = testsRootNode.getAllTests();
       final AbstractTestProxy firstError = ProxyFilters.ERROR_LEAF.detectIn(allTests);
       if (firstError != null) {
-       firstDefect = firstError;
-      } else {
+        firstDefect = firstError;
+      }
+      else {
         final AbstractTestProxy firstFailure = ProxyFilters.FAILURE_LEAF.detectIn(allTests);
         if (firstFailure != null) {
-         firstDefect = firstFailure;
-        } else {
+          firstDefect = firstFailure;
+        }
+        else {
           firstDefect = null;
         }
       }

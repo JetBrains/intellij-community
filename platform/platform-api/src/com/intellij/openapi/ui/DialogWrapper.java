@@ -32,6 +32,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
@@ -1605,6 +1606,12 @@ public abstract class DialogWrapper {
   }
 
   private void resizeWithAnimation(final Dimension size) {
+    //todo[kb]: fix this PITA
+    if (!Registry.is("enable.animation.on.dialogs")) {
+      setSize(size.width, size.height);
+      return;
+    }
+
     new Thread("DialogWrapper resizer") {
       int time = 200;
       int steps = 7;

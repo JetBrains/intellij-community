@@ -16,6 +16,8 @@ public class AndroidBuilderService extends BuilderService {
   @Override
   public List<? extends ModuleLevelBuilder> createModuleLevelBuilders(ExecutorService executorService) {
     return Arrays.asList(new AndroidSourceGeneratingBuilder(),
-                         new AndroidDexBuilder());
+                         new AndroidLibraryPackagingBuilder(),
+                         new AndroidDexBuilder(),
+                         new AndroidPackagingBuilder());
   }
 }

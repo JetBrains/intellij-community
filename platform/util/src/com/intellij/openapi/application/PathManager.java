@@ -67,6 +67,12 @@ public class PathManager {
     }
     else {
       ourHomePath = getHomePathFor(PathManager.class);
+      if (ourHomePath == null) {
+        if (SystemInfo.isMac) {
+          throw new RuntimeException("Could not find installation home path. Please reinstall the software.");
+        }
+        throw new RuntimeException("Could not find IDEA home path. Please make sure bin/idea.properties is present in the installation directory.");
+      }
     }
     try {
       if (!SystemInfo.isFileSystemCaseSensitive) {

@@ -16,179 +16,154 @@
 
 package com.intellij.ui;
 
-import com.intellij.codeInsight.lookup.LookupArranger;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.codeInsight.lookup.impl.LookupImpl;
-import com.intellij.lang.Language;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.editor.Document;
+import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.editor.event.DocumentAdapter;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.FocusChangeListener;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileFactory;
-import com.intellij.psi.codeStyle.NameUtil;
-import com.intellij.util.Function;
-import com.intellij.util.LocalTimeCounter;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.text.Matcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import javax.swing.*;
+import java.util.Collection;
 
 /**
  * @author Roman Chernyatchik
- *
- * It is text field with autocompletion from list of values.
- *
- * Autocompletion is implemented via LookupManager.
- * Use setVariants(..) set list of values for autocompletion.
- * For variants you can use not only instances of PresentableLookupValue, but
- * also instances of LookupValueWithPriority and LookupValueWithUIHint  
+ *         <p/>
+ *         It is text field with autocompletion from list of values.
+ *         <p/>
+ *         Autocompletion is implemented via LookupManager.
+ *         Use setVariants(..) set list of values for autocompletion.
+ *         For variants you can use not only instances of PresentableLookupValue, but
+ *         also instances of LookupValueWithPriority and LookupValueWithUIHint
  */
-public class TextFieldWithAutoCompletion extends EditorTextField {
-  private List<LookupElement> myVariants;
-  private String myAdText;
-  
-  private Comparator<LookupElement> myComparator = new Comparator<LookupElement>() {
-    public int compare(final LookupElement item1,
-                       final LookupElement item2) {
-      return item1.getLookupString().compareTo(item2.getLookupString());
-    }
-  };
+public class TextFieldWithAutoCompletion<T> extends LanguageTextField {
+
+  public static final TextFieldWithAutoCompletionListProvider EMPTY_COMPLETION = new StringsCompletionProvider(null, null);
+  private final boolean myShowAutocompletionIsAvailableHint;
 
   public TextFieldWithAutoCompletion() {
-    super();
+    // For UI designer
+    this(null, null, false);
   }
 
-  public TextFieldWithAutoCompletion(final Project project) {
-    super(createDocument(project), project, PlainTextLanguage.INSTANCE.getAssociatedFileType());
+  public TextFieldWithAutoCompletion(final Project project,
+                                     final TextFieldWithAutoCompletionListProvider<T> provider,
+                                     final boolean showAutocompletionIsAvailableHint) {
+    super(PlainTextLanguage.INSTANCE, project, "");
 
-    new VariantsCompletionAction();
-  }
+    myShowAutocompletionIsAvailableHint = showAutocompletionIsAvailableHint;
 
-  private static Document createDocument(@Nullable final Project project) {
-    if (project == null) {
-      return EditorFactory.getInstance().createDocument("");
-    }
-
-    final Language language = PlainTextLanguage.INSTANCE;
-    final PsiFileFactory factory = PsiFileFactory.getInstance(project);
-    final FileType fileType = language.getAssociatedFileType();
-    assert fileType != null;
-
-    final long stamp = LocalTimeCounter.currentTime();
-    final PsiFile psiFile = factory.createFileFromText("Dummy." + fileType.getDefaultExtension(), fileType, "", stamp, true, false);
-    final Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
-    assert document != null;
-    return document;
-  }
-
-  private class VariantsCompletionAction extends AnAction {
-    private VariantsCompletionAction() {
-      final AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_CODE_COMPLETION);
-      if (action != null) {
-        registerCustomShortcutSet(action.getShortcutSet(), TextFieldWithAutoCompletion.this);
-      }
-    }
-
-    public void actionPerformed(final AnActionEvent e) {
-      showLookup();
+    if (provider != null) {
+      TextFieldWithAutoCompletionContributor.installCompletion(getDocument(), project, provider, true);
     }
   }
 
-  public void showLookup() {
-    if (LookupManager.getInstance(getProject()).getActiveLookup() != null) return;
-    final Editor editor = getEditor();
-    assert editor != null;
+  public static TextFieldWithAutoCompletion<String> create(final Project project,
+                                                           @NotNull final Collection<String> items,
+                                                           @Nullable final Icon icon,
+                                                           final boolean showAutocompletionIsAvailableHint) {
+    return new TextFieldWithAutoCompletion<String>(project, new StringsCompletionProvider(items, icon), showAutocompletionIsAvailableHint);
+  }
 
-    editor.getSelectionModel().removeSelection();
-    final String lookupPrefix = getCurrentLookupPrefix(getCurrentTextPrefix());
-    final LookupImpl lookup =
-      (LookupImpl)LookupManager.getInstance(getProject()).createLookup(editor,
-                                                                       calcLookupItems(lookupPrefix),
-                                                                       StringUtil.notNullize(lookupPrefix),
-                                                                       LookupArranger.DEFAULT);
-    final String advertisementText = getAdvertisementText();
-    if (!StringUtil.isEmpty(advertisementText)) {
-      lookup.setAdvertisementText(advertisementText);
-      lookup.refreshUi(false);
+  @Override
+  protected EditorEx createEditor() {
+    final EditorEx editor = super.createEditor();
+
+    if (!myShowAutocompletionIsAvailableHint) {
+      return editor;
     }
-    lookup.showLookup();
-  }
 
-  public void setAdvertisementText(@Nullable String text) {
-    myAdText = text;
-  }
+    final String completionShortcutText = getCompletionShortcutText();
+    if (completionShortcutText == null) {
+      return editor;
+    }
 
-  public String getAdvertisementText() {
-    return myAdText;
-  }
-
-  public void setVariants(@Nullable final List<LookupElement> variants) {
-    myVariants = (variants != null) ? variants : Collections.<LookupElement>emptyList();
-  }
-
-  public void setVariants(@Nullable final String[] variants) {
-    myVariants = (variants == null)
-       ? Collections.<LookupElement>emptyList()
-       : ContainerUtil.map(variants, new Function<String, LookupElement>() {
-      public LookupElement fun(final String s) {
-        return LookupElementBuilder.create(s);
+    final Ref<Boolean> toShowHintRef = new Ref<Boolean>(true);
+    editor.getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
+      public void documentChanged(DocumentEvent e) {
+        toShowHintRef.set(false);
       }
     });
+
+    editor.addFocusListener(new FocusChangeListener() {
+      @Override
+      public void focusGained(final Editor editor) {
+        if (toShowHintRef.get() && getText().length() == 0) {
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              HintManager.getInstance().showInformationHint(editor, "Code completion available ( " + completionShortcutText + " )");
+            }
+          });
+        }
+      }
+
+      @Override
+      public void focusLost(Editor editor) {
+        // Do nothing
+      }
+    });
+    return editor;
   }
 
-  private LookupElement[] calcLookupItems(@Nullable final String lookupPrefix) {
-    if (lookupPrefix == null) {
-      return new LookupElement[0];
-    }
-
-    final List<LookupElement> items = new ArrayList<LookupElement>();
-    if (lookupPrefix.length() == 0) {
-      items.addAll(myVariants);
-    } else {
-      final Matcher matcher = NameUtil.buildMatcher(lookupPrefix, 0, true, true);
-
-      for (LookupElement variant : myVariants) {
-        if (matcher.matches(variant.getLookupString())) {
-          items.add(variant);
+  @Nullable
+  private static String getCompletionShortcutText() {
+    final AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_CODE_COMPLETION);
+    if (action != null) {
+      final ShortcutSet shortcutSet = action.getShortcutSet();
+      if (shortcutSet != null) {
+        final Shortcut[] shortcuts = shortcutSet.getShortcuts();
+        if (shortcuts != null && shortcuts.length > 0) {
+          return KeymapUtil.getShortcutText(shortcuts[0]);
         }
       }
     }
-
-    Collections.sort(items, myComparator);
-
-    return items.toArray(new LookupElement[items.size()]);
+    return null;
   }
 
-  public void setComparator(@NotNull Comparator<LookupElement> comparator) {
-    myComparator = comparator;
-  }
+  public static class StringsCompletionProvider extends TextFieldWithAutoCompletionListProvider<String> {
+    @Nullable private final Icon myIcon;
 
-  /**
-   * Returns prefix for autocompletion and lookup items matching.
-   */
-  @Nullable
-  protected String getCurrentLookupPrefix(final String currentTextPrefix) {
-    return currentTextPrefix;
-  }
+    public StringsCompletionProvider(@Nullable final Collection<String> variants,
+                                     @Nullable final Icon icon) {
+      super(variants);
+      myIcon = icon;
+    }
 
-  private String getCurrentTextPrefix() {
-    return getText().substring(0, getCaretModel().getOffset());
-  }
+    @Override
+    public int compare(final String item1, final String item2) {
+      return StringUtil.compare(item1, item2, false);
+    }
 
+    @Override
+    protected Icon getIcon(@NotNull final String item) {
+      return myIcon;
+    }
+
+    @NotNull
+    @Override
+    protected String getLookupString(@NotNull final String item) {
+      return item;
+    }
+
+    @Override
+    protected String getTailText(@NotNull final String item) {
+      return null;
+    }
+
+    @Override
+    protected String getTypeText(@NotNull final String item) {
+      return null;
+    }
+  }
 }

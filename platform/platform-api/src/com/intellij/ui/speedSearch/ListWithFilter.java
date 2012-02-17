@@ -19,6 +19,7 @@
  */
 package com.intellij.ui.speedSearch;
 
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Condition;
@@ -28,18 +29,27 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.Function;
 import com.intellij.util.ui.ComponentWithEmptyText;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
-public class ListWithFilter<T> extends JPanel {
+public class ListWithFilter<T> extends JPanel implements DataProvider {
   private final JList myList;
   private final JTextField mySpeedSearchPatternField;
   private final NameFilteringListModel<T> myModel;
   private final JScrollPane myScroller;
   private final MySpeedSearch mySpeedSearch;
+
+  @Override
+  public Object getData(@NonNls String dataId) {
+    if (SpeedSearchSupply.SPEED_SEARCH_CURRENT_QUERY.is(dataId)) {
+      return mySpeedSearchPatternField.getText();
+    }
+    return null;
+  }
 
   public static JComponent wrap(JList list) {
     return wrap(list, ScrollPaneFactory.createScrollPane(list), StringUtil.createToStringFunction(Object.class));

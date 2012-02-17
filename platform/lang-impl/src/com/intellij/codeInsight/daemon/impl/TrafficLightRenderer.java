@@ -29,6 +29,7 @@ import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.EditorMarkupModelImpl;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
@@ -123,7 +124,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     }
     else {
       renderer = new TrafficLightRenderer(project, document, file);
-      Disposer.register(project, (Disposable)renderer);
+      Disposer.register(((EditorImpl)editorMarkupModel.getEditor()).getDisposable(), (Disposable)renderer);
       editorMarkupModel.setErrorStripeRenderer(renderer);
     }
   }

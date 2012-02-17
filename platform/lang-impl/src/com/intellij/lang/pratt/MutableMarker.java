@@ -15,6 +15,7 @@
  */
 package com.intellij.lang.pratt;
 
+import com.intellij.lang.LighterASTNode;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
 
@@ -36,7 +37,15 @@ public class MutableMarker {
     myPath = path;
     myStartMarker = startMarker;
     myInitialPathLength = initialPathLength;
-    myMode = Mode.READY;
+    myMode = startMarker instanceof LighterASTNode && ((LighterASTNode)startMarker).getTokenType() != null? Mode.COMMITTED : Mode.READY;
+  }
+
+  // for easier transition only
+  public MutableMarker(final LinkedList<IElementType> path, final PsiBuilder builder) {
+    myPath = path;
+    myStartMarker = (PsiBuilder.Marker)builder.getLatestDoneMarker();
+    myInitialPathLength = path.size();
+    myMode = myStartMarker instanceof LighterASTNode && ((LighterASTNode)myStartMarker).getTokenType() != null ? Mode.COMMITTED : Mode.READY;
   }
 
   public boolean isCommitted() {

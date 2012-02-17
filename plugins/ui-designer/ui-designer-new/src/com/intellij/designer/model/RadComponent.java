@@ -15,6 +15,8 @@
  */
 package com.intellij.designer.model;
 
+import com.intellij.designer.designSurface.tools.DragTracker;
+import com.intellij.designer.designSurface.tools.InputTool;
 import com.intellij.designer.propertyTable.Property;
 import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.NotNull;
@@ -54,10 +56,6 @@ public abstract class RadComponent {
     return getChildren().toArray();
   }
 
-  public List<RadComponent> getSurfaceChildren() {
-    return getChildren();
-  }
-
   public Rectangle getBounds() {
     return null;
   }
@@ -68,6 +66,10 @@ public abstract class RadComponent {
 
   public Point convertPoint(int x, int y, Component component) {
     return null;
+  }
+
+  public InputTool getDragTracker() {
+    return new DragTracker(this);
   }
 
   public RadLayout getLayout() {

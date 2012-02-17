@@ -25,6 +25,7 @@ import com.intellij.concurrency.JobScheduler;
 import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.ide.*;
 import com.intellij.ide.dnd.DnDManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -283,6 +284,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private boolean myPaintSelection;
   
   private final EditorSizeAdjustmentStrategy mySizeAdjustmentStrategy = new EditorSizeAdjustmentStrategy();
+  private final Disposable myDisposable = Disposer.newDisposable();
 
   static {
     ourCaretBlinkingCommand = new RepaintCursorCommand();
@@ -683,6 +685,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (myConnection != null) {
       myConnection.disconnect();
     }
+    Disposer.dispose(myDisposable);
   }
 
   private void clearCaretThread() {
@@ -1537,6 +1540,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   public void setScrollToCaret(boolean scrollToCaret) {
     myScrollToCaret = scrollToCaret;
+  }
+
+  public Disposable getDisposable() {
+    return myDisposable;
   }
 
   private static int countLineFeeds(CharSequence c) {

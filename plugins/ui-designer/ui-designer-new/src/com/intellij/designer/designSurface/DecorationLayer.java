@@ -35,7 +35,6 @@ public class DecorationLayer extends JComponent {
   @Override
   public void paint(Graphics g) {
     painSelection((Graphics2D)g);
-    paintChildren(g);
   }
 
   @Nullable

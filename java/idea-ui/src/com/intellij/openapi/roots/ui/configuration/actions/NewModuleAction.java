@@ -73,6 +73,7 @@ public class NewModuleAction extends AnAction implements DumbAware {
           ModulesConfigurator.showDialog(project, null, null);
         }
       }
+      project.save();
     }
   }
 

@@ -1,17 +1,7 @@
 package org.jetbrains.android.logcat;
 
 import com.android.ddmlib.Log;
-import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.event.DocumentAdapter;
-import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.FocusChangeListener;
-import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.ValidationInfo;
@@ -26,9 +16,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.Arrays;
-import java.util.Comparator;
+import java.util.Collection;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -62,44 +51,46 @@ class EditLogFilterDialog extends DialogWrapper {
 
     myView = view;
 
-    myTagField = new MyTextFieldWithAutoCompletion(view.getProject()) {
+    final Project project = view.getProject();
+
+    myTagField = new TextFieldWithAutoCompletion<String>(project, new TextFieldWithAutoCompletion.StringsCompletionProvider(null, null) {
+      @NotNull
       @Override
-      public void showLookup() {
+      public Collection<String> getItems(String prefix, boolean cached) {
         parseExistingMessagesIfNecessary();
-        myTagField.setVariants(Arrays.asList(toLookupElements(myUsedTags)));
-        super.showLookup();
+        setItems(Arrays.asList(myUsedTags));
+        return super.getItems(prefix, cached);
       }
-    };
+    }, true);
 
     myTagFieldWrapper.add(myTagField);
     myLogTagLabel.setLabelFor(myTagField);
 
-    myPidField = new MyTextFieldWithAutoCompletion(view.getProject()) {
+    myPidField = new TextFieldWithAutoCompletion<String>(project, new TextFieldWithAutoCompletion.StringsCompletionProvider(null, null) {
+      @NotNull
       @Override
-      public void showLookup() {
+      public Collection<String> getItems(String prefix, boolean cached) {
         parseExistingMessagesIfNecessary();
-        myPidField.setVariants(myUsedPids);
-        super.showLookup();
+        setItems(Arrays.asList(myUsedPids));
+        return super.getItems(prefix, cached);
       }
-    };
-    myPidField.setComparator(new Comparator<LookupElement>() {
+
       @Override
-      public int compare(LookupElement e1, LookupElement e2) {
-        final int pid1 = Integer.parseInt(e1.getLookupString());
-        final int pid2 = Integer.parseInt(e2.getLookupString());
+      public int compare(String item1, String item2) {
+        final int pid1 = Integer.parseInt(item1);
+        final int pid2 = Integer.parseInt(item2);
         return Comparing.compare(pid1, pid2);
       }
-    });
+    }, true);
     myPidFieldWrapper.add(myPidField);
 
     myLogLevelCombo.setModel(new EnumComboBoxModel<Log.LogLevel>(Log.LogLevel.class));
-    myLogLevelCombo.setRenderer(new DefaultListCellRenderer() {
+    myLogLevelCombo.setRenderer(new ListCellRendererWrapper(myLogLevelCombo.getRenderer()) {
       @Override
-      public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+      public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         if (value != null) {
-          value = StringUtil.capitalize(((Log.LogLevel)value).getStringValue().toLowerCase());
+          setText(StringUtil.capitalize(((Log.LogLevel)value).getStringValue().toLowerCase()));
         }
-        return super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
       }
     });
 
@@ -112,31 +103,6 @@ class EditLogFilterDialog extends DialogWrapper {
     else {
       myEntry = new AndroidConfiguredLogFilters.MyFilterEntry();
     }
-  }
-
-  @Nullable
-  private static String getCompletionShortcutText() {
-    final AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_CODE_COMPLETION);
-    if (action != null) {
-      final ShortcutSet shortcutSet = action.getShortcutSet();
-      if (shortcutSet != null) {
-        final Shortcut[] shortcuts = shortcutSet.getShortcuts();
-        if (shortcuts != null && shortcuts.length > 0) {
-          return KeymapUtil.getShortcutText(shortcuts[0]);
-        }
-      }
-    }
-    return null;
-  }
-  
-  private static LookupElement[] toLookupElements(@NotNull String[] strs) {
-    final LookupElement[] result = new LookupElement[strs.length];
-    
-    for (int i = 0; i < result.length; i++) {
-      final String s = strs[i];
-      result[i] = LookupElementBuilder.create(s).addLookupString(s.toLowerCase());
-    }
-    return result;
   }
 
   private void parseExistingMessagesIfNecessary() {
@@ -219,7 +185,7 @@ class EditLogFilterDialog extends DialogWrapper {
   @Override
   protected ValidationInfo doValidate() {
     final String name = myNameField.getText().trim();
-    
+
     if (name.length() == 0) {
       return new ValidationInfo(AndroidBundle.message("android.logcat.new.filter.dialog.name.not.specified.error"), myNameField);
     }
@@ -279,52 +245,5 @@ class EditLogFilterDialog extends DialogWrapper {
   @NotNull
   public AndroidConfiguredLogFilters.MyFilterEntry getCustomLogFiltersEntry() {
     return myEntry;
-  }
-
-  private static class MyTextFieldWithAutoCompletion extends TextFieldWithAutoCompletion {
-    private boolean myToShowHint;
-    private final String myCompletionShortcutText;
-
-    public MyTextFieldWithAutoCompletion(Project project) {
-      super(project);
-      myCompletionShortcutText = getCompletionShortcutText();
-      myToShowHint = true;
-    }
-
-    @Override
-    protected EditorEx createEditor() {
-      final EditorEx editor = super.createEditor();
-
-      if (myCompletionShortcutText == null) {
-        return editor;
-      }
-
-      editor.getDocument().addDocumentListener(new DocumentAdapter() {
-        @Override
-        public void documentChanged(DocumentEvent e) {
-          myToShowHint = false;
-        }
-      });
-
-      editor.addFocusListener(new FocusChangeListener() {
-        @Override
-        public void focusGained(final Editor editor) {
-          if (myToShowHint && getText().length() == 0) {
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                HintManager.getInstance().showInformationHint(editor, "Code completion available (" + myCompletionShortcutText + ")");
-              }
-            });
-          }
-        }
-
-        @Override
-        public void focusLost(Editor editor) {
-        }
-      });
-
-      return editor;
-    }
   }
 }
