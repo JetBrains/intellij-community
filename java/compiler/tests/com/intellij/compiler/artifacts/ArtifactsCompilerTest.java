@@ -8,11 +8,17 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.impl.compiler.ArtifactCompileScope;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
+import java.util.Enumeration;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 
 /**
  * @author nik
@@ -292,6 +298,28 @@ public class ArtifactsCompilerTest extends ArtifactCompilerTestCase {
     compile(c);
     assertCompilationFailed(b);
     assertCompilationFailed(a);
+  }
+
+  //IDEA-73893
+  public void testManifestFileIsFirstEntry() throws IOException {
+    final VirtualFile firstFile = createFile("src/A.txt");
+    final VirtualFile manifestFile = createFile("src/MANIFEST.MF");
+    final VirtualFile lastFile = createFile("src/Z.txt");
+    final Artifact a = addArtifact(archive("a.jar").dir("META-INF")
+                                       .file(firstFile).file(manifestFile).file(lastFile));
+    compile(a);
+    final String jarPath = a.getOutputFilePath();
+    assertNotNull(jarPath);
+    JarFile jarFile = new JarFile(new File(FileUtil.toSystemDependentName(jarPath)));
+    try {
+      final Enumeration<JarEntry> entries = jarFile.entries();
+      assertTrue(entries.hasMoreElements());
+      final JarEntry firstEntry = entries.nextElement();
+      assertEquals(JarFile.MANIFEST_NAME, firstEntry.getName());
+    }
+    finally {
+      jarFile.close();
+    }
   }
 
   private void assertCompilationFailed(Artifact a) {
