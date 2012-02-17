@@ -29,6 +29,7 @@ public class MavenArtifact implements Serializable {
   private final String myGroupId;
   private final String myArtifactId;
   private final String myVersion;
+  private final String myBaseVersion;
   private final String myType;
   private final String myClassifier;
 
@@ -56,7 +57,8 @@ public class MavenArtifact implements Serializable {
                        boolean stubbed) {
     myGroupId = groupId;
     myArtifactId = artifactId;
-    myVersion = !StringUtil.isEmptyOrSpaces(baseVersion) ? baseVersion : version;
+    myVersion = version;
+    myBaseVersion = baseVersion;
     myType = type;
     myClassifier = classifier;
     myScope = scope;
@@ -247,7 +249,8 @@ public class MavenArtifact implements Serializable {
     if (!StringUtil.isEmptyOrSpaces(myType) && !MavenConstants.TYPE_JAR.equals(myType)) MavenId.append(builder, myType);
     if (!StringUtil.isEmptyOrSpaces(myClassifier)) MavenId.append(builder, myClassifier);
 
-    MavenId.append(builder, myVersion);
+    String version = !StringUtil.isEmptyOrSpaces(myBaseVersion) ? myBaseVersion : myVersion;
+    if (!StringUtil.isEmptyOrSpaces(version)) MavenId.append(builder, version);
 
     return builder.toString();
   }
@@ -267,6 +270,7 @@ public class MavenArtifact implements Serializable {
     if (myGroupId != null ? !myGroupId.equals(that.myGroupId) : that.myGroupId != null) return false;
     if (myArtifactId != null ? !myArtifactId.equals(that.myArtifactId) : that.myArtifactId != null) return false;
     if (myVersion != null ? !myVersion.equals(that.myVersion) : that.myVersion != null) return false;
+    if (myBaseVersion != null ? !myBaseVersion.equals(that.myBaseVersion) : that.myBaseVersion != null) return false;
     if (myType != null ? !myType.equals(that.myType) : that.myType != null) return false;
     if (myClassifier != null ? !myClassifier.equals(that.myClassifier) : that.myClassifier != null) return false;
     if (myScope != null ? !myScope.equals(that.myScope) : that.myScope != null) return false;
@@ -281,6 +285,7 @@ public class MavenArtifact implements Serializable {
     int result = myGroupId != null ? myGroupId.hashCode() : 0;
     result = 31 * result + (myArtifactId != null ? myArtifactId.hashCode() : 0);
     result = 31 * result + (myVersion != null ? myVersion.hashCode() : 0);
+    result = 31 * result + (myBaseVersion != null ? myBaseVersion.hashCode() : 0);
     result = 31 * result + (myType != null ? myType.hashCode() : 0);
     result = 31 * result + (myClassifier != null ? myClassifier.hashCode() : 0);
     result = 31 * result + (myScope != null ? myScope.hashCode() : 0);
