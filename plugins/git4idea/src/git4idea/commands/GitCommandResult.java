@@ -33,7 +33,7 @@ public class GitCommandResult {
   private final List<String> myErrorOutput;
   private final List<String> myOutput;
 
-  public GitCommandResult(boolean success, int exitCode, @NotNull List<String> errorOutput, List<String> output) {
+  public GitCommandResult(boolean success, int exitCode, @NotNull List<String> errorOutput, @NotNull List<String> output) {
     myExitCode = exitCode;
     mySuccess = success;
     myErrorOutput = errorOutput;

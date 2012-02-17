@@ -36,6 +36,9 @@ import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitCompoundResult;
 import git4idea.history.GitHistoryUtils;
 import git4idea.history.browser.GitCommit;
+import git4idea.jgit.GitHttpAdapter;
+import git4idea.push.GitSimplePushResult;
+import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.ui.branch.GitBranchUiUtil;
 import git4idea.ui.branch.GitCompareBranchesDialog;
@@ -223,7 +226,9 @@ public final class GitBranchOperationsProcessor {
     GitCompoundResult result = new GitCompoundResult(myProject);
     for (GitRepository repository : myRepositories) {
       Pair<String, String> pair = GitBranch.splitNameOfRemoteBranch(branchName);
-      GitCommandResult res = Git.push(repository, pair.getFirst(), ":" + pair.getSecond());
+      String remote = pair.getFirst();
+      String branch = pair.getSecond();
+      GitCommandResult res = pushDeletion(repository, remote, branch);
       result.append(repository, res);
       repository.update(GitRepository.TrackedTopic.BRANCHES);
     }
@@ -232,6 +237,46 @@ public final class GitBranchOperationsProcessor {
                                                              result.getErrorOutputWithReposIndication());
     }
     return result.totalSuccess();
+  }
+
+  @NotNull
+  private static GitCommandResult pushDeletion(GitRepository repository, String remoteName, String branchName) {
+    GitRemote remote = getRemoteByName(repository, remoteName);
+    if (remote == null) {
+      return pushDeletionNatively(repository, remoteName, branchName);
+    }
+
+    String remoteUrl = remote.getFirstUrl();
+    if (remoteUrl != null && GitHttpAdapter.shouldUseJGit(remoteUrl)) {
+      String fullBranchName = branchName.startsWith(GitBranch.REFS_HEADS_PREFIX) ? branchName : GitBranch.REFS_HEADS_PREFIX + branchName;
+      String spec = ":" + fullBranchName;
+      GitSimplePushResult simplePushResult = GitHttpAdapter.push(repository, remote, remoteUrl, spec);
+      return convertSimplePushResultToCommandResult(simplePushResult);
+    }
+    else {
+      return pushDeletionNatively(repository, remoteName, branchName);
+    }
+  }
+
+  private static GitCommandResult pushDeletionNatively(GitRepository repository, String remoteName, String branchName) {
+    return Git.push(repository, remoteName, ":" + branchName);
+  }
+
+  @NotNull
+  private static GitCommandResult convertSimplePushResultToCommandResult(GitSimplePushResult result) {
+    boolean success = result.getType() == GitSimplePushResult.Type.SUCCESS;
+    return new GitCommandResult(success, -1, success ? Collections.<String>emptyList() : Collections.singletonList(result.getOutput()),
+                                success ? Collections.singletonList(result.getOutput()) : Collections.<String>emptyList());
+  }
+
+  @Nullable
+  private static GitRemote getRemoteByName(@NotNull GitRepository repository, @NotNull String remoteName) {
+    for (GitRemote remote : repository.getRemotes()) {
+      if (remote.getName().equals(remoteName)) {
+        return remote;
+      }
+    }
+    return null;
   }
 
   private void notifySuccessfulDeletion(@NotNull String remoteBranchName, @NotNull Collection<String> localBranches) {
