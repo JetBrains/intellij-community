@@ -80,6 +80,7 @@ public class PopupChooserBuilder {
   private Function<Object,String> myItemsNamer = null;
   private boolean myMayBeParent;
   private int myAdAlignment = SwingUtilities.LEFT;
+  private boolean myModalContext;
 
   public PopupChooserBuilder(@NotNull JList list) {
     myChooserComponent = list;
@@ -172,6 +173,11 @@ public class PopupChooserBuilder {
     return this;
   }
 
+  public PopupChooserBuilder setModalContext(boolean modalContext) {
+    myModalContext = modalContext;
+    return this;
+  }
+
   @NotNull
   public JBPopup createPopup() {
     JList list = null;
@@ -248,10 +254,21 @@ public class PopupChooserBuilder {
       builder.addListener(each);
     }
 
-    builder.setDimensionServiceKey(null, myDimensionServiceKey, false).setRequestFocus(myRequestFocus).setResizable(myForceResizable)
-      .setMovable(myForceMovable).setTitle(myForceMovable ? myTitle : null).setCancelCallback(myCancelCallback).setAlpha(myAlpha)
-      .setFocusOwners(myFocusOwners).setCancelKeyEnabled(myCancelKeyEnabled && !(myChooserComponent instanceof ListWithFilter)).
-      setAdText(myAd, myAdAlignment).setKeyboardActions(myKeyboardActions).setMayBeParent(myMayBeParent).setLocateWithinScreenBounds(true);
+    builder.setDimensionServiceKey(null, myDimensionServiceKey, false)
+      .setRequestFocus(myRequestFocus)
+      .setResizable(myForceResizable)
+      .setMovable(myForceMovable)
+      .setTitle(myForceMovable ? myTitle : null)
+      .setCancelCallback(myCancelCallback)
+      .setAlpha(myAlpha)
+      .setFocusOwners(myFocusOwners)
+      .setCancelKeyEnabled(myCancelKeyEnabled && !(myChooserComponent instanceof ListWithFilter))
+      .setAdText(myAd, myAdAlignment)
+      .setKeyboardActions(myKeyboardActions)
+      .setMayBeParent(myMayBeParent)
+      .setLocateWithinScreenBounds(true)
+      .setCancelOnOtherWindowOpen(true)
+      .setModalContext(myModalContext);
 
     if (myCommandButton != null) {
       builder.setCommandButton(myCommandButton);

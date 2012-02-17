@@ -160,13 +160,14 @@ public abstract class BaseShowRecentFilesAction extends AnAction implements Dumb
     footerPanel.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
     footerPanel.add(pathLabel);
 
-    final PopupChooserBuilder builder = new PopupChooserBuilder(list).
-      setTitle(getTitle()).
-      setAdText(" ").
-      setMovable(true).
-      setItemChoosenCallback(runnable).
-      addAdditionalChooseKeystroke(getAdditionalSelectKeystroke()).
-      setFilteringEnabled(new Function<Object, String>() {
+    final PopupChooserBuilder builder = new PopupChooserBuilder(list)
+      .setTitle(getTitle())
+      .setAdText(" ")
+      .setMovable(true)
+      .setItemChoosenCallback(runnable)
+      .setModalContext(false)
+      .addAdditionalChooseKeystroke(getAdditionalSelectKeystroke())
+      .setFilteringEnabled(new Function<Object, String>() {
         public String fun(Object o) {
           return o instanceof VirtualFile ? ((VirtualFile)o).getName() : "";
         }

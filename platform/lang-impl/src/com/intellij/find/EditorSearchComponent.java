@@ -45,6 +45,7 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -169,6 +170,9 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
   @Override
   @Nullable
   public Object getData(@NonNls final String dataId) {
+    if (SpeedSearchSupply.SPEED_SEARCH_CURRENT_QUERY.is(dataId)) {
+      return mySearchField.getText();
+    }
     if (PlatformDataKeys.EDITOR_EVEN_IF_INACTIVE.is(dataId)) {
       return myEditor;
     }
