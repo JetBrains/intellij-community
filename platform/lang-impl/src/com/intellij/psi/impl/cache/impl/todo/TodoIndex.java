@@ -20,7 +20,6 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.openapi.project.ProjectUtil;
@@ -111,7 +110,6 @@ public class TodoIndex extends FileBasedIndexExtension<TodoIndexEntry, Integer> 
   };
   
   private final FileBasedIndex.InputFilter myInputFilter = new FileBasedIndex.InputFilter() {
-    private final FileTypeManager myFtManager = FileTypeManager.getInstance();
     @Override
     public boolean acceptInput(final VirtualFile file) {
       if (!(file.getFileSystem() instanceof LocalFileSystem)) {
