@@ -140,7 +140,7 @@ public abstract class InputTool {
     return getDefaultCursor();
   }
 
-  protected final Cursor getDefaultCursor() {
+  protected Cursor getDefaultCursor() {
     return myDefaultCursor;
   }
 

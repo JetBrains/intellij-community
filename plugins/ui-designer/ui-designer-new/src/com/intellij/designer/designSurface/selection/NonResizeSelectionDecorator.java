@@ -17,7 +17,6 @@ package com.intellij.designer.designSurface.selection;
 
 import com.intellij.designer.designSurface.ComponentDecorator;
 import com.intellij.designer.designSurface.DecorationLayer;
-import com.intellij.designer.designSurface.EditableArea;
 import com.intellij.designer.designSurface.tools.DragTracker;
 import com.intellij.designer.designSurface.tools.InputTool;
 import com.intellij.designer.model.RadComponent;
@@ -38,7 +37,7 @@ public class NonResizeSelectionDecorator implements ComponentDecorator {
 
   @Override
   public InputTool findTargetTool(DecorationLayer layer, RadComponent component, int x, int y) {
-    Rectangle bounds = layer.getComponentBounds(component);
+    Rectangle bounds = component.getBounds(layer);
     int lineWidth = Math.max(myLineWidth, 2);
 
     Rectangle top = new Rectangle(bounds.x, bounds.y, bounds.width, lineWidth);
@@ -60,7 +59,7 @@ public class NonResizeSelectionDecorator implements ComponentDecorator {
       g.setStroke(new BasicStroke(myLineWidth));
     }
 
-    Rectangle bounds = layer.getComponentBounds(component);
+    Rectangle bounds = component.getBounds(layer);
     g.drawRect(bounds.x, bounds.y, bounds.width, bounds.height);
   }
 }

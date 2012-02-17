@@ -18,8 +18,8 @@ package com.intellij.android.designer.designSurface;
 import com.intellij.designer.designSurface.EditOperation;
 import com.intellij.designer.designSurface.FeedbackLayer;
 import com.intellij.designer.designSurface.OperationContext;
-import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.designSurface.feedbacks.AlphaComponent;
+import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.utils.Position;
 
 import javax.swing.*;
@@ -56,9 +56,7 @@ public class ResizeOperation implements EditOperation {
       layer.add(myFeedback);
     }
 
-    Rectangle bounds = myComponent.getBounds();
-    Point location = myComponent.convertPoint(bounds.x, bounds.y, layer);
-    myFeedback.setBounds(myContext.getTransformedRectangle(location.x, location.y, bounds.width, bounds.height));
+    myFeedback.setBounds(myContext.getTransformedRectangle(myComponent.getBounds(layer)));
     layer.repaint();
   }
 

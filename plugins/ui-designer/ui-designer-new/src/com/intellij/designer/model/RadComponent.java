@@ -72,11 +72,11 @@ public abstract class RadComponent {
     return null;
   }
 
-  public Point convertPoint(Component component, int x, int y) {
+  public Rectangle getBounds(Component relativeTo) {
     return null;
   }
 
-  public Point convertPoint(int x, int y, Component component) {
+  public Point convertPoint(Component relativeFrom, int x, int y) {
     return null;
   }
 

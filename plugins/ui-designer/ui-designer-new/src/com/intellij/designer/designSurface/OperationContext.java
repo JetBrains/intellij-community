@@ -96,8 +96,8 @@ public final class OperationContext {
     mySizeDelta = sizeDelta;
   }
 
-  public Rectangle getTransformedRectangle(int x, int y, int width, int height) {
-    return new Rectangle(x + myMoveDelta.x, y + myMoveDelta.y, width + mySizeDelta.width, height + mySizeDelta.height);
+  public Rectangle getTransformedRectangle(Rectangle r) {
+    return new Rectangle(r.x + myMoveDelta.x, r.y + myMoveDelta.y, r.width + mySizeDelta.width, r.height + mySizeDelta.height);
   }
 
   public int getResizeDirection() {

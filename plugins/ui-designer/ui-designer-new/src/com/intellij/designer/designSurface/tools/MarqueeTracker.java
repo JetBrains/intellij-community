@@ -138,11 +138,7 @@ public class MarqueeTracker extends InputTool {
     myArea.getRootComponent().accept(new RadComponentVisitor() {
       @Override
       public void endVisit(RadComponent component) {
-        Rectangle bounds = component.getBounds();
-        Point location = component.convertPoint(bounds.x, bounds.y, myArea.getNativeComponent());
-
-        if (selectionRectangle.contains(location) &&
-            selectionRectangle.contains(location.x + bounds.width, location.y + bounds.height)) {
+        if (selectionRectangle.contains(component.getBounds(myArea.getNativeComponent()))) {
           newSelection.add(component);
         }
       }

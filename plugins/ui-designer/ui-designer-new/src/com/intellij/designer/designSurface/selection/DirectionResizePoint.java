@@ -76,7 +76,7 @@ public class DirectionResizePoint extends ResizePoint {
 
   @Override
   protected Point getLocation(DecorationLayer layer, RadComponent component) {
-    Rectangle bounds = layer.getComponentBounds(component);
+    Rectangle bounds = component.getBounds(layer);
     int size = (getSize() + 1) / 2;
     int x = bounds.x + (int) (bounds.width * myXSeparator) - size;
     int y = bounds.y + (int) (bounds.height * myYSeparator) - size;

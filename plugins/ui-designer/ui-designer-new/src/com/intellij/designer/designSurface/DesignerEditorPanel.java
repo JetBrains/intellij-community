@@ -253,6 +253,9 @@ public abstract class DesignerEditorPanel extends JPanel implements ToolProvider
       int height = 0;
 
       if (myRootComponent != null) {
+        width = Math.max(width, (int)myRootComponent.getBounds().getMaxX());
+        height = Math.max(height, (int)myRootComponent.getBounds().getMaxY());
+
         for (RadComponent component : myRootComponent.getChildren()) {
           width = Math.max(width, (int)component.getBounds().getMaxX());
           height = Math.max(height, (int)component.getBounds().getMaxY());
