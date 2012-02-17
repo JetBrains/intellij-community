@@ -30,6 +30,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -130,6 +131,11 @@ public abstract class DesignerEditorPanel extends JPanel implements ToolProvider
         return DesignerEditorPanel.this.getRootSelectionDecorator();
       }
 
+      @Nullable
+      public EditOperation processRootOperation(OperationContext context) {
+        return DesignerEditorPanel.this.processRootOperation(context);
+      }
+
       @Override
       public FeedbackLayer getFeedbackLayer() {
         return myFeedbackLayer;
@@ -174,6 +180,9 @@ public abstract class DesignerEditorPanel extends JPanel implements ToolProvider
   }
 
   protected abstract ComponentDecorator getRootSelectionDecorator();
+
+  @Nullable
+  protected abstract EditOperation processRootOperation(OperationContext context);
 
   public InputTool getActiveTool() {
     return myTool;
@@ -244,6 +253,9 @@ public abstract class DesignerEditorPanel extends JPanel implements ToolProvider
       int height = 0;
 
       if (myRootComponent != null) {
+        width = Math.max(width, (int)myRootComponent.getBounds().getMaxX());
+        height = Math.max(height, (int)myRootComponent.getBounds().getMaxY());
+
         for (RadComponent component : myRootComponent.getChildren()) {
           width = Math.max(width, (int)component.getBounds().getMaxX());
           height = Math.max(height, (int)component.getBounds().getMaxY());

@@ -37,7 +37,7 @@ public abstract class InputTool {
   protected ToolProvider myToolProvider;
   protected EditableArea myArea;
 
-  private Object myCommand;
+  protected Object myCommand;
 
   private boolean myActive;
   private boolean myCanUnload = true;
@@ -100,10 +100,6 @@ public abstract class InputTool {
     }
   }
 
-  protected final boolean unloadWhenFinished() {
-    return myCanUnload;
-  }
-
   public final void setUnloadWhenFinished(boolean value) {
     myCanUnload = value;
   }
@@ -144,7 +140,7 @@ public abstract class InputTool {
     return getDefaultCursor();
   }
 
-  protected final Cursor getDefaultCursor() {
+  protected Cursor getDefaultCursor() {
     return myDefaultCursor;
   }
 
@@ -228,7 +224,7 @@ public abstract class InputTool {
   protected void handleAreaExited() {
   }
 
-  protected void handleFinished() {
+  protected final void handleFinished() {
     if (myCanUnload) {
       myToolProvider.loadDefaultTool();
     }

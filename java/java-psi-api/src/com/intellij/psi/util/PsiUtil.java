@@ -579,8 +579,8 @@ public final class PsiUtil extends PsiUtilCore {
   @Nullable
   public static PsiClass getTopLevelClass(@NotNull PsiElement element) {
     final PsiFile file = element.getContainingFile();
-    if (file instanceof PsiJavaFile) {
-      final PsiClass[] classes = ((PsiJavaFile)file).getClasses();
+    if (file instanceof PsiClassOwner) {
+      final PsiClass[] classes = ((PsiClassOwner)file).getClasses();
       for (PsiClass aClass : classes) {
         if (PsiTreeUtil.isAncestor(aClass, element, false)) return aClass;
       }

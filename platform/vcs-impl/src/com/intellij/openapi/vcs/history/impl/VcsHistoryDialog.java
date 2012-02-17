@@ -20,6 +20,7 @@ import com.intellij.diff.FindBlock;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffManager;
 import com.intellij.openapi.diff.DiffPanel;
@@ -29,12 +30,11 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.VcsConfiguration;
-import com.intellij.openapi.vcs.VcsDataKeys;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.history.*;
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.TableView;
@@ -61,6 +61,7 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
   private final int mySelectionStart;
   private final int mySelectionEnd;
 
+  // todo equals???
   private final Map<VcsFileRevision, Block> myRevisionToContentMap = new com.intellij.util.containers.HashMap<VcsFileRevision, Block>();
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.history.impl.VcsHistoryDialog");
@@ -173,11 +174,11 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
     });
 
 
-    myList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+    final ListSelectionListener selectionListener = new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent e) {
         final VcsFileRevision revision;
-        if (myList.getSelectedRowCount() == 1) {
-          revision = (VcsFileRevision) myList.getItems().get(myList.getSelectedRow());
+        if (myList.getSelectedRowCount() == 1 && !myList.isEmpty()) {
+          revision = (VcsFileRevision)myList.getItems().get(myList.getSelectedRow());
           myComments.setText(revision.getCommitMessage());
           myComments.setCaretPosition(0);
         }
@@ -190,26 +191,54 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
         }
         updateDiff();
       }
-    });
+    };
+    myList.getSelectionModel().addListSelectionListener(selectionListener);
 
     myChangesOnlyCheckBox.setSelected(configuration.SHOW_ONLY_CHANGED_IN_SELECTION_DIFF);
-    updateRevisionsList();
+    try {
+      updateRevisionsList();
+    }
+    catch (final VcsException e) {
+      // todo test it, always exception
+      canNotLoadRevisionMessage(e);
+    }
     myChangesOnlyCheckBox.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         configuration.SHOW_ONLY_CHANGED_IN_SELECTION_DIFF = myChangesOnlyCheckBox.isSelected();
-        updateRevisionsList();
+        try {
+          updateRevisionsList();
+        }
+        catch (VcsException e1) {
+          canNotLoadRevisionMessage(e1);
+        }
       }
     });
 
     init();
 
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
+    SwingUtilities.invokeLater(new Runnable() {
       public void run() {
+        if (! VcsHistoryDialog.this.isShowing()) return;
         myList.getSelectionModel().addSelectionInterval(0, 0);
       }
     });
 
     setTitle(VcsBundle.message("dialog.title.history.for.file", file.getName()));
+  }
+
+  private void canNotLoadRevisionMessage(final VcsException e) {
+    SwingUtilities.invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        if (! VcsHistoryDialog.this.isShowing()) return;
+        VcsBalloonProblemNotifier.showBalloonForComponent(VcsHistoryDialog.this.getRootPane(),
+                                                          canNoLoadMessage(e), MessageType.ERROR, true);
+      }
+    });
+  }
+
+  private String canNoLoadMessage(VcsException e) {
+    return "Can not load revision contents: " + e.getMessage();
   }
 
   @Override
@@ -235,15 +264,15 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
     return result;
   }
 
-  protected String getContentOf(VcsFileRevision revision) {
+  protected String getContentOf(VcsFileRevision revision) throws VcsException {
     return myCachedContents.getContentOf(revision);
   }
 
-  private void loadContentsFor(final VcsFileRevision[] revisions) {
+  private void loadContentsFor(final VcsFileRevision[] revisions) throws VcsException {
     myCachedContents.loadContentsFor(revisions);
   }
 
-  private void updateRevisionsList() {
+  private void updateRevisionsList() throws VcsException {
     if (myIsInLoading) return;
     if (myChangesOnlyCheckBox.isSelected()) {
       loadContentsFor(myRevisions.toArray(new VcsFileRevision[myRevisions.size()]));
@@ -267,7 +296,7 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
 
   }
 
-  private List<VcsFileRevision> filteredRevisions() throws FilesTooBigForDiffException {
+  private List<VcsFileRevision> filteredRevisions() throws FilesTooBigForDiffException, VcsException {
     ArrayList<VcsFileRevision> result = new ArrayList<VcsFileRevision>();
     VcsFileRevision nextRevision = myRevisions.get(myRevisions.size() - 1);
     result.add(nextRevision);
@@ -282,6 +311,7 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
   }
 
   private synchronized void updateDiff() {
+    if (myList.isEmpty()) return;
     int[] selectedIndices = myList.getSelectedRows();
     if (selectedIndices.length == 0) {
       updateDiff(CURRENT, CURRENT);
@@ -313,6 +343,12 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
     }
     catch (FilesTooBigForDiffException e) {
       myDiffPanel.setTooBigFileErrorContents();
+    }
+    catch (VcsException e) {
+      final String text = canNoLoadMessage(e);
+      myDiffPanel.setContents(new SimpleContent(text, myContentFileType),
+                              new SimpleContent(text, myContentFileType));
+      canNotLoadRevisionMessage(e);
     }
     myDiffPanel.setTitle1(VcsBundle.message("diff.content.title.revision.number", firstRev.getRevisionNumber()));
     myDiffPanel.setTitle2(VcsBundle.message("diff.content.title.revision.number", secondRev.getRevisionNumber()));
@@ -414,14 +450,14 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
     return null;
   }
 
-  protected String getContentToShow(VcsFileRevision revision) throws FilesTooBigForDiffException {
+  protected String getContentToShow(VcsFileRevision revision) throws FilesTooBigForDiffException, VcsException {
     final Block block = getBlock(revision);
     if (block == null) return "";
     return block.getBlockContent();
   }
 
   @Nullable
-  private Block getBlock(VcsFileRevision revision) throws FilesTooBigForDiffException {
+  private Block getBlock(VcsFileRevision revision) throws FilesTooBigForDiffException, VcsException {
     if (myRevisionToContentMap.containsKey(revision))
       return myRevisionToContentMap.get(revision);
 

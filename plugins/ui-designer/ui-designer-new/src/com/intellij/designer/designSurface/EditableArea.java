@@ -92,7 +92,21 @@ public abstract class EditableArea {
 
   public abstract ComponentDecorator getRootSelectionDecorator();
 
+  @Nullable
+  public EditOperation processRootOperation(OperationContext context) {
+    return null;
+  }
+
   public abstract FeedbackLayer getFeedbackLayer();
 
   public abstract RadComponent getRootComponent();
+
+  public boolean isTree() {
+    return false;
+  }
+
+  @Nullable
+  public FeedbackTreeLayer getFeedbackTreeLayer() {
+    return null;
+  }
 }

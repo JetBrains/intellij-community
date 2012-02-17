@@ -65,10 +65,4 @@ public class DecorationLayer extends JComponent {
     }
     return parent.getLayout().getChildSelectionDecorator(component);
   }
-
-  public Rectangle getComponentBounds(RadComponent component) {
-    Rectangle bounds = component.getBounds();
-    Point location = component.convertPoint(bounds.x, bounds.y, this);
-    return new Rectangle(location.x, location.y, bounds.width, bounds.height);
-  }
 }

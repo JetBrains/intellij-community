@@ -422,12 +422,7 @@ public class MavenProjectReader {
                                                        MavenProjectProblem.ProblemType.PARENT));
       }
 
-      model = MavenServerManager.getInstance().assembleInheritance(model, parentModel);
-      List<MavenProfile> profiles = model.getProfiles();
-      for (MavenProfile each : parentModel.getProfiles()) {
-        addProfileIfDoesNotExist(each, profiles);
-      }
-      return model;
+      return MavenServerManager.getInstance().assembleInheritance(model, parentModel);
     }
     finally {
       recursionGuard.remove(file);

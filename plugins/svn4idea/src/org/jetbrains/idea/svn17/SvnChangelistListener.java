@@ -31,6 +31,8 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.ISVNChangelistHandler;
 import org.tmatesoft.svn.core.wc.SVNChangelistClient;
+import org.tmatesoft.svn.core.wc.SVNStatus;
+import org.tmatesoft.svn.core.wc.SVNStatusClient;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -177,21 +179,10 @@ public class SvnChangelistListener implements ChangeListListener {
   public static String getCurrentMapping(final Project project, final File file) {
     final SvnVcs17 vcs = SvnVcs17.getInstance(project);
     final SVNChangelistClient client = vcs.createChangelistClient();
+    final SVNStatusClient statusClient = vcs.createStatusClient();
     try {
-      final Ref<String> refResult = new Ref<String>();
-      final ISVNChangelistHandler handler = new ISVNChangelistHandler() {
-        public void handle(final File path, final String changelistName) {
-          if (refResult.isNull() && Comparing.equal(path, file)) {
-            refResult.set(changelistName);
-          }
-        }
-      };
-      if (file.exists()) {
-        client.doGetChangeLists(file, null, SVNDepth.EMPTY, handler);
-      } else if (file.getParentFile() != null) {
-        client.doGetChangeLists(file.getParentFile(), null, SVNDepth.IMMEDIATES, handler);
-      }
-      return refResult.get();
+      final SVNStatus status = statusClient.doStatus(file, false);
+      return status.getChangelistName();
     }
     catch (SVNException e) {
       final SVNErrorCode errorCode = e.getErrorMessage().getErrorCode();

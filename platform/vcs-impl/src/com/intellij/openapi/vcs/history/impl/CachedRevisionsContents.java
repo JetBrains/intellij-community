@@ -42,7 +42,7 @@ import java.util.*;
  */
 public class CachedRevisionsContents {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.history.impl.CachedRevisionsContents");
-  private final Map<VcsRevisionNumber, String> myCachedContents = new HashMap<VcsRevisionNumber, String>();
+  private final Map<VcsRevisionNumber, String> myCachedContents;
   private final Project myProject;
   // managed outside, for reference here
   private List<VcsFileRevision> myRevisions;
@@ -51,13 +51,14 @@ public class CachedRevisionsContents {
   public CachedRevisionsContents(final Project project, final VirtualFile file) {
     myProject = project;
     myFile = file;
+    myCachedContents = Collections.synchronizedMap(new HashMap<VcsRevisionNumber, String>());
   }
 
   public void setRevisions(List<VcsFileRevision> revisions) {
     myRevisions = revisions;
   }
 
-  public void loadContentsFor(final VcsFileRevision[] revisions) {
+  public void loadContentsFor(final VcsFileRevision[] revisions) throws VcsException {
     final VcsFileRevision[] revisionsToLoad = revisionsNeededToBeLoaded(revisions);
 
     final List<VcsFileRevision> toBeLoaded = new LinkedList<VcsFileRevision>();
@@ -67,6 +68,7 @@ public class CachedRevisionsContents {
     }
     if (toBeLoaded.isEmpty()) return;
 
+    final VcsException[] exception = new VcsException[1];
     final Runnable process = new Runnable() {
       public void run() {
         ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
@@ -91,19 +93,17 @@ public class CachedRevisionsContents {
                 vcsFileRevision.loadContent();
               }
               catch (final VcsException e) {
-                WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
-                  public void run() {
-                    Messages.showErrorDialog(VcsBundle.message("message.text.cannot.load.version.because.of.error",
-                                                               vcsFileRevision.getRevisionNumber(), e.getLocalizedMessage()),
-                                             VcsBundle.message("message.title.load.version"));
-                  }
-                }, null, myProject);
+                exception[0] = new VcsException(e);
+                LOG.info(e);
+                return;
               }
               catch (ProcessCanceledException ex) {
                 return;
               }
               catch (IOException e) {
-                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                exception[0] = new VcsException(e);
+                LOG.info(e);
+                return;
               }
               String content = null;
               try {
@@ -113,13 +113,16 @@ public class CachedRevisionsContents {
                 }
               }
               catch (IOException e) {
+                exception[0] = new VcsException(e);
                 LOG.info(e);
+                return;
               }
               catch (VcsException e) {
-                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                exception[0] = new VcsException(e);
+                LOG.info(e);
+                return;
               }
               myCachedContents.put(vcsFileRevision.getRevisionNumber(), content);
-
             }
           }
         }
@@ -136,9 +139,12 @@ public class CachedRevisionsContents {
     } else {
       process.run();
     }
+    if (exception[0] != null) {
+      throw exception[0];
+    }
   }
 
-  public String getContentOf(VcsFileRevision revision) {
+  public String getContentOf(VcsFileRevision revision) throws VcsException {
     if (! myCachedContents.containsKey(revision.getRevisionNumber())) {
       loadContentsFor(new VcsFileRevision[]{revision});
     }
@@ -157,7 +163,7 @@ public class CachedRevisionsContents {
   private Collection<VcsFileRevision> collectRevisionsFromFirstTo(VcsFileRevision revision) {
     ArrayList<VcsFileRevision> result = new ArrayList<VcsFileRevision>();
     for (VcsFileRevision vcsFileRevision : myRevisions) {
-      if (VcsHistoryUtil.compare(revision, vcsFileRevision) > 0) continue;
+      if (VcsHistoryUtil.compareNumbers(revision, vcsFileRevision) > 0) continue;
       result.add(vcsFileRevision);
     }
     return result;

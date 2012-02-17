@@ -19,18 +19,20 @@ package com.intellij.openapi.compiler.util;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Map;
 
 /**
  * @author peter
@@ -86,4 +88,8 @@ public abstract class InspectionValidator {
     return CompilerMessageCategory.INFORMATION;
   }
 
+  @NotNull
+  public Map<ProblemDescriptor, HighlightDisplayLevel> checkAdditionally(PsiFile file) {
+    return Collections.emptyMap();
+  }
 }

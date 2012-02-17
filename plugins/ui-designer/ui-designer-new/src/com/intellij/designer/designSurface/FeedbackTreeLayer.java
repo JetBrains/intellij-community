@@ -13,27 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.designer.designSurface.tools;
-
-import com.intellij.designer.model.RadComponent;
-import com.intellij.designer.utils.Cursors;
-
-import java.awt.*;
+package com.intellij.designer.designSurface;
 
 /**
  * @author Alexander Lobas
  */
-public class DragTracker extends SelectionTracker {
-  private static final Cursor myDragCursor = Cursors.getMoveCursor();
-
-  public DragTracker(RadComponent component) {
-    super(component);
-    setDefaultCursor(Cursors.RESIZE_ALL);
-    setDisabledCursor(Cursors.getNoCursor());
-  }
-
-  @Override
-  protected Cursor getDefaultCursor() {
-    return myState == STATE_NONE ? super.getDefaultCursor() : myDragCursor;
-  }
+public interface FeedbackTreeLayer {
 }
