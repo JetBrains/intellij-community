@@ -64,7 +64,7 @@ public class VcsHistoryUtil {
     }
   }
 
-  private static int compareNumbers(VcsFileRevision first, VcsFileRevision second) {
+  public static int compareNumbers(VcsFileRevision first, VcsFileRevision second) {
     return first.getRevisionNumber().compareTo(second.getRevisionNumber());
   }
 

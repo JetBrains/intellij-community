@@ -20,8 +20,16 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.BalloonBuilder;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
+import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
+import java.awt.*;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Shows a notification balloon over one of version control related tool windows: Changes View or Version Control View.
@@ -73,5 +81,25 @@ public class VcsBalloonProblemNotifier implements Runnable {
 
   public void run() {
     NOTIFICATION_GROUP.createNotification(myMessage, myMessageType).notify(myProject.isDefault() ? null : myProject);
+  }
+
+  public static void showBalloonForComponent(@NotNull JComponent component, @NotNull final String message, final MessageType type,
+                                             final boolean atTop) {
+      BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(message, type, null);
+      Balloon balloon = balloonBuilder.createBalloon();
+      Dimension size = component.getSize();
+      Balloon.Position position;
+      int x;
+      int y;
+      if (size == null) {
+        x = y = 0;
+        position = Balloon.Position.above;
+      }
+      else {
+        x = Math.min(10, size.width / 2);
+        y = size.height;
+        position = Balloon.Position.below;
+      }
+      balloon.show(new RelativePoint(component, new Point(x, y)), position);
   }
 }
