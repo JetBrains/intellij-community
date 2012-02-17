@@ -125,10 +125,10 @@ class XsContentDFA extends XmlContentDFA {
 
   private static QName createQName(XmlTag tag) {
     String namespace = tag.getNamespace();
-    return new QName(tag.getNamespacePrefix().intern(),
-                     tag.getLocalName().intern(),
-                     tag.getName().intern(),
-                     namespace.length() == 0 ? null : namespace.intern());
+    return new QName(tag.getNamespacePrefix(),
+                     tag.getLocalName(),
+                     tag.getName(),
+                     namespace.length() == 0 ? null : namespace);
   }
 
   @Nullable
