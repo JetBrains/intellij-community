@@ -25,7 +25,7 @@ import java.util.List;
 public interface EditOperation {
   void setComponent(RadComponent component);
 
-  void setComponents(List<RadComponent> component);
+  void setComponents(List<RadComponent> components);
 
   void showFeedback();
 

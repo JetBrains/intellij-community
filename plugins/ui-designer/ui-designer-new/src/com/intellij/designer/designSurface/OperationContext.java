@@ -16,6 +16,7 @@
 package com.intellij.designer.designSurface;
 
 import com.intellij.designer.model.RadComponent;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.awt.event.InputEvent;
@@ -26,7 +27,12 @@ import java.util.List;
  * @author Alexander Lobas
  */
 public final class OperationContext {
-  private final Object myType;
+  public static final String MOVE = "move_children";
+  public static final String ADD = "add_children";
+  public static final String CREATE = "create_children";
+  public static final String PASTE = "paste_children";
+
+  private Object myType;
   private EditableArea myArea;
   private List<RadComponent> myComponents;
   private InputEvent myInputEvent;
@@ -34,7 +40,12 @@ public final class OperationContext {
   private Point myMoveDelta;
   private Dimension mySizeDelta;
   private int myResizeDirection;
-  private Object myNewObject;
+
+  private boolean myMoveEnabled = true;
+  private boolean myAddEnabled = true;
+
+  public OperationContext() {
+  }
 
   public OperationContext(Object type) {
     myType = type;
@@ -44,8 +55,34 @@ public final class OperationContext {
     return myType;
   }
 
+  public void setType(@Nullable Object type) {
+    myType = type;
+  }
+
   public boolean is(Object type) {
-    return type == null ? myType == null : type.equals(myType);
+    if (myType == type) {
+      return true;
+    }
+    if (myType != null) {
+      return myType.equals(type);
+    }
+    return false;
+  }
+
+  public boolean isMove() {
+    return is(MOVE);
+  }
+
+  public boolean isAdd() {
+    return is(ADD);
+  }
+
+  public boolean isCreate() {
+    return is(CREATE);
+  }
+
+  public boolean isPaste() {
+    return is(PASTE);
   }
 
   public EditableArea getArea() {
@@ -62,6 +99,22 @@ public final class OperationContext {
 
   public void setComponents(List<RadComponent> components) {
     myComponents = components;
+  }
+
+  public boolean isMoveEnabled() {
+    return myMoveEnabled;
+  }
+
+  public void setMoveEnabled(boolean enabled) {
+    myMoveEnabled &= enabled;
+  }
+
+  public void setAddEnabled(boolean enabled) {
+    myAddEnabled &= enabled;
+  }
+
+  public boolean isAddEnabled() {
+    return myAddEnabled;
   }
 
   public InputEvent getInputEvent() {
@@ -106,13 +159,5 @@ public final class OperationContext {
 
   public void setResizeDirection(int resizeDirection) {
     myResizeDirection = resizeDirection;
-  }
-
-  public Object getNewObject() {
-    return myNewObject;
-  }
-
-  public void setNewObject(Object newObject) {
-    myNewObject = newObject;
   }
 }

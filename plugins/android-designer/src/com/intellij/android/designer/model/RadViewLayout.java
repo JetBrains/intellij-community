@@ -15,7 +15,10 @@
  */
 package com.intellij.android.designer.model;
 
+import com.intellij.android.designer.designSurface.MoveOperation;
 import com.intellij.designer.designSurface.ComponentDecorator;
+import com.intellij.designer.designSurface.EditOperation;
+import com.intellij.designer.designSurface.OperationContext;
 import com.intellij.designer.designSurface.selection.NonResizeSelectionDecorator;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.model.RadLayout;
@@ -29,5 +32,13 @@ public class RadViewLayout extends RadLayout {
   @Override
   public ComponentDecorator getChildSelectionDecorator(RadComponent component) {
     return new NonResizeSelectionDecorator(Color.RED, 1);
+  }
+
+  @Override
+  public EditOperation processChildOperation(OperationContext context) {
+    if (context.isMove()) {
+      return new MoveOperation(context);
+    }
+    return null;
   }
 }

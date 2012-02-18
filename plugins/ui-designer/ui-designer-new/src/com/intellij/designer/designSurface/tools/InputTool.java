@@ -37,7 +37,7 @@ public abstract class InputTool {
   protected ToolProvider myToolProvider;
   protected EditableArea myArea;
 
-  protected Object myCommand;
+  protected boolean myExecuteEnabled;
 
   private boolean myActive;
   private boolean myCanUnload = true;
@@ -67,7 +67,7 @@ public abstract class InputTool {
 
   public void deactivate() {
     myActive = false;
-    setCommand(null);
+    setExecuteEnabled(false);
   }
 
   protected void resetState() {
@@ -104,8 +104,8 @@ public abstract class InputTool {
     myCanUnload = value;
   }
 
-  protected final void setCommand(@Nullable Object command) {
-    myCommand = command;
+  protected final void setExecuteEnabled(boolean enabled) {
+    myExecuteEnabled = enabled;
     refreshCursor();
   }
 
@@ -134,10 +134,7 @@ public abstract class InputTool {
     if (myState == STATE_NONE) {
       return null;
     }
-    if (myCommand == null) {
-      return getDisabledCursor();
-    }
-    return getDefaultCursor();
+    return myExecuteEnabled ? getDefaultCursor() : getDisabledCursor();
   }
 
   protected Cursor getDefaultCursor() {

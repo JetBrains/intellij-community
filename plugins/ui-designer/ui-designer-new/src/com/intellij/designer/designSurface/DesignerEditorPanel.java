@@ -112,9 +112,9 @@ public abstract class DesignerEditorPanel extends JPanel implements ToolProvider
       }
 
       @Override
-      public RadComponent findTarget(int x, int y) {
+      public RadComponent findTarget(int x, int y, @Nullable ComponentTargetFilter filter) {
         if (myRootComponent != null) {
-          FindComponentVisitor visitor = new FindComponentVisitor(x, y);
+          FindComponentVisitor visitor = new FindComponentVisitor(filter, x, y);
           myRootComponent.accept(visitor, false);
           return visitor.getResult();
         }
@@ -295,11 +295,13 @@ public abstract class DesignerEditorPanel extends JPanel implements ToolProvider
   }
 
   private class FindComponentVisitor extends RadComponentVisitor {
+    @Nullable private final ComponentTargetFilter myFilter;
     private RadComponent myResult;
     private final int myX;
     private final int myY;
 
-    public FindComponentVisitor(int x, int y) {
+    public FindComponentVisitor(@Nullable ComponentTargetFilter filter, int x, int y) {
+      myFilter = filter;
       myX = x;
       myY = y;
     }
@@ -310,16 +312,15 @@ public abstract class DesignerEditorPanel extends JPanel implements ToolProvider
 
     @Override
     public boolean visit(RadComponent component) {
-      return myResult == null;
+      return myResult == null &&
+             component.getBounds(myLayeredPane).contains(myX, myY) &&
+             (myFilter == null || myFilter.preFilter(component));
     }
 
     @Override
     public void endVisit(RadComponent component) {
-      if (myResult == null) {
-        Point location = component.convertPoint(myLayeredPane, myX, myY);
-        if (component.getBounds().contains(location)) {
-          myResult = component;
-        }
+      if (myResult == null && (myFilter == null || myFilter.resultFilter(component))) {
+        myResult = component;
       }
     }
   }

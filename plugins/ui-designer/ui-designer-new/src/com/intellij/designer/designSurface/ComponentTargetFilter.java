@@ -13,14 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.designer.designSurface.tools;
+package com.intellij.designer.designSurface;
+
+import com.intellij.designer.model.RadComponent;
 
 /**
  * @author Alexander Lobas
  */
-public class PasteTool extends AbstractCreationTool {
-  @Override
-  protected void selectAddedObjects() {
-    // TODO: Auto-generated method stub
-  }
+public interface ComponentTargetFilter {
+  boolean preFilter(RadComponent component);
+
+  boolean resultFilter(RadComponent target);
 }

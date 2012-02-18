@@ -20,9 +20,9 @@ import com.intellij.designer.designSurface.OperationContext;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.utils.Cursors;
 import com.intellij.designer.utils.Position;
-import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,10 +30,10 @@ import java.util.List;
  * @author Alexander Lobas
  */
 public class ResizeTracker extends InputTool {
+  private final int myDirection;
   private OperationContext myContext;
   private List<EditOperation> myOperations;
   private boolean myShowFeedback;
-  private final int myDirection;
 
   public ResizeTracker(int direction, Object type) {
     myDirection = direction;
@@ -61,7 +61,7 @@ public class ResizeTracker extends InputTool {
 
   @Override
   protected void handleButtonDown(int button) {
-    if (button == 1) {
+    if (button == MouseEvent.BUTTON1) {
       if (myState == STATE_INIT) {
         myState = STATE_DRAG;
       }
@@ -69,7 +69,7 @@ public class ResizeTracker extends InputTool {
     else {
       myState = STATE_INVALID;
       eraseFeedback();
-      setCommand(null);
+      setExecuteEnabled(false);
     }
   }
 
@@ -115,7 +115,7 @@ public class ResizeTracker extends InputTool {
   }
 
   private void executeCommand() {
-    if (myCommand != null) {
+    if (myExecuteEnabled) {
       try {
         for (EditOperation operation : getOperations()) {
           if (operation.canExecute()) {
@@ -132,40 +132,40 @@ public class ResizeTracker extends InputTool {
   private void setCommand() {
     for (EditOperation operation : getOperations()) {
       if (operation.canExecute()) {
-        setCommand(this);
+        setExecuteEnabled(true);
         return;
       }
     }
-    setCommand(null);
+    setExecuteEnabled(false);
   }
 
   private void updateContext() {
     myContext.setArea(myArea);
     myContext.setInputEvent(myInputEvent);
 
-    Point corner = new Point();
-    Dimension resize = new Dimension();
-
-    int moveDeltaHeight = myCurrentScreenY - myStartScreenY;
-    if ((myDirection & Position.NORTH) != 0) {
-      corner.y += moveDeltaHeight;
-      resize.height -= moveDeltaHeight;
-    }
-    else if ((myDirection & Position.SOUTH) != 0) {
-      resize.height += moveDeltaHeight;
-    }
+    Point move = new Point();
+    Dimension size = new Dimension();
 
     int moveDeltaWidth = myCurrentScreenX - myStartScreenX;
     if ((myDirection & Position.WEST) != 0) {
-      corner.x += moveDeltaWidth;
-      resize.width -= moveDeltaWidth;
+      move.x += moveDeltaWidth;
+      size.width -= moveDeltaWidth;
     }
     else if ((myDirection & Position.EAST) != 0) {
-      resize.width += moveDeltaWidth;
+      size.width += moveDeltaWidth;
     }
 
-    myContext.setMoveDelta(corner);
-    myContext.setSizeDelta(resize);
+    int moveDeltaHeight = myCurrentScreenY - myStartScreenY;
+    if ((myDirection & Position.NORTH) != 0) {
+      move.y += moveDeltaHeight;
+      size.height -= moveDeltaHeight;
+    }
+    else if ((myDirection & Position.SOUTH) != 0) {
+      size.height += moveDeltaHeight;
+    }
+
+    myContext.setMoveDelta(move);
+    myContext.setSizeDelta(size);
     myContext.setLocation(new Point(myCurrentScreenX, myCurrentScreenY));
   }
 

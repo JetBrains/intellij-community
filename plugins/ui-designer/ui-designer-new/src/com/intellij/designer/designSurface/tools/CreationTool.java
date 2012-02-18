@@ -19,4 +19,8 @@ package com.intellij.designer.designSurface.tools;
  * @author Alexander Lobas
  */
 public class CreationTool extends AbstractCreationTool {
+  @Override
+  protected void selectAddedObjects() {
+    // TODO: Auto-generated method stub
+  }
 }
