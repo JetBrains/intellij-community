@@ -25,7 +25,6 @@ public class SvnTestDirtyScopeStateTest extends SvnTestCase {
     myInitChangeListManager = false;
   }
 
-  @Bombed(user = "irengrig", year = 2012, month = Calendar.FEBRUARY, day = 15)
   @Test
   public void testWhatIsDirty() throws Exception {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);

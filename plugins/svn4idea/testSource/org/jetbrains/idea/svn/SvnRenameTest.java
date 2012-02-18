@@ -221,7 +221,6 @@ public class SvnRenameTest extends SvnTestCase {
   }
 
   // IDEA-13824
-  @Bombed(user = "irengrig", month = Calendar.FEBRUARY, day = 20, description = "waiting for svnkit bugfix SVNKIT-136")
   @Test
   public void testRenameFileRenameDir() throws Exception {
     final VirtualFile child = prepareDirectoriesForRename();

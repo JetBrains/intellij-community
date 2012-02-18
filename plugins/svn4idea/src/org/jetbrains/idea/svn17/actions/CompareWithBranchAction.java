@@ -50,9 +50,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNReporter;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
-import org.tmatesoft.svn.core.internal.wc17.SVNBaseClient17;
 import org.tmatesoft.svn.core.internal.wc17.SVNReporter17;
-import org.tmatesoft.svn.core.internal.wc17.SVNWCClient17;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.*;
@@ -179,7 +177,6 @@ public class CompareWithBranchAction extends AnAction implements DumbAware {
 
         private void report17DirDiff(SvnVcs17 vcs, SVNURL url) throws SVNException {
           final File ioFile = new File(myVirtualFile.getPath());
-          final SVNWCClient17 wcClient17 = vcs.createWC17Client();
           final SVNWCClient wcClient = vcs.createWCClient();
           final SVNInfo info1 = wcClient.doInfo(ioFile, SVNRevision.HEAD);
 
@@ -193,9 +190,17 @@ public class CompareWithBranchAction extends AnAction implements DumbAware {
             SVNErrorManager.error(err, SVNLogType.WC);
           }
 
-          final SVNWCContext wcClientContext = wcClient17.getContext();
           final SVNReporter17 reporter17 =
-            new SVNReporter17(ioFile, wcClientContext, false, true, SVNDepth.INFINITY, false, false, true, false,
+            new SVNReporter17(ioFile, new SVNWCContext(SvnConfiguration17.getInstance(myProject).getOptions(myProject), new ISVNEventHandler() {
+              @Override
+              public void handleEvent(SVNEvent event, double progress) throws SVNException {
+              }
+
+              @Override
+              public void checkCancelled() throws SVNCancelException {
+              }
+            }),
+                              false, true, SVNDepth.INFINITY, false, false, true, false,
                               SVNDebugLog.getDefaultLog());
           SVNRepository repository = null;
           SVNRepository repository2 = null;
@@ -204,7 +209,7 @@ public class CompareWithBranchAction extends AnAction implements DumbAware {
             long rev = repository.getLatestRevision();
             repository2 = vcs.createRepository(url.toString());
             SvnDiffEditor diffEditor = new SvnDiffEditor(myVirtualFile, repository2, rev, true);
-            repository.diff(url, rev, rev, null, true, true, false, reporter17,
+            repository.diff(url, rev, rev, null, true, SVNDepth.INFINITY, false, reporter17,
                             SVNCancellableEditor.newInstance(diffEditor, new SvnProgressCanceller(), null));
             changes.addAll(diffEditor.getChangesMap().values());
           } finally {

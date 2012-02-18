@@ -87,7 +87,6 @@ import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea14;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaFactory;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
-import org.tmatesoft.svn.core.internal.wc17.SVNWCClient17;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.wc.*;
@@ -588,10 +587,6 @@ public class SvnVcs17 extends AbstractVcs<CommittedChangeList> {
 
   public SVNWCClient createWCClient() {
     return new SVNWCClient(myConfiguration.getAuthenticationManager(this), myConfiguration.getOptions(myProject));
-  }
-
-  public SVNWCClient17 createWC17Client() {
-    return new SVNWCClient17(myConfiguration.getAuthenticationManager(this), myConfiguration.getOptions(myProject));
   }
 
   public SVNCopyClient createCopyClient() {

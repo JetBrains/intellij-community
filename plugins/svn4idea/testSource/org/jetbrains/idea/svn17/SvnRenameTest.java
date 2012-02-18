@@ -178,7 +178,6 @@ public class SvnRenameTest extends SvnTestCase {
     return "{" + StringUtil.join(changes, StringUtil.createToStringFunction(Change.class), ",") + "}";
   }
 
-  @Bombed(user = "irengrig", year = 2012, month = Calendar.FEBRUARY, day = 15)
   // IDEADEV-19223
   @Test
   public void testRollbackRenameWithUnversioned() throws Exception {
@@ -226,7 +225,7 @@ public class SvnRenameTest extends SvnTestCase {
     Assert.assertTrue(new File(unversionedDirFile, "c.txt").exists());
   }
 
-  @Bombed(user = "irengrig", year = 2012, month = Calendar.FEBRUARY, day = 15)
+  @Bombed(user = "irengrig", year = 2012, month = Calendar.FEBRUARY, day = 25, description = "waiting for svnkit fix (reported 18.02)")
   // IDEA-13824
   @Test
   public void testRenameFileRenameDir() throws Exception {

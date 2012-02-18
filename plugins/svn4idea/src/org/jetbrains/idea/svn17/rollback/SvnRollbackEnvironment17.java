@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.svn17.rollback;
 
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
@@ -34,12 +35,14 @@ import org.jetbrains.idea.svn17.MoveRenameReplaceCheck;
 import org.jetbrains.idea.svn17.SvnBundle;
 import org.jetbrains.idea.svn17.SvnChangeProvider;
 import org.jetbrains.idea.svn17.SvnVcs17;
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.wc.*;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -86,6 +89,9 @@ public class SvnRollbackEnvironment17 extends DefaultRollbackEnvironment {
         }
       });
 
+    final List<Trinity<File, File, File>> fromTo = collector.getFromTo();
+    final List<Trinity<File, File, File>> fromToModified = new ArrayList<Trinity<File, File, File>>();
+    moveRenamesToTmp(exceptions, fromTo, fromToModified);
     // adds (deletes)
     // deletes (adds)
     // modifications
@@ -95,17 +101,44 @@ public class SvnRollbackEnvironment17 extends DefaultRollbackEnvironment {
     final List<File> edits = checker.getForEdits();
     reverter.revert(edits.toArray(new File[edits.size()]), false);
 
-    final List<Trinity<File, File, File>> fromTo = collector.getFromTo();
-    for (Trinity<File, File, File> trinity : fromTo) {
-      if (trinity.getFirst().exists()) {
-        // parent successfully renamed/moved
-        trinity.getSecond().renameTo(trinity.getThird());
-      }
-    }
+    moveGroup(exceptions, fromToModified);
+
     final List<Pair<File, File>> toBeDeleted = collector.getToBeDeleted();
     for (Pair<File, File> pair : toBeDeleted) {
       if (pair.getFirst().exists()) {
         FileUtil.delete(pair.getSecond());
+      }
+    }
+  }
+
+  private void moveRenamesToTmp(List<VcsException> exceptions,
+                                List<Trinity<File, File, File>> fromTo,
+                                List<Trinity<File, File, File>> fromToModified) {
+    try {
+      final File tmp = FileUtil.createTempDirectory("forRename", "");
+      for (Trinity<File, File, File> trinity : fromTo) {
+        final File tmpFile = FileUtil.createTempFile(tmp, trinity.getSecond().getName(), "", false);
+        tmpFile.mkdirs();
+        FileUtil.delete(tmpFile);
+        FileUtil.rename(trinity.getSecond(), tmpFile);
+        fromToModified.add(new Trinity<File, File, File>(trinity.getFirst(), tmpFile, trinity.getThird()));
+      }
+    }
+    catch (IOException e) {
+      exceptions.add(new VcsException(e));
+    }
+  }
+
+  private void moveGroup(List<VcsException> exceptions, List<Trinity<File, File, File>> fromTo) {
+    for (Trinity<File, File, File> trinity : fromTo) {
+      if (trinity.getFirst().exists()) {
+        // parent successfully renamed/moved
+        try {
+          FileUtil.rename(trinity.getSecond(), trinity.getThird());
+        }
+        catch (IOException e) {
+          exceptions.add(new VcsException(e));
+        }
       }
     }
   }
@@ -122,7 +155,7 @@ public class SvnRollbackEnvironment17 extends DefaultRollbackEnvironment {
     public void revert(final File[] files, final boolean recursive) {
       if (files.length == 0) return;
       try {
-        myClient.doRevert(files, recursive);
+        myClient.doRevert(files, recursive ? SVNDepth.INFINITY : SVNDepth.EMPTY, null);
       }
       catch (SVNException e) {
         if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_NOT_DIRECTORY) {
