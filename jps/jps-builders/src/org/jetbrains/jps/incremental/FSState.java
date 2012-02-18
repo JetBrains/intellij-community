@@ -84,6 +84,22 @@ public class FSState {
     }
   }
 
+  public void markDirtyIfNotDeleted(final File file, final RootDescriptor rd, final @Nullable TimestampStorage tsStorage) throws IOException {
+    final FilesDelta mainDelta = getDelta(rd.module);
+    final boolean marked = mainDelta.markRecompileIfNotDeleted(rd.root, rd.isTestRoot, file);
+    if (marked) {
+      if (tsStorage != null) {
+        tsStorage.markDirty(file);
+      }
+      final FilesDelta roundDelta = myCurrentRoundDelta;
+      if (roundDelta != null) {
+        if (myContextModules.contains(rd.module)) {
+          roundDelta.markRecompile(rd.root, rd.isTestRoot, file);
+        }
+      }
+    }
+  }
+
   /**
    * @return true if marked something, false otherwise
    */
@@ -186,6 +202,31 @@ public class FSState {
     private final Map<File, Set<File>> myTestsToRecompile = Collections.synchronizedMap(new HashMap<File, Set<File>>());   // srcRoot -> set of sources
 
     public boolean markRecompile(File root, boolean isTestRoot, File file) {
+      final boolean added = _addToRecompiled(root, isTestRoot, file);
+      if (added) {
+        final Set<String> deleted = isTestRoot? myDeletedTests : myDeletedProduction;
+        synchronized (deleted) {
+          if (!deleted.isEmpty()) { // optimization
+            deleted.remove(FileUtil.toCanonicalPath(file.getPath()));
+          }
+        }
+      }
+      return added;
+    }
+
+    public boolean markRecompileIfNotDeleted(File root, boolean isTestRoot, File file) {
+      final Set<String> deleted = isTestRoot? myDeletedTests : myDeletedProduction;
+      final boolean isMarkedDeleted;
+      synchronized (deleted) {
+        isMarkedDeleted = !deleted.isEmpty() && deleted.contains(FileUtil.toCanonicalPath(file.getPath()));
+      }
+      if (!isMarkedDeleted) {
+        return _addToRecompiled(root, isTestRoot, file);
+      }
+      return false;
+    }
+
+    private boolean _addToRecompiled(File root, boolean isTestRoot, File file) {
       final Map<File, Set<File>> toRecompile = isTestRoot ? myTestsToRecompile : mySourcesToRecompile;
       Set<File> files;
       synchronized (toRecompile) {
@@ -195,12 +236,7 @@ public class FSState {
           toRecompile.put(root, files);
         }
       }
-      final boolean added = files.add(file);
-      if (added) {
-        final Set<String> deleted = isTestRoot? myDeletedTests : myDeletedProduction;
-        deleted.remove(FileUtil.toCanonicalPath(file.getPath()));
-      }
-      return added;
+      return files.add(file);
     }
 
     public void addDeleted(File file, boolean isTest) {

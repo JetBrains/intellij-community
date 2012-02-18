@@ -106,7 +106,7 @@ public abstract class ModuleLevelBuilder extends Builder {
 
             if (!newlyAffectedFiles.isEmpty()) {
               for (File file : newlyAffectedFiles) {
-                context.markDirty(file);
+                context.markDirtyIfNotDeleted(file);
               }
               additionalPassRequired = context.isMake() && chunkContainsAffectedFiles(context, chunk, newlyAffectedFiles);
             }
