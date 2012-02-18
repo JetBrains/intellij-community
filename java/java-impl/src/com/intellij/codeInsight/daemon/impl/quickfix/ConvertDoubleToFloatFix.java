@@ -52,7 +52,7 @@ public class ConvertDoubleToFloatFix implements IntentionAction {
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (myExpression.isValid()) {
-      if (!StringUtil.endsWithIgnoreCase(myExpression.getText(), "d")) {
+      if (!StringUtil.endsWithIgnoreCase(myExpression.getText(), "f")) {
         final PsiLiteralExpression expression = (PsiLiteralExpression)createFloatingPointExpression(project);
         final Object value = expression.getValue();
         return value instanceof Float && !((Float)value).isInfinite() && !(((Float)value).floatValue() == 0 && !HighlightUtil.isFPZero(expression.getText())); 
@@ -67,7 +67,12 @@ public class ConvertDoubleToFloatFix implements IntentionAction {
   }
 
   private PsiExpression createFloatingPointExpression(Project project) {
-    return JavaPsiFacade.getElementFactory(project).createExpressionFromText(myExpression.getText() + "f", myExpression);
+    final String text = myExpression.getText();
+    if (StringUtil.endsWithIgnoreCase(text, "d")) {
+      return JavaPsiFacade.getElementFactory(project).createExpressionFromText(text.substring(0, text.length() - 1) + "f", myExpression);
+    } else {
+      return JavaPsiFacade.getElementFactory(project).createExpressionFromText(text + "f", myExpression);
+    }
   }
 
   @Override
