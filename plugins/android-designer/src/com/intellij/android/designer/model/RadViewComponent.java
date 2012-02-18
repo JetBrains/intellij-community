@@ -56,6 +56,11 @@ public class RadViewComponent extends RadComponent {
     return myBounds;
   }
 
+  @Override
+  public Rectangle getBounds(Component relativeTo) {
+    return SwingUtilities.convertRectangle(myNativeComponent, myBounds, relativeTo);
+  }
+
   public void setBounds(int x, int y, int width, int height) {
     myBounds.setBounds(x, y, width, height);
   }
@@ -67,10 +72,5 @@ public class RadViewComponent extends RadComponent {
   @Override
   public Point convertPoint(Component component, int x, int y) {
     return SwingUtilities.convertPoint(component, x, y, myNativeComponent);
-  }
-
-  @Override
-  public Point convertPoint(int x, int y, Component component) {
-    return SwingUtilities.convertPoint(myNativeComponent, x, y, component);
   }
 }

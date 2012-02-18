@@ -490,6 +490,7 @@ public class HighlightUtil {
     }
     if (expression != null && lType != null) {
       QuickFixAction.registerQuickFixAction(highlightInfo, new WrapExpressionFix(lType, expression));
+      AddTypeArgumentsConditionalFix.register(highlightInfo, expression, lType);
     }
     ChangeNewOperatorTypeFix.register(highlightInfo, expression, lType);
     return highlightInfo;

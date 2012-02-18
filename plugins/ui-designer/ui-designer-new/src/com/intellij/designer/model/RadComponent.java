@@ -36,6 +36,12 @@ public abstract class RadComponent {
   private RadLayout myLayout;
   private final Map<Object, Object> myClientProperties = new HashMap<Object, Object>();
 
+  //////////////////////////////////////////////////////////////////////////////////////////
+  //
+  // Hierarchy
+  //
+  //////////////////////////////////////////////////////////////////////////////////////////
+
   public RadComponent getRoot() {
     return myParent == null ? this : myParent.getRoot();
   }
@@ -56,21 +62,33 @@ public abstract class RadComponent {
     return getChildren().toArray();
   }
 
+  //////////////////////////////////////////////////////////////////////////////////////////
+  //
+  // Visual
+  //
+  //////////////////////////////////////////////////////////////////////////////////////////
+
   public Rectangle getBounds() {
     return null;
   }
 
-  public Point convertPoint(Component component, int x, int y) {
+  public Rectangle getBounds(Component relativeTo) {
     return null;
   }
 
-  public Point convertPoint(int x, int y, Component component) {
+  public Point convertPoint(Component relativeFrom, int x, int y) {
     return null;
   }
 
   public InputTool getDragTracker() {
     return new DragTracker(this);
   }
+
+  //////////////////////////////////////////////////////////////////////////////////////////
+  //
+  // layout
+  //
+  //////////////////////////////////////////////////////////////////////////////////////////
 
   public RadLayout getLayout() {
     return myLayout;
@@ -85,6 +103,12 @@ public abstract class RadComponent {
     return null;
   }
 
+  //////////////////////////////////////////////////////////////////////////////////////////
+  //
+  // Properties
+  //
+  //////////////////////////////////////////////////////////////////////////////////////////
+
   public List<Property> getProperties() {
     return null;
   }
@@ -96,6 +120,12 @@ public abstract class RadComponent {
   public final void putClientProperty(@NotNull Object key, Object value) {
     myClientProperties.put(key, value);
   }
+
+  //////////////////////////////////////////////////////////////////////////////////////////
+  //
+  // Visitor
+  //
+  //////////////////////////////////////////////////////////////////////////////////////////
 
   public void accept(RadComponentVisitor visitor, boolean forward) {
     if (visitor.visit(this)) {

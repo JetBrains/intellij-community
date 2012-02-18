@@ -16,10 +16,18 @@
 package com.intellij.designer.model;
 
 import com.intellij.designer.designSurface.ComponentDecorator;
+import com.intellij.designer.designSurface.EditOperation;
+import com.intellij.designer.designSurface.OperationContext;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Alexander Lobas
  */
 public abstract class RadLayout {
   public abstract ComponentDecorator getChildSelectionDecorator(RadComponent component);
+
+  @Nullable
+  public EditOperation processChildOperation(OperationContext context) {
+    return null;
+  }
 }

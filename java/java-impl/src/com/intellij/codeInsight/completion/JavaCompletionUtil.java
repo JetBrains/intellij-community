@@ -903,9 +903,12 @@ public class JavaCompletionUtil {
     }
 
     if (pkgContext) {
-      PsiFile classFile = psiClass.getContainingFile();
-      if (classFile instanceof PsiClassOwner && StringUtil.isEmpty(((PsiClassOwner)classFile).getPackageName())) {
-        return false;
+      PsiClass topLevel = PsiUtil.getTopLevelClass(psiClass);
+      if (topLevel != null) {
+        String fqName = topLevel.getQualifiedName();
+        if (fqName != null && StringUtil.isEmpty(StringUtil.getPackageName(fqName))) {
+          return false;
+        }
       }
     }
 

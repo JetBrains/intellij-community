@@ -33,25 +33,42 @@ public class SelectionTool extends InputTool {
   private InputTool myTracker;
 
   @Override
+  public void deactivate() {
+    deactivateTracker();
+    super.deactivate();
+  }
+
+  @Override
+  public void refreshCursor() {
+    if (myTracker == null) {
+      super.refreshCursor();
+    }
+  }
+
+  @Override
   protected void handleButtonDown(int button) {
     if (myState == STATE_INIT) {
       myState = STATE_DRAG;
       deactivateTracker();
 
-      if (myInputEvent.isAltDown()) {
-        setTracker(new MarqueeTracker());
-        return;
-      }
+      if (!myArea.isTree()) {
+        if (myInputEvent.isAltDown()) {
+          setTracker(new MarqueeTracker());
+          return;
+        }
 
-      InputTool tracker = myArea.findTargetTool(myCurrentScreenX, myCurrentScreenY);
-      if (tracker != null) {
-        setTracker(tracker);
-        return;
+        InputTool tracker = myArea.findTargetTool(myCurrentScreenX, myCurrentScreenY);
+        if (tracker != null) {
+          setTracker(tracker);
+          return;
+        }
       }
 
       RadComponent component = myArea.findTarget(myCurrentScreenX, myCurrentScreenY);
       if (component == null) {
-        setTracker(new MarqueeTracker());
+        if (!myArea.isTree()) {
+          setTracker(new MarqueeTracker());
+        }
       }
       else {
         setTracker(component.getDragTracker());
@@ -75,19 +92,6 @@ public class SelectionTool extends InputTool {
       else {
         myArea.setCursor(tracker.getDefaultCursor());
       }
-    }
-  }
-
-  @Override
-  public void deactivate() {
-    deactivateTracker();
-    super.deactivate();
-  }
-
-  @Override
-  public void refreshCursor() {
-    if (myTracker == null) {
-      super.refreshCursor();
     }
   }
 

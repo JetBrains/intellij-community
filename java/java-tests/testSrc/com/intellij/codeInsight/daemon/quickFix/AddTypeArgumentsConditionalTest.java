@@ -13,27 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.designer.designSurface.tools;
+package com.intellij.codeInsight.daemon.quickFix;
 
-import com.intellij.designer.model.RadComponent;
-import com.intellij.designer.utils.Cursors;
+public class AddTypeArgumentsConditionalTest extends LightQuickFix15TestCase {
 
-import java.awt.*;
-
-/**
- * @author Alexander Lobas
- */
-public class DragTracker extends SelectionTracker {
-  private static final Cursor myDragCursor = Cursors.getMoveCursor();
-
-  public DragTracker(RadComponent component) {
-    super(component);
-    setDefaultCursor(Cursors.RESIZE_ALL);
-    setDisabledCursor(Cursors.getNoCursor());
-  }
+  public void test() throws Exception { doAllTests(); }
 
   @Override
-  protected Cursor getDefaultCursor() {
-    return myState == STATE_NONE ? super.getDefaultCursor() : myDragCursor;
+  protected String getBasePath() {
+    return "/codeInsight/daemonCodeAnalyzer/quickFix/addTypeArgumentsConditional";
   }
 }

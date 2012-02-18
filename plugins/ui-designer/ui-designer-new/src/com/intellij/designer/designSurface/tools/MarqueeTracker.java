@@ -18,6 +18,7 @@ package com.intellij.designer.designSurface.tools;
 import com.intellij.designer.designSurface.FeedbackLayer;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.model.RadComponentVisitor;
+import com.intellij.designer.designSurface.feedbacks.AlphaComponent;
 import com.intellij.designer.utils.Cursors;
 
 import javax.swing.*;
@@ -30,8 +31,6 @@ import java.util.List;
  * @author Alexander Lobas
  */
 public class MarqueeTracker extends InputTool {
-  private static final AlphaComposite myComposite1 = AlphaComposite.getInstance(AlphaComposite.SRC_ATOP, 0.3f);
-  private static final AlphaComposite myComposite2 = AlphaComposite.getInstance(AlphaComposite.SRC_ATOP, 0.6f);
   private static final Color myColor = new Color(47, 67, 96);
 
   private static final int TOGGLE_MODE = 1;
@@ -111,24 +110,7 @@ public class MarqueeTracker extends InputTool {
     FeedbackLayer layer = myArea.getFeedbackLayer();
 
     if (myFeedback == null) {
-      myFeedback = new JComponent() {
-        protected void paintComponent(final Graphics g) {
-          Graphics2D g2d = (Graphics2D)g;
-          super.paintComponent(g);
-          final Composite oldComposite = g2d.getComposite();
-          final Color oldColor = g2d.getColor();
-          g2d.setColor(myColor);
-
-          g2d.setComposite(myComposite1);
-          g2d.fillRect(0, 0, getWidth(), getHeight());
-
-          g2d.setComposite(myComposite2);
-          g2d.drawRect(0, 0, getWidth() - 1, getHeight() - 1);
-
-          g2d.setColor(oldColor);
-          g2d.setComposite(oldComposite);
-        }
-      };
+      myFeedback = new AlphaComponent(myColor);
       layer.add(myFeedback);
     }
 
@@ -156,11 +138,7 @@ public class MarqueeTracker extends InputTool {
     myArea.getRootComponent().accept(new RadComponentVisitor() {
       @Override
       public void endVisit(RadComponent component) {
-        Rectangle bounds = component.getBounds();
-        Point location = component.convertPoint(bounds.x, bounds.y, myArea.getNativeComponent());
-
-        if (selectionRectangle.contains(location) &&
-            selectionRectangle.contains(location.x + bounds.width, location.y + bounds.height)) {
+        if (selectionRectangle.contains(component.getBounds(myArea.getNativeComponent()))) {
           newSelection.add(component);
         }
       }
