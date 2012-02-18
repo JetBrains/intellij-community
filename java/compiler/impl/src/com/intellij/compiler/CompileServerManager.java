@@ -743,7 +743,7 @@ public class CompileServerManager implements ApplicationComponent{
           statusMessage = "Auto make completed with errors";
           break;
         case CANCELED:
-          statusMessage = "Auto make has been canceled";
+          //statusMessage = "Auto make has been canceled";
           break;
       }
       if (statusMessage != null) {
