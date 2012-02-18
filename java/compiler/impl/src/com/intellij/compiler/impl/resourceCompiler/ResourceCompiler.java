@@ -81,6 +81,8 @@ public class ResourceCompiler implements TranslatingCompiler {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+
+        OUTER:
         for (final VirtualFile file : files) {
           if (context.getProgressIndicator().isCanceled()) {
             break;
@@ -89,6 +91,13 @@ public class ResourceCompiler implements TranslatingCompiler {
           if (module == null) {
             continue; // looks like file invalidated
           }
+
+          for (ResourceCompilerExtension extension : ResourceCompilerExtension.EP_NAME.getExtensions()) {
+            if (extension.skipStandardResourceCompiler(module)) {
+              continue OUTER;
+            }
+          }
+
           final VirtualFile fileRoot = MakeUtil.getSourceRoot(context, module, file);
           if (fileRoot == null) {
             continue;
