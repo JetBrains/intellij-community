@@ -707,6 +707,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
         return element;
       }
 
+      if (body == null) throw new IncorrectOperationException("Class must have body");
       return body.addBefore(element, nextChild);
     }
     else {
@@ -725,6 +726,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
       return super.addBefore(element, anchor);
     }
 
+    if (body == null) throw new IncorrectOperationException("Class must have body");
     return body.addBefore(element, anchor);
   }
 
@@ -811,13 +813,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
 
     GrTypeDefinitionBody body = getBody();
     if (body == null) throw new IncorrectOperationException("Type definition without a body");
-//    ASTNode anchorNode;
-//    anchorNode = anchorBefore.getNode();
-//    ASTNode bodyNode = body.getNode();
-    decl = (T)body.addBefore(decl, anchorBefore);
-//    bodyNode.addLeaf(GroovyTokenTypes.mWS, " ", decl.getNode()); //add whitespaces before and after to hack over incorrect auto reformat
-//    bodyNode.addLeaf(GroovyTokenTypes.mWS, " ", anchorNode);
-    return decl;
+    return  (T)body.addBefore(decl, anchorBefore);
   }
 
 }
