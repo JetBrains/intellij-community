@@ -614,6 +614,10 @@ public class EditorUtil {
            ? !e.isControlDown() && e.isMetaDown() && !e.isAltDown() && !e.isShiftDown()
            : e.isControlDown() && !e.isMetaDown() && !e.isAltDown() && !e.isShiftDown();
   }
+
+  public static boolean inVirtualSpace(Editor editor, LogicalPosition logicalPosition) {
+    return !editor.offsetToLogicalPosition(editor.logicalPositionToOffset(logicalPosition)).equals(logicalPosition);
+  }
 }
 
 

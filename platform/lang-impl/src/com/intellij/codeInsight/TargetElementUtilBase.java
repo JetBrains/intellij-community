@@ -33,7 +33,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.Navigatable;
@@ -129,14 +129,10 @@ public class TargetElementUtilBase {
 
   public static boolean inVirtualSpace(Editor editor, int offset) {
     if (offset == editor.getCaretModel().getOffset()) {
-      return inVirtualSpace(editor, editor.getCaretModel().getLogicalPosition());
+      return EditorUtil.inVirtualSpace(editor, editor.getCaretModel().getLogicalPosition());
     }
 
     return false;
-  }
-
-  public static boolean inVirtualSpace(Editor editor, LogicalPosition logicalPosition) {
-    return !editor.offsetToLogicalPosition(editor.logicalPositionToOffset(logicalPosition)).equals(logicalPosition);
   }
 
   @Nullable

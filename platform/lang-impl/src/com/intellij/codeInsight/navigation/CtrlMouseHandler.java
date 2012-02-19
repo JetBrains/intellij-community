@@ -40,6 +40,7 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
@@ -506,7 +507,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       if (file == null) return;
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
-      if (TargetElementUtilBase.inVirtualSpace(myEditor, myPosition)) {
+      if (EditorUtil.inVirtualSpace(myEditor, myPosition)) {
         return;
       }
 
