@@ -72,7 +72,7 @@ public class LineStatusTrackerDrawing {
     g.setColor(brighter(stripeColor));
 
     final int endX = gutter.getWhitespaceSeparatorOffset();
-    final int x = r.x + r.width - 2;
+    final int x = r.x + r.width - 5;
     final int width = endX - x;
     if (r.height > 0) {
       g.fillRect(x, r.y + 2, width, r.height - 4);
