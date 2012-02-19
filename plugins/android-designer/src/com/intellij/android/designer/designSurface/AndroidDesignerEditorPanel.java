@@ -29,6 +29,8 @@ import com.intellij.designer.designSurface.*;
 import com.intellij.designer.designSurface.selection.DirectionResizePoint;
 import com.intellij.designer.designSurface.selection.NonResizeSelectionDecorator;
 import com.intellij.designer.designSurface.selection.ResizeSelectionDecorator;
+import com.intellij.designer.designSurface.tools.ComponentCreationFactory;
+import com.intellij.designer.designSurface.tools.CreationTool;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.utils.Position;
 import com.intellij.openapi.module.Module;
@@ -45,6 +47,8 @@ import javax.swing.*;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import java.awt.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.io.InputStream;
 import java.util.List;
@@ -59,6 +63,21 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
 
   public AndroidDesignerEditorPanel(@NotNull Module module, @NotNull VirtualFile file) {
     super(module, file);
+
+    myGlassLayer.addKeyListener(new KeyAdapter() {
+      @Override
+      public void keyPressed(final KeyEvent event) {
+        if (event.getKeyCode() == KeyEvent.VK_F2) {
+          myToolProvider.setActiveTool(new CreationTool(true, new ComponentCreationFactory() {
+            @Override
+            @NotNull
+            public RadComponent create() throws Exception {
+              return new RadViewComponent(null, event.isControlDown() ? "swing" : "android");
+            }
+          }));
+        }
+      }
+    });
 
     // TODO: (profile|device|target|...|theme) panel
 

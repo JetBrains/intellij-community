@@ -15,12 +15,36 @@
  */
 package com.intellij.designer.designSurface.tools;
 
+import com.intellij.designer.designSurface.OperationContext;
+
+import java.util.Collections;
+
 /**
  * @author Alexander Lobas
  */
 public class CreationTool extends AbstractCreationTool {
+  private final ComponentCreationFactory myFactory;
+
+  public CreationTool(boolean canUnload, ComponentCreationFactory factory) {
+    super(canUnload);
+    myFactory = factory;
+  }
+
   @Override
-  protected void selectAddedObjects() {
-    // TODO: Auto-generated method stub
+  public void activate() {
+    super.activate();
+    myContext.setType(OperationContext.CREATE);
+
+    try {
+      myContext.setComponents(Collections.singletonList(myFactory.create()));
+    }
+    catch (Throwable e) {
+      myToolProvider.loadDefaultTool();
+    }
+  }
+
+  @Override
+  protected void updateTarget() {
+    myTargetOperation.setComponent(myContext.getComponents().get(0));
   }
 }

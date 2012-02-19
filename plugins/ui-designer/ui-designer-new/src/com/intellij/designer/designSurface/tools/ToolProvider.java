@@ -15,17 +15,58 @@
  */
 package com.intellij.designer.designSurface.tools;
 
+import com.intellij.designer.designSurface.EditableArea;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
+
+import java.awt.event.MouseEvent;
 
 /**
  * @author Alexander Lobas
  */
-public interface ToolProvider {
-  InputTool getActiveTool();
+public abstract class ToolProvider {
+  private InputTool myTool;
+  private EditableArea myArea;
+  private MouseEvent myEvent;
 
-  void setActiveTool(InputTool tool);
+  public InputTool getActiveTool() {
+    return myTool;
+  }
 
-  void loadDefaultTool();
+  public void setActiveTool(InputTool tool) {
+    if (myTool != null) {
+      myTool.deactivate();
+    }
 
-  void showError(@NonNls String message, Throwable e);
+    myTool = tool;
+
+    if (myTool != null) {
+      myTool.setToolProvider(this);
+      myTool.activate();
+
+      // hack: update cursor
+      if (myArea != null) {
+        myTool.setArea(myArea);
+        myTool.refreshCursor();
+        try {
+          myTool.mouseMove(myEvent, myArea);
+        }
+        catch (Exception e) {
+          showError("Edit error: ", e);
+        }
+      }
+    }
+  }
+
+  public abstract void loadDefaultTool();
+
+  public void setArea(@Nullable EditableArea area) {
+    myArea = area;
+  }
+
+  public void setEvent(MouseEvent event) {
+    myEvent = event;
+  }
+
+  public abstract void showError(@NonNls String message, Throwable e);
 }

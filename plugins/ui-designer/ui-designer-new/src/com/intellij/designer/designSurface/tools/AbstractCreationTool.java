@@ -27,7 +27,10 @@ import java.awt.event.MouseEvent;
  * @author Alexander Lobas
  */
 public abstract class AbstractCreationTool extends TargetingTool {
-  protected AbstractCreationTool() {
+  private boolean myCanUnload;
+
+  protected AbstractCreationTool(boolean canUnload) {
+    myCanUnload = canUnload;
     setDefaultCursor(Cursors.getCopyCursor());
     setDisabledCursor(Cursors.getNoCursor());
   }
@@ -62,14 +65,7 @@ public abstract class AbstractCreationTool extends TargetingTool {
     updateContext();
     updateTargetUnderMouse();
     showFeedback();
-    setCommand();
-  }
-
-  @Override
-  protected void handleDragStarted() {
-    if (myState == STATE_DRAG) {
-      myState = STATE_DRAG_IN_PROGRESS;
-    }
+    updateCommand();
   }
 
   @Override
@@ -77,28 +73,58 @@ public abstract class AbstractCreationTool extends TargetingTool {
     if (myState == STATE_DRAG_IN_PROGRESS) {
       updateContext();
       showFeedback();
-      setCommand();
+      updateCommand();
     }
   }
 
-  protected abstract void selectAddedObjects();
+  private void selectAddedObjects() {
+    myArea.setSelection(myContext.getComponents());
+  }
+
+  @Override
+  protected void resetState() {
+    // hack: update cursor
+    if (myCanUnload || myArea == null) {
+      super.resetState();
+    }
+  }
+
+  private void handleFinished() {
+    if (myCanUnload) {
+      myToolProvider.loadDefaultTool();
+    }
+    else {
+      deactivate();
+      activate();
+
+      // hack: update cursor
+      if (myArea != null) {
+        handleMove();
+      }
+    }
+  }
 
   private void updateTargetUnderMouse() {
     ContainerTargetFilter filter = new ContainerTargetFilter();
     RadComponent target = myArea.findTarget(myCurrentScreenX, myCurrentScreenY, filter);
     setTarget(target, filter);
-    // TODO
+
+    if (target != null) {
+      updateTarget();
+    }
   }
+
+  protected abstract void updateTarget();
 
   @Override
   protected void updateContext() {
     super.updateContext();
 
     if (myState == STATE_DRAG_IN_PROGRESS) {
-      myContext.setSizeDelta(new Dimension(myCurrentScreenX - myStartScreenX, myCurrentScreenY - myStartScreenY));
+      myContext.setSizeDelta(new Dimension(moveDeltaWidth(), moveDeltaHeight()));
     }
 
-    myContext.setLocation(new Point(myCurrentScreenX, myCurrentScreenY));
+    myContext.setLocation(getLocation());
   }
 
   @Override

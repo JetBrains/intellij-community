@@ -80,6 +80,7 @@ public class SelectionTool extends InputTool {
   protected void handleButtonUp(int button) {
     myState = STATE_INIT;
     setTracker(null);
+    handleMove(); // hack: update cursor
   }
 
   @Override

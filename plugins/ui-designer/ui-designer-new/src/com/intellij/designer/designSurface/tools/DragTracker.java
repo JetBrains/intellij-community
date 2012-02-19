@@ -59,12 +59,12 @@ public class DragTracker extends SelectionTracker {
       updateContext();
       updateTargetUnderMouse();
       showFeedback();
-      setCommand();
+      updateCommand();
     }
   }
 
   @Override
-  protected void setCommand() {
+  protected void updateCommand() {
     if (myTargetOperation != null) {
       if (myContext.isMove()) {
         setExecuteEnabled(myContext.isMoveEnabled() && myTargetOperation.canExecute());
@@ -117,9 +117,9 @@ public class DragTracker extends SelectionTracker {
   protected void updateContext() {
     super.updateContext();
 
-    myContext.setMoveDelta(new Point(myCurrentScreenX - myStartScreenX, myCurrentScreenY - myStartScreenY));
+    myContext.setMoveDelta(new Point(moveDeltaWidth(), moveDeltaHeight()));
     myContext.setSizeDelta(new Dimension());
-    myContext.setLocation(new Point(myCurrentScreenX, myCurrentScreenY));
+    myContext.setLocation(getLocation());
 
     if (myContext.getComponents() == null) {
       List<RadComponent> components = new ArrayList<RadComponent>();

@@ -20,6 +20,7 @@ import com.intellij.designer.designSurface.EditOperation;
 import com.intellij.designer.designSurface.OperationContext;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.model.RadLayout;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Alexander Lobas
@@ -45,8 +46,16 @@ public abstract class TargetingTool extends InputTool {
   }
 
   @Override
+  protected void handleDragStarted() {
+    if (myState == STATE_DRAG) {
+      myState = STATE_DRAG_IN_PROGRESS;
+    }
+  }
+
+  @Override
   protected void handleAreaExited() {
     setTarget(null, null);
+    setExecuteEnabled(false);
   }
 
   protected void showFeedback() {
@@ -76,16 +85,16 @@ public abstract class TargetingTool extends InputTool {
     }
   }
 
+  protected void updateCommand() {
+    setExecuteEnabled(myTargetOperation != null && myTargetOperation.canExecute());
+  }
+
   protected void updateContext() {
     myContext.setArea(myArea);
     myContext.setInputEvent(myInputEvent);
   }
 
-  protected void setCommand() {
-    setExecuteEnabled(myTargetOperation != null && myTargetOperation.canExecute());
-  }
-
-  protected void setTarget(RadComponent target, ContainerTargetFilter filter) {
+  protected void setTarget(@Nullable RadComponent target, @Nullable ContainerTargetFilter filter) {
     if (target != myTarget) {
       if (myTargetOperation != null) {
         eraseFeedback();

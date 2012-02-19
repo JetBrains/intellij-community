@@ -94,7 +94,7 @@ public class ResizeTracker extends InputTool {
     if (myState == STATE_DRAG_IN_PROGRESS) {
       updateContext();
       showFeedback();
-      setCommand();
+      updateCommand();
     }
   }
 
@@ -129,7 +129,7 @@ public class ResizeTracker extends InputTool {
     }
   }
 
-  private void setCommand() {
+  private void updateCommand() {
     for (EditOperation operation : getOperations()) {
       if (operation.canExecute()) {
         setExecuteEnabled(true);
@@ -146,7 +146,7 @@ public class ResizeTracker extends InputTool {
     Point move = new Point();
     Dimension size = new Dimension();
 
-    int moveDeltaWidth = myCurrentScreenX - myStartScreenX;
+    int moveDeltaWidth = moveDeltaWidth();
     if ((myDirection & Position.WEST) != 0) {
       move.x += moveDeltaWidth;
       size.width -= moveDeltaWidth;
@@ -155,7 +155,7 @@ public class ResizeTracker extends InputTool {
       size.width += moveDeltaWidth;
     }
 
-    int moveDeltaHeight = myCurrentScreenY - myStartScreenY;
+    int moveDeltaHeight = moveDeltaHeight();
     if ((myDirection & Position.NORTH) != 0) {
       move.y += moveDeltaHeight;
       size.height -= moveDeltaHeight;
@@ -166,7 +166,7 @@ public class ResizeTracker extends InputTool {
 
     myContext.setMoveDelta(move);
     myContext.setSizeDelta(size);
-    myContext.setLocation(new Point(myCurrentScreenX, myCurrentScreenY));
+    myContext.setLocation(getLocation());
   }
 
   private List<EditOperation> getOperations() {

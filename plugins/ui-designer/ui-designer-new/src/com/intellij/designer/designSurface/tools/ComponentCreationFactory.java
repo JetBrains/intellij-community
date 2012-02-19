@@ -15,36 +15,13 @@
  */
 package com.intellij.designer.designSurface.tools;
 
-import com.intellij.designer.designSurface.OperationContext;
-
-import java.util.Collections;
+import com.intellij.designer.model.RadComponent;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Alexander Lobas
  */
-public class PasteTool extends AbstractCreationTool {
-  private final ComponentPasteFactory myFactory;
-
-  public PasteTool(boolean canUnload, ComponentPasteFactory factory) {
-    super(canUnload);
-    myFactory = factory;
-  }
-
-  @Override
-  public void activate() {
-    super.activate();
-    myContext.setType(OperationContext.PASTE);
-
-    try {
-      myContext.setComponents(myFactory.create());
-    }
-    catch (Throwable e) {
-      myToolProvider.loadDefaultTool();
-    }
-  }
-
-  @Override
-  protected void updateTarget() {
-    myTargetOperation.setComponents(myContext.getComponents());
-  }
+public interface ComponentCreationFactory {
+  @NotNull
+  RadComponent create() throws Exception;
 }
