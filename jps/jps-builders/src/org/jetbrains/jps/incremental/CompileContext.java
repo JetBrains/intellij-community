@@ -190,6 +190,7 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
   }
 
   void onChunkBuildComplete(@NotNull ModuleChunk chunk) throws IOException {
+    myDataManager.closeSourceToOutputStorages(chunk, isCompilingTests());
     myDataManager.flush(true);
     myFsState.clearContextRoundData();
     myFsState.clearContextChunk();

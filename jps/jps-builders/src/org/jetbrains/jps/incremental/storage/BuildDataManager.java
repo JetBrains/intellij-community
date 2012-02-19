@@ -4,12 +4,15 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ether.dependencyView.Mappings;
+import org.jetbrains.jps.Module;
+import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.incremental.Paths;
 import org.jetbrains.jps.incremental.artifacts.ArtifactsBuildData;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -72,7 +75,7 @@ public class BuildDataManager {
       try {
         synchronized (mySourceToOutputLock) {
           try {
-            closeOutputToSourceStorages();
+            closeSourceToOutputStorages();
           }
           finally {
             FileUtil.delete(getSourceToOutputsRoot());
@@ -126,7 +129,7 @@ public class BuildDataManager {
     finally {
       try {
         synchronized (mySourceToOutputLock) {
-          closeOutputToSourceStorages();
+          closeSourceToOutputStorages();
         }
       }
       finally {
@@ -154,12 +157,25 @@ public class BuildDataManager {
     }
   }
 
-  private void closeOutputToSourceStorages() throws IOException {
+  public void closeSourceToOutputStorages(ModuleChunk chunk, boolean testSources) throws IOException {
+    final Map<String, SourceToOutputMapping> storageMap = testSources? myTestSourceToOutputs : myProductionSourceToOutputs;
+    synchronized (mySourceToOutputLock) {
+      for (Module module : chunk.getModules()) {
+        final String moduleName = module.getName().toLowerCase(Locale.US);
+        final SourceToOutputMapping mapping = storageMap.remove(moduleName);
+        if (mapping != null) {
+          mapping.close();
+        }
+      }
+    }
+  }
+
+  private void closeSourceToOutputStorages() throws IOException {
     IOException ex = null;
     try {
       for (Map.Entry<String, SourceToOutputMapping> entry : myProductionSourceToOutputs.entrySet()) {
         try {
-          closeStorage(entry.getValue());
+          entry.getValue().close();
         }
         catch (IOException e) {
           if (e != null) {
@@ -169,7 +185,7 @@ public class BuildDataManager {
       }
       for (Map.Entry<String, SourceToOutputMapping> entry : myTestSourceToOutputs.entrySet()) {
         try {
-          closeStorage(entry.getValue());
+          entry.getValue().close();
         }
         catch (IOException e) {
           if (e != null) {
