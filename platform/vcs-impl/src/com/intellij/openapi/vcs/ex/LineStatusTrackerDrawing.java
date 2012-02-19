@@ -245,13 +245,13 @@ public class LineStatusTrackerDrawing {
 
   public static void moveToRange(final Range range, final Editor editor, final LineStatusTracker tracker) {
     final Document document = tracker.getDocument();
-    final int firstOffset = document.getLineStartOffset(Math.min(range.getOffset1(), document.getLineCount() - 1));
-    editor.getCaretModel().moveToOffset(firstOffset);
+    final int lastOffset = document.getLineStartOffset(Math.min(range.getOffset2(), document.getLineCount() - 1));
+    editor.getCaretModel().moveToOffset(lastOffset);
     editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
 
     editor.getScrollingModel().runActionOnScrollingFinished(new Runnable() {
       public void run() {
-        Point p = editor.visualPositionToXY(editor.offsetToVisualPosition(firstOffset));
+        Point p = editor.visualPositionToXY(editor.offsetToVisualPosition(lastOffset));
         final JComponent editorComponent = editor.getContentComponent();
         final JLayeredPane layeredPane = editorComponent.getRootPane().getLayeredPane();
         p = SwingUtilities.convertPoint(editorComponent, 0, p.y, layeredPane);
