@@ -280,6 +280,10 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder, AS
       myLexemeIndex = 0;
       myParent = myNext = null;
     }
+
+    public void remapTokenType(IElementType type) {
+      throw new UnsupportedOperationException("Shall not be called on this kind of markers");
+    }
   }
 
   private static class StartMarker extends ProductionMarker implements Marker {
@@ -417,6 +421,11 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder, AS
     @Override
     public IElementType getTokenType() {
       return myType;
+    }
+
+    public void remapTokenType(IElementType type) {
+      //assert myType != null && type != null;
+      myType = type;
     }
 
     @Override
