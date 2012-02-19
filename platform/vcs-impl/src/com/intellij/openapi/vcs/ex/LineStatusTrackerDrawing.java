@@ -14,10 +14,7 @@ package com.intellij.openapi.vcs.ex;
 
 import com.intellij.codeInsight.hint.EditorFragmentComponent;
 import com.intellij.codeInsight.hint.HintManagerImpl;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diff.DiffColors;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -51,6 +48,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.EventObject;
+import java.util.List;
 
 /**
  * @author irengrig
@@ -159,11 +157,15 @@ public class LineStatusTrackerDrawing {
     localShowNextAction.copyFrom(globalShowNextAction);
     localShowPrevAction.copyFrom(globalShowPrevAction);
 
-    group.add(new RollbackLineStatusRangeAction(tracker, range, editor));
+    final RollbackLineStatusRangeAction rollback = new RollbackLineStatusRangeAction(tracker, range, editor);
+    EmptyAction.setupAction(rollback, IdeActions.CHANGES_VIEW_ROLLBACK, editorComponent);
+    group.add(rollback);
+
     group.add(new ShowLineStatusRangeDiffAction(tracker, range, editor));
     group.add(new CopyLineStatusRangeAction(tracker, range));
 
-    final java.util.List<AnAction> actionList = (java.util.List<AnAction>)editorComponent.getClientProperty(AnAction.ourClientProperty);
+    @SuppressWarnings("unchecked")
+    final List<AnAction> actionList = (List<AnAction>)editorComponent.getClientProperty(AnAction.ourClientProperty);
 
     actionList.remove(globalShowPrevAction);
     actionList.remove(globalShowNextAction);
@@ -200,6 +202,7 @@ public class LineStatusTrackerDrawing {
     final LightweightHint lightweightHint = new LightweightHint(component);
     lightweightHint.addHintListener(new HintListener() {
       public void hintHidden(final EventObject event) {
+        actionList.remove(rollback);
         actionList.remove(localShowPrevAction);
         actionList.remove(localShowNextAction);
         actionList.add(globalShowPrevAction);

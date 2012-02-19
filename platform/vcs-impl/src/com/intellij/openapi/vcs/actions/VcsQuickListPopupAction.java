@@ -22,6 +22,7 @@ import java.util.List;
  * May be customized using com.intellij.openapi.vcs.actions.VcsQuickListContentProvider extension point.
  */
 public class VcsQuickListPopupAction extends QuickSwitchSchemeAction implements DumbAware {
+
   public VcsQuickListPopupAction() {
     myActionPlace = ActionPlaces.ACTION_PLACE_VCS_QUICK_LIST_POPUP_ACTION;
   }
@@ -98,7 +99,7 @@ public class VcsQuickListPopupAction extends QuickSwitchSchemeAction implements 
     addAction("ChangesView.AddUnversioned", group);
     addAction("CheckinProject", group);
     addAction("CheckinFiles", group);
-    addAction("ChangesView.Rollback", group);
+    addAction(IdeActions.CHANGES_VIEW_ROLLBACK, group);
 
     // history and compare
     addSeparator(group);
