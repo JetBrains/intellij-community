@@ -46,6 +46,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.EventObject;
 import java.util.List;
@@ -184,6 +185,26 @@ public class LineStatusTrackerDrawing {
     final JPanel toolbarPanel = new JPanel(new BorderLayout());
     toolbarPanel.setOpaque(false);
     toolbarPanel.add(toolbar, BorderLayout.WEST);
+    JPanel emptyPanel = new JPanel();
+    emptyPanel.setOpaque(false);
+    toolbarPanel.add(emptyPanel, BorderLayout.CENTER);
+    MouseAdapter listener = new MouseAdapter() {
+      @Override
+      public void mousePressed(MouseEvent e) {
+        editor.getContentComponent().dispatchEvent(SwingUtilities.convertMouseEvent(e.getComponent(), e, editor.getContentComponent()));
+      }
+
+      @Override
+      public void mouseClicked(MouseEvent e) {
+        editor.getContentComponent().dispatchEvent(SwingUtilities.convertMouseEvent(e.getComponent(), e, editor.getContentComponent()));
+      }
+
+      public void mouseReleased(final MouseEvent e) {
+        editor.getContentComponent().dispatchEvent(SwingUtilities.convertMouseEvent(e.getComponent(), e, editor.getContentComponent()));
+      }
+    };
+    emptyPanel.addMouseListener(listener);
+
     component.add(toolbarPanel, BorderLayout.NORTH);
 
     if (range.getType() != Range.INSERTED) {
@@ -196,6 +217,7 @@ public class LineStatusTrackerDrawing {
         EditorFragmentComponent.createEditorFragmentComponent(uEditor, range.getUOffset1(), range.getUOffset2(), false, false);
 
       component.add(editorFragmentComponent, BorderLayout.CENTER);
+
       EditorFactory.getInstance().releaseEditor(uEditor);
     }
 
@@ -211,7 +233,7 @@ public class LineStatusTrackerDrawing {
     });
 
     HintManagerImpl.getInstanceImpl().showEditorHint(lightweightHint, editor, point, HintManagerImpl.HIDE_BY_ANY_KEY | HintManagerImpl.HIDE_BY_TEXT_CHANGE |
-                                                                             HintManagerImpl.HIDE_BY_OTHER_HINT | HintManagerImpl.HIDE_BY_SCROLLING,
+                                                                             HintManagerImpl.HIDE_BY_SCROLLING,
                                                                              -1, false, new HintHint(editor, point));
   }
 
