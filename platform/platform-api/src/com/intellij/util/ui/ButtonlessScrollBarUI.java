@@ -120,6 +120,21 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   }
 
   @Override
+  protected void installDefaults() {
+    final int incGap = UIManager.getInt("ScrollBar.incrementButtonGap");
+    final int decGap = UIManager.getInt("ScrollBar.decrementButtonGap");
+    try {
+      UIManager.put("ScrollBar.incrementButtonGap", 0);
+      UIManager.put("ScrollBar.decrementButtonGap", 0);
+      super.installDefaults();
+    }
+    finally {
+      UIManager.put("ScrollBar.incrementButtonGap", incGap);
+      UIManager.put("ScrollBar.decrementButtonGap", decGap);
+    }
+  }
+
+  @Override
   protected void installListeners() {
     super.installListeners();
     scrollbar.addAdjustmentListener(myAdjustmentListener);
