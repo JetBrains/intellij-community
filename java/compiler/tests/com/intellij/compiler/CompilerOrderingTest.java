@@ -47,6 +47,7 @@ public class CompilerOrderingTest extends IdeaTestCase {
     
     compareDescriptions(new String[] {
       CompilerBundle.message("resource.compiler.description"),
+      "Flex Resource Compiler",
       //"groovy compiler",
       "C2",
       "C4",
