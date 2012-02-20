@@ -75,7 +75,7 @@ public class GroovyCompletionData {
       return;
     }
     
-    if (!PlatformPatterns.psiElement().afterLeaf(".", ".&").accepts(position)) {
+    if (!PlatformPatterns.psiElement().afterLeaf(".", ".&", "@", "*.", "?.").accepts(position)) {
       if (suggestPackage(position)) {
         result.addElement(keyword(PsiKeyword.PACKAGE, TailType.INSERT_SPACE));
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,13 +22,11 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.SynchronizationUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class PublicFieldAccessedInSynchronizedContextInspection
-  extends BaseInspection {
+public class PublicFieldAccessedInSynchronizedContextInspection extends BaseInspection {
 
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "public.field.accessed.in.synchronized.context.display.name");
+    return InspectionGadgetsBundle.message("public.field.accessed.in.synchronized.context.display.name");
   }
 
   @NotNull
@@ -38,34 +36,34 @@ public class PublicFieldAccessedInSynchronizedContextInspection
 
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "public.field.accessed.in.synchronized.context.problem.descriptor");
+    return InspectionGadgetsBundle.message("public.field.accessed.in.synchronized.context.problem.descriptor");
   }
 
   public BaseInspectionVisitor buildVisitor() {
     return new PublicFieldAccessedInSynchronizedContextVisitor();
   }
 
-  private static class PublicFieldAccessedInSynchronizedContextVisitor
-    extends BaseInspectionVisitor {
+  private static class PublicFieldAccessedInSynchronizedContextVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitReferenceExpression(
-      @NotNull PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
+      final PsiExpression qualifier = expression.getQualifierExpression();
+      if (qualifier != null && !(qualifier instanceof PsiThisExpression) && !(qualifier instanceof PsiSuperExpression)) {
+        return;
+      }
       final PsiElement element = expression.resolve();
       if (!(element instanceof PsiField)) {
         return;
       }
       final PsiField field = (PsiField)element;
-      if (field.hasModifierProperty(PsiModifier.PRIVATE) ||
-          field.hasModifierProperty(PsiModifier.FINAL)) {
+      if (field.hasModifierProperty(PsiModifier.PRIVATE) || field.hasModifierProperty(PsiModifier.FINAL)) {
         return;
       }
       if (!SynchronizationUtil.isInSynchronizedContext(expression)) {
         return;
       }
       final PsiClass containingClass = field.getContainingClass();
-      if (containingClass.hasModifierProperty(PsiModifier.PRIVATE)) {
+      if (containingClass == null || containingClass.hasModifierProperty(PsiModifier.PRIVATE)) {
         return;
       }
       registerError(expression);

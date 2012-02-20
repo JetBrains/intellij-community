@@ -58,6 +58,8 @@ public class GrClassReferenceType extends PsiClassType {
 
   @Nullable
   public String getClassName() {
+    final PsiClass resolved = resolve();
+    if (resolved != null) return resolved.getName();
     return myReferenceElement.getReferenceName();
   }
 

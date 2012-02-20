@@ -161,7 +161,9 @@ public class SvnCommandLineStatusClient implements SvnStatusClientI {
       // todo not synchronized wrapper stream!
       SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
       parser.parse(new StringBufferInputStream(result), svnHandl[0]);
-
+      if (! svnHandl[0].isAnythingReported()) {
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY));
+      }
     }
     catch (SvnExceptionWrapper e) {
       throw (SVNException) e.getCause();

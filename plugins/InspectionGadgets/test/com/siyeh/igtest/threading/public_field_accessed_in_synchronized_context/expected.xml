@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>Foo.java</file>
+    <line>18</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Non-private field accessed in synchronized context</problem_class>
+    <description>Non-private field &lt;code&gt;myBar&lt;/code&gt; accessed in synchronized context #loc</description>
+  </problem>
+
+  <problem>
+    <file>Foo.java</file>
+    <line>19</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Non-private field accessed in synchronized context</problem_class>
+    <description>Non-private field &lt;code&gt;myBar&lt;/code&gt; accessed in synchronized context #loc</description>
+  </problem>
+</problems>

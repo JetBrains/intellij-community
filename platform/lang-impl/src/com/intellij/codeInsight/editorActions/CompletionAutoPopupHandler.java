@@ -22,7 +22,6 @@ import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -50,12 +49,14 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
                                 PsiFile file,
                                 FileType fileType) {
     CompletionPhase phase = CompletionServiceImpl.getCompletionPhase();
+    /*
     if (phase instanceof CompletionPhase.EmptyAutoPopup) {
       long modificationStampBeforeTyping = editor.getDocument().getModificationStamp();
       ((CompletionPhase.EmptyAutoPopup)phase).handleTyping(c);
       AutoHardWrapHandler.getInstance().wrapLineIfNecessary(editor, DataManager.getInstance().getDataContext(editor.getContentComponent()), modificationStampBeforeTyping);
       return Result.STOP;
     }
+    */
 
     return Result.CONTINUE;
   }

@@ -37,6 +37,7 @@ public class PortableStatus extends SVNStatus {
   private Getter<SVNInfo> myInfoGetter;
   private SVNInfo myInfo;
   private String myPath;
+  private boolean myFileExists;
 
   /**
    * Constructs an <b>SVNStatus</b> object filling it with status information
@@ -149,6 +150,16 @@ public class PortableStatus extends SVNStatus {
     return myInfo;
   }
 
+  @Override
+  public SVNNodeKind getKind() {
+    if (myFileExists) return super.getKind();
+    final SVNInfo info = initInfo();
+    if (info != null) {
+      return info.getKind();
+    }
+    return super.getKind();
+  }
+
   /**
    * Gets the temporary file that contains all latest changes from the
    * repository which led to a conflict with local changes. This file is at
@@ -259,5 +270,10 @@ public class PortableStatus extends SVNStatus {
 
   public String getPath() {
     return myPath;
+  }
+
+  public void setKind(boolean exists, SVNNodeKind kind) {
+    myFileExists = exists;
+    setKind(kind);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,20 +20,43 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+/**
+ * @author Bas Leijdekkers
+ */
 public class ProjectWindowActionGroup extends DefaultActionGroup {
 
   private ProjectWindowAction latest = null;
 
-  public void addProject(@NotNull String name) {
-    final ProjectWindowAction windowAction = new ProjectWindowAction(name, latest);
+  public void addProject(@NotNull Project project) {
+    final String projectLocation = project.getLocation();
+    if (projectLocation == null) {
+      return;
+    }
+    final String projectName = project.getName();
+    final ProjectWindowAction windowAction = new ProjectWindowAction(projectName, projectLocation, latest);
+    final List<ProjectWindowAction> duplicateWindowActions = findWindowActionsWithProjectName(projectName);
+    if (!duplicateWindowActions.isEmpty()) {
+      for (ProjectWindowAction action : duplicateWindowActions) {
+        action.getTemplatePresentation().setText(FileUtil.getLocationRelativeToUserHome(
+          FileUtil.toSystemDependentName(action.getProjectLocation())));
+      }
+      windowAction.getTemplatePresentation().setText(FileUtil.getLocationRelativeToUserHome(
+        FileUtil.toSystemDependentName(windowAction.getProjectLocation())));
+    }
     add(windowAction);
     latest = windowAction;
   }
 
-  public void removeProject(@NotNull String name) {
-    final ProjectWindowAction windowAction = findWindowAction(name);
+  public void removeProject(@NotNull Project project) {
+    final ProjectWindowAction windowAction = findWindowAction(project.getLocation());
     if (windowAction == null) {
       return;
     }
@@ -46,6 +69,11 @@ public class ProjectWindowActionGroup extends DefaultActionGroup {
       }
     }
     remove(windowAction);
+    final String projectName = project.getName();
+    final List<ProjectWindowAction> duplicateWindowActions = findWindowActionsWithProjectName(projectName);
+    if (duplicateWindowActions.size() == 1) {
+      duplicateWindowActions.get(0).getTemplatePresentation().setText(projectName);
+    }
     windowAction.dispose();
   }
 
@@ -63,7 +91,7 @@ public class ProjectWindowActionGroup extends DefaultActionGroup {
     if (project == null) {
       return;
     }
-    final ProjectWindowAction windowAction = findWindowAction(project.getName());
+    final ProjectWindowAction windowAction = findWindowAction(project.getLocation());
     if (windowAction == null) {
       return;
     }
@@ -78,7 +106,7 @@ public class ProjectWindowActionGroup extends DefaultActionGroup {
     if (project == null) {
       return;
     }
-    final ProjectWindowAction windowAction = findWindowAction(project.getName());
+    final ProjectWindowAction windowAction = findWindowAction(project.getLocation());
     if (windowAction == null) {
       return;
     }
@@ -88,17 +116,42 @@ public class ProjectWindowActionGroup extends DefaultActionGroup {
     }
   }
 
-  private ProjectWindowAction findWindowAction(String name) {
+  @Nullable
+  private ProjectWindowAction findWindowAction(String projectLocation) {
+    if (projectLocation == null) {
+      return null;
+    }
     final AnAction[] children = getChildren(null);
     for (AnAction child : children) {
       if (!(child instanceof ProjectWindowAction)) {
         continue;
       }
       final ProjectWindowAction windowAction = (ProjectWindowAction) child;
-      if (name.equals(windowAction.getTemplatePresentation().getText())) {
+      if (projectLocation.equals(windowAction.getProjectLocation())) {
         return windowAction;
       }
     }
     return null;
+  }
+
+  private List<ProjectWindowAction> findWindowActionsWithProjectName(String projectName) {
+    List<ProjectWindowAction> result = null;
+    final AnAction[] children = getChildren(null);
+    for (AnAction child : children) {
+      if (!(child instanceof ProjectWindowAction)) {
+        continue;
+      }
+      final ProjectWindowAction windowAction = (ProjectWindowAction) child;
+      if (projectName.equals(windowAction.getProjectName())) {
+        if (result == null) {
+          result = new ArrayList();
+        }
+        result.add(windowAction);
+      }
+    }
+    if (result == null) {
+      return Collections.emptyList();
+    }
+    return result;
   }
 }

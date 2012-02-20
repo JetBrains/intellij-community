@@ -222,7 +222,6 @@ public abstract class ResourceManager {
     final ResourceType type = ResourceType.getEnum(resourceType);
 
     if (type == null) {
-      LOG.error("Unknown resource type " + resourceType);
       return Collections.emptyList();
     }
 
@@ -354,7 +353,6 @@ public abstract class ResourceManager {
                                                   boolean distinguishDelimetersInName) {
     final ResourceType type = ResourceType.getEnum(resourceType);
     if (type == null) {
-      LOG.error("Unknown resource type " + resourceType);
       return Collections.emptyList();
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 
 /**
+ * @ author Bas Leijdekkers
  * This class is programmatically instantiated and registered when opening and closing projects
  * and thus not registered in plugin.xml
  */
@@ -36,9 +37,13 @@ public class ProjectWindowAction extends ToggleAction implements DumbAware {
 
   private ProjectWindowAction myPrevious;
   private ProjectWindowAction myNext;
+  @NotNull private final String myProjectName;
+  @NotNull private final String myProjectLocation;
 
-  public ProjectWindowAction(@NotNull String projectName, ProjectWindowAction previous) {
+  public ProjectWindowAction(@NotNull String projectName, @NotNull String projectLocation, ProjectWindowAction previous) {
     super(projectName);
+    myProjectName = projectName;
+    myProjectLocation = projectLocation;
     if (previous != null) {
       myPrevious = previous;
       myNext = previous.myNext;
@@ -71,11 +76,21 @@ public class ProjectWindowAction extends ToggleAction implements DumbAware {
     return myNext;
   }
 
+  @NotNull
+  public String getProjectLocation() {
+    return myProjectLocation;
+  }
+
+  @NotNull
+  public String getProjectName() {
+    return myProjectName;
+  }
+
   @Nullable
-  public static Frame findProjectFrame(@NotNull String projectName) {
+  public Frame findProjectFrame() {
     final Project[] projects = ProjectManager.getInstance().getOpenProjects();
     for (Project project : projects) {
-      if (projectName.equals(project.getName())) {
+      if (myProjectLocation.equals(project.getLocation())) {
         final WindowManager windowManager = WindowManager.getInstance();
         return windowManager.getFrame(project);
       }
@@ -89,15 +104,14 @@ public class ProjectWindowAction extends ToggleAction implements DumbAware {
     if (project == null) {
       return false;
     }
-    final String text = getTemplatePresentation().getText();
-    return text.equals(project.getName());
+    return myProjectLocation.equals(project.getLocation());
   }
 
   public void setSelected(@Nullable AnActionEvent e, boolean selected) {
     if (!selected) {
       return;
     }
-    final Frame projectFrame = findProjectFrame(getTemplatePresentation().getText());
+    final Frame projectFrame = findProjectFrame();
     if (projectFrame == null) {
       return;
     }

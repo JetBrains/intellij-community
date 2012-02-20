@@ -15,11 +15,9 @@
  */
 package org.jetbrains.plugins.groovy.completion;
 
-import com.intellij.codeInsight.completion.CompletionType;
-import com.intellij.testFramework.UsefulTestCase;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
-import java.util.List;
+import com.intellij.codeInsight.completion.CompletionType
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
 /**
  * @author Maxim.Medvedev
@@ -42,15 +40,15 @@ abstract public class GroovyCompletionTestBase extends LightCodeInsightFixtureTe
   public void doVariantableTest(String... variants) throws Throwable {
     myFixture.configureByFile(getTestName(false) + ".groovy");
     myFixture.complete(CompletionType.BASIC);
-    assertOrderedEquals(myFixture.getLookupElementStrings(), variants);
+    assertOrderedEquals(myFixture.lookupElementStrings, variants);
   }
 
   public void doSmartCompletion(String... variants) throws Exception {
     myFixture.configureByFile(getTestName(false) + ".groovy");
     myFixture.complete(CompletionType.SMART);
-    final List<String> list = myFixture.getLookupElementStrings();
+    final List<String> list = myFixture.lookupElementStrings;
     assertNotNull(list);
-    UsefulTestCase.assertOrderedEquals(list, variants);
+    assertOrderedEquals(list, variants);
   }
 
   public void checkCompletion(String before, String type, String after) {

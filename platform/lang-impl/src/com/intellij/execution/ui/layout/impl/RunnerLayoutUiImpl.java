@@ -46,7 +46,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-public class RunnerLayoutUiImpl implements Disposable, RunnerLayoutUi, LayoutStateDefaults, LayoutViewOptions {
+public class RunnerLayoutUiImpl implements Disposable.Parent, RunnerLayoutUi, LayoutStateDefaults, LayoutViewOptions {
   private final RunnerLayout myLayout;
   private final JPanel myContentPanel;
   private final RunnerContentUi myContentUI;
@@ -153,6 +153,11 @@ public class RunnerLayoutUiImpl implements Disposable, RunnerLayoutUi, LayoutSta
 
   public void updateActionsNow() {
     myContentUI.updateActionsImmediately();
+  }
+
+  @Override
+  public void beforeTreeDispose() {
+    myContentUI.saveUiState();
   }
 
   public void dispose() {

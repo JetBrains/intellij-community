@@ -51,7 +51,7 @@ public class DefaultClsStubBuilderFactory extends ClsStubBuilderFactory {
       return file;
     }
     catch (Exception e) {
-      LOG.warn(vFile.getPath(), e);
+      LOG.debug(vFile.getPath(), e);
       throw new ClsFormatException();
     }
   }

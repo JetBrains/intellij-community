@@ -181,6 +181,11 @@ class ProjectCallback extends LegacyCallback implements IProjectCallback {
       }
       return null;
     }
+    catch (UnsupportedClassVersionError e) {
+      LOG.info(e);
+      myBrokenClasses.put(className, e);
+      return null;
+    }
   }
 
   private Object createMockView(String className, Class[] constructorSignature, Object[] constructorArgs)
@@ -331,7 +336,7 @@ class ProjectCallback extends LegacyCallback implements IProjectCallback {
     return myBrokenClasses;
   }
 
-  public void loadAndParseRClass() throws ClassNotFoundException {
+  public void loadAndParseRClass() throws ClassNotFoundException, IncompatibleClassFileFormatException {
     final String className = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
       @Nullable
       @Override
@@ -347,7 +352,12 @@ class ProjectCallback extends LegacyCallback implements IProjectCallback {
     Class<?> aClass = myLoadedClasses.get(className);
     if (aClass == null) {
       ProjectClassLoader loader = new ProjectClassLoader(null, myModule);
-      aClass = loader.loadClass(className);
+      try {
+        aClass = loader.loadClass(className);
+      }
+      catch (UnsupportedClassVersionError e) {
+        throw new IncompatibleClassFileFormatException();
+      }
       if (aClass != null) {
         myLoadedClasses.put(className, aClass);
       }

@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn17;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.idea.svn17.commandLine.SvnCommandLineStatusClient;
@@ -174,9 +175,12 @@ public class SvnRecursiveStatusWalker {
 
     public void handleStatus(final SVNStatus status) throws SVNException {
       myPartner.checkCanceled();
-      final FilePath path = VcsUtil.getFilePath(status.getFile(), status.getKind().equals(SVNNodeKind.DIR));
-      final VirtualFile vFile = path.getVirtualFile();
-
+      final File ioFile = status.getFile();
+      final LocalFileSystem lfs = LocalFileSystem.getInstance();
+      VirtualFile vFile = lfs.findFileByIoFile(ioFile);
+      if (vFile == null) {
+        vFile = lfs.refreshAndFindFileByIoFile(ioFile);
+      }
       if ((vFile != null) && myPartner.isExcluded(vFile)) return;
 
       if ((vFile != null) && (SvnVcs17.svnStatusIsUnversioned(status))) {
@@ -185,6 +189,7 @@ public class SvnRecursiveStatusWalker {
           processRecursively(vFile, myCurrentItem.getDepth());
         }
       } else {
+        final FilePath path = VcsUtil.getFilePath(ioFile, status.getKind().equals(SVNNodeKind.DIR));
         myReceiver.process(path, status, myCurrentItem.isIsInnerCopyRoot());
       }
     }
