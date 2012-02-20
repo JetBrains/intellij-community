@@ -138,7 +138,7 @@ public class ProjectUtil {
   }
 
   @Nullable
-  public static Project openProject(final String path, Project projectToClose, boolean forceOpenInNewFrame) {
+  public static Project openProject(final String path, @Nullable Project projectToClose, boolean forceOpenInNewFrame) {
     File file = new File(path);
     if (!file.exists()) {
       Messages.showErrorDialog(IdeBundle.message("error.project.file.does.not.exist", path), CommonBundle.getErrorTitle());
@@ -161,7 +161,8 @@ public class ProjectUtil {
     if (!forceOpenInNewFrame && openProjects.length > 0) {
       int exitCode = confirmOpenNewProject(false);
       if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW) {
-        if (!closeAndDispose(projectToClose != null ? projectToClose : openProjects[openProjects.length - 1])) return null;
+        final Project toClose = projectToClose != null ? projectToClose : openProjects[openProjects.length - 1];
+        if (!closeAndDispose(toClose)) return null;
       }
       else if (exitCode != GeneralSettings.OPEN_PROJECT_NEW_WINDOW) {
         return null;

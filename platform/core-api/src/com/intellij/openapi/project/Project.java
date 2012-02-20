@@ -28,6 +28,12 @@ import org.jetbrains.annotations.Nullable;
 public interface Project extends ComponentManager, AreaInstance {
   @NonNls String DIRECTORY_STORE_FOLDER = ".idea";
 
+  /**
+   * Returns a name ot the project. For a directory-based project it's an arbitrary string specified by user at project creation
+   * or later in a project settings. For a file-based project it's a name of a project file without extension.
+   *
+   * @return project name
+   */
   @NotNull
   @NonNls
   String getName();
@@ -40,7 +46,6 @@ public interface Project extends ComponentManager, AreaInstance {
    * if it's desired to keep symlinks in original path.</p>
    *
    * @return project base directory, or null for default project
-   * todo: check usages
    */
   @Nullable
   VirtualFile getBaseDir();
@@ -83,7 +88,8 @@ public interface Project extends ComponentManager, AreaInstance {
 
   /**
    * Returns presentable project path:
-   * {@linkplain #getProjectFilePath()} for file-based projects, {@linkplain #getBasePath()} for directory-based ones.
+   * {@linkplain #getProjectFilePath()} for file-based projects, {@linkplain #getBasePath()} for directory-based ones.<br/>
+   * <b>Note:</b> the word "presentable" here implies file system presentation, not a UI one.
    *
    * @return presentable project path
    */
@@ -110,7 +116,6 @@ public interface Project extends ComponentManager, AreaInstance {
 
   /**
    * @deprecated please use {@linkplain #getPresentableUrl()} or {@linkplain #getBasePath()} (to remove in IDEA 13).
-   * todo: remove usages
    */
   @Nullable
   @NonNls

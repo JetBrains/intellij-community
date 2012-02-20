@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,13 +96,17 @@ public class CompilerPaths {
     return new File(getCompilerSystemDirectory(), projectName + "." + project.getLocationHash());
   }
 
+  @Nullable
   private static String getPresentableName(final Project project) {
     if (project.isDefault()) {
       return project.getName();
     }
 
-    String location = project.getLocation();
-    if (location == null) return null;
+    String location = project.getPresentableUrl();
+    if (location == null) {
+      return null;
+    }
+
     String projectName = FileUtil.toSystemIndependentName(location);
     if (projectName.endsWith("/")) {
       projectName = projectName.substring(0, projectName.length() - 1);

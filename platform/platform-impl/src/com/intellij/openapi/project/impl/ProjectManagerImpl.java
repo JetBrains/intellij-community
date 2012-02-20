@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -918,7 +918,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
         ProjectImpl projectImpl = (ProjectImpl)project[0];
         if (projectImpl.isDisposed()) return;
         IProjectStore projectStore = projectImpl.getStateStore();
-        final String location = projectImpl.getLocation();
+        final String location = projectImpl.getPresentableUrl();
 
         final List<IFile> original;
         try {

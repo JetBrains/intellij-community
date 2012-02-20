@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,7 +75,7 @@ public class ConsoleHistoryController {
                                   @NotNull final LanguageConsoleImpl console,
                                   @NotNull final ConsoleHistoryModel model) {
     myType = type;
-    myId = StringUtil.isEmpty(persistenceId)? console.getProject().getLocation() : persistenceId;
+    myId = StringUtil.isEmpty(persistenceId)? console.getProject().getPresentableUrl() : persistenceId;
     myConsole = console;
     myModel = model;
   }

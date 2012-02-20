@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.util.messages.MessageBus;
 
-import java.io.File;
-
 @State(
   name = "RecentProjectsManager",
   roamingType = RoamingType.DISABLED,
@@ -39,8 +37,7 @@ public class RecentProjectsManager extends RecentProjectsManagerBase {
   }
 
   protected String getProjectPath(Project project) {
-    final String location = project.getLocation();
-    return location == null ? null : location.replace('/', File.separatorChar);
+    return project.getPresentableUrl();
   }
 
   protected void doOpenProject(final String projectPath, Project projectToClose, final boolean forceOpenInNewFrame) {

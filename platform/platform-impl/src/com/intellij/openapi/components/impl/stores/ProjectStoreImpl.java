@@ -316,7 +316,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       String temp = getProjectFileName();
       FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(temp);
       if (fileType instanceof ProjectFileType) {
-        temp = temp.substring(0, temp.length() - fileType.getDefaultExtension().length()-1);
+        temp = temp.substring(0, temp.length() - fileType.getDefaultExtension().length() - 1);
       }
       final int i = temp.lastIndexOf(File.separatorChar);
       if (i >= 0) {
