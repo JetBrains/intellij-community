@@ -27,8 +27,6 @@ import com.intellij.openapi.util.MutualMap;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.content.Content;
-import com.intellij.ui.docking.DockContainer;
-import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.switcher.SwitchTarget;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.TabInfo;
@@ -364,7 +362,7 @@ public class GridCellImpl implements GridCell {
     final Dimension size = myContext.getContentManager().getComponent().getSize();
     service.setSize(getDimensionKey(), size, myContext.getProject());
     if (myContext.getWindow() != 0) {
-      final JFrame frame = (JFrame)DockManager.getInstance(myContext.getProject()).getIdeFrame((DockContainer)myContext);
+      final Window frame = SwingUtilities.getWindowAncestor(myPlaceholder);
       service.setLocation(getDimensionKey(), frame.getLocationOnScreen());
     }
   }
