@@ -1,13 +1,17 @@
 package org.jetbrains.idea.svn17;
 
 import com.intellij.idea.Bombed;
+import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManagerImpl;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeVfsListener;
 import com.intellij.openapi.vfs.VirtualFile;
 import junit.framework.Assert;
 import org.junit.Test;
@@ -23,6 +27,8 @@ public class SvnTestDirtyScopeStateTest extends SvnTestCase {
     super.setUp();
 
     myInitChangeListManager = false;
+    final VcsDirtyScopeVfsListener vfsListener = ApplicationManager.getApplication().getComponent(VcsDirtyScopeVfsListener.class);
+    vfsListener.setForbid(true);
   }
 
   @Test
@@ -35,6 +41,7 @@ public class SvnTestDirtyScopeStateTest extends SvnTestCase {
     final VirtualFile fileB = createFileInCommand("b.txt", "old content");
     final VirtualFile fileC = createFileInCommand("c.txt", "old content");
     final VirtualFile fileD = createFileInCommand("d.txt", "old content");
+    waitABit();
 
     final List<FilePath> list = ObjectsConvertor.vf2fp(Arrays.asList(file, fileB, fileC, fileD));
 
@@ -70,6 +77,15 @@ public class SvnTestDirtyScopeStateTest extends SvnTestCase {
     Assert.assertTrue(! dirty3.contains(new FilePathImpl(fileD)));
   }
 
+  private void waitABit() {
+    try {
+      Thread.sleep(100);
+    }
+    catch (InterruptedException e) {
+      //
+    }
+  }
+
   @Test
   public void testOkToAddScopeUnderWriteAction() throws Exception {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
@@ -80,6 +96,7 @@ public class SvnTestDirtyScopeStateTest extends SvnTestCase {
     final VirtualFile fileB = createFileInCommand("b.txt", "old content");
     final VirtualFile fileC = createFileInCommand("c.txt", "old content");
     final VirtualFile fileD = createFileInCommand("d.txt", "old content");
+    waitABit();
 
     final List<FilePath> list = ObjectsConvertor.vf2fp(Arrays.asList(file, fileB, fileC, fileD));
 
