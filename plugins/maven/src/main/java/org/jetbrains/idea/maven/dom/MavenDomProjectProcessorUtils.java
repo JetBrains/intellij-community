@@ -152,7 +152,6 @@ public class MavenDomProjectProcessorUtils {
     return property[0];
   }
 
-  @Nullable
   public static Set<XmlTag> collectProperties(@NotNull MavenDomProjectModel projectDom, @NotNull final Project project) {
     final Set<XmlTag> properties = new HashSet<XmlTag>();
 
