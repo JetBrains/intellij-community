@@ -54,6 +54,7 @@ import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
 import java.nio.charset.Charset;
@@ -178,13 +179,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> {
         params.setMainClass(MAIN_CLASS);
 
         Map<String, String> defs = new THashMap<String, String>();
-        
-        String mavenOpts = System.getenv("MAVEN_OPTS");
-        if (mavenOpts != null) {
-          ParametersList mavenOptsList = new ParametersList();
-          mavenOptsList.addParametersString(mavenOpts);
-          defs.putAll(mavenOptsList.getProperties());
-        }
+        defs.putAll(MavenUtil.getPropertiesFromMavenOpts());
 
         // pass ssl-related options
         for (Map.Entry<Object, Object> each : System.getProperties().entrySet()) {
