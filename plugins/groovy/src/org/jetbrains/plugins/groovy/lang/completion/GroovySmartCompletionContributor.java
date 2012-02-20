@@ -25,7 +25,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.patterns.ElementPattern;
-import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -63,14 +62,11 @@ import static com.intellij.patterns.StandardPatterns.or;
  */
 public class GroovySmartCompletionContributor extends CompletionContributor {
   private static final ElementPattern<PsiElement> INSIDE_EXPRESSION = psiElement().withParent(GrExpression.class);
-  private static final ElementPattern<PsiElement> IN_CAST_PARENTHESES = psiElement().withSuperParent(3,
-                                                                                                     psiElement(GrTypeCastExpression.class)
-                                                                                                       .withParent(or(psiElement(
-                                                                                                         GrAssignmentExpression.class),
-                                                                                                                      psiElement(
-                                                                                                                        GrVariable.class))));
-  static final ElementPattern<PsiElement> AFTER_NEW =
-    psiElement().afterLeaf(psiElement().withText(PsiKeyword.NEW).andNot(psiElement().afterLeaf(psiElement().withText(PsiKeyword.THROW))));
+  private static final ElementPattern<PsiElement> IN_CAST_PARENTHESES =
+    psiElement().withSuperParent(3, psiElement(GrTypeCastExpression.class).withParent(
+      or(psiElement(GrAssignmentExpression.class), psiElement(GrVariable.class))));
+
+  static final ElementPattern<PsiElement> AFTER_NEW = psiElement().afterLeaf(psiElement().withText(PsiKeyword.NEW));
   private static final TObjectHashingStrategy<TypeConstraint> EXPECTED_TYPE_INFO_STRATEGY =
     new TObjectHashingStrategy<TypeConstraint>() {
       public int computeHashCode(final TypeConstraint object) {
@@ -153,8 +149,8 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
           return;
         }
 
-        final boolean overwrite = PlatformPatterns.psiElement()
-          .afterLeaf(PlatformPatterns.psiElement().withText("(").withParent(GrTypeCastExpression.class))
+        final boolean overwrite = psiElement()
+          .afterLeaf(psiElement().withText("(").withParent(GrTypeCastExpression.class))
           .accepts(parameters.getOriginalPosition());
         final Set<TypeConstraint> typeConstraints = getExpectedTypeInfos(parameters);
         for (TypeConstraint typeConstraint : typeConstraints) {
