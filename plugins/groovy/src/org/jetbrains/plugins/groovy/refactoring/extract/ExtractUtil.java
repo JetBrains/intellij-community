@@ -18,7 +18,10 @@ package org.jetbrains.plugins.groovy.refactoring.extract;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
@@ -428,7 +431,12 @@ public class ExtractUtil {
   public static String getModifierString(ExtractMethodInfoHelper helper) {
     String visibility = helper.getVisibility();
     LOG.assertTrue(visibility != null && visibility.length() > 0);
-    visibility = visibility.equals(PsiModifier.PUBLIC) ? "" : visibility + " ";
-    return visibility + (helper.isStatic() ? "static " : "");
+    final StringBuilder builder = new StringBuilder();
+    builder.append(visibility);
+    builder.append(" ");
+    if (helper.isStatic()) {
+      builder.append("static ");
+    }
+    return builder.toString();
   }
 }

@@ -64,7 +64,7 @@ public class MavenProjectReader {
                                         new THashSet<MavenId>());
   }
 
-  private File getBaseDir(VirtualFile file) {
+  private static File getBaseDir(VirtualFile file) {
     return new File(file.getParent().getPath());
   }
 
@@ -109,13 +109,16 @@ public class MavenProjectReader {
       return new RawModelReadResult(result, problems, alwaysOnProfiles);
     }
 
-    MavenParent parent = new MavenParent(new MavenId(UNKNOWN, UNKNOWN, UNKNOWN), "../pom.xml");
+    MavenParent parent;
     if (MavenJDOMUtil.hasChildByPath(xmlProject, "parent")) {
       parent = new MavenParent(new MavenId(MavenJDOMUtil.findChildValueByPath(xmlProject, "parent.groupId", UNKNOWN),
                                            MavenJDOMUtil.findChildValueByPath(xmlProject, "parent.artifactId", UNKNOWN),
                                            MavenJDOMUtil.findChildValueByPath(xmlProject, "parent.version", UNKNOWN)),
                                MavenJDOMUtil.findChildValueByPath(xmlProject, "parent.relativePath", "../pom.xml"));
       result.setParent(parent);
+    }
+    else {
+      parent = new MavenParent(new MavenId(UNKNOWN, UNKNOWN, UNKNOWN), "../pom.xml");
     }
 
     result.setMavenId(new MavenId(MavenJDOMUtil.findChildValueByPath(xmlProject, "groupId", parent.getMavenId().getGroupId()),
@@ -336,7 +339,7 @@ public class MavenProjectReader {
     return true;
   }
 
-  private void collectProperties(Element xmlProperties, MavenModelBase mavenModelBase) {
+  private static void collectProperties(Element xmlProperties, MavenModelBase mavenModelBase) {
     if (xmlProperties == null) return;
 
     Properties props = mavenModelBase.getProperties();
@@ -422,7 +425,14 @@ public class MavenProjectReader {
                                                        MavenProjectProblem.ProblemType.PARENT));
       }
 
-      return MavenServerManager.getInstance().assembleInheritance(model, parentModel);
+      model = MavenServerManager.getInstance().assembleInheritance(model, parentModel);
+
+      // todo: it is a quick-hack here - we add inherited dummy profiles to correctly collect activated profiles in 'applyProfiles'.
+      List<MavenProfile> profiles = model.getProfiles();
+      for (MavenProfile each : parentModel.getProfiles()) {
+        addProfileIfDoesNotExist(new MavenProfile(each.getId(), each.getSource()), profiles);
+      }
+      return model;
     }
     finally {
       recursionGuard.remove(file);
@@ -469,13 +479,14 @@ public class MavenProjectReader {
     }
   }
 
-  public MavenProjectReaderResult generateSources(MavenEmbedderWrapper embedder,
-                                                  MavenImportingSettings importingSettings,
-                                                  VirtualFile file,
-                                                  Collection<String> profiles,
-                                                  MavenConsole console) throws MavenProcessCanceledException {
+  @Nullable
+  public static MavenProjectReaderResult generateSources(MavenEmbedderWrapper embedder,
+                                                         MavenImportingSettings importingSettings,
+                                                         VirtualFile file,
+                                                         Collection<String> profiles,
+                                                         MavenConsole console) throws MavenProcessCanceledException {
     try {
-      List<String> goals = Arrays.asList(importingSettings.getUpdateFoldersOnImportPhase());
+      List<String> goals = Collections.singletonList(importingSettings.getUpdateFoldersOnImportPhase());
       MavenServerExecutionResult result = embedder.execute(file, profiles, goals);
       if (result.projectData == null) return null;
 

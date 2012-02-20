@@ -110,7 +110,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   private ThreadTracker myThreadTracker;
 
   protected static boolean ourPlatformPrefixInitialized;
-  private static Set<VirtualFile> ourEternallyLivingFiles;
+  private static Set<VirtualFile> ourEternallyLivingFilesCache;
 
   static {
     Logger.setFactory(TestLoggerFactory.getInstance());
@@ -343,20 +343,9 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     PatchedWeakReference.clearAll();
   }
 
-  private static void addSubTree(VirtualFile root, Set<VirtualFile> to) {
-    if (root instanceof VirtualDirectoryImpl) {
-      for (VirtualFile child : ((VirtualDirectoryImpl)root).getCachedChildren()) {
-        if (child instanceof VirtualDirectoryImpl) {
-          to.add(child);
-          addSubTree(child, to);
-        }
-      }
-    }
-  }
-
-  public static Set<VirtualFile> eternallyLivingFiles() {
-    if (ourEternallyLivingFiles != null) {
-      return ourEternallyLivingFiles;
+  private static Set<VirtualFile> eternallyLivingFiles() {
+    if (ourEternallyLivingFilesCache != null) {
+      return ourEternallyLivingFilesCache;
     }
 
     Set<VirtualFile> survivors = new HashSet<VirtualFile>();
@@ -367,14 +356,31 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       }
     }
 
-    ourEternallyLivingFiles = survivors;
+    ourEternallyLivingFilesCache = survivors;
     return survivors;
   }
 
-  public static void registerSurvivor(Set<VirtualFile> survivors, VirtualFile file) {
+  public static void addSurvivingFiles(@NotNull Collection<VirtualFile> files) {
+    for (VirtualFile each : files) {
+      registerSurvivor(eternallyLivingFiles(), each);
+    }
+  }
+
+  private static void registerSurvivor(Set<VirtualFile> survivors, VirtualFile file) {
     addSubTree(file, survivors);
     while (file != null && survivors.add(file)) {
       file = file.getParent();
+    }
+  }
+
+  private static void addSubTree(VirtualFile root, Set<VirtualFile> to) {
+    if (root instanceof VirtualDirectoryImpl) {
+      for (VirtualFile child : ((VirtualDirectoryImpl)root).getCachedChildren()) {
+        if (child instanceof VirtualDirectoryImpl) {
+          to.add(child);
+          addSubTree(child, to);
+        }
+      }
     }
   }
 

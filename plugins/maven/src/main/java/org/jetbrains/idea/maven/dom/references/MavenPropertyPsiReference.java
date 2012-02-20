@@ -28,11 +28,8 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTagChild;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.containers.CollectionFactory;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.xml.XmlElementDescriptor;
@@ -46,19 +43,21 @@ import org.jetbrains.idea.maven.dom.MavenSchemaProvider;
 import org.jetbrains.idea.maven.dom.model.MavenDomProfile;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.dom.model.MavenDomSettingsModel;
+import org.jetbrains.idea.maven.execution.MavenRunner;
+import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
+import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.utils.MavenIcons;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.maven.vfs.MavenPropertiesVirtualFileSystem;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 public class MavenPropertyPsiReference extends MavenPsiReference {
-  private static final Set<String> BASEDIR_PROPS =
-    CollectionFactory.newTroveSet("basedir", "project.basedir", "pom.basedir", "baseUri", "project.baseUri", "pom.baseUri");
-
   private static final String TIMESTAMP_PROP = "maven.build.timestamp";
 
   protected final MavenDomProjectModel myProjectDom;
@@ -86,79 +85,110 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
     return result;
   }
 
-  // precedence
-  // 1. user/system
-  // 2. settings.xml
-  // 3. current profile (if property is used inside one)
-  // 4. profiles.xml
-  // 5. profiles in pom.xml
-  // 6. pom.xml
-  // 7. parent profiles.xml
-  // 8. profiles in parent pom.xml
-  // 9. parent pom.xml
-  // 10. model
+  // See org.apache.maven.project.interpolation.AbstractStringBasedModelInterpolator.createValueSources()
   @Nullable
   protected PsiElement doResolve() {
-    if (myText.startsWith("env.")) {
-      return resolveEnvPropety();
+    boolean hasPrefix = false;
+    String unprefixed = myText;
+
+    if (myText.startsWith("pom.")) {
+      unprefixed = myText.substring("pom.".length());
+      hasPrefix = true;
+    }
+    else if (myText.startsWith("project.")) {
+      unprefixed = myText.substring("project.".length());
+      hasPrefix = true;
     }
 
-    if (BASEDIR_PROPS.contains(myText)) {
-      return resolveBasedir();
+    MavenProject mavenProject = myMavenProject;
+
+    while (unprefixed.startsWith("parent.")) {
+      if (unprefixed.equals("parent.groupId") || unprefixed.equals("parent.artifactId") || unprefixed.equals("parent.version")
+          || unprefixed.equals("parent.relativePath")) {
+        break;
+      }
+
+      MavenId parentId = mavenProject.getParentId();
+      if (parentId == null) return null;
+
+      mavenProject = myProjectsManager.findProject(parentId);
+      if (mavenProject == null) return null;
+
+      unprefixed = unprefixed.substring("parent.".length());
+    }
+
+    if (unprefixed.equals("basedir") || (hasPrefix && mavenProject == myMavenProject && unprefixed.equals("baseUri"))) {
+      return getBaseDir(mavenProject);
     }
 
     if (myText.equals(TIMESTAMP_PROP)) {
       return myElement;
     }
 
-    PsiElement result = resolveSystemPropety();
-    if (result != null) return result;
+    if (hasPrefix) {
+      MavenDomProjectModel domProjectModel = MavenDomUtil.getMavenDomProjectModel(myProject, mavenProject.getFile());
+      if (domProjectModel != null) {
+        PsiElement res = resolveModelProperty(domProjectModel, "project." + unprefixed, new HashSet<DomElement>());
+        if (res != null) {
+          return res;
+        }
+      }
+    }
+
+    // todo resolve properties from config.
+    MavenRunnerSettings runnerSettings = MavenRunner.getInstance(myProject).getSettings();
+    if (runnerSettings.getMavenProperties().containsKey(myText) || runnerSettings.getVmOptions().contains("-D" + myText + '=')) {
+      return myElement;
+    }
+    if (MavenUtil.getPropertiesFromMavenOpts().containsKey(myText)) {
+      return myElement;
+    }
 
     MavenDomProfile profile = DomUtil.findDomElement(myElement, MavenDomProfile.class);
     if (profile != null) {
-      result = MavenDomProjectProcessorUtils.searchPropertyInProfile(myText, profile);
+      PsiElement result = MavenDomProjectProcessorUtils.searchPropertyInProfile(myText, profile);
       if (result != null) return result;
     }
 
-    result = MavenDomProjectProcessorUtils.searchProperty(myText, myProjectDom, myProject);
+    PsiElement result = MavenDomProjectProcessorUtils.searchProperty(myText, myProjectDom, myProject);
     if (result != null) return result;
+
+    IProperty property = MavenDomUtil.findProperty(myProject, MavenPropertiesVirtualFileSystem.SYSTEM_PROPERTIES_FILE, myText);
+    if (property != null) return property.getPsiElement();
+
+    if (myText.startsWith("env.")) {
+      property = MavenDomUtil.findProperty(myProject, MavenPropertiesVirtualFileSystem.ENV_PROPERTIES_FILE,
+                                           myText.substring("env.".length()));
+      if (property != null) return property.getPsiElement();
+    }
+
+    String textWithEnv = "env." + myText;
+
+    property = MavenDomUtil.findProperty(myProject, MavenPropertiesVirtualFileSystem.SYSTEM_PROPERTIES_FILE, textWithEnv);
+    if (property != null) return property.getPsiElement();
+
+    property = MavenDomUtil.findProperty(myProject, MavenPropertiesVirtualFileSystem.ENV_PROPERTIES_FILE, textWithEnv);
+    if (property != null) return property.getPsiElement();
+
+    if (!hasPrefix) {
+      MavenDomProjectModel domProjectModel = MavenDomUtil.getMavenDomProjectModel(myProject, mavenProject.getFile());
+      if (domProjectModel != null) {
+        PsiElement res = resolveModelProperty(domProjectModel, "project." + unprefixed, new HashSet<DomElement>());
+        if (res != null) {
+          return res;
+        }
+      }
+    }
 
     if (myText.startsWith("settings.")) {
       return resolveSettingsModelProperty();
     }
 
-    String modelProperty = myText;
-    if (!modelProperty.startsWith("project.")) {
-      modelProperty = modelProperty.startsWith("pom.")
-                      ? "project." + modelProperty.substring("pom.".length())
-                      : "project." + modelProperty;
-    }
-    return resolveModelProperty(myProjectDom, modelProperty, new THashSet<DomElement>());
+    return null;
   }
 
-  @Nullable
-  private PsiElement resolveSystemPropety() {
-    IProperty property = MavenDomUtil.findProperty(myProject,
-                                                   MavenPropertiesVirtualFileSystem.SYSTEM_PROPERTIES_FILE,
-                                                   myText);
-    return property == null ? null : property.getPsiElement();
-  }
-
-  @Nullable
-  private PsiElement resolveEnvPropety() {
-    IProperty property = MavenDomUtil.findProperty(myProject,
-                                                   MavenPropertiesVirtualFileSystem.ENV_PROPERTIES_FILE,
-                                                   myText.substring("env.".length()));
-    return property == null ? null : property.getPsiElement();
-  }
-
-  @Nullable
-  private PsiElement resolveBasedir() {
-    return getBaseDir();
-  }
-
-  private PsiDirectory getBaseDir() {
-    return PsiManager.getInstance(myProject).findDirectory(myMavenProject.getDirectoryFile());
+  private PsiDirectory getBaseDir(@NotNull MavenProject mavenProject) {
+    return PsiManager.getInstance(myProject).findDirectory(mavenProject.getDirectoryFile());
   }
 
   @Nullable
@@ -178,8 +208,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
   private PsiElement resolveModelProperty(@NotNull MavenDomProjectModel projectDom,
                                           @NotNull final String path,
                                           @NotNull final Set<DomElement> recursionGuard) {
-    if (recursionGuard.contains(projectDom)) return null;
-    recursionGuard.add(projectDom);
+    if (!recursionGuard.add(projectDom)) return null;
 
     if (!schemaHasProperty(MavenSchemaProvider.MAVEN_PROJECT_SCHEMA_URL, path)) return null;
 
@@ -187,7 +216,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
     if (result != null) return result;
 
     if (path.equals("project.groupId") || path.equals("project.version")) {
-      return MavenDomUtil.findTag(projectDom, path.replace("project.", "project.parent."));
+      return MavenDomUtil.findTag(projectDom, "project.parent." + path.substring("project.".length()));
     }
 
     result = new MavenDomProjectProcessorUtils.DomParentProjectFileProcessor<PsiElement>(myProjectsManager) {
@@ -224,72 +253,121 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
     return ArrayUtil.toObjectArray(result);
   }
 
-  protected void collectVariants(List<Object> result) {
-    collectStandardVariants(result);
-    collectProjectSchemaVariants(result);
-    collectSettingsXmlSchemaVariants(result);
-    collectPropertiesVariants(result);
-    collectSystemEnvProperties(MavenPropertiesVirtualFileSystem.SYSTEM_PROPERTIES_FILE, null, result);
-    collectSystemEnvProperties(MavenPropertiesVirtualFileSystem.ENV_PROPERTIES_FILE, "env.", result);
-  }
-
-  private void collectStandardVariants(List<Object> result) {
-    PsiDirectory basedir = getBaseDir();
-    for (String each : BASEDIR_PROPS) {
-      result.add(createLookupElement(basedir, each, MavenIcons.MAVEN_ICON));
+  protected void collectVariants(final List<Object> result) {
+    int prefixLength = 0;
+    if (myText.startsWith("pom.")) {
+      prefixLength = "pom.".length();
     }
-    result.add(createLookupElement(myElement, TIMESTAMP_PROP, MavenIcons.MAVEN_ICON));
-  }
+    else if (myText.startsWith("project.")) {
+      prefixLength = "project.".length();
+    }
 
-  private void collectProjectSchemaVariants(final List<Object> result) {
-    processSchema(MavenSchemaProvider.MAVEN_PROJECT_SCHEMA_URL, new CollectingSchemaProcessor(result) {
+    MavenProject mavenProject = myMavenProject;
+    while (myText.startsWith("parent.", prefixLength)) {
+      MavenId parentId = mavenProject.getParentId();
+      if (parentId == null) return;
+
+      mavenProject = myProjectsManager.findProject(parentId);
+      if (mavenProject == null) return;
+
+      prefixLength += "parent.".length();
+    }
+
+    final String prefix = prefixLength == 0 ? null : myText.substring(0, prefixLength);
+
+    PsiDirectory baseDir = getBaseDir(mavenProject);
+    addVariant(result, "basedir", baseDir, prefix, MavenIcons.MAVEN_ICON);
+    if (prefix == null) {
+      result.add(createLookupElement(baseDir, "project.baseUri", MavenIcons.MAVEN_ICON));
+      result.add(createLookupElement(baseDir, "pom.baseUri", MavenIcons.MAVEN_ICON));
+      result.add(LookupElementBuilder.create(TIMESTAMP_PROP).setIcon(MavenIcons.MAVEN_ICON));
+    }
+
+    processSchema(MavenSchemaProvider.MAVEN_PROJECT_SCHEMA_URL, new SchemaProcessor<Object>() {
       @Override
       public Object process(@NotNull String property, XmlElementDescriptor descriptor) {
-        super.process(property, descriptor);
-        String prefix = "project.";
-        if (property.length() > prefix.length()) {
-          String unqualified = property.substring(prefix.length());
-          super.process("pom." + unqualified, descriptor);
-          super.process(unqualified, descriptor);
+        if (property.startsWith("project.")) {
+          addVariant(result, property.substring("project.".length()), descriptor, prefix, MavenIcons.MAVEN_ICON);
         }
         return null;
       }
     });
+
+    processSchema(MavenSchemaProvider.MAVEN_SETTINGS_SCHEMA_URL, new SchemaProcessor<Object>(){
+      @Override
+      public Object process(@NotNull String property, XmlElementDescriptor descriptor) {
+        result.add(createLookupElement(descriptor, property, MavenIcons.MAVEN_ICON));
+        return null;
+      }
+    });
+
+    collectPropertiesVariants(result);
+    collectSystemEnvProperties(MavenPropertiesVirtualFileSystem.SYSTEM_PROPERTIES_FILE, null, result);
+    collectSystemEnvProperties(MavenPropertiesVirtualFileSystem.ENV_PROPERTIES_FILE, "env.", result);
+
+    MavenRunnerSettings runnerSettings = MavenRunner.getInstance(myProject).getSettings();
+    for (String prop : runnerSettings.getMavenProperties().keySet()) {
+      if (!isResultAlreadyContains(result, prop)) {
+        result.add(LookupElementBuilder.create(prop).setIcon(PlatformIcons.PROPERTY_ICON));
+      }
+    }
+    for (String prop : MavenUtil.getPropertiesFromMavenOpts().keySet()) {
+      if (!isResultAlreadyContains(result, prop)) {
+        result.add(LookupElementBuilder.create(prop).setIcon(PlatformIcons.PROPERTY_ICON));
+      }
+    }
   }
 
-  private void collectSettingsXmlSchemaVariants(final List<Object> result) {
-    processSchema(MavenSchemaProvider.MAVEN_SETTINGS_SCHEMA_URL, new CollectingSchemaProcessor(result));
+  private static boolean isResultAlreadyContains(List<Object> results, String propertyName) {
+    for (Object result : results) {
+      if (result instanceof LookupElement) {
+        if (((LookupElement)result).getLookupString().equals(propertyName)) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  private static void addVariant(List<Object> result, String name, @NotNull Object element, @Nullable String prefix, @NotNull Icon icon) {
+    String nameWithPrefix;
+    if (prefix == null) {
+      nameWithPrefix = name;
+      result.add(createLookupElement(element, "pom." + name, icon));
+      result.add(createLookupElement(element, "project." + name, icon));
+    }
+    else {
+      nameWithPrefix = prefix + name;
+    }
+
+    result.add(createLookupElement(element, nameWithPrefix, icon));
   }
 
   private void collectPropertiesVariants(final List<Object> result) {
-    Set<XmlTag> properties = MavenDomProjectProcessorUtils.collectProperties(myProjectDom, myProject);
-    result.addAll(ContainerUtil.map(properties, new Function<XmlTag, LookupElement>() {
-      public LookupElement fun(XmlTag xmlTag) {
-        return createLookupElement(xmlTag, xmlTag.getName());
-      }
-    }));
+    for (XmlTag xmlTag : MavenDomProjectProcessorUtils.collectProperties(myProjectDom, myProject)) {
+      result.add(createLookupElement(xmlTag, xmlTag.getName(), PlatformIcons.PROPERTY_ICON));
+    }
   }
 
-  private void collectSystemEnvProperties(String propertiesFileName, String prefix, List<Object> result) {
+  private void collectSystemEnvProperties(String propertiesFileName, @Nullable String prefix, List<Object> result) {
     PropertiesFile file = MavenDomUtil.getPropertiesFile(myProject, propertiesFileName);
     collectPropertiesFileVariants(file, prefix, result);
   }
 
-  protected void collectPropertiesFileVariants(@Nullable PropertiesFile file, String prefix, List<Object> result) {
+  protected static void collectPropertiesFileVariants(@Nullable PropertiesFile file, @Nullable String prefix, List<Object> result) {
     if (file == null) return;
 
     for (IProperty each : file.getProperties()) {
       String name = each.getKey();
-      if (prefix != null) name = prefix + name;
-      result.add(createLookupElement(each, name));
+      if (name != null) {
+        if (prefix != null) name = prefix + name;
+        result.add(createLookupElement(each, name, PlatformIcons.PROPERTY_ICON));
+      }
     }
   }
 
-  private static LookupElement createLookupElement(Object element, String name) {
-    return createLookupElement(element, name, PlatformIcons.PROPERTY_ICON);
-  }
-
-  private static LookupElement createLookupElement(Object element, String name, Icon icon) {
+  private static LookupElement createLookupElement(@NotNull Object element, @NotNull String name, @Nullable Icon icon) {
     return LookupElementBuilder.create(element, name)
       .setIcon(icon)
       .setPresentableText(name);
@@ -314,9 +392,8 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
                                        Set<XmlElementDescriptor> recursionGuard) {
     for (XmlElementDescriptor each : descriptors) {
       if (isCollection(each)) continue;
+      if (!recursionGuard.add(each)) continue;
 
-      if (recursionGuard.contains(each)) continue;
-      recursionGuard.add(each);
       try {
         String name = each.getName();
         if (prefix != null) name = prefix + "." + name;
@@ -335,7 +412,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
     return null;
   }
 
-  private static <T> boolean isCollection(XmlElementDescriptor each) {
+  private static boolean isCollection(XmlElementDescriptor each) {
     XmlTag declaration = (XmlTag)each.getDeclaration();
     if (declaration != null) {
       XmlTag complexType = declaration.findFirstSubTag("xs:complexType");
@@ -356,17 +433,4 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
     T process(@NotNull String property, XmlElementDescriptor descriptor);
   }
 
-  private static class CollectingSchemaProcessor implements SchemaProcessor {
-    private final List<Object> myResult;
-
-    public CollectingSchemaProcessor(List<Object> result) {
-      myResult = result;
-    }
-
-    @Nullable
-    public Object process(@NotNull String property, XmlElementDescriptor descriptor) {
-      myResult.add(createLookupElement(descriptor, property, MavenIcons.MAVEN_ICON));
-      return null;
-    }
-  }
 }

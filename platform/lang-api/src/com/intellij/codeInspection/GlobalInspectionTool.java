@@ -187,4 +187,9 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
   public JobDescriptor[] getAdditionalJobs() {
     return null;
   }
+
+  // In some cases we can do highlighting in annotator or high. visitor based on global inspection
+  public boolean worksInBatchModeOnly() {
+    return true;
+  }
 }

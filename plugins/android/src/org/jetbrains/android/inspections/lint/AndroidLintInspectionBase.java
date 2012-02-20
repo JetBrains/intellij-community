@@ -2,6 +2,7 @@ package org.jetbrains.android.inspections.lint;
 
 import com.android.tools.lint.detector.api.Category;
 import com.android.tools.lint.detector.api.Issue;
+import com.android.tools.lint.detector.api.Scope;
 import com.android.tools.lint.detector.api.Severity;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -31,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 
@@ -282,7 +284,19 @@ public abstract class AndroidLintInspectionBase extends GlobalInspectionTool {
         return null;
     }
   }
-  
+
+  public boolean worksInBatchModeOnly() {
+    final EnumSet<Scope> scopeSet = myIssue.getScope();
+    if (scopeSet.size() != 1) {
+      return true;
+    }
+    final Scope scope = scopeSet.iterator().next();
+    return scope != Scope.JAVA_FILE &&
+           scope != Scope.MANIFEST &&
+           scope != Scope.RESOURCE_FILE &&
+           scope != Scope.PROGUARD;
+  }
+
   static class MyLocalQuickFix implements LocalQuickFix {
     private final AndroidLintQuickFix myLintQuickFix;
 

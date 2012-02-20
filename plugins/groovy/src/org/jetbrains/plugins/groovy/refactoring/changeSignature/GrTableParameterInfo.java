@@ -33,6 +33,7 @@ public class GrTableParameterInfo {
   private PsiTypeCodeFragment myType;
   private GroovyCodeFragment myDefaultInitializer;
   private final int myPosition;
+  private boolean myUseAnyVar = false;
 
   public GrTableParameterInfo(GrParameter parameter, int position) {
     myPosition = position;
@@ -120,6 +121,14 @@ public class GrTableParameterInfo {
       type = null;
     }
     String defaultValue = getDefaultValue();
-    return new GrParameterInfo(getName(), defaultValue, defaultInitializer, type, myPosition, false);
+    return new GrParameterInfo(getName(), defaultValue, defaultInitializer, type, myPosition, myUseAnyVar);
+  }
+
+  public boolean isUseAnyVar() {
+    return myUseAnyVar;
+  }
+
+  public void setUseAnyVar(boolean useAnyVar) {
+    myUseAnyVar = useAnyVar;
   }
 }
