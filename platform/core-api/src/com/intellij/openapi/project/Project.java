@@ -83,10 +83,9 @@ public interface Project extends ComponentManager, AreaInstance {
 
   /**
    * Returns presentable project path:
-   * {@linkplain #getProjectFilePath()} for file-based projects, {@linkplain #getLocation()} for directory-based ones.
+   * {@linkplain #getProjectFilePath()} for file-based projects, {@linkplain #getBasePath()} for directory-based ones.
    *
    * @return presentable project path
-   * todo: check usages
    */
   @Nullable
   @NonNls
