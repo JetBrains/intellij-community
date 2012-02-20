@@ -37,6 +37,7 @@ public class IncProjectBuilder {
 
   private final ProjectDescriptor myProjectDescriptor;
   private final BuilderRegistry myBuilderRegistry;
+  private final Map<String, String> myBuilderParams;
   private final CanceledStatus myCancelStatus;
   private ProjectChunks myProductionChunks;
   private ProjectChunks myTestChunks;
@@ -53,9 +54,10 @@ public class IncProjectBuilder {
   private final float myTotalModulesWork;
   private final int myTotalModuleLevelBuilderCount;
 
-  public IncProjectBuilder(ProjectDescriptor pd, BuilderRegistry builderRegistry, CanceledStatus cs) {
+  public IncProjectBuilder(ProjectDescriptor pd, BuilderRegistry builderRegistry, Map<String, String> builderParams, CanceledStatus cs) {
     myProjectDescriptor = pd;
     myBuilderRegistry = builderRegistry;
+    myBuilderParams = builderParams;
     myCancelStatus = cs;
     myProductionChunks = new ProjectChunks(pd.project, ClasspathKind.PRODUCTION_COMPILE);
     myTestChunks = new ProjectChunks(pd.project, ClasspathKind.TEST_COMPILE);
@@ -182,8 +184,10 @@ public class IncProjectBuilder {
     final FSState fsState = myProjectDescriptor.fsState;
     final ModuleRootsIndex rootsIndex = myProjectDescriptor.rootsIndex;
     final BuildDataManager dataManager = myProjectDescriptor.dataManager;
-    return new CompileContext(scope, isMake, isProjectRebuild, myProductionChunks, myTestChunks, fsState, dataManager, tsStorage,
-                              myMessageDispatcher, rootsIndex, myCancelStatus);
+    return new CompileContext(
+      scope, isMake, isProjectRebuild, myProductionChunks, myTestChunks, fsState, dataManager, tsStorage, myMessageDispatcher, rootsIndex,
+      myBuilderParams, myCancelStatus
+    );
   }
 
   private void cleanOutputRoots(CompileContext context) throws ProjectBuildException {

@@ -41,6 +41,7 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
   private volatile boolean myErrorsFound = false;
   private final long myCompilationStartStamp;
   private final TimestampStorage myTsStorage;
+  private final Map<String, String> myBuilderParams;
   private final CanceledStatus myCancelStatus;
   private float myDone = -1.0f;
 
@@ -49,8 +50,15 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
                         boolean isProjectRebuild,
                         ProjectChunks productionChunks,
                         ProjectChunks testChunks,
-                        FSState fsState, final BuildDataManager dataManager, TimestampStorage tsStorage, MessageHandler delegateMessageHandler, final ModuleRootsIndex rootsIndex, CanceledStatus cancelStatus) throws ProjectBuildException {
+                        FSState fsState,
+                        final BuildDataManager dataManager,
+                        TimestampStorage tsStorage,
+                        MessageHandler delegateMessageHandler,
+                        final ModuleRootsIndex rootsIndex,
+                        Map<String, String> builderParams,
+                        CanceledStatus cancelStatus) throws ProjectBuildException {
     myTsStorage = tsStorage;
+    myBuilderParams = Collections.unmodifiableMap(builderParams);
     myCancelStatus = cancelStatus;
     myCompilationStartStamp = System.currentTimeMillis();
     myScope = scope;
@@ -80,6 +88,11 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
 
   public boolean isProjectRebuild() {
     return myIsProjectRebuild;
+  }
+
+  @Nullable
+  public String getBuilderParameter(String paramName) {
+    return myBuilderParams.get(paramName);
   }
 
   public void markDirty(final File file) throws IOException {
