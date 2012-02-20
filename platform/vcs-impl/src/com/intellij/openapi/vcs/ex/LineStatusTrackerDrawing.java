@@ -14,10 +14,7 @@ package com.intellij.openapi.vcs.ex;
 
 import com.intellij.codeInsight.hint.EditorFragmentComponent;
 import com.intellij.codeInsight.hint.HintManagerImpl;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diff.DiffColors;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -49,8 +46,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.EventObject;
+import java.util.List;
 
 /**
  * @author irengrig
@@ -73,7 +72,7 @@ public class LineStatusTrackerDrawing {
     g.setColor(brighter(stripeColor));
 
     final int endX = gutter.getWhitespaceSeparatorOffset();
-    final int x = r.x + r.width - 2;
+    final int x = r.x + r.width - 5;
     final int width = endX - x;
     if (r.height > 0) {
       g.fillRect(x, r.y + 2, width, r.height - 4);
@@ -159,11 +158,15 @@ public class LineStatusTrackerDrawing {
     localShowNextAction.copyFrom(globalShowNextAction);
     localShowPrevAction.copyFrom(globalShowPrevAction);
 
-    group.add(new RollbackLineStatusRangeAction(tracker, range, editor));
+    final RollbackLineStatusRangeAction rollback = new RollbackLineStatusRangeAction(tracker, range, editor);
+    EmptyAction.setupAction(rollback, IdeActions.CHANGES_VIEW_ROLLBACK, editorComponent);
+    group.add(rollback);
+
     group.add(new ShowLineStatusRangeDiffAction(tracker, range, editor));
     group.add(new CopyLineStatusRangeAction(tracker, range));
 
-    final java.util.List<AnAction> actionList = (java.util.List<AnAction>)editorComponent.getClientProperty(AnAction.ourClientProperty);
+    @SuppressWarnings("unchecked")
+    final List<AnAction> actionList = (List<AnAction>)editorComponent.getClientProperty(AnAction.ourClientProperty);
 
     actionList.remove(globalShowPrevAction);
     actionList.remove(globalShowNextAction);
@@ -182,6 +185,26 @@ public class LineStatusTrackerDrawing {
     final JPanel toolbarPanel = new JPanel(new BorderLayout());
     toolbarPanel.setOpaque(false);
     toolbarPanel.add(toolbar, BorderLayout.WEST);
+    JPanel emptyPanel = new JPanel();
+    emptyPanel.setOpaque(false);
+    toolbarPanel.add(emptyPanel, BorderLayout.CENTER);
+    MouseAdapter listener = new MouseAdapter() {
+      @Override
+      public void mousePressed(MouseEvent e) {
+        editor.getContentComponent().dispatchEvent(SwingUtilities.convertMouseEvent(e.getComponent(), e, editor.getContentComponent()));
+      }
+
+      @Override
+      public void mouseClicked(MouseEvent e) {
+        editor.getContentComponent().dispatchEvent(SwingUtilities.convertMouseEvent(e.getComponent(), e, editor.getContentComponent()));
+      }
+
+      public void mouseReleased(final MouseEvent e) {
+        editor.getContentComponent().dispatchEvent(SwingUtilities.convertMouseEvent(e.getComponent(), e, editor.getContentComponent()));
+      }
+    };
+    emptyPanel.addMouseListener(listener);
+
     component.add(toolbarPanel, BorderLayout.NORTH);
 
     if (range.getType() != Range.INSERTED) {
@@ -194,12 +217,14 @@ public class LineStatusTrackerDrawing {
         EditorFragmentComponent.createEditorFragmentComponent(uEditor, range.getUOffset1(), range.getUOffset2(), false, false);
 
       component.add(editorFragmentComponent, BorderLayout.CENTER);
+
       EditorFactory.getInstance().releaseEditor(uEditor);
     }
 
     final LightweightHint lightweightHint = new LightweightHint(component);
     lightweightHint.addHintListener(new HintListener() {
       public void hintHidden(final EventObject event) {
+        actionList.remove(rollback);
         actionList.remove(localShowPrevAction);
         actionList.remove(localShowNextAction);
         actionList.add(globalShowPrevAction);
@@ -208,7 +233,7 @@ public class LineStatusTrackerDrawing {
     });
 
     HintManagerImpl.getInstanceImpl().showEditorHint(lightweightHint, editor, point, HintManagerImpl.HIDE_BY_ANY_KEY | HintManagerImpl.HIDE_BY_TEXT_CHANGE |
-                                                                             HintManagerImpl.HIDE_BY_OTHER_HINT | HintManagerImpl.HIDE_BY_SCROLLING,
+                                                                             HintManagerImpl.HIDE_BY_SCROLLING,
                                                                              -1, false, new HintHint(editor, point));
   }
 
@@ -220,13 +245,13 @@ public class LineStatusTrackerDrawing {
 
   public static void moveToRange(final Range range, final Editor editor, final LineStatusTracker tracker) {
     final Document document = tracker.getDocument();
-    final int firstOffset = document.getLineStartOffset(Math.min(range.getOffset1(), document.getLineCount() - 1));
-    editor.getCaretModel().moveToOffset(firstOffset);
+    final int lastOffset = document.getLineStartOffset(Math.min(range.getOffset2(), document.getLineCount() - 1));
+    editor.getCaretModel().moveToOffset(lastOffset);
     editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
 
     editor.getScrollingModel().runActionOnScrollingFinished(new Runnable() {
       public void run() {
-        Point p = editor.visualPositionToXY(editor.offsetToVisualPosition(firstOffset));
+        Point p = editor.visualPositionToXY(editor.offsetToVisualPosition(lastOffset));
         final JComponent editorComponent = editor.getContentComponent();
         final JLayeredPane layeredPane = editorComponent.getRootPane().getLayeredPane();
         p = SwingUtilities.convertPoint(editorComponent, 0, p.y, layeredPane);

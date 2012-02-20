@@ -66,20 +66,7 @@ public abstract class CreateBeanPropertyFix implements LocalQuickFix, IntentionA
       type = facade.getElementFactory().createType(aClass);
     }
     if (psiClass.isInterface()) {
-      return new CreateBeanPropertyFix[] {
-        new CreateBeanPropertyFix(propertyName, psiClass, type) {
-          @Override
-          protected void doFix() throws IncorrectOperationException {
-            createSetter(false);
-          }
-
-          @Override
-          @NotNull
-          public String getName() {
-            return QuickFixBundle.message("create.writable.property", myPropertyName);
-          }
-        }
-      };
+      return new CreateBeanPropertyFix[] { new CreateAccessorFix(propertyName, psiClass, type, createSetter) };
     }
     return new CreateBeanPropertyFix[] {
         new CreateBeanPropertyFix(propertyName, psiClass, type) {
@@ -97,23 +84,7 @@ public abstract class CreateBeanPropertyFix implements LocalQuickFix, IntentionA
             createGetter(true);
           }
         },
-        new CreateBeanPropertyFix(propertyName, psiClass, type) {
-          @Override
-          protected void doFix() throws IncorrectOperationException {
-            if (createSetter) {
-              createSetter(false);
-            }
-            else {
-              createGetter(false);
-            }
-          }
-
-          @Override
-          @NotNull
-          public String getName() {
-            return QuickFixBundle.message(createSetter ? "create.writable.property" : "create.readable.property", myPropertyName);
-          }
-        },
+        new CreateAccessorFix(propertyName, psiClass, type, createSetter),
         new CreateBeanPropertyFix(propertyName, psiClass, type) {
           @Override
           protected void doFix() throws IncorrectOperationException {
@@ -132,7 +103,6 @@ public abstract class CreateBeanPropertyFix implements LocalQuickFix, IntentionA
             return QuickFixBundle.message(createSetter ? "create.writable.property.with.field" : "create.readable.property.with.field", myPropertyName);
           }
         }
-
     };
   }
 
@@ -228,15 +198,21 @@ public abstract class CreateBeanPropertyFix implements LocalQuickFix, IntentionA
     final String methodName = PropertyUtil.suggestGetterName(myPropertyName, myType);
     final String typeName = myType.getCanonicalText();
     @NonNls final String text;
+    boolean isInterface = myPsiClass.isInterface();
     if (createField) {
       final String fieldName = getFieldName();
       text = "public " + typeName + " " + methodName + "() { return " + fieldName + "; }";
     } else {
-      text = "public " + typeName + " " + methodName + "() { return null; }";
+      if (isInterface) {
+        text = typeName + " " + methodName + "();";
+      }
+      else {
+        text = "public " + typeName + " " + methodName + "() { return null; }";
+      }
     }
     final PsiMethod method = elementFactory.createMethodFromText(text, null);
     final PsiMethod psiElement = (PsiMethod)myPsiClass.add(method);
-    if (!createField) {
+    if (!createField && !isInterface) {
       CreateFromUsageUtils.setupMethodBody(psiElement);
     }
     return psiElement;
@@ -247,5 +223,30 @@ public abstract class CreateBeanPropertyFix implements LocalQuickFix, IntentionA
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(myPsiClass.getProject()).getElementFactory();
     final PsiField psiField = elementFactory.createField(fieldName, myType);
     return myPsiClass.add(psiField);
+  }
+
+  private static class CreateAccessorFix extends CreateBeanPropertyFix {
+    private final boolean myCreateSetter;
+
+    public CreateAccessorFix(String propertyName, PsiClass psiClass, PsiType type, boolean createSetter) {
+      super(propertyName, psiClass, type);
+      myCreateSetter = createSetter;
+    }
+
+    @Override
+    protected void doFix() throws IncorrectOperationException {
+      if (myCreateSetter) {
+        createSetter(false);
+      }
+      else {
+        createGetter(false);
+      }
+    }
+
+    @Override
+    @NotNull
+    public String getName() {
+      return QuickFixBundle.message(myCreateSetter ? "create.writable.property" : "create.readable.property", myPropertyName);
+    }
   }
 }

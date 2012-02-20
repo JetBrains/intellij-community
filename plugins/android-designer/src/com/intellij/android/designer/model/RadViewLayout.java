@@ -15,7 +15,11 @@
  */
 package com.intellij.android.designer.model;
 
+import com.intellij.android.designer.designSurface.CreateOperation;
+import com.intellij.android.designer.designSurface.MoveOperation;
 import com.intellij.designer.designSurface.ComponentDecorator;
+import com.intellij.designer.designSurface.EditOperation;
+import com.intellij.designer.designSurface.OperationContext;
 import com.intellij.designer.designSurface.selection.NonResizeSelectionDecorator;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.model.RadLayout;
@@ -26,8 +30,28 @@ import java.awt.*;
  * @author Alexander Lobas
  */
 public class RadViewLayout extends RadLayout {
+  private final RadViewComponent myContainer;
+
+  public RadViewLayout(RadViewComponent container) {
+    myContainer = container;
+  }
+
   @Override
   public ComponentDecorator getChildSelectionDecorator(RadComponent component) {
     return new NonResizeSelectionDecorator(Color.RED, 1);
+  }
+
+  @Override
+  public EditOperation processChildOperation(OperationContext context) {
+    if (context.isMove()) {
+      return new MoveOperation(context);
+    }
+    if (context.isCreate()) {
+      RadViewComponent component = (RadViewComponent)context.getComponents().get(0);
+      if ("android".equals(component.getTitle())) {
+        return new CreateOperation(myContainer, context);
+      }
+    }
+    return null;
   }
 }

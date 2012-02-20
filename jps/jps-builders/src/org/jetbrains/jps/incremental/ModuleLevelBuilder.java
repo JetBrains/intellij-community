@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Key;
 import org.jetbrains.ether.dependencyView.Mappings;
 import org.jetbrains.jps.Module;
 import org.jetbrains.jps.ModuleChunk;
+import org.jetbrains.jps.incremental.messages.ProgressMessage;
 
 import java.io.File;
 import java.io.IOException;
@@ -66,6 +67,7 @@ public abstract class ModuleLevelBuilder extends Builder {
       //noinspection SynchronizationOnLocalVariableOrMethodParameter
       synchronized (globalMappings) {
         if (!context.isProjectRebuild() && context.shouldDifferentiate(chunk, context.isCompilingTests())) {
+          context.processMessage(new ProgressMessage("Checking dependencies"));
           final Set<File> allCompiledFiles = getAllCompiledFilesContainer(context);
           final Set<File> allAffectedFiles = getAllAffectedFilesContainer(context);
 
@@ -100,18 +102,24 @@ public abstract class ModuleLevelBuilder extends Builder {
             newlyAffectedFiles.removeAll(affectedBeforeDif);
             newlyAffectedFiles.removeAll(allCompiledFiles); // the diff operation may have affected the class already compiled in thic compilation round
 
+            context.processMessage(new ProgressMessage("Found " + newlyAffectedFiles.size() + " affected files"));
+
             if (!newlyAffectedFiles.isEmpty()) {
               for (File file : newlyAffectedFiles) {
-                context.markDirty(file);
+                context.markDirtyIfNotDeleted(file);
               }
               additionalPassRequired = context.isMake() && chunkContainsAffectedFiles(context, chunk, newlyAffectedFiles);
             }
           }
           else {
+            context.processMessage(new ProgressMessage("Marking " + chunk.getName() + " and dependants for recompilation"));
+
             additionalPassRequired = context.isMake();
             context.markDirtyRecursively(chunk);
           }
         }
+
+        context.processMessage(new ProgressMessage("Updating dependency information"));
 
         globalMappings.integrate(delta, successfullyCompiled, removedPaths);
       }
@@ -124,6 +132,9 @@ public abstract class ModuleLevelBuilder extends Builder {
         throw ((IOException)cause);
       }
       throw e;
+    }
+    finally {
+      context.processMessage(new ProgressMessage("")); // clean progress messages
     }
   }
 

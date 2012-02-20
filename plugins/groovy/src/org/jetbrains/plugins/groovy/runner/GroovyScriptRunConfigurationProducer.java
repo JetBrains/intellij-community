@@ -29,14 +29,10 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PsiMethodUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-
 /**
  * @author ilyas
  */
@@ -45,34 +41,6 @@ public class GroovyScriptRunConfigurationProducer extends RuntimeConfigurationPr
 
   public GroovyScriptRunConfigurationProducer() {
     super(GroovyScriptRunConfigurationType.getInstance());
-  }
-
-  public static boolean canBeRunByGroovy(final PsiClass psiClass) {
-    if (isRunnable(psiClass)) {
-      return true;
-    }
-
-    if (PsiMethodUtil.hasMainMethod(psiClass) && psiClass instanceof GrTypeDefinition) {
-      return true;
-    }
-    
-    return false;
-  }
-
-  private static boolean isRunnable(final PsiClass psiClass) {
-    if (!(psiClass instanceof GrTypeDefinition)) return false;
-    if (psiClass instanceof PsiAnonymousClass) return false;
-    if (psiClass.isInterface()) return false;
-    final PsiClass runnable = JavaPsiFacade.getInstance(psiClass.getProject()).findClass("java.lang.Runnable", psiClass.getResolveScope());
-    if (runnable == null) return false;
-    final PsiMethod runMethod = runnable.getMethods()[0];
-    final PsiMethod[] runImplementations = psiClass.findMethodsBySignature(runMethod, false);
-    if (runImplementations.length == 1 &&
-        runImplementations[0] instanceof GrMethod &&
-        ((GrMethod)runImplementations[0]).getBlock() != null) {
-      return psiClass.getContainingClass() == null || psiClass.hasModifierProperty(PsiModifier.STATIC);
-    }
-    return false;
   }
 
   public PsiElement getSourceElement() {
@@ -87,29 +55,31 @@ public class GroovyScriptRunConfigurationProducer extends RuntimeConfigurationPr
     }
 
     GroovyFile groovyFile = (GroovyFile)file;
-    if (groovyFile.isScript()) {
-      mySourceElement = element;
-      final PsiClass scriptClass = getScriptClass(location.getPsiElement());
-      if (scriptClass == null) return null;
-      final RunnerAndConfigurationSettings settings = createConfiguration(scriptClass);
+    final PsiClass aClass = GroovyRunnerUtil.getRunningClass(location.getPsiElement());
+    if (aClass != null) {
+      final RunnerAndConfigurationSettings settings = createConfiguration(aClass);
       if (settings != null) {
+        mySourceElement = element;
         final GroovyScriptRunConfiguration configuration = (GroovyScriptRunConfiguration)settings.getConfiguration();
         GroovyScriptTypeDetector.getScriptType(groovyFile).tuneConfiguration(groovyFile, configuration, location);
         return settings;
       }
     }
-    
-    if (!file.getText().contains("@Grab")) return null;
 
-    ApplicationConfigurationProducer producer = new ApplicationConfigurationProducer();
-    RunnerAndConfigurationSettings settings = producer.createConfigurationByElement(location, context);
-    if (settings != null) {
-      PsiElement src = producer.getSourceElement();
-      mySourceElement = src;
-      return createConfiguration(src instanceof PsiMethod ? ((PsiMethod) src).getContainingClass() : (PsiClass)src);
+    if (file.getText().contains("@Grab")) {
+      ApplicationConfigurationProducer producer = new ApplicationConfigurationProducer();
+      RunnerAndConfigurationSettings settings = producer.createConfigurationByElement(location, context);
+      if (settings != null) {
+        PsiElement src = producer.getSourceElement();
+        mySourceElement = src;
+        return createConfiguration(src instanceof PsiMethod ? ((PsiMethod)src).getContainingClass() : (PsiClass)src);
+      }
+
+      return null;
     }
-
-    return null;
+    else {
+      return null;
+    }
   }
 
   @Override
@@ -179,12 +149,4 @@ public class GroovyScriptRunConfigurationProducer extends RuntimeConfigurationPr
     }
     return module.getModuleName();
   }
-
-  @Nullable
-   private static PsiClass getScriptClass(PsiElement element) {
-     final PsiFile file = element.getContainingFile();
-     if (!(file instanceof GroovyFile)) return null;
-     return ((GroovyFile) file).getScriptClass();
-   }
-
 }

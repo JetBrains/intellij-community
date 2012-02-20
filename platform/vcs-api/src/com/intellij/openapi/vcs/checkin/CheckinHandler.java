@@ -19,6 +19,7 @@ package com.intellij.openapi.vcs.checkin;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
+import com.intellij.openapi.vcs.changes.LocalCommitExecutor;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.util.PairConsumer;
 import org.jetbrains.annotations.Nullable;
@@ -123,5 +124,14 @@ public abstract class CheckinHandler {
    * Called to notify handler that user has included/excluded some changes to/from commit
    */
   public void includedChangesChanged() {
+  }
+
+  /**
+   * allows to skip before checkin steps when is not applicable. E.g. there should be no check for todos before shelf/create patch 
+   * @param executor current operation (null for commit)
+   * @return true if handler should be skipped
+   */
+  public boolean acceptExecutor(CommitExecutor executor) {
+    return executor == null || !(executor instanceof LocalCommitExecutor);
   }
 }

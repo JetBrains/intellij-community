@@ -24,11 +24,13 @@ public class LightTypeParameter extends LightClass implements PsiTypeParameter {
     super(delegate);
   }
 
+  @NotNull
   @Override
   public PsiTypeParameter getDelegate() {
     return (PsiTypeParameter)super.getDelegate();
   }
 
+  @NotNull
   @Override
   public PsiElement copy() {
     return new LightTypeParameter(getDelegate());

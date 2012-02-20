@@ -60,7 +60,7 @@ public class GroovyScriptRunConfigurationType implements ConfigurationType {
     return ConfigurationTypeUtil.findConfigurationType(GroovyScriptRunConfigurationType.class);
   }
 
-  public static class GroovyFactory extends ConfigurationFactory {
+  private static class GroovyFactory extends ConfigurationFactory {
     public GroovyFactory(ConfigurationType type) {
       super(type);
     }

@@ -17,19 +17,9 @@ package com.intellij.psi.impl.light;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.util.Pair;
-import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiClassImplUtil;
-import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.Collection;
-import java.util.List;
 
 /**
  * @author peter
@@ -37,20 +27,22 @@ import java.util.List;
 public class LightClass extends AbstractLightClass {
   private final PsiClass myDelegate;
 
-  public LightClass(PsiClass delegate) {
+  public LightClass(@NotNull PsiClass delegate) {
     this(delegate, JavaLanguage.INSTANCE);
   }
 
-  public LightClass(PsiClass delegate, final Language language) {
+  public LightClass(@NotNull PsiClass delegate, final Language language) {
     super(delegate.getManager(), language);
     myDelegate = delegate;
   }
 
+  @NotNull
   @Override
   public PsiClass getDelegate() {
     return myDelegate;
   }
 
+  @NotNull
   @Override
   public PsiElement copy() {
     return new LightClass(this);

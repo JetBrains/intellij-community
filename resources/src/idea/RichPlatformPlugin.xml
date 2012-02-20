@@ -46,6 +46,9 @@
     <extensionPoint name="compiler.makeDependencyProcessor"
                     interface="com.intellij.compiler.DependencyProcessor"/>
 
+    <extensionPoint name="compiler.resourceCompilerExtension"
+                    interface="com.intellij.compiler.impl.resourceCompiler.ResourceCompilerExtension"/>
+
     <extensionPoint name="java.programPatcher"
                     interface="com.intellij.execution.runners.JavaProgramPatcher"/>
 

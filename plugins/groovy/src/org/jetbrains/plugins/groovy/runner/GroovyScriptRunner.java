@@ -68,13 +68,11 @@ public abstract class GroovyScriptRunner {
     try {
       final String jarPath = PathUtil.getJarPathForClass(GroovyScriptRunner.class);
       if (new File(jarPath).isFile()) { //jar; distribution mode
-        return new File(jarPath, "../" +
-                                 fileName).getCanonicalPath();
+        return new File(jarPath, "../" + fileName).getCanonicalPath();
       }
 
       //else, it's directory in out, development mode
-      return new File(jarPath, "conf/" +
-                               fileName).getCanonicalPath();
+      return new File(jarPath, "conf/" + fileName).getCanonicalPath();
     }
     catch (IOException e) {
       throw new RuntimeException(e);

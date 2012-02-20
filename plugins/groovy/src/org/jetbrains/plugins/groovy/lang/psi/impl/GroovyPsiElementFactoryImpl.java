@@ -497,8 +497,12 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
       text = StringUtil.repeatSymbol('\n', length);
     }
 
-    PsiFile dummyFile = PsiFileFactory.getInstance(myProject).createFileFromText(DUMMY + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(),
-        text);
+    return createLineTerminator(text);
+  }
+
+  @NotNull
+  public PsiElement createLineTerminator(String text) {
+    PsiFile dummyFile = PsiFileFactory.getInstance(myProject).createFileFromText(DUMMY + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(), text);
     PsiElement child = dummyFile.getFirstChild();
     assert child != null;
     return child;
@@ -581,6 +585,19 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     GrCodeReferenceElement[] refElements = extendsClause.getReferenceElements();
     if (refElements.length != 1) throw new IncorrectOperationException("cannot create code reference element for class" + text);
     return refElements[0];
+  }
+
+  @Override
+  public GrThisReferenceExpression createThisExpression(PsiManager manager, @Nullable PsiClass psiClass) {
+    final String text;
+    if (psiClass == null) {
+      text = "this";
+    }
+    else {
+      text = psiClass.getQualifiedName() + ".this";
+    }
+    final GroovyFileImpl dummy = createDummyFile(text);
+    return (GrThisReferenceExpression)dummy.getStatements()[0];
   }
 
   public GrImportStatement createImportStatementFromText(String qName, boolean isStatic, boolean isOnDemand, String alias) {

@@ -89,6 +89,13 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
     }
   }
 
+  public void markDirtyIfNotDeleted(final File file) throws IOException {
+    final RootDescriptor descriptor = getModuleAndRoot(file);
+    if (descriptor != null) {
+      myFsState.markDirtyIfNotDeleted(file, descriptor, myTsStorage);
+    }
+  }
+
   public void markDirty(final ModuleChunk chunk) throws IOException {
     myFsState.clearContextRoundData();
     final Set<Module> modules = chunk.getModules();
@@ -183,6 +190,7 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
   }
 
   void onChunkBuildComplete(@NotNull ModuleChunk chunk) throws IOException {
+    myDataManager.closeSourceToOutputStorages(chunk, isCompilingTests());
     myDataManager.flush(true);
     myFsState.clearContextRoundData();
     myFsState.clearContextChunk();

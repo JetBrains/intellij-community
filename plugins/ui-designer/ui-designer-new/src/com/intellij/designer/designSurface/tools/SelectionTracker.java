@@ -74,13 +74,6 @@ public class SelectionTracker extends TargetingTool {
     }
   }
 
-  @Override
-  protected void handleDragStarted() {
-    if (myState == STATE_DRAG) {
-      myState = STATE_DRAG_IN_PROGRESS;
-    }
-  }
-
   private void performSelection() {
     if (mySelected) {
       return;

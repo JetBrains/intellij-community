@@ -64,7 +64,7 @@ public class SelectionTool extends InputTool {
         }
       }
 
-      RadComponent component = myArea.findTarget(myCurrentScreenX, myCurrentScreenY);
+      RadComponent component = myArea.findTarget(myCurrentScreenX, myCurrentScreenY, null);
       if (component == null) {
         if (!myArea.isTree()) {
           setTracker(new MarqueeTracker());
@@ -80,6 +80,7 @@ public class SelectionTool extends InputTool {
   protected void handleButtonUp(int button) {
     myState = STATE_INIT;
     setTracker(null);
+    handleMove(); // hack: update cursor
   }
 
   @Override

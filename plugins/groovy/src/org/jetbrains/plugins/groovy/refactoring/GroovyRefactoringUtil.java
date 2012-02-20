@@ -197,8 +197,8 @@ public abstract class GroovyRefactoringUtil {
     });
   }
 
-  public static boolean isLocalVariable(GrVariable variable) {
-    return !(variable instanceof GrField || variable instanceof GrParameter);
+  public static boolean isLocalVariable(PsiElement variable) {
+    return variable instanceof GrVariable && !(variable instanceof GrField || variable instanceof GrParameter);
   }
 
 

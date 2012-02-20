@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.refactoring.ui;
 
 import com.intellij.refactoring.ui.ComboBoxVisibilityPanel;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 
 import static com.intellij.psi.PsiModifier.*;
 import static com.intellij.util.VisibilityUtil.toPresentableText;
@@ -24,12 +25,13 @@ import static com.intellij.util.VisibilityUtil.toPresentableText;
  * @author Max Medvedev
  */
 public class GroovyComboboxVisibilityPanel extends ComboBoxVisibilityPanel {
-  private static final String[] MODIFIERS = {PRIVATE, PROTECTED, PUBLIC};
+  private static final String[] MODIFIERS = {PRIVATE, PROTECTED, PUBLIC, GrModifier.DEF};
 
   private static final String[] PRESENTABLE_NAMES = {
     toPresentableText(PRIVATE),
     toPresentableText(PROTECTED),
-    toPresentableText(PUBLIC)
+    toPresentableText(PUBLIC),
+    GrModifier.DEF
   };
 
   public GroovyComboboxVisibilityPanel() {

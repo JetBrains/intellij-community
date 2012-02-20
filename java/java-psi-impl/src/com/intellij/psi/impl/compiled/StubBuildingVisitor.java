@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -295,7 +295,7 @@ public class StubBuildingVisitor<T> implements ClassVisitor {
     if (reader == null) return;
 
     final StubBuildingVisitor<T> classVisitor = new StubBuildingVisitor<T>(innerSource, myInnersStrategy, myResult, access);
-    reader.accept(classVisitor, 0);
+    reader.accept(classVisitor, ClassReader.SKIP_FRAMES);
   }
 
   private boolean isCorrectName(String name) {
@@ -492,7 +492,7 @@ public class StubBuildingVisitor<T> implements ClassVisitor {
   @Override
   public void visitEnd() {
   }
-  
+
   private static class AnnotationTextCollector implements AnnotationVisitor {
     private final StringBuilder myBuilder = new StringBuilder();
     private final AnnotationResultCallback myCallback;

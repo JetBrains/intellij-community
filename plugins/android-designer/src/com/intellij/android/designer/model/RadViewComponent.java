@@ -39,7 +39,7 @@ public class RadViewComponent extends RadComponent {
     if (parent != null) {
       parent.getChildren().add(this);
     }
-    setLayout(new RadViewLayout());
+    setLayout(new RadViewLayout(this));
   }
 
   @Override

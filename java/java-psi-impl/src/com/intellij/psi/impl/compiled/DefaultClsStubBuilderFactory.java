@@ -42,7 +42,7 @@ public class DefaultClsStubBuilderFactory extends ClsStubBuilderFactory {
       final ClassReader reader = new ClassReader(bytes);
       final StubBuildingVisitor<VirtualFile> classVisitor =
         new StubBuildingVisitor<VirtualFile>(vFile, VirtualFileInnerClassStrategy.INSTANCE, file, 0);
-      reader.accept(classVisitor, 0);
+      reader.accept(classVisitor, ClassReader.SKIP_FRAMES);
 
       @SuppressWarnings("unchecked") final PsiClassStub<PsiClass> result = (PsiClassStub<PsiClass>)classVisitor.getResult();
       if (result == null) return null;

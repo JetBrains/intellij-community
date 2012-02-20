@@ -19,6 +19,8 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiModifier;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -30,6 +32,7 @@ import org.jetbrains.plugins.groovy.intentions.style.ReplaceQualifiedReferenceWi
 import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 
@@ -55,11 +58,35 @@ public class UnnecessaryQualifiedReferenceInspection extends BaseInspection {
       public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
         super.visitReferenceExpression(referenceExpression);
 
-        if (ReplaceQualifiedReferenceWithImportIntention.canBeReplacedWithImport(referenceExpression)) {
+        if (ReplaceQualifiedReferenceWithImportIntention.canBeReplacedWithImport(referenceExpression) ||
+            isQualifiedStaticMethodWithUnnecessaryQualifier(referenceExpression)) {
           registerError(referenceExpression);
         }
       }
     };
+  }
+
+  private static boolean isQualifiedStaticMethodWithUnnecessaryQualifier(GrReferenceExpression ref) {
+    if (ref.getQualifier() == null) return false;
+
+    final PsiElement resolved = ref.resolve();
+    if (!(resolved instanceof PsiMember)) return false;
+    if (!((PsiMember)resolved).hasModifierProperty(PsiModifier.STATIC)) return false;
+
+    PsiElement copyResolved;
+    final PsiElement parent = ref.getParent();
+    if (parent instanceof GrMethodCall) {
+      final GrMethodCall copy = (GrMethodCall)parent.copy();
+      ((GrReferenceExpression)copy.getInvokedExpression()).setQualifier(null);
+
+      copyResolved = ((GrReferenceExpression)copy.getInvokedExpression()).resolve();
+    }
+    else {
+      final GrReferenceExpression copy = (GrReferenceExpression)ref.copy();
+      copy.setQualifier(null);
+      copyResolved = copy.resolve();
+    }
+    return ref.getManager().areElementsEquivalent(copyResolved, resolved);
   }
 
   @Nls

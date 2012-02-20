@@ -189,7 +189,7 @@ public class CreateParameterForFieldIntention extends Intention {
     if (parameterName == null) {
       parameterName = nameValidator.validateName(suggestedNames[0], true);
     }
-    parameters.add(new GrParameterInfo(parameterName, "null", "", selectedValue.getTypeGroovy(), -1));
+    parameters.add(new GrParameterInfo(parameterName, "null", "", selectedValue.getTypeGroovy(), -1, false));
 
     PsiClassType[] exceptionTypes = constructor.getThrowsList().getReferencedTypes();
     ThrownExceptionInfo[] thrownExceptionInfos = new ThrownExceptionInfo[exceptionTypes.length];

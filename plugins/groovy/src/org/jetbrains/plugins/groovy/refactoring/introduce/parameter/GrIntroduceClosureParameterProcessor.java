@@ -343,8 +343,9 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
       final PsiElement arrow = block.addAfter(factory.createClosureFromText("{->}").getArrow().copy(), parameterList);
       final PsiElement child = block.getFirstChild().getNextSibling();
       if (TokenSets.WHITE_SPACES_SET.contains(child.getNode().getElementType())) {
-        block.addAfter(child, arrow);
+        final String text = child.getText();
         child.delete();
+        block.addAfter(factory.createLineTerminator(text), arrow);
       }
     }
     GrReferenceAdjuster.shortenReferences(parameter);

@@ -38,7 +38,7 @@ import java.awt.*;
 /**
  * @author Alexander Lobas
  */
-public abstract class DesignerEditorPanel extends JPanel implements ToolProvider, DataProvider {
+public abstract class DesignerEditorPanel extends JPanel implements DataProvider {
   private final CardLayout myLayout = new CardLayout();
 
   protected static final Integer LAYER_COMPONENT = JLayeredPane.DEFAULT_LAYER;
@@ -55,10 +55,10 @@ public abstract class DesignerEditorPanel extends JPanel implements ToolProvider
   private CaptionPanel myVerticalCaption;
   private JScrollPane myScrollPane;
   protected JLayeredPane myLayeredPane;
-  private GlassLayer myGlassLayer;
+  protected GlassLayer myGlassLayer;
   private DecorationLayer myDecorationLayer;
   private FeedbackLayer myFeedbackLayer;
-  private InputTool myTool;
+  protected ToolProvider myToolProvider;
   protected EditableArea mySurfaceArea;
 
   @NonNls private final static String ERROR_CARD = "error";
@@ -70,7 +70,7 @@ public abstract class DesignerEditorPanel extends JPanel implements ToolProvider
     setLayout(myLayout);
     createDesignerCard();
     createErrorCard();
-    loadDefaultTool();
+    myToolProvider.loadDefaultTool();
   }
 
   private void createDesignerCard() {
@@ -112,9 +112,9 @@ public abstract class DesignerEditorPanel extends JPanel implements ToolProvider
       }
 
       @Override
-      public RadComponent findTarget(int x, int y) {
+      public RadComponent findTarget(int x, int y, @Nullable ComponentTargetFilter filter) {
         if (myRootComponent != null) {
-          FindComponentVisitor visitor = new FindComponentVisitor(x, y);
+          FindComponentVisitor visitor = new FindComponentVisitor(filter, x, y);
           myRootComponent.accept(visitor, false);
           return visitor.getResult();
         }
@@ -147,7 +147,19 @@ public abstract class DesignerEditorPanel extends JPanel implements ToolProvider
       }
     };
 
-    myGlassLayer = new GlassLayer(this, mySurfaceArea);
+    myToolProvider = new ToolProvider() {
+      @Override
+      public void loadDefaultTool() {
+        setActiveTool(new SelectionTool());
+      }
+
+      @Override
+      public void showError(@NonNls String message, Throwable e) {
+        DesignerEditorPanel.this.showError(message, e);
+      }
+    };
+
+    myGlassLayer = new GlassLayer(myToolProvider, mySurfaceArea);
     myLayeredPane.add(myGlassLayer, LAYER_GLASS);
 
     myDecorationLayer = new DecorationLayer(mySurfaceArea);
@@ -183,29 +195,6 @@ public abstract class DesignerEditorPanel extends JPanel implements ToolProvider
 
   @Nullable
   protected abstract EditOperation processRootOperation(OperationContext context);
-
-  public InputTool getActiveTool() {
-    return myTool;
-  }
-
-  @Override
-  public void setActiveTool(InputTool tool) {
-    if (myTool != null) {
-      myTool.deactivate();
-    }
-
-    myTool = tool;
-
-    if (myTool != null) {
-      myTool.setToolProvider(this);
-      myTool.activate();
-    }
-  }
-
-  @Override
-  public void loadDefaultTool() {
-    setActiveTool(new SelectionTool());
-  }
 
   public final void showError(@NonNls String message, Throwable e) {
     myRootComponent = null;
@@ -295,11 +284,13 @@ public abstract class DesignerEditorPanel extends JPanel implements ToolProvider
   }
 
   private class FindComponentVisitor extends RadComponentVisitor {
+    @Nullable private final ComponentTargetFilter myFilter;
     private RadComponent myResult;
     private final int myX;
     private final int myY;
 
-    public FindComponentVisitor(int x, int y) {
+    public FindComponentVisitor(@Nullable ComponentTargetFilter filter, int x, int y) {
+      myFilter = filter;
       myX = x;
       myY = y;
     }
@@ -310,16 +301,15 @@ public abstract class DesignerEditorPanel extends JPanel implements ToolProvider
 
     @Override
     public boolean visit(RadComponent component) {
-      return myResult == null;
+      return myResult == null &&
+             component.getBounds(myLayeredPane).contains(myX, myY) &&
+             (myFilter == null || myFilter.preFilter(component));
     }
 
     @Override
     public void endVisit(RadComponent component) {
-      if (myResult == null) {
-        Point location = component.convertPoint(myLayeredPane, myX, myY);
-        if (component.getBounds().contains(location)) {
-          myResult = component;
-        }
+      if (myResult == null && (myFilter == null || myFilter.resultFilter(component))) {
+        myResult = component;
       }
     }
   }

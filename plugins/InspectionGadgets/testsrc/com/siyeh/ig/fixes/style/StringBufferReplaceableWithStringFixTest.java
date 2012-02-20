@@ -32,6 +32,7 @@ public class StringBufferReplaceableWithStringFixTest extends IGQuickFixesTestCa
   public void testSimpleStringBuffer() { doTest(); }
   public void testStringBuilderAppend() { doTest("StringBuilderAppend", InspectionGadgetsBundle.message("string.builder.replaceable.by.string.quickfix")); }
   public void testStringBufferVariable() { doTest(); }
+  public void testStringBufferVariable2() { doTest(); }
   public void testStartsWithPrimitive() { doTest(); }
   public void testPrecedence() { doTest("Precedence", InspectionGadgetsBundle.message("string.builder.replaceable.by.string.quickfix")); }
 }

@@ -34,10 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
@@ -62,6 +59,8 @@ public abstract class GroovyPsiElementFactory implements JVMElementFactory {
   public abstract GrCodeReferenceElement createCodeReferenceElementFromClass(PsiClass aClass);
 
   public abstract GrCodeReferenceElement createCodeReferenceElementFromText(String text);
+
+  public abstract GrThisReferenceExpression createThisExpression(PsiManager manager, PsiClass psiClass);
 
   public static GroovyPsiElementFactory getInstance(Project project) {
     return ServiceManager.getService(project, GroovyPsiElementFactory.class);
@@ -91,6 +90,9 @@ public abstract class GroovyPsiElementFactory implements JVMElementFactory {
 
   @NotNull
   public abstract PsiElement createLineTerminator(int length);
+
+  @NotNull
+  public abstract PsiElement createLineTerminator(String text);
 
   public abstract GrArgumentList createExpressionArgumentList(GrExpression... expressions);
 

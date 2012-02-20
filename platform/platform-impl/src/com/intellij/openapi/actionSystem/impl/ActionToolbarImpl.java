@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -160,7 +160,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   public void addNotify() {
     super.addNotify();
     myActionManager.addTimerListener(500, myWeakTimerListener);
-    myActionManager.addTransparrentTimerListener(500, myWeakTimerListener);
+    myActionManager.addTransparentTimerListener(500, myWeakTimerListener);
   }
 
   private boolean doMacEnhancementsForMainToolbar() {
@@ -175,7 +175,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   public void removeNotify() {
     super.removeNotify();
     myActionManager.removeTimerListener(myWeakTimerListener);
-    myActionManager.removeTransparrentTimerListener(myWeakTimerListener);
+    myActionManager.removeTransparentTimerListener(myWeakTimerListener);
   }
 
   public JComponent getComponent() {

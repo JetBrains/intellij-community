@@ -38,8 +38,6 @@ public class ResourcesBuilder extends ModuleLevelBuilder {
     }
     try {
       final ResourcePatterns finalPatterns = patterns;
-      // todo: process all files in case of rebuild or wholeModuleDirty
-      // todo: otherwise avoid traverwing the whole module and use dirty file list taken from params
       context.processFilesToRecompile(chunk, new FileProcessor() {
         public boolean apply(final Module module, final File file, final String sourceRoot) throws IOException {
           if (finalPatterns.isResourceFile(file, sourceRoot)) {

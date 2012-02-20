@@ -91,10 +91,13 @@ public class GrIntroduceParameterDialog extends DialogWrapper implements GrIntro
   private JCheckBox myForceReturnCheckBox;
   private Project myProject;
 
+  private final boolean myCanIntroduceSimpleParameter;
+
   public GrIntroduceParameterDialog(IntroduceParameterInfo info) {
     super(info.getProject(), true);
     myInfo = info;
     myProject = info.getProject();
+    myCanIntroduceSimpleParameter = findExpr() != null || findVar() != null;
 
     TObjectIntHashMap<GrParameter> parametersToRemove = GroovyIntroduceParameterUtil.findParametersToRemove(info);
     toRemoveCBs = new TObjectIntHashMap<JCheckBox>(parametersToRemove.size());
@@ -139,8 +142,17 @@ public class GrIntroduceParameterDialog extends DialogWrapper implements GrIntro
 
     updateSignature();
 
-    if (findExpr() != null || findVar() != null) {
+    if (myCanIntroduceSimpleParameter) {
       mySignaturePanel.setVisible(false);
+
+      //action to hide signature panel if we have variants to introduce simple parameter
+      myTypeComboBox.addItemListener(new ItemListener() {
+        @Override
+        public void itemStateChanged(ItemEvent e) {
+          mySignaturePanel.setVisible(myTypeComboBox.isClosureSelected());
+          pack();
+        }
+      });
     }
 
     final PsiType closureReturnType = inferClosureReturnType();
@@ -157,13 +169,6 @@ public class GrIntroduceParameterDialog extends DialogWrapper implements GrIntro
       myDelegateViaOverloadingMethodCheckBox.setToolTipText("Delegating is not allowed in closure context");
     }
 
-    myTypeComboBox.addItemListener(new ItemListener() {
-      @Override
-      public void itemStateChanged(ItemEvent e) {
-        mySignaturePanel.setVisible(myTypeComboBox.isClosureSelected());
-        pack();
-      }
-    });
 
     pack();
   }
@@ -457,7 +462,7 @@ public class GrIntroduceParameterDialog extends DialogWrapper implements GrIntro
     final GrExpression expr = findExpr();
     final GrVariable var = findVar();
 
-    if (myTypeComboBox.isClosureSelected()) {
+    if (myTypeComboBox.isClosureSelected() || expr == null && var == null) {
       GrIntroduceParameterSettings settings = new ExtractClosureHelperImpl(myInfo,
                                                                            myNameSuggestionsField.getEnteredName(),
                                                                            myDeclareFinalCheckBox.isSelected(),

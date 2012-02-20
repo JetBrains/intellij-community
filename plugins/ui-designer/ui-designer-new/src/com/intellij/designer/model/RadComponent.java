@@ -15,6 +15,7 @@
  */
 package com.intellij.designer.model;
 
+import com.intellij.designer.designSurface.OperationContext;
 import com.intellij.designer.designSurface.tools.DragTracker;
 import com.intellij.designer.designSurface.tools.InputTool;
 import com.intellij.designer.propertyTable.Property;
@@ -82,6 +83,9 @@ public abstract class RadComponent {
 
   public InputTool getDragTracker() {
     return new DragTracker(this);
+  }
+
+  public void processDropOperation(OperationContext context) {
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////

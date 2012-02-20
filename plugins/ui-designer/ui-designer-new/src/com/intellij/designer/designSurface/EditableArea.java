@@ -31,6 +31,12 @@ import java.util.List;
  * @author Alexander Lobas
  */
 public abstract class EditableArea {
+  //////////////////////////////////////////////////////////////////////////////////////////
+  //
+  // Selection
+  //
+  //////////////////////////////////////////////////////////////////////////////////////////
+
   private final EventListenerList myListenerList = new EventListenerList();
   private List<RadComponent> mySelection = new ArrayList<RadComponent>();
 
@@ -79,13 +85,19 @@ public abstract class EditableArea {
     fireSelectionChanged();
   }
 
+  //////////////////////////////////////////////////////////////////////////////////////////
+  //
+  //
+  //
+  //////////////////////////////////////////////////////////////////////////////////////////
+
   public abstract void setCursor(@Nullable Cursor cursor);
 
   @NotNull
   public abstract JComponent getNativeComponent();
 
   @Nullable
-  public abstract RadComponent findTarget(int x, int y);
+  public abstract RadComponent findTarget(int x, int y, @Nullable ComponentTargetFilter filter);
 
   @Nullable
   public abstract InputTool findTargetTool(int x, int y);
