@@ -66,7 +66,10 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiDocumentManager;
@@ -1215,40 +1218,12 @@ public abstract class DebugProcessImpl implements DebugProcess {
   }
 
   private static boolean isVisibleFromClassLoader(final ClassLoaderReference fromLoader, final ReferenceType refType) {
-    final ClassLoaderReference typeLoader = refType.classLoader();
-    if (typeLoader == null) {
-      return true; // optimization: if class is loaded by a bootstrap loader, it is visible from every other loader
-    }
-    for (ClassLoaderReference checkLoader = fromLoader; checkLoader != null; checkLoader = getParentLoader(checkLoader)) {
-      if (Comparing.equal(typeLoader, checkLoader)) {
-        return true;
-      }
-    }
-    return fromLoader != null && fromLoader.visibleClasses().contains(refType);
-  }
-
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private static ClassLoaderReference getParentLoader(final ClassLoaderReference fromLoader) {
-    final ReferenceType refType = fromLoader.referenceType();
-    Field field = refType.fieldByName("parent");
-    if (field == null) {
-      final List<Field> allFields = refType.allFields();
-      for (Field candidateField : allFields) {
-        try {
-          final Type checkedType = candidateField.type();
-          if (checkedType instanceof ReferenceType &&
-              DebuggerUtilsEx.isAssignableFrom("java.lang.ClassLoader", (ReferenceType)checkedType)) {
-            field = candidateField;
-            break;
-          }
-        }
-        catch (ClassNotLoadedException e) {
-          // ignore this and continue,
-          // java.lang.ClassLoader must be loaded at the moment of check, so if this happens, the field's type is definitely not java.lang.ClassLoader
-        }
-      }
-    }
-    return field != null? (ClassLoaderReference)fromLoader.getValue(field) : null;
+    // IMPORTANT! Even if the refType is already loaded by some parent or bootstrap loader, it may not be visible from the given loader.
+    // For example because there were no accesses yet from this loader to this class. So the loader is not in the list of "initialing" loaders
+    // for this refType and the refType is not visible to the loader.
+    // Attempt to evaluate method with this refType will yield ClassNotLoadedException.
+    // The only way to say for sure whether the class is _visible_ to the given loader, is to use the following API call
+    return fromLoader == null || fromLoader.visibleClasses().contains(refType);
   }
 
   private static String reformatArrayName(String className) {
