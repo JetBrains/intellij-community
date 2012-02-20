@@ -1290,17 +1290,15 @@ public class FileUtil {
   public static String getLocationRelativeToUserHome(final String path) {
     if (path == null) return null;
 
-    String _path = path;
-
-    if (SystemInfo.isLinux || SystemInfo.isMac) {
+    if (SystemInfo.isUnix) {
       final File projectDir = new File(path);
       final File userHomeDir = new File(SystemProperties.getUserHome());
       if (isAncestor(userHomeDir, projectDir, true)) {
-        _path = "~/" + getRelativePath(userHomeDir, projectDir);
+        return  "~/" + getRelativePath(userHomeDir, projectDir);
       }
     }
 
-    return _path;
+    return path;
   }
 
   public static boolean isHashBangLine(CharSequence firstCharsIfText, String marker) {

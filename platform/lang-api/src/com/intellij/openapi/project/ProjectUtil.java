@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,10 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
-
-/*
- * @author max
  */
 package com.intellij.openapi.project;
 
@@ -40,16 +36,17 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+/**
+ * @author max
+ */
 public class ProjectUtil {
   @NonNls public static final String DIRECTORY_BASED_PROJECT_DIR = ".idea";
 
-  private ProjectUtil() {
-  }
+  private ProjectUtil() { }
 
   @Nullable
   public static String getProjectLocationString(@NotNull final Project project) {
-    String projectPath = project.getLocation();
-    return FileUtil.getLocationRelativeToUserHome(projectPath);
+    return FileUtil.getLocationRelativeToUserHome(project.getBasePath());
   }
 
   public static String calcRelativeToProjectPath(final VirtualFile file, final Project project, final boolean includeFilePath) {

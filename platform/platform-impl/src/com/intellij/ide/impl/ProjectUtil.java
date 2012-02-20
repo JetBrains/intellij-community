@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,12 @@ package com.intellij.ide.impl;
 import com.intellij.CommonBundle;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.highlighter.InternalFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectEx;
@@ -53,13 +51,12 @@ import java.io.IOException;
 public class ProjectUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.impl.ProjectUtil");
 
-  private ProjectUtil() {
-  }
+  private ProjectUtil() { }
 
   public static void updateLastProjectLocation(final String projectFilePath) {
     File lastProjectLocation = new File(projectFilePath);
     if (lastProjectLocation.isFile()) {
-      lastProjectLocation = lastProjectLocation.getParentFile(); //for directory based project storages
+      lastProjectLocation = lastProjectLocation.getParentFile(); // for directory-based project storage
     }
     if (lastProjectLocation == null) { // the immediate parent of the ipr file
       return;
@@ -205,19 +202,23 @@ public class ProjectUtil {
     if (confirmOpenNewProject == GeneralSettings.OPEN_PROJECT_ASK) {
       if (isNewProject) {
         int exitCode = Messages.showYesNoDialog(IdeBundle.message("prompt.open.project.in.new.frame"),
-                                         IdeBundle.message("title.new.project"),
-                                         IdeBundle.message("button.existingframe"),
-                                         IdeBundle.message("button.newframe"),
-                                         Messages.getQuestionIcon(), new ProjectNewWindowDoNotAskOption());
+                                                IdeBundle.message("title.new.project"),
+                                                IdeBundle.message("button.existingframe"),
+                                                IdeBundle.message("button.newframe"),
+                                                Messages.getQuestionIcon(),
+                                                new ProjectNewWindowDoNotAskOption());
         return exitCode == 0 ? GeneralSettings.OPEN_PROJECT_SAME_WINDOW : GeneralSettings.OPEN_PROJECT_NEW_WINDOW;
       }
       else {
         int exitCode = Messages.showYesNoCancelDialog(IdeBundle.message("prompt.open.project.in.new.frame"),
-                                               IdeBundle.message("title.open.project"),
-                                               IdeBundle.message("button.existingframe"), IdeBundle.message("button.newframe"),
-                                               CommonBundle.getCancelButtonText(), Messages.getQuestionIcon(),
-                                               new ProjectNewWindowDoNotAskOption());
-        return exitCode == 0 ? GeneralSettings.OPEN_PROJECT_SAME_WINDOW : exitCode == 1 ? GeneralSettings.OPEN_PROJECT_NEW_WINDOW : Messages.CANCEL;
+                                                      IdeBundle.message("title.open.project"),
+                                                      IdeBundle.message("button.existingframe"),
+                                                      IdeBundle.message("button.newframe"),
+                                                      CommonBundle.getCancelButtonText(),
+                                                      Messages.getQuestionIcon(),
+                                                      new ProjectNewWindowDoNotAskOption());
+        return exitCode == 0 ? GeneralSettings.OPEN_PROJECT_SAME_WINDOW :
+               exitCode == 1 ? GeneralSettings.OPEN_PROJECT_NEW_WINDOW : Messages.CANCEL;
       }
     }
     return confirmOpenNewProject;
@@ -265,6 +266,10 @@ public class ProjectUtil {
     }
   }
 
+  /**
+   * @deprecated use {@linkplain com.intellij.openapi.project.ProjectUtil#isProjectOrWorkspaceFile(com.intellij.openapi.vfs.VirtualFile)} (to remove in IDEA 13)
+   */
+  @SuppressWarnings("UnusedDeclaration")
   public static boolean isProjectOrWorkspaceFile(final VirtualFile file) {
     return com.intellij.openapi.project.ProjectUtil.isProjectOrWorkspaceFile(file);
   }
