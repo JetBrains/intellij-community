@@ -430,7 +430,24 @@ public class CompileDriver {
     final CompileServerManager csManager = CompileServerManager.getInstance();
     final MessageBus messageBus = myProject.getMessageBus();
     csManager.cancelAutoMakeTasks(myProject);
-    return csManager.submitCompilationTask(myProject, compileContext.isRebuild(), compileContext.isMake(), moduleNames, artifactNames, paths, new JpsServerResponseHandler() {
+    final CompileScope scope = compileContext.getCompileScope();
+    final Map<String, String> userData;
+    // need to pass scope's user data to server
+    if (scope instanceof UserDataHolderBase) { // hack
+      userData = new HashMap<String, String>();
+      ((UserDataHolderBase)scope).copyUserDataTo(new UserDataHolderBase() {
+        @Override
+        public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
+          final String _key = key.toString();
+          final String _value = value != null? value.toString() : "";
+          userData.put(_key, _value);
+        }
+      });
+    }
+    else {
+      userData = Collections.emptyMap();
+    }
+    return csManager.submitCompilationTask(myProject, compileContext.isRebuild(), compileContext.isMake(), moduleNames, artifactNames, paths, userData, new JpsServerResponseHandler() {
 
       @Override
       public void handleCompileMessage(JpsRemoteProto.Message.Response.CompileMessage compilerMessage) {

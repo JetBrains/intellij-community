@@ -325,7 +325,7 @@ public abstract class IncrementalTestCase extends TestCase {
     try {
 
       new IncProjectBuilder(
-        projectDescriptor, BuilderRegistry.getInstance(), CanceledStatus.NULL
+        projectDescriptor, BuilderRegistry.getInstance(), Collections.<String, String>emptyMap(), CanceledStatus.NULL
       ).build(
         new AllProjectScope(project, Collections.<Artifact>emptySet(), true), false, true
       );
@@ -337,7 +337,7 @@ public abstract class IncrementalTestCase extends TestCase {
       }
 
       new IncProjectBuilder(
-        projectDescriptor, BuilderRegistry.getInstance(), CanceledStatus.NULL
+        projectDescriptor, BuilderRegistry.getInstance(), Collections.<String, String>emptyMap(), CanceledStatus.NULL
       ).build(
         new AllProjectScope(project, Collections.<Artifact>emptySet(), false), true, false
       );
