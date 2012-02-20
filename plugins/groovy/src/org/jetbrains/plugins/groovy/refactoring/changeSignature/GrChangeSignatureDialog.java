@@ -31,23 +31,20 @@ import com.intellij.refactoring.ui.MethodSignatureComponent;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.ui.EditorTextField;
-import com.intellij.ui.TabbedPaneWrapper;
-import com.intellij.ui.TableUtil;
-import com.intellij.ui.ToolbarDecorator;
+import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.Function;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.refactoring.ui.GrCodeFragmentTableCellEditor;
-import org.jetbrains.plugins.groovy.refactoring.ui.GrCodeFragmentTableCellRenderer;
 import org.jetbrains.plugins.groovy.refactoring.ui.GrMethodSignatureComponent;
 import org.jetbrains.plugins.groovy.refactoring.ui.GroovyComboboxVisibilityPanel;
 
@@ -73,7 +70,6 @@ public class GrChangeSignatureDialog extends RefactoringDialog {
   private JPanel contentPane;
   private JLabel myNameLabel;
   private JLabel myReturnTypeLabel;
-  @SuppressWarnings({"UnusedDeclaration"}) private JRadioButton myModifyRadioButton;
   private JRadioButton myDelegateRadioButton;
   private JPanel myDelegatePanel;
   private GroovyComboboxVisibilityPanel myVisibilityPanel;
@@ -146,15 +142,12 @@ public class GrChangeSignatureDialog extends RefactoringDialog {
   }
 
   private void createNameAndReturnTypeEditors() {
-    GroovyCodeFragment nameCodeFragment = new GroovyCodeFragment(myProject, "");
-    myNameField = new EditorTextField(PsiDocumentManager.getInstance(myProject).getDocument(nameCodeFragment), myProject,
-                                      nameCodeFragment.getFileType());
+    myNameField = new EditorTextField("", myProject,GroovyFileType.GROOVY_FILE_TYPE);
 
     final JavaCodeFragmentFactory factory = JavaCodeFragmentFactory.getInstance(myProject);
     myReturnTypeCodeFragment = factory.createTypeCodeFragment("", myMethod, true, JavaCodeFragmentFactory.ALLOW_VOID);
     final Document document = PsiDocumentManager.getInstance(myProject).getDocument(myReturnTypeCodeFragment);
     myReturnTypeField = new EditorTextField(document, myProject, myReturnTypeCodeFragment.getFileType());
-
 
     myNameField.setText(myMethod.getName());
     final GrTypeElement element = myMethod.getReturnTypeElementGroovy();
@@ -194,27 +187,23 @@ public class GrChangeSignatureDialog extends RefactoringDialog {
 
     myParameterTable.setCellSelectionEnabled(true);
     final TableColumnModel columnModel = myParameterTable.getColumnModel();
+
     columnModel.getColumn(0).setCellRenderer(new CodeFragmentTableCellRenderer(myProject));
-    columnModel.getColumn(1).setCellRenderer(new GrCodeFragmentTableCellRenderer(myProject));
-    columnModel.getColumn(2).setCellRenderer(new GrCodeFragmentTableCellRenderer(myProject));
-    columnModel.getColumn(3).setCellRenderer(new GrCodeFragmentTableCellRenderer(myProject));
+    columnModel.getColumn(1).setCellRenderer(new CodeFragmentTableCellRenderer(myProject, GroovyFileType.GROOVY_FILE_TYPE));
+    columnModel.getColumn(2).setCellRenderer(new CodeFragmentTableCellRenderer(myProject, GroovyFileType.GROOVY_FILE_TYPE));
+    columnModel.getColumn(3).setCellRenderer(new CodeFragmentTableCellRenderer(myProject, GroovyFileType.GROOVY_FILE_TYPE));
+    columnModel.getColumn(4).setCellRenderer(new BooleanTableCellRenderer());
 
     columnModel.getColumn(0).setCellEditor(new JavaCodeFragmentTableCellEditor(myProject));
     columnModel.getColumn(1).setCellEditor(new GrCodeFragmentTableCellEditor(myProject));
     columnModel.getColumn(2).setCellEditor(new GrCodeFragmentTableCellEditor(myProject));
     columnModel.getColumn(3).setCellEditor(new GrCodeFragmentTableCellEditor(myProject));
+    columnModel.getColumn(4).setCellEditor(new BooleanTableCellEditor(false));
 
     if (myParameterModel.getRowCount() > 0) {
       myParameterTable.setRowSelectionInterval(0, 0);
       myParameterTable.setColumnSelectionInterval(0, 0);
     }
-
-    myParameterModel.addTableModelListener(new TableModelListener() {
-      @Override
-      public void tableChanged(TableModelEvent e) {
-        updateSignature();
-      }
-    });
 
     return ToolbarDecorator.createDecorator(myParameterTable).createPanel();
   }
