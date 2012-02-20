@@ -1933,6 +1933,9 @@ public class FileBasedIndex implements ApplicationComponent {
 
     @Override
     public boolean processFile(final VirtualFile file) {
+      if (!file.isValid()) {
+        return true;
+      }
       if (!file.isDirectory()) {
         if (file instanceof NewVirtualFile && ((NewVirtualFile)file).getFlag(ALREADY_PROCESSED)) {
           return true;
