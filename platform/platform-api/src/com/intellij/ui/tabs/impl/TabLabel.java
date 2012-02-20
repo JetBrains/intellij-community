@@ -88,6 +88,10 @@ public class TabLabel extends JPanel {
     addMouseListener(new MouseAdapter() {
       public void mousePressed(final MouseEvent e) {
         if (myTabs.isSelectionClick(e, false) && myInfo.isEnabled()) {
+          final TabInfo selectedInfo = myTabs.getSelectedInfo();
+          if (selectedInfo != myInfo) {
+            myInfo.setPreviousSelection(selectedInfo);
+          }
           Component c = SwingUtilities.getDeepestComponentAt(e.getComponent(), e.getX(), e.getY());
           if (c instanceof InplaceButton) return;
           myTabs.select(info, true);
@@ -102,6 +106,7 @@ public class TabLabel extends JPanel {
       }
 
       public void mouseReleased(final MouseEvent e) {
+        myInfo.setPreviousSelection(null);
         handlePopup(e);
       }
     });
