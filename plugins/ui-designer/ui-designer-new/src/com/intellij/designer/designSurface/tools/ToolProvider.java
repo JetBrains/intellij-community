@@ -19,6 +19,7 @@ import com.intellij.designer.designSurface.EditableArea;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 
 /**
@@ -28,6 +29,72 @@ public abstract class ToolProvider {
   private InputTool myTool;
   private EditableArea myArea;
   private MouseEvent myEvent;
+
+  public void processKeyEvent(KeyEvent event, EditableArea area) {
+    if (myTool != null) {
+      try {
+        switch (event.getID()) {
+          case KeyEvent.KEY_PRESSED:
+            myTool.keyPressed(event, area);
+            break;
+          case KeyEvent.KEY_TYPED:
+            myTool.keyTyped(event, area);
+            break;
+          case KeyEvent.KEY_RELEASED:
+            myTool.keyReleased(event, area);
+            break;
+        }
+      }
+      catch (Throwable e) {
+        showError("Edit error: ", e);
+      }
+    }
+  }
+
+  public void processMouseEvent(MouseEvent event, EditableArea area) {
+    if (myTool != null) {
+      try {
+        switch (event.getID()) {
+          case MouseEvent.MOUSE_PRESSED:
+            myTool.mouseDown(event, area);
+            break;
+          case MouseEvent.MOUSE_RELEASED:
+            myTool.mouseUp(event, area);
+            break;
+          case MouseEvent.MOUSE_ENTERED:
+            myTool.mouseEntered(event, area);
+            break;
+          case MouseEvent.MOUSE_EXITED:
+            myTool.mouseExited(event, area);
+            break;
+          case MouseEvent.MOUSE_CLICKED:
+            if (event.getClickCount() == 2) {
+              myTool.mouseDoubleClick(event, area);
+            }
+            break;
+          case MouseEvent.MOUSE_MOVED:
+            myTool.mouseMove(event, area);
+            break;
+          case MouseEvent.MOUSE_DRAGGED:
+            myTool.mouseDrag(event, area);
+            break;
+        }
+      }
+      catch (Throwable e) {
+        showError("Edit error: ", e);
+      }
+    }
+  }
+
+  public void setEvent(MouseEvent event) {
+    myEvent = event;
+  }
+
+  public void setArea(@Nullable EditableArea area) {
+    myArea = area;
+  }
+
+  public abstract void showError(@NonNls String message, Throwable e);
 
   public InputTool getActiveTool() {
     return myTool;
@@ -59,14 +126,4 @@ public abstract class ToolProvider {
   }
 
   public abstract void loadDefaultTool();
-
-  public void setArea(@Nullable EditableArea area) {
-    myArea = area;
-  }
-
-  public void setEvent(MouseEvent event) {
-    myEvent = event;
-  }
-
-  public abstract void showError(@NonNls String message, Throwable e);
 }

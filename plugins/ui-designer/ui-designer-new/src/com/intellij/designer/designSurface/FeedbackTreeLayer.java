@@ -15,8 +15,20 @@
  */
 package com.intellij.designer.designSurface;
 
+import com.intellij.designer.model.RadComponent;
+import org.jetbrains.annotations.Nullable;
+
 /**
  * @author Alexander Lobas
  */
 public interface FeedbackTreeLayer {
+  int INSERT_BEFORE = 0;
+  int INSERT_AFTER = 1;
+  int INSERT_SELECTION = 2;
+
+  void mark(RadComponent component, int feedback);
+
+  boolean isBeforeLocation(RadComponent component, int x, int y);
+
+  boolean isAfterLocation(RadComponent component, int x, int y);
 }

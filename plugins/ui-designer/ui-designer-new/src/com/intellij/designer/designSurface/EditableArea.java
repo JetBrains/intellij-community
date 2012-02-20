@@ -21,104 +21,64 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.EventListenerList;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 /**
  * @author Alexander Lobas
  */
-public abstract class EditableArea {
+public interface EditableArea {
   //////////////////////////////////////////////////////////////////////////////////////////
   //
   // Selection
   //
   //////////////////////////////////////////////////////////////////////////////////////////
 
-  private final EventListenerList myListenerList = new EventListenerList();
-  private List<RadComponent> mySelection = new ArrayList<RadComponent>();
+  void addSelectionListener(ComponentSelectionListener listener);
 
-  public void addSelectionListener(ComponentSelectionListener listener) {
-    myListenerList.add(ComponentSelectionListener.class, listener);
-  }
-
-  public void removeSelectionListener(ComponentSelectionListener listener) {
-    myListenerList.remove(ComponentSelectionListener.class, listener);
-  }
-
-  protected void fireSelectionChanged() {
-    for (ComponentSelectionListener listener : myListenerList.getListeners(ComponentSelectionListener.class)) {
-      listener.selectionChanged(this);
-    }
-  }
+  void removeSelectionListener(ComponentSelectionListener listener);
 
   @NotNull
-  public List<RadComponent> getSelection() {
-    return mySelection;
-  }
+  List<RadComponent> getSelection();
 
-  public boolean isSelected(@NotNull RadComponent component) {
-    return mySelection.contains(component);
-  }
+  boolean isSelected(@NotNull RadComponent component);
 
-  public void select(@NotNull RadComponent component) {
-    mySelection = new ArrayList<RadComponent>();
-    mySelection.add(component);
-    fireSelectionChanged();
-  }
+  void select(@NotNull RadComponent component);
 
-  public void deselect(@NotNull RadComponent component) {
-    mySelection.remove(component);
-    fireSelectionChanged();
-  }
+  void deselect(@NotNull RadComponent component);
 
-  public void appendSelection(@NotNull RadComponent component) {
-    mySelection.remove(component);
-    mySelection.add(component);
-    fireSelectionChanged();
-  }
+  void appendSelection(@NotNull RadComponent component);
 
-  public void setSelection(@NotNull Collection<RadComponent> components) {
-    mySelection = new ArrayList<RadComponent>(components);
-    fireSelectionChanged();
-  }
+  void setSelection(@NotNull List<RadComponent> components);
 
   //////////////////////////////////////////////////////////////////////////////////////////
   //
-  //
+  // Visual
   //
   //////////////////////////////////////////////////////////////////////////////////////////
 
-  public abstract void setCursor(@Nullable Cursor cursor);
+  void setCursor(@Nullable Cursor cursor);
 
   @NotNull
-  public abstract JComponent getNativeComponent();
+  JComponent getNativeComponent();
 
   @Nullable
-  public abstract RadComponent findTarget(int x, int y, @Nullable ComponentTargetFilter filter);
+  RadComponent findTarget(int x, int y, @Nullable ComponentTargetFilter filter);
 
   @Nullable
-  public abstract InputTool findTargetTool(int x, int y);
+  InputTool findTargetTool(int x, int y);
 
-  public abstract ComponentDecorator getRootSelectionDecorator();
-
-  @Nullable
-  public EditOperation processRootOperation(OperationContext context) {
-    return null;
-  }
-
-  public abstract FeedbackLayer getFeedbackLayer();
-
-  public abstract RadComponent getRootComponent();
-
-  public boolean isTree() {
-    return false;
-  }
+  ComponentDecorator getRootSelectionDecorator();
 
   @Nullable
-  public FeedbackTreeLayer getFeedbackTreeLayer() {
-    return null;
-  }
+  EditOperation processRootOperation(OperationContext context);
+
+  FeedbackLayer getFeedbackLayer();
+
+  RadComponent getRootComponent();
+
+  boolean isTree();
+
+  @Nullable
+  FeedbackTreeLayer getFeedbackTreeLayer();
 }
