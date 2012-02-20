@@ -147,7 +147,7 @@ public class JBTabsImpl extends JComponent
 
   private TimedDeadzone.Length myTabActionsMouseDeadzone = TimedDeadzone.DEFAULT;
 
-  private long myRemoveDefferredRequest;
+  private long myRemoveDeferredRequest;
   private boolean myTestMode;
 
   private JBTabsPosition myPosition = JBTabsPosition.top;
@@ -155,8 +155,6 @@ public class JBTabsImpl extends JComponent
   private final TabsBorder myBorder = new TabsBorder(this);
   private BaseNavigationAction myNextAction;
   private BaseNavigationAction myPrevAction;
-
-  private boolean myWasEverShown;
 
   private boolean myTabDraggingEnabled;
   private DragHelper myDragHelper;
@@ -884,11 +882,11 @@ public class JBTabsImpl extends JComponent
   private ActionCallback removeDeferred() {
     final ActionCallback callback = new ActionCallback();
 
-    final long executionRequest = ++myRemoveDefferredRequest;
+    final long executionRequest = ++myRemoveDeferredRequest;
 
     final Runnable onDone = new Runnable() {
       public void run() {
-        if (myRemoveDefferredRequest == executionRequest) {
+        if (myRemoveDeferredRequest == executionRequest) {
           removeDeferredNow();
         }
 
@@ -1467,11 +1465,6 @@ public class JBTabsImpl extends JComponent
     }
     return insets;
   }
-
-  private int fixInset(int inset, int addin) {
-    return inset + addin;
-  }
-
 
   public int getToolbarInset() {
     return getArcSize() + 1;
@@ -2903,7 +2896,7 @@ public class JBTabsImpl extends JComponent
     return mySingleRowLayout;
   }
 
-  public JBTabsPresentation setUiDecorator(UiDecorator decorator) {
+  public JBTabsPresentation setUiDecorator(@Nullable UiDecorator decorator) {
     myUiDecorator = decorator == null ? ourDefaultDecorator : decorator;
     applyDecoration();
     return this;
@@ -2989,9 +2982,7 @@ public class JBTabsImpl extends JComponent
       ActionGroup group = selection.getGroup();
       if (group != null) {
         AnAction[] children = group.getChildren(null);
-        for (int i = 0; i < children.length; i++) {
-          result.add(children[i]);
-        }
+        Collections.addAll(result, children);
       }
     }
 
