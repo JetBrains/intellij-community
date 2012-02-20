@@ -121,7 +121,7 @@ public class EventLog implements Notifications {
     return getLogModel(project).getStatusMessage();
   }
 
-  public static LogEntry formatForLog(@NotNull final Notification notification) {
+  public static LogEntry formatForLog(@NotNull final Notification notification, String indent) {
     DocumentImpl logDoc = new DocumentImpl(true);
     AtomicBoolean showMore = new AtomicBoolean(false);
     Map<RangeMarker, HyperlinkInfo> links = new LinkedHashMap<RangeMarker, HyperlinkInfo>();
@@ -141,7 +141,7 @@ public class EventLog implements Notifications {
 
     String status = getStatusText(logDoc, showMore, lineSeparators, hasHtml);
 
-    indentNewLines(logDoc, lineSeparators, afterTitle, hasHtml);
+    indentNewLines(logDoc, lineSeparators, afterTitle, hasHtml, indent);
 
     ArrayList<Pair<TextRange, HyperlinkInfo>> list = new ArrayList<Pair<TextRange, HyperlinkInfo>>();
     for (RangeMarker marker : links.keySet()) {
@@ -165,7 +165,7 @@ public class EventLog implements Notifications {
     return new LogEntry(logDoc.getText(), status, list);
   }
 
-  private static void indentNewLines(DocumentImpl logDoc, List<RangeMarker> lineSeparators, RangeMarker afterTitle, boolean hasHtml) {
+  private static void indentNewLines(DocumentImpl logDoc, List<RangeMarker> lineSeparators, RangeMarker afterTitle, boolean hasHtml, String indent) {
     if (!hasHtml) {
       int i = -1;
       while (true) {
@@ -187,8 +187,8 @@ public class EventLog implements Notifications {
           continue;
         }
 
-        logDoc.replaceString(start, separator.getEndOffset(), "\n\t");
-        nextLineStart = start + 2;
+        logDoc.replaceString(start, separator.getEndOffset(), "\n" + indent);
+        nextLineStart = start + 1 + indent.length();
         while (nextLineStart < logDoc.getTextLength() && Character.isWhitespace(logDoc.getCharsSequence().charAt(nextLineStart))) {
           logDoc.deleteString(nextLineStart, nextLineStart + 1);
         }

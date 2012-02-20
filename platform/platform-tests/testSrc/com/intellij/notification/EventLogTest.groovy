@@ -30,17 +30,17 @@ class EventLogTest extends LightPlatformTestCase {
   }
 
   public void testHtmlEntities() {
-    def entry = EventLog.formatForLog(new Notification("xxx", "Title", "Hello&nbsp;world&laquo;&raquo;", NotificationType.ERROR))
+    def entry = format("Title", "Hello&nbsp;world&laquo;&raquo;")
     assert entry.message == 'Title: Hello world<<>>'
   }
 
   public void testParseMultilineText() {
-    def entry = EventLog.formatForLog(new Notification("xxx", "Title", "<html><body> " +
+    def entry = format("Title", "<html><body> " +
                                                                        "<font size=\"3\">first line<br>" +
                                                                        "second line<br>" +
                                                                        "third<br>" +
                                                                        "<a href=\"create\">Action</a><br>" +
-                                                                       "</body></html>", NotificationType.ERROR))
+                                                                       "</body></html>")
     assert entry.status == 'Title:  first line second line third // Action'
     assert entry.message == '''Title
 \tfirst line
@@ -52,13 +52,13 @@ class EventLogTest extends LightPlatformTestCase {
   }
 
   public void testInParagraph() {
-    def entry = EventLog.formatForLog(new Notification("xxx", "Title", "<p>message</p>", NotificationType.ERROR))
+    def entry = format("Title", "<p>message</p>")
     assert entry.message == 'Title: message'
     assert entry.status == 'Title: message'
   }
 
   public void testJavaSeparators() {
-    def entry = EventLog.formatForLog(new Notification("xxx", "Title", "fst\nsnd", NotificationType.ERROR))
+    def entry = format("Title", "fst\nsnd")
     assert entry.message == '''Title
 \tfst
 \tsnd'''
@@ -71,7 +71,7 @@ class EventLogTest extends LightPlatformTestCase {
   }
 
   public void testMalformedLink() throws Exception {
-    def entry = EventLog.formatForLog(new Notification("xxx", '<a href="a">link<a/>', "content", NotificationType.ERROR))
+    def entry = format('<a href="a">link<a/>', "content")
     assert entry.message ==  'link: content (show balloon)'
   }
 
@@ -96,7 +96,7 @@ class EventLogTest extends LightPlatformTestCase {
   }
 
   EventLog.LogEntry format(String title, String content) {
-    EventLog.formatForLog(new Notification("xxx", title, content, NotificationType.ERROR))
+    EventLog.formatForLog(new Notification("xxx", title, content, NotificationType.ERROR), '\t')
   }
 
   public void testManyNewlines() throws Exception {
