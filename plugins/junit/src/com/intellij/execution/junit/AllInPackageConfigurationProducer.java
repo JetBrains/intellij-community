@@ -40,12 +40,18 @@ public class AllInPackageConfigurationProducer extends JUnitConfigurationProduce
     if (myPackage == null) return null;
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
     boolean junitJarFound = false;
-    for (PsiDirectory directory : myPackage.getDirectories()) {
-      final Module module = ModuleUtil.findModuleForFile(directory.getVirtualFile(), project);
-      if (module != null) {
-        if (facade.findClass(JUnitUtil.TESTCASE_CLASS, GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, true)) != null) {
-          junitJarFound = true;
-          break;
+    final Module locationModule = location.getModule();
+    if (locationModule != null) {
+      junitJarFound = facade.findClass(JUnitUtil.TESTCASE_CLASS, 
+                                       GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(locationModule, true)) != null;
+    } else {
+      for (PsiDirectory directory : myPackage.getDirectories()) {
+        final Module module = ModuleUtil.findModuleForFile(directory.getVirtualFile(), project);
+        if (module != null) {
+          if (facade.findClass(JUnitUtil.TESTCASE_CLASS, GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, true)) != null) {
+            junitJarFound = true;
+            break;
+          }
         }
       }
     }
