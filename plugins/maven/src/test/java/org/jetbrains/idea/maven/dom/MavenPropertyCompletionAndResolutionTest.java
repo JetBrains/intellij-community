@@ -712,12 +712,6 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
                      "<version>1</version>\n" +
                      "<name>${<error>xxx</error>}</name>\n" +
 
-                     "<parent>\n" +
-                     "  <groupId>test</groupId>\n" +
-                     "  <artifactId>parent</artifactId>\n" +
-                     "  <version>1</version>\n" +
-                     "</parent>\n" +
-
                      "<properties>\n" +
                      "  <foo>\n" +
                      "${<error>zzz</error>}\n" +

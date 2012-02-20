@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.utils;
 
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
+import com.intellij.execution.configurations.ParametersList;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.notification.Notification;
@@ -79,6 +80,28 @@ public class MavenUtil {
   public static final String REPOSITORY_DIR = "repository";
   public static final String LIB_DIR = "lib";
   public static final String SUPER_POM_PATH = "org/apache/maven/project/" + MavenConstants.SUPER_POM_XML;
+
+  private static volatile Map<String, String> ourPropertiesFromMvnOpts;
+
+  public static Map<String, String> getPropertiesFromMavenOpts() {
+    Map<String, String> res = ourPropertiesFromMvnOpts;
+    if (res == null) {
+      String mavenOpts = System.getenv("MAVEN_OPTS");
+      if (mavenOpts != null) {
+        ParametersList mavenOptsList = new ParametersList();
+        mavenOptsList.addParametersString(mavenOpts);
+        res = mavenOptsList.getProperties();
+      }
+      else {
+        res = Collections.emptyMap();
+      }
+
+      ourPropertiesFromMvnOpts = res;
+    }
+
+    return res;
+  }
+
 
   public static void invokeLater(Project p, Runnable r) {
     invokeLater(p, ModalityState.defaultModalityState(), r);

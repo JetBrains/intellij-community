@@ -425,7 +425,14 @@ public class MavenProjectReader {
                                                        MavenProjectProblem.ProblemType.PARENT));
       }
 
-      return MavenServerManager.getInstance().assembleInheritance(model, parentModel);
+      model = MavenServerManager.getInstance().assembleInheritance(model, parentModel);
+
+      // todo: it is a quick-hack here - we add inherited dummy profiles to correctly collect activated profiles in 'applyProfiles'.
+      List<MavenProfile> profiles = model.getProfiles();
+      for (MavenProfile each : parentModel.getProfiles()) {
+        addProfileIfDoesNotExist(new MavenProfile(each.getId(), each.getSource()), profiles);
+      }
+      return model;
     }
     finally {
       recursionGuard.remove(file);

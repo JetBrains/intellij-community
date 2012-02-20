@@ -24,7 +24,6 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
-import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
 
 import java.io.File;
@@ -106,36 +105,6 @@ public class StructureImportingTest extends MavenImportingTestCase {
                             "<name>name2</name>");
     importProject();
     assertModules("project", "m1", "m2");
-  }
-
-  public void testModulesAreNotInheritedFromParentsProfiles() throws Exception {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<packaging>pom</packaging>" +
-
-                     "<profiles>\n" +
-                     " <profile>\n" +
-                     "  <id>one</id>\n" +
-                     "   <modules>" +
-                     "    <module>m</module>" +
-                     "   </modules>" +
-                     " </profile>" +
-                     "</profiles>");
-
-    createModulePom("m", "<groupId>test</groupId>" +
-                         "<artifactId>m</artifactId>" +
-                         "<version>1</version>" +
-                         "<parent>" +
-                         " <groupId>test</groupId>" +
-                         " <artifactId>project</artifactId>" +
-                         " <version>1</version>" +
-                         "</parent>");
-
-    importProjectWithProfiles("one");
-
-    assertSize(1, myProjectsManager.findProject(new MavenId("test", "project", "1")).getModulePaths());
-    assertSize(0, myProjectsManager.findProject(new MavenId("test", "m", "1")).getModulePaths());
   }
 
   public void testModulesWithSlashesAtTheEnds() throws Exception {
@@ -375,18 +344,18 @@ public class StructureImportingTest extends MavenImportingTestCase {
     if (!hasMavenInstallation()) return;
 
     final VirtualFile parent = createModulePom("parent",
-                                               "<groupId>test</groupId>" +
-                                               "<artifactId>parent</artifactId>" +
-                                               "<version>1</version>" +
-                                               "<packaging>pom</packaging>" +
+                                         "<groupId>test</groupId>" +
+                                         "<artifactId>parent</artifactId>" +
+                                         "<version>1</version>" +
+                                         "<packaging>pom</packaging>" +
 
-                                               "<dependencies>" +
-                                               "  <dependency>" +
-                                               "    <groupId>junit</groupId>" +
-                                               "    <artifactId>junit</artifactId>" +
-                                               "    <version>4.0</version>" +
-                                               "  </dependency>" +
-                                               "</dependencies>");
+                                         "<dependencies>" +
+                                         "  <dependency>" +
+                                         "    <groupId>junit</groupId>" +
+                                         "    <artifactId>junit</artifactId>" +
+                                         "    <version>4.0</version>" +
+                                         "  </dependency>" +
+                                         "</dependencies>");
     executeGoal("parent", "install");
 
     new WriteAction() {

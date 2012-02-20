@@ -75,7 +75,7 @@ public class SelectionTracker extends TargetingTool {
   }
 
   private void performSelection() {
-    if (mySelected) {
+    if (mySelected || myArea.isTree()) {
       return;
     }
     mySelected = true;

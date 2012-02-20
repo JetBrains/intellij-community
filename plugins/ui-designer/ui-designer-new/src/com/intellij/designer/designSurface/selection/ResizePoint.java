@@ -25,7 +25,7 @@ import java.awt.*;
 /**
  * @author Alexander Lobas
  */
-public abstract class ResizePoint implements ComponentDecorator {
+public abstract class ResizePoint extends ComponentDecorator {
   private static final int DEFAULT_SIZE = 5;
   private final Color myColor;
   private final Color myBorder;
@@ -52,7 +52,7 @@ public abstract class ResizePoint implements ComponentDecorator {
   }
 
   @Override
-  public void decorate(DecorationLayer layer, Graphics2D g, RadComponent component) {
+  protected void paint(DecorationLayer layer, Graphics2D g, RadComponent component) {
     Point location = getLocation(layer, component);
 
     g.setColor(myColor);

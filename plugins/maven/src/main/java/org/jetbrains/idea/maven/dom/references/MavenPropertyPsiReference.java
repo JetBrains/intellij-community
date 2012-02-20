@@ -43,9 +43,12 @@ import org.jetbrains.idea.maven.dom.MavenSchemaProvider;
 import org.jetbrains.idea.maven.dom.model.MavenDomProfile;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.dom.model.MavenDomSettingsModel;
+import org.jetbrains.idea.maven.execution.MavenRunner;
+import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.utils.MavenIcons;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.maven.vfs.MavenPropertiesVirtualFileSystem;
 
 import javax.swing.*;
@@ -133,6 +136,13 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
     }
 
     // todo resolve properties from config.
+    MavenRunnerSettings runnerSettings = MavenRunner.getInstance(myProject).getSettings();
+    if (runnerSettings.getMavenProperties().containsKey(myText) || runnerSettings.getVmOptions().contains("-D" + myText + '=')) {
+      return myElement;
+    }
+    if (MavenUtil.getPropertiesFromMavenOpts().containsKey(myText)) {
+      return myElement;
+    }
 
     MavenDomProfile profile = DomUtil.findDomElement(myElement, MavenDomProfile.class);
     if (profile != null) {
@@ -270,7 +280,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
     if (prefix == null) {
       result.add(createLookupElement(baseDir, "project.baseUri", MavenIcons.MAVEN_ICON));
       result.add(createLookupElement(baseDir, "pom.baseUri", MavenIcons.MAVEN_ICON));
-      result.add(createLookupElement(myElement, TIMESTAMP_PROP, MavenIcons.MAVEN_ICON));
+      result.add(LookupElementBuilder.create(TIMESTAMP_PROP).setIcon(MavenIcons.MAVEN_ICON));
     }
 
     processSchema(MavenSchemaProvider.MAVEN_PROJECT_SCHEMA_URL, new SchemaProcessor<Object>() {
@@ -284,7 +294,6 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
     });
 
     processSchema(MavenSchemaProvider.MAVEN_SETTINGS_SCHEMA_URL, new SchemaProcessor<Object>(){
-
       @Override
       public Object process(@NotNull String property, XmlElementDescriptor descriptor) {
         result.add(createLookupElement(descriptor, property, MavenIcons.MAVEN_ICON));
@@ -295,6 +304,30 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
     collectPropertiesVariants(result);
     collectSystemEnvProperties(MavenPropertiesVirtualFileSystem.SYSTEM_PROPERTIES_FILE, null, result);
     collectSystemEnvProperties(MavenPropertiesVirtualFileSystem.ENV_PROPERTIES_FILE, "env.", result);
+
+    MavenRunnerSettings runnerSettings = MavenRunner.getInstance(myProject).getSettings();
+    for (String prop : runnerSettings.getMavenProperties().keySet()) {
+      if (!isResultAlreadyContains(result, prop)) {
+        result.add(LookupElementBuilder.create(prop).setIcon(PlatformIcons.PROPERTY_ICON));
+      }
+    }
+    for (String prop : MavenUtil.getPropertiesFromMavenOpts().keySet()) {
+      if (!isResultAlreadyContains(result, prop)) {
+        result.add(LookupElementBuilder.create(prop).setIcon(PlatformIcons.PROPERTY_ICON));
+      }
+    }
+  }
+
+  private static boolean isResultAlreadyContains(List<Object> results, String propertyName) {
+    for (Object result : results) {
+      if (result instanceof LookupElement) {
+        if (((LookupElement)result).getLookupString().equals(propertyName)) {
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 
   private static void addVariant(List<Object> result, String name, @NotNull Object element, @Nullable String prefix, @NotNull Icon icon) {
