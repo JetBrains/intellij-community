@@ -128,7 +128,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
     if (hasPrefix) {
       MavenDomProjectModel domProjectModel = MavenDomUtil.getMavenDomProjectModel(myProject, mavenProject.getFile());
       if (domProjectModel != null) {
-        PsiElement res = resolveModelProperty(domProjectModel, "project." + unprefixed, new HashSet<DomElement>());
+        PsiElement res = resolveModelProperty(domProjectModel, unprefixed, new HashSet<DomElement>());
         if (res != null) {
           return res;
         }
@@ -173,7 +173,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
     if (!hasPrefix) {
       MavenDomProjectModel domProjectModel = MavenDomUtil.getMavenDomProjectModel(myProject, mavenProject.getFile());
       if (domProjectModel != null) {
-        PsiElement res = resolveModelProperty(domProjectModel, "project." + unprefixed, new HashSet<DomElement>());
+        PsiElement res = resolveModelProperty(domProjectModel, unprefixed, new HashSet<DomElement>());
         if (res != null) {
           return res;
         }
@@ -210,13 +210,18 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
                                           @NotNull final Set<DomElement> recursionGuard) {
     if (!recursionGuard.add(projectDom)) return null;
 
-    if (!schemaHasProperty(MavenSchemaProvider.MAVEN_PROJECT_SCHEMA_URL, path)) return null;
+    String pathWithProjectPrefix = "project." + path;
 
-    PsiElement result = MavenDomUtil.findTag(projectDom, path);
+    if (!MavenModelClassesProperties.isPathValid(MavenModelClassesProperties.MAVEN_PROJECT_CLASS, path)
+      && !MavenModelClassesProperties.isPathValid(MavenModelClassesProperties.MAVEN_MODEL_CLASS, path)) {
+      if (!schemaHasProperty(MavenSchemaProvider.MAVEN_PROJECT_SCHEMA_URL, pathWithProjectPrefix)) return null;
+    }
+
+    PsiElement result = MavenDomUtil.findTag(projectDom, pathWithProjectPrefix);
     if (result != null) return result;
 
-    if (path.equals("project.groupId") || path.equals("project.version")) {
-      return MavenDomUtil.findTag(projectDom, "project.parent." + path.substring("project.".length()));
+    if (pathWithProjectPrefix.equals("project.groupId") || pathWithProjectPrefix.equals("project.version")) {
+      return MavenDomUtil.findTag(projectDom, "project.parent." + path);
     }
 
     result = new MavenDomProjectProcessorUtils.DomParentProjectFileProcessor<PsiElement>(myProjectsManager) {

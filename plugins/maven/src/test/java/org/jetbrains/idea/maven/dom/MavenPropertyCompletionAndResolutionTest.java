@@ -723,6 +723,11 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
                      "${<error>project.version.bar</error>}\n" +
 
                      "${maven.build.timestamp}\n" +
+                     "${project.parentFile.name}\n" +
+                     "${<error>project.parentFile.nameXxx</error>}\n" +
+                     "${pom.compileArtifacts.empty}\n" +
+                     "${modules.empty}\n" +
+                     "${projectDirectory}\n" +
                      "</foo>\n" +
                      "</properties>"
     );
