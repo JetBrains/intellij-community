@@ -694,6 +694,8 @@
     <completion.contributor language="XML"
                             implementationClass="com.jetbrains.mako.editor.MakoControlCompletionContributor"/>
 
+    <fileTypeFactory implementation="com.jetbrains.mako.MakoFileTypeFactory"/>
+
     <typedHandler implementation="com.jetbrains.mako.editor.MakoBracesHandler"
                   id="MakoBracesHandler"/>
     <annotator language="Mako" implementationClass="com.jetbrains.mako.validation.MakoAnnotatingVisitor"/>
