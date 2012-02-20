@@ -234,8 +234,9 @@ public class EventLog implements Notifications {
         int linkEnd = content.indexOf(A_CLOSING, tagMatcher.end());
         if (linkEnd > 0) {
           String linkText = content.substring(tagMatcher.end(), linkEnd).replaceAll(TAG_PATTERN.pattern(), "");
+          int linkStart = document.getTextLength();
           appendText(document, linkText);
-          links.put(document.createRangeMarker(new TextRange(document.getTextLength() - linkText.length(), document.getTextLength())),
+          links.put(document.createRangeMarker(new TextRange(linkStart, document.getTextLength())),
                     new NotificationHyperlinkInfo(notification, href));
           content = content.substring(linkEnd + A_CLOSING.length());
           continue;

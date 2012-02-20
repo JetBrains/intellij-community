@@ -107,4 +107,14 @@ class EventLogTest extends LightPlatformTestCase {
 \tbar'''
   }
 
+  public void testTeamCityLink() {
+    def entry = format('title', '''<p>You are assigned for investigation of a test failure<br/>FtlFixesTest.testToplevelVariableLocal (IDEA Trunk), assigned by Roman Shevchenko<br/></p>
+<p><a href='#'>Details &raquo;</a></p>''')
+    assert entry.message == '''title
+\tYou are assigned for investigation of a test failure
+\tFtlFixesTest.testToplevelVariableLocal (IDEA Trunk), assigned by Roman Shevchenko
+\tDetails >>'''
+    assert entry.links.collect { it.first } == [new TextRange(144, 154)]
+  }
+
 }
