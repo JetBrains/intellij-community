@@ -50,7 +50,9 @@ public final class GitVersion implements Comparable<GitVersion> {
     CYGWIN,
     /** The type doesn't matter or couldn't be detected. */
     UNDEFINED,
-    /** Information about Git version is unavailable because the GitVcs hasn't fully initialized yet, or because Git executable is invalid. */
+    /**
+     * Information about Git version is unavailable because the GitVcs hasn't fully initialized yet, or because Git executable is invalid.
+     */
     NULL
   }
 
@@ -65,7 +67,9 @@ public final class GitVersion implements Comparable<GitVersion> {
    */
   public static final GitVersion NULL = new GitVersion(0, 0, 0, 0, Type.NULL);
 
-  private static final Pattern FORMAT = Pattern.compile("git version (\\d+)\\.(\\d+)\\.(\\d+)(?:\\.(\\d+))?(?:\\.(msysgit))?[\\.\\-\\d\\w]*", Pattern.CASE_INSENSITIVE);
+  private static final Pattern FORMAT = Pattern.compile(
+    "git version (\\d+)\\.(\\d+)\\.(\\d+)(?:\\.(\\d+))?(?:\\.(msysgit))?[\\.\\-\\d\\w]*", Pattern.CASE_INSENSITIVE);
+
   private static final Logger LOG = Logger.getInstance(GitVersion.class.getName());
 
   private final int myMajor;
@@ -139,7 +143,7 @@ public final class GitVersion implements Comparable<GitVersion> {
     CapturingProcessHandler handler = new CapturingProcessHandler(commandLine.createProcess(), CharsetToolkit.getDefaultSystemCharset());
     ProcessOutput result = handler.runProcess(30 * 1000);
     if (result.isTimeout()) {
-      throw new TimeoutException("Coulnd't identify the version of Git - stopped by timeout.");
+      throw new TimeoutException("Couldn't identify the version of Git - stopped by timeout.");
     }
     if (result.getExitCode() != 0 || !result.getStderr().isEmpty()) {
       LOG.info("getVersion exitCode=" + result.getExitCode() + " errors: " + result.getStderr());
@@ -147,7 +151,8 @@ public final class GitVersion implements Comparable<GitVersion> {
       try {
         parse(result.getStdout());
       } catch (ParseException pe) {
-        throw new ExecutionException("Errors while executing git --version. exitCode=" + result.getExitCode() + " errors: " + result.getStderr());
+        throw new ExecutionException("Errors while executing git --version. exitCode=" + result.getExitCode() +
+                                     " errors: " + result.getStderr());
       }
     }
     return parse(result.getStdout());
