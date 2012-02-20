@@ -16,6 +16,8 @@
 package org.jetbrains.plugins.groovy.refactoring.changeSignature;
 
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -25,33 +27,38 @@ import com.intellij.refactoring.changeSignature.ExceptionsTableModel;
 import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
 import com.intellij.refactoring.ui.CodeFragmentTableCellRenderer;
 import com.intellij.refactoring.ui.JavaCodeFragmentTableCellEditor;
+import com.intellij.refactoring.ui.MethodSignatureComponent;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.ui.EditableRowTable;
 import com.intellij.ui.EditorTextField;
+import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.Function;
+import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
-import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.ui.GrCodeFragmentTableCellEditor;
 import org.jetbrains.plugins.groovy.refactoring.ui.GrCodeFragmentTableCellRenderer;
+import org.jetbrains.plugins.groovy.refactoring.ui.GrMethodSignatureComponent;
+import org.jetbrains.plugins.groovy.refactoring.ui.GroovyComboboxVisibilityPanel;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableColumnModel;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.List;
 
 import static org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle.message;
@@ -62,62 +69,49 @@ import static org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle.m
 public class GrChangeSignatureDialog extends RefactoringDialog {
   private EditorTextField myNameField;
   private EditorTextField myReturnTypeField;
-  private JRadioButton myPublicRadioButton;
-  private JRadioButton myProtectedRadioButton;
-  private JRadioButton myPrivateRadioButton;
   private JBTable myParameterTable;
   private JPanel contentPane;
-  private JTextArea mySignatureLabel;
   private JLabel myNameLabel;
   private JLabel myReturnTypeLabel;
   @SuppressWarnings({"UnusedDeclaration"}) private JRadioButton myModifyRadioButton;
   private JRadioButton myDelegateRadioButton;
-  @SuppressWarnings({"UnusedDeclaration"}) private JPanel myParameterButtonPanel;
-  private JBTable myExceptionsTable;
-  @SuppressWarnings({"UnusedDeclaration"}) private JPanel myExceptionsButtonPanel;
   private JPanel myDelegatePanel;
+  private GroovyComboboxVisibilityPanel myVisibilityPanel;
+  private MethodSignatureComponent mySignaturePreview;
+  private JComponent myTabPanel;
   private GrParameterTableModel myParameterModel;
   private GrMethod myMethod;
   private PsiTypeCodeFragment myReturnTypeCodeFragment;
-  private GroovyCodeFragment myNameCodeFragment;
   private ExceptionsTableModel myExceptionTableModel;
   private static final String INDENT = "    ";
 
   public GrChangeSignatureDialog(@NotNull Project project, GrMethod method) {
     super(project, true);
     myMethod = method;
-    setTitle(ChangeSignatureHandler.REFACTORING_NAME);
+
     init();
     updateSignature();
-    ActionListener listener = new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        updateSignature();
-      }
-    };
-    myPublicRadioButton.addActionListener(listener);
-    myPrivateRadioButton.addActionListener(listener);
-    myProtectedRadioButton.addActionListener(listener);
   }
 
   protected void init() {
     super.init();
+
+    setTitle(ChangeSignatureHandler.REFACTORING_NAME);
+
     final PsiClass psiClass = myMethod.getContainingClass();
     if (psiClass == null) return;
     if (psiClass.isInterface()) {
       myDelegatePanel.setVisible(false);
     }
 
-    if (myMethod.hasModifierProperty(GrModifier.PRIVATE)) {
-      myPrivateRadioButton.setSelected(true);
-    } else if (myMethod.hasModifierProperty(GrModifier.PROTECTED)) {
-      myProtectedRadioButton.setSelected(true);
-    } else if (myMethod.hasModifierProperty(GrModifier.PUBLIC)) {
-      myPublicRadioButton.setSelected(true);
-    }
-  }
+    myVisibilityPanel.setVisibility(VisibilityUtil.getVisibilityModifier(myMethod.getModifierList()));
 
-  private void stopEditing() {
-    TableUtil.stopEditing(myParameterTable);
+    myVisibilityPanel.addListener(new ChangeListener() {
+      @Override
+      public void stateChanged(ChangeEvent e) {
+        updateSignature();
+      }
+    });
   }
 
   @Override
@@ -128,19 +122,39 @@ public class GrChangeSignatureDialog extends RefactoringDialog {
 
   private void createUIComponents() {
     createNameAndReturnTypeEditors();
-    createParametersPanel();
-    createExceptionsPanel();
+    createSignaturePreview();
+
+    JPanel paramPanel = createParametersPanel();
+    paramPanel.setBorder(new EmptyBorder(0, 0, 0, 0));
+    JPanel exceptionPanel = createExceptionsPanel();
+    exceptionPanel.setBorder(new EmptyBorder(0, 0, 0, 0));
+
+    final TabbedPaneWrapper tabbedPane = new TabbedPaneWrapper(getDisposable());
+    tabbedPane.addTab("Parameters", paramPanel);
+    tabbedPane.addTab("Exceptions", exceptionPanel);
+
+    myTabPanel = tabbedPane.getComponent();
+
+    for (JComponent c : UIUtil.findComponentsOfType(myTabPanel, JComponent.class)) {
+      c.setFocusCycleRoot(false);
+      c.setFocusTraversalPolicy(null);
+    }
+  }
+
+  private void createSignaturePreview() {
+    mySignaturePreview = new GrMethodSignatureComponent("", myProject);
   }
 
   private void createNameAndReturnTypeEditors() {
-    myNameCodeFragment = new GroovyCodeFragment(myProject, "");
-    myNameField = new EditorTextField(PsiDocumentManager.getInstance(myProject).getDocument(myNameCodeFragment), myProject,
-                                      myNameCodeFragment.getFileType());
+    GroovyCodeFragment nameCodeFragment = new GroovyCodeFragment(myProject, "");
+    myNameField = new EditorTextField(PsiDocumentManager.getInstance(myProject).getDocument(nameCodeFragment), myProject,
+                                      nameCodeFragment.getFileType());
 
     final JavaCodeFragmentFactory factory = JavaCodeFragmentFactory.getInstance(myProject);
     myReturnTypeCodeFragment = factory.createTypeCodeFragment("", myMethod, true, JavaCodeFragmentFactory.ALLOW_VOID);
     final Document document = PsiDocumentManager.getInstance(myProject).getDocument(myReturnTypeCodeFragment);
     myReturnTypeField = new EditorTextField(document, myProject, myReturnTypeCodeFragment.getFileType());
+
 
     myNameField.setText(myMethod.getName());
     final GrTypeElement element = myMethod.getReturnTypeElementGroovy();
@@ -153,10 +167,23 @@ public class GrChangeSignatureDialog extends RefactoringDialog {
 
     myNameLabel = new JLabel();
     myNameLabel.setLabelFor(myNameField);
+
+    final DocumentListener listener = new DocumentListener() {
+      @Override
+      public void beforeDocumentChange(DocumentEvent event) {
+      }
+
+      @Override
+      public void documentChanged(DocumentEvent event) {
+        updateSignature();
+      }
+    };
+    myReturnTypeField.addDocumentListener(listener);
+    myNameField.addDocumentListener(listener);
   }
 
-  private void createParametersPanel() {
-    myParameterModel = new GrParameterTableModel(myMethod, this, myProject);
+  private JPanel createParametersPanel() {
+    myParameterModel = new GrParameterTableModel(myMethod, myProject);
     myParameterModel.addTableModelListener(new TableModelListener() {
       public void tableChanged(TableModelEvent e) {
         updateSignature();
@@ -164,8 +191,6 @@ public class GrChangeSignatureDialog extends RefactoringDialog {
     });
     myParameterTable = new JBTable(myParameterModel);
     myParameterTable.setPreferredScrollableViewportSize(new Dimension(550, myParameterTable.getRowHeight() * 8));
-
-    myParameterButtonPanel = EditableRowTable.createButtonsTable(myParameterTable, myParameterModel, true);
 
     myParameterTable.setCellSelectionEnabled(true);
     final TableColumnModel columnModel = myParameterTable.getColumnModel();
@@ -183,9 +208,18 @@ public class GrChangeSignatureDialog extends RefactoringDialog {
       myParameterTable.setRowSelectionInterval(0, 0);
       myParameterTable.setColumnSelectionInterval(0, 0);
     }
+
+    myParameterModel.addTableModelListener(new TableModelListener() {
+      @Override
+      public void tableChanged(TableModelEvent e) {
+        updateSignature();
+      }
+    });
+
+    return ToolbarDecorator.createDecorator(myParameterTable).createPanel();
   }
 
-  private void createExceptionsPanel() {
+  private JPanel createExceptionsPanel() {
     myExceptionTableModel = new ExceptionsTableModel(myMethod);
     myExceptionTableModel.setTypeInfos(myMethod);
     myExceptionTableModel.addTableModelListener(new TableModelListener() {
@@ -193,24 +227,30 @@ public class GrChangeSignatureDialog extends RefactoringDialog {
         updateSignature();
       }
     });
-    myExceptionsTable = new JBTable(myExceptionTableModel);
-    myExceptionsTable.setPreferredScrollableViewportSize(new Dimension(200, myExceptionsTable.getRowHeight() * 8));
+    JBTable exceptionTable = new JBTable(myExceptionTableModel);
+    exceptionTable.setPreferredScrollableViewportSize(new Dimension(200, exceptionTable.getRowHeight() * 8));
 
-    myExceptionsButtonPanel = ToolbarDecorator.createDecorator(myExceptionsTable).createPanel();
-
-    myExceptionsTable.getColumnModel().getColumn(0).setCellRenderer(new CodeFragmentTableCellRenderer(myProject));
-    myExceptionsTable.getColumnModel().getColumn(0).setCellEditor(new JavaCodeFragmentTableCellEditor(myProject));
+    exceptionTable.getColumnModel().getColumn(0).setCellRenderer(new CodeFragmentTableCellRenderer(myProject));
+    exceptionTable.getColumnModel().getColumn(0).setCellEditor(new JavaCodeFragmentTableCellEditor(myProject));
 
     if (myExceptionTableModel.getRowCount() > 0) {
-      myExceptionsTable.setRowSelectionInterval(0, 0);
-      myExceptionsTable.setColumnSelectionInterval(0, 0);
+      exceptionTable.setRowSelectionInterval(0, 0);
+      exceptionTable.setColumnSelectionInterval(0, 0);
     }
 
+    myExceptionTableModel.addTableModelListener(new TableModelListener() {
+      @Override
+      public void tableChanged(TableModelEvent e) {
+        updateSignature();
+      }
+    });
+
+    return ToolbarDecorator.createDecorator(exceptionTable).createPanel();
   }
 
 
   private void updateSignature() {
-    mySignatureLabel.setText(generateSignatureText());
+    mySignaturePreview.setSignature(generateSignatureText());
   }
 
   private String generateSignatureText() {
@@ -218,16 +258,10 @@ public class GrChangeSignatureDialog extends RefactoringDialog {
     String type = myReturnTypeField.getText().trim();
 
     StringBuilder builder = new StringBuilder();
-    if (myPublicRadioButton.isSelected() && type.length() == 0) {
-      builder.append(GrModifier.DEF);
+    builder.append(myVisibilityPanel.getVisibility()).append(' ');
+    if (!type.isEmpty()) {
+      builder.append(type).append(' ');
     }
-    if (myPrivateRadioButton.isSelected()) {
-      builder.append(GrModifier.PRIVATE).append(' ');
-    }
-    else if (myProtectedRadioButton.isSelected()) {
-      builder.append(GrModifier.PROTECTED).append(' ');
-    }
-    builder.append(type).append(' ');
     builder.append(name).append('(');
 
     final List<GrTableParameterInfo> infos = myParameterModel.getParameterInfos();
@@ -281,17 +315,8 @@ public class GrChangeSignatureDialog extends RefactoringDialog {
       return;
     }
 
-    stopEditing();
-    String modifier = "";
-    if (myPublicRadioButton.isSelected()) {
-      modifier = GrModifier.PUBLIC;
-    }
-    else if (myPrivateRadioButton.isSelected()) {
-      modifier = GrModifier.PRIVATE;
-    }
-    else if (myProtectedRadioButton.isSelected()) {
-      modifier = GrModifier.PROTECTED;
-    }
+    TableUtil.stopEditing(myParameterTable);
+    String modifier = myVisibilityPanel.getVisibility();
 
     PsiType returnType = null;
     try {
@@ -310,12 +335,10 @@ public class GrChangeSignatureDialog extends RefactoringDialog {
       }
     });
     final ThrownExceptionInfo[] exceptionInfos = myExceptionTableModel.getThrownExceptions();
-    invokeRefactoring(new GrChangeSignatureProcessor(myProject, new GrChangeInfoImpl(myMethod, modifier, returnType == null
-                                                                                                         ? null
-                                                                                                         : CanonicalTypes
-                                                                                                           .createTypeWrapper(returnType),
-                                                                                     newName, parameterInfos, exceptionInfos,
-                                                                                     myDelegateRadioButton.isSelected())));
+    final CanonicalTypes.Type type = returnType == null ? null : CanonicalTypes.createTypeWrapper(returnType);
+    final GrChangeInfoImpl info =
+      new GrChangeInfoImpl(myMethod, modifier, type, newName, parameterInfos, exceptionInfos, myDelegateRadioButton.isSelected());
+    invokeRefactoring(new GrChangeSignatureProcessor(myProject, info));
   }
 
   private String getNewName() {
@@ -323,7 +346,7 @@ public class GrChangeSignatureDialog extends RefactoringDialog {
   }
 
   private void showErrorHint(String hint) {
-    CommonRefactoringUtil.showErrorHint(myProject, null, hint, GroovyRefactoringBundle.message("incorrect.data"), HelpID.CHANGE_SIGNATURE);
+    CommonRefactoringUtil.showErrorHint(myProject, null, hint, message("incorrect.data"), HelpID.CHANGE_SIGNATURE);
   }
 
   private boolean isGroovyMethodName(String name) {
@@ -375,24 +398,24 @@ public class GrChangeSignatureDialog extends RefactoringDialog {
       try {
         PsiType type = typeCodeFragment.getType();
         if (!(type instanceof PsiClassType)) {
-          showErrorHint(GroovyRefactoringBundle.message("changeSignature.wrong.type.for.exception", typeCodeFragment.getText()));
+          showErrorHint(message("changeSignature.wrong.type.for.exception", typeCodeFragment.getText()));
           return false;
         }
 
         PsiClassType throwable = JavaPsiFacade.getInstance(myMethod.getProject()).getElementFactory()
           .createTypeByFQClassName("java.lang.Throwable", myMethod.getResolveScope());
         if (!throwable.isAssignableFrom(type)) {
-          showErrorHint(GroovyRefactoringBundle.message("changeSignature.not.throwable.type", typeCodeFragment.getText()));
+          showErrorHint(message("changeSignature.not.throwable.type", typeCodeFragment.getText()));
           return false;
         }
         exceptionInfo.setType((PsiClassType)type);
       }
       catch (PsiTypeCodeFragment.TypeSyntaxException e) {
-        showErrorHint(GroovyRefactoringBundle.message("changeSignature.wrong.type.for.exception", typeCodeFragment.getText()));
+        showErrorHint(message("changeSignature.wrong.type.for.exception", typeCodeFragment.getText()));
         return false;
       }
       catch (PsiTypeCodeFragment.NoTypeException e) {
-        showErrorHint(GroovyRefactoringBundle.message("changeSignature.no.type.for.exception"));
+        showErrorHint(message("changeSignature.no.type.for.exception"));
         return false;
       }
     }
@@ -411,9 +434,5 @@ public class GrChangeSignatureDialog extends RefactoringDialog {
     catch (PsiTypeCodeFragment.NoTypeException e) {
       return true; //Groovy accepts methods and parameters without explicit type
     }
-  }
-
-  public GrParameterTableModel getParameterModel() {
-    return myParameterModel;
   }
 }

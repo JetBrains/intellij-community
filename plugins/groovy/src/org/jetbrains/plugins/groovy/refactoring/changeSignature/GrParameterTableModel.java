@@ -17,7 +17,7 @@ package org.jetbrains.plugins.groovy.refactoring.changeSignature;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiCodeFragment;
-import com.intellij.ui.RowEditableTableModel;
+import com.intellij.util.ui.EditableModel;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
@@ -31,15 +31,13 @@ import java.util.List;
 /**
  * @author Maxim.Medvedev
  */
-public class GrParameterTableModel extends AbstractTableModel implements RowEditableTableModel {
+public class GrParameterTableModel extends AbstractTableModel implements EditableModel {
   private final List<GrTableParameterInfo> infos;
   private final GrMethod myMethod;
-  private final GrChangeSignatureDialog myDialog;
   private final Project myProject;
 
-  public GrParameterTableModel(GrMethod method, GrChangeSignatureDialog dialog, Project project) {
+  public GrParameterTableModel(GrMethod method, Project project) {
     myMethod = method;
-    myDialog = dialog;
     final GrParameter[] parameters = myMethod.getParameters();
     infos = new ArrayList<GrTableParameterInfo>(parameters.length);
     for (int i = 0; i < parameters.length; i++) {
