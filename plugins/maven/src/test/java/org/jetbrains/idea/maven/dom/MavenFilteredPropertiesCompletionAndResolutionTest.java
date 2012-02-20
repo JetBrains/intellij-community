@@ -488,11 +488,11 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
 
     VirtualFile f = createProjectSubFile("res/foo1.properties",
                                          "foo1=${basedir}\n" +
-                                         "foo2=|baseUri|\n" +
+                                         "foo2=|pom.baseUri|\n" +
                                          "foo3=a(ve|rsion]");
 
     assertNotNull(resolveReference(f, "basedir"));
-    assertNotNull(resolveReference(f, "baseUri"));
+    assertNotNull(resolveReference(f, "pom.baseUri"));
     assertNotNull(getReference(f, "ve|rsion"));
   }
 
@@ -526,10 +526,10 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
 
     VirtualFile f = createProjectSubFile("res/foo1.properties",
                                          "foo1=${basedir}\n" +
-                                         "foo2=|baseUri|");
+                                         "foo2=|pom.baseUri|");
 
     assert !(getReference(f, "basedir") instanceof MavenPropertyPsiReference);
-    assertNotNull(resolveReference(f, "baseUri"));
+    assertNotNull(resolveReference(f, "pom.baseUri"));
   }
 
 }

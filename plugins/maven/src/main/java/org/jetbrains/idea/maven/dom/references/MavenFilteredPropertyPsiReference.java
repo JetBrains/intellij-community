@@ -55,7 +55,7 @@ public class MavenFilteredPropertyPsiReference extends MavenPropertyPsiReference
     for (String each : myMavenProject.getFilters()) {
       VirtualFile file = LocalFileSystem.getInstance().findFileByPath(each);
       if (file == null) continue;
-      collectPropertiesFileVariants(MavenDomUtil.getPropertiesFile(myProject, file), "", result);
+      collectPropertiesFileVariants(MavenDomUtil.getPropertiesFile(myProject, file), null, result);
     }
   }
 
