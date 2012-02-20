@@ -435,6 +435,13 @@ public class FileStructurePopup implements Disposable {
     }.registerCustomShortcutSet(shortcutSet, panel);
 
     new AnAction() {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        mySpeedSearch.setEnteredPrefix("");
+      }
+    }.registerCustomShortcutSet(CustomShortcutSet.fromString(SystemInfo.isMac ? "meta BACK_SPACE" : "control BACK_SPACE"), myTree);
+
+    new AnAction() {
       public void actionPerformed(AnActionEvent e) {
         if (mySpeedSearch != null && mySpeedSearch.isPopupActive()) {
           mySpeedSearch.hidePopup();
