@@ -443,6 +443,9 @@ public class RemoteDebugger implements ProcessDebugger {
         else if (AbstractCommand.isWriteToConsole(frame.getCommand())) {
           writeToConsole(parseIoEvent(frame));
         }
+        else if (AbstractCommand.isExitEvent(frame.getCommand())) {
+          fireCommunicationError();
+        }
         else {
           placeResponse(frame.getSequence(), frame);
         }
@@ -597,6 +600,12 @@ public class RemoteDebugger implements ProcessDebugger {
   private void fireCommunicationError() {
     for (RemoteDebuggerCloseListener listener : myCloseListeners) {
       listener.communicationError();
+    }
+  }
+
+  private void fireExitEvent() {
+    for (RemoteDebuggerCloseListener listener : myCloseListeners) {
+      listener.exitEvent();
     }
   }
 }

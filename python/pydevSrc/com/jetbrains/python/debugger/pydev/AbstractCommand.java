@@ -30,6 +30,7 @@ public abstract class AbstractCommand {
   public static final int ADD_DJANGO_EXCEPTION_BREAKPOINT = 125;
   public static final int REMOVE_DJANGO_EXCEPTION_BREAKPOINT = 126;
   public static final int SMART_STEP_INTO = 128;
+  public static final int EXIT = 129;
   public static final int VERSION = 501;
   public static final String NEW_LINE_CHAR = "@_@NEW_LINE_CHAR@_@";
   public static final String TAB_CHAR = "@_@TAB_CHAR@_@";
@@ -89,6 +90,10 @@ public abstract class AbstractCommand {
 
   public static boolean isWriteToConsole(final int command) {
     return command == WRITE_TO_CONSOLE;
+  }
+
+  public static boolean isExitEvent(final int command) {
+    return command == EXIT;
   }
 
   protected static class Payload {

@@ -4,9 +4,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.net.NetUtils;
 import org.apache.xmlrpc.*;
 
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.MalformedURLException;
+import java.net.Socket;
 import java.net.URL;
 import java.util.Arrays;
+import java.util.Scanner;
 import java.util.Vector;
 
 /**
@@ -42,10 +46,32 @@ public class PydevXmlRpcClient implements IPydevXmlRpcClient {
     throws MalformedURLException {
 
     String hostname = NetUtils.getLocalHostString();
+
+    //try {
+    //  Socket s = new Socket(hostname, port);
+    //  PrintWriter p = new PrintWriter(s.getOutputStream());
+    //  p.println("Hi there");
+    //  p.flush();
+    //  Scanner sc = new Scanner(s.getInputStream());
+    //  try {
+    //    Thread.sleep(1000);
+    //    String line = sc.nextLine();
+    //    System.out.println(line);
+    //  }
+    //  catch (Exception e) {
+    //  }
+    //  s.close();
+    //}
+    //catch (IOException e) {
+    //
+    //}
+
+
     URL url = new URL("http://" + hostname + ':' + port + "/RPC2");
 
     XmlRpc.setDefaultInputEncoding("UTF8"); //eventhough it uses UTF anyway
-    this.impl = new XmlRpcClient(url, new CommonsXmlRpcTransportFactory(url));
+    this.impl = new XmlRpcClientLite(url);
+    //this.impl = new XmlRpcClient(url, new CommonsXmlRpcTransportFactory(url));
     this.process = process;
   }
 

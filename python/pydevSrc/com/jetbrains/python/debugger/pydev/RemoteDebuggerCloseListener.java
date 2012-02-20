@@ -7,4 +7,6 @@ public interface RemoteDebuggerCloseListener {
   void closed();
 
   void communicationError();
+
+  void exitEvent();
 }

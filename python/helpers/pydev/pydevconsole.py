@@ -240,7 +240,7 @@ def ipython_editor(interpreter):
 def start_server(host, port, interpreter):
     from pydev_imports import SimpleXMLRPCServer
     try:
-        server = SimpleXMLRPCServer((host, port), logRequests=False)
+        server = SimpleXMLRPCServer((host, port), logRequests=True)
     except:
         sys.stderr.write('Error starting server with host: %s, port: %s, client_port: %s\n' % (host, port, client_port))
         raise
@@ -318,6 +318,23 @@ def exec_expression(expression, globals, locals):
 #=======================================================================================================================
 if __name__ == '__main__':
     port, client_port = sys.argv[1:3]
+    if port == 0 and client_port == 0:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.bind(('', 0))
+        (h, p) = sock.getsockname()
+
+        port = p
+
+        sys.stdout.write(p)
+
+        sock2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock2.bind(('', 0))
+        (h, p) = sock2.getsockname()
+
+        sys.stdout.write(p)
+
+        client_port = p
+
     import pydev_localhost
     StartServer(pydev_localhost.get_localhost(), int(port), int(client_port))
     

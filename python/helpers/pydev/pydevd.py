@@ -1047,6 +1047,13 @@ class PyDB:
 
         pydev_imports.execfile(file, globals, locals) #execute the script
 
+    def exiting(self):
+        sys.stdout.flush()
+        sys.stderr.flush()
+        self.checkOutputRedirect()
+        cmd = self.cmdFactory.makeExitMessage()
+        self.writer.addCommand(cmd)
+        self.writer.join()
 
 def set_debug(setup):
     setup['DEBUG_RECORD_SOCKET_READS'] = True
@@ -1114,7 +1121,8 @@ def SetTraceForParents(frame, dispatch_func):
     del frame
 
 def exit_hook():
-    GetGlobalDebugger().checkOutputRedirect()
+    debugger = GetGlobalDebugger()
+    debugger.exiting()
 
 def initStdoutRedirect():
     if not getattr(sys, 'stdoutBuf', None):
@@ -1213,6 +1221,8 @@ def _locked_settrace(host, stdoutToServer, stderrToServer, port, suspend, trace_
                 pass
 
         #sys.exitfunc = exit_hook
+        import atexit
+        atexit.register(exit_hook)
 
         PyDBCommandThread(debugger).start()
 

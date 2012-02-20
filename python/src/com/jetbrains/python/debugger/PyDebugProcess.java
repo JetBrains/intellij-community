@@ -69,6 +69,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
   private PyPositionConverter myPositionConverter;
   private XSmartStepIntoHandler<?> mySmartStepIntoHandler;
+  private boolean myWaitingForConnection = false;
 
   public PyDebugProcess(final @NotNull XDebugSession session,
                         @NotNull final ServerSocket serverSocket,
@@ -105,6 +106,11 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
       @Override
       public void communicationError() {
+        handleCommunicationError();
+      }
+
+      @Override
+      public void exitEvent() {
         handleCommunicationError();
       }
     });
@@ -186,7 +192,9 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
         indicator.setText(connectionMessage);
         try {
           beforeConnect();
+          myWaitingForConnection = true;
           myDebugger.waitForConnect();
+          myWaitingForConnection = false;
           afterConnect();
 
           handshake();
@@ -576,5 +584,13 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     if (handler != null) {
       handler.addProcessListener(listener);
     }
+  }
+
+  public boolean isWaitingForConnection() {
+    return myWaitingForConnection;
+  }
+
+  public void setWaitingForConnection(boolean waitingForConnection) {
+    myWaitingForConnection = waitingForConnection;
   }
 }

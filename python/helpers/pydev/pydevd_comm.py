@@ -117,6 +117,7 @@ CMD_ADD_DJANGO_EXCEPTION_BREAK = 125
 CMD_REMOVE_DJANGO_EXCEPTION_BREAK = 126
 CMD_SET_NEXT_STATEMENT = 127
 CMD_SMART_STEP_INTO = 128
+CMD_EXIT = 129
 CMD_VERSION = 501
 CMD_RETURN = 502
 CMD_ERROR = 901 
@@ -331,6 +332,7 @@ class WriterThread(PyDBDaemonThread):
                     #but the thread was still not liberated
                     return
                 out = cmd.getOutgoing()
+
                 if DebugInfoHolder.DEBUG_TRACE_LEVEL >= 1:
                     out_message = 'sending cmd: '
                     out_message += ID_TO_MEANING.get(out[:3], 'UNKNOWN')
@@ -344,6 +346,8 @@ class WriterThread(PyDBDaemonThread):
                 if IS_PY3K:
                     out = bytearray(out, 'utf-8')
                 self.sock.send(out) #TODO: this does not guarantee that all message are sent (and jython does not have a send all)
+                if cmd.id == CMD_EXIT:
+                    break
                 if time is None:
                     break #interpreter shutdown
                 time.sleep(self.timeout)                
@@ -479,11 +483,14 @@ class NetCommandFactory:
                 
             v = pydevd_vars.makeValidXmlValue(quote(v, '/>_= \t'))
             net = NetCommand(str(CMD_WRITE_TO_CONSOLE), 0, '<xml><io s="%s" ctx="%s"/></xml>' % (v, ctx))
-            if dbg:
-                dbg.writer.addCommand(net)
         except:
-            return self.makeErrorMessage(0, GetExceptionTracebackStr())
-    
+            net = self.makeErrorMessage(0, GetExceptionTracebackStr())
+
+        if dbg:
+            dbg.writer.addCommand(net)
+
+        return net
+
     def makeVersionMessage(self, seq):
         try:
             return NetCommand(CMD_VERSION, seq, VERSION_STRING)
@@ -587,11 +594,23 @@ class NetCommandFactory:
 
     def makeLoadSourceMessage(self, seq, source, dbg=None):
         try:
-            net = NetCommand(str(CMD_LOAD_SOURCE), seq, '%s' % source)
-            if dbg:
-                dbg.writer.addCommand(net)
+            net = NetCommand(CMD_LOAD_SOURCE, seq, '%s' % source)
+
         except:
-            return self.makeErrorMessage(0, GetExceptionTracebackStr())
+            net = self.makeErrorMessage(0, GetExceptionTracebackStr())
+
+        if dbg:
+            dbg.writer.addCommand(net)
+        return net
+
+    def makeExitMessage(self):
+        try:
+            net = NetCommand(CMD_EXIT, 0, '')
+
+        except:
+            net = self.makeErrorMessage(0, GetExceptionTracebackStr())
+
+        return net
 
 INTERNAL_TERMINATE_THREAD = 1
 INTERNAL_SUSPEND_THREAD = 2
