@@ -15,6 +15,7 @@
  */
 package com.intellij.designer.designSurface.selection;
 
+import com.intellij.designer.designSurface.ComponentDecorator;
 import com.intellij.designer.designSurface.DecorationLayer;
 import com.intellij.designer.designSurface.tools.InputTool;
 import com.intellij.designer.model.RadComponent;

@@ -26,7 +26,7 @@ import java.awt.*;
 /**
  * @author Alexander Lobas
  */
-public class NonResizeSelectionDecorator implements ComponentDecorator {
+public class NonResizeSelectionDecorator extends ComponentDecorator {
   private final Color myColor;
   private final int myLineWidth;
 
@@ -53,7 +53,7 @@ public class NonResizeSelectionDecorator implements ComponentDecorator {
   }
 
   @Override
-  public void decorate(DecorationLayer layer, Graphics2D g, RadComponent component) {
+  protected void paint(DecorationLayer layer, Graphics2D g, RadComponent component) {
     g.setColor(myColor);
     if (myLineWidth > 1) {
       g.setStroke(new BasicStroke(myLineWidth));

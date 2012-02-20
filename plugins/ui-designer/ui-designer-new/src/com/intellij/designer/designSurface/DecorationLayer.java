@@ -32,11 +32,6 @@ public class DecorationLayer extends JComponent {
     myArea = area;
   }
 
-  @Override
-  public void paint(Graphics g) {
-    painSelection((Graphics2D)g);
-  }
-
   @Nullable
   public InputTool findTargetTool(int x, int y) {
     for (RadComponent component : myArea.getSelection()) {
@@ -49,12 +44,15 @@ public class DecorationLayer extends JComponent {
     return null;
   }
 
+  @Override
+  public void paint(Graphics g) {
+    painSelection((Graphics2D)g);
+  }
+
   private void painSelection(Graphics2D g) {
     for (RadComponent component : myArea.getSelection()) {
       ComponentDecorator decorator = getDecorator(component);
-      // TODO: set component clipping
       decorator.decorate(this, g, component);
-      // TODO: restore Graphics state: color, font, stroke etc.
     }
   }
 
