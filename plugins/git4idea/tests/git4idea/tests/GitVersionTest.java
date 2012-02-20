@@ -36,7 +36,8 @@ public class GitVersionTest {
     new TestGitVersion("git version 1.6.4", 1, 6, 4, 0),
     new TestGitVersion("git version 1.7.3.3", 1, 7, 3, 3),
     new TestGitVersion("git version 1.7.3.5.gb27be", 1, 7, 3, 5),
-    new TestGitVersion("git version 1.7.4-rc1", 1, 7, 4, 0)
+    new TestGitVersion("git version 1.7.4-rc1", 1, 7, 4, 0),
+    new TestGitVersion("git version 1.7.7.5 (Apple Git-24)", 1, 7, 7, 5)
   };
 
   private static final TestGitVersion[] msysTests = {
