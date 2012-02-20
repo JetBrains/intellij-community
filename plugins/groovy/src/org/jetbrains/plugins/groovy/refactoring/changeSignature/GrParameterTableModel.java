@@ -32,6 +32,8 @@ import java.util.List;
  * @author Maxim.Medvedev
  */
 public class GrParameterTableModel extends AbstractTableModel implements EditableModel {
+  private static final int COLUMN_COUNT = 5;
+
   private final List<GrTableParameterInfo> infos;
   private final GrMethod myMethod;
   private final Project myProject;
@@ -75,7 +77,7 @@ public class GrParameterTableModel extends AbstractTableModel implements Editabl
   }
 
   public int getColumnCount() {
-    return 4;
+    return COLUMN_COUNT;
   }
 
   @Nullable
@@ -91,6 +93,8 @@ public class GrParameterTableModel extends AbstractTableModel implements Editabl
         return info.getDefaultInitializerFragment();
       case 3:
         return info.getDefaultValueFragment();
+      case 4:
+        return info.isUseAnyVar();
       default:
         throw new IllegalArgumentException();
     }
@@ -99,7 +103,8 @@ public class GrParameterTableModel extends AbstractTableModel implements Editabl
   @Override
   public void setValueAt(Object value, int rowIndex, int columnIndex) {
     if (rowIndex < 0 || rowIndex >= infos.size()) return;
-    if (columnIndex < 0 || columnIndex > 3) return;
+    if (columnIndex < 0 || columnIndex >= COLUMN_COUNT) return;
+    if (columnIndex==4) infos.get(rowIndex).setUseAnyVar(((Boolean)value).booleanValue());
     fireTableCellUpdated(rowIndex, columnIndex);
   }
 
@@ -115,6 +120,8 @@ public class GrParameterTableModel extends AbstractTableModel implements Editabl
         return GroovyRefactoringBundle.message("column.name.default.initializer");
       case 3:
         return GroovyRefactoringBundle.message("column.name.default.value");
+      case 4:
+        return GroovyRefactoringBundle.message("column.name.use.any.var");
       default:
         throw new IllegalArgumentException();
     }
@@ -129,6 +136,8 @@ public class GrParameterTableModel extends AbstractTableModel implements Editabl
       case 2:
       case 3:
         return GroovyCodeFragment.class;
+      case 4:
+        return Boolean.class;
       default:
         throw new IllegalArgumentException();
     }
