@@ -47,10 +47,17 @@ import java.util.Map;
 public class VcsDirtyScopeVfsListener implements ApplicationComponent, BulkFileListener {
   private final ProjectLocator myProjectLocator;
   private final MessageBusConnection myMessageBusConnection;
+  // for tests only
+  private boolean myForbid;
 
   public VcsDirtyScopeVfsListener() {
     myProjectLocator = ProjectLocator.getInstance();
     myMessageBusConnection = ApplicationManager.getApplication().getMessageBus().connect();
+  }
+
+  public void setForbid(boolean forbid) {
+    assert ApplicationManager.getApplication().isUnitTestMode();
+    myForbid = forbid;
   }
 
   @NotNull
@@ -68,6 +75,7 @@ public class VcsDirtyScopeVfsListener implements ApplicationComponent, BulkFileL
 
   @Override
   public void before(List<? extends VFileEvent> events) {
+    if (myForbid) return;
     final FileAndDirsCollector dirtyFilesAndDirs = new FileAndDirsCollector();
     // collect files and directories - sources of events
     for (VFileEvent event : events) {
@@ -89,6 +97,7 @@ public class VcsDirtyScopeVfsListener implements ApplicationComponent, BulkFileL
 
   @Override
   public void after(List<? extends VFileEvent> events) {
+    if (myForbid) return;
     final FileAndDirsCollector dirtyFilesAndDirs = new FileAndDirsCollector();
     // collect files and directories - sources of events
     for (VFileEvent event : events) {
