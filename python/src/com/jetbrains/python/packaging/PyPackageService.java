@@ -23,7 +23,8 @@ public class PyPackageService implements
   public Map<String, Boolean> sdkToUsersite = new HashMap<String, Boolean>();
   public List<String> additionalRepositories = new ArrayList<String>();
   public Map<String, String> PY_PACKAGES = new HashMap<String, String>();
-
+  public String virtualEnvBasePath;
+  
   public long LAST_TIME_CHECKED = 0;
 
   @Override
@@ -57,5 +58,13 @@ public class PyPackageService implements
 
   public static PyPackageService getInstance(Project project) {
     return ServiceManager.getService(project, PyPackageService.class);
+  }
+
+  public String getVirtualEnvBasePath() {
+    return virtualEnvBasePath;
+  }
+
+  public void setVirtualEnvBasePath(String virtualEnvBasePath) {
+    this.virtualEnvBasePath = virtualEnvBasePath;
   }
 }
