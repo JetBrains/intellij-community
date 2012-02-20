@@ -50,6 +50,7 @@ public class SvnStatusHandler extends DefaultHandler {
   private final DataCallback myDataCallback;
   private final File myBase;
   private final StringBuilder mySb;
+  private boolean myAnythingReported;
 
   public SvnStatusHandler(final DataCallback dataCallback, File base, final Convertor<File, SVNInfo> infoGetter) {
     myBase = base;
@@ -63,6 +64,7 @@ public class SvnStatusHandler extends DefaultHandler {
       myDataCallback = new DataCallback() {
         @Override
         public void switchPath() {
+          myAnythingReported = true;
           dataCallback.switchPath();
           newPending(infoGetter);
         }
@@ -76,6 +78,7 @@ public class SvnStatusHandler extends DefaultHandler {
       myDataCallback = new DataCallback() {
         @Override
         public void switchPath() {
+          myAnythingReported = true;
           if (myChangelistName == null) {
             myDefaultListStatuses.add(myPending);
           } else {
@@ -92,6 +95,10 @@ public class SvnStatusHandler extends DefaultHandler {
     }
     newPending(infoGetter);
     mySb = new StringBuilder();
+  }
+
+  public boolean isAnythingReported() {
+    return myAnythingReported;
   }
 
   private void newPending(final Convertor<File, SVNInfo> infoGetter) {
@@ -412,7 +419,12 @@ public class SvnStatusHandler extends DefaultHandler {
       assertSAX(path != null);
       final File file = new File(myBase, path);
       status.setFile(file);
-      status.setKind(file.isDirectory() ? SVNNodeKind.DIR : SVNNodeKind.FILE);
+      final boolean exists = file.exists();
+      if (exists) {
+        status.setKind(exists, file.isDirectory() ? SVNNodeKind.DIR : SVNNodeKind.FILE);
+      } else {
+        status.setKind(exists, SVNNodeKind.UNKNOWN);
+      }
       status.setPath(path);
     }
 

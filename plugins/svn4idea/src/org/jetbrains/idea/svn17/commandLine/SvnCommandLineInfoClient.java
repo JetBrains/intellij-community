@@ -16,6 +16,7 @@
 package org.jetbrains.idea.svn17.commandLine;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.Consumer;
@@ -70,7 +71,12 @@ public class SvnCommandLineInfoClient extends SvnkitSvnWcClient {
                      SVNDepth depth,
                      Collection changeLists,
                      final ISVNInfoHandler handler) throws SVNException {
-    final File base = path.isDirectory() ? path : path.getParentFile();
+    File base = path.isDirectory() ? path : path.getParentFile();
+    base = correctUpToExistingParent(base);
+    if (base == null) {
+      // very unrealistic
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR), new RuntimeException("Can not find existing parent file"));
+    }
     final SvnSimpleCommand command = new SvnSimpleCommand(myProject, base, SvnCommandName.info);
 
     if (depth != null) {
@@ -126,6 +132,14 @@ public class SvnCommandLineInfoClient extends SvnkitSvnWcClient {
       }
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR), e);
     }
+  }
+
+  private File correctUpToExistingParent(File base) {
+    while (base != null) {
+      if (base.exists()) return base;
+      base = base.getParentFile();
+    }
+    return null;
   }
 
   @Override

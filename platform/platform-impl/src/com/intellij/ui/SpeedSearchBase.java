@@ -276,6 +276,13 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     return mySearchPopup != null ? mySearchPopup.mySearchField.getText() : null;
   }
 
+  public void setEnteredPrefix(@NotNull String text) {
+    if (mySearchPopup != null) {
+      mySearchPopup.mySearchField.setText(text);
+      mySearchPopup.refreshSelection();
+    }
+  }
+
   public void refreshSelection() {
     if ( mySearchPopup != null ) mySearchPopup.refreshSelection();
   }

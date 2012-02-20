@@ -320,7 +320,7 @@ public class ActivateTaskDialog extends DialogWrapper {
 
     @Override
     protected String getQuickDocHotKeyAdvertisementTail(@NotNull String shortcut) {
-      return " would show task description and comments";
+      return " task description and comments";
     }
 
     @NotNull
