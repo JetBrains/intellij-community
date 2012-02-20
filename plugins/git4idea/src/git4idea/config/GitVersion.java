@@ -35,7 +35,8 @@ import java.util.regex.Pattern;
  * The version of Git. Note that the version number ignores build and commit hash.
  * The class is able to distinct MSYS and CYGWIN Gits under Windows assuming that msysgit adds the 'msysgit' suffix to the output
  * of the 'git version' command.
- * This is not a very good way to distinguish msys and cygwin since in old versions of msys they didn't add the suffix. 
+ * This is not a very good way to distinguish msys and cygwin since in old versions of msys they didn't add the suffix.
+ *
  * Note: this class has a natural ordering that is inconsistent with equals.
  */
 public final class GitVersion implements Comparable<GitVersion> {
@@ -68,7 +69,7 @@ public final class GitVersion implements Comparable<GitVersion> {
   public static final GitVersion NULL = new GitVersion(0, 0, 0, 0, Type.NULL);
 
   private static final Pattern FORMAT = Pattern.compile(
-    "git version (\\d+)\\.(\\d+)\\.(\\d+)(?:\\.(\\d+))?(?:\\.(msysgit))?[\\.\\-\\d\\w]*", Pattern.CASE_INSENSITIVE);
+    "git version (\\d+)\\.(\\d+)\\.(\\d+)(?:\\.(\\d+))?(.*)", Pattern.CASE_INSENSITIVE);
 
   private static final Logger LOG = Logger.getInstance(GitVersion.class.getName());
 
@@ -112,7 +113,7 @@ public final class GitVersion implements Comparable<GitVersion> {
     int minor = getIntGroup(m, 2);
     int rev = getIntGroup(m, 3);
     int patch = getIntGroup(m, 4);
-    boolean msys = (m.groupCount() >= 5) && m.group(5) != null && m.group(5).equalsIgnoreCase("msysgit");
+    boolean msys = (m.groupCount() >= 5) && m.group(5) != null && m.group(5).toLowerCase().contains("msysgit");
     Type type;
     if (SystemInfo.isWindows) {
       type = msys ? Type.MSYS : Type.CYGWIN;
