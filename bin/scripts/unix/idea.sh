@@ -8,7 +8,7 @@
 OS_TYPE="`uname -s`"
 
 # ---------------------------------------------------------------------
-# Locate a JDK installation directory which will be used to ruin the IDE.
+# Locate a JDK installation directory which will be used to run the IDE.
 # Try (in order): @@product_uc@@_JDK, JDK_HOME, JAVA_HOME, "java" in PATH.
 # ---------------------------------------------------------------------
 if [ -n "$@@product_uc@@_JDK" -a -x "$@@product_uc@@_JDK/bin/java" ]; then
