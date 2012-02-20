@@ -35,16 +35,13 @@ import com.intellij.openapi.projectRoots.SimpleJavaSdkType;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.apache.lucene.search.Query;
-import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenId;
@@ -167,10 +164,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> {
 
         params.setWorkingDirectory(PathManager.getBinPath());
         final ArrayList<String> classPath = new ArrayList<String>();
-        ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(NotNull.class), classPath);
-        ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(StringUtil.class), classPath);
-        ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(THashSet.class), classPath);
-        ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(Element.class), classPath);
+        classPath.addAll(PathManager.getUtilJars());
         ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(Query.class), classPath);
         params.getClassPath().add(PathManager.getResourceRoot(getClass(), "/messages/CommonBundle.properties"));
         params.getClassPath().addAll(classPath);
@@ -203,7 +197,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> {
         }
         params.getVMParametersList().addParametersString("-Xmx512m");
 
-        //params.getVMParametersList().addParametersString("-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5009");
+        //params.getVMParametersList().addParametersString("-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5009");
 
         return params;
       }
