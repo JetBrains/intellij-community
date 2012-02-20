@@ -808,6 +808,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
         FileDocumentManager.getInstance().saveAllDocuments();
 
         for (CheckinHandler handler : myHandlers) {
+          if (!(handler.acceptExecutor(executor))) continue;
           final CheckinHandler.ReturnResult result = handler.beforeCheckin(executor, myAdditionalData);
           if (result == CheckinHandler.ReturnResult.COMMIT) continue;
           if (result == CheckinHandler.ReturnResult.CANCEL) {
