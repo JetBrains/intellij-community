@@ -175,20 +175,6 @@ public class FileBasedIndexUnsavedDocumentsManagerImpl implements FileBasedIndex
     return true;
   }
 
-  @Override
-  public void initComponent() {
-  }
-
-  @Override
-  public void disposeComponent() {
-  }
-
-  @NotNull
-  @Override
-  public String getComponentName() {
-    return "FileBasedIndexUnsavedDocumentsManager";
-  }
-
   public static int getFileId(final VirtualFile file) {
     if (file instanceof VirtualFileWithId) {
       return ((VirtualFileWithId)file).getId();

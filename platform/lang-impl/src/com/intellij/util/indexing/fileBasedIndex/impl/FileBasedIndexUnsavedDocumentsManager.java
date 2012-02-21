@@ -15,7 +15,6 @@
  */
 package com.intellij.util.indexing.fileBasedIndex.impl;
 
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -23,7 +22,7 @@ import com.intellij.util.indexing.ID;
 import com.intellij.util.indexing.StorageException;
 import org.jetbrains.annotations.Nullable;
 
-public interface FileBasedIndexUnsavedDocumentsManager extends ApplicationComponent {
+public interface FileBasedIndexUnsavedDocumentsManager {
   void indexUnsavedDocuments(ID<?, ?> indexId, @Nullable Project project, GlobalSearchScope filter,
                              VirtualFile restrictedFile) throws StorageException;
 }
