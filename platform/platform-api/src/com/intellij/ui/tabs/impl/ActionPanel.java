@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,14 +27,11 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 public class ActionPanel extends NonOpaquePanel {
 
-  private final ActionGroup myGroup;
   private final List<ActionButton> myButtons = new ArrayList<ActionButton>();
-  private final TabInfo myTabInfo;
   private final JBTabsImpl myTabs;
 
   private boolean myAutoHide;
@@ -44,9 +41,8 @@ public class ActionPanel extends NonOpaquePanel {
 
   public ActionPanel(JBTabsImpl tabs, TabInfo tabInfo, Pass<MouseEvent> pass) {
     myTabs = tabs;
-    myTabInfo = tabInfo;
-    myGroup = tabInfo.getTabLabelActions() != null ? tabInfo.getTabLabelActions() : new DefaultActionGroup();
-    AnAction[] children = myGroup.getChildren(null);
+    ActionGroup group = tabInfo.getTabLabelActions() != null ? tabInfo.getTabLabelActions() : new DefaultActionGroup();
+    AnAction[] children = group.getChildren(null);
 
     final NonOpaquePanel wrapper = new NonOpaquePanel(new BorderLayout());
     wrapper.add(Box.createHorizontalStrut(myGap), BorderLayout.WEST);
@@ -96,8 +92,7 @@ public class ActionPanel extends NonOpaquePanel {
 
   public void setAutoHide(final boolean autoHide) {
     myAutoHide = autoHide;
-    for (Iterator<ActionButton> iterator = myButtons.iterator(); iterator.hasNext();) {
-      ActionButton each = iterator.next();
+    for (ActionButton each : myButtons) {
       each.setAutoHide(myAutoHide);
     }
   }
@@ -108,8 +103,7 @@ public class ActionPanel extends NonOpaquePanel {
   }
 
   public void toggleShowActions(final boolean show) {
-    for (Iterator<ActionButton> iterator = myButtons.iterator(); iterator.hasNext();) {
-      ActionButton each = iterator.next();
+    for (ActionButton each : myButtons) {
       each.toggleShowActions(show);
     }
   }
