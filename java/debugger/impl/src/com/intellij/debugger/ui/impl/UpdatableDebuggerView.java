@@ -64,7 +64,7 @@ public abstract class UpdatableDebuggerView extends JPanel implements DebuggerVi
   }
 
   protected final boolean isUpdateEnabled() {
-    return myUpdateEnabled;
+    return myUpdateEnabled || isShowing();
   }
 
   public final void setUpdateEnabled(final boolean enabled) {
