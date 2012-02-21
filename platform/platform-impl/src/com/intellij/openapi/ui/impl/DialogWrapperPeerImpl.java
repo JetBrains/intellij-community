@@ -335,6 +335,11 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
     myDialog.setModal(modal);
   }
 
+  @Override
+  public boolean isModal() {
+    return myDialog.isModal();
+  }
+
   public boolean isVisible() {
     return myDialog.isVisible();
   }

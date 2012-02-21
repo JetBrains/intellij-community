@@ -219,6 +219,11 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer implements Foc
     LOG.assertTrue(modal, "Can't be non modal!");
   }
 
+  @Override
+  public boolean isModal() {
+    return true;
+  }
+
   public boolean isVisible() {
     return myDialog != null && myDialog.isVisible();
   }

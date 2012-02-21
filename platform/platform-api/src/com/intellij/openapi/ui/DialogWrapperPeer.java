@@ -94,6 +94,8 @@ public abstract class DialogWrapperPeer {
 
   public abstract void setModal(boolean modal);
 
+  public abstract boolean isModal();
+
   /**
    * @see java.awt.Component#isVisible
    */
