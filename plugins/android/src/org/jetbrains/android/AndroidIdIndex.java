@@ -42,7 +42,7 @@ public class AndroidIdIndex extends ScalarIndexExtension<String> {
   public static final ID<String, Void> INDEX_ID = ID.create("android.id.index");
   public static final String MARKER = "$";
 
-  private static final FileBasedIndex.InputFilter INPUT_FILTER = new FileBasedIndex.InputFilter() {
+  private static final FileBasedIndexIndicesManager.InputFilter INPUT_FILTER = new FileBasedIndexIndicesManager.InputFilter() {
     public boolean acceptInput(final VirtualFile file) {
       return (file.getFileSystem() == LocalFileSystem.getInstance() || file.getFileSystem() instanceof TempFileSystem) &&
              file.getFileType() == StdFileTypes.XML;
@@ -95,7 +95,7 @@ public class AndroidIdIndex extends ScalarIndexExtension<String> {
   }
 
   @Override
-  public FileBasedIndex.InputFilter getInputFilter() {
+  public FileBasedIndexIndicesManager.InputFilter getInputFilter() {
     return INPUT_FILTER;
   }
 

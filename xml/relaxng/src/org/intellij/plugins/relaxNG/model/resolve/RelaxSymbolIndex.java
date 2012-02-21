@@ -133,8 +133,8 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
   }
 
   @Override
-  public FileBasedIndex.InputFilter getInputFilter() {
-    return new FileBasedIndex.InputFilter() {
+  public FileBasedIndexIndicesManager.InputFilter getInputFilter() {
+    return new FileBasedIndexIndicesManager.InputFilter() {
       public boolean acceptInput(VirtualFile file) {
         if (file.getFileSystem() instanceof JarFileSystem) {
           return false; // there is lots and lots of custom XML inside zip files

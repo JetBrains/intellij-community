@@ -74,7 +74,7 @@ public class Html5CustomAttributesIndex extends ScalarIndexExtension<String> {
     }
   };
 
-  private final FileBasedIndex.InputFilter myInputFilter = new FileBasedIndex.InputFilter() {
+  private final FileBasedIndexIndicesManager.InputFilter myInputFilter = new FileBasedIndexIndicesManager.InputFilter() {
     public boolean acceptInput(final VirtualFile file) {
       return (file.getFileSystem() == LocalFileSystem.getInstance() || file.getFileSystem() instanceof TempFileSystem) &&
              file.getFileType() == StdFileTypes.HTML || file.getFileType() == StdFileTypes.XHTML;
@@ -97,7 +97,7 @@ public class Html5CustomAttributesIndex extends ScalarIndexExtension<String> {
   }
 
   @Override
-  public FileBasedIndex.InputFilter getInputFilter() {
+  public FileBasedIndexIndicesManager.InputFilter getInputFilter() {
     return myInputFilter;
   }
 

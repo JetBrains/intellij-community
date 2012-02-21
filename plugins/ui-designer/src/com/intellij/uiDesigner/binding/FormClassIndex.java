@@ -56,7 +56,7 @@ public class FormClassIndex extends ScalarIndexExtension<String> {
     return myKeyDescriptor;
   }
 
-  public FileBasedIndex.InputFilter getInputFilter() {
+  public FileBasedIndexIndicesManager.InputFilter getInputFilter() {
     return myInputFilter;
   }
 
@@ -85,7 +85,7 @@ public class FormClassIndex extends ScalarIndexExtension<String> {
     }
   }
 
-  private static class MyInputFilter implements FileBasedIndex.InputFilter {
+  private static class MyInputFilter implements FileBasedIndexIndicesManager.InputFilter {
     public boolean acceptInput(final VirtualFile file) {
       return file.getFileType() == StdFileTypes.GUI_DESIGNER_FORM;
     }

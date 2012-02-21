@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util.indexing.fileBasedIndex.impl;
+package com.intellij.util.indexing;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
@@ -33,10 +33,6 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.HashSet;
-import com.intellij.util.indexing.FileContentImpl;
-import com.intellij.util.indexing.ID;
-import com.intellij.util.indexing.IndexingDataKeys;
-import com.intellij.util.indexing.StorageException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

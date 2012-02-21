@@ -55,7 +55,7 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
   }
 
   @Override
-  public FileBasedIndex.InputFilter getInputFilter() {
+  public FileBasedIndexIndicesManager.InputFilter getInputFilter() {
     return myInputFilter;
   }
 
@@ -100,7 +100,7 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
     }
   }
 
-  private static class MyInputFilter implements FileBasedIndex.InputFilter {
+  private static class MyInputFilter implements FileBasedIndexIndicesManager.InputFilter {
     @Override
     public boolean acceptInput(final VirtualFile file) {
       return true;
