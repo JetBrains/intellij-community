@@ -3,6 +3,7 @@ package com.intellij.refactoring;
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
@@ -53,7 +54,7 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
   }
 
   public void testAnonymousClass1() throws Exception {
-    doTest(new MockIntroduceVariableHandler("runnable", false, false, false, "java.lang.Runnable"));
+    doTest(new MockIntroduceVariableHandler("runnable", false, false, false, CommonClassNames.JAVA_LANG_RUNNABLE));
   }
 
   public void testAnonymousClass2() throws Exception {
