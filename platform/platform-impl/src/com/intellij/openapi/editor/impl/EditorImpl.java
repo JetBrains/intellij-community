@@ -127,6 +127,7 @@ import java.util.concurrent.TimeUnit;
 public final class EditorImpl extends UserDataHolderBase implements EditorEx, HighlighterClient, Queryable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorImpl");
   private static final Key DND_COMMAND_KEY = Key.create("DndCommand");
+  public static final Key<JComponent> PERMANENT_HEADER = Key.create("PERMANENT_HEADER");
   public static final Key<Boolean> DO_DOCUMENT_UPDATE_TEST = Key.create("DoDocumentUpdateTest");
   public static final Key<Pair<String, String>> EDITABLE_AREA_MARKER = Key.create("editable.area.marker");
   private static final boolean HONOR_CAMEL_HUMPS_ON_TRIPLE_CLICK 
@@ -1767,6 +1768,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   public void setHeaderComponent(JComponent header) {
     myHeaderPanel.removeAll();
+    header = header == null? getUserData(PERMANENT_HEADER) : header;
     if (header != null) {
       myHeaderPanel.add(header);
     }
