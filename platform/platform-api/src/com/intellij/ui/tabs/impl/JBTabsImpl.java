@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -114,7 +114,7 @@ public class JBTabsImpl extends JComponent
   public boolean myForcedRelayout;
 
   private UiDecorator myUiDecorator;
-  static final UiDecorator ourDefaultDecorator = new DefautDecorator();
+  static final UiDecorator ourDefaultDecorator = new DefaultDecorator();
 
   private boolean myPaintFocus;
 
@@ -3010,7 +3010,7 @@ public class JBTabsImpl extends JComponent
   }
 
 
-  private static class DefautDecorator implements UiDecorator {
+  private static class DefaultDecorator implements UiDecorator {
     @NotNull
     public UiDecoration getDecoration() {
       return new UiDecoration(null, new Insets(0, 4, 0, 5));
