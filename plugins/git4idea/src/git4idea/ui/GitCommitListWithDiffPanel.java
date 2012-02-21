@@ -42,7 +42,7 @@ public class GitCommitListWithDiffPanel extends JPanel {
   public GitCommitListWithDiffPanel(@NotNull Project project, @NotNull List<GitCommit> commits) {
     super(new BorderLayout());
 
-    myCommitListPanel = new GitCommitListPanel(commits);
+    myCommitListPanel = new GitCommitListPanel(commits, null);
     myCommitListPanel.addListSelectionListener(new Consumer<GitCommit>() {
       @Override public void consume(GitCommit commit) {
         myChangesBrowser.setChangesToDisplay(commit.getChanges());

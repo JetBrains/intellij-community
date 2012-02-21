@@ -28,6 +28,7 @@ import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.UIUtil;
 import git4idea.history.browser.GitCommit;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -45,13 +46,16 @@ public class GitCommitListPanel extends JPanel implements TypeSafeDataProvider {
   private final List<GitCommit> myCommits;
   private final TableView<GitCommit> myTable;
 
-  public GitCommitListPanel(@NotNull List<GitCommit> commits) {
+  public GitCommitListPanel(@NotNull List<GitCommit> commits, @Nullable String emptyText) {
     myCommits = commits;
 
     myTable = new TableView<GitCommit>();
     updateModel();
     myTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myTable.setStriped(true);
+    if (emptyText != null) {
+      myTable.getEmptyText().setText(emptyText);
+    }
 
     setLayout(new BorderLayout());
     add(ScrollPaneFactory.createScrollPane(myTable));
