@@ -28,5 +28,6 @@ public interface GradleProjectStructureChangeVisitor {
   void visit(@NotNull GradleLanguageLevelChange change);
   void visit(@NotNull GradleModulePresenceChange change);
   void visit(@NotNull GradleLibraryDependencyPresenceChange change);
+  void visit(@NotNull GradleModuleDependencyPresenceChange change);
   void visit(@NotNull GradleMismatchedLibraryPathChange change);
 }

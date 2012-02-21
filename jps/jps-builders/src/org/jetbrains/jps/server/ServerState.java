@@ -124,7 +124,7 @@ class ServerState {
   }
 
   public void startBuild(String projectPath, BuildType buildType, Set<String> modules, Collection<String> artifacts,
-                         Collection<String> paths, final MessageHandler msgHandler, CanceledStatus cs) throws Throwable{
+                         Map<String, String> builderParams, Collection<String> paths, final MessageHandler msgHandler, CanceledStatus cs) throws Throwable{
 
     final String projectName = getProjectName(projectPath);
 
@@ -167,7 +167,7 @@ class ServerState {
 
     try {
       final CompileScope compileScope = createCompilationScope(buildType, pd, modules, artifacts, paths);
-      final IncProjectBuilder builder = new IncProjectBuilder(pd, BuilderRegistry.getInstance(), cs);
+      final IncProjectBuilder builder = new IncProjectBuilder(pd, BuilderRegistry.getInstance(), builderParams, cs);
       if (msgHandler != null) {
         builder.addMessageHandler(msgHandler);
       }

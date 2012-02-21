@@ -17,6 +17,8 @@ package com.intellij.android.designer.model;
 
 import com.intellij.android.designer.designSurface.CreateOperation;
 import com.intellij.android.designer.designSurface.MoveOperation;
+import com.intellij.android.designer.designSurface.TreeOperation;
+import com.intellij.designer.componentTree.TreeEditOperation;
 import com.intellij.designer.designSurface.ComponentDecorator;
 import com.intellij.designer.designSurface.EditOperation;
 import com.intellij.designer.designSurface.OperationContext;
@@ -43,6 +45,15 @@ public class RadViewLayout extends RadLayout {
 
   @Override
   public EditOperation processChildOperation(OperationContext context) {
+    if (context.getArea().isTree()) {
+      if (!myContainer.getChildren().isEmpty() && TreeEditOperation.isTarget(myContainer, context)) {
+        /*if ("TableRow".equals(myContainer.getTitle())) {
+          return null;
+        }*/
+        return new TreeOperation(myContainer, context);
+      }
+      return null;
+    }
     if (context.isMove()) {
       return new MoveOperation(context);
     }

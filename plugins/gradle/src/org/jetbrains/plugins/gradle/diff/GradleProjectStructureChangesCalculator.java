@@ -21,25 +21,24 @@ import java.util.Set;
 public class GradleProjectStructureChangesCalculator implements GradleStructureChangesCalculator<GradleProject, Project> {
 
   private final GradleModuleStructureChangesCalculator myModuleChangesCalculator;
-  private final PlatformFacade myStructureHelper;
+  private final PlatformFacade myPlatformFacade;
 
   public GradleProjectStructureChangesCalculator(@NotNull GradleModuleStructureChangesCalculator moduleCalculator,
-                                                 @NotNull PlatformFacade structureHelper) {
+                                                 @NotNull PlatformFacade platformFacade) {
     myModuleChangesCalculator = moduleCalculator;
-    myStructureHelper = structureHelper;
+    myPlatformFacade = platformFacade;
   }
 
   @Override
   public void calculate(@NotNull GradleProject gradleEntity,
                         @NotNull Project intellijEntity,
-                        @NotNull Set<GradleProjectStructureChange> knownChanges,
-                        @NotNull Set<GradleProjectStructureChange> currentChanges)
+                        @NotNull GradleChangesCalculationContext context)
   {
-    calculateProjectChanges(gradleEntity, intellijEntity, currentChanges);
+    calculateProjectChanges(gradleEntity, intellijEntity, context.getCurrentChanges());
 
     final Set<? extends GradleModule> gradleSubEntities = gradleEntity.getModules();
-    final Collection<Module> intellijSubEntities = myStructureHelper.getModules(intellijEntity);
-    GradleDiffUtil.calculate(myModuleChangesCalculator, gradleSubEntities, intellijSubEntities, knownChanges, currentChanges);
+    final Collection<Module> intellijSubEntities = myPlatformFacade.getModules(intellijEntity);
+    GradleDiffUtil.calculate(myModuleChangesCalculator, gradleSubEntities, intellijSubEntities, context);
   }
 
   @NotNull
@@ -50,7 +49,7 @@ public class GradleProjectStructureChangesCalculator implements GradleStructureC
 
   @NotNull
   @Override
-  public Object getGradleKey(@NotNull GradleProject entity, @NotNull Set<GradleProjectStructureChange> knownChanges) {
+  public Object getGradleKey(@NotNull GradleProject entity, @NotNull GradleChangesCalculationContext context) {
     // TODO den consider the known changes
     return entity.getName();
   }
@@ -79,7 +78,7 @@ public class GradleProjectStructureChangesCalculator implements GradleStructureC
                                   @NotNull Set<GradleProjectStructureChange> currentChanges)
   {
     LanguageLevel gradleLevel = gradleProject.getLanguageLevel();
-    LanguageLevel intellijLevel = myStructureHelper.getLanguageLevel(intellijProject);
+    LanguageLevel intellijLevel = myPlatformFacade.getLanguageLevel(intellijProject);
     if (gradleLevel != intellijLevel) {
       currentChanges.add(new GradleLanguageLevelChange(gradleLevel, intellijLevel));
     }

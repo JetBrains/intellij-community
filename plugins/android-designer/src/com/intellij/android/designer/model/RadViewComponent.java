@@ -52,6 +52,11 @@ public class RadViewComponent extends RadComponent {
   }
 
   @Override
+  public String toString() {
+    return super.toString() + " - " + myTitle;
+  }
+
+  @Override
   public Rectangle getBounds() {
     return myBounds;
   }

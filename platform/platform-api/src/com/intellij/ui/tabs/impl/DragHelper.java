@@ -18,6 +18,7 @@ package com.intellij.ui.tabs.impl;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.MouseDragHelper;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.tabs.TabInfo;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,6 +39,7 @@ class DragHelper extends MouseDragHelper {
   Measurer myVertical = new Measurer.Height();
 
   private TabInfo myDragOutSource;
+  private TabLabel myPressedTabLabel;
 
   public DragHelper(JBTabsImpl tabs) {
     super(tabs, tabs);
@@ -81,19 +83,25 @@ class DragHelper extends MouseDragHelper {
     myDragOutSource.getDragOutDelegate().dragOutCancelled(myDragOutSource);
   }
 
+  @Override
+  protected void processMousePressed(MouseEvent event) {
+    // since selection change can cause tabs to be reordered, we need to remember the tab on which the mouse was pressed, otherwise
+    // we'll end up dragging the wrong tab (IDEA-65073)
+    myPressedTabLabel = findLabel(new RelativePoint(event).getPoint(myTabs));
+  }
+
   protected void processDrag(MouseEvent event, Point targetScreenPoint, Point startPointScreen) {
     if (!myTabs.isTabDraggingEnabled()) return;
 
     SwingUtilities.convertPointFromScreen(startPointScreen, myTabs);
 
     if (isDragJustStarted()) {
-      final TabLabel label = findLabel(startPointScreen);
-      if (label == null) return;
+      if (myPressedTabLabel == null) return;
 
-      final Rectangle labelBounds = label.getBounds();
+      final Rectangle labelBounds = myPressedTabLabel.getBounds();
 
       myHoldDelta = new Dimension(startPointScreen.x - labelBounds.x, startPointScreen.y - labelBounds.y);
-      myDragSource = label.getInfo();
+      myDragSource = myPressedTabLabel.getInfo();
       myDragRec = new Rectangle(startPointScreen, labelBounds.getSize());
       myDragOriginalRec = (Rectangle)myDragRec.clone();
 

@@ -18,7 +18,6 @@ package com.intellij.designer.componentTree;
 import com.intellij.designer.designSurface.ComponentSelectionListener;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.designer.designSurface.EditableArea;
-import com.intellij.designer.model.RadComponent;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 
 import javax.swing.event.TreeSelectionEvent;
@@ -30,22 +29,27 @@ import javax.swing.tree.TreeSelectionModel;
  * @author Alexander Lobas
  */
 public final class ComponentTreeBuilder extends AbstractTreeBuilder implements ComponentSelectionListener, TreeSelectionListener {
-  private final EditableArea mySurfaceArea;
   private final TreeSelectionModel myTreeSelectionModel;
+  private final EditableArea mySurfaceArea;
+  private final TreeEditableArea myTreeArea;
+  private final TreeGlassLayer myGlassLayer;
 
   public ComponentTreeBuilder(ComponentTree tree, DesignerEditorPanel designer) {
-    super(tree, (DefaultTreeModel)tree.getModel(), new TreeContentProvider(designer), null); // TODO: comparator?
+    super(tree, (DefaultTreeModel)tree.getModel(), new TreeContentProvider(designer), null);
     initRootNode();
-    mySurfaceArea = designer.getSurfaceArea();
     myTreeSelectionModel = getTree().getSelectionModel();
+    mySurfaceArea = designer.getSurfaceArea();
+    myTreeArea = new TreeEditableArea(tree, this);
+    myGlassLayer = new TreeGlassLayer(tree, designer.getToolProvider(), myTreeArea);
     // TODO: restore expanded state
-    setTreeSelection();
+    select(mySurfaceArea.getSelection().toArray(), null);
     addListeners();
   }
 
   @Override
   public void dispose() {
     removeListeners();
+    myGlassLayer.dispose();
     super.dispose();
   }
 
@@ -74,14 +78,9 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder implements C
     handleSelection(new Runnable() {
       @Override
       public void run() {
-        queueUpdate();
-        setTreeSelection();
+        myTreeArea.setSelection(mySurfaceArea.getSelection());
       }
     });
-  }
-
-  private void setTreeSelection() {
-    select(mySurfaceArea.getSelection().toArray(), null);
   }
 
   @Override
@@ -89,7 +88,7 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder implements C
     handleSelection(new Runnable() {
       @Override
       public void run() {
-        mySurfaceArea.setSelection(getSelectedElements(RadComponent.class));
+        mySurfaceArea.setSelection(myTreeArea.getSelection());
       }
     });
   }

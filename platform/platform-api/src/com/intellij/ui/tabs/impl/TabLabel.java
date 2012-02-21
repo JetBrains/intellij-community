@@ -34,6 +34,7 @@ import com.intellij.ui.tabs.UiDecorator;
 import com.intellij.ui.tabs.impl.table.TableLayout;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.ui.Centerizer;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -87,6 +88,10 @@ public class TabLabel extends JPanel {
     addMouseListener(new MouseAdapter() {
       public void mousePressed(final MouseEvent e) {
         if (myTabs.isSelectionClick(e, false) && myInfo.isEnabled()) {
+          final TabInfo selectedInfo = myTabs.getSelectedInfo();
+          if (selectedInfo != myInfo) {
+            myInfo.setPreviousSelection(selectedInfo);
+          }
           Component c = SwingUtilities.getDeepestComponentAt(e.getComponent(), e.getX(), e.getY());
           if (c instanceof InplaceButton) return;
           myTabs.select(info, true);
@@ -101,6 +106,7 @@ public class TabLabel extends JPanel {
       }
 
       public void mouseReleased(final MouseEvent e) {
+        myInfo.setPreviousSelection(null);
         handlePopup(e);
       }
     });
@@ -385,8 +391,8 @@ public class TabLabel extends JPanel {
     }
   }
 
-  private static int getValue(int curentValue, int newValue) {
-    return newValue != -1 ? newValue : curentValue;
+  private static int getValue(int currentValue, int newValue) {
+    return newValue != -1 ? newValue : currentValue;
   }
 
   public void setTabActions(ActionGroup group) {
@@ -530,6 +536,7 @@ public class TabLabel extends JPanel {
   }
 
 
+  @Nullable
   public BufferedImage getInactiveStateImage(Rectangle effectiveBounds) {
     BufferedImage img = null;
     if (myLastPaintedInactiveImageBounds != null && myLastPaintedInactiveImageBounds.getSize().equals(effectiveBounds.getSize())) {
@@ -541,7 +548,7 @@ public class TabLabel extends JPanel {
     return img;
   }
 
-  public void setInactiveStateImage(BufferedImage img) {
+  public void setInactiveStateImage(@Nullable BufferedImage img) {
     if (myInactiveStateImage != null && img != myInactiveStateImage) {
       myInactiveStateImage.flush();
     }

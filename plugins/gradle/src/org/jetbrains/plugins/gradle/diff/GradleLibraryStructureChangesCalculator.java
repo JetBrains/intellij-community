@@ -25,20 +25,20 @@ public class GradleLibraryStructureChangesCalculator implements GradleStructureC
   @Override
   public void calculate(@NotNull GradleLibrary gradleEntity,
                         @NotNull Library intellijEntity,
-                        @NotNull Set<GradleProjectStructureChange> knownChanges,
-                        @NotNull Set<GradleProjectStructureChange> currentChanges)
+                        @NotNull GradleChangesCalculationContext context)
   {
     final Set<String> gradleBinaryPaths = new HashSet<String>(gradleEntity.getPaths(LibraryPathType.BINARY));
+    final Set<String> intellijBinaryPaths = new HashSet<String>();
     for (VirtualFile file : intellijEntity.getFiles(OrderRootType.CLASSES)) {
       final String path = myPlatformFacade.getLocalFileSystemPath(file);
       if (!gradleBinaryPaths.remove(path)) {
-        currentChanges.add(new GradleMismatchedLibraryPathChange(intellijEntity, null, path));
+        intellijBinaryPaths.add(path);
       }
     }
 
-    for (String binaryPath : gradleBinaryPaths) {
-      currentChanges.add(new GradleMismatchedLibraryPathChange(intellijEntity, binaryPath, null));
-    } 
+    if (!gradleBinaryPaths.equals(intellijBinaryPaths)) {
+      context.register(new GradleMismatchedLibraryPathChange(intellijEntity, gradleBinaryPaths, intellijBinaryPaths));
+    }
   }
 
   @NotNull
@@ -49,7 +49,7 @@ public class GradleLibraryStructureChangesCalculator implements GradleStructureC
 
   @NotNull
   @Override
-  public Object getGradleKey(@NotNull GradleLibrary entity, @NotNull Set<GradleProjectStructureChange> knownChanges) {
+  public Object getGradleKey(@NotNull GradleLibrary entity, @NotNull GradleChangesCalculationContext context) {
     // TODO den consider the known changes 
     return entity.getName();
   }

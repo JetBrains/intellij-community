@@ -5,10 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.*;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
@@ -28,18 +25,20 @@ public class CompileServerClient extends SimpleProtobufClient<JpsServerResponseH
 
   @NotNull
   public RequestFuture sendCompileRequest(boolean isMake, String projectId, Collection<String> modules, final Collection<String> artifacts,
-                                          Collection<String> paths, JpsServerResponseHandler handler) throws Exception{
+                                          Collection<String> paths,
+                                          final Map<String, String> userData,
+                                          JpsServerResponseHandler handler) throws Exception{
     checkConnected();
     final JpsRemoteProto.Message.Request request = isMake?
-      ProtoUtil.createMakeRequest(projectId, modules, artifacts) :
-      ProtoUtil.createForceCompileRequest(projectId, modules, artifacts, paths);
+      ProtoUtil.createMakeRequest(projectId, modules, artifacts, userData) :
+      ProtoUtil.createForceCompileRequest(projectId, modules, artifacts, paths, userData);
     return sendRequest(request, handler);
   }
 
   @NotNull
   public RequestFuture sendRebuildRequest(String projectId, JpsServerResponseHandler handler) throws Exception{
     checkConnected();
-    return sendRequest(ProtoUtil.createRebuildRequest(projectId), handler);
+    return sendRequest(ProtoUtil.createRebuildRequest(projectId, Collections.<String, String>emptyMap()), handler);
   }
 
   @NotNull

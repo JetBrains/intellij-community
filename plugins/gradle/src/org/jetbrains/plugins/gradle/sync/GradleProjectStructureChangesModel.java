@@ -4,8 +4,10 @@ import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.diff.GradleChangesCalculationContext;
 import org.jetbrains.plugins.gradle.diff.GradleProjectStructureChange;
 import org.jetbrains.plugins.gradle.diff.GradleStructureChangesCalculator;
+import org.jetbrains.plugins.gradle.diff.PlatformFacade;
 import org.jetbrains.plugins.gradle.model.gradle.GradleProject;
 
 import java.util.HashSet;
@@ -28,14 +30,17 @@ public class GradleProjectStructureChangesModel extends AbstractProjectComponent
     = new AtomicReference<Set<GradleProjectStructureChange>>(new HashSet<GradleProjectStructureChange>());
   
   private final AtomicReference<GradleProject> myGradleProject = new AtomicReference<GradleProject>();
-  
-  private final GradleStructureChangesCalculator<GradleProject, Project> myChangesCalculator;
+
+  @NotNull private final GradleStructureChangesCalculator<GradleProject, Project> myChangesCalculator;
+  @NotNull private final PlatformFacade myPlatformFacade;
 
   public GradleProjectStructureChangesModel(@NotNull Project project,
-                                            @NotNull GradleStructureChangesCalculator<GradleProject, Project> changesCalculator)
+                                            @NotNull GradleStructureChangesCalculator<GradleProject, Project> changesCalculator,
+                                            @NotNull PlatformFacade platformFacade)
   {
     super(project);
     myChangesCalculator = changesCalculator;
+    myPlatformFacade = platformFacade;
   }
 
   /**
@@ -58,15 +63,14 @@ public class GradleProjectStructureChangesModel extends AbstractProjectComponent
    */
   public void update(@NotNull GradleProject gradleProject) {
     myGradleProject.set(gradleProject);
-    Set<GradleProjectStructureChange> knownChanges = new HashSet<GradleProjectStructureChange>(myChanges.get());
-    Set<GradleProjectStructureChange> currentChanges = new HashSet<GradleProjectStructureChange>();
-    myChangesCalculator.calculate(gradleProject, myProject, knownChanges, currentChanges);
-    if (currentChanges.equals(knownChanges)) {
+    GradleChangesCalculationContext context = new GradleChangesCalculationContext(myChanges.get(), myPlatformFacade);
+    myChangesCalculator.calculate(gradleProject, myProject, context);
+    if (!context.hasNewChanges()) {
       return;
     }
-    myChanges.set(currentChanges);
+    myChanges.set(context.getCurrentChanges());
     for (GradleProjectStructureChangeListener listener : myListeners) {
-      listener.onChanges(knownChanges, currentChanges);
+      listener.onChanges(context.getKnownChanges(), context.getCurrentChanges());
     }
   }
 
