@@ -1309,7 +1309,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   public boolean isDisposeInProgress() {
-    return myDisposeInProgress;
+    return myDisposeInProgress || ShutDownTracker.isShutdownHookRunning();
   }
 
   public boolean isRestartCapable() {
