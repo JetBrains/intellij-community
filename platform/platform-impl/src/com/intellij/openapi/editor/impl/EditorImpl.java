@@ -1659,31 +1659,19 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   public void stopDumb() {
-    final Runnable stopDumbRunnable = new Runnable() {
-      @Override
-      public void run() {
-        putUserData(BUFFER, null);
-      }
-    };
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      stopDumbRunnable.run();
-    } else {
-      ApplicationManager.getApplication().invokeLater(stopDumbRunnable, ModalityState.current());
-    }
+    putUserData(BUFFER, null);
   }
 
   /**
-   * {@link #stopDumb} must be performed in finally
+   * {@link #stopDumb()} must be performed in finally
    */
   public void startDumb() {
     final EditorComponentImpl component = getContentComponent();
-    final Rectangle rect = component.getVisibleRect();
-    BufferedImage image = new BufferedImage(rect.width, rect.height, BufferedImage.TYPE_INT_RGB);
+    final Dimension dimension = component.getSize();
+    BufferedImage image = new BufferedImage(dimension.width, dimension.height, BufferedImage.TYPE_INT_RGB);
     final Graphics2D graphics = image.createGraphics();
-    graphics.translate(-rect.x, -rect.y);
-    graphics.setClip(rect.x, rect.y, rect.width, rect.height);
+    graphics.setClip(0, 0, dimension.width, dimension.height);
     paint(graphics);
-    graphics.translate(rect.x, rect.y);
     putUserData(BUFFER, image);
   }
   
@@ -1697,9 +1685,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (Registry.is("editor.dumb.mode.available")) {
       final BufferedImage buffer = getUserData(BUFFER);
       if (buffer != null) {
-        g.setClip(clip.x, clip.y, buffer.getWidth(), buffer.getHeight());
-        final Rectangle rect = getContentComponent().getVisibleRect();
-        g.drawImage(buffer, null, rect.x, rect.y);
+        final Point point = new Point(clip.x, clip.y);
+        SwingUtilities.convertPointFromScreen(point, getContentComponent());
+        g.drawImage(buffer, null, 0, 0);
         return;
       }
     }
