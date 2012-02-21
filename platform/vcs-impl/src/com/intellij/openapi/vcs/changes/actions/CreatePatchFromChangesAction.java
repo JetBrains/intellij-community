@@ -114,10 +114,10 @@ public class CreatePatchFromChangesAction extends AnAction implements DumbAware 
   }
 
   public void update(final AnActionEvent e) {
-    Change[] changes = e.getData(VcsDataKeys.CHANGES);
+    final Boolean haveSelectedChanges = e.getData(VcsDataKeys.HAVE_SELECTED_CHANGES);
     ChangeList[] changeLists = e.getData(VcsDataKeys.CHANGE_LISTS);
     final String presetMessage = e.getData(VcsDataKeys.PRESET_COMMIT_MESSAGE);
-    e.getPresentation().setEnabled(changes != null && changes.length > 0 &&
+    e.getPresentation().setEnabled(Boolean.TRUE.equals(haveSelectedChanges) &&
                                    ((changeLists == null || changeLists.length == 1)) || (presetMessage != null));
   }
 }
