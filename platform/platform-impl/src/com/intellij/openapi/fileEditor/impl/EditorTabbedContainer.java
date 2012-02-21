@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
+import com.intellij.ui.InplaceButton;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.DockableContent;
@@ -474,6 +475,8 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
   }
 
   private class TabMouseListener extends MouseAdapter {
+    private int myActionClickCount;
+
     @Override
     public void mousePressed(final MouseEvent e) {
       if (UIUtil.isCloseClick(e, MouseEvent.MOUSE_PRESSED)) {
@@ -485,9 +488,19 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
         }
       }
 
-      if (UIUtil.isActionClick(e) && (e.getClickCount() % 2) == 0 && !isFloating()) {
-        final ActionManager mgr = ActionManager.getInstance();
-        mgr.tryToExecute(mgr.getAction("HideAllWindows"), e, null, ActionPlaces.UNKNOWN, true);
+      if (UIUtil.isActionClick(e)) {
+        if (e.getClickCount() == 1) {
+          myActionClickCount = 0;
+        }
+        // clicks on the close window button don't count in determining whether we have a double-click on tab (IDEA-70403)
+        final Component deepestComponent = SwingUtilities.getDeepestComponentAt(e.getComponent(), e.getX(), e.getY());
+        if (!(deepestComponent instanceof InplaceButton)) {
+          myActionClickCount++;
+        }
+        if (myActionClickCount == 2 && !isFloating()) {
+          final ActionManager mgr = ActionManager.getInstance();
+          mgr.tryToExecute(mgr.getAction("HideAllWindows"), e, null, ActionPlaces.UNKNOWN, true);
+        }
       }
     }
 
