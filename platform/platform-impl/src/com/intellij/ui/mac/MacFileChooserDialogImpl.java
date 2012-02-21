@@ -192,24 +192,23 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
   }
 
   static {
-    final ID delegateClass = Foundation.allocateObjcClassPair(Foundation.getObjcClass("NSObject"), "NSOpenPanelDelegate_");
-    if (!Foundation.addMethod(delegateClass, Foundation.createSelector("panel:shouldShowFilename:"), SHOULD_SHOW_FILENAME_CALLBACK, "B*")) {
+    final ID delegate = Foundation.allocateObjcClassPair(Foundation.getObjcClass("NSObject"), "NSOpenPanelDelegate_");
+    if (!Foundation.addMethod(delegate, Foundation.createSelector("panel:shouldShowFilename:"), SHOULD_SHOW_FILENAME_CALLBACK, "B*")) {
       throw new RuntimeException("Unable to add method to objective-c delegate class!");
     }
-    if (!Foundation.addMethod(delegateClass, Foundation.createSelector("panel:isValidFilename:"), IS_VALID_FILENAME_CALLBACK, "B*")) {
+    if (!Foundation.addMethod(delegate, Foundation.createSelector("panel:isValidFilename:"), IS_VALID_FILENAME_CALLBACK, "B*")) {
       throw new RuntimeException("Unable to add method to objective-c delegate class!");
     }
-    if (!Foundation.addMethod(delegateClass, Foundation.createSelector("showOpenPanel:"), MAIN_THREAD_RUNNABLE, "v*")) {
+    if (!Foundation.addMethod(delegate, Foundation.createSelector("showOpenPanel:"), MAIN_THREAD_RUNNABLE, "v*")) {
       throw new RuntimeException("Unable to add method to objective-c delegate class!");
     }
-    if (!Foundation.addMethod(delegateClass, Foundation.createSelector("openPanelDidEnd:returnCode:contextInfo:"), OPEN_PANEL_DID_END,
-                              "v*i")) {
+    if (!Foundation.addMethod(delegate, Foundation.createSelector("openPanelDidEnd:returnCode:contextInfo:"), OPEN_PANEL_DID_END, "v*i")) {
       throw new RuntimeException("Unable to add method to objective-c delegate class!");
     }
-    if (!Foundation.addMethod(delegateClass, Foundation.createSelector("panel:shouldEnableURL:"), SHOULD_ENABLE_URL, "B@@")) {
+    if (!Foundation.addMethod(delegate, Foundation.createSelector("panel:shouldEnableURL:"), SHOULD_ENABLE_URL, "B@@")) {
       throw new RuntimeException("Unable to add method to objective-c delegate class!");
     }
-    Foundation.registerObjcClassPair(delegateClass);
+    Foundation.registerObjcClassPair(delegate);
   }
 
   public MacFileChooserDialogImpl(@NotNull FileChooserDescriptor chooserDescriptor, Project project) {

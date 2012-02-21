@@ -177,22 +177,35 @@ class UpdateFoldRegionsOperation implements Runnable {
       }
       if (element != null && myElementsToFoldMap.containsKey(element)) {
         final Collection<FoldingDescriptor> descriptors = myElementsToFoldMap.get(element);
+        boolean matchingDescriptorFound = false;
         for (FoldingDescriptor descriptor : descriptors) {
           TextRange range = descriptor.getRange();
-          if (!region.isValid() ||
-              region.getGroup() != null ||
-              descriptor.getGroup() != null ||
-              region.getStartOffset() != range.getStartOffset() ||
-              region.getEndOffset() != range.getEndOffset() ||
-              !region.getPlaceholderText().equals(descriptor.getPlaceholderText()) ||
-              range.getLength() < 2
-            ) {
-            rangeToExpandStatusMap.put(range, region.isExpanded());
-            toRemove.add(region);
+          if (region.getStartOffset() == range.getStartOffset()
+              && region.getEndOffset() == range.getEndOffset()) {
+            matchingDescriptorFound = true;
+            if (!region.isValid() ||
+                region.getGroup() != null ||
+                descriptor.getGroup() != null ||
+                !region.getPlaceholderText().equals(descriptor.getPlaceholderText()) ||
+                range.getLength() < 2
+              ) {
+              rangeToExpandStatusMap.put(range, region.isExpanded());
+              toRemove.add(region);
+            }
+            else {
+              myElementsToFoldMap.removeValue(element, descriptor);
+            }
+            break;
           }
-          else {
-            myElementsToFoldMap.remove(element);
+        }
+        if (!matchingDescriptorFound) {
+          for (FoldingDescriptor descriptor : descriptors) {
+            rangeToExpandStatusMap.put(descriptor.getRange(), region.isExpanded());
           }
+          toRemove.add(region);
+        }
+        if (myElementsToFoldMap.get(element).isEmpty()) {
+          myElementsToFoldMap.remove(element);
         }
       }
       else if (region.isValid() && info.isLightRegion(region)) {

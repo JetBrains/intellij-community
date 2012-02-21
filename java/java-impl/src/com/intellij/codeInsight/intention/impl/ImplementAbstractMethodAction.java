@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,7 +79,10 @@ public class ImplementAbstractMethodAction extends BaseIntentionAction {
   }
 
   protected String getIntentionName(final PsiMethod method) {
-    return CodeInsightBundle.message("intention.implement.abstract.method.text", method.getName());
+    return method.hasModifierProperty(PsiModifier.ABSTRACT) ?
+           CodeInsightBundle.message("intention.implement.abstract.method.text", method.getName()) :
+           CodeInsightBundle.message("intention.override.method.text", method.getName())
+      ;
   }
 
   static class MyElementProcessor implements PsiElementProcessor {

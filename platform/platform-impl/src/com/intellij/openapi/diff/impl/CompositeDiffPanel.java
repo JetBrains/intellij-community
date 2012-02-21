@@ -71,6 +71,7 @@ public class CompositeDiffPanel implements DiffViewer {
         viewer.setDiffRequest(diffRequest);
       } else {
         final DiffViewer newViewer = myRequest.viewerForRequest(myWindow, myParentDisposable, key, diffRequest);
+        if (newViewer == null) continue;
         myMap.put(key, newViewer);
         final Content content = myUi.createContent(key, newViewer.getComponent(), key, null, newViewer.getPreferredFocusedComponent());
         content.setCloseable(false);

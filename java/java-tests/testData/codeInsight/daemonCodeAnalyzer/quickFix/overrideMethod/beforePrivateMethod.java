@@ -1,4 +1,4 @@
-// "Implement method 'foo'" "false"
+// "Override method 'foo'" "false"
 class Test {
   private void f<caret>oo(){}
 }

@@ -54,6 +54,7 @@ class GitMergeOperation extends GitBranchOperation {
 
   @NotNull private final ChangeListManager myChangeListManager;
   @NotNull private final String myBranchToMerge;
+  private final boolean myLocalBranch;
   @NotNull private final String myCurrentBranch;
   @NotNull private final GitRepository myCurrentRepository;
   @NotNull private final Map<GitRepository, String> myCurrentRevisionsBeforeMerge;
@@ -62,12 +63,13 @@ class GitMergeOperation extends GitBranchOperation {
   @NotNull private final Map<GitRepository, Boolean> myConflictedRepositories = new HashMap<GitRepository, Boolean>();
   private GitPreservingProcess myPreservingProcess;
 
-  protected GitMergeOperation(@NotNull Project project, @NotNull Collection<GitRepository> repositories,
-                              @NotNull String branchToMerge, @NotNull String currentBranch, @NotNull GitRepository currentRepository,
-                              @NotNull Map<GitRepository, String> currentRevisionsBeforeMerge,
-                              @NotNull ProgressIndicator indicator) {
+  GitMergeOperation(@NotNull Project project, @NotNull Collection<GitRepository> repositories,
+                    @NotNull String branchToMerge, boolean localBranch, @NotNull String currentBranch,
+                    @NotNull GitRepository currentRepository, @NotNull Map<GitRepository, String> currentRevisionsBeforeMerge,
+                    @NotNull ProgressIndicator indicator) {
     super(project, repositories, currentBranch, indicator);
     myBranchToMerge = branchToMerge;
+    myLocalBranch = localBranch;
     myCurrentBranch = currentBranch;
     myCurrentRepository = currentRepository;
     myCurrentRevisionsBeforeMerge = currentRevisionsBeforeMerge;
@@ -157,20 +159,14 @@ class GitMergeOperation extends GitBranchOperation {
 
   @Override
   protected void notifySuccess(@NotNull String message) {
-    String description = message + "<br/><a href='delete'>Delete " + myBranchToMerge + "</a>";
-    NotificationManager.getInstance(myProject).notify(GitVcs.NOTIFICATION_GROUP_ID, "", description, NotificationType.INFORMATION,
-                                                      new NotificationListener() {
-                                                        @Override
-                                                        public void hyperlinkUpdate(@NotNull Notification notification,
-                                                                                    @NotNull HyperlinkEvent event) {
-                                                          if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED &&
-                                                              event.getDescription().equalsIgnoreCase("delete")) {
-                                                            new GitBranchOperationsProcessor(myProject, new ArrayList<GitRepository>(
-                                                              getRepositories()), myCurrentRepository).
-                                                              deleteBranch(myBranchToMerge);
-                                                          }
-                                                        }
-                                                      });
+    if (!myLocalBranch) {
+      super.notifySuccess(message);
+    }
+    else {
+      String description = message + "<br/><a href='delete'>Delete " + myBranchToMerge + "</a>";
+      NotificationManager.getInstance(myProject).notify(GitVcs.NOTIFICATION_GROUP_ID, "", description, NotificationType.INFORMATION,
+                                                        new DeleteMergedLocalBranchNotificationListener());
+    }
   }
 
   private boolean resolveConflicts() {
@@ -367,6 +363,17 @@ class GitMergeOperation extends GitBranchOperation {
         GitVcs.IMPORTANT_ERROR_NOTIFICATION, "Merged branch " + myBranchToMerge + " with conflicts",
         "Unresolved conflicts remain in the project. <a href='resolve'>Resolve now.</a>", NotificationType.WARNING,
         getResolveLinkListener());
+    }
+  }
+
+  private class DeleteMergedLocalBranchNotificationListener implements NotificationListener {
+    @Override
+    public void hyperlinkUpdate(@NotNull Notification notification,
+                                @NotNull HyperlinkEvent event) {
+      if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED && event.getDescription().equalsIgnoreCase("delete")) {
+        new GitBranchOperationsProcessor(myProject, new ArrayList<GitRepository>(getRepositories()), myCurrentRepository).
+          deleteBranch(myBranchToMerge);
+      }
     }
   }
 }

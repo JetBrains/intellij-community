@@ -96,6 +96,9 @@ public final class ComponentTree extends Tree implements DataProvider {
     return null;
   }
 
+  public int getEdgeSize() {
+    return Math.max(5, ((JComponent)getCellRenderer()).getPreferredSize().height / 2 - 3);
+  }
 
   private void installCellRenderer() {
     setCellRenderer(new ColoredTreeCellRenderer() {

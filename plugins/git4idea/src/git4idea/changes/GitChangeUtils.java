@@ -18,6 +18,7 @@ package git4idea.changes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
@@ -113,7 +114,7 @@ public class GitChangeUtils {
    */
   public static void parseChanges(Project project,
                                   VirtualFile vcsRoot,
-                                  GitRevisionNumber thisRevision,
+                                  @Nullable GitRevisionNumber thisRevision,
                                   GitRevisionNumber parentRevision,
                                   String s,
                                   Collection<Change> changes,
@@ -161,7 +162,7 @@ public class GitChangeUtils {
    */
   public static void parseChanges(Project project,
                                   VirtualFile vcsRoot,
-                                  GitRevisionNumber thisRevision,
+                                  @Nullable GitRevisionNumber thisRevision,
                                   GitRevisionNumber parentRevision,
                                   StringScanner s,
                                   Collection<Change> changes,
@@ -444,4 +445,52 @@ public class GitChangeUtils {
   public static long longForSHAHash(String revisionNumber) {
     return Long.parseLong(revisionNumber.substring(0, 15), 16) << 4 + Integer.parseInt(revisionNumber.substring(15, 16), 16);
   }
+
+  @NotNull
+  public static Collection<Change> getDiff(@NotNull Project project, @NotNull VirtualFile root,
+                                           @Nullable String firstRevision, @NotNull String nextRevision,
+                                           @Nullable Collection<FilePath> dirtyPaths) throws VcsException {
+    Collection<Change> changes = new ArrayList<Change>();
+    String range = firstRevision == null ? nextRevision : firstRevision + ".." + nextRevision;
+    String output = getDiffOutput(project, root, range, dirtyPaths);
+    GitRevisionNumber thisRevision = firstRevision == null ? null : loadRevision(project, root, firstRevision);
+    parseChanges(project, root, thisRevision, loadRevision(project, root, nextRevision), output, changes, Collections.<String>emptySet());
+    return changes;
+  }
+
+  /**
+   * Calls {@code git diff} on the given range.
+   * @param project
+   * @param root
+   * @param diffRange  range or just revision (will be compared with current working tree).
+   * @param dirtyPaths limit the command by paths if needed or pass null.
+   * @return output of the 'git diff' command.
+   * @throws VcsException
+   */
+  @NotNull
+  public static String getDiffOutput(@NotNull Project project, @NotNull VirtualFile root,
+                                     @NotNull String diffRange, @Nullable Collection<FilePath> dirtyPaths) throws VcsException {
+    GitSimpleHandler handler = getDiffHandler(project, root, diffRange, dirtyPaths);
+    if (handler.isLargeCommandLine()) {
+      // if there are too much files, just get all changes for the project
+      handler = getDiffHandler(project, root, diffRange, null);
+    }
+    return handler.run();
+  }
+
+  @NotNull
+  private static GitSimpleHandler getDiffHandler(@NotNull Project project, @NotNull VirtualFile root,
+                                                 @NotNull String diffRange, @Nullable Collection<FilePath> dirtyPaths) {
+    GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.DIFF);
+    handler.addParameters("--name-status", "--diff-filter=ADCMRUXT", "-M", diffRange);
+    handler.setNoSSH(true);
+    handler.setSilent(true);
+    handler.setStdoutSuppressed(true);
+    handler.endOptions();
+    if (dirtyPaths != null) {
+      handler.addRelativePaths(dirtyPaths);
+    }
+    return handler;
+  }
+
 }

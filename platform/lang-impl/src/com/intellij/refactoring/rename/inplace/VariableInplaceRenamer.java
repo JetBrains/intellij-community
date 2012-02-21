@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -132,12 +132,18 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
     return stringUsages.isEmpty();
   }
 
+  protected boolean shouldCreateSnapshot() {
+    return true;
+  }
+
   @Override
   protected void beforeTemplateStart() {
     super.beforeTemplateStart();
     myLanguage = myScope.getLanguage();
-    final ResolveSnapshotProvider resolveSnapshotProvider = INSTANCE.forLanguage(myLanguage);
-    mySnapshot = resolveSnapshotProvider != null ? resolveSnapshotProvider.createSnapshot(myScope) : null;
+    if (shouldCreateSnapshot()) {
+      final ResolveSnapshotProvider resolveSnapshotProvider = INSTANCE.forLanguage(myLanguage);
+      mySnapshot = resolveSnapshotProvider != null ? resolveSnapshotProvider.createSnapshot(myScope) : null;
+    }
 
     final SelectionModel selectionModel = myEditor.getSelectionModel();
     mySelectedRange =

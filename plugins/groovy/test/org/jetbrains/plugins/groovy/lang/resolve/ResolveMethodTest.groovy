@@ -789,8 +789,38 @@ print new B().f<caret>oo()
 
     def resolved = ref.resolve()
     assertInstanceOf(resolved, GrMethod)
-    assertTrue(resolved.isPhysical())
+    assertTrue(resolved.physical)
   }
+
+  void testTwoMixinsInModifierList() {
+    def ref = configureByText("""
+class PersonHelper {
+  def useThePerson() {
+    Person person = new Person()
+
+    person.getUsername()
+    person.get<caret>Name()
+  }
+}
+
+@Mixin(PersonMixin)
+@Mixin(OtherPersonMixin)
+class Person { }
+
+class PersonMixin {
+  String getUsername() { }
+}
+
+class OtherPersonMixin {
+  String getName() { }
+}
+""")
+
+    def resolved = ref.resolve()
+    assertInstanceOf(resolved, GrMethod)
+    assertTrue(resolved.physical)
+  }
+
 
   void testDisjunctionType() {
     def ref = configureByText ("""

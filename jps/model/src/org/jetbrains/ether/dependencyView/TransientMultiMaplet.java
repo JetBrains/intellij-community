@@ -55,6 +55,13 @@ class TransientMultiMaplet<K, V> implements MultiMaplet<K, V> {
   }
 
   @Override
+  public void putAll(final MultiMaplet<K, V> m) {
+    for (Map.Entry<K, Collection<V>> e : m.entrySet()) {
+      put(e.getKey(), e.getValue());
+    }
+  }
+
+  @Override
   public void put(final K key, final Collection<V> value) {
     final Collection<V> x = myMap.get(key);
     if (x == null) {
@@ -102,7 +109,7 @@ class TransientMultiMaplet<K, V> implements MultiMaplet<K, V> {
   }
 
   @Override
-  public void putAll(MultiMaplet<K, V> m) {
+  public void replaceAll(MultiMaplet<K, V> m) {
     for (Map.Entry<K, Collection<V>> e : m.entrySet()) {
       remove(e.getKey());
       put(e.getKey(), e.getValue());

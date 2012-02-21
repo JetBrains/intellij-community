@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
@@ -61,7 +60,6 @@ import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -75,6 +73,7 @@ import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.AutoScrollFromSourceHandler;
 import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.ui.GuiUtils;
@@ -157,7 +156,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   @Deprecated static final String PROJECT_VIEW_DATA_CONSTANT = DATA_KEY.getName();
 
   private DefaultActionGroup myActionGroup;
-  private final Runnable myTreeChangeListener;
   private String mySavedPaneId = ProjectViewPane.ID;
   private String mySavedPaneSubId;
   //private static final Icon COMPACT_EMPTY_MIDDLE_PACKAGES_ICON = IconLoader.getIcon("/objectBrowser/compactEmptyPackages.png");
@@ -200,11 +198,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
     Disposer.register(myProject, this);
     myFileEditorManager = fileEditorManager;
-    myTreeChangeListener = new Runnable() {
-      public void run() {
-        updateToolWindowTitle();
-      }
-    };
 
     myConnection = project.getMessageBus().connect();
     myConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
@@ -474,15 +467,13 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     createToolbarActions();
     updateTitleActions();
 
-    newPane.setTreeChangeListener(myTreeChangeListener);
     myAutoScrollToSourceHandler.install(newPane.myTree);
 
     IdeFocusManager.getInstance(myProject).requestFocus(newPane.getComponentToFocus(), false);
-    updateToolWindowTitle();
 
     newPane.restoreExpandedPaths();
     if (selectedPsiElement != null) {
-      final VirtualFile virtualFile = PsiUtilBase.getVirtualFile(selectedPsiElement);
+      final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(selectedPsiElement);
       if (virtualFile != null && ((ProjectViewSelectInTarget)newPane.createSelectInTarget()).isSubIdSelectable(newSubId, new SelectInContext() {
         @NotNull
         public Project getProject() {
@@ -752,49 +743,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
   public String getCurrentViewId() {
     return myCurrentViewId;
-  }
-
-  private void updateToolWindowTitle() {
-    if (true) return;
-    ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
-    ToolWindow toolWindow = toolWindowManager == null ? null : toolWindowManager.getToolWindow(ToolWindowId.PROJECT_VIEW);
-    if (toolWindow == null) return;
-    String title = null;
-    final AbstractProjectViewPane pane = getCurrentProjectViewPane();
-    if (pane != null) {
-      final DefaultMutableTreeNode selectedNode = pane.getSelectedNode();
-      if (selectedNode != null) {
-        final Object o = selectedNode.getUserObject();
-        if (o instanceof ProjectViewNode) {
-          title = ((ProjectViewNode)o).getTitle();
-        }
-      }
-    }
-    if (title == null) {
-      if (true) return;
-
-      final PsiElement element = (PsiElement)myDataProvider.getData(LangDataKeys.PSI_ELEMENT.getName());
-      if (element != null) {
-        PsiFile file = element.getContainingFile();
-        if (file != null) {
-          title = FileUtil.getLocationRelativeToUserHome(file.getVirtualFile().getPresentableUrl());
-        }
-        else if (element instanceof PsiDirectory) {
-          title = PsiDirectoryFactory.getInstance(myProject).getQualifiedName((PsiDirectory) element, true);
-        }
-        else {
-          title = element.toString();
-        }
-      }
-      else {
-        title = "";
-        if (myProject != null) {
-          title = FileUtil.getLocationRelativeToUserHome(myProject.getPresentableUrl());
-        }
-      }
-    }
-
-    toolWindow.setTitle(title);
   }
 
   public PsiElement getParentOfCurrentSelection() {

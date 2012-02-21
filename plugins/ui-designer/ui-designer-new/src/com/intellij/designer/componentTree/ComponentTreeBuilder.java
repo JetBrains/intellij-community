@@ -36,13 +36,17 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder implements C
 
   public ComponentTreeBuilder(ComponentTree tree, DesignerEditorPanel designer) {
     super(tree, (DefaultTreeModel)tree.getModel(), new TreeContentProvider(designer), null);
+
     initRootNode();
+
     myTreeSelectionModel = getTree().getSelectionModel();
     mySurfaceArea = designer.getSurfaceArea();
     myTreeArea = new TreeEditableArea(tree, this);
     myGlassLayer = new TreeGlassLayer(tree, designer.getToolProvider(), myTreeArea);
+
     // TODO: restore expanded state
     select(mySurfaceArea.getSelection().toArray(), null);
+
     addListeners();
   }
 

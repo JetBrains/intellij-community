@@ -129,6 +129,9 @@ public class UpdateEventHandler implements ISVNEventHandler {
       else if (event.getContentsStatus() == SVNStatusType.UNCHANGED &&
                (event.getPropertiesStatus() == SVNStatusType.UNCHANGED || event.getPropertiesStatus() == SVNStatusType.UNKNOWN)) {
         myText2 = SvnBundle.message("progres.text2.updated", displayPath);
+      } else if (SVNStatusType.INAPPLICABLE.equals(event.getContentsStatus()) &&
+                 (event.getPropertiesStatus() == SVNStatusType.UNCHANGED || event.getPropertiesStatus() == SVNStatusType.UNKNOWN)) {
+        myText2 = SvnBundle.message("progres.text2.updated", displayPath);
       }
       else {
         myText2 = "";

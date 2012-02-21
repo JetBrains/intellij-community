@@ -25,6 +25,7 @@ package org.jetbrains.idea.svn17.history;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
@@ -477,7 +478,7 @@ public class SvnChangeList implements CommittedChangeList {
     final SimpleContentRevision after = createRevisionForProperty(becameUrl, change.getAfterRevision(), filePath);
     final String beforeText = before == null ? null : before.getContent();
     final String afterText = after == null ? null : after.getContent();
-    if (Comparing.equal(beforeText, afterText)) return;
+    if (Comparing.equal(beforeText, afterText) || StringUtil.isEmptyOrSpaces(beforeText) && StringUtil.isEmptyOrSpaces(afterText)) return;
     final Change additional = new Change(before, after);
     change.addAdditionalLayerElement(SvnChangeProvider.PROPERTY_LAYER, additional);
   }

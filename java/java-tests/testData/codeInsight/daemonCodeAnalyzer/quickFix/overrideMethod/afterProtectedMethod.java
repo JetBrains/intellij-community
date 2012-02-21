@@ -1,4 +1,4 @@
-// "Implement method 'foo'" "true"
+// "Override method 'foo'" "true"
 class Test {
   protected void foo(){}
 }

@@ -197,7 +197,7 @@ class GitBranchPopupActions {
         new CheckoutAction(myProject, myRepositories, myBranchName, mySelectedRepository),
         new CheckoutAsNewBranch(myProject, myRepositories, myBranchName, mySelectedRepository),
         new CompareAction(myProject, myRepositories, myBranchName, mySelectedRepository),
-        new MergeAction(myProject, myRepositories, myBranchName, mySelectedRepository),
+        new MergeAction(myProject, myRepositories, myBranchName, mySelectedRepository, true),
         new DeleteAction(myProject, myRepositories, myBranchName, mySelectedRepository)
       };
     }
@@ -298,7 +298,7 @@ class GitBranchPopupActions {
       return new AnAction[] {
         new CheckoutRemoteBranchAction(myProject, myRepositories, myBranchName, mySelectedRepository),
         new CompareAction(myProject, myRepositories, myBranchName, mySelectedRepository),
-        new MergeAction(myProject, myRepositories, myBranchName, mySelectedRepository),
+        new MergeAction(myProject, myRepositories, myBranchName, mySelectedRepository, false),
         new RemoteDeleteAction(myProject, myRepositories, myBranchName, mySelectedRepository)
       };
     }
@@ -387,19 +387,21 @@ class GitBranchPopupActions {
     private final List<GitRepository> myRepositories;
     private final String myBranchName;
     private final GitRepository mySelectedRepository;
+    private final boolean myLocalBranch;
 
     public MergeAction(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName,
-                       @NotNull GitRepository selectedRepository) {
+                       @NotNull GitRepository selectedRepository, boolean localBranch) {
       super("Merge");
       myProject = project;
       myRepositories = repositories;
       myBranchName = branchName;
       mySelectedRepository = selectedRepository;
+      myLocalBranch = localBranch;
     }
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      new GitBranchOperationsProcessor(myProject, myRepositories, mySelectedRepository).merge(myBranchName);
+      new GitBranchOperationsProcessor(myProject, myRepositories, mySelectedRepository).merge(myBranchName, myLocalBranch);
     }
 
   }
