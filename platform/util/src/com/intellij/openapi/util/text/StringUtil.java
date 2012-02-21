@@ -2247,4 +2247,23 @@ public class StringUtil {
   public static boolean isOctalDigit(char c) {
     return '0' <= c && c <= '7';
   }
+
+  @NotNull
+  public static String shortenTextWithEllipsis(final String text, final int max_length, final int suffix_length) {
+    final int prefix_length = max_length - suffix_length - 3;
+    assert prefix_length > 0;
+    final StringBuilder buffer = new StringBuilder();
+    final int textLength = text.length();
+    if (textLength > max_length) {
+      StringBuilder shorterText = new StringBuilder();
+      shorterText.append(text.substring(0, prefix_length));
+      shorterText.append("...");
+      shorterText.append(text.substring(textLength - suffix_length));
+      buffer.append(shorterText.toString());
+    }
+    else {
+      buffer.append(text);
+    }
+    return buffer.toString();
+  }
 }
