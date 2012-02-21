@@ -949,10 +949,7 @@ class PyDB:
         dispatch_func = self.trace_dispatch
 
         if also_add_to_passed_frame:
-            if frame.f_trace is None:
-                frame.f_trace = dispatch_func
-            else:
-                self.update_trace(frame, dispatch_func, overwrite_prev)
+            self.update_trace(frame, dispatch_func, overwrite_prev)
 
         frame = frame.f_back
         while frame:
@@ -962,16 +959,19 @@ class PyDB:
         del frame
 
     def update_trace(self, frame, dispatch_func, overwrite_prev):
-        if overwrite_prev:
-            frame.f_trace = dispatch_func
+        if frame.f_trace is None:
+          frame.f_trace = dispatch_func
         else:
-            try:
-                #If it's the trace_exception, go back to the frame trace dispatch!
-                if frame.f_trace.im_func.__name__ == 'trace_exception':
-                    frame.f_trace = frame.f_trace.im_self.trace_dispatch
-            except AttributeError:
-                pass
-            frame = frame.f_back
+          if overwrite_prev:
+              frame.f_trace = dispatch_func
+          else:
+              try:
+                  #If it's the trace_exception, go back to the frame trace dispatch!
+                  if frame.f_trace.im_func.__name__ == 'trace_exception':
+                      frame.f_trace = frame.f_trace.im_self.trace_dispatch
+              except AttributeError:
+                  pass
+              frame = frame.f_back
         del frame
 
 
