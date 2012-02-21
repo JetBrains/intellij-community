@@ -15,8 +15,8 @@
  */
 package com.intellij.psi.stubs;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
@@ -41,7 +41,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /*
  * @author max
  */
-public class SerializationManagerImpl extends SerializationManager implements ApplicationComponent {
+public class SerializationManagerImpl extends SerializationManager implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubs.SerializationManagerImpl");
 
   private PersistentStringEnumerator myNameStorage;
@@ -238,15 +238,7 @@ public class SerializationManagerImpl extends SerializationManager implements Ap
     return myIdToSerializer.get(id);
   }
 
-  @NotNull
-  public String getComponentName() {
-    return "PSI.SerializationManager";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
+  public void dispose() {
     performShutdown();
   }
 
