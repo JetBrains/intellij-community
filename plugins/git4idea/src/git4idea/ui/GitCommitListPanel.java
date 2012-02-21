@@ -16,7 +16,6 @@
 package git4idea.ui;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.ui.ScrollPaneFactory;
@@ -43,14 +42,11 @@ import java.util.List;
  */
 public class GitCommitListPanel extends JPanel implements TypeSafeDataProvider {
 
-  private final Project myProject;
   private final List<GitCommit> myCommits;
   private final TableView<GitCommit> myTable;
 
-  public GitCommitListPanel(@NotNull Project project, @NotNull List<GitCommit> commits) {
-    myProject = project;
+  public GitCommitListPanel(@NotNull List<GitCommit> commits) {
     myCommits = commits;
-
 
     myTable = new TableView<GitCommit>();
     updateModel();
@@ -92,6 +88,8 @@ public class GitCommitListPanel extends JPanel implements TypeSafeDataProvider {
       int row = rows[0];
 
       GitCommit gitCommit = myCommits.get(row);
+      // suppressing: inherited API
+      //noinspection unchecked
       sink.put(key, ArrayUtil.toObjectArray(gitCommit.getChanges(), Change.class));
     }
   }
