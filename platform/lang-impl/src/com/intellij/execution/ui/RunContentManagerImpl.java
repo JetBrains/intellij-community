@@ -615,12 +615,10 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
       else {
         //todo[nik] this is a temporary solution for the following problem: some configurations should not allow user to choose between 'terminating' and 'detaching'
         final boolean useDefault = Boolean.TRUE.equals(processHandler.getUserData(ALWAYS_USE_DEFAULT_STOPPING_BEHAVIOUR_KEY));
-        final TerminateRemoteProcessDialog terminateDialog = new TerminateRemoteProcessDialog(myProject, descriptor.getDisplayName(),
-                                                                                              processHandler.detachIsDefault(),
-                                                                                              useDefault);
-        terminateDialog.show();
-        if (terminateDialog.getExitCode() != DialogWrapper.OK_EXIT_CODE) return false;
-        destroyProcess = terminateDialog.forceTermination();
+        final TerminateRemoteProcessDialog.TerminateOption option = new TerminateRemoteProcessDialog.TerminateOption(processHandler.detachIsDefault(), useDefault);
+        final int rc = TerminateRemoteProcessDialog.show(myProject, descriptor.getDisplayName(), option);
+        if (rc != DialogWrapper.OK_EXIT_CODE) return false;
+        destroyProcess = !option.isToBeShown();
       }
       if (destroyProcess) {
         processHandler.destroyProcess();
