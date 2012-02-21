@@ -320,6 +320,7 @@
           <action id="PreviousTab" class="com.intellij.ide.actions.PreviousTabAction"/>
           <action id="CloseActiveTab" class="com.intellij.ide.actions.CloseActiveTabAction"/>
           <action id="PinActiveTab" class="com.intellij.ide.actions.PinActiveTabAction"/>
+          <action id="TabList" class="com.intellij.ide.actions.TabListAction"/>
           <separator/>
           <group id="CloseEditorsGroup">
             <action id="CloseContent" class="com.intellij.ide.actions.CloseAction"/>
