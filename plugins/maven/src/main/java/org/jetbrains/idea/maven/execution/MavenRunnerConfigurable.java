@@ -21,8 +21,6 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
-import com.intellij.ui.AddEditRemovePanel;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.RawCommandLineEditor;
 import org.jetbrains.annotations.Nls;
@@ -35,8 +33,9 @@ import org.jetbrains.idea.maven.utils.ComboBoxUtil;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
-import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Properties;
 
 public abstract class MavenRunnerConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private final Project myProject;
@@ -47,7 +46,7 @@ public abstract class MavenRunnerConfigurable implements SearchableConfigurable,
   private JComboBox myJdkCombo;
   private final DefaultComboBoxModel myJdkComboModel = new DefaultComboBoxModel();
   private JCheckBox mySkipTestsCheckBox;
-  private MyPropertiesPanel myPropertiesPanel;
+  private MavenPropertiesPanel myPropertiesPanel;
 
   private Map<String, String> myProperties;
 
@@ -114,7 +113,9 @@ public abstract class MavenRunnerConfigurable implements SearchableConfigurable,
 
     propertiesPanel.add(mySkipTestsCheckBox = new JCheckBox("Skip tests"), BorderLayout.NORTH);
     mySkipTestsCheckBox.setMnemonic('t');
-    propertiesPanel.add(myPropertiesPanel = new MyPropertiesPanel(), BorderLayout.CENTER);
+
+    collectProperties();
+    propertiesPanel.add(myPropertiesPanel = new MavenPropertiesPanel(myProperties), BorderLayout.CENTER);
     myPropertiesPanel.getEmptyText().setText("No properties defined");
 
     c.gridx = 0;
@@ -123,8 +124,6 @@ public abstract class MavenRunnerConfigurable implements SearchableConfigurable,
     c.gridwidth = c.gridheight = GridBagConstraints.REMAINDER;
     c.fill = GridBagConstraints.BOTH;
     panel.add(propertiesPanel, c);
-
-    collectProperties();
 
     return panel;
   }
@@ -135,9 +134,7 @@ public abstract class MavenRunnerConfigurable implements SearchableConfigurable,
 
     for (MavenProject each : s.getProjects()) {
       Properties properties = each.getProperties();
-      for (Map.Entry p : properties.entrySet()) {
-        result.put((String)p.getKey(), (String)p.getValue());
-      }
+      result.putAll((Map)properties);
     }
 
     myProperties = result;
@@ -214,61 +211,5 @@ public abstract class MavenRunnerConfigurable implements SearchableConfigurable,
     data.setJreName(ComboBoxUtil.getSelectedString(myJdkComboModel));
 
     data.setMavenProperties(myPropertiesPanel.getDataAsMap());
-  }
-
-  private class MyPropertiesPanel extends AddEditRemovePanel<Pair<String, String>> {
-    public MyPropertiesPanel() {
-      super(new MyPropertiesTableModel(), new ArrayList<Pair<String, String>>(), null);
-      setPreferredSize(new Dimension(100, 100));
-    }
-
-    protected Pair<String, String> addItem() {
-      return doAddOrEdit(new Pair<String, String>("", ""));
-    }
-
-    protected boolean removeItem(Pair<String, String> o) {
-      return true;
-    }
-
-    protected Pair<String, String> editItem(Pair<String, String> o) {
-      return doAddOrEdit(o);
-    }
-
-    private Pair<String, String> doAddOrEdit(Pair<String, String> o) {
-      EditMavenPropertyDialog d = new EditMavenPropertyDialog(myProject, o, myProperties);
-      d.show();
-      if (!d.isOK()) return null;
-      return d.getValue();
-    }
-
-    public Map<String, String> getDataAsMap() {
-      Map<String, String> result = new LinkedHashMap<String, String>();
-      for (Pair<String, String> p : getData()) {
-        result.put(p.getFirst(), p.getSecond());
-      }
-      return result;
-    }
-
-    public void setDataFromMap(Map<String, String> map) {
-      List<Pair<String, String>> result = new ArrayList<Pair<String, String>>();
-      for (Map.Entry<String, String> e : map.entrySet()) {
-        result.add(new Pair<String, String>(e.getKey(), e.getValue()));
-      }
-      setData(result);
-    }
-  }
-
-  private static class MyPropertiesTableModel extends AddEditRemovePanel.TableModel<Pair<String, String>> {
-    public int getColumnCount() {
-      return 2;
-    }
-
-    public String getColumnName(int c) {
-      return c == 0 ? "Name" : "Value";
-    }
-
-    public Object getField(Pair<String, String> o, int c) {
-      return c == 0 ? o.getFirst() : o.getSecond();
-    }
   }
 }

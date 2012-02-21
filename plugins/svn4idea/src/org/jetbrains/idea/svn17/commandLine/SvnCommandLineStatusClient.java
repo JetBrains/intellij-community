@@ -123,7 +123,7 @@ public class SvnCommandLineStatusClient implements SvnStatusClientI {
 
     final String[] changelistName = new String[1];
     final SvnStatusHandler[] svnHandl = new SvnStatusHandler[1];
-    svnHandl[0] = new SvnStatusHandler(new SvnStatusHandler.DataCallback() {
+    svnHandl[0] = new SvnStatusHandler(new SvnStatusHandler.ExternalDataCallback() {
       @Override
       public void switchPath() {
         final PortableStatus pending = svnHandl[0].getPending();
