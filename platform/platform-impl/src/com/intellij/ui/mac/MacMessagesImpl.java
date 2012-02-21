@@ -444,7 +444,7 @@ public class MacMessagesImpl extends MacMessages {
                                              // TODO: state=!doNotAsk.shouldBeShown()
                                              ? "-1"
                                              : doNotAskDialogOption.getDoNotShowMessage()),
-                                             nsString(!doNotAskDialogOption.isToBeShown()? "checked" : "-1"), null);
+                                    nsString(doNotAskDialogOption != null && !doNotAskDialogOption.isToBeShown() ? "checked" : "-1"), null);
 
             IdeFocusManager.getGlobalInstance().setTypeaheadEnabled(false);
             
