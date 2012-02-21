@@ -217,6 +217,7 @@ public class MultiProcessDebugger implements ProcessDebugger {
         new PyThreadInfo(t.getId(), threadName, t.getFrames(),
                          t.getStopReason(),
                          t.getMessage());
+      newThread.updateState(t.getState(), t.getFrames());
       result.add(newThread);
     }
     threads = result;
