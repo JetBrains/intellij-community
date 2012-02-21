@@ -208,7 +208,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
         }
 
         @Override
-        public void finished() {
+        public void finished(@Nullable PyExternalProcessException exception) {
           setRunningPackagingTasks(myModule, false);
         }
       });
