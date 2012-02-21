@@ -61,6 +61,7 @@ public class MavenModuleBuilderHelper {
   private final boolean myInheritVersion;
 
   private final MavenArchetype myArchetype;
+  private final Map<String, String> myPropertiesToCreateByArtifact;
 
   private final String myCommandName;
 
@@ -70,6 +71,7 @@ public class MavenModuleBuilderHelper {
                                   boolean inheritGroupId,
                                   boolean inheritVersion,
                                   MavenArchetype archetype,
+                                  Map<String, String> propertiesToCreateByArtifact,
                                   String commaneName) {
     myProjectId = projectId;
     myAggregatorProject = aggregatorProject;
@@ -77,6 +79,8 @@ public class MavenModuleBuilderHelper {
     myInheritGroupId = inheritGroupId;
     myInheritVersion = inheritVersion;
     myArchetype = archetype;
+    myPropertiesToCreateByArtifact = propertiesToCreateByArtifact;
+    assert (archetype == null) == (propertiesToCreateByArtifact == null);
     myCommandName = commaneName;
   }
 
@@ -194,14 +198,16 @@ public class MavenModuleBuilderHelper {
     Map<String, String> props = settings.getMavenProperties();
 
     props.put("interactiveMode", "false");
-    props.put("archetypeGroupId", myArchetype.groupId);
-    props.put("archetypeArtifactId", myArchetype.artifactId);
-    props.put("archetypeVersion", myArchetype.version);
-    if (myArchetype.repository != null) props.put("archetypeRepository", myArchetype.repository);
+    //props.put("archetypeGroupId", myArchetype.groupId);
+    //props.put("archetypeArtifactId", myArchetype.artifactId);
+    //props.put("archetypeVersion", myArchetype.version);
+    //if (myArchetype.repository != null) props.put("archetypeRepository", myArchetype.repository);
 
-    props.put("groupId", myProjectId.getGroupId());
-    props.put("artifactId", myProjectId.getArtifactId());
-    props.put("version", myProjectId.getVersion());
+    //props.put("groupId", myProjectId.getGroupId());
+    //props.put("artifactId", myProjectId.getArtifactId());
+    //props.put("version", myProjectId.getVersion());
+
+    props.putAll(myPropertiesToCreateByArtifact);
 
     runner.run(params, settings, new Runnable() {
       public void run() {

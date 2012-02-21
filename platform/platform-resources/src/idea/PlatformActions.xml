@@ -346,6 +346,7 @@
         <group id="OpenProjectWindows" class="com.intellij.openapi.wm.impl.ProjectWindowActionGroup">
           <action id="NextProjectWindow" class="com.intellij.openapi.wm.impl.NextProjectWindow"/>
           <action id="PreviousProjectWindow" class="com.intellij.openapi.wm.impl.PreviousProjectWindow"/>
+          <separator/>
         </group>
       </group>
 

@@ -70,13 +70,11 @@ public class GradleProjectStructureNode<T extends GradleEntityId> extends Defaul
     for (int i = 0; i < getChildCount(); i++) {
       GradleProjectStructureNode<?> node = getChildAt(i);
       if (NODE_COMPARATOR.compare((GradleProjectStructureNode<?>)newChild, node) <= 0) {
-        insert(newChild, i);
-        onNodeAdded((GradleProjectStructureNode<?>)newChild, i);
+        insert(newChild, i); // Assuming that the node listeners are notified during the nested call.
         return;
       }
     }
-    super.add(newChild);
-    onNodeAdded((GradleProjectStructureNode<?>)newChild, getChildCount() - 1);
+    super.add(newChild); // Assuming that the node listeners are notified during the nested call to 'insert()'.
   }
 
   @Override
@@ -105,26 +103,40 @@ public class GradleProjectStructureNode<T extends GradleEntityId> extends Defaul
    * Does nothing if given node is not a child of the current node.
    * 
    * @param child  target child node
+   * @return       <code>true</code> if child position was changed; <code>false</code> otherwise
    */
-  public void correctChildPositionIfNecessary(@NotNull GradleProjectStructureNode<?> child) {
+  public boolean correctChildPositionIfNecessary(@NotNull GradleProjectStructureNode<?> child) {
     int currentPosition = -1;
-    int desiredPosition = getChildCount() - 1;
+    int desiredPosition = -1;
     for (int i = 0; i < getChildCount(); i++) {
       GradleProjectStructureNode<?> node = getChildAt(i);
       if (node == child) {
         currentPosition = i;
         continue;
       }
-      if (NODE_COMPARATOR.compare(child, node) <= 0) {
+      if (desiredPosition < 0 && NODE_COMPARATOR.compare(child, node) <= 0) {
         desiredPosition = i;
+        if (currentPosition >= 0) {
+          break;
+        }
       }
     }
     if (currentPosition < 0) {
       // Given node is not a child of the current node.
-      return;
+      return false;
+    }
+    if (desiredPosition < 0) {
+      desiredPosition = getChildCount();
+    }
+    if (currentPosition < desiredPosition) {
+      desiredPosition--;
+    }
+    if (currentPosition == desiredPosition) {
+      return false;
     }
     remove(currentPosition);
     insert(child, desiredPosition);
+    return true;
   }
 
   /**
@@ -145,7 +157,12 @@ public class GradleProjectStructureNode<T extends GradleEntityId> extends Defaul
    */
   public void addConflictChange(@NotNull GradleProjectStructureChange change) {
     myConflictChanges.add(change);
-    if (myConflictChanges.size() == 1) {
+    if (myConflictChanges.size() != 1) {
+      return;
+    }
+    final TextAttributesKey key = myDescriptor.getAttributes();
+    boolean localNode = key == GradleTextAttributes.GRADLE_LOCAL_CHANGE || key == GradleTextAttributes.INTELLIJ_LOCAL_CHANGE;
+    if (!localNode) {
       myDescriptor.setAttributes(GradleTextAttributes.GRADLE_CHANGE_CONFLICT);
       onNodeChanged(this);
     }
@@ -219,7 +236,15 @@ public class GradleProjectStructureNode<T extends GradleEntityId> extends Defaul
 
   public void setAttributes(@NotNull TextAttributesKey key) {
     myDescriptor.setAttributes(key);
-    onNodeChanged(this);
+    final GradleProjectStructureNode<?> parent = getParent();
+    if (parent == null) {
+      onNodeChanged(this);
+      return;
+    }
+    boolean positionChanged = parent.correctChildPositionIfNecessary(this);
+    if (!positionChanged) {
+      onNodeChanged(this);
+    }
   }
   
   public void addListener(@NotNull Listener listener) {
@@ -232,9 +257,9 @@ public class GradleProjectStructureNode<T extends GradleEntityId> extends Defaul
     }
   }
 
-  private void onNodeRemoved(@NotNull GradleProjectStructureNode<?> node, int index) {
+  private void onNodeRemoved(@NotNull GradleProjectStructureNode<?> node, int removedChildIndex) {
     for (Listener listener : myListeners) {
-      listener.onNodeRemoved(node, index);
+      listener.onNodeRemoved(this, node, removedChildIndex);
     }
   }
 
@@ -246,7 +271,9 @@ public class GradleProjectStructureNode<T extends GradleEntityId> extends Defaul
   
   public interface Listener {
     void onNodeAdded(@NotNull GradleProjectStructureNode<?> node, int index);
-    void onNodeRemoved(@NotNull GradleProjectStructureNode<?> node, int index);
+    void onNodeRemoved(@NotNull GradleProjectStructureNode<?> parent,
+                       @NotNull GradleProjectStructureNode<?> removedChild,
+                       int removedChildIndex);
     void onNodeChanged(@NotNull GradleProjectStructureNode<?> node);
   }
 }

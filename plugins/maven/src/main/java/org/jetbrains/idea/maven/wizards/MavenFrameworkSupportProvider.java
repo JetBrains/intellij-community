@@ -67,7 +67,7 @@ public class MavenFrameworkSupportProvider extends FrameworkSupportProvider {
         }
         else {
           new MavenModuleBuilderHelper(new MavenId("groupId", module.getName(), "1.0-SNAPSHOT"), null, null, false, false, null,
-                                       "Add Maven Support").configure(model.getProject(), root, true);
+                                       null, "Add Maven Support").configure(model.getProject(), root, true);
         }
       }
     };

@@ -673,4 +673,22 @@ List<?> list2
   public void testGloballyUnusedSymbols() {
     doTest(new GroovyUnusedDeclarationInspection(), new UnusedDeclarationInspection())
   }
+
+  public void testAliasInParameterType() {
+    myFixture.configureByText('a_.groovy', '''\
+import java.awt.event.ActionListener
+import java.awt.event.ActionEvent as AE
+
+public class CorrectImplementor implements ActionListener {
+  public void actionPerformed (AE e) { //AE is alias to ActionEvent
+  }
+}
+
+<error descr="Method 'actionPerformed' is not implemented">public class IncorrectImplementor implements ActionListener</error> {
+  public void actionPerformed (Object e) {
+  }
+}
+''')
+    myFixture.testHighlighting(true, false, false)
+  }
 }

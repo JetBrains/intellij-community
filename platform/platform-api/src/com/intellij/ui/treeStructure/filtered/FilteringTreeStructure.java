@@ -100,6 +100,7 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
   }
 
   private void setUnknown(FilteringNode node) {
+    if (node.state == State.UNKNOWN) return;
     node.state = State.UNKNOWN;
     List<FilteringNode> nodes = myNodesCache.get(node);
     if (nodes != null) {

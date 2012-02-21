@@ -44,14 +44,17 @@ public class SvnStatusHandler extends DefaultHandler {
   private List<PortableStatus> myDefaultListStatuses;
   private MultiMap<String, PortableStatus> myCurrentListChanges;
   private PortableStatus myPending;
+  private boolean myInRemoteStatus;
+  private SVNLockWrapper myLockWrapper;
 
   private final List<ElementHandlerBase> myParseStack;
   private final Map<String, Getter<ElementHandlerBase>> myElementsMap;
   private final DataCallback myDataCallback;
   private final File myBase;
   private final StringBuilder mySb;
+  private boolean myAnythingReported;
 
-  public SvnStatusHandler(final DataCallback dataCallback, File base, final Convertor<File, SVNInfo> infoGetter) {
+  public SvnStatusHandler(final ExternalDataCallback dataCallback, File base, final Convertor<File, SVNInfo> infoGetter) {
     myBase = base;
     myParseStack = new ArrayList<ElementHandlerBase>();
     myParseStack.add(new Fake());
@@ -62,7 +65,33 @@ public class SvnStatusHandler extends DefaultHandler {
     if (dataCallback != null) {
       myDataCallback = new DataCallback() {
         @Override
+        public void startLock() {
+          myLockWrapper = new SVNLockWrapper();
+        }
+
+        @Override
+        public void endLock() {
+          if (myInRemoteStatus) {
+            myPending.setRemoteLock(myLockWrapper.create());
+          } else {
+            myPending.setLocalLock(myLockWrapper.create());
+          }
+          myLockWrapper = null;
+        }
+
+        @Override
+        public void startRemoteStatus() {
+          myInRemoteStatus = true;
+        }
+
+        @Override
+        public void endRemoteStatus() {
+          myInRemoteStatus = false;
+        }
+
+        @Override
         public void switchPath() {
+          myAnythingReported = true;
           dataCallback.switchPath();
           newPending(infoGetter);
         }
@@ -75,7 +104,33 @@ public class SvnStatusHandler extends DefaultHandler {
     } else {
       myDataCallback = new DataCallback() {
         @Override
+        public void startLock() {
+          myLockWrapper = new SVNLockWrapper();
+        }
+
+        @Override
+        public void endLock() {
+          if (myInRemoteStatus) {
+            myPending.setRemoteLock(myLockWrapper.create());
+          } else {
+            myPending.setLocalLock(myLockWrapper.create());
+          }
+          myLockWrapper = null;
+        }
+
+        @Override
+        public void startRemoteStatus() {
+          myInRemoteStatus = true;
+        }
+
+        @Override
+        public void endRemoteStatus() {
+          myInRemoteStatus = false;
+        }
+
+        @Override
         public void switchPath() {
+          myAnythingReported = true;
           if (myChangelistName == null) {
             myDefaultListStatuses.add(myPending);
           } else {
@@ -92,6 +147,10 @@ public class SvnStatusHandler extends DefaultHandler {
     }
     newPending(infoGetter);
     mySb = new StringBuilder();
+  }
+
+  public boolean isAnythingReported() {
+    return myAnythingReported;
   }
 
   private void newPending(final Convertor<File, SVNInfo> infoGetter) {
@@ -118,6 +177,44 @@ public class SvnStatusHandler extends DefaultHandler {
   }
 
   private void fillElements() {
+    myElementsMap.put("repos-status", new Getter<ElementHandlerBase>() {
+      @Override
+      public ElementHandlerBase get() {
+        return new ReposStatus();
+      }
+    });
+    myElementsMap.put("lock", new Getter<ElementHandlerBase>() {
+      @Override
+      public ElementHandlerBase get() {
+        return new Lock();
+      }
+    });
+
+    myElementsMap.put("token", new Getter<ElementHandlerBase>() {
+      @Override
+      public ElementHandlerBase get() {
+        return new LockToken();
+      }
+    });
+    myElementsMap.put("owner", new Getter<ElementHandlerBase>() {
+      @Override
+      public ElementHandlerBase get() {
+        return new LockOwner();
+      }
+    });
+    myElementsMap.put("comment", new Getter<ElementHandlerBase>() {
+      @Override
+      public ElementHandlerBase get() {
+        return new LockComment();
+      }
+    });
+    myElementsMap.put("created", new Getter<ElementHandlerBase>() {
+      @Override
+      public ElementHandlerBase get() {
+        return new LockCreatedDate();
+      }
+    });
+// --
     myElementsMap.put("status", new Getter<ElementHandlerBase>() {
       @Override
       public ElementHandlerBase get() {
@@ -178,7 +275,7 @@ public class SvnStatusHandler extends DefaultHandler {
     assertSAX(! myParseStack.isEmpty());
     ElementHandlerBase current = myParseStack.get(myParseStack.size() - 1);
     if (mySb.length() > 0) {
-      current.characters(mySb.toString().trim(), myPending);
+      current.characters(mySb.toString().trim(), myPending, myLockWrapper);
       mySb.setLength(0);
     }
 
@@ -187,7 +284,8 @@ public class SvnStatusHandler extends DefaultHandler {
       if (createNewChild) {
         assertSAX(myElementsMap.containsKey(qName));
         final ElementHandlerBase newChild = myElementsMap.get(qName).get();
-        newChild.updateStatus(attributes, myPending);
+        newChild.preEffect(myDataCallback);
+        newChild.updateStatus(attributes, myPending, myLockWrapper);
         myParseStack.add(newChild);
         return;
       } else {
@@ -228,7 +326,7 @@ public class SvnStatusHandler extends DefaultHandler {
     }
 
     @Override
-    protected void updateStatus(Attributes attributes, PortableStatus status) throws SAXException {
+    protected void updateStatus(Attributes attributes, PortableStatus status, SVNLockWrapper lock) throws SAXException {
     }
 
     @Override
@@ -240,7 +338,7 @@ public class SvnStatusHandler extends DefaultHandler {
     }
 
     @Override
-    public void characters(String s, PortableStatus pending) {
+    public void characters(String s, PortableStatus pending, SVNLockWrapper lock) {
     }
   }
 
@@ -250,7 +348,7 @@ public class SvnStatusHandler extends DefaultHandler {
     }
 
     @Override
-    protected void updateStatus(Attributes attributes, PortableStatus status) throws SAXException {
+    protected void updateStatus(Attributes attributes, PortableStatus status, SVNLockWrapper lock) throws SAXException {
     }
 
     @Override
@@ -262,7 +360,7 @@ public class SvnStatusHandler extends DefaultHandler {
     }
 
     @Override
-    public void characters(String s, PortableStatus pending) {
+    public void characters(String s, PortableStatus pending, SVNLockWrapper lock) {
       final SVNDate date = SVNDate.parseDate(s);
       //if (SVNDate.NULL.equals(date)) return;
       pending.setRemoteDate(date);
@@ -275,7 +373,7 @@ public class SvnStatusHandler extends DefaultHandler {
     }
 
     @Override
-    protected void updateStatus(Attributes attributes, PortableStatus status) throws SAXException {
+    protected void updateStatus(Attributes attributes, PortableStatus status, SVNLockWrapper lock) throws SAXException {
     }
 
     @Override
@@ -287,7 +385,7 @@ public class SvnStatusHandler extends DefaultHandler {
     }
 
     @Override
-    public void characters(String s, PortableStatus pending) {
+    public void characters(String s, PortableStatus pending, SVNLockWrapper lock) {
       pending.setRemoteAuthor(s);
     }
   }
@@ -303,7 +401,7 @@ public class SvnStatusHandler extends DefaultHandler {
     }
 
     @Override
-    protected void updateStatus(Attributes attributes, PortableStatus status) throws SAXException {
+    protected void updateStatus(Attributes attributes, PortableStatus status, SVNLockWrapper lock) throws SAXException {
       final String revision = attributes.getValue("revision");
       if (! StringUtil.isEmptyOrSpaces(revision)) {
         try {
@@ -324,7 +422,177 @@ public class SvnStatusHandler extends DefaultHandler {
     }
 
     @Override
-    public void characters(String s, PortableStatus pending) {
+    public void characters(String s, PortableStatus pending, SVNLockWrapper lock) {
+    }
+  }
+
+  /*<lock>
+  <token>opaquelocktoken:27ee743a-5376-fc4a-a209-b7834e1a3f39</token>
+  <owner>admin</owner>
+  <comment>LLL</comment>
+  <created>2012-02-21T09:59:39.771077Z</created>
+  </lock>*/
+
+  /*<lock>
+  <token>opaquelocktoken:e21e93d2-0623-b347-bb39-900b01387555</token>
+  <owner>admin</owner>
+  <comment>787878</comment>
+  <created>2012-02-21T10:17:29.160005Z</created>
+  </lock>
+  </wc-status>
+  <repos-status
+     props="none"
+     item="none">
+  <lock>
+  <token>opaquelocktoken:e21e93d2-0623-b347-bb39-900b01387555</token>
+  <owner>admin</owner>
+  <comment>787878</comment>
+  <created>2012-02-21T10:17:29.160005Z</created>
+  </lock>
+  </repos-status>
+  </entry>*/
+
+  private static class LockCreatedDate extends ElementHandlerBase {
+    private LockCreatedDate() {
+      super(new String[]{}, new String[]{});
+    }
+
+    @Override
+    protected void updateStatus(Attributes attributes, PortableStatus status, SVNLockWrapper lock) throws SAXException {
+    }
+
+    @Override
+    public void postEffect(DataCallback callback) {
+    }
+
+    @Override
+    public void preEffect(DataCallback callback) {
+    }
+
+    @Override
+    public void characters(String s, PortableStatus pending, SVNLockWrapper lock) {
+      final SVNDate date = SVNDate.parseDate(s);
+      lock.setCreationDate(date);
+    }
+  }
+
+  private static class LockComment extends ElementHandlerBase {
+    private LockComment() {
+      super(new String[]{}, new String[]{});
+    }
+
+    @Override
+    protected void updateStatus(Attributes attributes, PortableStatus status, SVNLockWrapper lock) throws SAXException {
+    }
+
+    @Override
+    public void postEffect(DataCallback callback) {
+    }
+
+    @Override
+    public void preEffect(DataCallback callback) {
+    }
+
+    @Override
+    public void characters(String s, PortableStatus pending, SVNLockWrapper lock) {
+      lock.setComment(s);
+    }
+  }
+
+  private static class LockOwner extends ElementHandlerBase {
+    private LockOwner() {
+      super(new String[]{}, new String[]{});
+    }
+
+    @Override
+    protected void updateStatus(Attributes attributes, PortableStatus status, SVNLockWrapper lock) throws SAXException {
+    }
+
+    @Override
+    public void postEffect(DataCallback callback) {
+    }
+
+    @Override
+    public void preEffect(DataCallback callback) {
+    }
+
+    @Override
+    public void characters(String s, PortableStatus pending, SVNLockWrapper lock) {
+      lock.setOwner(s);
+    }
+  }
+
+  private static class LockToken extends ElementHandlerBase {
+    private LockToken() {
+      super(new String[]{}, new String[]{});
+    }
+
+    @Override
+    protected void updateStatus(Attributes attributes, PortableStatus status, SVNLockWrapper lock) throws SAXException {
+    }
+
+    @Override
+    public void postEffect(DataCallback callback) {
+    }
+
+    @Override
+    public void preEffect(DataCallback callback) {
+    }
+
+    @Override
+    public void characters(String s, PortableStatus pending, SVNLockWrapper lock) {
+      lock.setID(s);
+    }
+  }
+
+  private static class Lock extends ElementHandlerBase {
+    private Lock() {
+      super(new String[]{"token","owner","comment","created"}, new String[]{});
+    }
+
+    @Override
+    protected void updateStatus(Attributes attributes, PortableStatus status, SVNLockWrapper lock) throws SAXException {
+      // todo check inside-repository path
+      lock.setPath(status.getPath());
+    }
+
+    @Override
+    public void postEffect(DataCallback callback) {
+      callback.endLock();
+    }
+
+    @Override
+    public void preEffect(DataCallback callback) {
+      callback.startLock();
+    }
+
+    @Override
+    public void characters(String s, PortableStatus pending, SVNLockWrapper lock) {
+    }
+  }
+
+  private static class ReposStatus extends ElementHandlerBase {
+    private ReposStatus() {
+      super(new String[]{"lock"}, new String[]{});
+    }
+
+    @Override
+    protected void updateStatus(Attributes attributes, PortableStatus status, SVNLockWrapper lock) throws SAXException {
+      //not used now
+    }
+
+    @Override
+    public void postEffect(DataCallback callback) {
+      callback.endRemoteStatus();
+    }
+
+    @Override
+    public void preEffect(DataCallback callback) {
+      callback.startRemoteStatus();
+    }
+
+    @Override
+    public void characters(String s, PortableStatus pending, SVNLockWrapper lock) {
     }
   }
 
@@ -336,7 +604,7 @@ public class SvnStatusHandler extends DefaultHandler {
   */
   private static class WcStatus extends ElementHandlerBase {
     private WcStatus() {
-      super(new String[]{"commit"}, new String[]{});
+      super(new String[]{"commit", "lock"}, new String[]{});
     }
 
     /*<wc-status
@@ -346,7 +614,7 @@ public class SvnStatusHandler extends DefaultHandler {
        revision="120">*/
 
     @Override
-    protected void updateStatus(Attributes attributes, PortableStatus status) throws SAXException {
+    protected void updateStatus(Attributes attributes, PortableStatus status, SVNLockWrapper lock) throws SAXException {
       final String props = attributes.getValue("props");
       assertSAX(props != null);
       final SVNStatusType propertiesStatus = StatusCallbackConvertor.convert(org.apache.subversion.javahl.types.Status.Kind.valueOf(props));
@@ -394,7 +662,7 @@ public class SvnStatusHandler extends DefaultHandler {
     }
 
     @Override
-    public void characters(String s, PortableStatus pending) {
+    public void characters(String s, PortableStatus pending, SVNLockWrapper lock) {
     }
   }
 
@@ -407,12 +675,17 @@ public class SvnStatusHandler extends DefaultHandler {
     }
 
     @Override
-    protected void updateStatus(Attributes attributes, PortableStatus status) throws SAXException {
+    protected void updateStatus(Attributes attributes, PortableStatus status, SVNLockWrapper lock) throws SAXException {
       final String path = attributes.getValue("path");
       assertSAX(path != null);
       final File file = new File(myBase, path);
       status.setFile(file);
-      status.setKind(file.isDirectory() ? SVNNodeKind.DIR : SVNNodeKind.FILE);
+      final boolean exists = file.exists();
+      if (exists) {
+        status.setKind(exists, file.isDirectory() ? SVNNodeKind.DIR : SVNNodeKind.FILE);
+      } else {
+        status.setKind(exists, SVNNodeKind.UNKNOWN);
+      }
       status.setPath(path);
     }
 
@@ -426,7 +699,7 @@ public class SvnStatusHandler extends DefaultHandler {
     }
 
     @Override
-    public void characters(String s, PortableStatus pending) {
+    public void characters(String s, PortableStatus pending, SVNLockWrapper lock) {
     }
   }
 
@@ -438,7 +711,7 @@ public class SvnStatusHandler extends DefaultHandler {
     }
 
     @Override
-    protected void updateStatus(Attributes attributes, PortableStatus status) throws SAXException {
+    protected void updateStatus(Attributes attributes, PortableStatus status, SVNLockWrapper lock) throws SAXException {
       final String name = attributes.getValue("name");
       assertSAX(! StringUtil.isEmptyOrSpaces(name));
       myName = name;
@@ -454,7 +727,7 @@ public class SvnStatusHandler extends DefaultHandler {
     }
 
     @Override
-    public void characters(String s, PortableStatus pending) {
+    public void characters(String s, PortableStatus pending, SVNLockWrapper lock) {
     }
   }
 
@@ -464,7 +737,7 @@ public class SvnStatusHandler extends DefaultHandler {
     }
 
     @Override
-    protected void updateStatus(Attributes attributes, PortableStatus status) {
+    protected void updateStatus(Attributes attributes, PortableStatus status, SVNLockWrapper lock) {
     }
 
     @Override
@@ -476,7 +749,7 @@ public class SvnStatusHandler extends DefaultHandler {
     }
 
     @Override
-    public void characters(String s, PortableStatus pending) {
+    public void characters(String s, PortableStatus pending, SVNLockWrapper lock) {
     }
   }
 
@@ -486,7 +759,7 @@ public class SvnStatusHandler extends DefaultHandler {
     }
 
     @Override
-    protected void updateStatus(Attributes attributes, PortableStatus status) {
+    protected void updateStatus(Attributes attributes, PortableStatus status, SVNLockWrapper lock) {
     }
 
     @Override
@@ -498,7 +771,7 @@ public class SvnStatusHandler extends DefaultHandler {
     }
 
     @Override
-    public void characters(String s, PortableStatus pending) {
+    public void characters(String s, PortableStatus pending, SVNLockWrapper lock) {
     }
   }
 
@@ -511,7 +784,7 @@ public class SvnStatusHandler extends DefaultHandler {
       myAwaitedChildrenMultiple = new HashSet<String>(Arrays.asList(awaitedChildrenMultiple));
     }
 
-    protected abstract void updateStatus(Attributes attributes, PortableStatus status) throws SAXException;
+    protected abstract void updateStatus(Attributes attributes, PortableStatus status, SVNLockWrapper lock) throws SAXException;
     public abstract void postEffect(final DataCallback callback);
     public abstract void preEffect(final DataCallback callback);
 
@@ -522,10 +795,19 @@ public class SvnStatusHandler extends DefaultHandler {
       return myAwaitedChildren.remove(qName);
     }
 
-    public abstract void characters(String s, PortableStatus pending);
+    public abstract void characters(String s, PortableStatus pending, SVNLockWrapper lock);
   }
 
-  public interface DataCallback {
+  public interface ExternalDataCallback {
+    void switchPath();
+    void switchChangeList(final String newList);
+  }
+
+  private interface DataCallback extends ExternalDataCallback {
+    void startRemoteStatus();
+    void endRemoteStatus();
+    void startLock();
+    void endLock();
     void switchPath();
     void switchChangeList(final String newList);
   }

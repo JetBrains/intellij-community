@@ -10,6 +10,11 @@ message Message {
     required sint64 least_sig_bits = 2;
   }
 
+  message KeyValuePair {
+    required string key = 1;
+    required string value = 2;
+  }
+
   enum Type {
     REQUEST = 1;
     RESPONSE = 2;
@@ -44,6 +49,7 @@ message Message {
       repeated string module_name = 3;
       repeated string file_path = 4;
       repeated string artifact_name = 5;
+      repeated KeyValuePair builder_parameter = 6;
     }
 
     message ShutdownCommand {
@@ -56,11 +62,6 @@ message Message {
 
     message SetupCommand {
 
-      message PathVariable {
-        required string name = 1;
-        required string value = 2;
-      }
-
       message GlobalLibrary {
         required string name = 1;
         optional string homePath = 2;
@@ -69,7 +70,7 @@ message Message {
         repeated string path = 5;
       }
 
-      repeated PathVariable path_variable = 1;
+      repeated KeyValuePair path_variable = 1;
       repeated GlobalLibrary global_library = 2;
       optional string global_encoding = 3;
     }

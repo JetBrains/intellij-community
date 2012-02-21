@@ -59,7 +59,7 @@ public class GradleEntityIdMapper {
 
         @Override
         public void visit(@NotNull GradleModuleDependency dependency) {
-          result.set(new GradleLibraryDependencyId(GradleEntityOwner.GRADLE, dependency.getOwnerModule().getName(), dependency.getName()));
+          result.set(new GradleModuleDependencyId(GradleEntityOwner.GRADLE, dependency.getOwnerModule().getName(), dependency.getName()));
         }
 
         @Override
@@ -74,7 +74,7 @@ public class GradleEntityIdMapper {
 
         @Override
         public void visit(@NotNull GradleLibrary library) {
-          // TODO den implement 
+          result.set(new GradleLibraryId(GradleEntityOwner.GRADLE, library.getName())); 
         }
       });
     }

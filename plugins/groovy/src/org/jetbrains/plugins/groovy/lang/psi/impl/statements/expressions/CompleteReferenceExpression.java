@@ -342,6 +342,8 @@ public class CompleteReferenceExpression {
     private final Set<String> myPropertyNames = new HashSet<String>();
     private final Set<String> myLocalVars = new HashSet<String>();
     private final Set<GrMethod> myProcessedMethodWithOptionalParams = new HashSet<GrMethod>();
+    private final boolean myFieldPointerOperator;
+    private final boolean myMethodPointerOperator;
 
     protected CompleteReferenceProcessor(GrReferenceExpression place, Consumer<Object> consumer, @NotNull PrefixMatcher matcher, CompletionParameters parameters) {
       super(null, EnumSet.allOf(ResolveKind.class), place, PsiType.EMPTY_ARRAY);
@@ -352,6 +354,9 @@ public class CompleteReferenceExpression {
       mySkipPackages = PsiImplUtil.getRuntimeQualifier(place) == null;
       myEventListener = JavaPsiFacade.getInstance(place.getProject()).findClass("java.util.EventListener", place.getResolveScope());
       myPropertyNames.addAll(addAllRestrictedProperties(place));
+
+      myFieldPointerOperator = place.hasAt();
+      myMethodPointerOperator = place.getDotTokenType() == GroovyTokenTypes.mMEMBER_POINTER;
     }
 
     @Override
@@ -396,17 +401,25 @@ public class CompleteReferenceExpression {
                                              result.isInvokedOnProperty());
       }
 
+      if (myFieldPointerOperator && !(element instanceof PsiVariable)) {
+        return;
+      }
+      if (myMethodPointerOperator && !(element instanceof PsiMethod)) {
+        return;
+      }
       addCandidate(result);
 
-      if (element instanceof PsiMethod) {
-        processProperty((PsiMethod)element, result);
-      }
-      else if (element instanceof GrField) {
-        if (((GrField)element).isProperty()) {
-          processPropertyFromField((GrField)element, result);
+      if (!myFieldPointerOperator && !myMethodPointerOperator) {
+        if (element instanceof PsiMethod) {
+          processProperty((PsiMethod)element, result);
+        }
+        else if (element instanceof GrField) {
+          if (((GrField)element).isProperty()) {
+            processPropertyFromField((GrField)element, result);
+          }
         }
       }
-      else if (element instanceof GrVariable) {
+      if (element instanceof GrVariable && !(element instanceof GrField)) {
         myLocalVars.add(((GrVariable)element).getName());
       }
     }

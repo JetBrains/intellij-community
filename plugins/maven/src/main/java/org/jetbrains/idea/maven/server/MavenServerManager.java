@@ -19,7 +19,10 @@ import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.configurations.CommandLineState;
+import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.RunProfileState;
+import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.rmi.RemoteProcessSupport;
@@ -54,6 +57,7 @@ import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
 import java.nio.charset.Charset;
@@ -178,13 +182,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> {
         params.setMainClass(MAIN_CLASS);
 
         Map<String, String> defs = new THashMap<String, String>();
-        
-        String mavenOpts = System.getenv("MAVEN_OPTS");
-        if (mavenOpts != null) {
-          ParametersList mavenOptsList = new ParametersList();
-          mavenOptsList.addParametersString(mavenOpts);
-          defs.putAll(mavenOptsList.getProperties());
-        }
+        defs.putAll(MavenUtil.getPropertiesFromMavenOpts());
 
         // pass ssl-related options
         for (Map.Entry<Object, Object> each : System.getProperties().entrySet()) {

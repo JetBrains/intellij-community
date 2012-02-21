@@ -123,7 +123,7 @@ public class SvnCommandLineStatusClient implements SvnStatusClientI {
 
     final String[] changelistName = new String[1];
     final SvnStatusHandler[] svnHandl = new SvnStatusHandler[1];
-    svnHandl[0] = new SvnStatusHandler(new SvnStatusHandler.DataCallback() {
+    svnHandl[0] = new SvnStatusHandler(new SvnStatusHandler.ExternalDataCallback() {
       @Override
       public void switchPath() {
         final PortableStatus pending = svnHandl[0].getPending();
@@ -161,7 +161,9 @@ public class SvnCommandLineStatusClient implements SvnStatusClientI {
       // todo not synchronized wrapper stream!
       SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
       parser.parse(new StringBufferInputStream(result), svnHandl[0]);
-
+      if (! svnHandl[0].isAnythingReported()) {
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY));
+      }
     }
     catch (SvnExceptionWrapper e) {
       throw (SVNException) e.getCause();

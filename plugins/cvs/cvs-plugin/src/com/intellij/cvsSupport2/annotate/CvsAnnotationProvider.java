@@ -37,6 +37,7 @@ import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,7 +49,7 @@ import java.util.*;
 public class CvsAnnotationProvider implements AnnotationProvider{
 
   @NonNls private static final String INVALID_OPTION_F = "invalid option -- F";
-  @NonNls private static final String USAGE_CVSNTSRV_SERVER = "Usage: cvsntsrv server";
+  @NonNls private static final String USAGE_CVSNTSRV_SERVER = "Usage: cvs";
 
   private final Project myProject;
   private final CvsHistoryProvider myCvsHistoryProvider;
@@ -194,7 +195,7 @@ public class CvsAnnotationProvider implements AnnotationProvider{
     }
 
     public byte[] getContent() throws IOException, VcsException {
-      return new byte[0];
+      return ArrayUtil.EMPTY_BYTE_ARRAY;
     }
   }
 

@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.maven.execution;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.ArrayUtil;
@@ -34,8 +33,8 @@ public class EditMavenPropertyDialog extends DialogWrapper {
   private JTextField myValueField;
   private final Map<String, String> myAvailableProperties;
 
-  public EditMavenPropertyDialog(Project p, Pair<String, String> value, Map<String, String> availableProperties) {
-    super(p, false);
+  public EditMavenPropertyDialog(Pair<String, String> value, Map<String, String> availableProperties) {
+    super(false);
     setTitle("Edit Maven Property");
 
     myAvailableProperties = availableProperties;

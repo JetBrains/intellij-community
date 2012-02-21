@@ -111,6 +111,7 @@ public class FileStructurePopup implements Disposable {
   private PsiElement myInitialPsiElement;
   private Map<Class, JCheckBox> myCheckBoxes = new HashMap<Class, JCheckBox>();
   private String myTestSearchFilter;
+  private final ActionCallback myTreeHasBuilt = new ActionCallback();
 
   public FileStructurePopup(StructureViewModel structureViewModel,
                             @Nullable Editor editor,
@@ -119,6 +120,7 @@ public class FileStructurePopup implements Disposable {
                             final boolean applySortAndFilter) {
     myProject = project;
     myEditor = editor;
+    IdeFocusManager.getInstance(myProject).typeAheadUntil(myTreeHasBuilt);
     myBaseTreeModel = structureViewModel;
     Disposer.register(this, auxDisposable);
     if (applySortAndFilter) {
@@ -210,8 +212,6 @@ public class FileStructurePopup implements Disposable {
 
   public void show() {
     //final long time = System.currentTimeMillis();
-    final ActionCallback treeHasBuilt = new ActionCallback();
-    IdeFocusManager.getInstance(myProject).typeAheadUntil(treeHasBuilt);
     JComponent panel = createCenterPanel();
     new MnemonicHelper().register(panel);
     boolean shouldSetWidth = DimensionService.getInstance().getSize(getDimensionServiceKey(), myProject) == null;
@@ -250,8 +250,8 @@ public class FileStructurePopup implements Disposable {
     Disposer.register(myPopup, new Disposable() {
       @Override
       public void dispose() {
-        if (!treeHasBuilt.isDone()) {
-          treeHasBuilt.setRejected();
+        if (!myTreeHasBuilt.isDone()) {
+          myTreeHasBuilt.setRejected();
         }
       }
     });
@@ -275,7 +275,7 @@ public class FileStructurePopup implements Disposable {
           @Override
           public void run() {
             selectPsiElement(myInitialPsiElement);
-            treeHasBuilt.setDone();
+            myTreeHasBuilt.setDone();
             //long t = System.currentTimeMillis() - time;
             //System.out.println("Shown in " + t + "ms");
           }

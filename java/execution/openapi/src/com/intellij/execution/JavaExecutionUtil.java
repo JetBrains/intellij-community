@@ -162,10 +162,7 @@ public class JavaExecutionUtil {
 
   public static String getShortClassName(final String fqName) {
     if (fqName == null) return "";
-    final int dotIndex = fqName.lastIndexOf('.');
-    if (dotIndex == fqName.length() - 1) return "";
-    if (dotIndex < 0) return fqName;
-    return fqName.substring(dotIndex + 1, fqName.length());
+    return StringUtil.getShortName(fqName);
   }
 
   public static void showExecutionErrorMessage(final ExecutionException e, final String title, final Project project) {

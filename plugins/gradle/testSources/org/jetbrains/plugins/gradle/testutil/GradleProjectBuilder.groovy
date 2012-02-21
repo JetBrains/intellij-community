@@ -6,6 +6,7 @@ import org.jetbrains.plugins.gradle.model.gradle.GradleLibraryDependency
 import org.jetbrains.plugins.gradle.model.gradle.GradleLibrary
 import org.jetbrains.plugins.gradle.model.gradle.LibraryPathType
 import com.intellij.pom.java.LanguageLevel
+import org.jetbrains.plugins.gradle.model.gradle.GradleModuleDependency
 
 /** 
  * @author Denis Zhdanov
@@ -23,8 +24,19 @@ class GradleProjectBuilder extends AbstractProjectBuilder {
 
   @Override
   protected createModule(String name) {
-    def result = new GradleModule(name, unique)
-    project.addModule(result)
+    registerModule(new GradleModule(name, unique))
+  }
+
+  @Override
+  protected registerModule(module) {
+    project.addModule(module)
+    module
+  }
+
+  @Override
+  protected createModuleDependency(ownerModule, targetModule) {
+    def result = new GradleModuleDependency(ownerModule, targetModule)
+    ownerModule.addDependency(result)
     result
   }
 
@@ -48,5 +60,10 @@ class GradleProjectBuilder extends AbstractProjectBuilder {
     ['bin': LibraryPathType.BINARY, 'src': LibraryPathType.SOURCE, 'doc': LibraryPathType.DOC].each {
       key, type -> paths[key]?.each { library.addPath(type, it) }
     }
+  }
+
+  @Override
+  protected reset() {
+    modulesCache.values().each { it.clearDependencies() }
   }
 }

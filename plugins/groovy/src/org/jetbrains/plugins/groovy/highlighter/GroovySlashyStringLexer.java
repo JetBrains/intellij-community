@@ -38,6 +38,8 @@ public class GroovySlashyStringLexer extends LexerBase {
 
   @Override
   public void start(CharSequence buffer, int startOffset, int endOffset, int initialState) {
+    assert buffer.length() >= endOffset : "buffer Length: " + buffer.length() + ", endOffset: " + endOffset;
+
     myBuffer = buffer;
     myEnd = startOffset;
     myBufferEnd = endOffset;

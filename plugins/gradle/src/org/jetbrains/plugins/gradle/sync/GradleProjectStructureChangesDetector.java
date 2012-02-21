@@ -1,11 +1,13 @@
 package org.jetbrains.plugins.gradle.sync;
 
 import com.intellij.ProjectTopics;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.util.Alarm;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
@@ -59,10 +61,25 @@ public class GradleProjectStructureChangesDetector extends AbstractProjectCompon
       myAlarm.cancelAllRequests();
       final long diff = System.currentTimeMillis() - myStartRefreshTime.get();
       if (diff < 0) {
+        myAlarm.cancelAllRequests();
         myAlarm.addRequest(this, (int)-diff);
         return;
       }
-      GradleUtil.refreshProject(myProject);
+
+      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+        @Override
+        public void run() {
+          if (ModalityState.current() != ModalityState.NON_MODAL) {
+            // There is a possible case that user performs intellij project structure modification and 'project settings' dialog
+            // is open. We want to perform the refresh when the editing is completely finished then.
+            myAlarm.cancelAllRequests();
+            myAlarm.addRequest(RefreshRequest.this, REFRESH_DELAY_MILLIS);
+            return;
+          }
+
+          GradleUtil.refreshProject(myProject); 
+        }
+      });
     }
   }
 }

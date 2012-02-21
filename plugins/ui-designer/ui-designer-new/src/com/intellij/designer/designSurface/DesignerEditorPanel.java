@@ -93,17 +93,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
 
     myLayeredPane = new MyLayeredPane();
 
-    mySurfaceArea = new EditableArea() {
-      @Override
-      public void setCursor(Cursor cursor) {
-        myLayeredPane.setCursor(cursor);
-      }
-
-      @Override
-      public JComponent getNativeComponent() {
-        return myLayeredPane;
-      }
-
+    mySurfaceArea = new ComponentEditableArea(myLayeredPane) {
       @Override
       protected void fireSelectionChanged() {
         super.fireSelectionChanged();
@@ -189,6 +179,10 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
 
   public EditableArea getSurfaceArea() {
     return mySurfaceArea;
+  }
+
+  public ToolProvider getToolProvider() {
+    return myToolProvider;
   }
 
   protected abstract ComponentDecorator getRootSelectionDecorator();

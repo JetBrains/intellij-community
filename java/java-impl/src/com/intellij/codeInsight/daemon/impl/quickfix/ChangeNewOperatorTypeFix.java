@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,15 +77,36 @@ public class ChangeNewOperatorTypeFix implements IntentionAction {
     int caretOffset;
     TextRange selection;
     if (toType instanceof PsiArrayType) {
-      caretOffset = -2;
-      @NonNls String text = "new " + toType.getDeepComponentType().getCanonicalText() + "[0]";
+      final PsiExpression[] originalExpressionArrayDimensions = originalExpression.getArrayDimensions();
+      caretOffset = 0;
+      @NonNls String text = "new " + toType.getDeepComponentType().getCanonicalText() + "[";
+      if (originalExpressionArrayDimensions.length > 0) {
+        text += originalExpressionArrayDimensions[0].getText();
+      }
+      else {
+        text += "0";
+        caretOffset = -2;
+      } 
+      text += "]";
       for (int i = 1; i < toType.getArrayDimensions(); i++) {
-        text += "[]";
-        caretOffset -= 2;
+        text += "[";
+        String arrayDimension = "";
+        if (originalExpressionArrayDimensions.length > i) {
+          arrayDimension = originalExpressionArrayDimensions[i].getText();
+          text += arrayDimension;
+        }
+        text += "]";
+        if (caretOffset < 0) {
+          caretOffset -= arrayDimension.length() + 2;
+        }
       }
 
       newExpression = (PsiNewExpression)factory.createExpressionFromText(text, originalExpression);
-      selection = new TextRange(caretOffset, caretOffset+1);
+      if (caretOffset < 0) {
+        selection = new TextRange(caretOffset, caretOffset+1);
+      } else {
+        selection = null;
+      }
     }
     else {
       final PsiAnonymousClass anonymousClass = originalExpression.getAnonymousClass();

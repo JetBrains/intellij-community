@@ -18,13 +18,13 @@ package org.jetbrains.plugins.groovy.completion;
 
 
 import com.intellij.codeInsight.CodeInsightSettings
+import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
-import org.jetbrains.plugins.groovy.GroovyFileType
-import org.jetbrains.plugins.groovy.util.TestUtils
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
+import org.jetbrains.plugins.groovy.GroovyFileType
 import org.jetbrains.plugins.groovy.formatter.GroovyCodeStyleSettings
-import com.intellij.codeInsight.completion.CompletionType
+import org.jetbrains.plugins.groovy.util.TestUtils
 
 /**
  * @author Maxim.Medvedev
@@ -1133,4 +1133,43 @@ Util.foo()<caret>'''
   }
 
   public void testPropertyChain() { doBasicTest() }
+
+  public void testMethodPointer() {
+    myFixture.configureByText('_a.groovy', '''\
+class Base {
+  def prefixMethod(){}
+  def prefixField
+}
+
+new Base().&prefix<caret>''')
+    myFixture.completeBasic()
+    assertNull(myFixture.lookupElements)
+    myFixture.checkResult('''\
+class Base {
+  def prefixMethod(){}
+  def prefixField
+}
+
+new Base().&prefixMethod<caret>''')
+  }
+
+  public void testFieldPointer() {
+    myFixture.configureByText('_a.groovy', '''\
+class Base {
+  def prefixMethod(){}
+  def prefixField
+}
+
+new Base().@prefix<caret>''')
+    myFixture.completeBasic()
+    assertNull(myFixture.lookupElements)
+    myFixture.checkResult('''\
+class Base {
+  def prefixMethod(){}
+  def prefixField
+}
+
+new Base().@prefixField<caret>''')
+  }
+
 }

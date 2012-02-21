@@ -295,6 +295,7 @@ public abstract class InplaceRefactoring {
 
     Template template = builder.buildInlineTemplate();
     template.setToShortenLongNames(false);
+    template.setToReformat(false);
     TextRange range = myScope.getTextRange();
     assert range != null;
     myHighlighters = new ArrayList<RangeHighlighter>();

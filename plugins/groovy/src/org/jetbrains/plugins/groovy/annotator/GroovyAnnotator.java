@@ -57,6 +57,7 @@ import org.jetbrains.plugins.groovy.annotator.intentions.*;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicMethodFix;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicPropertyFix;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
+import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
 import org.jetbrains.plugins.groovy.extensions.GroovyUnresolvedHighlightFilter;
 import org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter;
 import org.jetbrains.plugins.groovy.lang.documentation.GroovyPresentationUtil;
@@ -861,6 +862,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   }
 
   private static boolean isClosureAmbiguous(GrClosableBlock closure) {
+    if (closure.getContainingFile() instanceof GroovyCodeFragment) return false; //for code fragments
     PsiElement place = closure;
     while (true) {
       if (place instanceof GrUnAmbiguousClosureContainer) return false;

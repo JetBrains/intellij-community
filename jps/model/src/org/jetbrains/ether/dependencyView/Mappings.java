@@ -613,7 +613,7 @@ public class Mappings {
         }
       }
 
-      final Collection<DependencyContext.S> depClasses = myClassToClassDependency.get(fileName);
+      final Collection<DependencyContext.S> depClasses = myClassToClassDependency.get(className);
 
       if (depClasses != null) {
         dependants.addAll(depClasses);
@@ -885,7 +885,6 @@ public class Mappings {
         debug("Changed: ", it.name);
 
         final int addedModifiers = diff.addedModifiers();
-        final int removedModifiers = diff.removedModifiers();
 
         final boolean superClassChanged = (diff.base() & Difference.SUPERCLASS) > 0;
         final boolean interfacesChanged = !diff.interfaces().unchanged();

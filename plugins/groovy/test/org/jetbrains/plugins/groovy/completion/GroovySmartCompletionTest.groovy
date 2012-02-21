@@ -19,8 +19,6 @@ package org.jetbrains.plugins.groovy.completion;
 
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.completion.StaticallyImportable
-import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiFile
 import org.jetbrains.plugins.groovy.util.TestUtils
 
 /**
@@ -29,13 +27,13 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 public class GroovySmartCompletionTest extends GroovyCompletionTestBase {
   @Override
   protected String getBasePath() {
-    return TestUtils.getTestDataPath() + "groovy/completion/smart";
+    return "${TestUtils.testDataPath}groovy/completion/smart";
   }
 
   public void testSmartCompletionAfterNewInDeclaration() throws Throwable {
     myFixture.configureByFile(getTestName(false) + ".groovy");
     myFixture.complete(CompletionType.SMART);
-    assertOrderedEquals(myFixture.getLookupElementStrings(), "Bar", "Foo");
+    assertOrderedEquals(myFixture.lookupElementStrings, "Bar", "Foo");
   }
 
   public void testSmartCompletionAfterNewInDeclarationWithInterface() throws Throwable { doSmartTest(); }
@@ -116,12 +114,18 @@ class Expected {
 
 Expected exp = fooField'''
   }
+
+  public void testThrow() {
+    myFixture.configureByText('_a.groovy', '''\
+throw new RunEx<caret>
+''')
+    myFixture.complete(CompletionType.SMART)
+    myFixture.checkResult('''\
+throw new RuntimeException()
+''')
+  }
   
   void testInnerClassReferenceWithoutQualifier() {
     doSmartTest()
-  }
-
-  def getFileText(PsiFile file) {
-    return PsiDocumentManager.getInstance(project).getDocument(file).text
   }
 }

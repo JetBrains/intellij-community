@@ -36,16 +36,6 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
                   "<version>1</version>");
   }
 
-  public void testBasicResolution() throws Exception {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<name>${<caret>foo}</name>");
-
-    assertUnresolved(myProjectPom);
-  }
-
   public void testResolutionToProject() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -101,24 +91,6 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
                      "<name>${<caret>pom.basedir}</name>");
 
     assertResolved(myProjectPom, baseDir);
-
-    createProjectPom("<groupId>test</groupId" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<name>${<caret>baseUri}</name>");
-
-    assertResolved(myProjectPom, baseDir);
-  }
-
-  public void testBuiltInTimestampProperty() throws Exception {
-    createProjectPom("<groupId>test</groupId" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<name>${<caret>maven.build.timestamp}</name>");
-
-    assertResolved(myProjectPom, findTag("project.name"));
   }
 
   public void testResolutionWithSeveralProperties() throws Exception {
@@ -182,16 +154,6 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
                      "<version>1</version>" +
 
                      "<name>${<caret>project.bar}</name>");
-
-    assertUnresolved(myProjectPom);
-  }
-
-  public void testResolutionToUnknownExtraProjectProperty() throws Exception {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<name>${<caret>project.version.bar}</name>");
 
     assertUnresolved(myProjectPom);
   }
@@ -745,14 +707,30 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
   }
 
   public void testHighlightUnresolvedProperties() throws Exception {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<name>${<error>xxx</error>}</name>" +
+    createProjectPom("<groupId>test</groupId>\n" +
+                     "<artifactId>child</artifactId>\n" +
+                     "<version>1</version>\n" +
+                     "<name>${<error>xxx</error>}</name>\n" +
 
-                     "<properties>" +
-                     "  <foo>${<error>zzz</error>}</foo>" +
-                     "</properties>");
+                     "<properties>\n" +
+                     "  <foo>\n" +
+                     "${<error>zzz</error>}\n" +
+                     "${<error>pom.maven.build.timestamp</error>}\n" +
+                     "${<error>project.maven.build.timestamp</error>}\n" +
+                     "${<error>parent.maven.build.timestamp</error>}\n" +
+                     "${<error>baseUri</error>}\n" +
+                     "${<error>unknownProperty</error>}\n" +
+                     "${<error>project.version.bar</error>}\n" +
+
+                     "${maven.build.timestamp}\n" +
+                     "${project.parentFile.name}\n" +
+                     "${<error>project.parentFile.nameXxx</error>}\n" +
+                     "${pom.compileArtifacts.empty}\n" +
+                     "${modules.empty}\n" +
+                     "${projectDirectory}\n" +
+                     "</foo>\n" +
+                     "</properties>"
+    );
 
     checkHighlighting();
   }
@@ -841,8 +819,10 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
                   "parentPomProfilesProp",
                   "parentProfilesXmlProp");
     assertContain(variants, "artifactId", "project.artifactId", "pom.artifactId");
-    assertContain(variants, "basedir", "project.basedir", "pom.basedir", "baseUri", "project.baseUri", "pom.basedir");
+    assertContain(variants, "basedir", "project.basedir", "pom.basedir", "project.baseUri", "pom.basedir");
+    assert !variants.contains("baseUri");
     assertContain(variants, "maven.build.timestamp");
+    assert !variants.contains("project.maven.build.timestamp");
     assertContain(variants, "settingsXmlProp");
     assertContain(variants, "settings.localRepository");
     assertContain(variants, "user.home", "env." + getEnvVar());

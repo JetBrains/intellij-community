@@ -1,11 +1,17 @@
 package org.jetbrains.plugins.gradle.diff;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.roots.ModuleOrderEntry;
+import com.intellij.openapi.roots.OrderEntry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.gradle.*;
+import org.jetbrains.plugins.gradle.model.intellij.IntellijEntityVisitor;
+import org.jetbrains.plugins.gradle.util.GradleUtil;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Contains various utility methods for building changes between the gradle and intellij project structures.
@@ -25,10 +31,10 @@ public class GradleDiffUtil {
    * Example: particular module has been added at the gradle side. We want to mark that module, its content root(s), dependencies etc
    * as gradle-local changes.
    * 
-   * @param entity          target gradle-local entity
-   * @param currentChanges  holder for the changes built during the current call
+   * @param entity   target gradle-local entity
+   * @param context  changes calculation context to use
    */
-  public static void buildLocalChanges(@NotNull GradleEntity entity, @NotNull final Set<GradleProjectStructureChange> currentChanges) {
+  public static void buildLocalChanges(@NotNull GradleEntity entity, @NotNull final GradleChangesCalculationContext context) {
     entity.invite(new GradleEntityVisitor() {
       @Override
       public void visit(@NotNull GradleProject project) {
@@ -37,7 +43,7 @@ public class GradleDiffUtil {
 
       @Override
       public void visit(@NotNull GradleModule module) {
-        currentChanges.add(new GradleModulePresenceChange(module, null));
+        context.register(new GradleModulePresenceChange(module, null));
         for (GradleDependency dependency : module.getDependencies()) {
           dependency.invite(this);
         }
@@ -55,59 +61,56 @@ public class GradleDiffUtil {
 
       @Override
       public void visit(@NotNull GradleModuleDependency dependency) {
-        // TODO den implement 
+        context.register(new GradleModuleDependencyPresenceChange(dependency, null));
       }
 
       @Override
       public void visit(@NotNull GradleLibraryDependency dependency) {
-        currentChanges.add(new GradleLibraryDependencyPresenceChange(dependency, null));
+        context.register(new GradleLibraryDependencyPresenceChange(dependency, null));
       }
     });
   }
 
   /**
-   * Analogues to {@link #buildLocalChanges} but targets intellij entity.
-   *
-   * @param module          target intellij-local module that doesn't present at the gradle side
-   * @param currentChanges  holder for the changes built during the current call
-   */
-  public static void buildLocalChanges(@NotNull Module module,
-                                       @NotNull Set<GradleProjectStructureChange> currentChanges)
-  {
-    currentChanges.add(new GradleModulePresenceChange(null, module));
-    // TODO den process module sub-entities here (content roots and dependencies).
-  }
-
-  /**
-   * Analogues to {@link #buildLocalChanges} but targets intellij entity.
-   * 
-   * @param libraryDependency  target intellij-local library dependency that doesn't present at the gradle side
-   * @param currentChanges     holder for the changes built during the current call
-   */
-  public static void buildLocalChanges(@NotNull LibraryOrderEntry libraryDependency,
-                                       @NotNull Set<GradleProjectStructureChange> currentChanges)
-  {
-    final String libraryName = libraryDependency.getLibraryName();
-    if (libraryName != null) {
-      currentChanges.add(new GradleLibraryDependencyPresenceChange(null, libraryDependency));
-    }
-  }
-
-  /**
    * Performs argument type-based dispatch and delegates to one of strongly typed <code>'buildLocalChanges()'</code> methods.
    *
-   * @param entity          target intellij-local entity that doesn't present at the gradle side
-   * @param currentChanges  holder for the changes built during the current call
+   * @param entity   target intellij-local entity that doesn't present at the gradle side
+   * @param context  changes calculation context to use
    */
-  public static void buildLocalChanges(@NotNull Object entity, @NotNull Set<GradleProjectStructureChange> currentChanges) {
+  public static void buildLocalChanges(@NotNull Object entity, @NotNull final GradleChangesCalculationContext context) {
     if (entity instanceof GradleEntity) {
-      buildLocalChanges((GradleEntity)entity, currentChanges);
+      buildLocalChanges((GradleEntity)entity, context);
     }
-    else if (entity instanceof Module) {
-      buildLocalChanges((Module)entity, currentChanges);
-    }
-    else if (entity instanceof LibraryOrderEntry) {
-      buildLocalChanges((LibraryOrderEntry)entity, currentChanges);
+    else {
+      GradleUtil.dispatch(entity, new IntellijEntityVisitor() {
+        @Override
+        public void visit(@NotNull Project project) {
+        }
+
+        @Override
+        public void visit(@NotNull Module module) {
+          context.register(new GradleModulePresenceChange(null, module));
+          for (OrderEntry entry : context.getPlatformFacade().getOrderEntries(module)) {
+            GradleUtil.dispatch(entry, this);
+          }
+        }
+
+        @Override
+        public void visit(@NotNull LibraryOrderEntry libraryDependency) {
+          final String libraryName = libraryDependency.getLibraryName();
+          if (libraryName != null) {
+            context.register(new GradleLibraryDependencyPresenceChange(null, libraryDependency));
+          }
+        }
+
+        @Override
+        public void visit(@NotNull ModuleOrderEntry moduleDependency) {
+          final Module module = moduleDependency.getModule();
+          if (module != null) {
+            context.register(new GradleModuleDependencyPresenceChange(null, moduleDependency));
+          }
+        }
+      });
     }
   }
 
@@ -120,8 +123,7 @@ public class GradleDiffUtil {
    * @param calculator        comparison strategy that works with the single entities (not collection of entities)
    * @param gradleEntities    entities available at the gradle side
    * @param intellijEntities  entities available at the intellij side
-   * @param knownChanges      collection that contains known changes about the entities
-   * @param currentChanges    holder for the changes discovered during the current call
+   * @param context           changes calculation context
    * @param <I>               target intellij entity type
    * @param <G>               target gradle entity type
    */
@@ -129,8 +131,7 @@ public class GradleDiffUtil {
     @NotNull GradleStructureChangesCalculator<G, I> calculator,
     @NotNull Iterable<? extends G> gradleEntities,
     @NotNull Iterable<? extends I> intellijEntities,
-    @NotNull Set<GradleProjectStructureChange> knownChanges,
-    @NotNull Set<GradleProjectStructureChange> currentChanges)
+    @NotNull GradleChangesCalculationContext context)
   {
     Map<Object, I> intellijEntitiesByKeys = new HashMap<Object, I>();
     for (I entity : intellijEntities) {
@@ -138,17 +139,17 @@ public class GradleDiffUtil {
       assert previous == null;
     }
     for (G gradleEntity: gradleEntities) {
-      I intellijEntity = intellijEntitiesByKeys.remove(calculator.getGradleKey(gradleEntity, knownChanges));
+      I intellijEntity = intellijEntitiesByKeys.remove(calculator.getGradleKey(gradleEntity, context));
       if (intellijEntity == null) {
-        buildLocalChanges(gradleEntity, currentChanges);
+        buildLocalChanges(gradleEntity, context);
       }
       else {
-        calculator.calculate(gradleEntity, intellijEntity, knownChanges, currentChanges);
+        calculator.calculate(gradleEntity, intellijEntity, context);
       }
     }
 
     for (I entity : intellijEntitiesByKeys.values()) {
-      buildLocalChanges(entity, currentChanges);
+      buildLocalChanges(entity, context);
     }
   }
 }

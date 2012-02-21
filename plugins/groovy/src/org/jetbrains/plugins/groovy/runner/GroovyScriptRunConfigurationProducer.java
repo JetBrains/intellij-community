@@ -56,7 +56,7 @@ public class GroovyScriptRunConfigurationProducer extends RuntimeConfigurationPr
 
     GroovyFile groovyFile = (GroovyFile)file;
     final PsiClass aClass = GroovyRunnerUtil.getRunningClass(location.getPsiElement());
-    if (aClass != null) {
+    if (aClass != null && GroovyRunnerUtil.canBeRunByGroovy(aClass)) {
       final RunnerAndConfigurationSettings settings = createConfiguration(aClass);
       if (settings != null) {
         mySourceElement = element;
