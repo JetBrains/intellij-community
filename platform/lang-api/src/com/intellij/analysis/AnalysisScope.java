@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -429,21 +429,25 @@ public class AnalysisScope {
         return AnalysisScopeBundle.message("scope.module.list", modules, Integer.valueOf(myModules.size()));
 
       case PROJECT:
-        return AnalysisScopeBundle.message("scope.project", pathToName(myProject.getPresentableUrl()));
+        return AnalysisScopeBundle.message("scope.project", myProject.getName());
 
       case FILE:
-        final VirtualFile virtualFile = ((PsiFileSystemItem)myElement).getVirtualFile();
-        LOG.assertTrue(virtualFile != null);
-        return AnalysisScopeBundle.message("scope.file", virtualFile.getPresentableUrl());
+        return AnalysisScopeBundle.message("scope.file", getPresentableUrl((PsiFileSystemItem)myElement));
 
       case DIRECTORY:
-        return AnalysisScopeBundle.message("scope.directory", ((PsiFileSystemItem)myElement).getVirtualFile().getPresentableUrl());
+        return AnalysisScopeBundle.message("scope.directory", getPresentableUrl((PsiFileSystemItem)myElement));
 
       case VIRTUAL_FILES:
         return AnalysisScopeBundle.message("scope.virtual.files");
     }
 
     return "";
+  }
+
+  private static String getPresentableUrl(final PsiFileSystemItem element) {
+    final VirtualFile virtualFile = element.getVirtualFile();
+    assert virtualFile != null : element;
+    return virtualFile.getPresentableUrl();
   }
 
   public String getShortenName(){

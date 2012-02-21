@@ -222,6 +222,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
           String childPath = child.getPath();
           if (child.getFileSystem() == JarFileSystem.getInstance()) {
             VirtualFile local = JarFileSystem.getInstance().getVirtualFileForJar(child);
+            assert local != null : child;
             childPath = local.getPath();
           }
           if (FileUtil.startsWith(childPath, root)) {
@@ -238,13 +239,14 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
       if (!isUnder) {
         if (!allowed.isEmpty()) {
-          assert false : "File accessed outside allowed roots: " + child + ";\n Allowed roots: " + new ArrayList(allowed);
+          assert false : "File accessed outside allowed roots: " + child + ";\n Allowed roots: " + allowed;
         }
       }
     }
   }
 
   // null means we were unable to get roots, so do not check access
+  @Nullable
   private static Set<String> allowedRoots() {
     if (insideGettingRoots) return null;
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
@@ -257,8 +259,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       String output = new File(outUrl.toURI()).getParentFile().getParentFile().getPath();
       allowed.add(FileUtil.toSystemIndependentName(output));
     }
-    catch (URISyntaxException ignored) {
-    }
+    catch (URISyntaxException ignored) { }
     String javaHome = SystemProperties.getJavaHome();
     allowed.add(FileUtil.toSystemIndependentName(javaHome));
     String tempDirectorySpecific = new File(FileUtil.getTempDirectory()).getParent();
@@ -277,7 +278,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       for (VirtualFile root : getAllRoots(project)) {
         allowed.add(StringUtil.trimEnd(root.getPath(), JarFileSystem.JAR_SEPARATOR));
       }
-      String location = project.getLocation();
+      String location = project.getBasePath();
+      assert location != null : project;
       allowed.add(FileUtil.toSystemIndependentName(location));
     }
 

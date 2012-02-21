@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -191,6 +191,14 @@ public class CompileServerManager implements ApplicationComponent{
     sendNotification(paths, true);
   }
 
+  @Nullable
+  private static String getProjectPath(final Project project) {
+    final String path = project.getPresentableUrl();
+    if (path == null) return path;
+    final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(path);
+    return vFile != null ? vFile.getPath() : null;
+  }
+
   public void sendReloadRequest(final Project project) {
     if (!project.isDefault() && project.isOpen()) {
       myTaskExecutor.submit(new Runnable() {
@@ -200,7 +208,7 @@ public class CompileServerManager implements ApplicationComponent{
             if (!project.isDisposed()) {
               final CompileServerClient client = ensureServerRunningAndClientConnected(false);
               if (client != null) {
-                client.sendProjectReloadRequest(Collections.singletonList(project.getLocation()));
+                client.sendProjectReloadRequest(Collections.singletonList(getProjectPath(project)));
               }
             }
           }
@@ -251,7 +259,7 @@ public class CompileServerManager implements ApplicationComponent{
               }
               for (Project project : openProjects) {
                 try {
-                  client.sendFSEvent(project.getLocation(), changed, deleted);
+                  client.sendFSEvent(getProjectPath(project), changed, deleted);
                 }
                 catch (Exception e) {
                   LOG.info(e);
@@ -317,7 +325,7 @@ public class CompileServerManager implements ApplicationComponent{
                                              final Collection<String> modules, final Collection<String> artifacts,
                                              final Collection<String> paths,
                                              final Map<String, String> userData, final JpsServerResponseHandler handler) {
-    final String projectId = project.getLocation();
+    final String projectId = getProjectPath(project);
     final Ref<RequestFuture> futureRef = new Ref<RequestFuture>(null);
     final RunnableFuture future = myTaskExecutor.submit(new Runnable() {
       public void run() {

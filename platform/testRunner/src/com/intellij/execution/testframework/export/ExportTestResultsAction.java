@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.diagnostic.errordialog.Attachment;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RuntimeConfiguration;
-import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -28,7 +27,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
@@ -142,12 +140,11 @@ public class ExportTestResultsAction extends DumbAwareAction {
               outputFolder = new File(config.getOutputFolder());
             }
             else {
-              outputFolder = new File(new File(project.getLocation()), config.getOutputFolder());
+              outputFolder = new File(new File(project.getBasePath()), config.getOutputFolder());
             }
           }
           else {
-            outputFolder = new File(project.getLocation());
-
+            outputFolder = new File(project.getBasePath());
           }
           final File outputFile = new File(outputFolder, filename_);
           final String outputText;
