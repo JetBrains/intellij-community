@@ -55,8 +55,8 @@ public class GitCompareBranchesDialog extends DialogWrapper {
   private GitCommitListPanel myHeadToBranchListPanel;
   private GitCommitListPanel myBranchToHeadListPanel;
 
-  public GitCompareBranchesDialog(@NotNull Project project, @NotNull String branchName, @NotNull String currentBranchName, @NotNull GitCommitCompareInfo compareInfo,
-                                  @NotNull GitRepository initialRepo) {
+  public GitCompareBranchesDialog(@NotNull Project project, @NotNull String branchName, @NotNull String currentBranchName,
+                                  @NotNull GitCommitCompareInfo compareInfo, @NotNull GitRepository initialRepo) {
     super(project, false);
     myCurrentBranchName = currentBranchName;
     myCompareInfo = compareInfo;

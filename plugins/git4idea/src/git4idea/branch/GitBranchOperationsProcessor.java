@@ -418,20 +418,21 @@ public final class GitBranchOperationsProcessor {
     }
   }
 
-  public void merge(@NotNull final String branchName) {
+  public void merge(@NotNull final String branchName, final boolean localBranch) {
     new CommonBackgroundTask(myProject, "Merging " + branchName, myCallInAwtAfterExecution) {
       @Override public void execute(@NotNull ProgressIndicator indicator) {
-        doMerge(branchName, indicator);
+        doMerge(branchName, localBranch, indicator);
       }
     }.runInBackground();
   }
 
-  private void doMerge(@NotNull String branchName, @NotNull ProgressIndicator indicator) {
+  private void doMerge(@NotNull String branchName, boolean localBranch, @NotNull ProgressIndicator indicator) {
     Map<GitRepository, String> revisions = new HashMap<GitRepository, String>();
     for (GitRepository repository : myRepositories) {
       revisions.put(repository, repository.getCurrentRevision());
     }
-    new GitMergeOperation(myProject, myRepositories, branchName, getCurrentBranchOrRev(), mySelectedRepository, revisions, indicator).execute();
+    new GitMergeOperation(myProject, myRepositories, branchName, localBranch, getCurrentBranchOrRev(),
+                          mySelectedRepository, revisions, indicator).execute();
   }
 
   /**
