@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 
 /**
  * @author Max Medvedev
@@ -65,7 +66,7 @@ public class GroovyRunnerUtil {
       return true;
     }
 
-    if (PsiMethodUtil.hasMainMethod(psiClass) && psiClass instanceof GrTypeDefinition) {
+    if (PsiMethodUtil.hasMainMethod(psiClass) && (psiClass instanceof GrTypeDefinition || psiClass instanceof GroovyScriptClass)) {
       return true;
     }
 
