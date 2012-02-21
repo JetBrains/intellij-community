@@ -15,16 +15,14 @@
  */
 package com.intellij.util.indexing.fileBasedIndex.impl;
 
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.PsiFile;
 import gnu.trove.THashMap;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Map;
 
-public class FileBasedIndexTransactionMap implements ApplicationComponent {
+public class FileBasedIndexTransactionMap {
   private final Map<Document, PsiFile> myTransactionMap = new THashMap<Document, PsiFile>();
 
   public void put(Document doc, PsiFile file) {
@@ -45,20 +43,5 @@ public class FileBasedIndexTransactionMap implements ApplicationComponent {
 
   public PsiFile get(Document document) {
     return myTransactionMap.get(document);
-  }
-
-
-  @Override
-  public void initComponent() {
-  }
-
-  @Override
-  public void disposeComponent() {
-  }
-
-  @NotNull
-  @Override
-  public String getComponentName() {
-    return "FileBasedIndexTransactionMap";
   }
 }

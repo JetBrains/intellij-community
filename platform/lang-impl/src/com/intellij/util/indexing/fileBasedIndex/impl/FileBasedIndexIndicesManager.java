@@ -15,19 +15,17 @@
  */
 package com.intellij.util.indexing.fileBasedIndex.impl;
 
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.indexing.*;
 import gnu.trove.THashMap;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 import java.util.Set;
 
-public class FileBasedIndexIndicesManager implements ApplicationComponent {
+public class FileBasedIndexIndicesManager {
   private final ConcurrentHashSet<ID<?, ?>> myUpToDateIndices = new ConcurrentHashSet<ID<?, ?>>();
   private final Map<ID<?, ?>, Pair<UpdatableIndex<?, ?, FileContent>, FileBasedIndex.InputFilter>> myIndices = new THashMap<ID<?, ?>, Pair<UpdatableIndex<?, ?, FileContent>, FileBasedIndex.InputFilter>>();
   private final PerIndexDocumentVersionMap myLastIndexedDocStamps = new PerIndexDocumentVersionMap();
@@ -99,20 +97,6 @@ public class FileBasedIndexIndicesManager implements ApplicationComponent {
 
   public long getAndSetLastIndexedDocStamps(Document document, ID<?, ?> id, long stamp) {
     return myLastIndexedDocStamps.getAndSet(document, id, stamp);
-  }
-
-  @Override
-  public void initComponent() {
-  }
-
-  @Override
-  public void disposeComponent() {
-  }
-
-  @NotNull
-  @Override
-  public String getComponentName() {
-    return "FileBasedIndexIndicesManager";
   }
 
   public static class StorageGuard {

@@ -15,17 +15,15 @@
  */
 package com.intellij.util.indexing.fileBasedIndex.impl;
 
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.SingleRootFileViewProvider;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Set;
 
-public class FileBasedIndexLimitsChecker implements ApplicationComponent {
+public class FileBasedIndexLimitsChecker {
   private final Set<FileType> myNoLimitCheckTypes = new THashSet<FileType>();
 
   public boolean isTooLarge(VirtualFile file) {
@@ -46,19 +44,5 @@ public class FileBasedIndexLimitsChecker implements ApplicationComponent {
 
   public void addNoLimitsFileTypes(Collection<FileType> types) {
     myNoLimitCheckTypes.addAll(types);
-  }
-
-  @Override
-  public void initComponent() {
-  }
-
-  @Override
-  public void disposeComponent() {
-  }
-
-  @NotNull
-  @Override
-  public String getComponentName() {
-    return "FileBasedIndexLimitsChecker";
   }
 }

@@ -22,10 +22,10 @@ import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
@@ -91,7 +91,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  *         Date: Dec 20, 2007
  */
 
-public class FileBasedIndex implements ApplicationComponent {
+public class FileBasedIndex implements Disposable{
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.FileBasedIndex");
   @NonNls
   private static final String CORRUPTION_MARKER_NAME = "corruption.marker";
@@ -348,10 +348,6 @@ public class FileBasedIndex implements ApplicationComponent {
     }
   }
 
-  @Override
-  public void initComponent() {
-  }
-
   private static String calcConfigPath(final String path) {
     try {
       final String _path = FileUtil.toSystemIndependentName(new File(path).getCanonicalPath());
@@ -593,14 +589,7 @@ public class FileBasedIndex implements ApplicationComponent {
   }
 
   @Override
-  @NonNls
-  @NotNull
-  public String getComponentName() {
-    return "FileBasedIndex";
-  }
-
-  @Override
-  public void disposeComponent() {
+  public void dispose() {
     performShutdown();
   }
 
