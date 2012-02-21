@@ -20,16 +20,12 @@ import com.intellij.psi.util.PsiMethodUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 
 /**
  * @author Max Medvedev
  */
 public class GroovyRunnerUtil {
-
-  private static final String JAVA_LANG_RUNNABLE = "java.lang.Runnable";
-
   @Nullable
   public static PsiClass getRunningClass(PsiElement element) {
     final PsiFile file = element.getContainingFile();
@@ -46,19 +42,12 @@ public class GroovyRunnerUtil {
   }
 
   public static boolean isRunnable(final PsiClass psiClass) {
-    if (!(psiClass instanceof GrTypeDefinition)) return false;
+    if (!(psiClass instanceof GrTypeDefinition) && !(psiClass instanceof GroovyScriptClass)) return false;
     if (psiClass instanceof PsiAnonymousClass) return false;
     if (psiClass.isInterface()) return false;
-    final PsiClass runnable = JavaPsiFacade.getInstance(psiClass.getProject()).findClass(JAVA_LANG_RUNNABLE, psiClass.getResolveScope());
+    final PsiClass runnable = JavaPsiFacade.getInstance(psiClass.getProject()).findClass(CommonClassNames.JAVA_LANG_RUNNABLE, psiClass.getResolveScope());
     if (runnable == null) return false;
-    final PsiMethod runMethod = runnable.getMethods()[0];
-    final PsiMethod[] runImplementations = psiClass.findMethodsBySignature(runMethod, false);
-    if (runImplementations.length == 1 &&
-        runImplementations[0] instanceof GrMethod &&
-        ((GrMethod)runImplementations[0]).getBlock() != null) {
-      return psiClass.getContainingClass() == null || psiClass.hasModifierProperty(PsiModifier.STATIC);
-    }
-    return false;
+    return psiClass.isInheritor(runnable, true);
   }
 
   public static boolean canBeRunByGroovy(final PsiClass psiClass) {
