@@ -32,6 +32,8 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -85,6 +87,14 @@ public class ImportChooserStep extends ProjectImportWizardStep {
         }
       }
     }
+    myList.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseClicked(MouseEvent e) {
+        if (e.getButton() == MouseEvent.BUTTON1 && e.getClickCount() == 2) {
+          context.requestNextStep();
+        }
+      }
+    });
   }
 
   private static List<ProjectImportProvider> sorted(ProjectImportProvider[] providers) {
