@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.components.impl.stores;
 
-
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -28,7 +27,7 @@ import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.StreamProvider;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
@@ -78,6 +77,7 @@ public class FileBasedStorage extends XmlElementStorage {
         syncRefreshPathRecursively(PathManager.getConfigPath(true), "componentVersions");
       }
       finally {
+        //noinspection AssignmentToStaticFieldFromInstanceMethod
         myConfigDirectoryRefreshed = true;
       }
     }
@@ -125,10 +125,6 @@ public class FileBasedStorage extends XmlElementStorage {
     }
   }
 
-  private static boolean isOptionsFile(final String filePath) {
-    return FileUtil.isAncestor(new File(PathManager.getOptionsPath()), new File(filePath), false);
-  }
-
   protected MySaveSession createSaveSession(final MyExternalizationSession externalizationSession) {
     return new FileSaveSession(externalizationSession);
   }
@@ -162,7 +158,7 @@ public class FileBasedStorage extends XmlElementStorage {
 
     protected void doSave() throws StateStorageException {
       if (!myBlockSavingTheContent) {
-        if (ApplicationManager.getApplication().isUnitTestMode() && myFile != null && myFile.getPath().startsWith("$")) {
+        if (ApplicationManager.getApplication().isUnitTestMode() && myFile != null && StringUtil.startsWithChar(myFile.getPath(), '$')) {
           throw new StateStorageException("It seems like some macros were not expanded for path: " + myFile.getPath());
         }
 
@@ -228,9 +224,8 @@ public class FileBasedStorage extends XmlElementStorage {
     return StorageUtil.getVirtualFile(myFile);
   }
 
-
-  public IFile getFile() {
-    return myFile;
+  public File getFile() {
+    return new File(myFile.getPath());
   }
 
   @Nullable
@@ -254,6 +249,7 @@ public class FileBasedStorage extends XmlElementStorage {
     }
   }
 
+  @Nullable
   private Document processReadException(final Exception e) {
     myBlockSavingTheContent = isProjectOrModuleFile();
     if (!ApplicationManager.getApplication().isUnitTestMode() && !ApplicationManager.getApplication().isHeadlessEnvironment()) {

@@ -36,7 +36,7 @@ public class ProjectWindowActionGroup extends DefaultActionGroup {
   private ProjectWindowAction latest = null;
 
   public void addProject(@NotNull Project project) {
-    final String projectLocation = project.getLocation();
+    final String projectLocation = project.getPresentableUrl();
     if (projectLocation == null) {
       return;
     }
@@ -56,7 +56,7 @@ public class ProjectWindowActionGroup extends DefaultActionGroup {
   }
 
   public void removeProject(@NotNull Project project) {
-    final ProjectWindowAction windowAction = findWindowAction(project.getLocation());
+    final ProjectWindowAction windowAction = findWindowAction(project.getPresentableUrl());
     if (windowAction == null) {
       return;
     }
@@ -91,7 +91,7 @@ public class ProjectWindowActionGroup extends DefaultActionGroup {
     if (project == null) {
       return;
     }
-    final ProjectWindowAction windowAction = findWindowAction(project.getLocation());
+    final ProjectWindowAction windowAction = findWindowAction(project.getPresentableUrl());
     if (windowAction == null) {
       return;
     }
@@ -106,7 +106,7 @@ public class ProjectWindowActionGroup extends DefaultActionGroup {
     if (project == null) {
       return;
     }
-    final ProjectWindowAction windowAction = findWindowAction(project.getLocation());
+    final ProjectWindowAction windowAction = findWindowAction(project.getPresentableUrl());
     if (windowAction == null) {
       return;
     }
@@ -144,7 +144,7 @@ public class ProjectWindowActionGroup extends DefaultActionGroup {
       final ProjectWindowAction windowAction = (ProjectWindowAction) child;
       if (projectName.equals(windowAction.getProjectName())) {
         if (result == null) {
-          result = new ArrayList();
+          result = new ArrayList<ProjectWindowAction>();
         }
         result.add(windowAction);
       }

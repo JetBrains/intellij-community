@@ -5,15 +5,21 @@
 ::----------------------------------------------------------------------
 
 :: ---------------------------------------------------------------------
-:: Locate a JDK installation directory which will be used to ruin the IDE.
-:: Try (in order): @@product_uc@@_JDK, JDK_HOME, JAVA_HOME.
+:: Locate a JDK installation directory which will be used to run the IDE.
+:: Try (in order): @@product_uc@@_JDK, ..\jre, JDK_HOME, JAVA_HOME.
 :: ---------------------------------------------------------------------
-SET JDK=%@@product_uc@@_JDK%
-IF "%JDK%" == "" SET JDK=%JDK_HOME%
-IF "%JDK%" == "" SET JDK=%JAVA_HOME%
+IF EXIST "%@@product_uc@@_JDK%" SET JDK=%@@product_uc@@_JDK%
+IF NOT "%JDK%" == "" GOTO jdk
+IF EXIST "%~dp0\..\jre" SET JDK=%~dp0\..\jre
+IF NOT "%JDK%" == "" GOTO jdk
+IF EXIST "%JDK_HOME%" SET JDK=%JDK_HOME%
+IF NOT "%JDK%" == "" GOTO jdk
+IF EXIST "%JAVA_HOME%" SET JDK=%JAVA_HOME%
 IF "%JDK%" == "" GOTO error
 
+:jdk
 SET JAVA_EXE=%JDK%\bin\java.exe
+IF NOT EXIST "%JAVA_EXE%" SET JAVA_EXE=%JDK%\jre\bin\java.exe
 IF NOT EXIST "%JAVA_EXE%" GOTO error
 
 :: ---------------------------------------------------------------------

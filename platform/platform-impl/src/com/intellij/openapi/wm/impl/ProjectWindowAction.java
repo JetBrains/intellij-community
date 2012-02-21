@@ -90,7 +90,7 @@ public class ProjectWindowAction extends ToggleAction implements DumbAware {
   public Frame findProjectFrame() {
     final Project[] projects = ProjectManager.getInstance().getOpenProjects();
     for (Project project : projects) {
-      if (myProjectLocation.equals(project.getLocation())) {
+      if (myProjectLocation.equals(project.getPresentableUrl())) {
         final WindowManager windowManager = WindowManager.getInstance();
         return windowManager.getFrame(project);
       }
@@ -104,7 +104,7 @@ public class ProjectWindowAction extends ToggleAction implements DumbAware {
     if (project == null) {
       return false;
     }
-    return myProjectLocation.equals(project.getLocation());
+    return myProjectLocation.equals(project.getPresentableUrl());
   }
 
   public void setSelected(@Nullable AnActionEvent e, boolean selected) {

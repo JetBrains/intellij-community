@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -389,7 +389,7 @@ public abstract class AbstractLayoutCodeProcessor {
   private static Set<VirtualFile> getIgnoreRoots(@NotNull Project project) {
     Set<VirtualFile> result = new HashSet<VirtualFile>();
 
-    String location = project.getLocation();
+    String location = project.getBasePath();
     if (location != null) {
       File projectDir = new File(location, Project.DIRECTORY_STORE_FOLDER);
       if (projectDir.isDirectory()) {
