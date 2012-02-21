@@ -178,10 +178,11 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel {
   }
 
   protected static Color defaultActionForeground(boolean isSelected, Presentation presentation) {
-    return isSelected ? UIUtil.getListSelectionForeground()
-                      : presentation.isEnabled() && presentation.isVisible()
-                        ? UIUtil.getListForeground()
-                        : UIUtil.getInactiveTextColor();
+    if (!presentation.isEnabled() || !presentation.isVisible()) {
+      return UIUtil.getInactiveTextColor();
+    }
+
+    return isSelected ? UIUtil.getListSelectionForeground() : UIUtil.getListForeground();
   }
 
   public String[] getNames(boolean checkBoxState) {

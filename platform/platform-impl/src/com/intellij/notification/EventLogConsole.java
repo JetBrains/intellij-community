@@ -38,6 +38,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.EditorPopupHandler;
 import com.intellij.util.text.DateFormatUtil;
@@ -137,10 +138,11 @@ class EventLogConsole {
     if (notificationTime == null) {
       return;
     }
-    
-    append(document, DateFormatUtil.formatTimeWithSeconds(notificationTime) + " ");
 
-    EventLog.LogEntry pair = EventLog.formatForLog(notification);
+    String date = DateFormatUtil.formatTimeWithSeconds(notificationTime) + " ";
+    append(document, date);
+
+    EventLog.LogEntry pair = EventLog.formatForLog(notification, StringUtil.repeatSymbol(' ', date.length()));
 
     final NotificationType type = notification.getType();
     TextAttributesKey key = type == NotificationType.ERROR

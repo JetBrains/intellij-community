@@ -89,6 +89,10 @@ public class GradleModule extends AbstractNamedGradleEntity implements Named {
     myDependencies.add(dependency);
   }
 
+  public void clearDependencies() {
+    myDependencies.clear();
+  }
+  
   @Override
   public void invite(@NotNull GradleEntityVisitor visitor) {
     visitor.visit(this);

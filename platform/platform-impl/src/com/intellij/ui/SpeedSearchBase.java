@@ -17,16 +17,21 @@ package com.intellij.ui;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
+import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -77,6 +82,23 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
         processKeyEvent(e);
       }
     });
+
+    new AnAction() {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        final String prefix = getEnteredPrefix();
+        assert prefix != null;
+        final String[] strings = NameUtil.splitNameIntoWords(prefix);
+        final String last = strings[strings.length - 1];
+        final int i = prefix.lastIndexOf(last);
+        mySearchPopup.mySearchField.setText(prefix.substring(0, i).trim());
+      }
+
+      @Override
+      public void update(AnActionEvent e) {
+        e.getPresentation().setEnabled(isPopupActive() && !StringUtil.isEmpty(getEnteredPrefix()));
+      }
+    }.registerCustomShortcutSet(CustomShortcutSet.fromString(SystemInfo.isMac ? "meta BACK_SPACE" : "control BACK_SPACE"), myComponent);
 
     installSupplyTo(component);
   }
@@ -274,13 +296,6 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   @Nullable
   public String getEnteredPrefix() {
     return mySearchPopup != null ? mySearchPopup.mySearchField.getText() : null;
-  }
-
-  public void setEnteredPrefix(@NotNull String text) {
-    if (mySearchPopup != null) {
-      mySearchPopup.mySearchField.setText(text);
-      mySearchPopup.refreshSelection();
-    }
   }
 
   public void refreshSelection() {

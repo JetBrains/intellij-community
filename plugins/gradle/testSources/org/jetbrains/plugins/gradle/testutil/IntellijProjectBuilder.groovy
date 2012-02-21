@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.roots.OrderRootType
 import org.jetbrains.plugins.gradle.util.GradleUtil
 import com.intellij.openapi.roots.libraries.LibraryTable
+import com.intellij.openapi.roots.ModuleOrderEntry
 
 /** 
  * @author Denis Zhdanov
@@ -30,8 +31,8 @@ class IntellijProjectBuilder extends AbstractProjectBuilder {
   def projectLibraryTable = projectLibraryTableStub as LibraryTable
   
   def platformFacade = [
-    getModules: { modules },
-    getOrderEntries: { dependencies[it] },
+    getModules: { modules.values() },
+    getOrderEntries: { libraryDependencies[it] + moduleDependencies[it] },
     getProjectIcon: { IconLoader.getIcon("/nodes/ideaProject.png") },
     getLocalFileSystemPath: { it.path },
     getProjectLibraryTable: { projectLibraryTable }
@@ -42,13 +43,27 @@ class IntellijProjectBuilder extends AbstractProjectBuilder {
   @Override
   protected createProject(String name, LanguageLevel languageLevel) {
     projectStub.getName = { name }
-    platformFacade.getLanguageLevel = { languageLevel }
+    platformFacade.getLanguageLevel = { languageLevel } as Closure
     project
   }
 
   @Override
   protected createModule(String name) {
     [ getName: { name } ] as Module
+  }
+
+  @Override
+  protected registerModule(Object module) { }
+
+  @Override
+  protected createModuleDependency(ownerModule, targetModule) {
+    def stub = [:]
+    def result = stub as ModuleOrderEntry
+    stub.accept = { policy, defaultValue -> policy.visitModuleOrderEntry(result, defaultValue) }
+    stub.getModule = { targetModule }
+    stub.getOwnerModule = { ownerModule }
+    stub.getModuleName = { targetModule.name }
+    result
   }
 
   @Override
@@ -81,4 +96,7 @@ class IntellijProjectBuilder extends AbstractProjectBuilder {
   protected applyLibraryPaths(library, Map paths) {
     libraryPaths[library.name] = paths
   }
+
+  @Override
+  protected reset() { }
 }

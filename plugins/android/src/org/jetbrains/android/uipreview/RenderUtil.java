@@ -93,6 +93,9 @@ public class RenderUtil {
     catch (ClassNotFoundException e) {
       LOG.debug(e);
     }
+    catch (IncompatibleClassFileFormatException e) {
+      LOG.debug(e);
+    }
 
     final RenderResources resolver =
       factory.createResourceResolver(facet, config, projectResources, theme.getName(), theme.isProjectTheme());
@@ -157,6 +160,11 @@ public class RenderUtil {
     catch (ClassNotFoundException e) {
       LOG.debug(e);
       missingRClassMessage = e.getMessage();
+      missingRClass = true;
+    }
+    catch (IncompatibleClassFileFormatException e) {
+      LOG.debug(e);
+      missingRClassMessage = "Incompatible R.class file format";
       missingRClass = true;
     }
 

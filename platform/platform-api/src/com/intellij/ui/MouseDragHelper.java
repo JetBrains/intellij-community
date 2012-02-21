@@ -115,6 +115,7 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
 
     myPressPointScreen = new RelativePoint(e).getScreenPoint();
     myPressPointComponent = e.getPoint();
+    processMousePressed(e);
 
     myDelta = new Dimension();
     if (myDragComponent.isShowing()) {
@@ -207,6 +208,9 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
 
   protected boolean canStartDragging(final JComponent dragComponent, Point dragComponentPoint) {
     return true;
+  }
+
+  protected void processMousePressed(MouseEvent event) {
   }
 
   protected void processDragCancel() {

@@ -86,6 +86,12 @@ public final class TabInfo implements Queryable, PlaceProvider<String> {
   private Queryable myQueryable;
   private DragOutDelegate myDragOutDelegate;
 
+  /**
+   * The tab which was selected before the mouse was pressed on this tab. Focus will be transferred to that tab if this tab is dragged
+   * out of its container. (IDEA-61536)
+   */
+  private WeakReference<TabInfo> myPreviousSelection = new WeakReference<TabInfo>(null);
+
   public TabInfo(final JComponent component) {
     myComponent = component;
     myPreferredFocusableComponent = component;
@@ -369,6 +375,15 @@ public final class TabInfo implements Queryable, PlaceProvider<String> {
 
   public DragOutDelegate getDragOutDelegate() {
     return myDragOutDelegate;
+  }
+
+  public void setPreviousSelection(@Nullable TabInfo previousSelection) {
+    myPreviousSelection = new WeakReference<TabInfo>(previousSelection);
+  }
+
+  @Nullable
+  public TabInfo getPreviousSelection() {
+    return myPreviousSelection.get();
   }
 
   public interface DragOutDelegate {

@@ -15,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.diff.PlatformFacade;
 import org.jetbrains.plugins.gradle.model.gradle.*;
 import org.jetbrains.plugins.gradle.model.id.GradleLibraryDependencyId;
+import org.jetbrains.plugins.gradle.model.id.GradleModuleDependencyId;
 
 /**
  * Thread-safe.
@@ -49,23 +50,7 @@ public class GradleProjectStructureHelper extends AbstractProjectComponent {
    *                 <code>false</code> otherwise
    */
   public boolean isIntellijLibraryDependencyExist(@NotNull final GradleLibraryDependencyId id) {
-    final Module module = findIntellijModule(id.getModuleName());
-    if (module == null) {
-      return false;
-    }
-    
-    RootPolicy<Boolean> visitor = new RootPolicy<Boolean>() {
-      @Override
-      public Boolean visitLibraryOrderEntry(LibraryOrderEntry libraryOrderEntry, Boolean value) {
-        return id.getLibraryName().equals(libraryOrderEntry.getLibraryName());
-      }
-    };
-    for (OrderEntry entry : myFacade.getOrderEntries(module)) {
-      if (entry.accept(visitor, false)) {
-        return true;
-      }
-    }
-    return false;
+    return findIntellijLibraryDependency(id.getOwnerModuleName(), id.getDependencyName()) != null;
   }
 
   /**
@@ -76,7 +61,15 @@ public class GradleProjectStructureHelper extends AbstractProjectComponent {
    *                 <code>false</code> otherwise
    */
   public boolean isGradleLibraryDependencyExist(@NotNull final GradleLibraryDependencyId id) {
-    return findGradleLibraryDependency(id.getModuleName(), id.getLibraryName()) != null;
+    return findGradleLibraryDependency(id.getOwnerModuleName(), id.getDependencyName()) != null;
+  }
+
+  public boolean isIntellijModuleDependencyExist(@NotNull final GradleModuleDependencyId id) {
+    return findIntellijModuleDependency(id.getOwnerModuleName(), id.getDependencyName()) != null;
+  }
+  
+  public boolean isGradleModuleDependencyExist(@NotNull final GradleModuleDependencyId id) {
+    return findIntellijModuleDependency(id.getOwnerModuleName(), id.getDependencyName()) != null;
   }
   
   @Nullable
@@ -111,10 +104,15 @@ public class GradleProjectStructureHelper extends AbstractProjectComponent {
 
   @Nullable
   public Library findIntellijLibrary(@NotNull final GradleLibrary library) {
+    return findIntellijLibrary(library.getName());
+  }
+  
+  @Nullable
+  public Library findIntellijLibrary(@NotNull String libraryName) {
     final LibraryTable libraryTable = myFacade.getProjectLibraryTable(myProject);
     for (Library intellijLibrary : libraryTable.getLibraries()) {
       // TODO den consider 'merged libraries' at the registered project structure changes here.
-      if (library.getName().equals(intellijLibrary.getName())) {
+      if (libraryName.equals(intellijLibrary.getName())) {
         return intellijLibrary;
       }
     }
@@ -141,6 +139,20 @@ public class GradleProjectStructureHelper extends AbstractProjectComponent {
       final LibraryOrderEntry result = entry.accept(visitor, null);
       if (result != null) {
         return result;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public GradleLibrary findGradleLibrary(@NotNull final String libraryName) {
+    final GradleProject project = myModel.getGradleProject();
+    if (project == null) {
+      return null;
+    }
+    for (GradleLibrary library : project.getLibraries()) {
+      if (libraryName.equals(library.getName())) {
+        return library;
       }
     }
     return null;

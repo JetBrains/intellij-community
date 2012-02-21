@@ -15,7 +15,6 @@
  */
 package com.intellij.designer.designSurface;
 
-import com.intellij.designer.designSurface.tools.InputTool;
 import com.intellij.designer.designSurface.tools.ToolProvider;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.ui.popup.PopupOwner;
@@ -37,31 +36,12 @@ public final class GlassLayer extends JComponent implements PopupOwner, DataProv
     myToolProvider = provider;
     myArea = area;
     enableEvents(AWTEvent.KEY_EVENT_MASK | AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK);
-    // TODO: DND
   }
 
   @Override
   protected void processKeyEvent(KeyEvent event) {
-    try {
-      InputTool tool = myToolProvider.getActiveTool();
+    myToolProvider.processKeyEvent(event, myArea);
 
-      if (tool != null) {
-        switch (event.getID()) {
-          case KeyEvent.KEY_PRESSED:
-            tool.keyPressed(event, myArea);
-            break;
-          case KeyEvent.KEY_TYPED:
-            tool.keyTyped(event, myArea);
-            break;
-          case KeyEvent.KEY_RELEASED:
-            tool.keyReleased(event, myArea);
-            break;
-        }
-      }
-    }
-    catch (Throwable e) {
-      handleException(e);
-    }
     if (!event.isConsumed()) {
       super.processKeyEvent(event);
     }
@@ -72,59 +52,13 @@ public final class GlassLayer extends JComponent implements PopupOwner, DataProv
     if (event.getID() == MouseEvent.MOUSE_PRESSED) {
       requestFocusInWindow();
     }
-    try {
-      InputTool tool = myToolProvider.getActiveTool();
 
-      if (tool != null) {
-        switch (event.getID()) {
-          case MouseEvent.MOUSE_PRESSED:
-            tool.mouseDown(event, myArea);
-            break;
-          case MouseEvent.MOUSE_RELEASED:
-            tool.mouseUp(event, myArea);
-            break;
-          case MouseEvent.MOUSE_ENTERED:
-            tool.mouseEntered(event, myArea);
-            break;
-          case MouseEvent.MOUSE_EXITED:
-            tool.mouseExited(event, myArea);
-            break;
-          case MouseEvent.MOUSE_CLICKED:
-            if (event.getClickCount() == 2) {
-              tool.mouseDoubleClick(event, myArea);
-            }
-            break;
-        }
-      }
-    }
-    catch (Throwable e) {
-      handleException(e);
-    }
+    myToolProvider.processMouseEvent(event, myArea);
   }
 
   @Override
   protected void processMouseMotionEvent(MouseEvent event) {
-    try {
-      InputTool tool = myToolProvider.getActiveTool();
-
-      if (tool != null) {
-        switch (event.getID()) {
-          case MouseEvent.MOUSE_MOVED:
-            tool.mouseMove(event, myArea);
-            break;
-          case MouseEvent.MOUSE_DRAGGED:
-            tool.mouseDrag(event, myArea);
-            break;
-        }
-      }
-    }
-    catch (Throwable e) {
-      handleException(e);
-    }
-  }
-
-  private void handleException(Throwable e) {
-    myToolProvider.showError("Edit error: ", e);
+    myToolProvider.processMouseEvent(event, myArea);
   }
 
   @Override
