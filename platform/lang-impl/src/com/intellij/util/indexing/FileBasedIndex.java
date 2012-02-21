@@ -986,7 +986,7 @@ public class FileBasedIndex implements ApplicationComponent {
   }
 
   public @Nullable ProjectIndexableFilesFilter projectIndexableFiles(Project project) {
-    if (project == null || HeavyProcessLatch.INSTANCE.isRunning()) return null;
+    if (project == null) return null;
 
     SoftReference<ProjectIndexableFilesFilter> reference = project.getUserData(ourProjectFilesSetKey);
     ProjectIndexableFilesFilter data = reference != null ? reference.get() : null;
