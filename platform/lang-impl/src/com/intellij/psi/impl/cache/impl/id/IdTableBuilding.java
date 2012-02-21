@@ -52,7 +52,7 @@ import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.FileContent;
 import com.intellij.util.indexing.IdDataConsumer;
 import com.intellij.util.indexing.SubstitutedFileType;
-import com.intellij.util.indexing.fileBasedIndex.impl.FileBasedIndexUnsavedDocumentsManagerImpl;
+import com.intellij.util.indexing.FileBasedIndexUnsavedDocumentsManagerImpl;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

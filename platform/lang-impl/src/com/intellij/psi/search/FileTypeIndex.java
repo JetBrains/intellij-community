@@ -19,7 +19,7 @@ import java.util.Map;
  * @author Dmitry Avdeev
  */
 public class FileTypeIndex extends ScalarIndexExtension<FileType>
-  implements FileBasedIndex.InputFilter, KeyDescriptor<FileType>, DataIndexer<FileType, Void, FileContent> {
+  implements FileBasedIndexIndicesManager.InputFilter, KeyDescriptor<FileType>, DataIndexer<FileType, Void, FileContent> {
 
 
   public static Collection<VirtualFile> getFiles(FileType fileType, GlobalSearchScope scope) {
@@ -50,7 +50,7 @@ public class FileTypeIndex extends ScalarIndexExtension<FileType>
   }
 
   @Override
-  public FileBasedIndex.InputFilter getInputFilter() {
+  public FileBasedIndexIndicesManager.InputFilter getInputFilter() {
     return this;
   }
 

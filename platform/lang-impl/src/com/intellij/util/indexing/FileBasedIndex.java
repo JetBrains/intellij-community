@@ -64,10 +64,6 @@ import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
-import com.intellij.util.indexing.fileBasedIndex.impl.FileBasedIndexIndicesManager;
-import com.intellij.util.indexing.fileBasedIndex.impl.FileBasedIndexLimitsChecker;
-import com.intellij.util.indexing.fileBasedIndex.impl.FileBasedIndexTransactionMap;
-import com.intellij.util.indexing.fileBasedIndex.impl.FileBasedIndexUnsavedDocumentsManager;
 import com.intellij.util.io.*;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.storage.HeavyProcessLatch;
@@ -130,10 +126,6 @@ public class FileBasedIndex implements Disposable{
 
   public void requestReindexExcluded(final VirtualFile file) {
     myChangedFilesCollector.invalidateIndices(file, false);
-  }
-
-  public interface InputFilter {
-    boolean acceptInput(VirtualFile file);
   }
 
   public FileBasedIndex(final VirtualFileManagerEx vfManager, FileDocumentManager fdm,
@@ -393,12 +385,12 @@ public class FileBasedIndex implements Disposable{
         final MapIndexStorage<K, V> storage = new MapIndexStorage<K, V>(IndexInfrastructure.getStorageFile(name), extension.getKeyDescriptor(), extension.getValueExternalizer(), extension.getCacheSize());
         final MemoryIndexStorage<K, V> memStorage = new MemoryIndexStorage<K, V>(storage);
         final UpdatableIndex<K, V, FileContent> index = createIndex(name, extension, memStorage);
-        final InputFilter inputFilter = extension.getInputFilter();
+        final FileBasedIndexIndicesManager.InputFilter inputFilter = extension.getInputFilter();
         
         assert inputFilter != null : "Index extension " + name + " must provide non-null input filter";
 
         myIndexIndicesManager.addNewIndex(name,
-                                    new Pair<UpdatableIndex<?, ?, FileContent>, InputFilter>(index, new IndexableFilesFilter(inputFilter)));
+                                    new Pair<UpdatableIndex<?, ?, FileContent>, FileBasedIndexIndicesManager.InputFilter>(index, new IndexableFilesFilter(inputFilter)));
         myIndexIdToVersionMap.put(name, version);
         if (!extension.dependsOnFileContent()) {
           myNotRequiringContentIndices.add(name);
@@ -1804,10 +1796,10 @@ public class FileBasedIndex implements Disposable{
     myIndexableSetToProjectMap.remove(set);
   }
 
-  private static class IndexableFilesFilter implements InputFilter {
-    private final InputFilter myDelegate;
+  private static class IndexableFilesFilter implements FileBasedIndexIndicesManager.InputFilter {
+    private final FileBasedIndexIndicesManager.InputFilter myDelegate;
 
-    private IndexableFilesFilter(InputFilter delegate) {
+    private IndexableFilesFilter(FileBasedIndexIndicesManager.InputFilter delegate) {
       myDelegate = delegate;
     }
 

@@ -21,7 +21,7 @@ import java.util.Map;
  *         Date: 7/25/11
  */
 public class XmlPropertiesIndex extends FileBasedIndexExtension<XmlPropertiesIndex.Key, String>
-  implements FileBasedIndex.InputFilter, DataIndexer<XmlPropertiesIndex.Key, String, FileContent>,
+  implements FileBasedIndexIndicesManager.InputFilter, DataIndexer<XmlPropertiesIndex.Key, String, FileContent>,
              KeyDescriptor<XmlPropertiesIndex.Key> {
 
   public final static Key MARKER_KEY = new Key();
@@ -50,7 +50,7 @@ public class XmlPropertiesIndex extends FileBasedIndexExtension<XmlPropertiesInd
   }
 
   @Override
-  public FileBasedIndex.InputFilter getInputFilter() {
+  public FileBasedIndexIndicesManager.InputFilter getInputFilter() {
     return this;
   }
 

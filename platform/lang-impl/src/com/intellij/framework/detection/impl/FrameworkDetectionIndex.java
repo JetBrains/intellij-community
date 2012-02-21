@@ -96,7 +96,7 @@ public class FrameworkDetectionIndex extends ScalarIndexExtension<Integer> {
   }
 
   @Override
-  public FileBasedIndex.InputFilter getInputFilter() {
+  public FileBasedIndexIndicesManager.InputFilter getInputFilter() {
     if (myInputFilter == null) {
       final Set<FileType> acceptedTypes = new HashSet<FileType>();
       for (FrameworkDetector detector : FrameworkDetector.EP_NAME.getExtensions()) {
@@ -117,7 +117,7 @@ public class FrameworkDetectionIndex extends ScalarIndexExtension<Integer> {
     return myRegistry.getDetectorsVersion();
   }
 
-  private static class FileTypesInputFilter implements FileBasedIndex.InputFilter {
+  private static class FileTypesInputFilter implements FileBasedIndexIndicesManager.InputFilter {
     private final Set<FileType> myAcceptedTypes;
 
     public FileTypesInputFilter(Set<FileType> acceptedTypes) {
