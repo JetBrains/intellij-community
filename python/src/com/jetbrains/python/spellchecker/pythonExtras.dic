@@ -5,3 +5,4 @@ doctest
 doctests
 unittest
 unittests
+virtualenv
