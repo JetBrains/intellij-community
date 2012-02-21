@@ -1683,6 +1683,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     graphics.setClip(rect.x, rect.y, rect.width, rect.height);
     paint(graphics);
     graphics.translate(rect.x, rect.y);
+    graphics.dispose();
     putUserData(BUFFER, image);
   }
   
