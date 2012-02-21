@@ -49,12 +49,16 @@ public class ProjectUtil {
     return FileUtil.getLocationRelativeToUserHome(project.getBasePath());
   }
 
-  public static String calcRelativeToProjectPath(final VirtualFile file, final Project project, final boolean includeFilePath) {
+  @NotNull
+  public static String calcRelativeToProjectPath(@NotNull final VirtualFile file,
+                                                 @Nullable final Project project,
+                                                 final boolean includeFilePath) {
     return calcRelativeToProjectPath(file, project, includeFilePath, false);
   }
 
-  public static String calcRelativeToProjectPath(final VirtualFile file,
-                                                 final Project project,
+  @NotNull
+  public static String calcRelativeToProjectPath(@NotNull final VirtualFile file,
+                                                 @Nullable final Project project,
                                                  final boolean includeFilePath,
                                                  final boolean keepModuleAlwaysOnTheLeft) {
     if (file instanceof VirtualFilePathWrapper) {

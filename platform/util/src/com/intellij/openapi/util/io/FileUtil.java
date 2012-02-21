@@ -1287,7 +1287,7 @@ public class FileUtil {
   }
 
   @Nullable
-  public static String getLocationRelativeToUserHome(final String path) {
+  public static String getLocationRelativeToUserHome(@Nullable final String path) {
     if (path == null) return null;
 
     if (SystemInfo.isUnix) {
