@@ -34,7 +34,10 @@ public class GradleProjectStructureChangesModelTest extends AbstractGradleTest {
           module {
             dependencies {
               library("lib1")
-        } } } }
+        } } } },
+      changesSorter: { a, b ->
+        b.gradleEntity.dependencyName.compareTo(a.gradleEntity.dependencyName)
+      }
     )
     
     // Check that the initial projects state is correctly parsed.
@@ -214,12 +217,13 @@ public class GradleProjectStructureChangesModelTest extends AbstractGradleTest {
     } }
     checkTree {
       project {
-        module1()
         module2('gradle') {
           dependencies {
             lib1('gradle')
             lib2('gradle')
-    } } } }
+        } }
+        module1()
+    } }
   }
   
   @Test
@@ -241,8 +245,8 @@ public class GradleProjectStructureChangesModelTest extends AbstractGradleTest {
     } }
     checkTree {
       project {
-        module1()
         module2('gradle')
+        module1()
     } }
     
     // Emulate import gradle module to intellij.
@@ -294,13 +298,13 @@ public class GradleProjectStructureChangesModelTest extends AbstractGradleTest {
     } }
     checkTree {
       project {
-        module1() {
-          dependencies {
-            lib1('conflict')
-        } }
         module2('gradle') {
           dependencies {
             lib1('gradle') // This is the point of the test. We don't expect to see 'conflict' here.
+        } }
+        module1() {
+          dependencies {
+            lib1('conflict')
     } } } }
   }
   
@@ -478,6 +482,73 @@ public class GradleProjectStructureChangesModelTest extends AbstractGradleTest {
         module3('intellij') {
           dependencies {
             module2('intellij')
+    } } } }
+  }
+  
+  @Test
+  public void "mismatched library path is highlighted after importing local library dependency"() {
+    init(
+      gradle: {
+        project {
+          module('module1') {
+            dependencies {
+              library('lib1', bin: ['1'])
+          } }
+          module('module2') {
+            dependencies {
+              library('lib1')
+      } } } },
+      intellij: {
+        project {
+          module('module1') {
+            dependencies {
+              library('lib1', bin: ['2'])
+      } } } }
+    )
+    checkChanges {
+      presence {
+        module(gradle: gradle.modules['module2'])
+        libraryDependency(gradle: gradle.libraryDependencies[gradle.modules['module2']])
+      }
+      libraryConflict(entity: intellij.libraries['lib1']) {
+        binaryPath(gradle: '1', intellij: ['2'])
+    } }
+    checkTree {
+      project {
+        module2('gradle') {
+          dependencies {
+            lib1('gradle')
+        } }
+        module1 {
+          dependencies {
+            lib1('conflict')
+    } } } }
+    
+    // Emulate importing missing module and library dependencies. Expecting to see the newly imported library dependency node
+    // highlighted as 'conflict' now.
+    setState(intellij: {
+      project {
+        module('module1') {
+          dependencies {
+            library('lib1', bin: ['2'])
+        } }
+        module('module2') {
+          dependencies {
+            library('lib1')
+    } } } })
+    checkChanges {
+      libraryConflict(entity: intellij.libraries['lib1']) {
+        binaryPath(gradle: '1', intellij: ['2'])
+    } }
+    checkTree {
+      project {
+        module1 {
+          dependencies {
+            lib1('conflict')
+        } }
+        module2() {
+          dependencies {
+            lib1('conflict')
     } } } }
   }
 }

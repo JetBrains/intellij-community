@@ -103,17 +103,18 @@ public class GradleProjectStructureNode<T extends GradleEntityId> extends Defaul
    * Does nothing if given node is not a child of the current node.
    * 
    * @param child  target child node
+   * @return       <code>true</code> if child position was changed; <code>false</code> otherwise
    */
-  public void correctChildPositionIfNecessary(@NotNull GradleProjectStructureNode<?> child) {
+  public boolean correctChildPositionIfNecessary(@NotNull GradleProjectStructureNode<?> child) {
     int currentPosition = -1;
-    int desiredPosition = getChildCount();
+    int desiredPosition = -1;
     for (int i = 0; i < getChildCount(); i++) {
       GradleProjectStructureNode<?> node = getChildAt(i);
       if (node == child) {
         currentPosition = i;
         continue;
       }
-      if (NODE_COMPARATOR.compare(child, node) <= 0) {
+      if (desiredPosition < 0 && NODE_COMPARATOR.compare(child, node) <= 0) {
         desiredPosition = i;
         if (currentPosition >= 0) {
           break;
@@ -122,16 +123,20 @@ public class GradleProjectStructureNode<T extends GradleEntityId> extends Defaul
     }
     if (currentPosition < 0) {
       // Given node is not a child of the current node.
-      return;
+      return false;
+    }
+    if (desiredPosition < 0) {
+      desiredPosition = getChildCount();
     }
     if (currentPosition < desiredPosition) {
       desiredPosition--;
     }
     if (currentPosition == desiredPosition) {
-      return;
+      return false;
     }
     remove(currentPosition);
     insert(child, desiredPosition);
+    return true;
   }
 
   /**
@@ -231,7 +236,15 @@ public class GradleProjectStructureNode<T extends GradleEntityId> extends Defaul
 
   public void setAttributes(@NotNull TextAttributesKey key) {
     myDescriptor.setAttributes(key);
-    onNodeChanged(this);
+    final GradleProjectStructureNode<?> parent = getParent();
+    if (parent == null) {
+      onNodeChanged(this);
+      return;
+    }
+    boolean positionChanged = parent.correctChildPositionIfNecessary(this);
+    if (!positionChanged) {
+      onNodeChanged(this);
+    }
   }
   
   public void addListener(@NotNull Listener listener) {

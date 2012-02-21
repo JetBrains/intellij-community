@@ -160,7 +160,7 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
    * 
    * @param changes  collections that contains all changes between the current gradle and intellij project structures
    */
-  public void update(@NotNull Collection<GradleProjectStructureChange> changes) {
+  public void processCurrentChanges(@NotNull Collection<GradleProjectStructureChange> changes) {
     for (GradleProjectStructureChange change : changes) {
       change.invite(myNewChangesDispatcher);
     }
@@ -353,7 +353,7 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
       moduleNode.removeFromParent();
     }
     else {
-      moduleNode.getDescriptor().setAttributes(GradleTextAttributes.GRADLE_NO_CHANGE);
+      moduleNode.setAttributes(GradleTextAttributes.GRADLE_NO_CHANGE);
     }
   }
   
@@ -387,7 +387,6 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
     @Override public void visit(@NotNull GradleModulePresenceChange change) { processNewModulePresenceChange(change); }
     @Override public void visit(@NotNull GradleLibraryDependencyPresenceChange change) { processNewLibraryDependencyPresenceChange(change); }
     @Override public void visit(@NotNull GradleModuleDependencyPresenceChange change) { processNewModuleDependencyPresenceChange(change); }
-
     @Override public void visit(@NotNull GradleMismatchedLibraryPathChange change) { processNewMismatchedLibraryPathChange(change); }
   }
   

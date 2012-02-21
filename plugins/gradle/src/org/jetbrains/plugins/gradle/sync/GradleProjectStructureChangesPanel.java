@@ -49,8 +49,8 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
         UIUtil.invokeLaterIfNeeded(new Runnable() {
           @Override
           public void run() {
-            myTreeModel.update(currentChanges);
             myTreeModel.processObsoleteChanges(ContainerUtil.subtract(oldChanges, currentChanges));
+            myTreeModel.processCurrentChanges(currentChanges);
           }
         });
       }

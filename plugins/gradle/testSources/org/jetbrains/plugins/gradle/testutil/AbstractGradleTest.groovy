@@ -59,8 +59,8 @@ public abstract class AbstractGradleTest {
   protected def init(map = [:]) {
     treeModel = container.getComponentInstance(GradleProjectStructureTreeModel) as GradleProjectStructureTreeModel
     changesModel.addListener({ old, current ->
-                               treeModel.update(sortChanges(current))
                                treeModel.processObsoleteChanges(sortChanges(ContainerUtil.subtract(old, current)));
+                               treeModel.processCurrentChanges(sortChanges(current))
     } as GradleProjectStructureChangeListener)
     setState(map, false)
     treeModel.rebuild()

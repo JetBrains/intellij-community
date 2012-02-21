@@ -15,8 +15,7 @@ public abstract class GradleAbstractDependencyStructureChangesCalculator<G exten
   implements GradleStructureChangesCalculator<G, I>
 {
   @Override
-  public void calculate(@NotNull G gradleEntity, @NotNull I intellijEntity, @NotNull GradleChangesCalculationContext context)
-  {
+  public void calculate(@NotNull G gradleEntity, @NotNull I intellijEntity, @NotNull GradleChangesCalculationContext context) {
     // TODO den process common dependency properties here.
     doCalculate(gradleEntity, intellijEntity, context);
   }
