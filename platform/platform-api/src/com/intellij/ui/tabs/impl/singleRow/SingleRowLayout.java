@@ -224,7 +224,7 @@ public class SingleRowLayout extends TabLayout {
         myTabs.layout(label, rec);
       }
 
-      label.setAligmentToCenter((deltaToFit > 0 || myTabs.isEditorTabs()) && getStrategy().isToCenterTextWhenStretched());
+      label.setAlignmentToCenter((deltaToFit > 0 || myTabs.isEditorTabs()) && getStrategy().isToCenterTextWhenStretched());
 
       data.position = getStrategy().getMaxPosition(label.getBounds());
       data.position += myTabs.getInterTabSpaceLength();
