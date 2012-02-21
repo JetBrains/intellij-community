@@ -1665,7 +1665,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         putUserData(BUFFER, null);
       }
     };
-    ApplicationManager.getApplication().invokeLater(stopDumbRunnable, ModalityState.current());
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      stopDumbRunnable.run();
+    } else {
+      ApplicationManager.getApplication().invokeLater(stopDumbRunnable, ModalityState.current());
+    }
   }
 
   /**
