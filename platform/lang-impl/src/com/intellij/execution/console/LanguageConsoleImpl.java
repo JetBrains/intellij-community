@@ -551,7 +551,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
       @Override
       public void fileClosed(FileEditorManager source, VirtualFile file) {
         if (file != myFile.getVirtualFile()) return;
-        if (myUiUpdateRunnable != null) {
+        if (myUiUpdateRunnable != null && !Boolean.TRUE.equals(file.getUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN))) {
           ApplicationManager.getApplication().runReadAction(myUiUpdateRunnable);
         }
       }

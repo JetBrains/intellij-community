@@ -585,6 +585,7 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
     public void dragOutFinished(MouseEvent event, TabInfo source) {
       boolean copy = event.isMetaDown() || (!SystemInfo.isMac && event.isControlDown());
       if (!copy) {
+        myFile.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, Boolean.TRUE);
         FileEditorManagerEx.getInstanceEx(myProject).closeFile(myFile, myWindow);
       }
       else {
@@ -592,6 +593,9 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
       }
 
       mySession.process(event);
+      if (!copy) {
+        myFile.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, null);
+      }
 
       myFile = null;
       mySession = null;
