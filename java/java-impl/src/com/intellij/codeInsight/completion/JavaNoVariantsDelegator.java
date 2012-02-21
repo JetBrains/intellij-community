@@ -18,11 +18,9 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiJavaCodeReferenceElement;
-import com.intellij.psi.PsiReferenceExpression;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
+import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.Consumer;
 
@@ -92,6 +90,11 @@ public class JavaNoVariantsDelegator extends NoVariantsDelegator {
     PrefixMatcher qMatcher = new CamelHumpMatcher(referenceName);
     Set<LookupElement> plainVariants =
       JavaSmartCompletionContributor.completeReference(qualifier, qualifier, filter, true, true, parameters, qMatcher);
+
+    for (PsiClass aClass : PsiShortNamesCache.getInstance(qualifier.getProject()).getClassesByName(referenceName, qualifier.getResolveScope())) {
+      plainVariants.add(JavaClassNameCompletionContributor.createClassLookupItem(aClass, true));
+    }
+
     if (!plainVariants.isEmpty()) {
       return plainVariants;
     }

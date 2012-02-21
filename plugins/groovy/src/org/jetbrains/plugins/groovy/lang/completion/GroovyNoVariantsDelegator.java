@@ -23,6 +23,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
@@ -134,6 +135,11 @@ public class GroovyNoVariantsDelegator extends NoVariantsDelegator {
         variants.add(element);
       }
     }
+
+    for (PsiClass aClass : PsiShortNamesCache.getInstance(qualifier.getProject()).getClassesByName(referenceName, qualifier.getResolveScope())) {
+      variants.add(GroovyCompletionUtil.createClassLookupItem(aClass));
+    }
+
 
     if (variants.isEmpty()) {
       GroovyCompletionContributor.addAllClasses(parameters, new Consumer<LookupElement>() {
