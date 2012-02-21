@@ -184,14 +184,16 @@ public final class TreeEditableArea implements EditableArea, FeedbackTreeLayer {
 
   @Override
   public void mark(RadComponent component, int feedback) {
-    // TODO: INSERT_BEFORE - ensure visible up component
-    // TODO: INSERT_AFTER - ensure visible down component
-
-    if (component != null && feedback == INSERT_SELECTION) {
+    if (component != null) {
       TreePath path = getPath(component);
-      myTree.scrollPathToVisible(path);
-      if (!myTree.isExpanded(path)) {
-        myTreeBuilder.expand(component, null);
+      if (feedback == INSERT_SELECTION) {
+        myTree.scrollPathToVisible(path);
+        if (!myTree.isExpanded(path)) {
+          myTreeBuilder.expand(component, null);
+        }
+      }
+      else {
+        myTree.scrollRowToVisible(myTree.getRowForPath(path) + (feedback == INSERT_BEFORE ? -1 : 1));
       }
     }
     myTree.mark(component, feedback);
@@ -200,12 +202,12 @@ public final class TreeEditableArea implements EditableArea, FeedbackTreeLayer {
   @Override
   public boolean isBeforeLocation(RadComponent component, int x, int y) {
     Rectangle bounds = myTree.getPathBounds(getPath(component));
-    return bounds != null && y - bounds.y < 15;
+    return bounds != null && y - bounds.y < myTree.getEdgeSize();
   }
 
   @Override
   public boolean isAfterLocation(RadComponent component, int x, int y) {
     Rectangle bounds = myTree.getPathBounds(getPath(component));
-    return bounds != null && bounds.getMaxY() - y < 15;
+    return bounds != null && bounds.getMaxY() - y < myTree.getEdgeSize();
   }
 }
