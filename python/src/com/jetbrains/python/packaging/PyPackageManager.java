@@ -69,7 +69,7 @@ public class PyPackageManager {
 
     public interface Listener {
       void started();
-      void finished();
+      void finished(@Nullable PyExternalProcessException exception);
     }
 
     public UI(@NotNull Project project, @NotNull Sdk sdk, @Nullable Listener listener) {
@@ -137,11 +137,13 @@ public class PyPackageManager {
               }
             });
           }
+          final Ref<PyExternalProcessException> exceptionRef = Ref.create(null);
           try {
             runnable.run();
             notificationRef.set(new Notification(PACKAGING_GROUP_ID, successTitle, successDescription, NotificationType.INFORMATION));
           }
           catch (final PyExternalProcessException e) {
+            exceptionRef.set(e);
             final String progressLower = progressTitle.toLowerCase();
             final String description = "Error occurred when " + progressLower + ".";
             final String command = e.getName() + " " + StringUtil.join(e.getArgs(), " ");
@@ -163,7 +165,7 @@ public class PyPackageManager {
               @Override
               public void run() {
                 if (myListener != null) {
-                  myListener.finished();
+                  myListener.finished(exceptionRef.get());
                 }
                 VirtualFileManager.getInstance().refreshWithoutFileWatcher(false);
                 PythonSdkType.getInstance().setupSdkPaths(mySdk);
