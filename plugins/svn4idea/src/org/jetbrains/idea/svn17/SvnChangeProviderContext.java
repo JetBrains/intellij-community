@@ -30,6 +30,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
 import org.tmatesoft.svn.core.wc.*;
 
 import java.io.File;
@@ -191,7 +192,8 @@ class SvnChangeProviderContext implements StatusReceiver {
   }
 
   void processStatus(final FilePath filePath, final SVNStatus status) throws SVNException {
-    if (WorkingCopyFormat.ONE_DOT_SEVEN.getFormat() != status.getWorkingCopyFormat()) {
+    final int wcFormat = status.getWorkingCopyFormat();
+    if (WorkingCopyFormat.ONE_DOT_SEVEN.getFormat() != wcFormat && ISVNWCDb.WC_FORMAT_17 != wcFormat) {
       loadEntriesFile(filePath);
     }
     if (status != null) {
