@@ -459,7 +459,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
     textFieldWithBrowseButton
         .addBrowseFolderListener("TestNG", "Select .properties file for test properties", project, propertiesFileDescriptor);
 
-    propertiesTableView.setModel(propertiesTableModel);
+    propertiesTableView.setModelAndUpdateColumns(propertiesTableModel);
     propertiesTableView.setShowGrid(true);
 
     listenersTable.setModel(listenerModel);

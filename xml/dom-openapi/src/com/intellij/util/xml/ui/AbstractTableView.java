@@ -157,7 +157,7 @@ public abstract class AbstractTableView<T> extends JPanel implements TypeSafeDat
   }
 
   protected final void initializeTable() {
-    myTable.setModel(myTableModel);
+    myTable.setModelAndUpdateColumns(myTableModel);
     if (getEmptyPaneText() != null) {
       final CardLayout cardLayout = ((CardLayout)myInnerPanel.getLayout());
       myTable.getModel().addTableModelListener(new TableModelListener() {

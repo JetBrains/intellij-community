@@ -134,7 +134,7 @@ class StatisticsPanel extends JPanel implements DataProvider{
 
     public void doDispose() {
       BaseTableView.store(myStorage, myTable);
-      myTable.setModel(new ListTableModel(TestColumnInfo.COLUMN_NAMES));
+      myTable.setModelAndUpdateColumns(new ListTableModel(TestColumnInfo.COLUMN_NAMES));
       myModel = null;
       myChildInfo = null;
       myCurrentTest = null;

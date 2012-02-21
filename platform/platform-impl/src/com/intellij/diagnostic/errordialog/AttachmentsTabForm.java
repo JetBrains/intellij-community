@@ -1,7 +1,6 @@
 package com.intellij.diagnostic.errordialog;
 
 import com.intellij.diagnostic.DiagnosticBundle;
-import com.intellij.ide.plugins.InstalledPluginsTableModel;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.EventDispatcher;
@@ -107,7 +106,7 @@ public class AttachmentsTabForm {
   }
 
   public void setAttachments(List<Attachment> attachments) {
-    myTable.setModel(new ListTableModel<Attachment>(new ColumnInfo[]{ENABLED_COLUMN, PATH_COLUMN}, attachments, 1));
+    myTable.setModelAndUpdateColumns(new ListTableModel<Attachment>(new ColumnInfo[]{ENABLED_COLUMN, PATH_COLUMN}, attachments, 1));
     myTable.setBorder(IdeBorderFactory.createBorder());
     myTable.setSelection(Collections.singletonList(attachments.get(0)));
   }
