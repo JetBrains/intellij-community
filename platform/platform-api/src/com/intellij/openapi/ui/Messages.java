@@ -118,7 +118,7 @@ public class Messages {
 
     if (canShowMacSheetPanel()) {
       return MacMessages.getInstance()
-        .showMessageDialog(title, message, options, false, WindowManager.getInstance().suggestParentWindow(project), defaultOptionIndex, defaultOptionIndex, null);
+        .showMessageDialog(title, message, options, false, WindowManager.getInstance().suggestParentWindow(project), defaultOptionIndex, defaultOptionIndex, doNotAskOption);
     }
 
     MessageDialog dialog = new MessageDialog(project, message, title, options, defaultOptionIndex, -1, icon, doNotAskOption, false);
