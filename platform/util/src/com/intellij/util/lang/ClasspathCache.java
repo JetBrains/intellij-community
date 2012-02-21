@@ -21,6 +21,7 @@ package com.intellij.util.lang;
 
 import com.intellij.openapi.util.text.StringHash;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.BloomFilterBase;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashMap;
@@ -30,7 +31,6 @@ import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.Nullable;
 import sun.misc.Resource;
 
-import java.util.BitSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -44,7 +44,7 @@ public class ClasspathCache {
 
   private THashMap<String, Set<Loader>> myResources2LoadersTempMap = new THashMap<String, Set<Loader>>();
   private static final double PROBABILITY = 0.005d;
-  private BloomFilter myNameFilter;
+  private Name2LoaderFilter myNameFilter;
   private boolean myTempMapMode = true;
 
   public ClasspathCache() {
@@ -232,7 +232,7 @@ public class ClasspathCache {
       nBits += (int)(nBits * 0.03d); // allow some growth for Idea main loader
     }
 
-    myNameFilter = new BloomFilter(nBits, PROBABILITY);
+    myNameFilter = new Name2LoaderFilter(nBits, PROBABILITY);
 
     for(Map.Entry<String, Set<Loader>> e:myResources2LoadersTempMap.entrySet()) {
       final String name = e.getKey();
@@ -246,50 +246,25 @@ public class ClasspathCache {
     }
   }
 
-  static class BloomFilter {
-    private final int myHashFunctionCount;
-    private final int NBITS;
-    private final BitSet myResourceMap;
+  private static class Name2LoaderFilter extends BloomFilterBase {
     private static final int SEED = 31;
 
-    BloomFilter(int nBits, double probability) {
-      int bitsPerNameFactor = (int)Math.ceil(-Math.log(probability) / (Math.log(2) * Math.log(2)));
-      myHashFunctionCount = (int)Math.ceil(bitsPerNameFactor * Math.log(2));
-
-      nBits = nBits * bitsPerNameFactor;
-
-      if ((nBits & 1) == 0) ++nBits;
-      while(!isPrime(nBits))  nBits += 2;
-      NBITS = nBits;
-      myResourceMap = new BitSet(NBITS);
-    }
-
-    private static boolean isPrime(int bits) {
-      if ((bits & 1) == 0) return false;
-      int sqrt = (int)Math.sqrt(bits);
-      for(int i = 3; i <= sqrt; i+=2) {
-        if (bits % i == 0) return false;
-      }
-      return true;
+    Name2LoaderFilter(int nBits, double probability) {
+      super(nBits, probability);
     }
 
     private boolean maybeContains(String name, Loader loader) {
       int hash = hashFromNameAndLoader(name, loader, StringHash.murmur(name, SEED));
       int hash2 = hashFromNameAndLoader(name, loader, hash);
 
-      for (int i = 0; i < myHashFunctionCount; ++i) {
-        if (!myResourceMap.get(Math.abs((hash + i * hash2) % NBITS))) return false;
-      }
-      return true;
+      return maybeContains(hash, hash2);
     }
 
-    public void add(String name, Loader loader) {
-      int hash1 = hashFromNameAndLoader(name, loader, StringHash.murmur(name, SEED));
-      int hash2 = hashFromNameAndLoader(name, loader, hash1);
+    void add(String name, Loader loader) {
+      int hash = hashFromNameAndLoader(name, loader, StringHash.murmur(name, SEED));
+      int hash2 = hashFromNameAndLoader(name, loader, hash);
 
-      for (int i = 0; i < myHashFunctionCount; ++i) {
-        myResourceMap.set(Math.abs((hash1 + i * hash2) % NBITS));
-      }
+      addIt(hash, hash2);
     }
 
     private int hashFromNameAndLoader(String name, Loader loader, int n) {
