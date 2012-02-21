@@ -63,6 +63,23 @@ public class ModuleRootsIndex {
     return myRootToModuleMap.get(root);
   }
 
+  @NotNull
+  public RootDescriptor associateRoot(File root, Module module, boolean isTestRoot) {
+    final RootDescriptor d = myRootToModuleMap.get(root);
+    if (d != null) {
+      return d;
+    }
+    List<RootDescriptor> moduleRoots = myModuleToRootsMap.get(module);
+    if (moduleRoots == null) {
+      moduleRoots = new ArrayList<RootDescriptor>();
+      myModuleToRootsMap.put(module, moduleRoots);
+    }
+    final RootDescriptor descriptor = new RootDescriptor(module, root, false);
+    myRootToModuleMap.put(root, descriptor);
+    moduleRoots.add(descriptor);
+    return descriptor;
+  }
+
   @Nullable
   public RootDescriptor getModuleAndRoot(File file) {
     File current = file;
