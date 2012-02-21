@@ -1605,7 +1605,7 @@ public class Mappings {
         }
       }
 
-      if (delta.isDifferentiated()) {
+      if (delta.isDifferentiated() && false) {
         for (DependencyContext.S c : delta.getChangedClasses()) {
           myClassToSubclasses.remove(c);
 
@@ -1651,9 +1651,9 @@ public class Mappings {
         }
       }
       else {
-        mySourceFileToClasses.putAll(delta.mySourceFileToClasses);
-        mySourceFileToUsages.putAll(delta.mySourceFileToUsages);
-        mySourceFileToAnnotationUsages.putAll(delta.mySourceFileToAnnotationUsages);
+        mySourceFileToClasses.replaceAll(delta.mySourceFileToClasses);
+        mySourceFileToUsages.replaceAll(delta.mySourceFileToUsages);
+        mySourceFileToAnnotationUsages.replaceAll(delta.mySourceFileToAnnotationUsages);
       }
 
       final Collection<DependencyContext.S> compiledSet = new HashSet<DependencyContext.S>(compiled.size());
