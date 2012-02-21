@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util.indexing.fileBasedIndex.impl;
+package com.intellij.util.indexing;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ConcurrentHashSet;
-import com.intellij.util.indexing.*;
 import gnu.trove.THashMap;
 
 import java.util.Map;
@@ -27,12 +27,17 @@ import java.util.Set;
 
 public class FileBasedIndexIndicesManager {
   private final ConcurrentHashSet<ID<?, ?>> myUpToDateIndices = new ConcurrentHashSet<ID<?, ?>>();
-  private final Map<ID<?, ?>, Pair<UpdatableIndex<?, ?, FileContent>, FileBasedIndex.InputFilter>> myIndices = new THashMap<ID<?, ?>, Pair<UpdatableIndex<?, ?, FileContent>, FileBasedIndex.InputFilter>>();
+  private final Map<ID<?, ?>, Pair<UpdatableIndex<?, ?, FileContent>, InputFilter>> myIndices = new THashMap<ID<?, ?>, Pair<UpdatableIndex<?, ?, FileContent>, InputFilter>>();
   private final PerIndexDocumentVersionMap myLastIndexedDocStamps = new PerIndexDocumentVersionMap();
   private final Map<ID<?, ?>, Semaphore> myUnsavedDataIndexingSemaphores = new THashMap<ID<?,?>, Semaphore>();
 
+  public interface InputFilter {
+    boolean acceptInput(VirtualFile file);
+  }
+
+
   public <K, V> UpdatableIndex<K, V, FileContent> getIndex(ID<K, V> indexId) {
-    final Pair<UpdatableIndex<?, ?, FileContent>, FileBasedIndex.InputFilter> pair = myIndices.get(indexId);
+    final Pair<UpdatableIndex<?, ?, FileContent>, InputFilter> pair = myIndices.get(indexId);
 
     assert pair != null : "Index data is absent for index " + indexId;
 
@@ -48,13 +53,13 @@ public class FileBasedIndexIndicesManager {
     return myIndices.size();
   }
 
-  public <K, V> void addNewIndex(ID<K, V> key, Pair<UpdatableIndex<?, ?, FileContent>, FileBasedIndex.InputFilter> value) {
+  public <K, V> void addNewIndex(ID<K, V> key, Pair<UpdatableIndex<?, ?, FileContent>, InputFilter> value) {
     myIndices.put(key, value);
     myUnsavedDataIndexingSemaphores.put(key, new Semaphore());
   }
 
-  public FileBasedIndex.InputFilter getInputFilter(ID<?, ?> indexId) {
-    final Pair<UpdatableIndex<?, ?, FileContent>, FileBasedIndex.InputFilter> pair = myIndices.get(indexId);
+  public InputFilter getInputFilter(ID<?, ?> indexId) {
+    final Pair<UpdatableIndex<?, ?, FileContent>, InputFilter> pair = myIndices.get(indexId);
 
     assert pair != null : "Index data is absent for index " + indexId;
 
