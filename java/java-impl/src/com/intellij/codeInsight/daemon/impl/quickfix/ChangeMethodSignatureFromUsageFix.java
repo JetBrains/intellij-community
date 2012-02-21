@@ -178,11 +178,27 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction, HighP
 
     final PsiMethod method = SuperMethodWarningUtil.checkSuperMethod(myTargetMethod, RefactoringBundle.message("to.refactor"));
     if (method == null) return;
-    if (!CodeInsightUtilBase.prepareFileForWrite(method.getContainingFile())) return;
+    myNewParametersInfo = getNewParametersInfo(myExpressions, myTargetMethod, mySubstitutor);
 
+    final List<ParameterInfoImpl> parameterInfos =
+      performChange(project, editor, file, method, myMinUsagesNumberToShowDialog, myNewParametersInfo, myChangeAllUsages, false);
+    if (parameterInfos != null) {
+      myNewParametersInfo = parameterInfos.toArray(new ParameterInfoImpl[parameterInfos.size()]);
+    }
+  }
+
+  public static List<ParameterInfoImpl> performChange(final Project project,
+                                                      final Editor editor,
+                                                      final PsiFile file,
+                                                      final PsiMethod method,
+                                                      final int minUsagesNumber,
+                                                      final ParameterInfoImpl[] newParametersInfo,
+                                                      final boolean changeAllUsages,
+                                                      final boolean allowDelegation) {
+    if (!CodeInsightUtilBase.prepareFileForWrite(method.getContainingFile())) return null;
     final FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager();
     final FindUsagesHandler handler = findUsagesManager.getFindUsagesHandler(method, false);
-    if (handler == null) return; //on failure or cancel (e.g. cancel of super methods dialog)
+    if (handler == null) return null;//on failure or cancel (e.g. cancel of super methods dialog)
 
     final JavaMethodFindUsagesOptions options = new JavaMethodFindUsagesOptions(project);
     options.isImplementingMethods = true;
@@ -196,7 +212,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction, HighP
         Processor<UsageInfo> processor = new Processor<UsageInfo>() {
           @Override
           public boolean process(final UsageInfo t) {
-            return ++usagesFound[0] < myMinUsagesNumberToShowDialog;
+            return ++usagesFound[0] < minUsagesNumber;
           }
         };
 
@@ -204,21 +220,20 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction, HighP
       }
     };
     String progressTitle = QuickFixBundle.message("searching.for.usages.progress.title");
-    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(runnable, progressTitle, true, project)) return;
+    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(runnable, progressTitle, true, project)) return null;
 
-    myNewParametersInfo = getNewParametersInfo(myExpressions, myTargetMethod, mySubstitutor);
-    if (ApplicationManager.getApplication().isUnitTestMode() || usagesFound[0] < myMinUsagesNumberToShowDialog) {
+    if (ApplicationManager.getApplication().isUnitTestMode() || usagesFound[0] < minUsagesNumber) {
       ChangeSignatureProcessor processor = new ChangeSignatureProcessor(
                             project,
                             method,
                             false, null,
                             method.getName(),
                             method.getReturnType(),
-                            myNewParametersInfo){
+                            newParametersInfo){
         @Override
         @NotNull
         protected UsageInfo[] findUsages() {
-          return myChangeAllUsages ? super.findUsages() : UsageInfo.EMPTY_ARRAY;
+          return changeAllUsages ? super.findUsages() : UsageInfo.EMPTY_ARRAY;
         }
       };
       processor.run();
@@ -230,25 +245,21 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction, HighP
       });
     }
     else {
-      List<ParameterInfoImpl> parameterInfos = myNewParametersInfo != null
-                                               ? new ArrayList<ParameterInfoImpl>(Arrays.asList(myNewParametersInfo))
+      List<ParameterInfoImpl> parameterInfos = newParametersInfo != null
+                                               ? new ArrayList<ParameterInfoImpl>(Arrays.asList(newParametersInfo))
                                                : new ArrayList<ParameterInfoImpl>();
       final PsiReferenceExpression refExpr = TargetElementUtil.findReferenceExpression(editor);
-      JavaChangeSignatureDialog dialog = new JavaChangeSignatureDialog(project, method, allowDelegate(), refExpr);
+      JavaChangeSignatureDialog dialog = new JavaChangeSignatureDialog(project, method, allowDelegation, refExpr);
       dialog.setParameterInfos(parameterInfos);
       dialog.show();
-      List<ParameterInfoImpl> parameters = dialog.getParameters();
-      myNewParametersInfo = parameters.toArray(new ParameterInfoImpl[parameters.size()]);
+      return dialog.getParameters();
     }
+    return null;
   }
 
-  protected boolean allowDelegate() {
-    return false;
-  }
-
-  public String getNewParameterNameByOldIndex(int oldIndex) {
-    if (myNewParametersInfo == null) return null;
-    for (ParameterInfoImpl info : myNewParametersInfo) {
+  public static String getNewParameterNameByOldIndex(int oldIndex, final ParameterInfoImpl[] parametersInfo) {
+    if (parametersInfo == null) return null;
+    for (ParameterInfoImpl info : parametersInfo) {
       if (info.oldParameterIndex == oldIndex) {
         return info.getName();
       }

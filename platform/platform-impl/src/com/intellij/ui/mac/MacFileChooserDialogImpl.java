@@ -22,6 +22,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.impl.IdeMenuBar;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.ui.mac.foundation.MacUtil;
@@ -83,6 +85,14 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
       processResult(returnCode, openPanelDidEnd);
 
       try {
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            IdeMenuBar bar = getMenuBar();
+            if (bar != null) {
+              bar.enableUpdates();
+            }
+          }
+        });
         if (myResultPaths != null) {
           final List<String> paths = myResultPaths;
           final Consumer<List<String>> callback = myCallback;
@@ -231,7 +241,28 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
     });
   }
 
+  @Nullable
+  private static IdeMenuBar getMenuBar() {
+    Window cur = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+
+    while (cur != null) {
+      if (cur instanceof JFrame) {
+        JMenuBar menuBar = ((JFrame)cur).getJMenuBar();
+        if (menuBar instanceof IdeMenuBar) {
+          return (IdeMenuBar)menuBar;
+        }
+      }
+      cur = cur.getOwner();
+    }
+    return null;
+  }
+
   private static void showNativeChooserAsSheet(@Nullable String toSelect) {
+    IdeMenuBar bar = getMenuBar();
+    if (bar != null) {
+      bar.disableUpdates();
+    }
+
     final ID autoReleasePool = createAutoReleasePool();
     try {
       final ID delegate = invoke(Foundation.getObjcClass("NSOpenPanelDelegate_"), "new");

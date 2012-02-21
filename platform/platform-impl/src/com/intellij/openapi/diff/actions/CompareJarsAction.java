@@ -19,6 +19,7 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.diff.DirDiffSettings;
 import com.intellij.ide.diff.JarFileDiffElement;
 import com.intellij.ide.diff.VirtualFileDiffElement;
+import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -26,7 +27,6 @@ import com.intellij.openapi.diff.DirDiffManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 
 /**
@@ -42,21 +42,21 @@ public class CompareJarsAction extends AnAction {
     if (project != null && files != null) {
       VirtualFileDiffElement src = null;
       VirtualFileDiffElement trg = null;
-      if (files.length == 2 && isJar(files[0]) && isJar(files[1])) {
+      if (files.length == 2 && isArchive(files[0]) && isArchive(files[1])) {
         src = new JarFileDiffElement(files[0]);
         trg = new JarFileDiffElement(files[1]);
-      } else if (files.length == 1 && isJar(files[0])) {
+      } else if (files.length == 1 && isArchive(files[0])) {
         src = new JarFileDiffElement(files[0]);
         final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, true, true, false, false) {
           @Override
           public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
             return file.isDirectory()
-                   || (!file.isDirectory() && JarFileSystem.PROTOCOL.equalsIgnoreCase(file.getExtension()));
+                   || (!file.isDirectory() && isArchive(file));
           }
         };
         final VirtualFile[] result = FileChooserFactory.getInstance()
           .createFileChooser(descriptor, project).choose(project.getBaseDir(), project);
-        if (result.length == 1 && result[0] != null && isJar(result[0])) {
+        if (result.length == 1 && result[0] != null && isArchive(result[0])) {
           trg = new JarFileDiffElement(result[0]);
         }
       }
@@ -71,10 +71,10 @@ public class CompareJarsAction extends AnAction {
   public void update(AnActionEvent e) {
     final VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
     if (files != null && files.length > 0 && files.length < 3) {
-      if (isJar(files[0]) && (files.length == 1 || isJar(files[1]))) {
+      if (isArchive(files[0]) && (files.length == 1 || isArchive(files[1]))) {
         e.getPresentation().setEnabled(true);
         e.getPresentation().setVisible(true);
-        e.getPresentation().setText(files.length == 1 ? "Compare Jar File with..." : "Compare Jar Files");
+        e.getPresentation().setText(files.length == 1 ? "Compare Archive File with..." : "Compare Archives");
         return;
       }
     }
@@ -83,7 +83,7 @@ public class CompareJarsAction extends AnAction {
     e.getPresentation().setVisible(false);
   }
 
-  private static boolean isJar(VirtualFile file) {
-    return JarFileSystem.PROTOCOL.equalsIgnoreCase(file.getExtension());
+  private static boolean isArchive(VirtualFile file) {
+    return file.getFileType() instanceof ArchiveFileType;
   }
 }

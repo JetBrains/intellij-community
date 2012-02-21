@@ -1186,6 +1186,10 @@ public abstract class DialogWrapper {
     myPeer.setModal(modal);
   }
 
+  public boolean isModal() {
+    return myPeer.isModal();
+  }
+
   protected void setOKActionEnabled(boolean isEnabled) {
     myOKAction.setEnabled(isEnabled);
   }
