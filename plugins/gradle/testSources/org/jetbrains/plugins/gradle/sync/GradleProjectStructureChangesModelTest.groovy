@@ -40,8 +40,8 @@ public class GradleProjectStructureChangesModelTest extends AbstractGradleTest {
     // Check that the initial projects state is correctly parsed.
     checkChanges {
       presence {
-        library(gradle: gradle.modules.dependencies.flatten().findAll { it.name == "lib2" })
-        library(gradle: gradle.modules.dependencies.flatten().findAll { it.name == "lib3" })
+        library(gradle: gradle.libraryDependencies.values().flatten().findAll { it.name == "lib2" })
+        library(gradle: gradle.libraryDependencies.values().flatten().findAll { it.name == "lib3" })
     } }
     checkTree {
       project {
@@ -63,7 +63,7 @@ public class GradleProjectStructureChangesModelTest extends AbstractGradleTest {
     
     checkChanges {
       presence {
-        library(gradle: gradle.modules.dependencies.flatten().findAll { it.name == "lib3" })
+        library(gradle: gradle.libraryDependencies.values().flatten().findAll { it.name == "lib3" })
     } }
     checkTree {
       project {
@@ -144,7 +144,7 @@ public class GradleProjectStructureChangesModelTest extends AbstractGradleTest {
       } } } }
     )
     checkChanges {
-      libraryConflict(entity: intellij.dependencies.values().flatten().find {it.library.name == 'lib2' }.library) {
+      libraryConflict(entity: intellij.libraryDependencies.values().flatten().find {it.library.name == 'lib2' }.library) {
         binaryPath(gradle: null, intellij: '3')
     } }
     checkTree {
@@ -209,8 +209,8 @@ public class GradleProjectStructureChangesModelTest extends AbstractGradleTest {
     } } )
     checkChanges {
       presence {
-        module(gradle: gradle.modules.find { it.name == 'module2'})
-        libraryDependency(gradle: gradle.modules.dependencies.flatten())
+        module(gradle: gradle.modules['module2'])
+        libraryDependency(gradle: gradle.modules['module2'].dependencies)
     } }
     checkTree {
       project {
@@ -237,7 +237,7 @@ public class GradleProjectStructureChangesModelTest extends AbstractGradleTest {
     )
     checkChanges {
       presence {
-        module(gradle: gradle.modules.find { it.name == 'module2' })
+        module(gradle: gradle.modules['module2'])
     } }
     checkTree {
       project {
@@ -286,8 +286,8 @@ public class GradleProjectStructureChangesModelTest extends AbstractGradleTest {
 
     checkChanges {
       presence {
-        module(gradle: gradle.modules.find { it.name == 'module2' })
-        libraryDependency(gradle: gradle.dependencies[gradle.modules.find { it.name == 'module2' }].first())
+        module(gradle: gradle.modules['module2'])
+        libraryDependency(gradle: gradle.libraryDependencies[gradle.modules['module2']].first())
       }
       libraryConflict(entity: intellij.libraries['lib1']) {
         binaryPath(gradle: ['1'], intellij: ['2'])
@@ -301,6 +301,183 @@ public class GradleProjectStructureChangesModelTest extends AbstractGradleTest {
         module2('gradle') {
           dependencies {
             lib1('gradle') // This is the point of the test. We don't expect to see 'conflict' here.
+    } } } }
+  }
+  
+  @Test
+  public void "mismatched module dependency import"() {
+    init(
+      gradle: {
+        project {
+          module('module1')
+          module('module2')
+          module('module3') {
+            dependencies {
+              module('module1')
+              module('module2')
+      } } } },
+      intellij: {
+        project {
+          module('module2')
+          module('module4')
+          module('module3') {
+            dependencies {
+              module('module2')
+              module('module4')
+      } } } }
+    )
+    checkChanges {
+      presence {
+        module(gradle: gradle.modules['module1'])
+        module(intellij: intellij.modules['module4'])
+        moduleDependency(gradle: gradle.moduleDependencies[gradle.modules['module3']].find { it.target == gradle.modules['module1']})
+        moduleDependency(intellij: intellij.moduleDependencies[intellij.modules['module3']].find { it.moduleName == 'module4'})
+    } }
+    checkTree {
+      project {
+        module1('gradle')
+        module2()
+        module3() {
+          dependencies {
+            module1('gradle')
+            module2()
+            module4('intellij')
+        } }
+        module4('intellij')
+    } }
+    
+    Closure newProjectState = {
+      project {
+        module('module1')
+        module('module2')
+        module('module4')
+        module('module3') {
+          dependencies {
+            module('module1')
+            module('module2')
+            module('module4')
+    } } } }
+    setState(gradle: newProjectState, intellij: newProjectState)
+    checkChanges { } // No changes
+    checkTree {
+      project {
+        module1()
+        module2()
+        module3 {
+          dependencies {
+            module1()
+            module2()
+            module4()
+         } }
+        module4()
+    } }
+  }
+  
+  @Test
+  public void "mismatched module dependency removal"() {
+    init(
+      gradle: {
+        project {
+          module('module1')
+          module('module2')
+          module('module3') {
+            dependencies {
+              module('module1')
+              module('module2')
+      } } } },
+      intellij: {
+        project {
+          module('module2')
+          module('module4')
+          module('module3') {
+            dependencies {
+              module('module2')
+              module('module4')
+      } } } }
+    )
+    checkChanges {
+      presence {
+        module(gradle: gradle.modules['module1'])
+        module(intellij: intellij.modules['module4'])
+        moduleDependency(gradle: gradle.moduleDependencies[gradle.modules['module3']].find { it.target == gradle.modules['module1']})
+        moduleDependency(intellij: intellij.moduleDependencies[intellij.modules['module3']].find { it.moduleName == 'module4'})
+    } }
+    checkTree {
+      project {
+        module1('gradle')
+        module2()
+        module3() {
+          dependencies {
+            module1('gradle')
+            module2()
+            module4('intellij')
+        } }
+        module4('intellij')
+    } }
+
+    Closure newProjectState = {
+      project {
+        module('module2')
+        module('module3') {
+          dependencies {
+            module('module2')
+    } } } }
+    setState(gradle: newProjectState, intellij: newProjectState)
+    checkChanges { } // No changes
+    checkTree {
+      project {
+        module2()
+        module3 {
+          dependencies {
+            module2()
+    } } } }
+  }
+  
+  @Test
+  public void "cycled module dependencies"() {
+    init(
+      gradle: {
+        project {
+          module('module1') {
+            dependencies {
+              module('module2')
+          } }
+          module('module2') {
+            dependencies {
+              module('module1')
+      } } } },
+      intellij: {
+        project {
+          module('module2') {
+            dependencies {
+              module('module3')
+          } }
+          module('module3') {
+            dependencies {
+              module('module2')
+      } } } } 
+    )
+    checkChanges {
+      presence {
+        module(gradle: gradle.modules['module1'])
+        module(intellij: intellij.modules['module3'])
+        moduleDependency(gradle: gradle.moduleDependencies.values().flatten())
+        moduleDependency(intellij: intellij.moduleDependencies.values().flatten())
+    } }
+    checkTree {
+      project {
+        module1('gradle') {
+          dependencies {
+            module2('gradle')
+        } }
+        module2() {
+          dependencies {
+            module1('gradle')
+            module3('intellij')
+        } }
+        module3('intellij') {
+          dependencies {
+            module2('intellij')
     } } } }
   }
 }

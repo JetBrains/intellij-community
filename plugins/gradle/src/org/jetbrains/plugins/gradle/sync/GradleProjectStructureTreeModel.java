@@ -92,7 +92,7 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
           return value;
         }
         GradleLibraryDependencyId id = GradleEntityIdMapper.mapEntityToId(libraryOrderEntry);
-        dependencies.add(buildNode(id, id.getLibraryName()));
+        dependencies.add(buildNode(id, id.getDependencyName()));
         return value;
       }
     };
@@ -137,6 +137,7 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
     GradleProjectStructureNode<GradleModuleId> moduleNode = getModuleNode(id);
     GradleProjectStructureNode<GradleSyntheticId> result
       = new GradleProjectStructureNode<GradleSyntheticId>(GradleConstants.DEPENDENCIES_NODE_DESCRIPTOR);
+    result.addListener(myNodeListener);
     moduleNode.add(result);
     myModuleDependencies.put(id.getModuleName(), result);
     
@@ -196,7 +197,7 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
     for (GradleProjectStructureNode<GradleSyntheticId> holder : myModuleDependencies.values()) {
       for (GradleProjectStructureNode<GradleLibraryDependencyId> dependencyNode : holder.getChildren(GradleLibraryDependencyId.class)) {
         final GradleLibraryDependencyId id = dependencyNode.getDescriptor().getElement();
-        if (change.getLibraryName().equals(id.getLibraryName())) {
+        if (change.getLibraryName().equals(id.getDependencyName())) {
           dependencyNode.addConflictChange(change);
           break;
         }
@@ -205,25 +206,31 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
   }
 
   private void processNewLibraryDependencyPresenceChange(@NotNull GradleLibraryDependencyPresenceChange change) {
-    GradleLibraryDependencyId id = change.getGradleEntity();
+    processNewDependencyPresenceChange(change);
+  }
+
+  private void processNewModuleDependencyPresenceChange(@NotNull GradleModuleDependencyPresenceChange change) {
+    processNewDependencyPresenceChange(change);
+  }
+  
+  private <I extends GradleAbstractDependencyId> void processNewDependencyPresenceChange(@NotNull GradleEntityPresenceChange<I> change) {
+    I id = change.getGradleEntity();
     TextAttributesKey attributes = GradleTextAttributes.GRADLE_LOCAL_CHANGE;
     if (id == null) {
       id = change.getIntellijEntity();
       attributes = GradleTextAttributes.INTELLIJ_LOCAL_CHANGE;
     }
     assert id != null;
-    final GradleProjectStructureNode<GradleSyntheticId> dependenciesNode = getDependenciesNode(id.getModuleId());
-    for (GradleProjectStructureNode<GradleLibraryDependencyId> node : dependenciesNode.getChildren(GradleLibraryDependencyId.class)) {
-      GradleProjectStructureNodeDescriptor<GradleLibraryDependencyId> d = node.getDescriptor();
-      if (id.equals(d.getElement())) {
-        d.setAttributes(attributes);
-        nodeStructureChanged(node);
+    final GradleProjectStructureNode<GradleSyntheticId> dependenciesNode = getDependenciesNode(id.getOwnerModuleId());
+    for (GradleProjectStructureNode<? extends GradleAbstractDependencyId> node : dependenciesNode.getChildren(id.getClass())) {
+      if (id.equals(node.getDescriptor().getElement())) {
+        node.setAttributes(attributes);
         return;
       }
     }
-    GradleProjectStructureNode<GradleLibraryDependencyId> newNode = buildNode(id, id.getLibraryName());
-    newNode.setAttributes(attributes);
+    GradleProjectStructureNode<I> newNode = buildNode(id, id.getDependencyName());
     dependenciesNode.add(newNode);
+    newNode.setAttributes(attributes);
   }
 
   private void processNewModulePresenceChange(@NotNull GradleModulePresenceChange change) {
@@ -254,7 +261,7 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
     for (GradleProjectStructureNode<GradleSyntheticId> holder : myModuleDependencies.values()) {
       for (GradleProjectStructureNode<GradleLibraryDependencyId> node : holder.getChildren(GradleLibraryDependencyId.class)) {
         final GradleLibraryDependencyId id = node.getDescriptor().getElement();
-        if (id.getLibraryName().equals(change.getLibraryName())) {
+        if (id.getDependencyName().equals(change.getLibraryName())) {
           node.removeConflictChange(change);
           break;
         }
@@ -274,7 +281,25 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
     else {
       removeNode = !myProjectStructureHelper.isGradleLibraryDependencyExist(id);
     }
-    final GradleProjectStructureNode<GradleSyntheticId> holder = myModuleDependencies.get(id.getModuleName());
+    processObsoleteDependencyPresenceChange(id, removeNode);
+  }
+
+  private void processObsoleteModuleDependencyPresenceChange(@NotNull GradleModuleDependencyPresenceChange change) {
+    GradleModuleDependencyId id = change.getGradleEntity();
+    boolean removeNode;
+    if (id == null) {
+      id = change.getIntellijEntity();
+      assert id != null;
+      removeNode = !myProjectStructureHelper.isIntellijModuleDependencyExist(id);
+    }
+    else {
+      removeNode = !myProjectStructureHelper.isGradleModuleDependencyExist(id);
+    }
+    processObsoleteDependencyPresenceChange(id, removeNode);
+  }
+
+  private void processObsoleteDependencyPresenceChange(@NotNull GradleAbstractDependencyId id, boolean removeNode) {
+    final GradleProjectStructureNode<GradleSyntheticId> holder = myModuleDependencies.get(id.getOwnerModuleName());
     if (holder == null) {
       return;
     }
@@ -285,8 +310,8 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
     // We should distinguish between those situations because we need to mark the node as 'synced' at one case and
     // completely removed at another one.
 
-    for (GradleProjectStructureNode<GradleLibraryDependencyId> node : holder.getChildren(GradleLibraryDependencyId.class)) {
-      GradleProjectStructureNodeDescriptor<GradleLibraryDependencyId> descriptor = node.getDescriptor();
+    for (GradleProjectStructureNode<? extends GradleAbstractDependencyId> node : holder.getChildren(id.getClass())) {
+      GradleProjectStructureNodeDescriptor<? extends GradleAbstractDependencyId> descriptor = node.getDescriptor();
       if (!id.equals(descriptor.getElement())) {
         continue;
       }
@@ -303,12 +328,31 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
 
   private void processObsoleteModulePresenceChange(@NotNull GradleModulePresenceChange change) {
     GradleModuleId id = change.getGradleEntity();
+    boolean removeNode;
     if (id == null) {
       id = change.getIntellijEntity();
+      assert id != null;
+      removeNode = myProjectStructureHelper.findIntellijModule(id.getModuleName()) == null;
     }
-    assert id != null;
+    else {
+      removeNode = myProjectStructureHelper.findGradleModule(id.getModuleName()) == null;
+    }
+    
+
+    // There are two possible cases why 'module presence' change is obsolete:
+    //   1. Corresponding module has been added at the counterparty;
+    //   2. The 'local module' has been removed;
+    // We should distinguish between those situations because we need to mark the node as 'synced' at one case and
+    // completely removed at another one.
+    
     final GradleProjectStructureNode<GradleModuleId> moduleNode = myModules.get(id.getModuleName());
-    if (moduleNode != null) {
+    if (moduleNode == null) {
+      return;
+    }
+    if (removeNode) {
+      moduleNode.removeFromParent();
+    }
+    else {
       moduleNode.getDescriptor().setAttributes(GradleTextAttributes.GRADLE_NO_CHANGE);
     }
   }
@@ -322,10 +366,13 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
     }
 
     @Override
-    public void onNodeRemoved(@NotNull GradleProjectStructureNode<?> node, int index) {
-      myIndexHolder[0] = index;
-      myNodeHolder[0] = node;
-      nodesWereRemoved(node.getParent(), myIndexHolder, myNodeHolder); 
+    public void onNodeRemoved(@NotNull GradleProjectStructureNode<?> parent,
+                              @NotNull GradleProjectStructureNode<?> removedChild,
+                              int removedChildIndex)
+    {
+      myIndexHolder[0] = removedChildIndex;
+      myNodeHolder[0] = removedChild;
+      nodesWereRemoved(parent, myIndexHolder, myNodeHolder); 
     }
 
     @Override
@@ -339,6 +386,8 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
     @Override public void visit(@NotNull GradleLanguageLevelChange change) { processNewLanguageLevelChange(change); }
     @Override public void visit(@NotNull GradleModulePresenceChange change) { processNewModulePresenceChange(change); }
     @Override public void visit(@NotNull GradleLibraryDependencyPresenceChange change) { processNewLibraryDependencyPresenceChange(change); }
+    @Override public void visit(@NotNull GradleModuleDependencyPresenceChange change) { processNewModuleDependencyPresenceChange(change); }
+
     @Override public void visit(@NotNull GradleMismatchedLibraryPathChange change) { processNewMismatchedLibraryPathChange(change); }
   }
   
@@ -348,6 +397,9 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
     @Override public void visit(@NotNull GradleModulePresenceChange change) { processObsoleteModulePresenceChange(change); }
     @Override public void visit(@NotNull GradleLibraryDependencyPresenceChange change) {
       processObsoleteLibraryDependencyPresenceChange(change); 
+    }
+    @Override public void visit(@NotNull GradleModuleDependencyPresenceChange change) {
+      processObsoleteModuleDependencyPresenceChange(change); 
     }
     @Override public void visit(@NotNull GradleMismatchedLibraryPathChange change) { processObsoleteMismatchedLibraryPathChange(change); }
   }

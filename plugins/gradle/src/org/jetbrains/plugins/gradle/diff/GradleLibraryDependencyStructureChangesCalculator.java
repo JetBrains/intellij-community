@@ -5,14 +5,12 @@ import com.intellij.openapi.roots.libraries.Library;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.gradle.GradleLibraryDependency;
 
-import java.util.Set;
-
 /**
  * @author Denis Zhdanov
  * @since 1/24/12 1:37 PM
  */
 public class GradleLibraryDependencyStructureChangesCalculator
-  implements GradleStructureChangesCalculator<GradleLibraryDependency, LibraryOrderEntry>
+  extends GradleAbstractDependencyStructureChangesCalculator<GradleLibraryDependency, LibraryOrderEntry>
 {
   
   private final GradleLibraryStructureChangesCalculator myLibraryCalculator;
@@ -22,28 +20,30 @@ public class GradleLibraryDependencyStructureChangesCalculator
   }
 
   @Override
-  public void calculate(@NotNull GradleLibraryDependency gradleEntity,
-                        @NotNull LibraryOrderEntry intellijEntity,
-                        @NotNull Set<GradleProjectStructureChange> knownChanges,
-                        @NotNull Set<GradleProjectStructureChange> currentChanges)
+  public void doCalculate(@NotNull GradleLibraryDependency gradleEntity,
+                          @NotNull LibraryOrderEntry intellijEntity,
+                          @NotNull GradleChangesCalculationContext context)
   {
     final Library library = intellijEntity.getLibrary();
     if (library == null) {
       return;
     }
-    myLibraryCalculator.calculate(gradleEntity.getTarget(), library, knownChanges, currentChanges);
+    myLibraryCalculator.calculate(gradleEntity.getTarget(), library, context);
   }
 
   @NotNull
   @Override
   public Object getIntellijKey(@NotNull LibraryOrderEntry entity) {
-    final String result = entity.getLibraryName();
-    return result == null ? "" : result;
+    final Library library = entity.getLibrary();
+    if (library == null) {
+      return "";
+    }
+    return myLibraryCalculator.getIntellijKey(library);
   }
 
   @NotNull
   @Override
-  public Object getGradleKey(@NotNull GradleLibraryDependency entity, @NotNull Set<GradleProjectStructureChange> knownChanges) {
-    return myLibraryCalculator.getGradleKey(entity.getTarget(), knownChanges);
+  public Object getGradleKey(@NotNull GradleLibraryDependency entity, @NotNull GradleChangesCalculationContext context) {
+    return myLibraryCalculator.getGradleKey(entity.getTarget(), context);
   }
 }

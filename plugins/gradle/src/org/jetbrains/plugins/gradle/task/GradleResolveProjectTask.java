@@ -39,7 +39,7 @@ public class GradleResolveProjectTask extends AbstractGradleTask {
     final GradleProject project = resolver.resolveProjectInfo(getId(), myProjectPath, myResolveLibraries);
     myGradleProject.set(project);
     setState(GradleTaskState.FINISHED);
-    if (myIntellijProject == null) {
+    if (myIntellijProject == null || myIntellijProject.isDisposed()) {
       return;
     }
     final GradleProjectStructureChangesModel model = myIntellijProject.getComponent(GradleProjectStructureChangesModel.class);

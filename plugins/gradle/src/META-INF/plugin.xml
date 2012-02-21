@@ -38,6 +38,7 @@
     <applicationService serviceInterface="org.jetbrains.plugins.gradle.diff.GradleStructureChangesCalculator"
                         serviceImplementation="org.jetbrains.plugins.gradle.diff.GradleProjectStructureChangesCalculator"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.diff.GradleModuleStructureChangesCalculator"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.diff.GradleModuleDependencyStructureChangesCalculator"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.diff.GradleLibraryStructureChangesCalculator"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.diff.GradleLibraryDependencyStructureChangesCalculator"/>
     

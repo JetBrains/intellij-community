@@ -25,8 +25,7 @@ public class GradleLibraryStructureChangesCalculator implements GradleStructureC
   @Override
   public void calculate(@NotNull GradleLibrary gradleEntity,
                         @NotNull Library intellijEntity,
-                        @NotNull Set<GradleProjectStructureChange> knownChanges,
-                        @NotNull Set<GradleProjectStructureChange> currentChanges)
+                        @NotNull GradleChangesCalculationContext context)
   {
     final Set<String> gradleBinaryPaths = new HashSet<String>(gradleEntity.getPaths(LibraryPathType.BINARY));
     final Set<String> intellijBinaryPaths = new HashSet<String>();
@@ -38,7 +37,7 @@ public class GradleLibraryStructureChangesCalculator implements GradleStructureC
     }
 
     if (!gradleBinaryPaths.equals(intellijBinaryPaths)) {
-      currentChanges.add(new GradleMismatchedLibraryPathChange(intellijEntity, gradleBinaryPaths, intellijBinaryPaths));
+      context.register(new GradleMismatchedLibraryPathChange(intellijEntity, gradleBinaryPaths, intellijBinaryPaths));
     }
   }
 
@@ -50,7 +49,7 @@ public class GradleLibraryStructureChangesCalculator implements GradleStructureC
 
   @NotNull
   @Override
-  public Object getGradleKey(@NotNull GradleLibrary entity, @NotNull Set<GradleProjectStructureChange> knownChanges) {
+  public Object getGradleKey(@NotNull GradleLibrary entity, @NotNull GradleChangesCalculationContext context) {
     // TODO den consider the known changes 
     return entity.getName();
   }

@@ -46,4 +46,9 @@ public class GradleModuleId extends GradleAbstractEntityId {
     GradleModuleId that = (GradleModuleId)o;
     return myModuleName.equals(that.myModuleName);
   }
+
+  @Override
+  public String toString() {
+    return "module '" + myModuleName + "'";
+  }
 }

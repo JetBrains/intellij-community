@@ -1,23 +1,18 @@
 package org.jetbrains.plugins.gradle.testutil
 
+import com.intellij.openapi.project.Project
+import com.intellij.util.containers.ContainerUtil
+import org.jetbrains.plugins.gradle.model.id.GradleEntityIdMapper
+import org.jetbrains.plugins.gradle.sync.GradleProjectStructureChangeListener
 import org.jetbrains.plugins.gradle.sync.GradleProjectStructureChangesModel
+import org.jetbrains.plugins.gradle.sync.GradleProjectStructureHelper
 import org.jetbrains.plugins.gradle.sync.GradleProjectStructureTreeModel
 import org.junit.Before
-import org.picocontainer.defaults.DefaultPicoContainer
-import com.intellij.openapi.project.Project
-import org.jetbrains.plugins.gradle.diff.PlatformFacade
-import org.jetbrains.plugins.gradle.diff.GradleStructureChangesCalculator
-import org.jetbrains.plugins.gradle.diff.GradleProjectStructureChangesCalculator
-import org.jetbrains.plugins.gradle.diff.GradleModuleStructureChangesCalculator
-import org.jetbrains.plugins.gradle.diff.GradleLibraryDependencyStructureChangesCalculator
-import org.jetbrains.plugins.gradle.diff.GradleLibraryStructureChangesCalculator
-import org.jetbrains.plugins.gradle.sync.GradleProjectStructureHelper
-import com.intellij.util.containers.ContainerUtil
-import org.jetbrains.plugins.gradle.sync.GradleProjectStructureChangeListener
-
-import static org.junit.Assert.assertEquals
 import org.picocontainer.MutablePicoContainer
-import org.jetbrains.plugins.gradle.model.id.GradleEntityIdMapper;
+import org.picocontainer.defaults.DefaultPicoContainer
+import org.jetbrains.plugins.gradle.diff.*
+
+import static org.junit.Assert.fail
 
 /**
  * @author Denis Zhdanov
@@ -48,6 +43,7 @@ public abstract class AbstractGradleTest {
     container.registerComponentImplementation(GradleProjectStructureHelper)
     container.registerComponentImplementation(GradleStructureChangesCalculator, GradleProjectStructureChangesCalculator)
     container.registerComponentImplementation(GradleModuleStructureChangesCalculator)
+    container.registerComponentImplementation(GradleModuleDependencyStructureChangesCalculator)
     container.registerComponentImplementation(GradleLibraryDependencyStructureChangesCalculator)
     container.registerComponentImplementation(GradleLibraryStructureChangesCalculator)
     container.registerComponentImplementation(GradleEntityIdMapper)
@@ -96,7 +92,22 @@ public abstract class AbstractGradleTest {
     if (!expected) {
       expected = [].toSet()
     }
-    assertEquals(expected, changesModel.changes)
+    def actual = new HashSet(changesModel.changes)
+    if (expected == actual) {
+      return
+    }
+    actual.removeAll(expected)
+    expected.removeAll(changesModel.changes)
+    def message = "Project structure changes are mismatched."
+    if (expected) {
+      message += "\n  Expected but not matched:"
+      expected.each { message += "\n    * $it"}
+    }
+    if (actual) {
+      message += "\n  Unexpected:"
+      actual.each { message += "\n    * $it"}
+    }
+    fail(message)
   }
 
   protected def checkTree(c) {

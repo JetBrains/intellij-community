@@ -6,6 +6,7 @@ import org.jetbrains.plugins.gradle.diff.GradleMismatchedLibraryPathChange
 import com.intellij.openapi.roots.libraries.Library
 import org.jetbrains.plugins.gradle.util.GradleUtil
 import org.jetbrains.plugins.gradle.diff.GradleModulePresenceChange
+import org.jetbrains.plugins.gradle.diff.GradleModuleDependencyPresenceChange
 
 /**
  * @author Denis Zhdanov
@@ -34,6 +35,10 @@ public class ChangeBuilder extends BuilderSupport {
         changes.addAll attributes.gradle.collect { new GradleModulePresenceChange(it, null)}
         changes.addAll attributes.intellij.collect { new GradleModulePresenceChange(null, it)}
         return changes
+      case "moduleDependency":
+        changes.addAll attributes.gradle.collect { new GradleModuleDependencyPresenceChange(it, null) }
+        changes.addAll attributes.intellij.collect { new GradleModuleDependencyPresenceChange(null, it) }
+        return changes
       case "library":
         changes.addAll attributes.gradle.collect { new GradleLibraryDependencyPresenceChange(it, null)}
         changes.addAll attributes.intellij.collect { new GradleLibraryDependencyPresenceChange(null, it)}
@@ -52,7 +57,7 @@ public class ChangeBuilder extends BuilderSupport {
         // Assuming that we're processing library binary path conflict here
         register(new GradleMismatchedLibraryPathChange(
           current as Library, collectPaths(attributes.gradle), collectPaths(attributes.intellij)
-        ))  
+        ))
     }
     changes
   }
