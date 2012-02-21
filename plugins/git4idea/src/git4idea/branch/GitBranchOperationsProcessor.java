@@ -26,11 +26,13 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitBranch;
 import git4idea.GitExecutionException;
 import git4idea.GitVcs;
 import git4idea.NotificationManager;
+import git4idea.changes.GitChangeUtils;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitCompoundResult;
@@ -390,10 +392,23 @@ public final class GitBranchOperationsProcessor {
     GitCommitCompareInfo compareInfo = new GitCommitCompareInfo();
     for (GitRepository repository : repositories) {
       compareInfo.put(repository, loadCommitsToCompare(repository, branchName));
+      compareInfo.put(repository, loadTotalDiff(repository, branchName));
     }
     return compareInfo;
   }
-  
+
+  @NotNull
+  private static Collection<Change> loadTotalDiff(@NotNull GitRepository repository, @NotNull String branchName) {
+    try {
+      return GitChangeUtils.getDiff(repository.getProject(), repository.getRoot(), null, branchName, null);
+    }
+    catch (VcsException e) {
+      // we treat it as critical and report an error
+      throw new GitExecutionException("Couldn't get [git diff " + branchName + "] on repository [" + repository.getRoot() + "]", e);
+    }
+  }
+
+  @NotNull
   private Pair<List<GitCommit>, List<GitCommit>> loadCommitsToCompare(@NotNull GitRepository repository, @NotNull final String branchName) {
     final List<GitCommit> headToBranch;
     final List<GitCommit> branchToHead;
