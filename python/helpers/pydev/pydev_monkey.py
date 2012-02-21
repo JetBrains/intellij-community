@@ -1,4 +1,6 @@
 import os
+import shlex
+import sys
 import pydev_log
 
 def is_python(path):
@@ -21,7 +23,15 @@ def patch_args(args):
         return args
 
     if is_python(args[0]):
-        new_args.append(args[0])
+        if '-c' == args[1]:
+            import pydevd
+            host, port = pydevd.dispatch()
+
+            if port is not None:
+                args[2] = "import pydevd; pydevd.settrace(host='%s', port=%s, suspend=False); "%(host, port) + args[2]
+                return args
+        else:
+            new_args.append(args[0])
     else:
         pydev_log.debug("Process is not python, returning.")
         return args
@@ -49,12 +59,34 @@ def patch_args(args):
 
     return new_args
 
-def monkey_patch_os(funcname, create_func):
-    if hasattr(os, funcname):
+def args_to_str(args):
+    return ' '.join('"%s"' % x for x in args)
+
+def remove_quotes(str):
+    if str.startswith('"') and str.endswith('"'):
+        return str[1:-1]
+    else:
+        return str
+
+def str_to_args(str):
+    return [remove_quotes(x) for x in shlex.split(str)]
+
+def patch_arg_str_win(arg_str):
+    print(arg_str)
+    art = args_to_str(patch_args(str_to_args(arg_str)))
+    print(art)
+    return art
+
+def monkey_patch_module(module, funcname, create_func):
+    if hasattr(module, funcname):
         original_name = 'original_' + funcname
-        if not hasattr(os, original_name):
-            setattr(os, original_name, getattr(os, funcname))
-            setattr(os, funcname, create_func(original_name))
+        if not hasattr(module, original_name):
+            setattr(module, original_name, getattr(module, funcname))
+            setattr(module, funcname, create_func(original_name))
+
+
+def monkey_patch_os(funcname, create_func):
+    monkey_patch_module(os, funcname, create_func)
 
 def create_execl(original_name):
     def new_execl(path, *args):
@@ -121,31 +153,23 @@ os.spawnvpe(mode, file, args, env)
         return getattr(os, original_name)(mode, path, patch_args(args), env)
     return new_spawnve
 
+def create_CreateProcess(original_name):
+    """
+CreateProcess(*args, **kwargs)
+    """
+    def new_CreateProcess(appName, commandLine, *args):
+        import _subprocess
+        return getattr(_subprocess, original_name)(appName, patch_arg_str_win(commandLine), *args)
+    return new_CreateProcess
+
 def create_fork(original_name):
     def new_fork():
         import os
-        import sys
         child_process = getattr(os, original_name)() # fork
-        if child_process == 0:
-            argv = sys.original_argv[:]
+        if not child_process:
             import pydevd
-            setup = pydevd.processCommandLine(argv)
 
-
-    #        pydevd.debugger.FinishDebuggingSession()
-    #        for t in pydevd.threadingEnumerate():
-    #            if hasattr(t, 'doKillPydevThread'):
-    #                t.killReceived = True
-            import pydevd_tracing
-            pydevd_tracing.RestoreSysSetTraceFunc()
-
-            pydevd.dispatcher = pydevd.Dispatcher()
-            pydevd.dispatcher.connect(setup)
-
-            if pydevd.dispatcher.port is not None:
-                port = pydevd.dispatcher.port
-                pydevd.connected = False
-                pydevd.settrace(setup['client'], port=port, suspend=False, overwrite_prev_trace=True)
+            pydevd.settrace_forked()
         return child_process
     return new_fork
 
@@ -185,5 +209,9 @@ def patch_new_process_functions():
     monkey_patch_os('spawnvp', create_spawnv)
     monkey_patch_os('spawnvpe', create_spawnve)
 
-    monkey_patch_os('fork', create_fork)
-  
+    if sys.platform != 'win32':
+        monkey_patch_os('fork', create_fork)
+    else:
+        #Windows
+        import _subprocess
+        monkey_patch_module(_subprocess, 'CreateProcess', create_CreateProcess)
