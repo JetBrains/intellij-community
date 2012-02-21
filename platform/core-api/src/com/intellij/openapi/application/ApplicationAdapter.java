@@ -15,8 +15,6 @@
  */
 package com.intellij.openapi.application;
 
-import com.intellij.openapi.wm.IdeFrame;
-
 public abstract class ApplicationAdapter implements ApplicationListener {
   public boolean canExitApplication() {
     return true;
