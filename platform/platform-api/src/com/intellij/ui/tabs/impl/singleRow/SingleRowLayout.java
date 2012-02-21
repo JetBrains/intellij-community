@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.ui.tabs.JBTabsPosition;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsUtil;
 import com.intellij.ui.tabs.impl.*;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -105,7 +106,7 @@ public class SingleRowLayout extends TabLayout {
   }
 
   private boolean checkLayoutLabels(SingleRowPassInfo data) {
-  boolean layoutLabels = true;
+    boolean layoutLabels = true;
 
     if (!myTabs.myForcedRelayout &&
         myLastSingRowLayout != null &&
@@ -191,7 +192,6 @@ public class SingleRowLayout extends TabLayout {
 
   private void layoutLabelsAndGhosts(final SingleRowPassInfo data) {
     final int fixedPosition = getStrategy().getFixedPosition(data);
-    boolean reachedBounds = false;
 
     if (data.firstGhostVisible || myTabs.isGhostsAlwaysVisible()) {
       data.firstGhost = getStrategy().getLayoutRec(data.position, fixedPosition, myTabs.getGhostTabLength(), getStrategy().getFixedFitLength(data));
@@ -233,7 +233,7 @@ public class SingleRowLayout extends TabLayout {
     }
 
     for (TabInfo eachInfo : data.toDrop) {
-      myTabs.resetLayout(myTabs.myInfo2Label.get(eachInfo));
+      JBTabsImpl.resetLayout(myTabs.myInfo2Label.get(eachInfo));
     }
 
     if (data.lastGhostVisible || myTabs.isGhostsAlwaysVisible()) {
@@ -326,13 +326,13 @@ public class SingleRowLayout extends TabLayout {
       });
     }
 
-    public void setInfo(final TabInfo info) {
+    public void setInfo(@Nullable final TabInfo info) {
       myInfo = info;
       setToolTipText(info != null ? info.getTooltipText() : null);
     }
 
     public void reset() {
-      myTabs.resetLayout(this);
+      JBTabsImpl.resetLayout(this);
       setInfo(null);
     }
   }
@@ -367,7 +367,7 @@ public class SingleRowLayout extends TabLayout {
 
     Component c = myTabs.getComponentAt(point);
 
-    if (c instanceof JBTabsImpl && !(c instanceof TabLabel)) {
+    if (c instanceof JBTabsImpl) {
       for (int i = 0; i < myLastSingRowLayout.myVisibleInfos.size() - 1; i++) {
         TabLabel first = myTabs.myInfo2Label.get(myLastSingRowLayout.myVisibleInfos.get(i));
         TabLabel second = myTabs.myInfo2Label.get(myLastSingRowLayout.myVisibleInfos.get(i + 1));
