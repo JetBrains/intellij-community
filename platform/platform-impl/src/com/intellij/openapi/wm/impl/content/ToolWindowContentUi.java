@@ -375,6 +375,8 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
             hideWindow(e);
           }
         }
+      } else {
+        hideWindow(e);
       }
     }
     else {
