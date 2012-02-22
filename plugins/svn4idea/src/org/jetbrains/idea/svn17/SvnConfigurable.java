@@ -69,8 +69,6 @@ public class SvnConfigurable implements Configurable {
   private JCheckBox myMaximumNumberOfRevisionsCheckBox;
   private JSpinner mySSHConnectionTimeout;
   private JSpinner mySSHReadTimeout;
-  private JBLabel myWarningLabel;
-  private HyperlinkLabel myLinkLabel;
   private JRadioButton myJavaHLAcceleration;
   private JRadioButton myNoAcceleration;
   private JLabel myJavaHLInfo;
@@ -81,8 +79,6 @@ public class SvnConfigurable implements Configurable {
 
   public SvnConfigurable(Project project) {
     myProject = project;
-    myLinkLabel.setHyperlinkTarget("http://confluence.jetbrains.net/display/IDEADEV/Subversion+1.7+in+IntelliJ+IDEA+11");
-    myLinkLabel.setHyperlinkText("More information");
 
     myUseDefaultCheckBox.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {

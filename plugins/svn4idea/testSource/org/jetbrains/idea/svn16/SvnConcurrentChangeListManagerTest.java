@@ -1,4 +1,4 @@
-package org.jetbrains.idea.svn;
+package org.jetbrains.idea.svn16;
 
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;

@@ -273,7 +273,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
   }
 
   public String getVcsName() {
-    return "_Subversion 1.7 Experimental";
+    return "_Subversion";
   }
 
 }

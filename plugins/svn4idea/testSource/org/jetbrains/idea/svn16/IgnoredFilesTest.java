@@ -1,4 +1,4 @@
-package org.jetbrains.idea.svn;
+package org.jetbrains.idea.svn16;
 
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.openapi.components.ProjectComponent;

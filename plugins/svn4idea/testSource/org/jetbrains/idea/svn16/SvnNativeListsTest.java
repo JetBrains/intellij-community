@@ -1,6 +1,5 @@
-package org.jetbrains.idea.svn;
+package org.jetbrains.idea.svn16;
 
-import com.intellij.idea.Bombed;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -9,7 +8,6 @@ import org.jetbrains.idea.svn17.SvnChangelistListener;
 import org.junit.Test;
 import org.tmatesoft.svn.core.SVNException;
 
-import java.util.Calendar;
 import java.util.Collection;
 import java.util.List;
 

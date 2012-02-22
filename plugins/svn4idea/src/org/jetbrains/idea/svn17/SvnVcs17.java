@@ -112,7 +112,7 @@ public class SvnVcs17 extends AbstractVcs<CommittedChangeList> {
       SVNErrorCode.WC_NOT_FILE, SVNErrorCode.WC_NOT_DIRECTORY, SVNErrorCode.WC_PATH_NOT_FOUND}));
 
   private static final Logger LOG = wrapLogger(Logger.getInstance("org.jetbrains.idea.svn.SvnVcs"));
-  @NonNls public static final String VCS_NAME = "svn17";
+  @NonNls public static final String VCS_NAME = "svn";
   private static final VcsKey ourKey = createKey(VCS_NAME);
   public static final Topic<Runnable> WC_CONVERTED = new Topic<Runnable>("WC_CONVERTED", Runnable.class);
   private final Map<String, Map<String, Pair<SVNPropertyValue, Trinity<Long, Long, Long>>>> myPropertyCache = new SoftHashMap<String, Map<String, Pair<SVNPropertyValue, Trinity<Long, Long, Long>>>>();
@@ -446,8 +446,6 @@ public class SvnVcs17 extends AbstractVcs<CommittedChangeList> {
     vcsManager.addVcsListener(myRootsToWorkingCopies);
 
     myLoadedBranchesStorage.activate();
-
-    VcsBalloonProblemNotifier.showOverChangesView(myProject, SvnBundle.message("svn17.plugin.not.ready"), MessageType.ERROR);
   }
 
   private static void initLogFilters() {
@@ -649,7 +647,7 @@ public class SvnVcs17 extends AbstractVcs<CommittedChangeList> {
 
   public String getDisplayName() {
     LOG.debug("getDisplayName");
-    return "Subversion 1.7 experimental";
+    return "Subversion";
   }
 
   public Configurable getConfigurable() {
