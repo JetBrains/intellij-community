@@ -784,7 +784,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
         int bs = myEditor.logicalPositionToOffset(new LogicalPosition(line, blockStart.column));
         int start = bs - prefix.length();
         int end = myEditor.logicalPositionToOffset(new LogicalPosition(line, blockEnd.column));
-        if (start >= end) {
+        if (start > end) {
           LOG.error("bs=" + bs + "; start=" + start + "; end=" + end +
                     "; blockStart=" + blockStart + "; blockEnd=" + blockEnd + "; line=" + line + "; len=" +
                     (document.getLineEndOffset(line) - document.getLineStartOffset(line)));
