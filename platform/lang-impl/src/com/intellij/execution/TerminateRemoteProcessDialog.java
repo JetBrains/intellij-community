@@ -20,78 +20,60 @@
  */
 package com.intellij.execution;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.openapi.ui.Messages;
 
-import javax.swing.*;
-import javax.swing.border.Border;
-import java.awt.*;
-
-public class TerminateRemoteProcessDialog extends DialogWrapper {
-  private static final int ICON_TEXT_GAP = 7;
-  private JCheckBox myTerminateCheckBox;
-  private final String mySessionName;
-  private final boolean myDetachIsDefault;
-  private final boolean myAlwaysUseDefault;
-
-  public TerminateRemoteProcessDialog(final Project project,
-                                      final String configurationName,
-                                      final boolean detachIsDefault,
-                                      boolean alwaysUseDefault) {
-    super(project, true);
-    mySessionName = configurationName;
-    myDetachIsDefault = detachIsDefault;
-    myAlwaysUseDefault = alwaysUseDefault;
-    setTitle(ExecutionBundle.message("process.is.running.dialog.title", mySessionName));
-    setOKButtonText(alwaysUseDefault && !detachIsDefault ? ExecutionBundle.message("button.terminate")
-                                                         : ExecutionBundle.message("button.disconnect"));
-    setButtonsAlignment(SwingUtilities.CENTER);
-    this.init();
+public class TerminateRemoteProcessDialog {
+  public static int show(final Project project,
+                         final String sessionName,
+                         final TerminateOption option) {
+    final String message = option.myAlwaysUseDefault && !option.myDetachIsDefault ?
+                           ExecutionBundle.message("terminate.process.confirmation.text", sessionName) :
+                           ExecutionBundle.message("disconnect.process.confirmation.text", sessionName);
+    final String okButtonText = option.myAlwaysUseDefault && !option.myDetachIsDefault ?
+                                ExecutionBundle.message("button.terminate") :
+                                ExecutionBundle.message("button.disconnect");
+    final String[] options = new String[] {okButtonText, CommonBundle.getCancelButtonText()};
+    return Messages.showDialog(project, message, ExecutionBundle.message("process.is.running.dialog.title", sessionName),
+                        options, 0, Messages.getWarningIcon(),
+                        option);
   }
 
-  protected Action[] createActions(){
-    return new Action[]{getOKAction(), getCancelAction()};
-  }
+  public static class TerminateOption implements DialogWrapper.DoNotAskOption {
+    private final boolean myDetachIsDefault;
+    private final boolean myAlwaysUseDefault;
+    private boolean myDontTerminate = false;
 
-  protected JComponent createNorthPanel() {
-    final String message = myAlwaysUseDefault && !myDetachIsDefault ?
-                           ExecutionBundle.message("terminate.process.confirmation.text", mySessionName) :
-                           ExecutionBundle.message("disconnect.process.confirmation.text", mySessionName);
-    final JLabel label = new JLabel(message);
-    final JPanel panel = new JPanel(new BorderLayout());
-    panel.add(label, BorderLayout.CENTER);
-    final Icon icon = UIUtil.getOptionPanelWarningIcon();
-    if (icon != null) {
-      label.setIcon(icon);
-      label.setIconTextGap(ICON_TEXT_GAP);
+    public TerminateOption(boolean detachIsDefault, boolean alwaysUseDefault) {
+      myDetachIsDefault = detachIsDefault;
+      myAlwaysUseDefault = alwaysUseDefault;
     }
-    return panel;
-  }
 
-  protected JComponent createCenterPanel() {
-    final JPanel panel = new JPanel(new BorderLayout());
-    if (!myAlwaysUseDefault) {
-      myTerminateCheckBox = new JCheckBox(ExecutionBundle.message("terminate.after.disconnect.checkbox"));
-      myTerminateCheckBox.setSelected(!myDetachIsDefault);
-      final Icon icon = UIUtil.getOptionPanelWarningIcon();
-      if (icon != null) {
-        final Border border = myTerminateCheckBox.getBorder();
-        if (border != null) {
-          final Insets insets = border.getBorderInsets(myTerminateCheckBox);
-          final Border emptyBorder = BorderFactory.createEmptyBorder(0, icon.getIconWidth()+ICON_TEXT_GAP-insets.left, 0, 0);
-          myTerminateCheckBox.setBorder(BorderFactory.createCompoundBorder(emptyBorder, border));
-        }
-        else {
-          myTerminateCheckBox.setBorder(BorderFactory.createEmptyBorder(0, icon.getIconWidth()+ICON_TEXT_GAP, 0, 0));
-        }
-      }
-      panel.add(myTerminateCheckBox, BorderLayout.WEST);
+    @Override
+    public boolean isToBeShown() {
+      return myAlwaysUseDefault ? !myDetachIsDefault : myDontTerminate;
     }
-    return panel;
-  }
 
-  public boolean forceTermination() {
-    return myAlwaysUseDefault ? !myDetachIsDefault : myTerminateCheckBox.isSelected();
+    @Override
+    public void setToBeShown(boolean value, int exitCode) {
+      myDontTerminate = value;
+    }
+
+    @Override
+    public boolean canBeHidden() {
+      return !myAlwaysUseDefault;
+    }
+
+    @Override
+    public boolean shouldSaveOptionsOnCancel() {
+      return false;
+    }
+
+    @Override
+    public String getDoNotShowMessage() {
+      return ExecutionBundle.message("terminate.after.disconnect.checkbox");
+    }
   }
 }

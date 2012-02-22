@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,38 +21,45 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFilePathWrapper;
 import com.intellij.platform.ProjectBaseDirectory;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
 public class PlatformFrameTitleBuilder extends FrameTitleBuilder {
-  public String getProjectTitle(final Project project) {
-    final VirtualFile baseDir = project.getBaseDir();
-    if (baseDir != null) {
-      if (SystemInfo.isMac && baseDir.getName().equals(project.getName())) {
-        return "[" + FileUtil.getLocationRelativeToUserHome(baseDir.getPresentableUrl()) + "]";
-      }
-      
-      return project.getName() + " - [" + FileUtil.getLocationRelativeToUserHome(baseDir.getPresentableUrl()) + "]";
+  @Override
+  public String getProjectTitle(@NotNull final Project project) {
+    final String basePath = project.getBasePath();
+    if (basePath == null) return project.getName();
+
+    if (basePath.equals(project.getName())) {
+      return "[" + FileUtil.getLocationRelativeToUserHome(basePath) + "]";
     }
-    return project.getName();
+    else {
+      return project.getName() + " - [" + FileUtil.getLocationRelativeToUserHome(basePath) + "]";
+    }
   }
 
-  public String getFileTitle(final Project project, final VirtualFile file) {
+  @Override
+  public String getFileTitle(@NotNull final Project project, @NotNull final VirtualFile file) {
     if (SystemInfo.isMac) return file.getName();
     if (file instanceof VirtualFilePathWrapper) {
       return ((VirtualFilePathWrapper)file).getPresentablePath();
     }
+
     String url = FileUtil.getLocationRelativeToUserHome(file.getPresentableUrl());
+    if (url == null) url = file.getPresentableUrl();
+
     VirtualFile baseDir = ProjectBaseDirectory.getInstance(project).getBaseDir();
     if (baseDir == null) baseDir = project.getBaseDir();
+
     if (baseDir != null) {
-      //noinspection ConstantConditions
       final String projectHomeUrl = FileUtil.getLocationRelativeToUserHome(baseDir.getPresentableUrl());
-      if (url.startsWith(projectHomeUrl)) {
+      if (projectHomeUrl != null && url.startsWith(projectHomeUrl)) {
         url = "..." + url.substring(projectHomeUrl.length());
       }
     }
+
     return url;
   }
 }

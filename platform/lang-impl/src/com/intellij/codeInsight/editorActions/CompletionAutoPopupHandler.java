@@ -27,7 +27,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
@@ -41,25 +40,6 @@ import org.jetbrains.annotations.NotNull;
 public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler");
   public static volatile boolean ourTestingAutopopup = false;
-
-  @Override
-  public Result beforeCharTyped(char c,
-                                Project project,
-                                Editor editor,
-                                PsiFile file,
-                                FileType fileType) {
-    CompletionPhase phase = CompletionServiceImpl.getCompletionPhase();
-    /*
-    if (phase instanceof CompletionPhase.EmptyAutoPopup) {
-      long modificationStampBeforeTyping = editor.getDocument().getModificationStamp();
-      ((CompletionPhase.EmptyAutoPopup)phase).handleTyping(c);
-      AutoHardWrapHandler.getInstance().wrapLineIfNecessary(editor, DataManager.getInstance().getDataContext(editor.getContentComponent()), modificationStampBeforeTyping);
-      return Result.STOP;
-    }
-    */
-
-    return Result.CONTINUE;
-  }
 
   @Override
   public Result checkAutoPopup(char charTyped, final Project project, final Editor editor, final PsiFile file) {

@@ -22,6 +22,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.impl.IdeMenuBar;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.ui.mac.foundation.MacUtil;
@@ -83,6 +85,14 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
       processResult(returnCode, openPanelDidEnd);
 
       try {
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            IdeMenuBar bar = getMenuBar();
+            if (bar != null) {
+              bar.enableUpdates();
+            }
+          }
+        });
         if (myResultPaths != null) {
           final List<String> paths = myResultPaths;
           final Consumer<List<String>> callback = myCallback;
@@ -192,24 +202,23 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
   }
 
   static {
-    final ID delegateClass = Foundation.allocateObjcClassPair(Foundation.getObjcClass("NSObject"), "NSOpenPanelDelegate_");
-    if (!Foundation.addMethod(delegateClass, Foundation.createSelector("panel:shouldShowFilename:"), SHOULD_SHOW_FILENAME_CALLBACK, "B*")) {
+    final ID delegate = Foundation.allocateObjcClassPair(Foundation.getObjcClass("NSObject"), "NSOpenPanelDelegate_");
+    if (!Foundation.addMethod(delegate, Foundation.createSelector("panel:shouldShowFilename:"), SHOULD_SHOW_FILENAME_CALLBACK, "B*")) {
       throw new RuntimeException("Unable to add method to objective-c delegate class!");
     }
-    if (!Foundation.addMethod(delegateClass, Foundation.createSelector("panel:isValidFilename:"), IS_VALID_FILENAME_CALLBACK, "B*")) {
+    if (!Foundation.addMethod(delegate, Foundation.createSelector("panel:isValidFilename:"), IS_VALID_FILENAME_CALLBACK, "B*")) {
       throw new RuntimeException("Unable to add method to objective-c delegate class!");
     }
-    if (!Foundation.addMethod(delegateClass, Foundation.createSelector("showOpenPanel:"), MAIN_THREAD_RUNNABLE, "v*")) {
+    if (!Foundation.addMethod(delegate, Foundation.createSelector("showOpenPanel:"), MAIN_THREAD_RUNNABLE, "v*")) {
       throw new RuntimeException("Unable to add method to objective-c delegate class!");
     }
-    if (!Foundation.addMethod(delegateClass, Foundation.createSelector("openPanelDidEnd:returnCode:contextInfo:"), OPEN_PANEL_DID_END,
-                              "v*i")) {
+    if (!Foundation.addMethod(delegate, Foundation.createSelector("openPanelDidEnd:returnCode:contextInfo:"), OPEN_PANEL_DID_END, "v*i")) {
       throw new RuntimeException("Unable to add method to objective-c delegate class!");
     }
-    if (!Foundation.addMethod(delegateClass, Foundation.createSelector("panel:shouldEnableURL:"), SHOULD_ENABLE_URL, "B@@")) {
+    if (!Foundation.addMethod(delegate, Foundation.createSelector("panel:shouldEnableURL:"), SHOULD_ENABLE_URL, "B@@")) {
       throw new RuntimeException("Unable to add method to objective-c delegate class!");
     }
-    Foundation.registerObjcClassPair(delegateClass);
+    Foundation.registerObjcClassPair(delegate);
   }
 
   public MacFileChooserDialogImpl(@NotNull FileChooserDescriptor chooserDescriptor, Project project) {
@@ -232,7 +241,28 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
     });
   }
 
+  @Nullable
+  private static IdeMenuBar getMenuBar() {
+    Window cur = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+
+    while (cur != null) {
+      if (cur instanceof JFrame) {
+        JMenuBar menuBar = ((JFrame)cur).getJMenuBar();
+        if (menuBar instanceof IdeMenuBar) {
+          return (IdeMenuBar)menuBar;
+        }
+      }
+      cur = cur.getOwner();
+    }
+    return null;
+  }
+
   private static void showNativeChooserAsSheet(@Nullable String toSelect) {
+    IdeMenuBar bar = getMenuBar();
+    if (bar != null) {
+      bar.disableUpdates();
+    }
+
     final ID autoReleasePool = createAutoReleasePool();
     try {
       final ID delegate = invoke(Foundation.getObjcClass("NSOpenPanelDelegate_"), "new");

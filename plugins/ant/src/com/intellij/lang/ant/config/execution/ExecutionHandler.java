@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,6 +46,7 @@ import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.openapi.wm.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -63,7 +64,7 @@ public final class ExecutionHandler {
    */
   public static void runBuild(final AntBuildFileBase buildFile,
                               String[] targets,
-                              final AntBuildMessageView buildMessageViewToReuse,
+                              @Nullable final AntBuildMessageView buildMessageViewToReuse,
                               final DataContext dataContext,
                               List<BuildFileProperty> additionalProperties, @NotNull final AntBuildListener antBuildListener) {
     FileDocumentManager.getInstance().saveAllDocuments();
@@ -223,7 +224,7 @@ public final class ExecutionHandler {
     }
   }
 
-  private static AntBuildMessageView prepareMessageView(AntBuildMessageView buildMessageViewToReuse,
+  private static AntBuildMessageView prepareMessageView(@Nullable AntBuildMessageView buildMessageViewToReuse,
                                                         AntBuildFileBase buildFile,
                                                         String[] targets) throws RunCanceledException {
     AntBuildMessageView messageView;

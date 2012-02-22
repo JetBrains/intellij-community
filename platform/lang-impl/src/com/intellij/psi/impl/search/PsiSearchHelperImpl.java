@@ -781,7 +781,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         if (scope instanceof LocalSearchScope) {
           registerRequest(locals, primitive, processor);
         } else {
-          final List<String> words = StringUtil.getWordsIn(primitive.word);
+          final List<String> words = StringUtil.getWordsInStringLongestFirst(primitive.word);
           final Set<IdIndexEntry> key = new HashSet<IdIndexEntry>(words.size() * 2);
           for (String word : words) {
             key.add(new IdIndexEntry(word, primitive.caseSensitive));
@@ -857,7 +857,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   private static ArrayList<IdIndexEntry> getWordEntries(String name, boolean caseSensitively) {
-    List<String> words = StringUtil.getWordsIn(name);
+    List<String> words = StringUtil.getWordsInStringLongestFirst(name);
     final ArrayList<IdIndexEntry> keys = new ArrayList<IdIndexEntry>();
     for (String word : words) {
       keys.add(new IdIndexEntry(word, caseSensitively));

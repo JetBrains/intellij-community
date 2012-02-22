@@ -27,10 +27,12 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.Map;
 
 /**
  * @author gregsh
@@ -62,38 +64,48 @@ public class ExceptionExFilterFactory implements ExceptionFilterFactory {
                                  final int startOffset,
                                  int startLineNumber,
                                  final Consumer<AdditionalHighlight> consumer) {
+      Map<String, Trinity<TextRange, TextRange, TextRange>> visited = new THashMap<String, Trinity<TextRange, TextRange, TextRange>>();
+      final Trinity<TextRange, TextRange, TextRange> emptyInfo = Trinity.create(null, null, null);
+
+      final ExceptionWorker worker = new ExceptionWorker(myScope.getProject(), myScope);
       for (int i = 0; i < copiedFragment.getLineCount(); i++) {
         final int lineStartOffset = copiedFragment.getLineStartOffset(i);
         final int lineEndOffset = copiedFragment.getLineEndOffset(i);
-        final ExceptionWorker worker = new ExceptionWorker(myScope.getProject(), myScope);
-        Result result = null;
-        AccessToken token = ApplicationManager.getApplication().acquireReadActionLock();
-        try {
-          String text = copiedFragment.getText(new TextRange(lineStartOffset, lineEndOffset));
-          worker.execute(text, lineEndOffset);
-          result = worker.getResult();
-          if (result == null) continue;
-          int offset = result.hyperlinkInfo instanceof OpenFileHyperlinkInfo
-                       ? ((OpenFileHyperlinkInfo)result.hyperlinkInfo).getDescriptor().getOffset()
-                       : -1;
-          PsiFile psiFile = worker.getFile();
-          if (offset <= 0 || psiFile == null) continue;
-          PsiElement element = psiFile.findElementAt(offset);
-          PsiTryStatement parent = PsiTreeUtil.getParentOfType(element, PsiTryStatement.class, true, PsiClass.class);
-          PsiCodeBlock tryBlock = parent != null? parent.getTryBlock() : null;
-          if (tryBlock == null || !tryBlock.getTextRange().contains(offset)) continue;
+
+        String text = copiedFragment.getText(new TextRange(lineStartOffset, lineEndOffset));
+        if (!text.contains(".java:")) continue;
+        Trinity<TextRange, TextRange, TextRange> info = visited.get(text);
+        if (info == emptyInfo) continue;
+
+        if (info == null) {
+          info = emptyInfo;
+          AccessToken token = ApplicationManager.getApplication().acquireReadActionLock();
+          try {
+            worker.execute(text, lineEndOffset);
+            Result result = worker.getResult();
+            if (result == null) continue;
+            int offset = result.hyperlinkInfo instanceof OpenFileHyperlinkInfo
+                         ? ((OpenFileHyperlinkInfo)result.hyperlinkInfo).getDescriptor().getOffset()
+                         : -1;
+            PsiFile psiFile = worker.getFile();
+            if (offset <= 0 || psiFile == null) continue;
+            PsiElement element = psiFile.findElementAt(offset);
+            PsiTryStatement parent = PsiTreeUtil.getParentOfType(element, PsiTryStatement.class, true, PsiClass.class);
+            PsiCodeBlock tryBlock = parent != null? parent.getTryBlock() : null;
+            if (tryBlock == null || !tryBlock.getTextRange().contains(offset)) continue;
+            info = worker.getInfo();
+          }
+          finally {
+            token.finish();
+            visited.put(text, info);
+          }
         }
-        finally {
-          token.finish();
-        }
-        Trinity<TextRange,TextRange,TextRange> info = worker.getInfo();
         int off = startOffset + lineStartOffset;
-        final TextAttributes attributes = result.highlightAttributes;
-        attributes.setEffectColor(UIUtil.getInactiveTextColor());
+        final Color color = UIUtil.getInactiveTextColor();
         consumer.consume(new AdditionalHighlight(off + info.first.getStartOffset(), off + info.second.getEndOffset()) {
           @Override
           public TextAttributes getTextAttributes(@Nullable TextAttributes source) {
-            return new TextAttributes(null, null, attributes.getEffectColor(), EffectType.BOLD_DOTTED_LINE, Font.PLAIN);
+            return new TextAttributes(null, null, color, EffectType.BOLD_DOTTED_LINE, Font.PLAIN);
           }
         });
       }
@@ -101,7 +113,7 @@ public class ExceptionExFilterFactory implements ExceptionFilterFactory {
 
     @Override
     public String getUpdateMessage() {
-      return "Checking try/finally blocks";
+      return "Highlighting try blocks";
     }
   }
 }

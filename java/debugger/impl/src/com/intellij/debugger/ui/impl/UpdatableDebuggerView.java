@@ -35,7 +35,7 @@ public abstract class UpdatableDebuggerView extends JPanel implements DebuggerVi
   private final DebuggerStateManager myStateManager;
   private volatile boolean myRefreshNeeded = true;
   private final java.util.List<Disposable> myDisposables = new ArrayList<Disposable>();
-  private boolean myUpdateEnabled;
+  private volatile boolean myUpdateEnabled;
 
   protected UpdatableDebuggerView(final Project project, final DebuggerStateManager stateManager) {
     setLayout(new BorderLayout());

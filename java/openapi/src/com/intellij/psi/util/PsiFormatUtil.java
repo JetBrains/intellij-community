@@ -393,7 +393,7 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
       return builder.toString();
     }
     final PsiClass psiClass = PsiTreeUtil.getParentOfType(owner, PsiClass.class, false);
-    assert psiClass != null;
+    if (psiClass == null) return null;
     ClassUtil.formatClassName(psiClass, builder);
     if (owner instanceof PsiMethod) {
       builder.append(" ");
@@ -406,24 +406,22 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
     }
     else if (owner instanceof PsiParameter) {
       final PsiElement declarationScope = ((PsiParameter)owner).getDeclarationScope();
-      if (declarationScope instanceof PsiMethod) {
-        final PsiMethod psiMethod = (PsiMethod)declarationScope;
+      if (!(declarationScope instanceof PsiMethod)) {
+        return null;
+      }
+      final PsiMethod psiMethod = (PsiMethod)declarationScope;
 
-        builder.append(" ");
-        formatMethod(psiMethod, PsiSubstitutor.EMPTY,
-                     SHOW_NAME | SHOW_FQ_NAME | SHOW_TYPE | SHOW_PARAMETERS | SHOW_FQ_CLASS_NAMES,
-                     showParamName ? SHOW_NAME | SHOW_TYPE | SHOW_FQ_CLASS_NAMES : SHOW_TYPE | SHOW_FQ_CLASS_NAMES, maxParamsToShow, builder);
-        builder.append(" ");
+      builder.append(" ");
+      formatMethod(psiMethod, PsiSubstitutor.EMPTY,
+                   SHOW_NAME | SHOW_FQ_NAME | SHOW_TYPE | SHOW_PARAMETERS | SHOW_FQ_CLASS_NAMES,
+                   showParamName ? SHOW_NAME | SHOW_TYPE | SHOW_FQ_CLASS_NAMES : SHOW_TYPE | SHOW_FQ_CLASS_NAMES, maxParamsToShow, builder);
+      builder.append(" ");
 
-        if (showParamName) {
-          formatVariable((PsiVariable)owner, SHOW_NAME, PsiSubstitutor.EMPTY, builder);
-        }
-        else {
-          builder.append(psiMethod.getParameterList().getParameterIndex((PsiParameter)owner));
-        }
+      if (showParamName) {
+        formatVariable((PsiVariable)owner, SHOW_NAME, PsiSubstitutor.EMPTY, builder);
       }
       else {
-        return null;
+        builder.append(psiMethod.getParameterList().getParameterIndex((PsiParameter)owner));
       }
     }
     else {

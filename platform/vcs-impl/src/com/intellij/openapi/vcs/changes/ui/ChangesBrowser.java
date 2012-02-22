@@ -292,7 +292,7 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
       }
 
       public void actionPerformed(AnActionEvent e) {
-        showDiff();
+        showDiff();                     // todo here
       }
     };
     myDiffAction.registerCustomShortcutSet(CommonShortcuts.getDiff(), myViewer);

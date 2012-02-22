@@ -100,26 +100,42 @@ public class TypedAction {
   public final void actionPerformed(final Editor editor, final char charTyped, final DataContext dataContext) {
     if (editor == null) return;
 
-    Runnable command = new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new DocumentRunnable(editor.getDocument(),editor.getProject()) {
-          public void run() {
-            Document doc = editor.getDocument();
-            doc.startGuardedBlockChecking();
-            try {
-              getHandler().execute(editor, charTyped, dataContext);
-            }
-            catch (ReadOnlyFragmentModificationException e) {
-              EditorActionManager.getInstance().getReadonlyFragmentModificationHandler(doc).handle(e);
-            }
-            finally {
-              doc.stopGuardedBlockChecking();
-            }
-          }
-        });
-      }
-    };
+    Runnable command = new TypingCommand(editor, charTyped, dataContext);
 
     CommandProcessor.getInstance().executeCommand(PlatformDataKeys.PROJECT.getData(dataContext), command, "", editor.getDocument(), UndoConfirmationPolicy.DEFAULT, editor.getDocument());
+  }
+
+  public static boolean isTypedActionInProgress() {
+    return CommandProcessor.getInstance().getCurrentCommand() instanceof TypingCommand;
+  }
+
+  private class TypingCommand implements Runnable {
+    private final Editor myEditor;
+    private final char myCharTyped;
+    private final DataContext myDataContext;
+
+    public TypingCommand(Editor editor, char charTyped, DataContext dataContext) {
+      myEditor = editor;
+      myCharTyped = charTyped;
+      myDataContext = dataContext;
+    }
+
+    public void run() {
+      ApplicationManager.getApplication().runWriteAction(new DocumentRunnable(myEditor.getDocument(), myEditor.getProject()) {
+        public void run() {
+          Document doc = myEditor.getDocument();
+          doc.startGuardedBlockChecking();
+          try {
+            getHandler().execute(myEditor, myCharTyped, myDataContext);
+          }
+          catch (ReadOnlyFragmentModificationException e) {
+            EditorActionManager.getInstance().getReadonlyFragmentModificationHandler(doc).handle(e);
+          }
+          finally {
+            doc.stopGuardedBlockChecking();
+          }
+        }
+      });
+    }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package com.intellij.ui.tabs.impl.singleRow;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.ShapeTransform;
 import com.intellij.ui.tabs.impl.TabLabel;
-import com.intellij.ui.tabs.impl.table.TableLayout;
+import com.intellij.ui.tabs.impl.TabLayout;
 
 import java.awt.*;
 
@@ -83,7 +83,7 @@ public abstract class SingleRowLayoutStrategy {
 
     @Override
     public boolean isDragOut(TabLabel tabLabel, int deltaX, int deltaY) {
-      return Math.abs(deltaY) > tabLabel.getHeight() * TableLayout.getDragOutMultiplier();
+      return Math.abs(deltaY) > tabLabel.getHeight() * TabLayout.getDragOutMultiplier();
     }
 
     public int getMoreRectAxisSize() {
@@ -230,7 +230,7 @@ public abstract class SingleRowLayoutStrategy {
 
     @Override
     public boolean isDragOut(TabLabel tabLabel, int deltaX, int deltaY) {
-      return Math.abs(deltaX) > tabLabel.getHeight() * TableLayout.getDragOutMultiplier();
+      return Math.abs(deltaX) > tabLabel.getHeight() * TabLayout.getDragOutMultiplier();
     }
 
     public boolean isToCenterTextWhenStretched() {

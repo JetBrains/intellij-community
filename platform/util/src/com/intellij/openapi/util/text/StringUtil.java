@@ -54,6 +54,18 @@ public class StringUtil {
     }
   };
 
+  public static List<String> getWordsInStringLongestFirst(String find) {
+    List<String> words = getWordsIn(find);
+    // hope long words are rare
+    Collections.sort(words, new Comparator<String>() {
+      @Override
+      public int compare(final String o1, final String o2) {
+        return o2.length() - o1.length();
+      }
+    });
+    return words;
+  }
+
   @NotNull
   public static String escapePattern(final @NotNull String text) {
     return replace(replace(text, "'", "''"), "{", "'{'");

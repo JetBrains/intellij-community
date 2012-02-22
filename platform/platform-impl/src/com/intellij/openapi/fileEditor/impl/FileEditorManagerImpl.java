@@ -96,6 +96,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
 
   private static final FileEditor[] EMPTY_EDITOR_ARRAY = {};
   private static final FileEditorProvider[] EMPTY_PROVIDER_ARRAY = {};
+  public static final Key<Boolean> CLOSING_TO_REOPEN = Key.create("CLOSING_TO_REOPEN");
 
   private volatile JPanel myPanels;
   private EditorsSplitters mySplitters;
