@@ -13,6 +13,7 @@ import org.picocontainer.defaults.DefaultPicoContainer
 import org.jetbrains.plugins.gradle.diff.*
 
 import static org.junit.Assert.fail
+import org.jetbrains.plugins.gradle.util.GradleProjectStructureContext
 
 /**
  * @author Denis Zhdanov
@@ -47,6 +48,7 @@ public abstract class AbstractGradleTest {
     container.registerComponentImplementation(GradleLibraryDependencyStructureChangesCalculator)
     container.registerComponentImplementation(GradleLibraryStructureChangesCalculator)
     container.registerComponentImplementation(GradleEntityIdMapper)
+    container.registerComponentImplementation(GradleProjectStructureContext)
     configureContainer(container)
 
     changesModel = container.getComponentInstance(GradleProjectStructureChangesModel) as GradleProjectStructureChangesModel

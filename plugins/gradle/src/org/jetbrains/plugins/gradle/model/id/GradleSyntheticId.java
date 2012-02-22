@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.model.id;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.GradleEntityOwner;
 import org.jetbrains.plugins.gradle.model.GradleEntityType;
+import org.jetbrains.plugins.gradle.util.GradleProjectStructureContext;
 
 /**
  * Whole 'entity id' thing is necessary for mapping 'sync project structures' tree nodes to the domain entities. However, there are
@@ -30,7 +31,7 @@ public class GradleSyntheticId extends GradleAbstractEntityId {
   }
 
   @Override
-  public Object mapToEntity(@NotNull GradleEntityMappingContext context) {
+  public Object mapToEntity(@NotNull GradleProjectStructureContext context) {
     return null;
   }
 }

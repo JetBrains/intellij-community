@@ -10,10 +10,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.config.GradleToolWindowPanel;
 import org.jetbrains.plugins.gradle.diff.GradleProjectStructureChange;
-import org.jetbrains.plugins.gradle.diff.PlatformFacade;
 import org.jetbrains.plugins.gradle.ui.GradleDataKeys;
 import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNode;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
+import org.jetbrains.plugins.gradle.util.GradleProjectStructureContext;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -33,15 +33,12 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
 
   private Tree                            myTree;
   private GradleProjectStructureTreeModel myTreeModel;
-  private JPanel                          myContent;
+  private GradleProjectStructureContext   myContext;
 
-  public GradleProjectStructureChangesPanel(@NotNull Project project,
-                                            @NotNull GradleProjectStructureChangesModel model,
-                                            @NotNull PlatformFacade platformFacade,
-                                            @NotNull GradleProjectStructureHelper projectStructureHelper)
-  {
-    super(project, platformFacade, projectStructureHelper, GradleConstants.TOOL_WINDOW_TOOLBAR_PLACE);
-    model.addListener(new GradleProjectStructureChangeListener() {
+  public GradleProjectStructureChangesPanel(@NotNull Project project, @NotNull GradleProjectStructureContext context) {
+    super(project, GradleConstants.TOOL_WINDOW_TOOLBAR_PLACE);
+    myContext = context;
+    context.getChangesModel().addListener(new GradleProjectStructureChangeListener() {
       @Override
       public void onChanges(@NotNull final Collection<GradleProjectStructureChange> oldChanges,
                             @NotNull final Collection<GradleProjectStructureChange> currentChanges)
@@ -55,28 +52,30 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
         });
       }
     });
+    initContent();
   }
 
-  private void init() {
-    myContent = new JPanel(new GridBagLayout());
-    myTreeModel = new GradleProjectStructureTreeModel(getProject(), getProjectFacade(), getProjectStructureHelper());
+  @NotNull
+  public GradleProjectStructureTreeModel getTreeModel() {
+    return myTreeModel;
+  }
+
+  @NotNull
+  @Override
+  protected JComponent buildContent() {
+    JPanel result = new JPanel(new GridBagLayout());
+    myTreeModel = new GradleProjectStructureTreeModel(getProject(), myContext);
     myTree = new Tree(myTreeModel);
     applyInitialAppearance(myTree, (DefaultMutableTreeNode)myTreeModel.getRoot());
 
     GridBagConstraints constraints = new GridBagConstraints();
     constraints.fill = GridBagConstraints.BOTH;
     constraints.weightx = constraints.weighty = 1;
-    myContent.add(myTree, constraints);
-    myContent.setBackground(myTree.getBackground());
+    result.add(myTree, constraints);
+    result.setBackground(myTree.getBackground());
 
     CustomizationUtil.installPopupHandler(myTree, GradleConstants.ACTION_GROUP_SYNC_TREE, GradleConstants.SYNC_TREE_PLACE);
-  }
-  
-  @NotNull
-  @Override
-  protected JComponent buildContent() {
-    init();
-    return myContent;
+    return result;
   }
 
   @Override

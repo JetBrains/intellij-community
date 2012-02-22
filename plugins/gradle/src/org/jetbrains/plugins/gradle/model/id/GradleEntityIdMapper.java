@@ -10,8 +10,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.GradleEntityOwner;
 import org.jetbrains.plugins.gradle.model.gradle.*;
 import org.jetbrains.plugins.gradle.model.intellij.IntellijEntityVisitor;
-import org.jetbrains.plugins.gradle.sync.GradleProjectStructureChangesModel;
-import org.jetbrains.plugins.gradle.sync.GradleProjectStructureHelper;
+import org.jetbrains.plugins.gradle.model.intellij.ModuleAwareContentRoot;
+import org.jetbrains.plugins.gradle.util.GradleProjectStructureContext;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 /**
@@ -26,12 +26,10 @@ import org.jetbrains.plugins.gradle.util.GradleUtil;
  */
 public class GradleEntityIdMapper {
   
-  @NotNull GradleEntityMappingContext myMappingContext;
+  @NotNull GradleProjectStructureContext myMappingContext;
 
-  public GradleEntityIdMapper(@NotNull GradleProjectStructureHelper projectStructureHelper,
-                              @NotNull GradleProjectStructureChangesModel changesModel)
-  {
-    myMappingContext = new GradleEntityMappingContext(projectStructureHelper, changesModel);
+  public GradleEntityIdMapper(@NotNull GradleProjectStructureContext context) {
+    myMappingContext = context;
   }
 
   /**
@@ -89,6 +87,11 @@ public class GradleEntityIdMapper {
         @Override
         public void visit(@NotNull Module module) {
           result.set(new GradleModuleId(GradleEntityOwner.INTELLIJ, module.getName()));
+        }
+
+        @Override
+        public void visit(@NotNull ModuleAwareContentRoot contentRoot) {
+          result.set(new GradleContentRootId(GradleEntityOwner.INTELLIJ, contentRoot.getModule().getName(), contentRoot.getUrl()));
         }
 
         @Override

@@ -4,9 +4,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.GradleEntityOwner;
 import org.jetbrains.plugins.gradle.model.GradleEntityType;
+import org.jetbrains.plugins.gradle.util.GradleProjectStructureContext;
 
 /**
- * Represent unique identifier object for any gralde or intellij project structure entity (module, library, library dependency etc).
+ * Represent unique identifier object for any gradle or intellij project structure entity (module, library, library dependency etc).
  * <p/>
  * We need an entity id, for example, at the <code>'sync project structure'</code> tree - the model needs to keep mappings
  * between the existing tree nodes and corresponding project structure entities. However, we can't keep the entity as is because
@@ -28,5 +29,5 @@ public interface GradleEntityId {
   void setOwner(@NotNull GradleEntityOwner owner);
 
   @Nullable
-  Object mapToEntity(@NotNull GradleEntityMappingContext context);
+  Object mapToEntity(@NotNull GradleProjectStructureContext context);
 }

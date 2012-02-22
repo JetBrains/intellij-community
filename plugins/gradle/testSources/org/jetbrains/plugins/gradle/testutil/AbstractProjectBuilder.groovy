@@ -16,15 +16,18 @@ public abstract class AbstractProjectBuilder extends BuilderSupport {
   
   /** [module name; module] */
   def modules = [:]
+
+  /** [module; content roots] */
+  def contentRoots = [:].withDefault { [] }
   
   /** Holds (library name; library) pairs for the active configuration. */
   def libraries = [:]
 
   /** [module; dependency list] */
-  def libraryDependencies = [:].withDefault {[]}
+  def libraryDependencies = [:].withDefault { [] }
 
   /** [module; dependency list] */
-  def moduleDependencies = [:].withDefault {[]}
+  def moduleDependencies = [:].withDefault { [] }
   
   /**
    * Holds (library name; library) pairs for the whole test. I.e. there is a possible case that we define particular configuration
