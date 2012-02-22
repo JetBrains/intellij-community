@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
-public class SymLinkHandlingTest extends LightPlatformLangTestCase {
+public class SymlinkHandlingTest extends LightPlatformLangTestCase {
   private LocalFileSystem myFileSystem;
 
   @Override
