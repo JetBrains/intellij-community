@@ -660,12 +660,12 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
     return null;
   }
 
-  public void setErrorMessage(RenderingErrorMessage errorMessage) {
+  public void setErrorMessage(FixableIssueMessage errorMessage) {
     myPreviewPanel.setErrorMessage(errorMessage);
   }
 
-  public void setWarnMessage(String warnMessage) {
-    myPreviewPanel.setWarnMessage(warnMessage);
+  public void setWarnMessage(List<FixableIssueMessage> warnMessages) {
+    myPreviewPanel.setWarnMessages(warnMessages);
   }
 
   public void setImage(@Nullable BufferedImage image, @NotNull String fileName) {

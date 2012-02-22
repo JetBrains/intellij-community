@@ -3,22 +3,41 @@ package org.jetbrains.android.uipreview;
 import com.android.ide.common.rendering.api.RenderResources;
 import com.android.ide.common.rendering.api.RenderSession;
 import com.android.ide.common.rendering.api.Result;
-import com.android.ide.common.resources.*;
+import com.android.ide.common.resources.ResourceDeltaKind;
+import com.android.ide.common.resources.ResourceFolder;
+import com.android.ide.common.resources.ResourceRepository;
+import com.android.ide.common.resources.ScanningContext;
 import com.android.ide.common.resources.configuration.FolderConfiguration;
 import com.android.ide.common.resources.configuration.VersionQualifier;
-import com.android.io.*;
+import com.android.io.IAbstractFile;
+import com.android.io.IAbstractFolder;
+import com.android.io.IAbstractResource;
+import com.android.io.StreamException;
 import com.android.sdklib.IAndroidTarget;
 import com.android.sdklib.SdkConstants;
+import com.intellij.compiler.impl.javaCompiler.javac.JavacSettings;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ui.configuration.ClasspathEditor;
+import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
+import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.android.dom.manifest.Application;
 import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.android.facet.AndroidFacet;
@@ -81,7 +100,7 @@ public class RenderUtil {
     final ProjectResources projectResources = new ProjectResources();
 
     final VirtualFile[] resourceDirs = facet.getLocalResourceManager().getAllResourceDirs();
-    final IAbstractFolder[] resFolders = toAbstractFolders(project, resourceDirs);
+    final IAbstractFolder[] resFolders = toAbstractFolders(resourceDirs);
 
     loadResources(projectResources, layoutXmlText, layoutXmlFile, resFolders);
     final int minSdkVersion = getMinSdkVersion(facet);
@@ -109,18 +128,20 @@ public class RenderUtil {
     }
   }
 
-  public static boolean renderLayout(@NotNull Project project,
-                                     @NotNull String layoutXmlText,
-                                     @Nullable VirtualFile layoutXmlFile,
-                                     @NotNull String imgPath,
-                                     @NotNull IAndroidTarget target,
-                                     @NotNull AndroidFacet facet,
-                                     @NotNull FolderConfiguration config,
-                                     float xdpi,
-                                     float ydpi,
-                                     @NotNull ThemeData theme,
-                                     StringBuilder warningBuilder)
+  @Nullable
+  public static RenderingResult renderLayout(@NotNull final Module module,
+                                             @NotNull String layoutXmlText,
+                                             @Nullable VirtualFile layoutXmlFile,
+                                             @NotNull String imgPath,
+                                             @NotNull IAndroidTarget target,
+                                             @NotNull AndroidFacet facet,
+                                             @NotNull FolderConfiguration config,
+                                             float xdpi,
+                                             float ydpi,
+                                             @NotNull ThemeData theme)
     throws RenderingException, IOException, AndroidSdkNotConfiguredException {
+    final Project project = module.getProject();
+
     final Sdk sdk = ModuleRootManager.getInstance(facet.getModule()).getSdk();
     if (sdk == null || !(sdk.getSdkType() instanceof AndroidSdkType)) {
       throw new AndroidSdkNotConfiguredException();
@@ -146,14 +167,17 @@ public class RenderUtil {
     final ProjectResources projectResources = new ProjectResources();
 
     final VirtualFile[] resourceDirs = facet.getLocalResourceManager().getAllResourceDirs();
-    final IAbstractFolder[] resFolders = toAbstractFolders(project, resourceDirs);
+    final IAbstractFolder[] resFolders = toAbstractFolders(resourceDirs);
 
     loadResources(projectResources, layoutXmlText, layoutXmlFile, resFolders);
     final int minSdkVersion = getMinSdkVersion(facet);
     String missingRClassMessage = null;
     boolean missingRClass = false;
+    boolean incorrectRClassFormat = false;
+    String rClassName = null;
 
     final ProjectCallback callback = new ProjectCallback(factory.getLibrary(), facet.getModule(), projectResources);
+
     try {
       callback.loadAndParseRClass();
     }
@@ -164,8 +188,8 @@ public class RenderUtil {
     }
     catch (IncompatibleClassFileFormatException e) {
       LOG.debug(e);
-      missingRClassMessage = "Incompatible R.class file format";
-      missingRClass = true;
+      incorrectRClassFormat = true;
+      rClassName = e.getClassName();
     }
 
     final RenderResources resolver =
@@ -180,52 +204,34 @@ public class RenderUtil {
       throw new RenderingException(e);
     }
     if (session == null) {
-      return false;
+      return null;
+    }
+
+    final List<FixableIssueMessage> warnMessages = new ArrayList<FixableIssueMessage>();
+
+    if (callback.hasUnsupportedClassVersionProblem() || (incorrectRClassFormat && callback.hasLoadedClasses())) {
+      reportIncorrectClassFormatWarning(callback, rClassName, incorrectRClassFormat, warnMessages);
     }
 
     if (missingRClass && callback.hasLoadedClasses()) {
-      warningBuilder.append(missingRClassMessage != null && missingRClassMessage.length() > 0
-                            ? ("Class not found error: " + missingRClassMessage + ".")
-                            : "R class not found.")
-        .append(" Try to build project\n");
+      final StringBuilder builder = new StringBuilder();
+      builder.append(missingRClassMessage != null && missingRClassMessage.length() > 0
+                     ? ("Class not found error: " + missingRClassMessage + ".")
+                     : "R class not found.")
+        .append(" Try to build project");
+      warnMessages.add(new FixableIssueMessage(builder.toString()));
     }
 
-    final Set<String> missingClasses = callback.getMissingClasses();
-    if (missingClasses.size() > 0) {
-      if (missingClasses.size() > 1) {
-        warningBuilder.append("Missing classes:\n");
-        for (String missingClass : missingClasses) {
-          warningBuilder.append("&nbsp; &nbsp; &nbsp; &nbsp;").append(missingClass).append('\n');
-        }
-      }
-      else {
-        warningBuilder.append("Missing class ").append(missingClasses.iterator().next()).append('\n');
-      }
-    }
+    reportMissingClassesWarning(warnMessages, callback.getMissingClasses());
 
-    final Map<String, Throwable> brokenClasses = callback.getBrokenClasses();
-    if (brokenClasses.size() > 0) {
-      if (brokenClasses.size() > 1) {
-        warningBuilder.append("Unable to initialize:\n");
-        for (String brokenClass : brokenClasses.keySet()) {
-          warningBuilder.append("    ").append(brokenClass).append('\n');
-        }
-      }
-      else {
-        warningBuilder.append("Unable to initialize ").append(brokenClasses.keySet().iterator().next());
-      }
-    }
-
-    if (warningBuilder.length() > 0 && warningBuilder.charAt(warningBuilder.length() - 1) == '\n') {
-      warningBuilder.deleteCharAt(warningBuilder.length() - 1);
-    }
+    reportBrokenClassesWarning(warnMessages, callback.getBrokenClasses());
 
     final Result result = session.getResult();
     if (!result.isSuccess()) {
       final Throwable exception = result.getException();
 
       if (exception != null) {
-        final List<Throwable> exceptionsFromWarnings = getNonNullValues(brokenClasses);
+        final List<Throwable> exceptionsFromWarnings = getNonNullValues(callback.getBrokenClasses());
 
         if (exceptionsFromWarnings.size() > 0 &&
             exception instanceof ClassCastException &&
@@ -240,13 +246,215 @@ public class RenderUtil {
         LOG.info(message);
         throw new RenderingException();
       }
-      return false;
+      return null;
     }
 
     final String format = FileUtil.getExtension(imgPath);
     ImageIO.write(session.getImage(), format, new File(imgPath));
 
-    return true;
+    return new RenderingResult(warnMessages);
+  }
+
+  private static void reportBrokenClassesWarning(@NotNull List<FixableIssueMessage> warnMessages,
+                                                 @NotNull Map<String, Throwable> brokenClasses) {
+    if (brokenClasses.size() > 0) {
+      final StringBuilder builder = new StringBuilder();
+      if (brokenClasses.size() > 1) {
+        builder.append("Unable to initialize:\n");
+        for (String brokenClass : brokenClasses.keySet()) {
+          builder.append("    ").append(brokenClass).append('\n');
+        }
+      }
+      else {
+        builder.append("Unable to initialize ").append(brokenClasses.keySet().iterator().next());
+      }
+      removeLastNewLineChar(builder);
+      warnMessages.add(new FixableIssueMessage(builder.toString()));
+    }
+  }
+
+  private static void reportMissingClassesWarning(@NotNull List<FixableIssueMessage> warnMessages,
+                                                  @NotNull Set<String> missingClasses) {
+    if (missingClasses.size() > 0) {
+      final StringBuilder builder = new StringBuilder();
+      if (missingClasses.size() > 1) {
+        builder.append("Missing classes:\n");
+        for (String missingClass : missingClasses) {
+          builder.append("&nbsp; &nbsp; &nbsp; &nbsp;").append(missingClass).append('\n');
+        }
+      }
+      else {
+        builder.append("Missing class ").append(missingClasses.iterator().next());
+      }
+      removeLastNewLineChar(builder);
+      warnMessages.add(new FixableIssueMessage(builder.toString()));
+    }
+  }
+
+  private static void reportIncorrectClassFormatWarning(@NotNull ProjectCallback callback,
+                                                        @Nullable String rClassName,
+                                                        boolean incorrectRClassFormat,
+                                                        @NotNull List<FixableIssueMessage> warnMessages) {
+    final Module module = callback.getModule();
+    final Project project = module.getProject();
+    final List<Module> problemModules = getProblemModules(module);
+    final StringBuilder builder = new StringBuilder("Preview can be incorrect: unsupported classes version");
+    final List<Pair<String, Runnable>> quickFixes = new ArrayList<Pair<String, Runnable>>();
+
+    if (problemModules.size() > 0) {
+      quickFixes.add(new Pair<String, Runnable>("Rebuild project with '-target 1.6'", new Runnable() {
+        @Override
+        public void run() {
+          final JavacSettings settings = JavacSettings.getInstance(project);
+          if (settings.ADDITIONAL_OPTIONS_STRING.length() > 0) {
+            settings.ADDITIONAL_OPTIONS_STRING += ' ';
+          }
+          settings.ADDITIONAL_OPTIONS_STRING += "-target 1.6";
+          CompilerManager.getInstance(project).rebuild(null);
+        }
+      }));
+
+      quickFixes.add(new Pair<String, Runnable>("Change Java SDK to 1.5/1.6", new Runnable() {
+        @Override
+        public void run() {
+          final Set<String> sdkNames = getSdkNamesFromModules(problemModules);
+
+          if (sdkNames.size() == 1) {
+            final Sdk sdk = ProjectJdkTable.getInstance().findJdk(sdkNames.iterator().next());
+
+            if (sdk != null && sdk.getSdkType() instanceof AndroidSdkType) {
+              final ProjectStructureConfigurable config = ProjectStructureConfigurable.getInstance(project);
+
+              if (ShowSettingsUtil.getInstance().editConfigurable(project, config, new Runnable() {
+                public void run() {
+                  config.select(sdk, true);
+                }
+              })) {
+                askAndRebuild(project);
+              }
+              return;
+            }
+          }
+
+          final String moduleToSelect = problemModules.size() > 0
+                                        ? problemModules.iterator().next().getName()
+                                        : null;
+          if (ModulesConfigurator.showDialog(project, moduleToSelect, ClasspathEditor.NAME)) {
+            askAndRebuild(project);
+          }
+        }
+      }));
+
+      final Set<String> classesWithIncorrectFormat = new HashSet<String>(callback.getClassesWithIncorrectFormat());
+      if (incorrectRClassFormat && rClassName != null) {
+        classesWithIncorrectFormat.add(rClassName);
+      }
+      if (classesWithIncorrectFormat.size() > 0) {
+        quickFixes.add(new Pair<String, Runnable>("Details", new Runnable() {
+          @Override
+          public void run() {
+            showClassesWithIncorrectFormat(project, classesWithIncorrectFormat);
+          }
+        }));
+      }
+
+      builder.append("\nFollowing modules are built with incompatible JDK: ");
+
+      for (Iterator<Module> it = problemModules.iterator(); it.hasNext(); ) {
+        Module problemModule = it.next();
+        builder.append(problemModule.getName());
+        if (it.hasNext()) {
+          builder.append(", ");
+        }
+      }
+    }
+
+    warnMessages.add(new FixableIssueMessage(builder.toString(), quickFixes));
+  }
+
+  private static void showClassesWithIncorrectFormat(@NotNull Project project, @NotNull Set<String> classesWithIncorrectFormat) {
+    final StringBuilder builder = new StringBuilder("Classes with incompatible format:\n");
+
+    for (Iterator<String> it = classesWithIncorrectFormat.iterator(); it.hasNext(); ) {
+      builder.append("    ").append(it.next());
+
+      if (it.hasNext()) {
+        builder.append('\n');
+      }
+    }
+    Messages.showInfoMessage(project, builder.toString(), "Unsupported class version");
+  }
+
+  private static void askAndRebuild(Project project) {
+    final int r =
+      Messages.showYesNoDialog(project, "You have to rebuild project to see fixed preview. Would you like to do it?",
+                               "Rebuild project", Messages.getQuestionIcon());
+    if (r == Messages.YES) {
+      CompilerManager.getInstance(project).rebuild(null);
+    }
+  }
+
+  @NotNull
+  private static Set<String> getSdkNamesFromModules(@NotNull Collection<Module> modules) {
+    final Set<String> result = new HashSet<String>();
+
+    for (Module module : modules) {
+      final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
+
+      if (sdk != null) {
+        result.add(sdk.getName());
+      }
+    }
+    return result;
+  }
+
+  @NotNull
+  private static List<Module> getProblemModules(@NotNull Module root) {
+    final List<Module> result = new ArrayList<Module>();
+    collectProblemModules(root, new HashSet<Module>(), result);
+    return result;
+  }
+
+  private static void collectProblemModules(@NotNull Module module, @NotNull Set<Module> visited, @NotNull Collection<Module> result) {
+    if (!visited.add(module)) {
+      return;
+    }
+
+    if (isBuiltByJdk7OrHigher(module)) {
+      result.add(module);
+    }
+
+    for (Module depModule : ModuleRootManager.getInstance(module).getDependencies(false)) {
+      collectProblemModules(depModule, visited, result);
+    }
+  }
+
+  private static boolean isBuiltByJdk7OrHigher(@NotNull Module module) {
+    Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
+
+    if (sdk == null) {
+      return false;
+    }
+
+    if (sdk.getSdkType() instanceof AndroidSdkType) {
+      final AndroidSdkAdditionalData data = (AndroidSdkAdditionalData)sdk.getSdkAdditionalData();
+
+      if (data != null) {
+        final Sdk jdk = data.getJavaSdk();
+
+        if (jdk != null) {
+          sdk = jdk;
+        }
+      }
+    }
+    return sdk.getSdkType() instanceof JavaSdk &&
+           JavaSdk.getInstance().isOfVersionOrHigher(sdk, JavaSdkVersion.JDK_1_7);
+  }
+
+  private static void removeLastNewLineChar(StringBuilder builder) {
+    if (builder.length() > 0 && builder.charAt(builder.length() - 1) == '\n') {
+      builder.deleteCharAt(builder.length() - 1);
+    }
   }
 
   @NotNull
@@ -283,6 +491,7 @@ public class RenderUtil {
 
   private static int getMinSdkVersion(final AndroidFacet facet) {
     final XmlTag manifestTag = ApplicationManager.getApplication().runReadAction(new Computable<XmlTag>() {
+      @Nullable
       @Override
       public XmlTag compute() {
         final Manifest manifest = facet.getManifest();
@@ -301,7 +510,7 @@ public class RenderUtil {
   }
 
   @NotNull
-  private static IAbstractFolder[] toAbstractFolders(@NotNull Project project, @NotNull VirtualFile[] folders) {
+  private static IAbstractFolder[] toAbstractFolders(@NotNull VirtualFile[] folders) {
     final IAbstractFolder[] result = new IAbstractFolder[folders.length];
 
     for (int i = 0; i < folders.length; i++) {
@@ -329,15 +538,15 @@ public class RenderUtil {
 
         if (resFolder != null) {
           for (final IAbstractResource childRes : folder.listMembers()) {
-            
+
             if (childRes instanceof IAbstractFile) {
               final VirtualFile vFile;
 
-              if (childRes instanceof BufferingFileWrapper) { 
+              if (childRes instanceof BufferingFileWrapper) {
                 final BufferingFileWrapper fileWrapper = (BufferingFileWrapper)childRes;
                 final String filePath = FileUtil.toSystemIndependentName(fileWrapper.getOsLocation());
                 vFile = LocalFileSystem.getInstance().findFileByPath(filePath);
-  
+
                 if (vFile != null && vFile == layoutXmlFile && layoutXmlFileText != null) {
                   resFolder.processFile(new MyFileWrapper(layoutXmlFileText, childRes), ResourceDeltaKind.ADDED, scanningContext);
                 }
@@ -370,6 +579,28 @@ public class RenderUtil {
       }
     }
     return result.toString();
+  }
+
+  @Nullable
+  public static String getRClassName(@NotNull final Module module) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      @Nullable
+      @Override
+      public String compute() {
+        final AndroidFacet facet = AndroidFacet.getInstance(module);
+        if (facet == null) {
+          return null;
+        }
+
+        final Manifest manifest = facet.getManifest();
+        if (manifest == null) {
+          return null;
+        }
+
+        final String aPackage = manifest.getPackage().getValue();
+        return aPackage == null ? null : aPackage + ".R";
+      }
+    });
   }
 
   private static class MyFileWrapper implements IAbstractFile {
