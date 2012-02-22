@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,7 +59,7 @@ public class FormattingDocumentModelImpl implements FormattingDocumentModel {
         LOG.error("Document is uncommitted");
       }
       if (!document.getText().equals(file.getText())) {
-        LOG.error("Document and psi file texts should be equal");
+        LOG.error("Document and psi file texts should be equal: file " + file);
       }
       return new FormattingDocumentModelImpl(document, file);
     }
