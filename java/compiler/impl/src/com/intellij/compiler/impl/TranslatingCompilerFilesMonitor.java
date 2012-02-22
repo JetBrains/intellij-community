@@ -584,7 +584,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
   }
 
   private void initOutputRootsFile(File rootsFile) throws IOException {
-    myOutputRootsStorage = new PersistentHashMap<Integer, TIntObjectHashMap<Pair<Integer, Integer>>>(rootsFile, new EnumeratorIntegerDescriptor(), new DataExternalizer<TIntObjectHashMap<Pair<Integer, Integer>>>() {
+    myOutputRootsStorage = new PersistentHashMap<Integer, TIntObjectHashMap<Pair<Integer, Integer>>>(rootsFile, EnumeratorIntegerDescriptor.INSTANCE, new DataExternalizer<TIntObjectHashMap<Pair<Integer, Integer>>>() {
       public void save(DataOutput out, TIntObjectHashMap<Pair<Integer, Integer>> value) throws IOException {
         for (final TIntObjectIterator<Pair<Integer, Integer>> it = value.iterator(); it.hasNext();) {
           it.advance();

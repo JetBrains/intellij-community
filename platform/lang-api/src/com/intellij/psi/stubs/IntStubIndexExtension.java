@@ -29,6 +29,6 @@ public abstract class IntStubIndexExtension<Psi extends PsiElement> extends Abst
   }
 
   public KeyDescriptor<Integer> getKeyDescriptor() {
-    return new EnumeratorIntegerDescriptor();
+    return EnumeratorIntegerDescriptor.INSTANCE;
   }
 }

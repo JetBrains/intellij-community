@@ -532,7 +532,7 @@ public class FileBasedIndex implements ApplicationComponent {
     // cleared properly before updating (removed data will still be present on disk). See IDEA-52223 for illustration of possible effects.
 
     final PersistentHashMap<Integer, Collection<K>> map = new PersistentHashMap<Integer, Collection<K>>(
-      indexStorageFile, new EnumeratorIntegerDescriptor(), dataExternalizer
+      indexStorageFile, EnumeratorIntegerDescriptor.INSTANCE, dataExternalizer
     ) {
 
       @Override
