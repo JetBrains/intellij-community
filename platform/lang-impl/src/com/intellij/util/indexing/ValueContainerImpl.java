@@ -17,9 +17,11 @@
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.containers.EmptyIterator;
 import gnu.trove.THashMap;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntIterator;
+import gnu.trove.TObjectObjectProcedure;
 
 import java.util.*;
 
@@ -29,7 +31,6 @@ import java.util.*;
  */
 class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implements Cloneable{
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.ValueContainerImpl");
-
   private THashMap<Value, Object> myInputIdMapping;
 
   public ValueContainerImpl() {
@@ -117,6 +118,10 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
 
   @Override
   public Iterator<Value> getValueIterator() {
+    if (myInputIdMapping.size() == 0) {
+      return EmptyIterator.getInstance();
+    }
+
     final Set<Value> values = Collections.unmodifiableSet(myInputIdMapping.keySet());
     return new Iterator<Value>() {
       final Iterator<Value> iterator = values.iterator();
@@ -159,6 +164,28 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
       return inputId == ((Integer)input).intValue();
     }
     return false;
+  }
+
+  @Override
+  public IntPredicate getValueAssociationPredicate(Value value) {
+    final Object input = myInputIdMapping.get(value);
+    if (input == null) return EMPTY_PREDICATE;
+    if (input instanceof Integer) {
+      return new IntPredicate() {
+        final int myId = (Integer)input;
+        @Override
+        public boolean contains(int id) {
+          return id == myId;
+        }
+      };
+    }
+    return new IntPredicate() {
+      final TIntHashSet mySet = (TIntHashSet)input;
+      @Override
+      boolean contains(int id) {
+        return mySet.contains(id);
+      }
+    };
   }
 
   @Override
@@ -266,14 +293,25 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
       return null;
     }
     final THashMap<Value, Object> cloned = map.clone();
-    for (Value key : cloned.keySet()) {
-      final Object val = cloned.get(key);
-      if (val instanceof TIntHashSet) {
-        cloned.put(key, ((TIntHashSet)val).clone());
+    cloned.forEachEntry(new TObjectObjectProcedure<Value, Object>() {
+      @Override
+      public boolean execute(Value key, Object val) {
+        if (val instanceof TIntHashSet) {
+          cloned.put(key, ((TIntHashSet)val).clone());
+        }
+        return true;
       }
-    }
+    });
+
     return cloned;
   }
+
+  private static final IntPredicate EMPTY_PREDICATE = new IntPredicate() {
+    @Override
+    public boolean contains(int id) {
+      return false;
+    }
+  };
 
   private static class IdSet extends TIntHashSet {
 
