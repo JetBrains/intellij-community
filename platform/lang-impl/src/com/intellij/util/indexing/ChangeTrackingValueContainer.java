@@ -109,6 +109,11 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
   }
 
   @Override
+  public IntPredicate getValueAssociationPredicate(Value value) {
+    return getMergedData().getValueAssociationPredicate(value);
+  }
+
+  @Override
   public IntIterator getInputIdsIterator(final Value value) {
     return getMergedData().getInputIdsIterator(value);
   }
@@ -119,7 +124,7 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
 
   // need 'synchronized' to ensure atomic initialization of merged data
   // because several threads that acquired read lock may simultaneously execute the method
-  private ValueContainer<Value> getMergedData() {
+  private ValueContainerImpl<Value> getMergedData() {
     ValueContainerImpl<Value> merged = myMerged;
     if (merged != null) {
       return merged;
@@ -129,16 +134,15 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
       if (merged != null) {
         return merged;
       }
-      final ValueContainerImpl<Value> newMerged = new ValueContainerImpl<Value>();
 
       final ValueContainer<Value> fromDisk = myInitializer.compute();
+      final ValueContainerImpl<Value> newMerged;
 
-      fromDisk.forEach(new ContainerAction<Value>() {
-        @Override
-        public void perform(final int id, final Value value) {
-          newMerged.addValue(id, value);
-        }
-      });
+      if (fromDisk instanceof ValueContainerImpl) {
+        newMerged = ((ValueContainerImpl<Value>)fromDisk).clone();
+      } else {
+        newMerged = ((ChangeTrackingValueContainer<Value>)fromDisk).getMergedData().clone();
+      }
       myInvalidated.forEach(new TIntProcedure() {
         @Override
         public boolean execute(int inputId) {

@@ -63,8 +63,6 @@ import com.intellij.util.*;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.io.*;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.storage.HeavyProcessLatch;
@@ -171,7 +169,7 @@ public class FileBasedIndex implements ApplicationComponent {
       @Override
       public void beforeFileTypesChanged(final FileTypeEvent event) {
         cleanupProcessedFlag();
-        myTypeToExtensionMap = new HashMap<FileType, Set<String>>();
+        myTypeToExtensionMap = new THashMap<FileType, Set<String>>();
         for (FileType type : myFileTypeManager.getRegisteredFileTypes()) {
           myTypeToExtensionMap.put(type, getExtensions(type));
         }
@@ -182,7 +180,7 @@ public class FileBasedIndex implements ApplicationComponent {
         final Map<FileType, Set<String>> oldExtensions = myTypeToExtensionMap;
         myTypeToExtensionMap = null;
         if (oldExtensions != null) {
-          final Map<FileType, Set<String>> newExtensions = new HashMap<FileType, Set<String>>();
+          final Map<FileType, Set<String>> newExtensions = new THashMap<FileType, Set<String>>();
           for (FileType type : myFileTypeManager.getRegisteredFileTypes()) {
             newExtensions.put(type, getExtensions(type));
           }
@@ -204,7 +202,7 @@ public class FileBasedIndex implements ApplicationComponent {
       }
 
       private Set<String> getExtensions(FileType type) {
-        final Set<String> set = new HashSet<String>();
+        final Set<String> set = new THashSet<String>();
         for (FileNameMatcher matcher : myFileTypeManager.getAssociations(type)) {
           set.add(matcher.getPresentableString());
         }
@@ -434,7 +432,7 @@ public class FileBasedIndex implements ApplicationComponent {
   }
 
   private static Set<String> readRegisteredIndexNames() {
-    final Set<String> result = new HashSet<String>();
+    final Set<String> result = new THashSet<String>();
     try {
       final DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream(getRegisteredIndicesFile())));
       try {
@@ -493,7 +491,7 @@ public class FileBasedIndex implements ApplicationComponent {
                                                                                        MemoryIndexStorage<K, ?> storage) throws IOException {
     final File indexStorageFile = IndexInfrastructure.getInputIndexStorageFile(indexId);
     final Ref<Boolean> isBufferingMode = new Ref<Boolean>(false);
-    final Map<Integer, Collection<K>> tempMap = new HashMap<Integer, Collection<K>>();
+    final TIntObjectHashMap<Collection<K>> tempMap = new TIntObjectHashMap<Collection<K>>();
 
     final DataExternalizer<Collection<K>> dataExternalizer = new DataExternalizer<Collection<K>>() {
       @Override
@@ -532,7 +530,7 @@ public class FileBasedIndex implements ApplicationComponent {
     // cleared properly before updating (removed data will still be present on disk). See IDEA-52223 for illustration of possible effects.
 
     final PersistentHashMap<Integer, Collection<K>> map = new PersistentHashMap<Integer, Collection<K>>(
-      indexStorageFile, new EnumeratorIntegerDescriptor(), dataExternalizer
+      indexStorageFile, EnumeratorIntegerDescriptor.INSTANCE, dataExternalizer
     ) {
 
       @Override
@@ -667,7 +665,7 @@ public class FileBasedIndex implements ApplicationComponent {
    */
   @NotNull
   public <K> Collection<K> getAllKeys(final ID<K, ?> indexId, @NotNull Project project) {
-    Set<K> allKeys = new HashSet<K>();
+    Set<K> allKeys = new THashSet<K>();
     processAllKeys(indexId, new CommonProcessors.CollectProcessor<K>(allKeys), project);
     return allKeys;
   }
@@ -829,7 +827,7 @@ public class FileBasedIndex implements ApplicationComponent {
 
   @NotNull
   public <K, V> Collection<VirtualFile> getContainingFiles(final ID<K, V> indexId, @NotNull K dataKey, @NotNull final GlobalSearchScope filter) {
-    final Set<VirtualFile> files = new HashSet<VirtualFile>();
+    final Set<VirtualFile> files = new THashSet<VirtualFile>();
     processValuesImpl(indexId, dataKey, false, null, new ValueProcessor<V>() {
       @Override
       public boolean process(final VirtualFile file, final V value) {
@@ -1021,7 +1019,7 @@ public class FileBasedIndex implements ApplicationComponent {
 
           for (K dataKey : dataKeys) {
             ProgressManager.checkCanceled();
-            TIntHashSet copy = new TIntHashSet();
+            final TIntHashSet copy = new TIntHashSet();
             final ValueContainer<V> container = index.getData(dataKey);
 
             for (final Iterator<V> valueIt = container.getValueIterator(); valueIt.hasNext(); ) {
@@ -1029,12 +1027,27 @@ public class FileBasedIndex implements ApplicationComponent {
               if (valueChecker != null && !valueChecker.value(value)) {
                 continue;
               }
-              for (final ValueContainer.IntIterator inputIdsIterator = container.getInputIdsIterator(value); inputIdsIterator.hasNext(); ) {
-                final int id = inputIdsIterator.next();
-                if ((mainIntersection == null || mainIntersection.contains(id)) &&
-                    (projectFilesFilter == null || projectFilesFilter.contains(id))) {
-                  copy.add(id);
+
+              ValueContainer.IntIterator iterator = container.getInputIdsIterator(value);
+
+              if (mainIntersection == null || iterator.size() < mainIntersection.size()) {
+                for (final ValueContainer.IntIterator inputIdsIterator = iterator; inputIdsIterator.hasNext(); ) {
+                  final int id = inputIdsIterator.next();
+                  if (mainIntersection == null && (projectFilesFilter == null || projectFilesFilter.contains(id)) ||
+                      mainIntersection != null && mainIntersection.contains(id)
+                     ) {
+                    copy.add(id);
+                  }
                 }
+              } else {
+                mainIntersection.forEach(new TIntProcedure() {
+                  final ValueContainer.IntPredicate predicate = container.getValueAssociationPredicate(value);
+                  @Override
+                  public boolean execute(int id) {
+                    if (predicate.contains(id)) copy.add(id);
+                    return true;
+                  }
+                });
               }
             }
 
@@ -1249,7 +1262,7 @@ public class FileBasedIndex implements ApplicationComponent {
   }
 
   private Set<Document> getUnsavedOrTransactedDocuments() {
-    final Set<Document> docs = new HashSet<Document>(Arrays.asList(myFileDocumentManager.getUnsavedDocuments()));
+    final Set<Document> docs = new THashSet<Document>(Arrays.asList(myFileDocumentManager.getUnsavedDocuments()));
     synchronized (myTransactionMap) {
       docs.addAll(myTransactionMap.keySet());
     }
@@ -2161,7 +2174,7 @@ public class FileBasedIndex implements ApplicationComponent {
       return;
     }
 
-    Set<VirtualFile> visitedRoots = new HashSet<VirtualFile>();
+    Set<VirtualFile> visitedRoots = new THashSet<VirtualFile>();
     for (IndexedRootsProvider provider : Extensions.getExtensions(IndexedRootsProvider.EP_NAME)) {
       //important not to depend on project here, to support per-project background reindex
       // each client gives a project to FileBasedIndex

@@ -96,7 +96,7 @@ public class AntImportsIndex extends ScalarIndexExtension<Integer>{
   }
 
   public KeyDescriptor<Integer> getKeyDescriptor() {
-    return new EnumeratorIntegerDescriptor();
+    return EnumeratorIntegerDescriptor.INSTANCE;
   }
 
   public FileBasedIndex.InputFilter getInputFilter() {
