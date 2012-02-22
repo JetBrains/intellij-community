@@ -27,7 +27,6 @@ import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.designer.componentTree.TreeComponentDecorator;
 import com.intellij.designer.designSurface.*;
 import com.intellij.designer.designSurface.selection.DirectionResizePoint;
-import com.intellij.designer.designSurface.selection.NonResizeSelectionDecorator;
 import com.intellij.designer.designSurface.selection.ResizeSelectionDecorator;
 import com.intellij.designer.designSurface.tools.ComponentCreationFactory;
 import com.intellij.designer.designSurface.tools.CreationTool;
@@ -91,7 +90,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
       AndroidFacet facet = AndroidFacet.getInstance(module);
 
       LayoutDeviceManager layoutDeviceManager = new LayoutDeviceManager();
-      layoutDeviceManager.loadDevices(platform.getSdk());
+      layoutDeviceManager.loadDevices(platform.getSdkData());
       LayoutDevice layoutDevice = layoutDeviceManager.getCombinedList().get(0);
 
       LayoutDeviceConfiguration deviceConfiguration = layoutDevice.getConfigurations().get(0);
