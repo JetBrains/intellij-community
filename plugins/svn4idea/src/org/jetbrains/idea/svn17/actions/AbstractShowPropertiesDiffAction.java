@@ -280,7 +280,7 @@ public abstract class AbstractShowPropertiesDiffAction extends AnAction implemen
 
     final ISVNPropertyHandler propertyHandler = createHandler(revision, lines);
 
-    client.doGetProperty(url, null, SVNRevision.UNDEFINED, revision, SVNDepth.EMPTY, propertyHandler);
+    client.doGetProperty(url, null, revision, revision, SVNDepth.EMPTY, propertyHandler);
 
     Collections.sort(lines, new Comparator<SVNPropertyData>() {
       public int compare(final SVNPropertyData o1, final SVNPropertyData o2) {
