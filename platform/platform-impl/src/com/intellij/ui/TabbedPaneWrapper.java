@@ -17,7 +17,6 @@ package com.intellij.ui;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.project.Project;
@@ -37,7 +36,6 @@ import java.awt.event.MouseListener;
  * @author Vladimir Kondratyev
  */
 public class TabbedPaneWrapper  {
-  private static final PrevNextActionsDescriptor DEFAULT_SHORTCUTS = new PrevNextActionsDescriptor(IdeActions.ACTION_NEXT_TAB, IdeActions.ACTION_PREVIOUS_TAB);
   protected TabbedPane myTabbedPane;
   protected JComponent myTabbedPaneHolder;
 
@@ -45,12 +43,12 @@ public class TabbedPaneWrapper  {
 
   protected TabbedPaneWrapper(boolean construct) {
     if (construct) {
-      init(SwingConstants.TOP, DEFAULT_SHORTCUTS, new JTabbedPaneFactory(this));
+      init(SwingConstants.TOP, TabbedPaneImpl.DEFAULT_PREV_NEXT_SHORTCUTS, new JTabbedPaneFactory(this));
     }
   }
 
   public TabbedPaneWrapper(@NotNull Disposable parentDisposable) {
-    this(SwingConstants.TOP, DEFAULT_SHORTCUTS, parentDisposable);
+    this(SwingConstants.TOP, TabbedPaneImpl.DEFAULT_PREV_NEXT_SHORTCUTS, parentDisposable);
   }
 
   /**
@@ -533,7 +531,7 @@ public class TabbedPaneWrapper  {
   public static class AsJTabbedPane extends TabbedPaneWrapper {
     public AsJTabbedPane(int tabPlacement) {
       super(false);
-      init(tabPlacement, DEFAULT_SHORTCUTS, new JTabbedPaneFactory(this));
+      init(tabPlacement, TabbedPaneImpl.DEFAULT_PREV_NEXT_SHORTCUTS, new JTabbedPaneFactory(this));
     }
   }
 

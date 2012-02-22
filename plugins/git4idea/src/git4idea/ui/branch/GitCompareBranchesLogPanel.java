@@ -34,6 +34,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 
@@ -76,6 +77,9 @@ class GitCompareBranchesLogPanel extends JPanel {
     addSelectionListener(myHeadToBranchListPanel, myBranchToHeadListPanel, changesBrowser);
     addSelectionListener(myBranchToHeadListPanel, myHeadToBranchListPanel, changesBrowser);
 
+    myHeadToBranchListPanel.registerDiffAction(changesBrowser.getDiffAction());
+    myBranchToHeadListPanel.registerDiffAction(changesBrowser.getDiffAction());
+
     JPanel htb = layoutCommitListPanel(myCurrentBranchName, true);
     JPanel bth = layoutCommitListPanel(myCurrentBranchName, false);
 
@@ -106,6 +110,7 @@ class GitCompareBranchesLogPanel extends JPanel {
     JPanel repoSelectorPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
     JBLabel label = new JBLabel("Repository: ");
     label.setLabelFor(repoSelectorPanel);
+    label.setDisplayedMnemonic(KeyEvent.VK_R);
     repoSelectorPanel.add(label);
     repoSelectorPanel.add(repoSelector);
 

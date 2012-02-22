@@ -18,7 +18,7 @@ package git4idea.ui.branch;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.ui.components.JBTabbedPane;
+import com.intellij.ui.TabbedPaneImpl;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.util.GitCommitCompareInfo;
@@ -26,7 +26,6 @@ import git4idea.util.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.event.KeyEvent;
 
 /**
  * Dialog for comparing two Git branches.
@@ -39,6 +38,7 @@ public class GitCompareBranchesDialog extends DialogWrapper {
   private final String myCurrentBranchName;
   private final GitCommitCompareInfo myCompareInfo;
   private final GitRepository myInitialRepo;
+  private JPanel myLogPanel;
 
   public GitCompareBranchesDialog(@NotNull Project project, @NotNull String branchName, @NotNull String currentBranchName,
                                   @NotNull GitCommitCompareInfo compareInfo, @NotNull GitRepository initialRepo) {
@@ -62,14 +62,13 @@ public class GitCompareBranchesDialog extends DialogWrapper {
 
   @Override
   protected JComponent createCenterPanel() {
-    JPanel logPanel = new GitCompareBranchesLogPanel(myProject, myBranchName, myCurrentBranchName, myCompareInfo, myInitialRepo);
+    myLogPanel = new GitCompareBranchesLogPanel(myProject, myBranchName, myCurrentBranchName, myCompareInfo, myInitialRepo);
     JPanel diffPanel = new GitCompareBranchesDiffPanel(myProject, myBranchName, myCurrentBranchName, myCompareInfo);
 
-    JBTabbedPane tabbedPane = new JBTabbedPane();
-    tabbedPane.addTab("Log", IconLoader.getIcon("/icons/branch.png"), logPanel);
-    tabbedPane.setMnemonicAt(0, KeyEvent.VK_L);
+    TabbedPaneImpl tabbedPane = new TabbedPaneImpl(SwingConstants.TOP);
+    tabbedPane.addTab("Log", IconLoader.getIcon("/icons/branch.png"), myLogPanel);
     tabbedPane.addTab("Diff", IconLoader.getIcon("/actions/diff.png"), diffPanel);
-    tabbedPane.setMnemonicAt(1, KeyEvent.VK_D);
+    tabbedPane.setKeyboardNavigation(TabbedPaneImpl.DEFAULT_PREV_NEXT_SHORTCUTS);
     return tabbedPane;
   }
 
@@ -84,4 +83,8 @@ public class GitCompareBranchesDialog extends DialogWrapper {
     return GitCompareBranchesDialog.class.getName();
   }
 
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myLogPanel;
+  }
 }

@@ -18,6 +18,7 @@ package com.intellij.ui;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBTabbedPane;
@@ -35,6 +36,9 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 public class TabbedPaneImpl extends JBTabbedPane implements TabbedPane {
+
+  public static final PrevNextActionsDescriptor DEFAULT_PREV_NEXT_SHORTCUTS = new PrevNextActionsDescriptor(IdeActions.ACTION_NEXT_TAB,
+                                                                                                            IdeActions.ACTION_PREVIOUS_TAB);
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.TabbedPaneImpl");
 
