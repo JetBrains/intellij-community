@@ -18,13 +18,17 @@ package com.intellij.codeInsight.intention.impl;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.generation.*;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.ide.util.MemberChooser;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
@@ -39,17 +43,24 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.*;
 
 public class CreateFieldFromParameterAction implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.CreateFieldFromParameterAction");
+  private static final Key<Map<SmartPsiElementPointer<PsiParameter>, Boolean>> PARAMS = Key.create("FIELDS_FROM_PARAMS");
+
   private String myName = "";
 
   @Nullable
@@ -85,27 +96,70 @@ public class CreateFieldFromParameterAction implements IntentionAction {
 
   @NotNull
   public String getText() {
+    if (myName == null) return CodeInsightBundle.message("intention.create.fields.from.parameters.text");
     return CodeInsightBundle.message("intention.create.field.from.parameter.text", myName);
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    PsiParameter myParameter = findParameterAtCursor(file, editor);
-    if (myParameter == null) return false;
-    myName = myParameter.getName();
-    final PsiType[] types = getTypes(myParameter);
-    PsiClass targetClass = PsiTreeUtil.getParentOfType(myParameter, PsiClass.class);
-    return
-      myParameter.isValid()
-      && myParameter.getLanguage().isKindOf(StdLanguages.JAVA)
-      && myParameter.getDeclarationScope() instanceof PsiMethod
-      && ((PsiMethod)myParameter.getDeclarationScope()).getBody() != null
-      && myParameter.getManager().isInProject(myParameter)
-      && types != null
-      && types[0].isValid()
-      && getParameterAssignedToField(myParameter) == null
-      && targetClass != null
-      && !targetClass.isInterface()
+    PsiParameter psiParameter = findParameterAtCursor(file, editor);
+    if (psiParameter == null) return false;
+    final Collection<SmartPsiElementPointer<PsiParameter>> params = getUnboundedParams(psiParameter);
+    params.clear();
+    final PsiParameter[] parameters = ((PsiMethod)psiParameter.getDeclarationScope()).getParameterList().getParameters();
+    for (PsiParameter parameter : parameters) {
+      params.add(SmartPointerManager.getInstance(project).createSmartPsiElementPointer(parameter));
+    }
+    myName = params.size() > 1 && !ApplicationManager.getApplication().isUnitTestMode() ? null : psiParameter.getName();
+    return isAvailable(psiParameter);
+  }
+
+  private static boolean isAvailable(PsiParameter psiParameter) {
+    final PsiType[] types = getTypes(psiParameter);
+    PsiClass targetClass = PsiTreeUtil.getParentOfType(psiParameter, PsiClass.class);
+    return psiParameter.isValid()
+           && psiParameter.getLanguage().isKindOf(StdLanguages.JAVA)
+           && psiParameter.getDeclarationScope() instanceof PsiMethod
+           && ((PsiMethod)psiParameter.getDeclarationScope()).getBody() != null
+           && psiParameter.getManager().isInProject(psiParameter)
+           && types != null
+           && types[0].isValid()
+           && getParameterAssignedToField(psiParameter) == null
+           && targetClass != null
+           && !targetClass.isInterface()
       ;
+  }
+
+  @NotNull
+  private static Collection<SmartPsiElementPointer<PsiParameter>> getUnboundedParams(PsiParameter parameter) {
+    final PsiElement psiElement = parameter.getDeclarationScope();
+    if (!(psiElement instanceof PsiMethod)) return Collections.emptyList();
+    final PsiMethod psiMethod = (PsiMethod)psiElement;
+    Map<SmartPsiElementPointer<PsiParameter>, Boolean> params = psiMethod.getUserData(PARAMS);
+    if (params == null) psiMethod.putUserData(PARAMS, params = new ConcurrentWeakHashMap<SmartPsiElementPointer<PsiParameter>, Boolean>(1));
+    final Map<SmartPsiElementPointer<PsiParameter>, Boolean> finalParams = params;
+    return new AbstractCollection<SmartPsiElementPointer<PsiParameter>>() {
+      @Override
+      public boolean add(SmartPsiElementPointer<PsiParameter> psiVariable) {
+        PsiParameter psiParameter = psiVariable.getElement();
+        if (psiParameter == null || !isAvailable(psiParameter)) return false;
+        return finalParams.put(psiVariable, Boolean.TRUE) == null;
+      }
+
+      @Override
+      public Iterator<SmartPsiElementPointer<PsiParameter>> iterator() {
+        return finalParams.keySet().iterator();
+      }
+
+      @Override
+      public int size() {
+        return finalParams.size();
+      }
+
+      @Override
+      public void clear() {
+        finalParams.clear();
+      }
+    };
   }
 
   @Nullable
@@ -149,7 +203,56 @@ public class CreateFieldFromParameterAction implements IntentionAction {
   private static void invoke(final Project project, Editor editor, PsiFile file, boolean isInteractive) {
     final PsiParameter myParameter = findParameterAtCursor(file, editor);
     if (!CodeInsightUtilBase.prepareFileForWrite(myParameter.getContainingFile())) return;
+    final Collection<SmartPsiElementPointer<PsiParameter>> unboundedParams = getUnboundedParams(myParameter);
+    if (unboundedParams.size() > 1 && !ApplicationManager.getApplication().isUnitTestMode()) {
+      ClassMember[] members = new ClassMember[unboundedParams.size()];
+      ClassMember selection = null;
+      int i = 0;
+      for (SmartPsiElementPointer<PsiParameter> pointer : unboundedParams) {
+        final PsiParameter parameter = pointer.getElement();
+        final ParameterClassMember classMember = new ParameterClassMember(parameter);
+        members[i++] = classMember;
+        if (parameter == myParameter) {
+          selection = classMember;
+        }
+      }
+      final PsiParameterList parameterList = ((PsiMethod)myParameter.getDeclarationScope()).getParameterList();
+      Arrays.sort(members, new Comparator<ClassMember>() {
+        @Override
+        public int compare(ClassMember o1, ClassMember o2) {
+          return parameterList.getParameterIndex(((ParameterClassMember)o1).getParameter()) - 
+                 parameterList.getParameterIndex(((ParameterClassMember)o2).getParameter());
+        }
+      });
 
+      final MemberChooser<ClassMember> chooser = new MemberChooser<ClassMember>(members, false, true, project);
+      if (selection != null) {
+        chooser.selectElements(new ClassMember[] {selection});
+      }
+      chooser.setTitle("Choose Constructor Parameters to Generate Fields");
+      chooser.setCopyJavadocVisible(false);
+      chooser.show();
+      if (chooser.getExitCode() != DialogWrapper.OK_EXIT_CODE) return;
+      final List<ClassMember> selectedElements = chooser.getSelectedElements();
+      if (selectedElements == null) return;
+      if (selectedElements.size() == 1) {
+        processParameter(project, ((ParameterClassMember)selectedElements.get(0)).getParameter(), isInteractive);
+      } else {
+        //do not ask for names in batch
+        for (ClassMember selectedElement : selectedElements) {
+          processParameter(project, ((ParameterClassMember)selectedElement).getParameter(), false);
+        }
+      }
+    }
+    else {
+      processParameter(project, myParameter, isInteractive);
+    }
+    unboundedParams.clear();
+  }
+
+  private static void processParameter(final Project project,
+                                       final PsiParameter myParameter,
+                                       boolean isInteractive) {
     IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
     final PsiType[] types = getTypes(myParameter);
     final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
@@ -343,5 +446,33 @@ public class CreateFieldFromParameterAction implements IntentionAction {
 
   public boolean startInWriteAction() {
     return false;
+  }
+  
+  private static class ParameterClassMember implements ClassMember {
+    private PsiParameter myParameter;
+
+    private ParameterClassMember(PsiParameter parameter) {
+      myParameter = parameter;
+    }
+
+    @Override
+    public MemberChooserObject getParentNodeDelegate() {
+      return new PsiMethodMember((PsiMethod)myParameter.getDeclarationScope());
+    }
+
+    @Override
+    public void renderTreeNode(SimpleColoredComponent component, JTree tree) {
+      SpeedSearchUtil.appendFragmentsForSpeedSearch(tree, getText(), SimpleTextAttributes.REGULAR_ATTRIBUTES, false, component);
+      component.setIcon(myParameter.getIcon(0)); 
+    }
+
+    @Override
+    public String getText() {
+      return myParameter.getName();
+    }
+
+    public PsiParameter getParameter() {
+      return myParameter;
+    }
   }
 }
