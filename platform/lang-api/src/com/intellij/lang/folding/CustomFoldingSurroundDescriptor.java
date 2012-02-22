@@ -23,6 +23,7 @@ import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
@@ -136,14 +137,17 @@ public class CustomFoldingSurroundDescriptor implements SurroundDescriptor {
     public TextRange surroundElements(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement[] elements)
       throws IncorrectOperationException {
       if (elements.length == 0) return null;
-      Language language = elements[0].getContainingFile().getLanguage();
+      PsiElement firstElement = elements[0];
+      PsiElement lastElement = elements[elements.length - 1];
+      PsiFile psiFile = firstElement.getContainingFile();
+      Language language = psiFile.getLanguage();
       Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(language);
       if (commenter == null) return null;
       String linePrefix = commenter.getLineCommentPrefix();
       if (linePrefix == null) return null;
       int prefixLength = linePrefix.length();
-      int startOffset = elements[0].getTextRange().getStartOffset();
-      int endOffset = elements[elements.length - 1].getTextRange().getEndOffset();
+      int startOffset = firstElement.getTextRange().getStartOffset();
+      int endOffset = lastElement.getTextRange().getEndOffset();
       int delta = 0;
       TextRange rangeToSelect = new TextRange(startOffset, startOffset);
       String startText = myProvider.getStartString();
@@ -152,21 +156,27 @@ public class CustomFoldingSurroundDescriptor implements SurroundDescriptor {
         startText = startText.replace("?", DEFAULT_DESC_TEXT);
         rangeToSelect = new TextRange(startOffset + descPos, startOffset + descPos + DEFAULT_DESC_TEXT.length());
       }
-      editor.getDocument().insertString(endOffset, "\n" + linePrefix + myProvider.getEndString());
-      delta += myProvider.getEndString().length() + prefixLength;
-      editor.getDocument().insertString(startOffset, linePrefix + startText + "\n");
-      delta += startText.length() + prefixLength;
+      String startString = linePrefix + startText + "\n";
+      String endString = "\n" + linePrefix + myProvider.getEndString(); 
+      editor.getDocument().insertString(endOffset, endString);
+      delta += endString.length();
+      editor.getDocument().insertString(startOffset, startString);
+      delta += startString.length();
       rangeToSelect = rangeToSelect.shiftRight(prefixLength);
-      TextRange formatRange = new TextRange(startOffset, endOffset).grown(delta);
-      reformatFinalRange(project, elements[0].getContainingFile(), language, formatRange);
+      PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+      documentManager.commitDocument(documentManager.getDocument(psiFile));
+      adjustLineIndent(project, psiFile, language,
+                       new TextRange(endOffset + delta - endString.length(), endOffset + delta));
+      adjustLineIndent(project, psiFile, language,
+                       new TextRange(startOffset, startOffset + startString.length()));
       return rangeToSelect;
     }
     
-    private static void reformatFinalRange(@NotNull Project project, PsiFile file, Language language, TextRange range) {
+    private static void adjustLineIndent(@NotNull Project project, PsiFile file, Language language, TextRange range) {
       CommonCodeStyleSettings formatSettings = CodeStyleSettingsManager.getSettings(project).getCommonSettings(language);
       boolean keepAtFirstCol = formatSettings.KEEP_FIRST_COLUMN_COMMENT;
       formatSettings.KEEP_FIRST_COLUMN_COMMENT = false;
-      CodeStyleManager.getInstance(project).reformatText(file, range.getStartOffset(), range.getEndOffset());
+      CodeStyleManager.getInstance(project).adjustLineIndent(file, range);
       formatSettings.KEEP_FIRST_COLUMN_COMMENT = keepAtFirstCol;
     }
   }
