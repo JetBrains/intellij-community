@@ -711,7 +711,27 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
         
         addWindowListener(macFullScreenPatchListener);
       }
+      if (SystemInfo.isMac && Registry.is("ide.mac.fix.dialog.showing")) {
+        final Window owner = getOwner();
+        if (KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow() != owner) {
+          final Ref<WindowAdapter> dialogFixerRef = new Ref<WindowAdapter>();
+          final WindowAdapter dialogFixer = new WindowAdapter() {
+            @Override
+            public void windowActivated(WindowEvent e) {
+              owner.removeWindowListener(dialogFixerRef.get());
+              superShow();
+            }
+          };
+          dialogFixerRef.set(dialogFixer);
+          owner.addWindowListener(dialogFixer);
+          return;
+        }
+      }
 
+      superShow();
+    }
+
+    private void superShow() {
       super.show();
     }
 
