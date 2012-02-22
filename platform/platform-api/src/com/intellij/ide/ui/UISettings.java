@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -158,7 +158,12 @@ public class UISettings implements PersistentStateComponent<UISettings>, Exporta
   }
 
   private void setDefaultFontSettings() {
-    FONT_FACE = SystemInfo.isLinux && ApplicationManager.getApplication().isUnitTestMode() ? "Dialog.plain" : "Dialog";
+    final Application application = ApplicationManager.getApplication();
+    if (application == null) {
+      // we're the shadow settings
+      return;
+    }
+    FONT_FACE = SystemInfo.isLinux && application.isUnitTestMode() ? "Dialog.plain" : "Dialog";
     FONT_SIZE = 12;
   }
 
