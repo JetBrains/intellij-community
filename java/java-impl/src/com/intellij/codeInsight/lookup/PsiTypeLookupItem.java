@@ -234,7 +234,7 @@ public class PsiTypeLookupItem extends LookupItem {
     PsiFile file = context.getFile();
     int newTail = JavaCompletionUtil.insertClassReference(aClass, file, context.getStartOffset(), context.getTailOffset());
     context.setTailOffset(newTail);
-    PostprocessReformattingAspect.getInstance(context.getProject()).doPostponedFormatting();
     JavaCompletionUtil.shortenReference(file, context.getStartOffset());
+    PostprocessReformattingAspect.getInstance(context.getProject()).doPostponedFormatting();
   }
 }
