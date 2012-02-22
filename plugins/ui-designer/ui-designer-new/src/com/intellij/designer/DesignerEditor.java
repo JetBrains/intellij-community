@@ -72,10 +72,12 @@ public abstract class DesignerEditor extends UserDataHolderBase implements FileE
 
   @Override
   public void selectNotify() {
+    myDesignerPanel.activate();
   }
 
   @Override
   public void deselectNotify() {
+    myDesignerPanel.deactivate();
   }
 
   @Override

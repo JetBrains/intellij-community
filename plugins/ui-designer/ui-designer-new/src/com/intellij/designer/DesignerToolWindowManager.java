@@ -113,6 +113,12 @@ public final class DesignerToolWindowManager implements ProjectComponent {
     return project.getComponent(DesignerToolWindowManager.class);
   }
 
+  public void refresh() {
+    if (myTreeBuilder != null) {
+      myTreeBuilder.queueUpdate();
+    }
+  }
+
   private static DesignerEditorPanel getDesigner(FileEditor editor) {
     if (editor instanceof DesignerEditor) {
       DesignerEditor designerEditor = (DesignerEditor)editor;

@@ -70,6 +70,10 @@ public class RadViewComponent extends RadComponent {
     myBounds.setBounds(x, y, width, height);
   }
 
+  public Component getNativeComponent() {
+    return myNativeComponent;
+  }
+
   public void setNativeComponent(Component nativeComponent) {
     myNativeComponent = nativeComponent;
   }

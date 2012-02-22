@@ -96,6 +96,12 @@ public abstract class ComponentEditableArea implements EditableArea {
     fireSelectionChanged();
   }
 
+  @Override
+  public void deselectAll() {
+    mySelection = new ArrayList<RadComponent>();
+    fireSelectionChanged();
+  }
+
   //////////////////////////////////////////////////////////////////////////////////////////
   //
   // Visual
