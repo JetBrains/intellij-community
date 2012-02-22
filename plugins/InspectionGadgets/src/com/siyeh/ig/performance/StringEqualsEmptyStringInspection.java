@@ -113,10 +113,10 @@ public class StringEqualsEmptyStringInspection extends BaseInspection {
         if (BoolUtils.isNegation(parentExpression)) {
           expressionToReplace = parentExpression;
           if (useIsEmpty) {
-            newExpression.append('!' + variableText + ".isEmpty()");
+            newExpression.append('!').append(variableText).append(".isEmpty()");
           }
           else {
-            newExpression.append(variableText + ".length()!=0");
+            newExpression.append(variableText).append(".length()!=0");
           }
         }
         else {
