@@ -188,8 +188,8 @@ public class GrLiteralImpl extends GrAbstractLiteral implements GrLiteral, PsiLa
 
   public GrLiteralImpl updateText(@NotNull final String text) {
     final GrExpression newExpr = GroovyPsiElementFactory.getInstance(getProject()).createExpressionFromText(text);
-    LOG.assertTrue(newExpr instanceof GrLiteral);
-    LOG.assertTrue(newExpr.getFirstChild() != null);
+    LOG.assertTrue(newExpr instanceof GrLiteral, text);
+    LOG.assertTrue(newExpr.getFirstChild() != null, text);
     final ASTNode valueNode = getNode().getFirstChildNode();
     getNode().replaceChild(valueNode, newExpr.getFirstChild().getNode());
     return this;
