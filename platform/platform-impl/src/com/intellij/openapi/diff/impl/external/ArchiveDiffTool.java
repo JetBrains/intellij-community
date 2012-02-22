@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.diff.impl.external;
 
+import com.intellij.ide.diff.DirDiffSettings;
 import com.intellij.ide.diff.JarFileDiffElement;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.Disposable;
@@ -42,7 +43,10 @@ public class ArchiveDiffTool implements DiffTool {
     assert file1 != null && file2 != null;
     final JarFileDiffElement element = new JarFileDiffElement(file1);
     final JarFileDiffElement element1 = new JarFileDiffElement(file2);
-    DirDiffManager.getInstance(request.getProject()).showDiff(element, element1);
+    final DirDiffSettings settings = new DirDiffSettings();
+    settings.showInFrame = false;
+    settings.enableChoosers = false;
+    DirDiffManager.getInstance(request.getProject()).showDiff(element, element1, settings);
   }
 
   @Override
