@@ -114,15 +114,15 @@ public class AndroidSdkType extends SdkType implements JavaSdkType {
     final Sdk jdk = sdkModel.findSdk(name);
 
     MessageBuildingSdkLog log = new MessageBuildingSdkLog();
-    AndroidSdk sdkObject = AndroidSdk.parse(sdk.getHomePath(), log);
+    AndroidSdkData sdkData = AndroidSdkData.parse(sdk.getHomePath(), log);
 
-    if (sdkObject == null) {
+    if (sdkData == null) {
       String errorMessage = log.getErrorMessage().length() > 0 ? log.getErrorMessage() : AndroidBundle.message("cannot.parse.sdk.error");
       Messages.showErrorDialog(errorMessage, "SDK Parsing Error");
       return false;
     }
 
-    IAndroidTarget[] targets = sdkObject.getTargets();
+    IAndroidTarget[] targets = sdkData.getTargets();
 
     if (targets.length == 0) {
       Messages.showErrorDialog(AndroidBundle.message("no.android.targets.error"), CommonBundle.getErrorTitle());

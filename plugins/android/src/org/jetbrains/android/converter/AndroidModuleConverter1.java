@@ -71,10 +71,10 @@ public class AndroidModuleConverter1 extends ConversionProcessor<ModuleSettings>
 
       if (androidPlatform != null) {
 
-        Sdk androidSdk = AndroidSdkUtils.findAppropriateAndroidPlatform(androidPlatform.getTarget(), androidPlatform.getSdk());
+        Sdk androidSdk = AndroidSdkUtils.findAppropriateAndroidPlatform(androidPlatform.getTarget(), androidPlatform.getSdkData());
 
         if (androidSdk == null) {
-          androidSdk = AndroidSdkUtils.createNewAndroidPlatform(androidPlatform.getTarget(), androidPlatform.getSdk().getLocation(), false);
+          androidSdk = AndroidSdkUtils.createNewAndroidPlatform(androidPlatform.getTarget(), androidPlatform.getSdkData().getLocation(), false);
           final SdkModificator modificator = androidSdk.getSdkModificator();
 
           for (OrderRootType type : OrderRootType.getAllTypes()) {

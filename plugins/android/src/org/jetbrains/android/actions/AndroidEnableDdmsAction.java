@@ -25,7 +25,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.logcat.AndroidLogcatToolWindowFactory;
-import org.jetbrains.android.sdk.AndroidSdk;
+import org.jetbrains.android.sdk.AndroidSdkData;
 import org.jetbrains.android.util.AndroidBundle;
 
 import javax.swing.*;
@@ -72,7 +72,7 @@ public class AndroidEnableDdmsAction extends ToggleAction {
         hidden = true;
         toolWindow.hide(null);
       }
-      AndroidSdk.terminateDdmlib();
+      AndroidSdkData.terminateDdmlib();
       if (hidden) {
         toolWindow.show(null);
       }

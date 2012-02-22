@@ -530,7 +530,7 @@ public class AndroidCompileUtil {
 
     if (collectResCacheDirs) {
       final AndroidPlatform platform = facet.getConfiguration().getAndroidPlatform();
-      final int platformToolsRevision = platform != null ? platform.getSdk().getPlatformToolsRevision() : -1;
+      final int platformToolsRevision = platform != null ? platform.getSdkData().getPlatformToolsRevision() : -1;
 
       if (platformToolsRevision < 0 || platformToolsRevision > 7) {
         // png cache is supported since platform-tools-r8

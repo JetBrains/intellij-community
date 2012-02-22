@@ -57,7 +57,7 @@ public class SystemResourceManager extends ResourceManager {
 
   @Nullable
   public synchronized AttributeDefinitions getAttributeDefinitions() {
-    final AndroidTargetData targetData = myPlatform.getSdk().getTargetData(myPlatform.getTarget());
+    final AndroidTargetData targetData = myPlatform.getSdkData().getTargetData(myPlatform.getTarget());
     return targetData != null ? targetData.getAttrDefs(myModule.getProject()) : null;
   }
 }

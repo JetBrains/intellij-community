@@ -195,7 +195,7 @@ class ApkStep extends ExportSignedPackageWizardStep {
   private void createAndAlignApk(final String apkPath) {
     AndroidPlatform platform = myWizard.getFacet().getConfiguration().getAndroidPlatform();
     assert platform != null;
-    String sdkPath = platform.getSdk().getLocation();
+    String sdkPath = platform.getSdkData().getLocation();
     String zipAlignPath = sdkPath + File.separatorChar + AndroidSdkUtils.toolPath(SdkConstants.FN_ZIPALIGN);
     File zipalign = new File(zipAlignPath);
     final boolean runZipAlign = zipalign.isFile();

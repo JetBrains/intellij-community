@@ -618,11 +618,11 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
         return null;
       }
 
-      AndroidSdk sdk = AndroidSdk.parse(sdkPath, new EmptySdkLog());
-      if (sdk != null) {
-        IAndroidTarget target = sdk.findTargetByApiLevel(apiLevel);
+      AndroidSdkData sdkData = AndroidSdkData.parse(sdkPath, new EmptySdkLog());
+      if (sdkData != null) {
+        IAndroidTarget target = sdkData.findTargetByApiLevel(apiLevel);
         if (target != null) {
-          Sdk library = AndroidSdkUtils.findAppropriateAndroidPlatform(target, sdk);
+          Sdk library = AndroidSdkUtils.findAppropriateAndroidPlatform(target, sdkData);
           if (library == null) {
             library = AndroidSdkUtils.createNewAndroidPlatform(target, sdkPath, true);
           }

@@ -87,7 +87,7 @@ public class AndroidRenderscriptCompiler implements SourceGeneratingCompiler {
           }
 
           final IAndroidTarget target = platform.getTarget();
-          final String sdkLocation = platform.getSdk().getLocation();
+          final String sdkLocation = platform.getSdkData().getLocation();
 
           final String resourceDirPath = AndroidRootUtil.getResourceDirPath(facet);
           assert resourceDirPath != null;

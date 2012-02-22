@@ -58,7 +58,7 @@ public class AndroidPngFilesCachingCompiler implements SourceGeneratingCompiler 
             continue;
           }
 
-          final int platformToolsRevision = platform.getSdk().getPlatformToolsRevision();
+          final int platformToolsRevision = platform.getSdkData().getPlatformToolsRevision();
           if (platformToolsRevision > 0 && platformToolsRevision <= 7) {
             // png files cache is supported since platform-tools-r8
             continue;

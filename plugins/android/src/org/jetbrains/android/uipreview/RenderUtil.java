@@ -92,7 +92,7 @@ public class RenderUtil {
 
     config.setVersionQualifier(new VersionQualifier(target.getVersion().getApiLevel()));
 
-    final RenderServiceFactory factory = platform.getSdk().getTargetData(target).getRenderServiceFactory(project);
+    final RenderServiceFactory factory = platform.getSdkData().getTargetData(target).getRenderServiceFactory(project);
     if (factory == null) {
       throw new RenderingException(AndroidBundle.message("android.layout.preview.cannot.load.library.error"));
     }
@@ -159,7 +159,7 @@ public class RenderUtil {
 
     config.setVersionQualifier(new VersionQualifier(target.getVersion().getApiLevel()));
 
-    final RenderServiceFactory factory = platform.getSdk().getTargetData(target).getRenderServiceFactory(project);
+    final RenderServiceFactory factory = platform.getSdkData().getTargetData(target).getRenderServiceFactory(project);
     if (factory == null) {
       throw new RenderingException(AndroidBundle.message("android.layout.preview.cannot.load.library.error"));
     }

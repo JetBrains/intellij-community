@@ -10,7 +10,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.android.facet.AndroidFacet;
-import org.jetbrains.android.sdk.AndroidSdk;
+import org.jetbrains.android.sdk.AndroidSdkData;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,9 +39,9 @@ public abstract class AndroidRunSdkToolAction extends AnAction {
     assert facets.size() > 0;
     Set<String> sdkSet = new HashSet<String>();
     for (AndroidFacet facet : facets) {
-      AndroidSdk sdk = facet.getConfiguration().getAndroidSdk();
-      if (sdk != null) {
-        sdkSet.add(sdk.getLocation());
+      AndroidSdkData sdkData = facet.getConfiguration().getAndroidSdk();
+      if (sdkData != null) {
+        sdkSet.add(sdkData.getLocation());
       }
     }
     if (sdkSet.size() == 0) {

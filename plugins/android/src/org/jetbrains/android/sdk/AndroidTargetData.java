@@ -33,15 +33,15 @@ import java.util.Set;
 public class AndroidTargetData {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.sdk.AndroidTargetData");
 
-  private final AndroidSdk mySdk;
+  private final AndroidSdkData mySdkData;
   private final IAndroidTarget myTarget;
 
   private volatile AttributeDefinitions myAttrDefs;
   private volatile RenderServiceFactory myRenderServiceFactory;
   private volatile Set<String> myThemes;
 
-  public AndroidTargetData(@NotNull AndroidSdk sdk, @NotNull IAndroidTarget target) {
-    mySdk = sdk;
+  public AndroidTargetData(@NotNull AndroidSdkData sdkData, @NotNull IAndroidTarget target) {
+    mySdkData = sdkData;
     myTarget = target;
   }
 
@@ -84,7 +84,7 @@ public class AndroidTargetData {
     if (myThemes == null) {
       myThemes = new HashSet<String>();
       final Module module = facet.getModule();
-      final SystemResourceManager systemResourceManager = new SystemResourceManager(facet, new AndroidPlatform(mySdk, myTarget));
+      final SystemResourceManager systemResourceManager = new SystemResourceManager(facet, new AndroidPlatform(mySdkData, myTarget));
 
       for (VirtualFile valueResourceDir : systemResourceManager.getResourceSubdirs("values")) {
         for (final VirtualFile valueResourceFile : valueResourceDir.getChildren()) {

@@ -31,7 +31,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
 import org.jetbrains.android.sdk.AndroidPlatform;
-import org.jetbrains.android.sdk.AndroidSdk;
+import org.jetbrains.android.sdk.AndroidSdkData;
 import org.jetbrains.android.sdk.AndroidSdkAdditionalData;
 import org.jetbrains.android.sdk.AndroidSdkType;
 import org.jetbrains.annotations.NonNls;
@@ -122,9 +122,9 @@ public class AndroidFacetConfiguration implements FacetConfiguration {
   }
 
   @Nullable
-  public AndroidSdk getAndroidSdk() {
+  public AndroidSdkData getAndroidSdk() {
     AndroidPlatform platform = getAndroidPlatform();
-    return platform != null ? platform.getSdk() : null;
+    return platform != null ? platform.getSdkData() : null;
   }
 
   @Nullable
