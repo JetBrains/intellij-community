@@ -763,7 +763,7 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
     myLivePreviewController.setReplaceListener(this);
     mySearchResults.addListener(this);
 
-    myLivePreviewController.updateInBackground(myFindModel, false);
+    updateResults(false);
   }
 
   @Override
