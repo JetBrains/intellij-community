@@ -165,9 +165,10 @@ public class GroovyShellAction extends DumbAwareAction {
           DefaultGroovyScriptRunner.configureGenericGroovyRunner(javaParameters, module, "groovy.ui.GroovyMain", true);
           PathsList list = GroovyScriptRunner.getClassPathFromRootModel(module, true, javaParameters, true);
           if (list != null) {
-            javaParameters.getProgramParametersList().addAll("--classpath", list.getPathsString());
+            javaParameters.getClassPath().addAll(list.getPathList());
           }
           javaParameters.getProgramParametersList().addAll("-p", GroovyScriptRunner.getPathInConf("console.txt"));
+          //javaParameters.getVMParametersList().add("-Xdebug"); javaParameters.getVMParametersList().add("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5239");
           javaParameters.setWorkingDirectory(getWorkingDir());
 
           final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
