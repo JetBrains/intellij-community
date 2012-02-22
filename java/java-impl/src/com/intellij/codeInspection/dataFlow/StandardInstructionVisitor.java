@@ -119,6 +119,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
   @Override
   public DfaInstructionState[] visitFieldReference(FieldReferenceInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
+    memState.fieldReferenced();
     final DfaValue qualifier = memState.pop();
     if (instruction.getExpression().isPhysical() && !memState.applyNotNull(qualifier)) {
       onInstructionProducesNPE(instruction, runner);
