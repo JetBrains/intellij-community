@@ -42,23 +42,18 @@ public class GroovyRunnerUtil {
   }
 
   public static boolean isRunnable(final PsiClass psiClass) {
-    if (!(psiClass instanceof GrTypeDefinition) && !(psiClass instanceof GroovyScriptClass)) return false;
-    if (psiClass instanceof PsiAnonymousClass) return false;
-    if (psiClass.isInterface()) return false;
     final PsiClass runnable = JavaPsiFacade.getInstance(psiClass.getProject()).findClass(CommonClassNames.JAVA_LANG_RUNNABLE, psiClass.getResolveScope());
     if (runnable == null) return false;
-    return psiClass.isInheritor(runnable, true);
+
+    return psiClass instanceof GrTypeDefinition &&
+           !(psiClass instanceof PsiAnonymousClass) &&
+           !psiClass.isInterface() &&
+           psiClass.isInheritor(runnable, true);
   }
 
   public static boolean canBeRunByGroovy(final PsiClass psiClass) {
-    if (isRunnable(psiClass)) {
-      return true;
-    }
-
-    if (PsiMethodUtil.hasMainMethod(psiClass) && (psiClass instanceof GrTypeDefinition || psiClass instanceof GroovyScriptClass)) {
-      return true;
-    }
-
-    return false;
+    return psiClass instanceof GroovyScriptClass ||
+           isRunnable(psiClass) ||
+           psiClass instanceof GrTypeDefinition && PsiMethodUtil.hasMainMethod(psiClass);
   }
 }

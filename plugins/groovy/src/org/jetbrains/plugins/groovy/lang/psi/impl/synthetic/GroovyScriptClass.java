@@ -165,7 +165,7 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner, Sy
 
   @NotNull
   public PsiClassType[] getImplementsListTypes() {
-    return new PsiClassType[]{ TypesUtil.createTypeByFQClassName(CommonClassNames.JAVA_LANG_RUNNABLE, this)};
+    return PsiClassType.EMPTY_ARRAY;
   }
 
   public PsiClass getSuperClass() {

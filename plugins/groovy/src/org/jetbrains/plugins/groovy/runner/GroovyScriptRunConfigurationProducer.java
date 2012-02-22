@@ -33,6 +33,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
+
 /**
  * @author ilyas
  */
@@ -56,7 +58,7 @@ public class GroovyScriptRunConfigurationProducer extends RuntimeConfigurationPr
 
     GroovyFile groovyFile = (GroovyFile)file;
     final PsiClass aClass = GroovyRunnerUtil.getRunningClass(location.getPsiElement());
-    if (GroovyRunnerUtil.isRunnable(aClass)) {
+    if (aClass instanceof GroovyScriptClass || GroovyRunnerUtil.isRunnable(aClass)) {
       final RunnerAndConfigurationSettings settings = createConfiguration(aClass);
       if (settings != null) {
         mySourceElement = element;
