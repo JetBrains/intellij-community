@@ -81,7 +81,7 @@ public class TabLabel extends JPanel {
     myLabelPlaceholder.setOpaque(false);
     add(myLabelPlaceholder, BorderLayout.CENTER);
 
-    setAligmentToCenter(true);
+    setAlignmentToCenter(true);
 
     myIcon = new LayeredIcon(2);
 
@@ -124,7 +124,7 @@ public class TabLabel extends JPanel {
     return insets;
   }
 
-  public void setAligmentToCenter(boolean toCenter) {
+  public void setAlignmentToCenter(boolean toCenter) {
     if (myCentered == toCenter && myLabel.getParent() != null) return;
 
     myLabelPlaceholder.removeAll();

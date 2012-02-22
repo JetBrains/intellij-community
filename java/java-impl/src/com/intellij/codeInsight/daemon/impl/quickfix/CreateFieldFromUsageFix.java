@@ -54,7 +54,7 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
 
   @Override
   protected boolean canBeTargetClass(PsiClass psiClass) {
-    return super.canBeTargetClass(psiClass) && !psiClass.isInterface() && !psiClass.isAnnotationType();
+    return psiClass.getManager().isInProject(psiClass) && !psiClass.isInterface() && !psiClass.isAnnotationType();
   }
 
   @Override

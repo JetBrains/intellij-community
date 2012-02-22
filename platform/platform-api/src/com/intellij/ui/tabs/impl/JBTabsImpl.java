@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class JBTabsImpl extends JComponent
   implements JBTabs, PropertyChangeListener, TimerListener, DataProvider, PopupMenuListener, Disposable, JBTabsPresentation, Queryable, QuickActionProvider {
 
-  static DataKey<JBTabsImpl> NAVIGATION_ACTIONS_KEY = DataKey.create("JBTabs");
+  public static DataKey<JBTabsImpl> NAVIGATION_ACTIONS_KEY = DataKey.create("JBTabs");
   
   public static final String EDITOR_TABS = "main.editor.tabs";
   public static final Color MAC_AQUA_BG_COLOR = Gray._200;
@@ -114,7 +114,7 @@ public class JBTabsImpl extends JComponent
   public boolean myForcedRelayout;
 
   private UiDecorator myUiDecorator;
-  static final UiDecorator ourDefaultDecorator = new DefautDecorator();
+  static final UiDecorator ourDefaultDecorator = new DefaultDecorator();
 
   private boolean myPaintFocus;
 
@@ -518,13 +518,22 @@ public class JBTabsImpl extends JComponent
     }
   }
 
-  private void showMorePopup(final MouseEvent e) {
+  public boolean canShowMorePopup() {
+    final SingleRowPassInfo lastLayout = mySingleRowLayout.myLastSingRowLayout;
+    return lastLayout != null && lastLayout.moreRect != null;
+  }
+
+  public void showMorePopup(@Nullable final MouseEvent e) {
+    final SingleRowPassInfo lastLayout = mySingleRowLayout.myLastSingRowLayout;
+    if (lastLayout == null) {
+      return;
+    }
     mySingleRowLayout.myMorePopup = new JPopupMenu();
     for (final TabInfo each : myVisibleInfos) {
       final JCheckBoxMenuItem item = new JCheckBoxMenuItem(each.getText());
       Color color = UIManager.getColor("MenuItem.background");
       if (color != null) {
-        if (mySingleRowLayout.myLastSingRowLayout.toDrop.contains(each)) {
+        if (lastLayout.toDrop.contains(each)) {
           color = new Color((int) (color.getRed() * 0.85f), (int) (color.getGreen() * 0.85f), (int) (color.getBlue() * 0.85f));
         }
 
@@ -555,7 +564,15 @@ public class JBTabsImpl extends JComponent
       }
     });
 
-    mySingleRowLayout.myMorePopup.show(this, e.getX(), e.getY());
+    if (e != null) {
+      mySingleRowLayout.myMorePopup.show(this, e.getX(), e.getY());
+    }
+    else {
+      final Rectangle rect = lastLayout.moreRect;
+      if (rect != null) {
+        mySingleRowLayout.myMorePopup.show(this, rect.x, rect.y+rect.height);
+      }
+    }
   }
 
 
@@ -3010,7 +3027,7 @@ public class JBTabsImpl extends JComponent
   }
 
 
-  private static class DefautDecorator implements UiDecorator {
+  private static class DefaultDecorator implements UiDecorator {
     @NotNull
     public UiDecoration getDecoration() {
       return new UiDecoration(null, new Insets(0, 4, 0, 5));

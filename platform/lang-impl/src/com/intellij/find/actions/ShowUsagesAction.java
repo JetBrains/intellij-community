@@ -31,6 +31,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -468,23 +469,23 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
 
     KeyboardShortcut shortcut = getSettingsShortcut();
     if (shortcut != null) {
-      builder.registerKeyboardAction(shortcut.getFirstKeyStroke(), new ActionListener() {
+      new DumbAwareAction() {
         @Override
-        public void actionPerformed(ActionEvent e) {
+        public void actionPerformed(AnActionEvent e) {
           popup[0].cancel();
           showDialogAndFindUsages(handler, popupPosition, editor, maxUsages);
         }
-      });
+      }.registerCustomShortcutSet(new CustomShortcutSet(shortcut.getFirstKeyStroke()), table);
     }
     shortcut = getShowUsagesShortcut();
     if (shortcut != null) {
-      builder.registerKeyboardAction(shortcut.getFirstKeyStroke(), new ActionListener() {
+      new DumbAwareAction() {
         @Override
-        public void actionPerformed(ActionEvent e) {
+        public void actionPerformed(AnActionEvent e) {
           popup[0].cancel();
           searchEverywhere(options, handler, editor, popupPosition, maxUsages);
         }
-      });
+      }.registerCustomShortcutSet(new CustomShortcutSet(shortcut.getFirstKeyStroke()), table);
     }
 
     InplaceButton button = createSettingsButton(handler, popupPosition, editor, maxUsages, new Runnable() {

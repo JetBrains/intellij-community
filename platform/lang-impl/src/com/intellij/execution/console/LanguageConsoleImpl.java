@@ -38,6 +38,8 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.impl.EditorFactoryImpl;
+import com.intellij.openapi.editor.impl.EditorHeaderComponent;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
@@ -551,7 +553,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
       @Override
       public void fileClosed(FileEditorManager source, VirtualFile file) {
         if (file != myFile.getVirtualFile()) return;
-        if (myUiUpdateRunnable != null) {
+        if (myUiUpdateRunnable != null && !Boolean.TRUE.equals(file.getUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN))) {
           ApplicationManager.getApplication().runReadAction(myUiUpdateRunnable);
         }
       }
@@ -600,10 +602,13 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
 
   private void configureFullEditor(final Editor editor) {
     if (editor == null || myFullEditorActions == null || editor == myConsoleEditor) return;
-    final JPanel header = new JPanel(new BorderLayout());
+    final JPanel header = new EditorHeaderComponent();
     final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, myFullEditorActions, true);
     actionToolbar.setTargetComponent(editor.getContentComponent());
-    header.add(actionToolbar.getComponent(), BorderLayout.EAST);
+    JComponent component = actionToolbar.getComponent();
+    component.setOpaque(false);
+    header.add(component, BorderLayout.EAST);
+    editor.putUserData(EditorImpl.PERMANENT_HEADER, header);
     editor.setHeaderComponent(header);
     editor.getSettings().setLineMarkerAreaShown(false);
   }

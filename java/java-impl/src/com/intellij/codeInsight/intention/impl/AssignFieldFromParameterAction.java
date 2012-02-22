@@ -58,7 +58,7 @@ public class AssignFieldFromParameterAction extends BaseIntentionAction {
         || !type.isValid()
         || targetClass == null
         || targetClass.isInterface()
-        || CreateFieldFromParameterAction.isParameterAssignedToField(myParameter)) {
+        || CreateFieldFromParameterAction.getParameterAssignedToField(myParameter) != null) {
       return false;
     }
     PsiField field = findFieldToAssign(myParameter);

@@ -48,6 +48,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.util.*;
+import java.util.List;
 
 /**
  * @author peter
@@ -142,6 +144,8 @@ class EventLogConsole {
     String date = DateFormatUtil.formatTimeWithSeconds(notificationTime) + " ";
     append(document, date);
 
+    int startLine = document.getLineCount() - 1;
+
     EventLog.LogEntry pair = EventLog.formatForLog(notification, StringUtil.repeatSymbol(' ', date.length()));
 
     final NotificationType type = notification.getType();
@@ -172,34 +176,44 @@ class EventLogConsole {
     }
 
     if (notification.isImportant()) {
-      highlightNotification(notification, pair.status, document.getLineCount() - 2);
+      highlightNotification(notification, pair.status, startLine, document.getLineCount() - 1);
     }
   }
 
   private void highlightNotification(final Notification notification,
-                                     String message, final int line) {
+                                     String message, final int line1, final int line2) {
 
     final MarkupModel markupModel = myLogEditor.getValue().getMarkupModel();
     TextAttributes bold = new TextAttributes(null, null, null, null, Font.BOLD);
-    final RangeHighlighter lineHighlighter = markupModel.addLineHighlighter(line, HighlighterLayer.CARET_ROW + 1, bold);
-    Color color = notification.getType() == NotificationType.ERROR
-                  ? Color.red
-                  : notification.getType() == NotificationType.WARNING ? Color.yellow : Color.green;
-    lineHighlighter.setErrorStripeMarkColor(color);
-    lineHighlighter.setErrorStripeTooltip(message);
+    final List<RangeHighlighter> lineColors = new ArrayList<RangeHighlighter>();
+    for (int line = line1; line < line2; line++) {
+      final RangeHighlighter lineHighlighter = markupModel.addLineHighlighter(line, HighlighterLayer.CARET_ROW + 1, bold);
+      Color color = notification.getType() == NotificationType.ERROR
+                    ? Color.red
+                    : notification.getType() == NotificationType.WARNING ? Color.yellow : Color.green;
+      lineHighlighter.setErrorStripeMarkColor(color);
+      lineHighlighter.setErrorStripeTooltip(message);
+      lineColors.add(lineHighlighter);
+    }
 
     myProjectModel.removeHandlers.put(notification, new Runnable() {
       @Override
       public void run() {
-        markupModel.removeHighlighter(lineHighlighter);
+        for (RangeHighlighter color : lineColors) {
+          markupModel.removeHighlighter(color);
+        }
 
         TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(ConsoleViewContentType.LOG_EXPIRED_ENTRY);
-        markupModel.addLineHighlighter(line, HighlighterLayer.CARET_ROW + 1, attributes);
+        for (int line = line1; line < line2; line++) {
+          markupModel.addLineHighlighter(line, HighlighterLayer.CARET_ROW + 1, attributes);
+        }
 
         TextAttributes italic = new TextAttributes(null, null, null, null, Font.ITALIC);
-        for (RangeHighlighter highlighter : myHyperlinkSupport.getValue().findAllHyperlinksOnLine(line)) {
-          markupModel.addRangeHighlighter(highlighter.getStartOffset(), highlighter.getEndOffset(), HighlighterLayer.CARET_ROW + 2, italic, HighlighterTargetArea.EXACT_RANGE);
-          myHyperlinkSupport.getValue().removeHyperlink(highlighter);
+        for (int line = line1; line < line2; line++) {
+          for (RangeHighlighter highlighter : myHyperlinkSupport.getValue().findAllHyperlinksOnLine(line)) {
+            markupModel.addRangeHighlighter(highlighter.getStartOffset(), highlighter.getEndOffset(), HighlighterLayer.CARET_ROW + 2, italic, HighlighterTargetArea.EXACT_RANGE);
+            myHyperlinkSupport.getValue().removeHyperlink(highlighter);
+          }
         }
       }
     });

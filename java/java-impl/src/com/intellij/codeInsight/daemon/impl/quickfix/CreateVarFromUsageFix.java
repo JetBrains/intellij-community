@@ -24,6 +24,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiReferenceExpression;
@@ -39,6 +40,11 @@ public abstract class CreateVarFromUsageFix extends CreateFromUsageBaseFix {
   protected boolean isValidElement(PsiElement element) {
     PsiReferenceExpression expression = (PsiReferenceExpression) element;
     return CreateFromUsageUtils.isValidReference(expression, false);
+  }
+
+  @Override
+  protected boolean canBeTargetClass(PsiClass psiClass) {
+    return false;
   }
 
   @Override

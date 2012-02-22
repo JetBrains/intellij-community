@@ -102,13 +102,14 @@ public class CreateFieldFromParameterAction implements IntentionAction {
       && myParameter.getManager().isInProject(myParameter)
       && types != null
       && types[0].isValid()
-      && !isParameterAssignedToField(myParameter)
+      && getParameterAssignedToField(myParameter) == null
       && targetClass != null
       && !targetClass.isInterface()
       ;
   }
 
-  static boolean isParameterAssignedToField(final PsiParameter parameter) {
+  @Nullable
+  public static PsiField getParameterAssignedToField(final PsiParameter parameter) {
     for (PsiReference reference : ReferencesSearch.search(parameter, new LocalSearchScope(parameter.getDeclarationScope()), false)) {
       if (!(reference instanceof PsiReferenceExpression)) continue;
       final PsiReferenceExpression expression = (PsiReferenceExpression)reference;
@@ -118,10 +119,9 @@ public class CreateFieldFromParameterAction implements IntentionAction {
       final PsiExpression lExpression = assignmentExpression.getLExpression();
       if (!(lExpression instanceof PsiReferenceExpression)) continue;
       final PsiElement element = ((PsiReferenceExpression)lExpression).resolve();
-      if (!(element instanceof PsiField)) continue;
-      return true;
+      if (element instanceof PsiField) return (PsiField)element;
     }
-    return false;
+    return null;
   }
 
   @Nullable

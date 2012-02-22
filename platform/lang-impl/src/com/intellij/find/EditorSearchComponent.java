@@ -31,6 +31,7 @@ import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.SelectionEvent;
 import com.intellij.openapi.editor.event.SelectionListener;
+import com.intellij.openapi.editor.impl.EditorHeaderComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.IconLoader;
@@ -38,7 +39,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.Gray;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
@@ -61,7 +61,7 @@ import java.util.regex.Pattern;
 /**
  * @author max, andrey.zaytsev
  */
-public class EditorSearchComponent extends JPanel implements DataProvider, SelectionListener, SearchResults.SearchResultsListener,
+public class EditorSearchComponent extends EditorHeaderComponent implements DataProvider, SelectionListener, SearchResults.SearchResultsListener,
                                                              LivePreviewControllerBase.ReplaceListener {
   private static final int MATCHES_LIMIT = 10000;
 
@@ -104,10 +104,6 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
   private JButton myReplaceAllButton;
   private JButton myExcludeButton;
 
-  private final Color GRADIENT_C1;
-  private final Color GRADIENT_C2;
-
-  private static final Color BORDER_COLOR = Gray._135;
   public static final Color COMPLETION_BACKGROUND_COLOR = new Color(235, 244, 254);
   private static final Color FOCUS_CATCHER_COLOR = new Color(0x9999ff);
 
@@ -222,11 +218,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
   public void editorChanged(SearchResults sr, Editor oldEditor) {  }
 
   public EditorSearchComponent(final Editor editor, final Project project, FindModel findModel) {
-    super(new BorderLayout(0, 0));
     myFindModel = findModel;
-
-    GRADIENT_C1 = getBackground();
-    GRADIENT_C2 = new Color(Math.max(0, GRADIENT_C1.getRed() - 0x18), Math.max(0, GRADIENT_C1.getGreen() - 0x18), Math.max(0, GRADIENT_C1.getBlue() - 0x18));
 
     myProject = project;
     myEditor = editor;
@@ -874,21 +866,6 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
       insets.bottom += 2;
     }
     return insets;
-  }
-
-  @Override
-  protected void paintComponent(Graphics g) {
-    super.paintComponent(g);
-    final Graphics2D g2d = (Graphics2D) g;
-
-    if (!UIUtil.isUnderGTKLookAndFeel()) {
-      g2d.setPaint(new GradientPaint(0, 0, GRADIENT_C1, 0, getHeight(), GRADIENT_C2));
-      g2d.fillRect(1, 1, getWidth(), getHeight() - 1);
-      g2d.setPaint(null);
-    }
-
-    g.setColor(BORDER_COLOR);
-    g.drawLine(0, getHeight() - 1, getWidth(), getHeight() - 1);
   }
 
   private class MyLivePreviewController extends LivePreviewControllerBase {

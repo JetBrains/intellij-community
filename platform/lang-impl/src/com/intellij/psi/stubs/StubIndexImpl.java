@@ -199,10 +199,13 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
         index.getReadLock().lock();
         final ValueContainer<TIntArrayList> container = index.getData(key);
 
+        final FileBasedIndex.ProjectIndexableFilesFilter projectFilesFilter = FileBasedIndex.getInstance().projectIndexableFiles(project);
+
         container.forEach(new ValueContainer.ContainerAction<TIntArrayList>() {
           @Override
           public void perform(final int id, final TIntArrayList value) {
             ProgressManager.checkCanceled();
+            if (projectFilesFilter != null && !projectFilesFilter.contains(id)) return;
             final VirtualFile file = IndexInfrastructure.findFileByIdIfCached(fs, id);
             if (file == null || scope != null && !scope.contains(file)) {
               return;

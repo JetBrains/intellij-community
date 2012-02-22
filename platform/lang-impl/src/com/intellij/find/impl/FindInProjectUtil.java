@@ -509,15 +509,7 @@ public class FindInProjectUtil {
 
     fast |= findModel.isWholeWordsOnly() && findModel.getStringToFind().indexOf('$') < 0;
 
-    List<String> words = StringUtil.getWordsIn(findModel.getStringToFind());
-
-    // hope long words are rare
-    Collections.sort(words, new Comparator<String>() {
-      @Override
-      public int compare(final String o1, final String o2) {
-        return o2.length() - o1.length();
-      }
-    });
+    List<String> words = StringUtil.getWordsInStringLongestFirst(findModel.getStringToFind());
 
     for (int i = 0; i < words.size(); i++) {
       String word = words.get(i);

@@ -431,23 +431,22 @@ public class CompileDriver {
     final MessageBus messageBus = myProject.getMessageBus();
     csManager.cancelAutoMakeTasks(myProject);
     final CompileScope scope = compileContext.getCompileScope();
-    final Map<String, String> userData;
     // need to pass scope's user data to server
-    if (scope instanceof UserDataHolderBase) { // hack
-      userData = new HashMap<String, String>();
-      ((UserDataHolderBase)scope).copyUserDataTo(new UserDataHolderBase() {
-        @Override
-        public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
-          final String _key = key.toString();
-          final String _value = value != null? value.toString() : "";
-          userData.put(_key, _value);
-        }
-      });
+    final Map<Key, Object> exported = scope.exportUserData();
+    final Map<String, String> builderParams;
+    if (!exported.isEmpty()) {
+      builderParams = new HashMap<String, String>();
+      for (Map.Entry<Key, Object> entry : exported.entrySet()) {
+        final String _key = entry.getKey().toString();
+        final String _value = entry.getValue().toString();
+        builderParams.put(_key, _value);
+      }
     }
     else {
-      userData = Collections.emptyMap();
+      builderParams = Collections.emptyMap();
     }
-    return csManager.submitCompilationTask(myProject, compileContext.isRebuild(), compileContext.isMake(), moduleNames, artifactNames, paths, userData, new JpsServerResponseHandler() {
+    return csManager.submitCompilationTask(myProject, compileContext.isRebuild(), compileContext.isMake(), moduleNames, artifactNames, paths,
+                                           builderParams, new JpsServerResponseHandler() {
 
       @Override
       public void handleCompileMessage(JpsRemoteProto.Message.Response.CompileMessage compilerMessage) {
