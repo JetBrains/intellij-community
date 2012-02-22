@@ -28,9 +28,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.ArrayList;
-import java.util.List;
+import org.jetbrains.annotations.Nullable;
 
 public class StringConcatenationInsideStringBufferAppendInspection extends BaseInspection {
 
@@ -104,80 +102,73 @@ public class StringConcatenationInsideStringBufferAppendInspection extends BaseI
       final boolean useStringValueOf;
       useStringValueOf = !qualifiedName.equals(CommonClassNames.JAVA_LANG_STRING_BUFFER) &&
                          !qualifiedName.equals(CommonClassNames.JAVA_LANG_STRING_BUILDER);
-      final List<String> expressions = findConcatenationComponents(argument, useStringValueOf);
-      @NonNls final StringBuilder newExpressionBuffer = new StringBuilder();
-      newExpressionBuffer.append(qualifier.getText());
-      for (String expression : expressions) {
-        newExpressionBuffer.append(".append(");
-        newExpressionBuffer.append(expression);
-        newExpressionBuffer.append(')');
+      @NonNls final StringBuilder newExpressionBuffer =
+        buildAppendExpression(argument, useStringValueOf, new StringBuilder(qualifier.getText()));
+      if (newExpressionBuffer == null) {
+        return;
       }
-      final String newExpression = newExpressionBuffer.toString();
-      replaceExpression(methodCallExpression, newExpression);
+      replaceExpression(methodCallExpression, newExpressionBuffer.toString());
     }
 
-    private static List<String> findConcatenationComponents(PsiExpression concatenation, boolean useStringValueOf)
-      throws IncorrectOperationException {
-      final List<String> out = new ArrayList<String>();
-      findConcatenationComponents(concatenation, out, useStringValueOf);
-      return out;
-    }
-
-    private static void findConcatenationComponents(PsiExpression concatenation, @NonNls List<String> out, boolean useStringValueOf)
+    @Nullable
+    private static StringBuilder buildAppendExpression(PsiExpression concatenation, boolean useStringValueOf, @NonNls StringBuilder out)
       throws IncorrectOperationException {
       final PsiType type = concatenation.getType();
-      if (concatenation instanceof PsiPolyadicExpression) {
-        if (type != null && type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-          PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)concatenation;
-          final PsiExpression[] operands = polyadicExpression.getOperands();
-          boolean isConstant = true;
-          boolean isString = false;
-          final StringBuilder builder = new StringBuilder();
-          for (PsiExpression operand : operands) {
-            if (isConstant && PsiUtil.isConstantExpression(operand)) {
-              if (builder.length() != 0) {
-                builder.append('+');
-              }
-              final PsiType operandType = operand.getType();
-              if (operandType != null && operandType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-                isString = true;
-              }
-              builder.append(operand.getText());
+      if (type == null) {
+        return null;
+      }
+      if (concatenation instanceof PsiPolyadicExpression && type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+        PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)concatenation;
+        final PsiExpression[] operands = polyadicExpression.getOperands();
+        boolean isConstant = true;
+        boolean isString = false;
+        final StringBuilder builder = new StringBuilder();
+        for (PsiExpression operand : operands) {
+          if (isConstant && PsiUtil.isConstantExpression(operand)) {
+            if (builder.length() != 0) {
+              builder.append('+');
             }
-            else {
-              isConstant = false;
-              if (builder.length() != 0) {
-                if (useStringValueOf && !isString) {
-                  out.add("String.valueOf(" + builder.toString() + ')');
-                }
-                else {
-                  out.add(builder.toString());
-                }
-                builder.setLength(0);
-              }
-              findConcatenationComponents(operand, out, useStringValueOf);
+            final PsiType operandType = operand.getType();
+            if (operandType != null && operandType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+              isString = true;
             }
+            builder.append(operand.getText());
           }
-          if (builder.length() != 0) {
-            out.add(builder.toString());
+          else {
+            isConstant = false;
+            if (builder.length() != 0) {
+              append(builder, useStringValueOf && !isString, out);
+              builder.setLength(0);
+            }
+            buildAppendExpression(operand, useStringValueOf, out);
           }
-          return;
+        }
+        if (builder.length() != 0) {
+          append(builder, false, out);
         }
       }
       else if (concatenation instanceof PsiParenthesizedExpression) {
         final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)concatenation;
         final PsiExpression expression = parenthesizedExpression.getExpression();
         if (expression != null) {
-          findConcatenationComponents(expression, out, useStringValueOf);
+          return buildAppendExpression(expression, useStringValueOf, out);
         }
-        return;
-      }
-      if (useStringValueOf && type != null && !type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-        out.add("String.valueOf(" + concatenation.getText() + ')');
       }
       else {
-        out.add(concatenation.getText());
+        append(concatenation.getText(), useStringValueOf && !type.equalsToText(CommonClassNames.JAVA_LANG_STRING), out);
       }
+      return out;
+    }
+
+    private static void append(CharSequence text, boolean useStringValueOf, StringBuilder out) {
+      out.append(".append(");
+      if (useStringValueOf) {
+        out.append("String.valueOf(").append(text).append(')');
+      }
+      else {
+        out.append(text);
+      }
+      out.append(')');
     }
   }
 
