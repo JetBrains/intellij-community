@@ -45,6 +45,7 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.PathUtil;
+import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ConcurrentMultiMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.*;
@@ -256,9 +257,22 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
   private static volatile List<Pair<File, GroovyDslExecutor>> ourStandardScripts;
 
   private static List<Pair<File, GroovyDslExecutor>> getStandardScripts() {
-    if (ourStandardScripts == null) {
-      synchronized (SCRIPTS_CACHE) {
-        if (ourStandardScripts == null) {
+    List<Pair<File, GroovyDslExecutor>> result = ourStandardScripts;
+    if (result != null) {
+      return result;
+    }
+
+    final Semaphore semaphore = new Semaphore();
+    semaphore.down();
+    ourPool.execute(new Runnable() {
+      @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
+      @Override
+      public void run() {
+        if (ourStandardScripts != null) {
+          return;
+        }
+
+        try {
           Set<File> scriptFolders = new LinkedHashSet<File>();
           // perhaps a separate extension for that?
           for (GroovyFrameworkConfigNotification extension : GroovyFrameworkConfigNotification.EP_NAME.getExtensions()) {
@@ -285,11 +299,28 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
                 }
               }
             }
-
           }
           ourStandardScripts = executors;
         }
+        catch (OutOfMemoryError e) {
+          stopGdsl = true;
+          throw e;
+        }
+        catch (NoClassDefFoundError e) {
+          stopGdsl = true;
+          throw e;
+        }
+        finally {
+          semaphore.up();
+        }
       }
+    });
+
+    while (ourStandardScripts == null && !stopGdsl && !semaphore.waitFor(20)) {
+      ProgressManager.checkCanceled();
+    }
+    if (stopGdsl) {
+      return Collections.emptyList();
     }
     return ourStandardScripts;
   }
@@ -307,18 +338,11 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
 
         List<GroovyDslScript> result = new ArrayList<GroovyDslScript>();
 
-        try {
-          for (Pair<File, GroovyDslExecutor> pair : getStandardScripts()) {
-            result.add(new GroovyDslScript(project, null, pair.second, pair.first.getPath()));
-          }
+        for (Pair<File, GroovyDslExecutor> pair : getStandardScripts()) {
+          result.add(new GroovyDslScript(project, null, pair.second, pair.first.getPath()));
         }
-        catch (OutOfMemoryError e) {
-          stopGdsl = true;
-          throw e;
-        }
-        catch (NoClassDefFoundError e) {
-          stopGdsl = true;
-          throw e;
+        if (stopGdsl) {
+          return Result.create(Collections.<GroovyDslScript>emptyList());
         }
 
         final LinkedBlockingQueue<Pair<VirtualFile, GroovyDslExecutor>> queue =
