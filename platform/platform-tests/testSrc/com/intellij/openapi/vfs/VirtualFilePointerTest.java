@@ -451,8 +451,7 @@ public class VirtualFilePointerTest extends PlatformLangTestCase {
       }
     };
     VirtualFileManager.getInstance().addVirtualFileListener(listener, getTestRootDisposable());
-
-    int N = Timings.adjustAccordingToMySpeed(1000);
+    int N = Timings.adjustAccordingToMySpeed(1000, false);
     System.out.println("N = " + N);
     for (int i=0;i< N;i++) {
       assertNotNull(pointer.getFile());

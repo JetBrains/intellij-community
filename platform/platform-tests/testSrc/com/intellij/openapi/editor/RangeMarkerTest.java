@@ -878,7 +878,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     final int N = 100;
 
     final Random gen = new Random();
-    int N_TRIES = Timings.adjustAccordingToMySpeed(7000);
+    int N_TRIES = Timings.adjustAccordingToMySpeed(7000, false);
     System.out.println("N_TRIES = " + N_TRIES);
     DocumentEx document = null;
     for (int tryn=0; tryn < N_TRIES;tryn++) {
