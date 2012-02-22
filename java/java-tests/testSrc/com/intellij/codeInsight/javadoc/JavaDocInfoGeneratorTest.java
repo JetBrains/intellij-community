@@ -50,6 +50,10 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
   public void testClassTypeParameter() throws Exception {
     verifyJavaDoc(getTestClass());
   }
+  
+  public void testEnumValueOf() throws Exception {
+    doTestMethod();
+  }
 
   private void doTestField() throws Exception {
     PsiClass psiClass = getTestClass();
