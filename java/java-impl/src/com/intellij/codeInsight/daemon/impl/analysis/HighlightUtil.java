@@ -403,7 +403,7 @@ public class HighlightUtil {
                                                  formatType(rType));
 
       errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, assignment, message);
-      QuickFixAction.registerQuickFixAction(errorResult, new ChangeToAppendFix(eqOpSign, lType, rType, assignment));
+      QuickFixAction.registerQuickFixAction(errorResult, new ChangeToAppendFix(eqOpSign, lType, assignment));
     }
     return errorResult;
   }

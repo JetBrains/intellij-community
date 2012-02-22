@@ -78,7 +78,7 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
             String assetsDirPath = assetsDir != null ? assetsDir.getPath() : null;
             String[] resourcesDirPaths = AndroidCompileUtil.collectResourceDirs(facet, true, context);
             final IAndroidTarget target = platform.getTarget();
-            final int platformToolsRevision = platform.getSdk().getPlatformToolsRevision();
+            final int platformToolsRevision = platform.getSdkData().getPlatformToolsRevision();
 
             if (resourcesDirPaths.length == 0) {
               context.addMessage(CompilerMessageCategory.WARNING, "Resource directory not found for module " + module.getName(),

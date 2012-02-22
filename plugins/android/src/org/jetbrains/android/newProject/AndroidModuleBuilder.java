@@ -218,7 +218,7 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
     IAndroidTarget target = platform.getTarget();
 
     final String androidToolPath =
-      platform.getSdk().getLocation() + File.separator + AndroidSdkUtils.toolPath(SdkConstants.androidCmdName());
+      platform.getSdkData().getLocation() + File.separator + AndroidSdkUtils.toolPath(SdkConstants.androidCmdName());
 
     if (!new File(androidToolPath).exists()) {
       return false;

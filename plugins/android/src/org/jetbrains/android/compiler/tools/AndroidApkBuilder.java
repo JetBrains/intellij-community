@@ -419,7 +419,7 @@ public class AndroidApkBuilder {
     }
 
     // we exclude sources of library modules automatically for tools r7 or previous
-    return platform.getSdk().getPlatformToolsRevision() > 7;
+    return platform.getSdkData().getPlatformToolsRevision() > 7;
   }
 
   private static void writeStandardSourceFolderResources(Collection<VirtualFile> resources,

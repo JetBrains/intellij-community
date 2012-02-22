@@ -81,7 +81,7 @@ public class AndroidPrecompileTask implements CompileTask {
       }
 
       final AndroidPlatform platform = facet.getConfiguration().getAndroidPlatform();
-      final int platformToolsRevision = platform != null ? platform.getSdk().getPlatformToolsRevision() : -1;
+      final int platformToolsRevision = platform != null ? platform.getSdkData().getPlatformToolsRevision() : -1;
 
       LOG.debug("Platform-tools revision for module " + module.getName() + " is " + platformToolsRevision);
 

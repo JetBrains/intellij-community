@@ -76,7 +76,7 @@ public class TrigramIndex extends ScalarIndexExtension<Integer> {
 
   @Override
   public KeyDescriptor<Integer> getKeyDescriptor() {
-    return new EnumeratorIntegerDescriptor();
+    return EnumeratorIntegerDescriptor.INSTANCE;
   }
 
   @Override

@@ -36,7 +36,7 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.util.PathUtil;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidFacetConfiguration;
-import org.jetbrains.android.sdk.AndroidSdk;
+import org.jetbrains.android.sdk.AndroidSdkData;
 import org.jetbrains.android.sdk.AndroidSdkAdditionalData;
 import org.jetbrains.android.sdk.AndroidSdkType;
 import org.jetbrains.android.sdk.EmptySdkLog;
@@ -156,8 +156,8 @@ public abstract class AndroidTestCase extends JavaCodeInsightFixtureTestCase {
     sdkModificator.addRoot(resFolder, OrderRootType.CLASSES);
 
     AndroidSdkAdditionalData data = new AndroidSdkAdditionalData(sdk);
-    AndroidSdk sdkObject = AndroidSdk.parse(sdkPath, new EmptySdkLog());
-    data.setBuildTarget(sdkObject.findTargetByName("Android 1.5"));
+    AndroidSdkData sdkData = AndroidSdkData.parse(sdkPath, new EmptySdkLog());
+    data.setBuildTarget(sdkData.findTargetByName("Android 1.5"));
     sdkModificator.setSdkAdditionalData(data);
     sdkModificator.commitChanges();
     return sdk;

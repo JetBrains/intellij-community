@@ -16,10 +16,9 @@ try {
 7(11) element: Reference expression MAYBE_RETURN
 8(13) element: Finally clause
 9(8,10)  CALL 8
-10(16) AFTER CALL 9
+10(15) AFTER CALL 9
 11(8,12)  CALL 8
-12(16) AFTER CALL 11
+12(15) AFTER CALL 11
 13(14) READ c
-14(15) element: Reference expression MAYBE_RETURN
-15(10,12)  RETURN
-16() element: null
+14(10,12)  RETURN
+15() element: null

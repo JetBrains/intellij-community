@@ -35,6 +35,14 @@ public abstract class CustomFoldingProvider {
   public abstract boolean isCustomRegionStart(String elementText);
   public abstract boolean isCustomRegionEnd(String elementText);
   public abstract String getPlaceholderText(String elementText);
+
+  /**
+   * @return A description string shown in "Surround With" action.
+   */
+  public abstract String getDescription();
+  
+  public abstract String getStartString();
+  public abstract String getEndString();
   
   public boolean isCollapsedByDefault(String text) {
     return false;

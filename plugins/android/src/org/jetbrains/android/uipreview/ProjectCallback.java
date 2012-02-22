@@ -23,14 +23,11 @@ import com.android.ide.common.resources.IntArrayWrapper;
 import com.android.resources.ResourceType;
 import com.android.sdklib.SdkConstants;
 import com.android.util.Pair;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.util.Computable;
+import com.intellij.util.containers.HashSet;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TObjectIntHashMap;
-import org.jetbrains.android.dom.manifest.Manifest;
-import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,6 +47,7 @@ class ProjectCallback extends LegacyCallback implements IProjectCallback {
 
   private final Set<String> myMissingClasses = new TreeSet<String>();
   private final Map<String, Throwable> myBrokenClasses = new HashMap<String, Throwable>();
+  private final Set<String> myClassesWithIncorrectFormat = new HashSet<String>();
 
   private final Map<String, Class<?>> myLoadedClasses = new HashMap<String, Class<?>>();
 
@@ -113,9 +111,9 @@ class ProjectCallback extends LegacyCallback implements IProjectCallback {
       return createNewInstance(aClass, constructorSignature, constructorArgs);
     }
 
-    aClass = loadClass(className);
-
     try {
+      aClass = loadClass(className);
+
       if (aClass != null) {
         final Object viewObject = createNewInstance(aClass, constructorSignature, constructorArgs);
         myLoadedClasses.put(className, aClass);
@@ -128,7 +126,14 @@ class ProjectCallback extends LegacyCallback implements IProjectCallback {
     }
     catch (InvocationTargetException e) {
       LOG.info(e);
-      myBrokenClasses.put(className, e.getCause());
+
+      final Throwable cause = e.getCause();
+      if (cause instanceof IncompatibleClassFileFormatException) {
+        myClassesWithIncorrectFormat.add(((IncompatibleClassFileFormatException)cause).getClassName());
+      }
+      else {
+        myBrokenClasses.put(className, cause);
+      }
     }
     catch (IllegalAccessException e) {
       LOG.info(e);
@@ -141,6 +146,9 @@ class ProjectCallback extends LegacyCallback implements IProjectCallback {
     catch (NoSuchMethodException e) {
       LOG.info(e);
       myBrokenClasses.put(className, e.getCause());
+    }
+    catch (IncompatibleClassFileFormatException e) {
+      myClassesWithIncorrectFormat.add(e.getClassName());
     }
 
     try {
@@ -167,7 +175,7 @@ class ProjectCallback extends LegacyCallback implements IProjectCallback {
   }
 
   @Nullable
-  private Class<?> loadClass(String className) {
+  private Class<?> loadClass(String className) throws IncompatibleClassFileFormatException {
     try {
       if (myProjectClassLoader == null) {
         myProjectClassLoader = new ProjectClassLoader(myParentClassLoader, myModule);
@@ -181,11 +189,10 @@ class ProjectCallback extends LegacyCallback implements IProjectCallback {
       }
       return null;
     }
-    catch (UnsupportedClassVersionError e) {
-      LOG.info(e);
-      myBrokenClasses.put(className, e);
-      return null;
-    }
+  }
+
+  public boolean hasUnsupportedClassVersionProblem() {
+    return myClassesWithIncorrectFormat.size() > 0;
   }
 
   private Object createMockView(String className, Class[] constructorSignature, Object[] constructorArgs)
@@ -219,6 +226,16 @@ class ProjectCallback extends LegacyCallback implements IProjectCallback {
     }
 
     return viewObject;
+  }
+
+  @NotNull
+  public Set<String> getClassesWithIncorrectFormat() {
+    return myClassesWithIncorrectFormat;
+  }
+
+  @NotNull
+  public Module getModule() {
+    return myModule;
   }
 
   private static String getShortClassName(String fqcn) {
@@ -337,27 +354,21 @@ class ProjectCallback extends LegacyCallback implements IProjectCallback {
   }
 
   public void loadAndParseRClass() throws ClassNotFoundException, IncompatibleClassFileFormatException {
-    final String className = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-      @Nullable
-      @Override
-      public String compute() {
-        return getRClassName(myModule);
-      }
-    });
-    if (className == null) {
+    final String rClassName = RenderUtil.getRClassName(myModule);
+
+    if (rClassName == null) {
       LOG.info("loadAndParseRClass: failed to find manifest package for project %1$s");
       return;
     }
+    loadAndParseRClass(rClassName);
+  }
 
+  public void loadAndParseRClass(@NotNull String className) throws ClassNotFoundException, IncompatibleClassFileFormatException {
     Class<?> aClass = myLoadedClasses.get(className);
     if (aClass == null) {
       ProjectClassLoader loader = new ProjectClassLoader(null, myModule);
-      try {
-        aClass = loader.loadClass(className);
-      }
-      catch (UnsupportedClassVersionError e) {
-        throw new IncompatibleClassFileFormatException();
-      }
+      aClass = loader.loadClass(className);
+
       if (aClass != null) {
         myLoadedClasses.put(className, aClass);
       }
@@ -413,21 +424,5 @@ class ProjectCallback extends LegacyCallback implements IProjectCallback {
     }
 
     return true;
-  }
-
-  @Nullable
-  private static String getRClassName(Module module) {
-    final AndroidFacet facet = AndroidFacet.getInstance(module);
-    if (facet == null) {
-      return null;
-    }
-
-    final Manifest manifest = facet.getManifest();
-    if (manifest == null) {
-      return null;
-    }
-
-    final String aPackage = manifest.getPackage().getValue();
-    return aPackage == null ? null : aPackage + ".R";
   }
 }

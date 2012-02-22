@@ -196,7 +196,7 @@ public abstract class AndroidRunConfigurationBase extends ModuleBasedConfigurati
       return null;
     }
 
-    if (platform.getSdk().getDebugBridge(getProject()) == null) return null;
+    if (platform.getSdkData().getDebugBridge(getProject()) == null) return null;
 
     boolean debug = DefaultDebugExecutor.EXECUTOR_ID.equals(executor.getId());
     if (debug) {

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>StringConcatenationInsideStringBufferAppend.java</file>
+    <line>10</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">String concatenation as argument to 'StringBuffer.append()' call</problem_class>
+    <description>String concatenation as argument to &lt;code&gt;StringBuffer.append()&lt;/code&gt; call #loc</description>
+  </problem>
+
+  <problem>
+    <file>StringConcatenationInsideStringBufferAppend.java</file>
+    <line>11</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">String concatenation as argument to 'StringBuffer.append()' call</problem_class>
+    <description>String concatenation as argument to &lt;code&gt;StringBuffer.append()&lt;/code&gt; call #loc</description>
+  </problem>
+
+  <problem>
+    <file>StringConcatenationInsideStringBufferAppend.java</file>
+    <line>16</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">String concatenation as argument to 'StringBuffer.append()' call</problem_class>
+    <description>String concatenation as argument to &lt;code&gt;StringBuilder.append()&lt;/code&gt; call #loc</description>
+  </problem>
+
+  <problem>
+    <file>StringConcatenationInsideStringBufferAppend.java</file>
+    <line>17</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">String concatenation as argument to 'StringBuffer.append()' call</problem_class>
+    <description>String concatenation as argument to &lt;code&gt;StringBuilder.append()&lt;/code&gt; call #loc</description>
+  </problem>
+
+</problems>

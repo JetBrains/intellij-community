@@ -96,7 +96,7 @@ public class GroovyCompletionTest extends GroovyCompletionTestBase {
   }
 
   public void testNamedParametersForConstructorCall() throws Throwable {
-    doVariantableTest("hahaha", "hohoho");
+    doVariantableTest("hahaha", "hohoho", "hashCode");
   }
 
   public void testUnfinishedMethodTypeParameter() throws Throwable {

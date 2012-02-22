@@ -59,11 +59,11 @@ public class GroovySmartCompletionTest extends GroovyCompletionTestBase {
   }
 
   public void testReturnStatement() throws Exception {
-    doSmartCompletion("b", "b1", "b2", "foo");
+    doSmartCompletion("b", "b1", "b2", "equals", "foo");
   }
 
   public void testIncSmartCompletion() throws Exception {
-    doSmartCompletion("a", "b");
+    doSmartCompletion("a", "b", "hashCode");
   }
 
   public void testInheritConstructorsAnnotation() throws Throwable {

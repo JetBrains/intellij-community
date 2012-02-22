@@ -28,7 +28,6 @@ import com.intellij.designer.DesignerToolWindowManager;
 import com.intellij.designer.componentTree.TreeComponentDecorator;
 import com.intellij.designer.designSurface.*;
 import com.intellij.designer.designSurface.selection.DirectionResizePoint;
-import com.intellij.designer.designSurface.selection.NonResizeSelectionDecorator;
 import com.intellij.designer.designSurface.selection.ResizeSelectionDecorator;
 import com.intellij.designer.designSurface.tools.ComponentCreationFactory;
 import com.intellij.designer.designSurface.tools.CreationTool;

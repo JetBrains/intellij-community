@@ -1,10 +1,11 @@
 package org.jetbrains.plugins.groovy.lang;
 
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnInspection;
-import org.jetbrains.plugins.groovy.util.TestUtils;
+
+import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import org.jetbrains.annotations.NotNull
+import org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnInspection
+import org.jetbrains.plugins.groovy.util.TestUtils
 
 /**
  * @author peter
@@ -13,7 +14,7 @@ public class MissingReturnTest extends LightCodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {
-    return TestUtils.getTestDataPath() + "highlighting/missingReturn";
+    return "${TestUtils.testDataPath}highlighting/missingReturn";
   }
 
   @NotNull
@@ -38,8 +39,10 @@ public class MissingReturnTest extends LightCodeInsightFixtureTestCase {
   public void testExceptionWithFinally() throws Throwable {doTest();}
   public void testOnlyAssert() throws Throwable {doTest();}
   public void testImplicitReturnNull() throws Throwable {doTest();}
+  public void testMissingReturnInClosure() {doTest();}
+  public void testFinally() {doTest();}
 
-  private void doTest() throws Exception {
+  private void doTest() {
     myFixture.enableInspections(new MissingReturnInspection());
     myFixture.testHighlighting(true, false, false, getTestName(false) + ".groovy");
   }

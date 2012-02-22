@@ -18,6 +18,7 @@ package com.intellij.openapi.wm.impl.status;
 import com.intellij.notification.EventLog;
 import com.intellij.notification.Notification;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Pair;
@@ -39,6 +40,7 @@ import java.awt.event.MouseEvent;
  * @author peter
  */
 class StatusPanel extends JPanel {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.status.StatusPanel");
   private boolean myLogMode;
   private int myTimeStart;
   private boolean myDirty;
@@ -58,6 +60,9 @@ class StatusPanel extends JPanel {
     @Override
     protected String truncateText(String text, Rectangle bounds, FontMetrics fm, Rectangle textR, Rectangle iconR, int maxWidth) {
       if (myTimeStart > 0) {
+        if (myTimeStart >= text.length()) {
+          LOG.error(myTimeStart + " " + text.length());
+        }
         final String time = text.substring(myTimeStart);
         final int withoutTime = maxWidth - fm.stringWidth(time);
 
@@ -165,6 +170,8 @@ class StatusPanel extends JPanel {
           if (myDirty || System.currentTimeMillis() - statusMessage.second >= DateFormatUtil.MINUTE) {
             myTimeStart = text.length() + 1;
             text += " (" + StringUtil.decapitalize(DateFormatUtil.formatPrettyDateTime(statusMessage.second)) + ")";
+          } else {
+            myTimeStart = -1;
           }
           setStatusText(text);
           alarm.addRequest(this, 30000);

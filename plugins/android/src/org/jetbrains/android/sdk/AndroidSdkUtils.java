@@ -257,7 +257,7 @@ public class AndroidSdkUtils {
       if (data != null) {
         final AndroidPlatform androidPlatform = data.getAndroidPlatform();
         if (androidPlatform != null) {
-          result.add(FileUtil.toSystemIndependentName(androidPlatform.getSdk().getLocation()));
+          result.add(FileUtil.toSystemIndependentName(androidPlatform.getSdkData().getLocation()));
         }
       }
     }
@@ -314,7 +314,7 @@ public class AndroidSdkUtils {
       if (data != null) {
         final AndroidPlatform androidPlatform = data.getAndroidPlatform();
         if (androidPlatform != null) {
-          final String baseDir = FileUtil.toSystemIndependentName(androidPlatform.getSdk().getLocation());
+          final String baseDir = FileUtil.toSystemIndependentName(androidPlatform.getSdkData().getLocation());
           if ((sdkDir == null || FileUtil.pathsEqual(baseDir, sdkDir)) &&
               targetHashString.equals(androidPlatform.getTarget().hashString())) {
             return sdk;
@@ -361,11 +361,11 @@ public class AndroidSdkUtils {
   }
 
   private static boolean tryToCreateAndSetAndroidSdk(@NotNull Module module, @NotNull String baseDir, @NotNull String targetHashString) {
-    final AndroidSdk sdkObject = AndroidSdk.parse(baseDir, new EmptySdkLog());
-    if (sdkObject != null) {
-      final IAndroidTarget target = sdkObject.findTargetByHashString(targetHashString);
+    final AndroidSdkData sdkData = AndroidSdkData.parse(baseDir, new EmptySdkLog());
+    if (sdkData != null) {
+      final IAndroidTarget target = sdkData.findTargetByHashString(targetHashString);
       if (target != null) {
-        final Sdk androidSdk = createNewAndroidPlatform(target, sdkObject.getLocation(), true);
+        final Sdk androidSdk = createNewAndroidPlatform(target, sdkData.getLocation(), true);
         if (androidSdk != null) {
           setSdk(module, androidSdk);
           return true;
@@ -428,18 +428,18 @@ public class AndroidSdkUtils {
   }
 
   @Nullable
-  public static Sdk findAppropriateAndroidPlatform(@NotNull IAndroidTarget target, @NotNull AndroidSdk sdk) {
+  public static Sdk findAppropriateAndroidPlatform(@NotNull IAndroidTarget target, @NotNull AndroidSdkData sdkData) {
     for (Sdk library : ProjectJdkTable.getInstance().getAllJdks()) {
       final String homePath = library.getHomePath();
 
       if (homePath != null && library.getSdkType().equals(AndroidSdkType.getInstance())) {
-        final AndroidSdk sdk1 = AndroidSdk.parse(homePath, new EmptySdkLog());
+        final AndroidSdkData sdkData1 = AndroidSdkData.parse(homePath, new EmptySdkLog());
 
-        if (sdk1 != null && sdk1.equals(sdk)) {
+        if (sdkData1 != null && sdkData1.equals(sdkData)) {
           final AndroidSdkAdditionalData data = (AndroidSdkAdditionalData)library.getSdkAdditionalData();
 
           if (data != null) {
-            final IAndroidTarget target1 = data.getBuildTarget(sdk1);
+            final IAndroidTarget target1 = data.getBuildTarget(sdkData1);
 
             if (target1 != null && target.hashString().equals(target1.hashString())) {
               return library;

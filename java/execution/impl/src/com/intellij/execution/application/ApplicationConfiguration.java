@@ -182,7 +182,8 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
   }
 
   public void setEnvs(@NotNull final Map<String, String> envs) {
-    this.myEnvs = envs;
+    myEnvs.clear();
+    myEnvs.putAll(envs);
   }
 
   public boolean isPassParentEnvs() {

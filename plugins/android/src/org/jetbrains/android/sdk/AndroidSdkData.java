@@ -46,8 +46,8 @@ import java.util.Map;
 /**
  * @author Eugene.Kudelevsky
  */
-public class AndroidSdk {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.sdk.AndroidSdk");
+public class AndroidSdkData {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.sdk.AndroidSdkData");
 
   private static volatile boolean myDdmLibInitialized = false;
 
@@ -63,7 +63,7 @@ public class AndroidSdk {
 
   private final int myPlatformToolsRevision;
 
-  public AndroidSdk(@NotNull SdkManager sdkManager, @NotNull String sdkDirOsPath) {
+  public AndroidSdkData(@NotNull SdkManager sdkManager, @NotNull String sdkDirOsPath) {
     mySdkManager = sdkManager;
 
     final File platformToolsPropFile =
@@ -150,31 +150,31 @@ public class AndroidSdk {
   }
 
   @Nullable
-  public static AndroidSdk parse(@NotNull String path, @NotNull ISdkLog log) {
+  public static AndroidSdkData parse(@NotNull String path, @NotNull ISdkLog log) {
     final SdkManager manager = AndroidCommonUtils.createSdkManager(path, log);
-    return manager != null ? new AndroidSdk(manager, path) : null;
+    return manager != null ? new AndroidSdkData(manager, path) : null;
   }
 
   @Nullable
-  public static AndroidSdk parse(@NotNull String path, @NotNull final Component component) {
+  public static AndroidSdkData parse(@NotNull String path, @NotNull final Component component) {
     MessageBuildingSdkLog log = new MessageBuildingSdkLog();
-    AndroidSdk sdk = parse(path, log);
-    if (sdk == null) {
+    AndroidSdkData sdkData = parse(path, log);
+    if (sdkData == null) {
       String message = log.getErrorMessage();
       if (message.length() > 0) {
         message = "Android SDK is parsed incorrectly. Parsing log:\n" + message;
         Messages.showInfoMessage(component, message, CommonBundle.getErrorTitle());
       }
     }
-    return sdk;
+    return sdkData;
   }
 
   @Override
   public boolean equals(Object obj) {
     if (obj == null) return false;
     if (obj.getClass() != getClass()) return false;
-    AndroidSdk sdk = (AndroidSdk)obj;
-    return FileUtil.pathsEqual(getLocation(), sdk.getLocation());
+    AndroidSdkData sdkData = (AndroidSdkData)obj;
+    return FileUtil.pathsEqual(getLocation(), sdkData.getLocation());
   }
 
   @Override

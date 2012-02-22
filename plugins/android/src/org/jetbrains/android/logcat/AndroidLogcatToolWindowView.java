@@ -409,7 +409,7 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
   private void updateDevices() {
     AndroidPlatform platform = getAndroidPlatform(myProject);
     if (platform != null) {
-      final AndroidDebugBridge debugBridge = platform.getSdk().getDebugBridge(myProject);
+      final AndroidDebugBridge debugBridge = platform.getSdkData().getDebugBridge(myProject);
       if (debugBridge != null) {
         IDevice[] devices = debugBridge.getDevices();
         Object temp = myDeviceCombo.getSelectedItem();

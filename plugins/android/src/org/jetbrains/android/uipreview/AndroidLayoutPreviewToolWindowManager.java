@@ -66,6 +66,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -316,8 +318,8 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
     }
 
     BufferedImage image = null;
-    RenderingErrorMessage errorMessage = null;
-    String warnMessage = null;
+    FixableIssueMessage errorMessage = null;
+    final List<FixableIssueMessage> warnMessages = new ArrayList<FixableIssueMessage>();
 
     final String imgPath = FileUtil.getTempDirectory() + "/androidLayoutPreview.png";
 
@@ -358,14 +360,15 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
       final VirtualFile layoutXmlFile = psiFile.getVirtualFile();
 
       synchronized (RENDERING_LOCK) {
-        final StringBuilder warnBuilder = new StringBuilder();
+        if (target != null && theme != null) {
+          final RenderingResult result =
+            RenderUtil.renderLayout(facet.getModule(), layoutXmlText, layoutXmlFile, imgPath, target, facet, config, xdpi, ydpi, theme);
 
-          if (target != null && theme != null &&
-              RenderUtil.renderLayout(myProject, layoutXmlText, layoutXmlFile, imgPath,
-                                      target, facet, config, xdpi, ydpi, theme, warnBuilder)) {
-          warnMessage = warnBuilder.toString();
+          if (result != null) {
+            warnMessages.addAll(result.getWarnMessages());
             final File input = new File(imgPath);
             image = ImageIO.read(input);
+          }
         }
       }
     }
@@ -374,23 +377,23 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
       String message = e.getPresentableMessage();
       message = message != null ? message : AndroidBundle.message("android.layout.preview.default.error.message");
       final Throwable[] causes = e.getCauses();
-      errorMessage = causes.length > 0 ? new RenderingErrorMessage(message + ' ', "Details", "", new Runnable() {
+      errorMessage = causes.length > 0 ? new FixableIssueMessage(message + ' ', "Details", "", new Runnable() {
         @Override
         public void run() {
           showStackStace(causes);
         }
-      }) : new RenderingErrorMessage(message);
+      }) : new FixableIssueMessage(message);
     }
     catch (IOException e) {
       LOG.info(e);
       final String message = e.getMessage();
-      errorMessage = new RenderingErrorMessage("I/O error" + (message != null ? ": " + message : ""));
+      errorMessage = new FixableIssueMessage("I/O error" + (message != null ? ": " + message : ""));
     }
     catch (AndroidSdkNotConfiguredException e) {
       LOG.debug(e);
 
       if (!AndroidMavenUtil.isMavenizedModule(facet.getModule())) {
-        errorMessage = new RenderingErrorMessage("Please ", "configure", " Android SDK", new Runnable() {
+        errorMessage = new FixableIssueMessage("Please ", "configure", " Android SDK", new Runnable() {
           @Override
           public void run() {
             AndroidSdkUtils.openModuleDependenciesConfigurable(facet.getModule());
@@ -398,13 +401,12 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
         });
       }
       else {
-        errorMessage = new RenderingErrorMessage(AndroidBundle.message("android.maven.cannot.parse.android.sdk.error",
+        errorMessage = new FixableIssueMessage(AndroidBundle.message("android.maven.cannot.parse.android.sdk.error",
                                                                        facet.getModule().getName()));
       }
     }
 
-    final RenderingErrorMessage finalErrorMessage = errorMessage;
-    final String finalWarnMessage = warnMessage;
+    final FixableIssueMessage finalErrorMessage = errorMessage;
     final BufferedImage finalImage = image;
 
     if (!myRenderingQueue.isEmpty()) {
@@ -419,7 +421,7 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
           return;
         }
         myToolWindowForm.setErrorMessage(finalErrorMessage);
-        myToolWindowForm.setWarnMessage(finalWarnMessage);
+        myToolWindowForm.setWarnMessage(warnMessages);
         if (finalErrorMessage == null) {
           myToolWindowForm.setImage(finalImage, fileName);
         }

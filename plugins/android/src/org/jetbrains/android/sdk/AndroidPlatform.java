@@ -41,11 +41,11 @@ import java.util.Set;
  * To change this template use File | Settings | File Templates.
  */
 public class AndroidPlatform {
-  private final AndroidSdk mySdk;
+  private final AndroidSdkData mySdkData;
   private final IAndroidTarget myTarget;
 
-  public AndroidPlatform(@NotNull AndroidSdk sdk, @NotNull IAndroidTarget target) {
-    mySdk = sdk;
+  public AndroidPlatform(@NotNull AndroidSdkData sdkData, @NotNull IAndroidTarget target) {
+    mySdkData = sdkData;
     myTarget = target;
   }
 
@@ -64,8 +64,8 @@ public class AndroidPlatform {
   }
 
   @NotNull
-  public AndroidSdk getSdk() {
-    return mySdk;
+  public AndroidSdkData getSdkData() {
+    return mySdkData;
   }
 
   @NotNull
@@ -80,12 +80,12 @@ public class AndroidPlatform {
     }
     String sdkPath = sdk.getHomePath();
     if (sdkPath != null) {
-      AndroidSdk sdkObject = AndroidSdk.parse(sdkPath, new EmptySdkLog());
-      if (sdkObject != null) {
+      AndroidSdkData sdkData = AndroidSdkData.parse(sdkPath, new EmptySdkLog());
+      if (sdkData != null) {
         AndroidSdkAdditionalData data = (AndroidSdkAdditionalData)sdk.getSdkAdditionalData();
-        IAndroidTarget target = data != null ? data.getBuildTarget(sdkObject) : null;
+        IAndroidTarget target = data != null ? data.getBuildTarget(sdkData) : null;
         if (target != null) {
-          return new AndroidPlatform(sdkObject, target);
+          return new AndroidPlatform(sdkData, target);
         }
       }
     }
@@ -97,7 +97,7 @@ public class AndroidPlatform {
   @Deprecated
   public static AndroidPlatform parse(@NotNull Library library,
                                       @Nullable Library.ModifiableModel model,
-                                      @Nullable Map<String, AndroidSdk> parsedSdks) {
+                                      @Nullable Map<String, AndroidSdkData> parsedSdks) {
     VirtualFile[] files = model != null ? model.getFiles(OrderRootType.CLASSES) : library.getFiles(OrderRootType.CLASSES);
     Set<String> jarPaths = new HashSet<String>();
     VirtualFile frameworkLibrary = null;
@@ -119,16 +119,16 @@ public class AndroidPlatform {
           if (sdkDir == null) return null;
         }
         String sdkPath = sdkDir.getPath();
-        AndroidSdk sdk = parsedSdks != null ? parsedSdks.get(sdkPath) : null;
-        if (sdk == null) {
-          sdk = AndroidSdk.parse(sdkPath, new EmptySdkLog());
-          if (sdk == null) return null;
+        AndroidSdkData sdkData = parsedSdks != null ? parsedSdks.get(sdkPath) : null;
+        if (sdkData == null) {
+          sdkData = AndroidSdkData.parse(sdkPath, new EmptySdkLog());
+          if (sdkData == null) return null;
           if (parsedSdks != null) {
-            parsedSdks.put(sdkPath, sdk);
+            parsedSdks.put(sdkPath, sdkData);
           }
         }
         IAndroidTarget resultTarget = null;
-        for (IAndroidTarget target : sdk.getTargets()) {
+        for (IAndroidTarget target : sdkData.getTargets()) {
           String targetsFrameworkLibPath = PathUtil.getCanonicalPath(target.getPath(IAndroidTarget.ANDROID_JAR));
           if (frameworkLibrary.getPath().equals(targetsFrameworkLibPath)) {
             if (target.isPlatform()) {
@@ -153,7 +153,7 @@ public class AndroidPlatform {
           }
         }
         if (resultTarget != null) {
-          return new AndroidPlatform(sdk, resultTarget);
+          return new AndroidPlatform(sdkData, resultTarget);
         }
       }
     }
@@ -167,7 +167,7 @@ public class AndroidPlatform {
 
     AndroidPlatform platform = (AndroidPlatform)o;
 
-    if (!mySdk.equals(platform.mySdk)) return false;
+    if (!mySdkData.equals(platform.mySdkData)) return false;
     if (!myTarget.equals(platform.myTarget)) return false;
 
     return true;
@@ -175,7 +175,7 @@ public class AndroidPlatform {
 
   @Override
   public int hashCode() {
-    int result = mySdk.hashCode();
+    int result = mySdkData.hashCode();
     result = 31 * result + myTarget.hashCode();
     return result;
   }
