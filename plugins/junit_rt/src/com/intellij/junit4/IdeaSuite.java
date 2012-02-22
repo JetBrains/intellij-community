@@ -37,6 +37,11 @@ import java.util.*;
 class IdeaSuite extends Suite {
   private final String myName;
 
+  public IdeaSuite(List runners, String name) throws InitializationError {
+    super(null, runners);
+    myName = name;
+  }
+
   public IdeaSuite(final RunnerBuilder builder, Class[] classes, String name) throws InitializationError {
     super(builder, classes);
     myName = name;
@@ -59,12 +64,25 @@ class IdeaSuite extends Suite {
     return description;
   }
 
+  protected Description describeChild(Runner child) {
+    final Description superDescription = super.describeChild(child);
+    if (child instanceof ClassAwareSuiteMethod) {
+      final Description description = Description.createSuiteDescription(((ClassAwareSuiteMethod)child).getKlass());
+      ArrayList children = superDescription.getChildren();
+      for (int i = 0, size = children.size(); i < size; i++) {
+        description.addChild((Description)children.get(i));
+      }
+      return description;
+    }
+    return superDescription;
+  }
+
   protected List getChildren() {
     final List children = super.getChildren();
     final Set allNames = new HashSet();
     for (Iterator iterator = children.iterator(); iterator.hasNext();) {
       final Object child = iterator.next();
-      allNames.add(((Runner)child).getDescription().getDisplayName());
+      allNames.add(describeChild((Runner)child).getDisplayName());
     }
     for (Iterator iterator = children.iterator(); iterator.hasNext();) {
       final Object child = iterator.next();
@@ -75,7 +93,7 @@ class IdeaSuite extends Suite {
 
     for (Iterator iterator = children.iterator(); iterator.hasNext(); ) {
       Object child = iterator.next();
-      if (!allNames.contains(((Runner)child).getDescription().getDisplayName())) {
+      if (!allNames.contains(describeChild((Runner)child).getDisplayName())) {
         iterator.remove();
       }
     }
@@ -83,14 +101,14 @@ class IdeaSuite extends Suite {
     return children;
   }
 
-  private static void skipSuiteComponents(Set allNames, Object child) {
+  private void skipSuiteComponents(Set allNames, Object child) {
     try {
       if (child instanceof Suite) {
         final Method getChildrenMethod = Suite.class.getDeclaredMethod("getChildren", new Class[0]);
         getChildrenMethod.setAccessible(true);
         final List tests = (List)getChildrenMethod.invoke(child, new Object[0]);
         for (Iterator suiteIterator = tests.iterator(); suiteIterator.hasNext();) {
-          final String displayName = ((Runner)suiteIterator.next()).getDescription().getDisplayName();
+          final String displayName = describeChild((Runner)suiteIterator.next()).getDisplayName();
           if (allNames.contains(displayName)) {
             allNames.remove(displayName);
           }
