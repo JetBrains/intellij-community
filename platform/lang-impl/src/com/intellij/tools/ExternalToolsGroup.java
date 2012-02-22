@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package com.intellij.tools;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Eugene Belyaev
@@ -54,7 +55,7 @@ public class ExternalToolsGroup extends SimpleActionGroup implements DumbAware {
     presentation.setVisible(getChildrenCount() > 0);
   }
 
-  private static void fillGroup(String context, String groupName, SimpleActionGroup group) {
+  private static void fillGroup(String context, @Nullable String groupName, SimpleActionGroup group) {
     Tool[] tools = ToolManager.getInstance().getTools(groupName);
     for (Tool tool : tools) {
       if (isToolVisible(tool, context)) {
@@ -75,7 +76,8 @@ public class ExternalToolsGroup extends SimpleActionGroup implements DumbAware {
 
   private static boolean isToolVisible(Tool tool, String context) {
     if (!tool.isEnabled()) return false;
-    if (ActionPlaces.EDITOR_POPUP.equals(context)) {
+    if (ActionPlaces.EDITOR_POPUP.equals(context) ||
+        ActionPlaces.EDITOR_TAB_POPUP.equals(context)) {
       return tool.isShownInEditor();
     }
     else if (
@@ -88,7 +90,7 @@ public class ExternalToolsGroup extends SimpleActionGroup implements DumbAware {
       ActionPlaces.FAVORITES_VIEW_POPUP.equals(context) ||
       ActionPlaces.SCOPE_VIEW_POPUP.equals(context) ||
       ActionPlaces.NAVIGATION_BAR.equals(context)
-    ){
+      ) {
       return tool.isShownInProjectViews();
     }
     else if (ActionPlaces.MAIN_MENU.equals(context)) {
