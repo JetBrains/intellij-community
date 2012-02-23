@@ -1226,7 +1226,7 @@ public class HighlightUtil {
 
   @Nullable
   public static HighlightInfo checkSwitchSelectorType(PsiSwitchStatement statement) {
-    PsiExpression expression = statement.getExpression();
+    final PsiExpression expression = statement.getExpression();
     HighlightInfo errorResult = null;
     if (expression != null && expression.getType() != null) {
       PsiType type = expression.getType();
@@ -1234,6 +1234,7 @@ public class HighlightUtil {
         String message =
           JavaErrorMessages.message("incompatible.types", JavaErrorMessages.message("valid.switch.selector.types"), formatType(type));
         errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, expression, message);
+        QuickFixAction.registerQuickFixAction(errorResult, new ConvertSwitchToIfIntention(statement));
         if (PsiType.LONG.equals(type) || PsiType.FLOAT.equals(type) || PsiType.DOUBLE.equals(type)) {
           QuickFixAction.registerQuickFixAction(errorResult, new AddTypeCastFix(PsiType.INT, expression));
         }
