@@ -13,17 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.cvsSupport2.actions;
+package com.siyeh.ipp.switchtoif;
 
-import com.intellij.cvsSupport2.config.ui.ConfigureCvsGlobalSettingsDialog;
-import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.siyeh.ipp.IPPTestCase;
 
-/**
- * author: lesya
- */
-public class GlobalSettingsAction extends CvsGlobalAction {
+public class ReplaceSwitchWithIflIntentionTest extends IPPTestCase {
 
-  public void actionPerformed(AnActionEvent e) {
-    new ConfigureCvsGlobalSettingsDialog(e.getProject()).show();
+  public void testReplaceInt() {
+    doTest();
+  }
+
+  @Override
+  protected String getIntentionName() {
+    return "Replace 'switch' with 'if'";
+  }
+
+  @Override
+  protected String getRelativePath() {
+    return "switchtoif/replaceSwitchToIf";
   }
 }

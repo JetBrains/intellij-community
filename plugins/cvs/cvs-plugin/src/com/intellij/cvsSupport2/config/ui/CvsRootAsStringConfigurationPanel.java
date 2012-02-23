@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import java.util.Collection;
  * author: lesya
  */
 public class CvsRootAsStringConfigurationPanel {
+
   private JTextField myCvsRoot;
   private JButton myEditFieldByFieldButton;
   private final Ref<Boolean> myIsUpdating;
@@ -54,7 +55,7 @@ public class CvsRootAsStringConfigurationPanel {
       public void actionPerformed(ActionEvent e) {
         final CvsRootConfiguration cvsRootConfiguration =
           CvsApplicationLevelConfiguration.createNewConfiguration(CvsApplicationLevelConfiguration.getInstance());
-        saveTo(cvsRootConfiguration);
+        cvsRootConfiguration.CVS_ROOT = FormUtils.getFieldValue(myCvsRoot, false);
         final EditCvsConfigurationFieldByFieldDialog dialog = new EditCvsConfigurationFieldByFieldDialog(myCvsRoot.getText());
         dialog.show();
         if (dialog.isOK()) {

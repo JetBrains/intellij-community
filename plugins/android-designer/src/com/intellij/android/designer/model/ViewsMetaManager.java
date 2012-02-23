@@ -13,17 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.cvsSupport2.actions;
+package com.intellij.android.designer.model;
 
-import com.intellij.cvsSupport2.config.ui.ConfigureCvsGlobalSettingsDialog;
-import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.designer.model.MetaManager;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.project.Project;
 
 /**
- * author: lesya
+ * @author Alexander Lobas
  */
-public class GlobalSettingsAction extends CvsGlobalAction {
+public class ViewsMetaManager extends MetaManager {
+  public ViewsMetaManager(Project project) {
+    super(project, "views-meta-model.xml");
+  }
 
-  public void actionPerformed(AnActionEvent e) {
-    new ConfigureCvsGlobalSettingsDialog(e.getProject()).show();
+  public static MetaManager getInstance(Project project) {
+    return ServiceManager.getService(project, ViewsMetaManager.class);
   }
 }

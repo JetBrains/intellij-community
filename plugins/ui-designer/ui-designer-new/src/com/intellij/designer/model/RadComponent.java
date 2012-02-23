@@ -33,9 +33,18 @@ import java.util.Map;
  * @author Alexander Lobas
  */
 public abstract class RadComponent {
+  protected MetaModel myMetaModel;
   private RadComponent myParent;
   private RadLayout myLayout;
   private final Map<Object, Object> myClientProperties = new HashMap<Object, Object>();
+
+  public MetaModel getMetaModel() {
+    return myMetaModel;
+  }
+
+  public void setMetaModel(MetaModel metaModel) {
+    myMetaModel = metaModel;
+  }
 
   //////////////////////////////////////////////////////////////////////////////////////////
   //

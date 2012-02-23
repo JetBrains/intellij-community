@@ -92,6 +92,7 @@ public class UISettings implements PersistentStateComponent<UISettings>, Exporta
   public int MAX_LOOKUP_WIDTH = 500;
   public int MAX_LOOKUP_LIST_HEIGHT = 11;
   public boolean HIDE_NAVIGATION_ON_FOCUS_LOSS = true;
+  public boolean HIDE_SWITCHER_ON_CONTROL_RELEASE = true;
 
   /**
    * Defines whether asterisk is shown on modified editor tab or not

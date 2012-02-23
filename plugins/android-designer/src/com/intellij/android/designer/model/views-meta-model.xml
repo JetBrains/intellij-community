@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<meta-model>
+  <meta model="com.intellij.android.designer.model.RadViewComponent"
+        tag="&lt;root&gt;">
+
+    <palette title="Device Screen" icon="/com/intellij/android/designer/icons/DeviceScreen.png"/>
+  </meta>
+
+  <meta model="com.intellij.android.designer.model.RadViewComponent"
+        tag="merge">
+
+    <palette title="Device Screen (#merge)" icon="/com/intellij/android/designer/icons/DeviceScreen.png"/>
+  </meta>
+
+  <meta model="com.intellij.android.designer.model.RadViewComponent"
+        class="android.widget.Button"
+        tag="Button">
+    <presentation title="&quot;%text%&quot;"/>
+
+    <palette title="Button" icon="/com/intellij/android/designer/icons/Button.png"
+             tooltip="Represents a push-button widget."/>
+
+    <creation>
+      <![CDATA[
+          <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="New Button"
+          />
+      ]]>
+    </creation>
+  </meta>
+
+  <meta model="com.intellij.android.designer.model.RadViewComponent"
+        class="android.widget.TextView"
+        tag="TextView">
+    <presentation title="&quot;%text%&quot;"/>
+
+    <palette title="TextView" icon="/com/intellij/android/designer/icons/TextView.png"
+             tooltip="Displays text to the user and optionally allows them to edit it."/>
+
+    <creation>
+      <![CDATA[
+          <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="New Text"
+          />
+      ]]>
+    </creation>
+  </meta>
+
+  <meta model="com.intellij.android.designer.model.RadViewComponent"
+        layout="com.intellij.android.designer.model.RadViewLayout"
+        class="android.widget.LinearLayout"
+        tag="LinearLayout">
+
+    <palette title="LinearLayout" icon="/com/intellij/android/designer/icons/LinearLayout.png"
+             tooltip="A Layout that arranges its children in a single column or a single row."/>
+
+    <creation>
+      <![CDATA[
+          <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent">
+          </LinearLayout>
+      ]]>
+    </creation>
+  </meta>
+
+  <palette>
+    <group name="Layouts">
+      <item tag="LinearLayout"/>
+    </group>
+
+    <group name="Widgets">
+      <item tag="Button"/>
+      <item tag="TextView"/>
+    </group>
+  </palette>
+
+</meta-model>

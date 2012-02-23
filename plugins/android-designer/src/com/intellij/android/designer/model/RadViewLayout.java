@@ -15,13 +15,7 @@
  */
 package com.intellij.android.designer.model;
 
-import com.intellij.android.designer.designSurface.CreateOperation;
-import com.intellij.android.designer.designSurface.MoveOperation;
-import com.intellij.android.designer.designSurface.TreeOperation;
-import com.intellij.designer.componentTree.TreeEditOperation;
 import com.intellij.designer.designSurface.ComponentDecorator;
-import com.intellij.designer.designSurface.EditOperation;
-import com.intellij.designer.designSurface.OperationContext;
 import com.intellij.designer.designSurface.selection.NonResizeSelectionDecorator;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.model.RadLayout;
@@ -41,28 +35,5 @@ public class RadViewLayout extends RadLayout {
   @Override
   public ComponentDecorator getChildSelectionDecorator(RadComponent component) {
     return new NonResizeSelectionDecorator(Color.RED, 1);
-  }
-
-  @Override
-  public EditOperation processChildOperation(OperationContext context) {
-    if (context.getArea().isTree()) {
-      if (!myContainer.getChildren().isEmpty() && TreeEditOperation.isTarget(myContainer, context)) {
-        /*if ("TableRow".equals(myContainer.getTitle())) {
-          return null;
-        }*/
-        return new TreeOperation(myContainer, context);
-      }
-      return null;
-    }
-    if (context.isMove()) {
-      return new MoveOperation(context);
-    }
-    if (context.isCreate()) {
-      RadViewComponent component = (RadViewComponent)context.getComponents().get(0);
-      if ("android".equals(component.getTitle())) {
-        return new CreateOperation(myContainer, context);
-      }
-    }
-    return null;
   }
 }

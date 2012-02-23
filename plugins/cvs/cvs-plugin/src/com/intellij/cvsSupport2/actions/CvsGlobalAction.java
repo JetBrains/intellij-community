@@ -20,11 +20,13 @@ import com.intellij.cvsSupport2.actions.cvsContext.CvsContextWrapper;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.project.DumbAware;
 
-public abstract class CvsGlobalAction extends AnAction {
+public abstract class CvsGlobalAction extends AnAction implements DumbAware {
+
   public void update(AnActionEvent e) {
-    CvsContext cvsContext = CvsContextWrapper.createInstance(e);
-    Presentation presentation = e.getPresentation();
+    final CvsContext cvsContext = CvsContextWrapper.createInstance(e);
+    final Presentation presentation = e.getPresentation();
     if (cvsContext.cvsIsActive()) {
       presentation.setVisible(true);
       presentation.setEnabled(true);

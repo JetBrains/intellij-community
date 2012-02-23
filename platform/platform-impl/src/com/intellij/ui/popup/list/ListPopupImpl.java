@@ -379,7 +379,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
   }
 
   protected boolean isActionClick(MouseEvent e) {
-    return UIUtil.isActionClick(e, MouseEvent.MOUSE_PRESSED, true);
+    return UIUtil.isActionClick(e, MouseEvent.MOUSE_RELEASED, true);
   }
 
   public Object getSelectedValue() {
@@ -389,7 +389,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
   private class MyMouseListener extends MouseAdapter {
 
     @Override
-    public void mousePressed(MouseEvent e) {
+    public void mouseReleased(MouseEvent e) {
       if (!isActionClick(e)) return;
       IdeEventQueue.getInstance().blockNextEvents(e); // sometimes, after popup close, MOUSE_RELEASE event delivers to other components
       final Object selectedValue = myList.getSelectedValue();
