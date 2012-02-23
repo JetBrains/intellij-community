@@ -1,9 +1,9 @@
 package com.jetbrains.python.inspections;
 
-import com.intellij.codeInspection.LocalInspectionToolSession;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.google.common.collect.ImmutableSet;
+import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.codeInspection.ui.ListEditForm;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
@@ -11,7 +11,11 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.util.Function;
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibUtil;
@@ -23,19 +27,25 @@ import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import javax.swing.*;
+import java.util.*;
 
 /**
  * @author vlan
  */
 public class PyPackageRequirementsInspection extends PyInspection {
+  public JDOMExternalizableStringList ignoredPackages = new JDOMExternalizableStringList();
+
   @NotNull
   @Override
   public String getDisplayName() {
     return "Package requirements";
+  }
+
+  @Override
+  public JComponent createOptionsPanel() {
+    final ListEditForm form = new ListEditForm("Ignore packages", ignoredPackages);
+    return form.getContentPanel();
   }
 
   @NotNull
@@ -43,12 +53,30 @@ public class PyPackageRequirementsInspection extends PyInspection {
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                         boolean isOnTheFly,
                                         @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, session);
+    return new Visitor(holder, session, ignoredPackages);
+  }
+
+  @Nullable
+  public static PyPackageRequirementsInspection getInstance(@NotNull PsiElement element) {
+    final InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(element.getProject()).getInspectionProfile();
+    final String toolName = PyPackageRequirementsInspection.class.getSimpleName();
+    final InspectionProfileEntry inspectionTool = inspectionProfile.getInspectionTool(toolName, element);
+    if (inspectionTool instanceof LocalInspectionToolWrapper) {
+      final LocalInspectionToolWrapper profileEntry = (LocalInspectionToolWrapper)inspectionTool;
+      final LocalInspectionTool tool = profileEntry.getTool();
+      if (tool instanceof PyPackageRequirementsInspection) {
+        return (PyPackageRequirementsInspection)tool;
+      }
+    }
+    return null;
   }
 
   private static class Visitor extends PyInspectionVisitor {
-    public Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
+    private final Set<String> myIgnoredPackages;
+
+    public Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session, Collection<String> ignoredPackages) {
       super(holder, session);
+      myIgnoredPackages = ImmutableSet.copyOf(ignoredPackages);
     }
 
     @Override
@@ -96,7 +124,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
       if (!expressions.isEmpty()) {
         final PyExpression packageReference = expressions.get(0);
         final String packageName = packageReference.getName();
-        if (packageName != null) {
+        if (packageName != null && !myIgnoredPackages.contains(packageName)) {
           final Collection<String> stdlibPackages = PyStdlibUtil.getPackages();
           if (stdlibPackages != null) {
             for (String name : stdlibPackages) {
@@ -121,9 +149,10 @@ public class PyPackageRequirementsInspection extends PyInspection {
                   return;
                 }
               }
-              // TODO: User-adjustable ignore settings for this inspection: maybe the "Ignore imported package 'foo'" quickfix
               registerProblem(packageReference, String.format("Package '%s' is not listed in project requirements", packageName),
-                              new AddToRequirementsFix(module, packageName, LanguageLevel.forElement(importedExpression)));
+                              ProblemHighlightType.GENERIC_ERROR_OR_WARNING, null,
+                              new AddToRequirementsFix(module, packageName, LanguageLevel.forElement(importedExpression)),
+                              new IgnoreRequirementFix(packageName));
             }
           }
         }
@@ -213,6 +242,42 @@ public class PyPackageRequirementsInspection extends PyInspection {
         }
       });
       ui.install(myUnsatisfied, Collections.<String>emptyList());
+    }
+  }
+
+  private static class IgnoreRequirementFix implements LocalQuickFix {
+    @NotNull private final String myPackageName;
+
+    public IgnoreRequirementFix(@NotNull String packageName) {
+      myPackageName = packageName;
+    }
+
+    @NotNull
+    @Override
+    public String getName() {
+      return String.format("Ignore package requirement '%s'", myPackageName);
+    }
+
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return getName();
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      final PsiElement element = descriptor.getPsiElement();
+      if (element != null) {
+        final PyPackageRequirementsInspection inspection = PyPackageRequirementsInspection.getInstance(element);
+        if (inspection != null) {
+          final JDOMExternalizableStringList ignoredPackages = inspection.ignoredPackages;
+          if (!ignoredPackages.contains(myPackageName)) {
+            ignoredPackages.add(myPackageName);
+            final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
+            InspectionProfileManager.getInstance().fireProfileChanged(profile);
+          }
+        }
+      }
     }
   }
 
