@@ -37,11 +37,8 @@ public class SingleRowLayout extends TabLayout {
   final SingleRowLayoutStrategy myBottom;
   final SingleRowLayoutStrategy myRight;
 
-  public MoreIcon myMoreIcon = new MoreTabsIcon() {
-    protected boolean isActive() {
-      return myTabs.myFocused;
-    }
-
+  public MoreTabsIcon myMoreIcon = new MoreTabsIcon() {
+    @Nullable
     protected Rectangle getIconRec() {
       return myLastSingRowLayout != null ? myLastSingRowLayout.moreRect : null;
     }
@@ -164,14 +161,7 @@ public class SingleRowLayout extends TabLayout {
       getStrategy().layoutComp(data);
     }
 
-    if (data.toLayout.size() > 0 && data.myVisibleInfos.size() > 0) {
-      final int left = data.myVisibleInfos.indexOf(data.toLayout.get(0));
-      final int right = data.myVisibleInfos.indexOf(data.toLayout.get(data.toLayout.size() - 1));
-      myMoreIcon.setPaintedIcons(left > 0, right < data.myVisibleInfos.size() - 1);
-    }
-    else {
-      myMoreIcon.setPaintedIcons(false, false);
-    }
+    myMoreIcon.setPainted(data.toLayout.size() > 0 && data.myVisibleInfos.size() > data.toLayout.size());
 
     data.tabRectangle = new Rectangle();
 

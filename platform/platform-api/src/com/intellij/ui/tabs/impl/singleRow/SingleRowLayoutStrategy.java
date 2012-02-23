@@ -87,7 +87,7 @@ public abstract class SingleRowLayoutStrategy {
     }
 
     public int getMoreRectAxisSize() {
-      return myLayout.myMoreIcon.getIconWidth() + 6;
+      return myLayout.myMoreIcon.myIcon.getIconWidth() + 2 + 6;
     }
 
     public int getToFitLength(final SingleRowPassInfo data) {
@@ -238,7 +238,7 @@ public abstract class SingleRowLayoutStrategy {
     }
 
     int getMoreRectAxisSize() {
-      return myLayout.myMoreIcon.getIconHeight() + 4;
+      return myLayout.myMoreIcon.myIcon.getIconHeight() + 4;
     }
 
     public Dimension getCompSizeDelta(SingleRowPassInfo data) {
