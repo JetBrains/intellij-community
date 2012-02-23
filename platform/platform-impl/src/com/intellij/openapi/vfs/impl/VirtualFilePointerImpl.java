@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,12 +27,14 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.PrintStream;
 import java.io.PrintWriter;
 
 public class VirtualFilePointerImpl extends UserDataHolderBase implements VirtualFilePointer, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.VirtualFilePointerImpl");
+
   private Pair<VirtualFile, String> myFileAndUrl; // must not be both null
   private final VirtualFileManager myVirtualFileManager;
   private final VirtualFilePointerListener myListener;
@@ -44,7 +46,11 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
   private static final Key<Throwable> KILL_TRACE = Key.create("KILL_TRACE");
   private static final boolean TRACE_CREATION = /*true || */LOG.isDebugEnabled();
 
-  VirtualFilePointerImpl(VirtualFile file, @NotNull String url, @NotNull VirtualFileManager virtualFileManager, VirtualFilePointerListener listener, @NotNull Disposable parentDisposable) {
+  VirtualFilePointerImpl(VirtualFile file,
+                         @NotNull String url,
+                         @NotNull VirtualFileManager virtualFileManager,
+                         VirtualFilePointerListener listener,
+                         @NotNull Disposable parentDisposable) {
     myFileAndUrl = Pair.create(file, url);
     myVirtualFileManager = virtualFileManager;
     myListener = listener;
@@ -84,8 +90,6 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
   @Override
   @NotNull
   public String getUrl() {
-    //checkDisposed(); no check here since Disposer might want to compute hashcode during dispose()
-
     update();
     return getUrlNoUpdate();
   }
@@ -132,6 +136,7 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
 
     @Override
     public void printStackTrace(PrintStream s) {
+      //noinspection IOResourceOpenedButNotSafelyClosed
       printStackTrace(new PrintWriter(s));
     }
 
@@ -155,6 +160,7 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
     return result != null && result.first != null;
   }
 
+  @Nullable
   Pair<VirtualFile, String> update() {
     if (disposed) return null;
     long lastUpdated = myLastUpdated;
@@ -193,7 +199,7 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
   @Override
   public void dispose() {
     if (disposed) {
-      throw new MyException("Punching the dead horse.\nurl="+toString(), getUserData(CREATE_TRACE), getUserData(KILL_TRACE));
+      throw new MyException("Punching the dead horse.\nURL=" + toString(), getUserData(CREATE_TRACE), getUserData(KILL_TRACE));
     }
     if (--useCount == 0) {
       if (TRACE_CREATION) {
