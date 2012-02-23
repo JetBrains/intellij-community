@@ -452,7 +452,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       PsiElement point = node.getLastChild(); // usually the identifier at the end of qual ref
       if (point == null) point = node;
       TextRange range = reference.getRangeInElement().shiftRight(-point.getStartOffsetInParent());
-      if (reference instanceof PyImportReference) {
+      if (reference instanceof PyImportReference && refname != null) {
         // TODO: Ignore references in the second part of the 'from ... import ...' expression
         final PyQualifiedName qname = PyQualifiedName.fromDottedString(refname);
         final List<String> components = qname.getComponents();
