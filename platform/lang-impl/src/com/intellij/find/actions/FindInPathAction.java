@@ -1,6 +1,6 @@
 
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,10 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.psi.PsiDirectoryContainer;
+import com.intellij.psi.PsiElement;
 
 public class FindInPathAction extends AnAction implements DumbAware {
   static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.toolWindowGroup("FindInPath", ToolWindowId.FIND, false);
@@ -49,8 +52,24 @@ public class FindInPathAction extends AnAction implements DumbAware {
 
   @Override
   public void update(AnActionEvent e){
+    doUpdate(e);
+  }
+
+  static void doUpdate(AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     Project project = e.getData(PlatformDataKeys.PROJECT);
     presentation.setEnabled(project != null);
+    if (ActionPlaces.isPopupPlace(e.getPlace())) {
+      presentation.setVisible(isValidSearchScope(e));
+    }
+  }
+
+  private static boolean isValidSearchScope(AnActionEvent e) {
+    final PsiElement[] elements = e.getData(LangDataKeys.PSI_ELEMENT_ARRAY);
+    if (elements != null && elements.length == 1 && elements[0] instanceof PsiDirectoryContainer) {
+      return true;
+    }
+    final VirtualFile[] virtualFiles = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+    return virtualFiles != null && virtualFiles.length == 1 && virtualFiles[0].isDirectory();
   }
 }
