@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.performance;
 
+import com.intellij.codeInsight.daemon.impl.quickfix.ChangeToAppendFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -28,7 +29,6 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class StringConcatenationInsideStringBufferAppendInspection extends BaseInspection {
 
@@ -80,18 +80,6 @@ public class StringConcatenationInsideStringBufferAppendInspection extends BaseI
       if (methodCallExpression == null) {
         return;
       }
-      final PsiMethod method = methodCallExpression.resolveMethod();
-      if (method == null) {
-        return;
-      }
-      final PsiClass containingClass = method.getContainingClass();
-      if (containingClass == null) {
-        return;
-      }
-      final String qualifiedName = containingClass.getQualifiedName();
-      if (qualifiedName == null) {
-        return;
-      }
       final PsiExpression qualifier = methodExpression.getQualifierExpression();
       if (qualifier == null) {
         return;
@@ -99,76 +87,11 @@ public class StringConcatenationInsideStringBufferAppendInspection extends BaseI
       final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
       final PsiExpression[] arguments = argumentList.getExpressions();
       final PsiExpression argument = arguments[0];
-      final boolean useStringValueOf;
-      useStringValueOf = !qualifiedName.equals(CommonClassNames.JAVA_LANG_STRING_BUFFER) &&
-                         !qualifiedName.equals(CommonClassNames.JAVA_LANG_STRING_BUILDER);
-      @NonNls final StringBuilder newExpressionBuffer =
-        buildAppendExpression(argument, useStringValueOf, new StringBuilder(qualifier.getText()));
-      if (newExpressionBuffer == null) {
+      final PsiExpression appendExpression = ChangeToAppendFix.buildAppendExpression(qualifier, argument);
+      if (appendExpression == null) {
         return;
       }
-      replaceExpression(methodCallExpression, newExpressionBuffer.toString());
-    }
-
-    @Nullable
-    private static StringBuilder buildAppendExpression(PsiExpression concatenation, boolean useStringValueOf, @NonNls StringBuilder out)
-      throws IncorrectOperationException {
-      final PsiType type = concatenation.getType();
-      if (type == null) {
-        return null;
-      }
-      if (concatenation instanceof PsiPolyadicExpression && type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-        PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)concatenation;
-        final PsiExpression[] operands = polyadicExpression.getOperands();
-        boolean isConstant = true;
-        boolean isString = false;
-        final StringBuilder builder = new StringBuilder();
-        for (PsiExpression operand : operands) {
-          if (isConstant && PsiUtil.isConstantExpression(operand)) {
-            if (builder.length() != 0) {
-              builder.append('+');
-            }
-            final PsiType operandType = operand.getType();
-            if (operandType != null && operandType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-              isString = true;
-            }
-            builder.append(operand.getText());
-          }
-          else {
-            isConstant = false;
-            if (builder.length() != 0) {
-              append(builder, useStringValueOf && !isString, out);
-              builder.setLength(0);
-            }
-            buildAppendExpression(operand, useStringValueOf, out);
-          }
-        }
-        if (builder.length() != 0) {
-          append(builder, false, out);
-        }
-      }
-      else if (concatenation instanceof PsiParenthesizedExpression) {
-        final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)concatenation;
-        final PsiExpression expression = parenthesizedExpression.getExpression();
-        if (expression != null) {
-          return buildAppendExpression(expression, useStringValueOf, out);
-        }
-      }
-      else {
-        append(concatenation.getText(), useStringValueOf && !type.equalsToText(CommonClassNames.JAVA_LANG_STRING), out);
-      }
-      return out;
-    }
-
-    private static void append(CharSequence text, boolean useStringValueOf, StringBuilder out) {
-      out.append(".append(");
-      if (useStringValueOf) {
-        out.append("String.valueOf(").append(text).append(')');
-      }
-      else {
-        out.append(text);
-      }
-      out.append(')');
+      methodCallExpression.replace(appendExpression);
     }
   }
 

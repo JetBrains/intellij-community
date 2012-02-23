@@ -13,17 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.cvsSupport2.actions;
+package com.intellij.codeInsight.daemon.quickFix;
 
-import com.intellij.cvsSupport2.config.ui.ConfigureCvsGlobalSettingsDialog;
-import com.intellij.openapi.actionSystem.AnActionEvent;
+public class ConvertSwitchToIfTest extends LightQuickFixTestCase {
+  public void test() throws Exception { doAllTests(); }
 
-/**
- * author: lesya
- */
-public class GlobalSettingsAction extends CvsGlobalAction {
-
-  public void actionPerformed(AnActionEvent e) {
-    new ConfigureCvsGlobalSettingsDialog(e.getProject()).show();
+  @Override
+  protected String getBasePath() {
+    return "/codeInsight/daemonCodeAnalyzer/quickFix/convertSwitchToIf";
   }
 }
+
