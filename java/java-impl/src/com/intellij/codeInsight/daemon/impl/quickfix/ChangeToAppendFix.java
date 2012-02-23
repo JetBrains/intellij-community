@@ -77,18 +77,22 @@ public class ChangeToAppendFix implements IntentionAction {
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
-    final PsiExpression rhs = myAssignmentExpression.getRExpression();
-    if (rhs ==  null) {
-      return;
-    }
-    final StringBuilder appendCallText = buildAppendExpression(rhs, myLhsType.equalsToText("java.lang.Appendable"),
-                                                               new StringBuilder(myAssignmentExpression.getLExpression().getText()));
-    if (appendCallText == null) {
-      return;
-    }
-    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(myAssignmentExpression.getProject());
-    final PsiExpression appendCall = factory.createExpressionFromText(appendCallText.toString(), myAssignmentExpression);
-    myAssignmentExpression.replace(appendCall);
+    final PsiExpression appendExpression =
+      buildAppendExpression(myAssignmentExpression.getLExpression(), myAssignmentExpression.getRExpression());
+    if (appendExpression == null) return;
+    myAssignmentExpression.replace(appendExpression);
+  }
+
+  @Nullable
+  public static PsiExpression buildAppendExpression(PsiExpression appendable, PsiExpression concatenation) {
+    if (concatenation == null) return null;
+    final PsiType type = appendable.getType();
+    if (type == null) return null;
+    final StringBuilder result =
+      buildAppendExpression(concatenation, type.equalsToText("java.lang.Appendable"), new StringBuilder(appendable.getText()));
+    if (result == null) return null;
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(appendable.getProject());
+    return factory.createExpressionFromText(result.toString(), appendable);
   }
 
   @Nullable
