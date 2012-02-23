@@ -15,25 +15,19 @@
  */
 package com.intellij.android.designer.model;
 
-import com.intellij.designer.designSurface.ComponentDecorator;
-import com.intellij.designer.designSurface.selection.NonResizeSelectionDecorator;
-import com.intellij.designer.model.RadComponent;
-import com.intellij.designer.model.RadLayout;
-
-import java.awt.*;
+import com.intellij.designer.model.MetaManager;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.project.Project;
 
 /**
  * @author Alexander Lobas
  */
-public class RadViewLayout extends RadLayout {
-  private final RadViewComponent myContainer;
-
-  public RadViewLayout(RadViewComponent container) {
-    myContainer = container;
+public class ViewsMetaManager extends MetaManager {
+  public ViewsMetaManager(Project project) {
+    super(project, "views-meta-model.xml");
   }
 
-  @Override
-  public ComponentDecorator getChildSelectionDecorator(RadComponent component) {
-    return new NonResizeSelectionDecorator(Color.RED, 1);
+  public static MetaManager getInstance(Project project) {
+    return ServiceManager.getService(project, ViewsMetaManager.class);
   }
 }

@@ -34,8 +34,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Alexander Lobas
  */
 public final class AndroidDesignerEditorProvider implements FileEditorProvider, DumbAware {
-  @Override
-  public boolean accept(final @NotNull Project project, final @NotNull VirtualFile file) {
+  public static boolean acceptLayout(final @NotNull Project project, final @NotNull VirtualFile file) {
     PsiFile psiFile = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
       @Override
       public PsiFile compute() {
@@ -45,6 +44,11 @@ public final class AndroidDesignerEditorProvider implements FileEditorProvider, 
     return psiFile instanceof XmlFile &&
            AndroidFacet.getInstance(psiFile) != null &&
            LayoutDomFileDescription.isLayoutFile((XmlFile)psiFile);
+  }
+
+  @Override
+  public boolean accept(final @NotNull Project project, final @NotNull VirtualFile file) {
+    return acceptLayout(project, file);
   }
 
   @NotNull

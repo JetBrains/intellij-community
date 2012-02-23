@@ -24,6 +24,7 @@ import com.android.resources.UiMode;
 import com.android.sdklib.IAndroidTarget;
 import com.intellij.android.designer.componentTree.AndroidTreeDecorator;
 import com.intellij.android.designer.model.RadViewComponent;
+import com.intellij.android.designer.model.ViewsMetaManager;
 import com.intellij.designer.DesignerToolWindowManager;
 import com.intellij.designer.componentTree.TreeComponentDecorator;
 import com.intellij.designer.designSurface.ComponentDecorator;
@@ -34,10 +35,12 @@ import com.intellij.designer.designSurface.selection.DirectionResizePoint;
 import com.intellij.designer.designSurface.selection.ResizeSelectionDecorator;
 import com.intellij.designer.designSurface.tools.ComponentCreationFactory;
 import com.intellij.designer.designSurface.tools.CreationTool;
+import com.intellij.designer.model.MetaManager;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.utils.Position;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -96,23 +99,6 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
     catch (Throwable e) {
       showError("Parse error: ", e);
     }
-
-    // TODO: temp code
-
-    myGlassLayer.addKeyListener(new KeyAdapter() {
-      @Override
-      public void keyPressed(final KeyEvent event) {
-        if (event.getKeyCode() == KeyEvent.VK_F2) {
-          myToolProvider.setActiveTool(new CreationTool(true, new ComponentCreationFactory() {
-            @Override
-            @NotNull
-            public RadComponent create() throws Exception {
-              return new RadViewComponent(null, event.isControlDown() ? "swing" : "android");
-            }
-          }));
-        }
-      }
-    });
   }
 
   private void reparseFile() {
@@ -133,7 +119,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
 
   private void parseFile() throws Throwable {
     final RadViewComponent[] rootComponents = new RadViewComponent[1];
-
+    final MetaManager metaManager = ViewsMetaManager.getInstance(myModule.getProject());
     final String layoutXmlText = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
       RadViewComponent myComponent;
 
@@ -144,7 +130,9 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
           root.accept(new XmlRecursiveElementVisitor() {
             @Override
             public void visitXmlTag(XmlTag tag) {
-              myComponent = new RadViewComponent(myComponent, tag.getName());
+              myComponent = new RadViewComponent(myComponent);
+              myComponent.setTag(tag);
+              myComponent.setMetaModel(metaManager.getModelByTag(tag.getName()));
 
               if (rootComponents[0] == null) {
                 rootComponents[0] = myComponent;
@@ -162,7 +150,12 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
     });
 
     // TODO: run in background
-    createRenderer(layoutXmlText);
+    try {
+      createRenderer(layoutXmlText);
+    }
+    catch (IndexNotReadyException e) {
+      createRenderer(layoutXmlText);
+    }
 
     Result result = mySession.getResult();
     if (!result.isSuccess()) {
@@ -182,10 +175,6 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
     rootPanel.setBackground(Color.WHITE);
     rootPanel.add(rootView);
 
-    if (myRootComponent != null) {
-      myLayeredPane.remove(((RadViewComponent)myRootComponent).getNativeComponent().getParent());
-    }
-
     removeNativeRoot();
     myRootComponent = rootComponents[0];
     myLayeredPane.add(rootPanel, LAYER_COMPONENT);
@@ -197,12 +186,13 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
     }
   }
 
-  private static void updateRootComponent(RadViewComponent[] rootComponents, List<ViewInfo> views, JComponent nativeComponent) {
+  private void updateRootComponent(RadViewComponent[] rootComponents, List<ViewInfo> views, JComponent nativeComponent) {
     RadViewComponent rootComponent = rootComponents[0];
 
     int size = views.size();
     if (size == 1) {
-      RadViewComponent newRootComponent = new RadViewComponent(null, "Device Screen");
+      RadViewComponent newRootComponent = new RadViewComponent(null);
+      newRootComponent.setMetaModel(ViewsMetaManager.getInstance(myModule.getProject()).getModelByTag("<root>"));
       newRootComponent.getChildren().add(rootComponent);
       rootComponent.setParent(newRootComponent);
 
@@ -223,7 +213,6 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
 
   private static void updateComponent(RadViewComponent component, ViewInfo view, JComponent nativeComponent, int parentX, int parentY) {
     component.setNativeComponent(nativeComponent);
-    //System.out.println(view.getClassName() +" = " + mySession.getDefaultProperties(view.getViewObject()));
 
     int left = parentX + view.getLeft();
     int top = parentY + view.getTop();
@@ -294,9 +283,6 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
 
   @Override
   protected EditOperation processRootOperation(OperationContext context) {
-    if (context.is("top_resize")) {
-      return new ResizeOperation(context);
-    }
     return null;
   }
 
