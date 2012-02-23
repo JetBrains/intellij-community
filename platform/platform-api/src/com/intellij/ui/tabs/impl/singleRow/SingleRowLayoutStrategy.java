@@ -43,11 +43,15 @@ public abstract class SingleRowLayoutStrategy {
 
   public abstract int getMaxPosition(final Rectangle bounds);
 
-  public abstract int getFixedFitLength(final SingleRowPassInfo data);
+  protected abstract int getFixedFitLength(final SingleRowPassInfo data);
 
-  public abstract Rectangle getLayoutRec(final int position, final int fixedPos, final int length, final int fixedFitLength);
+  public Rectangle getLayoutRect(final SingleRowPassInfo data, final int position, final int length) {
+    return getLayoutRec(getFixedPosition(data), position, length, getFixedFitLength(data));
+  }
 
-  public abstract int getFixedPosition(final SingleRowPassInfo data);
+  protected abstract Rectangle getLayoutRec(final int position, final int fixedPos, final int length, final int fixedFitLength);
+
+  protected abstract int getFixedPosition(final SingleRowPassInfo data);
 
   public abstract Rectangle getMoreRect(final SingleRowPassInfo data);
 

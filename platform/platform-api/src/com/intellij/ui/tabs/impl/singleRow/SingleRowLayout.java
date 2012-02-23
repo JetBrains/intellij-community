@@ -181,10 +181,8 @@ public class SingleRowLayout extends TabLayout {
   }
 
   private void layoutLabelsAndGhosts(final SingleRowPassInfo data) {
-    final int fixedPosition = getStrategy().getFixedPosition(data);
-
     if (data.firstGhostVisible || myTabs.isGhostsAlwaysVisible()) {
-      data.firstGhost = getStrategy().getLayoutRec(data.position, fixedPosition, myTabs.getGhostTabLength(), getStrategy().getFixedFitLength(data));
+      data.firstGhost = getStrategy().getLayoutRect(data, data.position, myTabs.getGhostTabLength());
       myTabs.layout(myLeftGhost, data.firstGhost);
       data.position += getStrategy().getLengthIncrement(data.firstGhost.getSize()) + myTabs.getInterTabSpaceLength();
     }
@@ -205,12 +203,12 @@ public class SingleRowLayout extends TabLayout {
       boolean isLast = data.toLayout.indexOf(eachInfo) == data.toLayout.size() - 1;
 
       if (!isLast || deltaToFit == 0) {
-        Rectangle rec = getStrategy().getLayoutRec(data.position, fixedPosition, getStrategy().getLengthIncrement(eachSize) + deltaToFit, getStrategy().getFixedFitLength(data));
+        Rectangle rec = getStrategy().getLayoutRect(data, data.position, getStrategy().getLengthIncrement(eachSize) + deltaToFit);
         myTabs.layout(label, rec);
       }
       else {
         int length = data.toFitLength - totalLength;
-        final Rectangle rec = getStrategy().getLayoutRec(data.position, fixedPosition, length, getStrategy().getFixedFitLength(data));
+        final Rectangle rec = getStrategy().getLayoutRect(data, data.position, length);
         myTabs.layout(label, rec);
       }
 
@@ -227,7 +225,7 @@ public class SingleRowLayout extends TabLayout {
     }
 
     if (data.lastGhostVisible || myTabs.isGhostsAlwaysVisible()) {
-      data.lastGhost = getStrategy().getLayoutRec(data.position, fixedPosition, myTabs.getGhostTabLength(), getStrategy().getFixedFitLength(data));
+      data.lastGhost = getStrategy().getLayoutRect(data, data.position, myTabs.getGhostTabLength());
       myTabs.layout(myRightGhost, data.lastGhost);
     }
   }
