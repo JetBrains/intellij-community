@@ -83,7 +83,6 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
     myProject = project;
     final ActionManager actionManager = ActionManager.getInstance();
     myTabs = new JBEditorTabs(project, actionManager, IdeFocusManager.getInstance(project), this); 
-    ((JBTabsImpl)myTabs).setEditorTabs(true);
     myTabs.setDataProvider(new MyDataProvider()).setPopupGroup(new Getter<ActionGroup>() {
       public ActionGroup get() {
         return (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EDITOR_TAB_POPUP);

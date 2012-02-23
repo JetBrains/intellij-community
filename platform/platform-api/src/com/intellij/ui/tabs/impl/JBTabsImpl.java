@@ -169,7 +169,6 @@ public class JBTabsImpl extends JComponent
 
   private TabInfo myOldSelection;
   private SelectionChangeHandler mySelectionChangeHandler;
-  private boolean myEditorTabs;
 
   private Runnable myDeferredFocusRequest;
   
@@ -297,12 +296,8 @@ public class JBTabsImpl extends JComponent
     return this;
   }
   
-  public void setEditorTabs(boolean b) {
-    myEditorTabs = b;
-  }
-
   public boolean isEditorTabs() {
-    return myEditorTabs;
+    return false;
   }
 
   public JBTabs setNavigationActionsEnabled(boolean enabled) {
@@ -1541,12 +1536,7 @@ public class JBTabsImpl extends JComponent
   }
   
   protected void doPaintBackground(Graphics2D g2d, Rectangle clip) {
-    if (isEditorTabs() && UIUtil.isUnderAquaLookAndFeel()) {
-      g2d.setColor(MAC_AQUA_BG_COLOR);
-    } else {
-      g2d.setColor(getBackground());
-    }
-    
+    g2d.setColor(getBackground());
     g2d.fill(clip);
   }
   
