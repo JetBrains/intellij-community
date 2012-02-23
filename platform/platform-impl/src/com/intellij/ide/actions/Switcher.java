@@ -17,6 +17,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.markup.EffectType;
@@ -113,23 +114,25 @@ public class Switcher extends AnAction implements DumbAware {
     }
     TW_SHORTCUT = new CustomShortcutSet(shortcuts.toArray(new Shortcut[shortcuts.size()]));
 
-    IdeEventQueue.getInstance().addPostprocessor(new IdeEventQueue.EventDispatcher() {
-      @Override
-      public boolean dispatch(AWTEvent event) {
-        ToolWindow tw;
-        if (SWITCHER != null && event instanceof KeyEvent) {
-          final KeyEvent keyEvent = (KeyEvent)event;
-          if (event.getID() == KEY_RELEASED && keyEvent.getKeyCode() == CTRL_KEY) {
-            SwingUtilities.invokeLater(CHECKER);
+
+      IdeEventQueue.getInstance().addPostprocessor(new IdeEventQueue.EventDispatcher() {
+        @Override
+        public boolean dispatch(AWTEvent event) {
+          ToolWindow tw;
+          if (SWITCHER != null && event instanceof KeyEvent) {
+            final KeyEvent keyEvent = (KeyEvent)event;
+            if (event.getID() == KEY_RELEASED && keyEvent.getKeyCode() == CTRL_KEY && UISettings.getInstance().HIDE_SWITCHER_ON_CONTROL_RELEASE) {
+              SwingUtilities.invokeLater(CHECKER);
+            }
+            else if (event.getID() == KEY_PRESSED && (tw = SWITCHER.twShortcuts.get(String.valueOf((char)keyEvent.getKeyCode()))) != null) {
+              SWITCHER.myPopup.closeOk(null);
+              tw.activate(null, true, true);
+            }
           }
-          else if (event.getID() == KEY_PRESSED && (tw = SWITCHER.twShortcuts.get(String.valueOf((char)keyEvent.getKeyCode()))) != null) {
-            SWITCHER.myPopup.closeOk(null);
-            tw.activate(null, true, true);
-          }
+          return false;
         }
-        return false;
-      }
-    }, null);
+      }, null);
+
   }
 
   @NonNls private static final String SWITCHER_TITLE = "Switcher";
@@ -148,6 +151,7 @@ public class Switcher extends AnAction implements DumbAware {
       }
     }
 
+    assert SWITCHER != null;
     if (e.getInputEvent().isShiftDown()) {
       SWITCHER.goBack();
     } else {
@@ -437,7 +441,8 @@ public class Switcher extends AnAction implements DumbAware {
     }
 
     public void keyReleased(KeyEvent e) {
-      if (e.getKeyCode() == CTRL_KEY || e.getKeyCode() == VK_ENTER) {
+      if ((e.getKeyCode() == CTRL_KEY && UISettings.getInstance().HIDE_SWITCHER_ON_CONTROL_RELEASE)
+          || e.getKeyCode() == VK_ENTER) {
         navigate();
       } else
       if (e.getKeyCode() == VK_LEFT) {
@@ -541,7 +546,7 @@ public class Switcher extends AnAction implements DumbAware {
     }
 
     private void goRight() {
-      if (isFilesSelected() || !isFilesVisible()) {
+      if ((isFilesSelected() || !isFilesVisible()) && UISettings.getInstance().HIDE_SWITCHER_ON_CONTROL_RELEASE) {
         cancel();
       }
       else {
@@ -557,7 +562,7 @@ public class Switcher extends AnAction implements DumbAware {
     }
 
     private void goLeft() {
-      if (isToolWindowsSelected()) {
+      if (isToolWindowsSelected() && UISettings.getInstance().HIDE_SWITCHER_ON_CONTROL_RELEASE) {
         cancel();
       }
       else {

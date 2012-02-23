@@ -44,6 +44,7 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
   private JCheckBox myShowCloseButtonOnCheckBox;
   private JCheckBox myShowDirectoryInTabCheckBox;
   private JRadioButton myActivateRightNeighbouringTabRadioButton;
+  private JCheckBox mySwitcherPolicy;
 
   public EditorTabsConfigurable() {
     myEditorTabPlacement.setModel(new DefaultComboBoxModel(new Object[]{
@@ -100,6 +101,7 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
     myShowDirectoryInTabCheckBox.setSelected(uiSettings.SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES);
     myEditorTabLimitField.setText(Integer.toString(uiSettings.EDITOR_TAB_LIMIT));
     myShowCloseButtonOnCheckBox.setSelected(uiSettings.SHOW_CLOSE_BUTTON);
+    mySwitcherPolicy.setSelected(uiSettings.HIDE_SWITCHER_ON_CONTROL_RELEASE);
 
     if (uiSettings.CLOSE_NON_MODIFIED_FILES_FIRST) {
       myCloseNonModifiedFilesFirstRadio.setSelected(true);
@@ -129,6 +131,9 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
 
     if (isModified(myShowCloseButtonOnCheckBox, uiSettings.SHOW_CLOSE_BUTTON)) uiSettingsChanged = true;
     uiSettings.SHOW_CLOSE_BUTTON = myShowCloseButtonOnCheckBox.isSelected();
+
+    if (isModified(mySwitcherPolicy, uiSettings.HIDE_SWITCHER_ON_CONTROL_RELEASE)) uiSettingsChanged = true;
+    uiSettings.HIDE_SWITCHER_ON_CONTROL_RELEASE = mySwitcherPolicy.isSelected();
 
     final int tabPlacement = ((Integer)myEditorTabPlacement.getSelectedItem()).intValue();
     if (uiSettings.EDITOR_TAB_PLACEMENT != tabPlacement) uiSettingsChanged = true;
@@ -172,6 +177,7 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
 
     isModified |= myScrollTabLayoutInEditorCheckBox.isSelected() != uiSettings.SCROLL_TAB_LAYOUT_IN_EDITOR;
     isModified |= myShowCloseButtonOnCheckBox.isSelected() != uiSettings.SHOW_CLOSE_BUTTON;
+    isModified |= mySwitcherPolicy.isSelected() != uiSettings.HIDE_SWITCHER_ON_CONTROL_RELEASE;
 
     isModified |= isModified(myCloseNonModifiedFilesFirstRadio, uiSettings.CLOSE_NON_MODIFIED_FILES_FIRST);
     isModified |= isModified(myActivateMRUEditorOnCloseRadio, uiSettings.ACTIVATE_MRU_EDITOR_ON_CLOSE);
