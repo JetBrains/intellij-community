@@ -23,6 +23,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -82,6 +83,11 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
     }
     final boolean isSwitchOnString =
       switchExpressionType.equalsToText("java.lang.String");
+    boolean useEquals = isSwitchOnString;
+    if (!useEquals) {
+      final PsiClass aClass = PsiUtil.resolveClassInType(switchExpressionType);
+      useEquals = aClass != null && !aClass.isEnum();
+    }
     final String declarationString;
     final boolean hadSideEffects;
     final String expressionText;
@@ -204,7 +210,7 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
           branch.getPendingVariableDeclarations();
         dumpBranch(expressionText, caseValues, bodyElements,
                    pendingVariableDeclarations, firstBranch,
-                   isSwitchOnString, ifStatementText);
+                   useEquals, ifStatementText);
         firstBranch = false;
       }
     }
