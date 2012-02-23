@@ -202,15 +202,15 @@ public class SingleRowLayout extends TabLayout {
 
       boolean isLast = data.toLayout.indexOf(eachInfo) == data.toLayout.size() - 1;
 
+      int length;
       if (!isLast || deltaToFit == 0) {
-        Rectangle rec = getStrategy().getLayoutRect(data, data.position, getStrategy().getLengthIncrement(eachSize) + deltaToFit);
-        myTabs.layout(label, rec);
+        length = getStrategy().getLengthIncrement(eachSize) + deltaToFit;
       }
       else {
-        int length = data.toFitLength - totalLength;
-        final Rectangle rec = getStrategy().getLayoutRect(data, data.position, length);
-        myTabs.layout(label, rec);
+        length = data.toFitLength - totalLength;
       }
+      final Rectangle rec = getStrategy().getLayoutRect(data, data.position, length);
+      myTabs.layout(label, rec);
 
       label.setAlignmentToCenter((deltaToFit > 0 || myTabs.isEditorTabs()) && getStrategy().isToCenterTextWhenStretched());
 
