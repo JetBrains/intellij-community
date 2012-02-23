@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,6 +51,7 @@ public class SingleRowPassInfo extends LayoutPassInfo {
   private final JBTabsImpl myTabs;
   public JComponent comp;
   public Rectangle tabRectangle;
+  int scrollOffset;
 
 
   public SingleRowPassInfo(SingleRowLayout layout, List<TabInfo> visibleInfos) {
@@ -61,6 +62,7 @@ public class SingleRowPassInfo extends LayoutPassInfo {
     toLayout = new ArrayList<TabInfo>();
     toDrop = new ArrayList<TabInfo>();
     moreRectAxisSize = layout.getStrategy().getMoreRectAxisSize();
+    scrollOffset = layout.getScrollOffset();
   }
 
   public TabInfo getPreviousFor(final TabInfo info) {

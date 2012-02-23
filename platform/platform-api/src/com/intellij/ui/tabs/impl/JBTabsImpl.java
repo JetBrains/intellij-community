@@ -103,11 +103,11 @@ public class JBTabsImpl extends JComponent
 
   private final WeakHashMap<Component, Component> myDeferredToRemove = new WeakHashMap<Component, Component>();
 
-  private final SingleRowLayout mySingleRowLayout = new SingleRowLayout(this);
+  private final SingleRowLayout mySingleRowLayout;
   private final TableLayout myTableLayout = new TableLayout(this);
 
 
-  private TabLayout myLayout = mySingleRowLayout;
+  private TabLayout myLayout;
   private LayoutPassInfo myLastLayoutPass;
   private TabInfo myLastPaintedSelection;
 
@@ -206,6 +206,9 @@ public class JBTabsImpl extends JComponent
 
     setUiDecorator(null);
 
+    mySingleRowLayout = createSingleRowLayout();
+    myLayout = mySingleRowLayout;
+
     myPopupListener = new PopupMenuListener() {
       public void popupMenuWillBecomeVisible(final PopupMenuEvent e) {
       }
@@ -225,6 +228,15 @@ public class JBTabsImpl extends JComponent
             mySingleRowLayout.myLastSingRowLayout.moreRect != null &&
             mySingleRowLayout.myLastSingRowLayout.moreRect.contains(e.getPoint())) {
           showMorePopup(e);
+        }
+      }
+    });
+    addMouseWheelListener(new MouseWheelListener() {
+      @Override
+      public void mouseWheelMoved(MouseWheelEvent e) {
+        if (mySingleRowLayout.myLastSingRowLayout != null) {
+          mySingleRowLayout.scroll(e.getUnitsToScroll() * 10);
+          revalidateAndRepaint(false);
         }
       }
     });
@@ -282,6 +294,10 @@ public class JBTabsImpl extends JComponent
         }
       }
     };
+  }
+
+  protected SingleRowLayout createSingleRowLayout() {
+    return new SingleRowLayout(this);
   }
 
 
@@ -2491,8 +2507,6 @@ public class JBTabsImpl extends JComponent
   }
 
   private void updateContainer(boolean forced, final boolean layoutNow) {
-    final TabLabel selectedLabel = getSelectedLabel();
-
     for (TabInfo each : myVisibleInfos) {
       final JComponent eachComponent = each.getComponent();
       if (getSelectedInfo() == each && getSelectedInfo() != null) {
@@ -2518,6 +2532,7 @@ public class JBTabsImpl extends JComponent
       }
     }
 
+    mySingleRowLayout.scrollSelectionInView(myVisibleInfos);
     relayout(forced, layoutNow);
   }
 

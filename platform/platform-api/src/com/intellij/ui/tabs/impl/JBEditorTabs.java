@@ -17,11 +17,14 @@ package com.intellij.ui.tabs.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.tabs.JBTabsPosition;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsUtil;
+import com.intellij.ui.tabs.impl.singleRow.ScrollableSingleRowLayout;
+import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout;
 import com.intellij.ui.tabs.impl.table.TableLayout;
 import com.intellij.util.ui.SameColor;
 import com.intellij.util.ui.UIUtil;
@@ -38,6 +41,14 @@ public class JBEditorTabs extends JBTabsImpl {
 
   public JBEditorTabs(@Nullable Project project, ActionManager actionManager, IdeFocusManager focusManager, @NotNull Disposable parent) {
     super(project, actionManager, focusManager, parent);
+  }
+
+  @Override
+  protected SingleRowLayout createSingleRowLayout() {
+    if (ApplicationManager.getApplication().isInternal()) {
+      return new ScrollableSingleRowLayout(this);
+    }
+    return super.createSingleRowLayout();
   }
 
   @Override
