@@ -64,7 +64,7 @@ import java.util.*;
  * @author max
  */
 public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
-  private static final boolean ALT_SYMLINK_HANDLING = "true".equalsIgnoreCase(System.getProperty("idea.io.alt.symlink"));
+  public static final boolean ALT_SYMLINK_HANDLING = "true".equalsIgnoreCase(System.getProperty("idea.io.alt.symlink"));
 
   private static final VirtualFileSystemEntry NULL_VIRTUAL_FILE = new VirtualFileImpl("*?;%NULL", null, -42) {
     public String toString() {

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vfs.newvfs.persistent;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -23,12 +24,15 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
+import com.intellij.openapi.vfs.newvfs.impl.SymlinkDirectory;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.util.containers.Queue;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+
+import static com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem.*;
 
 /**
  * @author max
@@ -49,15 +53,14 @@ public class RefreshWorker {
   public void scan() {
     final NewVirtualFile root = (NewVirtualFile)myRefreshRoot;
     NewVirtualFileSystem delegate = root.getFileSystem();
-    int attributes = delegate.getBooleanAttributes(root, NewVirtualFileSystem.BA_EXISTS | NewVirtualFileSystem.BA_DIRECTORY);
+    final int rootAttributes = delegate.getBooleanAttributes(root, BA_EXISTS | BA_DIRECTORY);
 
-    if (root.isDirty() && (attributes & NewVirtualFileSystem.BA_EXISTS) == 0) {
+    if (root.isDirty() && (rootAttributes & BA_EXISTS) == 0) {
       scheduleDeletion(root);
       root.markClean();
     }
     else {
-      boolean isDir = (attributes & NewVirtualFileSystem.BA_DIRECTORY) != 0;
-      if (isDir) {
+      if ((rootAttributes & BA_DIRECTORY) != 0) {
         delegate = PersistentFS.replaceWithNativeFS(delegate);
       }
 
@@ -67,17 +70,21 @@ public class RefreshWorker {
         final VirtualFileSystemEntry file = (VirtualFileSystemEntry)myRefreshQueue.pullFirst();
         if (!file.isDirty()) continue;
 
-        if (file.isDirectory()) {
-          VirtualDirectoryImpl dir = (VirtualDirectoryImpl)file;
+        if (file instanceof SymlinkDirectory) {
+          final int attributes = delegate.getBooleanAttributes(file, -1);
+          scheduleChildRefresh(file.getParent(), file, delegate, attributes);
+        }
+        else if (file.isDirectory()) {
+          final VirtualDirectoryImpl dir = (VirtualDirectoryImpl)file;
           final boolean fullSync = dir.allChildrenLoaded();
           if (fullSync) {
-            Set<String> currentNames = new HashSet<String>(Arrays.asList(persistence.list(file)));
-            Set<String> upToDateNames = new HashSet<String>(Arrays.asList(VfsUtil.filterNames(delegate.list(file))));
+            final Set<String> currentNames = new HashSet<String>(Arrays.asList(persistence.list(file)));
+            final Set<String> upToDateNames = new HashSet<String>(Arrays.asList(VfsUtil.filterNames(delegate.list(file))));
 
-            Set<String> newNames = new HashSet<String>(upToDateNames);
+            final Set<String> newNames = new HashSet<String>(upToDateNames);
             newNames.removeAll(currentNames);
 
-            Set<String> deletedNames = new HashSet<String>(currentNames);
+            final Set<String> deletedNames = new HashSet<String>(currentNames);
             deletedNames.removeAll(upToDateNames);
 
             for (String name : deletedNames) {
@@ -91,15 +98,15 @@ public class RefreshWorker {
 
             for (VirtualFile child : file.getChildren()) {
               if (!deletedNames.contains(child.getName())) {
-                int childAttributes = delegate.getBooleanAttributes(child, -1);
+                final int childAttributes = delegate.getBooleanAttributes(child, -1);
                 scheduleChildRefresh(file, child, delegate, childAttributes);
               }
             }
           }
           else {
             for (VirtualFile child : file.getCachedChildren()) {
-              int childAttributes = delegate.getBooleanAttributes(child, -1);
-              if ((childAttributes & NewVirtualFileSystem.BA_EXISTS) != 0) {
+              final int childAttributes = delegate.getBooleanAttributes(child, -1);
+              if ((childAttributes & BA_EXISTS) != 0) {
                 scheduleChildRefresh(file, child, delegate, childAttributes);
               }
               else {
@@ -112,10 +119,10 @@ public class RefreshWorker {
               if (name.isEmpty()) continue;
 
               final VirtualFile fake = new FakeVirtualFile(file, name);
-              int attrs = delegate.getBooleanAttributes(fake, NewVirtualFileSystem.BA_EXISTS | NewVirtualFileSystem.BA_DIRECTORY);
-              if ((attrs & NewVirtualFileSystem.BA_EXISTS) != 0) {
-                boolean isDira = (attrs & NewVirtualFileSystem.BA_DIRECTORY) != 0;
-                scheduleCreation(file, name, isDira);
+              final int attributes = delegate.getBooleanAttributes(fake, BA_EXISTS | BA_DIRECTORY);
+              if ((attributes & BA_EXISTS) != 0) {
+                final boolean isDir = (attributes & BA_DIRECTORY) != 0;
+                scheduleCreation(file, name, isDir);
               }
             }
           }
@@ -143,21 +150,30 @@ public class RefreshWorker {
     }
   }
 
-  private void scheduleChildRefresh(@NotNull VirtualFileSystemEntry file,
+  private static final int SPECIAL_MASK = BA_REGULAR | BA_DIRECTORY | BA_EXISTS;
+
+  // todo[r.sh] compare link targets for files too
+  private void scheduleChildRefresh(@NotNull VirtualFileSystemEntry parent,
                                     @NotNull VirtualFile child,
                                     @NotNull NewVirtualFileSystem delegate,
-                                    @NewVirtualFileSystem.FileBooleanAttributes int childAttributes) {
+                                    @FileBooleanAttributes int childAttributes) {
     final boolean currentIsDirectory = child.isDirectory();
     final boolean currentIsSymlink = child.isSymLink();
     final boolean currentIsSpecial = child.isSpecialFile();
-    final boolean upToDateIsDirectory = (childAttributes & NewVirtualFileSystem.BA_DIRECTORY) != 0;
+    final String currentLinkTarget = child instanceof SymlinkDirectory ? ((SymlinkDirectory)child).getTargetPath() : null;
+    final boolean upToDateIsDirectory = (childAttributes & BA_DIRECTORY) != 0;
     final boolean upToDateIsSymlink = delegate.isSymLink(child);
-    final boolean upToDateIsSpecial = (childAttributes & (NewVirtualFileSystem.BA_REGULAR | NewVirtualFileSystem.BA_DIRECTORY | NewVirtualFileSystem.BA_EXISTS)) == NewVirtualFileSystem.BA_EXISTS;
-    if (currentIsDirectory != upToDateIsDirectory || currentIsSymlink != upToDateIsSymlink || currentIsSpecial != upToDateIsSpecial) {
+    final boolean upToDateIsSpecial = (childAttributes & SPECIAL_MASK) == BA_EXISTS;
+    final String upToDateLinkTarget = currentLinkTarget != null ? delegate.resolveSymLink(child) : null;
+
+    if (currentIsDirectory != upToDateIsDirectory ||
+        currentIsSymlink != upToDateIsSymlink ||
+        currentIsSpecial != upToDateIsSpecial ||
+        !Comparing.equal(currentLinkTarget, upToDateLinkTarget)) {
       scheduleDeletion(child);
-      scheduleReCreation(file, child.getName(), upToDateIsDirectory);
+      scheduleReCreation(parent, child.getName(), upToDateIsDirectory);
     }
-    else if (myIsRecursive || !currentIsDirectory) {
+    else if (myIsRecursive || !upToDateIsDirectory) {
       myRefreshQueue.addLast(child);
     }
   }
