@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,8 +88,8 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
 
       // Fill menu. Only after filling menu has non zero size.
 
-      int x2 = Math.min(Math.max(0, x), component.getWidth() - 1); // fit x into [0, width-1]
-      int y2 = Math.min(Math.max(0, y), component.getHeight() - 1); // fit y into [0, height-1]
+      int x2 = Math.max(0, Math.min(x, component.getWidth() - 1)); // fit x into [0, width-1]
+      int y2 = Math.max(0, Math.min(y, component.getHeight() - 1)); // fit y into [0, height-1]
 
       myContext = myDataContextProvider != null ? myDataContextProvider.get() : DataManager.getInstance().getDataContext(component, x2, y2);
       Utils.fillMenu(myGroup, this, true, myPresentationFactory, myContext, myPlace, false, false);
