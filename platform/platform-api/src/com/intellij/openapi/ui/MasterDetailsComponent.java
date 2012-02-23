@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -809,11 +809,11 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   public static class MyNode extends DefaultMutableTreeNode {
     private boolean myDisplayInBold;
 
-    public MyNode(NamedConfigurable userObject) {
+    public MyNode(@NotNull NamedConfigurable userObject) {
       super(userObject);
     }
 
-    public MyNode(NamedConfigurable userObject, boolean displayInBold) {
+    public MyNode(@NotNull NamedConfigurable userObject, boolean displayInBold) {
       super(userObject);
       myDisplayInBold = displayInBold;
     }
