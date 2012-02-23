@@ -16,6 +16,7 @@
 package com.intellij.android.designer.model;
 
 import com.intellij.designer.model.RadComponent;
+import com.intellij.psi.xml.XmlTag;
 
 import javax.swing.*;
 import java.awt.*;
@@ -28,13 +29,12 @@ import java.util.List;
  * @author Alexander Lobas
  */
 public class RadViewComponent extends RadComponent {
-  private final String myTitle;
   private final List<RadComponent> myChildren = new ArrayList<RadComponent>();
   private Component myNativeComponent;
   private final Rectangle myBounds = new Rectangle();
+  private XmlTag myTag;
 
-  public RadViewComponent(RadViewComponent parent, String title) {
-    myTitle = title;
+  public RadViewComponent(RadViewComponent parent) {
     setParent(parent);
     if (parent != null) {
       parent.getChildren().add(this);
@@ -42,18 +42,17 @@ public class RadViewComponent extends RadComponent {
     setLayout(new RadViewLayout(this));
   }
 
+  public XmlTag getTag() {
+    return myTag;
+  }
+
+  public void setTag(XmlTag tag) {
+    myTag = tag;
+  }
+
   @Override
   public List<RadComponent> getChildren() {
     return myChildren;
-  }
-
-  public String getTitle() {
-    return myTitle;
-  }
-
-  @Override
-  public String toString() {
-    return super.toString() + " - " + myTitle;
   }
 
   @Override
