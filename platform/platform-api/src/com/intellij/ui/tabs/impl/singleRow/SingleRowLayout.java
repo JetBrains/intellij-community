@@ -175,7 +175,7 @@ public class SingleRowLayout extends TabLayout {
 
     if (data.toLayout.size() > 0) {
       final TabLabel firstLabel = myTabs.myInfo2Label.get(data.toLayout.get(0));
-      final TabLabel lastLabel = myTabs.myInfo2Label.get(data.toLayout.get(data.toLayout.size() - 1));
+      final TabLabel lastLabel = findLastVisibleLabel(data);
       if (firstLabel != null && lastLabel != null) {
         data.tabRectangle.x = firstLabel.getBounds().x;
         data.tabRectangle.y = firstLabel.getBounds().y;
@@ -186,6 +186,11 @@ public class SingleRowLayout extends TabLayout {
 
     myLastSingRowLayout = data;
     return data;
+  }
+
+  @Nullable
+  protected TabLabel findLastVisibleLabel(SingleRowPassInfo data) {
+    return myTabs.myInfo2Label.get(data.toLayout.get(data.toLayout.size() - 1));
   }
 
   protected void prepareLayoutPassInfo(SingleRowPassInfo data, TabInfo selected) {

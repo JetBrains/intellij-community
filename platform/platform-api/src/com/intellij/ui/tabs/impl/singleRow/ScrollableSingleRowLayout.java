@@ -18,6 +18,7 @@ package com.intellij.ui.tabs.impl.singleRow;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.TabLabel;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.List;
@@ -142,5 +143,20 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
     final TabLabel label = myTabs.myInfo2Label.get(tabInfo);
     final Rectangle bounds = label.getBounds();
     return getStrategy().getMinPosition(bounds) < 0 || bounds.isEmpty();
+  }
+
+  @Nullable
+  @Override
+  protected TabLabel findLastVisibleLabel(SingleRowPassInfo data) {
+    int i = data.toLayout.size()-1;
+    while(i > 0) {
+      final TabInfo info = data.toLayout.get(i);
+      final TabLabel label = myTabs.myInfo2Label.get(info);
+      if (!label.getBounds().isEmpty()) {
+        return label;
+      }
+      i--;
+    }
+    return null;
   }
 }
