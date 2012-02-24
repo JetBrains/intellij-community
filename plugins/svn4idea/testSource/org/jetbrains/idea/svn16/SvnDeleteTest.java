@@ -8,7 +8,7 @@ import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.idea.svn17.integrate.AlienDirtyScope;
+import org.jetbrains.idea.svn.integrate.AlienDirtyScope;
 import org.junit.Assert;
 import org.junit.Test;
 

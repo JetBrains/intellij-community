@@ -6,8 +6,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.changes.committed.ChangesBunch;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
-import org.jetbrains.idea.svn17.SvnApplicationSettings17;
-import org.jetbrains.idea.svn17.history.*;
+import org.jetbrains.idea.svn.SvnApplicationSettings;
+import org.jetbrains.idea.svn.history.*;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -16,7 +16,7 @@ import java.util.*;
 
 public class SvnCachingRevisionsTest extends CodeInsightFixtureTestCase {
   private SvnRepositoryLocation myLocation;
-  private LoadedRevisionsCache17 myInternalManager;
+  private LoadedRevisionsCache myInternalManager;
   private final static String URL = "file:///C:/repo/trunk";
   private final static String ROOT = "file:///C:/repo";
   private final static String AUTHOR = "author";
@@ -26,12 +26,12 @@ public class SvnCachingRevisionsTest extends CodeInsightFixtureTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     myLocation = new SvnRepositoryLocation(URL);
-    myInternalManager = LoadedRevisionsCache17.getInstance(myFixture.getProject());
+    myInternalManager = LoadedRevisionsCache.getInstance(myFixture.getProject());
   }
 
   @Override
   protected void tearDown() throws Exception {
-    FileUtil.delete(SvnApplicationSettings17.getLoadedRevisionsDir(myFixture.getProject()));
+    FileUtil.delete(SvnApplicationSettings.getLoadedRevisionsDir(myFixture.getProject()));
     super.tearDown();
   }
 
@@ -138,7 +138,7 @@ public class SvnCachingRevisionsTest extends CodeInsightFixtureTestCase {
 
     // each pair corresponds to interval
     final List<Long> internalRevisions = new ArrayList<Long>();
-    LoadedRevisionsCache17.Bunch bindTo = null;
+    LoadedRevisionsCache.Bunch bindTo = null;
     for (int i = 0; i < internalBounds.size(); i++) {
       final Pair<Long, Long> bound = internalBounds.get(i);
       final boolean consistent = (i != 0) && (internalBounds.get(i - 1).second + step == bound.first);
@@ -208,7 +208,7 @@ public class SvnCachingRevisionsTest extends CodeInsightFixtureTestCase {
     return lists;
   }
 
-  private LoadedRevisionsCache17.Bunch putToInternalCache(final List<Long> revisions, final boolean consistent, final LoadedRevisionsCache17.Bunch bindTo) {
+  private LoadedRevisionsCache.Bunch putToInternalCache(final List<Long> revisions, final boolean consistent, final LoadedRevisionsCache.Bunch bindTo) {
     final List<CommittedChangeList> lists = revisionsToLists(revisions);
     Collections.reverse(lists);
     return myInternalManager.put(lists, consistent, bindTo);
