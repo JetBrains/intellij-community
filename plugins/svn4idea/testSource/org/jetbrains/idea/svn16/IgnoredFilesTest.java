@@ -17,7 +17,7 @@ import com.intellij.testFramework.AbstractVcsTestCase;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.idea.svn17.SvnVcs17;
+import org.jetbrains.idea.svn.SvnVcs;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -29,7 +29,7 @@ import java.io.File;
  * @author irengrig
  */
 public class IgnoredFilesTest extends AbstractVcsTestCase {
-  private SvnVcs17 myVcs;
+  private SvnVcs myVcs;
   private ProjectLevelVcsManagerImpl myVcsManager;
   private ChangeListManager myChangeListManager;
   private LocalFileSystem myLocalFileSystem;
@@ -55,7 +55,7 @@ public class IgnoredFilesTest extends AbstractVcsTestCase {
           ((StartupManagerImpl)StartupManager.getInstance(myProject)).runPostStartupActivities();
 
           myChangeListManager = ChangeListManager.getInstance(myProject);
-          myVcs = SvnVcs17.getInstance(myProject);
+          myVcs = SvnVcs.getInstance(myProject);
           myVcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(myProject);
           myVcsManager.registerVcs(myVcs);
           myVcsManager.setDirectoryMapping(myWorkingCopyDir.getPath(), myVcs.getName());

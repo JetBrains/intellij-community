@@ -3,6 +3,7 @@ package org.jetbrains.jps.android;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.incremental.BuilderService;
 import org.jetbrains.jps.incremental.ModuleLevelBuilder;
+import org.jetbrains.jps.incremental.ProjectLevelBuilder;
 
 import java.util.Arrays;
 import java.util.List;
@@ -17,7 +18,12 @@ public class AndroidBuilderService extends BuilderService {
   public List<? extends ModuleLevelBuilder> createModuleLevelBuilders(ExecutorService executorService) {
     return Arrays.asList(new AndroidSourceGeneratingBuilder(),
                          new AndroidLibraryPackagingBuilder(),
-                         new AndroidDexBuilder(),
-                         new AndroidPackagingBuilder());
+                         new AndroidResourcePackagingBuilder());
+  }
+
+  @NotNull
+  @Override
+  public List<? extends ProjectLevelBuilder> createProjectLevelBuilders() {
+    return Arrays.asList(new AndroidDexBuilder());
   }
 }

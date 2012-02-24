@@ -5,7 +5,7 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeListImpl;
 import junit.framework.Assert;
 import junit.framework.TestCase;
-import org.jetbrains.idea.svn17.integrate.GroupSplitter;
+import org.jetbrains.idea.svn.integrate.GroupSplitter;
 
 import java.util.Arrays;
 import java.util.Collections;
