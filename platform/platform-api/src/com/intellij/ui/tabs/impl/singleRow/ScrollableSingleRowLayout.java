@@ -104,7 +104,8 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
       length = getStrategy().getLengthIncrement(label.getPreferredSize());
       final int moreRectSize = getStrategy().getMoreRectAxisSize();
       if (data.position + length > data.toFitLength - moreRectSize) {
-        super.applyTabLayout(data, label, data.toFitLength - data.position - moreRectSize - 4, deltaToFit);
+        final int clippedLength = getStrategy().drawPartialOverflowTabs() ? data.toFitLength - data.position - moreRectSize - 4 : 0;
+        super.applyTabLayout(data, label, clippedLength, deltaToFit);
         label.setAlignmentToCenter(false);
         label.setActionPanelVisible(false);
         return false;

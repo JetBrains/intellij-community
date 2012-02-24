@@ -73,6 +73,13 @@ public abstract class SingleRowLayoutStrategy {
 
   public abstract boolean isDragOut(TabLabel tabLabel, int deltaX, int deltaY);
 
+  /**
+   * Whether a tab that didn't fit completely on the right/bottom side in scrollable layout should be clipped or hidden altogether.
+   *
+   * @return true if the tab should be clipped, false if hidden.
+   */
+  public abstract boolean drawPartialOverflowTabs();
+
   abstract static class Horizontal extends SingleRowLayoutStrategy {
     protected Horizontal(final SingleRowLayout layout) {
       super(layout);
@@ -129,6 +136,10 @@ public abstract class SingleRowLayoutStrategy {
       return data.insets.left;
     }
 
+    @Override
+    public boolean drawPartialOverflowTabs() {
+      return true;
+    }
   }
 
   static class Top extends Horizontal {
@@ -287,6 +298,10 @@ public abstract class SingleRowLayoutStrategy {
       return myTabs.myHeaderFitSize.width;
     }
 
+    @Override
+    public boolean drawPartialOverflowTabs() {
+      return false;
+    }
   }
 
   static class Left extends Vertical {
