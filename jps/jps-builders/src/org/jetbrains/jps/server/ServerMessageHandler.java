@@ -311,6 +311,7 @@ class ServerMessageHandler extends SimpleChannelHandler {
         }, this);
       }
       catch (Throwable e) {
+        LOG.info(e);
         error = e;
       }
       finally {
