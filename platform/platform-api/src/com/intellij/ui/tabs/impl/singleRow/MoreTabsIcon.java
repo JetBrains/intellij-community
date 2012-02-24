@@ -42,7 +42,7 @@ public abstract class MoreTabsIcon {
   }
   
   protected int getIconX(final Rectangle iconRec) {
-    return iconRec.x + iconRec.width / 2 - (myIcon.getIconWidth() + 2) / 2;
+    return iconRec.x + iconRec.width / 2 - (myIcon.getIconWidth()) / 2;
   }
 
   protected int getIconY(final Rectangle iconRec) {
