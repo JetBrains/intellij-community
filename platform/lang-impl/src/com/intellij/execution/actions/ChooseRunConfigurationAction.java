@@ -20,14 +20,15 @@ import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.UnknownConfigurationType;
 import com.intellij.execution.executors.DefaultRunExecutor;
-import com.intellij.execution.impl.*;
+import com.intellij.execution.impl.EditConfigurationsDialog;
+import com.intellij.execution.impl.RunDialog;
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.ListSeparator;
@@ -496,11 +497,6 @@ public class ChooseRunConfigurationAction extends AnAction {
           if (dialog.isOK()) {
             SwingUtilities.invokeLater(new Runnable() {
               public void run() {
-                final Configurable selectedConfigurable = dialog.getSelectedConfigurable();
-                if (selectedConfigurable != null && selectedConfigurable instanceof SingleConfigurationConfigurable) {
-                  manager.setSelectedConfiguration((RunnerAndConfigurationSettings) ((SingleConfigurationConfigurable)selectedConfigurable).getSettings());
-                }
-
                 final RunnerAndConfigurationSettings configuration = RunManager.getInstance(project).getSelectedConfiguration();
                 if (configuration instanceof RunnerAndConfigurationSettingsImpl) {
                   if (canRun(executor, configuration)) {

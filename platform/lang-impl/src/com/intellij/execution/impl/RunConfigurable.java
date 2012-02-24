@@ -543,14 +543,12 @@ class RunConfigurable extends BaseConfigurable {
   }
 
   public void apply() throws ConfigurationException {
+    updateActiveConfigurationFromSelected();
+
     final RunManagerImpl manager = getRunManager();
     final ConfigurationType[] configurationTypes = manager.getConfigurationFactories();
     for (ConfigurationType configurationType : configurationTypes) {
       applyByType(configurationType);
-    }
-
-    if (mySelectedConfigurable != null && mySelectedConfigurable instanceof SingleConfigurationConfigurable) {
-      manager.setSelectedConfiguration((RunnerAndConfigurationSettings) ((SingleConfigurationConfigurable)mySelectedConfigurable).getSettings());
     }
 
     String recentsLimit = myRecentsLimit.getText();
@@ -573,6 +571,15 @@ class RunConfigurable extends BaseConfigurable {
     }
 
     setModified(false);
+  }
+
+  protected void updateActiveConfigurationFromSelected() {
+    if (mySelectedConfigurable != null && mySelectedConfigurable instanceof SingleConfigurationConfigurable) {
+      RunnerAndConfigurationSettings settings =
+        (RunnerAndConfigurationSettings)((SingleConfigurationConfigurable)mySelectedConfigurable).getSettings();
+
+      getRunManager().setSelectedConfiguration(settings);
+    }
   }
 
   private void applyByType(ConfigurationType type) throws ConfigurationException {
@@ -598,7 +605,7 @@ class RunConfigurable extends BaseConfigurable {
           configurationBean = new RunConfigurationBean(settings,
                                                        manager.isConfigurationShared(settings),
                                                        manager.getBeforeRunTasks(settings.getConfiguration()));
-          
+
         }
         if (configurationBean != null) {
           final SingleConfigurationConfigurable configurable = configurationBean.getConfigurable();
@@ -630,6 +637,7 @@ class RunConfigurable extends BaseConfigurable {
       manager.addConfiguration(each.getSettings(), each.isShared(), each.getStepsBeforeLaunch());
     }
 
+    RunnerAndConfigurationSettings selected = manager.getSelectedConfiguration();
     for (RunnerAndConfigurationSettings each : toDeleteSettings) {
       manager.removeConfiguration(each);
     }
@@ -963,7 +971,7 @@ class RunConfigurable extends BaseConfigurable {
               return type.getConfigurationFactories().length > 1;
             }
 
-          });      
+          });
       //new TreeSpeedSearch(myTree);
       popup.showUnderneathOf(myToolbarComponent);
     }
