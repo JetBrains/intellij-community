@@ -26,6 +26,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.remote.PyRemoteInterpreterException;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.remote.PythonRemoteSdkAdditionalData;
+import com.jetbrains.python.remote.RemoteFile;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
@@ -321,7 +322,6 @@ public class PyPackageManager {
     return output.getStdout();
   }
 
-
   private ProcessOutput getProcessOutput(@NotNull String helper, @NotNull List<String> args) throws PyExternalProcessException {
     final SdkAdditionalData sdkData = mySdk.getSdkAdditionalData();
     if (sdkData instanceof PythonRemoteSdkAdditionalData) {
@@ -330,7 +330,7 @@ public class PyPackageManager {
       if (manager != null) {
         final List<String> cmdline = new ArrayList<String>();
         cmdline.add(mySdk.getHomePath());
-        cmdline.add(new File(remoteSdkData.getPyCharmHelpersPath(),
+        cmdline.add(new RemoteFile(remoteSdkData.getPyCharmHelpersPath(),
                              helper).getPath());
         cmdline.addAll(args);
         try {
