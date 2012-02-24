@@ -53,7 +53,16 @@ public class MacMainFrameDecorator implements UISettingsListener, Disposable {
   public static final Key<Boolean> SHOULD_OPEN_IN_FULLSCREEN = Key.create("mac.should.open.in.fullscreen");
   
   public static final String FULL_SCREEN = "Idea.Is.In.FullScreen.Mode.Now";
-  public static final boolean FULL_SCREEN_AVAILABLE = SystemInfo.isJavaVersionAtLeast("1.6.0_29");
+  private static boolean HAS_FULLSCREEN_UTILITIES;
+  static {
+    try {
+      Class.forName("com.apple.eawt.FullScreenUtilities");
+      HAS_FULLSCREEN_UTILITIES = true;
+    } catch (ClassNotFoundException e) {
+      HAS_FULLSCREEN_UTILITIES = false;
+    }
+  }
+  public static final boolean FULL_SCREEN_AVAILABLE = SystemInfo.isJavaVersionAtLeast("1.6.0_29") && HAS_FULLSCREEN_UTILITIES;
   
   private static boolean SHOWN = false;
 
