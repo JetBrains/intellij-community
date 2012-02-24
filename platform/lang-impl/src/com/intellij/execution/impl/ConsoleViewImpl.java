@@ -480,7 +480,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
           flushDeferredUserInput();
         }
       }
-      if (myFlushAlarm.getActiveRequestCount() == 0 && myEditor != null && !myFlushAlarm.isDisposed()) {
+      if (myEditor != null && !myFlushAlarm.isDisposed()) {
         final boolean shouldFlushNow = myBuffer.isUseCyclicBuffer() && myBuffer.getLength() >= myBuffer.getCyclicBufferSize();
         myFlushAlarm.addRequest(myFlushDeferredRunnable, shouldFlushNow ? 0 : FLUSH_DELAY, getStateForUpdate());
       }
@@ -541,6 +541,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         myEditor.getMarkupModel().removeAllHighlighters();
         document = myEditor.getDocument();
         myFoldingAlarm.cancelAllRequests();
+        cancelHeavyAlarm();
       }
       CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
         public void run() {
@@ -862,21 +863,25 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       @Override
       public void run() {
         if (! myPredefinedMessageFilter.shouldRunHeavy()) return;
-        myPredefinedMessageFilter.applyHeavyFilter(documentCopy, startOffset, startLine, new Consumer<FilterMixin.AdditionalHighlight>() {
-          @Override
-          public void consume(final FilterMixin.AdditionalHighlight additionalHighlight) {
-            if (myFlushAlarm.isDisposed()) return;
-            myFlushAlarm.addRequest(new Runnable() {
-              @Override
-              public void run() {
-                if (myHeavyUpdateTicket != currentValue) return;
-                myHyperlinks.adjustHighlighters(Collections.singletonList(additionalHighlight));
-              }
-            }, 0, getStateForUpdate());
+        try {
+          myPredefinedMessageFilter.applyHeavyFilter(documentCopy, startOffset, startLine, new Consumer<FilterMixin.AdditionalHighlight>() {
+            @Override
+            public void consume(final FilterMixin.AdditionalHighlight additionalHighlight) {
+              if (myFlushAlarm.isDisposed()) return;
+              myFlushAlarm.addRequest(new Runnable() {
+                @Override
+                public void run() {
+                  if (myHeavyUpdateTicket != currentValue) return;
+                  myHyperlinks.adjustHighlighters(Collections.singletonList(additionalHighlight));
+                }
+              }, 0, getStateForUpdate());
+            }
+          });
+        }
+        finally {
+          if (myHeavyAlarm.getActiveRequestCount() == 0) {
+            SwingUtilities.invokeLater(myFinishProgress);
           }
-        });
-        if (myHeavyAlarm.getActiveRequestCount() == 0) {
-          SwingUtilities.invokeLater(myFinishProgress);
         }
       }
     }, 0);

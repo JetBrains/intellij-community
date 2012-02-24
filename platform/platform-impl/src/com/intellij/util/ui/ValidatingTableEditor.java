@@ -303,7 +303,7 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
     }
 
     myTable.stopEditing();
-    myTable.setModel(new ListTableModel<Item>(columns));
+    myTable.setModelAndUpdateColumns(new ListTableModel<Item>(columns));
     if (maxHeight > 0) {
       myTable.setRowHeight(maxHeight);
     }

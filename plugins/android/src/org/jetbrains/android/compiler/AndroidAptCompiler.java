@@ -223,7 +223,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
           }
 
           final IAndroidTarget target = platform.getTarget();
-          final int platformToolsRevision = platform.getSdk().getPlatformToolsRevision();
+          final int platformToolsRevision = platform.getSdkData().getPlatformToolsRevision();
 
           String[] resPaths = AndroidCompileUtil.collectResourceDirs(facet, false, myContext);
           if (resPaths.length <= 0) {

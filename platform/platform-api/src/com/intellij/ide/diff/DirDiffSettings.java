@@ -37,6 +37,7 @@ public class DirDiffSettings {
   public boolean showNewOnSource = true;
   public boolean showNewOnTarget = true;
   public boolean showCompareModes = true;
+  public boolean enableChoosers = true;
   public CompareMode compareMode = CompareMode.CONTENT;
   public double compareTimestampAccuracy = 0;
 

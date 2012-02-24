@@ -28,6 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType
 import org.jetbrains.plugins.groovy.util.TestUtils
+
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_INTEGER
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING
 
@@ -305,5 +306,15 @@ X<String, Integer> x = [:]
     
     def type = ((myFixture.file as GroovyFile).statements[0] as GrVariableDeclaration).variables[0].initializerGroovy.type
     assertEquals("java.util.Map<java.lang.String,java.lang.Integer>", type.canonicalText)
+  }
+
+  void testRawCollectionsInCasts() {
+    def file = myFixture.configureByText('_a.groovy', '''\
+String[] a = ["a"]
+def b = a as ArrayList
+def cc = b[0]
+print c<caret>c''')
+    def ref = (GrReferenceExpression)file.findReferenceAt(myFixture.editor.caretModel.offset)
+    assertEquals(String.canonicalName, ref.type.canonicalText)
   }
 }

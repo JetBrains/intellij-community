@@ -27,10 +27,10 @@ import org.jetbrains.plugins.gradle.config.GradleSettings;
 import org.jetbrains.plugins.gradle.model.gradle.GradleProject;
 import org.jetbrains.plugins.gradle.model.id.GradleEntityId;
 import org.jetbrains.plugins.gradle.model.intellij.IntellijEntityVisitor;
+import org.jetbrains.plugins.gradle.model.intellij.ModuleAwareContentRoot;
 import org.jetbrains.plugins.gradle.remote.GradleApiException;
 import org.jetbrains.plugins.gradle.task.GradleResolveProjectTask;
 import org.jetbrains.plugins.gradle.ui.GradleIcons;
-import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNode;
 import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNodeDescriptor;
 
 import javax.swing.*;
@@ -201,7 +201,7 @@ public class GradleUtil {
     });
     return gradleProject.get();
   }
-
+  
   /**
    * Tries to dispatch given entity via the given visitor.
    * 
@@ -215,6 +215,9 @@ public class GradleUtil {
     else if (entity instanceof Module) {
       visitor.visit(((Module)entity));
     }
+    else if (entity instanceof ModuleAwareContentRoot) {
+      visitor.visit(((ModuleAwareContentRoot)entity));
+    }
     else if (entity instanceof LibraryOrderEntry) {
       visitor.visit(((LibraryOrderEntry)entity));
     }
@@ -227,16 +230,6 @@ public class GradleUtil {
     return new GradleProjectStructureNodeDescriptor<T>(id, name, id.getType().getIcon());
   }
 
-  @NotNull
-  public static  <T extends GradleEntityId> GradleProjectStructureNode<T> buildNode(@NotNull T id) {
-    return new GradleProjectStructureNode<T>(buildDescriptor(id, id.toString()));
-  }
-  
-  @NotNull
-  public static  <T extends GradleEntityId> GradleProjectStructureNode<T> buildNode(@NotNull T id, @NotNull String name) {
-    return new GradleProjectStructureNode<T>(buildDescriptor(id, name));
-  }
-  
   private interface TaskUnderProgress {
     void execute(@NotNull ProgressIndicator indicator);
   }

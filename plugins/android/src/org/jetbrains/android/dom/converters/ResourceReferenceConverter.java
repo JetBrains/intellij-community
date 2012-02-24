@@ -41,6 +41,7 @@ import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.resourceManagers.LocalResourceManager;
 import org.jetbrains.android.resourceManagers.ResourceManager;
 import org.jetbrains.android.util.AndroidBundle;
+import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.AndroidResourceUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -172,7 +173,7 @@ public class ResourceReferenceConverter extends ResolvingConverter<ResourceValue
     final LocalResourceManager manager = facet.getLocalResourceManager();
     
     for (VirtualFile resSubdir : manager.getResourceSubdirs(null)) {
-      final String resType = AndroidResourceUtil.getResourceTypeByDirName(resSubdir.getName());
+      final String resType = AndroidCommonUtils.getResourceTypeByDirName(resSubdir.getName());
       
       if (resType != null && com.android.resources.ResourceType.getEnum(resType) != null) {
         result.add(resType);

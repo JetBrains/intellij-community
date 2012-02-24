@@ -211,7 +211,7 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
   public AndroidDebugBridge getDebugBridge() {
     AndroidPlatform platform = getConfiguration().getAndroidPlatform();
     if (platform != null) {
-      return platform.getSdk().getDebugBridge(getModule().getProject());
+      return platform.getSdkData().getDebugBridge(getModule().getProject());
     }
     return null;
   }
@@ -376,10 +376,10 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
   public AvdManager getAvdManager() throws AvdsNotSupportedException, AndroidLocation.AndroidLocationException {
     if (myAvdManager == null) {
       AndroidPlatform platform = getConfiguration().getAndroidPlatform();
-      AndroidSdk sdk = platform != null ? platform.getSdk() : null;
+      AndroidSdkData sdkData = platform != null ? platform.getSdkData() : null;
       Project project = getModule().getProject();
-      if (sdk != null) {
-        SdkManager sdkManager = sdk.getSdkManager();
+      if (sdkData != null) {
+        SdkManager sdkManager = sdkData.getSdkManager();
         myAvdManager = new AvdManager(sdkManager, AndroidSdkUtils.getSdkLog(project));
       }
       else {
@@ -392,7 +392,7 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
   public void launchEmulator(@Nullable final String avdName, @NotNull final String commands, @Nullable ProcessHandler handler) {
     AndroidPlatform platform = getConfiguration().getAndroidPlatform();
     if (platform != null) {
-      final String emulatorPath = platform.getSdk().getLocation() + File.separator + AndroidSdkUtils.toolPath(SdkConstants.FN_EMULATOR);
+      final String emulatorPath = platform.getSdkData().getLocation() + File.separator + AndroidSdkUtils.toolPath(SdkConstants.FN_EMULATOR);
       final GeneralCommandLine commandLine = new GeneralCommandLine();
       commandLine.setExePath(FileUtil.toSystemDependentName(emulatorPath));
       if (avdName != null) {

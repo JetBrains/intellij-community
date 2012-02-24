@@ -93,7 +93,7 @@ public class AndroidIncludingCompiler implements SourceGeneratingCompiler {
           for (AndroidFacet depFacet : AndroidSdkUtils.getAllAndroidDependencies(module, true)) {
             final AndroidPlatform platform = depFacet.getConfiguration().getAndroidPlatform();
 
-            final int platformToolsRevision = platform != null ? platform.getSdk().getPlatformToolsRevision() : -1;
+            final int platformToolsRevision = platform != null ? platform.getSdkData().getPlatformToolsRevision() : -1;
             if (platformToolsRevision < 0 || platformToolsRevision > 7) {
               // "including" style building of library projects is deprecated since platform-tools-r8
               continue;

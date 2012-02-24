@@ -20,6 +20,8 @@ public interface IntellijEntityVisitor {
 
   void visit(@NotNull Module module);
 
+  void visit(@NotNull ModuleAwareContentRoot contentRoot);
+  
   void visit(@NotNull LibraryOrderEntry libraryDependency);
 
   void visit(@NotNull ModuleOrderEntry moduleDependency);

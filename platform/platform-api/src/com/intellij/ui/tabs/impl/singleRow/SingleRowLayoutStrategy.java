@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package com.intellij.ui.tabs.impl.singleRow;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.ShapeTransform;
 import com.intellij.ui.tabs.impl.TabLabel;
-import com.intellij.ui.tabs.impl.table.TableLayout;
+import com.intellij.ui.tabs.impl.TabLayout;
 
 import java.awt.*;
 
@@ -43,11 +43,15 @@ public abstract class SingleRowLayoutStrategy {
 
   public abstract int getMaxPosition(final Rectangle bounds);
 
-  public abstract int getFixedFitLength(final SingleRowPassInfo data);
+  protected abstract int getFixedFitLength(final SingleRowPassInfo data);
 
-  public abstract Rectangle getLayoutRec(final int position, final int fixedPos, final int length, final int fixedFitLength);
+  public Rectangle getLayoutRect(final SingleRowPassInfo data, final int position, final int length) {
+    return getLayoutRec(position, getFixedPosition(data), length, getFixedFitLength(data));
+  }
 
-  public abstract int getFixedPosition(final SingleRowPassInfo data);
+  protected abstract Rectangle getLayoutRec(final int position, final int fixedPos, final int length, final int fixedFitLength);
+
+  protected abstract int getFixedPosition(final SingleRowPassInfo data);
 
   public abstract Rectangle getMoreRect(final SingleRowPassInfo data);
 
@@ -83,11 +87,11 @@ public abstract class SingleRowLayoutStrategy {
 
     @Override
     public boolean isDragOut(TabLabel tabLabel, int deltaX, int deltaY) {
-      return Math.abs(deltaY) > tabLabel.getHeight() * TableLayout.getDragOutMultiplier();
+      return Math.abs(deltaY) > tabLabel.getHeight() * TabLayout.getDragOutMultiplier();
     }
 
     public int getMoreRectAxisSize() {
-      return myLayout.myMoreIcon.getIconWidth() + 6;
+      return myLayout.myMoreIcon.myIcon.getIconWidth() + 2 + 6;
     }
 
     public int getToFitLength(final SingleRowPassInfo data) {
@@ -230,7 +234,7 @@ public abstract class SingleRowLayoutStrategy {
 
     @Override
     public boolean isDragOut(TabLabel tabLabel, int deltaX, int deltaY) {
-      return Math.abs(deltaX) > tabLabel.getHeight() * TableLayout.getDragOutMultiplier();
+      return Math.abs(deltaX) > tabLabel.getHeight() * TabLayout.getDragOutMultiplier();
     }
 
     public boolean isToCenterTextWhenStretched() {
@@ -238,7 +242,7 @@ public abstract class SingleRowLayoutStrategy {
     }
 
     int getMoreRectAxisSize() {
-      return myLayout.myMoreIcon.getIconHeight() + 4;
+      return myLayout.myMoreIcon.myIcon.getIconHeight() + 4;
     }
 
     public Dimension getCompSizeDelta(SingleRowPassInfo data) {

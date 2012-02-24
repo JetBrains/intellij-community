@@ -190,7 +190,7 @@ public class ToBeMergedDialog extends DialogWrapper {
       }
     };
     final ListTableModel<CommittedChangeList> flatModel = new ListTableModel<CommittedChangeList>(FAKE_COLUMN);
-    myRevisionsList.setModel(flatModel);
+    myRevisionsList.setModelAndUpdateColumns(flatModel);
     myRevisionsList.setTableHeader(null);
     myRevisionsList.setShowGrid(false);
     final AbstractBaseTagMouseListener mouseListener = new AbstractBaseTagMouseListener() {

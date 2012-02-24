@@ -35,7 +35,8 @@ class IntellijProjectBuilder extends AbstractProjectBuilder {
     getOrderEntries: { libraryDependencies[it] + moduleDependencies[it] },
     getProjectIcon: { IconLoader.getIcon("/nodes/ideaProject.png") },
     getLocalFileSystemPath: { it.path },
-    getProjectLibraryTable: { projectLibraryTable }
+    getProjectLibraryTable: { projectLibraryTable },
+    getContentRoots: { contentRoots[it] }
   ]
   /** (library name - (library root type - paths)). */
   def libraryPaths = [:].withDefault { [:] }

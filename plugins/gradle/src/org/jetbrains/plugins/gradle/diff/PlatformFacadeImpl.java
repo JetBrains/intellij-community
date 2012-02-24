@@ -4,6 +4,7 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
@@ -12,10 +13,14 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.model.intellij.ModuleAwareContentRoot;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 
 /**
  * @author Denis Zhdanov
@@ -39,6 +44,21 @@ public class PlatformFacadeImpl implements PlatformFacade {
   @Override
   public Collection<Module> getModules(@NotNull Project project) {
     return Arrays.asList(ModuleManager.getInstance(project).getModules());
+  }
+
+  @NotNull
+  @Override
+  public Collection<ModuleAwareContentRoot> getContentRoots(@NotNull final Module module) {
+    final ContentEntry[] entries = ModuleRootManager.getInstance(module).getContentEntries();
+    if (entries == null) {
+      return Collections.emptyList();
+    }
+    return ContainerUtil.map(entries, new Function<ContentEntry, ModuleAwareContentRoot>() {
+      @Override
+      public ModuleAwareContentRoot fun(ContentEntry entry) {
+        return new ModuleAwareContentRoot(module, entry);
+      }
+    });
   }
 
   @NotNull

@@ -7,6 +7,7 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.model.intellij.ModuleAwareContentRoot;
 
 import java.util.Collection;
 
@@ -36,7 +37,10 @@ public interface PlatformFacade {
 
   @NotNull
   Collection<Module> getModules(@NotNull Project project);
-
+  
+  @NotNull
+  Collection<ModuleAwareContentRoot> getContentRoots(@NotNull Module module);
+  
   @NotNull
   Collection<OrderEntry> getOrderEntries(@NotNull Module module);
 

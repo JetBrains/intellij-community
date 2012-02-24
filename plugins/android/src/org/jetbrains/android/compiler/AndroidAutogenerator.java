@@ -94,7 +94,7 @@ public class AndroidAutogenerator {
         }
 
         final IAndroidTarget target = platform.getTarget();
-        final int platformToolsRevision = platform.getSdk().getPlatformToolsRevision();
+        final int platformToolsRevision = platform.getSdkData().getPlatformToolsRevision();
         final String[] resPaths = AndroidCompileUtil.collectResourceDirs(facet, false, context);
 
         if (resPaths.length == 0) {
@@ -419,7 +419,7 @@ public class AndroidAutogenerator {
             }
 
             final IAndroidTarget target = platform.getTarget();
-            final String sdkLocation = platform.getSdk().getLocation();
+            final String sdkLocation = platform.getSdkData().getLocation();
 
             final String packageName = AndroidUtils.computePackageName(module, file);
             if (packageName == null) {

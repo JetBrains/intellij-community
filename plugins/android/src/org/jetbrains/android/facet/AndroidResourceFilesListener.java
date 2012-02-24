@@ -33,7 +33,7 @@ import org.jetbrains.android.compiler.AndroidCompileUtil;
 import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.android.fileTypes.AndroidIdlFileType;
 import org.jetbrains.android.fileTypes.AndroidRenderscriptFileType;
-import org.jetbrains.android.util.AndroidResourceUtil;
+import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.android.util.ResourceEntry;
 import org.jetbrains.annotations.NotNull;
@@ -203,7 +203,7 @@ class AndroidResourceFilesListener extends VirtualFileAdapter {
       final VirtualFile resourceDir = AndroidRootUtil.getResourceDir(myFacet);
 
       if (gp == resourceDir &&
-          ResourceFolderType.VALUES.getName().equals(AndroidResourceUtil.getResourceTypeByDirName(parent.getName()))) {
+          ResourceFolderType.VALUES.getName().equals(AndroidCommonUtils.getResourceTypeByDirName(parent.getName()))) {
         myFacet.getLocalResourceManager().invalidateAttributeDefinitions();
       }
 

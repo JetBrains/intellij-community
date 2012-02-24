@@ -24,6 +24,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -205,7 +206,8 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     myUpdating.set(true);
     final JBLoadingPanel loadingPanel = getLoadingPanel();
     loadingPanel.startLoading();
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+
+    final Runnable action = new Runnable() {
       public void run() {
         try {
           updater = new Updater(loadingPanel, 100);
@@ -227,7 +229,12 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
           applySettings();
         }
       }
-    });
+    };
+    if (DirDiffManagerImpl.isFromModalDialog(myProject)) {
+      action.run();
+    } else {
+      ApplicationManager.getApplication().executeOnPooledThread(action);
+    }
   }
 
   private void reportException(final String htmlContent) {
@@ -278,7 +285,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
             clear();
             myElements.addAll(elements);
             myUpdating.set(false);
-            fireTableDataChanged();
+            myTable.revalidate();
             DirDiffTableModel.this.text.set("");
             if (loadingPanel.isLoading()) {
               loadingPanel.stopLoading();
@@ -294,7 +301,13 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
         if (myProject.isDefault()) {
           SwingUtilities.invokeLater(uiThread);
         } else {
-          app.invokeLater(uiThread);
+          final AccessToken token = ApplicationManager.getApplication().acquireReadActionLock();
+          try {
+            ApplicationManagerEx.getApplicationEx().runEdtSafeAction(uiThread);
+          }
+          finally {
+            token.finish();
+          }
         }
       }
     });

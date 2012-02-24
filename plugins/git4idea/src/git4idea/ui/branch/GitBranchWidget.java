@@ -43,11 +43,13 @@ public class GitBranchWidget extends EditorBasedWidget implements StatusBarWidge
   private final GitVcsSettings mySettings;
   private volatile String myText = "";
   private volatile String myTooltip = "";
+  private final String myMaxString;
 
   public GitBranchWidget(Project project) {
     super(project);
     GitRepositoryManager.getInstance(project).addListenerToAllRepositories(this);
     mySettings = GitVcsSettings.getInstance(project);
+    myMaxString = "Git: Rebasing master";
   }
 
   @Override
@@ -108,7 +110,7 @@ public class GitBranchWidget extends EditorBasedWidget implements StatusBarWidge
   @NotNull
   @Override
   public String getMaxValue() {
-    return "Git: Rebasing abcdefghij";
+    return myMaxString;
   }
 
   @Override
@@ -142,7 +144,8 @@ public class GitBranchWidget extends EditorBasedWidget implements StatusBarWidge
           return;
         }
 
-        myText = GitBranchUiUtil.getDisplayableBranchText(repo);
+        int maxLength = myMaxString.length() - 1; // -1, because there are arrows indicating that it is a popup
+        myText = StringUtil.shortenTextWithEllipsis(GitBranchUiUtil.getDisplayableBranchText(repo), maxLength, 5);
         myTooltip = getDisplayableBranchTooltip(repo);
         myStatusBar.updateWidget(ID());
         mySettings.setRecentRoot(repo.getRoot().getPath());

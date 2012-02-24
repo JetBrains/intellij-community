@@ -50,7 +50,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.containers.hash.HashMap;
+import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -77,7 +77,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
   private boolean isDebugEnabled;
   @Nullable private String scriptParams;
   @Nullable private String scriptPath;
-  private final Map<String, String> envs = new HashMap<String, String>();
+  private final Map<String, String> envs = new LinkedHashMap<String, String>();
   public boolean passParentEnv = true;
 
   public GroovyScriptRunConfiguration(final String name, final Project project, final ConfigurationFactory factory) {

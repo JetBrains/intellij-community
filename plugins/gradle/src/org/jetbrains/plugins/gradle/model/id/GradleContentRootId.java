@@ -5,6 +5,7 @@ import org.jetbrains.plugins.gradle.model.GradleEntityOwner;
 import org.jetbrains.plugins.gradle.model.GradleEntityType;
 import org.jetbrains.plugins.gradle.model.gradle.GradleContentRoot;
 import org.jetbrains.plugins.gradle.model.gradle.GradleModule;
+import org.jetbrains.plugins.gradle.util.GradleProjectStructureContext;
 
 /**
  * @author Denis Zhdanov
@@ -21,8 +22,13 @@ public class GradleContentRootId extends GradleAbstractEntityId {
     myRootPath = rootPath;
   }
 
+  @NotNull
+  public String getRootPath() {
+    return myRootPath;
+  }
+
   @Override
-  public Object mapToEntity(@NotNull GradleEntityMappingContext context) {
+  public Object mapToEntity(@NotNull GradleProjectStructureContext context) {
     switch (getOwner()) {
       case GRADLE:
         final GradleModule module = context.getProjectStructureHelper().findGradleModule(myModuleName);
@@ -38,5 +44,30 @@ public class GradleContentRootId extends GradleAbstractEntityId {
       case INTELLIJ: return null;
     }
     return null;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = super.hashCode();
+    result = 31 * result + myModuleName.hashCode();
+    result = 31 * result + myRootPath.hashCode();
+    return result;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (!super.equals(o)) return false;
+
+    GradleContentRootId that = (GradleContentRootId)o;
+
+    if (!myModuleName.equals(that.myModuleName)) return false;
+    if (!myRootPath.equals(that.myRootPath)) return false;
+
+    return true;
+  }
+
+  @Override
+  public String toString() {
+    return "content root '" + myRootPath + "'";
   }
 }

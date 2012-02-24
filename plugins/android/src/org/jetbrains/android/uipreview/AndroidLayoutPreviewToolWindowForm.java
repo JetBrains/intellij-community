@@ -660,12 +660,12 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
     return null;
   }
 
-  public void setErrorMessage(RenderingErrorMessage errorMessage) {
+  public void setErrorMessage(FixableIssueMessage errorMessage) {
     myPreviewPanel.setErrorMessage(errorMessage);
   }
 
-  public void setWarnMessage(String warnMessage) {
-    myPreviewPanel.setWarnMessage(warnMessage);
+  public void setWarnMessage(List<FixableIssueMessage> warnMessages) {
+    myPreviewPanel.setWarnMessages(warnMessages);
   }
 
   public void setImage(@Nullable BufferedImage image, @NotNull String fileName) {
@@ -682,13 +682,13 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
   }
 
   public void updateDevicesAndTargets(@Nullable AndroidPlatform platform) {
-    final AndroidSdk sdkObject = platform != null ? platform.getSdk() : null;
+    final AndroidSdkData sdkData = platform != null ? platform.getSdkData() : null;
     final LayoutDevice selectedDevice = getSelectedDevice();
     final String selectedDeviceName = selectedDevice != null ? selectedDevice.getName() : null;
 
     final List<LayoutDevice> devices;
-    if (sdkObject != null) {
-      myLayoutDeviceManager.loadDevices(sdkObject);
+    if (sdkData != null) {
+      myLayoutDeviceManager.loadDevices(sdkData);
       devices = myLayoutDeviceManager.getCombinedList();
     }
     else {
@@ -720,9 +720,9 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
     IAndroidTarget newSelectedTarget = null;
 
     final List<IAndroidTarget> targets;
-    if (sdkObject != null) {
+    if (sdkData != null) {
       targets = new ArrayList<IAndroidTarget>();
-      for (IAndroidTarget target : sdkObject.getTargets()) {
+      for (IAndroidTarget target : sdkData.getTargets()) {
         if (target.isPlatform()) {
           if (target.hashString().equals(selectedTargetHashString)) {
             newSelectedTarget = target;
@@ -752,7 +752,7 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
         }
         
         if (modulePlatformHash != null) {
-          targetFromModule = sdkObject.findTargetByHashString(modulePlatformHash);
+          targetFromModule = sdkData.findTargetByHashString(modulePlatformHash);
           if (targetFromModule != null && targets.indexOf(targetFromModule) >= 0) {
             newSelectedTarget = targetFromModule;
           }
@@ -917,7 +917,7 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
       if (target == null) {
         target = androidPlatform.getTarget();
       }
-      targetData = androidPlatform.getSdk().getTargetData(target);
+      targetData = androidPlatform.getSdkData().getTargetData(target);
     }
 
     if (targetData == null || targetData.areThemesCached()) {

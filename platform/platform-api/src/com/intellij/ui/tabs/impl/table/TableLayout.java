@@ -158,7 +158,7 @@ public class TableLayout extends TabLayout {
         }
 
         myTabs.layout(label, eachX, eachY, width, row < data.table.size() - 1 ? myTabs.myHeaderFitSize.height - tabUnderlineFix :  myTabs.myHeaderFitSize.height);
-        label.setAligmentToCenter(deltaToFit > 0);
+        label.setAlignmentToCenter(deltaToFit > 0);
 
         boolean lastCell = i == eachRow.myColumns.size() - 1;
         eachX += width + (lastCell ? 0 : myTabs.getInterTabSpaceLength());

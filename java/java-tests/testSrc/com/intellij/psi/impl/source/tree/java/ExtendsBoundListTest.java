@@ -79,7 +79,7 @@ public class ExtendsBoundListTest extends LightCodeInsightTestCase {
     final PsiTypeParameter typeParameter = getTypeParameter();
     final PsiReferenceList extendsList = typeParameter.getExtendsList();
     final JavaPsiFacade manager = getJavaFacade();
-    final PsiClass clonableClass = manager.findClass("java.lang.Runnable");
+    final PsiClass clonableClass = manager.findClass(CommonClassNames.JAVA_LANG_RUNNABLE);
     assertNotNull(clonableClass);
     final PsiJavaCodeReferenceElement reference = manager.getElementFactory().createClassReferenceElement(clonableClass);
     extendsList.add(reference);

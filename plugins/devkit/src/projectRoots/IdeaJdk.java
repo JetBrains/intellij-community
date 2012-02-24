@@ -475,4 +475,8 @@ public class IdeaJdk extends SdkType implements JavaSdkType {
            type == JavadocOrderRootType.getInstance() ||
            type == AnnotationOrderRootType.getInstance();
   }
+
+  public String getDefaultDocumentationUrl(final @NotNull Sdk sdk) {
+    return JavaSdk.getInstance().getDefaultDocumentationUrl(sdk);
+  }
 }

@@ -106,7 +106,7 @@ public class AndroidSdkConfigurable implements AdditionalDataConfigurable {
     }
     final AndroidSdkAdditionalData androidData = (AndroidSdkAdditionalData)data;
     AndroidPlatform platform = androidData.getAndroidPlatform();
-    myForm.init(androidData.getJavaSdk(), mySdk, platform != null ? androidData.getBuildTarget(platform.getSdk()) : null);
+    myForm.init(androidData.getJavaSdk(), mySdk, platform != null ? androidData.getBuildTarget(platform.getSdkData()) : null);
   }
 
   @Override

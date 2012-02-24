@@ -13,13 +13,16 @@
       <library name="android-sdk-tools-jps">
         <CLASSES>
           <root url="jar://$MODULE_DIR$/../lib/sdklib.jar!/" />
+          <root url="jar://$MODULE_DIR$/../lib/common.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
           <root url="jar://$MODULE_DIR$/../lib/src/sdklib_src.zip!/src" />
+          <root url="jar://$MODULE_DIR$/../lib/src/common_src.zip!/src" />
         </SOURCES>
       </library>
     </orderEntry>
+    <orderEntry type="library" name="NanoXML" level="project" />
   </component>
 </module>
 

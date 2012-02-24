@@ -1290,4 +1290,11 @@ public class ListUtils {
     checkResult()
   }
 
+  public void testAllAssertClassesMethods() {
+    myFixture.addClass 'package foo; public class Assert { public static void foo() {} }'
+    myFixture.addClass 'package bar; public class Assert { public static void bar() {} }'
+    configure()
+    assert myFixture.lookupElementStrings == ['Assert.bar', 'Assert.foo']
+  }
+
 }

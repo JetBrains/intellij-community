@@ -15,6 +15,7 @@
  */
 package com.intellij.designer.designSurface;
 
+import com.intellij.designer.DesignerToolWindowManager;
 import com.intellij.designer.componentTree.TreeComponentDecorator;
 import com.intellij.designer.designSurface.tools.InputTool;
 import com.intellij.designer.designSurface.tools.SelectionTool;
@@ -22,12 +23,15 @@ import com.intellij.designer.designSurface.tools.ToolProvider;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.model.RadComponentVisitor;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,8 +43,6 @@ import java.awt.*;
  * @author Alexander Lobas
  */
 public abstract class DesignerEditorPanel extends JPanel implements DataProvider {
-  private final CardLayout myLayout = new CardLayout();
-
   protected static final Integer LAYER_COMPONENT = JLayeredPane.DEFAULT_LAYER;
   protected static final Integer LAYER_STATIC_DECORATION = JLayeredPane.POPUP_LAYER;
   protected static final Integer LAYER_DECORATION = JLayeredPane.DRAG_LAYER;
@@ -50,6 +52,12 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   protected static final Integer LAYER_INPLACE_EDITING = LAYER_BUTTONS + 100;
 
   @NonNls private final static String DESIGNER_CARD = "designer";
+  @NonNls private final static String ERROR_CARD = "error";
+
+  @NotNull protected final Module myModule;
+  @NotNull protected final VirtualFile myFile;
+
+  private final CardLayout myLayout = new CardLayout();
   private JPanel myDesignerCard;
   private CaptionPanel myHorizontalCaption;
   private CaptionPanel myVerticalCaption;
@@ -58,18 +66,22 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   protected GlassLayer myGlassLayer;
   private DecorationLayer myDecorationLayer;
   private FeedbackLayer myFeedbackLayer;
+
   protected ToolProvider myToolProvider;
   protected EditableArea mySurfaceArea;
 
-  @NonNls private final static String ERROR_CARD = "error";
   private JLabel myErrorLabel;
 
   protected RadComponent myRootComponent;
 
   public DesignerEditorPanel(@NotNull Module module, @NotNull VirtualFile file) {
+    myModule = module;
+    myFile = file;
+
     setLayout(myLayout);
     createDesignerCard();
     createErrorCard();
+
     myToolProvider.loadDefaultTool();
   }
 
@@ -190,14 +202,21 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   @Nullable
   protected abstract EditOperation processRootOperation(OperationContext context);
 
-  public final void showError(@NonNls String message, Throwable e) {
+  public void showError(@NonNls String message, Throwable e) {
     myRootComponent = null;
     myErrorLabel.setText(message + e.toString());
     myLayout.show(this, ERROR_CARD);
+    DesignerToolWindowManager.getInstance(myModule.getProject()).refresh();
     repaint();
     if (ApplicationManagerEx.getApplicationEx().isInternal()) {
       e.printStackTrace();
     }
+  }
+
+  public void activate() {
+  }
+
+  public void deactivate() {
   }
 
   @Override

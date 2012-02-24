@@ -8,6 +8,7 @@ import com.intellij.openapi.roots.OrderEntry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.gradle.*;
 import org.jetbrains.plugins.gradle.model.intellij.IntellijEntityVisitor;
+import org.jetbrains.plugins.gradle.model.intellij.ModuleAwareContentRoot;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import java.util.HashMap;
@@ -90,9 +91,17 @@ public class GradleDiffUtil {
         @Override
         public void visit(@NotNull Module module) {
           context.register(new GradleModulePresenceChange(null, module));
+          for (ModuleAwareContentRoot contentRoot : context.getPlatformFacade().getContentRoots(module)) {
+            visit(contentRoot);
+          }
           for (OrderEntry entry : context.getPlatformFacade().getOrderEntries(module)) {
             GradleUtil.dispatch(entry, this);
           }
+        }
+
+        @Override
+        public void visit(@NotNull ModuleAwareContentRoot contentRoot) {
+          // TODO den implement 
         }
 
         @Override

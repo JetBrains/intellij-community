@@ -81,6 +81,9 @@
       <implementation-class>org.jetbrains.plugins.gradle.model.id.GradleEntityIdMapper</implementation-class>
     </component>
     <component>
+      <implementation-class>org.jetbrains.plugins.gradle.util.GradleProjectStructureContext</implementation-class>
+    </component>
+    <component>
       <implementation-class>org.jetbrains.plugins.gradle.importing.GradleLocalNodeImportHelper</implementation-class>
     </component>
     <component>

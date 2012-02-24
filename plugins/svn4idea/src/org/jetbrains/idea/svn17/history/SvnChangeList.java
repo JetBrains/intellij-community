@@ -474,12 +474,12 @@ public class SvnChangeList implements CommittedChangeList {
     }
 
     final FilePath filePath = ChangesUtil.getFilePath(change);
-    final SimpleContentRevision before = createRevisionForProperty(wasUrl, change.getBeforeRevision(), filePath);
-    final SimpleContentRevision after = createRevisionForProperty(becameUrl, change.getAfterRevision(), filePath);
-    final String beforeText = before == null ? null : before.getContent();
-    final String afterText = after == null ? null : after.getContent();
-    if (Comparing.equal(beforeText, afterText) || StringUtil.isEmptyOrSpaces(beforeText) && StringUtil.isEmptyOrSpaces(afterText)) return;
-    final Change additional = new Change(before, after);
+    final Change additional = new Change(change.getBeforeRevision() == null ? null :
+                                         new SvnLazyPropertyContentRevision(filePath, change.getBeforeRevision().getRevisionNumber(),
+                                                                            myVcs.getProject(), wasUrl),
+                                         change.getAfterRevision() == null ? null :
+                                         new SvnLazyPropertyContentRevision(filePath, change.getAfterRevision().getRevisionNumber(),
+                                                                            myVcs.getProject(), becameUrl));
     change.addAdditionalLayerElement(SvnChangeProvider.PROPERTY_LAYER, additional);
   }
 

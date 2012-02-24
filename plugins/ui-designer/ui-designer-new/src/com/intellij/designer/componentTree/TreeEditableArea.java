@@ -19,11 +19,11 @@ import com.intellij.designer.designSurface.*;
 import com.intellij.designer.designSurface.tools.InputTool;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.ArrayList;
@@ -69,8 +69,7 @@ public final class TreeEditableArea implements EditableArea, FeedbackTreeLayer {
 
   @Override
   public void select(@NotNull RadComponent component) {
-    myTreeBuilder.queueUpdate();
-    myTreeBuilder.select(component);
+    setRawSelection(component);
   }
 
   @Override
@@ -92,9 +91,23 @@ public final class TreeEditableArea implements EditableArea, FeedbackTreeLayer {
     setRawSelection(components);
   }
 
-  private void setRawSelection(Collection<RadComponent> components) {
+  @Override
+  public void deselectAll() {
+    setRawSelection(null);
+  }
+
+  private void setRawSelection(@Nullable Object value) {
     myTreeBuilder.queueUpdate();
-    myTreeBuilder.select(components.toArray(), null);
+
+    if (value == null) {
+      myTreeBuilder.select(ArrayUtil.EMPTY_OBJECT_ARRAY, null);
+    }
+    else if (value instanceof RadComponent) {
+      myTreeBuilder.select(value, null);
+    }
+    else {
+      myTreeBuilder.select(((Collection)value).toArray(), null);
+    }
   }
 
   private Collection<RadComponent> getRawSelection() {

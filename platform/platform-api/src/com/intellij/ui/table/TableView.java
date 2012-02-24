@@ -33,7 +33,7 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
 
   public TableView(final ListTableModel<Item> model) {
     super(model);
-    setModel(model);
+    setModelAndUpdateColumns(model);
   }
 
   public void setModel(final TableModel dataModel) {
@@ -41,7 +41,16 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
     super.setModel(dataModel);
   }
 
+  /**
+   * use {@link #setModelAndUpdateColumns(com.intellij.util.ui.ListTableModel<Item>)} instead
+   * @param model
+   */
+  @Deprecated
   public void setModel(final ListTableModel<Item> model) {
+    setModelAndUpdateColumns(model);
+  }
+  
+  public void setModelAndUpdateColumns(final ListTableModel<Item> model) {
     super.setModel(model);
     updateColumnSizes();
   }

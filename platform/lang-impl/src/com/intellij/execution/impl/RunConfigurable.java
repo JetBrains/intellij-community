@@ -41,10 +41,12 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.config.StorageAccessors;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -618,11 +620,18 @@ class RunConfigurable extends BaseConfigurable {
     }
 
     // if apply succeeded, update the list of configurations in RunManager
-    manager.removeConfigurations(type);
-    for (final RunConfigurationBean stableConfiguration : stableConfigurations) {
-      manager.addConfiguration(stableConfiguration.getSettings(),
-                               stableConfiguration.isShared(),
-                               stableConfiguration.getStepsBeforeLaunch());
+    Set<RunnerAndConfigurationSettings> toDeleteSettings = new THashSet<RunnerAndConfigurationSettings>();
+    for (RunConfiguration each : manager.getConfigurations(type)) {
+      ContainerUtil.addIfNotNull(toDeleteSettings, manager.getSettings(each));
+    }
+
+    for (RunConfigurationBean each : stableConfigurations) {
+      toDeleteSettings.remove(each.getSettings());
+      manager.addConfiguration(each.getSettings(), each.isShared(), each.getStepsBeforeLaunch());
+    }
+
+    for (RunnerAndConfigurationSettings each : toDeleteSettings) {
+      manager.removeConfiguration(each);
     }
   }
 

@@ -1,6 +1,5 @@
 package org.jetbrains.android;
 
-import com.android.resources.ResourceType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -12,8 +11,8 @@ import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.xml.NanoXmlUtil;
-import org.jetbrains.android.util.AndroidResourceUtil;
 import org.jetbrains.android.util.ResourceEntry;
+import org.jetbrains.android.util.ValueResourcesFileParser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,75 +39,38 @@ public class AndroidValueResourcesIndex extends FileBasedIndexExtension<Resource
 
   private final DataIndexer<ResourceEntry, Set<ResourceEntry>, FileContent> myIndexer =
     new DataIndexer<ResourceEntry, Set<ResourceEntry>, FileContent>() {
-    @NotNull
-    public Map<ResourceEntry, Set<ResourceEntry>> map(FileContent inputData) {
+      @NotNull
+      public Map<ResourceEntry, Set<ResourceEntry>> map(FileContent inputData) {
 
-      if (CharArrayUtil.indexOf(inputData.getContentAsText(), "<resources", 0) < 0) {
-        return Collections.emptyMap();
+        if (CharArrayUtil.indexOf(inputData.getContentAsText(), "<resources", 0) < 0) {
+          return Collections.emptyMap();
+        }
+        final Map<ResourceEntry, Set<ResourceEntry>> result = new HashMap<ResourceEntry, Set<ResourceEntry>>();
+
+        NanoXmlUtil.parse(new ByteArrayInputStream(inputData.getContent()), new ValueResourcesFileParser() {
+          @Override
+          protected void stop() {
+            throw new NanoXmlUtil.ParserStoppedException();
+          }
+
+          @Override
+          protected void process(@NotNull ResourceEntry entry) {
+            result.put(entry, Collections.<ResourceEntry>emptySet());
+
+            final ResourceEntry typeMarkerEntry = createTypeMarkerEntry(entry.getType());
+            Set<ResourceEntry> set = result.get(typeMarkerEntry);
+
+            if (set == null) {
+              set = new HashSet<ResourceEntry>();
+              result.put(typeMarkerEntry, set);
+            }
+            set.add(entry);
+          }
+        });
+
+        return result;
       }
-      final Map<ResourceEntry, Set<ResourceEntry>> result = new HashMap<ResourceEntry, Set<ResourceEntry>>();
-      
-      NanoXmlUtil.parse(new ByteArrayInputStream(inputData.getContent()), new NanoXmlUtil.IXMLBuilderAdapter() {
-        private boolean mySeenResources = false;
-        private String myLastTypeAttr = null;
-        private String myLastNameAttr = null;
-        
-        @Override
-        public void startElement(String name, String nsPrefix, String nsURI, String systemID, int lineNr) throws Exception {
-          super.startElement(name, nsPrefix, nsURI, systemID, lineNr);
-          
-          if (!mySeenResources) {
-            if ("resources".equals(name)) {
-              mySeenResources = true;
-            }
-            else {
-              throw new NanoXmlUtil.ParserStoppedException();
-            }
-          }
-          myLastNameAttr = null;
-          myLastTypeAttr = null;
-        }
-
-        @Override
-        public void addAttribute(String key, String nsPrefix, String nsURI, String value, String type) throws Exception {
-          super.addAttribute(key, nsPrefix, nsURI, value, type);
-
-          if ("name".equals(key)) {
-            myLastNameAttr = value;
-          }
-          else if ("type".equals(key)) {
-            myLastTypeAttr = value;
-          }
-        }
-
-        @Override
-        public void elementAttributesProcessed(String name, String nsPrefix, String nsURI) throws Exception {
-          super.elementAttributesProcessed(name, nsPrefix, nsURI);
-          
-          if (myLastNameAttr != null && name != null) {
-            final String resType = "item".equals(name)
-                                   ? myLastTypeAttr
-                                   : AndroidResourceUtil.getResourceTypeByTagName(name);
-            if (resType != null && ResourceType.getEnum(resType) != null) {
-              final ResourceEntry entry = new ResourceEntry(resType, myLastNameAttr);
-              result.put(entry, Collections.<ResourceEntry>emptySet());
-
-              final ResourceEntry typeMarkerEntry = createTypeMarkerEntry(resType);
-              Set<ResourceEntry> set = result.get(typeMarkerEntry);
-
-              if (set == null) {
-                set = new HashSet<ResourceEntry>();
-                result.put(typeMarkerEntry, set);
-              }
-              set.add(entry);
-            }
-          }
-        }
-      });
-      
-      return result;
-    }
-  };
+    };
 
   public static ResourceEntry createTypeMarkerEntry(String type) {
     return new ResourceEntry(type, "TYPE_MARKER_RESOURCE");

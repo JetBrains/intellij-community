@@ -34,6 +34,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 
@@ -53,7 +54,7 @@ class GitCompareBranchesLogPanel extends JPanel {
 
   GitCompareBranchesLogPanel(@NotNull Project project, @NotNull String branchName, @NotNull String currentBranchName,
                                     @NotNull GitCommitCompareInfo compareInfo, @NotNull GitRepository initialRepo) {
-    super(new BorderLayout());
+    super(new BorderLayout(UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP));
     myProject = project;
     myBranchName = branchName;
     myCurrentBranchName = currentBranchName;
@@ -68,11 +69,16 @@ class GitCompareBranchesLogPanel extends JPanel {
     final ChangesBrowser changesBrowser = new ChangesBrowser(myProject, null, Collections.<Change>emptyList(), null, false, true,
                                                              null, ChangesBrowser.MyUseCase.COMMITTED_CHANGES, null);
 
-    myHeadToBranchListPanel = new GitCommitListPanel(myProject, getHeadToBranchCommits(myInitialRepo));
-    myBranchToHeadListPanel = new GitCommitListPanel(myProject, getBranchToHeadCommits(myInitialRepo));
+    myHeadToBranchListPanel = new GitCommitListPanel(getHeadToBranchCommits(myInitialRepo),
+                                                     String.format("Branch %s is fully merged to %s", myBranchName, myCurrentBranchName));
+    myBranchToHeadListPanel = new GitCommitListPanel(getBranchToHeadCommits(myInitialRepo),
+                                                     String.format("Branch %s is fully merged to %s", myCurrentBranchName, myBranchName));
 
     addSelectionListener(myHeadToBranchListPanel, myBranchToHeadListPanel, changesBrowser);
     addSelectionListener(myBranchToHeadListPanel, myHeadToBranchListPanel, changesBrowser);
+
+    myHeadToBranchListPanel.registerDiffAction(changesBrowser.getDiffAction());
+    myBranchToHeadListPanel.registerDiffAction(changesBrowser.getDiffAction());
 
     JPanel htb = layoutCommitListPanel(myCurrentBranchName, true);
     JPanel bth = layoutCommitListPanel(myCurrentBranchName, false);
@@ -101,10 +107,11 @@ class GitCompareBranchesLogPanel extends JPanel {
       }
     });
 
-    JPanel repoSelectorPanel = new JPanel(new BorderLayout(UIUtil.DEFAULT_VGAP, UIUtil.DEFAULT_HGAP));
+    JPanel repoSelectorPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
     JBLabel label = new JBLabel("Repository: ");
     label.setLabelFor(repoSelectorPanel);
-    repoSelectorPanel.add(label, BorderLayout.WEST);
+    label.setDisplayedMnemonic(KeyEvent.VK_R);
+    repoSelectorPanel.add(label);
     repoSelectorPanel.add(repoSelector);
 
     if (myCompareInfo.getRepositories().size() < 2) {

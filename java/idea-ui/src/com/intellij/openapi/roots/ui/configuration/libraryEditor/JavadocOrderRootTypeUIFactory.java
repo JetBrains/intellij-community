@@ -24,14 +24,13 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.projectRoots.JavaSdk;
-import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ui.SdkPathEditor;
 import com.intellij.openapi.projectRoots.ui.Util;
 import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.ui.OrderRootTypeUIFactory;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.AnActionButtonUpdater;
@@ -86,29 +85,14 @@ public class JavadocOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
     }
 
     private void onSpecifyUrlButtonClicked() {
-      VirtualFile virtualFile  = Util.showSpecifyJavadocUrlDialog(myPanel, getInitialValue());
+      final String defaultDocsUrl = mySdk == null ? "" : StringUtil.notNullize(mySdk.getSdkType().getDefaultDocumentationUrl(mySdk), "");
+      VirtualFile virtualFile  = Util.showSpecifyJavadocUrlDialog(myPanel, defaultDocsUrl);
       if(virtualFile != null){
         addElement(virtualFile);
         setModified(true);
         requestDefaultFocus();
         setSelectedRoots(new Object[]{virtualFile});
       }
-    }
-
-    private String getInitialValue() {
-      if (mySdk != null) {
-        final JavaSdkVersion version = JavaSdk.getInstance().getVersion(mySdk);
-        if (version == JavaSdkVersion.JDK_1_5) {
-          return "http://download.oracle.com/javase/1.5.0/docs/api/";
-        }
-        else if (version == JavaSdkVersion.JDK_1_6) {
-          return "http://download.oracle.com/javase/6/docs/api/";
-        }
-        else if (version == JavaSdkVersion.JDK_1_7) {
-          return "http://download.oracle.com/javase/7/docs/api/";
-        }
-      }
-      return "";
     }
   }
 }

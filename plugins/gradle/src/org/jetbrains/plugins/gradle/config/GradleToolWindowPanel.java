@@ -9,10 +9,8 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.diff.PlatformFacade;
-import org.jetbrains.plugins.gradle.sync.GradleProjectStructureHelper;
-import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.ui.RichTextControlBuilder;
+import org.jetbrains.plugins.gradle.util.GradleBundle;
 
 import javax.swing.*;
 import java.awt.*;
@@ -44,25 +42,15 @@ public abstract class GradleToolWindowPanel extends SimpleToolWindowPanel {
   private final JPanel     myContent = new JPanel(myLayout);
 
   private final Project                      myProject;
-  private final PlatformFacade               myProjectFacade;
-  private final GradleProjectStructureHelper myProjectStructureHelper;
-  
-  protected GradleToolWindowPanel(@NotNull Project project,
-                                  @Nullable PlatformFacade projectFacade,
-                                  @NotNull GradleProjectStructureHelper projectStructureHelper,
-                                  @NotNull String place)
-  {
+
+  protected GradleToolWindowPanel(@NotNull Project project, @NotNull String place) {
     super(true);
     myProject = project;
-    myProjectFacade = projectFacade;
-    myProjectStructureHelper = projectStructureHelper;
     final ActionManager actionManager = ActionManager.getInstance();
     final ActionGroup actionGroup = (ActionGroup)actionManager.getAction(TOOL_WINDOW_TOOLBAR_ID);
     ActionToolbar actionToolbar = actionManager.createActionToolbar(place, actionGroup, true);
     setToolbar(actionToolbar.getComponent());
-    initContent();
     setContent(myContent);
-    update();
 
     MessageBusConnection connection = project.getMessageBus().connect(project);
     connection.subscribe(GradleConfigNotifier.TOPIC, new GradleConfigNotifier() {
@@ -73,7 +61,7 @@ public abstract class GradleToolWindowPanel extends SimpleToolWindowPanel {
     });
   }
 
-  private void initContent() {
+  public void initContent() {
     final JComponent payloadControl = buildContent();
     myContent.add(ScrollPaneFactory.createScrollPane(payloadControl), CONTENT_CARD_NAME);
     RichTextControlBuilder builder = new RichTextControlBuilder();
@@ -83,6 +71,7 @@ public abstract class GradleToolWindowPanel extends SimpleToolWindowPanel {
     builder.setText(GradleBundle.message("gradle.toolwindow.text.no.linked.project"));
     final JComponent noLinkedProjectControl = builder.build();
     myContent.add(noLinkedProjectControl, NON_LINKED_CARD_NAME);
+    update();
   }
 
   /**
@@ -99,16 +88,6 @@ public abstract class GradleToolWindowPanel extends SimpleToolWindowPanel {
   @NotNull
   public Project getProject() {
     return myProject;
-  }
-
-  @NotNull
-  public PlatformFacade getProjectFacade() {
-    return myProjectFacade;
-  }
-
-  @NotNull
-  public GradleProjectStructureHelper getProjectStructureHelper() {
-    return myProjectStructureHelper;
   }
 
   /**

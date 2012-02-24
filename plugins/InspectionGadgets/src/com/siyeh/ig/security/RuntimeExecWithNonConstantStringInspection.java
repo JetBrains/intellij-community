@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,14 @@
 package com.siyeh.ig.security;
 
 import com.intellij.psi.*;
-import com.intellij.psi.util.ConstantExpressionUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class RuntimeExecWithNonConstantStringInspection
-  extends BaseInspection {
+public class RuntimeExecWithNonConstantStringInspection extends BaseInspection {
 
   @Override
   @NotNull
@@ -35,15 +34,13 @@ public class RuntimeExecWithNonConstantStringInspection
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "runtime.exec.call.display.name");
+    return InspectionGadgetsBundle.message("runtime.exec.with.non.constant.string.display.name");
   }
 
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "runtime.exec.with.non.constant.string.problem.descriptor");
+    return InspectionGadgetsBundle.message("runtime.exec.with.non.constant.string.problem.descriptor");
   }
 
   @Override
@@ -54,13 +51,10 @@ public class RuntimeExecWithNonConstantStringInspection
   private static class RuntimeExecVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(
-      @NotNull PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      final PsiReferenceExpression methodExpression =
-        expression.getMethodExpression();
-      @NonNls final String methodName =
-        methodExpression.getReferenceName();
+      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
+      @NonNls final String methodName = methodExpression.getReferenceName();
       if (!"exec".equals(methodName)) {
         return;
       }
@@ -77,22 +71,16 @@ public class RuntimeExecWithNonConstantStringInspection
         return;
       }
       final PsiExpressionList argumentList = expression.getArgumentList();
-      final PsiExpression[] args = argumentList.getExpressions();
-      if (args.length == 0) {
+      final PsiExpression[] arguments = argumentList.getExpressions();
+      if (arguments.length == 0) {
         return;
       }
-      final PsiExpression arg = args[0];
-      final PsiType type = arg.getType();
-      if (type == null) {
+      final PsiExpression argument = arguments[0];
+      final PsiType type = argument.getType();
+      if (type == null || !type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
         return;
       }
-      final String typeText = type.getCanonicalText();
-      if (!CommonClassNames.JAVA_LANG_STRING.equals(typeText)) {
-        return;
-      }
-      final String stringValue =
-        (String)ConstantExpressionUtil.computeCastTo(arg, type);
-      if (stringValue != null) {
+      if (PsiUtil.isConstantExpression(argument)) {
         return;
       }
       registerMethodCallError(expression);

@@ -989,7 +989,7 @@ class Foo {
     myFixture.configureByText "a.java", "class Foo {{ <caret> }}"
     type 'Arrays.'
     myFixture.checkResult "class Foo {{ Arrays.<caret> }}"
-    assert !lookup
+    assert 'Arrays.asList' in myFixture.lookupElementStrings
   }
 
 

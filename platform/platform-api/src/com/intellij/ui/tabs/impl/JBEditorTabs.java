@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,14 @@ package com.intellij.ui.tabs.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.tabs.JBTabsPosition;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsUtil;
+import com.intellij.ui.tabs.impl.singleRow.ScrollableSingleRowLayout;
+import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout;
 import com.intellij.ui.tabs.impl.table.TableLayout;
 import com.intellij.util.ui.SameColor;
 import com.intellij.util.ui.UIUtil;
@@ -41,21 +44,28 @@ public class JBEditorTabs extends JBTabsImpl {
   }
 
   @Override
-  protected void paintFirstGhost(Graphics2D g2d) {
-    if (!isEditorTabs()) {
-      super.paintFirstGhost(g2d);
+  protected SingleRowLayout createSingleRowLayout() {
+    if (ApplicationManager.getApplication().isInternal()) {
+      return new ScrollableSingleRowLayout(this);
     }
+    return super.createSingleRowLayout();
+  }
+
+  @Override
+  public boolean isEditorTabs() {
+    return true;
+  }
+
+  @Override
+  protected void paintFirstGhost(Graphics2D g2d) {
   }
 
   @Override
   protected void paintLastGhost(Graphics2D g2d) {
-    if (!isEditorTabs()) {
-      super.paintLastGhost(g2d);
-    }
   }
 
   public boolean isGhostsAlwaysVisible() {
-    return super.isGhostsAlwaysVisible() && !isEditorTabs();
+    return false;
   }
 
   protected void doPaintInactive(Graphics2D g2d,
@@ -109,62 +119,58 @@ public class JBEditorTabs extends JBTabsImpl {
 
   @Override
   protected void doPaintBackground(Graphics2D g2d, Rectangle clip) {
-    if (isEditorTabs()) {
-      g2d.setColor(UIUtil.getPanelBackground());
-      g2d.fill(clip);
-      
-      g2d.setColor(new Color(0, 0, 0, 80));
-      g2d.fill(clip);
-      
-      List<TabInfo> visibleInfos = getVisibleInfos();
-      
-      final boolean vertical = getTabsPosition() == JBTabsPosition.left || getTabsPosition() == JBTabsPosition.right;
-      
-      Insets insets = getTabsBorder().getEffectiveBorder();
+    g2d.setColor(UIUtil.getPanelBackground());
+    g2d.fill(clip);
 
-      int maxOffset = 0;
-      int maxLength = 0;
-      
-      for (int i = visibleInfos.size() - 1; i >= 0; i--) {
-        TabInfo visibleInfo = visibleInfos.get(i);
-        TabLabel tabLabel = myInfo2Label.get(visibleInfo);
-        Rectangle r = tabLabel.getBounds();
-        if (r.width == 0 || r.height == 0) continue;
-        maxOffset = vertical ? r.y + r.height : r.x + r.width;
-        maxLength = vertical ? r.width : r.height;
-        break;
-      }
-      
-      maxOffset++;
-      
-      Rectangle r2 = getBounds();
+    g2d.setColor(new Color(0, 0, 0, 80));
+    g2d.fill(clip);
 
-      Rectangle rectangle;
-      if (vertical) {
-        rectangle = new Rectangle(insets.left, maxOffset, getWidth(),
-                                  r2.height - maxOffset - insets.top - insets.bottom);
-      } else {
-        int y = r2.y + insets.top;
-        int height = maxLength - insets.top - insets.bottom;
-        if (getTabsPosition() == JBTabsPosition.bottom) {
-          y = r2.height - height - insets.top + TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT;
-        } else {
-          height -= TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT; 
-        }
+    List<TabInfo> visibleInfos = getVisibleInfos();
 
-        rectangle = new Rectangle(maxOffset, y, r2.width - maxOffset - insets.left - insets.right, height);
-      }
+    final boolean vertical = getTabsPosition() == JBTabsPosition.left || getTabsPosition() == JBTabsPosition.right;
 
-      g2d.setPaint(new GradientPaint(rectangle.x, rectangle.y, new Color(255, 255, 255, 160), 
-                                     rectangle.x, rectangle.y + rectangle.height, new Color(255, 255, 255, 120)));
-      g2d.fillRect(rectangle.x, rectangle.y, rectangle.width, rectangle.height + (vertical ? 1 : 0));
-      
-      if (!vertical) {
-        g2d.setColor(new SameColor(210));
-        g2d.drawLine(rectangle.x, rectangle.y, rectangle.x + rectangle.width, rectangle.y);
-      }
+    Insets insets = getTabsBorder().getEffectiveBorder();
+
+    int maxOffset = 0;
+    int maxLength = 0;
+
+    for (int i = visibleInfos.size() - 1; i >= 0; i--) {
+      TabInfo visibleInfo = visibleInfos.get(i);
+      TabLabel tabLabel = myInfo2Label.get(visibleInfo);
+      Rectangle r = tabLabel.getBounds();
+      if (r.width == 0 || r.height == 0) continue;
+      maxOffset = vertical ? r.y + r.height : r.x + r.width;
+      maxLength = vertical ? r.width : r.height;
+      break;
+    }
+
+    maxOffset++;
+
+    Rectangle r2 = getBounds();
+
+    Rectangle rectangle;
+    if (vertical) {
+      rectangle = new Rectangle(insets.left, maxOffset, getWidth(),
+                                r2.height - maxOffset - insets.top - insets.bottom);
     } else {
-      super.doPaintBackground(g2d, clip);
+      int y = r2.y + insets.top;
+      int height = maxLength - insets.top - insets.bottom;
+      if (getTabsPosition() == JBTabsPosition.bottom) {
+        y = r2.height - height - insets.top + TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT;
+      } else {
+        height -= TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT;
+      }
+
+      rectangle = new Rectangle(maxOffset, y, r2.width - maxOffset - insets.left - insets.right, height);
+    }
+
+    g2d.setPaint(new GradientPaint(rectangle.x, rectangle.y, new Color(255, 255, 255, 160),
+                                   rectangle.x, rectangle.y + rectangle.height, new Color(255, 255, 255, 120)));
+    g2d.fillRect(rectangle.x, rectangle.y, rectangle.width, rectangle.height + (vertical ? 1 : 0));
+
+    if (!vertical) {
+      g2d.setColor(new SameColor(210));
+      g2d.drawLine(rectangle.x, rectangle.y, rectangle.x + rectangle.width, rectangle.y);
     }
   }
 

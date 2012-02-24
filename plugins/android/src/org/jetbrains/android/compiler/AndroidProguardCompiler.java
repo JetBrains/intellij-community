@@ -129,7 +129,7 @@ public class AndroidProguardCompiler implements ClassPostProcessingCompiler {
             }
           }
 
-          final String sdkPath = FileUtil.toSystemDependentName(platform.getSdk().getLocation());
+          final String sdkPath = FileUtil.toSystemDependentName(platform.getSdkData().getLocation());
 
           final VirtualFile outputDir = AndroidDexCompiler.getOutputDirectoryForDex(module);
           final String outputJarOsPath = FileUtil.toSystemDependentName(outputDir.getPath() + '/' + PROGUARD_OUTPUT_JAR_NAME);

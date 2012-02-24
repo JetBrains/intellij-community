@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -514,17 +514,20 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   protected PsiDirectory[] getSelectedDirectoriesInAmbiguousCase(@NotNull final DefaultMutableTreeNode node) {
     final Object userObject = node.getUserObject();
     if (userObject instanceof AbstractModuleNode) {
-      final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(((AbstractModuleNode)userObject).getValue());
-      final VirtualFile[] sourceRoots = moduleRootManager.getSourceRoots();
-      List<PsiDirectory> dirs = new ArrayList<PsiDirectory>(sourceRoots.length);
-      final PsiManager psiManager = PsiManager.getInstance(myProject);
-      for (final VirtualFile sourceRoot : sourceRoots) {
-        final PsiDirectory directory = psiManager.findDirectory(sourceRoot);
-        if (directory != null) {
-          dirs.add(directory);
+      final Module module = ((AbstractModuleNode)userObject).getValue();
+      if (module != null) {
+        final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
+        final VirtualFile[] sourceRoots = moduleRootManager.getSourceRoots();
+        List<PsiDirectory> dirs = new ArrayList<PsiDirectory>(sourceRoots.length);
+        final PsiManager psiManager = PsiManager.getInstance(myProject);
+        for (final VirtualFile sourceRoot : sourceRoots) {
+          final PsiDirectory directory = psiManager.findDirectory(sourceRoot);
+          if (directory != null) {
+            dirs.add(directory);
+          }
         }
+        return dirs.toArray(new PsiDirectory[dirs.size()]);
       }
-      return dirs.toArray(new PsiDirectory[dirs.size()]);
     }
     return PsiDirectory.EMPTY_ARRAY;
   }

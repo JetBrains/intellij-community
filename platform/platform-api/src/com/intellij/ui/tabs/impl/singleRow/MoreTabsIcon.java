@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,23 +15,20 @@
  */
 package com.intellij.ui.tabs.impl.singleRow;
 
-import com.intellij.openapi.ui.popup.ActiveIcon;
 import com.intellij.openapi.util.IconLoader;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 
 /**
  * @author pegov
  */
-public abstract class MoreTabsIcon extends MoreIcon {
-  
-  private final ActiveIcon myIcon =
-    new ActiveIcon(IconLoader.getIcon("/general/moreTabs.png"), IconLoader.getIcon("/general/moreTabs.png"));
+public abstract class MoreTabsIcon {
+  final Icon myIcon = IconLoader.getIcon("/general/moreTabs.png");
+  private boolean myPainted;
 
-  @Override
   public void paintIcon(final Component c, final Graphics g) {
-    myIcon.setActive(isActive());
-
     final Rectangle moreRect = getIconRec();
 
     if (moreRect == null) return;
@@ -39,18 +36,23 @@ public abstract class MoreTabsIcon extends MoreIcon {
     int iconY = getIconY(moreRect);
     int iconX = getIconX(moreRect);
 
-    if (myLeftPainted || myRightPainted) {
+    if (myPainted) {
       myIcon.paintIcon(c, g, iconX, iconY);
     }
   }
   
-  @Override
-  public int getIconWidth() {
-    return myIcon.getIconWidth() + myGap; 
+  protected int getIconX(final Rectangle iconRec) {
+    return iconRec.x + iconRec.width / 2 - (myIcon.getIconWidth() + 2) / 2;
   }
 
-  @Override
-  public int getIconHeight() {
-    return myIcon.getIconHeight();
+  protected int getIconY(final Rectangle iconRec) {
+    return iconRec.y + iconRec.height / 2 - myIcon.getIconHeight() / 2;
+  }
+
+  @Nullable
+  protected abstract Rectangle getIconRec();
+
+  public void setPainted(boolean painted) {
+    myPainted = painted;
   }
 }

@@ -134,8 +134,8 @@ class AndroidSdkConfigurableForm {
     }
 
     mySdkLocation = androidSdk != null ? androidSdk.getHomePath() : null;
-    AndroidSdk androidSdkObject = mySdkLocation != null ? AndroidSdk.parse(mySdkLocation, new EmptySdkLog()) : null;
-    updateBuildTargets(androidSdkObject);
+    AndroidSdkData androidSdkData = mySdkLocation != null ? AndroidSdkData.parse(mySdkLocation, new EmptySdkLog()) : null;
+    updateBuildTargets(androidSdkData);
 
     if (buildTarget != null) {
       for (int i = 0; i < myBuildTargetsModel.getSize(); i++) {
@@ -157,11 +157,11 @@ class AndroidSdkConfigurableForm {
     }
   }
 
-  private void updateBuildTargets(AndroidSdk androidSdk) {
+  private void updateBuildTargets(AndroidSdkData androidSdkData) {
     myBuildTargetsModel.removeAllElements();
 
-    if (androidSdk != null) {
-      for (IAndroidTarget target : androidSdk.getTargets()) {
+    if (androidSdkData != null) {
+      for (IAndroidTarget target : androidSdkData.getTargets()) {
         myBuildTargetsModel.addElement(target);
       }
     }

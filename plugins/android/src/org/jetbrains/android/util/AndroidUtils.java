@@ -126,8 +126,6 @@ public class AndroidUtils {
   @NonNls public static final String ANDROID_TARGET_PROPERTY = "target";
   @NonNls public static final String ANDROID_LIBRARY_REFERENCE_PROPERTY_PREFIX = "android.library.reference.";
 
-  @NonNls public static final String PNG_EXTENSION = "png";
-
   private AndroidUtils() {
   }
 

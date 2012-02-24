@@ -16,6 +16,7 @@
 package com.intellij.compiler.impl;
 
 import com.intellij.openapi.compiler.CompileScope;
+import com.intellij.openapi.compiler.ExportableUserDataHolderBase;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
@@ -24,7 +25,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.FileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -33,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class OneProjectItemCompileScope extends UserDataHolderBase implements CompileScope{
+public class OneProjectItemCompileScope extends ExportableUserDataHolderBase implements CompileScope{
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.OneProjectItemCompileScope");
   private final Project myProject;
   private final VirtualFile myFile;

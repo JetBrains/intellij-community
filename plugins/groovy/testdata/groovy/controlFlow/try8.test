@@ -16,14 +16,13 @@ finally {
 6(14) element: Method call MAYBE_RETURN
 7(16) element: Finally clause
 8(7,9)  CALL 7
-9(19) AFTER CALL 8
+9(18) AFTER CALL 8
 10(7,11)  CALL 7
-11(19) AFTER CALL 10
+11(18) AFTER CALL 10
 12(7,13)  CALL 7
-13(19) AFTER CALL 12
+13(18) AFTER CALL 12
 14(7,15)  CALL 7
-15(19) AFTER CALL 14
+15(18) AFTER CALL 14
 16(17) READ b
-17(18) element: Method call MAYBE_RETURN
-18(9,11,13,15)  RETURN
-19() element: null
+17(9,11,13,15)  RETURN
+18() element: null

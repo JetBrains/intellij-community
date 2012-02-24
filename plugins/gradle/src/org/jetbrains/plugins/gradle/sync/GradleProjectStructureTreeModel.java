@@ -3,26 +3,24 @@ package org.jetbrains.plugins.gradle.sync;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.LibraryOrderEntry;
-import com.intellij.openapi.roots.ModuleOrderEntry;
-import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.RootPolicy;
+import com.intellij.openapi.roots.*;
 import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.config.GradleTextAttributes;
 import org.jetbrains.plugins.gradle.diff.*;
 import org.jetbrains.plugins.gradle.model.id.*;
+import org.jetbrains.plugins.gradle.model.intellij.ModuleAwareContentRoot;
+import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNodeComparator;
 import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNode;
 import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNodeDescriptor;
+import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
+import org.jetbrains.plugins.gradle.util.GradleProjectStructureContext;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Model for the target project structure tree used by the gradle integration.
@@ -55,18 +53,17 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
   private final ObsoleteChangesDispatcher myObsoleteChangesDispatcher = new ObsoleteChangesDispatcher();
   private final NewChangesDispatcher      myNewChangesDispatcher      = new NewChangesDispatcher();
 
-  @NotNull private final Project                      myProject;
-  @NotNull private final PlatformFacade               myPlatformFacade;
-  @NotNull private final GradleProjectStructureHelper myProjectStructureHelper;
+  @NotNull private final Project                                   myProject;
+  @NotNull private final PlatformFacade                            myPlatformFacade;
+  @NotNull private final GradleProjectStructureHelper              myProjectStructureHelper;
+  @NotNull private final Comparator<GradleProjectStructureNode<?>> myNodeComparator;
 
-  public GradleProjectStructureTreeModel(@NotNull Project project,
-                                         @NotNull PlatformFacade platformFacade,
-                                         @NotNull GradleProjectStructureHelper projectStructureHelper)
-  {
+  public GradleProjectStructureTreeModel(@NotNull Project project, @NotNull GradleProjectStructureContext context) {
     super(null);
     myProject = project;
-    myPlatformFacade = platformFacade;
-    myProjectStructureHelper = projectStructureHelper;
+    myPlatformFacade = context.getPlatformFacade();
+    myProjectStructureHelper = context.getProjectStructureHelper();
+    myNodeComparator = new GradleProjectStructureNodeComparator(context);
     rebuild();
   }
 
@@ -102,6 +99,17 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
       final GradleProjectStructureNode<GradleModuleId> moduleNode = buildNode(moduleId, moduleId.getModuleName());
       myModules.put(module.getName(), moduleNode); // Assuming that module names are unique.
       root.add(moduleNode);
+      
+      // Content roots
+      final Collection<ModuleAwareContentRoot> contentRoots = myPlatformFacade.getContentRoots(module);
+      for (ContentEntry entry : contentRoots) {
+        GradleContentRootId contentRootId = GradleEntityIdMapper.mapEntityToId(entry);
+        GradleProjectStructureNode<GradleContentRootId> contentRootNode
+          = buildNode(contentRootId, getNodeName(contentRootId, contentRoots.size() <= 1));
+        moduleNode.add(contentRootNode);
+      }
+      
+      // Dependencies
       for (OrderEntry orderEntry : myPlatformFacade.getOrderEntries(module)) {
         orderEntry.accept(visitor, null);
       }
@@ -112,10 +120,23 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
       for (GradleProjectStructureNode<?> dependency : dependencies) {
         dependenciesNode.add(dependency);
       }
-      moduleNode.add(dependenciesNode);
     }
 
     setRoot(root);
+  }
+
+  @NotNull
+  private static String getNodeName(@NotNull GradleContentRootId id, boolean singleRoot) {
+    final String name = GradleBundle.message("gradle.import.structure.tree.node.content.root");
+    if (singleRoot) {
+      return name;
+    }
+    final String path = id.getRootPath();
+    final int i = path.lastIndexOf('/');
+    if (i < 0) {
+      return name;
+    }
+    return name + ":" + path.substring(i + 1);
   }
   
   @NotNull
@@ -124,7 +145,7 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
   }
 
   private <T extends GradleEntityId> GradleProjectStructureNode<T> buildNode(@NotNull T id, @NotNull String name) {
-    final GradleProjectStructureNode<T> result = GradleUtil.buildNode(id, name);
+    final GradleProjectStructureNode<T> result = new GradleProjectStructureNode<T>(GradleUtil.buildDescriptor(id, name), myNodeComparator);
     result.addListener(myNodeListener);
     return result;
   }
@@ -136,7 +157,7 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
     }
     GradleProjectStructureNode<GradleModuleId> moduleNode = getModuleNode(id);
     GradleProjectStructureNode<GradleSyntheticId> result
-      = new GradleProjectStructureNode<GradleSyntheticId>(GradleConstants.DEPENDENCIES_NODE_DESCRIPTOR);
+      = new GradleProjectStructureNode<GradleSyntheticId>(GradleConstants.DEPENDENCIES_NODE_DESCRIPTOR, myNodeComparator);
     result.addListener(myNodeListener);
     moduleNode.add(result);
     myModuleDependencies.put(id.getModuleName(), result);
@@ -155,6 +176,17 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
     return moduleNode;
   }
 
+  /**
+   * Notifies current model that particular module roots change just has happened.
+   * <p/>
+   * The model is expected to update itself if necessary.
+   */
+  public void onModuleRootsChange() {
+    for (GradleProjectStructureNode<GradleSyntheticId> node : myModuleDependencies.values()) {
+      node.sortChildren();
+    }
+  }
+  
   /**
    * Asks current model to update its state in accordance with the given changes.
    * 
@@ -378,6 +410,11 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
     @Override
     public void onNodeChanged(@NotNull GradleProjectStructureNode<?> node) {
       nodeChanged(node);
+    }
+
+    @Override
+    public void onNodeChildrenChanged(@NotNull GradleProjectStructureNode<?> parent, int[] childIndices) {
+      nodesChanged(parent, childIndices);
     }
   }
   

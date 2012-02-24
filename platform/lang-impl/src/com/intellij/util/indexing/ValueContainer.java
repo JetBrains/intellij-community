@@ -31,11 +31,17 @@ public abstract class ValueContainer<Value> {
 
     int size();
   }
+
+  static abstract class IntPredicate {
+    abstract boolean contains(int id);
+  }
   
   public abstract IntIterator getInputIdsIterator(Value value);
 
   public abstract boolean isAssociated(Value value, int inputId);
-  
+
+  public abstract IntPredicate getValueAssociationPredicate(Value value);
+
   public abstract Iterator<Value> getValueIterator();
 
   public abstract List<Value> toValueList();

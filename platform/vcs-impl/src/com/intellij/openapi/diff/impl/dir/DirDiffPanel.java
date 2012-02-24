@@ -284,7 +284,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
     mySourceDirField.setEditable(false);
     myTargetDirField.setEditable(false);
 
-    if (srcChooser != null) {
+    if (srcChooser != null && myModel.getSettings().enableChoosers) {
       mySourceDirField.setButtonEnabled(true);
       mySourceDirField.addActionListener(new AbstractAction() {
         @Override
@@ -308,7 +308,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
       mySourceDirField.setPreferredSize(preferredSize);
     }
 
-    if (trgChooser != null) {
+    if (trgChooser != null && myModel.getSettings().enableChoosers) {
       myTargetDirField.setButtonEnabled(true);
       myTargetDirField.addActionListener(new AbstractAction() {
         @Override

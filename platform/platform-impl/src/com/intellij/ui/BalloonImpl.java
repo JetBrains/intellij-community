@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -159,7 +159,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     if (!cmp.isShowing()) return true;
     if (cmp == myCloseRec) return true;
     if (SwingUtilities.isDescendingFrom(cmp, myComp) || cmp == myComp) return true;
-    if (!myComp.isShowing()) return false;
+    if (myComp == null || !myComp.isShowing()) return false;
     if (new Rectangle(myComp.getLocationOnScreen(), myComp.getSize()).contains(target.getScreenPoint())) return true;
 
     return false;
@@ -197,7 +197,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
                      boolean closeOnClick,
                      int animationCycle,
                      int calloutShift,
-                     int positioChangeXShfit,
+                     int positionChangeXShift,
                      int positionChangeYShift,
                      boolean dialogMode,
                      String title,
@@ -217,7 +217,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     myClickHandler = clickHandler;
     myCloseOnClick = closeOnClick;
     myCalloutshift = calloutShift;
-    myPositionChangeXShift = positioChangeXShfit;
+    myPositionChangeXShift = positionChangeXShift;
     myPositionChangeYShift = positionChangeYShift;
     myDialogMode = dialogMode;
     myTitle = title;
@@ -527,7 +527,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
   }
 
 
-  private EmptyBorder getPointlessBorder() {
+  private static EmptyBorder getPointlessBorder() {
     return new EmptyBorder(getNormalInset(), getNormalInset(), getNormalInset(), getNormalInset());
   }
 

@@ -1,15 +1,10 @@
 <idea-plugin version="2">
-  <name>Subversion 1.7 Experimental Integration</name>
-  <id>Subversion 1.7</id>
-  <version>1.0.1</version>
+  <name>Subversion Integration</name>
+  <id>Subversion</id>
+  <version>1.1</version>
   <category>VCS Integration</category>
-  <idea-version since-build="111.275" until-build="114.999"/>
-  <change-notes>Version 1.0.1 - Added an option for a status operation to be executed with command line client. (for performance reasons)</change-notes>
-  <description>This plugin provides only basic support for Subversion 1.7.
-       Some operations are not implemented.
-       Subversion 1.7 integration is not ready yet.
-       We do NOT guarantee data safety and consistency.
-       Also, we do NOT guarantee that plugin correctly works with Subversion 1.6 and lower working copies!</description>
+  <idea-version since-build="111.275"/>
+  <description>For Subversion 1.7 and older versions</description>
   <depends>com.intellij.modules.vcs</depends>
   <vendor logo="/general/ijLogo.png">JetBrains</vendor>
   <resource-bundle>org.jetbrains.idea.svn17.SvnBundle17</resource-bundle>
@@ -136,7 +131,7 @@
     <applicationService serviceInterface="org.jetbrains.idea.svn17.dialogs.browserCache.Loader17"
                     serviceImplementation="org.jetbrains.idea.svn17.dialogs.browserCache.CacheLoader17"/>
 
-    <vcs name="svn17" vcsClass="org.jetbrains.idea.svn17.SvnVcs17" displayName="Subversion 1.7 Experimental" administrativeAreaName=".svn, _svn"/>
+    <vcs name="svn" vcsClass="org.jetbrains.idea.svn17.SvnVcs17" displayName="Subversion" administrativeAreaName=".svn, _svn"/>
 
     <ComponentRoamingType component="SvnConfiguration" type="DISABLED"/>
     <vcsPopupProvider implementation="org.jetbrains.idea.svn17.actions.SvnQuickListContentProvider"/>

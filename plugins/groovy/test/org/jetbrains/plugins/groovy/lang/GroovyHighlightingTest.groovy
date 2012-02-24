@@ -43,7 +43,6 @@ import org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialConditio
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialIfInspection
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyUnnecessaryReturnInspection
 import org.jetbrains.plugins.groovy.codeInspection.metrics.GroovyOverlyLongMethodInspection
-import org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnInspection
 import org.jetbrains.plugins.groovy.codeInspection.unassignedVariable.UnassignedVariableAccessInspection
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUnresolvedAccessInspection
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUntypedAccessInspection
@@ -502,10 +501,6 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
     doTest(new GroovyAssignabilityCheckInspection());
   }
   
-  public void testMissingReturnInClosure() {
-    doTest(new MissingReturnInspection());
-  }
-
   public void testImmutableConstructorFromJava() {
     myFixture.addFileToProject "a.groovy", '''@groovy.transform.Immutable class Foo { int a; String b }'''
     myFixture.configureByText 'a.java', '''

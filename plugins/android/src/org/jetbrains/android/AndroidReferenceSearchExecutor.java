@@ -24,7 +24,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.Processor;
 import org.jetbrains.android.resourceManagers.LocalResourceManager;
-import org.jetbrains.android.util.AndroidResourceUtil;
+import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -49,7 +49,7 @@ public class AndroidReferenceSearchExecutor extends QueryExecutorBase<PsiReferen
 
     String resType = manager.getFileResourceType((PsiFile)refElement);
     if (resType != null) {
-      String resName = AndroidResourceUtil.getResourceName(resType, vFile.getName());
+      String resName = AndroidCommonUtils.getResourceName(resType, vFile.getName());
       // unless references can be found by a simple CachedBasedRefSearcher
       if (!resName.equals(vFile.getNameWithoutExtension()) && StringUtil.isNotEmpty(resName)) {
         params.getOptimizer().searchWord(resName, params.getEffectiveSearchScope(), true, refElement);

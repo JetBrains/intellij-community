@@ -21,8 +21,10 @@ import com.intellij.ide.diff.JarFileDiffElement;
 import com.intellij.ide.diff.VirtualFileDiffElement;
 import com.intellij.openapi.diff.DirDiffManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFocusManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,12 +54,21 @@ public class DirDiffManagerImpl extends DirDiffManager {
       frame.show();
     } else {
       DirDiffDialog dirDiffDialog = new DirDiffDialog(myProject, model);
-      if (myProject == null || myProject.isDefault()) {
+      if (myProject == null || myProject.isDefault() || isFromModalDialog(myProject)) {
         dirDiffDialog.setModal(true);
       }
       setWindowListener(onWindowClose, dirDiffDialog.getOwner());
       dirDiffDialog.show();
     }
+  }
+
+  public static boolean isFromModalDialog(Project project) {
+    final Component owner = IdeFocusManager.getInstance(project).getFocusOwner();
+    if (owner != null) {
+      final DialogWrapper instance = DialogWrapper.findInstance(owner);
+      return instance != null && instance.isModal();
+    }
+    return false;
   }
 
   private void setWindowListener(final Runnable onWindowClose, final Window window) {

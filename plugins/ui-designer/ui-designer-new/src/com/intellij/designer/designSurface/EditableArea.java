@@ -51,6 +51,7 @@ public interface EditableArea {
 
   void setSelection(@NotNull List<RadComponent> components);
 
+  void deselectAll();
   //////////////////////////////////////////////////////////////////////////////////////////
   //
   // Visual

@@ -17,6 +17,7 @@ package com.intellij.android.designer.componentTree;
 
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.designer.componentTree.TreeComponentDecorator;
+import com.intellij.designer.model.MetaModel;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.ui.ColoredTreeCellRenderer;
 
@@ -26,7 +27,16 @@ import com.intellij.ui.ColoredTreeCellRenderer;
 public final class AndroidTreeDecorator extends TreeComponentDecorator {
   @Override
   public void decorate(RadComponent component, ColoredTreeCellRenderer renderer) {
-    RadViewComponent view = (RadViewComponent)component;
-    renderer.append(view.getTitle());
+    MetaModel metaModel = component.getMetaModel();
+
+    // TODO
+    if (metaModel == null) {
+      RadViewComponent viewComponent = (RadViewComponent)component;
+      renderer.append(viewComponent.getTag().getName());
+    }
+    else {
+      renderer.append(metaModel.getPaletteItem().getTitle());
+      renderer.setIcon(metaModel.getIcon());
+    }
   }
 }

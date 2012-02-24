@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,7 +81,7 @@ public class TabLabel extends JPanel {
     myLabelPlaceholder.setOpaque(false);
     add(myLabelPlaceholder, BorderLayout.CENTER);
 
-    setAligmentToCenter(true);
+    setAlignmentToCenter(true);
 
     myIcon = new LayeredIcon(2);
 
@@ -124,7 +124,7 @@ public class TabLabel extends JPanel {
     return insets;
   }
 
-  public void setAligmentToCenter(boolean toCenter) {
+  public void setAlignmentToCenter(boolean toCenter) {
     if (myCentered == toCenter && myLabel.getParent() != null) return;
 
     myLabelPlaceholder.removeAll();
@@ -250,6 +250,10 @@ public class TabLabel extends JPanel {
   @Override
   public Dimension getPreferredSize() {
     final Dimension size = super.getPreferredSize();
+    if (myActionPanel != null && !myActionPanel.isVisible()) {
+      final Dimension actionPanelSize = myActionPanel.getPreferredSize();
+      size.width += actionPanelSize.width;
+    }
 
     final JBTabsPosition pos = myTabs.getTabsPosition();
     switch (pos) {
@@ -523,6 +527,12 @@ public class TabLabel extends JPanel {
   public void toggleShowActions(boolean show) {
     if (myActionPanel != null) {
       myActionPanel.toggleShowActions(show);
+    }
+  }
+
+  public void setActionPanelVisible(boolean visible) {
+    if (myActionPanel != null) {
+      myActionPanel.setVisible(visible);
     }
   }
 

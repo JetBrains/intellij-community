@@ -635,4 +635,11 @@ public class TypesUtil {
     return PsiImplUtil.normalizeWildcardTypeByPosition(type, expression);
   }
 
+  @Nullable
+  public static PsiType getItemType(@Nullable PsiType containerType) {
+    if (containerType == null) return null;
+
+    if (containerType instanceof PsiArrayType) return ((PsiArrayType)containerType).getComponentType();
+    return PsiUtil.extractIterableTypeParameter(containerType, false);
+  }
 }

@@ -179,6 +179,11 @@ public abstract class SdkType {
     return ProjectBundle.message("sdk.configure.type.home.path", getPresentableName());
   }
 
+  @Nullable
+  public String getDefaultDocumentationUrl(final @NotNull Sdk sdk) {
+    return null;
+  }
+
   public static SdkType[] getAllTypes() {
     List<SdkType> allTypes = new ArrayList<SdkType>();
     Collections.addAll(allTypes, ApplicationManager.getApplication().getComponents(SdkType.class));

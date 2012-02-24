@@ -16,9 +16,9 @@
 package com.intellij.compiler.impl;
 
 import com.intellij.openapi.compiler.CompileScope;
+import com.intellij.openapi.compiler.ExportableUserDataHolderBase;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.roots.FileIndex;
-import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +30,7 @@ import java.util.List;
  * @author Eugene Zhuravlev
  *         Date: Dec 18, 2003
  */
-public abstract class FileIndexCompileScope extends UserDataHolderBase implements CompileScope {
+public abstract class FileIndexCompileScope extends ExportableUserDataHolderBase implements CompileScope {
 
   protected abstract FileIndex[] getFileIndices();
 

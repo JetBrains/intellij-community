@@ -27,7 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import org.jetbrains.android.facet.AndroidFacet;
-import org.jetbrains.android.sdk.AndroidSdk;
+import org.jetbrains.android.sdk.AndroidSdkData;
 import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidUtils;
@@ -68,10 +68,10 @@ public class AvdChooser extends DialogWrapper {
 
   @Nullable
   private static String getAndroidToolPath(@NotNull AndroidFacet facet) {
-    AndroidSdk sdk = facet.getConfiguration().getAndroidSdk();
-    if (sdk == null) return null;
+    AndroidSdkData sdkData = facet.getConfiguration().getAndroidSdk();
+    if (sdkData == null) return null;
     String androidCmd = SdkConstants.androidCmdName();
-    return sdk.getLocation() + File.separator + AndroidSdkUtils.toolPath(androidCmd);
+    return sdkData.getLocation() + File.separator + AndroidSdkUtils.toolPath(androidCmd);
   }
 
   public AvdChooser(@NotNull final Project project,
