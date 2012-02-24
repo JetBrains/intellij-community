@@ -1,6 +1,5 @@
 package org.jetbrains.jps.android;
 
-import com.intellij.openapi.util.Ref;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.android.util.AndroidCommonUtils;
@@ -8,8 +7,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.jps.Module;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.ProjectPaths;
-import org.jetbrains.jps.incremental.*;
-import org.jetbrains.jps.incremental.java.JavaBuilder;
+import org.jetbrains.jps.incremental.BuilderCategory;
+import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.ModuleLevelBuilder;
+import org.jetbrains.jps.incremental.ProjectBuildException;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
@@ -47,62 +48,59 @@ public class AndroidLibraryPackagingBuilder extends ModuleLevelBuilder {
   }
 
   private static ModuleLevelBuilder.ExitCode doBuild(CompileContext context, ModuleChunk chunk) throws IOException {
-    final Ref<Boolean> shouldRun = Ref.create(false);
-
-    context.processFilesToRecompile(chunk, new FileProcessor() {
-      @Override
-      public boolean apply(Module module, File file, String sourceRoot) throws IOException {
-        if (JavaBuilder.JAVA_SOURCES_FILTER.accept(file)) {
-          shouldRun.set(true);
-          return false;
-        }
-        return true;
-      }
-    });
-
-    if (!Boolean.TRUE.equals(shouldRun.get())) {
-      return ExitCode.OK;
-    }
-
     boolean success = true;
+    final AndroidClassesAndJarsStateStorage storage = new AndroidClassesAndJarsStateStorage(context.getDataManager().getDataStorageRoot());
 
-    for (Module module : chunk.getModules()) {
-      final AndroidFacet facet = AndroidJpsUtil.getFacet(module);
-      if (facet == null || !facet.isLibrary()) {
-        continue;
-      }
-
-      final ProjectPaths projectPaths = context.getProjectPaths();
-      final File outputDirectoryForPackagedFiles = AndroidJpsUtil.getOutputDirectoryForPackagedFiles(projectPaths, module);
-
-      if (outputDirectoryForPackagedFiles == null) {
-        context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, AndroidJpsBundle
-          .message("android.jps.errors.output.dir.not.specified", module.getName())));
-        success = false;
-        continue;
-      }
-
-      final File classesDir = projectPaths.getModuleOutputDir(module, false);
-      if (classesDir == null || !classesDir.isDirectory()) {
-        continue;
-      }
-
-      final Set<String> subdirs = new HashSet<String>();
-      AndroidJpsUtil.addSubdirectories(classesDir, subdirs);
-
-      if (subdirs.size() > 0) {
-        final File outputJarFile = new File(outputDirectoryForPackagedFiles, AndroidCommonUtils.CLASSES_JAR_FILE_NAME);
-
-        try {
-          AndroidCommonUtils.packClassFilesIntoJar(ArrayUtil.EMPTY_STRING_ARRAY, ArrayUtil.toStringArray(subdirs), outputJarFile);
+    try {
+      for (Module module : chunk.getModules()) {
+        final AndroidFacet facet = AndroidJpsUtil.getFacet(module);
+        if (facet == null || !facet.isLibrary()) {
+          continue;
         }
-        catch (IOException e) {
-          AndroidJpsUtil.reportExceptionError(context, null, e, BUILDER_NAME);
+
+        final ProjectPaths projectPaths = context.getProjectPaths();
+        final File outputDirectoryForPackagedFiles = AndroidJpsUtil.getOutputDirectoryForPackagedFiles(projectPaths, module);
+
+        if (outputDirectoryForPackagedFiles == null) {
+          context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, AndroidJpsBundle
+            .message("android.jps.errors.output.dir.not.specified", module.getName())));
           success = false;
+          continue;
+        }
+
+        final File classesDir = projectPaths.getModuleOutputDir(module, false);
+        if (classesDir == null || !classesDir.isDirectory()) {
+          continue;
+        }
+
+        final Set<String> subdirs = new HashSet<String>();
+        AndroidJpsUtil.addSubdirectories(classesDir, subdirs);
+
+        final AndroidClassesAndJarsState newState = new AndroidClassesAndJarsState(subdirs);
+        final AndroidClassesAndJarsState oldState = storage.getState(module.getName());
+
+        if (oldState != null && oldState.equals(newState)) {
+          continue;
+        }
+
+        if (subdirs.size() > 0) {
+          final File outputJarFile = new File(outputDirectoryForPackagedFiles, AndroidCommonUtils.CLASSES_JAR_FILE_NAME);
+
+          try {
+            AndroidCommonUtils.packClassFilesIntoJar(ArrayUtil.EMPTY_STRING_ARRAY, ArrayUtil.toStringArray(subdirs), outputJarFile);
+            storage.update(module.getName(), newState);
+          }
+          catch (IOException e) {
+            AndroidJpsUtil.reportExceptionError(context, null, e, BUILDER_NAME);
+            success = false;
+          }
         }
       }
+      return success ? ModuleLevelBuilder.ExitCode.OK : ModuleLevelBuilder.ExitCode.ABORT;
     }
-    return success ? ModuleLevelBuilder.ExitCode.OK : ModuleLevelBuilder.ExitCode.ABORT;
+    finally {
+      storage.close();
+    }
   }
 
   @Override
