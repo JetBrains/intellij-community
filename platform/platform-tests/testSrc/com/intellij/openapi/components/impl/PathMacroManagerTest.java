@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2012 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.openapi.components.impl;
 
 import com.intellij.application.options.PathMacrosImpl;
@@ -43,10 +58,11 @@ import static org.junit.Assume.assumeThat;
 public class PathMacroManagerTest {
   private static final String APP_HOME = PathManager.getHomePath();
   private static final String USER_HOME = StringUtil.trimEnd(SystemProperties.getUserHome(), "/");
+
   private Module myModule;
   private ProjectEx myProject;
   private PathMacrosImpl myPathMacros;
-  public Mockery context = new JUnit4Mockery();
+  private Mockery context = new JUnit4Mockery();
   {
     context.setImposteriser(ClassImposteriser.INSTANCE);
   }
@@ -106,31 +122,41 @@ public class PathMacroManagerTest {
   private void setUpMocks(final String projectPath) {
     myModule = context.mock(Module.class);
     myPathMacros = context.mock(PathMacrosImpl.class);
-
     myProject = context.mock(ProjectEx.class);
-    final VirtualFile file = context.mock(VirtualFile.class);
-    final VirtualFile parentFile = context.mock(VirtualFile.class, "parentFile");
+
+    final VirtualFile projectFile = context.mock(VirtualFile.class, "projectFile");
+    final VirtualFile projectParentFile = context.mock(VirtualFile.class, "projectParentFile");
+    final VirtualFile moduleFile = context.mock(VirtualFile.class, "moduleFile");
+    final VirtualFile moduleParentFile = context.mock(VirtualFile.class, "moduleParentFile");
 
     context.checking(new Expectations() {{
       allowing(myModule).isDisposed(); will(returnValue(false));
       allowing(myProject).isDisposed(); will(returnValue(false));
-      allowing(myModule).getModuleFilePath(); will(returnValue(projectPath + "/module/module.iml"));
-      allowing(myProject).getProjectFilePath(); will(returnValue(projectPath));
 
-      allowing(myApplication).getComponent(with(equal(PathMacros.class))); will(returnValue(myPathMacros));
+      allowing(projectFile).getPath(); will(returnValue(projectPath));
+      allowing(projectFile).getParent(); will(returnValue(projectParentFile));
+      allowing(projectParentFile).getPath(); will(returnValue(StringUtil.getPackageName(projectPath, '/')));
 
+      final String moduleFilePath = projectPath + "/module/module.iml";
+      allowing(moduleFile).getPath(); will(returnValue(moduleFilePath));
+      allowing(moduleFile).getParent(); will(returnValue(moduleParentFile));
+      allowing(projectParentFile).getPath(); will(returnValue(StringUtil.getPackageName(moduleFilePath, '/')));
+
+      allowing(myApplication).getComponent(with(equal(PathMacros.class)));
+      will(returnValue(myPathMacros));
       allowing(myPathMacros).addMacroReplacements(with(any(ReplacePathToMacroMap.class)));
 
-      allowing(file).getPath();
-
+      allowing(myProject).getProjectFilePath();
       will(returnValue(projectPath));
-      allowing(file).getParent(); will(returnValue(parentFile));
-      allowing(parentFile).getPath(); will(returnValue(StringUtil.getPackageName(projectPath, '/')));
-      allowing(myProject).getBaseDir(); will(returnValue(file));
+      allowing(myProject).getBaseDir();
+      will(returnValue(projectFile));
+      allowing(myProject).getBasePath(); will(returnValue(projectPath));
+
+      allowing(myModule).getModuleFile(); will(returnValue(moduleFile));
+      allowing(myModule).getModuleFilePath(); will(returnValue(moduleFilePath));
       allowing(myModule).getProject(); will(returnValue(myProject));
     }});
   }
-
 
   @Test
   public void testRightMacrosOrder_RelativeValues_NoVariables() throws Exception {
@@ -261,8 +287,7 @@ public class PathMacroManagerTest {
   }
 
   private static String mapToString(final ReplacePathToMacroMap replacePathMap) {
-    StringBuilder buf = new StringBuilder();
-
+    final StringBuilder buf = new StringBuilder();
 
     final List<String> pathIndex = replacePathMap.getPathIndex();
     for (String s : pathIndex) {
