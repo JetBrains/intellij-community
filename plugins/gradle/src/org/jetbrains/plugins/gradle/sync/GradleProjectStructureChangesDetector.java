@@ -3,12 +3,15 @@ package org.jetbrains.plugins.gradle.sync;
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.AbstractProjectComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.task.GradleTaskManager;
+import org.jetbrains.plugins.gradle.task.GradleTaskType;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import java.util.concurrent.TimeUnit;
@@ -59,6 +62,11 @@ public class GradleProjectStructureChangesDetector extends AbstractProjectCompon
         return;
       }
       myAlarm.cancelAllRequests();
+      final GradleTaskManager taskManager = ServiceManager.getService(GradleTaskManager.class);
+      if (taskManager != null && taskManager.hasTaskOfTypeInProgress(GradleTaskType.RESOLVE_PROJECT)) {
+        return;
+      }
+      
       final long diff = System.currentTimeMillis() - myStartRefreshTime.get();
       if (diff < 0) {
         myAlarm.cancelAllRequests();
