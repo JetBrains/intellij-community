@@ -19,6 +19,7 @@ import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.TabLabel;
 
+import java.awt.*;
 import java.util.List;
 
 /**
@@ -111,5 +112,12 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
     }
     label.setActionPanelVisible(true);
     return super.applyTabLayout(data, label, length, deltaToFit);
+  }
+
+  @Override
+  public boolean isTabHidden(TabInfo tabInfo) {
+    final TabLabel label = myTabs.myInfo2Label.get(tabInfo);
+    final Rectangle bounds = label.getBounds();
+    return getStrategy().getMinPosition(bounds) < 0 || bounds.isEmpty();
   }
 }

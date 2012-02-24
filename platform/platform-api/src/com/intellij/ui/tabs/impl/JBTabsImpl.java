@@ -544,7 +544,7 @@ public class JBTabsImpl extends JComponent
       final JCheckBoxMenuItem item = new JCheckBoxMenuItem(each.getText());
       Color color = UIManager.getColor("MenuItem.background");
       if (color != null) {
-        if (lastLayout.toDrop.contains(each)) {
+        if (mySingleRowLayout.isTabHidden(each)) {
           color = new Color((int) (color.getRed() * 0.85f), (int) (color.getGreen() * 0.85f), (int) (color.getBlue() * 0.85f));
         }
 

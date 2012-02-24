@@ -41,6 +41,8 @@ public abstract class SingleRowLayoutStrategy {
 
   public abstract int getLengthIncrement(final Dimension dimension);
 
+  public abstract int getMinPosition(final Rectangle bounds);
+
   public abstract int getMaxPosition(final Rectangle bounds);
 
   protected abstract int getFixedFitLength(final SingleRowPassInfo data);
@@ -104,6 +106,11 @@ public abstract class SingleRowLayoutStrategy {
 
     public int getLengthIncrement(final Dimension labelPrefSize) {
       return myTabs.isEditorTabs() ? labelPrefSize.width < MIN_TAB_WIDTH ? MIN_TAB_WIDTH : labelPrefSize.width : labelPrefSize.width;
+    }
+
+    @Override
+    public int getMinPosition(Rectangle bounds) {
+      return (int)bounds.getX();
     }
 
     public int getMaxPosition(final Rectangle bounds) {
@@ -264,6 +271,11 @@ public abstract class SingleRowLayoutStrategy {
 
     public int getLengthIncrement(final Dimension labelPrefSize) {
       return labelPrefSize.height;
+    }
+
+    @Override
+    public int getMinPosition(Rectangle bounds) {
+      return (int) bounds.getMinY();
     }
 
     public int getMaxPosition(final Rectangle bounds) {
