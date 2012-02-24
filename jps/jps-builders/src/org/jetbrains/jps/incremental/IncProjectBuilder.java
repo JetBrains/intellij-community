@@ -86,7 +86,14 @@ public class IncProjectBuilder {
             e.getMessage())
           );
           flushContext(context);
-          context = createContext(new AllProjectScope(scope.getProject(), Collections.<Artifact>emptySet(), true), false, true);
+          if (isMake || isProjectRebuild) {
+            context = createContext(new AllProjectScope(scope.getProject(), Collections.<Artifact>emptySet(), true), false, true);
+          }
+          else {
+            //in case of forced compilation keep the scope, but remove all caches
+            context = createContext(scope, false, false);
+            cleanOutputRoots(context);
+          }
           runBuild(context);
         }
         else {
@@ -250,9 +257,7 @@ public class IncProjectBuilder {
         }
       }
       else {
-        context.processMessage(new CompilerMessage(COMPILE_SERVER_NAME, BuildMessage.Kind.WARNING, "Output path " +
-                                                                                               outputRoot.getPath() +
-                                                                                               " intersects with a source root. The output cannot be cleaned."));
+        context.processMessage(new CompilerMessage(COMPILE_SERVER_NAME, BuildMessage.Kind.WARNING, "Output path " + outputRoot.getPath() + " intersects with a source root. The output cannot be cleaned."));
       }
     }
 
