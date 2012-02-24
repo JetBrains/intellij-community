@@ -884,6 +884,7 @@ class IntToIntBtree {
     private int locate(int valueHC, boolean split) {
       int searched = 0;
       int parentAddress = 0;
+      final int maxHeight = btree.height + 1;
 
       while(true) {
         if (split && isFull()) {
@@ -895,6 +896,7 @@ class IntToIntBtree {
         int i = search(valueHC);
 
         ++searched;
+        if (searched > maxHeight) throw new IllegalStateException();
 
         if (isIndexLeaf()) {
           btree.height = Math.max(btree.height, searched);
