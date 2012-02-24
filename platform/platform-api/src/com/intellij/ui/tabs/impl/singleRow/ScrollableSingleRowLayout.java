@@ -46,6 +46,14 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
     }
   }
 
+  @Override
+  protected boolean checkLayoutLabels(SingleRowPassInfo data) {
+    if (myScrollSelectionInViewPending) {
+      return true;
+    }
+    return super.checkLayoutLabels(data);
+  }
+
   private void clampScrollOffsetToBounds(SingleRowPassInfo data) {
     if (data.requiredLength < data.toFitLength) {
       myScrollOffset = 0;

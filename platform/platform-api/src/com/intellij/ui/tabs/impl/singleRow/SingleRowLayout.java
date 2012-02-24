@@ -101,7 +101,7 @@ public class SingleRowLayout extends TabLayout {
     return null;
   }
 
-  private boolean checkLayoutLabels(SingleRowPassInfo data) {
+  protected boolean checkLayoutLabels(SingleRowPassInfo data) {
     boolean layoutLabels = true;
 
     if (!myTabs.myForcedRelayout &&
