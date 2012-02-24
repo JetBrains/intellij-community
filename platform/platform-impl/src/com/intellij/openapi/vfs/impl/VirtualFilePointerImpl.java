@@ -90,15 +90,17 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
   @Override
   @NotNull
   public String getUrl() {
-    update();
-    return getUrlNoUpdate();
+    return getUrlFromPair(update());
   }
 
   private String getUrlNoUpdate() {
-    Pair<VirtualFile, String> fileAndUrl = myFileAndUrl;
+    return getUrlFromPair(myFileAndUrl);
+  }
+
+  private static String getUrlFromPair(Pair<VirtualFile, String> fileAndUrl) {
     VirtualFile file = fileAndUrl.first;
     String url = fileAndUrl.second;
-    return url == null ? file.getUrl() : url;
+    return url != null ? url : file.getUrl();
   }
 
   @Override
@@ -109,15 +111,13 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
   }
 
   private void checkDisposed() {
-    if (disposed) throw new MyException("Already disposed: "+toString(), getUserData(CREATE_TRACE), getUserData(KILL_TRACE));
+    if (disposed) {
+      throw new MyException("Already disposed: URL=" + toString(), getUserData(CREATE_TRACE), getUserData(KILL_TRACE));
+    }
   }
 
   public void throwNotDisposedError(String msg) throws RuntimeException {
-    Throwable trace = getUserData(CREATE_TRACE);
-    throw new RuntimeException(msg+"\n" +
-                               "url=" + this +
-                               "\nCreation trace " + (trace==null?"null":"some")+
-                               "\n", trace);
+    throw new MyException(msg + ": URL=" + toString(), getUserData(CREATE_TRACE), null);
   }
 
   public int incrementUsageCount() {
@@ -163,6 +163,7 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
   @Nullable
   Pair<VirtualFile, String> update() {
     if (disposed) return null;
+
     long lastUpdated = myLastUpdated;
     Pair<VirtualFile, String> fileAndUrl = myFileAndUrl;
     VirtualFile file = fileAndUrl.first;
@@ -170,21 +171,31 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
     long fsModCount = myVirtualFileManager.getModificationCount();
     if (lastUpdated == fsModCount) return fileAndUrl;
 
+    // 1. reset invalid file, restore URL if needed
     if (file != null && !file.isValid()) {
-      url = file.getUrl();
+      if (url == null) {
+        url = file.getUrl();
+      }
       file = null;
     }
+
+    // 2. restore file, reset URL if it differs
     if (file == null) {
-      LOG.assertTrue(url != null, "Both file & url are null");
+      LOG.assertTrue(url != null, "Both file & URL are null");
       file = myVirtualFileManager.findFileByUrl(url);
-      if (file != null) {
+      if (file != null && url.equals(file.getUrl())) {
         url = null;
       }
     }
+
+    // 3. reset invalid file, restore URL id needed
     if (file != null && !file.exists()) {
-      url = file.getUrl();
+      if (url == null) {
+        url = file.getUrl();
+      }
       file = null;
     }
+
     Pair<VirtualFile, String> result = Pair.create(file, url);
     myFileAndUrl = result;
     myLastUpdated = fsModCount;
@@ -199,15 +210,21 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
   @Override
   public void dispose() {
     if (disposed) {
-      throw new MyException("Punching the dead horse.\nURL=" + toString(), getUserData(CREATE_TRACE), getUserData(KILL_TRACE));
+      throw new MyException("Punching the dead horse: URL=" + toString(), getUserData(CREATE_TRACE), getUserData(KILL_TRACE));
     }
     if (--useCount == 0) {
       if (TRACE_CREATION) {
         putUserData(KILL_TRACE, new Throwable());
       }
-      String url = getUrlNoUpdate();
       disposed = true;
-      ((VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance()).clearPointerCaches(url, myListener);
+
+      final Pair<VirtualFile, String> pair = myFileAndUrl;
+      if (pair.first != null) {
+        ((VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance()).clearPointerCaches(pair.first.getUrl(), myListener);
+      }
+      if (pair.second != null) {
+        ((VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance()).clearPointerCaches(pair.second, myListener);
+      }
     }
   }
 
