@@ -130,7 +130,6 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
         if (oldState != null && oldState.equalsTo(newState)) {
           continue;
         }
-        storage.update(module.getName(), newState);
 
         final String[] files = new String[fileSet.size()];
         int i = 0;
@@ -140,6 +139,9 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
 
         if (!runDex(androidSdk, target, dexOutputDir.getPath(), files, context)) {
           success = false;
+        }
+        else {
+          storage.update(module.getName(), newState);
         }
       }
       catch (IOException e) {

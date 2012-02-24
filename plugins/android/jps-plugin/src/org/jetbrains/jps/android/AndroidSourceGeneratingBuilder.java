@@ -301,10 +301,14 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
         final Set<String> depLibPackagesSet = getDepLibPackages(module);
         depLibPackagesSet.remove(packageName);
 
-        if (!updateState(module, resPaths, manifestFile, packageName, depLibPackagesSet, storage)) {
+        final Set<ResourceEntry> resources = collectResources(resPaths);
+        final Set<ResourceEntry> manifestElements = collectManifestElements(manifestFile);
+        final AndroidAptValidityState newState = new AndroidAptValidityState(resources, manifestElements, depLibPackagesSet, packageName);
+
+        final AndroidAptValidityState oldState = storage.getState(module.getName());
+        if (newState.equalsTo(oldState)) {
           continue;
         }
-
         final File outputDirectory = moduleData.getOutputDirectory();
         final File aptOutputDirectory = new File(outputDirectory, "generated-aapt");
 
@@ -323,6 +327,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
           success = false;
         }
         else {
+          storage.update(module.getName(), newState);
           JavaBuilder.addTempSourcePathRoot(context, aptOutputDirectory);
         }
       }
@@ -332,25 +337,6 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
       }
     }
     return success;
-  }
-
-  private static boolean updateState(@NotNull Module module,
-                                     @NotNull String[] resPaths,
-                                     @NotNull File manifestFile,
-                                     @NotNull String packageName,
-                                     @NotNull Set<String> depLibPackagesSet,
-                                     @NotNull AndroidAptStateStorage storage) throws IOException {
-
-    final Set<ResourceEntry> resources = collectResources(resPaths);
-    final Set<ResourceEntry> manifestElements = collectManifestElements(manifestFile);
-    final AndroidAptValidityState newState = new AndroidAptValidityState(resources, manifestElements, depLibPackagesSet, packageName);
-
-    final AndroidAptValidityState oldState = storage.getState(module.getName());
-    if (newState.equalsTo(oldState)) {
-      return false;
-    }
-    storage.update(module.getName(), newState);
-    return true;
   }
 
   @NotNull
