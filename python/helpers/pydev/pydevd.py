@@ -1271,6 +1271,27 @@ class DispatchReader(ReaderThread):
             self.dispatcher.port = int(text)
             self.killReceived = True
 
+
+def dispatch():
+    argv = sys.original_argv[:]
+    setup = processCommandLine(argv)
+    host = setup['client']
+    dispatcher = Dispatcher()
+    dispatcher.connect(setup)
+    port = dispatcher.port
+    return host, port
+
+
+def settrace_forked():
+    host, port = dispatch()
+
+    import pydevd_tracing
+    pydevd_tracing.RestoreSysSetTraceFunc()
+
+    if port is not None:
+        global connected
+        connected = False
+        settrace(host, port=port, suspend=False, overwrite_prev_trace=True)
 #=======================================================================================================================
 # main
 #=======================================================================================================================
@@ -1326,7 +1347,8 @@ if __name__ == '__main__':
             try:
                 pydev_monkey.patch_new_process_functions()
             except:
-                logger.error("Error patching process functions\n")
+                pydev_log.error("Error patching process functions\n")
+                traceback.print_exc()
         else:
             pydev_log.error("pydev debugger: couldn't get port for new debug process\n")
     else:
