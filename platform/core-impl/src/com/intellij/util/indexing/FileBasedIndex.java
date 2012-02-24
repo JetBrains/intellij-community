@@ -107,7 +107,6 @@ public class FileBasedIndex implements Disposable{
 
   private final VirtualFileManagerEx myVfManager;
   private final FileDocumentManager myFileDocumentManager;
-  private final FileTypeManager myFileTypeManager;
   private FileBasedIndexUnsavedDocumentsManager myUnsavedDocumentsManager;
   private FileBasedIndexIndicesManager myIndexIndicesManager;
   private FileBasedIndexTransactionMap myTransactionMap;
@@ -129,7 +128,7 @@ public class FileBasedIndex implements Disposable{
   }
 
   public FileBasedIndex(final VirtualFileManagerEx vfManager, FileDocumentManager fdm,
-                        FileTypeManager fileTypeManager, MessageBus bus,
+                        MessageBus bus,
                         FileBasedIndexUnsavedDocumentsManager unsavedDocumentsManager,
                         FileBasedIndexIndicesManager indexIndicesManager,
                         FileBasedIndexTransactionMap transactionMap,
@@ -137,7 +136,6 @@ public class FileBasedIndex implements Disposable{
                         SerializationManager sm /*need this parameter to ensure component dependency*/) throws IOException {
     myVfManager = vfManager;
     myFileDocumentManager = fdm;
-    myFileTypeManager = fileTypeManager;
     myUnsavedDocumentsManager = unsavedDocumentsManager;
     myIndexIndicesManager = indexIndicesManager;
     myTransactionMap = transactionMap;
@@ -163,64 +161,6 @@ public class FileBasedIndex implements Disposable{
         synchronized (myTransactionMap) {
           myTransactionMap.remove(doc);
         }
-      }
-    });
-
-    connection.subscribe(FileTypeManager.TOPIC, new FileTypeListener() {
-      private Map<FileType, Set<String>> myTypeToExtensionMap;
-      @Override
-      public void beforeFileTypesChanged(final FileTypeEvent event) {
-        cleanupProcessedFlag();
-        myTypeToExtensionMap = new HashMap<FileType, Set<String>>();
-        for (FileType type : myFileTypeManager.getRegisteredFileTypes()) {
-          myTypeToExtensionMap.put(type, getExtensions(type));
-        }
-      }
-
-      @Override
-      public void fileTypesChanged(final FileTypeEvent event) {
-        final Map<FileType, Set<String>> oldExtensions = myTypeToExtensionMap;
-        myTypeToExtensionMap = null;
-        if (oldExtensions != null) {
-          final Map<FileType, Set<String>> newExtensions = new HashMap<FileType, Set<String>>();
-          for (FileType type : myFileTypeManager.getRegisteredFileTypes()) {
-            newExtensions.put(type, getExtensions(type));
-          }
-          // we are interested only in extension changes or removals.
-          // addition of an extension is handled separately by RootsChanged event
-          if (!newExtensions.keySet().containsAll(oldExtensions.keySet())) {
-            rebuildAllIndices();
-            return;
-          }
-          for (Map.Entry<FileType, Set<String>> entry : oldExtensions.entrySet()) {
-            FileType fileType = entry.getKey();
-            Set<String> strings = entry.getValue();
-            if (!newExtensions.get(fileType).containsAll(strings)) {
-              rebuildAllIndices();
-              return;
-            }
-          }
-        }
-      }
-
-      private Set<String> getExtensions(FileType type) {
-        final Set<String> set = new HashSet<String>();
-        for (FileNameMatcher matcher : myFileTypeManager.getAssociations(type)) {
-          set.add(matcher.getPresentableString());
-        }
-        return set;
-      }
-
-      private void rebuildAllIndices() {
-        for (ID<?, ?> indexId : myIndexIndicesManager.keySet()) {
-          try {
-            clearIndex(indexId);
-          }
-          catch (StorageException e) {
-            LOG.info(e);
-          }
-        }
-        scheduleIndexRebuild(true);
       }
     });
 
@@ -1161,7 +1101,7 @@ public class FileBasedIndex implements Disposable{
     }
   }
 
-  private void scheduleIndexRebuild(boolean forceDumbMode) {
+  protected void scheduleIndexRebuild(boolean forceDumbMode) {
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
       final Set<CacheUpdater> updatersToRun = Collections.<CacheUpdater>singleton(new UnindexedFilesUpdater(project, this));
       final DumbServiceImpl service = DumbServiceImpl.getInstance(project);
@@ -1174,7 +1114,7 @@ public class FileBasedIndex implements Disposable{
     }
   }
 
-  private void clearIndex(final ID<?, ?> indexId) throws StorageException {
+  protected void clearIndex(final ID<?, ?> indexId) throws StorageException {
     final UpdatableIndex<?, ?, FileContent> index = myIndexIndicesManager.getIndex(indexId);
     assert index != null: "Index with key " + indexId + " not found or not registered properly";
     index.clear();
@@ -1809,7 +1749,7 @@ public class FileBasedIndex implements Disposable{
     }
   }
 
-  private static void cleanupProcessedFlag() {
+  protected static void cleanupProcessedFlag() {
     final VirtualFile[] roots = ManagingFS.getInstance().getRoots();
     for (VirtualFile root : roots) {
       cleanProcessedFlag(root);
