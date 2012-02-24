@@ -132,6 +132,10 @@ public class SingleRowLayout extends TabLayout {
   public void scroll(int units) {
   }
 
+  public int getScrollUnitIncrement() {
+    return 0;
+  }
+
   public void scrollSelectionInView(List<TabInfo> visibleInfos) {
   }
 

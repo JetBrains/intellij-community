@@ -235,7 +235,7 @@ public class JBTabsImpl extends JComponent
       @Override
       public void mouseWheelMoved(MouseWheelEvent e) {
         if (mySingleRowLayout.myLastSingRowLayout != null) {
-          mySingleRowLayout.scroll(e.getUnitsToScroll() * 10);
+          mySingleRowLayout.scroll(e.getUnitsToScroll() * mySingleRowLayout.getScrollUnitIncrement());
           revalidateAndRepaint(false);
         }
       }

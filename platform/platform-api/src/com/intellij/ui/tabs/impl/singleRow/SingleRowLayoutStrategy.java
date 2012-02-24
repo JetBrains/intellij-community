@@ -80,6 +80,14 @@ public abstract class SingleRowLayoutStrategy {
    */
   public abstract boolean drawPartialOverflowTabs();
 
+  /**
+   * Return the change of scroll offset for every unit of mouse wheel scrolling.
+   *
+   * @param label the first visible tab label
+   * @return the scroll amount
+   */
+  public abstract int getScrollUnitIncrement(TabLabel label);
+
   abstract static class Horizontal extends SingleRowLayoutStrategy {
     protected Horizontal(final SingleRowLayout layout) {
       super(layout);
@@ -139,6 +147,11 @@ public abstract class SingleRowLayoutStrategy {
     @Override
     public boolean drawPartialOverflowTabs() {
       return true;
+    }
+
+    @Override
+    public int getScrollUnitIncrement(TabLabel label) {
+      return 10;
     }
   }
 
@@ -301,6 +314,11 @@ public abstract class SingleRowLayoutStrategy {
     @Override
     public boolean drawPartialOverflowTabs() {
       return false;
+    }
+
+    @Override
+    public int getScrollUnitIncrement(TabLabel label) {
+      return label.getPreferredSize().height;
     }
   }
 
