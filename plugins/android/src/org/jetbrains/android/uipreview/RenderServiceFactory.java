@@ -33,6 +33,7 @@ import com.android.sdklib.internal.project.ProjectProperties;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -80,6 +81,8 @@ public class RenderServiceFactory {
                                                  String themeName,
                                                  boolean isProjectTheme) {
     final Map<ResourceType, Map<String, ResourceValue>> configedProjectRes = projectResources.getConfiguredResources(config);
+
+    DumbService.getInstance(facet.getModule().getProject()).waitForSmartMode();
 
     final Collection<String> ids = ApplicationManager.getApplication().runReadAction(new Computable<Collection<String>>() {
       @Override
