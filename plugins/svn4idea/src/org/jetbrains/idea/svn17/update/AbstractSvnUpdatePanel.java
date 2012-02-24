@@ -54,13 +54,26 @@ public abstract class AbstractSvnUpdatePanel {
         myRootToPanel.put(root, createRootPanel(root, myVCS, roots));
       }
 
+      Container parent = configureRootsPanel.getParent();
+      parent.remove(configureRootsPanel);
+      JPanel additionalPanel = getAdditionalPanel();
+      if (additionalPanel != null) {
+        parent.remove(additionalPanel);
+      }
       if (myRootToPanel.size() == 1) {
-
         configureRootsPanel.add(myRootToPanel.values().iterator().next().getPanel(), BorderLayout.CENTER);
+        parent.add(configureRootsPanel, BorderLayout.NORTH);
+        if (additionalPanel != null) {
+          parent.add(additionalPanel, BorderLayout.CENTER);
+        }
       }
       else {
         final MultipleRootEditorWithSplitter multipleRootsEditor = new MultipleRootEditorWithSplitter(myRootToPanel, myVCS.getProject());
         configureRootsPanel.add(multipleRootsEditor, BorderLayout.CENTER);
+        parent.add(configureRootsPanel, BorderLayout.CENTER);
+        if (additionalPanel != null) {
+          parent.add(additionalPanel, BorderLayout.SOUTH);
+        }
       }
     }
   }
@@ -68,6 +81,10 @@ public abstract class AbstractSvnUpdatePanel {
   protected abstract SvnPanel createRootPanel(final FilePath root, final SvnVcs17 p1, Collection<FilePath> roots);
 
   protected abstract JPanel getRootsPanel();
+
+  protected JPanel getAdditionalPanel() {
+    return null;
+  }
 
   public void reset(final SvnConfiguration17 configuration) {
     getDepthBox().setSelectedItem(configuration.UPDATE_DEPTH);

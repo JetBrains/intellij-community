@@ -33,6 +33,7 @@ public class SvnUpdatePanel extends AbstractSvnUpdatePanel {
   private JCheckBox myLockOnDemand;
   private DepthCombo myDepthCombo;
   private JLabel myDepthLabel;
+  private JPanel myAdditionalPanel;
 
   public SvnUpdatePanel(SvnVcs17 vcs, Collection<FilePath> roots) {
     super(vcs);
@@ -67,6 +68,11 @@ public class SvnUpdatePanel extends AbstractSvnUpdatePanel {
 
   protected JPanel getRootsPanel() {
     return myConfigureRootsPanel;
+  }
+
+  @Override
+  protected JPanel getAdditionalPanel() {
+    return myAdditionalPanel;
   }
 
   protected SvnPanel createRootPanel(final FilePath root, final SvnVcs17 vcs, Collection<FilePath> roots) {
