@@ -24,6 +24,7 @@ import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.android.uipreview.DeviceConfiguratorPanel;
 import org.jetbrains.android.uipreview.InvalidOptionValueException;
 import org.jetbrains.android.util.AndroidBundle;
+import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.AndroidResourceUtil;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
@@ -142,7 +143,7 @@ public class CreateXmlResourceDialog extends DialogWrapper {
       return new ValidationInfo("specify module", myModuleCombo);
     }
     else if (!ResourceFolderType.VALUES.getName().equals(
-      AndroidResourceUtil.getResourceTypeByDirName(directoryName))) {
+      AndroidCommonUtils.getResourceTypeByDirName(directoryName))) {
       return new ValidationInfo("directory name is not appropriate for value resources");
     }
 

@@ -38,6 +38,7 @@ import org.jetbrains.android.dom.attrs.AttributeDefinitions;
 import org.jetbrains.android.dom.resources.ResourceElement;
 import org.jetbrains.android.dom.resources.Resources;
 import org.jetbrains.android.facet.AndroidFacet;
+import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.AndroidResourceUtil;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.android.util.ResourceEntry;
@@ -102,7 +103,7 @@ public abstract class ResourceManager {
       for (final VirtualFile resFile : dir.getChildren()) {
         String extension = resFile.getExtension();
         if (extensions.length == 0 || extensionSet.contains(extension)) {
-          String s = AndroidResourceUtil.getResourceName(resType, resFile.getName());
+          String s = AndroidCommonUtils.getResourceName(resType, resFile.getName());
           if (resName == null || AndroidUtils.equal(resName, s, distinguishDelimetersInName)) {
             PsiFile file = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
               @Nullable
@@ -197,7 +198,7 @@ public abstract class ResourceManager {
         if (possibleResDir == null || !isResourceDir(possibleResDir.getVirtualFile())) {
           return null;
         }
-        String type = AndroidResourceUtil.getResourceTypeByDirName(dir.getName());
+        String type = AndroidCommonUtils.getResourceTypeByDirName(dir.getName());
         if (type == null) return null;
         return type;
       }
@@ -211,7 +212,7 @@ public abstract class ResourceManager {
     for (VirtualFile dir : dirs) {
       for (VirtualFile resourceFile : dir.getChildren()) {
         if (resourceFile.isDirectory()) continue;
-        result.add(AndroidResourceUtil.getResourceName(resourceType, resourceFile.getName()));
+        result.add(AndroidCommonUtils.getResourceName(resourceType, resourceFile.getName()));
       }
     }
     return result;

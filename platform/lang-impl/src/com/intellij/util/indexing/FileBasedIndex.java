@@ -1083,7 +1083,7 @@ public class FileBasedIndex implements ApplicationComponent {
   public static @Nullable Throwable getCauseToRebuildIndex(RuntimeException e) {
     Throwable cause = e.getCause();
     if (cause instanceof StorageException || cause instanceof IOException ||
-        cause instanceof IllegalArgumentException || cause instanceof IllegalStateException) return cause;
+        cause instanceof IllegalArgumentException) return cause;
     return null;
   }
 

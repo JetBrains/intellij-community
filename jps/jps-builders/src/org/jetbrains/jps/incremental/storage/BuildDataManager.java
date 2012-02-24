@@ -219,6 +219,10 @@ public class BuildDataManager {
     return new File(Paths.getDataStorageRoot(myProjectName), MAPPINGS_STORAGE);
   }
 
+  public File getDataStorageRoot() {
+    return Paths.getDataStorageRoot(myProjectName);
+  }
+
   private static void wipeStorage(File root, @Nullable AbstractStateStorage<?, ?> storage) {
     if (storage != null) {
       synchronized (storage) {

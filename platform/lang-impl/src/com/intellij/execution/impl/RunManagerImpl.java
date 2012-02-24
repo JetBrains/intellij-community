@@ -249,9 +249,10 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
 
     Integer existingId = findConfigurationIdByUniqueName(getUniqueName(settings));
     Integer newId = configuration.getUniqueID();
+    RunnerAndConfigurationSettings existingSettings = null;
 
     if (existingId != null) {
-      myConfigurations.remove(existingId);
+      existingSettings = myConfigurations.remove(existingId);
       mySharedConfigurations.remove(existingId);
     }
 
@@ -261,7 +262,13 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
 
     mySharedConfigurations.put(newId, shared);
     setBeforeRunTasks(configuration, tasks);
-    myDispatcher.getMulticaster().runConfigurationAdded(settings);
+
+    if (existingSettings == settings) {
+      myDispatcher.getMulticaster().runConfigurationChanged(settings);
+    }
+    else {
+      myDispatcher.getMulticaster().runConfigurationAdded(settings);
+    }
   }
 
   void checkRecentsLimit() {
@@ -283,31 +290,6 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     RunConfiguration config = settings.getConfiguration();
     return config.getType().getDisplayName() + "." + settings.getName() +
            (config instanceof UnknownRunConfiguration ? config.getUniqueID() : "");
-  }
-
-  public void removeConfigurations(@NotNull final ConfigurationType type) {
-    List<RunnerAndConfigurationSettings> removed = new ArrayList<RunnerAndConfigurationSettings>();
-    for (Iterator<RunnerAndConfigurationSettings> it = getSortedConfigurations().iterator(); it.hasNext(); ) {
-      final RunnerAndConfigurationSettings configuration = it.next();
-      final ConfigurationType configurationType = configuration.getType();
-      if (configurationType != null && type.getId().equals(configurationType.getId())) {
-        removed.add(configuration);
-        invalidateConfigurationIcon(configuration);
-        it.remove();
-      }
-    }
-    fireRunConfigurationsRemoved(removed);
-
-    final RunnerAndConfigurationSettings selectedConfiguration = getSelectedConfiguration();
-    if (selectedConfiguration != null && removed.contains(selectedConfiguration)) {
-      final Collection<RunnerAndConfigurationSettings> sortedConfigurations = getSortedConfigurations();
-      RunnerAndConfigurationSettings toSelect = null;
-      if (sortedConfigurations.size() > 0) {
-        toSelect = sortedConfigurations.iterator().next();
-      }
-
-      setSelectedConfiguration(toSelect);
-    }
   }
 
   @Override

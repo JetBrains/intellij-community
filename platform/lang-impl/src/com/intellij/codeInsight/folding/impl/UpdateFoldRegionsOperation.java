@@ -178,7 +178,7 @@ class UpdateFoldRegionsOperation implements Runnable {
       if (element != null && myElementsToFoldMap.containsKey(element)) {
         final Collection<FoldingDescriptor> descriptors = myElementsToFoldMap.get(element);
         boolean matchingDescriptorFound = false;
-        for (FoldingDescriptor descriptor : descriptors) {
+        for (FoldingDescriptor descriptor : descriptors.toArray(new FoldingDescriptor[descriptors.size()])) {
           TextRange range = descriptor.getRange();
           if (region.getStartOffset() == range.getStartOffset()
               && region.getEndOffset() == range.getEndOffset()) {
@@ -191,11 +191,11 @@ class UpdateFoldRegionsOperation implements Runnable {
               ) {
               rangeToExpandStatusMap.put(range, region.isExpanded());
               toRemove.add(region);
+              break;
             }
             else {
               myElementsToFoldMap.removeValue(element, descriptor);
             }
-            break;
           }
         }
         if (!matchingDescriptorFound) {

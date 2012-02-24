@@ -32,6 +32,7 @@ import org.jetbrains.android.dom.wrappers.FileResourceElementWrapper;
 import org.jetbrains.android.dom.wrappers.ValueResourceElementWrapper;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.resourceManagers.ResourceManager;
+import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.AndroidResourceUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -86,7 +87,7 @@ public class AndroidResourceReference extends PsiReferenceBase.Poly<XmlElement> 
     String resType = value.getResourceType();
     if (resType != null && newElementName != null) {
       myValue.setValue(ResourceValue.referenceTo(value.getPrefix(), value.getPackage(), resType,
-                                                 AndroidResourceUtil.getResourceName(resType, newElementName)));
+                                                 AndroidCommonUtils.getResourceName(resType, newElementName)));
     }
     return myValue.getXmlTag();
   }

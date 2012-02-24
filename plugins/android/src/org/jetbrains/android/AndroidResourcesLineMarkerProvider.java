@@ -40,6 +40,7 @@ import org.jetbrains.android.dom.resources.ResourceElement;
 import org.jetbrains.android.dom.resources.Resources;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.resourceManagers.LocalResourceManager;
+import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.AndroidResourceUtil;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
@@ -201,13 +202,13 @@ public class AndroidResourcesLineMarkerProvider implements LineMarkerProvider {
       public void run() {
         List<VirtualFile> resourceSubdirs = resManager.getResourceSubdirs(null);
         for (VirtualFile dir : resourceSubdirs) {
-          String resType = AndroidResourceUtil.getResourceTypeByDirName(dir.getName());
+          String resType = AndroidCommonUtils.getResourceTypeByDirName(dir.getName());
           if (resType != null) {
             for (VirtualFile resourceFile : dir.getChildren()) {
               if (!resourceFile.isDirectory()) {
                 PsiFile resourcePsiFile = psiManager.findFile(resourceFile);
                 if (resourcePsiFile != null) {
-                  String resName = AndroidResourceUtil.getResourceName(resType, resourceFile.getName());
+                  String resName = AndroidCommonUtils.getResourceName(resType, resourceFile.getName());
                   MyResourceEntry key = new MyResourceEntry(resName, resType);
                   List<PsiElement> list = result.get(key);
                   if (list == null) {
