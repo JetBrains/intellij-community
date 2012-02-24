@@ -529,7 +529,7 @@ public class TestNGUtil
   }
 
   public static boolean isTestngXML(final VirtualFile virtualFile) {
-    if ("xml".equalsIgnoreCase(virtualFile.getExtension())) {
+    if ("xml".equalsIgnoreCase(virtualFile.getExtension()) && virtualFile.isValid()) {
       final String result = NanoXmlUtil.parseHeader(virtualFile).getRootTagLocalName();
       if (result != null && result.equals(SUITE_TAG_NAME)) {
         return true;
