@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,6 +38,9 @@ public class AndroidCommonUtils {
   private static Pattern R_PATTERN = Pattern.compile("R(\\$.*)?\\.class");
 
   public static final Pattern COMPILER_MESSAGE_PATTERN = Pattern.compile("(.+):(\\d+):.+");
+  public static final String[] FILE_RESOURCE_TYPES = new String[]{"drawable", "anim", "layout", "values", "menu", "xml", "raw", "color"};
+  @NonNls public static final String PNG_EXTENSION = "png";
+  private static final String[] DRAWABLE_EXTENSIONS = new String[]{PNG_EXTENSION, "jpg", "gif"};
 
   private AndroidCommonUtils() {
   }
@@ -225,5 +229,36 @@ public class AndroidCommonUtils {
     finally {
       bis.close();
     }
+  }
+
+  @Nullable
+  public static String getResourceTypeByDirName(@NotNull String name) {
+    final int index = name.indexOf('-');
+    final String type = index >= 0 ? name.substring(0, index) : name;
+    return ArrayUtil.find(FILE_RESOURCE_TYPES, type) >= 0 ? type : null;
+  }
+
+  @NotNull
+  public static String getResourceName(@NotNull String resourceType, @NotNull String fileName) {
+    final String extension = FileUtil.getExtension(fileName);
+    final String s = FileUtil.getNameWithoutExtension(fileName);
+
+    return resourceType.equals("drawable") &&
+           ArrayUtil.find(DRAWABLE_EXTENSIONS, extension) >= 0 &&
+           s.endsWith(".9") &&
+           extension.equals(PNG_EXTENSION)
+           ? s.substring(0, s.length() - 2)
+           : s;
+  }
+
+  @NotNull
+  public static String getResourceTypeByTagName(@NotNull String tagName) {
+    if (tagName.equals("declare-styleable")) {
+      tagName = "styleable";
+    }
+    else if (tagName.endsWith("-array")) {
+      tagName = "array";
+    }
+    return tagName;
   }
 }

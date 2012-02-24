@@ -23,7 +23,6 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModulePackageIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -57,12 +56,10 @@ public class AndroidResourceUtil {
   public static final String NEW_ID_PREFIX = "@+id/";
   public static final String[] VALUE_RESOURCE_TYPES =
     new String[]{"drawable", "dimen", "color", "string", "style", "array", "id", "bool", "integer", "integer-array"};
-  private static final String[] DRAWABLE_EXTENSIONS = new String[]{AndroidUtils.PNG_EXTENSION, "jpg", "gif"};
   public static final Set<String> REFERABLE_RESOURCE_TYPES = new HashSet<String>();
-  public static final String[] FILE_RESOURCE_TYPES = new String[]{"drawable", "anim", "layout", "values", "menu", "xml", "raw", "color"};
 
   static {
-    addAll(REFERABLE_RESOURCE_TYPES, FILE_RESOURCE_TYPES);
+    addAll(REFERABLE_RESOURCE_TYPES, AndroidCommonUtils.FILE_RESOURCE_TYPES);
     addAll(REFERABLE_RESOURCE_TYPES, VALUE_RESOURCE_TYPES);
     REFERABLE_RESOURCE_TYPES.remove("values");
   }
@@ -194,7 +191,7 @@ public class AndroidResourceUtil {
       return PsiField.EMPTY_ARRAY;
     }
 
-    final String resourceName = getResourceName(resourceType, file.getName());
+    final String resourceName = AndroidCommonUtils.getResourceName(resourceType, file.getName());
     return findResourceFields(facet, resourceType, resourceName, onlyInOwnPackages);
   }
 
@@ -253,23 +250,12 @@ public class AndroidResourceUtil {
     String resClassName = tag.getName();
     resClassName = resClassName.equals("item")
                    ? tag.getAttributeValue("type", null)
-                   : getResourceTypeByTagName(resClassName);
+                   : AndroidCommonUtils.getResourceTypeByTagName(resClassName);
     if (resClassName != null) {
       final String resourceName = tag.getAttributeValue("name");
       return resourceName != null ? resClassName : null;
     }
     return null;
-  }
-
-  @NotNull
-  public static String getResourceTypeByTagName(@NotNull String tagName) {
-    if (tagName.equals("declare-styleable")) {
-      tagName = "styleable";
-    }
-    else if (tagName.endsWith("-array")) {
-      tagName = "array";
-    }
-    return tagName;
   }
 
   @Nullable
@@ -395,16 +381,9 @@ public class AndroidResourceUtil {
     throw new IllegalArgumentException("Incorrect resource type");
   }
 
-  @Nullable
-  public static String getResourceTypeByDirName(@NotNull String name) {
-    final int index = name.indexOf('-');
-    final String type = index >= 0 ? name.substring(0, index) : name;
-    return ArrayUtil.find(FILE_RESOURCE_TYPES, type) >= 0 ? type : null;
-  }
-
   @NotNull
   public static List<VirtualFile> getResourceSubdirs(@Nullable String resourceType, @NotNull VirtualFile[] resourceDirs) {
-    if (ArrayUtil.find(FILE_RESOURCE_TYPES, resourceType) < 0 && resourceType != null) {
+    if (ArrayUtil.find(AndroidCommonUtils.FILE_RESOURCE_TYPES, resourceType) < 0 && resourceType != null) {
       return Collections.emptyList();
     }
     final List<VirtualFile> dirs = new ArrayList<VirtualFile>();
@@ -418,7 +397,7 @@ public class AndroidResourceUtil {
       }
       else {
         for (VirtualFile child : resourcesDir.getChildren()) {
-          String type = getResourceTypeByDirName(child.getName());
+          String type = AndroidCommonUtils.getResourceTypeByDirName(child.getName());
           if (resourceType.equals(type)) dirs.add(child);
         }
       }
@@ -432,19 +411,6 @@ public class AndroidResourceUtil {
       return null;
     }
     return resourceType + "s.xml";
-  }
-
-  @NotNull
-  public static String getResourceName(@NotNull String resourceType, @NotNull String fileName) {
-    final String extension = FileUtil.getExtension(fileName);
-    final String s = FileUtil.getNameWithoutExtension(fileName);
-
-    return resourceType.equals("drawable") &&
-           ArrayUtil.find(DRAWABLE_EXTENSIONS, extension) >= 0 &&
-           s.endsWith(".9") &&
-           extension.equals(AndroidUtils.PNG_EXTENSION)
-           ? s.substring(0, s.length() - 2)
-           : s;
   }
 
   @NotNull
