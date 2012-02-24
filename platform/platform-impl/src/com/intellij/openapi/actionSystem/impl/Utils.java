@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -131,8 +131,11 @@ public class Utils{
         ActionGroup actionGroup = (ActionGroup)child;
         if (actionGroup.isPopup()) { // popup menu has its own presentation
           // disable group if it contains no visible actions
-          final boolean enabled = actionGroup.canBePerformed(context) || hasVisibleChildren(actionGroup, presentationFactory, context, place);
-          presentation.setEnabled(enabled);
+          final boolean visibleChildren = hasVisibleChildren(actionGroup, presentationFactory, context, place);
+          if (actionGroup.hideIfNoVisibleChildren() && !visibleChildren) {
+            continue;
+          }
+          presentation.setEnabled(actionGroup.canBePerformed(context) || visibleChildren);
           list.add(child);
         }
         else {
