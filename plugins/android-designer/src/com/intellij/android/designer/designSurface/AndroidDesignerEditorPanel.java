@@ -60,6 +60,7 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.util.List;
+import java.util.concurrent.Callable;
 
 /**
  * @author Alexander Lobas
@@ -150,12 +151,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
     });
 
     // TODO: run in background
-    try {
-      createRenderer(layoutXmlText);
-    }
-    catch (IndexNotReadyException e) {
-      createRenderer(layoutXmlText);
-    }
+    createRenderer(layoutXmlText);
 
     Result result = mySession.getResult();
     if (!result.isSuccess()) {
@@ -228,32 +224,37 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
   }
 
 
-  private void createRenderer(String layoutXmlText) throws Exception {
+  private void createRenderer(final String layoutXmlText) throws Exception {
     // TODO: (profile|device|target|...|theme) panel
 
-    AndroidPlatform platform = AndroidPlatform.getInstance(myModule);
-    IAndroidTarget target = platform.getTarget();
-    AndroidFacet facet = AndroidFacet.getInstance(myModule);
+    mySession = ApplicationManager.getApplication().executeOnPooledThread(new Callable<RenderSession>() {
+      @Override
+      public RenderSession call() throws Exception {
+        AndroidPlatform platform = AndroidPlatform.getInstance(myModule);
+        IAndroidTarget target = platform.getTarget();
+        AndroidFacet facet = AndroidFacet.getInstance(myModule);
 
-    LayoutDeviceManager layoutDeviceManager = new LayoutDeviceManager();
-    layoutDeviceManager.loadDevices(platform.getSdkData());
-    LayoutDevice layoutDevice = layoutDeviceManager.getCombinedList().get(0);
+        LayoutDeviceManager layoutDeviceManager = new LayoutDeviceManager();
+        layoutDeviceManager.loadDevices(platform.getSdkData());
+        LayoutDevice layoutDevice = layoutDeviceManager.getCombinedList().get(0);
 
-    LayoutDeviceConfiguration deviceConfiguration = layoutDevice.getConfigurations().get(0);
+        LayoutDeviceConfiguration deviceConfiguration = layoutDevice.getConfigurations().get(0);
 
-    FolderConfiguration config = new FolderConfiguration();
-    config.set(deviceConfiguration.getConfiguration());
-    config.setUiModeQualifier(new UiModeQualifier(UiMode.NORMAL));
-    config.setNightModeQualifier(new NightModeQualifier(NightMode.NIGHT));
-    config.setLanguageQualifier(new LanguageQualifier());
-    config.setRegionQualifier(new RegionQualifier());
+        FolderConfiguration config = new FolderConfiguration();
+        config.set(deviceConfiguration.getConfiguration());
+        config.setUiModeQualifier(new UiModeQualifier(UiMode.NORMAL));
+        config.setNightModeQualifier(new NightModeQualifier(NightMode.NIGHT));
+        config.setLanguageQualifier(new LanguageQualifier());
+        config.setRegionQualifier(new RegionQualifier());
 
-    float xdpi = deviceConfiguration.getDevice().getXDpi();
-    float ydpi = deviceConfiguration.getDevice().getYDpi();
+        float xdpi = deviceConfiguration.getDevice().getXDpi();
+        float ydpi = deviceConfiguration.getDevice().getYDpi();
 
-    ThemeData theme = new ThemeData("Theme", false);
+        ThemeData theme = new ThemeData("Theme", false);
 
-    mySession = RenderUtil.createRenderSession(myModule.getProject(), layoutXmlText, myFile, target, facet, config, xdpi, ydpi, theme);
+        return RenderUtil.createRenderSession(myModule.getProject(), layoutXmlText, myFile, target, facet, config, xdpi, ydpi, theme);
+      }
+    }).get();
   }
 
   @Override
