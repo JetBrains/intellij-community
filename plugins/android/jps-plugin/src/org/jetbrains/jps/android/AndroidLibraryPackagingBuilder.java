@@ -1,5 +1,6 @@
 package org.jetbrains.jps.android;
 
+import com.intellij.openapi.util.Ref;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.android.util.AndroidCommonUtils;
@@ -7,10 +8,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.jps.Module;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.ProjectPaths;
-import org.jetbrains.jps.incremental.BuilderCategory;
-import org.jetbrains.jps.incremental.CompileContext;
-import org.jetbrains.jps.incremental.ModuleLevelBuilder;
-import org.jetbrains.jps.incremental.ProjectBuildException;
+import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.incremental.java.JavaBuilder;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
@@ -23,7 +22,6 @@ import java.util.Set;
  * @author Eugene.Kudelevsky
  */
 
-// todo: save validity states
 // todo: support light builds
 
 public class AndroidLibraryPackagingBuilder extends ModuleLevelBuilder {
@@ -48,7 +46,24 @@ public class AndroidLibraryPackagingBuilder extends ModuleLevelBuilder {
     }
   }
 
-  private static ModuleLevelBuilder.ExitCode doBuild(CompileContext context, ModuleChunk chunk) {
+  private static ModuleLevelBuilder.ExitCode doBuild(CompileContext context, ModuleChunk chunk) throws IOException {
+    final Ref<Boolean> shouldRun = Ref.create(false);
+
+    context.processFilesToRecompile(chunk, new FileProcessor() {
+      @Override
+      public boolean apply(Module module, File file, String sourceRoot) throws IOException {
+        if (JavaBuilder.JAVA_SOURCES_FILTER.accept(file)) {
+          shouldRun.set(true);
+          return false;
+        }
+        return true;
+      }
+    });
+
+    if (!Boolean.TRUE.equals(shouldRun.get())) {
+      return ExitCode.OK;
+    }
+
     boolean success = true;
 
     for (Module module : chunk.getModules()) {

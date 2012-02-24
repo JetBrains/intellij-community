@@ -29,10 +29,10 @@ import java.util.Map;
 // todo: save validity states
 // todo: support light builds (for tests)
 
-public class AndroidPackagingBuilder extends ModuleLevelBuilder {
+public class AndroidResourcePackagingBuilder extends ModuleLevelBuilder {
   @NonNls private static final String BUILDER_NAME = "android-packager";
 
-  protected AndroidPackagingBuilder() {
+  protected AndroidResourcePackagingBuilder() {
     super(BuilderCategory.PACKAGER);
   }
 
