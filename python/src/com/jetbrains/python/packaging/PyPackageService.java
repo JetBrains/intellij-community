@@ -14,8 +14,7 @@ import java.util.Map;
  */
 @State(name = "PyPackageService",
        storages = {
-           @Storage( file = "$PROJECT_FILE$"),
-           @Storage( file = "$PROJECT_CONFIG_DIR$/packages.xml", scheme = StorageScheme.DIRECTORY_BASED)
+           @Storage( file = "$APP_CONFIG$/packages.xml")
        }
 )
 public class PyPackageService implements
