@@ -330,7 +330,7 @@ public class PyPackageManager {
       if (manager != null) {
         final List<String> cmdline = new ArrayList<String>();
         cmdline.add(mySdk.getHomePath());
-        cmdline.add(new File(remoteSdkData.getPyCharmTempFilesPath(),
+        cmdline.add(new File(remoteSdkData.getPyCharmHelpersPath(),
                              helper).getPath());
         cmdline.addAll(args);
         try {
