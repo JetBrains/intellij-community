@@ -114,6 +114,11 @@ public class GradleModulesImporter {
         AccessToken writeLock = application.acquireWriteActionLock(getClass());
         try {
           final List<ModifiableRootModel> rootModels = new ArrayList<ModifiableRootModel>();
+          final GradleProjectEntityImportListener publisher =
+            intellijProject.getMessageBus().syncPublisher(GradleProjectEntityImportListener.TOPIC);
+          for (GradleModule module : modules) {
+            publisher.onImportStart(module);
+          }
           try {
             Map<GradleModule, Module> moduleMappings = doImportModules(modules, model, rootModels);
             result.putAll(moduleMappings);
@@ -127,6 +132,9 @@ public class GradleModulesImporter {
             ProjectRootManager projectRootManager = ProjectRootManager.getInstance(intellijProject);
             ModifiableRootModel[] modelsAsArray = rootModels.toArray(new ModifiableRootModel[rootModels.size()]);
             projectRootManager.multiCommit(model, modelsAsArray);
+            for (GradleModule module : modules) {
+              publisher.onImportEnd(module);
+            }
           }
         }
         finally {

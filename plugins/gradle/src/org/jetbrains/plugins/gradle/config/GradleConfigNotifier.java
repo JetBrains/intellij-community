@@ -5,6 +5,8 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Defines callback for the gradle config structure change.
+ * <p/>
+ * Implementations of this interface are not obliged to be thread-safe.
  * 
  * @author Denis Zhdanov
  * @since 1/17/12 1:02 PM

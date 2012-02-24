@@ -64,35 +64,47 @@ public class GradleModuleImporter {
           @Override
           public void run() {
             final ModuleManager moduleManager = ModuleManager.getInstance(project);
+            final GradleProjectEntityImportListener publisher 
+              = project.getMessageBus().syncPublisher(GradleProjectEntityImportListener.TOPIC);
             for (GradleModule module : modules) {
-              final Module created = moduleManager.newModule(module.getModuleFilePath(), StdModuleTypes.JAVA);
-              
-              // Ensure that the dependencies are clear (used to be not clear when manually removing the module and importing it via gradle)
-              ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(created);
-              final ModifiableRootModel moduleRootModel = moduleRootManager.getModifiableModel();
-              RootPolicy<Object> visitor = new RootPolicy<Object>() {
-                @Override
-                public Object visitLibraryOrderEntry(LibraryOrderEntry libraryOrderEntry, Object value) {
-                  moduleRootModel.removeOrderEntry(libraryOrderEntry);
-                  return value;
-                }
-
-                @Override
-                public Object visitModuleOrderEntry(ModuleOrderEntry moduleOrderEntry, Object value) {
-                  moduleRootModel.removeOrderEntry(moduleOrderEntry);
-                  return value;
-                }
-              };
+              publisher.onImportStart(module);
               try {
-                for (OrderEntry orderEntry : moduleRootModel.getOrderEntries()) {
-                  orderEntry.accept(visitor, null);
-                }
+                importModule(moduleManager, module);
               }
               finally {
-                moduleRootModel.commit();
+                publisher.onImportEnd(module);
               }
-              moduleMappings.put(module, created);
             }
+          }
+
+          private void importModule(@NotNull ModuleManager moduleManager, @NotNull GradleModule module) {
+            final Module created = moduleManager.newModule(module.getModuleFilePath(), StdModuleTypes.JAVA);
+
+            // Ensure that the dependencies are clear (used to be not clear when manually removing the module and importing it via gradle)
+            ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(created);
+            final ModifiableRootModel moduleRootModel = moduleRootManager.getModifiableModel();
+            RootPolicy<Object> visitor = new RootPolicy<Object>() {
+              @Override
+              public Object visitLibraryOrderEntry(LibraryOrderEntry libraryOrderEntry, Object value) {
+                moduleRootModel.removeOrderEntry(libraryOrderEntry);
+                return value;
+              }
+
+              @Override
+              public Object visitModuleOrderEntry(ModuleOrderEntry moduleOrderEntry, Object value) {
+                moduleRootModel.removeOrderEntry(moduleOrderEntry);
+                return value;
+              }
+            };
+            try {
+              for (OrderEntry orderEntry : moduleRootModel.getOrderEntries()) {
+                orderEntry.accept(visitor, null);
+              }
+            }
+            finally {
+              moduleRootModel.commit();
+            }
+            moduleMappings.put(module, created);
           }
         });
         if (!recursive) {
