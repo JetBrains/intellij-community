@@ -122,10 +122,12 @@ public class ExtractInterfaceHandler implements RefactoringActionHandler, Elemen
     }
 
     if (anInterface != null) {
+      final SmartPsiElementPointer<PsiClass> classPointer = SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(myClass);
+      final SmartPsiElementPointer<PsiClass> interfacePointer = SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(anInterface);
       final Runnable turnRefsToSuperRunnable = new Runnable() {
         @Override
         public void run() {
-          ExtractClassUtil.askAndTurnRefsToSuper(myProject, myClass, anInterface);
+          ExtractClassUtil.askAndTurnRefsToSuper(myProject, classPointer, interfacePointer);
         }
       };
       SwingUtilities.invokeLater(turnRefsToSuperRunnable);
