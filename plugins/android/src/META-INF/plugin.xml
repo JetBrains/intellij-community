@@ -201,6 +201,10 @@
     <compileServer.plugin jar-path="sdklib.jar"/>
     <compileServer.plugin jar-path="../../../../../community/plugins/android/lib/sdklib.jar"/>
     <compileServer.plugin jar-path="../../../../../plugins/android/lib/sdklib.jar"/>
+
+    <compileServer.plugin jar-path="common.jar"/>
+    <compileServer.plugin jar-path="../../../../../community/plugins/android/lib/common.jar"/>
+    <compileServer.plugin jar-path="../../../../../plugins/android/lib/common.jar"/>
   </extensions>
 
   <extensionPoints>

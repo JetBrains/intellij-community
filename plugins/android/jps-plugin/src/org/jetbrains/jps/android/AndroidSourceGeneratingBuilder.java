@@ -13,10 +13,15 @@ import org.jetbrains.android.compiler.tools.AndroidIdl;
 import org.jetbrains.android.compiler.tools.AndroidRenderscript;
 import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.AndroidCompilerMessageKind;
+import org.jetbrains.android.util.ResourceEntry;
+import org.jetbrains.android.util.ValueResourcesFileParser;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.*;
+import org.jetbrains.jps.ClasspathItem;
+import org.jetbrains.jps.ClasspathKind;
+import org.jetbrains.jps.Module;
+import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.java.FormsParsing;
 import org.jetbrains.jps.incremental.java.JavaBuilder;
@@ -42,6 +47,9 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
   @NonNls private static final String RENDERSCRIPT_EXTENSION = "rs";
   @NonNls private static final String MANIFEST_TAG = "manifest";
   @NonNls private static final String PACKAGE_MANIFEST_ATTRIBUTE = "package";
+  @NonNls private static final String PERMISSION_TAG = "permission";
+  @NonNls private static final String PERMISSION_GROUP_TAG = "permission-group";
+  @NonNls private static final String NAME_ATTRIBUTE = "name";
 
   public AndroidSourceGeneratingBuilder() {
     super(BuilderCategory.SOURCE_GENERATOR);
@@ -106,8 +114,14 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
       success = false;
     }
 
-    if (!runAaptCompiler(context, moduleDataMap)) {
-      success = false;
+    final AndroidAptStateStorage storage = new AndroidAptStateStorage(context.getDataManager().getDataStorageRoot());
+    try {
+      if (!runAaptCompiler(context, moduleDataMap, storage)) {
+        success = false;
+      }
+    }
+    finally {
+      storage.close();
     }
 
     return success ? ExitCode.OK : ExitCode.ABORT;
@@ -246,9 +260,9 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
     return success;
   }
 
-  // todo: save validity state
   private static boolean runAaptCompiler(@NotNull final CompileContext context,
-                                         @NotNull Map<Module, MyModuleData> moduleDataMap) {
+                                         @NotNull Map<Module, MyModuleData> moduleDataMap,
+                                         @NotNull AndroidAptStateStorage storage) {
     context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.aapt")));
 
     boolean success = true;
@@ -287,6 +301,10 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
         final Set<String> depLibPackagesSet = getDepLibPackages(module);
         depLibPackagesSet.remove(packageName);
 
+        if (!updateState(module, resPaths, manifestFile, packageName, depLibPackagesSet, storage)) {
+          continue;
+        }
+
         final File outputDirectory = moduleData.getOutputDirectory();
         final File aptOutputDirectory = new File(outputDirectory, "generated-aapt");
 
@@ -314,6 +332,25 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
       }
     }
     return success;
+  }
+
+  private static boolean updateState(@NotNull Module module,
+                                     @NotNull String[] resPaths,
+                                     @NotNull File manifestFile,
+                                     @NotNull String packageName,
+                                     @NotNull Set<String> depLibPackagesSet,
+                                     @NotNull AndroidAptStateStorage storage) throws IOException {
+
+    final Set<ResourceEntry> resources = collectResources(resPaths);
+    final Set<ResourceEntry> manifestElements = collectManifestElements(manifestFile);
+    final AndroidAptValidityState newState = new AndroidAptValidityState(resources, manifestElements, depLibPackagesSet, packageName);
+
+    final AndroidAptValidityState oldState = storage.getState(module.getName());
+    if (newState.equalsTo(oldState)) {
+      return false;
+    }
+    storage.update(module.getName(), newState);
+    return true;
   }
 
   @NotNull
@@ -365,6 +402,99 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
       });
 
       return packageName.get();
+    }
+    finally {
+      inputStream.close();
+    }
+  }
+
+  @NotNull
+  private static Set<ResourceEntry> collectResources(@NotNull String[] resPaths) throws IOException {
+    final Set<ResourceEntry> result = new HashSet<ResourceEntry>();
+
+    for (String resDirPath : resPaths) {
+      final File[] resSubdirs = new File(resDirPath).listFiles();
+
+      if (resSubdirs != null) {
+        for (File resSubdir : resSubdirs) {
+          final String resType = AndroidCommonUtils.getResourceTypeByDirName(resSubdir.getName());
+
+          if (resType != null) {
+            final boolean valueResDir = "values".equals(resType);
+            final File[] resFiles = resSubdir.listFiles();
+
+            if (resFiles != null) {
+              for (File resFile : resFiles) {
+                if (valueResDir && "xml".equals(FileUtil.getExtension(resFile.getName()))) {
+                  collectValueResources(resFile, result);
+                }
+                else {
+                  final String resName = AndroidCommonUtils.getResourceName(resType, resFile.getName());
+                  result.add(new ResourceEntry(resType, resName));
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    return result;
+  }
+
+  private static void collectValueResources(@NotNull File valueResXmlFile, @NotNull final Set<ResourceEntry> result)
+    throws IOException {
+    final InputStream inputStream = new BufferedInputStream(new FileInputStream(valueResXmlFile));
+    try {
+
+      FormsParsing.parse(inputStream, new ValueResourcesFileParser() {
+        @Override
+        protected void stop() {
+          throw new FormsParsing.ParserStoppedException();
+        }
+
+        @Override
+        protected void process(@NotNull ResourceEntry resourceEntry) {
+          result.add(resourceEntry);
+        }
+      });
+    }
+    finally {
+      inputStream.close();
+    }
+  }
+
+  @NotNull
+  private static Set<ResourceEntry> collectManifestElements(@NotNull File manifestFile) throws IOException {
+    final InputStream inputStream = new BufferedInputStream(new FileInputStream(manifestFile));
+    try {
+      final Set<ResourceEntry> result = new HashSet<ResourceEntry>();
+
+      FormsParsing.parse(inputStream, new FormsParsing.IXMLBuilderAdapter() {
+        String myLastName;
+
+        @Override
+        public void startElement(String name, String nsPrefix, String nsURI, String systemID, int lineNr)
+          throws Exception {
+          myLastName = null;
+        }
+
+        @Override
+        public void addAttribute(String key, String nsPrefix, String nsURI, String value, String type)
+          throws Exception {
+          if (value != null && NAME_ATTRIBUTE.equals(key)) {
+            myLastName = value;
+          }
+        }
+
+        @Override
+        public void elementAttributesProcessed(String name, String nsPrefix, String nsURI) throws Exception {
+          if (myLastName != null && PERMISSION_TAG.equals(name) || PERMISSION_GROUP_TAG.equals(name)) {
+            result.add(new ResourceEntry(name, myLastName));
+          }
+        }
+      });
+
+      return result;
     }
     finally {
       inputStream.close();
