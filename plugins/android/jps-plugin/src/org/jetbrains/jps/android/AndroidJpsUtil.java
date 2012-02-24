@@ -130,7 +130,13 @@ class AndroidJpsUtil {
             final File file = new File(filePath);
 
             if (file.exists()) {
-              collectClassFilesAndJars(filePath, libraries);
+              processClassFilesAndJarsRecursively(filePath, new Processor<File>() {
+                @Override
+                public boolean process(File file) {
+                  libraries.add(file.getPath());
+                  return true;
+                }
+              });
             }
           }
         }
@@ -162,8 +168,7 @@ class AndroidJpsUtil {
     }
   }
 
-  private static void collectClassFilesAndJars(@NotNull String root,
-                                               @NotNull final Set<String> result) {
+  public static void processClassFilesAndJarsRecursively(@NotNull String root, @NotNull final Processor<File> processor) {
     FileUtil.processFilesRecursively(new File(root), new Processor<File>() {
       @Override
       public boolean process(File file) {
@@ -171,7 +176,9 @@ class AndroidJpsUtil {
           final String ext = FileUtil.getExtension(file.getName());
 
           if ("jar".equals(ext) || "class".equals(ext)) {
-            result.add(file.getPath());
+            if (!processor.process(file)) {
+              return false;
+            }
           }
         }
         return true;
@@ -240,6 +247,15 @@ class AndroidJpsUtil {
 
   public static boolean containsAndroidFacet(@NotNull ModuleChunk chunk) {
     for (Module module : chunk.getModules()) {
+      if (getFacet(module) != null) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public static boolean containsAndroidFacet(@NotNull Project project) {
+    for (Module module : project.getModules().values()) {
       if (getFacet(module) != null) {
         return true;
       }

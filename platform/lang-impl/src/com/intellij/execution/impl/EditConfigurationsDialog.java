@@ -18,13 +18,11 @@ package com.intellij.execution.impl;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.Executor;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
 
 public class EditConfigurationsDialog extends SingleConfigurableEditor implements RunConfigurable.RunDialogBase {
-  private Configurable mySelectedConfigurable;
   protected Executor myExecutor;
 
   public EditConfigurationsDialog(final Project project) {
@@ -35,14 +33,12 @@ public class EditConfigurationsDialog extends SingleConfigurableEditor implement
 
   @Override
   protected void doOKAction() {
-    final Configurable configurable = getConfigurable();
-    mySelectedConfigurable = ((RunConfigurable)configurable).getSelectedConfigurable();
-
+    RunConfigurable configurable = (RunConfigurable)getConfigurable();
     super.doOKAction();
-  }
-
-  public Configurable getSelectedConfigurable() {
-    return mySelectedConfigurable;
+    if (isOK()) {
+      // if configurable was not modified, apply was not called and Run Configurable has not called 'updateActiveConfigurationFromSelected'
+      configurable.updateActiveConfigurationFromSelected();
+    }
   }
 
   protected String getDimensionServiceKey() {

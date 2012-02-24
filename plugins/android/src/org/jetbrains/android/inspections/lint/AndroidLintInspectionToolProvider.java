@@ -74,97 +74,97 @@ public class AndroidLintInspectionToolProvider implements InspectionToolProvider
    */
   public static class AndroidLintInconsistentArraysInspection extends AndroidLintInspectionBase {
     public AndroidLintInconsistentArraysInspection() {
-      super("Inconsistent array sizes", ArraySizeDetector.INCONSISTENT);
+      super(AndroidBundle.message("android.lint.inspections.inconsistent.arrays"), ArraySizeDetector.INCONSISTENT);
     }
   }
 
   public static class AndroidLintDuplicateIncludedIdsInspection extends AndroidLintInspectionBase {
     public AndroidLintDuplicateIncludedIdsInspection() {
-      super("Duplicate ids across layouts combined with include tags", DuplicateIdDetector.CROSS_LAYOUT);
+      super(AndroidBundle.message("android.lint.inspections.duplicate.included.ids"), DuplicateIdDetector.CROSS_LAYOUT);
     }
   }
 
   public static class AndroidLintIconExpectedSizeInspection extends AndroidLintInspectionBase {
     public AndroidLintIconExpectedSizeInspection() {
-      super("Icon have incorrect size", IconDetector.ICON_EXPECTED_SIZE);
+      super(AndroidBundle.message("android.lint.inspections.icon.expected.size"), IconDetector.ICON_EXPECTED_SIZE);
     }
   }
 
   public static class AndroidLintIconDipSizeInspection extends AndroidLintInspectionBase {
     public AndroidLintIconDipSizeInspection() {
-      super("Icon density-independent size validation", IconDetector.ICON_DIP_SIZE);
+      super(AndroidBundle.message("android.lint.inspections.icon.dip.size"), IconDetector.ICON_DIP_SIZE);
     }
   }
 
   public static class AndroidLintIconLocationInspection extends AndroidLintInspectionBase {
     public AndroidLintIconLocationInspection() {
-      super("Image defined in density-independent drawable folder", IconDetector.ICON_LOCATION);
+      super(AndroidBundle.message("android.lint.inspections.icon.location"), IconDetector.ICON_LOCATION);
     }
   }
 
   public static class AndroidLintIconDensitiesInspection extends AndroidLintInspectionBase {
     public AndroidLintIconDensitiesInspection() {
-      super("Icon densities validation", IconDetector.ICON_DENSITIES);
+      super(AndroidBundle.message("android.lint.inspections.icon.densities"), IconDetector.ICON_DENSITIES);
     }
   }
 
   public static class AndroidLintIconMissingDensityFolderInspection extends AndroidLintInspectionBase {
     public AndroidLintIconMissingDensityFolderInspection() {
-      super("Missing density folder", IconDetector.ICON_MISSING_FOLDER);
+      super(AndroidBundle.message("android.lint.inspections.icon.missing.density.folder"), IconDetector.ICON_MISSING_FOLDER);
     }
   }
 
   public static class AndroidLintGifUsageInspection extends AndroidLintInspectionBase {
     public AndroidLintGifUsageInspection() {
-      super("Using the .gif format for bitmaps is discouraged", IconDetector.GIF_USAGE);
+      super(AndroidBundle.message("android.lint.inspections.gif.usage"), IconDetector.GIF_USAGE);
     }
   }
 
   public static class AndroidLintIconDuplicatesInspection extends AndroidLintInspectionBase {
     public AndroidLintIconDuplicatesInspection() {
-      super("Duplicated icons under different names", IconDetector.DUPLICATES_NAMES);
+      super(AndroidBundle.message("android.lint.inspections.icon.duplicates"), IconDetector.DUPLICATES_NAMES);
     }
   }
 
   public static class AndroidLintIconDuplicatesConfigInspection extends AndroidLintInspectionBase {
     public AndroidLintIconDuplicatesConfigInspection() {
-      super("Identical bitmaps across various configurations", IconDetector.DUPLICATES_CONFIGURATIONS);
+      super(AndroidBundle.message("android.lint.inspections.icon.duplicates.config"), IconDetector.DUPLICATES_CONFIGURATIONS);
     }
   }
 
   public static class AndroidLintIconNoDpiInspection extends AndroidLintInspectionBase {
     public AndroidLintIconNoDpiInspection() {
-      super("Icon appear in both -nodpi and dpi folders", IconDetector.ICON_NODPI);
+      super(AndroidBundle.message("android.lint.inspections.icon.no.dpi"), IconDetector.ICON_NODPI);
     }
   }
 
   public static class AndroidLintOverdrawInspection extends AndroidLintInspectionBase {
     public AndroidLintOverdrawInspection() {
-      super("Overdraw issues", OverdrawDetector.ISSUE);
+      super(AndroidBundle.message("android.lint.inspections.overdraw"), OverdrawDetector.ISSUE);
     }
   }
 
   public static class AndroidLintMissingTranslationInspection extends AndroidLintInspectionBase {
     public AndroidLintMissingTranslationInspection() {
-      super("Incomplete translation", TranslationDetector.MISSING);
+      super(AndroidBundle.message("android.lint.inspections.missing.translation"), TranslationDetector.MISSING);
     }
   }
 
   public static class AndroidLintExtraTranslationInspection extends AndroidLintInspectionBase {
     public AndroidLintExtraTranslationInspection() {
-      super("Extra translation", TranslationDetector.EXTRA);
+      super(AndroidBundle.message("android.lint.inspections.extra.translation"), TranslationDetector.EXTRA);
     }
   }
 
   public static class AndroidLintUnusedResourcesInspection extends AndroidLintInspectionBase {
     public AndroidLintUnusedResourcesInspection() {
-      super("Unused resources", UnusedResourceDetector.ISSUE);
+      super(AndroidBundle.message("android.lint.inspections.unused.resources"), UnusedResourceDetector.ISSUE);
     }
   }
 
   public static class AndroidLintUnusedIdsInspection extends AndroidLintInspectionBase {
     public AndroidLintUnusedIdsInspection() {
-      super("Unused id's", UnusedResourceDetector.ISSUE_IDS);
+      super(AndroidBundle.message("android.lint.inspections.unused.ids"), UnusedResourceDetector.ISSUE_IDS);
     }
   }
 
@@ -173,7 +173,7 @@ public class AndroidLintInspectionToolProvider implements InspectionToolProvider
    */
   public static class AndroidLintContentDescriptionInspection extends AndroidLintInspectionBase {
     public AndroidLintContentDescriptionInspection() {
-      super("Missing content description", AccessibilityDetector.ISSUE);
+      super(AndroidBundle.message("android.lint.inspections.content.description"), AccessibilityDetector.ISSUE);
     }
 
     @NotNull
@@ -218,19 +218,19 @@ public class AndroidLintInspectionToolProvider implements InspectionToolProvider
 
   public static class AndroidLintDuplicateIdsInspection extends AndroidLintInspectionBase {
     public AndroidLintDuplicateIdsInspection() {
-      super("Duplicate ids within a single layout", DuplicateIdDetector.WITHIN_LAYOUT);
+      super(AndroidBundle.message("android.lint.inspections.duplicate.ids"), DuplicateIdDetector.WITHIN_LAYOUT);
     }
   }
 
   public static class AndroidLintGridLayoutInspection extends AndroidLintInspectionBase {
     public AndroidLintGridLayoutInspection() {
-      super("GridLayout validation", GridLayoutDetector.ISSUE);
+      super(AndroidBundle.message("android.lint.inspections.grid.layout"), GridLayoutDetector.ISSUE);
     }
   }
 
   public static class AndroidLintHardcodedTextInspection extends AndroidLintInspectionBase {
     public AndroidLintHardcodedTextInspection() {
-      super("Hardcoded text", HardcodedValuesDetector.ISSUE);
+      super(AndroidBundle.message("android.lint.inspections.hardcoded.text"), HardcodedValuesDetector.ISSUE);
     }
 
     @NotNull
@@ -242,7 +242,7 @@ public class AndroidLintInspectionToolProvider implements InspectionToolProvider
 
   public static class AndroidLintInefficientWeightInspection extends AndroidLintInspectionBase {
     public AndroidLintInefficientWeightInspection() {
-      super("Inefficient layout weight", InefficientWeightDetector.INEFFICIENT_WEIGHT);
+      super(AndroidBundle.message("android.lint.inspections.inefficient.weight"), InefficientWeightDetector.INEFFICIENT_WEIGHT);
     }
 
     @NotNull
@@ -256,13 +256,13 @@ public class AndroidLintInspectionToolProvider implements InspectionToolProvider
 
   public static class AndroidLintNestedWeightsInspection extends AndroidLintInspectionBase {
     public AndroidLintNestedWeightsInspection() {
-      super("Nested layout weights", InefficientWeightDetector.NESTED_WEIGHTS);
+      super(AndroidBundle.message("android.lint.inspections.nested.weights"), InefficientWeightDetector.NESTED_WEIGHTS);
     }
   }
 
   public static class AndroidLintDisableBaselineAlignmentInspection extends AndroidLintInspectionBase {
     public AndroidLintDisableBaselineAlignmentInspection() {
-      super("Missing baselineAligned attribute", InefficientWeightDetector.BASELINE_WEIGHTS);
+      super(AndroidBundle.message("android.lint.inspections.disable.baseline.alignment"), InefficientWeightDetector.BASELINE_WEIGHTS);
     }
 
     @NotNull
@@ -277,25 +277,25 @@ public class AndroidLintInspectionToolProvider implements InspectionToolProvider
 
   public static class AndroidLintManifestOrderInspection extends AndroidLintInspectionBase {
     public AndroidLintManifestOrderInspection() {
-      super("Incorrect order of elements in manifest", ManifestOrderDetector.ISSUE);
+      super(AndroidBundle.message("android.lint.inspections.manifest.order"), ManifestOrderDetector.ISSUE);
     }
   }
 
   public static class AndroidLintMergeRootFrameInspection extends AndroidLintInspectionBase {
     public AndroidLintMergeRootFrameInspection() {
-      super("FrameLayout can be replaced with <merge> tag", MergeRootFrameLayoutDetector.ISSUE);
+      super(AndroidBundle.message("android.lint.inspections.merge.root.frame"), MergeRootFrameLayoutDetector.ISSUE);
     }
   }
 
   public static class AndroidLintNestedScrollingInspection extends AndroidLintInspectionBase {
     public AndroidLintNestedScrollingInspection() {
-      super("Nested scrolling widgets", NestedScrollingWidgetDetector.ISSUE);
+      super(AndroidBundle.message("android.lint.inspections.nested.scrolling"), NestedScrollingWidgetDetector.ISSUE);
     }
   }
 
   public static class AndroidLintObsoleteLayoutParamInspection extends AndroidLintInspectionBase {
     public AndroidLintObsoleteLayoutParamInspection() {
-      super("Obsolete layout params", ObsoleteLayoutParamsDetector.ISSUE);
+      super(AndroidBundle.message("android.lint.inspections.obsolete.layout.param"), ObsoleteLayoutParamsDetector.ISSUE);
     }
 
     @NotNull
@@ -307,13 +307,13 @@ public class AndroidLintInspectionToolProvider implements InspectionToolProvider
 
   public static class AndroidLintProguardInspection extends AndroidLintInspectionBase {
     public AndroidLintProguardInspection() {
-      super("Proguard config file validation", ProguardDetector.ISSUE);
+      super(AndroidBundle.message("android.lint.inspections.proguard"), ProguardDetector.ISSUE);
     }
   }
 
   public static class AndroidLintPxUsageInspection extends AndroidLintInspectionBase {
     public AndroidLintPxUsageInspection() {
-      super("Using 'px' dimension", PxUsageDetector.ISSUE);
+      super(AndroidBundle.message("android.lint.inspections.px.usage"), PxUsageDetector.ISSUE);
     }
 
     @NotNull
@@ -325,7 +325,7 @@ public class AndroidLintInspectionToolProvider implements InspectionToolProvider
 
   public static class AndroidLintScrollViewSizeInspection extends AndroidLintInspectionBase {
     public AndroidLintScrollViewSizeInspection() {
-      super("ScrollView size validation", ScrollViewChildDetector.ISSUE);
+      super(AndroidBundle.message("android.lint.inspections.scroll.view.size"), ScrollViewChildDetector.ISSUE);
     }
 
     @NotNull
@@ -337,7 +337,7 @@ public class AndroidLintInspectionToolProvider implements InspectionToolProvider
 
   public static class AndroidLintExportedServiceInspection extends AndroidLintInspectionBase {
     public AndroidLintExportedServiceInspection() {
-      super("Exported service does not require permission", SecurityDetector.EXPORTED_SERVICE);
+      super(AndroidBundle.message("android.lint.inspections.exported.service"), SecurityDetector.EXPORTED_SERVICE);
     }
 
     @NotNull
@@ -352,13 +352,13 @@ public class AndroidLintInspectionToolProvider implements InspectionToolProvider
 
   public static class AndroidLintGrantAllUrisInspection extends AndroidLintInspectionBase {
     public AndroidLintGrantAllUrisInspection() {
-      super("Content provider shares everything", SecurityDetector.OPEN_PROVIDER);
+      super(AndroidBundle.message("android.lint.inspections.grant.all.uris"), SecurityDetector.OPEN_PROVIDER);
     }
   }
 
   public static class AndroidLintStateListReachableInspection extends AndroidLintInspectionBase {
     public AndroidLintStateListReachableInspection() {
-      super("Unreachable state in a <selector>", StateListDetector.ISSUE);
+      super(AndroidBundle.message("android.lint.inspections.state.list.reachable"), StateListDetector.ISSUE);
     }
   }
 
@@ -379,61 +379,61 @@ public class AndroidLintInspectionToolProvider implements InspectionToolProvider
 
   public static class AndroidLintTooManyViewsInspection extends AndroidLintInspectionBase {
     public AndroidLintTooManyViewsInspection() {
-      super("Layout has too many views", TooManyViewsDetector.TOO_MANY);
+      super(AndroidBundle.message("android.lint.inspections.too.many.views"), TooManyViewsDetector.TOO_MANY);
     }
   }
 
   public static class AndroidLintTooDeepLayoutInspection extends AndroidLintInspectionBase {
     public AndroidLintTooDeepLayoutInspection() {
-      super("Layout hierarchy is too deep", TooManyViewsDetector.TOO_DEEP);
+      super(AndroidBundle.message("android.lint.inspections.too.deep.layout"), TooManyViewsDetector.TOO_DEEP);
     }
   }
 
   public static class AndroidLintTypographyDashesInspection extends AndroidLintTypographyInspectionBase {
     public AndroidLintTypographyDashesInspection() {
-      super("Hyphen can be replaced by dash", TypographyDetector.DASHES);
+      super(AndroidBundle.message("android.lint.inspections.typography.dashes"), TypographyDetector.DASHES);
     }
   }
 
   public static class AndroidLintTypographyQuotesInspection extends AndroidLintTypographyInspectionBase {
     public AndroidLintTypographyQuotesInspection() {
-      super("Straight quotes can be replaced by curvy quotes", TypographyDetector.QUOTES);
+      super(AndroidBundle.message("android.lint.inspections.typography.quotes"), TypographyDetector.QUOTES);
     }
   }
 
   public static class AndroidLintTypographyFractionsInspection extends AndroidLintTypographyInspectionBase {
     public AndroidLintTypographyFractionsInspection() {
-      super("Fraction string can be replaced with fraction character", TypographyDetector.FRACTIONS);
+      super(AndroidBundle.message("android.lint.inspections.typography.fractions"), TypographyDetector.FRACTIONS);
     }
   }
 
   public static class AndroidLintTypographyEllipsisInspection extends AndroidLintTypographyInspectionBase {
     public AndroidLintTypographyEllipsisInspection() {
-      super("Ellipsis string can be replaced with ellipsis character", TypographyDetector.ELLIPSIS);
+      super(AndroidBundle.message("android.lint.inspections.typography.ellipsis"), TypographyDetector.ELLIPSIS);
     }
   }
 
   public static class AndroidLintTypographyOtherInspection extends AndroidLintTypographyInspectionBase {
     public AndroidLintTypographyOtherInspection() {
-      super("Other typographical problems", TypographyDetector.OTHER);
+      super(AndroidBundle.message("android.lint.inspections.typography.other"), TypographyDetector.OTHER);
     }
   }
 
   public static class AndroidLintUseCompoundDrawablesInspection extends AndroidLintInspectionBase {
     public AndroidLintUseCompoundDrawablesInspection() {
-      super("Node can be replaced by TextView with compound drawables", UseCompoundDrawableDetector.ISSUE);
+      super(AndroidBundle.message("android.lint.inspections.use.compound.drawables"), UseCompoundDrawableDetector.ISSUE);
     }
   }
 
   public static class AndroidLintUselessParentInspection extends AndroidLintInspectionBase {
     public AndroidLintUselessParentInspection() {
-      super("Useless parent layout", UselessViewDetector.USELESS_PARENT);
+      super(AndroidBundle.message("android.lint.inspections.useless.parent"), UselessViewDetector.USELESS_PARENT);
     }
   }
 
   public static class AndroidLintUselessLeafInspection extends AndroidLintInspectionBase {
     public AndroidLintUselessLeafInspection() {
-      super("Useless leaf layout", UselessViewDetector.USELESS_LEAF);
+      super(AndroidBundle.message("android.lint.inspections.useless.leaf"), UselessViewDetector.USELESS_LEAF);
     }
 
     @NotNull
