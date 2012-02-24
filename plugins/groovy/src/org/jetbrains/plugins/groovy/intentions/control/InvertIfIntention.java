@@ -93,16 +93,15 @@ public class InvertIfIntention extends Intention {
     return new PsiElementPredicate() {
       @Override
       public boolean satisfiedBy(PsiElement element) {
-
-        if (!"if".equals(element.getText())) {
-          return false;
-        }
         PsiElement parent = element.getParent();
         if (!(parent instanceof GrIfStatement)) {
           return false;
         }
 
         if (((GrIfStatement)parent).getCondition() == null) {
+          return false;
+        }
+        if (!"if".equals(element.getText())) {
           return false;
         }
         return true;
