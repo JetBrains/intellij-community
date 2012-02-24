@@ -299,7 +299,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     });
     JTree tree = myFileSystemTree.getTree();
     tree.setCellRenderer(new NodeRenderer());
-    tree.addTreeSelectionListener(new FileTreeSelectionListener());
+    tree.getSelectionModel().addTreeSelectionListener(new FileTreeSelectionListener());
     tree.addTreeExpansionListener(new FileTreeExpansionListener());
     setOKActionEnabled(false);
 
