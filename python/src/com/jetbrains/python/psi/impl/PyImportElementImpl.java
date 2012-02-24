@@ -117,8 +117,8 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
       private String getRefName(String default_name) {
         PyReferenceExpression ref = getImportReferenceExpression();
         if (ref != null) {
-          String refname = ref.getName();
-          if (refname != null) return refname;
+          String refName = ref.getName();
+          if (refName != null) return refName;
         }
         return default_name;
       }
@@ -129,7 +129,7 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
 
       public String getLocationString() {
         PyElement elt = PsiTreeUtil.getParentOfType(PyImportElementImpl.this, PyImportStatement.class, PyFromImportStatement.class);
-        StringBuffer buf = new StringBuffer("| ");
+        final StringBuilder buf = new StringBuilder("| ");
         if (elt != null) { // always? who knows :)
           if (elt instanceof PyFromImportStatement) { // from ... import ...
             buf.append("from ");
