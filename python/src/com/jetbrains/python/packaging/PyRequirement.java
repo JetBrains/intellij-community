@@ -18,8 +18,39 @@ public class PyRequirement {
   private static final Pattern NAME = Pattern.compile("\\s*((\\w|[-.])+)\\s*(.*)");
   private static final Pattern VERSION = Pattern.compile("\\s*(<=?|>=?|==|!=)\\s*((\\w|[-.])+).*");
 
+  public enum Relation {
+    LT("<"),
+    LTE("<="),
+    GT(">"),
+    GTE(">="),
+    EQ("=="),
+    NE("!=");
+
+    @NotNull private final String myValue;
+
+    Relation(@NotNull String value) {
+      myValue = value;
+    }
+
+    @NotNull
+    @Override
+    public String toString() {
+      return myValue;
+    }
+
+    @Nullable
+    public static Relation fromString(@NotNull String value) {
+      for (Relation relation : Relation.values()) {
+        if (relation.myValue.equals(value)) {
+          return relation;
+        }
+      }
+      return null;
+    }
+  }
+
   private final String myName;
-  private final String myRelation;
+  private final Relation myRelation;
   private final String myVersion;
 
   public static final Comparator<String> VERSION_COMPARATOR = new Comparator<String>() {
@@ -52,10 +83,10 @@ public class PyRequirement {
   }
 
   public PyRequirement(@NotNull String name, @NotNull String version) {
-    this(name, "==", version);
+    this(name, Relation.EQ, version);
   }
 
-  public PyRequirement(@NotNull String name, @Nullable String relation, @Nullable String version) {
+  public PyRequirement(@NotNull String name, @Nullable Relation relation, @Nullable String version) {
     if (relation == null) {
       assert version == null;
     }
@@ -100,8 +131,24 @@ public class PyRequirement {
   public boolean match(@NotNull List<PyPackage> packages) {
     for (PyPackage pkg : packages) {
       if (myName.equalsIgnoreCase(pkg.getName())) {
-        if (myVersion == null || VERSION_COMPARATOR.compare(myVersion, pkg.getVersion()) == 0) {
+        // TODO: Multiple versions in requirements spec
+        if (myVersion == null) {
           return true;
+        }
+        final int cmp = VERSION_COMPARATOR.compare(pkg.getVersion(), myVersion);
+        switch (myRelation) {
+          case LT:
+            return cmp < 0;
+          case LTE:
+            return cmp <= 0;
+          case GT:
+            return cmp > 0;
+          case GTE:
+            return cmp >= 0;
+          case EQ:
+            return cmp == 0;
+          case NE:
+            return cmp != 0;
         }
       }
     }
@@ -112,28 +159,38 @@ public class PyRequirement {
   public static PyRequirement fromString(@NotNull String s) {
     // TODO: Extras, multi-line requirements '\'
     final Matcher nameMatcher = NAME.matcher(s);
-    if (nameMatcher.matches()) {
-      final String name = nameMatcher.group(1);
-      final String rest = nameMatcher.group(3);
-      final String relation;
-      final String version;
-      if (!rest.trim().isEmpty()) {
-        final Matcher versionMatcher = VERSION.matcher(rest);
-        if (versionMatcher.matches()) {
-          relation = versionMatcher.group(1);
-          version = versionMatcher.group(2);
-        }
-        else {
-          return null;
-        }
+    if (!nameMatcher.matches()) {
+      return null;
+    }
+    final String name = nameMatcher.group(1);
+    final String rest = nameMatcher.group(3);
+    final String rel;
+    final String version;
+    if (!rest.trim().isEmpty()) {
+      final Matcher versionMatcher = VERSION.matcher(rest);
+      if (versionMatcher.matches()) {
+        rel = versionMatcher.group(1);
+        version = versionMatcher.group(2);
       }
       else {
-        relation = null;
-        version = null;
+        return null;
       }
-      return new PyRequirement(name, relation, version);
     }
-    return null;
+    else {
+      rel = null;
+      version = null;
+    }
+    Relation relation = null;
+    if (rel != null) {
+      relation = Relation.fromString(rel);
+      if (relation == null) {
+        return null;
+      }
+    }
+    if (relation == null && version != null) {
+      return null;
+    }
+    return new PyRequirement(name, relation, version);
   }
 
   @Nullable
@@ -160,7 +217,7 @@ public class PyRequirement {
   }
 
   @Nullable
-  public String getRelation() {
+  public Relation getRelation() {
     return myRelation;
   }
 
