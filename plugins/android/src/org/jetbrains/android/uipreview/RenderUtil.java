@@ -252,6 +252,8 @@ public class RenderUtil {
     final String format = FileUtil.getExtension(imgPath);
     ImageIO.write(session.getImage(), format, new File(imgPath));
 
+      session.dispose();
+
     return new RenderingResult(warnMessages);
   }
 
