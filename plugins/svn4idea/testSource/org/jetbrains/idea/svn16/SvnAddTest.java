@@ -5,7 +5,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.idea.svn17.SvnVcs17;
+import org.jetbrains.idea.svn.SvnVcs;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -58,7 +58,7 @@ public class SvnAddTest extends SvnTestCase {
     final List<VirtualFile> files = new ArrayList<VirtualFile>();
     files.add(file);
     files.add(dir);
-    final List<VcsException> errors = SvnVcs17.getInstance(myProject).getCheckinEnvironment().scheduleUnversionedFilesForAddition(files);
+    final List<VcsException> errors = SvnVcs.getInstance(myProject).getCheckinEnvironment().scheduleUnversionedFilesForAddition(files);
     Assert.assertEquals(0, errors.size());
   }
 

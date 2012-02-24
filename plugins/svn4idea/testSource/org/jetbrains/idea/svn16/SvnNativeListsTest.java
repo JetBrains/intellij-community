@@ -3,8 +3,8 @@ package org.jetbrains.idea.svn16;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.idea.svn17.SvnChangeProvider;
-import org.jetbrains.idea.svn17.SvnChangelistListener;
+import org.jetbrains.idea.svn.SvnChangeProvider;
+import org.jetbrains.idea.svn.SvnChangelistListener;
 import org.junit.Test;
 import org.tmatesoft.svn.core.SVNException;
 

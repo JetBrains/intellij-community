@@ -12,7 +12,7 @@ import com.intellij.openapi.vcs.rollback.RollbackProgressListener;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.idea.svn17.SvnVcs17;
+import org.jetbrains.idea.svn.SvnVcs;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -141,7 +141,7 @@ public class SvnRenameTest extends SvnTestCase {
     Assert.assertNotNull(change);
 
     final List<VcsException> exceptions = new ArrayList<VcsException>();
-    SvnVcs17.getInstance(myProject).getRollbackEnvironment().rollbackChanges(Collections.singletonList(change), exceptions,
+    SvnVcs.getInstance(myProject).getRollbackEnvironment().rollbackChanges(Collections.singletonList(change), exceptions,
                                                                            RollbackProgressListener.EMPTY);
     Assert.assertTrue(exceptions.isEmpty());
     Assert.assertFalse(new File(myWorkingCopyDir.getPath(), "newchild").exists());
@@ -202,7 +202,7 @@ public class SvnRenameTest extends SvnTestCase {
     changes.add(ChangeListManager.getInstance(myProject).getChange(myWorkingCopyDir.findChild("newchild")));
 
     final List<VcsException> exceptions = new ArrayList<VcsException>();
-    SvnVcs17.getInstance(myProject).getRollbackEnvironment().rollbackChanges(changes, exceptions, RollbackProgressListener.EMPTY);
+    SvnVcs.getInstance(myProject).getRollbackEnvironment().rollbackChanges(changes, exceptions, RollbackProgressListener.EMPTY);
     try {
       Thread.sleep(300);
     }
@@ -234,7 +234,7 @@ public class SvnRenameTest extends SvnTestCase {
     LocalFileSystem.getInstance().refresh(false);   // wait for end of refresh operations initiated from SvnFileSystemListener
     changeListManager.ensureUpToDate(false);
     final List<Change> changes = new ArrayList<Change>(changeListManager.getDefaultChangeList().getChanges());
-    final List<VcsException> list = SvnVcs17.getInstance(myProject).getCheckinEnvironment().commit(changes, "test");
+    final List<VcsException> list = SvnVcs.getInstance(myProject).getCheckinEnvironment().commit(changes, "test");
     Assert.assertEquals(0, list.size());
   }
 
