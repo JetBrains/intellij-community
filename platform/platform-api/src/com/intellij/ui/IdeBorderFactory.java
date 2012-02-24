@@ -26,7 +26,7 @@ import java.awt.*;
 
 public class IdeBorderFactory {
   public static final int BORDER_ROUNDNESS = 5;
-  public static final int TITLED_BORDER_TOP_INSET = 7;
+  public static final int TITLED_BORDER_TOP_INSET = TitledSeparator.TOP_INSET;
   public static final int TITLED_BORDER_LEFT_INSET = 0;
   public static final int TITLED_BORDER_BOTTOM_INSET = 10;
   public static final int TITLED_BORDER_RIGHT_INSET = 0;
@@ -60,24 +60,35 @@ public class IdeBorderFactory {
   }
 
   public static TitledBorder createTitledBorder(String s) {
-    return createTitledBorder(s, false, true, true);
+    return createTitledBorder(s, true);
   }
 
+  @Deprecated
   public static IdeaTitledBorder createTitledBorder(String title, boolean hasBoldFont, boolean hasIndent, boolean hasSmallFont) {
     Insets insets = new Insets(TITLED_BORDER_TOP_INSET, TITLED_BORDER_LEFT_INSET, TITLED_BORDER_BOTTOM_INSET, TITLED_BORDER_RIGHT_INSET);
     return createTitledBorder(title, hasBoldFont, hasIndent, hasSmallFont, insets);
   }
 
-    public static IdeaTitledBorder createTitledBorder(String title, boolean hasBoldFont, boolean hasIndent, boolean hasSmallFont, Insets insets) {
-      int indent = hasIndent ? TITLED_BORDER_INDENT : 0;
-      return new IdeaTitledBorder(title, hasBoldFont, hasSmallFont, indent, insets);
-    }
+  @Deprecated
+  public static IdeaTitledBorder createTitledBorder(String title, boolean hasBoldFont, boolean hasIndent, boolean hasSmallFont, Insets insets) {
+    int indent = hasIndent ? TITLED_BORDER_INDENT : 0;
+    return new IdeaTitledBorder(title, indent, insets);
+  }
+
+  public static IdeaTitledBorder createTitledBorder(String title, boolean hasIndent) {
+    Insets insets = new Insets(TITLED_BORDER_TOP_INSET, TITLED_BORDER_LEFT_INSET, TITLED_BORDER_BOTTOM_INSET, TITLED_BORDER_RIGHT_INSET);
+    return createTitledBorder(title, hasIndent, insets);
+  }
+
+  public static IdeaTitledBorder createTitledBorder(String title, boolean hasIndent, Insets insets) {
+    int indent = hasIndent ? TITLED_BORDER_INDENT : 0;
+    return new IdeaTitledBorder(title, indent, insets);
+  }
 
   @Deprecated
   // Don't remove, used in TeamCity plugin.
   public static TitledBorder createTitledHeaderBorder(String title) {
-    return new IdeaTitledBorder(title, false, true, 10,
-                                new Insets(5, 0, 10, 0));
+    return new IdeaTitledBorder(title, 10, new Insets(5, 0, 10, 0));
   }
 
   private static Color getBorderColor() {
@@ -95,7 +106,7 @@ public class IdeBorderFactory {
                                                   int titlePosition,
                                                   Font titleFont,
                                                   Color titleColor) {
-      return IdeBorderFactory.createTitledBorder(title, false, true, true);
+      return IdeBorderFactory.createTitledBorder(title, true);
     }
   }
 
@@ -109,10 +120,11 @@ public class IdeBorderFactory {
                                                   int titlePosition,
                                                   Font titleFont,
                                                   Color titleColor) {
-      return IdeBorderFactory.createTitledBorder(title, false, false, true);
+      return IdeBorderFactory.createTitledBorder(title, false);
     }
   }
 
+  @Deprecated
   public static class BoldSmallWithIndent {
     private BoldSmallWithIndent() {
     }
@@ -127,6 +139,7 @@ public class IdeBorderFactory {
     }
   }
 
+  @Deprecated
   public static class BoldSmallWithoutIndent {
     private BoldSmallWithoutIndent() {
     }
@@ -141,6 +154,7 @@ public class IdeBorderFactory {
     }
   }
 
+  @Deprecated
   public static class PlainLargeWithIndent {
     private PlainLargeWithIndent() {
     }
@@ -155,6 +169,7 @@ public class IdeBorderFactory {
     }
   }
 
+  @Deprecated
   public static class PlainLargeWithoutIndent {
     private PlainLargeWithoutIndent() {
     }
@@ -169,6 +184,7 @@ public class IdeBorderFactory {
     }
   }
 
+  @Deprecated
   public static class BoldLargeWithIndent {
     private BoldLargeWithIndent() {
     }
@@ -183,6 +199,7 @@ public class IdeBorderFactory {
     }
   }
 
+  @Deprecated
   public static class BoldLargeWithoutIndent {
     private BoldLargeWithoutIndent() {
     }
@@ -207,7 +224,7 @@ public class IdeBorderFactory {
                                                   int titlePosition,
                                                   Font titleFont,
                                                   Color titleColor) {
-      return IdeBorderFactory.createTitledBorder(title, false, false, true, new Insets(5,0,0,0));
+      return IdeBorderFactory.createTitledBorder(title, false, new Insets(5,0,0,0));
     }
   }
 

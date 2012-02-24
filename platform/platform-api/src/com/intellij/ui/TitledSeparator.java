@@ -25,39 +25,36 @@ import java.awt.*;
  * @author cdr
  */
 public class TitledSeparator extends JPanel {
+  public static int TOP_INSET = 7;
+  public static int BOTTOM_INSET = 5;
+  public static int SEPARATOR_LEFT_INSET = 6;
+  public static int SEPARATOR_RIGHT_INSET = 3;
+
+
   protected final JLabel myLabel = new JLabel();
-  protected final JSeparator separator = new JSeparator(SwingConstants.HORIZONTAL);
-  private boolean boldFont;
-  private boolean smallFont;
+  protected final JSeparator mySeparator = new JSeparator(SwingConstants.HORIZONTAL);
 
   public TitledSeparator() {
     this("");
   }
 
   public TitledSeparator(String text) {
-    this(text, false, true);
-  }
-
-  public TitledSeparator(String text, boolean boldFont, boolean smallFont) {
     setLayout(new GridBagLayout());
-    add(myLabel, new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 6), 0, 0));
-    add(separator,
+    add(myLabel, new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+    add(mySeparator,
         new GridBagConstraints(1, 0, GridBagConstraints.REMAINDER, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
-                               new Insets(2, 0, 0, 3), 0, 0));
-    setBorder(IdeBorderFactory.createEmptyBorder(5, 0, 5, 0));
+                               new Insets(2, SEPARATOR_LEFT_INSET, 0, SEPARATOR_RIGHT_INSET), 0, 0));
+    setBorder(IdeBorderFactory.createEmptyBorder(TOP_INSET, 0, BOTTOM_INSET, 0));
 
     setText(text);
-    this.boldFont = boldFont;
-    this.smallFont = smallFont;
     updateUI();
   }
 
   @Override
   public void updateUI() {
     super.updateUI();
-    if (separator != null && myLabel != null) {
-      myLabel.setFont(UIUtil.getBorderFont(smallFont ? UIUtil.FontSize.SMALL : UIUtil.FontSize.NORMAL, boldFont));
-      myLabel.setForeground(UIUtil.getTitledBorderTitleColor());
+    if (myLabel != null) {
+      myLabel.setFont(UIUtil.getBorderFont(UIUtil.FontSize.SMALL, false));
     }
   }
 
@@ -77,21 +74,11 @@ public class TitledSeparator extends JPanel {
     return myLabel.getFont();
   }
 
-  public boolean isBoldFont() {
-    return boldFont;
+  public JLabel getLabel() {
+    return myLabel;
   }
 
-  public boolean isSmallFont() {
-    return smallFont;
-  }
-
-  public void setBoldFont(boolean boldFont) {
-    this.boldFont = boldFont;
-    setTitleFont(UIUtil.getBorderFont(this.smallFont ? UIUtil.FontSize.SMALL : UIUtil.FontSize.NORMAL, this.boldFont));
-  }
-
-  public void setSmallFont(boolean smallFont) {
-    this.smallFont = smallFont;
-    setTitleFont(UIUtil.getBorderFont(this.smallFont ? UIUtil.FontSize.SMALL : UIUtil.FontSize.NORMAL, this.boldFont));
+  public JSeparator getSeparator() {
+    return mySeparator;
   }
 }

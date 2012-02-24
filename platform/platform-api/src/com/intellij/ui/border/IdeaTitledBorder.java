@@ -1,12 +1,9 @@
 package com.intellij.ui.border;
 
-import com.intellij.ui.Gray;
+import com.intellij.ui.TitledSeparator;
 import com.intellij.util.ui.UIUtil;
-import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
-import javax.swing.border.Border;
-import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
 
@@ -15,285 +12,50 @@ import java.awt.*;
  */
 public class IdeaTitledBorder extends TitledBorder {
 
-  // Space between the border and the component's edge
-  private int EDGE_SPACING = 0;
-
-  // Space between the border and text
-  private int TEXT_SPACING = 0;
-
-  // Horizontal inset of text that is left or right justified
-  private int TEXT_INSET_H = 4;
-
-  private static final int SEPARATOR_RIGHT_SPACING = 5;
-
-  private boolean smallFont;
-  private boolean boldFont;
-  private int indent;
-  private Insets insets;
+  private final TitledSeparator titledSeparator;
   private Insets insideInsets;
   private Insets outsideInsets;
 
-  public IdeaTitledBorder(String title, boolean boldFont, boolean smallFont, int indent, Insets insets) {
-    super(title + "  ");
-    this.smallFont = smallFont;
-    this.boldFont = boldFont;
-    this.indent = indent;
-    this.insets = insets;
-    this.titleJustification = LEADING;
-    this.titlePosition = TOP;
+  public IdeaTitledBorder(String title, int indent, Insets insets) {
+    super(title);
+    titledSeparator = new TitledSeparator(title);
+    titledSeparator.setText(title);
 
-    calculateInsets();
-    updateUI();
-  }
+    this.outsideInsets = new Insets(insets.top, insets.left, insets.bottom, insets.right);
 
-  private void updateUI() {
-
-    this.titleFont = UIUtil.getBorderFont(smallFont ? UIUtil.FontSize.SMALL : UIUtil.FontSize.NORMAL, boldFont);
-    this.titleColor = UIUtil.getTitledBorderTitleColor();
-
-    Color foregroundColor = UIUtil.getSeparatorForeground();
-    Color backgroundColor = UIUtil.getSeparatorBackground();
-    if (UIUtil.isUnderAlloyLookAndFeel()) {
-      foregroundColor = UIUtil.getSeparatorShadow();
-      backgroundColor = UIUtil.getSeparatorHighlight();
-    }
-    if (UIUtil.isUnderNimbusLookAndFeel()) {
-      foregroundColor = null;
-      backgroundColor = UIUtil.getSeparatorColorUnderNimbus();
-    }
-    //under GTK+ L&F colors setted hard
-    if (UIUtil.isUnderGTKLookAndFeel()) {
-      foregroundColor = Gray._215;
-      backgroundColor = Gray._250;
-    }
-
-    Border lineBorder = BorderFactory.createCompoundBorder(
-      BorderFactory.createMatteBorder(1, 0, 0, 0, foregroundColor),
-      BorderFactory.createMatteBorder(1, 0, 0, 0, backgroundColor));
-    this.border = BorderFactory.createCompoundBorder(new EmptyBorder(outsideInsets),
-                                                     BorderFactory.createCompoundBorder(lineBorder, new EmptyBorder(insideInsets)));
-  }
-
-  private void calculateInsets() {
-    insideInsets = new Insets(0, 0, 0, 0);
-    outsideInsets = new Insets(0, 0, 0, 0);
-
-    //applying text inset
-    insideInsets.left -= TEXT_INSET_H;
-    insideInsets.right -= TEXT_INSET_H;
-    insideInsets.bottom -= TEXT_INSET_H;
-
-    //applying indent
-    TEXT_INSET_H -= indent;
-    insideInsets.left += indent;
-
-
-    //applying separator right spacing
-    insideInsets.right -= SEPARATOR_RIGHT_SPACING;
-    outsideInsets.right += SEPARATOR_RIGHT_SPACING;
-
-    //applying insets
-    insideInsets.top += insets.top / 2;
-    TEXT_SPACING += insets.top / 2;
-    outsideInsets.top += insets.top / 2;
-    outsideInsets.left += insets.left;
-    outsideInsets.bottom += insets.bottom;
-    outsideInsets.right += insets.right;
+    this.insideInsets = new Insets(TitledSeparator.BOTTOM_INSET, indent, 0, 0);
   }
 
   @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+    int labelX = x + outsideInsets.left;
+    int labelY = y + outsideInsets.top;
 
-    updateUI();
+    TitledSeparator titledSeparator = getTitledSeparator(c);
+    JLabel label = titledSeparator.getLabel();
+    Dimension labelSize = label.getPreferredSize();
+    label.setSize(labelSize);
+    g.translate(labelX, labelY);
+    label.paint(g);
 
-    g.setPaintMode();
+    int separatorX = labelX + labelSize.width + TitledSeparator.SEPARATOR_LEFT_INSET;
+    int separatorY = labelY +  (UIUtil.isUnderAquaLookAndFeel() ? 2 : labelSize.height / 2 - 1);
+    int separatorW = Math.max(0, width - separatorX - TitledSeparator.SEPARATOR_RIGHT_INSET);
+    int separatorH = 2;
 
-    Point textLoc = new Point();
-    Border border = getBorder();
+    JSeparator separator = titledSeparator.getSeparator();
+    separator.setSize(separatorW, separatorH);
+    g.translate(separatorX - labelX, separatorY - labelY);
+    separator.paint(g);
 
-    if (getTitle() == null || getTitle().isEmpty()) {
-      if (border != null) {
-        border.paintBorder(c, g, x, y, width, height);
-      }
-      return;
-    }
-
-    Rectangle grooveRect = new Rectangle(x + EDGE_SPACING, y + EDGE_SPACING,
-                                         width - (EDGE_SPACING * 2),
-                                         height - (EDGE_SPACING * 2));
-    Font font = g.getFont();
-    Color color = g.getColor();
-
-    g.setFont(getFont(c));
-
-    JComponent jc = (c instanceof JComponent) ? (JComponent)c : null;
-    FontMetrics fm = SwingUtilities2.getFontMetrics(jc, g);
-    int fontHeight = fm.getHeight();
-    int descent = fm.getDescent();
-    int ascent = fm.getAscent();
-    int diff;
-    int stringWidth = SwingUtilities2.stringWidth(jc, fm,
-                                                  getTitle());
-    Insets insets;
-
-    if (border != null) {
-      insets = border.getBorderInsets(c);
-    }
-    else {
-      insets = new Insets(0, 0, 0, 0);
-    }
-
-    int titlePos = getTitlePosition();
-    switch (titlePos) {
-      case ABOVE_TOP:
-        diff = ascent + descent + (Math.max(EDGE_SPACING,
-                                            TEXT_SPACING * 2) - EDGE_SPACING);
-        grooveRect.y += diff;
-        grooveRect.height -= diff;
-        textLoc.y = grooveRect.y - (descent + TEXT_SPACING);
-        break;
-      case TOP:
-      case DEFAULT_POSITION:
-        diff = Math.max(0, ((ascent / 2) + TEXT_SPACING) - EDGE_SPACING);
-        grooveRect.y += diff;
-        grooveRect.height -= diff;
-        textLoc.y = (grooveRect.y - descent) +
-                    (insets.top + ascent + descent) / 2;
-        break;
-      case BELOW_TOP:
-        textLoc.y = grooveRect.y + insets.top + ascent + TEXT_SPACING;
-        break;
-      case ABOVE_BOTTOM:
-        textLoc.y = (grooveRect.y + grooveRect.height) -
-                    (insets.bottom + descent + TEXT_SPACING);
-        break;
-      case BOTTOM:
-        grooveRect.height -= fontHeight / 2;
-        textLoc.y = ((grooveRect.y + grooveRect.height) - descent) +
-                    ((ascent + descent) - insets.bottom) / 2;
-        break;
-      case BELOW_BOTTOM:
-        grooveRect.height -= fontHeight;
-        textLoc.y = grooveRect.y + grooveRect.height + ascent +
-                    TEXT_SPACING;
-        break;
-    }
-
-    int justification = getTitleJustification();
-    if (c.getComponentOrientation().isLeftToRight()) {
-      if (justification == LEADING ||
-          justification == DEFAULT_JUSTIFICATION) {
-        justification = LEFT;
-      }
-      else if (justification == TRAILING) {
-        justification = RIGHT;
-      }
-    }
-    else {
-      if (justification == LEADING ||
-          justification == DEFAULT_JUSTIFICATION) {
-        justification = RIGHT;
-      }
-      else if (justification == TRAILING) {
-        justification = LEFT;
-      }
-    }
-
-    switch (justification) {
-      case LEFT:
-        textLoc.x = grooveRect.x + TEXT_INSET_H + insets.left;
-        break;
-      case RIGHT:
-        textLoc.x = (grooveRect.x + grooveRect.width) -
-                    (stringWidth + TEXT_INSET_H + insets.right);
-        break;
-      case CENTER:
-        textLoc.x = grooveRect.x +
-                    ((grooveRect.width - stringWidth) / 2);
-        break;
-    }
-
-    // If title is positioned in middle of border AND its fontsize
-    // is greater than the border's thickness, we'll need to paint
-    // the border in sections to leave space for the component's background
-    // to show through the title.
-    //
-    if (border != null) {
-      //if (((titlePos == TOP || titlePos == DEFAULT_POSITION) &&
-      //     (grooveRect.y > textLoc.y - ascent)) ||
-      //    (titlePos == BOTTOM &&
-      //     (grooveRect.y + grooveRect.height < textLoc.y + descent))) {
-
-      Rectangle clipRect = new Rectangle();
-
-      // save original clip
-      Rectangle saveClip = g.getClipBounds();
-
-      // paint strip left of text
-      clipRect.setBounds(saveClip);
-      if (computeIntersection(clipRect, x, y, textLoc.x - 1 - x, height)) {
-        g.setClip(clipRect);
-        border.paintBorder(c, g, grooveRect.x, grooveRect.y,
-                           grooveRect.width, grooveRect.height);
-      }
-
-      // paint strip right of text
-      clipRect.setBounds(saveClip);
-      if (computeIntersection(clipRect, textLoc.x + stringWidth + 1, y,
-                              x + width - (textLoc.x + stringWidth + 1), height)) {
-        g.setClip(clipRect);
-        border.paintBorder(c, g, grooveRect.x, grooveRect.y,
-                           grooveRect.width, grooveRect.height);
-      }
-
-      if (titlePos == TOP || titlePos == DEFAULT_POSITION) {
-        // paint strip below text
-        clipRect.setBounds(saveClip);
-        if (computeIntersection(clipRect, textLoc.x - 1, textLoc.y + descent,
-                                stringWidth + 2, y + height - textLoc.y - descent)) {
-          g.setClip(clipRect);
-          border.paintBorder(c, g, grooveRect.x, grooveRect.y,
-                             grooveRect.width, grooveRect.height);
-        }
-      }
-      else { // titlePos == BOTTOM
-        // paint strip above text
-        clipRect.setBounds(saveClip);
-        if (computeIntersection(clipRect, textLoc.x - 1, y,
-                                stringWidth + 2, textLoc.y - ascent - y)) {
-          g.setClip(clipRect);
-          border.paintBorder(c, g, grooveRect.x, grooveRect.y,
-                             grooveRect.width, grooveRect.height);
-        }
-      }
-
-      // restore clip
-      g.setClip(saveClip);
-      //}
-      //else {
-      //  border.paintBorder(c, g, grooveRect.x, grooveRect.y,
-      //                     grooveRect.width, grooveRect.height);
-      //}
-    }
-
-    //Color newBackground =
-    //  new Color(c.getBackground().getRed() - DARKNESS, c.getBackground().getGreen() - DARKNESS, c.getBackground().getBlue() - DARKNESS);
-    //g.setColor(newBackground);
-    //g.fillRoundRect(grooveRect.x, grooveRect.y, grooveRect.width, grooveRect.height - 15, 5, 5);
-    //g.setColor(color);
-    //if (jc != null) {
-    //  for (Component comp : jc.getComponents()) {
-    //    coloringRecursive(comp, newBackground, c.getBackground());
-    //  }
-    //}
-
-
-    g.setColor(getTitleColor());
-    SwingUtilities2.drawString(jc, g, getTitle(), textLoc.x, textLoc.y);
-
-    g.setFont(font);
-    g.setColor(color);
+    g.translate(-separatorX, -separatorY);
   }
+
+  private TitledSeparator getTitledSeparator(Component c) {
+    this.titledSeparator.setEnabled(c.isEnabled());
+    return this.titledSeparator;
+  }
+
 
   public void acceptMinimumSize(Component c) {
     Dimension minimumSize = getMinimumSize(c);
@@ -301,31 +63,28 @@ public class IdeaTitledBorder extends TitledBorder {
                                    Math.max(minimumSize.height, c.getMinimumSize().height)));
   }
 
-  private static boolean computeIntersection(Rectangle dest,
-                                             int rx, int ry, int rw, int rh) {
-    int x1 = Math.max(rx, dest.x);
-    int x2 = Math.min(rx + rw, dest.x + dest.width);
-    int y1 = Math.max(ry, dest.y);
-    int y2 = Math.min(ry + rh, dest.y + dest.height);
-    dest.x = x1;
-    dest.y = y1;
-    dest.width = x2 - x1;
-    dest.height = y2 - y1;
-
-    if (dest.width <= 0 || dest.height <= 0) {
-      return false;
-    }
-    return true;
+  @Override
+  public Dimension getMinimumSize(Component c) {
+    Insets insets = getBorderInsets(c);
+    Dimension minSize = new Dimension(insets.right + insets.left, insets.top + insets.bottom);
+    Dimension separatorSize = getTitledSeparator(c).getPreferredSize();
+    minSize.width = Math.max(minSize.width, separatorSize.width + outsideInsets.left + outsideInsets.right);
+    return minSize;
   }
 
-  private static void coloringRecursive(Component c, Color newBackground, Color oldBackground) {
-    if (c.getBackground().equals(oldBackground)) {
-      c.setBackground(newBackground);
-    }
-    if (c instanceof JComponent) {
-      for (Component comp : ((JComponent)c).getComponents()) {
-        coloringRecursive(comp, newBackground, oldBackground);
-      }
-    }
+  @Override
+  public Insets getBorderInsets(Component c) {
+    Insets insets = new Insets(0, 0, 0, 0);
+    insets.top += getTitledSeparator(c).getPreferredSize().getHeight() - TitledSeparator.TOP_INSET - TitledSeparator.BOTTOM_INSET;
+    insets.top += UIUtil.DEFAULT_VGAP;
+    insets.top += insideInsets.top;
+    insets.left += insideInsets.left;
+    insets.bottom += insideInsets.bottom;
+    insets.right += insideInsets.right;
+    insets.top += outsideInsets.top;
+    insets.left += outsideInsets.left;
+    insets.bottom += outsideInsets.bottom;
+    insets.right += outsideInsets.right;
+    return insets;
   }
 }
