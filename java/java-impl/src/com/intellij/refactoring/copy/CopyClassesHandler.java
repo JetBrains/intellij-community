@@ -312,12 +312,13 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
       }
     }
     final List<PsiFile> createdFiles = new ArrayList<PsiFile>(fileToClasses.size());
-    int foIdx = 0;
+    int[] choice = fileToClasses.size() > 1 ? new int[]{-1} : null;
     List<PsiFile> files = new ArrayList<PsiFile>();
     for (final Map.Entry<PsiFile, PsiClass[]> entry : fileToClasses.entrySet()) {
       final PsiFile psiFile = entry.getKey();
       if (psiFile instanceof PsiClassOwner) {
-        final PsiFile createdFile = copy(psiFile, targetDirectory, copyClassName, map == null ? null : map.get(psiFile));
+        final PsiFile createdFile = copy(psiFile, targetDirectory, copyClassName, map == null ? null : map.get(psiFile), choice);
+        if (createdFile == null) return null;
         final PsiClass[] sources = entry.getValue();
         for (final PsiClass destination : ((PsiClassOwner)createdFile).getClasses()) {
           if (destination instanceof SyntheticElement) {
@@ -339,7 +340,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
       }
     }
 
-    int[] choice = files.size() > 1 ? new int[]{-1} : null;
+    
     for (PsiFile file : files) {
       try {
         final PsiFile fileCopy =
@@ -375,11 +376,12 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
     return newElement != null ? newElement : createdFiles.size() > 0 ? createdFiles.get(0) : null;
   }
 
-  private static PsiFile copy(@NotNull PsiFile file, PsiDirectory directory, String name, String relativePath) {
+  private static PsiFile copy(@NotNull PsiFile file, PsiDirectory directory, String name, String relativePath, int[] choice) {
     final String fileName = getNewFileName(file, name);
     if (relativePath != null && !relativePath.isEmpty()) {
       return buildRelativeDir(directory, relativePath).findOrCreateTargetDirectory().copyFileFrom(fileName, file);
     }
+    if (CopyFilesOrDirectoriesHandler.checkFileExist(directory, choice, file, fileName, "Copy")) return null;
     return directory.copyFileFrom(fileName, file);
   }
 

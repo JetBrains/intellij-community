@@ -33,6 +33,9 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 public class MnemonicChooser extends JPanel {
+  private static final Color OCCUPIED_CELL_COLOR = new Color(250, 250, 139);
+  private static final Color FREE_CELL_COLOR = LightColors.SLIGHTLY_GRAY;
+
   public MnemonicChooser() {
     super(new VerticalFlowLayout());
     JPanel numbers = new NonOpaquePanel(new GridLayout(2, 5, 2, 2));
@@ -83,7 +86,7 @@ public class MnemonicChooser extends JPanel {
   }
 
   private Color backgroundForMnemonic(char c) {
-    return isOccupied(c) ? LightColors.YELLOW : LightColors.SLIGHTLY_GRAY;
+    return isOccupied(c) ? OCCUPIED_CELL_COLOR : FREE_CELL_COLOR;
   }
 
   private class MnemonicLabel extends JLabel {

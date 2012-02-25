@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.ui.MouseDragHelper;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.tabs.TabInfo;
+import com.intellij.ui.util.Axis;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -34,9 +35,6 @@ class DragHelper extends MouseDragHelper {
 
   Rectangle myDragRec;
   Dimension myHoldDelta;
-
-  Measurer myHorizontal = new Measurer.Width();
-  Measurer myVertical = new Measurer.Height();
 
   private TabInfo myDragOutSource;
   private TabLabel myPressedTabLabel;
@@ -134,14 +132,14 @@ class DragHelper extends MouseDragHelper {
 
     TabLabel targetLabel;
     if (myTabs.isHorizontalTabs()) {
-      targetLabel = findMostOverlapping(myHorizontal, left, right);
+      targetLabel = findMostOverlapping(Axis.X, left, right);
       if (targetLabel == null) {
-        targetLabel = findMostOverlapping(myVertical, top, bottom);
+        targetLabel = findMostOverlapping(Axis.Y, top, bottom);
       }
     } else {
-      targetLabel = findMostOverlapping(myVertical, top, bottom);
+      targetLabel = findMostOverlapping(Axis.Y, top, bottom);
       if (targetLabel == null) {
-        targetLabel = findMostOverlapping(myHorizontal, left, right);
+        targetLabel = findMostOverlapping(Axis.X, left, right);
       }
     }
 
@@ -163,7 +161,7 @@ class DragHelper extends MouseDragHelper {
     }
   }
 
-  private TabLabel findMostOverlapping(Measurer measurer, TabLabel... labels) {
+  private TabLabel findMostOverlapping(Axis measurer, TabLabel... labels) {
     double freeSpace;
 
     if (measurer.getMinValue(myDragRec) < measurer.getMinValue(myDragOriginalRec)) {
@@ -179,7 +177,7 @@ class DragHelper extends MouseDragHelper {
       if (each == null) continue;
 
       final Rectangle eachBounds = each.getBounds();
-      if (measurer.getMeasuredValue(eachBounds) > freeSpace + freeSpace *0.3) continue;
+      if (measurer.getSize(eachBounds) > freeSpace + freeSpace *0.3) continue;
 
       Rectangle intersection = myDragRec.intersection(eachBounds);
       int size = intersection.width * intersection.height;
@@ -190,40 +188,6 @@ class DragHelper extends MouseDragHelper {
     }
 
     return maxLabel;
-  }
-
-  interface Measurer {
-    int getMinValue(Rectangle r);
-    int getMaxValue(Rectangle r);
-    int getMeasuredValue(Rectangle r);
-
-    class Width implements Measurer{
-      public int getMinValue(Rectangle r) {
-        return r.x;
-      }
-
-      public int getMaxValue(Rectangle r) {
-        return (int)r.getMaxX();
-      }
-
-      public int getMeasuredValue(Rectangle r) {
-        return r.width;
-      }
-    }
-
-    class Height implements Measurer{
-      public int getMinValue(Rectangle r) {
-        return r.y;
-      }
-
-      public int getMaxValue(Rectangle r) {
-        return (int)r.getMaxY();
-      }
-
-      public int getMeasuredValue(Rectangle r) {
-        return r.height;
-      }
-    }
   }
 
 

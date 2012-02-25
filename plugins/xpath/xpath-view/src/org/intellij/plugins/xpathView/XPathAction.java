@@ -44,7 +44,7 @@ public abstract class XPathAction extends AnAction {
         } else if (ActionPlaces.MAIN_MENU.equals(event.getPlace())) {
             updateMainMenu(event);
         } else if (ActionPlaces.EDITOR_POPUP.equals(event.getPlace())) {
-            updatePopupMenu(event);
+            presentation.setVisible(presentation.isEnabled());
         }
     }
 
@@ -53,22 +53,18 @@ public abstract class XPathAction extends AnAction {
         event.getPresentation().setVisible(b && isEnabled(event, false));
     }
 
-    protected void updatePopupMenu(AnActionEvent event) {
-        event.getPresentation().setVisible(isEnabled(event, false));
-    }
-
     protected void updateToolbar(AnActionEvent event) {
         event.getPresentation().setVisible(myComponent.getConfig().SHOW_IN_TOOLBAR);
     }
 
     protected boolean isEnabled(AnActionEvent event, boolean checkAvailable) {
-        final Project project = LangDataKeys.PROJECT.getData(event.getDataContext());
+        final Project project = PlatformDataKeys.PROJECT.getData(event.getDataContext());
         if (project == null) {
             // no active project
             return false;
         }
 
-        Editor editor = LangDataKeys.EDITOR.getData(event.getDataContext());
+        Editor editor = PlatformDataKeys.EDITOR.getData(event.getDataContext());
         if (editor == null) {
             FileEditorManager fem = FileEditorManager.getInstance(project);
             editor = fem.getSelectedTextEditor();
