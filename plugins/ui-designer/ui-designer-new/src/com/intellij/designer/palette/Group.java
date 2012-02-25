@@ -59,12 +59,12 @@ public final class Group implements PaletteGroup {
 
   @Override
   public ActionGroup getPopupActionGroup() {
-    return (ActionGroup)ActionManager.getInstance().getAction("Designer.PaletteGroupPopupMenu");
+    return null; // TODO: Auto-generated method stub
   }
 
   @Override
   public Object getData(Project project, String dataId) {
-    return null;  // TODO: Auto-generated method stub
+    return null; // TODO: Auto-generated method stub
   }
 
   @Override

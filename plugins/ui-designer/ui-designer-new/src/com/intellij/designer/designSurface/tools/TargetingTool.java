@@ -22,6 +22,8 @@ import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.model.RadLayout;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
+
 /**
  * @author Alexander Lobas
  */
@@ -76,12 +78,7 @@ public abstract class TargetingTool extends InputTool {
 
   protected void executeCommand() {
     if (myExecuteEnabled) {
-      try {
-        myTargetOperation.execute();
-      }
-      catch (Exception e) {
-        myToolProvider.showError("Execute command: ", e);
-      }
+      myToolProvider.execute(Collections.singletonList(myTargetOperation));
     }
   }
 

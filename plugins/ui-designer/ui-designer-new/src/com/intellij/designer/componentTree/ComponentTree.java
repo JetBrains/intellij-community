@@ -15,6 +15,7 @@
  */
 package com.intellij.designer.componentTree;
 
+import com.intellij.designer.actions.DesignerActionPanel;
 import com.intellij.designer.designSurface.FeedbackTreeLayer;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -37,6 +38,7 @@ import java.awt.*;
  */
 public final class ComponentTree extends Tree implements DataProvider {
   private TreeComponentDecorator myDecorator;
+  private DesignerActionPanel myActionPanel;
   private RadComponent myMarkComponent;
   private int myMarkFeedback;
 
@@ -64,9 +66,13 @@ public final class ComponentTree extends Tree implements DataProvider {
     setModel(new DefaultTreeModel(new DefaultMutableTreeNode()));
   }
 
-  public void setDecorator(TreeComponentDecorator decorator) {
+  public void setDecorator(@Nullable TreeComponentDecorator decorator) {
     myDecorator = decorator;
     myMarkComponent = null;
+  }
+
+  public void setActionPanel(@Nullable DesignerActionPanel actionPanel) {
+    myActionPanel = actionPanel;
   }
 
   public void mark(RadComponent component, int feedback) {
@@ -77,7 +83,12 @@ public final class ComponentTree extends Tree implements DataProvider {
 
   @Override
   public Object getData(@NonNls String dataId) {
-    return null;  //TODO
+    // TODO: support keys
+
+    if (myActionPanel != null) {
+      return myActionPanel.getData(dataId);
+    }
+    return null;
   }
 
   @Nullable

@@ -17,6 +17,7 @@ package com.intellij.designer;
 
 import com.intellij.designer.componentTree.ComponentTree;
 import com.intellij.designer.componentTree.ComponentTreeBuilder;
+import com.intellij.designer.componentTree.TreeEditableArea;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.designer.propertyTable.PropertyTablePanel;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
@@ -43,6 +44,7 @@ import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -56,7 +58,7 @@ public final class DesignerToolWindowManager implements ProjectComponent {
   private final FileEditorManager myFileEditorManager;
   private ToolWindow myToolWindow;
   private ComponentTree myComponentTree;
-  private AbstractTreeBuilder myTreeBuilder;
+  private ComponentTreeBuilder myTreeBuilder;
   private PropertyTablePanel myPropertyTablePanel;
   private boolean myToolWindowReady;
   private boolean myToolWindowDisposed;
@@ -119,6 +121,12 @@ public final class DesignerToolWindowManager implements ProjectComponent {
     }
   }
 
+  @Nullable
+  public TreeEditableArea getTreeArea() {
+    return myTreeBuilder == null ? null : myTreeBuilder.getTreeArea();
+  }
+
+  @Nullable
   private static DesignerEditorPanel getDesigner(FileEditor editor) {
     if (editor instanceof DesignerEditor) {
       DesignerEditor designerEditor = (DesignerEditor)editor;
@@ -127,7 +135,8 @@ public final class DesignerToolWindowManager implements ProjectComponent {
     return null;
   }
 
-  private DesignerEditorPanel getActiveDesigner() {
+  @Nullable
+  public DesignerEditorPanel getActiveDesigner() {
     FileEditor[] editors = myFileEditorManager.getSelectedEditors();
     return editors.length > 0 ? getDesigner(editors[0]) : null;
   }
@@ -150,10 +159,12 @@ public final class DesignerToolWindowManager implements ProjectComponent {
         myComponentTree.newModel();
         if (designer == null) {
           myComponentTree.setDecorator(null);
+          myComponentTree.setActionPanel(null);
           myToolWindow.setAvailable(false, null);
         }
         else {
           myComponentTree.setDecorator(designer.getTreeDecorator());
+          myComponentTree.setActionPanel(designer.getActionPanel());
           myTreeBuilder = new ComponentTreeBuilder(myComponentTree, designer);
           myToolWindow.setAvailable(true, null);
           myToolWindow.show(null);
