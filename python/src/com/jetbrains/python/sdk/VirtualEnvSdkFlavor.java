@@ -5,7 +5,9 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -71,5 +73,23 @@ public class VirtualEnvSdkFlavor extends CPythonSdkFlavor {
       }
     }
     return candidates;
+  }
+
+  @Override
+  public boolean isValidSdkPath(@NotNull File file) {
+    if (!super.isValidSdkPath(file)) return false;
+    File bin = file.getParentFile();
+    if (bin != null) {
+      File[] children = bin.listFiles();
+      if (children != null) {
+        for (File f : children) {
+          //is it good enough to determine virtual env?
+          if (f.getName().equals("activate_this.py")) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
   }
 }
