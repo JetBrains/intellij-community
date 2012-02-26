@@ -15,12 +15,15 @@
  */
 package com.intellij.designer.designSurface.tools;
 
+import com.intellij.designer.designSurface.EditOperation;
 import com.intellij.designer.designSurface.EditableArea;
+import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.util.List;
 
 /**
  * @author Alexander Lobas
@@ -126,4 +129,8 @@ public abstract class ToolProvider {
   }
 
   public abstract void loadDefaultTool();
+
+  public abstract boolean execute(ThrowableRunnable<Exception> operation);
+
+  public abstract void execute(List<EditOperation> operations);
 }

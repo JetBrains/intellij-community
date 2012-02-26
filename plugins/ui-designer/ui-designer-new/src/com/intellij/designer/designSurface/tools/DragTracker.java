@@ -122,14 +122,7 @@ public class DragTracker extends SelectionTracker {
     myContext.setLocation(getLocation());
 
     if (myContext.getComponents() == null) {
-      List<RadComponent> components = new ArrayList<RadComponent>();
-      List<RadComponent> selection = myArea.getSelection();
-
-      for (RadComponent component : selection) {
-        if (!isParentsContainedIn(selection, component)) {
-          components.add(component);
-        }
-      }
+      List<RadComponent> components = RadComponent.getPureSelection(myArea.getSelection());
 
       RadComponent parent = null;
       for (RadComponent component : components) {
@@ -147,16 +140,5 @@ public class DragTracker extends SelectionTracker {
         component.processDropOperation(myContext);
       }
     }
-  }
-
-  private static boolean isParentsContainedIn(List<RadComponent> components, RadComponent component) {
-    RadComponent parent = component.getParent();
-    while (parent != null) {
-      if (components.contains(parent)) {
-        return true;
-      }
-      parent = parent.getParent();
-    }
-    return false;
   }
 }

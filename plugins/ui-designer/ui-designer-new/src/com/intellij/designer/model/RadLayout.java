@@ -18,16 +18,23 @@ package com.intellij.designer.model;
 import com.intellij.designer.designSurface.ComponentDecorator;
 import com.intellij.designer.designSurface.EditOperation;
 import com.intellij.designer.designSurface.OperationContext;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import java.util.List;
 
 /**
  * @author Alexander Lobas
  */
 public abstract class RadLayout {
-  public abstract ComponentDecorator getChildSelectionDecorator(RadComponent component);
+  public abstract ComponentDecorator getChildSelectionDecorator(RadComponent component, List<RadComponent> selection);
 
   @Nullable
   public EditOperation processChildOperation(OperationContext context) {
     return null;
+  }
+
+  public void addSelectionActions(DefaultActionGroup actionGroup, JComponent shortcuts, List<RadComponent> selection) {
   }
 }

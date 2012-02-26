@@ -17,16 +17,20 @@
 package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.lang.ImportOptimizer;
 import com.intellij.lang.LanguageImportStatements;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.FutureTask;
 
 public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
@@ -59,12 +63,18 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
 
   @NotNull
   protected FutureTask<Boolean> preprocessFile(@NotNull final PsiFile file, boolean processChangedTextOnly) throws IncorrectOperationException {
-    final List<Runnable> optimizers = LanguageImportStatements.INSTANCE.forFile(file);
-    Runnable runnable = optimizers.isEmpty() ? EmptyRunnable.getInstance() : new Runnable() {
+    final Set<ImportOptimizer> optimizers = LanguageImportStatements.INSTANCE.forFile(file);
+    final List<Runnable> runnables = ContainerUtil.map(optimizers, new Function<ImportOptimizer, Runnable>() {
+      @Override
+      public Runnable fun(ImportOptimizer optimizer) {
+        return optimizer.processFile(file);
+      }
+    });
+    Runnable runnable = runnables.isEmpty() ? EmptyRunnable.getInstance() : new Runnable() {
       @Override
       public void run() {
-        for (Runnable optimizer : optimizers) {
-          optimizer.run();
+        for (Runnable runnable : runnables) {
+          runnable.run();
         }
       }
     };

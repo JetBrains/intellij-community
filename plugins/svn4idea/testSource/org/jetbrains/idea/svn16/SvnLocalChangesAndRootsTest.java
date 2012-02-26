@@ -6,7 +6,7 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.IgnoredBeanFactory;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.idea.svn17.SvnVcs17;
+import org.jetbrains.idea.svn.SvnVcs;
 import org.junit.Test;
 
 import java.io.File;
@@ -144,7 +144,7 @@ public class SvnLocalChangesAndRootsTest extends SvnTestCase {
           newMappings.add(mapping);
         }
       }
-      newMappings.add(new VcsDirectoryMapping(myMappingTarget.getPath(), SvnVcs17.VCS_NAME));
+      newMappings.add(new VcsDirectoryMapping(myMappingTarget.getPath(), SvnVcs.VCS_NAME));
       myProjectLevelVcsManager.setDirectoryMappings(newMappings);
       myProjectLevelVcsManager.updateActiveVcss();
       sleep100();

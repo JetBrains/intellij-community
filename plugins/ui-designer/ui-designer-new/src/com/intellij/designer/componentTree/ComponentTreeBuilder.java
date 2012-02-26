@@ -50,6 +50,10 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder implements C
     addListeners();
   }
 
+  public TreeEditableArea getTreeArea() {
+    return myTreeArea;
+  }
+
   @Override
   public void dispose() {
     removeListeners();

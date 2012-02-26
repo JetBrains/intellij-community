@@ -1,4 +1,4 @@
-// "Change 'implements java.lang.Object' to 'extends java.lang.Object'" "true"
+// "Change 'implements Object' to 'extends Object'" "true"
 import java.io.*;
 
 class a extends Object implements Runnable,<caret> Serializable {

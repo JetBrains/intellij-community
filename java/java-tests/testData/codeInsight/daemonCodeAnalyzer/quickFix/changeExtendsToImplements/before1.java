@@ -1,4 +1,4 @@
-// "Change 'extends java.lang.Runnable' to 'implements java.lang.Runnable'" "true"
+// "Change 'extends Runnable' to 'implements Runnable'" "true"
 import java.io.*;
 
 class a extends <caret>Runnable {

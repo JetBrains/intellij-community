@@ -13,9 +13,11 @@ import org.jetbrains.android.util.AndroidCompilerMessageKind;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.Module;
-import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.ProjectPaths;
-import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.ExternalProcessUtil;
+import org.jetbrains.jps.incremental.ProjectBuildException;
+import org.jetbrains.jps.incremental.ProjectLevelBuilder;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
@@ -28,37 +30,48 @@ import java.util.*;
 /**
  * @author Eugene.Kudelevsky
  */
-// todo: save validity state
+
 // todo: support light builds (for tests)
 
-public class AndroidDexBuilder extends ModuleLevelBuilder {
+public class AndroidDexBuilder extends ProjectLevelBuilder {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.android.AndroidDexBuilder");
 
   @NonNls private static final String BUILDER_NAME = "android-dex";
 
-  protected AndroidDexBuilder() {
-    super(BuilderCategory.CLASS_POST_PROCESSOR);
-  }
-
   @Override
-  public ExitCode build(CompileContext context, ModuleChunk chunk) throws ProjectBuildException {
-    if (context.isCompilingTests() || !AndroidJpsUtil.containsAndroidFacet(chunk)) {
-      return ModuleLevelBuilder.ExitCode.OK;
+  public void build(CompileContext context) throws ProjectBuildException {
+    if (!AndroidJpsUtil.containsAndroidFacet(context.getProject())) {
+      return;
     }
     context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.dex")));
 
     try {
-      return doBuild(context, chunk);
+      doBuild(context);
+    }
+    catch (ProjectBuildException e) {
+      throw e;
     }
     catch (Exception e) {
-      return AndroidJpsUtil.handleException(context, e, BUILDER_NAME);
+      AndroidJpsUtil.handleException(context, e, BUILDER_NAME);
     }
   }
 
-  private static ExitCode doBuild(CompileContext context, ModuleChunk chunk) {
+  private static void doBuild(CompileContext context) throws IOException, ProjectBuildException {
+    final AndroidClassesAndJarsStateStorage storage = new AndroidClassesAndJarsStateStorage(context.getDataManager().getDataStorageRoot());
+    try {
+      if (!doDexBuild(context, storage)) {
+        throw new ProjectBuildException();
+      }
+    }
+    finally {
+      storage.close();
+    }
+  }
+
+  private static boolean doDexBuild(CompileContext context, AndroidClassesAndJarsStateStorage storage) {
     boolean success = true;
 
-    for (Module module : chunk.getModules()) {
+    for (Module module : context.getProject().getModules().values()) {
       final AndroidFacet facet = AndroidJpsUtil.getFacet(module);
       if (facet == null || facet.getLibrary()) {
         continue;
@@ -92,35 +105,51 @@ public class AndroidDexBuilder extends ModuleLevelBuilder {
         continue;
       }
 
-      final Set<String> fileSet = new HashSet<String>();
-      AndroidJpsUtil.addSubdirectories(classesDir, fileSet);
-      fileSet.addAll(AndroidJpsUtil.getExternalLibraries(projectPaths, module));
 
-      for (String filePath : AndroidJpsUtil.getClassdirsOfDependentModules(projectPaths, module)) {
-        if (!classesDir.getPath().equals(filePath)) {
-          fileSet.add(filePath);
+      try {
+        final Set<String> fileSet = new HashSet<String>();
+        AndroidJpsUtil.addSubdirectories(classesDir, fileSet);
+        fileSet.addAll(AndroidJpsUtil.getExternalLibraries(projectPaths, module));
+
+        for (String filePath : AndroidJpsUtil.getClassdirsOfDependentModules(projectPaths, module)) {
+          if (!classesDir.getPath().equals(filePath)) {
+            fileSet.add(filePath);
+          }
+        }
+
+        if (facet.isLibrary()) {
+          final File testsClassDir = projectPaths.getModuleOutputDir(module, true);
+
+          if (testsClassDir != null && testsClassDir.isDirectory()) {
+            AndroidJpsUtil.addSubdirectories(testsClassDir, fileSet);
+          }
+        }
+
+        final AndroidClassesAndJarsState newState = new AndroidClassesAndJarsState(fileSet);
+        final AndroidClassesAndJarsState oldState = storage.getState(module.getName());
+        if (oldState != null && oldState.equalsTo(newState)) {
+          continue;
+        }
+
+        final String[] files = new String[fileSet.size()];
+        int i = 0;
+        for (String filePath : fileSet) {
+          files[i++] = FileUtil.toSystemDependentName(filePath);
+        }
+
+        if (!runDex(androidSdk, target, dexOutputDir.getPath(), files, context)) {
+          success = false;
+        }
+        else {
+          storage.update(module.getName(), newState);
         }
       }
-
-      if (facet.isLibrary()) {
-        final File testsClassDir = projectPaths.getModuleOutputDir(module, true);
-
-        if (testsClassDir != null && testsClassDir.isDirectory()) {
-          AndroidJpsUtil.addSubdirectories(testsClassDir, fileSet);
-        }
-      }
-
-      final String[] files = new String[fileSet.size()];
-      int i = 0;
-      for (String filePath : fileSet) {
-        files[i++] = FileUtil.toSystemDependentName(filePath);
-      }
-
-      if (!runDex(androidSdk, target, dexOutputDir.getPath(), files, context)) {
-        success = false;
+      catch (IOException e) {
+        AndroidJpsUtil.reportExceptionError(context, null, e, BUILDER_NAME);
+        return false;
       }
     }
-    return success ? ExitCode.OK : ExitCode.ABORT;
+    return success;
   }
 
   @Override
@@ -137,7 +166,7 @@ public class AndroidDexBuilder extends ModuleLevelBuilder {
                                @NotNull IAndroidTarget target,
                                @NotNull String outputDir,
                                @NotNull String[] compileTargets,
-                               @NotNull CompileContext context) {
+                               @NotNull CompileContext context) throws IOException {
     @SuppressWarnings("deprecation")
     final String dxJarPath = FileUtil.toSystemDependentName(target.getPath(IAndroidTarget.DX_JAR));
 
@@ -173,23 +202,17 @@ public class AndroidDexBuilder extends ModuleLevelBuilder {
 
     LOG.info(AndroidCommonUtils.command2string(commandLine));
 
-    try {
-      final Process process = Runtime.getRuntime().exec(ArrayUtil.toStringArray(commandLine));
+    final Process process = Runtime.getRuntime().exec(ArrayUtil.toStringArray(commandLine));
 
-      final HashMap<AndroidCompilerMessageKind, List<String>> messages = new HashMap<AndroidCompilerMessageKind, List<String>>(3);
-      messages.put(AndroidCompilerMessageKind.ERROR, new ArrayList<String>());
-      messages.put(AndroidCompilerMessageKind.WARNING, new ArrayList<String>());
-      messages.put(AndroidCompilerMessageKind.INFORMATION, new ArrayList<String>());
+    final HashMap<AndroidCompilerMessageKind, List<String>> messages = new HashMap<AndroidCompilerMessageKind, List<String>>(3);
+    messages.put(AndroidCompilerMessageKind.ERROR, new ArrayList<String>());
+    messages.put(AndroidCompilerMessageKind.WARNING, new ArrayList<String>());
+    messages.put(AndroidCompilerMessageKind.INFORMATION, new ArrayList<String>());
 
-      AndroidCommonUtils.handleDexCompilationResult(process, outFilePath, messages);
+    AndroidCommonUtils.handleDexCompilationResult(process, outFilePath, messages);
 
-      AndroidJpsUtil.addMessages(context, messages, BUILDER_NAME);
+    AndroidJpsUtil.addMessages(context, messages, BUILDER_NAME);
 
-      return messages.get(AndroidCompilerMessageKind.ERROR).size() == 0;
-    }
-    catch (IOException e) {
-      AndroidJpsUtil.reportExceptionError(context, null, e, BUILDER_NAME);
-      return false;
-    }
+    return messages.get(AndroidCompilerMessageKind.ERROR).size() == 0;
   }
 }

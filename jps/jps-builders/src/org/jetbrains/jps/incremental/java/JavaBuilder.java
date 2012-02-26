@@ -56,7 +56,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
   private static final String FORM_EXTENSION = ".form";
   public static final boolean USE_EMBEDDED_JAVAC = System.getProperty(GlobalOptions.USE_EXTERNAL_JAVAC_OPTION) == null;
 
-  private static final FileFilter JAVA_SOURCES_FILTER = new FileFilter() {
+  public static final FileFilter JAVA_SOURCES_FILTER = new FileFilter() {
     public boolean accept(File file) {
       return file.getPath().endsWith(JAVA_EXTENSION);
     }

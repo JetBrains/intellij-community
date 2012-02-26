@@ -21,9 +21,7 @@ package com.intellij.lang;
 
 import com.intellij.psi.PsiFile;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 public class LanguageImportStatements extends LanguageExtension<ImportOptimizer> {
@@ -33,15 +31,14 @@ public class LanguageImportStatements extends LanguageExtension<ImportOptimizer>
     super("com.intellij.lang.importOptimizer");
   }
 
-  public List<Runnable> forFile(PsiFile file) {
-    List<Runnable> runnables = new ArrayList<Runnable>();
+  public Set<ImportOptimizer> forFile(PsiFile file) {
     Set<ImportOptimizer> optimizers = new HashSet<ImportOptimizer>();
     for (PsiFile psiFile : file.getViewProvider().getAllFiles()) {
       ImportOptimizer optimizer = forLanguage(psiFile.getLanguage());
-      if (optimizer != null && optimizer.supports(psiFile) && optimizers.add(optimizer)) {
-        runnables.add(optimizer.processFile(psiFile));
+      if (optimizer != null && optimizer.supports(psiFile)) {
+        optimizers.add(optimizer);
       }
     }
-    return runnables;
+    return optimizers;
   }
 }

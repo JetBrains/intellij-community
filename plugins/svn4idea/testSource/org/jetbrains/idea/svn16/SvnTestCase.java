@@ -25,8 +25,8 @@ import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.testFramework.vcs.MockChangelistBuilder;
 import com.intellij.util.io.ZipUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.idea.svn17.SvnFileUrlMappingImpl17;
-import org.jetbrains.idea.svn17.SvnVcs17;
+import org.jetbrains.idea.svn.SvnFileUrlMappingImpl;
+import org.jetbrains.idea.svn.SvnVcs;
 import org.junit.After;
 import org.junit.Before;
 
@@ -79,7 +79,7 @@ public abstract class SvnTestCase extends AbstractVcsTestCase {
           verify(runSvn("co", myRepoUrl, "."));
 
           initProject(myWcRoot);
-          activateVCS(SvnVcs17.VCS_NAME);
+          activateVCS(SvnVcs.VCS_NAME);
 
           myGate = new MockChangeListManagerGate(ChangeListManager.getInstance(myProject));
 
@@ -99,10 +99,10 @@ public abstract class SvnTestCase extends AbstractVcsTestCase {
             }
           };
 
-          final SvnVcs17 vcs = SvnVcs17.getInstance(myProject);
+          final SvnVcs vcs = SvnVcs.getInstance(myProject);
           ((StartupManagerImpl) StartupManager.getInstance(myProject)).runPostStartupActivities();
           //vcs.postStartup();
-          ((SvnFileUrlMappingImpl17) vcs.getSvnFileUrlMapping()).realRefresh();
+          ((SvnFileUrlMappingImpl) vcs.getSvnFileUrlMapping()).realRefresh();
 
         }
         catch (Exception e) {
@@ -140,11 +140,11 @@ public abstract class SvnTestCase extends AbstractVcsTestCase {
   }
 
   protected void enableSilentOperation(final VcsConfiguration.StandardConfirmation op) {
-    setStandardConfirmation(SvnVcs17.VCS_NAME, op, VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY);
+    setStandardConfirmation(SvnVcs.VCS_NAME, op, VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY);
   }
 
   protected void disableSilentOperation(final VcsConfiguration.StandardConfirmation op) {
-    setStandardConfirmation(SvnVcs17.VCS_NAME, op, VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY);
+    setStandardConfirmation(SvnVcs.VCS_NAME, op, VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY);
   }
 
   protected void checkin() throws IOException {
@@ -164,7 +164,7 @@ public abstract class SvnTestCase extends AbstractVcsTestCase {
   }
 
   protected List<Change> getChangesInScope(final VcsDirtyScope dirtyScope) throws VcsException {
-    ChangeProvider changeProvider = SvnVcs17.getInstance(myProject).getChangeProvider();
+    ChangeProvider changeProvider = SvnVcs.getInstance(myProject).getChangeProvider();
     assert changeProvider != null;
     MockChangelistBuilder builder = new MockChangelistBuilder();
     changeProvider.getChanges(dirtyScope, builder, new EmptyProgressIndicator(), myGate);

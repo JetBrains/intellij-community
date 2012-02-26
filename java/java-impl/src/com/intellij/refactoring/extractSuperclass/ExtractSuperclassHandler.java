@@ -165,9 +165,11 @@ public class ExtractSuperclassHandler implements RefactoringActionHandler, Extra
 
       // ask whether to search references to subclass and turn them into refs to superclass if possible
       if (superclass != null) {
+        final SmartPsiElementPointer<PsiClass> classPointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(subclass);
+        final SmartPsiElementPointer<PsiClass> interfacePointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(superclass);
         final Runnable turnRefsToSuperRunnable = new Runnable() {
           public void run() {
-            ExtractClassUtil.askAndTurnRefsToSuper(project, subclass, superclass);
+            ExtractClassUtil.askAndTurnRefsToSuper(project, classPointer, interfacePointer);
           }
         };
         SwingUtilities.invokeLater(turnRefsToSuperRunnable);

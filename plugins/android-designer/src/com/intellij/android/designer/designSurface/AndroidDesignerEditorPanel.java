@@ -34,20 +34,24 @@ import com.intellij.designer.designSurface.OperationContext;
 import com.intellij.designer.designSurface.selection.DirectionResizePoint;
 import com.intellij.designer.designSurface.selection.ResizeSelectionDecorator;
 import com.intellij.designer.designSurface.tools.ComponentCreationFactory;
-import com.intellij.designer.designSurface.tools.CreationTool;
+import com.intellij.designer.designSurface.tools.ComponentPasteFactory;
 import com.intellij.designer.model.MetaManager;
 import com.intellij.designer.model.RadComponent;
+import com.intellij.designer.palette.Item;
 import com.intellij.designer.utils.Position;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.XmlRecursiveElementVisitor;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.uipreview.*;
@@ -56,10 +60,10 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
+import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.Callable;
 
 /**
  * @author Alexander Lobas
@@ -73,10 +77,19 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
   public AndroidDesignerEditorPanel(@NotNull Module module, @NotNull VirtualFile file) {
     super(module, file);
 
+    myActionPanel.getActionGroup()
+      .add(new AnAction("Android", "Description", IconLoader.getIcon("/com/intellij/android/designer/icons/DeviceScreen.png")) {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          System.out.println("Action: " + e);
+        }
+      });
+    myActionPanel.update();
+
     myXmlFile = (XmlFile)ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
       @Override
       public PsiFile compute() {
-        return PsiManager.getInstance(myModule.getProject()).findFile(myFile);
+        return PsiManager.getInstance(getProject()).findFile(myFile);
       }
     });
 
@@ -110,7 +123,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
       showDesignerCard();
       myLayeredPane.repaint();
 
-      DesignerToolWindowManager.getInstance(myModule.getProject()).refresh();
+      DesignerToolWindowManager.getInstance(getProject()).refresh();
     }
     catch (Throwable e) {
       showError("Parse error: ", e);
@@ -119,7 +132,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
 
   private void parseFile() throws Throwable {
     final RadViewComponent[] rootComponents = new RadViewComponent[1];
-    final MetaManager metaManager = ViewsMetaManager.getInstance(myModule.getProject());
+    final MetaManager metaManager = ViewsMetaManager.getInstance(getProject());
     final String layoutXmlText = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
       RadViewComponent myComponent;
 
@@ -150,12 +163,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
     });
 
     // TODO: run in background
-    try {
-      createRenderer(layoutXmlText);
-    }
-    catch (IndexNotReadyException e) {
-      createRenderer(layoutXmlText);
-    }
+    createRenderer(layoutXmlText);
 
     Result result = mySession.getResult();
     if (!result.isSuccess()) {
@@ -192,7 +200,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
     int size = views.size();
     if (size == 1) {
       RadViewComponent newRootComponent = new RadViewComponent(null);
-      newRootComponent.setMetaModel(ViewsMetaManager.getInstance(myModule.getProject()).getModelByTag("<root>"));
+      newRootComponent.setMetaModel(ViewsMetaManager.getInstance(getProject()).getModelByTag("<root>"));
       newRootComponent.getChildren().add(rootComponent);
       rootComponent.setParent(newRootComponent);
 
@@ -228,32 +236,37 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
   }
 
 
-  private void createRenderer(String layoutXmlText) throws Exception {
+  private void createRenderer(final String layoutXmlText) throws Exception {
     // TODO: (profile|device|target|...|theme) panel
 
-    AndroidPlatform platform = AndroidPlatform.getInstance(myModule);
-    IAndroidTarget target = platform.getTarget();
-    AndroidFacet facet = AndroidFacet.getInstance(myModule);
+    mySession = ApplicationManager.getApplication().executeOnPooledThread(new Callable<RenderSession>() {
+      @Override
+      public RenderSession call() throws Exception {
+        AndroidPlatform platform = AndroidPlatform.getInstance(myModule);
+        IAndroidTarget target = platform.getTarget();
+        AndroidFacet facet = AndroidFacet.getInstance(myModule);
 
-    LayoutDeviceManager layoutDeviceManager = new LayoutDeviceManager();
-    layoutDeviceManager.loadDevices(platform.getSdkData());
-    LayoutDevice layoutDevice = layoutDeviceManager.getCombinedList().get(0);
+        LayoutDeviceManager layoutDeviceManager = new LayoutDeviceManager();
+        layoutDeviceManager.loadDevices(platform.getSdkData());
+        LayoutDevice layoutDevice = layoutDeviceManager.getCombinedList().get(0);
 
-    LayoutDeviceConfiguration deviceConfiguration = layoutDevice.getConfigurations().get(0);
+        LayoutDeviceConfiguration deviceConfiguration = layoutDevice.getConfigurations().get(0);
 
-    FolderConfiguration config = new FolderConfiguration();
-    config.set(deviceConfiguration.getConfiguration());
-    config.setUiModeQualifier(new UiModeQualifier(UiMode.NORMAL));
-    config.setNightModeQualifier(new NightModeQualifier(NightMode.NIGHT));
-    config.setLanguageQualifier(new LanguageQualifier());
-    config.setRegionQualifier(new RegionQualifier());
+        FolderConfiguration config = new FolderConfiguration();
+        config.set(deviceConfiguration.getConfiguration());
+        config.setUiModeQualifier(new UiModeQualifier(UiMode.NORMAL));
+        config.setNightModeQualifier(new NightModeQualifier(NightMode.NIGHT));
+        config.setLanguageQualifier(new LanguageQualifier());
+        config.setRegionQualifier(new RegionQualifier());
 
-    float xdpi = deviceConfiguration.getDevice().getXDpi();
-    float ydpi = deviceConfiguration.getDevice().getYDpi();
+        float xdpi = deviceConfiguration.getDevice().getXDpi();
+        float ydpi = deviceConfiguration.getDevice().getYDpi();
 
-    ThemeData theme = new ThemeData("Theme", false);
+        ThemeData theme = new ThemeData("Theme", false);
 
-    mySession = RenderUtil.createRenderSession(myModule.getProject(), layoutXmlText, myFile, target, facet, config, xdpi, ydpi, theme);
+        return RenderUtil.createRenderSession(getProject(), layoutXmlText, myFile, target, facet, config, xdpi, ydpi, theme);
+      }
+    }).get();
   }
 
   @Override
@@ -267,6 +280,11 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
     myPSIChangeListener.stop();
     super.dispose();
     mySession = null;
+  }
+
+  @Override
+  public String getPlatformTarget() {
+    return "android";
   }
 
   @Override
@@ -284,6 +302,55 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
   @Override
   protected EditOperation processRootOperation(OperationContext context) {
     return null;
+  }
+
+  @Override
+  @NotNull
+  protected ComponentCreationFactory createCreationFactory(Item paletteItem) {
+    return new ComponentCreationFactory() {
+      @Override
+      @NotNull
+      public RadComponent create() throws Exception {
+        return new RadViewComponent(null);
+      }
+    };
+    //return null;  // TODO: Auto-generated method stub
+  }
+
+  @Override
+  public ComponentPasteFactory createPasteFactory(String xmlComponents) {
+    return new ComponentPasteFactory() {
+      @NotNull
+      @Override
+      public List<RadComponent> create() throws Exception {
+        return Collections.<RadComponent>singletonList(new RadViewComponent(null));
+      }
+    };
+    //return null; // TODO: Auto-generated method stub
+  }
+
+  @Override
+  protected boolean execute(ThrowableRunnable<Exception> operation) {
+    try {
+      operation.run();
+      return true;
+    }
+    catch (Throwable e) {
+      showError("Execute command", e);
+      return false;
+    }
+  }
+
+  @Override
+  protected void execute(List<EditOperation> operations) {
+    try {
+      for (EditOperation operation : operations) {
+        operation.execute();
+      }
+    }
+    catch (Throwable e) {
+      showError("Execute command", e);
+    }
   }
 
   private static class RootView extends JComponent {
