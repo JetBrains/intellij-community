@@ -255,10 +255,27 @@ public class PyPackageManager {
     return myPackagesCache;
   }
 
+  @Nullable
+  public PyPackage findPackage(String name){
+    try {
+      for (PyPackage pkg : getPackages()) {
+        if (name.equals(pkg.getName())) {
+          return pkg;
+        }
+      }
+    }
+    catch (PyExternalProcessException e) {
+    }
+    return null;
+  }
+
   @NotNull
-  public String createVirtualEnv(@NotNull String destinationDir) throws PyExternalProcessException {
-    // TODO: Add boolean systemSitePackages option
-    runPythonHelper(VIRTUALENV, list("--never-download", "--distribute", destinationDir));
+  public String createVirtualEnv(@NotNull String destinationDir, boolean useGlobalSite) throws PyExternalProcessException {
+    List<String> args = new ArrayList<String>();
+    if (useGlobalSite) args.add("--system-site-packages");
+    args.addAll(list("--never-download", "--distribute", destinationDir));
+
+    runPythonHelper(VIRTUALENV, args);
     final String binary = PythonSdkType.getPythonExecutable(destinationDir);
     final String binaryFallback = destinationDir + File.separator + "bin" + File.separator + "python";
     return (binary != null) ? binary : binaryFallback;
