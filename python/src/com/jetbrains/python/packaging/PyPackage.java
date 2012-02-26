@@ -23,7 +23,7 @@ public class PyPackage {
 
   @Override
   public String toString() {
-    return String.format("%s %s", getName(), getVersion());
+    return getName();
   }
 
   @NotNull
