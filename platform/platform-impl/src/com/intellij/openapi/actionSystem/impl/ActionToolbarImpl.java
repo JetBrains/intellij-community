@@ -713,7 +713,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
         }
       }
       else {
-        g.setColor(UIUtil.getSeparatorShadow());
+        g.setColor(UIUtil.getSeparatorColor());
         if (getParent() != null) {
           if (myOrientation == SwingConstants.HORIZONTAL) {
             UIUtil.drawLine(g, 3, 2, 3, getParent().getSize().height - 2);
