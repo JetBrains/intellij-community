@@ -3,6 +3,6 @@
   <problem>
     <file>test.py</file>
     <line>1</line>
-    <description>Non-ASCII character � in file, but no encoding declared</description>
+    <description>Byte literal contains characters > 255</description>
   </problem>
 </problems>
