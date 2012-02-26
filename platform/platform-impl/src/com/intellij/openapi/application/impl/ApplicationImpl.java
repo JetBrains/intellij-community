@@ -202,7 +202,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
                          boolean isHeadless,
                          boolean isCommandLine,
                          @NotNull String appName,
-                         Splash splash) {
+                         @Nullable Splash splash) {
     super(null);
 
     ApplicationManager.setApplication(this, myLastDisposable); // reset back to null only when all components already disposed
