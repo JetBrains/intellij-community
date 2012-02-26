@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,6 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diff.DiffRequest;
 import com.intellij.openapi.editor.Document;
@@ -271,31 +269,26 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
       final FileDocumentManager manager = FileDocumentManager.getInstance();
       for (Document document : manager.getUnsavedDocuments()) {
         VirtualFile file = manager.getFile(document);
-        if (file!=null && VfsUtilCore.isAncestor(virtualFile, file, false)) {
+        if (file != null && VfsUtilCore.isAncestor(virtualFile, file, false)) {
           docsToSave.add(document);
         }
       }
 
       if (!docsToSave.isEmpty()) {
-        ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-          @Override
-          public void run() {
-            AccessToken token = WriteAction.start();
-            try {
-              for (Document document : docsToSave) {
-                manager.saveDocument(document);
-              }
-            }
-            finally {
-              token.finish();
-            }
+        AccessToken token = WriteAction.start();
+        try {
+          for (Document document : docsToSave) {
+            manager.saveDocument(document);
           }
-        }, ModalityState.defaultModalityState());
+        }
+        finally {
+          token.finish();
+        }
       }
+      if (!FileWatcher.getInstance().isWatched(virtualFile)) {
+        ((NewVirtualFile)virtualFile).markDirtyRecursively();
+      }
+      virtualFile.refresh(true, true);
     }
-    if (!FileWatcher.getInstance().isWatched(virtualFile)) {
-      ((NewVirtualFile)virtualFile).markDirtyRecursively();
-    }
-    virtualFile.refresh(false, true);
   }
 }

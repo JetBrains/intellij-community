@@ -54,7 +54,7 @@ public class DirDiffManagerImpl extends DirDiffManager {
       frame.show();
     } else {
       DirDiffDialog dirDiffDialog = new DirDiffDialog(myProject, model);
-      if (myProject == null || myProject.isDefault() || isFromModalDialog(myProject)) {
+      if (myProject == null || myProject.isDefault()/* || isFromModalDialog(myProject)*/) {
         dirDiffDialog.setModal(true);
       }
       setWindowListener(onWindowClose, dirDiffDialog.getOwner());
