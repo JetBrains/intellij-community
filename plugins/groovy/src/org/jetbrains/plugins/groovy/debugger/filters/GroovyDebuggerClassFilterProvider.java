@@ -17,28 +17,25 @@ package org.jetbrains.plugins.groovy.debugger.filters;
 
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.ui.classFilter.DebuggerClassFilterProvider;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
-import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * @author ilyas
  */
 public class GroovyDebuggerClassFilterProvider implements DebuggerClassFilterProvider {
-  private static final ClassFilter[] FILTERS = {new ClassFilter("org.codehaus.groovy.*"), new ClassFilter("groovy.*")};
+  private static final List<ClassFilter> FILTERS = Arrays.asList(new ClassFilter("org.codehaus.groovy.*"), new ClassFilter("groovy.*"));
 
   public List<ClassFilter> getFilters() {
-
-    final GroovyDebuggerSettings settings = GroovyDebuggerSettings.getInstance();
-    final Boolean flag = settings.DEBUG_DISABLE_SPECIFIC_GROOVY_METHODS;
-    final ArrayList<ClassFilter> list = new ArrayList<ClassFilter>();
+    GroovyDebuggerSettings settings = GroovyDebuggerSettings.getInstance();
+    Boolean flag = settings.DEBUG_DISABLE_SPECIFIC_GROOVY_METHODS;
     if (flag == null || flag.booleanValue()) {
-      ContainerUtil.addAll(list, FILTERS);
-      return list;
+      return FILTERS;
     }
-    return list;
+    return Collections.emptyList();
   }
 
   public boolean isAuxiliaryFrame(String className, String methodName) {
