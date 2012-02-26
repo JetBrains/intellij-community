@@ -46,10 +46,10 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.EditorTextFieldWithBrowseButton;
 import com.intellij.ui.InsertPathAction;
+import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.TextFieldCompletionProvider;
@@ -102,6 +102,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
   private JComboBox myForkCb;
   private JBLabel myTestLabel;
   private JComboBox myTypeChooser;
+  private JBLabel mySearchForTestsLabel;
   @NonNls private static final String NONE = "none";
   @NonNls private static final String METHOD = "method";
   @NonNls private static final String KLASS = "class";
@@ -216,7 +217,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
 
     myCommonJavaParameters.getProgramParametersComponent().setVisible(false);
 
-    setAnchor(myDir.getLabel());
+    setAnchor(mySearchForTestsLabel);
     myAlternativeJREPanel.setAnchor(myModule.getLabel());
     myCommonJavaParameters.setAnchor(myModule.getLabel());
   }
@@ -403,6 +404,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
   @Override
   public void setAnchor(JComponent anchor) {
     this.anchor = anchor;
+    mySearchForTestsLabel.setAnchor(anchor);
     myTestLabel.setAnchor(anchor);
     myClass.setAnchor(anchor);
     myDir.setAnchor(anchor);
