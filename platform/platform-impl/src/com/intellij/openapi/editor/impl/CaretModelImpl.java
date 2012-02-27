@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -110,7 +110,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     DocumentBulkUpdateListener bulkUpdateListener = new DocumentBulkUpdateListener() {
       @Override
       public void updateStarted(Document doc) {
-        if (doc != myEditor.getDocument()) return;
+        if (doc != myEditor.getDocument() && myOffset >= doc.getTextLength()) return;
         savedBeforeBulkCaretMarker = doc.createRangeMarker(myOffset, myOffset);
       }
       @Override
