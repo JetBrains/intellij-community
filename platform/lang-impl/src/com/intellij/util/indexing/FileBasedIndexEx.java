@@ -20,6 +20,10 @@
 
 package com.intellij.util.indexing;
 
+import com.intellij.notification.NotificationDisplayType;
+import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationType;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.*;
@@ -109,5 +113,11 @@ public class FileBasedIndexEx extends FileBasedIndex {
         scheduleIndexRebuild(true);
       }
     });
+  }
+
+  protected void notifyIndexRebuild(String rebuildNotification) {
+    if(!ApplicationManager.getApplication().isHeadlessEnvironment())
+      new NotificationGroup("Indexing", NotificationDisplayType.BALLOON, false)
+        .createNotification("Index Rebuild", rebuildNotification, NotificationType.INFORMATION, null).notify(null);
   }
 }
