@@ -823,9 +823,11 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       final String allText = parent.getContainingFile().getText();
       final TextRange parentRange = parent.getTextRange();
 
+      LOG.assertTrue(parentRange.getStartOffset() <= rangeMarker.getStartOffset(), parent + "; prefix:" + prefix + "; suffix:" + suffix);
       String beg = allText.substring(parentRange.getStartOffset(), rangeMarker.getStartOffset());
       if (StringUtil.stripQuotesAroundValue(beg).trim().length() == 0 && prefix == null) beg = "";
 
+      LOG.assertTrue(rangeMarker.getEndOffset() <= parentRange.getEndOffset(), parent + "; prefix:" + prefix + "; suffix:" + suffix);
       String end = allText.substring(rangeMarker.getEndOffset(), parentRange.getEndOffset());
       if (StringUtil.stripQuotesAroundValue(end).trim().length() == 0 && suffix == null) end = "";
 
