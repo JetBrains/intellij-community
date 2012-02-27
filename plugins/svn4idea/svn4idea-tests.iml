@@ -34,6 +34,8 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="module" module-name="platform-resources" scope="TEST" />
+    <orderEntry type="module" module-name="dom-impl" scope="TEST" />
   </component>
 </module>
 
