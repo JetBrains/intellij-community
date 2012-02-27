@@ -289,6 +289,12 @@ binding.setVariable("winScripts", { String target, String home, String name, Map
   String fullName = args.fullName != null ? args.fullName : p("component.names.fullname")
   String product_uc = args.product_uc != null ? args.product_uc : p("component.names.product").toUpperCase()
   String vm_options = args.vm_options != null ? args.vm_options : "${p("component.names.product").toLowerCase()}.exe"
+  if (vm_options.endsWith(".exe")) {
+    vm_options = vm_options.replace(".exe", "%BITS%.exe")
+  }
+  else {
+    vm_options = vm_options + "%BITS%"
+  }
 
   String classPath = "SET CLASS_PATH=%IDE_HOME%\\lib\\${classPathLibs[0]}\n"
   classPath += classPathLibs[1..-1].collect {"SET CLASS_PATH=%CLASS_PATH%;%IDE_HOME%\\lib\\${it}"}.join("\n")
@@ -356,11 +362,11 @@ binding.setVariable("unixScripts", { String target, String home, String name, Ma
 })
 
 binding.setVariable("winVMOptions", { String target, String system_selector, String name, String name64 = null ->
-  def options = system_selector != null ? vmOptions32yjp(system_selector) : vmOptions32()
+  def options = isEap() && system_selector != null ? vmOptions32yjp(system_selector) : vmOptions32()
   ant.echo(file: "$target/bin/${name}.vmoptions", message: options.replace(' ', '\n'))
 
   if (name64 != null) {
-    options = system_selector != null ? vmOptions64yjp(system_selector) : vmOptions64()
+    options = isEap() && system_selector != null ? vmOptions64yjp(system_selector) : vmOptions64()
     ant.echo(file: "$target/bin/${name64}.vmoptions", message: options.replace(' ', '\n'))
   }
 
