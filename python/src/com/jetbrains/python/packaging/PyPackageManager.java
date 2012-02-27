@@ -257,7 +257,7 @@ public class PyPackageManager {
   }
 
   @Nullable
-  public PyPackage findPackage(String name){
+  public PyPackage findPackage(String name) {
     try {
       for (PyPackage pkg : getPackages()) {
         if (name.equals(pkg.getName())) {
@@ -265,7 +265,7 @@ public class PyPackageManager {
         }
       }
     }
-    catch (PyExternalProcessException e) {
+    catch (PyExternalProcessException ignored) {
     }
     return null;
   }
@@ -296,14 +296,18 @@ public class PyPackageManager {
     if (requirementsTxt != null) {
       return PyRequirement.parse(requirementsTxt.getText());
     }
-    final PyListLiteralExpression installRequires = PyPackageUtil.findSetupPyInstallRequires(module);
-    if (installRequires != null) {
-      final List<String> lines = new ArrayList<String>();
-      for (PyExpression e : installRequires.getElements()) {
-        if (e instanceof PyStringLiteralExpression) {
-          lines.add(((PyStringLiteralExpression)e).getStringValue());
+    final List<String> lines = new ArrayList<String>();
+    for (String name : PyPackageUtil.SETUP_PY_REQUIRES_KWARGS_NAMES) {
+      final PyListLiteralExpression installRequires = PyPackageUtil.findSetupPyRequires(module, name);
+      if (installRequires != null) {
+        for (PyExpression e : installRequires.getElements()) {
+          if (e instanceof PyStringLiteralExpression) {
+            lines.add(((PyStringLiteralExpression)e).getStringValue());
+          }
         }
       }
+    }
+    if (!lines.isEmpty()) {
       return PyRequirement.parse(StringUtil.join(lines, "\n"));
     }
     if (PyPackageUtil.findSetupPy(module) != null) {

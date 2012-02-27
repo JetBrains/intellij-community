@@ -24,6 +24,8 @@ import java.util.List;
  * @author vlan
  */
 public class PyPackageUtil {
+  public static final String[] SETUP_PY_REQUIRES_KWARGS_NAMES = new String[] {"requires", "install_requires", "setup_requires"};
+
   private PyPackageUtil() {
   }
 
@@ -53,7 +55,18 @@ public class PyPackageUtil {
   }
 
   @Nullable
-  public static PyListLiteralExpression findSetupPyInstallRequires(@NotNull Module module) {
+  public static PyListLiteralExpression findSetupPyRequires(@NotNull Module module) {
+    for (String name : SETUP_PY_REQUIRES_KWARGS_NAMES) {
+      final PyListLiteralExpression kwarg = findSetupPyRequires(module, name);
+      if (kwarg != null) {
+        return kwarg;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public static PyListLiteralExpression findSetupPyRequires(@NotNull Module module, @NotNull String kwargName) {
     final PyFile setupPy = findSetupPy(module);
     if (setupPy != null) {
       final PyCallExpression setup = findSetupCall(setupPy);
@@ -61,7 +74,7 @@ public class PyPackageUtil {
         for (PyExpression arg : setup.getArguments()) {
           if (arg instanceof PyKeywordArgument) {
             final PyKeywordArgument kwarg = (PyKeywordArgument)arg;
-            if ("install_requires".equals(kwarg.getKeyword())) {
+            if (kwargName.equals(kwarg.getKeyword())) {
               final PyExpression value = kwarg.getValueExpression();
               if (value instanceof PyListLiteralExpression) {
                 return (PyListLiteralExpression)value;

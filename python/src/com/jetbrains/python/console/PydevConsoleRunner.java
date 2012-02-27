@@ -207,7 +207,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
   }
 
   @Override
-  protected OSProcessHandler createProcess() throws ExecutionException {
+  protected Process createProcess() throws ExecutionException {
     CommandLineArgumentsProvider provider = myCommandLineArgumentsProvider;
     final Process server = Runner.createProcess(getWorkingDir(), provider.getAdditionalEnvs(), provider.getArguments());
     try {
@@ -216,7 +216,12 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     catch (Exception e) {
       throw new ExecutionException(e.getMessage());
     }
-    myProcessHandler = new PyConsoleProcessHandler(server, getConsoleView(), myPydevConsoleCommunication, provider.getCommandLineString(),
+    return server;
+  }
+
+  @Override
+  protected PyConsoleProcessHandler createProcessHandler(final Process process) {
+    myProcessHandler = new PyConsoleProcessHandler(process, getConsoleView(), myPydevConsoleCommunication, myCommandLineArgumentsProvider.getCommandLineString(),
                                                    CharsetToolkit.UTF8_CHARSET);
     return myProcessHandler;
   }
