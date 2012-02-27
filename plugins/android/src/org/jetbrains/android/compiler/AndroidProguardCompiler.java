@@ -75,6 +75,7 @@ public class AndroidProguardCompiler implements ClassPostProcessingCompiler {
             LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(proguardCfgPath));
           if (proguardConfigFile == null) {
             context.addMessage(CompilerMessageCategory.ERROR, "Cannot find file " + proguardCfgPath, null, -1, -1);
+            continue;
           }
 
           final CompilerModuleExtension extension = CompilerModuleExtension.getInstance(module);
