@@ -62,6 +62,7 @@ public class ExceptionWorker {
   }
 
   public void execute(final String line, final int textEndOffset) {
+    myResult = null;
     myInfo = parseExceptionLine(line);
     if (myInfo == null) {
       return;
