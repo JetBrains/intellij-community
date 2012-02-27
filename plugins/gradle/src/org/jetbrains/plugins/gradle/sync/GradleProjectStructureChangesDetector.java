@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.gradle.sync;
 
 import com.intellij.ProjectTopics;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.components.ServiceManager;
@@ -72,6 +73,9 @@ public class GradleProjectStructureChangesDetector extends AbstractProjectCompon
   }
 
   private void scheduleUpdate() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return;
+    }
     myStartRefreshTime.set(System.currentTimeMillis() + REFRESH_DELAY_MILLIS);
     myAlarm.cancelAllRequests();
     myAlarm.addRequest(myRequest, REFRESH_DELAY_MILLIS + 16);
