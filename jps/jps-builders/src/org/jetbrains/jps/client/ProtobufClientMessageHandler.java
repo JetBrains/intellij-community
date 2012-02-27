@@ -2,7 +2,10 @@ package org.jetbrains.jps.client;
 
 import com.google.protobuf.MessageLite;
 import com.intellij.openapi.diagnostic.Logger;
-import org.jboss.netty.channel.*;
+import org.jboss.netty.channel.ChannelHandlerContext;
+import org.jboss.netty.channel.ChannelStateEvent;
+import org.jboss.netty.channel.MessageEvent;
+import org.jboss.netty.channel.SimpleChannelHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.api.RequestFuture;
 
@@ -88,17 +91,6 @@ final class ProtobufClientMessageHandler<T extends ProtobufResponseHandler> exte
     }
     finally {
       // make sure the client is in disconnected state
-      myClient.disconnect();
-    }
-  }
-
-  @Override
-  public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
-    try {
-      LOG.info(e.getCause());
-      ctx.sendUpstream(e);
-    }
-    finally {
       myClient.disconnect();
     }
   }
