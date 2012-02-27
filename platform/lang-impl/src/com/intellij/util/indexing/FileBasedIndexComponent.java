@@ -122,14 +122,4 @@ public class FileBasedIndexComponent extends FileBasedIndex implements Applicati
       new NotificationGroup("Indexing", NotificationDisplayType.BALLOON, false)
         .createNotification("Index Rebuild", rebuildNotification, NotificationType.INFORMATION, null).notify(null);
   }
-
-  @Override
-  public void initComponent() {
-  }
-
-  @NotNull
-  @Override
-  public String getComponentName() {
-    return "com.intellij.util.indexing.FileBasedIndexComponent";
-  }
 }

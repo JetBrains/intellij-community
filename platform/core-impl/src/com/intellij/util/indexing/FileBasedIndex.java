@@ -524,6 +524,14 @@ public class FileBasedIndex {
     performShutdown();
   }
 
+  public void initComponent() {
+  }
+
+  @NotNull
+  public String getComponentName() {
+    return "com.intellij.util.indexing.FileBasedIndexComponent";
+  }
+
   private final AtomicBoolean myShutdownPerformed = new AtomicBoolean(false);
 
   private void performShutdown() {
