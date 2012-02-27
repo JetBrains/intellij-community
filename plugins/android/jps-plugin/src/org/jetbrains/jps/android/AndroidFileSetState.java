@@ -1,5 +1,6 @@
 package org.jetbrains.jps.android;
 
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.HashMap;
@@ -19,14 +20,16 @@ import java.util.Map;
 public class AndroidFileSetState implements ValidityState {
   private final Map<String, Long> myTimestamps;
 
-  public AndroidFileSetState(@NotNull Collection<String> roots) {
+  public AndroidFileSetState(@NotNull Collection<String> roots, @NotNull final Condition<File> filter) {
     myTimestamps = new HashMap<String, Long>();
 
     for (String resourceDir : roots) {
       FileUtil.processFilesRecursively(new File(resourceDir), new Processor<File>() {
         @Override
         public boolean process(File file) {
-          myTimestamps.put(FileUtil.toSystemIndependentName(file.getPath()), file.lastModified());
+          if (filter.value(file)) {
+            myTimestamps.put(FileUtil.toSystemIndependentName(file.getPath()), file.lastModified());
+          }
           return true;
         }
       });

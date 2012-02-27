@@ -55,11 +55,12 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
   private static void doBuild(CompileContext context) throws IOException, ProjectBuildException {
     final File root = context.getDataManager().getDataStorageRoot();
 
-    AndroidClassesAndJarsStateStorage dexStateStorage = null;
-    AndroidClassesAndJarsStateStorage proguardStateStorage = null;
+    AndroidFileSetStorage dexStateStorage = null;
+    AndroidFileSetStorage proguardStateStorage = null;
     try {
-      dexStateStorage = new AndroidClassesAndJarsStateStorage(root, "_dex");
-      proguardStateStorage = new AndroidClassesAndJarsStateStorage(root, "_proguard");
+      dexStateStorage = new AndroidFileSetStorage(root, "dex");
+      proguardStateStorage = new AndroidFileSetStorage(root, "proguard");
+
       if (!doDexBuild(context, dexStateStorage, proguardStateStorage)) {
         throw new ProjectBuildException();
       }
@@ -75,8 +76,8 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
   }
 
   private static boolean doDexBuild(@NotNull CompileContext context,
-                                    @NotNull AndroidClassesAndJarsStateStorage dexStateStorage,
-                                    @NotNull AndroidClassesAndJarsStateStorage proguardStateStorage) {
+                                    @NotNull AndroidFileSetStorage dexStateStorage,
+                                    @NotNull AndroidFileSetStorage proguardStateStorage) {
     boolean success = true;
 
     for (Module module : context.getProject().getModules().values()) {
@@ -145,10 +146,10 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
             }
           }
         }
-        final AndroidClassesAndJarsState newState = new AndroidClassesAndJarsState(fileSet);
+        final AndroidFileSetState newState = new AndroidFileSetState(fileSet, AndroidJpsUtil.CLASSES_AND_JARS_FILTER);
 
         if (context.isMake()) {
-          final AndroidClassesAndJarsState oldState = dexStateStorage.getState(module.getName());
+          final AndroidFileSetState oldState = dexStateStorage.getState(module.getName());
           if (oldState != null && oldState.equalsTo(newState)) {
             continue;
           }
@@ -254,7 +255,7 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
                                                 @NotNull CompileContext context,
                                                 @NotNull String outputJarPath,
                                                 @NotNull String proguardCfgPath,
-                                                @NotNull AndroidClassesAndJarsStateStorage proguardStateStorage) throws IOException {
+                                                @NotNull AndroidFileSetStorage proguardStateStorage) throws IOException {
     final Module module = facet.getModule();
 
     final File proguardCfgFile = new File(proguardCfgPath);
@@ -294,8 +295,8 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
     allFiles.addAll(libClassFilesDirs);
     allFiles.addAll(externalJars);
 
-    final AndroidClassesAndJarsState newState = new AndroidClassesAndJarsState(allFiles);
-    final AndroidClassesAndJarsState oldState = proguardStateStorage.getState(module.getName());
+    final AndroidFileSetState newState = new AndroidFileSetState(allFiles, AndroidJpsUtil.CLASSES_AND_JARS_FILTER);
+    final AndroidFileSetState oldState = proguardStateStorage.getState(module.getName());
     if (context.getTimestampStorage().getStamp(proguardCfgFile) == proguardCfgFile.lastModified() &&
         newState.equalsTo(oldState)) {
       return true;

@@ -3,6 +3,7 @@ package org.jetbrains.jps.android;
 import com.android.sdklib.IAndroidTarget;
 import com.android.sdklib.SdkManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
@@ -34,8 +35,17 @@ import java.util.regex.Matcher;
  */
 class AndroidJpsUtil {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.android.AndroidJpsUtil");
+
   @NonNls public static final String ANDROID_STORAGE_DIR = "android";
   @NonNls private static final String RESOURCE_CACHE_STORAGE = "res-cache";
+
+  public static final Condition<File> CLASSES_AND_JARS_FILTER = new Condition<File>() {
+    @Override
+    public boolean value(File file) {
+      final String ext = FileUtil.getExtension(file.getName());
+      return "jar".equals(ext) || "class".equals(ext);
+    }
+  };
 
   private AndroidJpsUtil() {
   }

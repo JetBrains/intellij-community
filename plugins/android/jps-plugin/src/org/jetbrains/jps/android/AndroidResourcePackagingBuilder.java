@@ -1,6 +1,7 @@
 package org.jetbrains.jps.android;
 
 import com.android.sdklib.IAndroidTarget;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.android.compiler.tools.AndroidApt;
@@ -64,6 +65,7 @@ public class AndroidResourcePackagingBuilder extends ProjectLevelBuilder {
     }
   }
 
+  @SuppressWarnings("unchecked")
   private static void fillStates(@NotNull Collection<Module> modules,
                                  @NotNull Map<Module, AndroidFileSetState> resourcesStates,
                                  @NotNull Map<Module, AndroidFileSetState> assetsStates) throws IOException {
@@ -75,13 +77,13 @@ public class AndroidResourcePackagingBuilder extends ProjectLevelBuilder {
         final List<String> resourceDirs = resourceDir != null
                                           ? Arrays.asList(resourceDir.getPath())
                                           : Collections.<String>emptyList();
-        resourcesStates.put(module, new AndroidFileSetState(resourceDirs));
+        resourcesStates.put(module, new AndroidFileSetState(resourceDirs, Condition.TRUE));
 
         final File assetsDir = facet.getAssetsDir();
         final List<String> assetDirs = assetsDir != null
                                        ? Arrays.asList(assetsDir.getPath())
                                        : Collections.<String>emptyList();
-        assetsStates.put(module, new AndroidFileSetState(assetDirs));
+        assetsStates.put(module, new AndroidFileSetState(assetDirs, Condition.TRUE));
       }
     }
   }

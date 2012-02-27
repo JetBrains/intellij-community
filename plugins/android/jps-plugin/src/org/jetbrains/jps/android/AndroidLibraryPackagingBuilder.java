@@ -45,8 +45,7 @@ public class AndroidLibraryPackagingBuilder extends ModuleLevelBuilder {
 
   private static ModuleLevelBuilder.ExitCode doBuild(CompileContext context, ModuleChunk chunk) throws IOException {
     boolean success = true;
-    final AndroidClassesAndJarsStateStorage storage =
-      new AndroidClassesAndJarsStateStorage(context.getDataManager().getDataStorageRoot(), "_libs");
+    final AndroidFileSetStorage storage = new AndroidFileSetStorage(context.getDataManager().getDataStorageRoot(), "libs_packaging");
 
     try {
       for (Module module : chunk.getModules()) {
@@ -73,8 +72,8 @@ public class AndroidLibraryPackagingBuilder extends ModuleLevelBuilder {
         final Set<String> subdirs = new HashSet<String>();
         AndroidJpsUtil.addSubdirectories(classesDir, subdirs);
 
-        final AndroidClassesAndJarsState newState = new AndroidClassesAndJarsState(subdirs);
-        final AndroidClassesAndJarsState oldState = storage.getState(module.getName());
+        final AndroidFileSetState newState = new AndroidFileSetState(subdirs, AndroidJpsUtil.CLASSES_AND_JARS_FILTER);
+        final AndroidFileSetState oldState = storage.getState(module.getName());
 
         if (oldState != null && oldState.equalsTo(newState)) {
           continue;
