@@ -95,6 +95,13 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
     progressManager.onStart(id);
     ProjectConnection connection = getConnection(projectPath);
     ModelBuilder<? extends IdeaProject> modelBuilder = connection.model(downloadLibraries ? IdeaProject.class : BasicIdeaProject.class);
+    final RemoteGradleProcessSettings settings = mySettings.get();
+    if (settings != null) {
+      final String javaHome = settings.getJavaHome();
+      if (javaHome != null && new File(javaHome).isDirectory()) {
+        modelBuilder.setJavaHome(new File(javaHome));
+      }
+    }
     modelBuilder.addProgressListener(new ProgressListener() {
       @Override
       public void statusChanged(ProgressEvent event) {

@@ -146,7 +146,9 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     }
     if (elements.length > 1) {
       final TextRange range = reference.getRangeInElement();
-      final String refText = range.substring(reference.getElement().getText());
+      final String elementText = reference.getElement().getText();
+      LOG.assertTrue(range.getStartOffset() >= 0 && range.getEndOffset() <= elementText.length(), reference);
+      final String refText = range.substring(elementText);
       String title = MessageFormat.format(titlePattern, refText);
       NavigationUtil.getPsiElementPopup(elements, new DefaultPsiElementCellRenderer(), title, processor).showInBestPositionFor(editor);
       return true;

@@ -10,4 +10,6 @@ public interface GlobalOptions {
   String USE_EXTERNAL_JAVAC_OPTION = "use.external.javac.process";
   String HOSTNAME_OPTION = "localhost.name";
   String VM_EXE_PATH_OPTION = "vm.executable.path";
+  
+  long SERVER_PING_PERIOD = 2000L; // 2 sec
 }

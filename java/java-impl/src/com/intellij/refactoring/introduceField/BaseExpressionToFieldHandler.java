@@ -315,7 +315,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
 
   private static void addInitializationToSetUp(final PsiExpression initializer,
                                                final PsiField field,
-                                               final OccurrenceManager occurrenceManager,
+                                               final PsiExpression[] occurrences,
                                                final boolean replaceAll,
                                                final PsiClass parentClass) throws IncorrectOperationException {
     final PsiMethod setupMethod = TestFrameworks.getInstance().findOrCreateSetUpMethod(parentClass);
@@ -325,7 +325,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     PsiElement anchor = null;
     if (PsiTreeUtil.isAncestor(setupMethod, initializer, true)) {
       anchor = replaceAll
-               ? occurrenceManager.getAnchorStatementForAllInScope(setupMethod)
+               ? RefactoringUtil.getAnchorElementForMultipleExpressions(occurrences, setupMethod)
                : PsiTreeUtil.getParentOfType(initializer, PsiStatement.class);
     }
 
@@ -742,7 +742,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
           addInitializationToConstructors(initializer, myField, enclosingConstructor, myParentClass);
         }
         if (initializerPlace == InitializationPlace.IN_SETUP_METHOD && initializer != null) {
-          addInitializationToSetUp(initializer, myField, myOccurrenceManager, myReplaceAll, myParentClass);
+          addInitializationToSetUp(initializer, myField, myOccurrences, myReplaceAll, myParentClass);
         }
         if (mySelectedExpr.getParent() instanceof PsiParenthesizedExpression) {
           mySelectedExpr = (PsiExpression)mySelectedExpr.getParent();

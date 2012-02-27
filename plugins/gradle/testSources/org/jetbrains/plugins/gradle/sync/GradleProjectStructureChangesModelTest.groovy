@@ -551,4 +551,35 @@ public class GradleProjectStructureChangesModelTest extends AbstractGradleTest {
             lib1('conflict')
     } } } }
   }
+
+  // TODO den uncomment
+  //@Test
+  public void "local content root importing"() {
+    init(
+      gradle: {
+        project {
+          module {
+            contentRoot('1')
+            contentRoot('2')
+      } } },
+      intellij: {
+        project {
+          module {
+            contentRoot('2')
+            contentRoot('3')
+      } } }
+    )
+    checkChanges {
+      presence {
+        contentRoot(gradle: gradle.contentRoots.values().find { it.rootPath == '1' })
+        contentRoot(intellij: intellij.contentRoots.values().find { it.file.path == '3' })
+    } }
+    checkTree {
+      project {
+        module {
+          "content-root:1"('gradle')
+          "content-root:2"()
+          "content-root:3"('intellij')
+    } } }
+  }
 }

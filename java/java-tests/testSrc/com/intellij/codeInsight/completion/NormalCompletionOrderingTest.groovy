@@ -298,4 +298,8 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     }
   }
 
+  public void testPreferKeywordsToVoidMethodsInExpectedTypeContext() {
+    checkPreferredItems 0, 'noo', 'new', 'null', 'noo2', 'notify', 'notifyAll'
+  }
+
 }

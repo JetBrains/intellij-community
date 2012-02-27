@@ -352,6 +352,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
 
     public boolean isValid(Document document) {
       if (!myTargetElement.isValid()) return false;
+      if (!myElementAtPointer.isValid()) return false;
       if (myTargetElement == myElementAtPointer || myTargetElement == myElementAtPointer.getParent()) return false;
 
       return rangesAreCorrect(document);

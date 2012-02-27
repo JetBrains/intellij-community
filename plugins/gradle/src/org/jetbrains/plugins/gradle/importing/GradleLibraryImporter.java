@@ -36,7 +36,14 @@ public class GradleLibraryImporter {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
-        doImportLibrary(library, project);
+        final GradleProjectEntityImportListener publisher = project.getMessageBus().syncPublisher(GradleProjectEntityImportListener.TOPIC);
+        publisher.onImportStart(library);
+        try {
+          doImportLibrary(library, project);
+        }
+        finally {
+          publisher.onImportEnd(library);
+        }
       }
     });
   }
