@@ -12,7 +12,7 @@
     <orderEntry type="module" module-name="colorSchemes" />
     <orderEntry type="module" module-name="cvs-plugin" />
     <orderEntry type="module" module-name="hg4idea" />
-    <orderEntry type="module" module-name="svn4ideaOld" />
+    <orderEntry type="module" module-name="svn4idea" />
     <orderEntry type="module" module-name="git4idea" />
     <orderEntry type="module" module-name="database-impl" />
     <orderEntry type="module" module-name="jdbc-console" />

@@ -299,7 +299,7 @@ public class PythonSdkType extends SdkType {
 
 
   // /home/joe/foo -> ~/foo
-  protected static String shortenDirName(String path) {
+  public static String shortenDirName(String path) {
     String home = SystemProperties.getUserHome();
     if (path.startsWith(home)) {
       return "~" + path.substring(home.length());

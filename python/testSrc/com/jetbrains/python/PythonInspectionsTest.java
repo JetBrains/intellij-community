@@ -198,10 +198,6 @@ public class PythonInspectionsTest extends PyTestCase {
     doTest(getTestName(false), inspection);
   }
 
-  public void testPyByteLiteralInspection1() {
-    doHighlightingTest(PyByteLiteralInspection.class);
-  }
-
   public void testPyTupleItemAssignmentInspection() {
     LocalInspectionTool inspection = new PyTupleItemAssignmentInspection();
     doTest(getTestName(false), inspection);
@@ -300,6 +296,10 @@ public class PythonInspectionsTest extends PyTestCase {
 
   public void testPyArgumentEqualDefaultInspection() {    //PY-3125
     doHighlightingTest(PyArgumentEqualDefaultInspection.class);
+  }
+
+  public void testPyNonAsciiCharInspection() {    //PY-5868
+    doHighlightingTest(PyNonAsciiCharInspection.class);
   }
 
   public void testPySetFunctionToLiteralInspection() {    //PY-3120
