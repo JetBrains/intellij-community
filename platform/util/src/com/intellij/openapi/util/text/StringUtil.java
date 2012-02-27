@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.*;
 import com.intellij.util.text.CharArrayCharSequence;
+import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.LineReader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -2061,12 +2062,29 @@ public class StringUtil {
   }
 
   public static void assertValidSeparators(@NotNull CharSequence s) {
-    for (int i = 0; i < s.length(); i++) {
-      if (s.charAt(i) == '\r') {
-        String context = String.valueOf(last(s.subSequence(0, i), 10, true)) + first(s.subSequence(i, s.length()), 10, true);
-        context = escapeStringCharacters(context);
-        LOG.error("Wrong line separators: '" + context + "' at offset " + i);
+    char[] chars = CharArrayUtil.fromSequenceWithoutCopying(s);
+    int slashRIndex = -1;
+
+    if (chars != null) {
+      for(int i = 0, len = s.length(); i < len; ++i) {
+        if (chars[i] == '\r') {
+          slashRIndex = i;
+          break;
+        }
       }
+    } else {
+      for (int i = 0, len = s.length(); i < len; i++) {
+        if (s.charAt(i) == '\r') {
+          slashRIndex = i;
+          break;
+        }
+      }
+    }
+
+    if (slashRIndex != -1) {
+      String context = String.valueOf(last(s.subSequence(0, slashRIndex), 10, true)) + first(s.subSequence(slashRIndex, s.length()), 10, true);
+      context = escapeStringCharacters(context);
+      LOG.error("Wrong line separators: '" + context + "' at offset " + slashRIndex);
     }
   }
 

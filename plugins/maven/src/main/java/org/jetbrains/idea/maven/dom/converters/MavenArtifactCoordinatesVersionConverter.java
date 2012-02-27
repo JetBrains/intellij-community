@@ -22,8 +22,12 @@ import org.jetbrains.idea.maven.model.MavenId;
 
 import java.util.Collections;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 public class MavenArtifactCoordinatesVersionConverter extends MavenArtifactCoordinatesConverter {
+
+  private static final Pattern MAGIC_VERSION_PATTERN = Pattern.compile("\\s*(?:LATEST|RELEASE|[(\\[].*|.*-20\\d{6}\\.[0-2]\\d{5}-\\d+)\\s*");
+
   @Override
   protected boolean doIsValid(MavenId id, MavenProjectIndicesManager manager, ConvertContext context) {
     if (StringUtil.isEmpty(id.getGroupId())
@@ -31,13 +35,8 @@ public class MavenArtifactCoordinatesVersionConverter extends MavenArtifactCoord
         || StringUtil.isEmpty(id.getVersion())) {
       return false;
     }
-    if (isMagicVersion(id)) return true; // todo handle ranges more sensibly
+    if (MAGIC_VERSION_PATTERN.matcher(id.getVersion()).matches()) return true; // todo handle ranges more sensibly
     return manager.hasVersion(id.getGroupId(), id.getArtifactId(), id.getVersion());
-  }
-
-  private boolean isMagicVersion(MavenId id) {
-    String version = id.getVersion().trim();
-    return version.equals("LATEST") || version.equals("RELEASE") || version.startsWith("(") || version.startsWith("[");
   }
 
   @Override

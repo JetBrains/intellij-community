@@ -42,12 +42,7 @@ public class _LastInSuiteTest extends TestCase {
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
-        try {
-          LightPlatformTestCase.disposeApplication();
-        }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
+        LightPlatformTestCase.disposeApplication();
       }
     });
 

@@ -17,6 +17,7 @@ package com.intellij.designer.model;
 
 import com.intellij.designer.palette.Item;
 import com.intellij.openapi.util.IconLoader;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -92,7 +93,8 @@ public class MetaModel {
     return myPaletteItem;
   }
 
-  public void setPaletteItem(Item paletteItem) {
+  public void setPaletteItem(@NotNull Item paletteItem) {
     myPaletteItem = paletteItem;
+    myPaletteItem.setMetaModel(this);
   }
 }

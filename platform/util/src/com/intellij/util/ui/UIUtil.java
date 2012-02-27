@@ -684,6 +684,21 @@ public class UIUtil {
     return UIManager.getColor("nimbusBlueGrey");
   }
 
+  public static Color getSeparatorColor() {
+    Color separatorColor = getSeparatorForeground();
+    if (isUnderAlloyLookAndFeel()) {
+      separatorColor = getSeparatorShadow();
+    }
+    if (isUnderNimbusLookAndFeel()) {
+      separatorColor = getSeparatorColorUnderNimbus();
+    }
+    //under GTK+ L&F colors set hard
+    if (isUnderGTKLookAndFeel()) {
+      separatorColor = Gray._215;
+    }
+    return separatorColor;
+  }
+
   public static Border getTableFocusCellHighlightBorder() {
     return UIManager.getBorder("Table.focusCellHighlightBorder");
   }

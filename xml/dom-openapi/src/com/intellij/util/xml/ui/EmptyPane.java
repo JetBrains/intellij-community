@@ -31,7 +31,7 @@ public class EmptyPane {
   private JLabel myLabel;
 
   public EmptyPane(String text) {
-    final Color color = UIUtil.getSeparatorShadow();
+    final Color color = UIUtil.getSeparatorColor();
     myLabel.setForeground(color);
     myLabel.setText(text);
     myPanel.setBackground(new Tree().getBackground());

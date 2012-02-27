@@ -147,7 +147,7 @@ public class Extensions {
     return getRootArea().getExtensionPoint(AREA_LISTENER_EXTENSION_POINT).getExtensions();
   }
 
-  public static void registerAreaClass(@NonNls String areaClass, @NonNls String parentAreaClass) {
+  public static void registerAreaClass(@NonNls String areaClass, @Nullable @NonNls String parentAreaClass) {
     if (ourAreaClass2Configuration.containsKey(areaClass)) {
       // allow duplicate area class registrations if they are the same - fixing duplicate registration in tests is much more trouble
       AreaClassConfiguration configuration = ourAreaClass2Configuration.get(areaClass);

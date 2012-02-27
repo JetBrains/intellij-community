@@ -24,7 +24,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -206,8 +206,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     myUpdating.set(true);
     final JBLoadingPanel loadingPanel = getLoadingPanel();
     loadingPanel.startLoading();
-
-    final Runnable action = new Runnable() {
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
         try {
           updater = new Updater(loadingPanel, 100);
@@ -229,12 +228,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
           applySettings();
         }
       }
-    };
-    if (DirDiffManagerImpl.isFromModalDialog(myProject)) {
-      action.run();
-    } else {
-      ApplicationManager.getApplication().executeOnPooledThread(action);
-    }
+    });
   }
 
   private void reportException(final String htmlContent) {
@@ -285,7 +279,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
             clear();
             myElements.addAll(elements);
             myUpdating.set(false);
-            myTable.revalidate();
+            fireTableDataChanged();
             DirDiffTableModel.this.text.set("");
             if (loadingPanel.isLoading()) {
               loadingPanel.stopLoading();
@@ -301,13 +295,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
         if (myProject.isDefault()) {
           SwingUtilities.invokeLater(uiThread);
         } else {
-          final AccessToken token = ApplicationManager.getApplication().acquireReadActionLock();
-          try {
-            ApplicationManagerEx.getApplicationEx().runEdtSafeAction(uiThread);
-          }
-          finally {
-            token.finish();
-          }
+          app.invokeLater(uiThread, ModalityState.any());
         }
       }
     });
@@ -779,7 +767,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
         }
         catch (InterruptedException e) {//
         }
-        SwingUtilities.invokeLater(new Runnable() {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
             final String s = text.get();
@@ -787,7 +775,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
               myLoadingPanel.setLoadingText(s);
             }
           }
-        });
+        }, ModalityState.stateForComponent(myLoadingPanel));
         updater = new Updater(myLoadingPanel, mySleep);
         updater.start();
       } else {

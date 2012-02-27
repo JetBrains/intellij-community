@@ -134,15 +134,18 @@ public class MarqueeTracker extends InputTool {
   private void performMarqueeSelect() {
     final Rectangle selectionRectangle = getSelectionRectangle();
     final List<RadComponent> newSelection = new ArrayList<RadComponent>();
+    RadComponent rootComponent = myArea.getRootComponent();
 
-    myArea.getRootComponent().accept(new RadComponentVisitor() {
-      @Override
-      public void endVisit(RadComponent component) {
-        if (selectionRectangle.contains(component.getBounds(myArea.getNativeComponent()))) {
-          newSelection.add(component);
+    if (rootComponent != null) {
+      rootComponent.accept(new RadComponentVisitor() {
+        @Override
+        public void endVisit(RadComponent component) {
+          if (selectionRectangle.contains(component.getBounds(myArea.getNativeComponent()))) {
+            newSelection.add(component);
+          }
         }
-      }
-    }, true);
+      }, true);
+    }
 
     if (mySelectionMode == TOGGLE_MODE) {
       List<RadComponent> selection = new ArrayList<RadComponent>(myArea.getSelection());

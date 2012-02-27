@@ -358,7 +358,7 @@ public class PluginManager {
     //noinspection HardCodedStringLiteral
     final String pluginId = System.getProperty("idea.load.plugins.id");
     if (pluginId == null) {
-      if (descriptor instanceof IdeaPluginDescriptorImpl && !((IdeaPluginDescriptorImpl)descriptor).isEnabled()) return true;
+      if (descriptor instanceof IdeaPluginDescriptorImpl && !descriptor.isEnabled()) return true;
 
       if (!shouldLoadPlugins()) return true;
     }
@@ -443,7 +443,7 @@ public class PluginManager {
   }
 
   public static boolean isIncompatible(final IdeaPluginDescriptor descriptor) {
-    BuildNumber buildNumber = null;
+    BuildNumber buildNumber;
     try {
       buildNumber = getBuildNumber();
     }
@@ -614,7 +614,7 @@ public class PluginManager {
     final String pathProperty = System.getProperty(PROPERTY_PLUGIN_PATH);
     if (pathProperty == null) return;
 
-    for (java.util.StringTokenizer t = new java.util.StringTokenizer(pathProperty, File.pathSeparator); t.hasMoreTokens();) {
+    for (StringTokenizer t = new StringTokenizer(pathProperty, File.pathSeparator); t.hasMoreTokens();) {
       String s = t.nextToken();
       final IdeaPluginDescriptorImpl ideaPluginDescriptor = loadDescriptor(new File(s), PLUGIN_XML);
       if (ideaPluginDescriptor != null) {

@@ -116,16 +116,13 @@ public class ResizeTracker extends InputTool {
 
   private void executeCommand() {
     if (myExecuteEnabled) {
-      try {
-        for (EditOperation operation : getOperations()) {
-          if (operation.canExecute()) {
-            operation.execute();
-          }
+      List<EditOperation> operations = new ArrayList<EditOperation>();
+      for (EditOperation operation : getOperations()) {
+        if (operation.canExecute()) {
+          operations.add(operation);
         }
       }
-      catch (Exception e) {
-        myToolProvider.showError("Execute command: ", e);
-      }
+      myToolProvider.execute(operations);
     }
   }
 

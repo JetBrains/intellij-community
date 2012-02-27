@@ -16,7 +16,12 @@
 package com.intellij.android.designer.model;
 
 import com.intellij.designer.model.RadComponent;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.xml.XmlTag;
+import org.jdom.Element;
 
 import javax.swing.*;
 import java.awt.*;
@@ -29,6 +34,13 @@ import java.util.List;
  * @author Alexander Lobas
  */
 public class RadViewComponent extends RadComponent {
+  public static final AnAction LinearLayout =
+    new AnAction("Horizontal/Vertical", "LinearLayout", IconLoader.getIcon("/com/intellij/android/designer/icons/LinearLayout.png")) {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+      }
+    };
+
   private final List<RadComponent> myChildren = new ArrayList<RadComponent>();
   private Component myNativeComponent;
   private final Rectangle myBounds = new Rectangle();
@@ -80,5 +92,19 @@ public class RadViewComponent extends RadComponent {
   @Override
   public Point convertPoint(Component component, int x, int y) {
     return SwingUtilities.convertPoint(component, x, y, myNativeComponent);
+  }
+
+  @Override
+  public void addSelectionActions(DefaultActionGroup actionGroup, JComponent shortcuts, List<RadComponent> selection) {
+    if (myTag != null && myTag.getName().equals("LinearLayout") && selection.size() == 1 && selection.get(0) == this) {
+      AnAction action = new AnAction() {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          System.out.println("LinearLayout: " + e);
+        }
+      };
+      action.copyFrom(LinearLayout);
+      actionGroup.add(action);
+    }
   }
 }
