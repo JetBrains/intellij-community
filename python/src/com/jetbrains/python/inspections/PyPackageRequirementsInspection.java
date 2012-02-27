@@ -13,15 +13,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
 import com.intellij.util.Function;
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibUtil;
 import com.jetbrains.python.packaging.*;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
@@ -122,8 +124,8 @@ public class PyPackageRequirementsInspection extends PyInspection {
     private void checkPackageNameInRequirements(@NotNull PyQualifiedExpression importedExpression) {
       final List<PyExpression> expressions = PyResolveUtil.unwindQualifiers(importedExpression);
       if (!expressions.isEmpty()) {
-        final PyExpression packageReference = expressions.get(0);
-        final String packageName = packageReference.getName();
+        final PyExpression packageReferenceExpression = expressions.get(0);
+        final String packageName = packageReferenceExpression.getName();
         if (packageName != null && !myIgnoredPackages.contains(packageName)) {
           final Collection<String> stdlibPackages = PyStdlibUtil.getPackages();
           if (stdlibPackages != null) {
@@ -133,7 +135,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
               }
             }
           }
-          final Module module = ModuleUtil.findModuleForPsiElement(packageReference);
+          final Module module = ModuleUtil.findModuleForPsiElement(packageReferenceExpression);
           if (module != null) {
             final List<PyRequirement> requirements = PyPackageManager.getRequirements(module);
             if (requirements != null) {
@@ -142,14 +144,18 @@ public class PyPackageRequirementsInspection extends PyInspection {
                   return;
                 }
               }
-              final PyQualifiedName packageQName = PyQualifiedName.fromComponents(packageName);
-              for (String name : PyPackageUtil.getPackageNames(module)) {
-                final PyQualifiedName qname = PyQualifiedName.fromDottedString(name);
-                if (qname.matchesPrefix(packageQName)) {
-                  return;
+              final PsiReference reference = packageReferenceExpression.getReference();
+              if (reference != null) {
+                final PsiElement element = reference.resolve();
+                if (element != null) {
+                  final PsiFile file = element.getContainingFile();
+                  final VirtualFile virtualFile = file.getVirtualFile();
+                  if (ModuleUtil.moduleContainsFile(module, virtualFile, false)) {
+                    return;
+                  }
                 }
               }
-              registerProblem(packageReference, String.format("Package '%s' is not listed in project requirements", packageName),
+              registerProblem(packageReferenceExpression, String.format("Package '%s' is not listed in project requirements", packageName),
                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING, null,
                               new AddToRequirementsFix(module, packageName, LanguageLevel.forElement(importedExpression)),
                               new IgnoreRequirementFix(packageName));
