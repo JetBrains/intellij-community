@@ -35,6 +35,7 @@ import java.util.regex.Matcher;
 class AndroidJpsUtil {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.android.AndroidJpsUtil");
   @NonNls public static final String ANDROID_STORAGE_DIR = "android";
+  @NonNls private static final String RESOURCE_CACHE_STORAGE = "res-cache";
 
   private AndroidJpsUtil() {
   }
@@ -332,8 +333,17 @@ class AndroidJpsUtil {
     return Pair.create(androidSdk, target);
   }
 
-  public static String[] collectResourceDirs(@NotNull AndroidFacet facet) throws IOException {
+  public static String[] collectResourceDirsForCompilation(@NotNull AndroidFacet facet,
+                                                           boolean withCacheDirs,
+                                                           @NotNull CompileContext context) throws IOException {
     final List<String> result = new ArrayList<String>();
+
+    if (withCacheDirs) {
+      final File resourcesCacheDir = getResourcesCacheDir(context, facet.getModule());
+      if (resourcesCacheDir.exists()) {
+        result.add(resourcesCacheDir.getPath());
+      }
+    }
 
     final File resDir = getResourceDirForCompilationPath(facet);
     if (resDir != null) {
@@ -350,7 +360,7 @@ class AndroidJpsUtil {
   }
 
   @Nullable
-  private static File getResourceDirForCompilationPath(@NotNull AndroidFacet facet) throws IOException {
+  public static File getResourceDirForCompilationPath(@NotNull AndroidFacet facet) throws IOException {
     return facet.getUseCustomResFolderForCompilation()
            ? facet.getResourceDirForCompilation()
            : facet.getResourceDir();
@@ -385,5 +395,11 @@ class AndroidJpsUtil {
 
   public static boolean isReleaseBuild(@NotNull CompileContext context) {
     return Boolean.parseBoolean(context.getBuilderParameter(AndroidCommonUtils.RELEASE_BUILD_OPTION));
+  }
+
+  @NotNull
+  public static File getResourcesCacheDir(@NotNull CompileContext context, @NotNull Module module) {
+    final File androidStorage = new File(context.getDataManager().getDataStorageRoot(), ANDROID_STORAGE_DIR);
+    return new File(new File(androidStorage, RESOURCE_CACHE_STORAGE), module.getName());
   }
 }

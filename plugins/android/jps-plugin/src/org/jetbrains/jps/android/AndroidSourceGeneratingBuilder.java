@@ -279,7 +279,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
       final IAndroidTarget target = moduleData.getAndroidTarget();
 
       try {
-        final String[] resPaths = AndroidJpsUtil.collectResourceDirs(facet);
+        final String[] resPaths = AndroidJpsUtil.collectResourceDirsForCompilation(facet, false, context);
         if (resPaths.length == 0) {
           // there is no resources in the module
           continue;
