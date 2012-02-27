@@ -68,13 +68,13 @@ try:
                 ExecState.FIRST_CALL = False
                 sys.stdout.write('\nYou are now in a console within Eclipse.\nUse it with care as it can halt the VM.\n')
                 sys.stdout.write(
-                        'Typing a line with "PYDEV_CONSOLE_TOGGLE_RUN_IN_UI"\nwill start executing all the commands in the UI thread.\n\n')
+                    'Typing a line with "PYDEV_CONSOLE_TOGGLE_RUN_IN_UI"\nwill start executing all the commands in the UI thread.\n\n')
 
             if self.line == 'PYDEV_CONSOLE_TOGGLE_RUN_IN_UI':
                 ExecState.PYDEV_CONSOLE_RUN_IN_UI = not ExecState.PYDEV_CONSOLE_RUN_IN_UI
                 if ExecState.PYDEV_CONSOLE_RUN_IN_UI:
                     sys.stdout.write(
-                            'Running commands in UI mode. WARNING: using sys.stdin (i.e.: calling raw_input()) WILL HALT ECLIPSE.\n')
+                        'Running commands in UI mode. WARNING: using sys.stdin (i.e.: calling raw_input()) WILL HALT ECLIPSE.\n')
                 else:
                     sys.stdout.write('No longer running commands in UI mode.\n')
                 self.more = False
@@ -238,9 +238,13 @@ def ipython_editor(interpreter):
 # StartServer
 #=======================================================================================================================
 def start_server(host, port, interpreter):
+    if port == 0:
+        host = ''
+
     from pydev_imports import SimpleXMLRPCServer
     try:
-        server = SimpleXMLRPCServer((host, port), logRequests=True)
+        server = SimpleXMLRPCServer((host, port), logRequests=False)
+
     except:
         sys.stderr.write('Error starting server with host: %s, port: %s, client_port: %s\n' % (host, port, client_port))
         raise
@@ -257,6 +261,12 @@ def start_server(host, port, interpreter):
             interpreter.interpreter.ipython.hooks.editor = ipython_editor(interpreter)
         except :
             pass
+
+    if port == 0:
+        (h, port) = server.socket.getsockname()
+
+        print(port)
+        print(client_port)
 
     server.serve_forever()
 
@@ -313,28 +323,31 @@ def exec_expression(expression, globals, locals):
 
     return False
 
+def read_line(s):
+    ret = ''
+
+    while True:
+        c = s.recv(1)
+
+        if c == '\n' or c == '':
+            break
+        else:
+            ret += c
+
+    return ret
+
 #=======================================================================================================================
 # main
 #=======================================================================================================================
 if __name__ == '__main__':
     port, client_port = sys.argv[1:3]
-    if port == 0 and client_port == 0:
+    if int(port) == 0 and int(client_port) == 0:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         sock.bind(('', 0))
         (h, p) = sock.getsockname()
-
-        port = p
-
-        sys.stdout.write(p)
-
-        sock2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock2.bind(('', 0))
-        (h, p) = sock2.getsockname()
-
-        sys.stdout.write(p)
 
         client_port = p
 
     import pydev_localhost
     StartServer(pydev_localhost.get_localhost(), int(port), int(client_port))
-    

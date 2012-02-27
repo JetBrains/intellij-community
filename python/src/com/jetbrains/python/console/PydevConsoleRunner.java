@@ -5,6 +5,7 @@ import com.google.common.collect.Maps;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionHelper;
 import com.intellij.execution.Executor;
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.console.ConsoleHistoryController;
 import com.intellij.execution.console.LanguageConsoleViewImpl;
 import com.intellij.execution.process.*;
@@ -41,6 +42,11 @@ import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.completion.PydevConsoleElement;
 import com.jetbrains.python.console.parsing.PythonConsoleData;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
+import com.jetbrains.python.debugger.PySourcePosition;
+import com.jetbrains.python.remote.PyRemoteInterpreterException;
+import com.jetbrains.python.remote.PyRemoteSshProcess;
+import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
+import com.jetbrains.python.remote.PythonRemoteSdkAdditionalData;
 import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.run.PythonTracebackFilter;
 import com.jetbrains.python.sdk.PythonSdkFlavor;
@@ -50,11 +56,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.KeyEvent;
+import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.jetbrains.python.sdk.PythonEnvUtil.setPythonIOEncoding;
 import static com.jetbrains.python.sdk.PythonEnvUtil.setPythonUnbuffered;
@@ -64,6 +68,7 @@ import static com.jetbrains.python.sdk.PythonEnvUtil.setPythonUnbuffered;
  */
 public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonConsoleView> {
   private static final Logger LOG = Logger.getInstance(PydevConsoleRunner.class.getName());
+  public static final String PYDEV_PYDEVCONSOLE_PY = "pydev/pydevconsole.py";
 
   private Sdk mySdk;
   @NotNull private final CommandLineArgumentsProvider myCommandLineArgumentsProvider;
@@ -73,6 +78,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
   private PydevConsoleExecuteActionHandler myConsoleExecuteActionHandler;
   private List<ConsoleListener> myConsoleListeners = Lists.newArrayList();
   private final PyConsoleType myConsoleType;
+  private String myCommandLine;
 
   public static Key<ConsoleCommunication> CONSOLE_KEY = new Key<ConsoleCommunication>("PYDEV_CONSOLE_KEY");
 
@@ -177,7 +183,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     if (versionString == null || !versionString.toLowerCase().contains("jython")) {
       args.add("-u");
     }
-    args.add(FileUtil.toSystemDependentName(PythonHelpersLocator.getHelperPath("pydev/pydevconsole.py")));
+    args.add(FileUtil.toSystemDependentName(PythonHelpersLocator.getHelperPath(PYDEV_PYDEVCONSOLE_PY)));
     for (int port : ports) {
       args.add(String.valueOf(port));
     }
@@ -208,20 +214,70 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
 
   @Override
   protected Process createProcess() throws ExecutionException {
-    CommandLineArgumentsProvider provider = myCommandLineArgumentsProvider;
-    final Process server = Runner.createProcess(getWorkingDir(), provider.getAdditionalEnvs(), provider.getArguments());
-    try {
-      myPydevConsoleCommunication = new PydevConsoleCommunication(getProject(), myPorts[0], server, myPorts[1]);
+    if (mySdk.getSdkAdditionalData() instanceof PythonRemoteSdkAdditionalData) {
+      PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
+      if (manager != null) {
+        try {
+          PythonRemoteSdkAdditionalData data = (PythonRemoteSdkAdditionalData)mySdk.getSdkAdditionalData();
+
+          GeneralCommandLine commandLine = new GeneralCommandLine(myCommandLineArgumentsProvider.getArguments());
+
+          commandLine.getParametersList().set(1, PythonRemoteInterpreterManager.toSystemDependent(new File(data.getPyCharmHelpersPath(),
+                                                                                                           PYDEV_PYDEVCONSOLE_PY)
+                                                                                                    .getPath(),
+                                                                                                  PySourcePosition.isWindowsPath(
+                                                                                                    data.getInterpreterPath())));
+          commandLine.getParametersList().set(2, "0");
+          commandLine.getParametersList().set(3, "0");
+
+          myCommandLine = commandLine.getCommandLineString();
+
+
+          PyRemoteSshProcess server =
+            manager.createRemoteProcess(getProject(), data, commandLine);
+
+          try {
+            Scanner s = new Scanner(server.getInputStream());
+            Thread.sleep(1000);
+
+            int port = s.nextInt();
+            int port2 = s.nextInt();
+            server.addTunnelLocal(myPorts[0], data.getHost(), port);
+            server.addTunnelRemote(port2, "localhost", myPorts[1]);
+          }
+          catch (Exception e) {
+
+          }
+          try {
+            myPydevConsoleCommunication = new PydevConsoleCommunication(getProject(), myPorts[0], server, myPorts[1]);
+            return server;
+          }
+          catch (Exception e) {
+            throw new ExecutionException(e.getMessage());
+          }
+        }
+        catch (PyRemoteInterpreterException e) {
+          throw new ExecutionException("Can't start remote console", e);
+        }
+      }
+      throw new PythonRemoteInterpreterManager.PyRemoteInterpreterExecutionException();
     }
-    catch (Exception e) {
-      throw new ExecutionException(e.getMessage());
+    else {
+      myCommandLine = myCommandLineArgumentsProvider.getCommandLineString();
+      final Process server = Runner.createProcess(getWorkingDir(), myCommandLineArgumentsProvider.getAdditionalEnvs(), myCommandLineArgumentsProvider.getArguments());
+      try {
+        myPydevConsoleCommunication = new PydevConsoleCommunication(getProject(), myPorts[0], server, myPorts[1]);
+      }
+      catch (Exception e) {
+        throw new ExecutionException(e.getMessage());
+      }
+      return server;
     }
-    return server;
   }
 
   @Override
   protected PyConsoleProcessHandler createProcessHandler(final Process process) {
-    myProcessHandler = new PyConsoleProcessHandler(process, getConsoleView(), myPydevConsoleCommunication, myCommandLineArgumentsProvider.getCommandLineString(),
+    myProcessHandler = new PyConsoleProcessHandler(process, getConsoleView(), myPydevConsoleCommunication, myCommandLine,
                                                    CharsetToolkit.UTF8_CHARSET);
     return myProcessHandler;
   }

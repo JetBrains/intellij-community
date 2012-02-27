@@ -1,12 +1,15 @@
 package com.jetbrains.python.remote;
 
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.ParamsGroup;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
+import com.intellij.openapi.util.io.FileUtil;
 import com.jetbrains.python.debugger.remote.PyRemoteDebugConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,6 +34,11 @@ public abstract class PythonRemoteInterpreterManager {
   public abstract ProcessOutput runRemoteProcess(@Nullable Project project, PythonRemoteSdkAdditionalData data, String[] command)
     throws PyRemoteInterpreterException;
 
+  @NotNull
+  public abstract PyRemoteSshProcess createRemoteProcess(Project project,
+                                              PythonRemoteSdkAdditionalData data,
+                                              GeneralCommandLine commandLine) throws PyRemoteInterpreterException;
+
   public abstract boolean testConnection(final Project project, final PythonRemoteSdkAdditionalData data,
                                          final String title) throws PyRemoteInterpreterException;
 
@@ -43,6 +51,27 @@ public abstract class PythonRemoteInterpreterManager {
     }
     else {
       return null;
+    }
+  }
+
+  static void addUnbuffered(ParamsGroup exeGroup) {
+    for (String param : exeGroup.getParametersList().getParameters()) {
+      if ("-u".equals(param)) {
+        return;
+      }
+    }
+    exeGroup.addParameter("-u");
+  }
+
+  public static String toSystemDependent(String path, boolean isWin) {
+    char separator = isWin ? '\\' : '/';
+    return FileUtil.toSystemIndependentName(path).replace('/', separator);
+  }
+
+  public static class PyRemoteInterpreterExecutionException extends ExecutionException {
+
+    public PyRemoteInterpreterExecutionException() {
+      super("Can't run remote python interpreter. WebDeployment plugin is disabled.");
     }
   }
 }
