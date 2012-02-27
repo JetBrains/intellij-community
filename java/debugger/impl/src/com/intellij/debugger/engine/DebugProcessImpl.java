@@ -60,6 +60,7 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -147,7 +148,9 @@ public abstract class DebugProcessImpl implements DebugProcess {
   private boolean myIsFailed = false;
   protected DebuggerSession mySession;
   @Nullable protected MethodReturnValueWatcher myReturnValueWatcher;
-  private final Alarm myStatusUpdateAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+  private final Disposable myDisposable = Disposer.newDisposable();
+  private final Alarm myStatusUpdateAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, myDisposable);
+
   /** @noinspection FieldCanBeLocal*/
   private volatile boolean myDebugProcessStarted = false;
 
@@ -553,7 +556,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
             String portString = myConnection.getAddress();
             String hostString = myConnection.getHostName();
 
-            if (hostString == null || hostString.length() == 0) {
+            if (hostString == null || hostString.isEmpty()) {
               //noinspection HardCodedStringLiteral
               hostString = "localhost";
             }
@@ -822,7 +825,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
         buf.append(DebuggerBundle.message("error.cannot.open.debugger.port")).append(" : ");
         buf.append(e1.getClass().getName()).append(" ");
         final String localizedMessage = e1.getLocalizedMessage();
-        if (localizedMessage != null && localizedMessage.length() > 0) {
+        if (localizedMessage != null && !localizedMessage.isEmpty()) {
           buf.append('"');
           buf.append(localizedMessage);
           buf.append('"');
@@ -850,14 +853,14 @@ public abstract class DebugProcessImpl implements DebugProcess {
 
   public void dispose() {
     NodeRendererSettings.getInstance().removeListener(mySettingsListener);
-    Disposer.dispose(myStatusUpdateAlarm);
+    Disposer.dispose(myDisposable);
   }
 
   public DebuggerManagerThreadImpl getManagerThread() {
     if (myDebuggerManagerThread == null) {
       synchronized (this) {
         if (myDebuggerManagerThread == null) {
-          myDebuggerManagerThread = new DebuggerManagerThreadImpl();
+          myDebuggerManagerThread = new DebuggerManagerThreadImpl(myDisposable);
         }
       }
     }
