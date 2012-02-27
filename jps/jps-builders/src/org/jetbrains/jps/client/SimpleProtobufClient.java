@@ -100,6 +100,8 @@ public class SimpleProtobufClient<T extends ProtobufResponseHandler> {
 
   protected void onConnect() {
   }
+  protected void beforeDisconnect() {
+  }
   protected void onDisconnect() {
   }
 
@@ -117,6 +119,12 @@ public class SimpleProtobufClient<T extends ProtobufResponseHandler> {
       try {
         final ChannelFuture future = myConnectFuture;
         if (future != null) {
+          try {
+            beforeDisconnect();
+          }
+          catch (Throwable e) {
+            LOG.error(e);
+          }
           try {
             final ChannelFuture closeFuture = future.getChannel().close();
             closeFuture.awaitUninterruptibly();
