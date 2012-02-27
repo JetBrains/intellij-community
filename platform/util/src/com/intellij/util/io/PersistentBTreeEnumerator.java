@@ -143,8 +143,12 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
 
   @Override
   protected void doClose() throws IOException {
-    super.doClose();
-    btree.doClose();
+    try {
+      super.doClose();
+    }
+    finally {
+      btree.doClose();
+    }
   }
 
   private int allocPage() {
