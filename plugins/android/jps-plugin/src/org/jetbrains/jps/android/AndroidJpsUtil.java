@@ -37,6 +37,29 @@ class AndroidJpsUtil {
   private AndroidJpsUtil() {
   }
 
+  @Nullable
+  public static File getMainContentRoot(@NotNull AndroidFacet facet) throws IOException {
+    final Module module = facet.getModule();
+
+    final List<String> contentRoots = module.getContentRoots();
+
+    if (contentRoots.size() == 0) {
+      return null;
+    }
+    final File manifestFile = facet.getManifestFile();
+
+    if (manifestFile != null) {
+      for (String rootPath : contentRoots) {
+        final File root = new File(rootPath);
+
+        if (FileUtil.isAncestor(root, manifestFile, true)) {
+          return root;
+        }
+      }
+    }
+    return new File(contentRoots.get(0));
+  }
+
   public static void addMessages(@NotNull CompileContext context,
                                  @NotNull Map<AndroidCompilerMessageKind, List<String>> messages,
                                  @NotNull String builderName) {
@@ -107,7 +130,7 @@ class AndroidJpsUtil {
   }
 
   @NotNull
-  public static Set<String> getClassdirsOfDependentModules(@NotNull ProjectPaths paths, @NotNull Module module) {
+  public static Set<String> getClassdirsOfDependentModulesAndPackagesLibraries(@NotNull ProjectPaths paths, @NotNull Module module) {
     final Set<String> result = new HashSet<String>();
     fillClasspath(paths, module, result, null, new HashSet<String>(), false);
     return result;

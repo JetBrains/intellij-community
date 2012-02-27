@@ -131,8 +131,9 @@ public class AndroidResourcePackagingBuilder extends ModuleLevelBuilder {
       final AndroidResourcesPackagingStateStorage storage = releaseBuild ? releaseStorage : devStorage;
       final AndroidResourcesPackagingState oldState = storage.getState(module.getName());
 
-      if (oldState == null || !oldState.equals(newState)) {
+      if (oldState == null || !oldState.equalsTo(newState)) {
         if (!doPackageResources(context, manifestFile, target, resourceDirPaths, assetsDirPath, outputFilePath, releaseBuild)) {
+          storage.update(module.getName(), null);
           return false;
         }
         storage.update(module.getName(), newState);

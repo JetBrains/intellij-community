@@ -305,9 +305,11 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
         final Set<ResourceEntry> manifestElements = collectManifestElements(manifestFile);
         final AndroidAptValidityState newState = new AndroidAptValidityState(resources, manifestElements, depLibPackagesSet, packageName);
 
-        final AndroidAptValidityState oldState = storage.getState(module.getName());
-        if (newState.equalsTo(oldState)) {
-          continue;
+        if (context.isMake()) {
+          final AndroidAptValidityState oldState = storage.getState(module.getName());
+          if (newState.equalsTo(oldState)) {
+            continue;
+          }
         }
         final File outputDirectory = moduleData.getOutputDirectory();
         final File aptOutputDirectory = new File(outputDirectory, "generated-aapt");
@@ -325,6 +327,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
 
         if (messages.get(AndroidCompilerMessageKind.ERROR).size() > 0) {
           success = false;
+          storage.update(module.getName(), null);
         }
         else {
           storage.update(module.getName(), newState);

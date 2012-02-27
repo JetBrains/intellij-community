@@ -19,13 +19,13 @@ public class AndroidClassesAndJarsStateStorage extends AbstractStateStorage<Stri
   @NonNls private static final String ANDROID_CLASSES_AND_JARS_STORAGE_DIR = "android_classes_and_jars";
   @NonNls private static final String CLASSES_AND_JARS_STORAGE = "classes_and_jars";
 
-  public AndroidClassesAndJarsStateStorage(@NotNull File dataStorageRoot) throws IOException {
-    super(getStorageFile(dataStorageRoot), new EnumeratorStringDescriptor(), new MyDataExternalizer());
+  public AndroidClassesAndJarsStateStorage(@NotNull File dataStorageRoot, @NotNull String suffix) throws IOException {
+    super(getStorageFile(dataStorageRoot, suffix), new EnumeratorStringDescriptor(), new MyDataExternalizer());
   }
 
   @NotNull
-  private static File getStorageFile(@NotNull File dataStorageRoot) {
-    return new File(new File(dataStorageRoot, ANDROID_CLASSES_AND_JARS_STORAGE_DIR), CLASSES_AND_JARS_STORAGE);
+  private static File getStorageFile(@NotNull File dataStorageRoot, @NotNull String suffix) {
+    return new File(new File(dataStorageRoot, ANDROID_CLASSES_AND_JARS_STORAGE_DIR), CLASSES_AND_JARS_STORAGE + suffix);
   }
 
   private static class MyDataExternalizer implements DataExternalizer<AndroidClassesAndJarsState> {
