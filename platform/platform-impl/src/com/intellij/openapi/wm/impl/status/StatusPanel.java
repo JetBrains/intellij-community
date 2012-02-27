@@ -66,7 +66,7 @@ class StatusPanel extends JPanel {
         final String time = text.substring(myTimeStart);
         final int withoutTime = maxWidth - fm.stringWidth(time);
 
-        int end = myTimeStart - 1;
+        int end = Math.min(myTimeStart - 1, 1000);
         while (end > 0) {
           final String truncated = text.substring(0, end) + "... ";
           if (fm.stringWidth(truncated) < withoutTime) {
