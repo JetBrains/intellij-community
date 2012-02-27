@@ -21,10 +21,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
+import java.io.*;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -191,5 +188,15 @@ public class VfsUtilCore {
     finally {
       reader.close();
     }
+  }
+
+  public static boolean isAncestor(@NotNull File ancestor, @NotNull File file, boolean strict) {
+    File parent = strict ? file.getParentFile() : file;
+    while (parent != null) {
+      if (parent.equals(ancestor)) return true;
+      parent = parent.getParentFile();
+    }
+
+    return false;
   }
 }
