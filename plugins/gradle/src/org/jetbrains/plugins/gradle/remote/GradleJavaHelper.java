@@ -1,6 +1,10 @@
 package org.jetbrains.plugins.gradle.remote;
 
+import com.intellij.openapi.projectRoots.JdkUtil;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Encapsulates functionality of deciding what java should be used by the gradle process.
@@ -17,7 +21,15 @@ public class GradleJavaHelper {
   @SuppressWarnings("MethodMayBeStatic")
   @Nullable
   public String getJdkHome() {
-    // TODO den implement
+    List<String> candidates = new ArrayList<String>();
+    candidates.add(System.getProperty(GRADLE_JAVA_HOME_KEY));
+    candidates.add(System.getenv("JAVA_HOME"));
+    candidates.add(System.getProperty("java.home"));
+    for (String candidate : candidates) {
+      if (candidate != null && JdkUtil.checkForJre(candidate)) {
+        return candidate;
+      }
+    }
     return null;
   }
 }
