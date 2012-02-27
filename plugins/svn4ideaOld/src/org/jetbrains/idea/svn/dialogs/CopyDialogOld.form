@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="org.jetbrains.idea.svn.dialogs.CopyDialog">
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="org.jetbrains.idea.svn.dialogs.CopyDialog1">
   <grid id="9287c" binding="myTopPanel" layout-manager="GridBagLayout">
     <constraints>
       <xy x="10" y="10" width="561" height="430"/>

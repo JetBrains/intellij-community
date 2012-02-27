@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="org.jetbrains.idea.svn.dialogs.browser.MkdirOptionsDialog">
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="org.jetbrains.idea.svn.dialogs.browser.MkdirOptionsDialog1">
   <grid id="740d6" binding="myMainPanel" layout-manager="GridBagLayout">
     <constraints>
       <xy x="10" y="10" width="281" height="260"/>
