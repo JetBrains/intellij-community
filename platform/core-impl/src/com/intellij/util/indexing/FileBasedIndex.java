@@ -31,7 +31,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
-import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -232,10 +231,8 @@ public class FileBasedIndex implements Disposable{
         rebuildNotification = "Index file format has changed for some indices. These indices will be rebuilt.";
       }
       if (rebuildNotification != null
-          && !ApplicationManager.getApplication().isHeadlessEnvironment()
           && Registry.is("ide.showIndexRebuildMessage")) {
-        new NotificationGroup("Indexing", NotificationDisplayType.BALLOON, false)
-          .createNotification("Index Rebuild", rebuildNotification, NotificationType.INFORMATION, null).notify(null);
+        notifyIndexRebuild(rebuildNotification);
       }
 
       dropUnregisteredIndices();
@@ -278,6 +275,9 @@ public class FileBasedIndex implements Disposable{
       });
 
     }
+  }
+
+  protected void notifyIndexRebuild(String rebuildNotification) {
   }
 
   private static String calcConfigPath(final String path) {
