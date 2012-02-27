@@ -24,6 +24,7 @@ import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.*;
@@ -33,23 +34,24 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 
-public class FileBasedIndexEx extends FileBasedIndex {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.FileBasedIndexEx");
+public class FileBasedIndexComponent extends FileBasedIndex implements ApplicationComponent {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.FileBasedIndexComponent");
   
-  public FileBasedIndexEx(final VirtualFileManagerEx vfManager,
-                          FileDocumentManager fdm,
-                          FileTypeManager fileTypeManager,
-                          MessageBus bus,
-                          FileBasedIndexUnsavedDocumentsManager unsavedDocumentsManager,
-                          FileBasedIndexIndicesManager indexIndicesManager,
-                          FileBasedIndexTransactionMap transactionMap,
-                          FileBasedIndexLimitsChecker limitsChecker,
-                          SerializationManager sm) throws IOException {
+  public FileBasedIndexComponent(final VirtualFileManagerEx vfManager,
+                                 FileDocumentManager fdm,
+                                 FileTypeManager fileTypeManager,
+                                 MessageBus bus,
+                                 FileBasedIndexUnsavedDocumentsManager unsavedDocumentsManager,
+                                 FileBasedIndexIndicesManager indexIndicesManager,
+                                 FileBasedIndexTransactionMap transactionMap,
+                                 FileBasedIndexLimitsChecker limitsChecker,
+                                 SerializationManager sm) throws IOException {
     super(vfManager, fdm, bus, unsavedDocumentsManager, indexIndicesManager, transactionMap, limitsChecker, sm);
 
     final MessageBusConnection connection = bus.connect();
@@ -119,5 +121,15 @@ public class FileBasedIndexEx extends FileBasedIndex {
     if(!ApplicationManager.getApplication().isHeadlessEnvironment())
       new NotificationGroup("Indexing", NotificationDisplayType.BALLOON, false)
         .createNotification("Index Rebuild", rebuildNotification, NotificationType.INFORMATION, null).notify(null);
+  }
+
+  @Override
+  public void initComponent() {
+  }
+
+  @NotNull
+  @Override
+  public String getComponentName() {
+    return "com.intellij.util.indexing.FileBasedIndexComponent";
   }
 }

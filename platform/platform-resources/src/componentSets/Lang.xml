@@ -13,7 +13,7 @@
 
     <component>
       <interface-class>com.intellij.util.indexing.FileBasedIndex</interface-class>
-      <implementation-class>com.intellij.util.indexing.FileBasedIndexEx</implementation-class>
+      <implementation-class>com.intellij.util.indexing.FileBasedIndexComponent</implementation-class>
     </component>
     <component>
       <implementation-class>com.intellij.util.indexing.FileBasedIndexIndicesManager</implementation-class>
