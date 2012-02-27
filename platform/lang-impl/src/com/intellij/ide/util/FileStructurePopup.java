@@ -112,6 +112,8 @@ public class FileStructurePopup implements Disposable {
   private Map<Class, JCheckBox> myCheckBoxes = new HashMap<Class, JCheckBox>();
   private String myTestSearchFilter;
   private final ActionCallback myTreeHasBuilt = new ActionCallback();
+  private FilteringTreeStructure.FilteringNode myInitialNode;
+  private boolean myInitialNodeIsLeaf;
 
   public FileStructurePopup(StructureViewModel structureViewModel,
                             @Nullable Editor editor,
@@ -340,6 +342,7 @@ public class FileStructurePopup implements Disposable {
         if (myAbstractTreeBuilder.getSelectedElements().isEmpty()) {
           TreeUtil.selectFirstNode(myTree);
         }
+        myInitialNodeIsLeaf = node.getChildren().length == 0;
         return node;
       }
     }
@@ -827,7 +830,7 @@ public class FileStructurePopup implements Disposable {
             node = node.getParentNode();
           }
           final int size = ContainerUtil.intersection(parents, elements).size();
-          if (size == elements.size() - 1 && size == parents.size() && candidate.children().isEmpty()) {
+          if (size == elements.size() - 1 && size == parents.size() - (myInitialNodeIsLeaf ? 1 : 0) && candidate.children().isEmpty()) {
             return p.node;
           }
           if (size > max) {
@@ -844,7 +847,7 @@ public class FileStructurePopup implements Disposable {
         @Override
         public int compare(ObjectWithWeight o1, ObjectWithWeight o2) {
           final int i = o1.compareWith(o2);
-          return i != 0 ? i 
+          return i != 0 ? i
                         : ((TreePath)o2.node).getPathCount() - ((TreePath)o1.node).getPathCount();
         }
       });

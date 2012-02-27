@@ -114,7 +114,7 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
     return myDescriptors2Nodes.get(nodeObject);
   }
 
-  public Object getRootElement() {
+  public FilteringNode getRootElement() {
     return myRoot;
   }
 
