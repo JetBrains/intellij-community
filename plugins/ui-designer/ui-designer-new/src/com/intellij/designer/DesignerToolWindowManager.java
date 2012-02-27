@@ -21,6 +21,8 @@ import com.intellij.designer.componentTree.TreeEditableArea;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.designer.propertyTable.PropertyTablePanel;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -35,11 +37,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
+import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NonNls;
@@ -191,6 +195,8 @@ public final class DesignerToolWindowManager implements ProjectComponent {
         .registerToolWindow(DesignerBundle.message("designer.toolwindow.name"), false, ToolWindowAnchor.LEFT, myProject, true);
     myToolWindow.setIcon(IconLoader.getIcon("/com/intellij/designer/icons/toolWindow.png"));
 
+    ((ToolWindowEx)myToolWindow).setTitleActions(createActions());
+
     ContentManager contentManager = myToolWindow.getContentManager();
     Content content =
       contentManager.getFactory().createContent(toolWindowPanel, DesignerBundle.message("designer.toolwindow.title"), false);
@@ -199,6 +205,28 @@ public final class DesignerToolWindowManager implements ProjectComponent {
     contentManager.addContent(content);
     contentManager.setSelectedContent(content, true);
     myToolWindow.setAvailable(false, null);
+  }
+
+  private AnAction[] createActions() {
+    AnAction expandAll = new AnAction("Expand All", null, IconLoader.getIcon("/com/intellij/designer/icons/ExpandAll.png")) {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        if (myTreeBuilder != null) {
+          myTreeBuilder.expandAll(null);
+        }
+      }
+    };
+
+    AnAction collapseAll = new AnAction("Collapse All", null, IconLoader.getIcon("/general/collapseAll.png")) {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        if (myTreeBuilder != null) {
+          TreeUtil.collapseAll(myComponentTree, 1);
+        }
+      }
+    };
+
+    return new AnAction[]{expandAll, collapseAll};
   }
 
   @Override
