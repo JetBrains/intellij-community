@@ -476,16 +476,6 @@ public class VfsUtil extends VfsUtilCore {
     return url;
   }
 
-  public static boolean isAncestor(@NotNull File ancestor, @NotNull File file, boolean strict) {
-    File parent = strict ? file.getParentFile() : file;
-    while (parent != null) {
-      if (parent.equals(ancestor)) return true;
-      parent = parent.getParentFile();
-    }
-
-    return false;
-  }
-
   /**
    * Returns the relative path from one virtual file to another.
    *
