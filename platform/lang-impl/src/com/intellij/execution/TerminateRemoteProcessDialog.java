@@ -29,10 +29,10 @@ public class TerminateRemoteProcessDialog {
   public static int show(final Project project,
                          final String sessionName,
                          final TerminateOption option) {
-    final String message = option.myAlwaysUseDefault && !option.myDetachIsDefault ?
+    final String message = option.myAlwaysUseDefault && !option.myDetach ?
                            ExecutionBundle.message("terminate.process.confirmation.text", sessionName) :
                            ExecutionBundle.message("disconnect.process.confirmation.text", sessionName);
-    final String okButtonText = option.myAlwaysUseDefault && !option.myDetachIsDefault ?
+    final String okButtonText = option.myAlwaysUseDefault && !option.myDetach ?
                                 ExecutionBundle.message("button.terminate") :
                                 ExecutionBundle.message("button.disconnect");
     final String[] options = new String[] {okButtonText, CommonBundle.getCancelButtonText()};
@@ -42,23 +42,22 @@ public class TerminateRemoteProcessDialog {
   }
 
   public static class TerminateOption implements DialogWrapper.DoNotAskOption {
-    private final boolean myDetachIsDefault;
+    private boolean myDetach;
     private final boolean myAlwaysUseDefault;
-    private boolean myDontTerminate = false;
 
     public TerminateOption(boolean detachIsDefault, boolean alwaysUseDefault) {
-      myDetachIsDefault = detachIsDefault;
+      myDetach = detachIsDefault;
       myAlwaysUseDefault = alwaysUseDefault;
     }
 
     @Override
     public boolean isToBeShown() {
-      return myAlwaysUseDefault ? myDetachIsDefault : myDontTerminate;
+      return myDetach;
     }
 
     @Override
     public void setToBeShown(boolean value, int exitCode) {
-      myDontTerminate = value;
+      myDetach = value;
     }
 
     @Override
