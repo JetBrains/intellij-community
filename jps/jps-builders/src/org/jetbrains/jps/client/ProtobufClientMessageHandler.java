@@ -1,7 +1,6 @@
 package org.jetbrains.jps.client;
 
 import com.google.protobuf.MessageLite;
-import com.intellij.openapi.diagnostic.Logger;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ChannelStateEvent;
 import org.jboss.netty.channel.MessageEvent;
@@ -18,7 +17,6 @@ import java.util.concurrent.ConcurrentHashMap;
 *         Date: 1/22/12
 */
 final class ProtobufClientMessageHandler<T extends ProtobufResponseHandler> extends SimpleChannelHandler {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.client.ProtobufClientMessageHandler");
   private final ConcurrentHashMap<UUID, RequestFuture<T>> myHandlers = new ConcurrentHashMap<UUID, RequestFuture<T>>();
   @NotNull
   private final UUIDGetter myUuidGetter;
@@ -91,7 +89,7 @@ final class ProtobufClientMessageHandler<T extends ProtobufResponseHandler> exte
     }
     finally {
       // make sure the client is in disconnected state
-      myClient.disconnect();
+      myClient.scheduleDisconnect();
     }
   }
 

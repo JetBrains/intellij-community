@@ -14,6 +14,7 @@ import org.jetbrains.jps.api.RequestFuture;
 
 import java.net.InetSocketAddress;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -23,6 +24,8 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class SimpleProtobufClient<T extends ProtobufResponseHandler> {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.client.SimpleProtobufClient");
+  private final ExecutorService ourExecutor = Executors.newCachedThreadPool();
+
   private static enum State {
     DISCONNECTED, CONNECTING, CONNECTED, DISCONNECTING
   }
@@ -35,7 +38,7 @@ public class SimpleProtobufClient<T extends ProtobufResponseHandler> {
 
   public SimpleProtobufClient(final MessageLite msgDefaultInstance, final UUIDGetter uuidGetter) {
     myMessageHandler = new ProtobufClientMessageHandler<T>(uuidGetter, this);
-    myChannelFactory = new NioClientSocketChannelFactory(Executors.newCachedThreadPool(), Executors.newCachedThreadPool(), 1);
+    myChannelFactory = new NioClientSocketChannelFactory(ourExecutor, ourExecutor, 1);
     myPipelineFactory = new ChannelPipelineFactory() {
       public ChannelPipeline getPipeline() throws Exception {
         return Channels.pipeline(
@@ -98,6 +101,15 @@ public class SimpleProtobufClient<T extends ProtobufResponseHandler> {
   protected void onConnect() {
   }
   protected void onDisconnect() {
+  }
+
+  public final void scheduleDisconnect() {
+    ourExecutor.submit(new Runnable() {
+      @Override
+      public void run() {
+        disconnect();
+      }
+    });
   }
 
   public final void disconnect() {
