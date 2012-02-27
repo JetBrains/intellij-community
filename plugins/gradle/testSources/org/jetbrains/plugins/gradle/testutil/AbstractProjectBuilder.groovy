@@ -65,6 +65,10 @@ public abstract class AbstractProjectBuilder extends BuilderSupport {
       case "project":
         clear()
         return project = createProject(attributes.name?: same, attributes.langLevel?: LanguageLevel.JDK_1_6)
+      case "contentRoot":
+        def contentRoot = createContentRoot(current, attributes.name, attributes)
+        contentRoots[current] << contentRoot
+        return contentRoot
       case "module":
       case "library":
         def n = StringUtil.capitalize(name)
@@ -82,6 +86,7 @@ public abstract class AbstractProjectBuilder extends BuilderSupport {
   protected abstract def createProject(String name, LanguageLevel languageLevel)
   protected abstract def createModule(String name)
   protected abstract def registerModule(module)
+  protected abstract def createContentRoot(module, rootPath, Map paths)
   protected abstract def createLibrary(String name, Map paths)
   protected abstract def applyLibraryPaths(library, Map paths)
   protected abstract def createLibraryDependency(module, library)

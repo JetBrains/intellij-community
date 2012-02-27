@@ -8,13 +8,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.util.Alarm;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.importing.GradleProjectEntityImportListener;
 import org.jetbrains.plugins.gradle.task.GradleTaskManager;
 import org.jetbrains.plugins.gradle.task.GradleTaskType;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -26,14 +29,31 @@ import java.util.concurrent.atomic.AtomicLong;
 public class GradleProjectStructureChangesDetector extends AbstractProjectComponent {
   
   private static final int REFRESH_DELAY_MILLIS = (int)TimeUnit.SECONDS.toMillis(2);
-  
-  private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
-  private final AtomicLong myStartRefreshTime = new AtomicLong();
-  private final RefreshRequest myRequest = new RefreshRequest();
+
+  private final Alarm          myAlarm            = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+  private final AtomicLong     myStartRefreshTime = new AtomicLong();
+  private final RefreshRequest myRequest          = new RefreshRequest();
+  private final AtomicInteger  myImportCounter    = new AtomicInteger();
   
   public GradleProjectStructureChangesDetector(@NotNull Project project) {
     super(project);
+    subscribeToGradleImport(project);
     subscribeToRootChanges(project);
+  }
+  
+  private void subscribeToGradleImport(@NotNull Project project) {
+    MessageBusConnection connection = project.getMessageBus().connect(project);
+    connection.subscribe(GradleProjectEntityImportListener.TOPIC, new GradleProjectEntityImportListener() {
+      @Override
+      public void onImportStart(@NotNull Object entity) {
+        myImportCounter.incrementAndGet();
+      }
+
+      @Override
+      public void onImportEnd(@NotNull Object entity) {
+        myImportCounter.incrementAndGet(); 
+      }
+    });    
   }
   
   private void subscribeToRootChanges(@NotNull Project project) {
@@ -44,7 +64,9 @@ public class GradleProjectStructureChangesDetector extends AbstractProjectCompon
 
       @Override
       public void rootsChanged(ModuleRootEvent event) {
-        scheduleUpdate(); 
+        if (myImportCounter.incrementAndGet() <= 0) {
+          scheduleUpdate();
+        }
       }
     });
   }
@@ -58,6 +80,10 @@ public class GradleProjectStructureChangesDetector extends AbstractProjectCompon
   private class RefreshRequest implements Runnable {
     @Override
     public void run() {
+      if (myProject.isDisposed()) {
+        myAlarm.cancelAllRequests();
+        return;
+      }
       if (!myProject.isInitialized()) {
         return;
       }
@@ -66,7 +92,7 @@ public class GradleProjectStructureChangesDetector extends AbstractProjectCompon
       if (taskManager != null && taskManager.hasTaskOfTypeInProgress(GradleTaskType.RESOLVE_PROJECT)) {
         return;
       }
-      
+
       final long diff = System.currentTimeMillis() - myStartRefreshTime.get();
       if (diff < 0) {
         myAlarm.cancelAllRequests();
@@ -85,7 +111,7 @@ public class GradleProjectStructureChangesDetector extends AbstractProjectCompon
             return;
           }
 
-          GradleUtil.refreshProject(myProject); 
+          GradleUtil.refreshProject(myProject);
         }
       });
     }

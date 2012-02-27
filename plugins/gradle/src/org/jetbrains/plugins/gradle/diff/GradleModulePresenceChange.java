@@ -18,8 +18,8 @@ package org.jetbrains.plugins.gradle.diff;
 import com.intellij.openapi.module.Module;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.model.GradleEntityOwner;
 import org.jetbrains.plugins.gradle.model.gradle.GradleModule;
+import org.jetbrains.plugins.gradle.model.id.GradleEntityIdMapper;
 import org.jetbrains.plugins.gradle.model.id.GradleModuleId;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 
@@ -41,18 +41,10 @@ public class GradleModulePresenceChange extends GradleEntityPresenceChange<Gradl
   }
 
   @Nullable
-  private static GradleModuleId of(@Nullable GradleModule module) {
+  private static GradleModuleId of(@Nullable Object module) {
     if (module == null) {
       return null;
     }
-    return new GradleModuleId(GradleEntityOwner.GRADLE, module.getName());
-  }
-
-  @Nullable
-  private static GradleModuleId of(@Nullable Module module) {
-    if (module == null) {
-      return null;
-    }
-    return new GradleModuleId(GradleEntityOwner.GRADLE, module.getName());
+    return GradleEntityIdMapper.mapEntityToId(module);
   }
 }

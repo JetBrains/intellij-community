@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.gradle.remote;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
 
@@ -19,6 +20,7 @@ public class RemoteGradleProcessSettings implements Serializable {
 
   private final String myGradleHome;
   private       long   myTtlInMs;
+  private       String myJavaHome;
 
   public RemoteGradleProcessSettings(@NotNull String gradleHome) {
     myGradleHome = gradleHome;
@@ -38,6 +40,15 @@ public class RemoteGradleProcessSettings implements Serializable {
 
   public void setTtlInMs(long ttlInMs) {
     myTtlInMs = ttlInMs;
+  }
+
+  @Nullable
+  public String getJavaHome() {
+    return myJavaHome;
+  }
+
+  public void setJavaHome(@Nullable String javaHome) {
+    myJavaHome = javaHome;
   }
 
   @Override

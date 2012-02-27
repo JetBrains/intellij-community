@@ -280,6 +280,10 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
     final GradleProjectStructureNode<GradleModuleId> moduleNode = getModuleNode(id);
     moduleNode.setAttributes(key);
   }
+
+  private void processNewContentRootPresenceChange(@NotNull GradleContentRootPresenceChange change) {
+    // TODO den implement
+  }
   
   private void processObsoleteProjectRenameChange(@NotNull GradleProjectRenameChange change) {
     // TODO den implement
@@ -388,6 +392,10 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
       moduleNode.setAttributes(GradleTextAttributes.GRADLE_NO_CHANGE);
     }
   }
+
+  private void processObsoleteContentRootPresenceChange(@NotNull GradleContentRootPresenceChange change) {
+    // TODO den implement
+  }
   
   private class NodeListener implements GradleProjectStructureNode.Listener {
     
@@ -422,7 +430,9 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
     @Override public void visit(@NotNull GradleProjectRenameChange change) { processNewProjectRenameChange(change); }
     @Override public void visit(@NotNull GradleLanguageLevelChange change) { processNewLanguageLevelChange(change); }
     @Override public void visit(@NotNull GradleModulePresenceChange change) { processNewModulePresenceChange(change); }
-    @Override public void visit(@NotNull GradleLibraryDependencyPresenceChange change) { processNewLibraryDependencyPresenceChange(change); }
+    @Override public void visit(@NotNull GradleContentRootPresenceChange change) { processNewContentRootPresenceChange(change); }
+
+      @Override public void visit(@NotNull GradleLibraryDependencyPresenceChange change) { processNewLibraryDependencyPresenceChange(change); }
     @Override public void visit(@NotNull GradleModuleDependencyPresenceChange change) { processNewModuleDependencyPresenceChange(change); }
     @Override public void visit(@NotNull GradleMismatchedLibraryPathChange change) { processNewMismatchedLibraryPathChange(change); }
   }
@@ -431,6 +441,7 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
     @Override public void visit(@NotNull GradleProjectRenameChange change) { processObsoleteProjectRenameChange(change); }
     @Override public void visit(@NotNull GradleLanguageLevelChange change) { processObsoleteLanguageLevelChange(change); }
     @Override public void visit(@NotNull GradleModulePresenceChange change) { processObsoleteModulePresenceChange(change); }
+    @Override public void visit(@NotNull GradleContentRootPresenceChange change) { processObsoleteContentRootPresenceChange(change); }
     @Override public void visit(@NotNull GradleLibraryDependencyPresenceChange change) {
       processObsoleteLibraryDependencyPresenceChange(change); 
     }

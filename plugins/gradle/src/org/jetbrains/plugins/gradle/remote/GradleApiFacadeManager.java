@@ -293,6 +293,8 @@ public class GradleApiFacadeManager {
         GradleLog.LOG.warn("Incorrect remote process ttl value detected. Expected to find number, found '" + ttlAsString + "'");
       }
     }
+    GradleJavaHelper javaHelper = new GradleJavaHelper();
+    result.setJavaHome(javaHelper.getJdkHome());
     return result;
   }
   
