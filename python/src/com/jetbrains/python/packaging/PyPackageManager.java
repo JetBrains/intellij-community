@@ -256,7 +256,7 @@ public class PyPackageManager {
   }
 
   @Nullable
-  public PyPackage findPackage(String name){
+  public PyPackage findPackage(String name) {
     try {
       for (PyPackage pkg : getPackages()) {
         if (name.equals(pkg.getName())) {
@@ -264,7 +264,7 @@ public class PyPackageManager {
         }
       }
     }
-    catch (PyExternalProcessException e) {
+    catch (PyExternalProcessException ignored) {
     }
     return null;
   }
