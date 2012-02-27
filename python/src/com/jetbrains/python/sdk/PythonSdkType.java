@@ -69,8 +69,8 @@ public class PythonSdkType extends SdkType {
   static final int MINUTE = 60 * 1000; // 60 seconds, used with script timeouts
   @NonNls public static final String SKELETONS_TOPIC = "Skeletons";
   private static final String[] DIRS_WITH_BINARY = new String[]{"", "bin", "Scripts"};
-  private static final String[] UNIX_BINARY_NAMES = new String[]{"python", "jython", "pypy"};
-  private static final String[] WIN_BINARY_NAMES = new String[]{"python.exe", "jython.bat", "ipy.exe", "pypy.exe"};
+  private static final String[] UNIX_BINARY_NAMES = new String[]{"jython", "pypy", "python"};
+  private static final String[] WIN_BINARY_NAMES = new String[]{"jython.bat", "ipy.exe", "pypy.exe", "python.exe"};
 
   public static PythonSdkType getInstance() {
     return SdkType.findInstance(PythonSdkType.class);
