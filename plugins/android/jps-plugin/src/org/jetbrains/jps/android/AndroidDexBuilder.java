@@ -263,10 +263,6 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
       return false;
     }
 
-    if (context.getTimestampStorage().getStamp(proguardCfgFile) == proguardCfgFile.lastModified()) {
-      return true;
-    }
-
     final File mainContentRoot = AndroidJpsUtil.getMainContentRoot(facet);
     if (mainContentRoot == null) {
       context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, AndroidJpsBundle
@@ -300,7 +296,8 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
 
     final AndroidClassesAndJarsState newState = new AndroidClassesAndJarsState(allFiles);
     final AndroidClassesAndJarsState oldState = proguardStateStorage.getState(module.getName());
-    if (newState.equalsTo(oldState)) {
+    if (context.getTimestampStorage().getStamp(proguardCfgFile) == proguardCfgFile.lastModified() &&
+        newState.equalsTo(oldState)) {
       return true;
     }
 
@@ -327,6 +324,10 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
     final boolean success = messages.get(AndroidCompilerMessageKind.ERROR).isEmpty();
 
     proguardStateStorage.update(module.getName(), success ? newState : null);
+
+    if (success) {
+      context.getTimestampStorage().saveStamp(proguardCfgFile, proguardCfgFile.lastModified());
+    }
     return success;
   }
 }
