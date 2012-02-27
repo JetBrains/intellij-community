@@ -22,6 +22,11 @@ SET JAVA_EXE=%JDK%\bin\java.exe
 IF NOT EXIST "%JAVA_EXE%" SET JAVA_EXE=%JDK%\jre\bin\java.exe
 IF NOT EXIST "%JAVA_EXE%" GOTO error
 
+SET JRE=%JDK%
+IF EXIST "%JRE%\jre" SET JRE=%JDK%\jre
+SET BITS=
+IF EXIST "%JRE%\lib\amd64" SET BITS=64
+
 :: ---------------------------------------------------------------------
 :: Ensure IDE_HOME points to the directory where the IDE is installed.
 :: ---------------------------------------------------------------------

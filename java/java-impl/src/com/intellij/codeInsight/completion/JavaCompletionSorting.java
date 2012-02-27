@@ -135,21 +135,38 @@ public class JavaCompletionSorting {
 
   private static ExpectedTypeMatching getExpectedTypeMatching(LookupElement item, ExpectedTypeInfo[] expectedInfos) {
     PsiType itemType = JavaCompletionUtil.getLookupElementType(item);
-    if (itemType == null) return ExpectedTypeMatching.normal;
 
-    for (final ExpectedTypeInfo expectedInfo : expectedInfos) {
-      final PsiType defaultType = expectedInfo.getDefaultType();
-      final PsiType expectedType = expectedInfo.getType();
-      if (!expectedType.isValid()) {
-        return ExpectedTypeMatching.normal;
-      }
+    if (itemType != null) {
+      for (final ExpectedTypeInfo expectedInfo : expectedInfos) {
+        final PsiType defaultType = expectedInfo.getDefaultType();
+        final PsiType expectedType = expectedInfo.getType();
 
-      if (defaultType != expectedType && defaultType.isAssignableFrom(itemType)) {
-        return ExpectedTypeMatching.ofDefaultType;
+        if (defaultType != expectedType && defaultType.isAssignableFrom(itemType)) {
+          return ExpectedTypeMatching.ofDefaultType;
+        }
+        if (expectedType.isAssignableFrom(itemType)) {
+          return ExpectedTypeMatching.expected;
+        }
       }
-      if (expectedType.isAssignableFrom(itemType)) {
-        return ExpectedTypeMatching.expected;
+    }
+
+    boolean hasNonVoid = false;
+    for (ExpectedTypeInfo info : expectedInfos) {
+      if (!PsiType.VOID.equals(info.getType())) {
+        hasNonVoid = true;
       }
+    }
+
+    if (hasNonVoid) {
+      if (item.getObject() instanceof PsiKeyword) {
+        String keyword = ((PsiKeyword)item.getObject()).getText();
+        if (PsiKeyword.NEW.equals(keyword) || PsiKeyword.NULL.equals(keyword)) {
+          return ExpectedTypeMatching.maybeExpected;
+        }
+      }
+    }
+    else if (expectedInfos.length > 0) {
+      return ExpectedTypeMatching.unexpected;
     }
 
     return ExpectedTypeMatching.normal;
@@ -391,7 +408,9 @@ public class JavaCompletionSorting {
   private enum ExpectedTypeMatching {
     ofDefaultType,
     expected,
+    maybeExpected,
     normal,
+    unexpected,
   }
 
   private static class PreferAccessible extends LookupElementWeigher {

@@ -437,7 +437,7 @@ public class UIUtil {
 
   public static Color getTreeSelectionBackground() {
     if (isUnderNimbusLookAndFeel()) {
-      Color color = UIManager.getColor("Tree.nimbusSelectionBackground");
+      Color color = UIManager.getColor("Tree.selectionBackground");
       if (color != null) return color;
       color = UIManager.getColor("nimbusSelectionBackground");
       if (color != null) return color;
@@ -463,7 +463,7 @@ public class UIUtil {
 
   public static Color getTableSelectionBackground() {
     if (isUnderNimbusLookAndFeel()) {
-      Color color = UIManager.getColor("Table.nimbusSelectionBackground");
+      Color color = UIManager.getColor("Table[Enabled+Selected].textBackground");
       if (color != null) return color;
       color = UIManager.getColor("nimbusSelectionBackground");
       if (color != null) return color;
@@ -625,12 +625,6 @@ public class UIUtil {
   }
 
   public static Color getListSelectionBackground() {
-    if (isUnderNimbusLookAndFeel()) {
-      Color color = UIManager.getColor("List.nimbusSelectionBackground");
-      if (color != null) return color;
-      color = UIManager.getColor("nimbusSelectionBackground");
-      if (color != null) return color;
-    }
     final Color color = UIManager.getColor("List.selectionBackground");
     if (color == null) {
       return UIManager.getColor("List[Selected].textBackground");  // Nimbus

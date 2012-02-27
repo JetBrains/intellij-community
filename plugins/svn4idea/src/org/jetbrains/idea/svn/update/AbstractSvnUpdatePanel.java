@@ -56,6 +56,7 @@ public abstract class AbstractSvnUpdatePanel {
 
       Container parent = configureRootsPanel.getParent();
       parent.remove(configureRootsPanel);
+      parent.setLayout(new BorderLayout());
       JPanel additionalPanel = getAdditionalPanel();
       if (additionalPanel != null) {
         parent.remove(additionalPanel);

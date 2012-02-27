@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="org.jetbrains.idea.svn.dialogs.browser.DiffOptionsDialog">
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="org.jetbrains.idea.svn.dialogs.browser.DiffOptionsDialog1">
   <grid id="d108" binding="myMainPanel" layout-manager="GridBagLayout">
     <constraints>
       <xy x="10" y="10" width="251" height="611"/>

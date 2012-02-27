@@ -45,4 +45,4 @@ xpp3-1.1.4-min.jar
 xstream.jar
 swingx-core-1.6.2.jar
 netty-3.3.1.Final.jar
-protobuf-2.3.0.jar
+protobuf-2.4.1.jar

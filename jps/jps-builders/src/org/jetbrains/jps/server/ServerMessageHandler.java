@@ -138,6 +138,9 @@ class ServerMessageHandler extends SimpleChannelHandler {
           }
           reply = ProtoUtil.toMessage(sessionId, ProtoUtil.createCommandCompletedEvent(null));
           break;
+        case PING:
+          myServer.pingReceived();
+          reply = ProtoUtil.toMessage(sessionId, ProtoUtil.createCommandCompletedEvent(null));
         default:
           reply = ProtoUtil.toMessage(sessionId, ProtoUtil.createFailure("Unknown request: " + message));
       }

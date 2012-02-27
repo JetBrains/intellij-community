@@ -270,9 +270,12 @@ public class MyTestInjector {
               String t = s.trim();
               if (t.startsWith("*")) t = t.substring(1).trim();
               int i = s.length() - t.length();
-              placesToInject.addPlace(js, TextRange.from(prefix.length() + off, i), "", "\n");
               off += i;
-              s = s.substring(i);
+              int endOfLine = t.indexOf('\n');
+              if (endOfLine == -1) endOfLine = t.length();
+              placesToInject.addPlace(js, TextRange.from(prefix.length() + off, endOfLine), "", "\n");
+              off += endOfLine;
+              s = s.substring(i+endOfLine);
             }
             return;
           }

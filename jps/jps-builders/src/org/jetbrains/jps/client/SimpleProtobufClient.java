@@ -1,6 +1,7 @@
 package org.jetbrains.jps.client;
 
 import com.google.protobuf.MessageLite;
+import com.intellij.openapi.diagnostic.Logger;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.channel.*;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
@@ -13,6 +14,7 @@ import org.jetbrains.jps.api.RequestFuture;
 
 import java.net.InetSocketAddress;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -21,6 +23,9 @@ import java.util.concurrent.atomic.AtomicReference;
  *         Date: 1/22/12
  */
 public class SimpleProtobufClient<T extends ProtobufResponseHandler> {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.client.SimpleProtobufClient");
+  private final ExecutorService ourExecutor = Executors.newCachedThreadPool();
+
   private static enum State {
     DISCONNECTED, CONNECTING, CONNECTED, DISCONNECTING
   }
@@ -32,8 +37,8 @@ public class SimpleProtobufClient<T extends ProtobufResponseHandler> {
   private final ProtobufClientMessageHandler<T> myMessageHandler;
 
   public SimpleProtobufClient(final MessageLite msgDefaultInstance, final UUIDGetter uuidGetter) {
-    myMessageHandler = new ProtobufClientMessageHandler<T>(uuidGetter);
-    myChannelFactory = new NioClientSocketChannelFactory(Executors.newCachedThreadPool(), Executors.newCachedThreadPool(), 1);
+    myMessageHandler = new ProtobufClientMessageHandler<T>(uuidGetter, this);
+    myChannelFactory = new NioClientSocketChannelFactory(ourExecutor, ourExecutor, 1);
     myPipelineFactory = new ChannelPipelineFactory() {
       public ChannelPipeline getPipeline() throws Exception {
         return Channels.pipeline(
@@ -69,6 +74,12 @@ public class SimpleProtobufClient<T extends ProtobufResponseHandler> {
 
         if (success) {
           myConnectFuture = future;
+          try {
+            onConnect();
+          }
+          catch (Throwable e) {
+            LOG.error(e);
+          }
         }
         else {
           final Throwable reason = future.getCause();
@@ -87,11 +98,33 @@ public class SimpleProtobufClient<T extends ProtobufResponseHandler> {
     return true;
   }
 
+  protected void onConnect() {
+  }
+  protected void beforeDisconnect() {
+  }
+  protected void onDisconnect() {
+  }
+
+  public final void scheduleDisconnect() {
+    ourExecutor.submit(new Runnable() {
+      @Override
+      public void run() {
+        disconnect();
+      }
+    });
+  }
+
   public final void disconnect() {
     if (myState.compareAndSet(State.CONNECTED, State.DISCONNECTING)) {
       try {
         final ChannelFuture future = myConnectFuture;
         if (future != null) {
+          try {
+            beforeDisconnect();
+          }
+          catch (Throwable e) {
+            LOG.error(e);
+          }
           try {
             final ChannelFuture closeFuture = future.getChannel().close();
             closeFuture.awaitUninterruptibly();
@@ -104,6 +137,12 @@ public class SimpleProtobufClient<T extends ProtobufResponseHandler> {
       finally {
         myConnectFuture = null;
         myState.compareAndSet(State.DISCONNECTING, State.DISCONNECTED);
+        try {
+          onDisconnect();
+        }
+        catch (Throwable e) {
+          LOG.error(e);
+        }
       }
     }
   }

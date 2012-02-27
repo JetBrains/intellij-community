@@ -20,9 +20,11 @@ final class ProtobufClientMessageHandler<T extends ProtobufResponseHandler> exte
   private final ConcurrentHashMap<UUID, RequestFuture<T>> myHandlers = new ConcurrentHashMap<UUID, RequestFuture<T>>();
   @NotNull
   private final UUIDGetter myUuidGetter;
+  private final SimpleProtobufClient myClient;
 
-  public ProtobufClientMessageHandler(@NotNull UUIDGetter uuidGetter) {
+  public ProtobufClientMessageHandler(@NotNull UUIDGetter uuidGetter, SimpleProtobufClient client) {
     myUuidGetter = uuidGetter;
+    myClient = client;
   }
 
   public final void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
@@ -77,6 +79,17 @@ final class ProtobufClientMessageHandler<T extends ProtobufResponseHandler> exte
       for (UUID uuid : new ArrayList<UUID>(myHandlers.keySet())) {
         terminateSession(uuid);
       }
+    }
+  }
+
+  @Override
+  public void channelDisconnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
+    try {
+      super.channelDisconnected(ctx, e);
+    }
+    finally {
+      // make sure the client is in disconnected state
+      myClient.scheduleDisconnect();
     }
   }
 

@@ -123,12 +123,15 @@ public class GradleModuleDependencyImporter {
         // Register library dependencies.
         ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
         final ModifiableRootModel moduleRootModel = moduleRootManager.getModifiableModel();
+        final GradleProjectEntityImportListener publisher
+          = module.getProject().getMessageBus().syncPublisher(GradleProjectEntityImportListener.TOPIC);
         try {
           for (GradleLibraryDependency dependency : dependencies) {
             final Library library = gradle2intellij.get(dependency.getTarget());
             if (library == null) {
               continue;
             }
+            publisher.onImportStart(library);
             LibraryOrderEntry orderEntry = moduleRootModel.addLibraryEntry(library);
             orderEntry.setExported(dependency.isExported());
             orderEntry.setScope(dependency.getScope());
@@ -136,6 +139,11 @@ public class GradleModuleDependencyImporter {
         }
         finally {
           moduleRootModel.commit();
+          for (GradleLibraryDependency dependency : dependencies) {
+            if (dependency != null) {
+              publisher.onImportEnd(dependency);
+            }
+          }
         }
       }
     });

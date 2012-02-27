@@ -160,7 +160,7 @@ public class GroovyShellAction extends DumbAwareAction {
         }
 
         @Override
-        protected OSProcessHandler createProcess() throws ExecutionException {
+        protected Process createProcess() throws ExecutionException {
           final JavaParameters javaParameters = GroovyScriptRunConfiguration.createJavaParametersWithSdk(module);
           DefaultGroovyScriptRunner.configureGenericGroovyRunner(javaParameters, module, "groovy.ui.GroovyMain", true);
           PathsList list = GroovyScriptRunner.getClassPathFromRootModel(module, true, javaParameters, true);
@@ -177,7 +177,12 @@ public class GroovyShellAction extends DumbAwareAction {
           assert sdkType instanceof JavaSdkType;
           final String exePath = ((JavaSdkType)sdkType).getVMExecutablePath(sdk);
 
-          return new OSProcessHandler(JdkUtil.setupJVMCommandLine(exePath, javaParameters, true).createProcess(), null);
+          return JdkUtil.setupJVMCommandLine(exePath, javaParameters, true).createProcess();
+        }
+
+        @Override
+        protected OSProcessHandler createProcessHandler(Process process) {
+          return new OSProcessHandler(process, null);
         }
 
         @NotNull

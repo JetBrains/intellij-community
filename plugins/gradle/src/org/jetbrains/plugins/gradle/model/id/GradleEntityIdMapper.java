@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.GradleEntityOwner;
@@ -91,7 +92,11 @@ public class GradleEntityIdMapper {
 
         @Override
         public void visit(@NotNull ModuleAwareContentRoot contentRoot) {
-          result.set(new GradleContentRootId(GradleEntityOwner.INTELLIJ, contentRoot.getModule().getName(), contentRoot.getUrl()));
+          final VirtualFile file = contentRoot.getFile();
+          if (file == null) {
+            return;
+          }
+          result.set(new GradleContentRootId(GradleEntityOwner.INTELLIJ, contentRoot.getModule().getName(), file.getPath()));
         }
 
         @Override

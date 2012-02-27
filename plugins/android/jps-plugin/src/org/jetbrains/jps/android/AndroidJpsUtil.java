@@ -11,6 +11,7 @@ import com.intellij.util.containers.HashSet;
 import org.jetbrains.android.sdk.MessageBuildingSdkLog;
 import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.AndroidCompilerMessageKind;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.*;
@@ -33,8 +34,33 @@ import java.util.regex.Matcher;
  */
 class AndroidJpsUtil {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.android.AndroidJpsUtil");
+  @NonNls public static final String ANDROID_STORAGE_DIR = "android";
+  @NonNls private static final String RESOURCE_CACHE_STORAGE = "res-cache";
 
   private AndroidJpsUtil() {
+  }
+
+  @Nullable
+  public static File getMainContentRoot(@NotNull AndroidFacet facet) throws IOException {
+    final Module module = facet.getModule();
+
+    final List<String> contentRoots = module.getContentRoots();
+
+    if (contentRoots.size() == 0) {
+      return null;
+    }
+    final File manifestFile = facet.getManifestFile();
+
+    if (manifestFile != null) {
+      for (String rootPath : contentRoots) {
+        final File root = new File(rootPath);
+
+        if (FileUtil.isAncestor(root, manifestFile, true)) {
+          return root;
+        }
+      }
+    }
+    return new File(contentRoots.get(0));
   }
 
   public static void addMessages(@NotNull CompileContext context,
@@ -107,7 +133,7 @@ class AndroidJpsUtil {
   }
 
   @NotNull
-  public static Set<String> getClassdirsOfDependentModules(@NotNull ProjectPaths paths, @NotNull Module module) {
+  public static Set<String> getClassdirsOfDependentModulesAndPackagesLibraries(@NotNull ProjectPaths paths, @NotNull Module module) {
     final Set<String> result = new HashSet<String>();
     fillClasspath(paths, module, result, null, new HashSet<String>(), false);
     return result;
@@ -307,8 +333,17 @@ class AndroidJpsUtil {
     return Pair.create(androidSdk, target);
   }
 
-  public static String[] collectResourceDirs(@NotNull AndroidFacet facet) throws IOException {
+  public static String[] collectResourceDirsForCompilation(@NotNull AndroidFacet facet,
+                                                           boolean withCacheDirs,
+                                                           @NotNull CompileContext context) throws IOException {
     final List<String> result = new ArrayList<String>();
+
+    if (withCacheDirs) {
+      final File resourcesCacheDir = getResourcesCacheDir(context, facet.getModule());
+      if (resourcesCacheDir.exists()) {
+        result.add(resourcesCacheDir.getPath());
+      }
+    }
 
     final File resDir = getResourceDirForCompilationPath(facet);
     if (resDir != null) {
@@ -325,7 +360,7 @@ class AndroidJpsUtil {
   }
 
   @Nullable
-  private static File getResourceDirForCompilationPath(@NotNull AndroidFacet facet) throws IOException {
+  public static File getResourceDirForCompilationPath(@NotNull AndroidFacet facet) throws IOException {
     return facet.getUseCustomResFolderForCompilation()
            ? facet.getResourceDirForCompilation()
            : facet.getResourceDir();
@@ -352,5 +387,19 @@ class AndroidJpsUtil {
         }
       }
     }
+  }
+
+  public static boolean isLightBuild(@NotNull CompileContext context) {
+    return Boolean.parseBoolean(context.getBuilderParameter(AndroidCommonUtils.LIGHT_BUILD_OPTION));
+  }
+
+  public static boolean isReleaseBuild(@NotNull CompileContext context) {
+    return Boolean.parseBoolean(context.getBuilderParameter(AndroidCommonUtils.RELEASE_BUILD_OPTION));
+  }
+
+  @NotNull
+  public static File getResourcesCacheDir(@NotNull CompileContext context, @NotNull Module module) {
+    final File androidStorage = new File(context.getDataManager().getDataStorageRoot(), ANDROID_STORAGE_DIR);
+    return new File(new File(androidStorage, RESOURCE_CACHE_STORAGE), module.getName());
   }
 }

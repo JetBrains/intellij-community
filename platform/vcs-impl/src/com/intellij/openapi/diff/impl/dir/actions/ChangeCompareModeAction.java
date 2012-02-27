@@ -36,7 +36,7 @@ class ChangeCompareModeAction extends AnAction {
   private final DirDiffSettings.CompareMode myMode;
 
   ChangeCompareModeAction(DirDiffTableModel model, DirDiffSettings.CompareMode mode) {
-    super(mode.getPresentableName());
+    super(mode.getPresentableName(model.getSettings()));
     myModel = model;
     myMode = mode;
   }

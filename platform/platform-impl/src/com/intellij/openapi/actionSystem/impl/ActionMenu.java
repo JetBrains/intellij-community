@@ -201,14 +201,9 @@ public final class ActionMenu extends JMenu {
     IdeFrame frame = component instanceof IdeFrame
                          ? (IdeFrame)component
                          : (IdeFrame)SwingUtilities.getAncestorOfClass(IdeFrame.class, component);
-    if (frame != null) {
-      StatusBar statusBar = frame.getStatusBar();
-      if (isIncluded) {
-        statusBar.setInfo(description);
-      }
-      else {
-        statusBar.setInfo(null);
-      }
+    StatusBar statusBar;
+    if (frame != null && (statusBar = frame.getStatusBar()) != null) {
+      statusBar.setInfo(isIncluded ? description : null);
     }
   }
 

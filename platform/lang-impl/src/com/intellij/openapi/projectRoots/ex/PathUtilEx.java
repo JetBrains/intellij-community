@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.util.containers.ComparatorUtil;
 import static com.intellij.util.containers.ContainerUtil.map;
 import static com.intellij.util.containers.ContainerUtil.skipNulls;
 import com.intellij.util.containers.Convertor;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -50,10 +51,12 @@ public class PathUtilEx {
     }
   };
 
+  @Nullable
   public static Sdk getAnyJdk(Project project) {
     return chooseJdk(project, Arrays.asList(ModuleManager.getInstance(project).getModules()));
   }
 
+  @Nullable
   public static Sdk chooseJdk(Project project, Collection<Module> modules) {
     Sdk projectJdk = ProjectRootManager.getInstance(project).getProjectSdk();
     if (projectJdk != null) {
@@ -62,6 +65,7 @@ public class PathUtilEx {
     return chooseJdk(modules);
   }
 
+  @Nullable
   public static Sdk chooseJdk(Collection<Module> modules) {
     List<Sdk> jdks = skipNulls(map(skipNulls(modules), MODULE_JDK));
     if (jdks.isEmpty()) {

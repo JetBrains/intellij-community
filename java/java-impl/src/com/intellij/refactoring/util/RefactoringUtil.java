@@ -551,7 +551,7 @@ public class RefactoringUtil {
     }
   }
 
-  public static PsiElement getAnchorElementForMultipleExpressions(PsiExpression[] occurrences, PsiElement scope) {
+  public static PsiElement getAnchorElementForMultipleExpressions(@NotNull PsiExpression[] occurrences, PsiElement scope) {
     PsiElement anchor = null;
     for (PsiExpression occurrence : occurrences) {
     //  if (!occurrence.isPhysical()) continue;

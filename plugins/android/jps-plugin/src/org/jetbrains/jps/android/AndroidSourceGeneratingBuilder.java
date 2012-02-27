@@ -130,7 +130,9 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
   private static boolean runAidlCompiler(@NotNull final CompileContext context,
                                          @NotNull Map<File, Module> files,
                                          @NotNull Map<Module, MyModuleData> moduleDataMap) {
-    context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.aidl")));
+    if (files.size() > 0) {
+      context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.aidl")));
+    }
 
     boolean success = true;
 
@@ -192,7 +194,9 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
   private static boolean runRenderscriptCompiler(@NotNull final CompileContext context,
                                                  @NotNull Map<File, Module> files,
                                                  @NotNull Map<Module, MyModuleData> moduleDataMap) {
-    context.processMessage(new ProgressMessage("Processing Renderscript files..."));
+    if (files.size() > 0) {
+      context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.renderscript")));
+    }
 
     boolean success = true;
 
@@ -263,8 +267,6 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
   private static boolean runAaptCompiler(@NotNull final CompileContext context,
                                          @NotNull Map<Module, MyModuleData> moduleDataMap,
                                          @NotNull AndroidAptStateStorage storage) {
-    context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.aapt")));
-
     boolean success = true;
 
     for (Map.Entry<Module, MyModuleData> entry : moduleDataMap.entrySet()) {
@@ -277,7 +279,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
       final IAndroidTarget target = moduleData.getAndroidTarget();
 
       try {
-        final String[] resPaths = AndroidJpsUtil.collectResourceDirs(facet);
+        final String[] resPaths = AndroidJpsUtil.collectResourceDirsForCompilation(facet, false, context);
         if (resPaths.length == 0) {
           // there is no resources in the module
           continue;
@@ -305,9 +307,11 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
         final Set<ResourceEntry> manifestElements = collectManifestElements(manifestFile);
         final AndroidAptValidityState newState = new AndroidAptValidityState(resources, manifestElements, depLibPackagesSet, packageName);
 
-        final AndroidAptValidityState oldState = storage.getState(module.getName());
-        if (newState.equalsTo(oldState)) {
-          continue;
+        if (context.isMake()) {
+          final AndroidAptValidityState oldState = storage.getState(module.getName());
+          if (newState.equalsTo(oldState)) {
+            continue;
+          }
         }
         final File outputDirectory = moduleData.getOutputDirectory();
         final File aptOutputDirectory = new File(outputDirectory, "generated-aapt");
@@ -317,6 +321,8 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
           FileUtil.delete(aptOutputDirectory);
         }
 
+        context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.aapt", module.getName())));
+
         final Map<AndroidCompilerMessageKind, List<String>> messages =
           AndroidApt.compile(target, -1, manifestFile.getPath(), packageName, aptOutputDirectory.getPath(), resPaths,
                              ArrayUtil.toStringArray(depLibPackagesSet), facet.getLibrary());
@@ -325,6 +331,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
 
         if (messages.get(AndroidCompilerMessageKind.ERROR).size() > 0) {
           success = false;
+          storage.update(module.getName(), null);
         }
         else {
           storage.update(module.getName(), newState);

@@ -9,6 +9,8 @@ import org.jetbrains.plugins.gradle.model.id.GradleLibraryDependencyId;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 
 /**
+ * Thread-safe.
+ * 
  * @author Denis Zhdanov
  * @since 1/24/12 9:48 AM
  */
@@ -26,15 +28,7 @@ public class GradleLibraryDependencyPresenceChange extends GradleEntityPresenceC
   }
 
   @Nullable
-  private static GradleLibraryDependencyId of(@Nullable GradleLibraryDependency dependency) {
-    if (dependency == null) {
-      return null;
-    }
-    return GradleEntityIdMapper.mapEntityToId(dependency);
-  }
-
-  @Nullable
-  private static GradleLibraryDependencyId of(@Nullable LibraryOrderEntry dependency) {
+  private static GradleLibraryDependencyId of(@Nullable Object dependency) {
     if (dependency == null) {
       return null;
     }

@@ -16,6 +16,8 @@
 package com.intellij.platform;
 
 import com.intellij.ide.GeneralSettings;
+import com.intellij.internal.statistic.UsageTrigger;
+import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -67,6 +69,8 @@ public class NewDirectoryProjectAction extends AnAction implements DumbAware {
       }
     }
 
+    String generatorName = generator == null ? "empty" : ConvertUsagesUtil.ensureProperKey(generator.getName());
+    UsageTrigger.trigger("NewDirectoryProjectAction." + generatorName);
     Object settings = null;
     if (generator != null) {
       try {

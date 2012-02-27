@@ -26,10 +26,12 @@ import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.DottedBorder;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
+import com.intellij.ui.table.JBTable;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.io.EqualityPolicy;
 import com.intellij.util.messages.MessageBusConnection;
@@ -46,14 +48,17 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.File;
-import java.util.Collections;
-import java.util.Comparator;
+import java.util.*;
 import java.util.List;
 
 public class CopiesPanel {
@@ -66,6 +71,11 @@ public class CopiesPanel {
   // updated only on AWT
   private List<OverrideEqualsWrapper<WCInfo>> myCurrentInfoList;
   private int myTextHeight;
+
+  private final static String CHANGE_FORMAT = "CHANGE_FORMAT";
+  private final static String FIX_DEPTH = "FIX_DEPTH";
+  private final static String CONFIGURE_BRANCHES = "CONFIGURE_BRANCHES";
+  private final static String MERGE_FROM = "MERGE_FROM";
 
   public CopiesPanel(final Project project) {
     myProject = project;
@@ -172,6 +182,51 @@ public class CopiesPanel {
     final LocalFileSystem lfs = LocalFileSystem.getInstance();
     final Insets topIndent = new Insets(10, 3, 0, 0);
     for (final WCInfo wcInfo : infoList) {
+      final VirtualFile vf = lfs.refreshAndFindFileByIoFile(new File(wcInfo.getPath()));
+      final VirtualFile root = (vf == null) ? wcInfo.getVcsRoot() : vf;
+
+      final JEditorPane editorPane = new JEditorPane(UIUtil.HTML_MIME, "");
+      editorPane.setEditable(false);
+      editorPane.setFocusable(true);
+      editorPane.setBackground(UIUtil.getPanelBackground());
+      editorPane.addHyperlinkListener(new HyperlinkListener() {
+        @Override
+        public void hyperlinkUpdate(HyperlinkEvent e) {
+          if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+            if (CONFIGURE_BRANCHES.equals(e.getDescription())) {
+              if (! checkRoot(root, wcInfo.getPath(), " invoke Configure Branches")) return;
+              BranchConfigurationDialog.configureBranches(myProject, root, true);
+            } else if (FIX_DEPTH.equals(e.getDescription())) {
+              final int result =
+                Messages.showOkCancelDialog(myVcs.getProject(), "You are going to checkout into '" + wcInfo.getPath() + "' with 'infinity' depth.\n" +
+                                                        "This will update your working copy to HEAD revision as well.",
+                                    "Set working copy infinity depth",
+                                    Messages.getWarningIcon());
+              if (result == 0) {
+                // update of view will be triggered by roots changed event
+                SvnCheckoutProvider.checkout(myVcs.getProject(), new File(wcInfo.getPath()), wcInfo.getRootUrl(), SVNRevision.HEAD,
+                                             SVNDepth.INFINITY, false, null, wcInfo.getFormat());
+              }
+            } else if (CHANGE_FORMAT.equals(e.getDescription())) {
+              changeFormat(wcInfo);
+            } else if (MERGE_FROM.equals(e.getDescription())) {
+              if (! checkRoot(root, wcInfo.getPath(), " invoke Merge From")) return;
+              mergeFrom(wcInfo, root, editorPane);
+            }
+          }
+        }
+
+        private boolean checkRoot(VirtualFile root, final String path, final String actionName) {
+          if (root == null) {
+            Messages.showWarningDialog(myProject, "Invalid working copy root: " + path, "Can not " + actionName);
+            return false;
+          }
+          return true;
+        }
+      });
+      editorPane.setBorder(null);
+      editorPane.setText(formatWc(wcInfo));
+
       final JPanel copyPanel = new JPanel(new GridBagLayout());
 
       final GridBagConstraints gb1 =
@@ -187,111 +242,51 @@ public class CopiesPanel {
       contForCopy.add(copyPanel, BorderLayout.WEST);
       myPanel.add(contForCopy, gb);
 
-      final JTextField path = createField(wcInfo.getPath());
-      copyPanel.add(path, gb1);
-      path.setFont(path.getFont().deriveFont(Font.BOLD));
-
+      copyPanel.add(editorPane, gb1);
       gb1.insets = nullIndent;
-      gb1.insets.top = 5;
-      ++ gb1.gridy;
-      final JTextField url = createField("URL: " + wcInfo.getRootUrl());
-      copyPanel.add(url, gb1);
-
-      ++ gb1.gridy;
-      gb1.insets.top = 1;
-      final JTextField format = createField("Format: " + wcInfo.getFormat().getName());
-      copyPanel.add(format, gb1);
-
-      if (! WorkingCopyFormat.ONE_DOT_SEVEN.equals(wcInfo.getFormat())) {
-        gb1.gridx = 2;
-        final LinkLabel changeFormatLabel = new MyLinkLabel(myTextHeight, "Change", new LinkListener() {
-          public void linkSelected(LinkLabel aSource, Object aLinkData) {
-            changeFormat(wcInfo);
-          }
-        });
-        copyPanel.add(changeFormatLabel, gb1);
-        setFocusableForLinks(changeFormatLabel);
-      }
-      gb1.gridx = 0;
-
-      ++ gb1.gridy;
-      final JTextField depth = createField("Depth: " + wcInfo.getStickyDepth().getName());
-      copyPanel.add(depth, gb1);
-
-      if (! SVNDepth.INFINITY.equals(wcInfo.getStickyDepth())) {
-        gb1.gridx = 2;
-        final LinkLabel fixDepthLabel = new MyLinkLabel(myTextHeight, "Make infinity", new LinkListener() {
-          public void linkSelected(LinkLabel aSource, Object aLinkData) {
-            final int result =
-              Messages.showOkCancelDialog(myVcs.getProject(), "You are going to checkout into '" + wcInfo.getPath() + "' with 'infinity' depth.\n" +
-                                                      "This will update your working copy to HEAD revision as well.",
-                                  "Set working copy infinity depth",
-                                  Messages.getWarningIcon());
-            if (result == 0) {
-              // update of view will be triggered by roots changed event
-              SvnCheckoutProvider.checkout(myVcs.getProject(), new File(wcInfo.getPath()), wcInfo.getRootUrl(), SVNRevision.HEAD,
-                                           SVNDepth.INFINITY, false, null, wcInfo.getFormat());
-            }
-          }
-        });
-        copyPanel.add(fixDepthLabel, gb1);
-        setFocusableForLinks(fixDepthLabel);
-        gb1.gridx = 0;
-      }
-
-      final NestedCopyType type = wcInfo.getType();
-      if (NestedCopyType.external.equals(type) || NestedCopyType.switched.equals(type)) {
-        ++ gb1.gridy;
-        final JTextField whetherNested = createField(type.getName() + " copy");
-        copyPanel.add(whetherNested, gb1);
-        whetherNested.setFont(whetherNested.getFont().deriveFont(Font.ITALIC));
-      }
-      if (wcInfo.isIsWcRoot()) {
-        ++ gb1.gridy;
-        final JTextField whetherRoot = createField("Working copy root");
-        copyPanel.add(whetherRoot, gb1);
-        whetherRoot.setFont(whetherRoot.getFont().deriveFont(Font.ITALIC));
-      }
-
-      gb1.gridwidth = 1;
-      gb1.insets.top = 5;
-      ++ gb1.gridy;
-
-      final VirtualFile vf = lfs.refreshAndFindFileByIoFile(new File(wcInfo.getPath()));
-      final VirtualFile root = (vf == null) ? wcInfo.getVcsRoot() : vf;
-      final LinkLabel configureBranchesLabel = new MyLinkLabel(myTextHeight, "Configure Branches", new LinkListener() {
-        public void linkSelected(LinkLabel aSource, Object aLinkData) {
-          BranchConfigurationDialog.configureBranches(myProject, root, true);
-        }
-      });
-      if (root == null) {
-        configureBranchesLabel.setEnabled(false); //+-
-      }
-      copyPanel.add(configureBranchesLabel, gb1);
-      setFocusableForLinks(configureBranchesLabel);
-
-      ++ gb1.gridy;
-      final LinkLabel mergeLabel = new MyLinkLabel(myTextHeight, "Merge from...", null);
-      mergeLabel.setListener(new LinkListener() {
-        public void linkSelected(LinkLabel aSource, Object aLinkData) {
-          mergeFrom(wcInfo, root, mergeLabel);
-        }
-      }, null);
-      if (root == null) {
-        mergeLabel.setEnabled(false); //+-
-      }
-      final Font font = mergeLabel.getFont();
-      mergeLabel.setFont(font.deriveFont(Font.BOLD));
-      mergeLabel.setForeground(mergeLabel.getForeground().darker());
-      copyPanel.add(mergeLabel, gb1);
-      setFocusableForLinks(mergeLabel);
     }
 
     myPanel.revalidate();
     myPanel.repaint();
   }
 
-  private void mergeFrom(final WCInfo wcInfo, final VirtualFile root, final LinkLabel mergeLabel) {
+  private String formatWc(WCInfo info) {
+    final StringBuilder sb = new StringBuilder().append("<html><head>").append(UIUtil.getCssFontDeclaration(UIUtil.getLabelFont()))
+      .append("</head><body><table bgColor=\"").append(ColorUtil.toHex(UIUtil.getPanelBackground())).append("\">");
+
+    sb.append("<tr valign=\"top\"><td colspan=\"3\"><b>").append(info.getPath()).append("</b></td></tr>");
+    sb.append("<tr valign=\"top\"><td>URL:</td><td colspan=\"2\">").append(info.getRootUrl()).append("</td></tr>");
+    if (! WorkingCopyFormat.ONE_DOT_SEVEN.equals(info.getFormat())) {
+      // can convert
+      sb.append("<tr valign=\"top\"><td>Format:</td><td>").append(info.getFormat().getName()).append("</td><td><a href=\"").
+        append(CHANGE_FORMAT).append("\">Change</a></td></tr>");
+    } else {
+      sb.append("<tr valign=\"top\"><td>Format:</td><td colspan=\"2\">").append(info.getFormat().getName()).append("</td></tr>");
+    }
+
+    if (! SVNDepth.INFINITY.equals(info.getStickyDepth())) {
+      // can fix
+      sb.append("<tr valign=\"top\"><td>Depth:</td><td>").append(info.getStickyDepth().getName()).append("</td><td><a href=\"").
+        append(FIX_DEPTH).append("\">Fix</a></td></tr>");
+    } else {
+      sb.append("<tr valign=\"top\"><td>Depth:</td><td colspan=\"2\">").append(info.getStickyDepth().getName()).append("</td></tr>");
+    }
+
+    final NestedCopyType type = info.getType();
+    if (NestedCopyType.external.equals(type) || NestedCopyType.switched.equals(type)) {
+      sb.append("<tr valign=\"top\"><td colspan=\"3\"><i>").append(type.getName()).append("</i></td></tr>");
+    }
+    if (info.isIsWcRoot()) {
+      sb.append("<tr valign=\"top\"><td colspan=\"3\"><i>").append("Working copy root</i></td></tr>");
+    }
+    sb.append("<tr valign=\"top\"><td colspan=\"3\"><a href=\"").append(CONFIGURE_BRANCHES).append("\">Configure Branches</a></td></tr>");
+    sb.append("<tr valign=\"top\"><td colspan=\"3\"><a href=\"").append(MERGE_FROM).append("\"><b>Merge From...</b></a></i></td></tr>");
+
+    sb.append("</table></body></html>");
+    return sb.toString();
+  }
+
+  private void mergeFrom(final WCInfo wcInfo, final VirtualFile root, final Component mergeLabel) {
     SelectBranchPopup.showForBranchRoot(myProject, root, new SelectBranchPopup.BranchSelectedCallback() {
       public void branchSelected(Project project, SvnBranchConfigurationNew configuration, String url, long revision) {
         new QuickMerge(project, url, wcInfo, SVNPathUtil.tail(url), root).execute();

@@ -7,6 +7,7 @@ import com.intellij.openapi.roots.libraries.Library
 import org.jetbrains.plugins.gradle.util.GradleUtil
 import org.jetbrains.plugins.gradle.diff.GradleModulePresenceChange
 import org.jetbrains.plugins.gradle.diff.GradleModuleDependencyPresenceChange
+import org.jetbrains.plugins.gradle.diff.GradleContentRootPresenceChange
 
 /**
  * @author Denis Zhdanov
@@ -53,6 +54,10 @@ public class ChangeBuilder extends BuilderSupport {
           throw new IllegalArgumentException("No entity is defined for the library conflict change. Known attributes: $attributes")
         }
         return library
+      case "contentRoot":
+        changes.addAll attributes.gradle.collect { new GradleContentRootPresenceChange(it, null)}
+        changes.addAll attributes.intellij.collect { new GradleContentRootPresenceChange(null, it)}
+        return changes
       case "binaryPath":
         // Assuming that we're processing library binary path conflict here
         register(new GradleMismatchedLibraryPathChange(
