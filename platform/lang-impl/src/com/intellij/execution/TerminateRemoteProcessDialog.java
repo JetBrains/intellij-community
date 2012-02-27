@@ -53,7 +53,7 @@ public class TerminateRemoteProcessDialog {
 
     @Override
     public boolean isToBeShown() {
-      return myAlwaysUseDefault ? !myDetachIsDefault : myDontTerminate;
+      return myAlwaysUseDefault ? myDetachIsDefault : myDontTerminate;
     }
 
     @Override
