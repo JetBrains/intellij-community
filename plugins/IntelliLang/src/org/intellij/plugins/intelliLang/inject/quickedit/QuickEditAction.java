@@ -176,7 +176,7 @@ public class QuickEditAction implements IntentionAction, LowPriorityAction {
       final String text = InjectedLanguageManager.getInstance(project).getUnescapedText(injectedFile);
       final String newFileName =
         StringUtil.notNullize(language.getDisplayName(), "Injected") + " Fragment " + "(" +
-        origFile.getName() + ":" + shreds.get(0).host.getTextRange().getStartOffset() + ")" + "." + fileType.getDefaultExtension();
+        origFile.getName() + ":" + shreds.get(0).getHost().getTextRange().getStartOffset() + ")" + "." + fileType.getDefaultExtension();
       myNewFile = factory.createFileFromText(newFileName, language, text, true, true);
       myNewVirtualFile = (LightVirtualFile)myNewFile.getVirtualFile();
       assert myNewVirtualFile != null;
@@ -296,11 +296,12 @@ public class QuickEditAction implements IntentionAction, LowPriorityAction {
       final SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(myProject);
       for (PsiLanguageInjectionHost.Shred shred : shreds) {
         final RangeMarker rangeMarker = myNewDocument
-          .createRangeMarker(shred.range.getStartOffset() + shred.prefix.length(), shred.range.getEndOffset() - shred.suffix.length());
+          .createRangeMarker(
+            shred.getRange().getStartOffset() + shred.getPrefix().length(), shred.getRange().getEndOffset() - shred.getSuffix().length());
         final TextRange rangeInsideHost = shred.getRangeInsideHost();
         final RangeMarker origMarker =
-          myOrigDocument.createRangeMarker(rangeInsideHost.shiftRight(shred.host.getTextRange().getStartOffset()));
-        myMarkers.put(smartPointerManager.createSmartPsiElementPointer(shred.host), Pair.create(origMarker, rangeMarker));
+          myOrigDocument.createRangeMarker(rangeInsideHost.shiftRight(shred.getHost().getTextRange().getStartOffset()));
+        myMarkers.put(smartPointerManager.createSmartPsiElementPointer(shred.getHost()), Pair.create(origMarker, rangeMarker));
       }
       for (Pair<RangeMarker, RangeMarker> markers : myMarkers.values()) {
         markers.first.setGreedyToLeft(true);

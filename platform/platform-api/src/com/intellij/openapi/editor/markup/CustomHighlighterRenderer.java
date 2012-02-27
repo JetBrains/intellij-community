@@ -20,9 +20,10 @@
 package com.intellij.openapi.editor.markup;
 
 import com.intellij.openapi.editor.Editor;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
 public interface CustomHighlighterRenderer {
-  void paint(Editor editor, RangeHighlighter highlighter, Graphics g);
+  void paint(@NotNull Editor editor, @NotNull RangeHighlighter highlighter, @NotNull Graphics g);
 }

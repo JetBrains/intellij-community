@@ -47,6 +47,6 @@ public class _LastInSuiteTest extends TestCase {
     });
 
     LeakHunter.checkProjectLeak(application);
-    Disposer.assertIsEmpty();
+    Disposer.assertIsEmpty(true);
   }
 }

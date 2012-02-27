@@ -33,6 +33,7 @@ import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,16 +45,19 @@ import java.awt.event.KeyEvent;
  * @author spleaner
  */
 public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
+  @Override
   public boolean canRun(@NotNull final String executorId, @NotNull final RunProfile profile) {
     return executorId.equals(DefaultRunExecutor.EXECUTOR_ID) &&
            profile instanceof ModuleRunProfile &&
            !(profile instanceof RunConfigurationWithSuppressedDefaultRunAction);
   }
 
+  @Override
   public void patch(JavaParameters javaParameters, RunnerSettings settings, final boolean beforeExecution) throws ExecutionException {
     runCustomPatchers(javaParameters, settings, Executor.EXECUTOR_EXTENSION_NAME.findExtension(DefaultRunExecutor.class));
   }
 
+  @Override
   protected RunContentDescriptor doExecute(final Project project, final Executor executor, final RunProfileState state, final RunContentDescriptor contentToReuse,
                                            final ExecutionEnvironment env) throws ExecutionException {
     FileDocumentManager.getInstance().saveAllDocuments();
@@ -83,6 +87,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
     onProcessStarted(env.getRunnerSettings(), executionResult);
 
     final RunContentBuilder contentBuilder = new RunContentBuilder(project, this, executor);
+    Disposer.register(project, contentBuilder);
     contentBuilder.setExecutionResult(executionResult);
     contentBuilder.setEnvironment(env);
     if (shouldAddDefaultActions) {
@@ -110,6 +115,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
       final ProcessHandler processHandler = executionResult.getProcessHandler();
       assert processHandler != null : executionResult;
       processHandler.addProcessListener(new ProcessAdapter() {
+        @Override
         public void processTerminated(final ProcessEvent event) {
           processHandler.removeProcessListener(this);
           controlBreakAction.unregisterCustomShortcutSet(consoleComponent);
@@ -129,6 +135,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
       myProcessHandler = processHandler;
     }
 
+    @Override
     public void update(final AnActionEvent event) {
       final Presentation presentation = event.getPresentation();
       if (!isVisible()) {
@@ -157,6 +164,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
       return super.isVisible() && ProcessProxyFactory.getInstance().isBreakGenLibraryAvailable();
     }
 
+    @Override
     public void actionPerformed(final AnActionEvent e) {
       ProcessProxy proxy = ProcessProxyFactory.getInstance().getAttachedProxy(myProcessHandler);
       if (proxy != null) {
@@ -170,6 +178,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
       super(ExecutionBundle.message("run.configuration.exit.action.name"), null, IconLoader.getIcon("/actions/exit.png"), processHandler);
     }
 
+    @Override
     public void actionPerformed(final AnActionEvent e) {
       ProcessProxy proxy = ProcessProxyFactory.getInstance().getAttachedProxy(myProcessHandler);
       if (proxy != null) {
@@ -178,6 +187,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
     }
   }
 
+  @Override
   @NotNull
   public String getRunnerId() {
     return "Run";

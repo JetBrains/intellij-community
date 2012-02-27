@@ -112,6 +112,10 @@ public class TextRange implements Segment, Serializable {
     return create(segment.getStartOffset(), segment.getEndOffset());
   }
 
+  public static boolean areSegmentsEqual(@NotNull Segment segment1, @NotNull Segment segment2) {
+    return segment1.getStartOffset() == segment2.getStartOffset()
+           && segment1.getEndOffset() == segment2.getEndOffset();
+  }
   @NotNull
   public String replace(@NotNull String original, @NotNull String replacement) {
     String beginning = original.substring(0, getStartOffset());
