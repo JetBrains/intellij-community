@@ -225,7 +225,7 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
   @Override
   public boolean shouldReplace(TextRange range, String replace) {
     for (RangeMarker r : mySearchResults.getExcluded()) {
-      if (r.getStartOffset() == range.getStartOffset() && r.getEndOffset() == range.getEndOffset()) {
+      if (TextRange.areSegmentsEqual(r, range)) {
         return false;
       }
     }

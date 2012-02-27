@@ -70,9 +70,9 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
   private static final CustomHighlighterRenderer RENDERER = new CustomHighlighterRenderer() {
     @Override
     @SuppressWarnings({"AssignmentToForLoopParameter"})
-    public void paint(Editor editor,
-                      RangeHighlighter highlighter,
-                      Graphics g) {
+    public void paint(@NotNull Editor editor,
+                      @NotNull RangeHighlighter highlighter,
+                      @NotNull Graphics g) {
       int startOffset = highlighter.getStartOffset();
       final Document doc = highlighter.getDocument();
       if (startOffset >= doc.getTextLength()) return;
