@@ -34,7 +34,6 @@ public class AndroidLibraryPackagingBuilder extends ModuleLevelBuilder {
     if (context.isCompilingTests() || !AndroidJpsUtil.containsAndroidFacet(chunk) || AndroidJpsUtil.isLightBuild(context)) {
       return ModuleLevelBuilder.ExitCode.OK;
     }
-    context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.library.packaging")));
 
     try {
       return doBuild(context, chunk);
@@ -82,6 +81,7 @@ public class AndroidLibraryPackagingBuilder extends ModuleLevelBuilder {
         }
 
         if (subdirs.size() > 0) {
+          context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.library.packaging", module.getName())));
           final File outputJarFile = new File(outputDirectoryForPackagedFiles, AndroidCommonUtils.CLASSES_JAR_FILE_NAME);
 
           try {

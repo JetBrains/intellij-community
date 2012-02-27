@@ -130,7 +130,9 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
   private static boolean runAidlCompiler(@NotNull final CompileContext context,
                                          @NotNull Map<File, Module> files,
                                          @NotNull Map<Module, MyModuleData> moduleDataMap) {
-    context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.aidl")));
+    if (files.size() > 0) {
+      context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.aidl")));
+    }
 
     boolean success = true;
 
@@ -192,7 +194,9 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
   private static boolean runRenderscriptCompiler(@NotNull final CompileContext context,
                                                  @NotNull Map<File, Module> files,
                                                  @NotNull Map<Module, MyModuleData> moduleDataMap) {
-    context.processMessage(new ProgressMessage("Processing Renderscript files..."));
+    if (files.size() > 0) {
+      context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.renderscript")));
+    }
 
     boolean success = true;
 
@@ -263,8 +267,6 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
   private static boolean runAaptCompiler(@NotNull final CompileContext context,
                                          @NotNull Map<Module, MyModuleData> moduleDataMap,
                                          @NotNull AndroidAptStateStorage storage) {
-    context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.aapt")));
-
     boolean success = true;
 
     for (Map.Entry<Module, MyModuleData> entry : moduleDataMap.entrySet()) {
@@ -318,6 +320,8 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
           // clear directory, because it may contain obsolete files (ex. if package name was changed)
           FileUtil.delete(aptOutputDirectory);
         }
+
+        context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.aapt", module.getName())));
 
         final Map<AndroidCompilerMessageKind, List<String>> messages =
           AndroidApt.compile(target, -1, manifestFile.getPath(), packageName, aptOutputDirectory.getPath(), resPaths,

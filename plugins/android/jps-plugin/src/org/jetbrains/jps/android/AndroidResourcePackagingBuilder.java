@@ -65,8 +65,6 @@ public class AndroidResourcePackagingBuilder extends ModuleLevelBuilder {
           continue;
         }
 
-        context.processMessage(new ProgressMessage("Packaging module " + module.getName()));
-
         if (!packageResources(facet, context, devStorage, releaseStorage)) {
           success = false;
         }
@@ -132,6 +130,8 @@ public class AndroidResourcePackagingBuilder extends ModuleLevelBuilder {
       final AndroidResourcesPackagingState oldState = storage.getState(module.getName());
 
       if (oldState == null || !oldState.equalsTo(newState)) {
+        context.processMessage(new ProgressMessage("Packaging resources for module " + module.getName()));
+
         if (!doPackageResources(context, manifestFile, target, resourceDirPaths, assetsDirPath, outputFilePath, releaseBuild)) {
           storage.update(module.getName(), null);
           return false;

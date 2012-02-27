@@ -80,8 +80,6 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
     boolean success = true;
 
     for (Module module : context.getProject().getModules().values()) {
-      context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.dex")));
-
       final AndroidFacet facet = AndroidJpsUtil.getFacet(module);
       if (facet == null || facet.getLibrary()) {
         continue;
@@ -139,7 +137,7 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
             }
           }
 
-          if (facet.isLibrary()) {
+          if (facet.isPackTestCode()) {
             final File testsClassDir = projectPaths.getModuleOutputDir(module, true);
 
             if (testsClassDir != null && testsClassDir.isDirectory()) {
@@ -147,7 +145,6 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
             }
           }
         }
-
         final AndroidClassesAndJarsState newState = new AndroidClassesAndJarsState(fileSet);
 
         if (context.isMake()) {
@@ -157,11 +154,17 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
           }
         }
 
+        if (fileSet.size() == 0) {
+          continue;
+        }
+
         final String[] files = new String[fileSet.size()];
         int i = 0;
         for (String filePath : fileSet) {
           files[i++] = FileUtil.toSystemDependentName(filePath);
         }
+
+        context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.dex", module.getName())));
 
         if (!runDex(androidSdk, target, dexOutputDir.getPath(), files, context)) {
           success = false;
@@ -313,6 +316,8 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
         return false;
       }
     }
+
+    context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.proguard", module.getName())));
 
     final Map<AndroidCompilerMessageKind, List<String>> messages =
       AndroidCommonUtils.launchProguard(target, sdk.getSdkPath(), proguardCfgPath, inputJarOsPath,
