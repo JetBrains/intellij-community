@@ -117,8 +117,8 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
       private String getRefName(String default_name) {
         PyReferenceExpression ref = getImportReferenceExpression();
         if (ref != null) {
-          String refname = ref.getName();
-          if (refname != null) return refname;
+          String refName = ref.getName();
+          if (refName != null) return refName;
         }
         return default_name;
       }
@@ -129,7 +129,7 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
 
       public String getLocationString() {
         PyElement elt = PsiTreeUtil.getParentOfType(PyImportElementImpl.this, PyImportStatement.class, PyFromImportStatement.class);
-        StringBuffer buf = new StringBuffer("| ");
+        final StringBuilder buf = new StringBuilder("| ");
         if (elt != null) { // always? who knows :)
           if (elt instanceof PyFromImportStatement) { // from ... import ...
             buf.append("from ");
@@ -168,8 +168,13 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
   public Iterable<PyElement> iterateNames() {
     PyElement ret = getAsNameElement();
     if (ret == null) {
-      List<PyExpression> unwound_path = PyResolveUtil.unwindQualifiers(getImportReferenceExpression());
-      if ((unwound_path != null) && (unwound_path.size() > 0)) ret = unwound_path.get(0);
+      final PyReferenceExpression importReference = getImportReferenceExpression();
+      if (importReference != null) {
+        final List<PyExpression> qualifiers = PyResolveUtil.unwindQualifiers(importReference);
+        if (qualifiers.size() > 0) {
+          ret = qualifiers.get(0);
+        }
+      }
     }
     if (ret == null) {
       return EmptyIterable.getInstance();

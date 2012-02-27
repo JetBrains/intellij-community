@@ -1,6 +1,7 @@
 package com.jetbrains.python.packaging;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,11 +17,101 @@ import java.util.regex.Pattern;
  */
 public class PyRequirement {
   private static final Pattern NAME = Pattern.compile("\\s*((\\w|[-.])+)\\s*(.*)");
-  private static final Pattern VERSION = Pattern.compile("\\s*(<=?|>=?|==|!=)\\s*((\\w|[-.])+).*");
+  private static final Pattern VERSION = Pattern.compile("\\s*(<=?|>=?|==|!=)\\s*((\\w|[-.])+)");
 
-  private final String myName;
-  private final String myRelation;
-  private final String myVersion;
+  public enum Relation {
+    LT("<"),
+    LTE("<="),
+    GT(">"),
+    GTE(">="),
+    EQ("=="),
+    NE("!=");
+
+    @NotNull private final String myValue;
+
+    Relation(@NotNull String value) {
+      myValue = value;
+    }
+
+    @NotNull
+    @Override
+    public String toString() {
+      return myValue;
+    }
+
+    @Nullable
+    public static Relation fromString(@NotNull String value) {
+      for (Relation relation : Relation.values()) {
+        if (relation.myValue.equals(value)) {
+          return relation;
+        }
+      }
+      return null;
+    }
+
+    public boolean isSuccessful(int comparisonResult) {
+      switch (this) {
+        case LT:
+          return comparisonResult < 0;
+        case LTE:
+          return comparisonResult <= 0;
+        case GT:
+          return comparisonResult > 0;
+        case GTE:
+          return comparisonResult >= 0;
+        case EQ:
+          return comparisonResult == 0;
+        case NE:
+          return comparisonResult != 0;
+      }
+      return false;
+    }
+  }
+
+  public static class VersionSpec {
+    @NotNull private final Relation myRelation;
+    @NotNull private final String myVersion;
+
+    public VersionSpec(@NotNull Relation relation, @NotNull String version) {
+      myRelation = relation;
+      myVersion = version;
+    }
+
+    @Override
+    public String toString() {
+      return myRelation + myVersion;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      VersionSpec spec = (VersionSpec)o;
+      if (myRelation != spec.myRelation) return false;
+      if (!myVersion.equals(spec.myVersion)) return false;
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = myRelation.hashCode();
+      result = 31 * result + myVersion.hashCode();
+      return result;
+    }
+
+    @NotNull
+    public Relation getRelation() {
+      return myRelation;
+    }
+
+    @NotNull
+    public String getVersion() {
+      return myVersion;
+    }
+  }
+
+  @NotNull private final String myName;
+  @NotNull private final List<VersionSpec> myVersionSpecs;
 
   public static final Comparator<String> VERSION_COMPARATOR = new Comparator<String>() {
     @Override
@@ -42,67 +133,65 @@ public class PyRequirement {
 
     @NotNull
     private List<String> parse(@Nullable String s) {
-      // TODO: Take version modificators (dev, alpha, beta, b, etc.) into account
+      // TODO: Take version modificators (dev, alpha, beta, b, etc.) into account, see pkg_resources parsing for ideas
       return s != null ? StringUtil.split(s, ".") : Collections.<String>emptyList();
     }
   };
 
   public PyRequirement(@NotNull String name) {
-    this(name, null, null);
+    this(name, Collections.<VersionSpec>emptyList());
   }
 
   public PyRequirement(@NotNull String name, @NotNull String version) {
-    this(name, "==", version);
+    this(name, Collections.singletonList(new VersionSpec(Relation.EQ, version)));
   }
 
-  public PyRequirement(@NotNull String name, @Nullable String relation, @Nullable String version) {
-    if (relation == null) {
-      assert version == null;
-    }
+  public PyRequirement(@NotNull String name, @NotNull List<VersionSpec> versionSpecs) {
     myName = name;
-    myRelation = relation;
-    myVersion = version;
+    myVersionSpecs = versionSpecs;
   }
 
   @NotNull
   @Override
   public String toString() {
-    if (myRelation != null && myVersion != null) {
-      return myName + myRelation + myVersion;
-    }
-    else {
-      return myName;
-    }
+    return myName + StringUtil.join(myVersionSpecs,
+                                    new Function<VersionSpec, String>() {
+                                      @Override
+                                      public String fun(VersionSpec spec) {
+                                        return spec.toString();
+                                      }
+                                    },
+                                    ",");
   }
 
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-
     PyRequirement that = (PyRequirement)o;
-
-    if (!myName.toLowerCase().equals(that.myName.toLowerCase())) return false;
-    if (myRelation != null ? !myRelation.equals(that.myRelation) : that.myRelation != null) return false;
-    if (myVersion != null ? !myVersion.equals(that.myVersion) : that.myVersion != null) return false;
-
+    if (!myName.equals(that.myName)) return false;
+    if (!myVersionSpecs.equals(that.myVersionSpecs)) return false;
     return true;
   }
 
   @Override
   public int hashCode() {
-    int result = myName.toLowerCase().hashCode();
-    result = 31 * result + (myRelation != null ? myRelation.hashCode() : 0);
-    result = 31 * result + (myVersion != null ? myVersion.hashCode() : 0);
+    int result = myName.hashCode();
+    result = 31 * result + myVersionSpecs.hashCode();
     return result;
   }
 
   public boolean match(@NotNull List<PyPackage> packages) {
     for (PyPackage pkg : packages) {
       if (myName.equalsIgnoreCase(pkg.getName())) {
-        if (myVersion == null || VERSION_COMPARATOR.compare(myVersion, pkg.getVersion()) == 0) {
-          return true;
+        for (VersionSpec spec : myVersionSpecs) {
+          final int cmp = VERSION_COMPARATOR.compare(pkg.getVersion(), spec.getVersion());
+          final Relation relation = spec.getRelation();
+          if (!relation.isSuccessful(cmp)) {
+            return false;
+          }
         }
+        return true;
       }
     }
     return false;
@@ -112,28 +201,25 @@ public class PyRequirement {
   public static PyRequirement fromString(@NotNull String s) {
     // TODO: Extras, multi-line requirements '\'
     final Matcher nameMatcher = NAME.matcher(s);
-    if (nameMatcher.matches()) {
-      final String name = nameMatcher.group(1);
-      final String rest = nameMatcher.group(3);
-      final String relation;
-      final String version;
-      if (!rest.trim().isEmpty()) {
-        final Matcher versionMatcher = VERSION.matcher(rest);
-        if (versionMatcher.matches()) {
-          relation = versionMatcher.group(1);
-          version = versionMatcher.group(2);
-        }
-        else {
+    if (!nameMatcher.matches()) {
+      return null;
+    }
+    final String name = nameMatcher.group(1);
+    final String rest = nameMatcher.group(3);
+    final List<VersionSpec> versionSpecs = new ArrayList<VersionSpec>();
+    if (!rest.trim().isEmpty()) {
+      final Matcher versionMatcher = VERSION.matcher(rest);
+      while (versionMatcher.find()) {
+        final String rel = versionMatcher.group(1);
+        final String version = versionMatcher.group(2);
+        final Relation relation = Relation.fromString(rel);
+        if (relation == null) {
           return null;
         }
+        versionSpecs.add(new VersionSpec(relation, version));
       }
-      else {
-        relation = null;
-        version = null;
-      }
-      return new PyRequirement(name, relation, version);
     }
-    return null;
+    return new PyRequirement(name, versionSpecs);
   }
 
   @Nullable
@@ -157,15 +243,5 @@ public class PyRequirement {
   @NotNull
   public String getName() {
     return myName;
-  }
-
-  @Nullable
-  public String getRelation() {
-    return myRelation;
-  }
-
-  @Nullable
-  public String getVersion() {
-    return myVersion;
   }
 }
