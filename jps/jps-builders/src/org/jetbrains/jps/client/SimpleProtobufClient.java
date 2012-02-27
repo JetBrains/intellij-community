@@ -34,7 +34,7 @@ public class SimpleProtobufClient<T extends ProtobufResponseHandler> {
   private final ProtobufClientMessageHandler<T> myMessageHandler;
 
   public SimpleProtobufClient(final MessageLite msgDefaultInstance, final UUIDGetter uuidGetter) {
-    myMessageHandler = new ProtobufClientMessageHandler<T>(uuidGetter);
+    myMessageHandler = new ProtobufClientMessageHandler<T>(uuidGetter, this);
     myChannelFactory = new NioClientSocketChannelFactory(Executors.newCachedThreadPool(), Executors.newCachedThreadPool(), 1);
     myPipelineFactory = new ChannelPipelineFactory() {
       public ChannelPipeline getPipeline() throws Exception {
