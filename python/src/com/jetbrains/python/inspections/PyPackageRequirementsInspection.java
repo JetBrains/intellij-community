@@ -282,7 +282,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
   }
 
   private static class AddToRequirementsFix implements LocalQuickFix {
-    @Nullable private final PyListLiteralExpression myInstallRequires;
+    @Nullable private final PyListLiteralExpression mySetupPyRequires;
     @Nullable private final Document myRequirementsTxt;
     @Nullable private final PyArgumentList mySetupArgumentList;
     @NotNull private final String myPackageName;
@@ -292,7 +292,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
       myPackageName = packageName;
       myLanguageLevel = languageLevel;
       myRequirementsTxt = PyPackageUtil.findRequirementsTxt(module);
-      myInstallRequires = PyPackageUtil.findSetupPyInstallRequires(module);
+      mySetupPyRequires = PyPackageUtil.findSetupPyRequires(module);
       final PyFile setupPy = PyPackageUtil.findSetupPy(module);
       if (setupPy != null) {
         final PyCallExpression setupCall = PyPackageUtil.findSetupCall(setupPy);
@@ -315,7 +315,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
       if (myRequirementsTxt != null) {
         target = "requirements.txt";
       }
-      else if (myInstallRequires != null || mySetupArgumentList != null) {
+      else if (mySetupPyRequires != null || mySetupArgumentList != null) {
         target = "setup.py";
       }
       else {
@@ -345,24 +345,24 @@ public class PyPackageRequirementsInspection extends PyInspection {
               }
               else {
                 final PyElementGenerator generator = PyElementGenerator.getInstance(project);
-                if (myInstallRequires != null) {
-                  if (myInstallRequires.getContainingFile().isWritable()) {
+                if (mySetupPyRequires != null) {
+                  if (mySetupPyRequires.getContainingFile().isWritable()) {
                     final PyStringLiteralExpression literal = generator.createStringLiteralFromString(myPackageName);
-                    myInstallRequires.add(literal);
+                    mySetupPyRequires.add(literal);
                   }
                 }
                 else if (mySetupArgumentList != null) {
-                  final PyKeywordArgument installRequiresArg = generateInstallRequiresKwarg(generator);
-                  if (installRequiresArg != null) {
-                    mySetupArgumentList.addArgument(installRequiresArg);
+                  final PyKeywordArgument requiresArg = generateRequiresKwarg(generator);
+                  if (requiresArg != null) {
+                    mySetupArgumentList.addArgument(requiresArg);
                   }
                 }
               }
             }
 
             @Nullable
-            private PyKeywordArgument generateInstallRequiresKwarg(PyElementGenerator generator) {
-              final String text = String.format("foo(install_requires=[\"%s\"])", myPackageName);
+            private PyKeywordArgument generateRequiresKwarg(PyElementGenerator generator) {
+              final String text = String.format("foo(requires=[\"%s\"])", myPackageName);
               final PyExpression generated = generator.createExpressionFromText(myLanguageLevel, text);
               PyKeywordArgument installRequiresArg = null;
               if (generated instanceof PyCallExpression) {
@@ -370,7 +370,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
                 for (PyExpression arg : foo.getArguments()) {
                   if (arg instanceof PyKeywordArgument) {
                     final PyKeywordArgument kwarg = (PyKeywordArgument)arg;
-                    if ("install_requires".equals(kwarg.getKeyword())) {
+                    if ("requires".equals(kwarg.getKeyword())) {
                       installRequiresArg = kwarg;
                     }
                   }
