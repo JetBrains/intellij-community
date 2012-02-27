@@ -20,7 +20,7 @@
 package com.intellij.injected.editor;
 
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,7 +45,7 @@ public interface DocumentWindow extends Document {
   int injectedToHostLine(int line);
 
   @NotNull
-  RangeMarker[] getHostRanges();
+  Segment[] getHostRanges();
 
   boolean areRangesEqual(@NotNull DocumentWindow documentWindow);
 

@@ -32,7 +32,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.Extensions;
@@ -43,6 +42,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ProperTextRange;
+import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -58,6 +58,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -128,7 +129,8 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
     final PsiFile hostPsiFile = documentManager.getCachedPsiFile(hostDocument);
     if (hostPsiFile == null) return;
 
-    final List<DocumentWindow> injected = InjectedLanguageUtil.getCachedInjectedDocuments(hostPsiFile);
+    final CopyOnWriteArrayList<DocumentWindow> injected =
+      (CopyOnWriteArrayList<DocumentWindow>)InjectedLanguageUtil.getCachedInjectedDocuments(hostPsiFile);
     if (injected.isEmpty()) return;
 
     if (myProgress.isCanceled()) {
@@ -143,8 +145,9 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
         if (indicator != null && indicator.isCanceled()) return false;
         if (documentManager.isUncommited(hostDocument) || !hostPsiFile.isValid()) return false; // will be committed later
 
-        RangeMarker rangeMarker = documentWindow.getHostRanges()[0];
-        PsiElement element = rangeMarker.isValid() ? hostPsiFile.findElementAt(rangeMarker.getStartOffset()) : null;
+        Segment[] ranges = documentWindow.getHostRanges();
+        Segment rangeMarker = ranges.length > 0 ? ranges[0] : null;
+        PsiElement element = rangeMarker == null ? null : hostPsiFile.findElementAt(rangeMarker.getStartOffset());
         if (element == null) {
           synchronized (PsiLock.LOCK) {
             injected.remove(documentWindow);
@@ -166,7 +169,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
           }
           else if (stillInjectedDocument[0] != documentWindow) {
             injected.remove(documentWindow);
-            injected.add(stillInjectedDocument[0]);
+            injected.addIfAbsent(stillInjectedDocument[0]);
           }
         }
 
@@ -334,7 +337,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
     int count = 0;
     int offset = 0;
     for (PsiLanguageInjectionHost.Shred shred : shreds) {
-      TextRange encodedRange = TextRange.from(offset + shred.prefix.length(), shred.getRangeInsideHost().getLength());
+      TextRange encodedRange = TextRange.from(offset + shred.getPrefix().length(), shred.getRangeInsideHost().getLength());
       TextRange intersection = encodedRange.intersection(rangeToEdit);
       if (intersection != null) {
         count++;
@@ -364,7 +367,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
           ((List<TextRange>)result).add(intersection);
         }
       }
-      offset += shred.prefix.length() + shred.getRangeInsideHost().getLength() + shred.suffix.length();
+      offset += shred.getPrefix().length() + shred.getRangeInsideHost().getLength() + shred.getSuffix().length();
     }
     return count == 0 ? Collections.<TextRange>emptyList() : count == 1 ? Collections.singletonList((TextRange)result) : (List<TextRange>)result;
   }

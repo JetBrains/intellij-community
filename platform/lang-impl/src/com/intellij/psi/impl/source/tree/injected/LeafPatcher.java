@@ -74,14 +74,14 @@ class LeafPatcher extends RecursiveTreeElementWalkingVisitor {
 
   private StringBuilder constructTextFromHostPSI(int startOffset, int endOffset) {
     PsiLanguageInjectionHost.Shred current = myShreds.get(shredNo);
-    if (hostText == null) hostText = current.host.getText();
+    if (hostText == null) hostText = current.getHost().getText();
     StringBuilder text = new StringBuilder(endOffset-startOffset);
     while (startOffset < endOffset) {
-      TextRange shredRange = current.range;
-      String prefix = current.prefix;
+      TextRange shredRange = current.getRange();
+      String prefix = current.getPrefix();
       if (startOffset >= shredRange.getEndOffset()) {
         current = myShreds.get(++shredNo);
-        hostText = current.host.getText();
+        hostText = current.getHost().getText();
         continue;
       }
       assert startOffset >= shredRange.getStartOffset();
@@ -93,7 +93,7 @@ class LeafPatcher extends RecursiveTreeElementWalkingVisitor {
         continue;
       }
 
-      String suffix = current.suffix;
+      String suffix = current.getSuffix();
       if (startOffset < shredRange.getEndOffset() - suffix.length()) {
         // inside host body, cut out from the host text
         int startOffsetInHost = myEscapers.get(shredNo).getOffsetInHost(startOffset - shredRange.getStartOffset() - prefix.length(), current.getRangeInsideHost());

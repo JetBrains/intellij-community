@@ -41,7 +41,7 @@ public class Place extends SmartList<PsiLanguageInjectionHost.Shred> {
 
   public void dispose() {
     for (PsiLanguageInjectionHost.Shred shred : this) {
-      shred.getHostRangeMarker().dispose();
+      shred.dispose();
     }
   }
 }
