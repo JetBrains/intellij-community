@@ -128,7 +128,7 @@ public class HectorComponent extends JPanel {
                                                    GridBagConstraints.NONE, new Insets(0, 5, 0, 0), 0, 0);
 
     JPanel panel = new JPanel(new GridBagLayout());
-    panel.setBorder(IdeBorderFactory.createTitledBorder(myTitle, false, false, true, new Insets(5, 0, 0, 0)));
+    panel.setBorder(IdeBorderFactory.createTitledBorder(myTitle, false));
     final boolean addLabel = mySliders.size() > 1;
     if (addLabel) {
       layoutVertical(panel);
@@ -147,6 +147,7 @@ public class HectorComponent extends JPanel {
 
     final HyperlinkLabel configurator = new HyperlinkLabel("Configure inspections");
     gc.insets.right = 5;
+    gc.insets.bottom = 10;
     gc.weightx = 0;
     gc.fill = GridBagConstraints.NONE;
     gc.anchor = GridBagConstraints.EAST;
@@ -184,7 +185,7 @@ public class HectorComponent extends JPanel {
   @Override
   public Dimension getPreferredSize() {
     final Dimension preferredSize = super.getPreferredSize();
-    final int width = getFontMetrics(getFont()).stringWidth(myTitle) + 60;
+    final int width = 300;
     if (preferredSize.width < width){
       preferredSize.width = width;
     }
