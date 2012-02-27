@@ -1,6 +1,7 @@
 package org.jetbrains.jps.client;
 
 import com.google.protobuf.MessageLite;
+import com.intellij.openapi.diagnostic.Logger;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.channel.*;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
@@ -21,6 +22,7 @@ import java.util.concurrent.atomic.AtomicReference;
  *         Date: 1/22/12
  */
 public class SimpleProtobufClient<T extends ProtobufResponseHandler> {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.client.SimpleProtobufClient");
   private static enum State {
     DISCONNECTED, CONNECTING, CONNECTED, DISCONNECTING
   }
@@ -69,6 +71,12 @@ public class SimpleProtobufClient<T extends ProtobufResponseHandler> {
 
         if (success) {
           myConnectFuture = future;
+          try {
+            onConnect();
+          }
+          catch (Throwable e) {
+            LOG.error(e);
+          }
         }
         else {
           final Throwable reason = future.getCause();
@@ -85,6 +93,11 @@ public class SimpleProtobufClient<T extends ProtobufResponseHandler> {
     }
     // already connected
     return true;
+  }
+
+  protected void onConnect() {
+  }
+  protected void onDisconnect() {
   }
 
   public final void disconnect() {
@@ -104,6 +117,12 @@ public class SimpleProtobufClient<T extends ProtobufResponseHandler> {
       finally {
         myConnectFuture = null;
         myState.compareAndSet(State.DISCONNECTING, State.DISCONNECTED);
+        try {
+          onDisconnect();
+        }
+        catch (Throwable e) {
+          LOG.error(e);
+        }
       }
     }
   }

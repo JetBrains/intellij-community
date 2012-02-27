@@ -35,6 +35,7 @@ message Message {
       RELOAD_PROJECT_COMMAND = 4;
       FS_EVENT = 5;
       CANCEL_BUILD_COMMAND = 6;
+      PING = 7;
     }
 
     message CompilationRequest {

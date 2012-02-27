@@ -2,6 +2,7 @@ package org.jetbrains.jps.server;
 
 //import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.ConcurrencyUtil;
 import org.apache.log4j.Level;
 import org.apache.log4j.xml.DOMConfigurator;
 import org.jboss.netty.bootstrap.ServerBootstrap;
@@ -24,6 +25,8 @@ import java.io.File;
 import java.net.InetSocketAddress;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Eugene Zhuravlev
@@ -40,10 +43,13 @@ public class Server {
   private final ChannelFactory myChannelFactory;
   private final ChannelPipelineFactory myPipelineFactory;
   private final ExecutorService myBuildsExecutor;
+  private volatile long myLastPingTime  = -1L;
+  private final ScheduledExecutorService myScheduler;
 
   public Server(File systemDir) {
     Paths.getInstance().setSystemRoot(systemDir);
     final ExecutorService threadPool = Executors.newCachedThreadPool();
+    myScheduler = ConcurrencyUtil.newSingleScheduledThreadExecutor("Client activity checker", Thread.MIN_PRIORITY);
     myBuildsExecutor = Executors.newFixedThreadPool(MAX_SIMULTANEOUS_BUILD_SESSIONS);
     myChannelFactory = new NioServerSocketChannelFactory(threadPool, threadPool, 1);
     final ChannelRegistrar channelRegistrar = new ChannelRegistrar();
@@ -69,10 +75,53 @@ public class Server {
     bootstrap.setOption("child.keepAlive", true);
     final Channel serverChannel = bootstrap.bind(new InetSocketAddress(listenPort));
     myAllOpenChannels.add(serverChannel);
+
+    startIdleMonitor();
+  }
+
+  private void startIdleMonitor() {
+    final long allowedIdlePeriod = 2 * GlobalOptions.SERVER_PING_PERIOD;
+    myScheduler.scheduleAtFixedRate(new Runnable() {
+      private long myStartTime;
+      @Override
+      public void run() {
+        final long now = System.currentTimeMillis();
+        final long lastPing = myLastPingTime;
+        if (lastPing > 0L) {
+          final long elapsed = now - lastPing;
+          if (elapsed > allowedIdlePeriod) {
+            doStop();
+          }
+        }
+        else {
+          final long start = myStartTime;
+          if (start > 0) {
+            final long elapsed = now - start;
+            if (elapsed > 5 * GlobalOptions.SERVER_PING_PERIOD) {
+              // no pings received since start
+              doStop();
+            }
+          }
+          else {
+            myStartTime = now;
+          }
+        }
+      }
+
+      private void doStop() {
+        try {
+          stop();
+        }
+        finally {
+          System.exit(0);
+        }
+      }
+    }, allowedIdlePeriod, allowedIdlePeriod, TimeUnit.MILLISECONDS);
   }
 
   public void stop() {
     try {
+      myScheduler.shutdownNow();
       myBuildsExecutor.shutdownNow();
       final ChannelGroupFuture closeFuture = myAllOpenChannels.close();
       closeFuture.awaitUninterruptibly();
@@ -80,6 +129,10 @@ public class Server {
     finally {
       myChannelFactory.releaseExternalResources();
     }
+  }
+
+  public void pingReceived() {
+    myLastPingTime = System.currentTimeMillis();
   }
 
   public static void main(String[] args) {

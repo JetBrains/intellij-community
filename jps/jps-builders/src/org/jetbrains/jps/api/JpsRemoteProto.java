@@ -1019,6 +1019,7 @@ public final class JpsRemoteProto {
         RELOAD_PROJECT_COMMAND(3, 4),
         FS_EVENT(4, 5),
         CANCEL_BUILD_COMMAND(5, 6),
+        PING(6, 7),
         ;
         
         
@@ -1032,6 +1033,7 @@ public final class JpsRemoteProto {
             case 4: return RELOAD_PROJECT_COMMAND;
             case 5: return FS_EVENT;
             case 6: return CANCEL_BUILD_COMMAND;
+            case 7: return PING;
             default: return null;
           }
         }
