@@ -38,6 +38,7 @@ public class PythonRemoteSdkAdditionalData extends PythonSdkAdditionalData imple
   private static final String INTERPRETER_PATH = "INTERPRETER_PATH";
   private static final String PYCHARM_HELPERS_PATH = "PYCHARM_HELPERS_PATH";
 
+  private final static String HELPERS_DIR = "pycharm_helpers";
 
   private String myHost;
   private int myPort;
@@ -53,6 +54,7 @@ public class PythonRemoteSdkAdditionalData extends PythonSdkAdditionalData imple
 
   private String myInterpreterPath;
   private String myPyCharmTempFilesPath;
+
 
   public PythonRemoteSdkAdditionalData(@Nullable PythonSdkFlavor flavor) {
     super(flavor);
@@ -78,6 +80,10 @@ public class PythonRemoteSdkAdditionalData extends PythonSdkAdditionalData imple
 
   public String getPyCharmTempFilesPath() {
     return myPyCharmTempFilesPath;
+  }
+
+  public String getPyCharmHelpersPath() {
+    return new RemoteFile(getPyCharmTempFilesPath(), HELPERS_DIR).getPath();
   }
 
   public void setPyCharmTempFilesPath(String pyCharmTempFilesPath) {

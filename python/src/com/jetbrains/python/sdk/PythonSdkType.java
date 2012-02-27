@@ -254,7 +254,7 @@ public class PythonSdkType extends SdkType {
   public static File findExecutableFile(File parent, String name) {
     if (SystemInfo.isWindows || SystemInfo.isOS2) {
       for (String suffix : WINDOWS_EXECUTABLE_SUFFIXES) {
-        File file = new File(parent, name + suffix);
+        File file = new File(parent, name + "." + suffix);
         if (file.exists()) return file;
       }
     }
@@ -299,7 +299,7 @@ public class PythonSdkType extends SdkType {
 
 
   // /home/joe/foo -> ~/foo
-  protected static String shortenDirName(String path) {
+  public static String shortenDirName(String path) {
     String home = SystemProperties.getUserHome();
     if (path.startsWith(home)) {
       return "~" + path.substring(home.length());

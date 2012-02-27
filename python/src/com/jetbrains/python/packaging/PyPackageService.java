@@ -14,8 +14,7 @@ import java.util.Map;
  */
 @State(name = "PyPackageService",
        storages = {
-           @Storage( file = "$PROJECT_FILE$"),
-           @Storage( file = "$PROJECT_CONFIG_DIR$/packages.xml", scheme = StorageScheme.DIRECTORY_BASED)
+           @Storage( file = "$APP_CONFIG$/packages.xml")
        }
 )
 public class PyPackageService implements
@@ -23,7 +22,8 @@ public class PyPackageService implements
   public Map<String, Boolean> sdkToUsersite = new HashMap<String, Boolean>();
   public List<String> additionalRepositories = new ArrayList<String>();
   public Map<String, String> PY_PACKAGES = new HashMap<String, String>();
-
+  public String virtualEnvBasePath;
+  
   public long LAST_TIME_CHECKED = 0;
 
   @Override
@@ -57,5 +57,13 @@ public class PyPackageService implements
 
   public static PyPackageService getInstance(Project project) {
     return ServiceManager.getService(project, PyPackageService.class);
+  }
+
+  public String getVirtualEnvBasePath() {
+    return virtualEnvBasePath;
+  }
+
+  public void setVirtualEnvBasePath(String virtualEnvBasePath) {
+    this.virtualEnvBasePath = virtualEnvBasePath;
   }
 }

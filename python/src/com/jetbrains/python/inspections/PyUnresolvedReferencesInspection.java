@@ -12,6 +12,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.Key;
@@ -38,10 +39,13 @@ import com.jetbrains.python.codeInsight.imports.OptimizeImportsQuickFix;
 import com.jetbrains.python.codeInsight.imports.PythonReferenceImporter;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.documentation.DocStringParameterReference;
+import com.jetbrains.python.packaging.PyPIPackageUtil;
+import com.jetbrains.python.packaging.PyRequirement;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyImportStatementNavigator;
 import com.jetbrains.python.psi.impl.PyImportedModule;
+import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.impl.references.PyImportReference;
 import com.jetbrains.python.psi.impl.references.PyOperatorReference;
 import com.jetbrains.python.psi.resolve.ImportedResolveResult;
@@ -448,6 +452,31 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       PsiElement point = node.getLastChild(); // usually the identifier at the end of qual ref
       if (point == null) point = node;
       TextRange range = reference.getRangeInElement().shiftRight(-point.getStartOffsetInParent());
+      if (reference instanceof PyImportReference && refname != null) {
+        // TODO: Ignore references in the second part of the 'from ... import ...' expression
+        final PyQualifiedName qname = PyQualifiedName.fromDottedString(refname);
+        final List<String> components = qname.getComponents();
+        if (!components.isEmpty()) {
+          final String packageName = components.get(0);
+          final Module module = ModuleUtil.findModuleForPsiElement(node);
+          final Sdk sdk = PythonSdkType.findPythonSdk(module);
+          if (module != null && sdk != null) {
+            final Map<String, String> pyPIPackages = PyPIPackageUtil.getPyPIPackages(node.getProject());
+            boolean found = false;
+            // TODO: Cache the set of lower-cased package names and search via Set.contains()
+            for (String s : pyPIPackages.keySet()) {
+              if (s.compareToIgnoreCase(packageName) == 0) {
+                found = true;
+              }
+            }
+            if (found) {
+              final List<PyRequirement> requirements = Collections.singletonList(new PyRequirement(packageName));
+              final String name = "Install package " + packageName;
+              actions.add(new PyPackageRequirementsInspection.InstallRequirementsFix(name, module, sdk, requirements));
+            }
+          }
+        }
+      }
       registerProblem(point, description, hl_type, null, range, actions.toArray(new LocalQuickFix[actions.size()]));
     }
 

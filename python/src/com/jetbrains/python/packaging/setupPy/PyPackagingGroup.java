@@ -1,4 +1,4 @@
-package com.jetbrains.python.packaging;
+package com.jetbrains.python.packaging.setupPy;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -18,6 +18,17 @@ public class PyPackagingGroup extends ActionGroup {
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
     List<AnAction> result = new ArrayList<AnAction>();
     result.add(new CreateSetupPyAction());
+    result.add(new SetupTaskChooserAction());
+    //if (e != null) {
+    //  final Module module = e.getData(LangDataKeys.MODULE);
+    //  if (module != null) {
+    //    final PyFile setupPy = PyPackageUtil.findSetupPy(module);
+    //    if (setupPy != null) {
+    //      result.add(Separator.getInstance());
+    //      result.addAll(SetupTaskIntrospector.createSetupTaskActions(module, setupPy));
+    //    }
+    //  }
+    //}
     return result.toArray(new AnAction[result.size()]);
   }
 }

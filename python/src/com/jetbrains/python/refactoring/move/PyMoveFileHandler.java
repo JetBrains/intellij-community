@@ -17,10 +17,7 @@ import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author vlan
@@ -36,7 +33,7 @@ public class PyMoveFileHandler extends MoveFileHandler {
   @Override
   public void prepareMovedFile(PsiFile file, PsiDirectory moveDestination, Map<PsiElement, PsiElement> oldToNewMap) {
     if (file != null) {
-      final List<VirtualFile> roots = PyUtil.getSourceRoots(file);
+      final Collection<VirtualFile> roots = PyUtil.getSourceRoots(file);
       PsiDirectory root = moveDestination;
       while (root != null && !roots.contains(root.getVirtualFile())) {
         root = root.getParentDirectory();

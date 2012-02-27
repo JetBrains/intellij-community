@@ -1,4 +1,4 @@
-package com.jetbrains.python.packaging;
+package com.jetbrains.python.packaging.setupPy;
 
 import com.intellij.ide.IdeView;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
@@ -12,14 +12,19 @@ import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.SystemProperties;
+import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.python.psi.PyUtil;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.Properties;
 
 /**
@@ -37,7 +42,7 @@ public class CreateSetupPyAction extends CreateFromTemplateAction {
   @Override
   public void update(AnActionEvent e) {
     final Module module = e.getData(LangDataKeys.MODULE);
-    e.getPresentation().setEnabled(module != null && PyPackageManager.findSetupPy(module) == null);
+    e.getPresentation().setEnabled(module != null && PyPackageUtil.findSetupPy(module) == null);
   }
 
   @Override
@@ -49,17 +54,45 @@ public class CreateSetupPyAction extends CreateFromTemplateAction {
       final PropertiesComponent properties = PropertiesComponent.getInstance();
       defaults.add("Author", properties.getOrInit(AUTHOR_PROPERTY, SystemProperties.getUserName()));
       defaults.add("Author_Email", properties.getOrInit(EMAIL_PROPERTY, ""));
+      defaults.addPredefined("PackageList", getPackageList(dataContext));
+      defaults.addPredefined("PackageDirs", getPackageDirs(dataContext));
     }
     return defaults;
+  }
+
+  private static String getPackageList(DataContext dataContext) {
+    final Module module = LangDataKeys.MODULE.getData(dataContext);
+    if (module != null) {
+      return "['" + StringUtil.join(PyPackageUtil.getPackageNames(module), "', '") + "']";
+    }
+    return "[]";
+  }
+
+  private static String getPackageDirs(DataContext dataContext) {
+    final Module module = LangDataKeys.MODULE.getData(dataContext);
+    if (module != null) {
+      final VirtualFile[] sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots();
+      if (sourceRoots.length > 0) {
+        for (VirtualFile sourceRoot : sourceRoots) {
+          // TODO notify if we have multiple source roots and can't build mapping automatically
+          final VirtualFile contentRoot = ProjectFileIndex.SERVICE.getInstance(module.getProject()).getContentRootForFile(sourceRoot);
+          if (contentRoot != null && contentRoot != sourceRoot) {
+            final String relativePath = VfsUtilCore.getRelativePath(sourceRoot, contentRoot, '/');
+            return "\n    package_dir={'': '" + relativePath + "'},";
+          }
+        }
+      }
+    }
+    return "";
   }
 
   @Override
   protected PsiDirectory getTargetDirectory(DataContext dataContext, IdeView view) {
     final Module module = LangDataKeys.MODULE.getData(dataContext);
     if (module != null) {
-      final List<VirtualFile> sourceRoots = PyUtil.getSourceRoots(module);
+      final Collection<VirtualFile> sourceRoots = PyUtil.getSourceRoots(module);
       if (sourceRoots.size() > 0) {
-        return PsiManager.getInstance(module.getProject()).findDirectory(sourceRoots.get(0));
+        return PsiManager.getInstance(module.getProject()).findDirectory(sourceRoots.iterator().next());
       }
     }
     return super.getTargetDirectory(dataContext, view);
