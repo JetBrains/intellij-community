@@ -12,6 +12,7 @@
     </component>
 
     <component>
+      <interface-class>com.intellij.util.indexing.FileBasedIndex</interface-class>
       <implementation-class>com.intellij.util.indexing.FileBasedIndexEx</implementation-class>
     </component>
     <component>
