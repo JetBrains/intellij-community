@@ -19,16 +19,14 @@ import org.jetbrains.jps.incremental.messages.ProgressMessage;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 /**
  * @author Eugene.Kudelevsky
  */
-
-// todo: save validity states
-// todo: support light builds (for tests)
-
 public class AndroidResourcePackagingBuilder extends ModuleLevelBuilder {
   @NonNls private static final String BUILDER_NAME = "android-packager";
 
@@ -38,7 +36,7 @@ public class AndroidResourcePackagingBuilder extends ModuleLevelBuilder {
 
   @Override
   public ExitCode build(CompileContext context, ModuleChunk chunk) throws ProjectBuildException {
-    if (context.isCompilingTests() || !AndroidJpsUtil.containsAndroidFacet(chunk)) {
+    if (context.isCompilingTests() || !AndroidJpsUtil.containsAndroidFacet(chunk) || AndroidJpsUtil.isLightBuild(context)) {
       return ModuleLevelBuilder.ExitCode.OK;
     }
 
@@ -50,25 +48,45 @@ public class AndroidResourcePackagingBuilder extends ModuleLevelBuilder {
     }
   }
 
-  private static ExitCode doBuild(CompileContext context, ModuleChunk chunk) {
+  private static ExitCode doBuild(CompileContext context, ModuleChunk chunk) throws IOException {
     boolean success = true;
 
-    for (Module module : chunk.getModules()) {
-      final AndroidFacet facet = AndroidJpsUtil.getFacet(module);
-      if (facet == null || facet.isLibrary()) {
-        continue;
+    final File dataStorageRoot = context.getDataManager().getDataStorageRoot();
+    AndroidResourcesPackagingStateStorage devStorage = null;
+    AndroidResourcesPackagingStateStorage releaseStorage = null;
+
+    try {
+      devStorage = new AndroidResourcesPackagingStateStorage(dataStorageRoot, false);
+      releaseStorage = new AndroidResourcesPackagingStateStorage(dataStorageRoot, true);
+
+      for (Module module : chunk.getModules()) {
+        final AndroidFacet facet = AndroidJpsUtil.getFacet(module);
+        if (facet == null || facet.isLibrary()) {
+          continue;
+        }
+
+        context.processMessage(new ProgressMessage("Packaging module " + module.getName()));
+
+        if (!packageResources(facet, context, devStorage, releaseStorage)) {
+          success = false;
+        }
       }
-
-      context.processMessage(new ProgressMessage("Packaging module " + module.getName()));
-
-      if (!packageResources(facet, context)) {
-        success = false;
+    }
+    finally {
+      if (devStorage != null) {
+        devStorage.close();
+      }
+      if (releaseStorage != null) {
+        releaseStorage.close();
       }
     }
     return success ? ExitCode.OK : ExitCode.ABORT;
   }
 
-  private static boolean packageResources(@NotNull AndroidFacet facet, @NotNull CompileContext context) {
+  private static boolean packageResources(@NotNull AndroidFacet facet,
+                                          @NotNull CompileContext context,
+                                          @NotNull AndroidResourcesPackagingStateStorage devStorage,
+                                          @NotNull AndroidResourcesPackagingStateStorage releaseStorage) {
     final Module module = facet.getModule();
 
     try {
@@ -104,8 +122,22 @@ public class AndroidResourcePackagingBuilder extends ModuleLevelBuilder {
         return true;
       }
 
-      // todo: generate release package
-      return doPackageResources(context, manifestFile, target, resourceDirPaths, assetsDirPath, outputFilePath, false);
+      final List<String> assetDirPaths = assetsDirPath != null
+                                         ? Arrays.asList(assetsDirPath)
+                                         : Collections.<String>emptyList();
+
+      final AndroidResourcesPackagingState newState = new AndroidResourcesPackagingState(Arrays.asList(resourceDirPaths), assetDirPaths);
+      final boolean releaseBuild = AndroidJpsUtil.isReleaseBuild(context);
+      final AndroidResourcesPackagingStateStorage storage = releaseBuild ? releaseStorage : devStorage;
+      final AndroidResourcesPackagingState oldState = storage.getState(module.getName());
+
+      if (oldState == null || !oldState.equals(newState)) {
+        if (!doPackageResources(context, manifestFile, target, resourceDirPaths, assetsDirPath, outputFilePath, releaseBuild)) {
+          return false;
+        }
+        storage.update(module.getName(), newState);
+      }
+      return true;
     }
     catch (IOException e) {
       AndroidJpsUtil.reportExceptionError(context, null, e, BUILDER_NAME);

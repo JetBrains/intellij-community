@@ -30,9 +30,6 @@ import java.util.*;
 /**
  * @author Eugene.Kudelevsky
  */
-
-// todo: support light builds (for tests)
-
 public class AndroidDexBuilder extends ProjectLevelBuilder {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.android.AndroidDexBuilder");
 
@@ -40,7 +37,7 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
 
   @Override
   public void build(CompileContext context) throws ProjectBuildException {
-    if (!AndroidJpsUtil.containsAndroidFacet(context.getProject())) {
+    if (!AndroidJpsUtil.containsAndroidFacet(context.getProject()) || AndroidJpsUtil.isLightBuild(context)) {
       return;
     }
     context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.dex")));

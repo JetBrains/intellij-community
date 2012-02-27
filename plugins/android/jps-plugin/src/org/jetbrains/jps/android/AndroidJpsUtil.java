@@ -353,4 +353,12 @@ class AndroidJpsUtil {
       }
     }
   }
+
+  public static boolean isLightBuild(@NotNull CompileContext context) {
+    return Boolean.parseBoolean(context.getBuilderParameter(AndroidCommonUtils.LIGHT_BUILD_OPTION));
+  }
+
+  public static boolean isReleaseBuild(@NotNull CompileContext context) {
+    return Boolean.parseBoolean(context.getBuilderParameter(AndroidCommonUtils.RELEASE_BUILD_OPTION));
+  }
 }

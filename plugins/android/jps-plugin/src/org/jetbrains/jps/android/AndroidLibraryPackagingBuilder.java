@@ -22,9 +22,6 @@ import java.util.Set;
 /**
  * @author Eugene.Kudelevsky
  */
-
-// todo: support light builds
-
 public class AndroidLibraryPackagingBuilder extends ModuleLevelBuilder {
   @NonNls private static final String BUILDER_NAME = "android-library-packager";
 
@@ -34,7 +31,7 @@ public class AndroidLibraryPackagingBuilder extends ModuleLevelBuilder {
 
   @Override
   public ModuleLevelBuilder.ExitCode build(CompileContext context, ModuleChunk chunk) throws ProjectBuildException {
-    if (context.isCompilingTests() || !AndroidJpsUtil.containsAndroidFacet(chunk)) {
+    if (context.isCompilingTests() || !AndroidJpsUtil.containsAndroidFacet(chunk) || AndroidJpsUtil.isLightBuild(context)) {
       return ModuleLevelBuilder.ExitCode.OK;
     }
     context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.library.packaging")));

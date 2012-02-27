@@ -42,6 +42,9 @@ public class AndroidCommonUtils {
   @NonNls public static final String PNG_EXTENSION = "png";
   private static final String[] DRAWABLE_EXTENSIONS = new String[]{PNG_EXTENSION, "jpg", "gif"};
 
+  @NonNls public static final String RELEASE_BUILD_OPTION = "RELEASE_BUILD_KEY";
+  @NonNls public static final String LIGHT_BUILD_OPTION = "LIGHT_BUILD_KEY";
+
   private AndroidCommonUtils() {
   }
 
