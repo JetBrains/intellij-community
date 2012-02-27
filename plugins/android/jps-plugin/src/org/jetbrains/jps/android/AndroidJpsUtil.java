@@ -11,6 +11,7 @@ import com.intellij.util.containers.HashSet;
 import org.jetbrains.android.sdk.MessageBuildingSdkLog;
 import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.AndroidCompilerMessageKind;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.*;
@@ -33,6 +34,7 @@ import java.util.regex.Matcher;
  */
 class AndroidJpsUtil {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.android.AndroidJpsUtil");
+  @NonNls public static final String ANDROID_STORAGE_DIR = "android";
 
   private AndroidJpsUtil() {
   }

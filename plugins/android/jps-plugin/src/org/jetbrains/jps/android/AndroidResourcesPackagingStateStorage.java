@@ -16,7 +16,6 @@ import java.io.IOException;
  */
 public class AndroidResourcesPackagingStateStorage extends AbstractStateStorage<String, AndroidResourcesPackagingState> {
   @NonNls private static final String RELEASE_SUFFIX = "_release";
-  @NonNls private static final String ANDROID_RESOURCES_AND_ASSETS_STORAGE_DIR = "android_resources_and_assets";
   @NonNls private static final String RESOURCES_AND_ASSETS_STORAGE = "resources_and_assets";
 
   public AndroidResourcesPackagingStateStorage(@NotNull File dataStorageRoot, boolean release) throws IOException {
@@ -25,11 +24,12 @@ public class AndroidResourcesPackagingStateStorage extends AbstractStateStorage<
 
   @NotNull
   private static File getStorageFile(@NotNull File dataStorageRoot, boolean release) {
-    return new File(new File(dataStorageRoot, ANDROID_RESOURCES_AND_ASSETS_STORAGE_DIR), getStorageFileName(release));
+    return new File(new File(new File(dataStorageRoot, AndroidJpsUtil.ANDROID_STORAGE_DIR), getStorageDirName(release)),
+                    RESOURCES_AND_ASSETS_STORAGE);
   }
 
   @NotNull
-  private static String getStorageFileName(boolean release) {
+  private static String getStorageDirName(boolean release) {
     return release ? RESOURCES_AND_ASSETS_STORAGE + RELEASE_SUFFIX : RESOURCES_AND_ASSETS_STORAGE;
   }
 
