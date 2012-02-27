@@ -186,8 +186,7 @@ target(name: "zip", description: "Generate zip plugin file") {
   ant.mkdir(dir: "${plugindir}/helpers")
   ant.copy(todir: "${plugindir}/helpers") {
     fileset(dir: "${pluginHome}/helpers") {
-      include(name: "**/*.py")
-      include(name: "**/*.xml")
+      include(name: "**/*")
     }
   }
 
