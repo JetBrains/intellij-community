@@ -86,7 +86,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  *         Date: Dec 20, 2007
  */
 
-public class FileBasedIndex implements Disposable{
+public class FileBasedIndex {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.FileBasedIndex");
   @NonNls
   private static final String CORRUPTION_MARKER_NAME = "corruption.marker";
@@ -520,8 +520,7 @@ public class FileBasedIndex implements Disposable{
     return map;
   }
 
-  @Override
-  public void dispose() {
+  public void disposeComponent() {
     performShutdown();
   }
 
