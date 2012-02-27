@@ -51,8 +51,8 @@ import org.jetbrains.android.compiler.AndroidProguardCompiler;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.sdk.AndroidPlatform;
-import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.android.util.AndroidBundle;
+import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.SaveFileListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -196,7 +196,7 @@ class ApkStep extends ExportSignedPackageWizardStep {
     AndroidPlatform platform = myWizard.getFacet().getConfiguration().getAndroidPlatform();
     assert platform != null;
     String sdkPath = platform.getSdkData().getLocation();
-    String zipAlignPath = sdkPath + File.separatorChar + AndroidSdkUtils.toolPath(SdkConstants.FN_ZIPALIGN);
+    String zipAlignPath = sdkPath + File.separatorChar + AndroidCommonUtils.toolPath(SdkConstants.FN_ZIPALIGN);
     File zipalign = new File(zipAlignPath);
     final boolean runZipAlign = zipalign.isFile();
     File destFile = null;

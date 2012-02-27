@@ -423,10 +423,6 @@ public class AndroidSdkUtils {
     };
   }
 
-  public static String toolPath(@NotNull String toolFileName) {
-    return SdkConstants.OS_SDK_TOOLS_FOLDER + toolFileName;
-  }
-
   @Nullable
   public static Sdk findAppropriateAndroidPlatform(@NotNull IAndroidTarget target, @NotNull AndroidSdkData sdkData) {
     for (Sdk library : ProjectJdkTable.getInstance().getAllJdks()) {

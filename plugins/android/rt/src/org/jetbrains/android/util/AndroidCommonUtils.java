@@ -343,4 +343,8 @@ public class AndroidCommonUtils {
 
     return FileUtil.toSystemDependentName(inputJar.getPath());
   }
+
+  public static String toolPath(@NotNull String toolFileName) {
+    return SdkConstants.OS_SDK_TOOLS_FOLDER + toolFileName;
+  }
 }

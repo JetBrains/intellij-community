@@ -81,6 +81,7 @@ import org.jetbrains.android.resourceManagers.ResourceManager;
 import org.jetbrains.android.resourceManagers.SystemResourceManager;
 import org.jetbrains.android.sdk.*;
 import org.jetbrains.android.util.AndroidBundle;
+import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.android.util.ResourceEntry;
 import org.jetbrains.annotations.NotNull;
@@ -392,7 +393,8 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
   public void launchEmulator(@Nullable final String avdName, @NotNull final String commands, @Nullable ProcessHandler handler) {
     AndroidPlatform platform = getConfiguration().getAndroidPlatform();
     if (platform != null) {
-      final String emulatorPath = platform.getSdkData().getLocation() + File.separator + AndroidSdkUtils.toolPath(SdkConstants.FN_EMULATOR);
+      final String emulatorPath = platform.getSdkData().getLocation() + File.separator + AndroidCommonUtils
+        .toolPath(SdkConstants.FN_EMULATOR);
       final GeneralCommandLine commandLine = new GeneralCommandLine();
       commandLine.setExePath(FileUtil.toSystemDependentName(emulatorPath));
       if (avdName != null) {

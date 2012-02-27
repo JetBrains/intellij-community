@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -233,9 +234,15 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
                                ? item.getFinalPath() + UNSIGNED_SUFFIX
                                : item.getFinalPath();
 
-      final Map<CompilerMessageCategory, List<String>> messages = AndroidApkBuilder
-        .execute(context.getProject(), resPackagePath, item.getClassesDexPath(), item.getSourceRoots(), externalLibPaths, item.getNativeLibsFolders(),
-                 finalPath, unsigned, item.mySdkPath, item.getCustomKeystorePath());
+      final String[] sourceRoots = AndroidCompileUtil.toOsPaths(item.getSourceRoots());
+      final String[] nativeLibsFolders = AndroidCompileUtil.toOsPaths(item.getNativeLibsFolders());
+      final Project project = context.getProject();
+
+      final Map<CompilerMessageCategory, List<String>> messages = AndroidCompileUtil.toCompilerMessageCategoryKeys(
+        AndroidApkBuilder.execute(resPackagePath, item.getClassesDexPath(), sourceRoots, externalLibPaths,
+                                  nativeLibsFolders, finalPath, unsigned, item.mySdkPath, item.getCustomKeystorePath(),
+                                  new ExcludedSourcesFilter(project)));
+
       AndroidCompileUtil.addMessages(context, messages);
     }
     catch (final IOException e) {
@@ -296,7 +303,7 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
     private final boolean myGenerateUnsigendApk;
     private final Module myModule;
     private boolean myReleaseBuild;
-    
+
     private final String myCustomKeystorePath;
 
     private AptPackagingItem(String sdkPath,
@@ -375,8 +382,8 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
 
     @Nullable
     public ValidityState getValidityState() {
-      return new MyValidityState(myResPackagePath, myClassesDexPath, myFinalPath, myGenerateUnsigendApk, myReleaseBuild,
-                                 mySourceRoots, myExternalLibraries, myNativeLibsFolders, myCustomKeystorePath);
+      return new MyValidityState(myModule.getProject(), myResPackagePath, myClassesDexPath, myFinalPath, myGenerateUnsigendApk,
+                                 myReleaseBuild, mySourceRoots, myExternalLibraries, myNativeLibsFolders, myCustomKeystorePath);
     }
   }
 
@@ -400,7 +407,8 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
       myCustomKeystorePath = CompilerIOUtil.readString(is);
     }
 
-    MyValidityState(String resPackagePath,
+    MyValidityState(Project project,
+                    String resPackagePath,
                     String classesDexPath,
                     String apkPath,
                     boolean generateUnsignedApk,
@@ -416,25 +424,26 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
       myReleaseBuild = releaseBuild;
       myCustomKeystorePath = customKeystorePath != null ? customKeystorePath : "";
 
-      final HashSet<VirtualFile> resourcesFromSourceRoot = new HashSet<VirtualFile>();
+      final HashSet<File> resourcesFromSourceRoot = new HashSet<File>();
       for (VirtualFile sourceRoot : sourceRoots) {
-        AndroidApkBuilder.collectStandardSourceFolderResources(sourceRoot, new HashSet<VirtualFile>(), resourcesFromSourceRoot, null);
+        AndroidApkBuilder.collectStandardSourceFolderResources(new File(sourceRoot.getPath()), resourcesFromSourceRoot,
+                                                               new ExcludedSourcesFilter(project));
       }
-      for (VirtualFile resource : resourcesFromSourceRoot) {
-        myResourceTimestamps.put(resource.getPath(), resource.getTimeStamp());
+      for (File resource : resourcesFromSourceRoot) {
+        myResourceTimestamps.put(FileUtil.toSystemIndependentName(resource.getPath()), resource.lastModified());
       }
 
       for (VirtualFile externalLib : externalLibs) {
         myResourceTimestamps.put(externalLib.getPath(), externalLib.getTimeStamp());
       }
-      ArrayList<VirtualFile> nativeLibs = new ArrayList<VirtualFile>();
+      ArrayList<File> nativeLibs = new ArrayList<File>();
       for (VirtualFile nativeLibFolder : nativeLibFolders) {
         for (VirtualFile child : nativeLibFolder.getChildren()) {
-          AndroidApkBuilder.collectNativeLibraries(child, nativeLibs, !releaseBuild);
+          AndroidApkBuilder.collectNativeLibraries(new File(child.getPath()), nativeLibs, !releaseBuild);
         }
       }
-      for (VirtualFile nativeLib : nativeLibs) {
-        myResourceTimestamps.put(nativeLib.getPath(), nativeLib.getTimeStamp());
+      for (File nativeLib : nativeLibs) {
+        myResourceTimestamps.put(FileUtil.toSystemIndependentName(nativeLib.getPath()), nativeLib.lastModified());
       }
     }
 
@@ -447,7 +456,7 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
       return mvs.myGenerateUnsignedApk == myGenerateUnsignedApk &&
              mvs.myReleaseBuild == myReleaseBuild &&
              mvs.myResourceTimestamps.equals(myResourceTimestamps) &&
-             mvs.myApkPath.equals(myApkPath) && 
+             mvs.myApkPath.equals(myApkPath) &&
              mvs.myCustomKeystorePath.equals(myCustomKeystorePath);
     }
 
