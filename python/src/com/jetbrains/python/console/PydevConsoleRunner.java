@@ -236,17 +236,28 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
           PyRemoteSshProcess server =
             manager.createRemoteProcess(getProject(), data, commandLine);
 
-          try {
-            Scanner s = new Scanner(server.getInputStream());
-            Thread.sleep(1000);
 
-            int port = s.nextInt();
-            int port2 = s.nextInt();
-            server.addTunnelLocal(myPorts[0], data.getHost(), port);
-            server.addTunnelRemote(port2, "localhost", myPorts[1]);
+          Scanner s = new Scanner(server.getInputStream());
+          boolean received = false;
+          long started = System.currentTimeMillis();
+          while (!received && (System.currentTimeMillis() - started < 2000)) {
+            try {
+              int port = s.nextInt();
+              int port2 = s.nextInt();
+              received = true;
+              server.addTunnelLocal(myPorts[0], data.getHost(), port);
+              server.addTunnelRemote(port2, "localhost", myPorts[1]);
+            }
+            catch (Exception e) {
+              try {
+                Thread.sleep(200);
+              }
+              catch (InterruptedException e1) {
+              }
+            }
           }
-          catch (Exception e) {
-
+          if (!received) {
+            throw new ExecutionException("Couldn't get remote ports for console connection.");
           }
           try {
             myPydevConsoleCommunication = new PydevConsoleCommunication(getProject(), myPorts[0], server, myPorts[1]);
@@ -264,7 +275,8 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     }
     else {
       myCommandLine = myCommandLineArgumentsProvider.getCommandLineString();
-      final Process server = Runner.createProcess(getWorkingDir(), myCommandLineArgumentsProvider.getAdditionalEnvs(), myCommandLineArgumentsProvider.getArguments());
+      final Process server = Runner
+        .createProcess(getWorkingDir(), myCommandLineArgumentsProvider.getAdditionalEnvs(), myCommandLineArgumentsProvider.getArguments());
       try {
         myPydevConsoleCommunication = new PydevConsoleCommunication(getProject(), myPorts[0], server, myPorts[1]);
       }
