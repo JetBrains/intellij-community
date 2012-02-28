@@ -252,7 +252,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     }
   }
 
-  public void fileDirty(final VirtualFile file) {
+  public void fileDirty(@NotNull final VirtualFile file) {
     try {
       final AbstractVcs vcs = myGuess.getVcsForDirty(file);
       if (vcs == null) return;
@@ -269,7 +269,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     }
   }
 
-  public void fileDirty(final FilePath file) {
+  public void fileDirty(@NotNull final FilePath file) {
     try {
       final AbstractVcs vcs = myGuess.getVcsForDirty(file);
       if (vcs == null) return;
