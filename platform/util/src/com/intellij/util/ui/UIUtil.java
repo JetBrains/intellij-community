@@ -19,10 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.ColorUtil;
-import com.intellij.ui.Gray;
-import com.intellij.ui.PanelWithAnchor;
-import com.intellij.ui.SideBorder;
+import com.intellij.ui.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PairFunction;
 import com.intellij.util.Processor;
@@ -2533,23 +2530,30 @@ public class UIUtil {
     return false;
   }
 
-  public static void mergeComponentsWithAnchor(PanelWithAnchor c1, PanelWithAnchor c2) {
-    if (c1 == null || c2 == null) return;
-
-    if (c1.getAnchor() == null) {
-      c1.setAnchor(c2.getAnchor());
-    } else {
-      if (c2.getAnchor() == null) {
-        c2.setAnchor(c1.getAnchor());
-      } else {
-        JComponent anchor = c1.getAnchor().getPreferredSize().getWidth() > c2.getAnchor().getPreferredSize().getWidth() ?
-                            c1.getAnchor() : c2.getAnchor();
-        c2.setAnchor(anchor);
-        c1.setAnchor(anchor);
-      }
-    }
+  @Nullable
+  public static JComponent mergeComponentsWithAnchor(PanelWithAnchor...panels) {
+    return mergeComponentsWithAnchor(Arrays.asList(panels));
   }
   
+  @Nullable
+  public static JComponent mergeComponentsWithAnchor(Collection<? extends PanelWithAnchor> panels) {
+    JComponent tempAnchor = null;
+    int maxWidth = 0;
+    for (PanelWithAnchor panel : panels) {
+      if (panel == null) continue;
+      if (panel.getAnchor() == null) continue;
+      if (maxWidth < panel.getAnchor().getPreferredSize().width) {
+        maxWidth = panel.getAnchor().getPreferredSize().width;
+        tempAnchor = panel.getAnchor();
+      }
+    }
+    for (PanelWithAnchor panel : panels) {
+      if (panel == null) continue;
+      panel.setAnchor(tempAnchor);
+    }
+    return tempAnchor;
+  }
+
   public static void setNotOpaqueRecursively(@NotNull Component component) {
     if (!isUnderAquaLookAndFeel()) return;
 
