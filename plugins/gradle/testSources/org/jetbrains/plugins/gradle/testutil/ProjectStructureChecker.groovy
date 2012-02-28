@@ -9,7 +9,7 @@ import org.junit.Assert
 import static junit.framework.Assert.assertEquals
 import static junit.framework.Assert.fail
 import org.jetbrains.plugins.gradle.model.GradleEntityOwner
-import org.jetbrains.plugins.gradle.model.id.GradleEntityId
+
 import org.jetbrains.plugins.gradle.model.GradleEntityType
 
 /** 
@@ -26,7 +26,7 @@ class ProjectStructureChecker {
   static def COLORS = [
     'gradle' : GradleTextAttributes.GRADLE_LOCAL_CHANGE,
     'intellij' : GradleTextAttributes.INTELLIJ_LOCAL_CHANGE,
-    'conflict' : GradleTextAttributes.GRADLE_CHANGE_CONFLICT
+    'conflict' : GradleTextAttributes.CHANGE_CONFLICT
   ]
 
   def check(Node expected, DefaultMutableTreeNode actual) {
@@ -62,7 +62,7 @@ class ProjectStructureChecker {
   }
 
   def checkMarkup(Node node, GradleProjectStructureNodeDescriptor descriptor) {
-    def expectedMarkup = COLORS[node.children().find {it instanceof CharSequence}]?: GradleTextAttributes.GRADLE_NO_CHANGE
+    def expectedMarkup = COLORS[node.children().find {it instanceof CharSequence}]?: GradleTextAttributes.NO_CHANGE
     assertEquals("node '$descriptor'", expectedMarkup, descriptor.attributes)
 
     if (descriptor.element.type != GradleEntityType.SYNTHETIC) {

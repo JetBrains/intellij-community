@@ -130,6 +130,6 @@ public abstract class AbstractProjectBuilder extends BuilderSupport {
 
   private def clear() {
     reset()
-    [modules, libraryDependencies, libraries, moduleDependencies]*.clear()
+    [modules, contentRoots, libraryDependencies, libraries, moduleDependencies]*.clear()
   }
 }

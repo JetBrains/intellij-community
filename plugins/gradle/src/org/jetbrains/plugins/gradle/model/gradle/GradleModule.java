@@ -51,6 +51,10 @@ public class GradleModule extends AbstractNamedGradleEntity implements Named {
     myContentRoots.add(contentRoot);
   }
 
+  public void clearContentRoots() {
+    myContentRoots.clear();
+  }
+  
   public boolean isInheritProjectCompileOutputPath() {
     return myInheritProjectCompileOutputPath;
   }

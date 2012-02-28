@@ -21,7 +21,7 @@ public class GradleSyntheticId extends GradleAbstractEntityId {
   @NotNull private final String myText;
 
   public GradleSyntheticId(@NotNull String text) {
-    super(GradleEntityType.SYNTHETIC, GradleEntityOwner.GRADLE/* no matter what owner is used */);
+    super(GradleEntityType.SYNTHETIC, GradleEntityOwner.INTELLIJ/* no matter what owner is used */);
     myText = text;
   }
 

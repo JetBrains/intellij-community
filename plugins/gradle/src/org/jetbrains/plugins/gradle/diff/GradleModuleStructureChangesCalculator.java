@@ -22,8 +22,10 @@ import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.RootPolicy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.gradle.*;
+import org.jetbrains.plugins.gradle.model.intellij.ModuleAwareContentRoot;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -37,13 +39,16 @@ import java.util.List;
 public class GradleModuleStructureChangesCalculator implements GradleStructureChangesCalculator<GradleModule, Module> {
   
   @NotNull private final GradleLibraryDependencyStructureChangesCalculator myLibraryDependencyCalculator;
-  @NotNull private final GradleModuleDependencyStructureChangesCalculator myModuleDependencyCalculator;
+  @NotNull private final GradleModuleDependencyStructureChangesCalculator  myModuleDependencyCalculator;
+  @NotNull private final GradleContentRootStructureChangesCalculator       myContentRootCalculator;
 
   public GradleModuleStructureChangesCalculator(@NotNull GradleLibraryDependencyStructureChangesCalculator libraryDependencyCalculator,
-                                                @NotNull GradleModuleDependencyStructureChangesCalculator moduleDependencyCalculator)
+                                                @NotNull GradleModuleDependencyStructureChangesCalculator moduleDependencyCalculator,
+                                                @NotNull GradleContentRootStructureChangesCalculator calculator)
   {
     myLibraryDependencyCalculator = libraryDependencyCalculator;
     myModuleDependencyCalculator = moduleDependencyCalculator;
+    myContentRootCalculator = calculator;
   }
 
   @Override
@@ -52,7 +57,12 @@ public class GradleModuleStructureChangesCalculator implements GradleStructureCh
                         @NotNull GradleChangesCalculationContext context)
   {
     //TODO den process module-local settings
-    //TODO den process content roots
+    // Content roots.
+    final Collection<GradleContentRoot> gradleContentRoots = gradleEntity.getContentRoots();
+    final Collection<ModuleAwareContentRoot> intellijContentRoots = context.getPlatformFacade().getContentRoots(intellijEntity);
+    GradleDiffUtil.calculate(myContentRootCalculator, gradleContentRoots, intellijContentRoots, context);
+    
+    // Dependencies.
     checkDependencies(gradleEntity, intellijEntity, context); 
   }
 

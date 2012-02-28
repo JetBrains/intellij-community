@@ -52,12 +52,12 @@ public class GradleDiffUtil {
 
       @Override
       public void visit(@NotNull GradleContentRoot contentRoot) {
-        // TODO den implement 
+        context.register(new GradleContentRootPresenceChange(contentRoot, null)); 
       }
 
       @Override
       public void visit(@NotNull GradleLibrary library) {
-        // TODO den implement 
+        // Don't show library nodes. 
       }
 
       @Override
@@ -101,7 +101,7 @@ public class GradleDiffUtil {
 
         @Override
         public void visit(@NotNull ModuleAwareContentRoot contentRoot) {
-          // TODO den implement 
+          context.register(new GradleContentRootPresenceChange(null, contentRoot)); 
         }
 
         @Override

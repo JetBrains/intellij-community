@@ -22,7 +22,7 @@ import javax.swing.*;
  */
 public class GradleProjectStructureNodeDescriptor<T extends GradleEntityId> extends PresentableNodeDescriptor<T> {
 
-  private TextAttributesKey myAttributes = GradleTextAttributes.GRADLE_NO_CHANGE;
+  private TextAttributesKey myAttributes = GradleTextAttributes.NO_CHANGE;
 
   private final T myId;
 
@@ -63,10 +63,14 @@ public class GradleProjectStructureNodeDescriptor<T extends GradleEntityId> exte
     if (attributes == GradleTextAttributes.GRADLE_LOCAL_CHANGE) {
       owner = GradleEntityOwner.GRADLE;
     }
-    else if (attributes == GradleTextAttributes.GRADLE_NO_CHANGE || attributes == GradleTextAttributes.INTELLIJ_LOCAL_CHANGE) {
+    else if (attributes == GradleTextAttributes.NO_CHANGE || attributes == GradleTextAttributes.INTELLIJ_LOCAL_CHANGE) {
       owner = GradleEntityOwner.INTELLIJ;
     }
     myId.setOwner(owner);
     update();
+  }
+
+  public void setToolTip(@NotNull String text) {
+    getTemplatePresentation().setTooltip(text);
   }
 }
