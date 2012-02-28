@@ -2229,6 +2229,7 @@ public class UIUtil {
     return e.isShiftDown() || e.isControlDown() || e.isMetaDown();
   }
 
+  @SuppressWarnings("deprecation")
   public static void setComboBoxEditorBounds(int x, int y, int width, int height, JComponent editor) {
     if(SystemInfo.isMac && isUnderAquaLookAndFeel()) {
       // fix for too wide combobox editor, see AquaComboBoxUI.layoutContainer:
@@ -2248,7 +2249,8 @@ public class UIUtil {
     Component eachParent = c;
     while (eachParent != null) {
       if (cls.isAssignableFrom(eachParent.getClass())) {
-        return (T)eachParent;
+        @SuppressWarnings({"unchecked", "UnnecessaryLocalVariable"}) final T t = (T)eachParent;
+        return t;
       }
 
       eachParent = eachParent.getParent();
@@ -2275,7 +2277,10 @@ public class UIUtil {
 
   @Nullable
   public static <T extends JComponent> T findComponentOfType(JComponent parent, Class<T> cls) {
-    if (parent == null || cls.isAssignableFrom(parent.getClass())) return (T)parent;
+    if (parent == null || cls.isAssignableFrom(parent.getClass())) {
+      @SuppressWarnings({"unchecked", "UnnecessaryLocalVariable"}) final T t = (T)parent;
+      return t;
+    }
     for (Component component : parent.getComponents()) {
       if (component instanceof JComponent) {
         T comp = findComponentOfType((JComponent)component, cls);
@@ -2294,7 +2299,8 @@ public class UIUtil {
   private static <T extends JComponent> void findComponentsOfType(JComponent parent, Class<T> cls, ArrayList<T> result) {
     if (parent == null) return;
     if (cls.isAssignableFrom(parent.getClass())) {
-      result.add((T)parent);
+      @SuppressWarnings({"unchecked", "UnnecessaryLocalVariable"}) final T t = (T)parent;
+      result.add(t);
     }
     for (Component c : parent.getComponents()) {
       if (c instanceof JComponent) {
@@ -2353,7 +2359,7 @@ public class UIUtil {
       return this;
     }
 
-    public TextPainter underlined(final Color color) {
+    public TextPainter underlined(@Nullable final Color color) {
       if (!myLines.isEmpty()) {
         final LineInfo info = myLines.get(myLines.size() - 1).getSecond();
         info.underlined = true;
@@ -2438,6 +2444,7 @@ public class UIUtil {
         @Override
         public boolean process(final Pair<String, LineInfo> pair) {
           final LineInfo info = pair.getSecond();
+
           Font old = null;
           if (info.smaller) {
             old = g.getFont();
@@ -2502,21 +2509,23 @@ public class UIUtil {
     }
 
     private static class LineInfo {
-      boolean underlined;
-      boolean withBullet;
-      char bulletChar;
-      Color underlineColor;
-      boolean smaller;
-      public boolean center;
+      private boolean underlined;
+      private boolean withBullet;
+      private char bulletChar;
+      private Color underlineColor;
+      private boolean smaller;
+      private boolean center;
     }
   }
 
+  @Nullable
   public static JRootPane getRootPane(Component c) {
     JRootPane root = getParentOfType(JRootPane.class, c);
     if (root != null) return root;
     Component eachParent = c;
     while (eachParent != null) {
       if (eachParent instanceof JComponent) {
+        @SuppressWarnings({"unchecked", "UnnecessaryLocalVariable"})
         WeakReference<JRootPane> pane = (WeakReference<JRootPane>)((JComponent)eachParent).getClientProperty(ROOT_PANE);
         if (pane != null) return pane.get();
       }
