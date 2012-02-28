@@ -34,6 +34,7 @@ import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -192,7 +193,8 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
       }
     }
   };
-
+  private volatile List<TextRange> myRanges;
+  private volatile List<IndentGuideDescriptor> myDescriptors;
 
   public IndentsPass(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     super(project, editor.getDocument(), false);
@@ -202,6 +204,20 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
 
   @Override
   public void doCollectInformation(ProgressIndicator progress) {
+    final Long stamp = myEditor.getUserData(LAST_TIME_INDENTS_BUILT);
+    if (stamp != null && stamp.longValue() == nowStamp()) return;
+
+    myDescriptors = buildDescriptors();
+
+    ArrayList<TextRange> ranges = new ArrayList<TextRange>();
+    for (IndentGuideDescriptor descriptor : myDescriptors) {
+      ProgressManager.checkCanceled();
+      int endOffset = descriptor.endLine < myDocument.getLineCount() ? myDocument.getLineStartOffset(descriptor.endLine) : myDocument.getTextLength();
+      ranges.add(new TextRange(myDocument.getLineStartOffset(descriptor.startLine), endOffset));
+    }
+
+    Collections.sort(ranges, RANGE_COMPARATOR);
+    myRanges = ranges;
   }
 
   private long nowStamp() {
@@ -214,17 +230,6 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
     final Long stamp = myEditor.getUserData(LAST_TIME_INDENTS_BUILT);
     if (stamp != null && stamp.longValue() == nowStamp()) return;
 
-    List<IndentGuideDescriptor> descriptors = buildDescriptors();
-
-    List<TextRange> ranges = new ArrayList<TextRange>(descriptors.size());
-    for (IndentGuideDescriptor descriptor : descriptors) {
-      int endOffset =
-        descriptor.endLine < myDocument.getLineCount() ? myDocument.getLineStartOffset(descriptor.endLine) : myDocument.getTextLength();
-      ranges.add(new TextRange(myDocument.getLineStartOffset(descriptor.startLine), endOffset));
-    }
-
-
-    Collections.sort(ranges, RANGE_COMPARATOR);
     List<RangeHighlighter> oldHighlighters = myEditor.getUserData(INDENT_HIGHLIGHTERS_IN_EDITOR_KEY);
     List<RangeHighlighter> newHighlighters = new ArrayList<RangeHighlighter>();
     MarkupModel mm = myEditor.getMarkupModel();
@@ -233,8 +238,8 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
 
     if (oldHighlighters != null) {
       int curHighlight = 0;
-      while (curRange < ranges.size() && curHighlight < oldHighlighters.size()) {
-        TextRange range = ranges.get(curRange);
+      while (curRange < myRanges.size() && curHighlight < oldHighlighters.size()) {
+        TextRange range = myRanges.get(curRange);
         RangeHighlighter highlighter = oldHighlighters.get(curHighlight);
 
         int cmp = compare(range, highlighter);
@@ -259,13 +264,13 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
       }
     }
 
-    for (; curRange < ranges.size(); curRange++) {
-      newHighlighters.add(createHighlighter(mm, ranges.get(curRange)));
+    for (; curRange < myRanges.size(); curRange++) {
+      newHighlighters.add(createHighlighter(mm, myRanges.get(curRange)));
     }
 
     myEditor.putUserData(INDENT_HIGHLIGHTERS_IN_EDITOR_KEY, newHighlighters);
     myEditor.putUserData(LAST_TIME_INDENTS_BUILT, nowStamp());
-    myEditor.getIndentsModel().assumeIndents(descriptors);
+    myEditor.getIndentsModel().assumeIndents(myDescriptors);
   }
 
   private List<IndentGuideDescriptor> buildDescriptors() {
@@ -282,9 +287,11 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
     indents.push(0);
     final CharSequence chars = myDocument.getCharsSequence();
     for (int line = 1; line < lineIndents.length; line++) {
+      ProgressManager.checkCanceled();
       int curIndent = lineIndents[line];
 
       while (!indents.empty() && curIndent <= indents.peek()) {
+        ProgressManager.checkCanceled();
         final int level = indents.pop();
         int startLine = lines.pop();
         descriptors.add(createDescriptor(level, startLine, line, chars));
@@ -300,6 +307,7 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
     }
 
     while (!indents.empty()) {
+      ProgressManager.checkCanceled();
       final int level = indents.pop();
       if (level > 0) {
         int startLine = lines.pop();
@@ -330,6 +338,7 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
     final FileType fileType = myFile.getFileType();
 
     for (int line = 0; line < lineIndents.length; line++) {
+      ProgressManager.checkCanceled();
       int lineStart = doc.getLineStartOffset(line);
       int lineEnd = doc.getLineEndOffset(line);
 
@@ -354,6 +363,7 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
 
     int topIndent = 0;
     for (int line = 0; line < lineIndents.length; line++) {
+      ProgressManager.checkCanceled();
       if (lineIndents[line] >= 0) {
         topIndent = lineIndents[line];
       }
