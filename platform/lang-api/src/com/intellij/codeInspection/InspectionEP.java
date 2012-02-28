@@ -26,7 +26,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ResourceBundle;
 
@@ -48,14 +48,14 @@ public class InspectionEP extends LanguageExtensionPoint {
   @Attribute("shortName")
   public String shortName;
 
+  @Nullable
   @Nls
-  @NotNull
   public String getDisplayName() {
     return getLocalizedString(bundle, key, displayName);
   }
 
+  @Nullable
   @Nls
-  @NotNull
   public String getGroupDisplayName() {
     return getLocalizedString(groupBundle, groupKey, groupDisplayName);
   }
@@ -82,8 +82,10 @@ public class InspectionEP extends LanguageExtensionPoint {
   @Attribute("groupPath")
   public String groupPath;
 
+  @Nullable
   public String[] getGroupPath() {
     String name = getGroupDisplayName();
+    if (name == null) return null;
     if (groupPath == null) {
       return new String[]{name.isEmpty() ? InspectionProfileEntry.GENERAL_GROUP_NAME : name};
     }
@@ -113,11 +115,12 @@ public class InspectionEP extends LanguageExtensionPoint {
     return displayLevel;
   }
 
+  @Nullable
   private String getLocalizedString(String bundleName, String key, String displayName) {
     if (displayName != null) return displayName;
     final String baseName = bundleName != null ? bundleName : bundle == null ? ((IdeaPluginDescriptor)myPluginDescriptor).getResourceBundleBaseName() : bundle;
     if (baseName == null) {
-      LOG.error("No resource bundle specified for " + myPluginDescriptor + " Inspection: " + implementationClass);
+      return null;
     }
     final ResourceBundle bundle = AbstractBundle.getResourceBundle(baseName, myPluginDescriptor.getPluginClassLoader());
     return CommonBundle.message(bundle, key);

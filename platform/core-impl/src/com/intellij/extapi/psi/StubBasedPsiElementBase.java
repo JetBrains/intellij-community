@@ -103,7 +103,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   }
 
   private ASTNode notBoundInExistingAst(PsiFileImpl file, FileElement treeElement, StubTree stubTree) {
-    String message = "this=" + this +
+    String message = "this=" + this.getClass() +
                      "; file.isPhysical=" + file.isPhysical() +
                      "; node=" + myNode +
                      "; file=" + file +

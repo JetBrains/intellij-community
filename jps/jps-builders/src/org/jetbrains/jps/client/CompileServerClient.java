@@ -92,13 +92,16 @@ public class CompileServerClient extends SimpleProtobufClient<JpsServerResponseH
     myPingFuture = ourPingService.scheduleAtFixedRate(new Runnable() {
       @Override
       public void run() {
-        sendRequest(ProtoUtil.createPingRequest(), null);
+        final JpsRemoteProto.Message.Request ping = ProtoUtil.createPingRequest();
+        if (isConnected()) {
+          sendRequest(ping, null);
+        }
       }
     }, GlobalOptions.SERVER_PING_PERIOD, GlobalOptions.SERVER_PING_PERIOD, TimeUnit.MILLISECONDS);
   }
 
   @Override
-  protected void onDisconnect() {
+  protected void beforeDisconnect() {
     final ScheduledFuture<?> future = myPingFuture;
     if (future != null) {
       future.cancel(true);

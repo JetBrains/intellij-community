@@ -95,7 +95,7 @@ public class Extensions {
   }
 
   @NotNull
-  public static <T> T[] getExtensions(String extensionPointName, AreaInstance areaInstance) {
+  public static <T> T[] getExtensions(String extensionPointName, @Nullable AreaInstance areaInstance) {
     ExtensionsArea area = getArea(areaInstance);
     ExtensionPoint<T> extensionPoint = area.getExtensionPoint(extensionPointName);
     return extensionPoint.getExtensions();

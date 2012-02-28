@@ -22,9 +22,6 @@ import java.util.Set;
 /**
  * @author Eugene.Kudelevsky
  */
-
-// todo: support light builds
-
 public class AndroidLibraryPackagingBuilder extends ModuleLevelBuilder {
   @NonNls private static final String BUILDER_NAME = "android-library-packager";
 
@@ -34,10 +31,9 @@ public class AndroidLibraryPackagingBuilder extends ModuleLevelBuilder {
 
   @Override
   public ModuleLevelBuilder.ExitCode build(CompileContext context, ModuleChunk chunk) throws ProjectBuildException {
-    if (context.isCompilingTests() || !AndroidJpsUtil.containsAndroidFacet(chunk)) {
+    if (context.isCompilingTests() || !AndroidJpsUtil.containsAndroidFacet(chunk) || AndroidJpsUtil.isLightBuild(context)) {
       return ModuleLevelBuilder.ExitCode.OK;
     }
-    context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.library.packaging")));
 
     try {
       return doBuild(context, chunk);
@@ -49,7 +45,8 @@ public class AndroidLibraryPackagingBuilder extends ModuleLevelBuilder {
 
   private static ModuleLevelBuilder.ExitCode doBuild(CompileContext context, ModuleChunk chunk) throws IOException {
     boolean success = true;
-    final AndroidClassesAndJarsStateStorage storage = new AndroidClassesAndJarsStateStorage(context.getDataManager().getDataStorageRoot());
+    final AndroidClassesAndJarsStateStorage storage =
+      new AndroidClassesAndJarsStateStorage(context.getDataManager().getDataStorageRoot(), "_libs");
 
     try {
       for (Module module : chunk.getModules()) {
@@ -79,11 +76,12 @@ public class AndroidLibraryPackagingBuilder extends ModuleLevelBuilder {
         final AndroidClassesAndJarsState newState = new AndroidClassesAndJarsState(subdirs);
         final AndroidClassesAndJarsState oldState = storage.getState(module.getName());
 
-        if (oldState != null && oldState.equals(newState)) {
+        if (oldState != null && oldState.equalsTo(newState)) {
           continue;
         }
 
         if (subdirs.size() > 0) {
+          context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.library.packaging", module.getName())));
           final File outputJarFile = new File(outputDirectoryForPackagedFiles, AndroidCommonUtils.CLASSES_JAR_FILE_NAME);
 
           try {
@@ -92,6 +90,7 @@ public class AndroidLibraryPackagingBuilder extends ModuleLevelBuilder {
           }
           catch (IOException e) {
             AndroidJpsUtil.reportExceptionError(context, null, e, BUILDER_NAME);
+            storage.update(module.getName(), null);
             success = false;
           }
         }

@@ -1,7 +1,6 @@
 package org.jetbrains.android.compiler;
 
 import com.android.sdklib.IAndroidTarget;
-import com.android.sdklib.SdkConstants;
 import com.intellij.compiler.CompilerIOUtil;
 import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -16,7 +15,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.android.facet.AndroidFacet;
@@ -24,7 +22,6 @@ import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidCommonUtils;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,9 +39,7 @@ import java.util.Set;
  */
 public class AndroidProguardCompiler implements ClassPostProcessingCompiler {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.compiler.AndroidProguardCompiler");
-  @NonNls private static final String DIRECTORY_FOR_LOGS_NAME = "proguard_logs";
-  @NonNls static final String PROGUARD_OUTPUT_JAR_NAME = "obfuscated_sources.jar";
-  public static Key<String> PROGUARD_CFG_PATH_KEY = Key.create("ANDROID_PROGUARD_CFG_PATH");
+  public static Key<String> PROGUARD_CFG_PATH_KEY = Key.create(AndroidCommonUtils.PROGUARD_CFG_PATH_OPTION);
 
   @NotNull
   @Override
@@ -75,6 +70,7 @@ public class AndroidProguardCompiler implements ClassPostProcessingCompiler {
             LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(proguardCfgPath));
           if (proguardConfigFile == null) {
             context.addMessage(CompilerMessageCategory.ERROR, "Cannot find file " + proguardCfgPath, null, -1, -1);
+            continue;
           }
 
           final CompilerModuleExtension extension = CompilerModuleExtension.getInstance(module);
@@ -104,7 +100,7 @@ public class AndroidProguardCompiler implements ClassPostProcessingCompiler {
             continue;
           }
 
-          final String logsDirOsPath = FileUtil.toSystemDependentName(mainContentRoot.getPath() + '/' + DIRECTORY_FOR_LOGS_NAME);
+          final String logsDirOsPath = FileUtil.toSystemDependentName(mainContentRoot.getPath() + '/' + AndroidCommonUtils.DIRECTORY_FOR_LOGS_NAME);
 
           final File logsDir = new File(logsDirOsPath);
           if (!logsDir.exists()) {
@@ -132,7 +128,7 @@ public class AndroidProguardCompiler implements ClassPostProcessingCompiler {
           final String sdkPath = FileUtil.toSystemDependentName(platform.getSdkData().getLocation());
 
           final VirtualFile outputDir = AndroidDexCompiler.getOutputDirectoryForDex(module);
-          final String outputJarOsPath = FileUtil.toSystemDependentName(outputDir.getPath() + '/' + PROGUARD_OUTPUT_JAR_NAME);
+          final String outputJarOsPath = FileUtil.toSystemDependentName(outputDir.getPath() + '/' + AndroidCommonUtils.PROGUARD_OUTPUT_JAR_NAME);
 
           items.add(new MyProcessingItem(module, sdkPath, platform.getTarget(), proguardConfigFile, outputJarOsPath, classFilesDir,
                                          classFilesDirs.toArray(new VirtualFile[classFilesDirs.size()]),
@@ -162,12 +158,13 @@ public class AndroidProguardCompiler implements ClassPostProcessingCompiler {
       final String[] externalJarOsPaths = AndroidCompileUtil.toOsPaths(processingItem.getExternalJars());
  
       try {
-        final String inputJarOsPath = buildTempInputJar(classFilesDirOsPaths, libClassFilesDirOsPaths);
+        final String inputJarOsPath = AndroidCommonUtils.buildTempInputJar(classFilesDirOsPaths, libClassFilesDirOsPaths);
         final String logsDirOsPath = processingItem.getLogsDirectoryOsPath();
 
-        final Map<CompilerMessageCategory, List<String>> messages =
-          launchProguard(processingItem.getTarget(), processingItem.getSdkOsPath(), proguardConfigFileOsPath, inputJarOsPath,
-                         externalJarOsPaths, processingItem.getOutputJarOsPath(), logsDirOsPath);
+        final Map<CompilerMessageCategory, List<String>> messages = AndroidCompileUtil.toCompilerMessageCategoryKeys(
+          AndroidCommonUtils
+            .launchProguard(processingItem.getTarget(), processingItem.getSdkOsPath(), proguardConfigFileOsPath, inputJarOsPath,
+                            externalJarOsPaths, processingItem.getOutputJarOsPath(), logsDirOsPath));
 
         CompilerUtil.refreshIOFile(new File(processingItem.getOutputJarOsPath()));
 
@@ -189,81 +186,6 @@ public class AndroidProguardCompiler implements ClassPostProcessingCompiler {
     }
     
     return processedItems.toArray(new ProcessingItem[processedItems.size()]);
-  }
-
-  private static String buildTempInputJar(@NotNull String[] classFilesDirOsPaths, @NotNull String[] libClassFilesDirOsPaths)
-    throws IOException {
-    final File inputJar = FileUtil.createTempFile("proguard_input", ".jar");
-
-    AndroidCommonUtils.packClassFilesIntoJar(classFilesDirOsPaths, libClassFilesDirOsPaths, inputJar);
-    
-    return FileUtil.toSystemDependentName(inputJar.getPath());
-  }
-
-  @NotNull
-  private static Map<CompilerMessageCategory, List<String>> launchProguard(@NotNull IAndroidTarget target,
-                                                                           @NotNull String sdkOsPath,
-                                                                           @NotNull String proguardConfigFileOsPath,
-                                                                           @NotNull String inputJarOsPath,
-                                                                           @NotNull String[] externalJarOsPaths,
-                                                                           @NotNull String outputJarFileOsPath,
-                                                                           @Nullable String logDirOutputOsPath) throws IOException {
-
-    final List<String> commands = new ArrayList<String>();
-    final String toolOsPath = sdkOsPath + File.separator + SdkConstants.OS_SDK_TOOLS_PROGUARD_BIN_FOLDER + SdkConstants.FN_PROGUARD;
-
-    commands.add(toolOsPath);
-    commands.add("@" + quotePath(proguardConfigFileOsPath));
-
-    commands.add("-injars");
-
-    StringBuilder builder = new StringBuilder(quotePath(inputJarOsPath));
-
-    for (String jarFile : externalJarOsPaths) {
-      builder.append(File.pathSeparatorChar);
-      builder.append(quotePath(jarFile));
-    }
-    commands.add(builder.toString());
-
-    commands.add("-outjars");
-    commands.add(quotePath(outputJarFileOsPath));
-
-    commands.add("-libraryjars");
-
-    builder = new StringBuilder(quotePath(target.getPath(IAndroidTarget.ANDROID_JAR)));
-
-    IAndroidTarget.IOptionalLibrary[] libraries = target.getOptionalLibraries();
-    if (libraries != null) {
-      for (IAndroidTarget.IOptionalLibrary lib : libraries) {
-        builder.append(File.pathSeparatorChar);
-        builder.append(quotePath(lib.getJarPath()));
-      }
-    }
-    commands.add(builder.toString());
-
-    if (logDirOutputOsPath != null) {
-      commands.add("-dump");
-      commands.add(quotePath(new File(logDirOutputOsPath, "dump.txt").getAbsolutePath()));
-
-      commands.add("-printseeds");
-      commands.add(quotePath(new File(logDirOutputOsPath, "seeds.txt").getAbsolutePath()));
-
-      commands.add("-printusage");
-      commands.add(quotePath(new File(logDirOutputOsPath, "usage.txt").getAbsolutePath()));
-
-      commands.add("-printmapping");
-      commands.add(quotePath(new File(logDirOutputOsPath, "mapping.txt").getAbsolutePath()));
-    }
-
-    LOG.info(AndroidCommonUtils.command2string(commands));
-    return AndroidCompileUtil.execute(ArrayUtil.toStringArray(commands));
-  }
-
-  private static String quotePath(String path) {
-    if (path.indexOf(' ') != -1) {
-      path = '\'' + path + '\'';
-    }
-    return path;
   }
 
   @NotNull

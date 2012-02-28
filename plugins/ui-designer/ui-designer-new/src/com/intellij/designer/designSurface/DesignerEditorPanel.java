@@ -32,11 +32,14 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.ui.AsyncProcessIcon;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,6 +61,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   protected static final Integer LAYER_GLASS = LAYER_FEEDBACK + 100;
   protected static final Integer LAYER_BUTTONS = LAYER_GLASS + 100;
   protected static final Integer LAYER_INPLACE_EDITING = LAYER_BUTTONS + 100;
+  private static final Integer LAYER_PROGRESS = LAYER_INPLACE_EDITING + 100;
 
   @NonNls private final static String DESIGNER_CARD = "designer";
   @NonNls private final static String ERROR_CARD = "error";
@@ -85,6 +89,10 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
 
   private JLabel myErrorLabel;
 
+  private JPanel myProgressPanel;
+  private AsyncProcessIcon myProgressIcon;
+  private JLabel myProgressMessage;
+
   protected RadComponent myRootComponent;
 
   public DesignerEditorPanel(@NotNull Module module, @NotNull VirtualFile file) {
@@ -94,6 +102,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     setLayout(myLayout);
     createDesignerCard();
     createErrorCard();
+    createProgressPanel();
 
     myToolProvider.loadDefaultTool();
   }
@@ -248,7 +257,36 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     add(myErrorLabel, ERROR_CARD);
   }
 
+  private void createProgressPanel() {
+    myProgressIcon = new AsyncProcessIcon("Designer progress");
+    myProgressMessage = new JLabel();
+
+    JPanel progressBlock = new JPanel();
+    progressBlock.add(myProgressIcon);
+    progressBlock.add(myProgressMessage);
+    progressBlock.setBorder(IdeBorderFactory.createRoundedBorder());
+
+    myProgressPanel = new JPanel(new GridBagLayout());
+    myProgressPanel.add(progressBlock,
+                        new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0),
+                                               0, 0));
+    myProgressPanel.setOpaque(false);
+  }
+
+  protected final void showProgress(String message) {
+    myProgressMessage.setText(message);
+    myProgressIcon.resume();
+    myLayeredPane.add(myProgressPanel, LAYER_PROGRESS);
+    myLayeredPane.repaint();
+  }
+
+  protected final void hideProgress() {
+    myProgressIcon.suspend();
+    myLayeredPane.remove(myProgressPanel);
+  }
+
   public void showError(@NonNls String message, Throwable e) {
+    hideProgress();
     myRootComponent = null;
     myErrorLabel.setText(message + e.toString());
     myLayout.show(this, ERROR_CARD);
@@ -311,6 +349,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
 
   public void dispose() {
     PaletteManager.getInstance(getProject()).removeSelectionListener(myPaletteListener);
+    Disposer.dispose(myProgressIcon);
   }
 
   public JComponent getPreferredFocusedComponent() {
