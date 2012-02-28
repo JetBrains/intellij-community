@@ -83,7 +83,8 @@ public class SvnCommandLineUpdateClient extends SvnSvnkitUpdateClient {
     new CommandLineAuthenticator(myProject, new CommandLineAuthenticator.AuthenticationRequiringCommand() {
       @Override
       public void run(File configDir) throws SVNException {
-        final File base = myCommonAncestor == null ? paths[0] : new File(myCommonAncestor.getPath());
+        File base = myCommonAncestor == null ? paths[0] : new File(myCommonAncestor.getPath());
+        base = base.isDirectory() ? base : base.getParentFile();
         final SvnLineCommand command = new SvnLineCommand(myProject, base, SvnCommandName.up);
         if (revision != null && ! SVNRevision.UNDEFINED.equals(revision) && ! SVNRevision.WORKING.equals(revision)) {
           command.addParameters("-r", revision.toString());
