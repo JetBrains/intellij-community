@@ -168,17 +168,19 @@ public abstract class DialogWrapper {
    */
   protected DialogWrapper(Project project, boolean canBeParent) {
     myPeer = createPeer(project, canBeParent);
-    myPeer.getWindow().addComponentListener(new ComponentAdapter() {
-      @Override
-      public void componentResized(ComponentEvent e) {
-        if (!myResizeInProgress) {
-          myActualSize = myPeer.getSize();
-          if (myErrorText.isVisible()) {
-            myActualSize.height -= myErrorText.getHeight() + 10;
+    if (myPeer != null) {
+      myPeer.getWindow().addComponentListener(new ComponentAdapter() {
+        @Override
+        public void componentResized(ComponentEvent e) {
+          if (!myResizeInProgress) {
+            myActualSize = myPeer.getSize();
+            if (myErrorText.isVisible()) {
+              myActualSize.height -= myErrorText.getHeight() + 10;
+            }
           }
         }
-      }
-    });
+      });
+    }
     createDefaultActions();
   }
 
