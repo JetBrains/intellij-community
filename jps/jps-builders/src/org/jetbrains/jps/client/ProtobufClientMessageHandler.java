@@ -6,6 +6,7 @@ import org.jboss.netty.channel.ChannelStateEvent;
 import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelHandler;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.api.AsyncTaskExecutor;
 import org.jetbrains.jps.api.RequestFuture;
 
 import java.util.ArrayList;
@@ -21,10 +22,12 @@ final class ProtobufClientMessageHandler<T extends ProtobufResponseHandler> exte
   @NotNull
   private final UUIDGetter myUuidGetter;
   private final SimpleProtobufClient myClient;
+  private final AsyncTaskExecutor myAsyncExec;
 
-  public ProtobufClientMessageHandler(@NotNull UUIDGetter uuidGetter, SimpleProtobufClient client) {
+  public ProtobufClientMessageHandler(@NotNull UUIDGetter uuidGetter, SimpleProtobufClient client, AsyncTaskExecutor asyncExec) {
     myUuidGetter = uuidGetter;
     myClient = client;
+    myAsyncExec = asyncExec;
   }
 
   public final void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
@@ -89,7 +92,12 @@ final class ProtobufClientMessageHandler<T extends ProtobufResponseHandler> exte
     }
     finally {
       // make sure the client is in disconnected state
-      myClient.scheduleDisconnect();
+      myAsyncExec.submit(new Runnable() {
+        @Override
+        public void run() {
+          myClient.disconnect();
+        }
+      });
     }
   }
 

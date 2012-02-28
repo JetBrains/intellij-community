@@ -92,6 +92,7 @@ public abstract class AbstractStateStorage<Key, T> {
     }
   }
 
+  @Nullable
   public T getState(Key key) throws IOException {
     synchronized (myDataLock) {
       return myMap.get(key);

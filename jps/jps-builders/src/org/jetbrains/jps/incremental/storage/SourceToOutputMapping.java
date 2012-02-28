@@ -5,6 +5,7 @@ import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -46,6 +47,7 @@ public final class SourceToOutputMapping extends AbstractStateStorage<String, Co
     super.remove(FileUtil.toSystemIndependentName(srcPath));
   }
 
+  @Nullable
   @Override
   public Collection<String> getState(@NotNull String srcPath) throws IOException {
     return super.getState(FileUtil.toSystemIndependentName(srcPath));
