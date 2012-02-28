@@ -60,7 +60,7 @@ class IntellijProjectBuilder extends AbstractProjectBuilder {
 
   @Override
   protected createContentRoot(module, rootPath, Map paths) {
-    new ModuleAwareContentRoot(module, [:] as ContentEntry)
+    new ModuleAwareContentRoot(module, [ getFile: {asVirtualFile(rootPath)} ] as ContentEntry)
   }
 
   @Override

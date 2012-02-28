@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.ui.DocumentAdapter;
@@ -190,8 +191,9 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
 
   public void apply() throws ConfigurationException {
     final CompilerProjectExtension compilerProjectExtension = CompilerProjectExtension.getInstance(myProject);
+    assert compilerProjectExtension != null : myProject;
 
-    if (myProjectName != null && myProjectName.getText().trim().length() == 0) {
+    if (myProjectName != null && StringUtil.isEmptyOrSpaces(myProjectName.getText())) {
       throw new ConfigurationException("Please, specify project name!");
     }
 

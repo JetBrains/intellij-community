@@ -90,22 +90,6 @@ class UsageRepr {
       return residentialMap.get(usage);
     }
 
-    public void updateCluster(final Cluster c) {
-      usages.addAll(c.getUsages());
-      for (Map.Entry<Usage, Set<DependencyContext.S>> e : c.residentialMap.entrySet()) {
-        final Usage u = e.getKey();
-        final Set<DependencyContext.S> v = e.getValue();
-        final Set<DependencyContext.S> s = residentialMap.get(u);
-
-        if (s == null) {
-          residentialMap.put(u, v);
-        }
-        else {
-          s.addAll(v);
-        }
-      }
-    }
-
     public boolean isEmpty() {
       return usages.isEmpty();
     }
@@ -122,6 +106,26 @@ class UsageRepr {
           return new Cluster(context, in);
         }
       };
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      Cluster cluster = (Cluster)o;
+
+      if (!residentialMap.equals(cluster.residentialMap)) return false;
+      if (!usages.equals(cluster.usages)) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = usages.hashCode();
+      result = 31 * result + residentialMap.hashCode();
+      return result;
     }
   }
 

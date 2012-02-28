@@ -29,7 +29,7 @@ import java.util.List;
 
 /**
  * Temporary class, do not use.
- * Will be removed after migration from file choosing to path choosing (approx. in IDEA 13).
+ * May be removed after migration from file choosing to path choosing (approx. in IDEA 13).
  *
  * @author Roman Shevchenko
  */
@@ -89,9 +89,9 @@ public final class FileChooserUtil {
                                        @Nullable String lastPath) {
     if (toSelect == null && lastPath == null) {
       if (project != null) {
-        final VirtualFile baseDir = project.getBaseDir();
-        if (baseDir != null) {
-          return baseDir.getPath();
+        final String basePath = project.getBasePath();
+        if (basePath != null) {
+          return basePath;
         }
       }
     }

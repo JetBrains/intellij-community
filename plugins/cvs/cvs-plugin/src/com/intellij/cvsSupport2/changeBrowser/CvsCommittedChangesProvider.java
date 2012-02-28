@@ -37,6 +37,7 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.AsynchConsumer;
 import com.intellij.util.Consumer;
+import gnu.trove.TObjectLongHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.admin.Entry;
@@ -73,8 +74,8 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
   }
 
   private static class MyZipper extends VcsCommittedListsZipperAdapter {
-    private long lastNumber = 0;
-    private final Map<CommittedChangeListKey, Long> numberCache = new HashMap();
+    private long lastNumber = 1;
+    private final TObjectLongHashMap<CommittedChangeListKey> numberCache = new TObjectLongHashMap<CommittedChangeListKey>();
 
     private MyZipper() {
       super(new GroupCreator() {
@@ -98,12 +99,12 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
       final long time = list.getCommitDate().getTime();
       final Long roundedTime = Long.valueOf(time - (time % CvsChangeList.SUITABLE_DIFF));
       final CommittedChangeListKey key = new CommittedChangeListKey(list.getCommitterName(), roundedTime, list.getComment());
-      final Long number = numberCache.get(key);
-      if (number == null) {
-        numberCache.put(key, Long.valueOf(lastNumber));
+      final long number = numberCache.get(key);
+      if (number == 0) {
+        numberCache.put(key, lastNumber);
         return lastNumber++;
       }
-      return number.longValue();
+      return number;
     }
   }
 

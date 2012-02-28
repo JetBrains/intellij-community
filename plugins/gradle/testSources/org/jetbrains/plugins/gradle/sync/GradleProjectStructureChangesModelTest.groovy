@@ -552,8 +552,7 @@ public class GradleProjectStructureChangesModelTest extends AbstractGradleTest {
     } } } }
   }
 
-  // TODO den uncomment
-  //@Test
+  @Test
   public void "local content root importing"() {
     init(
       gradle: {
@@ -571,8 +570,8 @@ public class GradleProjectStructureChangesModelTest extends AbstractGradleTest {
     )
     checkChanges {
       presence {
-        contentRoot(gradle: gradle.contentRoots.values().find { it.rootPath == '1' })
-        contentRoot(intellij: intellij.contentRoots.values().find { it.file.path == '3' })
+        contentRoot(gradle: gradle.contentRoots.values().flatten().find { it.rootPath.endsWith('1') })
+        contentRoot(intellij: intellij.contentRoots.values().flatten().find { it.file.path.endsWith('3') })
     } }
     checkTree {
       project {
@@ -580,6 +579,24 @@ public class GradleProjectStructureChangesModelTest extends AbstractGradleTest {
           "content-root:1"('gradle')
           "content-root:2"()
           "content-root:3"('intellij')
+    } } }
+    
+    // Import local content roots.
+    Closure projectState = {
+      project {
+        module {
+          contentRoot('1')
+          contentRoot('2')
+          contentRoot('3')
+    } } }
+    setState(intellij: projectState, gradle: projectState)
+    checkChanges { } // No changes
+    checkTree {
+      project {
+        module {
+          "content-root:1"()
+          "content-root:2"()
+          "content-root:3"()
     } } }
   }
 }

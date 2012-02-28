@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,9 @@ import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.components.PathMacroManager;
-import com.intellij.openapi.components.PathMacroMap;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.FactoryMap;
 import org.jdom.Element;
@@ -35,25 +35,36 @@ import java.util.*;
 public class BasePathMacroManager extends PathMacroManager {
   private PathMacrosImpl myPathMacros;
 
-
   public BasePathMacroManager(@Nullable PathMacros pathMacros) {
     myPathMacros = (PathMacrosImpl)pathMacros;
   }
 
-  protected static void addFileHierarchyReplacements(ReplacePathToMacroMap result,
-                                                     String variableName,
-                                                     @Nullable String _path, @Nullable String stopAt) {
-    if (_path == null) {
-      return;
-    }
+  protected static void addFileHierarchyReplacements(ExpandMacroToPathMap result, String macroName, @Nullable String path) {
+    if (path == null) return;
+    final File f = new File(FileUtil.toSystemDependentName(path));
+    addFileHierarchyReplacements(result, f, "$" + macroName + "$");
+  }
 
-    String macro = "$" + variableName + "$";
-    File dir = new File(_path.replace('/', File.separatorChar));
+  protected static void addFileHierarchyReplacements(ExpandMacroToPathMap result, @Nullable File f, String macro) {
+    if (f == null) return;
+    addFileHierarchyReplacements(result, f.getParentFile(), macro + "/..");
+
+    final String path = FileUtil.toSystemIndependentName(f.getAbsolutePath());
+    String s = macro;
+    if (StringUtil.endsWithChar(path, '/')) s += "/";
+    result.put(s, path);
+  }
+
+  protected static void addFileHierarchyReplacements(ReplacePathToMacroMap result, String macroName, @Nullable String path, @Nullable String stopAt) {
+    if (path == null) return;
+
+    String macro = "$" + macroName + "$";
+    File dir = new File(FileUtil.toSystemDependentName(path));
     boolean check = false;
     while (dir != null && dir.getParentFile() != null) {
-      @NonNls String path = PathMacroMap.quotePath(dir.getAbsolutePath());
-      String s = macro;
+      path = FileUtil.toSystemIndependentName(dir.getAbsolutePath());
 
+      String s = macro;
       if (StringUtil.endsWithChar(path, '/')) s += "/";
 
       putIfAbsent(result, "file:" + path, "file:" + s, check);
@@ -76,6 +87,7 @@ public class BasePathMacroManager extends PathMacroManager {
     }
   }
 
+  // todo: make protected
   public ExpandMacroToPathMap getExpandMacroMap() {
     ExpandMacroToPathMap result = new ExpandMacroToPathMap();
     for (Map.Entry<String, String> entry : PathMacrosImpl.getGlobalSystemMacros().entrySet()) {
@@ -85,6 +97,7 @@ public class BasePathMacroManager extends PathMacroManager {
     return result;
   }
 
+  // todo: make protected
   public ReplacePathToMacroMap getReplacePathMap() {
     ReplacePathToMacroMap result = new ReplacePathToMacroMap();
     for (Map.Entry<String, String> entry : PathMacrosImpl.getGlobalSystemMacros().entrySet()) {
@@ -114,7 +127,6 @@ public class BasePathMacroManager extends PathMacroManager {
     getExpandMacroMap().substitute(element, SystemInfo.isFileSystemCaseSensitive);
   }
 
-
   public void collapsePaths(final Element element) {
     getReplacePathMap().substitute(element, SystemInfo.isFileSystemCaseSensitive);
   }
@@ -127,10 +139,12 @@ public class BasePathMacroManager extends PathMacroManager {
     return myPathMacros;
   }
 
-
-  protected static void putIfAbsent(final ReplacePathToMacroMap result, @NonNls final String pathWithPrefix, @NonNls final String substWithPrefix, final boolean check) {
+  protected static void putIfAbsent(final ReplacePathToMacroMap result,
+                                    @NonNls final String pathWithPrefix,
+                                    @NonNls final String substitutionWithPrefix,
+                                    final boolean check) {
     if (check && result.get(pathWithPrefix) != null) return;
-    result.put(pathWithPrefix, substWithPrefix);
+    result.put(pathWithPrefix, substitutionWithPrefix);
   }
 
   private class MyTrackingPathMacroSubstitutor implements TrackingPathMacroSubstitutor {
@@ -214,5 +228,10 @@ public class BasePathMacroManager extends PathMacroManager {
 
       myComponentNameToMacros.get(componentName).addAll(unknownMacros);
     }
+  }
+
+  protected static boolean pathsEqual(@Nullable String path1, @Nullable String path2) {
+    return path1 != null && path2 != null &&
+           FileUtil.pathsEqual(FileUtil.toSystemIndependentName(path1), FileUtil.toSystemIndependentName(path2));
   }
 }

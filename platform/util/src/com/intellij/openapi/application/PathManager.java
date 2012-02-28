@@ -25,6 +25,7 @@ import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
 import java.net.URL;
@@ -428,5 +429,10 @@ public class PathManager {
       return file;
     }
     return new File(getHomePath() + File.separator + "community" + File.separator + "lib" + File.separator + relativePath);
+  }
+
+  @TestOnly
+  public static void cleanup() {
+    ourPluginsPath = null;
   }
 }

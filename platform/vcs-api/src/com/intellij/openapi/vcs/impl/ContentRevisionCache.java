@@ -220,6 +220,10 @@ public class ContentRevisionCache {
     Pair<VcsRevisionNumber, byte[]> loaded;
     while (true) {
       currentRevision = putIntoCurrentCache(cache, path, vcsKey, loader);
+      final byte[] cachedCurrent = cache.getBytes(path, currentRevision, vcsKey, UniqueType.REPOSITORY_CONTENT);
+      if (cachedCurrent != null) {
+        return new Pair<VcsRevisionNumber, byte[]>(currentRevision, cachedCurrent);
+      }
       loaded = loader.get();
       if (loaded.getFirst().equals(currentRevision)) break;
     }
