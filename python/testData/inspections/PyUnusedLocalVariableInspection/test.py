@@ -244,3 +244,12 @@ def f(c):
     except Exception:
         raise
     return x
+
+
+# PY-5755
+def test_same_named_variable_inside_class():
+    a = 1 #pass
+    class C:
+        def a(self):
+            print(a)
+    return C

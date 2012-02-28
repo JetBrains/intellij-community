@@ -78,14 +78,16 @@ public class ScopeUtil {
       if (PsiTreeUtil.getParentOfType(anchor, PyParameter.class, PyDecorator.class) != null) {
         element = getScopeOwner(anchor);
       }
-
-      ScopeOwner owner = getScopeOwner(element);
-      while (owner != null) {
-        Scope scope = ControlFlowCache.getScope(owner);
-        if (scope.containsDeclaration(name)) {
-          return owner;
+      final ScopeOwner originalScopeOwner = getScopeOwner(element);
+      ScopeOwner scopeOwner = originalScopeOwner;
+      while (scopeOwner != null) {
+        if (!(scopeOwner instanceof PyClass) || scopeOwner == originalScopeOwner) {
+          Scope scope = ControlFlowCache.getScope(scopeOwner);
+          if (scope.containsDeclaration(name)) {
+            return scopeOwner;
+          }
         }
-        owner = getScopeOwner(owner);
+        scopeOwner = getScopeOwner(scopeOwner);
       }
     }
     return null;
