@@ -196,6 +196,7 @@ public class LocalTaskImpl extends LocalTask {
     myChangeLists = changeLists;
   }
 
+  @Override
   public void setAssociatedChangelistId(String associatedChangelistId) {
     myAssociatedChangelistId = associatedChangelistId;
   }
