@@ -1629,7 +1629,7 @@ public class Mappings {
         myClassToSourceFile.putAll(delta.myClassToSourceFile);
       }
 
-      if (delta.isDifferentiated() && false) {
+      if (delta.isDifferentiated()) {
         for (DependencyContext.S f : delta.getChangedFiles()) {
           mySourceFileToClasses.remove(f);
           final Collection<ClassRepr> classes = delta.mySourceFileToClasses.get(f);
