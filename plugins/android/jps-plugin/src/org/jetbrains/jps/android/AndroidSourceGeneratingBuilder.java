@@ -147,7 +147,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
         continue;
       }
       final File outputDirectory = moduleData.getOutputDirectory();
-      final File aidlOutputDirectory = new File(outputDirectory, "generated-aidl");
+      final File aidlOutputDirectory = new File(outputDirectory, AndroidJpsUtil.GENERATED_AIDL_DIR_NAME);
       final IAndroidTarget target = moduleData.getAndroidTarget();
 
       try {
@@ -210,8 +210,8 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
       }
 
       final File outputDirectory = moduleData.getOutputDirectory();
-      final File rsOutputDirectory = new File(outputDirectory, "generated-rs");
-      final File generatedResourcesDir = new File(outputDirectory, "generated-resources");
+      final File rsOutputDirectory = new File(outputDirectory, AndroidJpsUtil.GENERATED_RENDER_SCRIPT_DIR_NAME);
+      final File generatedResourcesDir = new File(outputDirectory, AndroidJpsUtil.GENERATED_RESOURCES_DIR_NAME);
 
       final IAndroidTarget target = moduleData.getAndroidTarget();
       final String sdkLocation = moduleData.getSdkLocation();
@@ -312,7 +312,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
           }
         }
         final File outputDirectory = moduleData.getOutputDirectory();
-        final File aptOutputDirectory = new File(outputDirectory, "generated-aapt");
+        final File aptOutputDirectory = new File(outputDirectory, AndroidJpsUtil.GENERATED_AAPT_DIR_NAME);
 
         if (aptOutputDirectory.exists()) {
           // clear directory, because it may contain obsolete files (ex. if package name was changed)
