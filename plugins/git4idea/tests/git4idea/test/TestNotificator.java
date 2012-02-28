@@ -20,18 +20,18 @@ import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.project.Project;
-import git4idea.NotificationManager;
+import git4idea.Notificator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Kirill Likhodedov
  */
-public class TestNotificationManager extends NotificationManager {
+public class TestNotificator extends Notificator {
 
   private Notification myLastNotification;
 
-  public TestNotificationManager(@NotNull Project project) {
+  public TestNotificator(@NotNull Project project) {
     super(project);
   }
 

@@ -161,7 +161,7 @@ abstract class GitBranchOperation {
   }
 
   protected void notifySuccess(@NotNull String message) {
-    NotificationManager.getInstance(myProject).notify(GitVcs.NOTIFICATION_GROUP_ID, "", message, NotificationType.INFORMATION);
+    Notificator.getInstance(myProject).notify(GitVcs.NOTIFICATION_GROUP_ID, "", message, NotificationType.INFORMATION);
   }
 
   protected final void notifySuccess() {
@@ -225,7 +225,7 @@ abstract class GitBranchOperation {
   }
 
   protected void notifyError(@NotNull String title, @NotNull String message) {
-    NotificationManager.getInstance(myProject).notify(GitVcs.IMPORTANT_ERROR_NOTIFICATION, title, message, NotificationType.ERROR);
+    Notificator.getInstance(myProject).notify(GitVcs.IMPORTANT_ERROR_NOTIFICATION, title, message, NotificationType.ERROR);
   }
 
   @NotNull
@@ -285,7 +285,7 @@ abstract class GitBranchOperation {
   private void showUnmergedFilesNotification() {
     String title = unmergedFilesErrorTitle();
     String description = unmergedFilesErrorNotificationDescription();
-    NotificationManager.getInstance(myProject).notify(GitVcs.IMPORTANT_ERROR_NOTIFICATION, title, description, NotificationType.ERROR,
+    Notificator.getInstance(myProject).notify(GitVcs.IMPORTANT_ERROR_NOTIFICATION, title, description, NotificationType.ERROR,
                                                       new NotificationListener() {
       @Override public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
         if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED && event.getDescription().equals("resolve")) {

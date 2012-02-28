@@ -28,7 +28,7 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
-import git4idea.NotificationManager;
+import git4idea.Notificator;
 import git4idea.commands.*;
 import git4idea.merge.GitMergeCommittingConflictResolver;
 import git4idea.merge.GitMerger;
@@ -164,7 +164,7 @@ class GitMergeOperation extends GitBranchOperation {
     }
     else {
       String description = message + "<br/><a href='delete'>Delete " + myBranchToMerge + "</a>";
-      NotificationManager.getInstance(myProject).notify(GitVcs.NOTIFICATION_GROUP_ID, "", description, NotificationType.INFORMATION,
+      Notificator.getInstance(myProject).notify(GitVcs.NOTIFICATION_GROUP_ID, "", description, NotificationType.INFORMATION,
                                                         new DeleteMergedLocalBranchNotificationListener());
     }
   }
@@ -286,7 +286,7 @@ class GitMergeOperation extends GitBranchOperation {
     myConflictedRepositories.clear();
 
     if (!result.totalSuccess()) {
-      NotificationManager.getInstance(myProject).notifyError("Error during rollback", result.getErrorOutputWithReposIndication());
+      Notificator.getInstance(myProject).notifyError("Error during rollback", result.getErrorOutputWithReposIndication());
     }
     LOG.info("rollback finished.");
   }
@@ -359,7 +359,7 @@ class GitMergeOperation extends GitBranchOperation {
 
     @Override
     protected void notifyUnresolvedRemain() {
-      NotificationManager.getInstance(myProject).notify(
+      Notificator.getInstance(myProject).notify(
         GitVcs.IMPORTANT_ERROR_NOTIFICATION, "Merged branch " + myBranchToMerge + " with conflicts",
         "Unresolved conflicts remain in the project. <a href='resolve'>Resolve now.</a>", NotificationType.WARNING,
         getResolveLinkListener());

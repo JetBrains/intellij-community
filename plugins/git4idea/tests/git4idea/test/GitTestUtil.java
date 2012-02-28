@@ -24,7 +24,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.DialogManager;
 import git4idea.MessageManager;
-import git4idea.NotificationManager;
+import git4idea.Notificator;
 import git4idea.tests.GitTestRepository;
 import git4idea.tests.TestDialogManager;
 import org.jetbrains.annotations.NotNull;
@@ -253,12 +253,12 @@ public class GitTestUtil {
     return (TestMessageManager)MessageManager.getInstance(project);
   }
 
-  public static TestNotificationManager registerNotificationManager(Project project) {
+  public static TestNotificator registerNotificationManager(Project project) {
     final String key = "git4idea.NotificationManager";
     final MutablePicoContainer picoContainer = (MutablePicoContainer) project.getPicoContainer();
     picoContainer.unregisterComponent(key);
-    picoContainer.registerComponentImplementation(key, TestNotificationManager.class);
-    return (TestNotificationManager)NotificationManager.getInstance(project);
+    picoContainer.registerComponentImplementation(key, TestNotificator.class);
+    return (TestNotificator)Notificator.getInstance(project);
   }
 
 }

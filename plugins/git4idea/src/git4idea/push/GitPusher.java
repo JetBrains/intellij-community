@@ -28,7 +28,7 @@ import com.intellij.util.ui.UIUtil;
 import git4idea.GitBranch;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
-import git4idea.NotificationManager;
+import git4idea.Notificator;
 import git4idea.branch.GitBranchPair;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
@@ -345,7 +345,7 @@ public final class GitPusher {
       catch (VcsException e) {
         LOG.error(String.format("Couldn't set up tracking for source branch %s, target branch %s, remote %s in root %s",
                                 source, dest, remote, repository), e);
-        NotificationManager.getInstance(project).notify(GitVcs.NOTIFICATION_GROUP_ID, "", "Couldn't set up branch tracking",
+        Notificator.getInstance(project).notify(GitVcs.NOTIFICATION_GROUP_ID, "", "Couldn't set up branch tracking",
                                                         NotificationType.ERROR);
       }
     }

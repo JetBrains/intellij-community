@@ -31,7 +31,7 @@ import com.intellij.util.ui.UIUtil;
 import git4idea.GitBranch;
 import git4idea.GitExecutionException;
 import git4idea.GitVcs;
-import git4idea.NotificationManager;
+import git4idea.Notificator;
 import git4idea.changes.GitChangeUtils;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
@@ -235,7 +235,7 @@ public final class GitBranchOperationsProcessor {
       repository.update(GitRepository.TrackedTopic.BRANCHES);
     }
     if (!result.totalSuccess()) {
-      NotificationManager.getInstance(myProject).notifyError("Failed to delete remote branch " + branchName,
+      Notificator.getInstance(myProject).notifyError("Failed to delete remote branch " + branchName,
                                                              result.getErrorOutputWithReposIndication());
     }
     return result.totalSuccess();
@@ -286,7 +286,7 @@ public final class GitBranchOperationsProcessor {
     if (!localBranches.isEmpty()) {
       message = "Also deleted local " + StringUtil.pluralize("branch", localBranches.size()) + ": " + StringUtil.join(localBranches, ", ");
     }
-    NotificationManager.getInstance(myProject).notify(GitVcs.NOTIFICATION_GROUP_ID, "Deleted remote branch " + remoteBranchName,
+    Notificator.getInstance(myProject).notify(GitVcs.NOTIFICATION_GROUP_ID, "Deleted remote branch " + remoteBranchName,
                                                       message, NotificationType.INFORMATION);
   }
 
