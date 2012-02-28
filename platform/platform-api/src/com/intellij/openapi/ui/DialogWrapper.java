@@ -168,8 +168,9 @@ public abstract class DialogWrapper {
    */
   protected DialogWrapper(Project project, boolean canBeParent) {
     myPeer = createPeer(project, canBeParent);
-    if (myPeer != null) {
-      myPeer.getWindow().addComponentListener(new ComponentAdapter() {
+    final Window window = myPeer.getWindow();
+    if (window != null) {
+      window.addComponentListener(new ComponentAdapter() {
         @Override
         public void componentResized(ComponentEvent e) {
           if (!myResizeInProgress) {
