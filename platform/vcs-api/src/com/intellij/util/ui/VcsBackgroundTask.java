@@ -32,20 +32,13 @@ import java.util.List;
  * @author yole
  */
 public abstract class VcsBackgroundTask<T> extends Task.ConditionalModal {
-  @NotNull private final PerformInBackgroundOption myBackgroundOption;
   private final Collection<T> myItems;
   private final List<VcsException> myExceptions = new ArrayList<VcsException>();
 
   public VcsBackgroundTask(final Project project, @NotNull final String title, @NotNull final PerformInBackgroundOption backgroundOption,
                            final Collection<T> itemsToProcess) {
     super(project, title, false, backgroundOption);
-    myBackgroundOption = backgroundOption;
     myItems = itemsToProcess;
-  }
-
-  @NotNull
-  public PerformInBackgroundOption getBackgroundOption() {
-    return myBackgroundOption;
   }
 
   public void run(@NotNull ProgressIndicator indicator) {
