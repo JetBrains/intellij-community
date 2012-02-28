@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.fileEditor.impl;
 
+import com.google.common.collect.Lists;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
@@ -65,8 +66,8 @@ import java.util.List;
  */
 public class EditorsSplitters extends JPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.EditorsSplitters");
+
   private EditorWindow myCurrentWindow;
-  private VirtualFile myCurrentFile;
   private final FileEditorManagerImpl myManager;
   private Element mySplittersElement;  // temporarily used during initialization
   int myInsideChange = 0;
@@ -97,7 +98,6 @@ public class EditorsSplitters extends JPanel {
     removeAll();
     myWindows.clear();
     setCurrentWindow(null);
-    myCurrentFile = null;
     repaint (); // revalidate doesn't repaint correctly after "Close All"
   }
 
@@ -151,13 +151,12 @@ public class EditorsSplitters extends JPanel {
     }
     
     if (showEmptyText()) {
-      final boolean darkerColors = UIUtil.isUnderAquaLookAndFeel() || UIUtil.isUnderGTKLookAndFeel();
       UIUtil.applyRenderingHints(g);
-      g.setColor(darkerColors ? Gray._100 : Color.DARK_GRAY);
+      g.setColor(Gray._100);
       g.setFont(UIUtil.getLabelFont().deriveFont(18f));
 
-      final UIUtil.TextPainter painter = new UIUtil.TextPainter(1.4f);
-      painter.appendLine("No files are open").underlined(darkerColors ? Gray._150 : Color.DARK_GRAY);
+      final UIUtil.TextPainter painter = new UIUtil.TextPainter().withShadow(true).withLineSpacing(1.4f);
+      painter.appendLine("No files are open").underlined(Gray._150);
 
       if (!isProjectViewVisible()) {
         painter.appendLine("Open Project View with " + KeymapUtil.getShortcutText(new KeyboardShortcut(
@@ -325,8 +324,7 @@ public class EditorsSplitters extends JPanel {
         window = findWindowWith(panel);
         LOG.assertTrue(window != null);
       }
-      //noinspection unchecked
-      final List<Element> children = new ArrayList<Element>(leaf.getChildren("file"));
+      @SuppressWarnings("unchecked") final List<Element> children = Lists.newArrayList(leaf.getChildren("file"));
       VirtualFile currentFile = null;
       
       if (UISettings.getInstance().ACTIVATE_RIGHT_EDITOR_ON_CLOSE) {
@@ -506,7 +504,7 @@ public class EditorsSplitters extends JPanel {
     return myInsideChange > 0;
   }
 
-  private void setCurrentWindow(final EditorWindow currentWindow) {
+  private void setCurrentWindow(@Nullable final EditorWindow currentWindow) {
     myCurrentWindow = currentWindow;
   }
 
@@ -785,16 +783,11 @@ public class EditorsSplitters extends JPanel {
   private final class MyFocusWatcher extends FocusWatcher {
     protected void focusedComponentChanged(final Component component, final AWTEvent cause) {
       EditorWindow newWindow = null;
-      VirtualFile newFile = null;
 
       if (component != null) {
         newWindow = findWindowWith(component);
-        if (newWindow != null) {
-          newFile = newWindow.getSelectedFile();
-        }
       }
 
-      myCurrentFile = newFile;
       setCurrentWindow(newWindow);
       setCurrentWindow(newWindow, false);
     }

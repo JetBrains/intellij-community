@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2308,23 +2308,46 @@ public class UIUtil {
 
   public static class TextPainter {
     private List<Pair<String, LineInfo>> myLines = new ArrayList<Pair<String, LineInfo>>();
-    private boolean myDrawMacShadow;
-    private Color myMacShadowColor;
+    private boolean myDrawShadow;
+    private Color myShadowColor;
     private float myLineSpacing;
 
-
     public TextPainter() {
-      this(true, Gray._220, 1.0f);
+      myDrawShadow = isUnderAquaLookAndFeel();
+      myShadowColor = Gray._220;
+      myLineSpacing = 1.0f;
     }
 
+    /** @deprecated use {@linkplain #withLineSpacing(float)} (to remove in IDEA 12) */
+    @SuppressWarnings("UnusedDeclaration")
     public TextPainter(final float lineSpacing) {
-      this(true, Gray._220, lineSpacing);
+      myDrawShadow = isUnderAquaLookAndFeel();
+      myShadowColor = Gray._220;
+      myLineSpacing = lineSpacing;
     }
 
-    public TextPainter(final boolean drawMacShadow, final Color shadowColor, final float lineSpacing) {
-      myDrawMacShadow = drawMacShadow;
-      myMacShadowColor = shadowColor;
+    /** @deprecated use {@linkplain #withShadow(boolean, java.awt.Color)} and {@linkplain #withLineSpacing(float)} (to remove in IDEA 12) */
+    @SuppressWarnings("UnusedDeclaration")
+    public TextPainter(final boolean drawShadow, final Color shadowColor, final float lineSpacing) {
+      myDrawShadow = drawShadow;
+      myShadowColor = shadowColor;
       myLineSpacing = lineSpacing;
+    }
+
+    public TextPainter withShadow(final boolean drawShadow) {
+      myDrawShadow = drawShadow;
+      return this;
+    }
+
+    public TextPainter withShadow(final boolean drawShadow, final Color shadowColor) {
+      myDrawShadow = drawShadow;
+      myShadowColor = shadowColor;
+      return this;
+    }
+
+    public TextPainter withLineSpacing(final float lineSpacing) {
+      myLineSpacing = lineSpacing;
+      return this;
     }
 
     public TextPainter appendLine(final String text) {
@@ -2432,9 +2455,9 @@ public class UIUtil {
             xOffset = x + (maxWidth[0] - fm.stringWidth(pair.getFirst())) / 2;
           }
 
-          if (myDrawMacShadow && UIUtil.isUnderAquaLookAndFeel()) {
+          if (myDrawShadow) {
             final Color oldColor = g.getColor();
-            g.setColor(myMacShadowColor);
+            g.setColor(myShadowColor);
 
             if (info.withBullet) {
               g.drawString(info.bulletChar + " ", x - fm.stringWidth(" " + info.bulletChar), yOffset[0] + 1);
@@ -2462,9 +2485,9 @@ public class UIUtil {
               g.setColor(c);
             }
 
-            if (myDrawMacShadow && UIUtil.isUnderAquaLookAndFeel()) {
+            if (myDrawShadow) {
               c = g.getColor();
-              g.setColor(myMacShadowColor);
+              g.setColor(myShadowColor);
               g.drawLine(x - maxBulletWidth[0] - 10, yOffset[0] + fm.getDescent() + 1, x + maxWidth[0] + 10, yOffset[0] + fm.getDescent() + 1);
               g.setColor(c);
             }
