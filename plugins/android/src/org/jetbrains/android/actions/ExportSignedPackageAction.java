@@ -55,7 +55,7 @@ public class ExportSignedPackageAction extends AnAction {
     if (facets.size() == 1) {
       if (!checkFacet(facets.get(0))) return;
     }
-    ExportSignedPackageWizard wizard = new ExportSignedPackageWizard(project, facets);
+    ExportSignedPackageWizard wizard = new ExportSignedPackageWizard(project, facets, true);
     wizard.show();
   }
 

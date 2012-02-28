@@ -46,9 +46,12 @@ public class ExportSignedPackageWizard extends AbstractWizard<ExportSignedPackag
   private char[] myKeystorePassword;
   private List<String> myKeyAliasList;
 
-  public ExportSignedPackageWizard(Project project, List<AndroidFacet> facets) {
-    super(AndroidBundle.message("android.export.signed.package.action.text"), project);
+  private boolean mySigned;
+
+  public ExportSignedPackageWizard(Project project, List<AndroidFacet> facets, boolean signed) {
+    super(AndroidBundle.message("android.export.package.wizard.title"), project);
     myProject = project;
+    mySigned = signed;
     assert facets.size() > 0;
     if (facets.size() > 1) {
       addStep(new ChooseModuleStep(this, facets));
@@ -56,11 +59,17 @@ public class ExportSignedPackageWizard extends AbstractWizard<ExportSignedPackag
     else {
       myFacet = facets.get(0);
     }
-    addStep(new KeystoreStep(this));
-    addStep(new InitialKeyStep(this));
-    addStep(new NewKeyStep(this));
+    if (signed) {
+      addStep(new KeystoreStep(this));
+      addStep(new InitialKeyStep(this));
+      addStep(new NewKeyStep(this));
+    }
     addStep(new ApkStep(this));
     init();
+  }
+
+  public boolean isSigned() {
+    return mySigned;
   }
 
   @Override

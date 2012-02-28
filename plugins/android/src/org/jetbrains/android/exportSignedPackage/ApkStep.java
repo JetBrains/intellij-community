@@ -58,6 +58,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -73,6 +74,7 @@ import java.security.cert.X509Certificate;
  */
 class ApkStep extends ExportSignedPackageWizardStep {
   public static final String APK_PATH_PROPERTY = "ExportedApkPath";
+  public static final String APK_PATH_PROPERTY_UNSIGNED = "ExportedUnsignedApkPath";
   public static final String RUN_PROGUARD_PROPERTY = "AndroidRunProguardForReleaseBuild";
   public static final String PROGUARD_CFG_PATH_PROPERTY = "AndroidProguardConfigPath";
 
@@ -138,6 +140,8 @@ class ApkStep extends ExportSignedPackageWizardStep {
         myProguardConfigFilePathField.setEnabled(enabled);
       }
     });
+
+    myContentPanel.setPreferredSize(new Dimension(myContentPanel.getPreferredSize().width, 250));
   }
 
   @Override
@@ -147,7 +151,7 @@ class ApkStep extends ExportSignedPackageWizardStep {
 
     PropertiesComponent properties = PropertiesComponent.getInstance(module.getProject());
     String lastModule = properties.getValue(ChooseModuleStep.MODULE_PROPERTY);
-    String lastApkPath = properties.getValue(APK_PATH_PROPERTY);
+    String lastApkPath = properties.getValue(getApkPathPropertyName());
     if (lastApkPath != null && module.getName().equals(lastModule)) {
       myApkPathField.setText(FileUtil.toSystemDependentName(lastApkPath));
     }
@@ -185,6 +189,10 @@ class ApkStep extends ExportSignedPackageWizardStep {
     }
 
     myInited = true;
+  }
+
+  private String getApkPathPropertyName() {
+    return myWizard.isSigned() ? APK_PATH_PROPERTY : APK_PATH_PROPERTY_UNSIGNED;
   }
 
   @Override
@@ -234,33 +242,38 @@ class ApkStep extends ExportSignedPackageWizardStep {
 
   @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
   private void createApk(File destFile) throws IOException, GeneralSecurityException {
-    FileOutputStream fos = new FileOutputStream(destFile);
-    PrivateKey privateKey = myWizard.getPrivateKey();
-    assert privateKey != null;
-    X509Certificate certificate = myWizard.getCertificate();
-    assert certificate != null;
-    SignedJarBuilder builder = new SignedJarBuilder(fos, privateKey, certificate);
-    Module module = myWizard.getFacet().getModule();
-    //String srcApkPath = CompilerPaths.getModuleOutputPath(module, false) + '/' + module.getName() + ".apk";
-    String srcApkPath = AndroidRootUtil.getApkPath(myWizard.getFacet()) + AndroidPackagingCompiler.UNSIGNED_SUFFIX;
-    FileInputStream fis = new FileInputStream(new File(FileUtil.toSystemDependentName(srcApkPath)));
-    try {
-      builder.writeZip(fis, null);
-      builder.close();
-    }
-    finally {
+    final String srcApkPath = AndroidRootUtil.getApkPath(myWizard.getFacet()) + AndroidPackagingCompiler.UNSIGNED_SUFFIX;
+    final File srcApk = new File(FileUtil.toSystemDependentName(srcApkPath));
+
+    if (myWizard.isSigned()) {
+      FileOutputStream fos = new FileOutputStream(destFile);
+      PrivateKey privateKey = myWizard.getPrivateKey();
+      assert privateKey != null;
+      X509Certificate certificate = myWizard.getCertificate();
+      assert certificate != null;
+      SignedJarBuilder builder = new SignedJarBuilder(fos, privateKey, certificate);
+      FileInputStream fis = new FileInputStream(srcApk);
       try {
-        fis.close();
-      }
-      catch (IOException ignored) {
+        builder.writeZip(fis, null);
+        builder.close();
       }
       finally {
         try {
-          fos.close();
+          fis.close();
         }
         catch (IOException ignored) {
         }
+        finally {
+          try {
+            fos.close();
+          }
+          catch (IOException ignored) {
+          }
+        }
       }
+    }
+    else {
+      FileUtil.copy(srcApk, destFile);
     }
   }
 
@@ -317,7 +330,7 @@ class ApkStep extends ExportSignedPackageWizardStep {
     AndroidFacet facet = myWizard.getFacet();
     PropertiesComponent properties = PropertiesComponent.getInstance(myWizard.getProject());
     properties.setValue(ChooseModuleStep.MODULE_PROPERTY, facet != null ? facet.getModule().getName() : "");
-    properties.setValue(APK_PATH_PROPERTY, apkPath);
+    properties.setValue(getApkPathPropertyName(), apkPath);
 
     File folder = new File(apkPath).getParentFile();
     if (folder == null) {
