@@ -16,6 +16,7 @@
 package git4idea.push;
 
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -73,7 +74,7 @@ public final class GitPusher {
   private final Collection<GitRepository> myRepositories;
   private final GitVcsSettings mySettings;
   private final GitPushSettings myPushSettings;
-  private final GitVcs myVcs;
+  private final Git myGit;
 
   public static void showPushDialogAndPerformPush(@NotNull final Project project) {
     final GitPushDialog dialog = new GitPushDialog(project);
@@ -123,7 +124,7 @@ public final class GitPusher {
     myRepositories = GitRepositoryManager.getInstance(project).getRepositories();
     mySettings = GitVcsSettings.getInstance(myProject);
     myPushSettings = GitPushSettings.getInstance(myProject);
-    myVcs = GitVcs.getInstance(project);
+    myGit = ServiceManager.getService(Git.class);
   }
 
   /**
@@ -245,9 +246,9 @@ public final class GitPusher {
   }
 
   @NotNull
-  private static GitPushRepoResult pushRepository(@NotNull GitPushInfo pushInfo,
-                                                  @NotNull GitCommitsByRepoAndBranch commits,
-                                                  @NotNull GitRepository repository) {
+  private GitPushRepoResult pushRepository(@NotNull GitPushInfo pushInfo,
+                                           @NotNull GitCommitsByRepoAndBranch commits,
+                                           @NotNull GitRepository repository) {
     GitPushSpec pushSpec = pushInfo.getPushSpecs().get(repository);
     GitSimplePushResult simplePushResult = pushAndGetSimpleResult(repository, pushSpec, commits.get(repository));
     String output = simplePushResult.getOutput();
@@ -299,7 +300,7 @@ public final class GitPusher {
   }
 
   @NotNull
-  private static GitSimplePushResult pushAndGetSimpleResult(@NotNull GitRepository repository,
+  private GitSimplePushResult pushAndGetSimpleResult(@NotNull GitRepository repository,
                                                             @NotNull GitPushSpec pushSpec, @NotNull GitCommitsByBranch commitsByBranch) {
     if (pushSpec.getDest() == NO_TARGET_BRANCH) {
       return GitSimplePushResult.notPushed();
@@ -381,9 +382,9 @@ public final class GitPusher {
   }
 
   @NotNull
-  private static GitSimplePushResult pushNatively(GitRepository repository, GitPushSpec pushSpec) {
+  private GitSimplePushResult pushNatively(GitRepository repository, GitPushSpec pushSpec) {
     GitPushRejectedDetector rejectedDetector = new GitPushRejectedDetector();
-    GitCommandResult res = Git.push(repository, pushSpec, rejectedDetector);
+    GitCommandResult res = myGit.push(repository, pushSpec, rejectedDetector);
     if (rejectedDetector.rejected()) {
       Collection<String> rejectedBranches = rejectedDetector.getRejectedBranches();
       return GitSimplePushResult.reject(rejectedBranches);

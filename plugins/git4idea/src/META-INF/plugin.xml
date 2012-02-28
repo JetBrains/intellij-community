@@ -133,24 +133,21 @@
     <projectService
         serviceInterface="git4idea.history.wholeTree.GitLogSettings"
         serviceImplementation="git4idea.history.wholeTree.GitLogSettings"/>
-    <applicationService
-        serviceImplementation="git4idea.history.wholeTree.GitCommitsSequentialIndex"
-        serviceInterface="git4idea.history.wholeTree.GitCommitsSequentially"/>
-    <applicationService
-        serviceInterface="git4idea.config.GitVcsApplicationSettings"
-        serviceImplementation="git4idea.config.GitVcsApplicationSettings"/>
-    <applicationService
-        serviceInterface="git4idea.commands.GitSSHIdeaService"
-        serviceImplementation="git4idea.commands.GitSSHIdeaService"/>
-    <applicationService
-        serviceInterface="git4idea.rebase.GitRebaseEditorService"
-        serviceImplementation="git4idea.rebase.GitRebaseEditorService"/>
-    <applicationService
-        serviceInterface="git4idea.config.SSHConnectionSettings"
-        serviceImplementation="git4idea.config.SSHConnectionSettings"/>
-    <applicationService
-        serviceInterface="git4idea.remote.GitRememberedInputs"
-        serviceImplementation="git4idea.remote.GitRememberedInputs"/>
+
+    <applicationService serviceImplementation="git4idea.history.wholeTree.GitCommitsSequentialIndex"
+                        serviceInterface="git4idea.history.wholeTree.GitCommitsSequentially"/>
+    <applicationService serviceInterface="git4idea.config.GitVcsApplicationSettings"
+                        serviceImplementation="git4idea.config.GitVcsApplicationSettings"/>
+    <applicationService serviceInterface="git4idea.commands.GitSSHIdeaService"
+                        serviceImplementation="git4idea.commands.GitSSHIdeaService"/>
+    <applicationService serviceInterface="git4idea.rebase.GitRebaseEditorService"
+                        serviceImplementation="git4idea.rebase.GitRebaseEditorService"/>
+    <applicationService serviceInterface="git4idea.config.SSHConnectionSettings"
+                        serviceImplementation="git4idea.config.SSHConnectionSettings"/>
+    <applicationService serviceInterface="git4idea.remote.GitRememberedInputs"
+                        serviceImplementation="git4idea.remote.GitRememberedInputs"/>
+    <applicationService serviceInterface="git4idea.commands.Git"
+                        serviceImplementation="git4idea.commands.GitImpl"/>
 
     <ComponentRoamingType component="Git.Settings" type="DISABLED"/>
     <fileTypeFactory implementation="git4idea.vfs.GitFileTypeFactory"/>

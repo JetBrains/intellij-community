@@ -16,6 +16,7 @@
 package git4idea.branch;
 
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -64,8 +65,9 @@ public final class GitBranchOperationsProcessor {
 
   private final Project myProject;
   private final List<GitRepository> myRepositories;
-  @Nullable private final Runnable myCallInAwtAfterExecution;
+  private final @Nullable Runnable myCallInAwtAfterExecution;
   private final GitRepository mySelectedRepository;
+  private final Git myGit;
 
   public GitBranchOperationsProcessor(@NotNull GitRepository repository) {
     this(repository, null);
@@ -88,6 +90,7 @@ public final class GitBranchOperationsProcessor {
     myRepositories = repositories;
     mySelectedRepository = selectedRepository;
     myCallInAwtAfterExecution = callInAwtAfterExecution;
+    myGit = ServiceManager.getService(Git.class);
   }
   
   @NotNull
@@ -124,14 +127,14 @@ public final class GitBranchOperationsProcessor {
     new CommonBackgroundTask(myProject, "Checking out new branch " + name, myCallInAwtAfterExecution) {
       @Override public void execute(@NotNull ProgressIndicator indicator) {
         for (GitRepository repository : myRepositories) {
-          Git.createNewTag(repository, name, null, reference);
+          myGit.createNewTag(repository, name, null, reference);
         }
       }
     }.runInBackground();
   }
 
   private void doCheckoutNewBranch(@NotNull final String name, @NotNull ProgressIndicator indicator) {
-    new GitCheckoutNewBranchOperation(myProject, myRepositories, name, getCurrentBranchOrRev(), indicator).execute();
+    new GitCheckoutNewBranchOperation(myProject, myGit, myRepositories, name, getCurrentBranchOrRev(), indicator).execute();
   }
 
   /**
@@ -172,13 +175,13 @@ public final class GitBranchOperationsProcessor {
   }
 
   private void doCheckout(@NotNull ProgressIndicator indicator, @NotNull String reference, @Nullable String newBranch) {
-    new GitCheckoutOperation(myProject, myRepositories, reference, newBranch, getCurrentBranchOrRev(), indicator).execute();
+    new GitCheckoutOperation(myProject, myGit, myRepositories, reference, newBranch, getCurrentBranchOrRev(), indicator).execute();
   }
 
   public void deleteBranch(final String branchName) {
     new CommonBackgroundTask(myProject, "Deleting " + branchName, myCallInAwtAfterExecution) {
       @Override public void execute(@NotNull ProgressIndicator indicator) {
-        new GitDeleteBranchOperation(myProject, myRepositories, branchName, getCurrentBranchOrRev(), indicator).execute();
+        new GitDeleteBranchOperation(myProject, myGit, myRepositories, branchName, getCurrentBranchOrRev(), indicator).execute();
       }
     }.runInBackground();
   }
@@ -203,7 +206,7 @@ public final class GitBranchOperationsProcessor {
             if (decision.deleteTracking()) {
               for (final String branch : trackingBranches) {
                 indicator.setText("Deleting " + branch);
-                new GitDeleteBranchOperation(myProject, myRepositories, branch, getCurrentBranchOrRev(), indicator) {
+                new GitDeleteBranchOperation(myProject, myGit, myRepositories, branch, getCurrentBranchOrRev(), indicator) {
                   @Override
                   protected void notifySuccess(@NotNull String message) {
                     // do nothing - will display a combo notification for all deleted branches below
@@ -242,7 +245,7 @@ public final class GitBranchOperationsProcessor {
   }
 
   @NotNull
-  private static GitCommandResult pushDeletion(GitRepository repository, String remoteName, String branchName) {
+  private GitCommandResult pushDeletion(GitRepository repository, String remoteName, String branchName) {
     GitRemote remote = getRemoteByName(repository, remoteName);
     if (remote == null) {
       return pushDeletionNatively(repository, remoteName, branchName);
@@ -260,8 +263,8 @@ public final class GitBranchOperationsProcessor {
     }
   }
 
-  private static GitCommandResult pushDeletionNatively(GitRepository repository, String remoteName, String branchName) {
-    return Git.push(repository, remoteName, ":" + branchName);
+  private GitCommandResult pushDeletionNatively(GitRepository repository, String remoteName, String branchName) {
+    return myGit.push(repository, remoteName, ":" + branchName);
   }
 
   @NotNull
@@ -446,7 +449,7 @@ public final class GitBranchOperationsProcessor {
     for (GitRepository repository : myRepositories) {
       revisions.put(repository, repository.getCurrentRevision());
     }
-    new GitMergeOperation(myProject, myRepositories, branchName, localBranch, getCurrentBranchOrRev(),
+    new GitMergeOperation(myProject, myGit, myRepositories, branchName, localBranch, getCurrentBranchOrRev(),
                           mySelectedRepository, revisions, indicator).execute();
   }
 

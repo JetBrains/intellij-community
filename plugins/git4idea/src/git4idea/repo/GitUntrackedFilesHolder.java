@@ -16,6 +16,7 @@
 package git4idea.repo;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
@@ -81,6 +82,7 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
   private final GitRepositoryManager myRepositoryManager;
   private final VcsDirtyScopeManager myDirtyScopeManager;
   private final GitRepositoryFiles myRepositoryFiles;
+  private final Git myGit;
 
   private Set<VirtualFile> myDefinitelyUntrackedFiles = new HashSet<VirtualFile>();
   private Set<VirtualFile> myPossiblyUntrackedFiles = new HashSet<VirtualFile>();
@@ -95,6 +97,7 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
     myChangeListManager = ChangeListManager.getInstance(project);
     myRepositoryManager = GitRepositoryManager.getInstance(project);
     myDirtyScopeManager = VcsDirtyScopeManager.getInstance(project);
+    myGit = ServiceManager.getService(Git.class);
   }
 
   void setupVfsListener(@NotNull Project project) {
@@ -177,7 +180,7 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
    * Resets the list of untracked files after retrieving the full list of them from Git.
    */
   public void rescanAll() throws VcsException {
-    Set<VirtualFile> untrackedFiles = Git.untrackedFiles(myProject, myRoot, null);
+    Set<VirtualFile> untrackedFiles = myGit.untrackedFiles(myProject, myRoot, null);
     synchronized (LOCK) {
       myDefinitelyUntrackedFiles = untrackedFiles;
       myPossiblyUntrackedFiles.clear();
@@ -205,7 +208,7 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
       suspiciousFiles.addAll(myPossiblyTrackedFiles);
     }
 
-    Set<VirtualFile> untrackedFiles = Git.untrackedFiles(myProject, myRoot, suspiciousFiles);
+    Set<VirtualFile> untrackedFiles = myGit.untrackedFiles(myProject, myRoot, suspiciousFiles);
     suspiciousFiles.removeAll(untrackedFiles);
     // files that were suspicious (and thus passed to 'git ls-files'), but are not untracked, are definitely tracked.
     Set<VirtualFile> trackedFiles  = suspiciousFiles;

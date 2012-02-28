@@ -33,6 +33,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Function;
 import com.intellij.util.ui.UIUtil;
 import git4idea.*;
+import git4idea.commands.Git;
 import git4idea.commands.GitMessageWithFilesDetector;
 import git4idea.config.GitVcsSettings;
 import git4idea.merge.GitConflictResolver;
@@ -59,6 +60,7 @@ abstract class GitBranchOperation {
   private static final Logger LOG = Logger.getInstance(GitBranchOperation.class);
 
   @NotNull protected final Project myProject;
+  @NotNull protected final Git myGit;
   @NotNull private final Collection<GitRepository> myRepositories;
   @NotNull private final String myCurrentBranchOrRev;
   @NotNull private final ProgressIndicator myIndicator;
@@ -67,9 +69,10 @@ abstract class GitBranchOperation {
   @NotNull private final Collection<GitRepository> mySuccessfulRepositories;
   @NotNull private final Collection<GitRepository> myRemainingRepositories;
 
-  protected GitBranchOperation(@NotNull Project project, @NotNull Collection<GitRepository> repositories,
+  protected GitBranchOperation(@NotNull Project project, @NotNull Git git, @NotNull Collection<GitRepository> repositories,
                                @NotNull String currentBranchOrRev, @NotNull ProgressIndicator indicator) {
     myProject = project;
+    myGit = git;
     myRepositories = repositories;
     myCurrentBranchOrRev = currentBranchOrRev;
     myIndicator = indicator;
