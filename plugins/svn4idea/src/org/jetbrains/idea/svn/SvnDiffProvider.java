@@ -160,11 +160,15 @@ public class SvnDiffProvider implements DiffProvider, DiffMixin {
   private ItemLatestState getLastRevision(final File file) {
     final SVNStatusClient client = myVcs.createStatusClient();
     try {
-      final SVNStatus svnStatus = client.doStatus(file, true, false);
+      final SVNStatus svnStatus = client.doStatus(file, true);
       if (svnStatus == null) {
         // IDEADEV-21785 (no idea why this can happen)
-        LOG.info("No SVN status returned for " + file.getPath());
-        return defaultResult();
+        final SVNInfo info = myVcs.createWCClient().doInfo(file, SVNRevision.HEAD);
+        if (info == null || info.getURL() == null) {
+          LOG.info("No SVN status returned for " + file.getPath());
+          return defaultResult();
+        }
+        return createResult(info.getRevision(), true, false);
       }
       final boolean exists = ! SVNStatusType.STATUS_DELETED.equals(svnStatus.getRemoteContentsStatus()) &&
         ! SVNStatusType.STATUS_DELETED.equals(svnStatus.getRemoteNodeStatus());
