@@ -34,7 +34,7 @@ public class CreateChangelistAction extends BaseTaskAction {
     TaskManager manager = getTaskManager(event);
     Presentation presentation = event.getPresentation();
 
-    if (manager == null || !manager.getOpenChangelists(manager.getActiveTask()).isEmpty()) {
+    if (manager == null || !manager.isVcsEnabled() || !manager.getOpenChangelists(manager.getActiveTask()).isEmpty()) {
       presentation.setText(getTemplatePresentation().getText());
       presentation.setEnabled(false);
     } else {
@@ -46,7 +46,7 @@ public class CreateChangelistAction extends BaseTaskAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     Task activeTask = getActiveTask(e);
-    String name = Messages.showInputDialog(getProject(e), "Changelist name:", "Create changelist", null, TaskUtil.getChangeListName(activeTask), null);
+    String name = Messages.showInputDialog(getProject(e), "Changelist name:", "Create Changelist", null, TaskUtil.getChangeListName(activeTask), null);
     if (name != null) {
       TaskManagerImpl manager = (TaskManagerImpl)getTaskManager(e);
       assert manager != null;
