@@ -58,8 +58,7 @@ class GitRootDetectorTest {
 
   @Test
   public void "project with all subdirs under Git should still be not fully controlled"() {
-    doTest project:  [".idea", "src", "community"],
-           gits:     [".idea", "src", "community"],
+    doTest gits:     [".idea", "src", "community"],
            expected: [".idea", "src", "community"],
            full:     false
   }
