@@ -116,6 +116,19 @@ class AndroidJpsUtil {
     return result;
   }
 
+  @NotNull
+  public static List<String> toPaths(@NotNull Collection<File> files) {
+    if (files.size() == 0) {
+      return Collections.emptyList();
+    }
+
+    final List<String> result = new ArrayList<String>(files.size());
+    for (File file : files) {
+      result.add(file.getPath());
+    }
+    return result;
+  }
+
   @Nullable
   public static File getOutputDirectoryForPackagedFiles(@NotNull ProjectPaths paths, @NotNull Module module) {
     // todo: return build directory for mavenized modules to place .dex and .apk files into target dir (not target/classes)
@@ -160,6 +173,7 @@ class AndroidJpsUtil {
     }
 
     if (libraries != null) {
+      // todo: do not include provided libs there
       for (ClasspathItem item : module.getClasspath(ClasspathKind.PRODUCTION_COMPILE, exportedLibrariesOnly)) {
         if (item instanceof Library && !(item instanceof Sdk)) {
           for (String filePath : item.getClasspathRoots(ClasspathKind.PRODUCTION_COMPILE)) {
@@ -190,7 +204,7 @@ class AndroidJpsUtil {
           if (depLibrary) {
             final File packagedClassesJar = new File(depClassDir, AndroidCommonUtils.CLASSES_JAR_FILE_NAME);
 
-            if (packagedClassesJar.isDirectory()) {
+            if (packagedClassesJar.isFile()) {
               outputDirs.add(packagedClassesJar.getPath());
             }
           }
@@ -411,5 +425,73 @@ class AndroidJpsUtil {
   public static File getResourcesCacheDir(@NotNull CompileContext context, @NotNull Module module) {
     final File androidStorage = new File(context.getDataManager().getDataStorageRoot(), ANDROID_STORAGE_DIR);
     return new File(new File(androidStorage, RESOURCE_CACHE_STORAGE), module.getName());
+  }
+
+  private static void fillSourceRoots(@NotNull Module module, @NotNull Set<Module> visited, @NotNull Set<File> result)
+    throws IOException {
+    visited.add(module);
+    final AndroidFacet facet = getFacet(module);
+    File resDir = null;
+    File resDirForCompilation = null;
+
+    if (facet != null) {
+      resDir = facet.getResourceDir();
+      resDirForCompilation = facet.getResourceDirForCompilation();
+    }
+
+    for (String sourceRootPath : module.getSourceRoots()) {
+      final File sourceRoot = new File(sourceRootPath).getCanonicalFile();
+
+      if (!sourceRoot.equals(resDir) && !sourceRoot.equals(resDirForCompilation)) {
+        result.add(sourceRoot);
+      }
+    }
+
+    if (facet != null && facet.isPackTestCode()) {
+      for (String testRootPath : module.getTestRoots()) {
+        final File testRoot = new File(testRootPath).getCanonicalFile();
+
+        if (!testRoot.equals(resDir) && !testRoot.equals(resDirForCompilation)) {
+          result.add(testRoot);
+        }
+      }
+    }
+
+    for (ClasspathItem classpathItem : module.getClasspath(ClasspathKind.PRODUCTION_COMPILE)) {
+      if (classpathItem instanceof Module) {
+        final Module depModule = (Module)classpathItem;
+
+        if (!visited.contains(depModule)) {
+          fillSourceRoots(depModule, visited, result);
+        }
+      }
+    }
+  }
+
+  @NotNull
+  public static File[] getSourceRootsForModuleAndDependencies(@NotNull Module module) throws IOException {
+    Set<File> result = new HashSet<File>();
+    fillSourceRoots(module, new HashSet<Module>(), result);
+    return result.toArray(new File[result.size()]);
+  }
+
+  @Nullable
+  public static String getApkPath(@NotNull AndroidFacet facet, @NotNull File outputDirForPackagedArtifacts) {
+    final String apkRelativePath = facet.getApkRelativePath();
+    final Module module = facet.getModule();
+
+    if (apkRelativePath.length() == 0) {
+      return new File(outputDirForPackagedArtifacts, getApkName(module)).getPath();
+    }
+    final String moduleDirPath = module.getBasePath();
+
+    return moduleDirPath != null
+           ? FileUtil.toSystemDependentName(moduleDirPath + apkRelativePath)
+           : null;
+  }
+
+  @NotNull
+  public static String getApkName(@NotNull Module module) {
+    return module.getName() + ".apk";
   }
 }

@@ -146,7 +146,7 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
             }
           }
         }
-        final AndroidFileSetState newState = new AndroidFileSetState(fileSet, AndroidJpsUtil.CLASSES_AND_JARS_FILTER);
+        final AndroidFileSetState newState = new AndroidFileSetState(fileSet, AndroidJpsUtil.CLASSES_AND_JARS_FILTER, true);
 
         if (context.isMake()) {
           final AndroidFileSetState oldState = dexStateStorage.getState(module.getName());
@@ -193,11 +193,11 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
     return "Android Dex Builder";
   }
 
-  public static boolean runDex(@NotNull AndroidSdk sdk,
-                               @NotNull IAndroidTarget target,
-                               @NotNull String outputDir,
-                               @NotNull String[] compileTargets,
-                               @NotNull CompileContext context) throws IOException {
+  private static boolean runDex(@NotNull AndroidSdk sdk,
+                                @NotNull IAndroidTarget target,
+                                @NotNull String outputDir,
+                                @NotNull String[] compileTargets,
+                                @NotNull CompileContext context) throws IOException {
     @SuppressWarnings("deprecation")
     final String dxJarPath = FileUtil.toSystemDependentName(target.getPath(IAndroidTarget.DX_JAR));
 
@@ -295,7 +295,7 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
     allFiles.addAll(libClassFilesDirs);
     allFiles.addAll(externalJars);
 
-    final AndroidFileSetState newState = new AndroidFileSetState(allFiles, AndroidJpsUtil.CLASSES_AND_JARS_FILTER);
+    final AndroidFileSetState newState = new AndroidFileSetState(allFiles, AndroidJpsUtil.CLASSES_AND_JARS_FILTER, true);
     final AndroidFileSetState oldState = proguardStateStorage.getState(module.getName());
     if (context.getTimestampStorage().getStamp(proguardCfgFile) == proguardCfgFile.lastModified() &&
         newState.equalsTo(oldState)) {

@@ -384,11 +384,11 @@ public class AndroidApkBuilder {
       for (File child : children) {
         if (child.exists()) {
           if (child.isDirectory()) {
-            if (JavaResourceFilter.checkFolderForPackaging(child.getName()) && !filter.value(child)) {
+            if (JavaResourceFilter.checkFolderForPackaging(child.getName()) && filter.value(child)) {
               collectStandardSourceFolderResources(child, result, filter);
             }
           }
-          else if (checkFileForPackaging(child) && !filter.value(child)) {
+          else if (checkFileForPackaging(child) && filter.value(child)) {
             result.add(child);
           }
         }

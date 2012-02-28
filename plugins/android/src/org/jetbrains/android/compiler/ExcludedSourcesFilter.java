@@ -18,6 +18,6 @@ class ExcludedSourcesFilter implements Condition<File> {
 
   @Override
   public boolean value(File file) {
-    return AndroidCompileUtil.isExcludedFromCompilation(file, myProject);
+    return !AndroidCompileUtil.isExcludedFromCompilation(file, myProject);
   }
 }

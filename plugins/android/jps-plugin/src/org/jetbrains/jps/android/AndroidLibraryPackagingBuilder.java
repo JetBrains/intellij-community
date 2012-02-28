@@ -72,7 +72,7 @@ public class AndroidLibraryPackagingBuilder extends ModuleLevelBuilder {
         final Set<String> subdirs = new HashSet<String>();
         AndroidJpsUtil.addSubdirectories(classesDir, subdirs);
 
-        final AndroidFileSetState newState = new AndroidFileSetState(subdirs, AndroidJpsUtil.CLASSES_AND_JARS_FILTER);
+        final AndroidFileSetState newState = new AndroidFileSetState(subdirs, AndroidJpsUtil.CLASSES_AND_JARS_FILTER, true);
         final AndroidFileSetState oldState = storage.getState(module.getName());
 
         if (oldState != null && oldState.equalsTo(newState)) {

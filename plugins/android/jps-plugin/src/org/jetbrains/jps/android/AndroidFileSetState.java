@@ -20,22 +20,28 @@ import java.util.Map;
 public class AndroidFileSetState implements ValidityState {
   private final Map<String, Long> myTimestamps;
 
-  public AndroidFileSetState(@NotNull Collection<String> roots, @NotNull final Condition<File> filter) {
+  public AndroidFileSetState(@NotNull Collection<String> roots, @NotNull final Condition<File> filter, boolean recursively) {
     myTimestamps = new HashMap<String, Long>();
 
-    for (String resourceDir : roots) {
-      FileUtil.processFilesRecursively(new File(resourceDir), new Processor<File>() {
-        @Override
-        public boolean process(File file) {
-          if (filter.value(file)) {
-            myTimestamps.put(FileUtil.toSystemIndependentName(file.getPath()), file.lastModified());
+    for (String rootPath : roots) {
+      final File root = new File(rootPath);
+
+      if (recursively) {
+        FileUtil.processFilesRecursively(root, new Processor<File>() {
+          @Override
+          public boolean process(File file) {
+            if (filter.value(file)) {
+              myTimestamps.put(FileUtil.toSystemIndependentName(file.getPath()), file.lastModified());
+            }
+            return true;
           }
-          return true;
-        }
-      });
+        });
+      }
+      else if (filter.value(root)) {
+        myTimestamps.put(FileUtil.toSystemIndependentName(root.getPath()), root.lastModified());
+      }
     }
   }
-
 
   public AndroidFileSetState(DataInput in) throws IOException {
     final int resourcesCount = in.readInt();
