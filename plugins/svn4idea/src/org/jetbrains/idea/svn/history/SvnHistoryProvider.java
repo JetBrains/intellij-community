@@ -163,7 +163,23 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
       if (myCommittedPath == null) {
         return null;
       }
-      return getCurrentRevision(myCommittedPath);
+      if (myCommittedPath.isNonLocal()) {
+        // technically, it does not make sense, since there's no "current" revision for non-local history (if look how it's used)
+        // but ok, lets keep it for now
+        return new SvnRevisionNumber(SVNRevision.HEAD);
+      }
+      try {
+        SVNWCClient wcClient = myVcs.createWCClient();
+        SVNInfo info = wcClient.doInfo(new File(myCommittedPath.getPath()), SVNRevision.UNDEFINED);
+        if (info != null) {
+          return new SvnRevisionNumber(info.getCommittedRevision());
+        } else {
+          return null;
+        }
+      }
+      catch (SVNException e) {
+        return null;
+      }
     }
 
     public FilePath getCommittedPath() {
