@@ -35,6 +35,7 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.ModifiableFacetModel;
+import com.intellij.facet.ProjectFacetManager;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -623,5 +624,17 @@ public class AndroidUtils {
       }
     }
     return true;
+  }
+
+  @NotNull
+  public static List<AndroidFacet> getApplicationFacets(@NotNull Project project) {
+    final List<AndroidFacet> result = new ArrayList<AndroidFacet>();
+
+    for (AndroidFacet facet : ProjectFacetManager.getInstance(project).getFacets(AndroidFacet.ID)) {
+      if (!facet.getConfiguration().LIBRARY_PROJECT) {
+        result.add(facet);
+      }
+    }
+    return result;
   }
 }
