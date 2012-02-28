@@ -69,4 +69,8 @@ public class GradleProjectStructureNodeDescriptor<T extends GradleEntityId> exte
     myId.setOwner(owner);
     update();
   }
+
+  public void setToolTip(@NotNull String text) {
+    getTemplatePresentation().setTooltip(text);
+  }
 }

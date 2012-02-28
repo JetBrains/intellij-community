@@ -106,9 +106,7 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
       final Collection<ModuleAwareContentRoot> contentRoots = myPlatformFacade.getContentRoots(module);
       for (ContentEntry entry : contentRoots) {
         GradleContentRootId contentRootId = GradleEntityIdMapper.mapEntityToId(entry);
-        GradleProjectStructureNode<GradleContentRootId> contentRootNode
-          = buildNode(contentRootId, getNodeName(contentRootId, contentRoots.size() <= 1));
-        moduleNode.add(contentRootNode);
+        moduleNode.add(buildContentRootNode(contentRootId, contentRoots.size() <= 1));
       }
       
       // Dependencies
@@ -128,21 +126,7 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
   }
 
   @NotNull
-  private String getNodeName(@NotNull GradleContentRootId id) {
-    final boolean singleRoot;
-    if (id.getOwner() == GradleEntityOwner.GRADLE) {
-      final GradleModule module = myProjectStructureHelper.findGradleModule(id.getModuleName());
-      singleRoot = module == null || module.getContentRoots().size() <= 1;
-    }
-    else {
-      final Module module = myProjectStructureHelper.findIntellijModule(id.getModuleName());
-      singleRoot = module == null || myPlatformFacade.getContentRoots(module).size() <= 1;
-    }
-    return getNodeName(id, singleRoot);
-  }
-  
-  @NotNull
-  private static String getNodeName(@NotNull GradleContentRootId id, boolean singleRoot) {
+  private static String getContentRootNodeName(@NotNull GradleContentRootId id, boolean singleRoot) {
     final String name = GradleBundle.message("gradle.import.structure.tree.node.content.root");
     if (singleRoot) {
       return name;
@@ -160,12 +144,35 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
     return myProject;
   }
 
+  @NotNull
+  private GradleProjectStructureNode<GradleContentRootId> buildContentRootNode(@NotNull GradleContentRootId id) {
+    final boolean singleRoot;
+    if (id.getOwner() == GradleEntityOwner.GRADLE) {
+      final GradleModule module = myProjectStructureHelper.findGradleModule(id.getModuleName());
+      singleRoot = module == null || module.getContentRoots().size() <= 1;
+    }
+    else {
+      final Module module = myProjectStructureHelper.findIntellijModule(id.getModuleName());
+      singleRoot = module == null || myPlatformFacade.getContentRoots(module).size() <= 1;
+    }
+    return buildContentRootNode(id, singleRoot);
+  }
+  
+  @NotNull
+  private GradleProjectStructureNode<GradleContentRootId> buildContentRootNode(@NotNull GradleContentRootId id, boolean singleRoot) {
+    GradleProjectStructureNode<GradleContentRootId> result = buildNode(id, getContentRootNodeName(id, singleRoot));
+    result.getDescriptor().setToolTip(id.getRootPath());
+    return result;
+  }
+
+  @NotNull
   private <T extends GradleEntityId> GradleProjectStructureNode<T> buildNode(@NotNull T id, @NotNull String name) {
     final GradleProjectStructureNode<T> result = new GradleProjectStructureNode<T>(GradleUtil.buildDescriptor(id, name), myNodeComparator);
     result.addListener(myNodeListener);
     return result;
   }
 
+  @NotNull
   private GradleProjectStructureNode<GradleSyntheticId> getDependenciesNode(@NotNull GradleModuleId id) {
     final GradleProjectStructureNode<GradleSyntheticId> cached = myModuleDependencies.get(id.getModuleName());
     if (cached != null) {
@@ -312,7 +319,7 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
         return;
       }
     }
-    GradleProjectStructureNode<GradleContentRootId> contentRootNode = buildNode(id, getNodeName(id));
+    GradleProjectStructureNode<GradleContentRootId> contentRootNode = buildContentRootNode(id);
     moduleNode.add(contentRootNode);
     contentRootNode.setAttributes(key);
   }
