@@ -331,6 +331,15 @@ public class PyTypeTest extends PyTestCase {
     assertEquals("int", actual.getName());
   }
 
+  // PY-5831
+  public void testYieldType() {
+    PyExpression expr = parseExpr("def f():\n" +
+                                  "    expr = yield 2\n");
+    TypeEvalContext context = TypeEvalContext.slow().withTracing();
+    PyType actual = expr.getType(context);
+    assertNull(actual);
+  }
+
   private PyExpression parseExpr(String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     return myFixture.findElementByText("expr", PyExpression.class);
