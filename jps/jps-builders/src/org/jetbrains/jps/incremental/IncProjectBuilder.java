@@ -170,11 +170,11 @@ public class IncProjectBuilder {
     runTasks(context, myBuilderRegistry.getBeforeTasks());
 
     context.setCompilingTests(false);
-    context.processMessage(new ProgressMessage("Building production sources"));
+    context.processMessage(new ProgressMessage("Checking production sources"));
     buildChunks(context, myProductionChunks);
 
     context.setCompilingTests(true);
-    context.processMessage(new ProgressMessage("Building test sources"));
+    context.processMessage(new ProgressMessage("Checking test sources"));
     buildChunks(context, myTestChunks);
 
     context.processMessage(new ProgressMessage("Building project"));
