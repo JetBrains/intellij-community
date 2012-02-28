@@ -1,5 +1,6 @@
 package com.jetbrains.python.run;
 
+import com.jetbrains.python.debugger.remote.PyPathMappingSettings;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -21,8 +22,9 @@ public interface PythonRunConfigurationParams {
   void setMultiprocessMode(boolean multiprocess);
 
   @Nullable
-  String getRemoteDebugConfiguration();
+  PyPathMappingSettings getMappingSettings();
 
-  void setRemoteDebugConfiguration(String name);
+
+  void setMappingSettings(PyPathMappingSettings mappingSettings);
 }
 

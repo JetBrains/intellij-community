@@ -10,7 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.util.io.FileUtil;
-import com.jetbrains.python.debugger.remote.PyRemoteDebugConfiguration;
+import com.jetbrains.python.debugger.remote.PyPathMappingSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,7 +25,7 @@ public abstract class PythonRemoteInterpreterManager {
                                                  PythonRemoteSdkAdditionalData data,
                                                  GeneralCommandLine commandLine,
                                                  @Nullable
-                                                 PyRemoteDebugConfiguration configuration)
+                                                 PyPathMappingSettings mappingSettings)
     throws PyRemoteInterpreterException;
 
   @Nullable

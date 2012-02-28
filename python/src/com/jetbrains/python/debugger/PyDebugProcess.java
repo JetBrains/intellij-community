@@ -93,7 +93,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
       myProcessHandler.addProcessListener(this);
     }
     if (processHandler instanceof PyRemoteProcessHandlerBase) {
-      myPositionConverter = new PyRemotePositionConverter(this, ((PyRemoteProcessHandlerBase)processHandler).getRemoteDebugConfiguration().getMappingSettings());
+      myPositionConverter = new PyRemotePositionConverter(this, ((PyRemoteProcessHandlerBase)processHandler).getMappingSettings());
     }
     else {
       myPositionConverter = new PyLocalPositionConverter();

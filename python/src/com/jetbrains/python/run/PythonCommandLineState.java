@@ -82,7 +82,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     }
   }
 
-  private static ServerSocket createServerSocket() throws ExecutionException {
+  private ServerSocket createServerSocket() throws ExecutionException {
     final ServerSocket serverSocket;
     try {
       //noinspection SocketOpenedButNotSafelyClosed
@@ -194,9 +194,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
         try {
           processHandler =
             manager.doCreateProcess(myConfig.getProject(), (PythonRemoteSdkAdditionalData)sdk.getSdkAdditionalData(), commandLine,
-                                    PyRemoteDebugConfiguration
-                                      .findByName(myConfig.getProject(),
-                                                  ((PythonRunConfiguration)myConfig).getRemoteDebugConfiguration()));
+                                    ((PythonRunConfiguration)myConfig).getMappingSettings());
           break;
         }
         catch (PyRemoteInterpreterException e) {

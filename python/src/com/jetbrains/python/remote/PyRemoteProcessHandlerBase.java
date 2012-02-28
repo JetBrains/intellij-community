@@ -1,10 +1,10 @@
 package com.jetbrains.python.remote;
 
-import com.jetbrains.python.debugger.remote.PyRemoteDebugConfiguration;
+import com.jetbrains.python.debugger.remote.PyPathMappingSettings;
 
 /**
  * @author traff
  */
 public interface PyRemoteProcessHandlerBase {
-  PyRemoteDebugConfiguration getRemoteDebugConfiguration();
+  PyPathMappingSettings getMappingSettings();
 }
