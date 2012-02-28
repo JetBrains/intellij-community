@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Throwable2Computable;
 import com.intellij.openapi.vcs.FilePath;
@@ -48,12 +49,14 @@ public class ContentRevisionCache {
   private final Object myLock;
   private final SLRUMap<Key, byte[]> myCache;
   private final SLRUMap<CurrentKey, VcsRevisionNumber> myCurrentRevisionsCache;
+  private final SLRUMap<Pair<FilePath, VcsRevisionNumber>, Object> myCustom;
   private long myCounter;
 
   public ContentRevisionCache() {
     myLock = new Object();
     myCache = new SLRUMap<Key, byte[]>(100, 50);
     myCurrentRevisionsCache = new SLRUMap<CurrentKey, VcsRevisionNumber>(200, 50);
+    myCustom = new SLRUMap<Pair<FilePath, VcsRevisionNumber>, Object>(30,30);
     myCounter = 0;
   }
 
@@ -70,6 +73,19 @@ public class ContentRevisionCache {
       final byte[] bytes = getBytes(path, number, vcsKey, type);
       if (bytes == null) return null;
       return bytesToString(path, bytes);
+    }
+  }
+
+  public void putCustom(FilePath path, VcsRevisionNumber number, final Object o) {
+    synchronized (myLock) {
+      myCustom.put(new Pair<FilePath, VcsRevisionNumber>(path, number), o);
+    }
+  }
+
+  @Nullable
+  public Object getCustom(FilePath path, VcsRevisionNumber number) {
+    synchronized (myLock) {
+      return myCustom.get(new Pair<FilePath, VcsRevisionNumber>(path, number));
     }
   }
 
