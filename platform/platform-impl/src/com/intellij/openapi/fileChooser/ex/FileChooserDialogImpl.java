@@ -115,7 +115,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
   @Override
   public void choose(@Nullable String toSelect, @NotNull Consumer<List<String>> callback) {
     prepareAndShow(toSelect, myProject);
-    callback.consume(Arrays.asList(FileChooserUtil.getPaths(myChosenFiles)));
+    callback.consume(Arrays.asList(FileChooserUtil.filesToPaths(myChosenFiles)));
   }
 
   private void prepareAndShow(@Nullable String toSelect, @Nullable Project project) {
