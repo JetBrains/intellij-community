@@ -24,7 +24,7 @@ but seemingly no one uses them in C extensions yet anyway.
 # * re.search-bound, ~30% time, in likes of builtins and _gtk with complex docstrings.
 # None of this can seemingly be easily helped. Maybe there's a simpler and faster parser library?
 
-VERSION = "1.101" # Must be a number-dot-number string, updated with each change that affects generated skeletons
+VERSION = "1.102" # Must be a number-dot-number string, updated with each change that affects generated skeletons
 # Note: DON'T FORGET TO UPDATE!
 
 VERSION_CONTROL_HEADER_FORMAT = '# from %s by generator %s'
@@ -885,6 +885,9 @@ class ModuleRedeclarator(object):
         ("_io", None, "open"): ("(name, mode=None, buffering=None)", "file('/dev/null')"),
         ("_io", "FileIO", "read"): ("(self, size=-1)", DEFAULT_STR_LIT),
         ("_fileio", "_FileIO", "read"): ("(self, size=-1)", DEFAULT_STR_LIT),
+
+        ("thread", None, "start_new"): ("(function, args, kwargs=None)", INT_LIT),
+        ("_thread", None, "start_new"): ("(function, args, kwargs=None)", INT_LIT),
 
         # NOTE: here we stand on shaky ground providing sigs for 3rd-party modules, though well-known
         ("numpy.core.multiarray", "ndarray", "__array__") : ("(self, dtype=None)", None),
