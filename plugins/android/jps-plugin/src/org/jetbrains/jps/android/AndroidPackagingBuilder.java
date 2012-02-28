@@ -31,7 +31,7 @@ import java.util.*;
 /**
  * @author Eugene.Kudelevsky
  */
-public class AndroidResourcePackagingBuilder extends ProjectLevelBuilder {
+public class AndroidPackagingBuilder extends ProjectLevelBuilder {
   @NonNls private static final String BUILDER_NAME = "android-packager";
   @NonNls private static final String RELEASE_SUFFIX = ".release";
   @NonNls private static final String UNSIGNED_SUFFIX = ".unsigned";

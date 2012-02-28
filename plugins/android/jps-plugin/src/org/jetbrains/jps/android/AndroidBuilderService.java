@@ -24,6 +24,6 @@ public class AndroidBuilderService extends BuilderService {
   @Override
   public List<? extends ProjectLevelBuilder> createProjectLevelBuilders() {
     return Arrays.asList(new AndroidDexBuilder(),
-                         new AndroidResourcePackagingBuilder());
+                         new AndroidPackagingBuilder());
   }
 }
