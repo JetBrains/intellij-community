@@ -43,7 +43,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
@@ -65,7 +64,6 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.Callable;
 
 /**
  * @author Alexander Lobas
@@ -74,7 +72,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
   private final TreeComponentDecorator myTreeDecorator = new AndroidTreeDecorator();
   private final XmlFile myXmlFile;
   private final ExternalPSIChangeListener myPSIChangeListener;
-  private RenderSession mySession;
+  private volatile RenderSession mySession;
 
   public AndroidDesignerEditorPanel(@NotNull Module module, @NotNull VirtualFile file) {
     super(module, file);
@@ -253,19 +251,26 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
   private void createRenderer(final String layoutXmlText, final ThrowableRunnable<Throwable> runnable) throws Exception {
     // TODO: (profile|device|target|...|theme) panel
 
-    disposeSession();
-    ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable() {
-                                                      @Override
-                                                      public void run() {
-                                                        showProgress("Create RenderLib");
-                                                      }
-                                                    }, new Condition() {
-                                                      @Override
-                                                      public boolean value(Object o) {
-                                                        return mySession != null;
-                                                      }
-                                                    }
-    );
+    if (mySession == null) {
+      ApplicationManager.getApplication().invokeLater(
+        new Runnable() {
+          @Override
+          public void run() {
+            if (mySession == null) {
+              showProgress("Create RenderLib");
+            }
+          }
+        }, new Condition() {
+          @Override
+          public boolean value(Object o) {
+            return mySession != null;
+          }
+        }
+      );
+    }
+    else {
+      disposeSession();
+    }
 
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       @Override

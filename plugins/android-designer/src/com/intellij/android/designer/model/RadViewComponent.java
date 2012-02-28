@@ -16,10 +16,12 @@
 package com.intellij.android.designer.model;
 
 import com.intellij.designer.model.RadComponent;
+import com.intellij.designer.propertyTable.Property;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import org.jdom.Element;
 
@@ -45,6 +47,7 @@ public class RadViewComponent extends RadComponent {
   private Component myNativeComponent;
   private final Rectangle myBounds = new Rectangle();
   private XmlTag myTag;
+  private List<Property> myProperties;
 
   public RadViewComponent(RadViewComponent parent) {
     setParent(parent);
@@ -106,5 +109,25 @@ public class RadViewComponent extends RadComponent {
       action.copyFrom(LinearLayout);
       actionGroup.add(action);
     }
+  }
+
+  @Override
+  public List<Property> getProperties() {
+    if (myProperties == null && myTag != null) {
+      myProperties = new ArrayList<Property>();
+      for (XmlAttribute attribute : myTag.getAttributes()) {
+        String name = attribute.getName();
+        if (name.equals("xmlns:android")) {
+          continue;
+        }
+
+        Property property = new AttributeProperty(null, new String(name).replace("android:", "").replace('_', ' '), name);
+        property.setImportant(name.equals("android:text"));
+        property.setExpert(name.equals("android:id"));
+        property.setDeprecated(name.equals("android:background"));
+        myProperties.add(property);
+      }
+    }
+    return myProperties == null ? super.getProperties() : myProperties;
   }
 }
