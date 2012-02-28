@@ -416,6 +416,7 @@ public class FSRecords implements Forceable {
         myRecords.close();
         myRecords = null;
       }
+      ourInitialized = false;
     }
 
     private static void markClean() {
