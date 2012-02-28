@@ -16,6 +16,7 @@
 package com.intellij.designer.propertyTable;
 
 import com.intellij.designer.DesignerBundle;
+import com.intellij.designer.designSurface.EditableArea;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.IdeBorderFactory;
@@ -32,8 +33,7 @@ import java.awt.*;
 public final class PropertyTablePanel extends JPanel {
   private final DefaultActionGroup myActionGroup = new DefaultActionGroup();
   private final ActionToolbar myToolbar;
-  private final PropertyTable myPropertyTable;
-  private boolean myShowExpert;
+  private final PropertyTable myPropertyTable = new PropertyTable();
 
   public PropertyTablePanel() {
     createActions();
@@ -49,7 +49,6 @@ public final class PropertyTablePanel extends JPanel {
     titlePanel.add(myToolbar.getComponent(), BorderLayout.LINE_END);
     add(titlePanel, BorderLayout.PAGE_START);
 
-    myPropertyTable = new PropertyTable();
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myPropertyTable);
     scrollPane.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
     add(scrollPane, BorderLayout.CENTER);
@@ -60,13 +59,17 @@ public final class PropertyTablePanel extends JPanel {
     myActionGroup.add(new ToggleAction(expert, expert, IconLoader.getIcon("/com/intellij/designer/icons/filter.png")) {
       @Override
       public boolean isSelected(AnActionEvent e) {
-        return myShowExpert;
+        return myPropertyTable.isShowExpert();
       }
 
       @Override
       public void setSelected(AnActionEvent e, boolean state) {
-        myShowExpert = state;
+        myPropertyTable.setShowExpert(state);
       }
     });
+  }
+
+  public PropertyTable getPropertyTable() {
+    return myPropertyTable;
   }
 }

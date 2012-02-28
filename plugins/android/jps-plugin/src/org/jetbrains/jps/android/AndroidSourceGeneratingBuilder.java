@@ -18,8 +18,6 @@ import org.jetbrains.android.util.ValueResourcesFileParser;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.ClasspathItem;
-import org.jetbrains.jps.ClasspathKind;
 import org.jetbrains.jps.Module;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.incremental.*;
@@ -153,7 +151,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
       final IAndroidTarget target = moduleData.getAndroidTarget();
 
       try {
-        final File[] sourceRoots = getSourceRootsForModuleAndDependencies(module);
+        final File[] sourceRoots = AndroidJpsUtil.getSourceRootsForModuleAndDependencies(module);
         final String[] sourceRootPaths = AndroidJpsUtil.toPaths(sourceRoots);
         final String packageName = computePackageForFile(context, file);
         
@@ -567,44 +565,6 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
     }
     
     return FileUtil.toSystemIndependentName(relPath).replace('/', '.');
-  }
-
-  private static void fillSourceRoots(@NotNull Module module, @NotNull Set<Module> visited, @NotNull Set<File> result)
-    throws IOException {
-    visited.add(module);
-    final AndroidFacet facet = AndroidJpsUtil.getFacet(module);
-    File resDir = null;
-    File resDirForCompilation = null;
-
-    if (facet != null) {
-      resDir = facet.getResourceDir();
-      resDirForCompilation = facet.getResourceDirForCompilation();
-    }
-
-    for (String sourceRootPath : module.getSourceRoots()) {
-      final File sourceRoot = new File(sourceRootPath).getCanonicalFile();
-      
-      if (!sourceRoot.equals(resDir) && !sourceRoot.equals(resDirForCompilation)) {
-        result.add(sourceRoot);
-      }
-    }
-    
-    for (ClasspathItem classpathItem : module.getClasspath(ClasspathKind.PRODUCTION_COMPILE)) {
-      if (classpathItem instanceof Module) {
-        final Module depModule = (Module)classpathItem;
-
-        if (!visited.contains(depModule)) {
-          fillSourceRoots(depModule, visited, result);
-        }
-      }
-    }
-  }
-
-  @NotNull
-  public static File[] getSourceRootsForModuleAndDependencies(@NotNull Module module) throws IOException {
-    Set<File> result = new HashSet<File>();
-    fillSourceRoots(module, new HashSet<Module>(), result);
-    return result.toArray(new File[result.size()]);
   }
 
   @Override

@@ -384,7 +384,8 @@ public class CompleteReferenceExpression {
       }
 
       GroovyResolveResult result = (GroovyResolveResult)o;
-      if (!result.isStaticsOK() || !result.isAccessible()) return;
+      if (!result.isStaticsOK()) return;
+      if (!result.isAccessible() && myParameters.getInvocationCount() < 2) return;
       if (mySkipPackages && result.getElement() instanceof PsiPackage) return;
 
       PsiElement element = result.getElement();

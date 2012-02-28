@@ -26,4 +26,6 @@ public interface PropertyEditor {
   JComponent getComponent(RadComponent component, Object value);
 
   Object getValue();
+
+  void updateUI();
 }
