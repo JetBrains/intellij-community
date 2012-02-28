@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.editorActions.enter;
 
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Document;
@@ -122,6 +123,9 @@ public class BaseIndentEnterHandler extends EnterHandlerDelegateAdapter {
       return Result.Stop;
     }
 
+    if (LanguageFormatting.INSTANCE.forLanguage(myLanguage) != null) {
+      return Result.Continue;
+    }
     EditorModificationUtil.insertStringAtCaret(editor, "\n" + lineIndent);
     editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(lineNumber + 1, lineIndent.length()));
     return Result.Stop;
