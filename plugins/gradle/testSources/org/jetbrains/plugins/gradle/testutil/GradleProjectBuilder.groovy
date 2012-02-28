@@ -72,6 +72,6 @@ class GradleProjectBuilder extends AbstractProjectBuilder {
 
   @Override
   protected reset() {
-    modulesCache.values().each { it.clearDependencies() }
+    modulesCache.values().each { it.clearDependencies(); it.clearContentRoots() }
   }
 }

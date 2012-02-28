@@ -8,6 +8,8 @@ import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.config.GradleTextAttributes;
 import org.jetbrains.plugins.gradle.diff.*;
+import org.jetbrains.plugins.gradle.model.GradleEntityOwner;
+import org.jetbrains.plugins.gradle.model.gradle.GradleModule;
 import org.jetbrains.plugins.gradle.model.id.*;
 import org.jetbrains.plugins.gradle.model.intellij.ModuleAwareContentRoot;
 import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNodeComparator;
@@ -125,6 +127,20 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
     setRoot(root);
   }
 
+  @NotNull
+  private String getNodeName(@NotNull GradleContentRootId id) {
+    final boolean singleRoot;
+    if (id.getOwner() == GradleEntityOwner.GRADLE) {
+      final GradleModule module = myProjectStructureHelper.findGradleModule(id.getModuleName());
+      singleRoot = module == null || module.getContentRoots().size() <= 1;
+    }
+    else {
+      final Module module = myProjectStructureHelper.findIntellijModule(id.getModuleName());
+      singleRoot = module == null || myPlatformFacade.getContentRoots(module).size() <= 1;
+    }
+    return getNodeName(id, singleRoot);
+  }
+  
   @NotNull
   private static String getNodeName(@NotNull GradleContentRootId id, boolean singleRoot) {
     final String name = GradleBundle.message("gradle.import.structure.tree.node.content.root");
@@ -282,7 +298,23 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
   }
 
   private void processNewContentRootPresenceChange(@NotNull GradleContentRootPresenceChange change) {
-    // TODO den implement
+    GradleContentRootId id = change.getGradleEntity();
+    TextAttributesKey key = GradleTextAttributes.GRADLE_LOCAL_CHANGE;
+    if (id == null) {
+      id = change.getIntellijEntity();
+      key = GradleTextAttributes.INTELLIJ_LOCAL_CHANGE;
+    }
+    assert id != null;
+    final GradleProjectStructureNode<GradleModuleId> moduleNode = getModuleNode(id.getModuleId());
+    for (GradleProjectStructureNode<GradleContentRootId> contentRoot : moduleNode.getChildren(GradleContentRootId.class)) {
+      if (id.equals(contentRoot.getDescriptor().getElement())) {
+        contentRoot.setAttributes(key);
+        return;
+      }
+    }
+    GradleProjectStructureNode<GradleContentRootId> contentRootNode = buildNode(id, getNodeName(id));
+    moduleNode.add(contentRootNode);
+    contentRootNode.setAttributes(key);
   }
   
   private void processObsoleteProjectRenameChange(@NotNull GradleProjectRenameChange change) {
@@ -355,7 +387,7 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
         holder.remove(node);
       }
       else {
-        descriptor.setAttributes(GradleTextAttributes.GRADLE_NO_CHANGE);
+        descriptor.setAttributes(GradleTextAttributes.NO_CHANGE);
         holder.correctChildPositionIfNecessary(node);
       }
       return;
@@ -389,12 +421,37 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
       moduleNode.removeFromParent();
     }
     else {
-      moduleNode.setAttributes(GradleTextAttributes.GRADLE_NO_CHANGE);
+      moduleNode.setAttributes(GradleTextAttributes.NO_CHANGE);
     }
   }
 
   private void processObsoleteContentRootPresenceChange(@NotNull GradleContentRootPresenceChange change) {
-    // TODO den implement
+    GradleContentRootId id = change.getGradleEntity();
+    final boolean removeNode;
+    if (id == null) {
+      id = change.getIntellijEntity();
+      assert id != null;
+      removeNode = myProjectStructureHelper.findIntellijContentRoot(id) == null;
+    }
+    else {
+      removeNode = myProjectStructureHelper.findGradleContentRoot(id) == null;
+    }
+    final GradleProjectStructureNode<GradleModuleId> moduleNode = myModules.get(id.getModuleName());
+    if (moduleNode == null) {
+      return;
+    }
+    for (GradleProjectStructureNode<GradleContentRootId> contentRootNode : moduleNode.getChildren(GradleContentRootId.class)) {
+      if (!id.equals(contentRootNode.getDescriptor().getElement())) {
+        continue;
+      }
+      if (removeNode) {
+        contentRootNode.removeFromParent();
+      }
+      else {
+        contentRootNode.setAttributes(GradleTextAttributes.NO_CHANGE);
+      }
+      return;
+    }
   }
   
   private class NodeListener implements GradleProjectStructureNode.Listener {
