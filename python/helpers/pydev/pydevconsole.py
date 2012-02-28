@@ -147,7 +147,9 @@ class InterpreterInterface(BaseInterpreterInterface):
             completer = Completer(self.namespace, None)
             return completer.complete(act_tok)
         except:
-            import traceback;traceback.print_exc()
+            import traceback;
+
+            traceback.print_exc()
             return []
 
 
@@ -189,6 +191,7 @@ try:
     except AttributeError:
         exitfunc = None
     from pydev_ipython_console import InterpreterInterface
+
     IPYTHON = True
     if exitfunc is not None:
         sys.exitfunc = exitfunc
@@ -196,7 +199,7 @@ try:
     else:
         try:
             delattr(sys, 'exitfunc')
-        except :
+        except:
             pass
 except:
     IPYTHON = False
@@ -222,8 +225,10 @@ def _DoExit(*args):
         else:
             os._exit(0)
 
+
 def handshake():
     return "PyCharm"
+
 
 def ipython_editor(interpreter):
     def editor(file, line):
@@ -232,6 +237,7 @@ def ipython_editor(interpreter):
         if line is None:
             line = "-1"
         interpreter.ipython_editor(file, line)
+
     return editor
 
 #=======================================================================================================================
@@ -242,6 +248,7 @@ def start_server(host, port, interpreter):
         host = ''
 
     from pydev_imports import SimpleXMLRPCServer
+
     try:
         server = SimpleXMLRPCServer((host, port), logRequests=False)
 
@@ -259,7 +266,7 @@ def start_server(host, port, interpreter):
     if IPYTHON:
         try:
             interpreter.interpreter.ipython.hooks.editor = ipython_editor(interpreter)
-        except :
+        except:
             pass
 
     if port == 0:
@@ -271,6 +278,7 @@ def start_server(host, port, interpreter):
     server.serve_forever()
 
     return server
+
 
 def StartServer(host, port, client_port):
     #replace exit (see comments on method)
@@ -299,6 +307,7 @@ def get_interpreter():
 
     return interpreterInterface
 
+
 def get_completions(text, token, globals, locals):
     interpreterInterface = get_interpreter()
 
@@ -308,7 +317,6 @@ def get_completions(text, token, globals, locals):
 
 
 def exec_expression(expression, globals, locals):
-
     interpreterInterface = get_interpreter()
 
     interpreterInterface.interpreter.update(globals, locals)
@@ -318,10 +326,10 @@ def exec_expression(expression, globals, locals):
     if res:
         return True
 
-
     interpreterInterface.addExec(expression)
 
     return False
+
 
 def read_line(s):
     ret = ''
@@ -339,15 +347,15 @@ def read_line(s):
 #=======================================================================================================================
 # main
 #=======================================================================================================================
+
+
 if __name__ == '__main__':
     port, client_port = sys.argv[1:3]
+    import pydev_localhost
+
     if int(port) == 0 and int(client_port) == 0:
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        sock.bind(('', 0))
-        (h, p) = sock.getsockname()
+        (h, p) = pydev_localhost.get_socket_name()
 
         client_port = p
 
-    import pydev_localhost
     StartServer(pydev_localhost.get_localhost(), int(port), int(client_port))

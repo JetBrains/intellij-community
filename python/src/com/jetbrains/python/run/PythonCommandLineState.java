@@ -75,14 +75,14 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
     if (sdk != null && sdk.getSdkAdditionalData() instanceof PythonRemoteSdkAdditionalData) {
       //remote interpreter
-      return Pair.create(serverSocket, 0);
+      return Pair.create(serverSocket, -serverSocket.getLocalPort());
     }
     else {
       return Pair.create(serverSocket, serverSocket.getLocalPort());
     }
   }
 
-  private ServerSocket createServerSocket() throws ExecutionException {
+  private static ServerSocket createServerSocket() throws ExecutionException {
     final ServerSocket serverSocket;
     try {
       //noinspection SocketOpenedButNotSafelyClosed

@@ -78,6 +78,7 @@ try:
     from urllib import quote
 except:
     from urllib.parse import quote #@Reimport @UnresolvedImport
+import time
 import pydevd_vars
 import pydevd_tracing
 import pydevd_vm_type
@@ -85,6 +86,7 @@ import pydevd_file_utils
 import traceback
 from pydevd_utils import *
 from pydevd_utils import quote_smart as quote
+
 
 from pydevd_tracing import GetExceptionTracebackStr
 import pydevconsole
@@ -378,17 +380,25 @@ def StartServer(port):
 def StartClient(host, port):
     """ connects to a host/port """
     PydevdLog(1, "Connecting to ", host, ":", str(port))
-    try:
-        s = socket(AF_INET, SOCK_STREAM)
 
-        s.connect((host, port))
+    s = socket(AF_INET, SOCK_STREAM)
+
+    MAX_TRIES = 3
+    i = 0
+    while i<MAX_TRIES:
+        try:
+            s.connect((host, port))
+        except:
+            i+=1
+            time.sleep(0.2)
+            continue
         PydevdLog(1, "Connected.")
         return s
-    except:
-        sys.stderr.write("Could not connect to %s: %s\n" % (host, port))
-        sys.stderr.flush()
-        traceback.print_exc()
-        sys.exit(1)
+
+    sys.stderr.write("Could not connect to %s: %s\n" % (host, port))
+    sys.stderr.flush()
+    traceback.print_exc()
+    sys.exit(1)
 
 
     
