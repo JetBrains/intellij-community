@@ -24,11 +24,18 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vcs.impl.ContentRevisionCache;
+import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.BeforeAfter;
+import com.intellij.util.Consumer;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -60,14 +67,25 @@ public class PreparedFragmentedContent {
   private final FragmentedContent myFragmentedContent;
   private final String myFileName;
   private final FileType myFileType;
+  private final VcsRevisionNumber myBeforeNumber;
+  private final VcsRevisionNumber myAfterNumber;
   private VirtualFile myFile;
+  private FilePath myFilePath;
 
   public PreparedFragmentedContent(final Project project, final FragmentedContent fragmentedContent, final String fileName,
-                                   final FileType fileType) {
+                                   final FileType fileType,
+                                   VcsRevisionNumber beforeNumber,
+                                   VcsRevisionNumber afterNumber,
+                                   FilePath path,
+                                   VirtualFile file) {
+    myFile = file;
     myProject = project;
     myFragmentedContent = fragmentedContent;
     myFileName = fileName;
     myFileType = fileType;
+    myBeforeNumber = beforeNumber;
+    myAfterNumber = afterNumber;
+    myFilePath = path;
     oldConvertor = new LineNumberConvertor();
     newConvertor = new LineNumberConvertor();
     sbOld = new StringBuilder();
@@ -301,16 +319,24 @@ public class PreparedFragmentedContent {
   }
 
   private void setTodoHighlighting(final Document oldDocument, final Document document) {
-    final List<Pair<TextRange,TextAttributes>> beforeTodoRanges = new TodoForRanges(myProject, myFileName, oldDocument.getText(), true,
-                                                getBeforeFragments(), myFileType, 1).execute();
-    final List<Pair<TextRange, TextAttributes>> afterTodoRanges = new TodoForRanges(myProject, myFileName, document.getText(), false,
-                                                getAfterFragments(), myFileType, 1).execute();
+    final ContentRevisionCache cache = ProjectLevelVcsManager.getInstance(myProject).getContentRevisionCache();
+    final List<Pair<TextRange,TextAttributes>> beforeTodoRanges = myBeforeNumber == null ? Collections.<Pair<TextRange,TextAttributes>>emptyList() :
+      new TodoForBaseRevision(myProject, getBeforeFragments(), 1, myFileName, oldDocument.getText(), true, myFileType, new Getter<Object>() {
+      @Override
+      public Object get() {
+        return cache.getCustom(myFilePath, myBeforeNumber);
+      }
+    }, new Consumer<Object>() {
+      @Override
+      public void consume(Object items) {
+        cache.putCustom(myFilePath, myBeforeNumber, items);
+      }
+    }).execute();
+
+    final List<Pair<TextRange, TextAttributes>> afterTodoRanges = new TodoForExistingFile(myProject, getAfterFragments(), 1,
+      myFileName, document.getText(), false, myFileType, myFile).execute();
     setBeforeTodoRanges(beforeTodoRanges);
     setAfterTodoRanges(afterTodoRanges);
-  }
-
-  public void setVirtualFile(VirtualFile file) {
-    myFile = file;
   }
 
   public VirtualFile getFile() {

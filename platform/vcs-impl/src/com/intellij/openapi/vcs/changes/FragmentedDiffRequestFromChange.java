@@ -81,14 +81,15 @@ public class FragmentedDiffRequestFromChange {
     final FileStatus fs = change.getFileStatus();
     fragmentedContent.setIsAddition(FileStatus.ADDED.equals(fs));
     fragmentedContent.setOneSide(FileStatus.ADDED.equals(fs) || FileStatus.DELETED.equals(fs));
-    final PreparedFragmentedContent preparedFragmentedContent = new PreparedFragmentedContent(myProject, fragmentedContent,
-                                    filePath.getName(), filePath.getFileType());
     VirtualFile file = filePath.getVirtualFile();
     if (file == null) {
       filePath.hardRefresh();
       file = filePath.getVirtualFile();
     }
-    preparedFragmentedContent.setVirtualFile(file);
+    final PreparedFragmentedContent preparedFragmentedContent = new PreparedFragmentedContent(myProject, fragmentedContent,
+                                    filePath.getName(), filePath.getFileType(),
+                                    change.getBeforeRevision() == null ? null : change.getBeforeRevision().getRevisionNumber(),
+                                    change.getAfterRevision() == null ? null : change.getAfterRevision().getRevisionNumber(), filePath, file);
     return preparedFragmentedContent;
   }
 

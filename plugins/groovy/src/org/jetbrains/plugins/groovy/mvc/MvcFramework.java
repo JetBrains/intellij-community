@@ -115,6 +115,13 @@ public abstract class MvcFramework {
     }
   }
 
+  public boolean isInteractiveConsoleSupport(@NotNull Module module) {
+    return false;
+  }
+
+  public void runInteractiveConsole(@NotNull Module module) {
+    throw new UnsupportedOperationException();
+  }
 
   public abstract void upgradeFramework(@NotNull Module module);
 

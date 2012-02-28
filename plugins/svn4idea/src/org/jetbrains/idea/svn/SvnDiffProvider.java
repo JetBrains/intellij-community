@@ -168,7 +168,7 @@ public class SvnDiffProvider implements DiffProvider, DiffMixin {
           LOG.info("No SVN status returned for " + file.getPath());
           return defaultResult();
         }
-        return createResult(info.getRevision(), true, false);
+        return createResult(info.getCommittedRevision(), true, false);
       }
       final boolean exists = ! SVNStatusType.STATUS_DELETED.equals(svnStatus.getRemoteContentsStatus()) &&
         ! SVNStatusType.STATUS_DELETED.equals(svnStatus.getRemoteNodeStatus());

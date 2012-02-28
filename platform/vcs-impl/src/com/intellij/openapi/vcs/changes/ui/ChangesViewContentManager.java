@@ -166,7 +166,7 @@ public class ChangesViewContentManager extends AbstractProjectComponent implemen
   }
   
   public boolean isToolwindowVisible() {
-    return myToolWindow.isVisible();
+    return ! myToolWindow.isDisposed() && myToolWindow.isVisible();
   }
 
   public void projectClosed() {

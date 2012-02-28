@@ -19,8 +19,7 @@ import com.intellij.ide.presentation.VirtualFilePresentation;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diff.DiffRequest;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -275,15 +274,14 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
       }
 
       if (!docsToSave.isEmpty()) {
-        AccessToken token = WriteAction.start();
-        try {
-          for (Document document : docsToSave) {
-            manager.saveDocument(document);
+        ApplicationManagerEx.getApplicationEx().runEdtSafeAction(new Runnable() {
+          @Override
+          public void run() {
+            for (Document document : docsToSave) {
+              manager.saveDocument(document);
+            }
           }
-        }
-        finally {
-          token.finish();
-        }
+        });
       }
       if (!FileWatcher.getInstance().isWatched(virtualFile)) {
         ((NewVirtualFile)virtualFile).markDirtyRecursively();

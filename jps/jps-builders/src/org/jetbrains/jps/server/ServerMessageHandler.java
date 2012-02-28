@@ -36,6 +36,7 @@ class ServerMessageHandler extends SimpleChannelHandler {
   }
 
   public void messageReceived(final ChannelHandlerContext ctx, MessageEvent e) throws Exception {
+    myServer.pingReceived();
     final JpsRemoteProto.Message message = (JpsRemoteProto.Message)e.getMessage();
     final UUID sessionId = ProtoUtil.fromProtoUUID(message.getSessionId());
 
@@ -86,7 +87,6 @@ class ServerMessageHandler extends SimpleChannelHandler {
           break;
 
         case SHUTDOWN_COMMAND :
-          // todo pay attention to policy
           myBuildsExecutor.submit(new Runnable() {
             public void run() {
               final List<RunnableFuture> futures = new ArrayList<RunnableFuture>();
@@ -139,7 +139,6 @@ class ServerMessageHandler extends SimpleChannelHandler {
           reply = ProtoUtil.toMessage(sessionId, ProtoUtil.createCommandCompletedEvent(null));
           break;
         case PING:
-          myServer.pingReceived();
           reply = ProtoUtil.toMessage(sessionId, ProtoUtil.createCommandCompletedEvent(null));
         default:
           reply = ProtoUtil.toMessage(sessionId, ProtoUtil.createFailure("Unknown request: " + message));
@@ -213,7 +212,7 @@ class ServerMessageHandler extends SimpleChannelHandler {
     synchronized (myTaskExecutors) {
       SequentialTaskExecutor executor = myTaskExecutors.get(projectId);
       if (executor == null) {
-        executor = new SequentialTaskExecutor(new SequentialTaskExecutor.AsyncTaskExecutor() {
+        executor = new SequentialTaskExecutor(new AsyncTaskExecutor() {
           @Override
           public void submit(Runnable runnable) {
             myBuildsExecutor.submit(runnable);
@@ -226,10 +225,12 @@ class ServerMessageHandler extends SimpleChannelHandler {
   }
 
   public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
-    if (this == ctx.getPipeline().getLast()) {
-      LOG.error(e);
-    }
+    LOG.error(e);
     ctx.sendUpstream(e);
+  }
+
+  public boolean hasRunningBuilds() {
+    return !myBuildsInProgress.isEmpty();
   }
 
   private class CompilationTask implements Runnable, CanceledStatus {

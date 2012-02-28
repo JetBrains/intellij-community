@@ -92,8 +92,9 @@ public class CompileServerManager implements ApplicationComponent{
   private static final String DEFAULT_LOGGER_CONFIG = "defaultLogConfig.xml";
   private volatile OSProcessHandler myProcessHandler;
   private final File mySystemDirectory;
-  private volatile CompileServerClient myClient = new CompileServerClient();
-  private final SequentialTaskExecutor myTaskExecutor = new SequentialTaskExecutor(new SequentialTaskExecutor.AsyncTaskExecutor() {
+  @Nullable
+  private volatile CompileServerClient myClient;
+  private final SequentialTaskExecutor myTaskExecutor = new SequentialTaskExecutor(new AsyncTaskExecutor() {
     public void submit(Runnable runnable) {
       ApplicationManager.getApplication().executeOnPooledThread(runnable);
     }
@@ -102,6 +103,12 @@ public class CompileServerManager implements ApplicationComponent{
   private static final int MAKE_TRIGGER_DELAY = 5 * 1000 /*5 seconds*/;
   private final Map<RequestFuture, Project> myAutomakeFutures = new HashMap<RequestFuture, Project>();
   private final CompileServerClasspathManager myClasspathManager = new CompileServerClasspathManager();
+  private final AsyncTaskExecutor myAsyncExec = new AsyncTaskExecutor() {
+    @Override
+    public void submit(Runnable runnable) {
+      ApplicationManager.getApplication().executeOnPooledThread(runnable);
+    }
+  };
 
   public CompileServerManager(final ProjectManager projectManager) {
     myProjectManager = projectManager;
@@ -394,7 +401,8 @@ public class CompileServerManager implements ApplicationComponent{
       }
 
       final int port = NetUtils.findAvailableSocketPort();
-      final Process process = launchServer(port);
+      final long serverPingInterval = Registry.intValue("compiler.server.ping.interval", -1) * 1000L; 
+      final Process process = launchServer(port, serverPingInterval);
 
       final OSProcessHandler processHandler = new OSProcessHandler(process, null) {
         protected boolean shouldDestroyProcessRecursively() {
@@ -451,7 +459,7 @@ public class CompileServerManager implements ApplicationComponent{
         throw new Exception("Server startup failed: " + startupMsg);
       }
 
-      CompileServerClient client = new CompileServerClient();
+      CompileServerClient client = new CompileServerClient(serverPingInterval, myAsyncExec);
       boolean connected = false;
       try {
         connected = client.connect(NetUtils.getLocalHostString(), port);
@@ -545,7 +553,7 @@ public class CompileServerManager implements ApplicationComponent{
   //  commandLine.add((launcherUsed? "-J" : "") + "-D" + CharsetToolkit.FILE_ENCODING_PROPERTY + "=" + CharsetToolkit.getDefaultSystemCharset().name());
   //}
 
-  private Process launchServer(final int port) throws ExecutionException {
+  private Process launchServer(final int port, long pingInterval) throws ExecutionException {
     // validate tools.jar presence
     final JavaCompiler systemCompiler = ToolProvider.getSystemJavaCompiler();
     if (systemCompiler == null) {
@@ -561,7 +569,10 @@ public class CompileServerManager implements ApplicationComponent{
     cmdLine.addParameter("-XX:ReservedCodeCacheSize=64m");
     cmdLine.addParameter("-Xmx" + Registry.intValue("compiler.server.heap.size") + "m");
     cmdLine.addParameter("-Djava.awt.headless=true");
-    //cmdLine.addParameter("-DuseJavaUtilZip");
+    //noinspection ConstantConditions
+    if (pingInterval > 0L) {
+      cmdLine.addParameter("-D" + GlobalOptions.PING_INTERVAL_MS_OPTION + "=" + pingInterval);
+    }
     final String additionalOptions = Registry.stringValue("compiler.server.vm.options");
     if (!StringUtil.isEmpty(additionalOptions)) {
       final StringTokenizer tokenizer = new StringTokenizer(additionalOptions, " ", false);

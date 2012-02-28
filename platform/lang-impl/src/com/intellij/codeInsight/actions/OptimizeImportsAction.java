@@ -107,7 +107,7 @@ public class OptimizeImportsAction extends AnAction {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       includeSubdirectories = processDirectory = false;
     }
-    else if (!EditorSettingsExternalizable.getInstance().getOptions().SHOW_OPIMIZE_IMPORTS_DIALOG) {
+    else if (!EditorSettingsExternalizable.getInstance().getOptions().SHOW_OPIMIZE_IMPORTS_DIALOG && file != null) {
       includeSubdirectories = processDirectory = false;
     }
     else {

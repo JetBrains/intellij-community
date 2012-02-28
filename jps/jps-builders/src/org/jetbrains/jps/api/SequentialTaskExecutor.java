@@ -31,10 +31,6 @@ public class SequentialTaskExecutor {
     }
   };
 
-  public interface AsyncTaskExecutor {
-    void submit(Runnable runnable);
-  }
-
   public SequentialTaskExecutor(AsyncTaskExecutor executor) {
     myExecutor = executor;
   }
