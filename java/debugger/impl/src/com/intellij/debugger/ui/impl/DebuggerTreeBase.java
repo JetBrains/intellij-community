@@ -66,8 +66,8 @@ public class DebuggerTreeBase extends DnDAwareTree implements Disposable {
         return DebuggerTreeBase.this.createToolTip(e);
       }
 
-      public MouseEvent createTooltipEvent(MouseEvent candiateEvent) {
-        return DebuggerTreeBase.this.createTooltipEvent(candiateEvent);
+      public MouseEvent createTooltipEvent(MouseEvent candidateEvent) {
+        return DebuggerTreeBase.this.createTooltipEvent(candidateEvent);
       }
 
       public boolean isFocusOwner() {
