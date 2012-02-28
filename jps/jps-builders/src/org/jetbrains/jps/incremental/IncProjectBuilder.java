@@ -306,28 +306,29 @@ public class IncProjectBuilder {
             // deleting outputs corresponding to non-existing source
             final Collection<String> outputs = sourceToOutputStorage.getState(deletedSource);
             
-            if (LOG.isDebugEnabled()) {
-              if (outputs.size() > 0) {
-                final String[] buffer = new String[outputs.size()];
-                int i = 0;
-                for (final String o : outputs) {
-                  buffer[i++] = o;
-                }
-                Arrays.sort(buffer);
-                LOG.info("Cleaning output files:");
-                for(final String o : buffer) {
-                  LOG.info(o);
-                }
-                LOG.info("End of files");
-              }
-            }
-            
             if (outputs != null) {
+              if (LOG.isDebugEnabled()) {
+                if (outputs.size() > 0) {
+                  final String[] buffer = new String[outputs.size()];
+                  int i = 0;
+                  for (final String o : outputs) {
+                    buffer[i++] = o;
+                  }
+                  Arrays.sort(buffer);
+                  LOG.info("Cleaning output files:");
+                  for(final String o : buffer) {
+                    LOG.info(o);
+                  }
+                  LOG.info("End of files");
+                }
+              }
+              
               for (String output : outputs) {
                 FileUtil.delete(new File(output));
               }
               sourceToOutputStorage.remove(deletedSource);
             }
+            
             // check if deleted source was associated with a form
             final SourceToFormMapping sourceToFormMap = context.getDataManager().getSourceToFormMap();
             final String formPath = sourceToFormMap.getState(deletedSource);
