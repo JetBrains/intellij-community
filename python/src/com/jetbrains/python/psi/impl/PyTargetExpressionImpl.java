@@ -146,6 +146,9 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
               return typeFromTarget;
             }
           }
+          if (assignedValue instanceof PyYieldExpression) {
+            return null;
+          }
           return context.getType(assignedValue);
         }
       }

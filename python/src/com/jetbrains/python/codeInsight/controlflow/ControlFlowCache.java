@@ -22,7 +22,7 @@ public class ControlFlowCache {
     scopeOwner.putUserData(SCOPE_KEY, null);
   }
 
-  public static ControlFlow getControlFlow(ScopeOwner element) {
+  public static ControlFlow getControlFlow(@NotNull ScopeOwner element) {
     SoftReference<ControlFlow> ref = element.getUserData(CONTROL_FLOW_KEY);
     ControlFlow flow = ref != null ? ref.get() : null;
     if (flow == null) {

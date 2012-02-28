@@ -1,5 +1,6 @@
 package com.jetbrains.python;
 
+import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.jetbrains.python.documentation.DocStringFormat;
@@ -81,7 +82,7 @@ public class PythonInspectionsTest extends PyTestCase {
     PyUnusedLocalInspection inspection = new PyUnusedLocalInspection();
     inspection.ignoreTupleUnpacking = false;
     inspection.ignoreLambdaParameters = false;
-    doTest(getTestName(false), inspection);
+    doHighlightingTest(inspection, LanguageLevel.PYTHON27);
   }
 
   public void testPyUnusedLocalVariableInspection3K() {
@@ -226,6 +227,22 @@ public class PythonInspectionsTest extends PyTestCase {
     finally {
       setLanguageLevel(null);
     }
+  }
+
+  private void doHighlightingTest(InspectionProfileEntry entry, final LanguageLevel languageLevel) {
+    setLanguageLevel(languageLevel);
+    try {
+      doHighlightingTest(entry);
+    }
+    finally {
+      setLanguageLevel(null);
+    }
+  }
+
+  private void doHighlightingTest(InspectionProfileEntry entry) {
+    myFixture.configureByFile("inspections/" + getTestName(false) + "/test.py");
+    myFixture.enableInspections(entry);
+    myFixture.checkHighlighting(true, false, true);
   }
 
   public void testPyPropertyAccessInspection() {

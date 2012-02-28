@@ -242,6 +242,7 @@ test
 textwrap
 this
 thread
+_thread
 threading
 time
 timeit

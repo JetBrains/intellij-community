@@ -3,6 +3,7 @@ package com.jetbrains.python.psi.types;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.psi.Callable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
@@ -20,8 +21,9 @@ public class PyReturnTypeReference extends PyTypeReferenceImpl {
 
   @Nullable
   @Override
-  protected PyType resolveStep(PsiElement context, TypeEvalContext typeEvalContext) {
-    return myCallable.getReturnType(typeEvalContext, null);
+  protected PyType resolveStep(@Nullable PsiElement context, @NotNull TypeEvalContext typeEvalContext) {
+    final PyType returnType = myCallable.getReturnType(typeEvalContext, null);
+    return PyTypeChecker.hasGenerics(returnType, typeEvalContext) ? null : returnType;
   }
 
   public String getName() {
