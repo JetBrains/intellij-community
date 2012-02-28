@@ -46,7 +46,7 @@ public abstract class PyTypeReferenceImpl implements PyTypeReference {
     }
     return resolved;
   }
-  
+
   @Nullable
-  protected abstract PyType resolveStep(@Nullable PsiElement context, TypeEvalContext typeEvalContext);
+  protected abstract PyType resolveStep(@Nullable PsiElement context, @NotNull TypeEvalContext typeEvalContext);
 }
