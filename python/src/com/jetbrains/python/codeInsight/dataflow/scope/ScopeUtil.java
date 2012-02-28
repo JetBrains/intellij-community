@@ -92,7 +92,8 @@ public class ScopeUtil {
   }
 
   @NotNull
-  public static Collection<PsiElement> getReadWriteElements(String name, ScopeOwner scopeOwner, boolean isReadAccess, boolean isWriteAccess) {
+  public static Collection<PsiElement> getReadWriteElements(@NotNull String name, @NotNull ScopeOwner scopeOwner, boolean isReadAccess,
+                                                            boolean isWriteAccess) {
     ControlFlow flow = ControlFlowCache.getControlFlow(scopeOwner);
     Collection<PsiElement> result = new ArrayList<PsiElement>();
     for (Instruction instr : flow.getInstructions()) {
