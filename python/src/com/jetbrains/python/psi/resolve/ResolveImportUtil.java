@@ -261,7 +261,7 @@ public class ResolveImportUtil {
    * @param referencedName  which name to look for.
    * @param containingFile  where we're in.
    * @param root            the root from which we started descending the directory tree (if any)
-   * @param sdk             the SDK to which the root belongs, if any                     
+   * @param sdk             the SDK to which the root belongs, if any
    * @param fileOnly        if true, considers only a PsiFile child as a valid result; non-file hits are ignored.
    * @param checkForPackage if true, directories are returned only if they contain __init__.py
    * @return the element the referencedName resolves to, or null.
@@ -543,6 +543,10 @@ public class ResolveImportUtil {
       }
       else if (head.equals("_io") || head.equals("_pyio") || head.equals("_fileio")) {
         components.set(0, "io");
+        return PyQualifiedName.fromComponents(components);
+      }
+      else if (head.equals("_datetime")) {
+        components.set(0, "datetime");
         return PyQualifiedName.fromComponents(components);
       }
       else if (head.equals("ntpath")) {

@@ -72,8 +72,7 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
   }
 
   private void processScope(final ScopeOwner owner) {
-    if ((owner.getContainingFile() instanceof PyExpressionCodeFragment) ||
-        callsLocals(owner)) {
+    if (owner.getContainingFile() instanceof PyExpressionCodeFragment || callsLocals(owner)) {
       return;
     }
     if (!(owner instanceof PyClass)) {
@@ -233,7 +232,7 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
         registerWarning(nameIdentifier == null ? element : nameIdentifier,
                         PyBundle.message("INSP.unused.locals.local.function.isnot.used",
                         ((PyFunction)element).getName()));
-      } 
+      }
       // Local variable or parameter
       else {
         String name = element.getText();

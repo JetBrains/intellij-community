@@ -307,22 +307,24 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     private void processReferenceInImportGuard(PyElement node, PyExceptPart guard) {
       final PyImportElement importElement = PsiTreeUtil.getParentOfType(node, PyImportElement.class);
       if (importElement != null) {
-        Collection<PsiElement> allWrites = ScopeUtil.getReadWriteElements(importElement.getVisibleName(),
-                                                                          ScopeUtil.getScopeOwner(importElement),
-                                                                          false, true);
-        Collection<PsiElement> writesInsideGuard = new ArrayList<PsiElement>();
-        for (PsiElement write : allWrites) {
-          if (PsiTreeUtil.isAncestor(guard, write, false)) {
-            writesInsideGuard.add(write);
+        final String visibleName = importElement.getVisibleName();
+        final ScopeOwner owner = ScopeUtil.getScopeOwner(importElement);
+        if (visibleName != null && owner != null) {
+          final Collection<PsiElement> allWrites = ScopeUtil.getReadWriteElements(visibleName, owner, false, true);
+          final Collection<PsiElement> writesInsideGuard = new ArrayList<PsiElement>();
+          for (PsiElement write : allWrites) {
+            if (PsiTreeUtil.isAncestor(guard, write, false)) {
+              writesInsideGuard.add(write);
+            }
           }
-        }
-        if (writesInsideGuard.isEmpty()) {
-          final PyTargetExpression asElement = importElement.getAsNameElement();
-          final PyElement toHighlight = asElement != null ? asElement : node;
-          registerProblem(toHighlight,
-                          PyBundle.message("INSP.try.except.import.error",
-                                           importElement.getVisibleName()),
-                          ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, null);
+          if (writesInsideGuard.isEmpty()) {
+            final PyTargetExpression asElement = importElement.getAsNameElement();
+            final PyElement toHighlight = asElement != null ? asElement : node;
+            registerProblem(toHighlight,
+                            PyBundle.message("INSP.try.except.import.error",
+                                             visibleName),
+                            ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, null);
+          }
         }
       }
     }
