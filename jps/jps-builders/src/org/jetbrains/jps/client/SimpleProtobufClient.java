@@ -10,6 +10,7 @@ import org.jboss.netty.handler.codec.protobuf.ProtobufEncoder;
 import org.jboss.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import org.jboss.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.api.AsyncTaskExecutor;
 import org.jetbrains.jps.api.RequestFuture;
 
 import java.net.InetSocketAddress;
@@ -36,8 +37,8 @@ public class SimpleProtobufClient<T extends ProtobufResponseHandler> {
   protected ChannelFuture myConnectFuture;
   private final ProtobufClientMessageHandler<T> myMessageHandler;
 
-  public SimpleProtobufClient(final MessageLite msgDefaultInstance, final UUIDGetter uuidGetter) {
-    myMessageHandler = new ProtobufClientMessageHandler<T>(uuidGetter, this);
+  public SimpleProtobufClient(final MessageLite msgDefaultInstance, final AsyncTaskExecutor asyncExec, final UUIDGetter uuidGetter) {
+    myMessageHandler = new ProtobufClientMessageHandler<T>(uuidGetter, this, asyncExec);
     myChannelFactory = new NioClientSocketChannelFactory(ourExecutor, ourExecutor, 1);
     myPipelineFactory = new ChannelPipelineFactory() {
       public ChannelPipeline getPipeline() throws Exception {
@@ -105,15 +106,6 @@ public class SimpleProtobufClient<T extends ProtobufResponseHandler> {
   protected void onDisconnect() {
   }
 
-  public final void scheduleDisconnect() {
-    ourExecutor.submit(new Runnable() {
-      @Override
-      public void run() {
-        disconnect();
-      }
-    });
-  }
-
   public final void disconnect() {
     if (myState.compareAndSet(State.CONNECTED, State.DISCONNECTING)) {
       try {
@@ -154,23 +146,31 @@ public class SimpleProtobufClient<T extends ProtobufResponseHandler> {
   public final RequestFuture<T> sendMessage(final UUID messageId, MessageLite message, @Nullable final T responseHandler, @Nullable final RequestFuture.CancelAction<T> cancelAction) {
     final RequestFuture<T> requestFuture = new RequestFuture<T>(responseHandler, messageId, cancelAction);
     myMessageHandler.registerFuture(messageId, requestFuture);
-    final ChannelFuture channelFuture = Channels.write(myConnectFuture.getChannel(), message);
-    channelFuture.addListener(new ChannelFutureListener() {
-      public void operationComplete(ChannelFuture future) throws Exception {
-        if (!future.isSuccess()) {
-          try {
-            myMessageHandler.removeFuture(messageId);
-            if (responseHandler != null) {
-              responseHandler.sessionTerminated();
-            }
-          }
-          finally {
-            requestFuture.setDone();
+    final Channel channel = myConnectFuture.getChannel();
+    if (channel.isConnected()) {
+      Channels.write(channel, message).addListener(new ChannelFutureListener() {
+        public void operationComplete(ChannelFuture future) throws Exception {
+          if (!future.isSuccess()) {
+            notifyTerminated(messageId, requestFuture, responseHandler);
           }
         }
-      }
-    });
+      });
+    }
+    else {
+      notifyTerminated(messageId, requestFuture, responseHandler);
+    }
     return requestFuture;
   }
 
+  private void notifyTerminated(UUID messageId, RequestFuture<T> requestFuture, @Nullable T responseHandler) {
+    try {
+      myMessageHandler.removeFuture(messageId);
+      if (responseHandler != null) {
+        responseHandler.sessionTerminated();
+      }
+    }
+    finally {
+      requestFuture.setDone();
+    }
+  }
 }

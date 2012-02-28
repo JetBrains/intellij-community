@@ -170,11 +170,11 @@ public class IncProjectBuilder {
     runTasks(context, myBuilderRegistry.getBeforeTasks());
 
     context.setCompilingTests(false);
-    context.processMessage(new ProgressMessage("Building production sources"));
+    context.processMessage(new ProgressMessage("Checking production sources"));
     buildChunks(context, myProductionChunks);
 
     context.setCompilingTests(true);
-    context.processMessage(new ProgressMessage("Building test sources"));
+    context.processMessage(new ProgressMessage("Checking test sources"));
     buildChunks(context, myTestChunks);
 
     context.processMessage(new ProgressMessage("Building project"));
@@ -290,10 +290,12 @@ public class IncProjectBuilder {
       if (context.isMake()) {
         // cleanup outputs
         final Set<String> allChunkRemovedSources = new HashSet<String>();
-        final SourceToFormMapping sourceToFormMap = context.getDataManager().getSourceToFormMap();
 
         for (Module module : chunk.getModules()) {
           final Collection<String> deletedPaths = myProjectDescriptor.fsState.getDeletedPaths(module, context.isCompilingTests());
+          if (deletedPaths.isEmpty()) {
+            continue;
+          }
           allChunkRemovedSources.addAll(deletedPaths);
 
           final String moduleName = module.getName().toLowerCase(Locale.US);
@@ -327,6 +329,7 @@ public class IncProjectBuilder {
               sourceToOutputStorage.remove(deletedSource);
             }
             // check if deleted source was associated with a form
+            final SourceToFormMapping sourceToFormMap = context.getDataManager().getSourceToFormMap();
             final String formPath = sourceToFormMap.getState(deletedSource);
             if (formPath != null) {
               final File formFile = new File(formPath);

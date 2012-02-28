@@ -182,7 +182,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     final XDebuggerEditorBase inputEditor = myInputComponent.getInputEditor();
     inputEditor.saveTextInHistory();
     String expression = inputEditor.getText();
-    myEvaluator.evaluate(expression, evaluationCallback, null);
+    myEvaluator.evaluate(expression, evaluationCallback, null, inputEditor.getMode());
   }
 
   public JComponent getPreferredFocusedComponent() {
