@@ -54,11 +54,11 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
   public JarFileSystemImpl(MessageBus bus) {
     bus.connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
-      public void before(final List<? extends VFileEvent> events) {
+      public void before(@NotNull final List<? extends VFileEvent> events) {
       }
 
       @Override
-      public void after(final List<? extends VFileEvent> events) {
+      public void after(@NotNull final List<? extends VFileEvent> events) {
         final List<VirtualFile> rootsToRefresh = new ArrayList<VirtualFile>();
 
         for (VFileEvent event : events) {

@@ -44,31 +44,40 @@ public class FormClassIndex extends ScalarIndexExtension<String> {
   private final MyInputFilter myInputFilter = new MyInputFilter();
   private final MyDataIndexer myDataIndexer = new MyDataIndexer();
 
+  @Override
+  @NotNull
   public ID<String, Void> getName() {
     return NAME;
   }
 
+  @Override
+  @NotNull
   public DataIndexer<String, Void, FileContent> getIndexer() {
     return myDataIndexer;
   }
 
+  @Override
   public KeyDescriptor<String> getKeyDescriptor() {
     return myKeyDescriptor;
   }
 
+  @Override
   public FileBasedIndex.InputFilter getInputFilter() {
     return myInputFilter;
   }
 
+  @Override
   public boolean dependsOnFileContent() {
     return true;
   }
 
+  @Override
   public int getVersion() {
     return 0;
   }
 
   private static class MyDataIndexer implements DataIndexer<String, Void, FileContent> {
+    @Override
     @NotNull
     public Map<String, Void> map(final FileContent inputData) {
       String className = null;
@@ -86,6 +95,7 @@ public class FormClassIndex extends ScalarIndexExtension<String> {
   }
 
   private static class MyInputFilter implements FileBasedIndex.InputFilter {
+    @Override
     public boolean acceptInput(final VirtualFile file) {
       return file.getFileType() == StdFileTypes.GUI_DESIGNER_FORM;
     }
@@ -99,6 +109,7 @@ public class FormClassIndex extends ScalarIndexExtension<String> {
                                                     final String className,
                                                     final GlobalSearchScope scope) {
     return ApplicationManager.getApplication().runReadAction(new Computable<List<PsiFile>>() {
+      @Override
       public List<PsiFile> compute() {
         final Collection<VirtualFile> files;
         try {

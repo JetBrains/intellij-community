@@ -78,6 +78,8 @@ class RunConfigurable extends BaseConfigurable {
   private static final Icon EDIT_DEFAULTS_ICON = IconLoader.getIcon(EDIT_DEFAULTS_ICON_PATH);
   @NonNls private static final String DIVIDER_PROPORTION = "dividerProportion";
 
+  private volatile boolean isDisposed = false;
+
   private final Project myProject;
   private RunDialogBase myRunDialog;
   @NonNls private final DefaultMutableTreeNode myRoot = new DefaultMutableTreeNode("Root");
@@ -263,6 +265,8 @@ class RunConfigurable extends BaseConfigurable {
     }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), JComponent.WHEN_FOCUSED);
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
+        if (isDisposed) return;
+
         myTree.requestFocusInWindow();
         final RunnerAndConfigurationSettings settings = manager.getSelectedConfiguration();
         if (settings != null) {
@@ -711,6 +715,7 @@ class RunConfigurable extends BaseConfigurable {
   }
 
   public void disposeUIResources() {
+    isDisposed = true;
     for (Configurable configurable : myStoredComponents.values()) {
       configurable.disposeUIResources();
     }

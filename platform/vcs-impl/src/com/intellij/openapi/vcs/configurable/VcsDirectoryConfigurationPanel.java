@@ -16,7 +16,7 @@
 
 package com.intellij.openapi.vcs.configurable;
 
-import com.intellij.CommonBundle;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
@@ -36,8 +36,6 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
@@ -64,9 +62,6 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
   private final ColumnInfo<VcsDirectoryMapping, VcsDirectoryMapping> DIRECTORY;
   private JCheckBox myBaseRevisionTexts;
   private ListTableModel<VcsDirectoryMapping> myModel;
-  private JButton myAddButton;
-  private JButton myEditButton;
-  private JButton myRemoveButton;
   private final Map<String, VcsDescriptor> myAllVcss;
   private VcsContentAnnotationConfigurable myRecentlyChangedConfigurable;
   private final boolean myIsDisabled;
@@ -81,18 +76,18 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
 
     @Override
     protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
-      if (value instanceof VcsDirectoryMapping){
+      if (value instanceof VcsDirectoryMapping) {
         if (((VcsDirectoryMapping)value).isDefaultMapping()) {
           append(VcsDirectoryMapping.PROJECT_CONSTANT);
           return;
         }
-        final VcsDirectoryMapping mapping = (VcsDirectoryMapping) value;
+        final VcsDirectoryMapping mapping = (VcsDirectoryMapping)value;
         String directory = mapping.getDirectory();
         VirtualFile baseDir = myProject.getBaseDir();
         if (baseDir != null) {
           final File directoryFile = new File(directory);
           File ioBase = new File(baseDir.getPath());
-          if (directoryFile.isAbsolute() && ! FileUtil.isAncestor(ioBase, directoryFile, false)) {
+          if (directoryFile.isAbsolute() && !FileUtil.isAncestor(ioBase, directoryFile, false)) {
             append(directoryFile.getPath());
             return;
           }
@@ -109,59 +104,60 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
     }
   }
 
-  private final ColumnInfo<VcsDirectoryMapping, String> VCS_SETTING = new ColumnInfo<VcsDirectoryMapping, String>(VcsBundle.message("comumn.name.configure.vcses.vcs")) {
-    public String valueOf(final VcsDirectoryMapping object) {
-      return object.getVcs();
-    }
+  private final ColumnInfo<VcsDirectoryMapping, String> VCS_SETTING =
+    new ColumnInfo<VcsDirectoryMapping, String>(VcsBundle.message("comumn.name.configure.vcses.vcs")) {
+      public String valueOf(final VcsDirectoryMapping object) {
+        return object.getVcs();
+      }
 
-    public boolean isCellEditable(final VcsDirectoryMapping o) {
-      return true;
-    }
+      public boolean isCellEditable(final VcsDirectoryMapping o) {
+        return true;
+      }
 
-    public void setValue(final VcsDirectoryMapping o, final String aValue) {
-      Collection<AbstractVcs> activeVcses = getActiveVcses();
-      o.setVcs(aValue);
-      checkNotifyListeners(activeVcses);
-    }
+      public void setValue(final VcsDirectoryMapping o, final String aValue) {
+        Collection<AbstractVcs> activeVcses = getActiveVcses();
+        o.setVcs(aValue);
+        checkNotifyListeners(activeVcses);
+      }
 
-    public TableCellRenderer getRenderer(final VcsDirectoryMapping p0) {
-      return new ColoredTableCellRenderer() {
-        protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
-          final String vcsName = p0.getVcs();
-          String text;
-          if (vcsName.length() == 0) {
-            text = VcsBundle.message("none.vcs.presentation");
-          }
-          else {
-            final VcsDescriptor vcs = myAllVcss.get(vcsName);
-            if (vcs != null) {
-              text = vcs.getDisplayName();
+      public TableCellRenderer getRenderer(final VcsDirectoryMapping p0) {
+        return new ColoredTableCellRenderer() {
+          protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
+            final String vcsName = p0.getVcs();
+            String text;
+            if (vcsName.length() == 0) {
+              text = VcsBundle.message("none.vcs.presentation");
             }
             else {
-              text = VcsBundle.message("unknown.vcs.presentation", vcsName);
+              final VcsDescriptor vcs = myAllVcss.get(vcsName);
+              if (vcs != null) {
+                text = vcs.getDisplayName();
+              }
+              else {
+                text = VcsBundle.message("unknown.vcs.presentation", vcsName);
+              }
             }
+            append(text, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, table.getForeground()));
           }
-          append(text, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, table.getForeground()));
-        }
-      };
-    }
+        };
+      }
 
-    @Override
-    public TableCellEditor getEditor(final VcsDirectoryMapping o) {
-      return new AbstractTableCellEditor() {
-        public Object getCellEditorValue() {
-          final VcsDescriptor selectedVcs = (VcsDescriptor) myVcsComboBox.getComboBox().getSelectedItem();
-          return ((selectedVcs == null) || selectedVcs.isNone()) ? "" : selectedVcs.getName();
-        }
+      @Override
+      public TableCellEditor getEditor(final VcsDirectoryMapping o) {
+        return new AbstractTableCellEditor() {
+          public Object getCellEditorValue() {
+            final VcsDescriptor selectedVcs = (VcsDescriptor)myVcsComboBox.getComboBox().getSelectedItem();
+            return ((selectedVcs == null) || selectedVcs.isNone()) ? "" : selectedVcs.getName();
+          }
 
-        public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
-          String vcsName = (String) value;
-          myVcsComboBox.getComboBox().setSelectedItem(myAllVcss.get(vcsName));
-          return myVcsComboBox;
-        }
-      };
-    }
-  };
+          public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
+            String vcsName = (String)value;
+            myVcsComboBox.getComboBox().setSelectedItem(myAllVcss.get(vcsName));
+            return myVcsComboBox;
+          }
+        };
+      }
+    };
 
   public VcsDirectoryConfigurationPanel(final Project project) {
     myProject = project;
@@ -209,21 +205,14 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
     });
 
     myDirectoryMappingTable.setRowHeight(myVcsComboBox.getPreferredSize().height);
-    myDirectoryMappingTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-      public void valueChanged(final ListSelectionEvent e) {
-        updateButtons();
-      }
-    });
-    updateButtons();
     if (myIsDisabled) {
       myDirectoryMappingTable.setEnabled(false);
-      myAddButton.setEnabled(false);
     }
   }
 
   private void initializeModel() {
     List<VcsDirectoryMapping> mappings = new ArrayList<VcsDirectoryMapping>();
-    for(VcsDirectoryMapping mapping: ProjectLevelVcsManager.getInstance(myProject).getDirectoryMappings()) {
+    for (VcsDirectoryMapping mapping : ProjectLevelVcsManager.getInstance(myProject).getDirectoryMappings()) {
       mappings.add(new VcsDirectoryMapping(mapping.getDirectory(), mapping.getVcs(), mapping.getRootSettings()));
     }
     myModel = new ListTableModel<VcsDirectoryMapping>(new ColumnInfo[]{DIRECTORY, VCS_SETTING}, mappings, 0);
@@ -231,12 +220,6 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
 
     myRecentlyChangedConfigurable.reset();
     myBaseRevisionTexts.setSelected(myVcsConfiguration.INCLUDE_TEXT_INTO_SHELF);
-  }
-
-  private void updateButtons() {
-    final boolean hasSelection = myDirectoryMappingTable.getSelectedObject() != null;
-    myEditButton.setEnabled((! myIsDisabled) && hasSelection);
-    myRemoveButton.setEnabled((! myIsDisabled) && hasSelection);
   }
 
   public static DefaultComboBoxModel buildVcsWrappersModel(final Project project) {
@@ -252,25 +235,7 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
   }
 
   protected JButton[] createButtons() {
-    myAddButton = new JButton(CommonBundle.message("button.add"));
-    myAddButton.addActionListener(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        addMapping();
-      }
-    });
-    myEditButton = new JButton(CommonBundle.message("button.edit"));
-    myEditButton.addActionListener(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        editMapping();
-      }
-    });
-    myRemoveButton = new JButton(CommonBundle.message("button.remove"));
-    myRemoveButton.addActionListener(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        removeMapping();
-      }
-    });
-    return new JButton[] {myAddButton, myEditButton, myRemoveButton};
+    return new JButton[]{};
   }
 
   private void addMapping() {
@@ -311,7 +276,7 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
     myModel.setItems(mappings);
     if (mappings.size() > 0) {
       if (index >= mappings.size()) {
-        index = mappings.size()-1;
+        index = mappings.size() - 1;
       }
       myDirectoryMappingTable.getSelectionModel().setSelectionInterval(index, index);
     }
@@ -320,26 +285,68 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
 
   protected JComponent createMainComponent() {
     JPanel panel = new JPanel(new BorderLayout());
-    final JScrollPane scroll = ScrollPaneFactory.createScrollPane(myDirectoryMappingTable);
-    panel.add(scroll, BorderLayout.CENTER);
+
+    JPanel panelForTable = ToolbarDecorator.createDecorator(myDirectoryMappingTable, null)
+      .setAddAction(new AnActionButtonRunnable() {
+        @Override
+        public void run(AnActionButton button) {
+          addMapping();
+        }
+      }).setEditAction(new AnActionButtonRunnable() {
+        @Override
+        public void run(AnActionButton button) {
+          editMapping();
+        }
+      }).setRemoveAction(new AnActionButtonRunnable() {
+        @Override
+        public void run(AnActionButton button) {
+          removeMapping();
+        }
+      }).disableUpDownActions().createPanel();
+    panel.add(panelForTable, BorderLayout.CENTER);
+    ToolbarDecorator.findAddButton(panelForTable).addCustomUpdater(new AnActionButtonUpdater() {
+      @Override
+      public boolean isEnabled(AnActionEvent e) {
+        return !myIsDisabled;
+      }
+    });
+    ToolbarDecorator.findEditButton(panelForTable).addCustomUpdater(new AnActionButtonUpdater() {
+      @Override
+      public boolean isEnabled(AnActionEvent e) {
+        final boolean hasSelection = myDirectoryMappingTable.getSelectedObject() != null;
+        return (!myIsDisabled) && hasSelection;
+      }
+    });
+    ToolbarDecorator.findRemoveButton(panelForTable).addCustomUpdater(new AnActionButtonUpdater() {
+      @Override
+      public boolean isEnabled(AnActionEvent e) {
+        final boolean hasSelection = myDirectoryMappingTable.getSelectedObject() != null;
+        return (!myIsDisabled) && hasSelection;
+      }
+    });
+
     final JPanel wrapper = new JPanel(new BorderLayout());
     myRecentlyChangedConfigurable = new VcsContentAnnotationConfigurable(myProject);
+
     final JBLabel label = new JBLabel(myProjectMessage);
     label.setComponentStyle(UIUtil.ComponentStyle.SMALL);
     label.setFontColor(UIUtil.FontColor.BRIGHTER);
     label.setBorder(BorderFactory.createEmptyBorder(2, 5, 2, 0));
     wrapper.add(label, BorderLayout.CENTER);
-    final JBLabel noteLabel = new JBLabel("File texts bigger than " + VcsConfiguration.ourMaximumFileForBaseRevisionSize / 1000 + "K are not stored");
+
+    final JBLabel noteLabel =
+      new JBLabel("File texts bigger than " + VcsConfiguration.ourMaximumFileForBaseRevisionSize / 1000 + "K are not stored");
     noteLabel.setComponentStyle(UIUtil.ComponentStyle.SMALL);
     noteLabel.setFontColor(UIUtil.FontColor.BRIGHTER);
     noteLabel.setBorder(BorderFactory.createEmptyBorder(2, 25, 5, 0));
+
     final JPanel twoPanel = new JPanel(new BorderLayout());
     twoPanel.add(myBaseRevisionTexts, BorderLayout.NORTH);
     twoPanel.add(noteLabel, BorderLayout.SOUTH);
     final JPanel wr2 = new JPanel(new BorderLayout());
     wr2.add(twoPanel, BorderLayout.WEST);
 
-    myBaseRevisionTexts.setBorder(BorderFactory.createEmptyBorder(5,0,0,0));
+    myBaseRevisionTexts.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
 
     final JPanel wr3 = new JPanel(new BorderLayout());
     wr3.add(wr2, BorderLayout.NORTH);
@@ -377,7 +384,7 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
   private void checkNotifyListeners(Collection<AbstractVcs> oldVcses) {
     Collection<AbstractVcs> vcses = getActiveVcses();
     if (!vcses.equals(oldVcses)) {
-      for(ModuleVcsListener listener: myListeners) {
+      for (ModuleVcsListener listener : myListeners) {
         listener.activeVcsSetChanged(vcses);
       }
     }
@@ -385,7 +392,7 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
 
   public Collection<AbstractVcs> getActiveVcses() {
     Set<AbstractVcs> vcses = new HashSet<AbstractVcs>();
-    for(VcsDirectoryMapping mapping: myModel.getItems()) {
+    for (VcsDirectoryMapping mapping : myModel.getItems()) {
       if (mapping.getVcs().length() > 0) {
         vcses.add(myVcsManager.findVcsByName(mapping.getVcs()));
       }

@@ -95,6 +95,7 @@ public class CompileServerManager implements ApplicationComponent{
   @Nullable
   private volatile CompileServerClient myClient;
   private final SequentialTaskExecutor myTaskExecutor = new SequentialTaskExecutor(new AsyncTaskExecutor() {
+    @Override
     public void submit(Runnable runnable) {
       ApplicationManager.getApplication().executeOnPooledThread(runnable);
     }
@@ -128,11 +129,11 @@ public class CompileServerManager implements ApplicationComponent{
       private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
       private final AtomicBoolean myAutoMakeInProgress = new AtomicBoolean(false);
       @Override
-      public void before(List<? extends VFileEvent> events) {
+      public void before(@NotNull List<? extends VFileEvent> events) {
       }
 
       @Override
-      public void after(List<? extends VFileEvent> events) {
+      public void after(@NotNull List<? extends VFileEvent> events) {
         if (shouldTriggerMake(events)) {
           scheduleMake(new Runnable() {
             @Override
@@ -252,6 +253,7 @@ public class CompileServerManager implements ApplicationComponent{
       final CompileServerClient client = ensureServerRunningAndClientConnected(false);
       if (client != null) {
         myTaskExecutor.submit(new Runnable() {
+          @Override
           public void run() {
             final Project[] openProjects = myProjectManager.getOpenProjects();
             if (openProjects.length > 0) {
@@ -321,7 +323,7 @@ public class CompileServerManager implements ApplicationComponent{
     synchronized (myAutomakeFutures) {
       for (Map.Entry<RequestFuture, Project> entry : myAutomakeFutures.entrySet()) {
         if (entry.getValue().equals(project)) {
-          entry.getKey().cancel(true);
+          entry.getKey().cancel(false);
         }
       }
     }
@@ -335,6 +337,7 @@ public class CompileServerManager implements ApplicationComponent{
     final String projectId = getProjectPath(project);
     final Ref<RequestFuture> futureRef = new Ref<RequestFuture>(null);
     final RunnableFuture future = myTaskExecutor.submit(new Runnable() {
+      @Override
       public void run() {
         try {
           final CompileServerClient client = ensureServerRunningAndClientConnected(true);
@@ -405,6 +408,7 @@ public class CompileServerManager implements ApplicationComponent{
       final Process process = launchServer(port, serverPingInterval);
 
       final OSProcessHandler processHandler = new OSProcessHandler(process, null) {
+        @Override
         protected boolean shouldDestroyProcessRecursively() {
           return true;
         }
@@ -413,6 +417,7 @@ public class CompileServerManager implements ApplicationComponent{
       final Semaphore semaphore  = new Semaphore();
       semaphore.down();
       processHandler.addProcessListener(new ProcessAdapter() {
+        @Override
         public void onTextAvailable(ProcessEvent event, Key outputType) {
           // re-translate server's output to idea.log
           final String text = event.getText();
@@ -422,6 +427,7 @@ public class CompileServerManager implements ApplicationComponent{
         }
       });
       processHandler.addProcessListener(new ProcessAdapter() {
+        @Override
         public void processTerminated(ProcessEvent event) {
           try {
             processHandler.removeProcessListener(this);
@@ -431,6 +437,7 @@ public class CompileServerManager implements ApplicationComponent{
           }
         }
 
+        @Override
         public void onTextAvailable(ProcessEvent event, Key outputType) {
           if (outputType == ProcessOutputTypes.STDERR) {
             try {
@@ -797,16 +804,20 @@ public class CompileServerManager implements ApplicationComponent{
   private class ProjectWatcher extends ProjectManagerAdapter {
     private final Map<Project, MessageBusConnection> myConnections = new HashMap<Project, MessageBusConnection>();
 
+    @Override
     public void projectOpened(final Project project) {
       final MessageBusConnection conn = project.getMessageBus().connect();
       myConnections.put(project, conn);
       conn.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+        @Override
         public void beforeRootsChange(final ModuleRootEvent event) {
           sendReloadRequest(project);
         }
 
+        @Override
         public void rootsChanged(final ModuleRootEvent event) {
           myTaskExecutor.submit(new Runnable() {
+            @Override
             public void run() {
               try {
                 // this will reload sdks and global libraries
@@ -824,10 +835,12 @@ public class CompileServerManager implements ApplicationComponent{
       });
     }
 
+    @Override
     public void projectClosing(Project project) {
       sendReloadRequest(project);
     }
 
+    @Override
     public void projectClosed(Project project) {
       final MessageBusConnection conn = myConnections.remove(project);
       if (conn != null) {

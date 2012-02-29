@@ -50,7 +50,7 @@ public class BrowserSettingsPanel extends JPanel {
 
     // generic system browser
     final JPanel genericPanel = new JPanel();
-    genericPanel.setBorder(IdeBorderFactory.createTitledBorder("Default Web Browser", true, true, true));
+    genericPanel.setBorder(IdeBorderFactory.createTitledBorder("Default Web Browser", true));
     genericPanel.setLayout(new BoxLayout(genericPanel, BoxLayout.Y_AXIS));
     final JPanel innerPanel1 = new JPanel(new BorderLayout());
 

@@ -52,7 +52,7 @@ public class FrameworkSupportOptionsComponent {
     myMainPanel = new JPanel(layout);
 
     if (title != null) {
-      myMainPanel.setBorder(IdeBorderFactory.createTitledBorder(title, false, true, true));
+      myMainPanel.setBorder(IdeBorderFactory.createTitledBorder(title, true));
     }
 
     final JComponent component = myConfigurable.createComponent();

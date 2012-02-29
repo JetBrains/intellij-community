@@ -41,8 +41,8 @@ import java.io.File;
 public class NewDirectoryProjectDialog extends DialogWrapper {
   private JTextField myProjectNameTextField;
   private TextFieldWithBrowseButton myLocationField;
-  private JPanel myRootPane;
-  private JComboBox myProjectTypeComboBox;
+  protected JPanel myRootPane;
+  protected JComboBox myProjectTypeComboBox;
   private JPanel myProjectTypePanel;
   private JLabel myLocationLabel;
 

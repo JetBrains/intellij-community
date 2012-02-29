@@ -180,7 +180,7 @@ public class ToolEditorDialog extends DialogWrapper {
 
   private JPanel createCommandPane() {
     JPanel pane = new JPanel(new GridBagLayout());
-    pane.setBorder(IdeBorderFactory.createTitledBorder(ToolsBundle.message("tools.tool.group"), false, true, true));
+    pane.setBorder(IdeBorderFactory.createTitledBorder(ToolsBundle.message("tools.tool.group"), true));
     GridBagConstraints constr;
 
     // program
@@ -428,7 +428,7 @@ public class ToolEditorDialog extends DialogWrapper {
 
   private JPanel getShowInPanel() {
     JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
-    panel.setBorder(IdeBorderFactory.createTitledBorder(ToolsBundle.message("tools.menu.group"), false, true, true));
+    panel.setBorder(IdeBorderFactory.createTitledBorder(ToolsBundle.message("tools.menu.group"), true));
     panel.add(myShowInMainMenuCheckbox);
     panel.add(myShowInEditorCheckbox);
     panel.add(myShowInProjectTreeCheckbox);
@@ -438,7 +438,7 @@ public class ToolEditorDialog extends DialogWrapper {
 
   private JPanel getOptionsPanel() {
     JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
-    panel.setBorder(IdeBorderFactory.createTitledBorder(ToolsBundle.message("tools.options.group"), false, true, true));
+    panel.setBorder(IdeBorderFactory.createTitledBorder(ToolsBundle.message("tools.options.group"), true));
     panel.add(mySynchronizedAfterRunCheckbox);
     panel.add(myUseConsoleCheckbox);
     panel.add(myOutputFiltersButton);
