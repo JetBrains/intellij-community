@@ -179,7 +179,7 @@ public class GeneralCommandLine implements UserDataHolder {
       commands.add(exeName);
     }
     else if (myExePath != null) {
-      commands.add(FileUtil.toSystemDependentName(myExePath));
+      commands.add(myExePath);
     }
     else {
       commands.add("<null>");
