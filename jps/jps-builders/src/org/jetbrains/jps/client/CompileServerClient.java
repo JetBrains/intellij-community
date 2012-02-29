@@ -108,7 +108,7 @@ public class CompileServerClient extends SimpleProtobufClient<JpsServerResponseH
   protected void beforeDisconnect() {
     final ScheduledFuture<?> future = myPingFuture;
     if (future != null) {
-      future.cancel(true);
+      future.cancel(false);
       myPingFuture = null;
     }
   }

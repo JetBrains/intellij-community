@@ -323,7 +323,7 @@ public class CompileServerManager implements ApplicationComponent{
     synchronized (myAutomakeFutures) {
       for (Map.Entry<RequestFuture, Project> entry : myAutomakeFutures.entrySet()) {
         if (entry.getValue().equals(project)) {
-          entry.getKey().cancel(true);
+          entry.getKey().cancel(false);
         }
       }
     }
