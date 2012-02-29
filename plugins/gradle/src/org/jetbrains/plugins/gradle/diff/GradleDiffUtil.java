@@ -45,6 +45,9 @@ public class GradleDiffUtil {
       @Override
       public void visit(@NotNull GradleModule module) {
         context.register(new GradleModulePresenceChange(module, null));
+        for (GradleContentRoot root : module.getContentRoots()) {
+          root.invite(this);
+        }
         for (GradleDependency dependency : module.getDependencies()) {
           dependency.invite(this);
         }
