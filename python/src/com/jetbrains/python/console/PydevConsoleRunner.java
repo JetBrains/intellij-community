@@ -233,11 +233,11 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
           myCommandLine = commandLine.getCommandLineString();
 
 
-          PyRemoteSshProcess server =
+          PyRemoteSshProcess remoteProcess =
             manager.createRemoteProcess(getProject(), data, commandLine);
 
 
-          Scanner s = new Scanner(server.getInputStream());
+          Scanner s = new Scanner(remoteProcess.getInputStream());
           boolean received = false;
           long started = System.currentTimeMillis();
           while (!received && (System.currentTimeMillis() - started < 2000)) {
@@ -245,8 +245,8 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
               int port = s.nextInt();
               int port2 = s.nextInt();
               received = true;
-              server.addTunnelLocal(myPorts[0], data.getHost(), port);
-              server.addTunnelRemote(port2, "localhost", myPorts[1]);
+              remoteProcess.addLocalTunnel(myPorts[0], data.getHost(), port);
+              remoteProcess.addRemoteTunnel(port2, "localhost", myPorts[1]);
             }
             catch (Exception e) {
               try {
@@ -260,8 +260,8 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
             throw new ExecutionException("Couldn't get remote ports for console connection.");
           }
           try {
-            myPydevConsoleCommunication = new PydevConsoleCommunication(getProject(), myPorts[0], server, myPorts[1]);
-            return server;
+            myPydevConsoleCommunication = new PydevConsoleCommunication(getProject(), myPorts[0], remoteProcess, myPorts[1]);
+            return remoteProcess;
           }
           catch (Exception e) {
             throw new ExecutionException(e.getMessage());
