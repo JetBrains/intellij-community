@@ -69,14 +69,14 @@ public class MavenIndex {
   private final String myRepositoryId;
   private final String myRepositoryPathOrUrl;
   private final Kind myKind;
-  private volatile Long myUpdateTimestamp;
+  private Long myUpdateTimestamp;
 
-  private volatile String myDataDirName;
-  private volatile IndexData myData;
+  private String myDataDirName;
+  private IndexData myData;
 
-  private volatile String myFailureMessage;
+  private String myFailureMessage;
 
-  private volatile boolean isBroken;
+  private boolean isBroken;
   private final IndexListener myListener;
 
   public MavenIndex(MavenIndexerWrapper indexer,
