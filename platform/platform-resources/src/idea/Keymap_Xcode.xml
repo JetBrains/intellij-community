@@ -38,8 +38,8 @@
     <action id="CIDR.CreateXcodeProject">
       <keyboard-shortcut first-keystroke="shift meta N" />
     </action>
-    <action id="CloseProject">
-      <keyboard-shortcut first-keystroke="meta W" />
+    <action id="CloseContent">
+      <keyboard-shortcut first-keystroke="meta W"/>
     </action>
     <action id="CodeCompletion">
       <keyboard-shortcut first-keystroke="control SPACE" />

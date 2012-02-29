@@ -134,7 +134,7 @@ public abstract class RadComponent {
   //////////////////////////////////////////////////////////////////////////////////////////
 
   public List<Property> getProperties() {
-    return null;
+    return Collections.emptyList();
   }
 
   public final Object getClientProperty(@NotNull Object key) {

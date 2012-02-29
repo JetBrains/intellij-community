@@ -24,6 +24,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.EventListenerList;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.ArrayList;
@@ -33,13 +36,19 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
-public final class TreeEditableArea implements EditableArea, FeedbackTreeLayer {
+public final class TreeEditableArea implements EditableArea, FeedbackTreeLayer, TreeSelectionListener {
+  private final EventListenerList myListenerList = new EventListenerList();
   private final ComponentTree myTree;
   private final AbstractTreeBuilder myTreeBuilder;
 
   public TreeEditableArea(ComponentTree tree, AbstractTreeBuilder treeBuilder) {
     myTree = tree;
     myTreeBuilder = treeBuilder;
+    tree.getSelectionModel().addTreeSelectionListener(this);
+  }
+
+  public void dispose() {
+    myTree.getSelectionModel().removeTreeSelectionListener(this);
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////
@@ -50,10 +59,19 @@ public final class TreeEditableArea implements EditableArea, FeedbackTreeLayer {
 
   @Override
   public void addSelectionListener(ComponentSelectionListener listener) {
+    myListenerList.add(ComponentSelectionListener.class, listener);
   }
 
   @Override
   public void removeSelectionListener(ComponentSelectionListener listener) {
+    myListenerList.remove(ComponentSelectionListener.class, listener);
+  }
+
+  @Override
+  public void valueChanged(TreeSelectionEvent e) {
+    for (ComponentSelectionListener listener : myListenerList.getListeners(ComponentSelectionListener.class)) {
+      listener.selectionChanged(this);
+    }
   }
 
   @NotNull

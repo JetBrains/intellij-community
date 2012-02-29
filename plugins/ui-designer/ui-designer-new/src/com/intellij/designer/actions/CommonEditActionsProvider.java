@@ -19,6 +19,7 @@ import com.intellij.designer.DesignerBundle;
 import com.intellij.designer.clipboard.SerializedComponentData;
 import com.intellij.designer.clipboard.SimpleTransferable;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
+import com.intellij.designer.designSurface.EditableArea;
 import com.intellij.designer.designSurface.tools.ComponentPasteFactory;
 import com.intellij.designer.designSurface.tools.PasteTool;
 import com.intellij.designer.model.RadComponent;
@@ -78,9 +79,20 @@ public class CommonEditActionsProvider implements DeleteProvider, CopyProvider, 
         myDesigner.getToolProvider().execute(new ThrowableRunnable<Exception>() {
           @Override
           public void run() throws Exception {
-            List<RadComponent> components = RadComponent.getPureSelection(myDesigner.getActionsArea().getSelection());
+            EditableArea area = myDesigner.getActionsArea();
+            List<RadComponent> selection = area.getSelection();
+            List<RadComponent> components = RadComponent.getPureSelection(selection);
+            RadComponent newSelection = getNewSelection(components.get(0), selection);
+
             for (RadComponent component : components) {
               component.delete();
+            }
+
+            if (newSelection == null) {
+              area.deselectAll();
+            }
+            else {
+              area.select(newSelection);
             }
           }
         });
@@ -88,6 +100,24 @@ public class CommonEditActionsProvider implements DeleteProvider, CopyProvider, 
     }, DesignerBundle.message("command.delete.selection"), null);
   }
 
+  @Nullable
+  private static RadComponent getNewSelection(RadComponent component, List<RadComponent> excludes) {
+    RadComponent parent = component.getParent();
+    if (parent == null) {
+      return null;
+    }
+
+    List<RadComponent> children = parent.getChildren();
+    int size = children.size();
+    for (int i = children.indexOf(component) + 1; i < size; i++) {
+      RadComponent next = children.get(i);
+      if (!excludes.contains(next)) {
+        return next;
+      }
+    }
+
+    return parent;
+  }
   //////////////////////////////////////////////////////////////////////////////////////////
   //
   // Copy

@@ -41,36 +41,32 @@ import java.util.List;
  * Date: 9/9/11
  * Time: 9:55 AM
  */
-public class TodoForRanges {
-  private final Project myProject;
-  private final String myFileName;
-  private final String myText;
-  private final boolean myOldRevision;
+public abstract class TodoForRanges {
+  protected final Project myProject;
   private final List<TextRange> myRanges;
-  private final FileType myFileType;
   private final int myAdditionalOffset;
+  protected final String myFileName;
+  protected final String myText;
+  protected final boolean myOldRevision;
+  protected final FileType myFileType;
 
-  public TodoForRanges(final Project project, final String fileName, final String text, final boolean oldRevision,
-                       final List<TextRange> ranges, FileType fileType, int additionalOffset) {
+  protected TodoForRanges(final Project project,
+                       final List<TextRange> ranges,
+                       int additionalOffset,
+                       String name,
+                       String text,
+                       boolean revision, FileType type) {
     myProject = project;
-    myFileName = fileName;
-    myText = text;
-    myOldRevision = oldRevision;
     myRanges = ranges;
-    myFileType = fileType;
     myAdditionalOffset = additionalOffset;
+    myFileName = name;
+    myText = text;
+    myOldRevision = revision;
+    myFileType = type;
   }
 
   public List<Pair<TextRange, TextAttributes>> execute() {
-    final TodoItem[] todoItems = ApplicationManager.getApplication().runReadAction(new Computable<TodoItem[]>() {
-      @Override
-      public TodoItem[] compute() {
-        final PsiFile psiFile = PsiFileFactory.getInstance(myProject).createFileFromText((myOldRevision ? "old" : "") + myFileName, myFileType, myText);
-
-        final PsiSearchHelper helper = PsiSearchHelper.SERVICE.getInstance(myProject);
-        return helper.findTodoItemsLight(psiFile);
-      }
-    });
+    final TodoItem[] todoItems = getTodoItems();
     
     final StepIntersection<TodoItem, TextRange> stepIntersection =
       new StepIntersection<TodoItem, TextRange>(new Convertor<TodoItem, TextRange>() {
@@ -104,5 +100,17 @@ public class TodoForRanges {
       offset += range.getLength() + 1 + myAdditionalOffset;
     }
     return result;
+  }
+
+  protected abstract TodoItem[] getTodoItems();
+
+  protected TodoItem[] getTodoForText(PsiSearchHelper helper) {
+    final PsiFile psiFile = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
+      @Override
+      public PsiFile compute() {
+        return PsiFileFactory.getInstance(myProject).createFileFromText((myOldRevision ? "old" : "") + myFileName, myFileType, myText);
+      }
+    });
+    return helper.findTodoItemsLight(psiFile);
   }
 }

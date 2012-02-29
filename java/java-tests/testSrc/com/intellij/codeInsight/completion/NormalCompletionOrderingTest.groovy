@@ -196,6 +196,10 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     assertEquals("Baaaaaaar", ((JavaPsiClassReferenceElement)lookup.getItems().get(1)).getQualifiedName());
   }
 
+  public void _testSkipLifted() {
+    checkPreferredItems(1, "hashCode", "hashCodeMine")
+  }
+
   public void testDispreferInnerClasses() {
     checkPreferredItems(0); //no chosen items
     assertFalse(getLookup().getItems().get(0).getObject() instanceof PsiClass);
