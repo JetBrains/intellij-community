@@ -372,7 +372,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         );
         while (!future.waitFor(100L, TimeUnit.MILLISECONDS)) {
           if (context.isCanceled()) {
-            future.cancel(true);
+            future.cancel(false);
           }
         }
         rc = future.getResponseHandler().isTerminatedSuccessfully();
