@@ -182,8 +182,10 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
     myMappingSettings = mappingSettings;
     if (myMappingsTextField != null) {
       StringBuilder sb = new StringBuilder();
-      for (PyPathMappingSettings.PyPathMapping mapping : mappingSettings.getPathMappings()) {
-        sb.append(mapping.getLocalRoot() + "=" + mapping.getRemoteRoot()).append(";");
+      if (mappingSettings != null) {
+        for (PyPathMappingSettings.PyPathMapping mapping : mappingSettings.getPathMappings()) {
+          sb.append(mapping.getLocalRoot()).append("=").append(mapping.getRemoteRoot()).append(";");
+        }
       }
       myMappingsTextField.setText(sb.toString());
     }
