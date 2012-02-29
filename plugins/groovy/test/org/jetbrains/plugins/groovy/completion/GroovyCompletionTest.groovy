@@ -111,6 +111,9 @@ public class GroovyCompletionTest extends GroovyCompletionTestBase {
     doBasicTest();
   }
 
+  public void testInstanceofHelpsDetermineTypeInBinaryAnd() throws Throwable { doBasicTest() }
+  public void testInstanceofHelpsDetermineTypeInBinaryOr() throws Throwable { doBasicTest() }
+
   public void testNotInstanceofDoesntHelpDetermineType() throws Throwable {
     myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + ".groovy");
   }

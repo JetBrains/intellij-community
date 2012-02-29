@@ -42,7 +42,7 @@ public class JavaCharFilter extends CharFilter {
     return psiElement != null && psiElement.getParent() instanceof PsiLiteralExpression;
   }
 
-  public static boolean isNonImportedClassEntered(LookupImpl lookup) {
+  public static boolean isNonImportedClassEntered(LookupImpl lookup, boolean orPackage) {
     if (lookup.isSelectionTouched() || !lookup.isCompletion()) return false;
 
     CompletionProcess process = CompletionService.getCompletionService().getCurrentCompletion();
@@ -64,6 +64,10 @@ public class JavaCharFilter extends CharFilter {
       if (!isObfuscated(aClass)) {
         return true;
       }
+    }
+
+    if (orPackage && prefix.length() > 1 && JavaPsiFacade.getInstance(file.getProject()).findPackage(prefix) != null) {
+      return true;
     }
 
     return false;
@@ -117,7 +121,8 @@ public class JavaCharFilter extends CharFilter {
       return Result.HIDE_LOOKUP;
     }
 
-    if ((c == '[' || c == '<' || c == '.' || c == ' ' || c == '(') && isNonImportedClassEntered((LookupImpl)lookup)) {
+    if ((c == '[' || c == '<' || c == '.' || c == ' ' || c == '(') &&
+        isNonImportedClassEntered((LookupImpl)lookup, c == '.')) {
       return Result.HIDE_LOOKUP;
     }
     

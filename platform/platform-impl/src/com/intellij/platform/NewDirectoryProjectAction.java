@@ -32,6 +32,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectOpenedCallback;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
@@ -44,11 +45,21 @@ public class NewDirectoryProjectAction extends AnAction implements DumbAware {
     NewDirectoryProjectDialog dlg = new NewDirectoryProjectDialog(project);
     dlg.show();
     if (dlg.getExitCode() != DialogWrapper.OK_EXIT_CODE) return;
+
+  }
+
+  protected Object showSettings(DirectoryProjectGenerator generator, VirtualFile baseDir)
+      throws ProcessCanceledException {
+    return generator.showGenerationSettings(baseDir);
+  }
+
+  @Nullable
+  protected Project generateProject(Project project, NewDirectoryProjectDialog dlg) {
     final DirectoryProjectGenerator generator = dlg.getProjectGenerator();
     final File location = new File(dlg.getNewProjectLocation());
     if (!location.exists() && !location.mkdirs()) {
       Messages.showErrorDialog(project, "Cannot create directory '" + location + "'", "Create Project");
-      return;
+      return null;
     }
 
     final VirtualFile baseDir = ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
@@ -61,11 +72,10 @@ public class NewDirectoryProjectAction extends AnAction implements DumbAware {
     if (baseDir.getChildren().length > 0) {
       int rc = Messages.showYesNoDialog(project,
                                         "The directory '" + location +
-                                            "' is not empty. Would you like to create a project from existing sources instead?",
+                                        "' is not empty. Would you like to create a project from existing sources instead?",
                                         "Create New Project", Messages.getQuestionIcon());
       if (rc == 0) {
-        PlatformProjectOpenProcessor.getInstance().doOpenProject(baseDir, null, false);
-        return;
+        return PlatformProjectOpenProcessor.getInstance().doOpenProject(baseDir, null, false);
       }
     }
 
@@ -74,15 +84,15 @@ public class NewDirectoryProjectAction extends AnAction implements DumbAware {
     Object settings = null;
     if (generator != null) {
       try {
-        settings = generator.showGenerationSettings(baseDir);
+        settings = showSettings(generator, baseDir);
       }
       catch (ProcessCanceledException e1) {
-        return;
+        return null;
       }
     }
     GeneralSettings.getInstance().setLastProjectLocation(location.getParent());
     final Object finalSettings = settings;
-    PlatformProjectOpenProcessor.doOpenProject(baseDir, null, false, -1, new ProjectOpenedCallback() {
+    return PlatformProjectOpenProcessor.doOpenProject(baseDir, null, false, -1, new ProjectOpenedCallback() {
       @Override
       public void projectOpened(Project project, Module module) {
         if (generator != null) {

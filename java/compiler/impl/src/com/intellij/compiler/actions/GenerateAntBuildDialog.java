@@ -176,7 +176,7 @@ public class GenerateAntBuildDialog extends DialogWrapper {
     myChunksPanel.setLayout(new BorderLayout());
     myChunksPanel.setBorder(
       IdeBorderFactory.createTitledBorder(CompilerBundle.message("generate.ant.build.dialog.cyclic.modules.table.title"),
-                                          false, true, true));
+                                          true));
     JLabel textLabel = new JLabel(CompilerBundle.message("generate.ant.build.dialog.cyclic.modules.table.description"));
     textLabel.setUI(new MultiLineLabelUI());
     textLabel.setBorder(IdeBorderFactory.createEmptyBorder(4, 4, 6, 4));

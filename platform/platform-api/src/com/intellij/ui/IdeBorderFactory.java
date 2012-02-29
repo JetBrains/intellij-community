@@ -65,14 +65,12 @@ public class IdeBorderFactory {
 
   @Deprecated
   public static IdeaTitledBorder createTitledBorder(String title, boolean hasBoldFont, boolean hasIndent, boolean hasSmallFont) {
-    Insets insets = new Insets(TITLED_BORDER_TOP_INSET, TITLED_BORDER_LEFT_INSET, TITLED_BORDER_BOTTOM_INSET, TITLED_BORDER_RIGHT_INSET);
-    return createTitledBorder(title, hasBoldFont, hasIndent, hasSmallFont, insets);
+    return createTitledBorder(title, hasIndent);
   }
 
   @Deprecated
   public static IdeaTitledBorder createTitledBorder(String title, boolean hasBoldFont, boolean hasIndent, boolean hasSmallFont, Insets insets) {
-    int indent = hasIndent ? TITLED_BORDER_INDENT : 0;
-    return new IdeaTitledBorder(title, indent, insets);
+    return createTitledBorder(title, hasIndent, insets);
   }
 
   public static IdeaTitledBorder createTitledBorder(String title, boolean hasIndent) {
@@ -135,7 +133,7 @@ public class IdeBorderFactory {
                                                   int titlePosition,
                                                   Font titleFont,
                                                   Color titleColor) {
-      return IdeBorderFactory.createTitledBorder(title, true, true, true);
+      return IdeBorderFactory.createTitledBorder(title, true);
     }
   }
 
@@ -150,7 +148,7 @@ public class IdeBorderFactory {
                                                   int titlePosition,
                                                   Font titleFont,
                                                   Color titleColor) {
-      return IdeBorderFactory.createTitledBorder(title, true, false, true);
+      return IdeBorderFactory.createTitledBorder(title, false);
     }
   }
 
@@ -165,7 +163,7 @@ public class IdeBorderFactory {
                                                   int titlePosition,
                                                   Font titleFont,
                                                   Color titleColor) {
-      return IdeBorderFactory.createTitledBorder(title, false, true, false);
+      return IdeBorderFactory.createTitledBorder(title, true);
     }
   }
 
@@ -180,7 +178,7 @@ public class IdeBorderFactory {
                                                   int titlePosition,
                                                   Font titleFont,
                                                   Color titleColor) {
-      return IdeBorderFactory.createTitledBorder(title, false, false, false);
+      return IdeBorderFactory.createTitledBorder(title, false);
     }
   }
 
@@ -195,7 +193,7 @@ public class IdeBorderFactory {
                                                   int titlePosition,
                                                   Font titleFont,
                                                   Color titleColor) {
-      return IdeBorderFactory.createTitledBorder(title, true, true, false);
+      return IdeBorderFactory.createTitledBorder(title, true);
     }
   }
 
@@ -210,7 +208,7 @@ public class IdeBorderFactory {
                                                   int titlePosition,
                                                   Font titleFont,
                                                   Color titleColor) {
-      return IdeBorderFactory.createTitledBorder(title, true, false, false);
+      return IdeBorderFactory.createTitledBorder(title, false);
     }
   }
 
@@ -224,7 +222,7 @@ public class IdeBorderFactory {
                                                   int titlePosition,
                                                   Font titleFont,
                                                   Color titleColor) {
-      return IdeBorderFactory.createTitledBorder(title, false, new Insets(5,0,0,0));
+      return IdeBorderFactory.createTitledBorder(title, false, new Insets(TITLED_BORDER_TOP_INSET,0,0,0));
     }
   }
 

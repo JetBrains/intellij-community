@@ -2602,6 +2602,8 @@ public class UIUtil {
   }
 
   public static void addInsets(@NotNull JComponent component, @NotNull Insets insets) {
+    if (component == null || insets == null) return;
+
     if (component.getBorder() != null) {
       component.setBorder(new CompoundBorder(new EmptyBorder(insets), component.getBorder()));
     }
@@ -2652,6 +2654,17 @@ public class UIUtil {
     catch (InterruptedException ignore) {
     }
     return null;
+  }
+
+  public static void addBorder(JComponent component, Border border) {
+    if (component == null) return;
+
+    if (component.getBorder() != null) {
+      component.setBorder(new CompoundBorder(border, component.getBorder()));
+    }
+    else {
+      component.setBorder(border);
+    }
   }
 }
 

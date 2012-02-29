@@ -232,7 +232,7 @@ public class MavenIndicesManager {
 
       myWaitingIndices.addAll(toSchedule);
     }
-
+    if (toSchedule.isEmpty()) return;
     myUpdatingQueue.run(new Task.Backgroundable(projectOrNull, IndicesBundle.message("maven.indices.updating"), true) {
       public void run(@NotNull ProgressIndicator indicator) {
         try {
@@ -288,7 +288,7 @@ public class MavenIndicesManager {
 
     AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
     try {
-      settings = project.isDisposed() ? null : MavenProjectsManager.getInstance(project).getGeneralSettings();
+      settings = project.isDisposed() ? null : MavenProjectsManager.getInstance(project).getGeneralSettings().clone();
     }
     finally {
       accessToken.finish();

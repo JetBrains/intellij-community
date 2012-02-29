@@ -1149,6 +1149,7 @@ public class ListUtils {
   }
 
   public void testNewClassAngleBracket() throws Exception { doTest('<') }
+  public void testNewClassAngleBracketExpected() throws Exception { doTest('<') }
   public void testNewClassSquareBracket() throws Exception { doTest('[') }
 
   public void testMethodColon() throws Exception { doTest(':') }

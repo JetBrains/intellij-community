@@ -219,7 +219,7 @@ public class GrIntroduceParameterDialog extends DialogWrapper implements GrIntro
       }
     };
 
-    mySignature.setBorder(IdeBorderFactory.createTitledBorder(GroovyRefactoringBundle.message("signature.preview.border.title"), false, false, true));
+    mySignature.setBorder(IdeBorderFactory.createTitledBorder(GroovyRefactoringBundle.message("signature.preview.border.title"), false));
 
     Splitter splitter = new Splitter(true);
 
@@ -259,7 +259,7 @@ public class GrIntroduceParameterDialog extends DialogWrapper implements GrIntro
     panel.add(myReplaceFieldsInaccessibleInRadioButton);
     panel.add(myReplaceAllFieldsRadioButton);
 
-    panel.setBorder(IdeBorderFactory.createTitledBorder("Replace fields used in expression with their getters", false, true, true));
+    panel.setBorder(IdeBorderFactory.createTitledBorder("Replace fields used in expression with their getters", true));
     return panel;
   }
 
