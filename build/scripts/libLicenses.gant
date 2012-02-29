@@ -172,7 +172,7 @@ libraryLicense(name: "DTDParser", version: "1.13", license: "LGPL", url: "http:/
 libraryLicense(name: "Ganymed", version: "bundled with SVNKit", libraryName: "svnkit.jar", license: "BSD", url: "http://www.ganymed.ethz.ch/ssh2/", licenseUrl: "http://www.ganymed.ethz.ch/ssh2/LICENSE.txt")
 libraryLicense(name: "sqljet", version: "bundled with SVNKit", libraryName: "sqljet.jar", license: "GPLv2", url: "http://sqljet.com", licenseUrl: "http://www.opensource.org/licenses/lgpl-2.1")
 libraryLicense(name: "svnkit-javahl", version: "bundled with SVNKit", libraryName: "svnkit-javahl.jar", license: "link (commercial license)", url: "http://www.svnkit.com/", licenseUrl: "http://svnkit.com/license.html")
-libraryLicense(name: "Javahl", version: "1.7.2", libraryName: "Javahl.jar", license: "Apache", url: "http://subversion.apache.org", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0")
+libraryLicense(name: "javahl", version: "1.7.2", libraryName: "javahl.jar", license: "Apache", url: "http://subversion.apache.org", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0")
 libraryLicense(name: "Apache Commons HTTPClient", libraryName: "httpclient-4.1.1.jar", version:"4.1.1", license: "Apache 2.0",
                url: "http://hc.apache.org/httpcomponents-client-ga/index.html", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0")
 libraryLicense(name: "Apache Commons HTTPCore", libraryName: "httpcore-4.1.jar", version: "4.1", license: "Apache 2.0",
