@@ -63,6 +63,7 @@ import org.jetbrains.android.run.testing.AndroidTestRunConfigurationType;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.android.util.AndroidBundle;
+import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -218,7 +219,7 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
     IAndroidTarget target = platform.getTarget();
 
     final String androidToolPath =
-      platform.getSdkData().getLocation() + File.separator + AndroidSdkUtils.toolPath(SdkConstants.androidCmdName());
+      platform.getSdkData().getLocation() + File.separator + AndroidCommonUtils.toolPath(SdkConstants.androidCmdName());
 
     if (!new File(androidToolPath).exists()) {
       return false;

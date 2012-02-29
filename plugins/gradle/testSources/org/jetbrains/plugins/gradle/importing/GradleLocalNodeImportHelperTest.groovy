@@ -8,7 +8,7 @@ import org.picocontainer.MutablePicoContainer
 
 import javax.swing.tree.TreeNode
 
-import static org.junit.Assert.assertEquals
+import static org.junit.Assert.fail
 
 /**
  * @author Denis Zhdanov
@@ -28,7 +28,7 @@ public class GradleLocalNodeImportHelperTest extends AbstractGradleTest {
   }
 
   @Test
-  public void libraryDependencyToModule() {
+  public void "library dependency causes module and library to be transitively imported as well"() {
     doTest {
       project {
         module('module1', transitive: true, order: 0) { // Mark that the module should be imported
@@ -41,6 +41,15 @@ public class GradleLocalNodeImportHelperTest extends AbstractGradleTest {
     } }
   }
 
+  @Test
+  public void "module import covers content root"() {
+    doTest {
+      project {
+        module('module1', initial: true, order: 0) {
+          contentRoot('1', transitive: true, order: 1)
+    } } }
+  }
+  
   private def doTest(Closure c) {
     myHelper = container.getComponentInstance(GradleLocalNodeImportHelper)
     def compositeBuilder = new CompositeProjectBuilder(gradleBuilder: gradle, intellijBuilder: intellij)
@@ -50,7 +59,16 @@ public class GradleLocalNodeImportHelperTest extends AbstractGradleTest {
     myHelper
     def nodes = collectNodes(treeModel.root as TreeNode, compositeBuilder.initial)
     def expectedEntities = compositeBuilder.expected.sort{ a, b -> a[0].compareTo(b[0]) }.collect { it[1] }
-    assertEquals(expectedEntities, myHelper.deriveEntitiesToImport(nodes))
+    def actual = myHelper.deriveEntitiesToImport(nodes)
+    if (expectedEntities == actual) {
+      return
+    }
+    fail("""\
+Mismatched 'import nodes with dependencies'.
+  Initial: ${out -> nodes.each { out << "\n    * $it"}}
+  Expected ordered graph: ${out -> expectedEntities.eachWithIndex { val, i -> out << "\n    $i) $val"}}
+  Actual ordered grapth: ${out -> actual.eachWithIndex { val, i -> out << "\n    $i) $val"}}
+""")
   }
 
   private List collectNodes(TreeNode node, initial, holder = []) {

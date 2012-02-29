@@ -20,25 +20,15 @@ import com.android.jarutils.JavaResourceFilter;
 import com.android.jarutils.SignedJarBuilder;
 import com.android.prefs.AndroidLocation;
 import com.android.sdklib.SdkConstants;
-import com.intellij.ide.highlighter.ArchiveFileType;
-import com.intellij.openapi.compiler.CompilerManager;
-import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.text.DateFormatUtil;
-import org.jetbrains.android.compiler.AndroidCompileUtil;
-import org.jetbrains.android.facet.AndroidFacet;
-import org.jetbrains.android.sdk.AndroidPlatform;
-import org.jetbrains.android.sdk.AndroidSdkUtils;
-import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidCommonUtils;
+import org.jetbrains.android.util.AndroidCompilerMessageKind;
+import org.jetbrains.android.util.AndroidExecutionUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,7 +44,7 @@ import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import static com.intellij.openapi.compiler.CompilerMessageCategory.*;
+import static org.jetbrains.android.util.AndroidCompilerMessageKind.*;
 
 /**
  * @author yole
@@ -68,7 +58,7 @@ public class AndroidApkBuilder {
   private AndroidApkBuilder() {
   }
 
-  private static Map<CompilerMessageCategory, List<String>> filterUsingKeystoreMessages(Map<CompilerMessageCategory, List<String>> messages) {
+  private static Map<AndroidCompilerMessageKind, List<String>> filterUsingKeystoreMessages(Map<AndroidCompilerMessageKind, List<String>> messages) {
     List<String> infoMessages = messages.get(INFORMATION);
     if (infoMessages == null) {
       infoMessages = new ArrayList<String>();
@@ -118,48 +108,49 @@ public class AndroidApkBuilder {
     }
   }
 
-  public static Map<CompilerMessageCategory, List<String>> execute(Project project,
-                                                                   @NotNull String resPackagePath,
-                                                                   @NotNull String dexPath,
-                                                                   @NotNull VirtualFile[] sourceRoots,
-                                                                   @NotNull String[] externalJars,
-                                                                   @NotNull VirtualFile[] nativeLibsFolders,
-                                                                   @NotNull String finalApk,
-                                                                   boolean unsigned,
-                                                                   @NotNull String sdkPath,
-                                                                   @Nullable String customKeystorePath) throws IOException {
+  public static Map<AndroidCompilerMessageKind, List<String>> execute(@NotNull String resPackagePath,
+                                                                      @NotNull String dexPath,
+                                                                      @NotNull String[] sourceRoots,
+                                                                      @NotNull String[] externalJars,
+                                                                      @NotNull String[] nativeLibsFolders,
+                                                                      @NotNull String finalApk,
+                                                                      boolean unsigned,
+                                                                      @NotNull String sdkPath,
+                                                                      @Nullable String customKeystorePath,
+                                                                      @NotNull Condition<File> resourceFilter) throws IOException {
     if (unsigned) {
       return filterUsingKeystoreMessages(
-        finalPackage(project, dexPath, sourceRoots, externalJars, nativeLibsFolders, finalApk, resPackagePath, customKeystorePath, false));
+        finalPackage(dexPath, sourceRoots, externalJars, nativeLibsFolders, finalApk, resPackagePath, customKeystorePath, false,
+                     resourceFilter));
     }
 
-    final Map<CompilerMessageCategory, List<String>> map = new HashMap<CompilerMessageCategory, List<String>>();
-    final String zipAlignPath = sdkPath + File.separator + AndroidSdkUtils.toolPath(SdkConstants.FN_ZIPALIGN);
+    final Map<AndroidCompilerMessageKind, List<String>> map = new HashMap<AndroidCompilerMessageKind, List<String>>();
+    final String zipAlignPath = sdkPath + File.separator + AndroidCommonUtils.toolPath(SdkConstants.FN_ZIPALIGN);
     boolean withAlignment = new File(zipAlignPath).exists();
     String unalignedApk = finalApk + UNALIGNED_SUFFIX;
 
-    Map<CompilerMessageCategory, List<String>> map2 = filterUsingKeystoreMessages(
-      finalPackage(project, dexPath, sourceRoots, externalJars, nativeLibsFolders, withAlignment ? unalignedApk : finalApk, resPackagePath,
-                   customKeystorePath, true));
+    Map<AndroidCompilerMessageKind, List<String>> map2 = filterUsingKeystoreMessages(
+      finalPackage(dexPath, sourceRoots, externalJars, nativeLibsFolders, withAlignment ? unalignedApk : finalApk, resPackagePath,
+                   customKeystorePath, true, resourceFilter));
     map.putAll(map2);
 
     if (withAlignment && map.get(ERROR).size() == 0) {
-      map2 = AndroidCompileUtil.execute(zipAlignPath, "-f", "4", unalignedApk, finalApk);
+      map2 = AndroidExecutionUtil.doExecute(zipAlignPath, "-f", "4", unalignedApk, finalApk);
       map.putAll(map2);
     }
     return map;
   }
 
-  private static Map<CompilerMessageCategory, List<String>> finalPackage(Project project,
-                                                                         @NotNull String dexPath,
-                                                                         @NotNull VirtualFile[] sourceRoots,
-                                                                         @NotNull String[] externalJars,
-                                                                         @NotNull VirtualFile[] nativeLibsFolders,
-                                                                         @NotNull String outputApk, 
-                                                                         @NotNull String apkPath,
-                                                                         @Nullable String customKeystorePath,
-                                                                         boolean signed) {
-    final Map<CompilerMessageCategory, List<String>> result = new HashMap<CompilerMessageCategory, List<String>>();
+  private static Map<AndroidCompilerMessageKind, List<String>> finalPackage(@NotNull String dexPath,
+                                                                            @NotNull String[] sourceRoots,
+                                                                            @NotNull String[] externalJars,
+                                                                            @NotNull String[] nativeLibsFolders,
+                                                                            @NotNull String outputApk,
+                                                                            @NotNull String apkPath,
+                                                                            @Nullable String customKeystorePath,
+                                                                            boolean signed,
+                                                                            @NotNull Condition<File> resourceFilter) {
+    final Map<AndroidCompilerMessageKind, List<String>> result = new HashMap<AndroidCompilerMessageKind, List<String>>();
     result.put(ERROR, new ArrayList<String>());
     result.put(INFORMATION, new ArrayList<String>());
     result.put(WARNING, new ArrayList<String>());
@@ -187,35 +178,36 @@ public class AndroidApkBuilder {
 
       if (certificate != null && certificate.getNotAfter().compareTo(new Date()) < 0) {
         String date = DateFormatUtil.formatPrettyDateTime(certificate.getNotAfter());
-        result.get(ERROR).add(AndroidBundle.message("android.debug.certificate.expired.error", date, keyStoreOsPath));
+        result.get(ERROR).add(
+          ("Debug certificate expired on " + date + ". Cannot regenerate it, please delete file \"" + keyStoreOsPath + "\" manually."));
         return result;
       }
 
       PrivateKey key = provider.getDebugKey();
 
       if (key == null) {
-        result.get(ERROR).add(AndroidBundle.message("android.cannot.create.new.key.error"));
+        result.get(ERROR).add("Cannot create new key or keystore");
         return result;
       }
 
       if (!new File(apkPath).exists()) {
-        result.get(CompilerMessageCategory.ERROR).add("File " + apkPath + " not found. Try to rebuild project");
+        result.get(ERROR).add("File " + apkPath + " not found. Try to rebuild project");
         return result;
       }
 
       File dexEntryFile = new File(dexPath);
       if (!dexEntryFile.exists()) {
-        result.get(CompilerMessageCategory.ERROR).add("File " + dexEntryFile.getPath() + " not found. Try to rebuild project");
+        result.get(ERROR).add("File " + dexEntryFile.getPath() + " not found. Try to rebuild project");
         return result;
       }
 
       for (String externalJar : externalJars) {
         if (new File(externalJar).isDirectory()) {
-          result.get(CompilerMessageCategory.ERROR).add(externalJar + " is directory. Directory libraries are not supported");
+          result.get(ERROR).add(externalJar + " is directory. Directory libraries are not supported");
         }
       }
 
-      if (result.get(CompilerMessageCategory.ERROR).size() > 0) {
+      if (result.get(ERROR).size() > 0) {
         return result;
       }
 
@@ -233,9 +225,10 @@ public class AndroidApkBuilder {
       builder.writeFile(dexEntryFile, AndroidCommonUtils.CLASSES_FILE_NAME);
 
       final HashSet<String> added = new HashSet<String>();
-      for (VirtualFile sourceRoot : sourceRoots) {
-        final HashSet<VirtualFile> sourceFolderResources = new HashSet<VirtualFile>();
-        collectStandardSourceFolderResources(sourceRoot, new HashSet<VirtualFile>(), sourceFolderResources, project);
+      for (String sourceRootPath : sourceRoots) {
+        final HashSet<File> sourceFolderResources = new HashSet<File>();
+        final File sourceRoot = new File(sourceRootPath);
+        collectStandardSourceFolderResources(sourceRoot, sourceFolderResources, resourceFilter);
         writeStandardSourceFolderResources(sourceFolderResources, sourceRoot, builder, added);
       }
 
@@ -246,7 +239,7 @@ public class AndroidApkBuilder {
       }
 
       for (String duplicate : duplicates) {
-        result.get(CompilerMessageCategory.WARNING).add("Duplicate entry " + duplicate + ". The file won't be added");
+        result.get(WARNING).add("Duplicate entry " + duplicate + ". The file won't be added");
       }
 
       MyResourceFilter filter = new MyResourceFilter(duplicates);
@@ -262,9 +255,14 @@ public class AndroidApkBuilder {
       }
 
       final HashSet<String> nativeLibs = new HashSet<String>();
-      for (VirtualFile nativeLibsFolder : nativeLibsFolders) {
-        for (VirtualFile child : nativeLibsFolder.getChildren()) {
-          writeNativeLibraries(builder, nativeLibsFolder, child, signed, nativeLibs);
+      for (String nativeLibsFolderPath : nativeLibsFolders) {
+        final File nativeLibsFolder = new File(nativeLibsFolderPath);
+        final File[] children = nativeLibsFolder.listFiles();
+
+        if (children != null) {
+          for (File child : children) {
+            writeNativeLibraries(builder, nativeLibsFolder, child, signed, nativeLibs);
+          }
         }
       }
       builder.close();
@@ -305,7 +303,7 @@ public class AndroidApkBuilder {
     return result;
   }
 
-  private static DebugKeyProvider createDebugKeyProvider(final Map<CompilerMessageCategory, List<String>> result, String path) throws
+  private static DebugKeyProvider createDebugKeyProvider(final Map<AndroidCompilerMessageKind, List<String>> result, String path) throws
                                                                                                                                KeyStoreException,
                                                                                                                                NoSuchAlgorithmException,
                                                                                                                                CertificateException,
@@ -326,18 +324,20 @@ public class AndroidApkBuilder {
   }
 
   private static void writeNativeLibraries(SignedJarBuilder builder,
-                                           VirtualFile nativeLibsFolder,
-                                           VirtualFile child,
+                                           File nativeLibsFolder,
+                                           File child,
                                            boolean debugBuild,
                                            Set<String> added)
     throws IOException {
-    ArrayList<VirtualFile> list = new ArrayList<VirtualFile>();
+    ArrayList<File> list = new ArrayList<File>();
     collectNativeLibraries(child, list, debugBuild);
-    for (VirtualFile file : list) {
-      String relativePath = VfsUtilCore.getRelativePath(file, nativeLibsFolder, File.separatorChar);
+
+    for (File file : list) {
+      final String relativePath = FileUtil.getRelativePath(nativeLibsFolder, file);
       String path = FileUtil.toSystemIndependentName(SdkConstants.FD_APK_NATIVE_LIBS + File.separator + relativePath);
+
       if (added.add(path)) {
-        builder.writeFile(toIoFile(file), path);
+        builder.writeFile(file, path);
         LOG.info("Native lib file added to APK: " + file.getPath());
       }
       else {
@@ -346,104 +346,73 @@ public class AndroidApkBuilder {
     }
   }
 
-  private static Map<CompilerMessageCategory, List<String>> addExceptionMessage(Exception e,
-                                                                                Map<CompilerMessageCategory, List<String>> result) {
+  private static Map<AndroidCompilerMessageKind, List<String>> addExceptionMessage(Exception e,
+                                                                                Map<AndroidCompilerMessageKind, List<String>> result) {
     LOG.info(e);
     String simpleExceptionName = e.getClass().getCanonicalName();
     result.get(ERROR).add(simpleExceptionName + ": " + e.getMessage());
     return result;
   }
 
-  public static void collectNativeLibraries(@NotNull VirtualFile file, @NotNull List<VirtualFile> result, boolean debugBuild) {
+  public static void collectNativeLibraries(@NotNull File file, @NotNull List<File> result, boolean debugBuild) {
     if (!file.isDirectory()) {
-      String ext = file.getExtension();
+      String ext = FileUtil.getExtension(file.getName());
 
       // some users store jars and *.so libs in the same directory. Do not pack JARs to APK's "lib" folder!
       if (EXT_NATIVE_LIB.equalsIgnoreCase(ext) ||
-          (debugBuild && !(file.getFileType() instanceof ArchiveFileType))) {
+          (debugBuild && !("jar".equals(ext)))) {
         result.add(file);
       }
     }
     else if (JavaResourceFilter.checkFolderForPackaging(file.getName())) {
-      for (VirtualFile child : file.getChildren()) {
-        collectNativeLibraries(child, result, debugBuild);
+      final File[] children = file.listFiles();
+
+      if (children != null) {
+        for (File child : children) {
+          collectNativeLibraries(child, result, debugBuild);
+        }
       }
     }
   }
 
-  public static void collectStandardSourceFolderResources(VirtualFile sourceFolder,
-                                                          Set<VirtualFile> visited,
-                                                          Set<VirtualFile> result,
-                                                          @Nullable Project project) {
-    visited.add(sourceFolder);
-    
-    for (VirtualFile child : sourceFolder.getChildren()) {
-      if (child.exists()) {
-        if (child.isDirectory()) {
-          if (!visited.contains(child) &&
-              JavaResourceFilter.checkFolderForPackaging(child.getName()) && !isExcludedFromCompilation(child, project)) {
-            collectStandardSourceFolderResources(child, visited, result, project);
+  public static void collectStandardSourceFolderResources(@NotNull File sourceFolder,
+                                                          @NotNull Collection<File> result,
+                                                          @NotNull Condition<File> filter) {
+    final File[] children = sourceFolder.listFiles();
+
+    if (children != null) {
+      for (File child : children) {
+        if (child.exists()) {
+          if (child.isDirectory()) {
+            if (JavaResourceFilter.checkFolderForPackaging(child.getName()) && filter.value(child)) {
+              collectStandardSourceFolderResources(child, result, filter);
+            }
+          }
+          else if (checkFileForPackaging(child) && filter.value(child)) {
+            result.add(child);
           }
         }
-        else if (checkFileForPackaging(child) && !isExcludedFromCompilation(child, project)) {
-          result.add(child);
-        }
       }
     }
   }
 
-  private static boolean isExcludedFromCompilation(VirtualFile child, @Nullable Project project) {
-    final CompilerManager compilerManager = project != null ? CompilerManager.getInstance(project) : null;
-    
-    if (compilerManager == null) {
-      return false;
-    }
-    
-    if (!compilerManager.isExcludedFromCompilation(child)) {
-      return false;
-    }
-
-    final Module module = ModuleUtil.findModuleForFile(child, project);
-    if (module == null) {
-      return true;
-    }
-
-    final AndroidFacet facet = AndroidFacet.getInstance(module);
-    if (facet == null || !facet.getConfiguration().LIBRARY_PROJECT) {
-      return true;
-    }
-
-    final AndroidPlatform platform = facet.getConfiguration().getAndroidPlatform();
-    if (platform == null) {
-      return true;
-    }
-
-    // we exclude sources of library modules automatically for tools r7 or previous
-    return platform.getSdkData().getPlatformToolsRevision() > 7;
-  }
-
-  private static void writeStandardSourceFolderResources(Collection<VirtualFile> resources,
-                                                         VirtualFile sourceRoot,
+  private static void writeStandardSourceFolderResources(Collection<File> resources,
+                                                         File sourceRoot,
                                                          SignedJarBuilder jarBuilder,
                                                          Set<String> added) throws IOException {
-    for (VirtualFile child : resources) {
-      final String relativePath = FileUtil.toSystemIndependentName(VfsUtilCore.getRelativePath(child, sourceRoot, File.separatorChar));
-      if (!added.contains(relativePath)) {
-        File file = toIoFile(child);
-        jarBuilder.writeFile(file, FileUtil.toSystemIndependentName(relativePath));
+    for (File child : resources) {
+      final String relativePath = FileUtil.getRelativePath(sourceRoot, child);
+      if (relativePath != null && !added.contains(relativePath)) {
+        jarBuilder.writeFile(child, FileUtil.toSystemIndependentName(relativePath));
         added.add(relativePath);
       }
     }
   }
 
-  private static File toIoFile(VirtualFile child) {
-    return new File(FileUtil.toSystemDependentName(child.getPath())).getAbsoluteFile();
-  }
-
-  private static boolean checkFileForPackaging(VirtualFile file) {
-    String fileName = file.getNameWithoutExtension();
+  private static boolean checkFileForPackaging(File file) {
+    String fileName = FileUtil.getNameWithoutExtension(file);
     if (fileName.length() > 0) {
-      return JavaResourceFilter.checkFileForPackaging(fileName, file.getExtension());
+      return JavaResourceFilter.checkFileForPackaging(fileName, FileUtil.getExtension(file.getName()));
     }
     return false;
   }

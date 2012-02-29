@@ -28,6 +28,8 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.regex.Pattern;
+
 public class TestClassFilter implements ClassFilter.ClassFilterWithScope {
   private final PsiClass myBase;
   private final Project myProject;
@@ -58,6 +60,18 @@ public class TestClassFilter implements ClassFilter.ClassFilterWithScope {
     if (sourceScope == null) throw new JUnitUtil.NoJUnitException();
     PsiClass testCase = module == null ? JUnitUtil.getTestCaseClass(sourceScope) : JUnitUtil.getTestCaseClass(module);
     return new TestClassFilter(testCase, sourceScope.getGlobalSearchScope());
+  }
+
+  public static TestClassFilter create(final SourceScope sourceScope, Module module, final String pattern) throws JUnitUtil.NoJUnitException {
+    if (sourceScope == null) throw new JUnitUtil.NoJUnitException();
+    PsiClass testCase = module == null ? JUnitUtil.getTestCaseClass(sourceScope) : JUnitUtil.getTestCaseClass(module);
+    return new TestClassFilter(testCase, sourceScope.getGlobalSearchScope()){
+      private final Pattern myPattern = Pattern.compile(pattern);
+      @Override
+      public boolean isAccepted(PsiClass aClass) {
+        return super.isAccepted(aClass) && myPattern.matcher(aClass.getQualifiedName()).matches();
+      }
+    };
   }
 
   public GlobalSearchScope getScope() { return myScope; }

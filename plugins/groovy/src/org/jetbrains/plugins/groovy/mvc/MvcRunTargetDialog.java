@@ -54,13 +54,47 @@ public class MvcRunTargetDialog extends DialogWrapper {
   private ComboBox myTargetField;
   private Module myModule;
 
-  public MvcRunTargetDialog(@NotNull Module module, MvcFramework framework) {
+  private final MvcFramework myFramework;
+
+  private Action myInteractiveRunAction;
+
+  public MvcRunTargetDialog(@NotNull Module module, @NotNull MvcFramework framework) {
     super(module.getProject(), true);
     myModule = module;
+    myFramework = framework;
     setTitle("Run " + framework.getDisplayName() + " target");
     setUpDialog();
     setModal(true);
     init();
+  }
+
+  @Override
+  protected Action[] createLeftSideActions() {
+    boolean hasOneSupportedModule = false;
+    for (Module module : ModuleManager.getInstance(myModule.getProject()).getModules()) {
+      if (module == myModule || myFramework.hasSupport(module)) {
+        if (myFramework.isInteractiveConsoleSupport(module)) {
+          hasOneSupportedModule = true;
+          break;
+        }
+      }
+    }
+
+    if (hasOneSupportedModule) {
+      myInteractiveRunAction = new DialogWrapperAction("&Run Interactive Console") {
+        @Override
+        protected void doAction(ActionEvent e) {
+          myFramework.runInteractiveConsole(getSelectedModule());
+          doCancelAction();
+        }
+      };
+
+      myInteractiveRunAction.setEnabled(myFramework.isInteractiveConsoleSupport(myModule));
+
+      return new Action[]{myInteractiveRunAction};
+    }
+
+    return new Action[0];
   }
 
   private void setUpDialog() {
@@ -72,7 +106,7 @@ public class MvcRunTargetDialog extends DialogWrapper {
 
     List<Module> mvcModules = new ArrayList<Module>();
     for (Module module : ModuleManager.getInstance(myModule.getProject()).getModules()) {
-      if (module == myModule || MvcFramework.getInstance(module) != null) {
+      if (module == myModule || myFramework.hasSupport(module)) {
         mvcModules.add(module);
       }
     }
@@ -85,6 +119,9 @@ public class MvcRunTargetDialog extends DialogWrapper {
       @Override
       public void actionPerformed(ActionEvent e) {
         myModule = (Module)myModuleBox.getSelectedItem();
+        if (myInteractiveRunAction != null) {
+          myInteractiveRunAction.setEnabled(myFramework.isInteractiveConsoleSupport(myModule));
+        }
       }
     });
 

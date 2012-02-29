@@ -52,7 +52,7 @@ public class GradleProjectStructureChangesDetector extends AbstractProjectCompon
 
       @Override
       public void onImportEnd(@NotNull Object entity) {
-        myImportCounter.incrementAndGet(); 
+        myImportCounter.decrementAndGet(); 
       }
     });    
   }
@@ -65,7 +65,7 @@ public class GradleProjectStructureChangesDetector extends AbstractProjectCompon
 
       @Override
       public void rootsChanged(ModuleRootEvent event) {
-        if (myImportCounter.incrementAndGet() <= 0) {
+        if (myImportCounter.get() <= 0) {
           scheduleUpdate();
         }
       }

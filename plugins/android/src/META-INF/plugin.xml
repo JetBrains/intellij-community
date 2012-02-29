@@ -205,6 +205,14 @@
     <compileServer.plugin jar-path="common.jar"/>
     <compileServer.plugin jar-path="../../../../../community/plugins/android/lib/common.jar"/>
     <compileServer.plugin jar-path="../../../../../plugins/android/lib/common.jar"/>
+
+    <compileServer.plugin jar-path="jarutils.jar"/>
+    <compileServer.plugin jar-path="../../../../../community/plugins/android/lib/jarutils.jar"/>
+    <compileServer.plugin jar-path="../../../../../plugins/android/lib/jarutils.jar"/>
+
+    <compileServer.plugin jar-path="androidprefs.jar"/>
+    <compileServer.plugin jar-path="../../../../../community/plugins/android/lib/androidprefs.jar"/>
+    <compileServer.plugin jar-path="../../../../../plugins/android/lib/androidprefs.jar"/>
   </extensions>
 
   <extensionPoints>

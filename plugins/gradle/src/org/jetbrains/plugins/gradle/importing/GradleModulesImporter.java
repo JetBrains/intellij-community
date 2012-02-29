@@ -366,12 +366,16 @@ public class GradleModulesImporter {
 
     model = projectLibraryTable.getModifiableModel();
     List<ModifiableRootModel> modelsToCommit = new ArrayList<ModifiableRootModel>();
+    Map<GradleLibrary, Library> libraryMappings = registerProjectLibraries(gradleProject, model);
+    final GradleProjectEntityImportListener publisher
+      = intellijProject.getMessageBus().syncPublisher(GradleProjectEntityImportListener.TOPIC);
     try {
-      Map<GradleLibrary, Library> libraryMappings = registerProjectLibraries(gradleProject, model);
       if (libraryMappings == null) {
         return;
       }
-
+      for (GradleLibrary library : libraryMappings.keySet()) {
+        publisher.onImportStart(library);
+      }
       modelsToCommit.addAll(configureModulesLibraryDependencies(moduleMappings, libraryMappings, gradleProject));
     }
     finally {
@@ -379,6 +383,11 @@ public class GradleModulesImporter {
       ProjectRootManager projectRootManager = ProjectRootManager.getInstance(intellijProject);
       ModifiableRootModel[] modelsAsArray = modelsToCommit.toArray(new ModifiableRootModel[modelsToCommit.size()]);
       projectRootManager.multiCommit(modelsAsArray);
+      if (libraryMappings != null) {
+        for (GradleLibrary library : libraryMappings.keySet()) {
+          publisher.onImportEnd(library);
+        }
+      }
     }
   }
 

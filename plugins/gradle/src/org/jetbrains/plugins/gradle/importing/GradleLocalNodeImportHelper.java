@@ -9,8 +9,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.config.GradleTextAttributes;
 import org.jetbrains.plugins.gradle.model.GradleEntityType;
 import org.jetbrains.plugins.gradle.model.gradle.*;
+import org.jetbrains.plugins.gradle.model.id.GradleContentRootId;
 import org.jetbrains.plugins.gradle.model.id.GradleEntityId;
 import org.jetbrains.plugins.gradle.model.id.GradleEntityIdMapper;
+import org.jetbrains.plugins.gradle.model.intellij.ModuleAwareContentRoot;
 import org.jetbrains.plugins.gradle.sync.GradleProjectStructureHelper;
 import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNode;
 import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNodeDescriptor;
@@ -136,11 +138,24 @@ public class GradleLocalNodeImportHelper {
     if (!context.recursive) {
       return;
     }
+    for (GradleContentRoot contentRoot : module.getContentRoots()) {
+      contentRoot.invite(context.visitor);
+    }
     for (GradleDependency dependency : module.getDependencies()) {
       dependency.invite(context.visitor);
     }
   }
 
+  private void collectContentRoots(@NotNull GradleContentRoot contentRoot, @NotNull Context context) {
+    final GradleContentRootId id = GradleEntityIdMapper.mapEntityToId(contentRoot);
+    final ModuleAwareContentRoot intellijContentRoot = myProjectStructureHelper.findIntellijContentRoot(id);
+    if (intellijContentRoot != null) {
+      // Already imported.
+      return;
+    }
+    context.contentRoots.add(contentRoot);
+  }
+  
   private void collectModuleDependencyEntities(@NotNull GradleModuleDependency dependency, @NotNull Context context) {
     final ModuleOrderEntry intellijModuleDependency = myProjectStructureHelper.findIntellijModuleDependency(dependency);
     if (intellijModuleDependency != null) {
@@ -232,10 +247,11 @@ public class GradleLocalNodeImportHelper {
   
   private class Context {
 
-    public final Set<GradleModule>     modules      = new HashSet<GradleModule>();
-    public final Set<GradleLibrary>    libraries    = new HashSet<GradleLibrary>();
-    public final Set<GradleDependency> dependencies = new HashSet<GradleDependency>();
-    public final CollectingVisitor     visitor      = new CollectingVisitor(this);
+    public final Set<GradleModule>      modules      = new HashSet<GradleModule>();
+    public final Set<GradleContentRoot> contentRoots = new HashSet<GradleContentRoot>();
+    public final Set<GradleLibrary>     libraries    = new HashSet<GradleLibrary>();
+    public final Set<GradleDependency>  dependencies = new HashSet<GradleDependency>();
+    public final CollectingVisitor      visitor      = new CollectingVisitor(this);
     
     public boolean recursive;
 
@@ -243,6 +259,7 @@ public class GradleLocalNodeImportHelper {
     public List<GradleEntity> getAll() {
       List<GradleEntity> result = new ArrayList<GradleEntity>();
       result.addAll(modules);
+      result.addAll(contentRoots);
       result.addAll(libraries);
       result.addAll(dependencies);
       return result;
@@ -258,10 +275,7 @@ public class GradleLocalNodeImportHelper {
 
     @Override public void visit(@NotNull GradleProject project) { }
     @Override public void visit(@NotNull GradleModule module) { collectModuleEntities(module, myContext); }
-    @Override
-    public void visit(@NotNull GradleContentRoot contentRoot) {
-      // TODO den implement 
-    }
+    @Override public void visit(@NotNull GradleContentRoot contentRoot) { collectContentRoots(contentRoot, myContext); }
     @Override public void visit(@NotNull GradleLibrary library) { /* Assuming that a library may be imported only as a dependency */ }
     @Override public void visit(@NotNull GradleModuleDependency dependency) { collectModuleDependencyEntities(dependency, myContext); }
     @Override public void visit(@NotNull GradleLibraryDependency dependency) { collectLibraryDependencyEntities(dependency, myContext); }
