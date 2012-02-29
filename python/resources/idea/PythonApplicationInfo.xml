@@ -1,5 +1,5 @@
   <component>
-  <version codename="2.0 Beta" major="2" minor="0" eap="true" update-channel="pycharm2EAP"/>
+  <version codename="2.1 EAP" major="2" minor="1" eap="true" update-channel="pycharm2EAP"/>
   <build number="__BUILD_NUMBER__" date="__BUILD_DATE__"/>
   <logo url="/pycharm_logo.png" textcolor="B7C9B5"/>
   <about url="/pycharm_about.png"/>
