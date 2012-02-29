@@ -244,4 +244,11 @@ class GroovyAutoPopupTest extends CompletionAutoPopupTestCase {
     myFixture.checkResult '[has:<caret>]'
   }
 
+  public void testTypingFqn() {
+    CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE
+    myFixture.configureByText 'a.groovy', '<caret>'
+    type 'java.'
+    myFixture.checkResult 'java.<caret>'
+  }
+
 }
