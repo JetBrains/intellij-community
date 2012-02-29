@@ -102,12 +102,32 @@ public class CreateFieldFromParameterAction implements IntentionAction {
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     PsiParameter psiParameter = findParameterAtCursor(file, editor);
-    if (psiParameter == null) return false;
-    final Collection<SmartPsiElementPointer<PsiParameter>> params = getUnboundedParams(psiParameter);
+    PsiMethod method = null;
+    if (psiParameter == null) {
+      final PsiElement elementAt = file.findElementAt(editor.getCaretModel().getOffset());
+      if (elementAt instanceof PsiIdentifier) {
+        final PsiElement parent = elementAt.getParent();
+        if (parent instanceof PsiMethod) {
+          method  = (PsiMethod)parent;
+        }
+      }
+    } else {
+      final PsiElement declarationScope = psiParameter.getDeclarationScope();
+      if (declarationScope instanceof PsiMethod) {
+        method = (PsiMethod)declarationScope;
+      }
+    }
+    if (method == null) return false;
+    final Collection<SmartPsiElementPointer<PsiParameter>> params = getUnboundedParams(method);
     params.clear();
-    final PsiParameter[] parameters = ((PsiMethod)psiParameter.getDeclarationScope()).getParameterList().getParameters();
+    final PsiParameter[] parameters = method.getParameterList().getParameters();
     for (PsiParameter parameter : parameters) {
       params.add(SmartPointerManager.getInstance(project).createSmartPsiElementPointer(parameter));
+    }
+    if (params.isEmpty()) return false;
+    if (psiParameter == null) {
+      psiParameter = params.iterator().next().getElement();
+      LOG.assertTrue(psiParameter != null);
     }
     myName = params.size() > 1 && !ApplicationManager.getApplication().isUnitTestMode() ? null : psiParameter.getName();
     return isAvailable(psiParameter);
@@ -130,10 +150,7 @@ public class CreateFieldFromParameterAction implements IntentionAction {
   }
 
   @NotNull
-  private static Collection<SmartPsiElementPointer<PsiParameter>> getUnboundedParams(PsiParameter parameter) {
-    final PsiElement psiElement = parameter.getDeclarationScope();
-    if (!(psiElement instanceof PsiMethod)) return Collections.emptyList();
-    final PsiMethod psiMethod = (PsiMethod)psiElement;
+  private static Collection<SmartPsiElementPointer<PsiParameter>> getUnboundedParams(PsiMethod psiMethod) {
     Map<SmartPsiElementPointer<PsiParameter>, Boolean> params = psiMethod.getUserData(PARAMS);
     if (params == null) psiMethod.putUserData(PARAMS, params = new ConcurrentWeakHashMap<SmartPsiElementPointer<PsiParameter>, Boolean>(1));
     final Map<SmartPsiElementPointer<PsiParameter>, Boolean> finalParams = params;
@@ -201,9 +218,14 @@ public class CreateFieldFromParameterAction implements IntentionAction {
   }
 
   private static void invoke(final Project project, Editor editor, PsiFile file, boolean isInteractive) {
-    final PsiParameter myParameter = findParameterAtCursor(file, editor);
-    if (!CodeInsightUtilBase.prepareFileForWrite(myParameter.getContainingFile())) return;
-    final Collection<SmartPsiElementPointer<PsiParameter>> unboundedParams = getUnboundedParams(myParameter);
+    PsiParameter myParameter = findParameterAtCursor(file, editor);
+    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
+    final PsiMethod method = myParameter != null ? (PsiMethod)myParameter.getDeclarationScope() : PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PsiMethod.class);
+    LOG.assertTrue(method != null);
+    final Collection<SmartPsiElementPointer<PsiParameter>> unboundedParams = getUnboundedParams(method);
+    if (myParameter == null) {
+      myParameter = unboundedParams.iterator().next().getElement();
+    }
     if (unboundedParams.size() > 1 && !ApplicationManager.getApplication().isUnitTestMode()) {
       ClassMember[] members = new ClassMember[unboundedParams.size()];
       ClassMember selection = null;
@@ -216,7 +238,7 @@ public class CreateFieldFromParameterAction implements IntentionAction {
           selection = classMember;
         }
       }
-      final PsiParameterList parameterList = ((PsiMethod)myParameter.getDeclarationScope()).getParameterList();
+      final PsiParameterList parameterList = method.getParameterList();
       Arrays.sort(members, new Comparator<ClassMember>() {
         @Override
         public int compare(ClassMember o1, ClassMember o2) {
