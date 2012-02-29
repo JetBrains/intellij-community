@@ -23,13 +23,16 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.Consumer;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.UIUtil;
+import com.trilead.ssh2.crypto.PEMDecoder;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.svn.SvnBundle;
+import org.tmatesoft.svn.core.internal.io.svn.SVNSSHPrivateKeyUtil;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -37,7 +40,10 @@ import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 import java.io.File;
+import java.io.IOException;
 
 /**
  * @author alex
@@ -62,6 +68,7 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
   private final Project myProject;
 
   @NonNls private static final String HELP_ID = "vcs.subversion.authentication";
+  private boolean myKeyFileEmptyOrCorrect;
 
   protected SSHCredentialsDialog(Project project, String realm, String userName, boolean allowSave, final int port) {
     super(project, true);
@@ -73,6 +80,7 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
     getHelpAction().setEnabled(true);
     init();
     myPortField.setText("" + port);
+    myKeyFileEmptyOrCorrect = true;
   }
 
   protected void doHelpAction() {
@@ -206,6 +214,13 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
     myPassphraseText = new JPasswordField(30);
     panel.add(myPassphraseText, gb);
     myPassphraseText.getDocument().addDocumentListener(this);
+    myPassphraseText.addFocusListener(new FocusAdapter() {
+      @Override
+      public void focusLost(FocusEvent e) {
+        checkKeyFile();
+        updateOKButton();
+      }
+    });
 
     myPassphraseLabel.setLabelFor(myPassphraseText);
 
@@ -292,6 +307,7 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
         ok = myPasswordText != null && myPasswordText.getPassword() != null;
       }
       else if (myKeyButton.isSelected()) {
+        if (! myKeyFileEmptyOrCorrect) return false;
         ok = myKeyFileText != null && myKeyFileText.getText().trim().length() > 0;
       }
         if (ok) {
@@ -365,6 +381,7 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
   public void actionPerformed(ActionEvent e) {
     if (e.getSource() == myPasswordButton || e.getSource() == myKeyButton) {
       updateFields();
+      checkKeyFile();
       updateOKButton();
     }
     else {
@@ -401,9 +418,33 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
             path[0] = files[0].getPath().replace('/', File.separatorChar);
             myKeyFileText.setText(path[0]);
           }
+          checkKeyFile();
           updateOKButton();
         }
       });
+    }
+  }
+
+  private void checkKeyFile() {
+    myKeyFileEmptyOrCorrect = true;
+    setErrorText(null);
+
+    if (! myKeyButton.isSelected()) return;
+    final String text = myKeyFileText.getText();
+    if (StringUtil.isEmptyOrSpaces(text)) return;
+    final File file = new File(text);
+    if (! file.exists()) {
+      setErrorText("Private key file does not exist");
+      myKeyFileEmptyOrCorrect = false;
+      return;
+    }
+    final char[] password = myPassphraseText.getPassword();
+    try {
+      PEMDecoder.decode(SVNSSHPrivateKeyUtil.readPrivateKey(file), String.valueOf(password));
+    }
+    catch (IOException e) {
+      setErrorText("Private key file is not valid. " + e.getMessage());
+      myKeyFileEmptyOrCorrect = false;
     }
   }
 
@@ -431,5 +472,13 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
 
   public void changedUpdate(DocumentEvent e) {
     updateOKButton();
+  }
+
+  @Override
+  protected void doOKAction() {
+    checkKeyFile();
+    updateOKButton();
+    if (! isOKActionEnabled()) return;
+    super.doOKAction();
   }
 }
