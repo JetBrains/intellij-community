@@ -73,7 +73,7 @@ class ConstructorInsertHandler implements InsertHandler<LookupElementDecorator<L
     if (delegate instanceof PsiTypeLookupItem) {
       fillTypeArgs = !isRawTypeExpected(context, (PsiTypeLookupItem)delegate) &&
                      psiClass.getTypeParameters().length > 0 &&
-                     ((PsiTypeLookupItem)delegate).calcGenerics(position).isEmpty() &&
+                     ((PsiTypeLookupItem)delegate).calcGenerics(position, context).isEmpty() &&
                      context.getCompletionChar() != '(';
       delegate.handleInsert(context);
       PostprocessReformattingAspect.getInstance(context.getProject()).doPostponedFormatting(context.getFile().getViewProvider());

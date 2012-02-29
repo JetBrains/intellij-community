@@ -942,6 +942,7 @@ public class JavaCompletionUtil {
 
     context.getDocument().insertString(offset, "<>");
     context.getEditor().getCaretModel().moveToOffset(offset + 1);
+    context.setAddCompletionChar(false);
     return true;
   }
 }
