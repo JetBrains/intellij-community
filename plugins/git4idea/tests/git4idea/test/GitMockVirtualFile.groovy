@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileSystem
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
+import com.intellij.mock.MockVirtualFileSystem
 
 /**
  * VirtualFile test implementation based on {@link java.io.File}.
@@ -34,14 +35,16 @@ class GitMockVirtualFile extends VirtualFile {
     myPath = path;
   }
 
+  @NotNull
   @Override
   String getName() {
     new File(path).getName();
   }
 
+  @NotNull
   @Override
   VirtualFileSystem getFileSystem() {
-    throw new UnsupportedOperationException();
+    new MockVirtualFileSystem()
   }
 
   @Override
@@ -76,11 +79,13 @@ class GitMockVirtualFile extends VirtualFile {
     new File(path).list().collect { new GitMockVirtualFile("$path/$it") }
   }
 
+  @NotNull
   @Override
   OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) {
     throw new UnsupportedOperationException();
   }
 
+  @NotNull
   @Override
   byte[] contentsToByteArray() {
     throw new UnsupportedOperationException();
@@ -110,4 +115,11 @@ class GitMockVirtualFile extends VirtualFile {
   String toString() {
     return myPath;
   }
+
+  @NotNull
+  @Override
+  String getUrl() {
+    myPath;
+  }
+
 }

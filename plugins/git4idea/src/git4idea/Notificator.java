@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Kirill Likhodedov
  */
-public class Notificator {
+  public class Notificator {
 
   @NotNull private final Project myProject;
 
@@ -57,6 +57,10 @@ public class Notificator {
 
   public void notifyError(String title, String message) {
     notify(GitVcs.IMPORTANT_ERROR_NOTIFICATION, title, message, NotificationType.ERROR, null);
+  }
+
+  public void notifySuccess(@NotNull String title, @NotNull String message) {
+    notify(GitVcs.NOTIFICATION_GROUP_ID, title, message, NotificationType.INFORMATION,  null);
   }
 
   protected static Notification createNotification(NotificationGroup notificationGroup, String title, String message,

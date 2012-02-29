@@ -149,6 +149,8 @@
     <applicationService serviceInterface="git4idea.commands.Git"
                         serviceImplementation="git4idea.commands.GitImpl"/>
 
+    <applicationService serviceInterface="git4idea.PlatformFacade" serviceImplementation="git4idea.PlatformFacadeImpl" />
+
     <ComponentRoamingType component="Git.Settings" type="DISABLED"/>
     <fileTypeFactory implementation="git4idea.vfs.GitFileTypeFactory"/>
   </extensions>

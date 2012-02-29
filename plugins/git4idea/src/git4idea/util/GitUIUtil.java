@@ -529,4 +529,14 @@ public class GitUIUtil {
       }
     }, ", ");
   }
+
+  @NotNull
+  public static String joinRootsPaths(@NotNull Collection<VirtualFile> roots) {
+    return StringUtil.join(roots, new Function<VirtualFile, String>() {
+      @Override
+      public String fun(VirtualFile virtualFile) {
+        return virtualFile.getPresentableUrl();
+      }
+    }, ", ");
+  }
 }

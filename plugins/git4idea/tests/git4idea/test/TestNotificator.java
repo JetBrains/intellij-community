@@ -29,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class TestNotificator extends Notificator {
 
+  private static final String TEST_NOTIFICATION_GROUP = "Test";
   private Notification myLastNotification;
 
   public TestNotificator(@NotNull Project project) {
@@ -42,7 +43,17 @@ public class TestNotificator extends Notificator {
   public void notify(@NotNull NotificationGroup notificationGroup, @NotNull String title, @NotNull String message, @NotNull NotificationType type) {
     notify(notificationGroup, title, message, type, null);
   }
-  
+
+  @Override
+  public void notifySuccess(@NotNull String title, @NotNull String message) {
+    myLastNotification = createNotification(title, message, NotificationType.INFORMATION);
+  }
+
+  @NotNull
+  private static Notification createNotification(@NotNull String title, @NotNull String message, NotificationType type) {
+    return new Notification(TEST_NOTIFICATION_GROUP, title, message, type);
+  }
+
   public void notify(@NotNull NotificationGroup notificationGroup, @NotNull String title, @NotNull String message,
                      @NotNull NotificationType type, @Nullable NotificationListener listener) {
     myLastNotification = createNotification(notificationGroup, title, message, type, listener);
