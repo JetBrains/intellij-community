@@ -20,14 +20,16 @@ import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
+import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+
+import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
 /**
  * @author ilyas
@@ -58,12 +60,16 @@ public class GroovyReferenceCharFilter extends CharFilter {
     if (c == ':') {
       PsiFile file = lookup.getPsiFile();
       PsiDocumentManager.getInstance(file.getProject()).commitDocument(lookup.getEditor().getDocument());
-      PsiElement element = lookup.getPsiElement();
-      if (PsiTreeUtil.getParentOfType(element, GrCaseLabel.class) != null ||
-          PsiTreeUtil.getParentOfType(element, GrConditionalExpression.class) != null ||
-          PsiTreeUtil.getParentOfType(element, GrArgumentList.class) != null ||
-          PsiTreeUtil.getParentOfType(element, GrListOrMap.class) != null
-        ) {
+      PsiElement element = file.findElementAt(Math.max(caret - 1, 0));
+      if (psiElement().withParent(
+        psiElement(GrReferenceExpression.class).withParent(
+          StandardPatterns.or(psiElement(GrCaseLabel.class),
+                              psiElement(GrConditionalExpression.class)))).accepts(element)) {
+        return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
+      }
+      if (item.getObject() instanceof NamedArgumentDescriptor &&
+          (MapArgumentCompletionProvider.IN_ARGUMENT_LIST_OF_CALL.accepts(element) ||
+           MapArgumentCompletionProvider.IN_LABEL.accepts(element))) {
         return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
       }
       return Result.HIDE_LOOKUP;
