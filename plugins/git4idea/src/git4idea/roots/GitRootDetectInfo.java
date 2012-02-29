@@ -18,6 +18,7 @@ package git4idea.roots;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Collection;
 
 /**
@@ -38,7 +39,7 @@ class GitRootDetectInfo {
    *              i.e. .git is above the project dir, and there is no .git directly under the project dir.
    */
   GitRootDetectInfo(@NotNull Collection<VirtualFile> roots, boolean full, boolean below) {
-    myRoots = roots;
+    myRoots = new ArrayList<VirtualFile>(roots);
     myFull = full;
     myBelow = below;
   }
@@ -57,7 +58,7 @@ class GitRootDetectInfo {
 
   @NotNull
   Collection<VirtualFile> getRoots() {
-    return myRoots;
+    return new ArrayList<VirtualFile>(myRoots);
   }
 
   /**
