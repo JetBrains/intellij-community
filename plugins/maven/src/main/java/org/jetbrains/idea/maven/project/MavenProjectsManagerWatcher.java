@@ -112,6 +112,7 @@ public class MavenProjectsManagerWatcher {
         if (mavenProject != null) myManager.setIgnoredState(Collections.singletonList(mavenProject), true);
       }
 
+      @Override
       public void moduleAdded(final Project project, final Module module) {
         // this method is needed to return non-ignored status for modules that were deleted (and thus ignored) and then created again with a different module type
         if (myManager.isMavenizedModule(module)) {
@@ -123,6 +124,7 @@ public class MavenProjectsManagerWatcher {
     });
 
     DocumentAdapter myDocumentListener = new DocumentAdapter() {
+      @Override
       public void documentChanged(DocumentEvent event) {
         Document doc = event.getDocument();
         VirtualFile file = FileDocumentManager.getInstance().getFile(doc);
@@ -136,6 +138,7 @@ public class MavenProjectsManagerWatcher {
           myChangedDocuments.add(doc);
         }
         myChangedDocumentsQueue.queue(new Update(MavenProjectsManagerWatcher.this) {
+          @Override
           public void run() {
             final Set<Document> copy;
 
@@ -145,8 +148,10 @@ public class MavenProjectsManagerWatcher {
             }
 
             MavenUtil.invokeLater(myProject, new Runnable() {
+              @Override
               public void run() {
                 new WriteAction() {
+                  @Override
                   protected void run(Result result) throws Throwable {
                     for (Document each : copy) {
                       PsiDocumentManager.getInstance(myProject).commitDocument(each);
@@ -163,6 +168,7 @@ public class MavenProjectsManagerWatcher {
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(myDocumentListener, myBusConnection);
 
     final MavenGeneralSettings.Listener mySettingsPathsChangesListener = new MavenGeneralSettings.Listener() {
+      @Override
       public void changed() {
         updateSettingsFilePointers();
         onSettingsChange();
@@ -170,6 +176,7 @@ public class MavenProjectsManagerWatcher {
     };
     myGeneralSettings.addListener(mySettingsPathsChangesListener);
     Disposer.register(myChangedDocumentsQueue, new Disposable() {
+      @Override
       public void dispose() {
         myGeneralSettings.removeListener(mySettingsPathsChangesListener);
         mySettingsFilesPointers.clear();
@@ -204,9 +211,11 @@ public class MavenProjectsManagerWatcher {
         String url = VfsUtil.pathToUrl(path);
         mySettingsFilesPointers.add(
           VirtualFilePointerManager.getInstance().create(url, myChangedDocumentsQueue, new VirtualFilePointerListener() {
+            @Override
             public void beforeValidityChanged(VirtualFilePointer[] pointers) {
             }
 
+            @Override
             public void validityChanged(VirtualFilePointer[] pointers) {
             }
           }));
@@ -294,9 +303,11 @@ public class MavenProjectsManagerWatcher {
   }
 
   private class MyRootChangesListener implements ModuleRootListener {
+    @Override
     public void beforeRootsChange(ModuleRootEvent event) {
     }
 
+    @Override
     public void rootsChanged(ModuleRootEvent event) {
       // todo is this logic necessary?
       List<VirtualFile> existingFiles = myProjectsTree.getProjectsFiles();
@@ -350,14 +361,17 @@ public class MavenProjectsManagerWatcher {
     private boolean settingsHaveChanged;
     private boolean forceImportAndResolve;
 
+    @Override
     protected boolean isRelevant(String path) {
       return isPomFile(path) || isProfilesFile(path) || isSettingsFile(path);
     }
 
+    @Override
     protected void updateFile(VirtualFile file) {
       doUpdateFile(file, false);
     }
 
+    @Override
     protected void deleteFile(VirtualFile file) {
       doUpdateFile(file, true);
     }
@@ -393,6 +407,7 @@ public class MavenProjectsManagerWatcher {
       return f.getParent().findChild(MavenConstants.POM_XML);
     }
 
+    @Override
     protected void apply() {
       // the save may occur during project close. in this case the background task
       // can not be started since the window has already been closed.
@@ -443,7 +458,8 @@ public class MavenProjectsManagerWatcher {
 
     protected abstract void apply();
 
-    public void before(List<? extends VFileEvent> events) {
+    @Override
+    public void before(@NotNull List<? extends VFileEvent> events) {
       for (VFileEvent each : events) {
         if (each instanceof VFileDeleteEvent) {
           deleteRecursively(each.getFile());
@@ -479,7 +495,8 @@ public class MavenProjectsManagerWatcher {
       }
     }
 
-    public void after(List<? extends VFileEvent> events) {
+    @Override
+    public void after(@NotNull List<? extends VFileEvent> events) {
       for (VFileEvent each : events) {
         if (!isRelevant(each.getPath())) continue;
 

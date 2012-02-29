@@ -224,7 +224,7 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
     mySignature.setPreferredSize(new Dimension(500, 100));
     mySignature.setMinimumSize(new Dimension(500, 100));
     mySignature.setBorder(
-      IdeBorderFactory.createTitledBorder(GroovyRefactoringBundle.message("signature.preview.border.title"), false, false, true));
+      IdeBorderFactory.createTitledBorder(GroovyRefactoringBundle.message("signature.preview.border.title"), false));
     mySignature.setFocusable(false);
 
     myNameField = new EditorTextField("", myProject, GroovyFileType.GROOVY_FILE_TYPE);

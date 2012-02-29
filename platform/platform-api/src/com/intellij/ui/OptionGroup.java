@@ -106,7 +106,7 @@ public class OptionGroup implements PanelWithAnchor {
                                      new Insets(0, 0, 0, 0), 0, 0));
 
     if (myTitle != null) {
-      IdeaTitledBorder titledBorder = IdeBorderFactory.createTitledBorder(myTitle, boldTitle, true, true);
+      IdeaTitledBorder titledBorder = IdeBorderFactory.createTitledBorder(myTitle, true);
       panel.setBorder(titledBorder);
       titledBorder.acceptMinimumSize(panel);
     }

@@ -59,12 +59,17 @@ public class XmlNamespaceIndex extends XmlIndex<String> {
   
   private static final ID<String,String> NAME = ID.create("XmlNamespaces");
 
+  @Override
+  @NotNull
   public ID<String, String> getName() {
     return NAME;
   }
 
+  @Override
+  @NotNull
   public DataIndexer<String, String, FileContent> getIndexer() {
     return new DataIndexer<String, String, FileContent>() {
+      @Override
       @NotNull
       public Map<String, String> map(final FileContent inputData) {
         final String ns = XsdNamespaceBuilder.computeNamespace(new UnsyncByteArrayInputStream(inputData.getContent()));
@@ -78,6 +83,7 @@ public class XmlNamespaceIndex extends XmlIndex<String> {
     };
   }
 
+  @Override
   public DataExternalizer<String> getValueExternalizer() {
     return KEY_DESCRIPTOR;
   }

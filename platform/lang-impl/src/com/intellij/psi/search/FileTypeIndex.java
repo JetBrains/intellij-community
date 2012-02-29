@@ -34,11 +34,13 @@ public class FileTypeIndex extends ScalarIndexExtension<FileType>
     myFileTypeManager = fileTypeManager;
   }
 
+  @NotNull
   @Override
   public ID<FileType, Void> getName() {
     return NAME;
   }
 
+  @NotNull
   @Override
   public DataIndexer<FileType, Void, FileContent> getIndexer() {
     return this;

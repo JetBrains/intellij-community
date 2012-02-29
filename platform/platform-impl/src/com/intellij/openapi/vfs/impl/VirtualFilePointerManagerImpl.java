@@ -447,7 +447,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     private List<VirtualFilePointer> myPointersToUpdate = null;
 
     @Override
-    public void before(final List<? extends VFileEvent> events) {
+    public void before(@NotNull final List<? extends VFileEvent> events) {
       cleanContainerCaches();
       List<VirtualFilePointer> toFireEvents = new ArrayList<VirtualFilePointer>();
       List<String> toUpdateUrl = new ArrayList<String>();
@@ -517,7 +517,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     }
 
     @Override
-    public void after(final List<? extends VFileEvent> events) {
+    public void after(@NotNull final List<? extends VFileEvent> events) {
       cleanContainerCaches();
 
       if (myUrlsToUpdate == null) {

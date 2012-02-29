@@ -56,14 +56,17 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
     return processor.getResult();
   }
 
+  @NotNull
   @Override
   public ID<String, Void> getName() {
     return NAME;
   }
 
+  @NotNull
   @Override
   public DataIndexer<String, Void, FileContent> getIndexer() {
     return new DataIndexer<String, Void, FileContent>() {
+      @Override
       @NotNull
       public Map<String, Void> map(FileContent inputData) {
         final HashMap<String, Void> map = new HashMap<String, Void>();
@@ -135,6 +138,7 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
     return new FileBasedIndex.InputFilter() {
+      @Override
       public boolean acceptInput(VirtualFile file) {
         if (file.getFileSystem() instanceof JarFileSystem) {
           return false; // there is lots and lots of custom XML inside zip files
@@ -167,6 +171,7 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
       myName = name;
     }
 
+    @Override
     public boolean process(VirtualFile file, Void kind) {
       if (myScope.contains(file)) {
         final PsiFile psiFile = myMgr.findFile(file);
@@ -204,10 +209,12 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
       myPresentation = presentation;
     }
 
+    @Override
     public String getPresentableText() {
       return myPresentation.getPresentableText();
     }
 
+    @Override
     @Nullable
     public String getLocationString() {
       return getLocationString((PsiElement)myItem);
@@ -217,6 +224,7 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
       return "(in " + element.getContainingFile().getName() + ")";
     }
 
+    @Override
     @Nullable
     public Icon getIcon(boolean open) {
       return myPresentation.getIcon(open);
@@ -227,10 +235,12 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
       return myPresentation instanceof ColoredItemPresentation ? ((ColoredItemPresentation) myPresentation).getTextAttributesKey() : null;
     }
 
+    @Override
     public String getName() {
       return myItem.getName();
     }
 
+    @Override
     public ItemPresentation getPresentation() {
       return myPresentation != null ? this : null;
     }
@@ -240,14 +250,17 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
       return (PsiElement) myItem;
     }
 
+    @Override
     public void navigate(boolean requestFocus) {
       myItem.navigate(requestFocus);
     }
 
+    @Override
     public boolean canNavigate() {
       return myItem.canNavigate();
     }
 
+    @Override
     public boolean canNavigateToSource() {
       return myItem.canNavigateToSource();
     }
@@ -259,15 +272,18 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
         if (data instanceof PsiPresentableMetaData) {
           final PsiPresentableMetaData metaData = (PsiPresentableMetaData)data;
           presentation = new ColoredItemPresentation() {
+            @Override
             public String getPresentableText() {
               return metaData.getName();
             }
 
+            @Override
             @Nullable
             public String getLocationString() {
               return MyNavigationItem.getLocationString((PsiElement)item);
             }
 
+            @Override
             @Nullable
             public Icon getIcon(boolean open) {
               return metaData.getIcon();

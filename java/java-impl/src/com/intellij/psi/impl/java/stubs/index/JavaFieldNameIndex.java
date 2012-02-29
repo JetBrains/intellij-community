@@ -36,6 +36,7 @@ public class JavaFieldNameIndex extends StringStubIndexExtension<PsiField> {
     return ourInstance;
   }
 
+  @NotNull
   @Override
   public StubIndexKey<String, PsiField> getKey() {
     return JavaStubIndexKeys.FIELDS;
