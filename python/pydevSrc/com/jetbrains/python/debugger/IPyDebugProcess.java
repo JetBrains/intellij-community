@@ -3,6 +3,8 @@ package com.jetbrains.python.debugger;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 
+import java.io.IOException;
+
 /**
  * @author yole
  */
@@ -24,4 +26,6 @@ public interface IPyDebugProcess {
   void printToConsole(String text, ConsoleViewContentType contentType);
 
   void init();
+
+  int handleDebugPort(int port) throws IOException;
 }

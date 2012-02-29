@@ -21,11 +21,11 @@ public abstract class PythonRemoteInterpreterManager {
   public final static ExtensionPointName<PythonRemoteInterpreterManager> EP_NAME =
     ExtensionPointName.create("Pythonid.remoteInterpreterManager");
 
-  public abstract ProcessHandler doCreateProcess(Project project,
-                                                 PythonRemoteSdkAdditionalData data,
-                                                 GeneralCommandLine commandLine,
-                                                 @Nullable
-                                                 PyPathMappingSettings mappingSettings)
+  public abstract ProcessHandler startRemoteProcess(Project project,
+                                                    PythonRemoteSdkAdditionalData data,
+                                                    GeneralCommandLine commandLine,
+                                                    @Nullable
+                                                    PyPathMappingSettings mappingSettings)
     throws PyRemoteInterpreterException;
 
   @Nullable

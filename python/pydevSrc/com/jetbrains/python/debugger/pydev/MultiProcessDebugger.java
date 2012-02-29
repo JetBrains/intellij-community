@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.xdebugger.frame.XValueChildrenList;
@@ -38,8 +39,11 @@ public class MultiProcessDebugger implements ProcessDebugger {
 
   private ThreadRegistry myThreadRegistry = new ThreadRegistry();
 
-  public MultiProcessDebugger(final IPyDebugProcess debugProcess, final ServerSocket serverSocket, final int timeoutInMillis) {
+  public MultiProcessDebugger(final IPyDebugProcess debugProcess,
+                              final ServerSocket serverSocket,
+                              final int timeoutInMillis) {
     myDebugProcess = debugProcess;
+
     myServerSocket = serverSocket;
     myTimeoutInMillis = timeoutInMillis;
 
@@ -67,7 +71,7 @@ public class MultiProcessDebugger implements ProcessDebugger {
         public void run() {
           try {
             //do we need any synchronization here with myMainDebugger.waitForConnect() ??? TODO
-            sendDebuggerPort(socket, myDebugServerSocket);
+            sendDebuggerPort(socket, myDebugServerSocket, myDebugProcess);
           }
           catch (Exception e) {
             throw new RuntimeException(e);
@@ -86,9 +90,10 @@ public class MultiProcessDebugger implements ProcessDebugger {
     }
   }
 
-  private static void sendDebuggerPort(Socket socket, ServerSocket serverSocket) throws IOException {
+  private static void sendDebuggerPort(Socket socket, ServerSocket serverSocket, IPyDebugProcess processHandler) throws IOException {
+    int port = processHandler.handleDebugPort(serverSocket.getLocalPort());
     PrintWriter writer = new PrintWriter(socket.getOutputStream());
-    writer.println(99 + "\t" + -1 + "\t" + serverSocket.getLocalPort());
+    writer.println(99 + "\t" + -1 + "\t" + port);
     writer.flush();
     socket.close();
   }
@@ -350,7 +355,7 @@ public class MultiProcessDebugger implements ProcessDebugger {
             final RemoteDebugger debugger =
               new RemoteDebugger(myMultiProcessDebugger.myDebugProcess, serverSocket, myMultiProcessDebugger.myTimeoutInMillis);
             addCloseListener(debugger);
-            sendDebuggerPort(socket, serverSocket);
+            sendDebuggerPort(socket, serverSocket, myMultiProcessDebugger.myDebugProcess);
             socket.close();
             debugger.waitForConnect();
             debugger.handshake();
