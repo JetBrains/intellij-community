@@ -75,7 +75,7 @@ public abstract class AddDeleteListPanel<T> extends PanelWithButtons implements 
     setLayout(new BorderLayout());
     add(decorator.createPanel(), BorderLayout.CENTER);
     if (myTitle != null) {
-      setBorder(IdeBorderFactory.createTitledBorder(myTitle, false, false, true));
+      setBorder(IdeBorderFactory.createTitledBorder(myTitle, false));
     }
   }
 

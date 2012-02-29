@@ -58,7 +58,7 @@ public class MethodBreakpointPropertiesPanel extends BreakpointPropertiesPanel {
     _panel0.add(Box.createHorizontalStrut(3), BorderLayout.WEST);
     _panel0.add(Box.createHorizontalStrut(3), BorderLayout.EAST);
     _panel.add(_panel0, BorderLayout.NORTH);
-    _panel.setBorder(IdeBorderFactory.createTitledBorder(DebuggerBundle.message("label.group.watch.events"), false, true, true));
+    _panel.setBorder(IdeBorderFactory.createTitledBorder(DebuggerBundle.message("label.group.watch.events"), true));
 
     ActionListener listener = new ActionListener() {
       public void actionPerformed(ActionEvent e) {

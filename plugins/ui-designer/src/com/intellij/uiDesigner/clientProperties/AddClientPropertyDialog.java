@@ -40,7 +40,7 @@ public class AddClientPropertyDialog extends DialogWrapper {
     init();
     setTitle(UIDesignerBundle.message("client.property.add.title"));
     myGroupPanel.setBorder(IdeBorderFactory.createTitledBorder(UIDesignerBundle.message("client.properties.type.header"),
-                                                               false, true, true));
+                                                               true));
   }
 
   @Nullable

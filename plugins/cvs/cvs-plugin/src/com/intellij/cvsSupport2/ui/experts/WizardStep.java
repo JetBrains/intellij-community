@@ -49,7 +49,7 @@ public abstract class WizardStep extends StepAdapter{
   public JComponent getComponent(){
     if (myComponent == null) {
       myComponent = createComponent();
-      final IdeaTitledBorder border = IdeBorderFactory.createTitledBorder(myDescription, false, false, false);
+      final IdeaTitledBorder border = IdeBorderFactory.createTitledBorder(myDescription, false);
       myComponent.setBorder(border);
     }
     return myComponent;
@@ -61,7 +61,7 @@ public abstract class WizardStep extends StepAdapter{
   }
 
   protected void setStepTitle(String title){
-    final IdeaTitledBorder border = IdeBorderFactory.createTitledBorder(title, false, false, false);
+    final IdeaTitledBorder border = IdeBorderFactory.createTitledBorder(title, false);
     getComponent().setBorder(border);
   }
 
