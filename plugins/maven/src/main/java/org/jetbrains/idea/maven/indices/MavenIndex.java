@@ -51,10 +51,7 @@ public class MavenIndex {
   private static final String UPDATE_DIR = "update";
 
   private static final String DATA_DIR_PREFIX = "data";
-  private static final String GROUP_IDS_FILE = "groupIds.dat";
-  private static final String ARTIFACT_IDS_FILE = "artifactIds.dat";
 
-  private static final String VERSIONS_FILE = "versions.dat";
   private static final String ARTIFACT_IDS_MAP_FILE = "artifactIds-map.dat";
   private static final String VERSIONS_MAP_FILE = "versions-map.dat";
 
@@ -360,10 +357,6 @@ public class MavenIndex {
 
   private void doUpdateIndexData(IndexData data,
                                  MavenProgressIndicator progress) throws IOException, MavenServerIndexerException {
-    final Set<String> groups = new THashSet<String>();
-    final Set<String> groupsWithArtifacts = new THashSet<String>();
-    final Set<String> groupsWithArtifactsWithVersions = new THashSet<String>();
-
     final Map<String, Set<String>> groupToArtifactMap = new THashMap<String, Set<String>>();
     final Map<String, Set<String>> groupWithArtifactToVersionMap = new THashMap<String, Set<String>>();
 
@@ -386,22 +379,11 @@ public class MavenIndex {
             builder.append(groupId).append(":").append(artifactId);
             String ga = builder.toString();
 
-            builder.append(":").append(version);
-            String gav = builder.toString();
-
-            groups.add(groupId);
-            groupsWithArtifacts.add(ga);
-            groupsWithArtifactsWithVersions.add(gav);
-
             getOrCreate(groupToArtifactMap, groupId).add(artifactId);
             getOrCreate(groupWithArtifactToVersionMap, ga).add(version);
           }
         }
       });
-
-      persist(groups, data.groups);
-      persist(groupsWithArtifacts, data.groupsWithArtifacts);
-      persist(groupsWithArtifactsWithVersions, data.groupsWithArtifactsWithVersions);
 
       persist(groupToArtifactMap, data.groupToArtifactMap);
       persist(groupWithArtifactToVersionMap, data.groupWithArtifactToVersionMap);
@@ -469,20 +451,8 @@ public class MavenIndex {
         String artifactId = id.getArtifactId();
         String version = id.getVersion();
 
-        myData.groups.enumerate(groupId);
-        myData.hasGroupCache.put(groupId, true);
-
-        String groupWithArtifact = groupId + ":" + artifactId;
-
-        myData.groupsWithArtifacts.enumerate(groupWithArtifact);
-        myData.hasArtifactCache.put(groupWithArtifact, true);
         addToCache(myData.groupToArtifactMap, groupId, artifactId);
-
-        String groupWithArtifactWithVersion = groupWithArtifact + ":" + version;
-
-        myData.groupsWithArtifactsWithVersions.enumerate(groupWithArtifactWithVersion);
-        myData.hasVersionCache.put(groupWithArtifactWithVersion, true);
-        addToCache(myData.groupWithArtifactToVersionMap, groupWithArtifact, version);
+        addToCache(myData.groupWithArtifactToVersionMap, groupId + ":" + artifactId, version);
         myData.flush();
 
         return null;
@@ -497,17 +467,10 @@ public class MavenIndex {
     cache.put(key, values);
   }
 
-  public synchronized Set<String> getGroupIds() {
-    return doIndexTask(new IndexTask<Set<String>>() {
-      public Set<String> doTask() throws Exception {
-        final Set<String> result = new THashSet<String>();
-        myData.groups.traverseAllRecords(new PersistentEnumerator.RecordsProcessor() {
-          public boolean process(int record) throws IOException {
-            result.add(myData.groups.valueOf(record));
-            return true;
-          }
-        });
-        return result;
+  public synchronized Collection<String> getGroupIds() {
+    return doIndexTask(new IndexTask<Collection<String>>() {
+      public Collection<String> doTask() throws Exception {
+        return myData.groupToArtifactMap.getAllDataObjects(null);
       }
     }, Collections.<String>emptySet());
   }
@@ -531,38 +494,29 @@ public class MavenIndex {
   }
 
   public synchronized boolean hasGroupId(String groupId) {
-    return hasValue(myData.groups, myData.hasGroupCache, groupId);
+    return hasValue(myData.groupToArtifactMap, groupId);
   }
 
   public synchronized boolean hasArtifactId(String groupId, String artifactId) {
-    return hasValue(myData.groupsWithArtifacts,
-                    myData.hasArtifactCache,
-                    groupId + ":" + artifactId);
+    return hasValue(myData.groupWithArtifactToVersionMap, groupId + ":" + artifactId);
   }
 
-  public synchronized boolean hasVersion(String groupId, String artifactId, String version) {
-    return hasValue(myData.groupsWithArtifactsWithVersions,
-                    myData.hasVersionCache,
-                    groupId + ":" + artifactId + ":" + version);
-  }
-
-  private boolean hasValue(final PersistentStringEnumerator set, Map<String, Boolean> cache, final String value) {
-    Boolean cached = cache.get(value);
-    if (cached != null) return cached;
-
-    boolean result = doIndexTask(new IndexTask<Boolean>() {
+  public synchronized boolean hasVersion(final String groupId, final String artifactId, final String version) {
+    return doIndexTask(new IndexTask<Boolean>() {
+      @Override
       public Boolean doTask() throws Exception {
-        return !set.traverseAllRecords(new PersistentEnumerator.RecordsProcessor() {
-          public boolean process(int record) throws IOException {
-            if (value.equals(set.valueOf(record))) return false;
-            return true;
-          }
-        });
+        Set<String> set = myData.groupWithArtifactToVersionMap.get(groupId + ":" + artifactId);
+        return set != null && set.contains(version);
+      }
+    }, false);
+  }
+
+  private boolean hasValue(final PersistentHashMap<String, ?> map, final String value) {
+    return doIndexTask(new IndexTask<Boolean>() {
+      public Boolean doTask() throws Exception {
+        return map.tryEnumerate(value) != 0;
       }
     }, false).booleanValue();
-
-    cache.put(value, result);
-    return result;
   }
 
   public synchronized Set<MavenArtifactInfo> search(final Query query, final int maxResult) {
@@ -608,25 +562,13 @@ public class MavenIndex {
   }
 
   private class IndexData {
-    final PersistentStringEnumerator groups;
-    final PersistentStringEnumerator groupsWithArtifacts;
-    final PersistentStringEnumerator groupsWithArtifactsWithVersions;
-
     final PersistentHashMap<String, Set<String>> groupToArtifactMap;
     final PersistentHashMap<String, Set<String>> groupWithArtifactToVersionMap;
-
-    final Map<String, Boolean> hasGroupCache = new THashMap<String, Boolean>();
-    final Map<String, Boolean> hasArtifactCache = new THashMap<String, Boolean>();
-    final Map<String, Boolean> hasVersionCache = new THashMap<String, Boolean>();
 
     private final int indexId;
 
     public IndexData(File dir) throws MavenIndexException {
       try {
-        groups = new PersistentStringEnumerator(new File(dir, GROUP_IDS_FILE));
-        groupsWithArtifacts = new PersistentStringEnumerator(new File(dir, ARTIFACT_IDS_FILE));
-        groupsWithArtifactsWithVersions = new PersistentStringEnumerator(new File(dir, VERSIONS_FILE));
-
         groupToArtifactMap = createPersistentMap(new File(dir, ARTIFACT_IDS_MAP_FILE));
         groupWithArtifactToVersionMap = createPersistentMap(new File(dir, VERSIONS_MAP_FILE));
 
@@ -657,10 +599,6 @@ public class MavenIndex {
         if (exceptions[0] == null) exceptions[0] = new MavenIndexException(e);
       }
 
-      safeClose(groups, exceptions);
-      safeClose(groupsWithArtifacts, exceptions);
-      safeClose(groupsWithArtifactsWithVersions, exceptions);
-
       safeClose(groupToArtifactMap, exceptions);
       safeClose(groupWithArtifactToVersionMap, exceptions);
 
@@ -678,10 +616,6 @@ public class MavenIndex {
     }
 
     public void flush() throws IOException {
-      groups.force();
-      groupsWithArtifacts.force();
-      groupsWithArtifactsWithVersions.force();
-
       groupToArtifactMap.force();
       groupWithArtifactToVersionMap.force();
     }
