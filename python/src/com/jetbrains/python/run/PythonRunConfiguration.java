@@ -40,7 +40,6 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
   private String myScriptParameters;
   private boolean myMultiprocessMode;
   private String myRemoteDebugConfiguration;
-  private PyPathMappingSettings myMappingSettings;
 
   protected PythonRunConfiguration(RunConfigurationModule module, ConfigurationFactory configurationFactory, String name) {
     super(name, module, configurationFactory);
@@ -109,16 +108,6 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
     myMultiprocessMode = multiprocess;
   }
 
-  @Override
-  public PyPathMappingSettings getMappingSettings() {
-    return myMappingSettings;
-  }
-
-  @Override
-  public void setMappingSettings(PyPathMappingSettings mappingSettings) {
-    myMappingSettings = mappingSettings;
-  }
-
   public void readExternal(Element element) throws InvalidDataException {
     super.readExternal(element);
     myScriptName = JDOMExternalizerUtil.readField(element, SCRIPT_NAME);
@@ -139,8 +128,8 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
     JDOMExternalizerUtil.writeField(element, PARAMETERS, myScriptParameters);
     JDOMExternalizerUtil.writeField(element, MULTIPROCESS, Boolean.toString(myMultiprocessMode));
     JDOMExternalizerUtil.writeField(element, REMOTE_DEBUG_RUN_CONFIGURATION, myRemoteDebugConfiguration);
-    if (myMappingSettings != null) {
-      element.addContent(XmlSerializer.serialize(myMappingSettings));
+    if (getMappingSettings() != null) {
+      element.addContent(XmlSerializer.serialize(getMappingSettings()));
     }
   }
 

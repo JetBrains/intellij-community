@@ -21,6 +21,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PlatformUtils;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonModuleTypeBase;
+import com.jetbrains.python.debugger.remote.PyPathMappingSettings;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkFlavor;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -40,6 +41,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractRunConfig
   private String myWorkingDirectory = "";
   private String mySdkHome = "";
   private boolean myUseModuleSdk;
+  protected PyPathMappingSettings myMappingSettings;
 
   public AbstractPythonRunConfiguration(final String name, final RunConfigurationModule module, final ConfigurationFactory factory) {
     super(name, module, factory);
@@ -48,6 +50,14 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractRunConfig
 
   public List<Module> getValidModules() {
     return getValidModules(getProject());
+  }
+
+  public PyPathMappingSettings getMappingSettings() {
+    return myMappingSettings;
+  }
+
+  public void setMappingSettings(PyPathMappingSettings mappingSettings) {
+    myMappingSettings = mappingSettings;
   }
 
   public static List<Module> getValidModules(Project project) {
