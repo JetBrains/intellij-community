@@ -16,6 +16,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugProcessStarter;
 import com.intellij.xdebugger.XDebugSession;
@@ -65,17 +66,9 @@ public class PyDebugRunner extends GenericProgramRunner {
                                            ExecutionEnvironment env) throws ExecutionException {
     FileDocumentManager.getInstance().saveAllDocuments();
 
-    final ServerSocket serverSocket;
-    try {
-      //noinspection SocketOpenedButNotSafelyClosed
-      serverSocket = new ServerSocket(0);
-    }
-    catch (IOException e) {
-      throw new ExecutionException("Failed to find free socket port", e);
-    }
-
     final PythonCommandLineState pyState = (PythonCommandLineState)profileState;
-    final int serverLocalPort = serverSocket.getLocalPort();
+    final Pair<ServerSocket, Integer> serverSocket = pyState.createDebugServerSocket();
+    final int serverLocalPort = serverSocket.getSecond();
     RunProfile profile = env.getRunProfile();
     final ExecutionResult result = pyState.execute(executor, createCommandLinePatchers(pyState, profile, serverLocalPort));
 
@@ -84,7 +77,7 @@ public class PyDebugRunner extends GenericProgramRunner {
         @NotNull
         public XDebugProcess start(@NotNull final XDebugSession session) {
           PyDebugProcess pyDebugProcess =
-            new PyDebugProcess(session, serverSocket, result.getExecutionConsole(), result.getProcessHandler(),
+            new PyDebugProcess(session, serverSocket.getFirst(), result.getExecutionConsole(), result.getProcessHandler(),
                                pyState.isMultiprocessDebug());
 
           createConsoleCommunicationAndSetupActions(project, result, pyDebugProcess);

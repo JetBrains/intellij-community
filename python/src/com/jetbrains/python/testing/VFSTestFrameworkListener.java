@@ -49,11 +49,11 @@ public class VFSTestFrameworkListener implements ApplicationComponent, Persisten
     MessageBus messageBus = ApplicationManager.getApplication().getMessageBus();
     messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
-      public void before(List<? extends VFileEvent> events) {
+      public void before(@NotNull List<? extends VFileEvent> events) {
       }
 
       @Override
-      public void after(List<? extends VFileEvent> events) {
+      public void after(@NotNull List<? extends VFileEvent> events) {
         for (VFileEvent event : events) {
           VirtualFile vFile = event.getFile();
           if (vFile == null) continue;
@@ -94,6 +94,7 @@ public class VFSTestFrameworkListener implements ApplicationComponent, Persisten
 
   public void updateTestFrameworks(final String sdkHome, final String searcher, final String sdkType) {
     myQueue.queue(new Update(Pair.create(sdkHome, searcher)) {
+      @Override
       public void run() {
         testInstalled(isTestFrameworkInstalled(sdkHome, searcher), sdkHome, sdkType);
       }

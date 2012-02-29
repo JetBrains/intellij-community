@@ -25,6 +25,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -45,6 +46,8 @@ import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
+import java.net.ServerSocket;
 import java.util.*;
 
 /**
@@ -63,6 +66,32 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
   public boolean isDebug() {
     return isDebug(getConfigurationSettings());
+  }
+
+  public Pair<ServerSocket, Integer> createDebugServerSocket() throws ExecutionException {
+    ServerSocket serverSocket = createServerSocket();
+
+    Sdk sdk = PythonSdkType.findSdkByPath(myConfig.getSdkHome());
+
+    if (sdk != null && sdk.getSdkAdditionalData() instanceof PythonRemoteSdkAdditionalData) {
+      //remote interpreter
+      return Pair.create(serverSocket, -serverSocket.getLocalPort());
+    }
+    else {
+      return Pair.create(serverSocket, serverSocket.getLocalPort());
+    }
+  }
+
+  private ServerSocket createServerSocket() throws ExecutionException {
+    final ServerSocket serverSocket;
+    try {
+      //noinspection SocketOpenedButNotSafelyClosed
+      serverSocket = new ServerSocket(0);
+    }
+    catch (IOException e) {
+      throw new ExecutionException("Failed to find free socket port", e);
+    }
+    return serverSocket;
   }
 
   protected static boolean isDebug(ConfigurationPerRunnerSettings configurationSettings) {
@@ -129,7 +158,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
    * @throws ExecutionException
    */
   protected ProcessHandler startProcess(CommandLinePatcher... patchers) throws ExecutionException {
-    Sdk sdk = PythonSdkType.findSdkByPath(myConfig.getSdkHome());
+
 
     GeneralCommandLine commandLine = generateCommandLine(patchers);
 
@@ -137,6 +166,8 @@ public abstract class PythonCommandLineState extends CommandLineState {
     RunnerSettings runnerSettings = getRunnerSettings();
     PythonRunConfigurationExtensionsManager.getInstance()
       .patchCommandLine(myConfig, runnerSettings, commandLine, getConfigurationSettings().getRunnerId());
+
+    Sdk sdk = PythonSdkType.findSdkByPath(myConfig.getSdkHome());
 
     if (sdk != null && sdk.getSdkAdditionalData() instanceof PythonRemoteSdkAdditionalData) {
       return startRemoteProcess(sdk, commandLine);
@@ -163,9 +194,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
         try {
           processHandler =
             manager.doCreateProcess(myConfig.getProject(), (PythonRemoteSdkAdditionalData)sdk.getSdkAdditionalData(), commandLine,
-                                    PyRemoteDebugConfiguration
-                                      .findByName(myConfig.getProject(),
-                                                  ((PythonRunConfiguration)myConfig).getRemoteDebugConfiguration()));
+                                    ((PythonRunConfiguration)myConfig).getMappingSettings());
           break;
         }
         catch (PyRemoteInterpreterException e) {
@@ -179,7 +208,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
       return processHandler;
     }
     else {
-      throw new ExecutionException("Can't run remote python interpreter. WebDeployment plugin is disabled.");
+      throw new PythonRemoteInterpreterManager.PyRemoteInterpreterExecutionException();
     }
   }
 

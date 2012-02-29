@@ -10,12 +10,14 @@ import com.intellij.psi.stubs.StringStubIndexExtension;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.stubs.StubIndexKey;
 import com.jetbrains.python.psi.PyFunction;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
 public class PyFunctionNameIndex extends StringStubIndexExtension<PyFunction> {
   public static final StubIndexKey<String, PyFunction> KEY = StubIndexKey.createIndexKey("Py.function.shortName");
 
+  @NotNull
   public StubIndexKey<String, PyFunction> getKey() {
     return KEY;
   }

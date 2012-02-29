@@ -78,6 +78,7 @@ try:
     from urllib import quote
 except:
     from urllib.parse import quote #@Reimport @UnresolvedImport
+import time
 import pydevd_vars
 import pydevd_tracing
 import pydevd_vm_type
@@ -85,6 +86,7 @@ import pydevd_file_utils
 import traceback
 from pydevd_utils import *
 from pydevd_utils import quote_smart as quote
+
 
 from pydevd_tracing import GetExceptionTracebackStr
 import pydevconsole
@@ -117,6 +119,7 @@ CMD_ADD_DJANGO_EXCEPTION_BREAK = 125
 CMD_REMOVE_DJANGO_EXCEPTION_BREAK = 126
 CMD_SET_NEXT_STATEMENT = 127
 CMD_SMART_STEP_INTO = 128
+CMD_EXIT = 129
 CMD_VERSION = 501
 CMD_RETURN = 502
 CMD_ERROR = 901 
@@ -331,6 +334,7 @@ class WriterThread(PyDBDaemonThread):
                     #but the thread was still not liberated
                     return
                 out = cmd.getOutgoing()
+
                 if DebugInfoHolder.DEBUG_TRACE_LEVEL >= 1:
                     out_message = 'sending cmd: '
                     out_message += ID_TO_MEANING.get(out[:3], 'UNKNOWN')
@@ -344,6 +348,8 @@ class WriterThread(PyDBDaemonThread):
                 if IS_PY3K:
                     out = bytearray(out, 'utf-8')
                 self.sock.send(out) #TODO: this does not guarantee that all message are sent (and jython does not have a send all)
+                if cmd.id == CMD_EXIT:
+                    break
                 if time is None:
                     break #interpreter shutdown
                 time.sleep(self.timeout)                
@@ -374,17 +380,25 @@ def StartServer(port):
 def StartClient(host, port):
     """ connects to a host/port """
     PydevdLog(1, "Connecting to ", host, ":", str(port))
-    try:
-        s = socket(AF_INET, SOCK_STREAM)
 
-        s.connect((host, port))
+    s = socket(AF_INET, SOCK_STREAM)
+
+    MAX_TRIES = 3
+    i = 0
+    while i<MAX_TRIES:
+        try:
+            s.connect((host, port))
+        except:
+            i+=1
+            time.sleep(0.2)
+            continue
         PydevdLog(1, "Connected.")
         return s
-    except:
-        sys.stderr.write("Could not connect to %s: %s\n" % (host, port))
-        sys.stderr.flush()
-        traceback.print_exc()
-        sys.exit(1)
+
+    sys.stderr.write("Could not connect to %s: %s\n" % (host, port))
+    sys.stderr.flush()
+    traceback.print_exc()
+    sys.exit(1)
 
 
     
@@ -479,11 +493,14 @@ class NetCommandFactory:
                 
             v = pydevd_vars.makeValidXmlValue(quote(v, '/>_= \t'))
             net = NetCommand(str(CMD_WRITE_TO_CONSOLE), 0, '<xml><io s="%s" ctx="%s"/></xml>' % (v, ctx))
-            if dbg:
-                dbg.writer.addCommand(net)
         except:
-            return self.makeErrorMessage(0, GetExceptionTracebackStr())
-    
+            net = self.makeErrorMessage(0, GetExceptionTracebackStr())
+
+        if dbg:
+            dbg.writer.addCommand(net)
+
+        return net
+
     def makeVersionMessage(self, seq):
         try:
             return NetCommand(CMD_VERSION, seq, VERSION_STRING)
@@ -587,11 +604,23 @@ class NetCommandFactory:
 
     def makeLoadSourceMessage(self, seq, source, dbg=None):
         try:
-            net = NetCommand(str(CMD_LOAD_SOURCE), seq, '%s' % source)
-            if dbg:
-                dbg.writer.addCommand(net)
+            net = NetCommand(CMD_LOAD_SOURCE, seq, '%s' % source)
+
         except:
-            return self.makeErrorMessage(0, GetExceptionTracebackStr())
+            net = self.makeErrorMessage(0, GetExceptionTracebackStr())
+
+        if dbg:
+            dbg.writer.addCommand(net)
+        return net
+
+    def makeExitMessage(self):
+        try:
+            net = NetCommand(CMD_EXIT, 0, '')
+
+        except:
+            net = self.makeErrorMessage(0, GetExceptionTracebackStr())
+
+        return net
 
 INTERNAL_TERMINATE_THREAD = 1
 INTERNAL_SUSPEND_THREAD = 2

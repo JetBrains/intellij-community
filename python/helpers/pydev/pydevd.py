@@ -64,6 +64,7 @@ import pydevd_vm_type
 import pydevd_tracing
 import pydevd_io
 import pydev_log
+import pydev_localhost
 from pydevd_additional_thread_info import PyDBAdditionalThreadInfo
 import time
 import os
@@ -1047,6 +1048,13 @@ class PyDB:
 
         pydev_imports.execfile(file, globals, locals) #execute the script
 
+    def exiting(self):
+        sys.stdout.flush()
+        sys.stderr.flush()
+        self.checkOutputRedirect()
+        cmd = self.cmdFactory.makeExitMessage()
+        self.writer.addCommand(cmd)
+        self.writer.join()
 
 def set_debug(setup):
     setup['DEBUG_RECORD_SOCKET_READS'] = True
@@ -1114,7 +1122,8 @@ def SetTraceForParents(frame, dispatch_func):
     del frame
 
 def exit_hook():
-    GetGlobalDebugger().checkOutputRedirect()
+    debugger = GetGlobalDebugger()
+    debugger.exiting()
 
 def initStdoutRedirect():
     if not getattr(sys, 'stdoutBuf', None):
@@ -1213,6 +1222,8 @@ def _locked_settrace(host, stdoutToServer, stderrToServer, port, suspend, trace_
                 pass
 
         #sys.exitfunc = exit_hook
+        import atexit
+        atexit.register(exit_hook)
 
         PyDBCommandThread(debugger).start()
 
@@ -1252,11 +1263,19 @@ class Dispatcher(object):
     def __init__(self):
         self.port = None
 
-    def connect(self, setup):
-        self.setup  = setup
-        self.client = StartClient(setup['client'], setup['port'])
+    def connect(self, host, port):
+        self.host  = host
+        self.port = port
+        self.client = StartClient(self.host, self.port)
         self.reader = DispatchReader(self)
         self.reader.run()
+
+    def close(self):
+        try:
+            self.reader.doKillPydevThread()
+        except :
+            pass
+
 
 class DispatchReader(ReaderThread):
     def __init__(self, dispatcher):
@@ -1276,9 +1295,13 @@ def dispatch():
     argv = sys.original_argv[:]
     setup = processCommandLine(argv)
     host = setup['client']
+    port = setup['port']
     dispatcher = Dispatcher()
-    dispatcher.connect(setup)
-    port = dispatcher.port
+    try:
+        dispatcher.connect(host, port)
+        port = dispatcher.port
+    finally:
+        dispatcher.close()
     return host, port
 
 
@@ -1334,28 +1357,41 @@ if __name__ == '__main__':
     DebugInfoHolder.DEBUG_TRACE_LEVEL = setup.get('DEBUG_TRACE_LEVEL', -1)
 
     port = setup['port']
+    host = setup['client']
     if setup['multiproc']:
         pydev_log.debug("Started in multiproc mode\n")
-        dispatcher = Dispatcher()
-        dispatcher.connect(setup)
-        if dispatcher.port is not None:
-            port = dispatcher.port
-            pydev_log.debug("Received port %d\n" %port)
-            pydev_log.info("pydev debugger: process %d is connecting\n"% os.getpid())
 
-            import pydev_monkey
-            try:
-                pydev_monkey.patch_new_process_functions()
-            except:
-                pydev_log.error("Error patching process functions\n")
-                traceback.print_exc()
-        else:
-            pydev_log.error("pydev debugger: couldn't get port for new debug process\n")
+        dispatcher = Dispatcher()
+        try:
+            dispatcher.connect(host, port)
+            if dispatcher.port is not None:
+                port = dispatcher.port
+                pydev_log.debug("Received port %d\n" %port)
+                pydev_log.info("pydev debugger: process %d is connecting\n"% os.getpid())
+
+                import pydev_monkey
+                try:
+                    pydev_monkey.patch_new_process_functions()
+                except:
+                    pydev_log.error("Error patching process functions\n")
+                    traceback.print_exc()
+            else:
+                pydev_log.error("pydev debugger: couldn't get port for new debug process\n")
+        finally:
+            dispatcher.close()
     else:
         pydev_log.info("pydev debugger: starting\n")
 
     debugger = PyDB()
-    debugger.connect(setup['client'], port)
+
+    if port<0:
+        (h, p) = pydev_localhost.get_socket_name()
+        sys.stderr.write("Remote port forwarding: %d-%d\n"%(p, -port))
+        sys.stderr.flush()
+        port = p
+        host = h
+
+    debugger.connect(host, port)
 
     connected = True #Mark that we're connected when started from inside eclipse.
 

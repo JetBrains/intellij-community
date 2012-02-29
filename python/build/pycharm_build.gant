@@ -379,7 +379,9 @@ private layoutWin(Map args, String target) {
       fileset(dir: "$home/community/bin/win") {
         exclude(name: "breakgen*")
       }
-      fileset(file: "$home/bin/yjpagent.dll")
+      fileset(dir: "$home/bin") {
+        include(name: "yjpagent*.dll")
+      }
     }
 
     dir("skeletons") {
@@ -390,7 +392,7 @@ private layoutWin(Map args, String target) {
   }
 
   winScripts(target, "$home/community", "pycharm.bat", args)
-  winVMOptions(target, args.system_selector, "pycharm.exe")
+  winVMOptions(target, args.system_selector, "pycharm.exe", "pycharm64.exe")
 
   ant.copy(file: "$home/python/help/pycharmhelp.jar", todir: "$target/help", failonerror: false)
 }

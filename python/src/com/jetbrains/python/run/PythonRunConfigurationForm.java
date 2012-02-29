@@ -1,7 +1,8 @@
 package com.jetbrains.python.run;
 
-import com.intellij.ide.ui.ListCellRendererWrapper;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.options.newEditor.OptionsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
@@ -11,11 +12,11 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBLabel;
-import com.jetbrains.python.debugger.remote.PyRemoteDebugConfiguration;
+import com.jetbrains.python.debugger.remote.PyPathMappingSettings;
+import com.jetbrains.python.debugger.remote.ui.PyMappingSettingsDialog;
 import com.jetbrains.python.remote.PythonRemoteSdkAdditionalData;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.Nullable;
@@ -24,6 +25,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 /**
  * @author yole
@@ -35,12 +38,13 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
   private JPanel myCommonOptionsPlaceholder;
   private JBLabel myScriptParametersLabel;
   private JCheckBox myAttachDebuggerToSubprocess;
-  private JComboBox myRemoteConfigurationCombo;
-  private JPanel myRemoteDebugConfigurationPanel;
+  private JPanel myMappingsConfigurationPanel;
   private final AbstractPyCommonOptionsForm myCommonOptionsForm;
   private JComponent anchor;
   private boolean myRemoteInterpreterMode;
   private final Project myProject;
+  private PyPathMappingSettings myMappingSettings;
+  private JBLabel myMappingsConfigLabel;
 
   public PythonRunConfigurationForm(PythonRunConfiguration configuration) {
     myCommonOptionsForm = PyCommonOptionsFormFactory.getInstance().createForm(configuration.getCommonOptionsFormData());
@@ -77,28 +81,40 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
     }
     );
 
+    createConfigureMappingsLink();
+
     updateRemoteInterpreterMode();
+  }
+
+  private void createConfigureMappingsLink() {
+    JLabel mappingsConfigLabel = new JBLabel("<html><a href=\"#\">Configure path mappings");
+    mappingsConfigLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+    mappingsConfigLabel.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseClicked(MouseEvent e) {
+        if (e.getButton() == MouseEvent.BUTTON1 && e.getClickCount() == 1) {
+          showConfigureMappingsDialog();
+        }
+      }
+    });
+
+    myMappingsConfigurationPanel.setLayout(new BorderLayout());
+    myMappingsConfigurationPanel.add(mappingsConfigLabel, BorderLayout.CENTER);
   }
 
   private void updateRemoteInterpreterMode() {
     setRemoteInterpreterMode(isRemoteSdkSelected());
-    Object selection = myRemoteConfigurationCombo.getSelectedItem();
-    myRemoteConfigurationCombo
-      .setModel(new CollectionComboBoxModel(PyRemoteDebugConfiguration.listAllRemoteDebugConfigurations(myProject), selection));
-    myRemoteConfigurationCombo
-      .setRenderer(new ListCellRendererWrapper<PyRemoteDebugConfiguration>(myRemoteConfigurationCombo.getRenderer()) {
-        @Override
-        public void customize(JList list, PyRemoteDebugConfiguration value, int index, boolean selected, boolean hasFocus) {
-          if (value != null) {
-            setText(value.getName());
-            setIcon(value.getIcon());
-          }
-          else {
-            setText("<Select Python Remote Debug Configuration>");
-            setIcon(null);
-          }
-        }
-      });
+    if (myMappingSettings == null) {
+      myMappingSettings = new PyPathMappingSettings();
+    }
+  }
+
+  private void showConfigureMappingsDialog() {
+    PyMappingSettingsDialog dialog = new PyMappingSettingsDialog(myProject, myMappingSettings);
+    dialog.show();
+    if (dialog.isOK()) {
+      myMappingSettings = dialog.getMappingSettings();
+    }
   }
 
   private boolean isRemoteSdkSelected() {
@@ -120,7 +136,7 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
 
   private void setRemoteInterpreterMode(boolean remoteInterpreterMode) {
     myRemoteInterpreterMode = remoteInterpreterMode;
-    myRemoteDebugConfigurationPanel.setVisible(remoteInterpreterMode);
+    myMappingsConfigurationPanel.setVisible(remoteInterpreterMode);
   }
 
   public JComponent getPanel() {
@@ -161,19 +177,12 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
   }
 
   @Nullable
-  @Override
-  public String getRemoteDebugConfiguration() {
-    Object selection = myRemoteConfigurationCombo.getSelectedItem();
-    if (selection instanceof PyRemoteDebugConfiguration) {
-      return ((PyRemoteDebugConfiguration)selection).getName();
-    }
-    return null;
+  public PyPathMappingSettings getMappingSettings() {
+    return myMappingSettings;
   }
 
-  @Override
-  public void setRemoteDebugConfiguration(String name) {
-    PyRemoteDebugConfiguration conf = PyRemoteDebugConfiguration.findByName(myProject, name);
-    myRemoteConfigurationCombo.setSelectedItem(conf);
+  public void setMappingSettings(PyPathMappingSettings mappingSettings) {
+    myMappingSettings = mappingSettings;
   }
 
   @Override

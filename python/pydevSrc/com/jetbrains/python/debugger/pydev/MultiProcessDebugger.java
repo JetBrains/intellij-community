@@ -387,6 +387,11 @@ public class MultiProcessDebugger implements ProcessDebugger {
         public void communicationError() {
           notifyThreadsClosed(debugger);
         }
+
+        @Override
+        public void exitEvent() {
+          notifyThreadsClosed(debugger);
+        }
       });
     }
 

@@ -68,13 +68,13 @@ try:
                 ExecState.FIRST_CALL = False
                 sys.stdout.write('\nYou are now in a console within Eclipse.\nUse it with care as it can halt the VM.\n')
                 sys.stdout.write(
-                        'Typing a line with "PYDEV_CONSOLE_TOGGLE_RUN_IN_UI"\nwill start executing all the commands in the UI thread.\n\n')
+                    'Typing a line with "PYDEV_CONSOLE_TOGGLE_RUN_IN_UI"\nwill start executing all the commands in the UI thread.\n\n')
 
             if self.line == 'PYDEV_CONSOLE_TOGGLE_RUN_IN_UI':
                 ExecState.PYDEV_CONSOLE_RUN_IN_UI = not ExecState.PYDEV_CONSOLE_RUN_IN_UI
                 if ExecState.PYDEV_CONSOLE_RUN_IN_UI:
                     sys.stdout.write(
-                            'Running commands in UI mode. WARNING: using sys.stdin (i.e.: calling raw_input()) WILL HALT ECLIPSE.\n')
+                        'Running commands in UI mode. WARNING: using sys.stdin (i.e.: calling raw_input()) WILL HALT ECLIPSE.\n')
                 else:
                     sys.stdout.write('No longer running commands in UI mode.\n')
                 self.more = False
@@ -147,7 +147,9 @@ class InterpreterInterface(BaseInterpreterInterface):
             completer = Completer(self.namespace, None)
             return completer.complete(act_tok)
         except:
-            import traceback;traceback.print_exc()
+            import traceback;
+
+            traceback.print_exc()
             return []
 
 
@@ -189,6 +191,7 @@ try:
     except AttributeError:
         exitfunc = None
     from pydev_ipython_console import InterpreterInterface
+
     IPYTHON = True
     if exitfunc is not None:
         sys.exitfunc = exitfunc
@@ -196,7 +199,7 @@ try:
     else:
         try:
             delattr(sys, 'exitfunc')
-        except :
+        except:
             pass
 except:
     IPYTHON = False
@@ -222,8 +225,10 @@ def _DoExit(*args):
         else:
             os._exit(0)
 
+
 def handshake():
     return "PyCharm"
+
 
 def ipython_editor(interpreter):
     def editor(file, line):
@@ -232,15 +237,21 @@ def ipython_editor(interpreter):
         if line is None:
             line = "-1"
         interpreter.ipython_editor(file, line)
+
     return editor
 
 #=======================================================================================================================
 # StartServer
 #=======================================================================================================================
 def start_server(host, port, interpreter):
+    if port == 0:
+        host = ''
+
     from pydev_imports import SimpleXMLRPCServer
+
     try:
         server = SimpleXMLRPCServer((host, port), logRequests=False)
+
     except:
         sys.stderr.write('Error starting server with host: %s, port: %s, client_port: %s\n' % (host, port, client_port))
         raise
@@ -255,12 +266,19 @@ def start_server(host, port, interpreter):
     if IPYTHON:
         try:
             interpreter.interpreter.ipython.hooks.editor = ipython_editor(interpreter)
-        except :
+        except:
             pass
+
+    if port == 0:
+        (h, port) = server.socket.getsockname()
+
+        print(port)
+        print(client_port)
 
     server.serve_forever()
 
     return server
+
 
 def StartServer(host, port, client_port):
     #replace exit (see comments on method)
@@ -289,6 +307,7 @@ def get_interpreter():
 
     return interpreterInterface
 
+
 def get_completions(text, token, globals, locals):
     interpreterInterface = get_interpreter()
 
@@ -298,7 +317,6 @@ def get_completions(text, token, globals, locals):
 
 
 def exec_expression(expression, globals, locals):
-
     interpreterInterface = get_interpreter()
 
     interpreterInterface.interpreter.update(globals, locals)
@@ -308,16 +326,36 @@ def exec_expression(expression, globals, locals):
     if res:
         return True
 
-
     interpreterInterface.addExec(expression)
 
     return False
 
+
+def read_line(s):
+    ret = ''
+
+    while True:
+        c = s.recv(1)
+
+        if c == '\n' or c == '':
+            break
+        else:
+            ret += c
+
+    return ret
+
 #=======================================================================================================================
 # main
 #=======================================================================================================================
+
+
 if __name__ == '__main__':
     port, client_port = sys.argv[1:3]
     import pydev_localhost
+
+    if int(port) == 0 and int(client_port) == 0:
+        (h, p) = pydev_localhost.get_socket_name()
+
+        client_port = p
+
     StartServer(pydev_localhost.get_localhost(), int(port), int(client_port))
-    

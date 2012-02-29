@@ -12,6 +12,8 @@
 _fileio 1.101
 _io 1.101
 sys 1.101
+thread 1.102
+_thread 1.102
 
 PyQt4.Qsci 1.94
 PyQt4.QtAssistant 1.94
