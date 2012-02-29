@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.project;
 
+import com.google.common.collect.ImmutableMap;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
@@ -48,6 +49,17 @@ import java.util.concurrent.ConcurrentHashMap;
 public class MavenProject {
   @NotNull private final VirtualFile myFile;
   @NotNull private volatile State myState = new State();
+
+  private static Map<String, String> COMPILER_LEVEL_TABLE = ImmutableMap.<String,String>builder()
+    .put("1.1", "1.1")
+    .put("1.2", "1.2")
+    .put("1.3", "1.3")
+    .put("1.4", "1.4")
+    .put("1.5", "1.5")
+    .put("5", "1.5")
+    .put("1.6", "1.6")
+    .put("1.7", "1.7")
+    .put("7", "1.7").build();
 
   @Nullable
   public static MavenProject read(DataInputStream in) throws IOException {
@@ -750,6 +762,11 @@ public class MavenProject {
   @Nullable
   private String getCompilerLevel(String level) {
     String result = MavenJDOMUtil.findChildValueByPath(getCompilerConfig(), level);
+
+    if (result == null) {
+      result = myState.myProperties.getProperty("maven.compiler." + level);
+    }
+
     return normalizeCompilerLevel(result);
   }
 
@@ -758,26 +775,9 @@ public class MavenProject {
     return getPluginConfiguration("org.apache.maven.plugins", "maven-compiler-plugin");
   }
 
-  private static class CompilerLevelTable {
-    public static Map<String, String> table = new THashMap<String, String>();
-
-    static {
-      table.put("1.1", "1.1");
-      table.put("1.2", "1.2");
-      table.put("1.3", "1.3");
-      table.put("1.4", "1.4");
-      table.put("1.5", "1.5");
-      table.put("5", "1.5");
-      table.put("1.6", "1.6");
-      table.put("1.7", "1.7");
-      table.put("7", "1.7");
-    }
-  }
-
   @Nullable
-  public static String normalizeCompilerLevel(String level) {
-    if (level == null) return null;
-    return CompilerLevelTable.table.get(level);
+  public static String normalizeCompilerLevel(@Nullable String level) {
+    return COMPILER_LEVEL_TABLE.get(level);
   }
 
   @NotNull
