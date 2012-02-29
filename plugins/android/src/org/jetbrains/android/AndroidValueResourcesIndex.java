@@ -31,6 +31,7 @@ public class AndroidValueResourcesIndex extends FileBasedIndexExtension<Resource
   public static final ID<ResourceEntry, Set<ResourceEntry>> INDEX_ID = ID.create("android.value.resources.index");
 
   private final FileBasedIndex.InputFilter myInputFilter = new FileBasedIndex.InputFilter() {
+    @Override
     public boolean acceptInput(final VirtualFile file) {
       return (file.getFileSystem() == LocalFileSystem.getInstance() || file.getFileSystem() instanceof TempFileSystem) &&
              file.getFileType() == StdFileTypes.XML;
@@ -39,6 +40,7 @@ public class AndroidValueResourcesIndex extends FileBasedIndexExtension<Resource
 
   private final DataIndexer<ResourceEntry, Set<ResourceEntry>, FileContent> myIndexer =
     new DataIndexer<ResourceEntry, Set<ResourceEntry>, FileContent>() {
+      @Override
       @NotNull
       public Map<ResourceEntry, Set<ResourceEntry>> map(FileContent inputData) {
 
@@ -128,11 +130,13 @@ public class AndroidValueResourcesIndex extends FileBasedIndexExtension<Resource
     }
   };
 
+  @NotNull
   @Override
   public ID<ResourceEntry, Set<ResourceEntry>> getName() {
     return INDEX_ID;
   }
 
+  @NotNull
   @Override
   public DataIndexer<ResourceEntry, Set<ResourceEntry>, FileContent> getIndexer() {
     return myIndexer;  

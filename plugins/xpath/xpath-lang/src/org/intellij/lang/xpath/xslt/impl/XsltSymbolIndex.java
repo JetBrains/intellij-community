@@ -77,12 +77,17 @@ public class XsltSymbolIndex extends FileBasedIndexExtension<String, XsltSymbolI
         }
     }
 
+    @Override
+    @NotNull
     public ID<String, Kind> getName() {
         return NAME;
     }
 
+    @Override
+    @NotNull
     public DataIndexer<String, Kind, FileContent> getIndexer() {
         return new DataIndexer<String, Kind, FileContent>() {
+            @Override
             @NotNull
             public Map<String, Kind> map(FileContent inputData) {
                 CharSequence inputDataContentAsText = inputData.getContentAsText();
@@ -127,16 +132,20 @@ public class XsltSymbolIndex extends FileBasedIndexExtension<String, XsltSymbolI
         };
     }
 
+    @Override
     public DataExternalizer<Kind> getValueExternalizer() {
         return new EnumDataDescriptor<Kind>(Kind.class);
     }
 
+    @Override
     public KeyDescriptor<String> getKeyDescriptor() {
         return new EnumeratorStringDescriptor();
     }
 
+    @Override
     public FileBasedIndex.InputFilter getInputFilter() {
         return new FileBasedIndex.InputFilter() {
+            @Override
             public boolean acceptInput(VirtualFile file) {
                 if (file.getFileSystem() instanceof JarFileSystem) {
                   return false; // there is lots and lots of custom XML inside zip files
@@ -146,10 +155,12 @@ public class XsltSymbolIndex extends FileBasedIndexExtension<String, XsltSymbolI
         };
     }
 
+    @Override
     public boolean dependsOnFileContent() {
         return true;
     }
 
+    @Override
     public int getVersion() {
         return 0;
     }
@@ -198,6 +209,7 @@ public class XsltSymbolIndex extends FileBasedIndexExtension<String, XsltSymbolI
             myName = name;
         }
 
+        @Override
         public boolean process(VirtualFile file, Kind kind) {
             if (myScope.contains(file)) {
                 final PsiFile psiFile = myMgr.findFile(file);

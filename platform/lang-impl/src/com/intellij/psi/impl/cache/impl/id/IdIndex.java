@@ -97,11 +97,13 @@ public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> {
     return true;
   }
 
+  @NotNull
   @Override
   public ID<IdIndexEntry,Integer> getName() {
     return NAME;
   }
 
+  @NotNull
   @Override
   public DataIndexer<IdIndexEntry, Integer, FileContent> getIndexer() {
     return myIndexer;

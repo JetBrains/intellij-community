@@ -60,21 +60,24 @@ public class VcsDirtyScopeVfsListener implements ApplicationComponent, BulkFileL
     myForbid = forbid;
   }
 
+  @Override
   @NotNull
   public String getComponentName() {
     return VcsDirtyScopeVfsListener.class.getName();
   }
 
+  @Override
   public void initComponent() {
     myMessageBusConnection.subscribe(VirtualFileManager.VFS_CHANGES, this);
   }
 
+  @Override
   public void disposeComponent() {
     myMessageBusConnection.disconnect();
   }
 
   @Override
-  public void before(List<? extends VFileEvent> events) {
+  public void before(@NotNull List<? extends VFileEvent> events) {
     if (myForbid) return;
     final FileAndDirsCollector dirtyFilesAndDirs = new FileAndDirsCollector();
     // collect files and directories - sources of events
@@ -96,7 +99,7 @@ public class VcsDirtyScopeVfsListener implements ApplicationComponent, BulkFileL
   }
 
   @Override
-  public void after(List<? extends VFileEvent> events) {
+  public void after(@NotNull List<? extends VFileEvent> events) {
     if (myForbid) return;
     final FileAndDirsCollector dirtyFilesAndDirs = new FileAndDirsCollector();
     // collect files and directories - sources of events

@@ -16,6 +16,7 @@
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
 
 public class CharArrayCharSequence implements CharSequenceBackedByArray {
   private final char[] myChars;
@@ -37,14 +38,17 @@ public class CharArrayCharSequence implements CharSequenceBackedByArray {
     myEnd = end;
   }
 
+  @Override
   public final int length() {
     return myEnd - myStart;
   }
 
+  @Override
   public final char charAt(int index) {
     return myChars[index + myStart];
   }
 
+  @Override
   public CharSequence subSequence(int start, int end) {
     return start == 0 && end == length() ? this : new CharArrayCharSequence(myChars, myStart + start, myStart + end);
   }
@@ -53,6 +57,8 @@ public class CharArrayCharSequence implements CharSequenceBackedByArray {
     return new String(myChars, myStart, myEnd - myStart); //TODO StringFactory
   }
 
+  @Override
+  @NotNull
   public char[] getChars() {
     if (myStart == 0 /*&& myEnd == myChars.length*/) return myChars;
     char[] chars = new char[length()];
@@ -64,7 +70,8 @@ public class CharArrayCharSequence implements CharSequenceBackedByArray {
     return StringUtil.stringHashCode(myChars, myStart, myEnd);
   }
 
-  public void getChars(char[] dst, int dstOffset) {
+  @Override
+  public void getChars(@NotNull char[] dst, int dstOffset) {
     System.arraycopy(myChars, myStart, dst, dstOffset, length());
   }
 

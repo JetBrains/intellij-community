@@ -599,4 +599,70 @@ public class GradleProjectStructureChangesModelTest extends AbstractGradleTest {
           "content-root:3"()
     } } }
   }
+  
+  @Test
+  public void "module removal at intellij"() {
+    Closure initial = {
+      project {
+        module {
+          contentRoot('1')
+          dependencies {
+            library('lib1')
+    } } } }
+    init(gradle: initial, intellij: initial)
+    checkChanges { }
+    checkTree {
+      project {
+        module {
+          "content-root"()
+          dependencies {
+            lib1()
+    } } } }
+    
+    setState(intellij: { project { }})
+    def m = gradle.modules.values().flatten().first()
+    checkChanges {
+      presence {
+        module(gradle: m)
+        contentRoot(gradle: gradle.contentRoots[m])
+        libraryDependency(gradle: gradle.libraryDependencies[m])
+    } }
+    checkTree {
+      project {
+        module('gradle') {
+          "content-root"('gradle')
+          dependencies {
+            lib1('gradle')
+    } } } }
+  }
+
+  @Test
+  public void "content root is correctly highlighted after importing gradle local module"() {
+    Closure completeProject = {
+      project {
+        module {
+          contentRoot('1')
+    } } }
+    init(gradle: completeProject, intellij: { project { }})
+    def m = gradle.modules.values().flatten().first()
+    checkChanges {
+      presence {
+        module(gradle: m)
+        contentRoot(gradle: gradle.contentRoots[m])
+    } }
+    checkTree {
+      project {
+        module('gradle') {
+          "content-root"('gradle')
+    } } }
+    
+    // Import the whole module.
+    setState(gradle: completeProject, intellij: completeProject)
+    checkChanges { }
+    checkTree {
+      project {
+        module() {
+          "content-root"()
+    } } }
+  }
 }

@@ -132,7 +132,7 @@ public class GradleProjectStructureNodeComparator implements Comparator<GradlePr
             }
             i++;
           }
-          result.set(UNKNOWN_WEIGHT);
+          result.set(CONTENT_ROOT_WEIGHT);
         }
 
         @Override
@@ -146,12 +146,8 @@ public class GradleProjectStructureNodeComparator implements Comparator<GradlePr
         }
       });
     }
-    try {
-      return result.get();
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+    final Integer i = result.get();
+    return i == null ? UNKNOWN_WEIGHT : i;
   }
 
   private int getWeight(@NotNull Module module, @NotNull Object entry) {

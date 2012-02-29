@@ -143,11 +143,13 @@ public class TodoIndex extends FileBasedIndexExtension<TodoIndexEntry, Integer> 
     return true;
   }
 
+  @NotNull
   @Override
   public ID<TodoIndexEntry, Integer> getName() {
     return NAME;
   }
 
+  @NotNull
   @Override
   public DataIndexer<TodoIndexEntry, Integer, FileContent> getIndexer() {
     return myIndexer;
