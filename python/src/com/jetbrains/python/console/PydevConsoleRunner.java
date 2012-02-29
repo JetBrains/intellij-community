@@ -26,6 +26,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -37,6 +38,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.net.NetUtils;
+import com.intellij.util.ui.UIUtil;
 import com.jetbrains.django.run.Runner;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.completion.PydevConsoleElement;
@@ -148,7 +150,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
           initAndRun(statements2execute);
         }
         catch (ExecutionException e) {
-          LOG.error("Error running console", e);
+          LOG.warn("Error running console", e);
           ExecutionHelper.showErrors(myProject, Arrays.<Exception>asList(e), getTitle(), null);
         }
       }
@@ -267,8 +269,8 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
             throw new ExecutionException(e.getMessage());
           }
         }
-        catch (PyRemoteInterpreterException e) {
-          throw new ExecutionException("Can't start remote console", e);
+        catch (final PyRemoteInterpreterException e) {
+          throw new ExecutionException(e.getMessage(), e);
         }
       }
       throw new PythonRemoteInterpreterManager.PyRemoteInterpreterExecutionException();
