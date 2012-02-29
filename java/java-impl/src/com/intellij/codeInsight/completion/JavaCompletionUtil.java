@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,7 +93,7 @@ public class JavaCompletionUtil {
     public ExpectedTypeInfo[] fun(final CompletionLocation location) {
       if (PsiJavaPatterns.psiElement().beforeLeaf(PsiJavaPatterns.psiElement().withText("."))
         .accepts(location.getCompletionParameters().getPosition())) {
-        return new ExpectedTypeInfo[0];
+        return ExpectedTypeInfo.EMPTY_ARRAY;
       }
 
       return JavaSmartCompletionContributor.getExpectedTypes(location.getCompletionParameters());
