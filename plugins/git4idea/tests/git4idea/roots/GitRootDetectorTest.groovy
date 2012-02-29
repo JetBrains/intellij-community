@@ -24,6 +24,7 @@ import org.junit.Test
 
 import static org.junit.Assert.assertEquals
 import static org.junit.Assert.fail
+import git4idea.test.GitGTestUtil
 
 /**
  * @author Kirill Likhodedov
@@ -40,7 +41,8 @@ class GitRootDetectorTest {
   void "no roots in project"() {
     doTest gits: [],
            expected:  [],
-           full: false
+           full: false,
+           below: false
   }
 
   @Test
@@ -53,19 +55,24 @@ class GitRootDetectorTest {
     doTest project:  [".idea", "bin", "src", "community"],
            gits:     ["community"],
            expected: ["community"],
-           full:     false
+           full:     false,
+           below:    false
   }
 
   @Test
   public void "project with all subdirs under Git should still be not fully controlled"() {
     doTest gits:     [".idea", "src", "community"],
            expected: [".idea", "src", "community"],
-           full:     false
+           full:     false,
+           below:    false
   }
 
   @Test
   void "project under Git above it"() {
-    doTest ".."
+    doTest gits:      [".."],
+           expected:  [".."],
+           full:      true,
+           below:     true
   }
 
   @Test
@@ -75,33 +82,42 @@ class GitRootDetectorTest {
 
   @Test
   void "one above and one under"() {
-    doTest "..", "./community"
+    doTest gits:     ["..", "./community"],
+           expected: ["..", "./community"],
+           full:     true,
+           below:    true
   }
 
   @Test
   void "one above and one for project should show only project root"() {
     doTest gits:     ["..", "."],
            expected: ["."],
-           full:     true
+           full:     true,
+           below:    false
   }
 
   @Test
   void "one above and several under project"() {
-    doTest "..", "./community", "./contrib"
+    doTest gits:     ["..", "./community", "./contrib"],
+           expected: ["..", "./community", "./contrib"],
+           full:     true,
+           below:    true
   }
 
   @Test
   void "multiple above should be detected as one above"() {
     doTest gits:     ["..", "../.."],
            expected: [".."],
-           full:     true
+           full:     true,
+           below:    true
   }
 
   @Test
   void "unrelated root should not be detected"() {
     doTest gits:     ["../neighbour"],
            expected: [],
-           full:     false
+           full:     false,
+           below:    false
   }
 
   /**
@@ -113,7 +129,8 @@ class GitRootDetectorTest {
     initProject(map.gits, map.project)
     testInfo empty: map.expected.empty,
              full : map.full,
-             roots: map.expected
+             roots: map.expected,
+             below: map.below
   }
 
   /**
@@ -123,7 +140,8 @@ class GitRootDetectorTest {
   private void doTest(String... roots = []) {
     doTest gits:     roots.toList(),
            expected: roots.toList(),
-           full:     true
+           full:     true,
+           below:    false
   }
 
   /**
@@ -192,17 +210,20 @@ class GitRootDetectorTest {
   void assertInfo(Map expected, GitRootDetectInfo actual) {
     assertEquals(expected.empty, actual.empty())
     if (expected.full ^ actual.totallyUnderGit()) {
-      fail("The project is unexpectedly ${actual.totallyUnderGit() ? "" : "not "}under Git\nRoots:${actual.roots.collect {"\n  * $it"}}\n" )
+      fail("The project is unexpectedly ${actual.totallyUnderGit() ? "" : "not "}under Git${roots(actual.roots)}")
+    }
+    if (expected.below ^ actual.projectIsBelowGit()) {
+      fail("The project is unexpectedly ${actual.projectIsBelowGit() ? "below" : "not below"} Git${roots(actual.roots)}")
     }
     assertRoots(expected.roots, actual.roots)
   }
 
-  void assertRoots(Collection<String> expectedRelativePaths, Collection<VirtualFile> actual) {
-    assertEquals(toAbsolute(expectedRelativePaths).toSet(), getPaths(actual).toSet())
+  String roots(Collection roots) {
+    "\nRoots:${roots.collect {"\n  * $it"}}\n"
   }
 
-  Collection<String> toAbsolute(Collection<String> relPaths) {
-    relPaths.collect { new File(myProject.baseDir.path + "/" + it).getCanonicalPath() }
+  void assertRoots(Collection<String> expectedRelativePaths, Collection<VirtualFile> actual) {
+    assertEquals(GitGTestUtil.toAbsolute(expectedRelativePaths, myProject).toSet(), getPaths(actual).toSet())
   }
 
   Collection<String> getPaths(Collection<VirtualFile> files) {

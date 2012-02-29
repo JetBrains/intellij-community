@@ -29,14 +29,18 @@ class GitRootDetectInfo {
 
   private final @NotNull Collection<VirtualFile> myRoots;
   private final boolean myFull;
+  private final boolean myBelow;
 
   /**
    * @param roots Git roots important for the project.
    * @param full  Pass true to indicate that the project is fully under Git.
+   * @param below Pass true to indicate that the project dir is below Git dir,
+   *              i.e. .git is above the project dir, and there is no .git directly under the project dir.
    */
-  GitRootDetectInfo(@NotNull Collection<VirtualFile> roots, boolean full) {
+  GitRootDetectInfo(@NotNull Collection<VirtualFile> roots, boolean full, boolean below) {
     myRoots = roots;
     myFull = full;
+    myBelow = below;
   }
 
   /**
@@ -54,6 +58,15 @@ class GitRootDetectInfo {
   @NotNull
   Collection<VirtualFile> getRoots() {
     return myRoots;
+  }
+
+  /**
+   * Below implies totally under Git.
+   * @return true if the uppermost interesting Git root is above the project dir,
+   *         false if all .git directories are immediately under the project dir or deeper.
+   */
+  public boolean projectIsBelowGit() {
+    return myBelow;
   }
 
 }
