@@ -33,9 +33,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
@@ -98,10 +95,11 @@ public class BaseIndentEnterHandler extends EnterHandlerDelegateAdapter {
     }
 
     final int lineNumber = document.getLineNumber(caret);
+    final int previousLineStartOffset = document.getLineStartOffset(lineNumber - 1);
     final int lineStartOffset = document.getLineStartOffset(lineNumber);
     final EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
     final HighlighterIterator iterator = highlighter.createIterator(caret - 1);
-    final IElementType type = getNonWhitespaceElementType(iterator, lineStartOffset);
+    final IElementType type = getNonWhitespaceElementType(iterator, previousLineStartOffset);
 
     final CharSequence editorCharSequence = editor.getDocument().getCharsSequence();
     final CharSequence lineIndent =
@@ -118,9 +116,7 @@ public class BaseIndentEnterHandler extends EnterHandlerDelegateAdapter {
     }
 
     if (myIndentTokens.contains(type)) {
-      final String singleIndent = getSingleIndent(file);
-      EditorModificationUtil.insertStringAtCaret(editor, "\n" + lineIndent + singleIndent);
-      return Result.Stop;
+      return Result.Continue;
     }
 
     if (LanguageFormatting.INSTANCE.forLanguage(myLanguage) != null) {
@@ -129,12 +125,6 @@ public class BaseIndentEnterHandler extends EnterHandlerDelegateAdapter {
     EditorModificationUtil.insertStringAtCaret(editor, "\n" + lineIndent);
     editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(lineNumber + 1, lineIndent.length()));
     return Result.Stop;
-  }
-
-  protected String getSingleIndent(final PsiFile file) {
-    CodeStyleSettings currantSettings = CodeStyleSettingsManager.getSettings(file.getProject());
-    CommonCodeStyleSettings.IndentOptions indentOptions = currantSettings.getIndentOptions(file.getFileType());
-    return StringUtil.repeatSymbol(' ', indentOptions.INDENT_SIZE);
   }
 
   @Nullable
