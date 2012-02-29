@@ -93,7 +93,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/Javahl.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/javahl.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
