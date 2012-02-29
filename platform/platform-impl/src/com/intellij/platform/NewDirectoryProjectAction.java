@@ -45,7 +45,7 @@ public class NewDirectoryProjectAction extends AnAction implements DumbAware {
     NewDirectoryProjectDialog dlg = new NewDirectoryProjectDialog(project);
     dlg.show();
     if (dlg.getExitCode() != DialogWrapper.OK_EXIT_CODE) return;
-
+    generateProject(project, dlg);
   }
 
   protected Object showSettings(DirectoryProjectGenerator generator, VirtualFile baseDir)
