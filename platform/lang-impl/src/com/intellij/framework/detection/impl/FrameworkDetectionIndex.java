@@ -49,6 +49,7 @@ public class FrameworkDetectionIndex extends ScalarIndexExtension<Integer> {
     return EXTENSION_POINT_NAME.findExtension(FrameworkDetectionIndex.class);
   }
 
+  @NotNull
   @Override
   public ID<Integer, Void> getName() {
     return NAME;
@@ -58,6 +59,7 @@ public class FrameworkDetectionIndex extends ScalarIndexExtension<Integer> {
     myDispatcher.addListener(listener, parentDisposable);
   }
 
+  @NotNull
   @Override
   public DataIndexer<Integer, Void, FileContent> getIndexer() {
     final MultiMap<FileType, Pair<ElementPattern<FileContent>, Integer>> detectors = new MultiMap<FileType, Pair<ElementPattern<FileContent>, Integer>>();

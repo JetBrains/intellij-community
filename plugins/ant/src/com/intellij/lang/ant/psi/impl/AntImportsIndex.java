@@ -37,12 +37,14 @@ public class AntImportsIndex extends ScalarIndexExtension<Integer>{
   public static final Integer ANT_FILES_WITH_IMPORTS_KEY = new Integer(0);
   
   private static final DataIndexer<Integer,Void,FileContent> DATA_INDEXER = new DataIndexer<Integer, Void, FileContent>() {
+    @Override
     @NotNull
     public Map<Integer, Void> map(final FileContent inputData) {
       final Map<Integer, Void> map = new HashMap<Integer, Void>();
       
       NanoXmlUtil.parse(new StringReader(inputData.getContentAsText().toString()), new NanoXmlUtil.IXMLBuilderAdapter() {
         private boolean isFirstElement = true;
+        @Override
         public void startElement(final String elemName, final String nsPrefix, final String nsURI, final String systemID, final int lineNr) throws Exception {
           if (isFirstElement) {
             if (!"project".equalsIgnoreCase(elemName)) {
@@ -58,12 +60,14 @@ public class AntImportsIndex extends ScalarIndexExtension<Integer>{
           }
         }
 
+        @Override
         public void addAttribute(final String key, final String nsPrefix, final String nsURI, final String value, final String type) throws Exception {
           //if (myAttributes != null) {
           //  myAttributes.add(key);
           //}
         }
 
+        @Override
         public void elementAttributesProcessed(final String name, final String nsPrefix, final String nsURI) throws Exception {
           //if (myAttributes != null) {
           //  if (!(myAttributes.contains("name") && myAttributes.contains("default"))) {
@@ -78,31 +82,40 @@ public class AntImportsIndex extends ScalarIndexExtension<Integer>{
     }
   };
   private static final FileBasedIndex.InputFilter INPUT_FILTER = new FileBasedIndex.InputFilter() {
+    @Override
     public boolean acceptInput(final VirtualFile file) {
       return file.getFileType() instanceof XmlFileType;
     }
   };
 
+  @Override
   public int getVersion() {
     return VERSION;
   }
 
+  @Override
+  @NotNull
   public ID<Integer, Void> getName() {
     return INDEX_NAME;
   }
 
+  @Override
+  @NotNull
   public DataIndexer<Integer, Void, FileContent> getIndexer() {
     return DATA_INDEXER;
   }
 
+  @Override
   public KeyDescriptor<Integer> getKeyDescriptor() {
     return EnumeratorIntegerDescriptor.INSTANCE;
   }
 
+  @Override
   public FileBasedIndex.InputFilter getInputFilter() {
     return INPUT_FILTER;
   }
 
+  @Override
   public boolean dependsOnFileContent() {
     return true;
   }

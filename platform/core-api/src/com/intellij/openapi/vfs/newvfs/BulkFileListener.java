@@ -20,10 +20,11 @@
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 public interface BulkFileListener {
-  void before(List<? extends VFileEvent> events);
-  void after(List<? extends VFileEvent> events);
+  void before(@NotNull List<? extends VFileEvent> events);
+  void after(@NotNull List<? extends VFileEvent> events);
 }

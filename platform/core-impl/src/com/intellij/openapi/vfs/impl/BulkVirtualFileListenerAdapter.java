@@ -22,6 +22,7 @@ package com.intellij.openapi.vfs.impl;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -33,14 +34,14 @@ public class BulkVirtualFileListenerAdapter implements BulkFileListener {
   }
 
   @Override
-  public void before(final List<? extends VFileEvent> events) {
+  public void before(@NotNull final List<? extends VFileEvent> events) {
     for (VFileEvent event : events) {
       fireBefore(event);
     }
   }
 
   @Override
-  public void after(final List<? extends VFileEvent> events) {
+  public void after(@NotNull final List<? extends VFileEvent> events) {
     for (VFileEvent event : events) {
       fireAfter(event);
     }

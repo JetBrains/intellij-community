@@ -80,22 +80,26 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   }
 
   private final LimitedPool<AppendStream> myStreamPool = new LimitedPool<AppendStream>(10, new LimitedPool.ObjectFactory<AppendStream>() {
+    @Override
     @NotNull
     public AppendStream create() {
       return new AppendStream();
     }
 
+    @Override
     public void cleanup(@NotNull final AppendStream appendStream) {
       appendStream.reset();
     }
   });  
 
   private final SLRUCache<Key, AppendStream> myAppendCache = new SLRUCache<Key, AppendStream>(16 * 1024, 4 * 1024) {
+    @Override
     @NotNull
     public AppendStream createValue(final Key key) {
       return myStreamPool.alloc();
     }
 
+    @Override
     protected void onDropFromCache(final Key key, @NotNull final AppendStream value) {
       synchronized (PersistentEnumerator.ourLock) {
         try {
@@ -124,6 +128,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   }
 
   private final LowMemoryWatcher myAppendCacheFlusher = LowMemoryWatcher.register(new LowMemoryWatcher.ForceableAdapter() {
+    @Override
     public void force() {
       //System.out.println("Flushing caches: " + myFile.getPath());
       dropMemoryCaches();
@@ -230,6 +235,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   public static void deleteFilesStartingWith(@NotNull File prefixFile) {
     final String baseName = prefixFile.getName();
     final File[] files = prefixFile.getParentFile().listFiles(new FileFilter() {
+      @Override
       public boolean accept(@NotNull final File pathName) {
         return pathName.getName().startsWith(baseName);
       }
@@ -246,6 +252,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     return new File(file.getParentFile(), file.getName() + DATA_FILE_EXTENSION);
   }
 
+  @Override
   public final void put(Key key, Value value) throws IOException {
     synchronized (myEnumerator) {
       doPut(key, value);
@@ -305,6 +312,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
    * Process all keys registered in the map. Note that keys which were removed after {@link #compact()} call will be processed as well. Use
    * {@link #processKeysWithExistingMapping(com.intellij.util.Processor)} to process only keys with existing mappings
    */
+  @Override
   public final boolean processKeys(Processor<Key> processor) throws IOException {
     synchronized (myEnumerator) {
       myAppendCache.clear();
@@ -323,6 +331,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     synchronized (myEnumerator) {
       myAppendCache.clear();
       return myEnumerator.processAllDataObject(processor, new PersistentEnumerator.DataFilter() {
+        @Override
         public boolean accept(final int id) {
           return readValueId(id) != NULL_ADDR;
         }
@@ -330,13 +339,15 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     }
   }
 
-  public final @Nullable Value get(Key key) throws IOException {
+  @Override
+  public final Value get(Key key) throws IOException {
     synchronized (myEnumerator) {
       return doGet(key);
     }
   }
 
-  protected @Nullable Value doGet(Key key) throws IOException {
+  @Nullable
+  protected Value doGet(Key key) throws IOException {
     synchronized (PersistentEnumerator.ourLock) {
       myAppendCache.remove(key);
       final int id = tryEnumerate(key);
@@ -407,12 +418,14 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     }
   }
 
+  @Override
   public final void markDirty() throws IOException {
     synchronized (myEnumerator) {
       myEnumerator.markDirty(true);
     }
   }
 
+  @Override
   public final void force() {
     synchronized (myEnumerator) {
       doForce();
@@ -435,6 +448,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     myValueStorage.force();
   }
 
+  @Override
   public final void close() throws IOException {
     synchronized (myEnumerator) {
       doClose();
@@ -464,6 +478,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
       myLiveAndGarbageKeysCounter = 0;
 
       traverseAllRecords(new PersistentEnumerator.RecordsProcessor() {
+        @Override
         public boolean process(final int keyId) throws IOException {
           final long record = readValueId(keyId);
           if (record != NULL_ADDR) {

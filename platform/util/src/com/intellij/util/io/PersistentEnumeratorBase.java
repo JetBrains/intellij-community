@@ -84,11 +84,12 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
     public PersistentEnumeratorBase owner;
     public Object key;
 
-    private CacheKey(final Object key, final PersistentEnumeratorBase owner) {
+    private CacheKey(Object key, PersistentEnumeratorBase owner) {
       this.key = key;
       this.owner = owner;
     }
 
+    @Override
     public ShareableKey getStableCopy() {
       return this;
     }
@@ -301,6 +302,7 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
 
   public boolean processAllDataObject(final Processor<Data> processor, @Nullable final DataFilter filter) throws IOException {
     return traverseAllRecords(new RecordsProcessor() {
+      @Override
       public boolean process(final int record) throws IOException {
         if (filter == null || filter.accept(record)) {
           return processor.process(valueOf(record));
@@ -448,6 +450,7 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
     }
   }
 
+  @Override
   public synchronized void close() throws IOException {
     synchronized (ourLock) {
       if (!myClosed) {
@@ -473,6 +476,7 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
     return myClosed;
   }
 
+  @Override
   public synchronized boolean isDirty() {
     return myDirty;
   }
@@ -490,6 +494,7 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
     myStorage.force();
   }
 
+  @Override
   public synchronized void force() {
     synchronized (ourLock) {
       try {
@@ -548,6 +553,7 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
       super(null, null);
     }
 
+    @Override
     public ShareableKey getStableCopy() {
       return new CacheKey(key, owner);
     }
