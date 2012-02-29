@@ -107,8 +107,8 @@ public class MavenIndices {
         String name = prefix + i;
         File f = new File(parent, name);
         if (!f.exists()) {
-          f.mkdirs();
-          assert f.exists();
+          boolean createSuccessFull = f.mkdirs();
+          assert createSuccessFull || f.exists();
           return f;
         }
       }
