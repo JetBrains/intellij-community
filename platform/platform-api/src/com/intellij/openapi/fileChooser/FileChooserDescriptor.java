@@ -29,10 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @see FileChooserDescriptorFactory
@@ -49,7 +46,7 @@ public class FileChooserDescriptor implements Cloneable {
   private String myDescription;
 
   private boolean myHideIgnored = true;
-  private final List<VirtualFile> myRoots = new ArrayList<VirtualFile>();
+  private final List<String> myRoots = new ArrayList<String>();
   private boolean myShowFileSystemRoots = true;
   private boolean myIsTreeRootVisible = false;
 
@@ -239,18 +236,38 @@ public class FileChooserDescriptor implements Cloneable {
     return JarFileSystem.getInstance().findFileByPath(path + JarFileSystem.JAR_SEPARATOR);
   }
 
-  public final void setHideIgnored(boolean hideIgnored) { myHideIgnored = hideIgnored; }
-
-  public final List<VirtualFile> getRoots() {
-    return myRoots;
+  public final void setHideIgnored(boolean hideIgnored) {
+    myHideIgnored = hideIgnored;
   }
 
+  @NotNull
+  public final List<String> getRootPaths() {
+    return Collections.unmodifiableList(myRoots);
+  }
+
+  public final void setRoots(final String... roots) {
+    setRoots(Arrays.asList(roots));
+  }
+
+  public final void setRoots(@NotNull final Collection<String> roots) {
+    myRoots.clear();
+    myRoots.addAll(roots);
+  }
+
+  /** @deprecated use {@linkplain #getRootPaths()} (to remove in IDEA 13) */
+  public final List<VirtualFile> getRoots() {
+    return FileChooserUtil.pathsToFiles(myRoots, false);
+  }
+
+  /** @deprecated use {@linkplain #setRoots(java.util.Collection)} (to remove in IDEA 13) */
   public final void setRoot(VirtualFile root) {
     myRoots.clear();
-    addRoot(root);
+    myRoots.add(root.getPresentableUrl());
   }
-  public void addRoot(VirtualFile root) {
-    myRoots.add(root);
+
+  /** @deprecated use {@linkplain #setRoots(java.util.Collection)} (to remove in IDEA 13) */
+  public final void addRoot(VirtualFile root) {
+    myRoots.add(root.getPresentableUrl());
   }
 
   public boolean isTreeRootVisible() {

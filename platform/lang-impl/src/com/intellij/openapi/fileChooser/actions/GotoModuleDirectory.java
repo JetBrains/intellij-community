@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,47 +19,35 @@ package com.intellij.openapi.fileChooser.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.PathUtil;
+import org.jetbrains.annotations.Nullable;
 
 public final class GotoModuleDirectory extends FileChooserAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileChooser.actions.GotoModuleDirectory");
-
-  protected void actionPerformed(final FileSystemTree fileSystemTree, AnActionEvent e) {
-    final VirtualFile path = getModulePath(e);
-    LOG.assertTrue(path != null);
-    fileSystemTree.select(path, new Runnable() {
-      public void run() {
-        fileSystemTree.expand(path, null);
-      }
-    });
+  protected void actionPerformed(final FileSystemTree fileSystemTree, final AnActionEvent e) {
+    final String path = getModulePath(e);
+    if (path != null) {
+      fileSystemTree.select(new Runnable() {
+        public void run() {
+          fileSystemTree.expand(path, null);
+        }
+      }, path);
+    }
   }
 
-  protected void update(FileSystemTree fileSystemTree, AnActionEvent e) {
+  protected void update(final FileSystemTree fileSystemTree, final AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
-    final VirtualFile path = getModulePath(e);
+    final String path = getModulePath(e);
     presentation.setEnabled(path != null && fileSystemTree.isUnderRoots(path));
   }
 
-  private static VirtualFile getModulePath(AnActionEvent e) {
+  @Nullable
+  private static String getModulePath(final AnActionEvent e) {
     Module module = e.getData(LangDataKeys.MODULE_CONTEXT);
     if (module == null) {
       module = e.getData(LangDataKeys.MODULE);
     }
-    if (module == null || module.isDisposed()) {
-      return null;
-    }
-    final VirtualFile moduleFile = validated(module.getModuleFile());
-    return (moduleFile != null)? validated(moduleFile.getParent()) : null;
+    return module == null || module.isDisposed() ? null : PathUtil.getParentPath(module.getModuleFilePath());
   }
-
-  private static VirtualFile validated(final VirtualFile file) {
-    if (file == null || !file.isValid()) {
-      return null;
-    }
-    return file;
-  }
-
 }
