@@ -232,4 +232,23 @@ class GroovyAutoPopupTest extends CompletionAutoPopupTestCase {
     assert myFixture.file.text == 'FIS:'
   }
 
+  public void testEnteringNamedArg() {
+    myFixture.configureByText 'a.groovy', 'foo(<caret>)'
+    type 'has:'
+    myFixture.checkResult 'foo(has:<caret>)'
+  }
+
+  public void testEnteringMapKey() {
+    myFixture.configureByText 'a.groovy', '[<caret>]'
+    type 'has:'
+    myFixture.checkResult '[has:<caret>]'
+  }
+
+  public void testTypingFqn() {
+    CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE
+    myFixture.configureByText 'a.groovy', '<caret>'
+    type 'java.'
+    myFixture.checkResult 'java.<caret>'
+  }
+
 }

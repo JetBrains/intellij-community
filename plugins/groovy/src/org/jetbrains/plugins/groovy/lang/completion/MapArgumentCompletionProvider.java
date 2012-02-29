@@ -51,20 +51,19 @@ import static org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor.Pr
  */
 class MapArgumentCompletionProvider extends CompletionProvider<CompletionParameters> {
 
+  public static final ElementPattern<PsiElement> IN_ARGUMENT_LIST_OF_CALL = psiElement().withParent(psiElement(GrReferenceExpression.class).withParent(
+    StandardPatterns.or(psiElement(GrArgumentList.class), psiElement(GrListOrMap.class)))
+  );
+  public static final ElementPattern<PsiElement> IN_LABEL = psiElement(GroovyTokenTypes.mIDENT).withParent(GrArgumentLabel.class);
+
   private MapArgumentCompletionProvider() {
   }
 
   public static void register(CompletionContributor contributor) {
     MapArgumentCompletionProvider instance = new MapArgumentCompletionProvider();
 
-    ElementPattern<PsiElement> inArgumentListOfCall = psiElement().withParent(psiElement(GrReferenceExpression.class).withParent(
-      StandardPatterns.or(psiElement(GrArgumentList.class), psiElement(GrListOrMap.class)))
-    );
-
-    ElementPattern<PsiElement> inLabel = psiElement(GroovyTokenTypes.mIDENT).withParent(GrArgumentLabel.class);
-
-    contributor.extend(CompletionType.BASIC, inArgumentListOfCall, instance);
-    contributor.extend(CompletionType.BASIC, inLabel, instance);
+    contributor.extend(CompletionType.BASIC, IN_ARGUMENT_LIST_OF_CALL, instance);
+    contributor.extend(CompletionType.BASIC, IN_LABEL, instance);
   }
 
   @Override
