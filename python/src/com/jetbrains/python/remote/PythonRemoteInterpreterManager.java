@@ -20,6 +20,8 @@ import org.jetbrains.annotations.Nullable;
 public abstract class PythonRemoteInterpreterManager {
   public final static ExtensionPointName<PythonRemoteInterpreterManager> EP_NAME =
     ExtensionPointName.create("Pythonid.remoteInterpreterManager");
+  public static final String WEB_DEPLOYMENT_PLUGIN_IS_DISABLED =
+    "Can't run remote python interpreter. WebDeployment plugin is disabled.";
 
   public abstract ProcessHandler startRemoteProcess(Project project,
                                                     PythonRemoteSdkAdditionalData data,
@@ -54,7 +56,7 @@ public abstract class PythonRemoteInterpreterManager {
     }
   }
 
-  static void addUnbuffered(ParamsGroup exeGroup) {
+  public static void addUnbuffered(ParamsGroup exeGroup) {
     for (String param : exeGroup.getParametersList().getParameters()) {
       if ("-u".equals(param)) {
         return;
@@ -71,7 +73,7 @@ public abstract class PythonRemoteInterpreterManager {
   public static class PyRemoteInterpreterExecutionException extends ExecutionException {
 
     public PyRemoteInterpreterExecutionException() {
-      super("Can't run remote python interpreter. WebDeployment plugin is disabled.");
+      super(WEB_DEPLOYMENT_PLUGIN_IS_DISABLED);
     }
   }
 }
