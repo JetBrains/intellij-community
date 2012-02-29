@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.ProcessEventListener;
 import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.svn.SvnVcs;
 
 import java.io.File;
 
@@ -99,6 +100,7 @@ public class SvnSimpleCommand extends SvnTextCommand {
       waitFor();
     }
     if (ex[0] != null) {
+      SvnVcs.getInstance(myProject).checkCommandLineVersion();
       throw ex[0];
     }
     if (result[0] == null) {
