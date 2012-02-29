@@ -237,7 +237,7 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
     result.add(myRunnerPanel);
 
     JPanel panel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, true));
-    panel.setBorder(IdeBorderFactory.createTitledBorder(ExecutionBundle.message("record.coverage.filters.title"), false, false, true));
+    panel.setBorder(IdeBorderFactory.createTitledBorder(ExecutionBundle.message("record.coverage.filters.title"), false));
     myClassFilterEditor = new MyClassFilterEditor(myProject);
     panel.add(myClassFilterEditor);
     myTrackTestSourcesCb = new JCheckBox("Enable coverage in test folders");
