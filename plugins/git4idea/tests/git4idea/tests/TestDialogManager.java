@@ -16,7 +16,9 @@
 package git4idea.tests;
 
 import com.intellij.openapi.ui.DialogWrapper;
+import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -50,13 +52,26 @@ public class TestDialogManager {
 
   private Map<Class, TestDialogHandler> myHandlers = new HashMap<Class, TestDialogHandler>();
 
-  public void show(DialogWrapper dialog) {
+  private DialogWrapper myLastShownDialog;
+
+  public void show(DialogWrapper dialog) throws IllegalAccessException, NoSuchFieldException {
     final TestDialogHandler handler = myHandlers.get(dialog.getClass());
     int exitCode = DialogWrapper.OK_EXIT_CODE;
     if (handler != null) {
       exitCode = handler.handleDialog(dialog);
     }
-    dialog.close(exitCode);
+    closeDialog(dialog, exitCode);
+    myLastShownDialog = dialog;
+  }
+
+  private static void closeDialog(DialogWrapper dialog, int exitCode) throws NoSuchFieldException, IllegalAccessException {
+    Field exitCodeField = DialogWrapper.class.getDeclaredField("myExitCode");
+    exitCodeField.setAccessible(true);
+    exitCodeField.set(dialog, exitCode);
+
+    Field closedField = DialogWrapper.class.getDeclaredField("myClosed");
+    closedField.setAccessible(true);
+    closedField.set(dialog, true);
   }
 
   /**
@@ -67,5 +82,10 @@ public class TestDialogManager {
    */
   public void registerDialogHandler(Class dialogClass, TestDialogHandler handler) {
     myHandlers.put(dialogClass, handler);
+  }
+
+  @Nullable
+  public DialogWrapper getLastShownDialog() {
+    return myLastShownDialog;
   }
 }

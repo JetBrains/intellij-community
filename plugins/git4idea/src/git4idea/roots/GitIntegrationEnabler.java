@@ -51,30 +51,57 @@ public class GitIntegrationEnabler {
 
   public void enable(@NotNull GitRootDetectInfo detectInfo) {
     Notificator notificator = myPlatformFacade.getNotificator(myProject);
+    Collection<VirtualFile> roots = detectInfo.getRoots();
+    VirtualFile projectDir = myProject.getBaseDir();
+    assert projectDir != null : "Base dir is unexpectedly null for project: " + myProject;
 
     if (detectInfo.totallyUnderGit()) {
-      Collection<VirtualFile> roots = detectInfo.getRoots();
       assert !roots.isEmpty();
       if (roots.size() > 1 || detectInfo.projectIsBelowGit()) {
-        notificator.notifySuccess("", String.format("Added Git %s: %s", pluralize("root", roots.size()), joinRootsPaths(roots)));
+        notifyAddedRoots(notificator, roots);
       }
       addVcsRoots(roots);
     }
     else if (detectInfo.empty()) {
-      VirtualFile projectDir = myProject.getBaseDir();
-      assert projectDir != null : "Base dir is unexpectedly null for project: " + myProject;
-      try {
-        myGit.init(myProject, projectDir);
+      boolean succeeded = gitInitOrNotifyError(notificator, projectDir);
+      if (succeeded) {
         addVcsRoots(Collections.singleton(projectDir));
-        notificator.notifySuccess("", "Created Git repository in \n" + projectDir.getPresentableUrl());
-      }
-      catch (VcsException e) {
-        notificator.notifyError("Couldn't git init " + projectDir.getPresentableUrl(), e.getMessage());
-        LOG.error(e);
       }
     }
     else {
-      // TODO show dialog
+      GitIntegrationEnableComplexCaseDialog dialog = new GitIntegrationEnableComplexCaseDialog(myProject, roots);
+      myPlatformFacade.showDialog(dialog);
+      if (dialog.isOK()) {
+        if (dialog.getChoice() == GitIntegrationEnableComplexCaseDialog.Choice.GIT_INIT) {
+          boolean succeeded = gitInitOrNotifyError(notificator, projectDir);
+          if (succeeded) {
+            roots.add(projectDir);
+            addVcsRoots(roots);
+            notifyAddedRoots(notificator, roots);
+          }
+        }
+        else {
+          addVcsRoots(roots);
+          notifyAddedRoots(notificator, roots);
+        }
+      }
+    }
+  }
+
+  private static void notifyAddedRoots(Notificator notificator, Collection<VirtualFile> roots) {
+    notificator.notifySuccess("", String.format("Added Git %s: %s", pluralize("root", roots.size()), joinRootsPaths(roots)));
+  }
+
+  private boolean gitInitOrNotifyError(@NotNull Notificator notificator, @NotNull VirtualFile projectDir) {
+    try {
+      myGit.init(myProject, projectDir);
+      notificator.notifySuccess("", "Created Git repository in \n" + projectDir.getPresentableUrl());
+      return true;
+    }
+    catch (VcsException e) {
+      notificator.notifyError("Couldn't git init " + projectDir.getPresentableUrl(), e.getMessage());
+      LOG.error(e);
+      return false;
     }
   }
 
