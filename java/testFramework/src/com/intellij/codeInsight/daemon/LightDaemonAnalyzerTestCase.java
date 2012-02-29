@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,7 +79,7 @@ public abstract class LightDaemonAnalyzerTestCase extends LightCodeInsightTestCa
     doTestConfiguredFile(checkWarnings, checkInfos, filePath);
   }
 
-  protected void doTestConfiguredFile(boolean checkWarnings, boolean checkInfos, String filePath) {
+  protected void doTestConfiguredFile(boolean checkWarnings, boolean checkInfos, @Nullable String filePath) {
     getJavaFacade().setAssertOnFileLoadingFilter(VirtualFileFilter.NONE);
 
     ExpectedHighlightingData data = new ExpectedHighlightingData(getEditor().getDocument(),checkWarnings, checkInfos);
@@ -87,7 +87,7 @@ public abstract class LightDaemonAnalyzerTestCase extends LightCodeInsightTestCa
   }
 
   @Nullable
-  private String composeLocalPath(String filePath) {
+  private String composeLocalPath(@Nullable String filePath) {
     return filePath != null ? getTestDataPath() + "/" + filePath : null;
   }
 
@@ -106,7 +106,7 @@ public abstract class LightDaemonAnalyzerTestCase extends LightCodeInsightTestCa
     data.checkResult(infos, getEditor().getDocument().getText(), filePath);
   }
 
-  protected HighlightTestInfo testFile(@NonNls @NotNull String filePath) {
+  protected HighlightTestInfo doTestFile(@NonNls @NotNull String filePath) {
     return new HighlightTestInfo(getTestRootDisposable(), filePath){
       @Override
       public HighlightTestInfo doTest() throws Exception {
