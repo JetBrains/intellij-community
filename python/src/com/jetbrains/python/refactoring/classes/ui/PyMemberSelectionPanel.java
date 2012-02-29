@@ -19,7 +19,7 @@ public class PyMemberSelectionPanel extends JPanel {
 
   public PyMemberSelectionPanel(String title, List<PyMemberInfo> memberInfo, final MemberInfoModel<PyElement, PyMemberInfo> model) {
     super();
-    Border titledBorder = IdeBorderFactory.createTitledBorder(title, false, false, true);
+    Border titledBorder = IdeBorderFactory.createTitledBorder(title, false);
     Border emptyBorder = BorderFactory.createEmptyBorder(0, 5, 5, 5);
     Border border = BorderFactory.createCompoundBorder(titledBorder, emptyBorder);
     setBorder(border);

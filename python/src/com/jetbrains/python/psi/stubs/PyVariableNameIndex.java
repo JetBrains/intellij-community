@@ -6,6 +6,7 @@ import com.intellij.psi.stubs.StringStubIndexExtension;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.stubs.StubIndexKey;
 import com.jetbrains.python.psi.PyTargetExpression;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
@@ -15,6 +16,7 @@ import java.util.Collection;
 public class PyVariableNameIndex extends StringStubIndexExtension<PyTargetExpression> {
   public static final StubIndexKey<String, PyTargetExpression> KEY = StubIndexKey.createIndexKey("Py.variable.shortName");
 
+  @NotNull
   public StubIndexKey<String, PyTargetExpression> getKey() {
     return KEY;
   }
