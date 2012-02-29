@@ -13,20 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.designer.propertyTable;
+package com.intellij.designer.propertyTable.renderers;
 
 import com.intellij.designer.model.RadComponent;
+import com.intellij.designer.propertyTable.PropertyRenderer;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 /**
- * @author Alexander Lobas
+ * @author Anton Katilin
+ * @author Vladimir Kondratyev
  */
-public interface PropertyRenderer {
+public class BooleanRenderer extends JCheckBox implements PropertyRenderer {
   @NotNull
-  JComponent getComponent(@Nullable RadComponent component, @Nullable Object value, boolean selected, boolean hasFocus);
+  public JComponent getComponent(@Nullable RadComponent component, @Nullable Object value, boolean selected, boolean hasFocus) {
+    if (selected) {
+      setForeground(UIUtil.getTableSelectionForeground());
+      setBackground(UIUtil.getTableSelectionBackground());
+    }
+    else {
+      setForeground(UIUtil.getTableForeground());
+      setBackground(UIUtil.getTableBackground());
+    }
 
-  void updateUI();
+    setSelected(value != null && (Boolean)value);
+    return this;
+  }
 }

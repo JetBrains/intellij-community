@@ -365,7 +365,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   private final class MyLayeredPane extends JLayeredPane implements Scrollable {
     public void doLayout() {
       for (int i = getComponentCount() - 1; i >= 0; i--) {
-        final Component component = getComponent(i);
+        Component component = getComponent(i);
         component.setBounds(0, 0, getWidth(), getHeight());
       }
     }
