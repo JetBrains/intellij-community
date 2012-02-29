@@ -463,19 +463,23 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     final GrExpression right = expression.getRightOperand();
     final IElementType opType = expression.getOperationTokenType();
 
-    final FakeInstruction binaryEnd =
-      opType == GroovyTokenTypes.mLAND || opType == GroovyTokenTypes.mLOR ? new FakeInstruction(myInstructionNumber++) : null;
-
+    InstructionImpl start = myHead;
     left.accept(this);
-    if (binaryEnd != null && myHead != null) {
-      addEdge(myHead, binaryEnd);
+
+    if (right != null) {
+      if (opType == GroovyTokenTypes.mLOR) {
+        addPendingEdge(expression, myHead);
+        myHead = start;
+
+        myNegate = !myNegate;
+        left.accept(this);
+        myNegate = !myNegate;
+      }
+
+      right.accept(this);
     }
 
-    if (right != null) right.accept(this);
-
     visitCall(expression);
-
-    if (binaryEnd != null) addNode(binaryEnd);
   }
 
   /**
