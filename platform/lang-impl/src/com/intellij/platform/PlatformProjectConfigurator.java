@@ -41,8 +41,11 @@ public class PlatformProjectConfigurator implements DirectoryProjectConfigurator
           String moduleName = baseDir.getName().replace(":", "");     // correct module name when opening root of drive as project (RUBY-5181)
           String imlName = baseDir.getPath() + "/.idea/" + moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION;
           final Module module = moduleManager.newModule(imlName, ModuleTypeManager.getInstance().getDefaultModuleType());
-          ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
-          rootModel.addContentEntry(baseDir);
+          ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
+          ModifiableRootModel rootModel = rootManager.getModifiableModel();
+          if (rootModel.getContentRoots().length == 0) {
+            rootModel.addContentEntry(baseDir);
+          }
           rootModel.inheritSdk();
           rootModel.commit();
           moduleRef.set(module);
