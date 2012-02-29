@@ -5,7 +5,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.javascript.ActionScriptFileType;
 import com.intellij.lang.javascript.JSLanguageDialect;
 import com.intellij.lang.javascript.JavaScriptSupportLoader;
-import com.intellij.lang.javascript.dialects.ui.JSLanguageLevel;
+import com.intellij.lang.javascript.dialects.JSLanguageLevel;
 import com.intellij.lang.javascript.settings.JSRootConfiguration;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
