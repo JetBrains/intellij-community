@@ -22,12 +22,14 @@ package com.intellij.psi.stubs;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class StringStubIndexExtension<Psi extends PsiElement> extends AbstractStubIndex<String, Psi> {
   public int getVersion() {
     return 2;
   }
 
+  @NotNull
   public KeyDescriptor<String> getKeyDescriptor() {
     return new EnumeratorStringDescriptor();
   }

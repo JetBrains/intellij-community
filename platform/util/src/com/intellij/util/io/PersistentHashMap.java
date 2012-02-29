@@ -57,8 +57,8 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   private static final long USED_LONG_VALUE_MASK = 1L << 62;
   private static final int POSITIVE_VALUE_SHIFT = 1;
   private final int myParentValueRefOffset;
-  private final byte[] myRecordBuffer;
-  private final byte[] mySmallRecordBuffer;
+  @NotNull private final byte[] myRecordBuffer;
+  @NotNull private final byte[] mySmallRecordBuffer;
   private final boolean myCanReEnumerate;
   private int myWatermarkId;
   private boolean myIntAddressForNewRecord;
@@ -73,17 +73,19 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
       ((UnsyncByteArrayOutputStream)out).reset();
     }
     
+    @NotNull
     private BufferExposingByteArrayOutputStream getInternalBuffer() {
       return (BufferExposingByteArrayOutputStream)out;      
     }
   }
 
   private final LimitedPool<AppendStream> myStreamPool = new LimitedPool<AppendStream>(10, new LimitedPool.ObjectFactory<AppendStream>() {
+    @NotNull
     public AppendStream create() {
       return new AppendStream();
     }
 
-    public void cleanup(final AppendStream appendStream) {
+    public void cleanup(@NotNull final AppendStream appendStream) {
       appendStream.reset();
     }
   });  
@@ -94,7 +96,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
       return myStreamPool.alloc();
     }
 
-    protected void onDropFromCache(final Key key, final AppendStream value) {
+    protected void onDropFromCache(final Key key, @NotNull final AppendStream value) {
       synchronized (PersistentEnumerator.ourLock) {
         try {
           final BufferExposingByteArrayOutputStream bytes = value.getInternalBuffer();
@@ -128,11 +130,11 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     }
   });
 
-  public PersistentHashMap(final File file, KeyDescriptor<Key> keyDescriptor, DataExternalizer<Value> valueExternalizer) throws IOException {
+  public PersistentHashMap(@NotNull final File file, @NotNull KeyDescriptor<Key> keyDescriptor, @NotNull DataExternalizer<Value> valueExternalizer) throws IOException {
     this(file, keyDescriptor, valueExternalizer, INITIAL_INDEX_SIZE);
   }
   
-  public PersistentHashMap(final File file, KeyDescriptor<Key> keyDescriptor, DataExternalizer<Value> valueExternalizer, final int initialSize) throws IOException {
+  public PersistentHashMap(@NotNull final File file, @NotNull KeyDescriptor<Key> keyDescriptor, @NotNull DataExternalizer<Value> valueExternalizer, final int initialSize) throws IOException {
     super(checkDataFiles(file), keyDescriptor, initialSize);
 
     final PersistentEnumeratorBase.RecordBufferHandler<PersistentEnumeratorBase> recordHandler = myEnumerator.getRecordHandler();
@@ -153,7 +155,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
       }
 
       @Override
-      void setupRecord(PersistentEnumeratorBase enumerator, int hashCode, int dataOffset, byte[] buf) {
+      void setupRecord(PersistentEnumeratorBase enumerator, int hashCode, int dataOffset, @NotNull byte[] buf) {
         recordHandler.setupRecord(enumerator, hashCode, dataOffset, buf);
         for (int i = myParentValueRefOffset; i < buf.length; i++) {
           buf[i] = 0;
@@ -217,17 +219,18 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     return false;
   }
 
-  private static File checkDataFiles(final File file) {
+  @NotNull
+  private static File checkDataFiles(@NotNull final File file) {
     if (!file.exists()) {
       deleteFilesStartingWith(getDataFile(file));
     }
     return file;
   }
 
-  public static void deleteFilesStartingWith(File prefixFile) {
+  public static void deleteFilesStartingWith(@NotNull File prefixFile) {
     final String baseName = prefixFile.getName();
     final File[] files = prefixFile.getParentFile().listFiles(new FileFilter() {
-      public boolean accept(final File pathName) {
+      public boolean accept(@NotNull final File pathName) {
         return pathName.getName().startsWith(baseName);
       }
     });
@@ -238,7 +241,8 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     }
   }
 
-  private static File getDataFile(final File file) {
+  @NotNull
+  private static File getDataFile(@NotNull final File file) {
     return new File(file.getParentFile(), file.getName() + DATA_FILE_EXTENSION);
   }
 
@@ -284,13 +288,13 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     void append(DataOutput out) throws IOException;
   }
   
-  public final void appendData(Key key, ValueDataAppender appender) throws IOException {
+  public final void appendData(Key key, @NotNull ValueDataAppender appender) throws IOException {
     synchronized (myEnumerator) {
       doAppendData(key, appender);
     }
   }
 
-  protected void doAppendData(Key key, ValueDataAppender appender) throws IOException {
+  protected void doAppendData(Key key, @NotNull ValueDataAppender appender) throws IOException {
     myEnumerator.markDirty(true);
 
     final AppendStream stream = myAppendCache.get(key);
@@ -308,6 +312,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     }
   }
 
+  @NotNull
   public Collection<Key> getAllKeysWithExistingMapping() throws IOException {
     final List<Key> values = new ArrayList<Key>();
     processKeysWithExistingMapping(new CommonProcessors.CollectProcessor<Key>(values));

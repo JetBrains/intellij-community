@@ -16,27 +16,29 @@
 package com.intellij.util.io;
 
 import com.intellij.util.containers.ConcurrentSLRUMap;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
 
 public class PersistentStringEnumerator extends PersistentEnumeratorDelegate<String>{
-  private final ConcurrentSLRUMap<Integer, String> myIdToStringCache;
-  private final ConcurrentSLRUMap<Integer, Integer> myHashcodeToIdCache;
+  @Nullable private final ConcurrentSLRUMap<Integer, String> myIdToStringCache;
+  @Nullable private final ConcurrentSLRUMap<Integer, Integer> myHashcodeToIdCache;
 
-  public PersistentStringEnumerator(final File file) throws IOException {
+  public PersistentStringEnumerator(@NotNull final File file) throws IOException {
     this(file, 1024 * 4);
   }
 
-  public PersistentStringEnumerator(final File file, boolean cacheLastMappings) throws IOException {
+  public PersistentStringEnumerator(@NotNull final File file, boolean cacheLastMappings) throws IOException {
     this(file, 1024 * 4, cacheLastMappings);
   }
 
-  public PersistentStringEnumerator(final File file, final int initialSize) throws IOException {
+  public PersistentStringEnumerator(@NotNull final File file, final int initialSize) throws IOException {
     this(file, initialSize, false);
   }
 
-  private PersistentStringEnumerator(final File file, final int initialSize, boolean cacheLastMappings) throws IOException {
+  private PersistentStringEnumerator(@NotNull final File file, final int initialSize, boolean cacheLastMappings) throws IOException {
     super(file, new EnumeratorStringDescriptor(), initialSize);
     if (cacheLastMappings) {
       myIdToStringCache = new ConcurrentSLRUMap<Integer, String>(8192, 8192);
@@ -48,7 +50,7 @@ public class PersistentStringEnumerator extends PersistentEnumeratorDelegate<Str
   }
 
   @Override
-  public int enumerate(String value) throws IOException {
+  public int enumerate(@Nullable String value) throws IOException {
     int valueHashCode = -1;
 
     if (myHashcodeToIdCache != null && value != null) {
@@ -73,6 +75,7 @@ public class PersistentStringEnumerator extends PersistentEnumeratorDelegate<Str
     return enumerate;
   }
 
+  @Nullable
   @Override
   public String valueOf(int idx) throws IOException {
     if (myIdToStringCache != null) {

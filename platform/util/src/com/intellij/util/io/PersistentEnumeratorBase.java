@@ -73,9 +73,10 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
     }
   }
   
-  public static abstract class RecordBufferHandler<T extends PersistentEnumeratorBase> {
+  public abstract static class RecordBufferHandler<T extends PersistentEnumeratorBase> {
     abstract int recordWriteOffset(T enumerator, byte[] buf);
-    abstract @NotNull byte[] getRecordBuffer(T enumerator);
+    @NotNull
+    abstract byte[] getRecordBuffer(T enumerator);
     abstract void setupRecord(T enumerator, int hashCode, final int dataOffset, final byte[] buf);
   }
 
@@ -137,8 +138,12 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
     }
   }
 
-  public PersistentEnumeratorBase(File file, ResizeableMappedFile storage, KeyDescriptor<Data> dataDescriptor, int initialSize,
-                                  Version version, RecordBufferHandler<? extends PersistentEnumeratorBase> recordBufferHandler,
+  public PersistentEnumeratorBase(@NotNull File file,
+                                  @NotNull ResizeableMappedFile storage,
+                                  @NotNull KeyDescriptor<Data> dataDescriptor,
+                                  int initialSize,
+                                  @NotNull Version version,
+                                  @NotNull RecordBufferHandler<? extends PersistentEnumeratorBase> recordBufferHandler,
                                   boolean doCaching) throws IOException {
     myDataDescriptor = dataDescriptor;
     myFile = file;
@@ -210,11 +215,12 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
 
   protected abstract void setupEmptyFile() throws IOException;
 
+  @NotNull
   public final RecordBufferHandler<PersistentEnumeratorBase> getRecordHandler() {
     return myRecordHandler;
   }
 
-  public void setRecordHandler(RecordBufferHandler<PersistentEnumeratorBase> recordHandler) {
+  public void setRecordHandler(@NotNull RecordBufferHandler<PersistentEnumeratorBase> recordHandler) {
     myRecordHandler = recordHandler;
   }
 
@@ -311,7 +317,7 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
     return values;
   }
 
-  public static abstract class RecordsProcessor {
+  public abstract static class RecordsProcessor {
     private int myKey;
 
     public abstract boolean process(int record) throws IOException;
